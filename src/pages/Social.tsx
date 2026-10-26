@@ -38,8 +38,11 @@ export type { SocialTab, FeedSubTab };
 
 export default function Social() {
   const uid = useUid();
-  const { count: followingCount, refresh: refreshFollowing } =
-    useFollowingCount();
+  const {
+    count: followingCount,
+    failed: followingCountFailed,
+    refresh: refreshFollowing,
+  } = useFollowingCount();
   /* useBlockedUsers now returns { blocked, addBlocked, removeBlocked }
      so ActivityCard can mutate the shared set after a block write
      completes. We only care about the Set here for filtering — the
@@ -287,6 +290,8 @@ export default function Social() {
         feedSubTab={feedSubTab}
         selectFeedSubTab={selectFeedSubTab}
         followingCount={followingCount}
+        followingCountFailed={followingCountFailed}
+        retryFollowingCount={refreshFollowing}
         followingFeedUnlocked={followingFeedUnlocked}
         blockedUsers={blockedUsers}
         blockedReady={blockedReady}

@@ -18,7 +18,10 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { defineSecret } = require("firebase-functions/params");
 const { DEFAULT_HTTP_CAP } = require("../lib/runtimeCaps");
-const { isEmailRateLimited } = require("../lib/emailRateLimit");
+const {
+  isEmailRateLimited,
+  passwordResetKey,
+} = require("../lib/emailRateLimit");
 const passwordResetEmail = require("../lib/passwordResetEmail");
 const verificationEmail = require("../lib/verificationEmail");
 
@@ -49,8 +52,14 @@ async function sendViaResend({ to, subject, html, text }) {
   });
   if (!resp.ok) {
     const body = await resp.text().catch(() => "");
+    // The message is logged by every caller, and Resend's error body can
+    // name the recipient ("Invalid `to` field: …"): the password-reset
+    // callable, which anyone can call, would log every address tried.
+    // Addresses are cut here, once, as trialReminders.js cuts its own.
     throw new Error(
-      `Resend send failed (${resp.status}): ${body.slice(0, 200)}`
+      `Resend send failed (${resp.status}): ${body
+        .slice(0, 200)
+        .replace(/\S+@\S+/g, "[address]")}`
     );
   }
 }
@@ -77,12 +86,11 @@ exports.sendPasswordResetLinkCallable = functions
         "A valid email is required."
       );
     }
-    // Keyed on a sanitised email (no auth uid — logged out). 5 per 5 min per
-    // email caps bombing a single victim.
-    const key = `pwreset_${email.toLowerCase().replace(/[^a-z0-9]/g, "_")}`;
+    // Keyed on a hash of the address (no auth uid — logged out). 5 per
+    // 5 min per address caps bombing a single victim.
     const limited = await isEmailRateLimited({
       firestore: admin.firestore(),
-      key,
+      key: passwordResetKey(email),
       action: "passwordReset",
       maxCalls: 5,
       windowMs: 300_000,

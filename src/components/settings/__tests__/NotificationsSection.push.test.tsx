@@ -16,6 +16,7 @@ const state = vi.hoisted(() => ({
     recap: true,
     badge: true,
     challenges: false,
+    challengeReminders: false,
   },
   update: vi.fn(async (_patch: unknown) => true),
   request: vi.fn(async () => true),
@@ -89,6 +90,7 @@ const PUSH_SWITCHES = [
   "Toggle Weekly recap push",
   "Toggle Badge unlocked push",
   "Toggle Monthly challenges push",
+  "Toggle Monthly challenge reminders push",
 ];
 
 beforeEach(() => {
@@ -101,11 +103,31 @@ beforeEach(() => {
     recap: true,
     badge: true,
     challenges: false,
+    challengeReminders: false,
   };
   state.update.mockReset().mockResolvedValue(true);
   state.request.mockReset().mockResolvedValue(true);
 });
 afterEach(cleanup);
+
+describe("NotificationsSection — the reminders", () => {
+  it("are one Reminders group with a row each, not a heading over each switch", () => {
+    renderSection();
+    expect(
+      screen.getByRole("heading", { name: "Reminders" })
+    ).toBeInTheDocument();
+    for (const row of ["Meals", "Workouts", "Streak"])
+      expect(screen.getByText(row)).toBeInTheDocument();
+    for (const gone of [
+      "Meal reminders",
+      "Enable meal reminders",
+      "Workout reminders",
+      "Enable workout reminders",
+      "Streak reminders",
+    ])
+      expect(screen.queryByText(gone)).toBeNull();
+  });
+});
 
 describe("NotificationsSection — monthly challenge push", () => {
   it("offers a separate challenge opt-in without asking permission on mount", () => {
@@ -137,6 +159,25 @@ describe("NotificationsSection — monthly challenge push", () => {
     );
     await waitFor(() =>
       expect(state.update).toHaveBeenCalledWith({ challenges: true })
+    );
+    expect(state.request).not.toHaveBeenCalled();
+    expect(state.register).not.toHaveBeenCalled();
+  });
+
+  it("keeps closing reminders off and saves them independently of announcements", async () => {
+    renderSection();
+    const toggle = screen.getByRole("switch", {
+      name: "Toggle Monthly challenge reminders push",
+    });
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    expect(
+      screen.getByText(/for joined monthly goals still in progress/)
+    ).toBeInTheDocument();
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(state.update).toHaveBeenCalledExactlyOnceWith({
+        challengeReminders: true,
+      })
     );
     expect(state.request).not.toHaveBeenCalled();
     expect(state.register).not.toHaveBeenCalled();

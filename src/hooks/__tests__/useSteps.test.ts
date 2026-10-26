@@ -61,6 +61,42 @@ beforeEach(() => {
   getTodayStepTotal.mockResolvedValue(0);
 });
 
+describe("useSteps pending", () => {
+  /* Settings → Health showed 0 and "No steps yet" while it loaded: the
+     status reads "ambiguous" for a connected account until the first
+     step read lands. */
+  it("stays pending until a connected account's first step read lands", async () => {
+    isHealthAvailable.mockResolvedValue(true);
+    seedFirestore({ [FLAG_DOC]: { connected: true, primingShown: true } });
+    let answer!: (n: number) => void;
+    getTodayStepTotal.mockReturnValue(
+      new Promise<number>((resolve) => {
+        answer = resolve;
+      })
+    );
+    const { result } = renderHook(() => useSteps());
+    expect(result.current.pending).toBe(true);
+    await waitFor(() => expect(getTodayStepTotal).toHaveBeenCalled());
+    expect(result.current.status).toBe("ambiguous");
+    expect(result.current.pending).toBe(true);
+    await act(async () => answer(4200));
+    expect(result.current.pending).toBe(false);
+    expect(result.current.status).toBe("connected");
+  });
+
+  it("settles where Health is not available, and when the read fails", async () => {
+    isHealthAvailable.mockResolvedValue(false);
+    const web = renderHook(() => useSteps());
+    await waitFor(() => expect(web.result.current.pending).toBe(false));
+
+    isHealthAvailable.mockResolvedValue(true);
+    seedFirestore({ [FLAG_DOC]: { connected: true, primingShown: true } });
+    getTodayStepTotal.mockRejectedValue(new Error("no health"));
+    const phone = renderHook(() => useSteps());
+    await waitFor(() => expect(phone.result.current.pending).toBe(false));
+  });
+});
+
 describe("useSteps status", () => {
   it("is 'unavailable' when Health isn't available", async () => {
     isHealthAvailable.mockResolvedValue(false);
@@ -233,6 +269,47 @@ describe("useSteps connect / priming persistence", () => {
     expect(result.current.primingShown).toBe(true);
     expect(getTodayStepTotal).not.toHaveBeenCalled();
     expect(toastError).toHaveBeenCalledWith("Couldn't connect Apple Health");
+  });
+
+  /* A failed save of the flags went unsaid, and the next launch asked to
+     connect again. */
+  it("says so when the connection cannot be saved", async () => {
+    isHealthAvailable.mockResolvedValue(true);
+    setDocGuarded.mockRejectedValueOnce(new Error("unavailable"));
+    const { result } = renderHook(() => useSteps());
+    await waitFor(() => expect(result.current.status).toBe("unprompted"));
+    await act(async () => {
+      await result.current.connect();
+    });
+    expect(toastError).toHaveBeenCalledWith(
+      "Couldn't save your Apple Health setting. Try again."
+    );
+  });
+
+  /* Steps come from the phone and need no connection, but connecting
+     waited for the flags' save to reach the server first, so offline
+     nobody who connected ever saw a step count. */
+  it("offline, reads today's steps without waiting for the flags to reach the server", async () => {
+    isHealthAvailable.mockResolvedValue(true);
+    getTodayStepTotal.mockResolvedValue(4321);
+    const online = Object.getOwnPropertyDescriptor(navigator, "onLine");
+    Object.defineProperty(navigator, "onLine", {
+      configurable: true,
+      get: () => false,
+    });
+    setDocGuarded.mockReturnValueOnce(new Promise<void>(() => {}));
+    try {
+      const { result } = renderHook(() => useSteps());
+      await waitFor(() => expect(result.current.status).toBe("unprompted"));
+      await act(async () => {
+        await result.current.connect();
+      });
+      expect(result.current.steps).toBe(4321);
+      expect(result.current.status).toBe("connected");
+    } finally {
+      if (online) Object.defineProperty(navigator, "onLine", online);
+      else delete (navigator as { onLine?: boolean }).onLine;
+    }
   });
 
   it("dismissPriming() persists primingShown without connecting", async () => {

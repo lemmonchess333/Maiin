@@ -149,12 +149,14 @@ import {
 } from "@/lib/runResumeStorage";
 import { DEFAULT_CONFIG } from "@/components/run/runConfigDefaults";
 import {
-  deferReads,
+  readsAt,
   releaseAllReads,
   resetFirestore,
   resumeReads,
   seedFirestore,
 } from "@/test/firestoreHarness";
+
+const RUNS_PATH = "users/runner/runs";
 import { Timestamp } from "firebase/firestore";
 
 /** A valid outdoor run, already saved (the receipt), that didn't match
@@ -341,25 +343,26 @@ describe("RunSummary — the off-plan prompt says only what happened", () => {
   });
 });
 
-describe("RunSummary — pace history loading follows its inputs", () => {
-  it("reads as loading from the render the run changes until the new read settles", async () => {
+describe("RunSummary — past runs are read once", () => {
+  /* The history (every saved run, routes and all) feeds the pace badge
+     and the Pro insight. The run on the screen is handed to both on its
+     own, so the read need not follow it: it used to restart on every
+     corrected distance and every replaced receipt, such as a notes edit,
+     reading the whole history again each time. */
+  it("does not read the history again when the receipt is replaced", async () => {
     renderSummary();
     // POSITIVE anchor: the first history read settled.
     await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
+    const runReads = () => readsAt(RUNS_PATH).length;
+    const before = runReads();
+    expect(before).toBeGreaterThan(0);
 
-    // Hold the next read, then replace the receipt.
-    deferReads();
     const from = h.paceLoading.length;
     fireEvent.click(screen.getByRole("link", { name: "Replace receipt" }));
+    await waitFor(() => expect(h.paceLoading.length).toBeGreaterThan(from));
 
-    const afterChange = h.paceLoading.slice(from);
-    expect(afterChange.length).toBeGreaterThan(0);
-    expect(afterChange.every((loading) => loading)).toBe(true);
-
-    // Then settled again, once the new read lands.
-    resumeReads();
-    releaseAllReads();
-    await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
+    expect(runReads()).toBe(before);
+    expect(h.paceLoading.slice(from).every((loading) => !loading)).toBe(true);
   });
 });
 

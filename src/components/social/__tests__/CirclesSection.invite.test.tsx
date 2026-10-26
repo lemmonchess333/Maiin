@@ -1,19 +1,29 @@
 /**
  * CIRCLE-INVITE-ACTIVATION-01 — a new circle is useful immediately:
- * (a) creating hands off straight into the "Your Circle is ready"
+ * (a) creating hands off straight into the "Your circle is ready"
  *     invite sheet with the RETURNED code (Share / Copy / Not now);
  * (b) a one-member circle's featured card leads with "Invite someone"
  *     (the focus action moves to the detail sheet); multi-member
  *     circles keep the focus button; a non-owner solo member (no
  *     inviteCode) falls back to the focus button.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  beforeAll,
+} from "vitest";
+import { loadWordFilter } from "@/lib/wordFilter";
 import {
   render,
   screen,
   cleanup,
   fireEvent,
   waitFor,
+  within,
 } from "@testing-library/react";
 /* CirclesSection reads useSearchParams (PROGRAM-CIRCLE-01 hand-off),
    so renders need a Router. The partial mock below keeps the real
@@ -49,11 +59,16 @@ import CirclesSection from "../CirclesSection";
 import { toast } from "@/lib/toast";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
 
+const DAY = 86_400_000;
+/** A code made just now: it works for another seven days. */
+const fresh = () => Date.now() + 7 * DAY;
+
 function summary(
   id: string,
   title: string,
   memberCount: number,
-  inviteCode: string | null
+  inviteCode: string | null,
+  inviteCodeExpiresAt: number | null = inviteCode === null ? null : fresh()
 ): CircleSummary {
   return {
     space: {
@@ -69,6 +84,7 @@ function summary(
       createdAt: 1,
     },
     inviteCode,
+    inviteCodeExpiresAt,
   };
 }
 
@@ -81,6 +97,11 @@ function hookValue(overrides: Record<string, unknown> = {}) {
     createCircle: vi.fn(async () => ({
       spaceId: "new-space",
       inviteCode: "new-code",
+      inviteCodeExpiresAt: fresh(),
+    })),
+    renewInviteCode: vi.fn(async () => ({
+      inviteCode: "NEWC0DE3",
+      inviteCodeExpiresAt: fresh(),
     })),
     joinCircle: vi.fn(),
     leaveCircle: vi.fn(),
@@ -138,7 +159,7 @@ beforeEach(() => {
 });
 
 describe("post-create invite hand-off", () => {
-  it("creating a circle opens 'Your Circle is ready' with the returned code", async () => {
+  it("creating a circle opens 'Your circle is ready' with the returned code", async () => {
     mockUseGoalSpaces.mockReturnValue(hookValue());
     render(
       <MemoryRouter>
@@ -155,7 +176,7 @@ describe("post-create invite hand-off", () => {
     fireEvent.click(screen.getByRole("button", { name: /start circle/i }));
 
     await waitFor(() =>
-      expect(screen.getByText("Your Circle is ready")).toBeInTheDocument()
+      expect(screen.getByText("Your circle is ready")).toBeInTheDocument()
     );
     // The RETURNED invite code, in the copyable row.
     expect(screen.getByText("new-space.new-code")).toBeInTheDocument();
@@ -208,6 +229,7 @@ describe("post-create invite hand-off", () => {
         createCircle: vi.fn(async () => ({
           spaceId: "new-space",
           inviteCode: "K7P49M2H",
+          inviteCodeExpiresAt: fresh(),
         })),
       })
     );
@@ -224,7 +246,7 @@ describe("post-create invite hand-off", () => {
     fireEvent.click(screen.getByRole("button", { name: /start circle/i }));
 
     await waitFor(() =>
-      expect(screen.getByText("Your Circle is ready")).toBeInTheDocument()
+      expect(screen.getByText("Your circle is ready")).toBeInTheDocument()
     );
     // Short code shows grouped and WITHOUT the spaceId prefix.
     expect(screen.getByText("K7P4-9M2H")).toBeInTheDocument();
@@ -348,4 +370,149 @@ describe("a full circle stops offering an invite", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText(/Nobody else can join/)).toBeNull();
   });
+});
+
+describe("the circle's own actions", () => {
+  /* jsdom lays nothing out, so the wrap is read off the classes. Three
+     buttons shared a row that could not wrap, each with a floor of its
+     longest word, and at large text "Need a nudge" ran off the sheet
+     (17 px at 393 px and 200%, 90 px at 320 px). Each button's floor is
+     now its one-line width, and the row wraps when the three do not fit. */
+  it("wrap to another row rather than run off the sheet", async () => {
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({
+        circles: [summary("c1", "Autumn Crew", 3, "K7P49M2H")],
+      })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Autumn Crew/ }));
+    const sheet = await screen.findByRole("dialog");
+    const nudge = await within(sheet).findByRole("button", {
+      name: "Need a nudge",
+    });
+    const row = nudge.parentElement!;
+    expect(row).toHaveClass("flex-wrap");
+    for (const name of ["Weekly focus", "Milestone", "Need a nudge"]) {
+      expect(within(row).getByRole("button", { name })).toHaveClass(
+        "min-w-fit",
+        "flex-1"
+      );
+    }
+  });
+});
+
+describe("an invite code expires", () => {
+  /* The server refuses a code seven days after it is made, and the owner
+     can replace one at any time. So where the code is shown, the owner is
+     told when it stops working, and an expired one is replaced rather
+     than sent. */
+  const WORKS_UNTIL = /^Works until \d\d:\d\d on \w{3} \d{1,2} \w{3}$/;
+
+  it("the hand-off says when the code stops working", async () => {
+    mockUseGoalSpaces.mockReturnValue(hookValue());
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Start a circle" }));
+    fireEvent.click(screen.getByRole("button", { name: /strength block/i }));
+    fireEvent.change(screen.getByLabelText(/circle name/i), {
+      target: { value: "Autumn block" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /start circle/i }));
+    await waitFor(() =>
+      expect(screen.getByText("Your circle is ready")).toBeInTheDocument()
+    );
+    expect(screen.getByText(WORKS_UNTIL)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /share invite/i })
+    ).toBeInTheDocument();
+  });
+
+  it("an expired code is not shown or sent; a new one takes its place", async () => {
+    const hook = hookValue({
+      circles: [summary("c1", "Solo Circle", 1, "K7P49M2H", Date.now() - 1)],
+    });
+    mockUseGoalSpaces.mockReturnValue(hook);
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /invite someone/i }));
+    await screen.findByText("This code has expired.");
+    expect(screen.queryByText("K7P4-9M2H")).toBeNull();
+    expect(screen.queryByRole("button", { name: /share invite/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /copy code/i })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /make a new code/i }));
+    await screen.findByText("NEWC-0DE3");
+    expect(hook.renewInviteCode).toHaveBeenCalledWith("c1");
+    expect(screen.getByText(WORKS_UNTIL)).toBeInTheDocument();
+    expect(screen.queryByText("This code has expired.")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /share invite/i })
+    ).toBeInTheDocument();
+  });
+
+  it("the owner can replace a live code from the circle's sheet", async () => {
+    const hook = hookValue({
+      circles: [summary("c1", "Autumn Crew", 3, "K7P49M2H")],
+    });
+    mockUseGoalSpaces.mockReturnValue(hook);
+    const toastSuccess = vi.spyOn(toast, "success");
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Autumn Crew/ }));
+    await screen.findByRole("dialog");
+    expect(await screen.findByText(WORKS_UNTIL)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "New code" }));
+    await waitFor(() =>
+      expect(hook.renewInviteCode).toHaveBeenCalledWith("c1")
+    );
+    await waitFor(() =>
+      expect(toastSuccess).toHaveBeenCalledWith(
+        "New invite code. The old one no longer works."
+      )
+    );
+    toastSuccess.mockRestore();
+  });
+
+  it("an expired code in the circle's sheet offers only a new one", async () => {
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({
+        circles: [summary("c1", "Autumn Crew", 3, "K7P49M2H", Date.now() - 1)],
+      })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Autumn Crew/ }));
+    await screen.findByRole("dialog");
+    expect(
+      await screen.findByText("This code has expired.")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /copy invite code/i })
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /make a new code/i })
+    ).toBeInTheDocument();
+  });
+});
+
+/* The word filter as a session that has used it holds it: loaded, so the
+   sheet draws on its first render (useWordFilter covers the wait). */
+beforeAll(async () => {
+  await loadWordFilter();
 });

@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { restoreRealTimers } from "@/test/fakeTimers";
 import {
   act,
   render,
@@ -33,6 +34,8 @@ vi.mock("@/lib/offlineQueue", () => ({
   getFailedWorkoutCompletionCount: (uid: string) => state.failed[uid] ?? 0,
   getFailedRunSaveCount: (uid: string) => state.failedRuns[uid] ?? 0,
   getFailedMealSaveCount: (uid: string) => state.failedMeals[uid] ?? 0,
+  getRefusedSaveCount: () => 0,
+  discardRefusedSaves: vi.fn(),
   subscribeQueuedWrites: (listener: () => void) => {
     state.listeners.add(listener);
     return () => state.listeners.delete(listener);
@@ -85,9 +88,9 @@ beforeEach(() => {
     value: true,
   });
 });
-afterEach(() => {
+afterEach(async () => {
+  await restoreRealTimers();
   cleanup();
-  vi.useRealTimers();
 });
 
 describe("Layout pending changes", () => {

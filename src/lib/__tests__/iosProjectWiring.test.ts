@@ -159,6 +159,19 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(workflow).toMatch(/MARKETING_VERSION="\$APP_VERSION"/);
   });
 
+  it("uploads Crashlytics' symbol files from the archive, after TestFlight has the build", () => {
+    // Without them every native crash report is unreadable. Uploaded after
+    // the TestFlight upload, so a failure cannot hold the build back.
+    const upload = workflow.indexOf("name: Upload to TestFlight");
+    const symbols = workflow.indexOf("name: Upload Crashlytics symbol files");
+    expect(upload).toBeGreaterThan(-1);
+    expect(symbols).toBeGreaterThan(upload);
+    expect(workflow).toContain(
+      '-gsp ios/App/App/GoogleService-Info.plist -p ios \\\n            "$RUNNER_TEMP/App.xcarchive/dSYMs"'
+    );
+    expect(pbxproj).toContain('DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";');
+  });
+
   it("places the Firebase plist before the archive it belongs to", () => {
     const place = workflow.indexOf("name: Place GoogleService-Info.plist");
     const archive = workflow.indexOf("name: Archive");
@@ -222,6 +235,19 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(plistKeys(infoPlist)).not.toContain(
       "UISupportedInterfaceOrientations~ipad"
     );
+  });
+
+  it("turns with the phone only to portrait", () => {
+    // Every screen is laid out for a phone held upright, and the large-text
+    // capture spec checks them at portrait widths only. A landscape phone
+    // is a 393-point-tall window none of them was drawn for.
+    const list = infoPlist.match(
+      /<key>UISupportedInterfaceOrientations<\/key>\s*<array>([\s\S]*?)<\/array>/
+    );
+    expect(list).not.toBeNull();
+    expect(
+      [...list![1].matchAll(/<string>([^<]+)<\/string>/g)].map((m) => m[1])
+    ).toEqual(["UIInterfaceOrientationPortrait"]);
   });
 
   it("answers the export-compliance question in the bundle", () => {

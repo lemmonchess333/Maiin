@@ -1,0 +1,162 @@
+{
+  "exerciseId": "stairmaster",
+  "version": "anatomy-v3-2026-10-20-native-final-v1",
+  "width": 1024,
+  "height": 1536,
+  "reference": {
+    "path": "form-frames/stairmaster/1.webp",
+    "sha256": "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658"
+  },
+  "cueSha256": "e1c03ab37ef0fc06f68b5431c44577119100ed37972e0fd0445f0e5f62a24f71",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:49.012632+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Athlete faces uphill. Left tread support, right knee swing and right landing are distinct; grips and upper body stay steady. Rear-visible glute/hamstring/calf fields match the legend. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed rear camera, rails and moving treads remain coherent. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Athlete faces uphill. Left tread support, right knee swing and right landing are distinct; grips and upper body stay steady. Rear-visible glute/hamstring/calf fields match the legend. Actual named native supports are measured in all six frames: fixedLeftFloorBaseMaterialFeature1, fixedLeftFloorBaseMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedLeftFloorBaseProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Athlete faces uphill. Left tread support, right knee swing and right landing are distinct; grips and upper body stay steady. Rear-visible glute/hamstring/calf fields match the legend. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Glutes #7B72E9; secondary Hamstrings, Calves #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Step: Stand tall; shoulders stacked over hips. / Drive: Drive the whole foot down each step. / Knee up: Bring the other knee through to climb. / Grip: Keep a light grip on the rails. / Land: Land the whole foot on the step. / Steady: Hold a pace you can sustain.. Preparation remains [\"Step on and start at a slow, steady pace.\", \"Rest your hands lightly on the side rails.\"]. Athlete faces uphill. Left tread support, right knee swing and right landing are distinct; grips and upper body stay steady. Rear-visible glute/hamstring/calf fields match the legend."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Athlete faces uphill. Left tread support, right knee swing and right landing are distinct; grips and upper body stay steady. Rear-visible glute/hamstring/calf fields match the legend. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-20-remaining33-final/stairmaster.json (sha256 f7a285d0959ce70cae22512a30d0e38952bd4df97f56726c09f83bbecb58ec35). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-20-remaining33-final/stairmaster.json (sha256 f7a285d0959ce70cae22512a30d0e38952bd4df97f56726c09f83bbecb58ec35). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/stairmaster/1.webp",
+      "sha256": "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 194, "y": 1433 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 271, "y": 1441 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+        "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/2.webp",
+      "sha256": "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 194, "y": 1433 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 271, "y": 1441 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+        "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/3.webp",
+      "sha256": "041edb8b642d60a15d6b2718ba4f16dfe17f3e3fef60c36f6f22fd3a0ae30106",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 194, "y": 1433 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 271, "y": 1441 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+        "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/4.webp",
+      "sha256": "5f8165ecad2874dbf2401ca6c14d912f7867183f2fe550fd40db1da993ec5746",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 194, "y": 1433 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 271, "y": 1441 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+        "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/5.webp",
+      "sha256": "5f8165ecad2874dbf2401ca6c14d912f7867183f2fe550fd40db1da993ec5746",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 194, "y": 1433 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 271, "y": 1441 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+        "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/6.webp",
+      "sha256": "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 194, "y": 1433 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 271, "y": 1441 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+        "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-20-remaining33-final/stairmaster.json",
+    "sha256": "f7a285d0959ce70cae22512a30d0e38952bd4df97f56726c09f83bbecb58ec35"
+  },
+  "historicalFindings": [
+    "New fixed rear camera shows the canonical athlete facing uphill with three genuine connected poses: left upper-tread support, right-leg swing, and right upper-tread landing. Upper body, grips, rails and apparatus outside native lower-body/contact-shadow footprints remain identical to one master. Source order A,A,B,C,C,A; visible-muscle key describes primary glutes and secondary hamstrings/calves, with quads occluded.",
+    "Discrete source poses and small illustrative contour/projection differences remain qualitative. Historical findings are preserved separately; no calibrated3D or strict certificate is asserted."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/stairmaster.json",
+    "sha256": "19fa8e313620fd695eda7c1892b0f8d91ec56a6f50de2590ad48d40b9f8f8a14"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

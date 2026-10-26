@@ -8,15 +8,32 @@
  * Firebase emulator.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach } from "vitest";
 import { useState } from "react";
 import ProfileInfoSection from "../ProfileInfoSection";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
 import { DISPLAY_NAME_LENGTH_MESSAGE } from "@/lib/displayName";
+import { localDateString } from "@/lib/dateHelpers";
 
 afterEach(() => cleanup());
+
+const { queueWeightEntry, flushQueuedWeights } = vi.hoisted(() => ({
+  queueWeightEntry: vi.fn(),
+  flushQueuedWeights: vi.fn(async () => {}),
+}));
+vi.mock("@/lib/weightQueue", () => ({ queueWeightEntry, flushQueuedWeights }));
+beforeEach(() => {
+  queueWeightEntry.mockClear();
+  flushQueuedWeights.mockClear();
+});
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
@@ -31,7 +48,10 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   } as UserProfile;
 }
 
-function renderSection(profile: UserProfile) {
+function renderSection(
+  profile: UserProfile,
+  refreshProfile?: () => Promise<void>
+) {
   const updateProfile = vi.fn(
     async (_patch: Partial<UserProfile>) =>
       ({ ok: true }) as UpdateProfileResult
@@ -42,6 +62,7 @@ function renderSection(profile: UserProfile) {
       name={profile.displayName ?? ""}
       setName={vi.fn()}
       updateProfile={updateProfile}
+      refreshProfile={refreshProfile}
       inline
     />
   );
@@ -146,6 +167,7 @@ describe("ProfileInfoSection — cleared-field guards on weight/height blur", ()
     const input = type(/weight/i, "0");
     await Promise.resolve();
     expect(updateProfile).not.toHaveBeenCalled();
+    expect(queueWeightEntry).not.toHaveBeenCalled();
     expect(input.value).toBe("75"); // profile.weightKg
   });
 
@@ -154,14 +176,42 @@ describe("ProfileInfoSection — cleared-field guards on weight/height blur", ()
     const input = type(/weight/i, "999");
     await Promise.resolve();
     expect(updateProfile).not.toHaveBeenCalled();
+    expect(queueWeightEntry).not.toHaveBeenCalled();
     expect(input.value).toBe("75");
   });
 
-  it("still writes a plausible changed weight", async () => {
+  it("logs a plausible changed weight as today's weigh-in", async () => {
     const { updateProfile } = renderSection(makeProfile());
     type(/weight/i, "82");
     await Promise.resolve();
-    expect(updateProfile).toHaveBeenCalledWith({ weightKg: 82 });
+    // Through the weigh-in queue, which writes the log row and the
+    // profile's weight and macros together, as a weigh-in from Home does.
+    expect(queueWeightEntry).toHaveBeenCalledWith("u-1", localDateString(), 82);
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  it("putting a mistaken weight back saves it: it compares against what was just saved", async () => {
+    // The queue writes the profile on the server, not the one this screen
+    // holds, which still says 75: putting 82 back to 75 matched it and
+    // saved nothing, leaving 82 stored and 75 on screen.
+    renderSection(makeProfile());
+    type(/weight/i, "82");
+    type(/weight/i, "75");
+    await Promise.resolve();
+    expect(queueWeightEntry).toHaveBeenNthCalledWith(
+      2,
+      "u-1",
+      localDateString(),
+      75
+    );
+  });
+
+  it("re-reads the profile once the weight is written", async () => {
+    const refreshProfile = vi.fn(async () => {});
+    renderSection(makeProfile(), refreshProfile);
+    type(/weight/i, "82");
+    await vi.waitFor(() => expect(refreshProfile).toHaveBeenCalledTimes(1));
+    expect(flushQueuedWeights).toHaveBeenCalledWith("u-1");
   });
 
   it("rejects a cleared (0) height: no write, value restored", async () => {
@@ -185,6 +235,7 @@ describe("ProfileInfoSection — cleared-field guards on weight/height blur", ()
     fireEvent.blur(screen.getByLabelText(/height/i));
     await Promise.resolve();
     expect(updateProfile).not.toHaveBeenCalled();
+    expect(queueWeightEntry).not.toHaveBeenCalled();
   });
 });
 
@@ -195,15 +246,13 @@ describe("ProfileInfoSection — cleared-field guards on weight/height blur", ()
  */
 describe("ProfileInfoSection — weight and height in the chosen units", () => {
   it("shows pounds, and saves what is typed in pounds as kg", async () => {
-    const { updateProfile } = renderSection(
-      makeProfile({ preferredWeightUnit: "lbs", weightKg: 75 })
-    );
+    renderSection(makeProfile({ preferredWeightUnit: "lbs", weightKg: 75 }));
     const input = screen.getByLabelText("Weight (lb)") as HTMLInputElement;
     expect(input.value).toBe("165.3");
     fireEvent.change(input, { target: { value: "160" } });
     fireEvent.blur(input);
     await Promise.resolve();
-    expect(updateProfile.mock.calls[0][0].weightKg).toBeCloseTo(72.57, 2);
+    expect(queueWeightEntry.mock.calls[0][2]).toBeCloseTo(72.57, 2);
   });
 
   it("does not write back a rounded conversion when pounds are left alone", async () => {
@@ -214,6 +263,7 @@ describe("ProfileInfoSection — weight and height in the chosen units", () => {
     fireEvent.blur(screen.getByLabelText("Weight (lb)"));
     await Promise.resolve();
     expect(updateProfile).not.toHaveBeenCalled();
+    expect(queueWeightEntry).not.toHaveBeenCalled();
   });
 
   it("applies the kg range to a weight typed in pounds", async () => {
@@ -226,6 +276,7 @@ describe("ProfileInfoSection — weight and height in the chosen units", () => {
     fireEvent.blur(input);
     await Promise.resolve();
     expect(updateProfile).not.toHaveBeenCalled();
+    expect(queueWeightEntry).not.toHaveBeenCalled();
     expect(input.value).toBe("165.3");
   });
 
@@ -307,8 +358,10 @@ describe("ProfileInfoSection — the display name", () => {
     const { updateProfile, input } = renderName();
     fireEvent.change(input, { target: { value: "  Sam Kerr  " } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" });
+    // The word filter loads on the first check.
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" })
+    );
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -316,8 +369,7 @@ describe("ProfileInfoSection — the display name", () => {
     const { updateProfile, input } = renderName();
     fireEvent.change(input, { target: { value: "shit head" } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       OBJECTIONABLE_NAME_MESSAGE
     );
     expect(input).toHaveAttribute("aria-invalid", "true");
@@ -330,8 +382,7 @@ describe("ProfileInfoSection — the display name", () => {
     const { updateProfile, input } = renderName();
     fireEvent.change(input, { target: { value: "S" } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       DISPLAY_NAME_LENGTH_MESSAGE
     );
     expect(updateProfile).not.toHaveBeenCalled();
@@ -341,8 +392,7 @@ describe("ProfileInfoSection — the display name", () => {
     const { input } = renderName();
     fireEvent.change(input, { target: { value: "shit head" } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
     fireEvent.change(input, { target: { value: "Sam" } });
     expect(screen.queryByRole("alert")).toBeNull();
   });

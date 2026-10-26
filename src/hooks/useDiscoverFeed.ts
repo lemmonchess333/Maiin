@@ -12,7 +12,11 @@ import type { DocumentSnapshot } from "firebase/firestore";
 import type { FeedItem } from "./useSocialFeed";
 import { activityToFeedItem } from "@/lib/activityFeedItem";
 
-export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
+export function useDiscoverFeed(
+  enabled = true,
+  blockedUsers?: Set<string>,
+  hiddenActivityIds?: Set<string>
+) {
   const uid = useUid();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,6 +87,14 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
           );
         }
 
+        // A post hidden from the feed (the report sheet's Hide from feed)
+        // is hidden here too, keyed by activity as in useSocialFeed.
+        if (hiddenActivityIds && hiddenActivityIds.size > 0) {
+          feedItems = feedItems.filter(
+            (item) => !hiddenActivityIds.has(item.activityId)
+          );
+        }
+
         // Re-check ownership after the kudos batch (a second await).
         if (!isCurrent()) return;
         if (refresh) {
@@ -107,7 +119,7 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
       }
       if (isCurrent()) setLoading(false);
     },
-    [uid, enabled, blockedUsers]
+    [uid, enabled, blockedUsers, hiddenActivityIds]
   );
 
   useEffect(() => {

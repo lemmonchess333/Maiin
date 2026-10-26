@@ -90,6 +90,10 @@ supported Home Screen web app and allow notifications; an ordinary browser tab
 is insufficient. See [Apple's Web Push documentation](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers).
 Neither channel needs a ChatGPT session or a computer left running.
 
+## Closing reminders
+
+Closing reminders use a separate **Monthly challenge reminders** opt-in, defaulting off even for accounts with launch announcements enabled. The existing hourly scheduler checks the final three local dates around 09:00. It sends one campaign per account/month only for joined, canonical monthly goals still progressing toward Gold, using live participant progress (and the community SUM for a collective goal). It skips fully completed goals, weekly/seasonal memberships and deleting accounts. A dedicated `challengeReminder-YYYY-MM` claim in settings prevents repeats and is erased with the rest of the account. Launch and closing campaigns do not consume one another's claims.
+
 ## Publishing this change
 
 The UI and new cover assets need the normal web/native release. The production

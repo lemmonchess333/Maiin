@@ -1,5 +1,6 @@
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import {
+  describeRejection,
   isRateLimitedRejection,
   PLAN_SAVES_TOO_OFTEN,
 } from "@/lib/callableErrors";
@@ -27,8 +28,8 @@ import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
  * the user into an onboarding-style edit-everything form. Product-owner call:
  * split running into its own section.
  *
- * This screen edits ONLY the running plan — mode (Freeform / Race prep),
- * race goal + runway, run days/week. RUN-EV-02 (owner decision, P0): the
+ * This screen edits ONLY the running plan: whether there is a race (No race
+ * / Training for a race), race goal + runway, run days/week. RUN-EV-02 (owner decision, P0): the
  * save is ONE current-draft computation (`buildPlan`, threading the lift
  * slice unchanged from the saved profile with `preserveHistory: true`, so
  * committing a run change never regenerates the user's lifting) and ONE
@@ -51,19 +52,11 @@ import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatClock } from "@/utils/formatters";
 import { useSearchParams } from "react-router-dom";
-import {
-  ChevronRight,
-  Footprints,
-  Minus,
-  Plus,
-  SlidersHorizontal,
-} from "lucide-react";
-import { motion } from "framer-motion";
+import { ChevronRight, Minus, Plus, SlidersHorizontal } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
-import { THEME } from "@/lib/theme";
 import { Button } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -187,17 +180,11 @@ interface RunPlanSettingsProps {
  *  "3:59:00"). */
 const formatRaceTime = formatClock;
 
-const MODE_OPTIONS: { id: RunMode; label: string; desc: string }[] = [
-  {
-    id: "freeform",
-    label: "Freeform",
-    desc: "Run whenever you want, no auto-scheduling",
-  },
-  {
-    id: "race_prep",
-    label: "Race prep",
-    desc: "Periodised plan for a specific race",
-  },
+/** Whether the runner is training for a race. The stored mode follows from
+ *  the answer (Run9a); the words never name it. */
+const RACE_OR_NOT_OPTIONS: { value: RunMode; label: string }[] = [
+  { value: "freeform", label: "No race" },
+  { value: "race_prep", label: "Training for a race" },
 ];
 
 export default function RunPlanSettings({
@@ -599,7 +586,9 @@ export default function RunPlanSettings({
         );
       toast.error(
         conflict
-          ? "Your programme changed. Reopen settings to review the latest plan before saving."
+          ? // The server's sentence says what changed, when it wrote one.
+            (describeRejection(e) ??
+              "Your programme changed. Reopen settings to review the latest plan before saving.")
           : isRateLimitedRejection(e)
             ? PLAN_SAVES_TOO_OFTEN
             : "Couldn't save your run plan. Try again.",
@@ -669,62 +658,25 @@ export default function RunPlanSettings({
             : "Save run plan";
 
   return (
-    <div className="space-y-5 pb-6">
-      {/* ── Mode ─────────────────────────────────────────────────────── */}
-      {/* Under 15em (larger text on the phone) the two cards stack: side
-          by side, "Periodised" no longer fit inside its half. Wide-first. */}
-      <div className="@container space-y-2">
-        <SectionHeading size="compact">Run mode</SectionHeading>
-        <div
-          role="radiogroup"
-          aria-label="Run mode"
-          className="grid grid-cols-2 gap-2 @max-[15em]:grid-cols-1"
-        >
-          {MODE_OPTIONS.map((opt) => {
-            const selected = runMode === opt.id;
-            return (
-              <motion.button
-                data-motion-driven
-                key={opt.id}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  haptic();
-                  setRunMode(opt.id);
-                  if (opt.id === "race_prep")
-                    setWeeklyRunDays((n) => Math.max(minRunDays, n));
-                }}
-                className={cn(
-                  "min-h-[68px] rounded-2xl border px-3.5 py-3 text-left bg-card shadow-sm transition-all",
-                  selected ? "border-transparent" : "border-border/70"
-                )}
-                style={
-                  selected
-                    ? {
-                        background: `${THEME.running}14`,
-                        borderColor: `${THEME.running}45`,
-                      }
-                    : undefined
-                }
-              >
-                <span className="flex items-center gap-2">
-                  <Footprints
-                    className="size-4 shrink-0 text-running"
-                    aria-hidden="true"
-                  />
-                  <span className="text-body font-bold leading-tight text-foreground">
-                    {opt.label}
-                  </span>
-                </span>
-                <span className="mt-1 block text-xs leading-snug text-muted-foreground">
-                  {opt.desc}
-                </span>
-              </motion.button>
-            );
-          })}
-        </div>
+    <div className="space-y-4 pb-6">
+      {/* ── Race or not ───────────────────────────────────────────────
+          Run9a: the plan is a race goal or nothing, so the question is
+          whether there is a race. The same control as the race's
+          Distance, in the running colour. */}
+      <div className="space-y-2">
+        <SectionHeading size="compact">Race goal</SectionHeading>
+        <SegmentedControl
+          ariaLabel="Race goal"
+          tone="running"
+          options={RACE_OR_NOT_OPTIONS}
+          value={runMode}
+          onChange={(next) => {
+            haptic();
+            setRunMode(next);
+            if (next === "race_prep")
+              setWeeklyRunDays((n) => Math.max(minRunDays, n));
+          }}
+        />
       </div>
 
       {/* ── Race goal + runway (race prep only) ──────────────────────── */}
@@ -748,13 +700,10 @@ export default function RunPlanSettings({
 
       {/* ── A2: goal time (optional) + feasibility verdict ───────────── */}
       {runMode === "race_prep" && (
-        <div className="rounded-2xl bg-card border border-border/40 px-3.5 py-3 space-y-2">
-          <label
-            htmlFor="ps-race-time"
-            className="text-sm font-medium text-foreground"
-          >
-            Goal time (optional)
-          </label>
+        <div className="space-y-2">
+          <SectionHeading size="compact">
+            <label htmlFor="ps-race-time">Goal time (optional)</label>
+          </SectionHeading>
           <input
             id="ps-race-time"
             type="text"
@@ -762,7 +711,7 @@ export default function RunPlanSettings({
             value={raceTimeStr}
             onChange={(e) => setRaceTimeStr(e.target.value)}
             placeholder={`e.g. ${goalTimeExample(raceDistance)}`}
-            className="w-full min-h-[44px] rounded-xl border border-border bg-background px-3 text-sm font-mono tabular-nums"
+            className="ds-input text-sm font-mono tabular-nums"
           />
           {raceTimeInvalid && (
             <p className="text-xs text-destructive-strong">
@@ -799,21 +748,19 @@ export default function RunPlanSettings({
 
       {/* ── Run days / week (race prep only — freeform has no schedule) ── */}
       {runMode === "race_prep" && (
-        <div className="flex items-center justify-between rounded-2xl bg-card border border-border/40 px-3.5 py-3">
+        <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">
-              Run days / week
-            </p>
+            <SectionHeading size="compact">Run days / week</SectionHeading>
             {liftDays + weeklyRunDays > 7 && (
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 <span className="font-mono tabular-nums">{liftDays}</span> lift
-                +{" "}
+                and{" "}
                 <span className="font-mono tabular-nums">{weeklyRunDays}</span>{" "}
-                run — some days combine both.
+                run days, so some days hold both.
               </p>
             )}
             {raceRunDaysNote(raceDistance, weeklyRunDays) && (
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {raceRunDaysNote(raceDistance, weeklyRunDays)}
               </p>
             )}
@@ -880,15 +827,14 @@ export default function RunPlanSettings({
           run editor is the ONE place run-plan fields are edited. Bounded
           presets; `standard` is byte-identical to the untuned plan. */}
       {runMode === "race_prep" && (
-        <div className="space-y-3">
-          <div>
-            <p className="text-sm font-medium text-foreground">
-              Long-run volume
-            </p>
-            <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-              How big your long runs build — Lighter peaks about a quarter
-              lower, Bigger about a quarter higher.
-            </p>
+        <>
+          <div className="space-y-2">
+            <div>
+              <SectionHeading size="compact">Long-run volume</SectionHeading>
+              <p className="mt-1 text-xs text-muted-foreground">
+                How long your longest runs get.
+              </p>
+            </div>
             <SegmentedControl
               options={[
                 { value: "lighter", label: "Lighter" },
@@ -898,14 +844,16 @@ export default function RunPlanSettings({
               value={runVolume}
               onChange={(v) => setRunVolume(v as RunVolumePreset)}
               ariaLabel="Long-run volume"
+              tone="running"
             />
           </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">Intensity</p>
-            <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-              How much tempo &amp; interval work each week carries. Paces stay
-              personalised either way.
-            </p>
+          <div className="space-y-2">
+            <div>
+              <SectionHeading size="compact">Intensity</SectionHeading>
+              <p className="mt-1 text-xs text-muted-foreground">
+                How much tempo and interval work each week has.
+              </p>
+            </div>
             <SegmentedControl
               options={[
                 { value: "gentler", label: "Gentler" },
@@ -915,31 +863,29 @@ export default function RunPlanSettings({
               value={runDifficulty}
               onChange={(v) => setRunDifficulty(v as RunDifficultyPreset)}
               ariaLabel="Plan intensity"
+              tone="running"
             />
           </div>
           {/* Lift4 (10): the race-setup answer on the leg trim, changeable
               here for as long as the race runs. */}
           {lifts && (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <SectionHeading size="compact">
                   Lighten leg sessions while your runs build
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  A third fewer sets on leg lifts, at the same weights, from
-                  your plan&apos;s build weeks until the two lighter weeks
-                  before your race.
+                </SectionHeading>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  A third fewer leg sets, at the same weights.
                 </p>
               </div>
               <Toggle
                 checked={raceLegTrim}
                 label="Lighten leg sessions while your runs build"
-                className="ml-3"
                 onChange={() => setRaceLegTrim((v) => !v)}
               />
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* ── The way back to the Programme page ───────────────────────── */}

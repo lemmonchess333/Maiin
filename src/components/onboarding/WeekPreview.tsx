@@ -7,7 +7,8 @@ import {
   liftIndexForDayOfWeek,
   type ScheduleDay,
 } from "@/lib/scheduleUtils";
-import { liftDayNameIn } from "@/lib/liftDayLabel";
+import { liftDayNameIn, liftWeekDayNames } from "@/lib/liftDayLabel";
+import ExerciseThumb from "@/components/program/ExerciseThumb";
 import type {
   WorkoutDay,
   ScheduledRunDay,
@@ -72,6 +73,12 @@ export default function WeekPreview({
   const runMinutes = runTemplate
     ? runMinutesLine(runTemplate, easyPaceSPerKm)
     : null;
+  /* The lifts the week holds, in the order they come (FV3): what the days
+     and minutes just chosen built, named as Train will name them. */
+  const liftNames =
+    !openWeek && lifts > 0 && workouts.length > 0
+      ? liftWeekDayNames(workouts.map((w) => w.dayName)).join(", ")
+      : null;
   return (
     <section
       className="rounded-2xl bg-card card-shadow p-4 space-y-3"
@@ -97,6 +104,9 @@ export default function WeekPreview({
             </>
           )}
         </p>
+        {liftNames && (
+          <p className="text-sm text-muted-foreground">{liftNames}</p>
+        )}
       </div>
       <div className="flex gap-0.5 -mx-2 overflow-x-auto">
         {orderedDays.map(({ day, type }) => (
@@ -143,13 +153,20 @@ export default function WeekPreview({
                 workout.dayName
               )}
             </h3>
-            <ul className="divide-y divide-border">
+            {/* Each lift's picture gives way under 16em (double text on a
+                narrow phone), leaving the name and its sets the row. */}
+            <ul className="@container divide-y divide-border">
               {workout.exercises.map((exercise, index) => (
                 <li
                   key={exercise.instanceId ?? `${exercise.name}-${index}`}
-                  className="flex justify-between items-baseline gap-3 py-2 text-sm"
+                  className="flex items-center gap-3 py-2 text-sm"
                 >
-                  <span>{exercise.name}</span>
+                  <ExerciseThumb
+                    exerciseId={exercise.exerciseId}
+                    size="sm"
+                    className="@max-[16em]:hidden"
+                  />
+                  <span className="min-w-0 flex-1">{exercise.name}</span>
                   <span className="shrink-0 text-muted-foreground">
                     <InlineNumerals>{`${exercise.sets} × ${formatRepTarget(exercise)}${exercise.repUnit === "seconds" ? "" : " reps"}`}</InlineNumerals>
                   </span>

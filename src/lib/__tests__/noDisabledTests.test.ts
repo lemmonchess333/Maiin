@@ -25,6 +25,10 @@ import { readdirSync, statSync } from "node:fs";
  * needs, and they run in full wherever that need is met. What is banned
  * is the unconditional call: a test that runs NOWHERE.
  *
+ * It reads every unit-test file: `src/`, `functions/`, `scripts/`, and
+ * the rules suites at the repo root (`firestore.*.test.ts`,
+ * `storage.rules.test.ts`), which CI runs against the emulators.
+ *
  * `e2e/` is deliberately out of scope. Playwright's `test.skip(cond,
  * reason)` is a runtime guard with the same syntax as the thing being
  * banned here, so a scan over those files would be all false positives.
@@ -46,6 +50,8 @@ const EXEMPT = new Set([selfPath]);
 const DISABLED =
   /\b(?:it|test|describe)\.(?:skip|todo)\s*\(|\bx(?:it|describe)\s*\(/;
 
+const TEST_FILE = /\.test\.(ts|tsx|js|mjs)$/;
+
 function testFiles(dir: string, acc: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
     if (entry === "node_modules" || entry === "dist" || entry === ".git") {
@@ -54,7 +60,7 @@ function testFiles(dir: string, acc: string[] = []): string[] {
     const full = join(dir, entry);
     if (statSync(full).isDirectory()) {
       testFiles(full, acc);
-    } else if (/\.test\.(ts|tsx|js)$/.test(entry)) {
+    } else if (TEST_FILE.test(entry)) {
       acc.push(full);
     }
   }
@@ -62,23 +68,30 @@ function testFiles(dir: string, acc: string[] = []): string[] {
 }
 
 describe("no test is switched off outright", () => {
-  it("finds no unconditional skip in src/ or functions/", () => {
+  it("finds no unconditional skip in any unit or rules test", () => {
     const offenders: string[] = [];
-    for (const dir of ["src", "functions"]) {
-      for (const file of testFiles(resolve(repoRoot, dir))) {
-        if (EXEMPT.has(file)) continue;
-        readFileSync(file, "utf8")
-          .split("\n")
-          .forEach((line, i) => {
-            /* Skip comment lines: this file's own prose names the forms
-               it bans, and so will any future explanation of them. */
-            const code = line.trim();
-            if (code.startsWith("//") || code.startsWith("*")) return;
-            if (DISABLED.test(line)) {
-              offenders.push(`${relative(repoRoot, file)}:${i + 1}`);
-            }
-          });
-      }
+    const rootSuites = readdirSync(repoRoot)
+      .filter((entry) => TEST_FILE.test(entry))
+      .map((entry) => join(repoRoot, entry));
+    const files = [
+      ...rootSuites,
+      ...["src", "functions", "scripts"].flatMap((dir) =>
+        testFiles(resolve(repoRoot, dir))
+      ),
+    ];
+    for (const file of files) {
+      if (EXEMPT.has(file)) continue;
+      readFileSync(file, "utf8")
+        .split("\n")
+        .forEach((line, i) => {
+          /* Skip comment lines: this file's own prose names the forms
+             it bans, and so will any future explanation of them. */
+          const code = line.trim();
+          if (code.startsWith("//") || code.startsWith("*")) return;
+          if (DISABLED.test(line)) {
+            offenders.push(`${relative(repoRoot, file)}:${i + 1}`);
+          }
+        });
     }
     expect(
       offenders,

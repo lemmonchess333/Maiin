@@ -33,7 +33,11 @@ records what shipped as **web-visible groundwork** and what the native step is.
 
 Live HR is genuinely native-only. The plan:
 
-1. **Capacitor plugin for HealthKit live HR.** Either a community plugin or a
+1. **Capacitor plugin for HealthKit live HR.** Not the installed
+   `capacitor-health`: it has no stream, and its heart rate comes only attached
+   to a finished workout (`queryWorkouts({ includeHeartRate: true })`), which a
+   Tropos run does not write, so it can show heart rate after a run another
+   app recorded and never during one. Either a community plugin or a
    thin custom one that starts an `HKWorkoutSession` and an
    `HKAnchoredObjectQuery` on the `heartRate` quantity type, forwarding samples
    to JS. Request `HKObjectType.quantityType(.heartRate)` read auth at run start.
@@ -44,7 +48,9 @@ Live HR is genuinely native-only. The plan:
    `isNativePlatform()`. That's a one-line change — the seam is the whole point.
 4. **Wire `Info.plist`** with `NSHealthShareUsageDescription` (and
    `NSHealthUpdateUsageDescription` if we later write workouts back) and enable
-   the HealthKit capability in the Xcode project, then `cap sync ios`.
+   the HealthKit capability in the Xcode project, then `cap sync ios`. Done for
+   steps: `Info.plist` carries both strings and `App.entitlements` the
+   HealthKit entitlement, so this step is only the new read type.
 
 Consumers (run HUD, post-run breakdown) read through `useHeartRate({ live: true })`
 and `hrZones.ts` — they need no change when the native source lands; they simply

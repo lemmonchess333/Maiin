@@ -15,7 +15,7 @@ const TOTAL_CAP = 30;
 const SPACES_CAP = 6;
 
 /**
- * SOC-P3a — the "My communities" feed source (Phase 3 of the Runna-model
+ * SOC-P3a — the Feed's Spaces source (Phase 3 of the Runna-model
  * social arc): recent posts from the caller's JOINED spaces, merged
  * newest-first. This is the context stream — members' posts reach the
  * Feed tab without visiting each space. The retired weekly coach posts

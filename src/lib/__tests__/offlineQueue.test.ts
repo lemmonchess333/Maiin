@@ -2,12 +2,20 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   queueWrite,
+  queueDurableWrite,
+  queueWorkoutCompletion,
+  discardRefusedSaves,
+  getRefusedSaveCount,
   getQueueLength,
+  getFailedMealSaveCount,
+  pendingDocumentWrites,
   flushQueue,
   safeSave,
+  safeMerge,
 } from "../offlineQueue";
 import {
   resetFirestore,
+  readDoc,
   failNextFirestore,
   unfiredFailures,
   writeLog,
@@ -22,6 +30,10 @@ const { auth } = vi.hoisted(() => ({
   auth: { currentUser: { uid: "user-a" } as { uid: string } | null },
 }));
 vi.mock("@/lib/firebase", () => ({ auth }));
+const { clearCompletedWorkoutDraft } = vi.hoisted(() => ({
+  clearCompletedWorkoutDraft: vi.fn(),
+}));
+vi.mock("@/hooks/useWorkoutDraft", () => ({ clearCompletedWorkoutDraft }));
 
 /** Ids the fake mints for `doc(collectionRef)` — the client-minted-id
  *  shape these tests pin. */
@@ -157,7 +169,10 @@ describe("offlineQueue", () => {
     // One of the two writes fails. Which one is immaterial to the
     // contract under test — a partial flush must retire exactly the
     // items that landed and leave the rest queued.
-    failNextFirestore("addDoc", { path: "users/abc/meals" });
+    failNextFirestore("addDoc", {
+      path: "users/abc/meals",
+      code: "unavailable",
+    });
 
     const mockDb = {} as Parameters<typeof flushQueue>[0];
     const count = await flushQueue(mockDb, UID_A);
@@ -256,7 +271,10 @@ describe("offlineQueue", () => {
       // keep them by never removing them.
       queueWrite(UID_A, "users/abc/meals", { name: "chicken" }, "meal-1");
       queueWrite(UID_A, "users/abc/meals", { name: "will-fail" }, "meal-2");
-      failNextFirestore("setDoc", { path: "users/abc/meals/meal-2" });
+      failNextFirestore("setDoc", {
+        path: "users/abc/meals/meal-2",
+        code: "unavailable",
+      });
 
       deferWrites();
       const mockDb = {} as Parameters<typeof flushQueue>[0];
@@ -319,7 +337,10 @@ describe("offlineQueue", () => {
     it("keeps running after a flush whose write rejects", async () => {
       // A rejected pass must not break the chain for every later one.
       queueWrite(UID_A, "users/abc/meals", { name: "will-fail" }, "meal-1");
-      failNextFirestore("setDoc", { path: "users/abc/meals/meal-1" });
+      failNextFirestore("setDoc", {
+        path: "users/abc/meals/meal-1",
+        code: "unavailable",
+      });
 
       const mockDb = {} as Parameters<typeof flushQueue>[0];
       expect(await flushQueue(mockDb, UID_A)).toBe(0);
@@ -357,6 +378,130 @@ describe("offlineQueue", () => {
   });
 
   // ── CORE-01: idempotent creates + accountable quota handling ──
+  /**
+   * A save the rules refuse for good (or one Firestore cannot store) fails
+   * the same way on every flush. Every failure used to stop the flush, so
+   * one such meal kept every meal, run and edit behind it on the phone.
+   */
+  describe("a save the rules refuse for good", () => {
+    const meals = `users/${UID_A}/meals`;
+    const db = {} as Parameters<typeof flushQueue>[0];
+    beforeEach(() => vi.stubGlobal("navigator", { onLine: true }));
+
+    it("syncs what is queued behind it, and keeps it as needing attention", async () => {
+      queueDurableWrite(UID_A, meals, "refused", { foodName: "Oats" });
+      queueDurableWrite(UID_A, meals, "fine", { foodName: "Eggs" });
+      failNextFirestore("commit", { code: "permission-denied" });
+
+      expect(await flushQueue(db, UID_A)).toBe(1);
+      expect(unfiredFailures()).toEqual([]);
+      expect(readDoc(`${meals}/fine`)?.foodName).toBe("Eggs");
+      expect(readDoc(`${meals}/refused`)).toBeUndefined();
+      expect(pendingDocumentWrites(UID_A, meals).map((w) => w.id)).toEqual([
+        "refused",
+      ]);
+      expect(getFailedMealSaveCount(UID_A)).toBe(1);
+    });
+
+    it("holds a later change to the same document behind it", async () => {
+      queueDurableWrite(UID_A, meals, "refused", { foodName: "Oats" });
+      queueDurableWrite(UID_A, meals, "refused", { deletedAt: 1 }, true);
+      queueDurableWrite(UID_A, meals, "fine", { foodName: "Eggs" });
+      failNextFirestore("commit", { code: "invalid-argument" });
+
+      expect(await flushQueue(db, UID_A)).toBe(1);
+      // Applied on its own, the Undo would create a meal that is only a
+      // deletion stamp.
+      expect(readDoc(`${meals}/refused`)).toBeUndefined();
+      expect(readDoc(`${meals}/fine`)?.foodName).toBe("Eggs");
+      expect(pendingDocumentWrites(UID_A, meals)).toHaveLength(2);
+    });
+
+    it("still stops at a save that may land later", async () => {
+      queueDurableWrite(UID_A, meals, "first", { foodName: "Oats" });
+      queueDurableWrite(UID_A, meals, "second", { foodName: "Eggs" });
+      failNextFirestore("commit", { code: "unavailable" });
+
+      expect(await flushQueue(db, UID_A)).toBe(0);
+      expect(readDoc(`${meals}/second`)).toBeUndefined();
+      expect(pendingDocumentWrites(UID_A, meals)).toHaveLength(2);
+    });
+
+    it("drops a best-effort change no flush can land, and keeps one that can", async () => {
+      queueWrite(UID_A, `users/${UID_A}/logs`, { meals: 2 }, "d1", true);
+      queueWrite(UID_A, `users/${UID_A}/logs`, { meals: 3 }, "d2", true);
+      failNextFirestore("setDoc", {
+        path: `users/${UID_A}/logs/d1`,
+        code: "permission-denied",
+      });
+      failNextFirestore("setDoc", {
+        path: `users/${UID_A}/logs/d2`,
+        code: "unavailable",
+      });
+
+      expect(await flushQueue(db, UID_A)).toBe(0);
+      const stored = JSON.parse(
+        localStorage.getItem("tropos_offline_queue") || "[]"
+      );
+      expect(stored.map((q: { docId: string }) => q.docId)).toEqual(["d2"]);
+    });
+
+    it("can be discarded, with what waits behind it, and only by its account", async () => {
+      queueDurableWrite(UID_A, meals, "refused", { foodName: "Oats" });
+      queueDurableWrite(UID_A, meals, "refused", { deletedAt: 1 }, true);
+      queueDurableWrite(UID_A, meals, "waiting", { foodName: "Eggs" });
+      queueDurableWrite(UID_B, `users/${UID_B}/meals`, "theirs", {});
+      failNextFirestore("commit", { code: "permission-denied" });
+      vi.stubGlobal("navigator", { onLine: false });
+      await flushQueue(db, UID_A);
+      vi.stubGlobal("navigator", { onLine: true });
+      // Offline, nothing was tried: nothing is refused yet.
+      expect(getRefusedSaveCount(UID_A)).toBe(0);
+      expect(await discardRefusedSaves(UID_A)).toBe(0);
+
+      await flushQueue(db, UID_A);
+      expect(getRefusedSaveCount(UID_A)).toBe(1);
+      expect(await discardRefusedSaves(UID_A)).toBe(1);
+      expect(pendingDocumentWrites(UID_A, meals)).toEqual([]);
+      expect(readDoc(`${meals}/waiting`)?.foodName).toBe("Eggs");
+      expect(getQueueLength(UID_B)).toBe(1);
+    });
+
+    it("discarding a refused workout retires its finished-session draft", async () => {
+      clearCompletedWorkoutDraft.mockClear();
+      failNextFirestore("commit", { code: "permission-denied" });
+      const settled = queueWorkoutCompletion(db, UID_A, "programme-c1", {
+        completionId: "c1",
+        date: "2026-10-20",
+        exercises: [],
+      });
+      expect(await settled).toBe("failed");
+      expect(getRefusedSaveCount(UID_A)).toBe(1);
+
+      expect(await discardRefusedSaves(UID_A)).toBe(1);
+      expect(getQueueLength(UID_A)).toBe(0);
+      expect(clearCompletedWorkoutDraft).toHaveBeenCalledWith(UID_A, "c1");
+    });
+
+    it("tells safeMerge's caller, and queues nothing", async () => {
+      failNextFirestore("setDoc", {
+        path: `users/${UID_A}/logs/d1`,
+        code: "permission-denied",
+      });
+      await expect(
+        safeMerge(db, UID_A, `users/${UID_A}/logs`, "d1", { meals: 2 })
+      ).rejects.toMatchObject({ code: "permission-denied" });
+      expect(getQueueLength(UID_A)).toBe(0);
+
+      failNextFirestore("setDoc", {
+        path: `users/${UID_A}/logs/d1`,
+        code: "unavailable",
+      });
+      await safeMerge(db, UID_A, `users/${UID_A}/logs`, "d1", { meals: 2 });
+      expect(getQueueLength(UID_A)).toBe(1);
+    });
+  });
+
   describe("CORE-01 idempotent creates", () => {
     it("safeSave online uses setDoc with a client-minted id, not addDoc", async () => {
       vi.stubGlobal("navigator", { onLine: true });
@@ -370,7 +515,10 @@ describe("offlineQueue", () => {
     });
 
     it("an ambiguous online failure queues the SAME id — a retry re-sets, never duplicates", async () => {
-      failNextFirestore("setDoc", { path: "users/abc/meals" });
+      failNextFirestore("setDoc", {
+        path: "users/abc/meals",
+        code: "unavailable",
+      });
       vi.stubGlobal("navigator", { onLine: true });
       const mockDb = {} as Parameters<typeof safeSave>[0];
       await safeSave(mockDb, UID_A, "users/abc/meals", { name: "rice" });

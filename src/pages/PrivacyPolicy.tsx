@@ -155,7 +155,7 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Social Activity (optional):
                 </strong>{" "}
-                the posts you share, comments, kudos, follows, Circle check-ins,
+                the posts you share, comments, props, follows, Circle check-ins,
                 Space posts, and the reports you make about content or accounts.
               </li>
               <li>
@@ -178,7 +178,8 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Crash and Error Reports:
                 </strong>{" "}
-                error messages and where in the app they happened.
+                error messages and where in the app they happened, and in the
+                iPhone app, its crashes.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -286,6 +287,24 @@ export default function PrivacyPolicy() {
               off, and your privacy zones are removed from it.
             </p>
             <p>
+              <strong className="text-foreground">Followers.</strong> Someone
+              becomes your follower once you accept their request, unless you
+              turn off Approve followers in Settings &gt; Social &amp; privacy,
+              when anyone can follow you. A request is seen only by you and the
+              person who asked. Who you follow and who follows you are visible
+              to other signed-in Tropos users.
+            </p>
+            <p>
+              <strong className="text-foreground">
+                Friends&rsquo; boards.
+              </strong>{" "}
+              If you choose to show your week, your followers see how many
+              sessions you did this week, how far you ran and how much you
+              lifted, beside theirs. Until you choose, and once you turn it off
+              in Settings &gt; Social &amp; privacy, nothing of your week is
+              kept for them.
+            </p>
+            <p>
               Some data goes to the services listed in section 7, each for the
               purpose stated there.
             </p>
@@ -370,13 +389,17 @@ export default function PrivacyPolicy() {
                 for 90 days. Non-public comment text and minimised moderation
                 records may be retained for up to 365 days for safety review.
                 Protected billing identifiers are retained for 13 months to
-                prevent purchase theft. Expired records are removed by scheduled
-                retention policies; removal is not instantaneous. An outstanding
-                subscription cancellation request is kept until it is resolved.
-                Deletion also leaves records of password-reset requests, which
-                hold the email address a reset was asked for, and the records of
-                Apple&apos;s subscription notifications, kept so each is handled
-                once. Outside Tropos, RevenueCat keeps its subscription records,
+                prevent purchase theft. If a moderator had restricted your
+                account, we keep a coded form of its email address and its Apple
+                or Google sign-in for 13 months, which can&apos;t be read back,
+                so that a new account made with them is restricted too. Expired
+                records are removed by scheduled retention policies; removal is
+                not instantaneous. An outstanding subscription cancellation
+                request is kept until it is resolved. Deletion also leaves
+                records of password-reset requests, which hold the email address
+                a reset was asked for, and the records of Apple&apos;s
+                subscription notifications, kept so each is handled once.
+                Outside Tropos, RevenueCat keeps its subscription records,
                 Stripe keeps its records of any purchase made on the web, and
                 Google keeps analytics data under its Google Analytics retention
                 settings, each under its own policy.
@@ -412,8 +435,9 @@ export default function PrivacyPolicy() {
                 Firebase Authentication (sign-in), Cloud Firestore (your data),
                 Cloud Storage (progress, profile and Space photos), Cloud
                 Functions (our server code), App Check (which checks that
-                requests come from the real app; on the web it uses reCAPTCHA)
-                and Google Analytics for Firebase (usage analytics, section 2).
+                requests come from the real app; on the web it uses reCAPTCHA),
+                Google Analytics for Firebase (usage analytics, section 2) and,
+                in the iPhone app, Firebase Crashlytics (crash reports, below).
               </li>
               <li>
                 <strong className="text-foreground">
@@ -520,9 +544,12 @@ export default function PrivacyPolicy() {
             <p>
               <strong className="text-foreground">Error Reporting:</strong> We
               automatically collect crash reports and error logs to improve app
-              stability. They are stored with your account. Reports include
-              error messages and stack traces but do not contain sensitive
-              personal data such as passwords, meal content, or workout details.
+              stability. They are stored with your account, and in the iPhone
+              app Google&apos;s Firebase Crashlytics also receives them, with
+              your account&apos;s ID but not your name or email address. Reports
+              include error messages and stack traces but do not contain
+              sensitive personal data such as passwords, meal content, or
+              workout details.
             </p>
           </section>
 
@@ -581,8 +608,8 @@ export default function PrivacyPolicy() {
               11. Contact
             </h2>
             <p>
-              For questions about this privacy policy or your data, please
-              contact us at support@troposfit.com
+              For questions about this privacy policy or your data, contact us
+              at support@troposfit.com
             </p>
           </section>
         </div>

@@ -3,7 +3,7 @@ import { pendingWeights, weightSyncFailed } from "@/lib/weightQueue";
 import { formatWeightInUnit } from "@/lib/weightUnits";
 import { collection, query, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { format } from "date-fns";
+import { formatDayMonth } from "@/utils/formatters";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import type { Workout } from "@/hooks/useWorkouts";
 import type { UserProfile } from "@/lib/auth";
@@ -11,10 +11,7 @@ import { logger } from "@/lib/logger";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { fetchSavedRuns } from "@/lib/savedRuns";
 import { calcWeightTrend } from "@/utils/weightTrend";
-import {
-  collapseBodyweightLogs,
-  BODYWEIGHT_READ_LIMIT,
-} from "@/lib/bodyweightLogs";
+import { collapseBodyweightLogs } from "@/lib/bodyweightLogs";
 
 /** #984 direction signal for the home weight tile. Mapped from
  *  calcWeightTrend's "stable" → "flat". null = a weight exists but
@@ -53,6 +50,13 @@ interface HomeDataState {
   loading: boolean;
   error: string | null;
 }
+
+/** Weigh-ins Home reads. It keeps the newest 30 days, and uses the
+ *  newest one, the last week's direction and a count of up to three; the
+ *  chart and the adaptive targets read their own. Wider than 30 so a day
+ *  weighed twice cannot crowd a distinct day out; the shared 400 would read
+ *  a year's weigh-ins on every opening of the app. */
+const HOME_BODYWEIGHT_READ_LIMIT = 60;
 
 export function useHomeData(
   user: { uid: string } | null,
@@ -119,7 +123,7 @@ export function useHomeData(
             lastWeightInfo: {
               kg: latest.kg,
               weight: formatWeightInUnit(latest.kg, weightUnit),
-              date: format(new Date(`${latest.date}T12:00:00`), "d MMM"),
+              date: formatDayMonth(new Date(`${latest.date}T12:00:00`)),
               rawDate: latest.date,
             },
           };
@@ -157,10 +161,9 @@ export function useHomeData(
         query(
           collection(db, "users", user.uid, "bodyweightLogs"),
           orderBy("date", "desc"),
-          // Read wide, then collapse to one row/day: a duplicate-heavy day
-          // could otherwise crowd distinct history out of a 30-row window.
-          // The .slice(0, 30) below still caps trend input.
-          limit(BODYWEIGHT_READ_LIMIT)
+          // Read wider than the 30 days kept, then collapse to one row a
+          // day, so a day weighed twice cannot crowd distinct days out.
+          limit(HOME_BODYWEIGHT_READ_LIMIT)
         )
       );
 
@@ -221,12 +224,12 @@ export function useHomeData(
                 };
               })
             ).slice(0, 30);
-            // The 400-row cap is a safety bound, not a proof arbitrarily
-            // corrupt history always yields 30 unique days. If a full page
-            // still can't surface 30 distinct days, show the trustworthy
-            // subset and log counts only (no uid/weight values).
+            // The read cap is a bound, not a proof that every history
+            // yields 30 unique days. If a full page still can't surface 30
+            // distinct days, show the trustworthy subset and log counts
+            // only (no uid/weight values).
             if (
-              snap.docs.length === BODYWEIGHT_READ_LIMIT &&
+              snap.docs.length === HOME_BODYWEIGHT_READ_LIMIT &&
               entries.length < 30
             ) {
               logger.warn(
@@ -244,7 +247,7 @@ export function useHomeData(
               weightInfo = {
                 kg: latest.weight,
                 weight: w,
-                date: format(new Date(latest.date + "T12:00:00"), "d MMM"),
+                date: formatDayMonth(new Date(latest.date + "T12:00:00")),
                 rawDate: latest.date,
               };
               // #984 — derive direction from the logged history via
@@ -393,7 +396,7 @@ export function useHomeData(
       ? {
           kg: latestPending[1],
           weight: formatWeightInUnit(latestPending[1], weightUnit),
-          date: format(new Date(`${latestPending[0]}T12:00:00`), "d MMM"),
+          date: formatDayMonth(new Date(`${latestPending[0]}T12:00:00`)),
           rawDate: latestPending[0],
         }
       : state.lastWeightInfo;

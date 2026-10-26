@@ -225,4 +225,33 @@ describe("sendReportAlert over the Resend transport (fetch mocked)", () => {
     expect(result).toEqual({ sent: false });
     expect(logger.warn.mock.calls[0][1].error).toContain("500");
   });
+
+  it("logs no address when Resend's error names the recipient", async () => {
+    // Resend's 422 for a bad recipient echoes it back; every caller of
+    // sendViaResend logs the error's message.
+    const address = "someone.private@example.com";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 422,
+        text: async () =>
+          JSON.stringify({ message: `Invalid \`to\` field: ${address}` }),
+      })
+    );
+    const logger = quiet();
+    const result = await sendReportAlert({
+      sendEmail: sendViaResend,
+      to: address,
+      queueUrl: QUEUE,
+      report: REPORT,
+      logger,
+    });
+    expect(result).toEqual({ sent: false });
+    const logged = JSON.stringify(logger.warn.mock.calls);
+    // Anchor: the failure itself is still in the log.
+    expect(logged).toContain("422");
+    expect(logged).toContain("[address]");
+    expect(logged).not.toContain(address);
+  });
 });

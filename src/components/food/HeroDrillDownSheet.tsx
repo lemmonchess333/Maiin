@@ -10,9 +10,12 @@ import { Button } from "@/components/ui/Button";
 import { useSubscription } from "@/lib/subscription";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 import {
   formatCalories,
   formatMacro,
+  formatNutrientAmount,
+  formatNutrientFigure,
   CALORIE_UNIT,
 } from "@/utils/formatNutrition";
 import { clampPct } from "@/lib/percentageHelpers";
@@ -139,13 +142,14 @@ function MicroRow({
   const barColor = warn ? THEME.amber : color;
   const remaining = Math.max(0, Math.round(target - consumed));
   const overBy = Math.max(0, Math.round(consumed - target));
+  const amount = (value: number) => formatNutrientAmount(value, unit);
   const note = isLimit
     ? over
-      ? `${formatMacro(overBy)}${unit} over limit`
-      : `${formatMacro(remaining)}${unit} left · ${pct}%`
+      ? `${amount(overBy)} over limit`
+      : `${amount(remaining)} left · ${pct}%`
     : consumed >= target
-      ? `Goal reached · ${formatMacro(consumed)}${unit}`
-      : `${formatMacro(remaining)}${unit} to goal · ${pct}%`;
+      ? `Goal reached · ${amount(consumed)}`
+      : `${amount(remaining)} to goal · ${pct}%`;
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
@@ -159,15 +163,16 @@ function MicroRow({
         </SectionLabel>
         <span className="font-mono tabular-nums text-sm">
           <span
-            className="font-semibold text-foreground"
-            style={warn ? { color: THEME.amber } : undefined}
+            className={cn(
+              "font-semibold",
+              warn ? "text-warning-strong" : "text-foreground"
+            )}
           >
-            {formatMacro(consumed)}
+            {formatNutrientFigure(consumed, unit)}
           </span>
           <span className="text-muted-foreground">
             {" / "}
-            {formatMacro(target)}
-            {unit}
+            {formatNutrientAmount(target, unit)}
           </span>
         </span>
       </div>
@@ -178,8 +183,10 @@ function MicroRow({
         />
       </div>
       <p
-        className="text-caption text-muted-foreground font-mono tabular-nums"
-        style={warn ? { color: THEME.amber } : undefined}
+        className={cn(
+          "text-caption font-mono tabular-nums",
+          warn ? "text-warning-strong" : "text-muted-foreground"
+        )}
       >
         {note}
       </p>

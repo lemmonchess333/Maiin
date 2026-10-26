@@ -7,6 +7,8 @@
  * (both directions), inactive spaces, and is idempotent; leave
  * decrements and deactivates when the owner leaves; remove is
  * owner-only and idempotent. memberCount is server-maintained only.
+ * An invite code works for seven days, an old one is as old as its
+ * Circle, and the owner's new code replaces the old one at once.
  */
 import { describe, it, expect, beforeEach } from "vitest";
 import { createRequire } from "node:module";
@@ -14,11 +16,14 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const {
   GOAL_SPACE_MAX_MEMBERS,
+  INVITE_CODE_TTL_MS,
   GoalSpaceError,
   createGoalSpace,
   joinGoalSpace,
   leaveGoalSpace,
   removeGoalSpaceMember,
+  renewGoalSpaceInviteCode,
+  inviteCodeExpiresAt,
 } = require("../lib/goalSpaceMembership");
 
 function makeStore() {
@@ -400,6 +405,7 @@ describe("short invite codes", () => {
     expect(docs.get("goalSpaceInvites/K7P49M2H")).toEqual({
       spaceId,
       createdAt: NOW,
+      expiresAt: NOW + INVITE_CODE_TTL_MS,
     });
   });
 
@@ -458,5 +464,224 @@ describe("short invite codes", () => {
         makeId,
       })
     ).rejects.toThrow("invite code required");
+  });
+});
+
+describe("invite codes expire", () => {
+  const DAY = 86_400_000;
+  /** A Circle with a short code made at NOW, and a friend to invite. */
+  async function circleWithCode(code = "K7P49M2H") {
+    const store = makeStore();
+    const created = await createGoalSpace({
+      firestore: store.firestore,
+      uid: "owner",
+      displayName: "Owner",
+      photoURL: null,
+      input: { type: "hybrid", title: "Hybrid" },
+      now: NOW,
+      makeId,
+      makeCode: () => code,
+    });
+    return { ...store, ...created };
+  }
+  const join = (firestore, code, uid, now) =>
+    joinGoalSpace({
+      firestore,
+      uid,
+      displayName: uid,
+      photoURL: null,
+      code,
+      now,
+      makeId,
+    });
+
+  it("a new code says when it stops working, seven days on", async () => {
+    const { docs, spaceId, inviteCodeExpiresAt: at } = await circleWithCode();
+    expect(INVITE_CODE_TTL_MS).toBe(7 * DAY);
+    expect(at).toBe(NOW + 7 * DAY);
+    expect(docs.get(`goalSpaces/${spaceId}`).inviteCodeExpiresAt).toBe(at);
+  });
+
+  it("works until the moment it expires, and not from then on", async () => {
+    const { firestore, docs, spaceId } = await circleWithCode();
+    await join(firestore, "K7P4-9M2H", "early", NOW + 7 * DAY - 1);
+    expect(docs.has(`goalSpaces/${spaceId}/members/early`)).toBe(true);
+    await expect(
+      join(firestore, "K7P4-9M2H", "late", NOW + 7 * DAY)
+    ).rejects.toThrow("invite expired");
+    // Refused, not half-joined: no member, no count, no link.
+    expect(docs.has(`goalSpaces/${spaceId}/members/late`)).toBe(false);
+    expect(docs.has(`users/late/journeys/${spaceId}`)).toBe(false);
+    expect(docs.get(`goalSpaces/${spaceId}`).memberCount).toBe(2);
+  });
+
+  it("is refused as a failed precondition the app can name", async () => {
+    const { firestore } = await circleWithCode();
+    const err = await join(firestore, "K7P49M2H", "late", NOW + 8 * DAY).catch(
+      (e) => e
+    );
+    expect(err).toBeInstanceOf(GoalSpaceError);
+    expect(err.code).toBe("failed-precondition");
+  });
+
+  it("leaves a member who is already in alone", async () => {
+    const { firestore, docs, spaceId } = await circleWithCode();
+    await join(firestore, "K7P49M2H", "friend", NOW + DAY);
+    // A month on, the friend's own Circle still opens: re-joining with the
+    // old code is the same no-op it always was.
+    await expect(
+      join(firestore, "K7P49M2H", "friend", NOW + 30 * DAY)
+    ).resolves.toBeUndefined();
+    expect(docs.has(`goalSpaces/${spaceId}/members/friend`)).toBe(true);
+    expect(docs.get(`goalSpaces/${spaceId}`).memberCount).toBe(2);
+  });
+
+  it("a code from before expiry existed is as old as its Circle", async () => {
+    const { firestore, docs, spaceId } = await circleWithCode();
+    const space = { ...docs.get(`goalSpaces/${spaceId}`) };
+    delete space.inviteCodeExpiresAt;
+    docs.set(`goalSpaces/${spaceId}`, space);
+    expect(inviteCodeExpiresAt(space)).toBe(NOW + 7 * DAY);
+    await join(firestore, "K7P49M2H", "early", NOW + 6 * DAY);
+    await expect(
+      join(firestore, "K7P49M2H", "late", NOW + 7 * DAY)
+    ).rejects.toThrow("invite expired");
+  });
+
+  it("the legacy spaceId.token form expires the same way", async () => {
+    const { firestore } = makeStore();
+    const { spaceId, inviteCode } = await seedSpace(firestore);
+    await expect(
+      joinGoalSpace({
+        firestore,
+        uid: "late",
+        displayName: "late",
+        photoURL: null,
+        code: `${spaceId}.${inviteCode}`,
+        now: NOW + 7 * DAY,
+        makeId,
+      })
+    ).rejects.toThrow("invite expired");
+  });
+
+  it("a code of unknown age lets nobody in", () => {
+    expect(inviteCodeExpiresAt({})).toBe(0);
+    expect(inviteCodeExpiresAt({ createdAt: "yesterday" })).toBe(0);
+    expect(inviteCodeExpiresAt({ inviteCodeExpiresAt: NaN })).toBe(0);
+  });
+});
+
+describe("renewGoalSpaceInviteCode", () => {
+  const DAY = 86_400_000;
+  async function circle() {
+    const store = makeStore();
+    const created = await createGoalSpace({
+      firestore: store.firestore,
+      uid: "owner",
+      displayName: "Owner",
+      photoURL: null,
+      input: { type: "hybrid", title: "Hybrid" },
+      now: NOW,
+      makeId,
+      makeCode: () => "OLDC0DE2",
+    });
+    return { ...store, ...created };
+  }
+  const renew = (firestore, spaceId, { uid = "owner", now, codes }) => {
+    let i = 0;
+    return renewGoalSpaceInviteCode({
+      firestore,
+      uid,
+      spaceId,
+      now,
+      makeCode: () => codes[i++],
+    });
+  };
+  const join = (firestore, code, uid, now) =>
+    joinGoalSpace({
+      firestore,
+      uid,
+      displayName: uid,
+      photoURL: null,
+      code,
+      now,
+      makeId,
+    });
+
+  it("gives the Circle a new code that works for seven days from now", async () => {
+    const { firestore, docs, spaceId } = await circle();
+    const later = NOW + 10 * DAY;
+    const result = await renew(firestore, spaceId, {
+      now: later,
+      codes: ["NEWC0DE3"],
+    });
+    expect(result).toEqual({
+      inviteCode: "NEWC0DE3",
+      inviteCodeExpiresAt: later + 7 * DAY,
+    });
+    expect(docs.get(`goalSpaces/${spaceId}`)).toMatchObject({
+      inviteCode: "NEWC0DE3",
+      inviteCodeExpiresAt: later + 7 * DAY,
+    });
+    expect(docs.get("goalSpaceInvites/NEWC0DE3")).toEqual({
+      spaceId,
+      createdAt: later,
+      expiresAt: later + 7 * DAY,
+    });
+    await join(firestore, "NEWC-0DE3", "friend", later + DAY);
+    expect(docs.has(`goalSpaces/${spaceId}/members/friend`)).toBe(true);
+  });
+
+  it("the code it replaces stops working at once, and says it expired", async () => {
+    const { firestore, spaceId } = await circle();
+    // Anchor: the old code works right up to the renewal.
+    await join(firestore, "OLDC0DE2", "early", NOW + DAY);
+    await renew(firestore, spaceId, { now: NOW + DAY, codes: ["NEWC0DE3"] });
+    await expect(
+      join(firestore, "OLDC0DE2", "late", NOW + DAY)
+    ).rejects.toThrow("invite expired");
+  });
+
+  it("skips a code that is taken, or is the one being replaced", async () => {
+    const { firestore, docs, spaceId } = await circle();
+    docs.set("goalSpaceInvites/TAKEN234", { spaceId: "other" });
+    const { inviteCode } = await renew(firestore, spaceId, {
+      now: NOW,
+      codes: ["OLDC0DE2", "TAKEN234", "FRESH567"],
+    });
+    expect(inviteCode).toBe("FRESH567");
+    expect(docs.get("goalSpaceInvites/TAKEN234")).toEqual({ spaceId: "other" });
+  });
+
+  it("is the owner's alone, and only for a Circle still running", async () => {
+    const { firestore, docs, spaceId } = await circle();
+    await join(firestore, "OLDC0DE2", "friend", NOW);
+    await expect(
+      renew(firestore, spaceId, {
+        uid: "friend",
+        now: NOW,
+        codes: ["X2345678"],
+      })
+    ).rejects.toThrow("owner only");
+    docs.set(`goalSpaces/${spaceId}`, {
+      ...docs.get(`goalSpaces/${spaceId}`),
+      active: false,
+    });
+    await expect(
+      renew(firestore, spaceId, { now: NOW, codes: ["X2345678"] })
+    ).rejects.toThrow("circle inactive");
+    await expect(
+      renew(firestore, "missing", { now: NOW, codes: ["X2345678"] })
+    ).rejects.toThrow("no such circle");
+    // Nothing was reserved by any refusal.
+    expect(docs.has("goalSpaceInvites/X2345678")).toBe(false);
+    expect(docs.get(`goalSpaces/${spaceId}`).inviteCode).toBe("OLDC0DE2");
+  });
+
+  it("refuses a missing spaceId before reading anything", async () => {
+    const { firestore } = makeStore();
+    await expect(
+      renew(firestore, "", { now: NOW, codes: ["X2345678"] })
+    ).rejects.toThrow("spaceId required");
   });
 });

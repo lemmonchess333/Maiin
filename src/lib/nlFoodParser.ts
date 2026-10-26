@@ -483,6 +483,22 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 3,
     serving: "40g dry",
   },
+  // Oats by their packet names, weighed dry. Without these rows "50g porridge
+  // oats" found "porridge", a cooked bowl, and logged 32 kcal for 187.
+  "porridge oats": {
+    calories: 150,
+    protein: 5,
+    carbs: 27,
+    fat: 3,
+    serving: "40g dry",
+  },
+  "rolled oats": {
+    calories: 150,
+    protein: 5,
+    carbs: 27,
+    fat: 3,
+    serving: "40g dry",
+  },
   oatmeal: {
     calories: 150,
     protein: 5,
@@ -1436,6 +1452,15 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 14,
     serving: "1 sandwich",
   },
+  // A toastie is a toasted sandwich: the sandwich's row, by its own name,
+  // so "cheese toastie" is the toastie and not a slice of cheese.
+  toastie: {
+    calories: 350,
+    protein: 18,
+    carbs: 35,
+    fat: 14,
+    serving: "1 toastie",
+  },
   burger: {
     calories: 500,
     protein: 28,
@@ -1673,6 +1698,8 @@ const FOOD_ALIASES: Record<string, string> = {
   toast: "bread", // toasted ↔ untoasted (DB treats equal)
   oatmeal: "oats",
   porridge: "oats",
+  "porridge oats": "oats",
+  "rolled oats": "oats",
   chips: "fries", // UK chips are fries
   "potato chips": "crisps", // US ↔ UK (the snack)
   mash: "mashed potato",
@@ -1733,6 +1760,86 @@ function pieceGrams(key: string, rest: string): number | null {
 
 /** A British (imperial) pint. */
 const PINT_ML = 568;
+
+const NUMBER_WORDS: Record<string, number> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+};
+const NUMBER_WORD_RE = new RegExp(
+  `^(${Object.keys(NUMBER_WORDS).join("|")})\\s+(.+)`,
+  "i"
+);
+const UNICODE_FRACTIONS: Record<string, number> = {
+  "½": 1 / 2,
+  "¼": 1 / 4,
+  "¾": 3 / 4,
+  "⅓": 1 / 3,
+  "⅔": 2 / 3,
+};
+
+/** "of", "of a", "an" between a fraction and its food: "half of an avocado". */
+function afterFraction(rest: string): string {
+  return rest.replace(/^(?:of\s+)?(?:an?\s+|the\s+)?/i, "").trim();
+}
+
+/**
+ * A count written as a fraction or a word: "1/2 avocado", "1 1/2 cups",
+ * "½ avocado", "half an avocado", "a quarter of a pizza", "two eggs".
+ * Before this a fraction was no count at all (the whole avocado was
+ * logged for half) and a number word was part of the name ("two eggs"
+ * found one egg). A segment that is itself a food's name is left alone,
+ * so a dish named with a number keeps its name.
+ */
+function fractionOrWordCount(
+  segment: string
+): { qty: number; rest: string } | null {
+  if (FOOD_DB[segment.toLowerCase()]) return null;
+  let m = segment.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)\s+(.+)/);
+  if (m && Number(m[3]) > 0) {
+    return {
+      qty: Number(m[1]) + Number(m[2]) / Number(m[3]),
+      rest: afterFraction(m[4]),
+    };
+  }
+  m = segment.match(/^(\d+)\s*\/\s*(\d+)\s+(.+)/);
+  if (m && Number(m[2]) > 0) {
+    return { qty: Number(m[1]) / Number(m[2]), rest: afterFraction(m[3]) };
+  }
+  m = segment.match(/^(\d+)?\s*([½¼¾⅓⅔])\s*(.+)/);
+  if (m) {
+    return {
+      qty: (m[1] ? Number(m[1]) : 0) + UNICODE_FRACTIONS[m[2]],
+      rest: afterFraction(m[3]),
+    };
+  }
+  m = segment.match(/^(?:an?\s+)?(half|quarter)\s+(.+)/i);
+  if (m) {
+    return {
+      qty: m[1].toLowerCase() === "half" ? 1 / 2 : 1 / 4,
+      rest: afterFraction(m[2]),
+    };
+  }
+  m = segment.match(NUMBER_WORD_RE);
+  if (m) return { qty: NUMBER_WORDS[m[1].toLowerCase()], rest: m[2].trim() };
+  return null;
+}
+
+/** The row's name for a count: "eggs (x2)", "avocado (x0.5)", "avocado". */
+function countedName(rest: string, qty: number): string {
+  return qty > 0 && qty !== 1
+    ? `${rest} (x${Math.round(qty * 100) / 100})`
+    : rest;
+}
 
 /**
  * Attempt to extract a quantity prefix like "2 eggs" → { qty: 2, rest: "eggs" }
@@ -1815,6 +1922,25 @@ function extractQty(segment: string): {
       rest: pintMatch[3].trim(),
     };
   }
+  // "1/2 avocado", "half an avocado", "two eggs"; "two pints of lager".
+  const written = fractionOrWordCount(segment);
+  if (written) {
+    const pints = written.rest.match(/^pints?\s+(?:of\s+)?(.+)/i);
+    if (pints) {
+      const portionLabel =
+        written.qty === 0.5
+          ? "half a pint"
+          : `${Math.round(written.qty * 100) / 100} ${written.qty === 1 ? "pint" : "pints"}`;
+      return {
+        qty: 1,
+        ml: written.qty * PINT_ML,
+        portionLabel,
+        namePrefix: `${portionLabel} of`,
+        rest: pints[1].trim(),
+      };
+    }
+    return { qty: written.qty, counted: true, rest: written.rest };
+  }
   // "2 eggs" or "2.5 servings"
   const match = segment.match(/^(\d+(?:\.\d+)?)\s+(.+)/);
   if (match) {
@@ -1828,6 +1954,25 @@ function extractQty(segment: string): {
       counted: true,
       rest: gluedMatch[2].trim(),
     };
+  }
+  // A measure written after the food: "chicken breast 200g", "milk 300ml".
+  // Read only from the start before, so the serving was logged and the row
+  // still said "200g".
+  const trailing = segment.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s*(kg|g|ml|l)$/i);
+  if (trailing) {
+    const num = parseFloat(trailing[2]);
+    const unit = trailing[3].toLowerCase();
+    const rest = trailing[1].replace(/^an?\s+/i, "").trim();
+    const portionLabel = `${num}${unit}`;
+    if (unit === "kg" || unit === "g") {
+      return {
+        qty: 1,
+        grams: unit === "kg" ? num * 1000 : num,
+        portionLabel,
+        rest,
+      };
+    }
+    return { qty: 1, ml: unit === "l" ? num * 1000 : num, portionLabel, rest };
   }
   // "a slice of toast" → qty=1, rest="slice of toast"
   const aMatch = segment.match(/^an?\s+(.+)/i);
@@ -1859,6 +2004,24 @@ function parseServingMl(serving: string): number | null {
   return m ? parseFloat(m[1]) : null;
 }
 
+/**
+ * How many of the typed unit a serving holds, when it counts them:
+ * "2 tbsp (32g)" holds 2 tbsp, "2 slices (16g)" 2 slices, "1 omelette
+ * (2 eggs)" 2 eggs. A count typed against that unit ("2 tbsp peanut
+ * butter", "3 egg omelette") counts units, not servings: multiplied as
+ * servings, 2 tbsp logged 4.
+ */
+function servingUnits(serving: string, rest: string): number | null {
+  const unit = depluralize(rest.toLowerCase().split(/\s+/)[0] ?? "");
+  if (unit.length < 2) return null;
+  for (const m of serving
+    .toLowerCase()
+    .matchAll(/(\d+(?:\.\d+)?)\s+([a-z]+)/g)) {
+    if (depluralize(m[2]) === unit) return Number(m[1]);
+  }
+  return null;
+}
+
 /** Scale only against a compatible reference. Mass and volume cannot be
  *  interchanged without food-specific conversion data. */
 function foodMultiplier(
@@ -1868,9 +2031,12 @@ function foodMultiplier(
   const item = FOOD_DB[key];
   let multiplier = amount.qty;
   const piece = amount.counted ? pieceGrams(key, amount.rest) : null;
+  const units = amount.counted ? servingUnits(item.serving, amount.rest) : null;
   if (piece) {
     const servingGrams = parseServingGrams(item.serving);
     if (servingGrams) multiplier = (amount.qty * piece) / servingGrams;
+  } else if (units) {
+    multiplier = amount.qty / units;
   } else if (amount.grams !== undefined) {
     const servingGrams = parseServingGrams(item.serving);
     if (!servingGrams) return null;
@@ -1962,46 +2128,91 @@ function depluralize(word: string): string {
 }
 
 /**
- * Try to find an exact or substring match in the food DB.
- * Falls back to depluralized forms, then to typos (see `typoAllowance`).
- * Returns the best matching key, or null.
+ * Plain bases a dish is built on: a food named with one is on it or in
+ * it, and adds ("chicken salad", "cheese omelette", "tuna pasta"). Every
+ * other dish is made with its filling, which its row already holds:
+ * "chicken wrap" is a wrap, "beef burrito" a burrito.
  */
-function findBestMatch(text: string): string | null {
-  const lower = andForAmpersand(text.toLowerCase().trim());
+const DISH_BASES = new Set([
+  "salad",
+  "omelette",
+  "omelet",
+  "toast",
+  "bagel",
+  "bread",
+  "sourdough",
+  "pasta",
+  "noodles",
+  "rice",
+  "brown rice",
+  "couscous",
+  "potato",
+  "jacket potato",
+  "sweet potato",
+  "mash",
+  "mashed potato",
+  "porridge",
+  "oats",
+  "oatmeal",
+  "tortilla",
+  "pita",
+  "naan",
+  "flatbread",
+  "cracker",
+  "crackers",
+  "rice cake",
+]);
 
-  // Exact match
-  if (FOOD_DB[lower]) return lower;
+/** Spreads and sauces: added to what they are on, and never the dish
+ *  ("tuna mayo" is tuna with mayonnaise). */
+const CONDIMENTS = new Set([
+  "mayo",
+  "mayonnaise",
+  "butter",
+  "jam",
+  "honey",
+  "hummus",
+  "houmous",
+  "cream cheese",
+]);
 
-  // Try depluralized form: "chocolate bars" → "chocolate bar"
-  const depluralWords = lower.split(/\s+/).map(depluralize).join(" ");
-  if (FOOD_DB[depluralWords]) return depluralWords;
+let keysLongestFirst: string[] | null = null;
+function foodKeysLongestFirst(): string[] {
+  keysLongestFirst ??= Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
+  return keysLongestFirst;
+}
 
-  // Try multi-word matches (longest first) — require word boundaries
-  const sortedKeys = Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
-  for (const key of sortedKeys) {
+/** The foods a phrase names, in the order named. A longer name takes its
+ *  words first: "peanut butter sandwich" names peanut butter and a
+ *  sandwich, not butter. */
+function foodsNamed(text: string): string[] {
+  const taken: [number, number][] = [];
+  const found: { key: string; at: number }[] = [];
+  for (const key of foodKeysLongestFirst()) {
     const re = new RegExp(
-      `\\b${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`
+      `\\b${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+      "g"
     );
-    if (re.test(lower)) return key;
-  }
-
-  // Try depluralized text against word boundaries
-  if (depluralWords !== lower) {
-    for (const key of sortedKeys) {
-      const re = new RegExp(
-        `\\b${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`
-      );
-      if (re.test(depluralWords)) return key;
+    for (const m of text.matchAll(re)) {
+      const start = m.index;
+      const end = start + key.length;
+      if (taken.some(([s, e]) => start < e && end > s)) continue;
+      taken.push([start, end]);
+      found.push({ key, at: start });
     }
   }
+  return found.sort((a, b) => a.at - b.at).map((f) => f.key);
+}
 
-  // Typos: the closest key within the typed word's allowance.
+/** The closest key within the typed word's allowance (see
+ *  `typoAllowance`), or null. */
+function closestTypo(candidates: string[]): string | null {
   let bestKey: string | null = null;
   let bestDist = Infinity;
-  for (const candidate of [lower, depluralWords]) {
+  for (const candidate of candidates) {
     if (NOT_TYPOS.has(candidate)) continue;
     const allowance = typoAllowance(candidate);
-    for (const key of sortedKeys) {
+    for (const key of foodKeysLongestFirst()) {
       // Words further apart in length than the allowance cannot match.
       if (Math.abs(candidate.length - key.length) > allowance) continue;
       // Nearly every misspelling keeps its first letter, so a word that
@@ -2018,52 +2229,73 @@ function findBestMatch(text: string): string | null {
   return bestKey;
 }
 
+/** A phrase's food: the row it names (`head`) and the rows added to it. */
+interface Dish {
+  head: string;
+  added: string[];
+}
+
 /**
- * Try to match multiple words in a segment against individual DB keys.
- * "ham sandwich" → finds "ham" and "sandwich", sums their macros.
- * Returns the combined macros and matched words, or null if <1 match.
+ * The food a phrase names. An exact row wins, then its singular. Failing
+ * that, the dish is the last food named, as English names a dish: the
+ * longest name used to win, and the rest vanished ("chicken wrap" logged
+ * a chicken breast, "blueberry muffin" 1 kcal of blueberries). A plain
+ * base adds the foods named with it (`DISH_BASES`), and a condiment is
+ * added to whatever it is on (`CONDIMENTS`). Then typos.
  */
-function findCompoundMatch(
-  text: string
-): { macros: Macros; matchedKeys: string[] } | null {
-  const lower = text.toLowerCase().trim();
-  const words = lower.split(/\s+/);
-  const matched: { key: string; macros: Macros }[] = [];
-  const usedIndices = new Set<number>();
+function matchDish(text: string): Dish | null {
+  const lower = andForAmpersand(text.toLowerCase().trim());
+  if (FOOD_DB[lower]) return { head: lower, added: [] };
 
-  // Try multi-word keys first (longest first), then single words
-  const sortedKeys = Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
-  for (const key of sortedKeys) {
-    const keyWords = key.split(/\s+/);
-    // Check if consecutive words in `words` match this key
-    for (let i = 0; i <= words.length - keyWords.length; i++) {
-      if (usedIndices.has(i)) continue;
-      const slice = words.slice(i, i + keyWords.length).join(" ");
-      if (slice === key) {
-        matched.push({ key, macros: FOOD_DB[key] });
-        for (let j = i; j < i + keyWords.length; j++) usedIndices.add(j);
-        break;
-      }
-    }
+  // "chocolate bars" → "chocolate bar"
+  const depluralWords = lower.split(/\s+/).map(depluralize).join(" ");
+  if (FOOD_DB[depluralWords]) return { head: depluralWords, added: [] };
+
+  // The singular can name more of the phrase ("chicken salads" names a
+  // salad), or less ("onion crisps" loses its crisps): the reading that
+  // covers more of it stands.
+  const asTyped = foodsNamed(lower);
+  const singular =
+    depluralWords === lower ? asTyped : foodsNamed(depluralWords);
+  const covered = (keys: string[]) =>
+    keys.reduce((n, key) => n + key.length, 0);
+  const named = covered(singular) > covered(asTyped) ? singular : asTyped;
+  if (named.length > 0) {
+    const dishes = named.filter((key) => !CONDIMENTS.has(key));
+    const head = (dishes.length > 0 ? dishes : named).at(-1)!;
+    const rest = [...named];
+    rest.splice(rest.lastIndexOf(head), 1);
+    // What the row's own serving counts is the dish, not added to it:
+    // an egg omelette is the omelette ("1 omelette (2 eggs)").
+    const others = rest.filter(
+      (key) => servingUnits(FOOD_DB[head].serving, key) === null
+    );
+    const added = DISH_BASES.has(head)
+      ? others
+      : others.filter((key) => CONDIMENTS.has(key));
+    return { head, added };
   }
 
-  if (matched.length === 0) return null;
+  const typo = closestTypo([lower, depluralWords]);
+  return typo ? { head: typo, added: [] } : null;
+}
 
-  const combined: Macros = {
-    calories: 0,
-    protein: 0,
-    carbs: 0,
-    fat: 0,
-    serving: "1 serving",
-  };
-  for (const m of matched) {
-    combined.calories += m.macros.calories;
-    combined.protein += m.macros.protein;
-    combined.carbs += m.macros.carbs;
-    combined.fat += m.macros.fat;
+/** The row a phrase names, ignoring what is added to it. */
+function findBestMatch(text: string): string | null {
+  return matchDish(text)?.head ?? null;
+}
+
+/** A dish's macros: its row, and one serving of each food added to it,
+ *  against the row's serving. */
+function dishItem(dish: Dish): Macros {
+  const item = { ...FOOD_DB[dish.head] };
+  for (const key of dish.added) {
+    item.calories += FOOD_DB[key].calories;
+    item.protein += FOOD_DB[key].protein;
+    item.carbs += FOOD_DB[key].carbs;
+    item.fat += FOOD_DB[key].fat;
   }
-
-  return { macros: combined, matchedKeys: matched.map((m) => m.key) };
+  return item;
 }
 
 /**
@@ -2155,10 +2387,7 @@ const CONJUNCTION_KEYS = Object.keys(FOOD_DB).filter((k) =>
 function partResolves(part: string): boolean {
   const { rest } = extractQty(part);
   if (!rest) return false;
-  if (rest.split(/\s+with\s+/i).some((w) => findBestMatch(w) !== null)) {
-    return true;
-  }
-  return findCompoundMatch(rest) !== null;
+  return rest.split(/\s+with\s+/i).some((w) => findBestMatch(w) !== null);
 }
 
 function splitConjunctions(segment: string): string[] {
@@ -2214,9 +2443,7 @@ function unresolvedFood(
   const displayName =
     grams !== undefined || ml !== undefined
       ? `${namePrefix ?? portionLabel} ${rest}`
-      : qty > 1
-        ? `${rest} (x${qty})`
-        : rest;
+      : countedName(rest, qty);
   if (!quantityIssue) logger.warn("[nlFoodParser] Unrecognized food:", rest);
   return {
     name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
@@ -2282,11 +2509,27 @@ export function parseFoodText(input: string): ParsedFood[] {
         // itself still applies once through `qty` below. Bare foods and
         // containers keep their normal serving because pieceGrams checks
         // that the remaining wording names only the food itself.
+        // A measure typed after the base ("chicken 200g with rice") is in
+        // the part, not the segment, so the part's own measure stands then.
         const amount =
-          i === 0 ? { ...extracted, counted, grams, ml } : extracted;
-        const key = findBestMatch(amount.rest);
-        if (key) {
-          const multiplier = foodMultiplier(key, amount);
+          i === 0
+            ? {
+                ...extracted,
+                counted,
+                grams: grams ?? extracted.grams,
+                ml: ml ?? extracted.ml,
+              }
+            : extracted;
+        const dish = matchDish(amount.rest);
+        if (dish) {
+          const key = dish.head;
+          // A measure cannot be shared out between a base and what is on it.
+          const measured =
+            amount.grams !== undefined || amount.ml !== undefined;
+          const multiplier =
+            measured && dish.added.length > 0
+              ? null
+              : foodMultiplier(key, amount);
           if (multiplier === null) {
             unresolved.push(
               unresolvedQuantity(i === 0 ? typedParts[0] : part, key)
@@ -2294,7 +2537,7 @@ export function parseFoodText(input: string): ParsedFood[] {
             continue;
           }
           matchedParts.push({ index: i, text: part });
-          const item = FOOD_DB[key];
+          const item = dishItem(dish);
           const assumedShare = i === 0 ? 1 : addedShare(baseKey, key);
           const articlePortion = /^an?\s+/i.test(part);
           const impliedSplash =
@@ -2337,7 +2580,7 @@ export function parseFoodText(input: string): ParsedFood[] {
             : rest;
         const hasKnownBase = matchedParts[0].index === 0;
         // A whole-meal xN suffix would imply that explicit sides repeat too.
-        let displayName = qty > 1 ? `${knownRest} (x${qty})` : knownRest;
+        let displayName = countedName(knownRest, qty);
         if (hasExplicitSide) {
           displayName =
             unresolved.length > 0
@@ -2368,11 +2611,16 @@ export function parseFoodText(input: string): ParsedFood[] {
       }
     }
 
-    // Try exact/substring match first
-    const key = findBestMatch(rest);
-    if (key) {
-      const item = FOOD_DB[key];
-      const multiplier = foodMultiplier(key, { qty, grams, ml, counted, rest });
+    const dish = matchDish(rest);
+    if (dish) {
+      const key = dish.head;
+      const item = dishItem(dish);
+      const combined = dish.added.length > 0;
+      // A measure cannot be shared out between a base and what is on it.
+      const multiplier =
+        hasUnitPrefix && combined
+          ? null
+          : foodMultiplier(key, { qty, grams, ml, counted, rest });
       if (multiplier === null) {
         results.push(unresolvedQuantity(segment, key));
         continue;
@@ -2382,9 +2630,7 @@ export function parseFoodText(input: string): ParsedFood[] {
       // and the portionLabel carries the unit.
       const displayName = hasUnitPrefix
         ? `${namePrefix ?? portionLabel} ${rest}`
-        : qty > 1
-          ? `${rest} (x${qty})`
-          : rest;
+        : countedName(rest, qty);
       results.push({
         name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
         calories: Math.round(item.calories * multiplier),
@@ -2397,24 +2643,11 @@ export function parseFoodText(input: string): ParsedFood[] {
         // Skip canonical-key dedup when an explicit portion was
         // typed — merging "200g chicken" with "100g chicken" loses
         // the per-row portion semantics. Each portioned row stays
-        // independent in the diary.
-        ...(hasUnitPrefix ? {} : { _canonicalKey: canonicalKey(key) }),
-      });
-      continue;
-    }
-
-    // Fallback: compound word matching ("ham sandwich" → ham + sandwich).
-    // A measured single-food portion cannot safely scale a sum of foods.
-    const compound = hasUnitPrefix ? null : findCompoundMatch(rest);
-    if (compound && compound.macros.calories > 0) {
-      const displayName = qty > 1 ? `${rest} (x${qty})` : rest;
-      results.push({
-        name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
-        calories: Math.round(compound.macros.calories * qty),
-        protein: Math.round(compound.macros.protein * qty),
-        carbs: Math.round(compound.macros.carbs * qty),
-        fat: Math.round(compound.macros.fat * qty),
-        _canonicalKey: canonicalKey(compound.matchedKeys[0]),
+        // independent in the diary. A dish with foods added to it is
+        // a sum, not its row, so it never merges with that row either.
+        ...(hasUnitPrefix || combined
+          ? {}
+          : { _canonicalKey: canonicalKey(key) }),
       });
       continue;
     }

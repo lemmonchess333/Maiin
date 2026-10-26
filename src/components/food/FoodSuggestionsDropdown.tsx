@@ -7,7 +7,6 @@ import {
 import { motion } from "framer-motion";
 import IconButton from "@/components/ui/IconButton";
 import { ChevronRight, Star, Pencil } from "lucide-react";
-import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -46,11 +45,13 @@ const GHOST_CLICK_SUPPRESS_MS = 400;
  *
  * A pantry row and a local-DB row are visually identical and do
  * opposite things — one commits a meal, one only types for you — so
- * the verb is the whole point. Deliberately muted rather than
- * button-coloured: it is a label on a row that is already the control,
- * not a second control to hit. `text-muted-foreground` is also the one
- * grey tuned to clear AA on card, muted and page background in both
- * themes.
+ * the verb is the whole point. A row that logs says "Log" in the food
+ * orange (`text-nutrition-strong`, its AA step for small text): logging
+ * food is orange wherever it appears (Food10, Polish3 call 3), and grey
+ * beside a pencil it read as a caption rather than what the tap does.
+ * "Select" only fills the box and "Choose portion" opens a sheet, so they
+ * stay in the row's grey. It is a
+ * label on a row that is already the control, not a second control.
  *
  * The rows carry an explicit `min-h-11`. Single-line at `py-2.5` they
  * measured ~40px — under the 44px Tropos target — and the second line
@@ -58,10 +59,17 @@ const GHOST_CLICK_SUPPRESS_MS = 400;
  * stated in the class list is the guarantee; an emergent one lasts
  * until someone shortens the content.
  */
-function RowAction({ children }: { children: React.ReactNode }) {
+function RowAction({ verb }: { verb: "Log" | "Select" | "Choose portion" }) {
   return (
-    <span className="text-micro font-medium text-muted-foreground">
-      {children}
+    <span
+      className={cn(
+        "text-micro",
+        verb === "Log"
+          ? "font-semibold text-nutrition-strong"
+          : "font-medium text-muted-foreground"
+      )}
+    >
+      {verb}
     </span>
   );
 }
@@ -306,7 +314,7 @@ function FoodSuggestionsDropdown({
                   {item.name}
                   <span className="block text-micro text-muted-foreground font-normal">
                     {item.portionSize} ·{" "}
-                    <RowAction>{item.example ? "Select" : "Log"}</RowAction>
+                    <RowAction verb={item.example ? "Select" : "Log"} />
                   </span>
                 </span>
                 <span className="w-full min-w-0 break-words text-xs text-muted-foreground font-mono tabular-nums">
@@ -349,7 +357,7 @@ function FoodSuggestionsDropdown({
               <span className="w-full min-w-0 break-words text-sm font-medium text-foreground">
                 {p.name}
                 <span className="block text-micro text-muted-foreground font-normal">
-                  {p.servingSize} · <RowAction>Log</RowAction>
+                  {p.servingSize} · <RowAction verb="Log" />
                 </span>
               </span>
               <span className="w-full min-w-0 break-words text-xs text-muted-foreground font-mono tabular-nums">
@@ -374,7 +382,7 @@ function FoodSuggestionsDropdown({
               <span className="w-full min-w-0 break-words text-sm font-medium text-foreground">
                 {s.name}
                 <span className="block text-micro text-muted-foreground font-normal">
-                  {s.serving} · <RowAction>Select</RowAction>
+                  {s.serving} · <RowAction verb="Select" />
                 </span>
               </span>
               <span className="w-full min-w-0 break-words text-xs text-muted-foreground font-mono tabular-nums">
@@ -446,7 +454,7 @@ function FoodSuggestionsDropdown({
                     tap actually opens ServingSizeDrawer — the one row
                     whose affordance pointed at the wrong outcome. */}
                 <span className="shrink-0 mt-1 flex items-center gap-0.5">
-                  <RowAction>Choose portion</RowAction>
+                  <RowAction verb="Choose portion" />
                   <ChevronRight
                     aria-hidden="true"
                     className="size-3.5 text-muted-foreground"
@@ -475,10 +483,7 @@ function FoodSuggestionsDropdown({
             <span className="text-sm text-muted-foreground">
               No matches found
             </span>
-            <span
-              className="text-xs font-medium"
-              style={{ color: THEME.semantic.nutrition }}
-            >
+            <span className="text-xs font-medium text-nutrition-strong">
               Log manually
             </span>
           </button>

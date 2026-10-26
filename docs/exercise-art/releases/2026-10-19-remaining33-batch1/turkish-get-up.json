@@ -1,0 +1,157 @@
+{
+  "exerciseId": "turkish-get-up",
+  "version": "anatomy-v3-2026-10-19-native-followup-v1",
+  "width": 1024,
+  "height": 1152,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration and mobile source review",
+  "reviewedAt": "2026-10-19T22:30:10.814391+00:00",
+  "reference": {
+    "path": "form-frames/turkish-get-up/1.webp",
+    "sha256": "09af983678602258edaad79b70ef2791b8ffef99d00cabb53c81831b7d71b9c9"
+  },
+  "cueSha256": "ef47e27eedd522dc2a95f35480974a7805650cdbb6dc8dff207b1ea406262925",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/turkish-get-up/1.webp",
+      "sha256": "09af983678602258edaad79b70ef2791b8ffef99d00cabb53c81831b7d71b9c9",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-19-remaining33-batch1/1.png",
+        "sha256": "00fbfa797e381f32ef87a133675de6da962bb72a7fb55e9167cfd0271d2e222a"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/2.webp",
+      "sha256": "b9a49e9c834f84b06f42bc8c22b5bfc92f3beea5b9cefc3f52ce291c501a812e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-19-remaining33-batch1/2.png",
+        "sha256": "fe992a5422d58633be598da07452ddd21b8be4ae16b542df42c83a592c469529"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/3.webp",
+      "sha256": "7dd32179c3d2547a8521fb4c9161d89e81bbe80797ce47975c7f6041d79feece",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-19-remaining33-batch1/3.png",
+        "sha256": "6fc1479ff9fe5e729a7256bc2184bf0dfa9ae16f4a303c0fb5e861756c7326f9"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/4.webp",
+      "sha256": "643fc1b60c4d9f0a809bf4b134f056580992bd9e6e5c7a083fe31bf7d6e33abe",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-19-remaining33-batch1/4.png",
+        "sha256": "7faec9ec5e1734e0ad7ca7a26568dba884708fb838d256c0d9800a1224bc825d"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/5.webp",
+      "sha256": "7e705ce5a72feefb363062c7517a692f495fc14e05129d06603e23fa071f4971",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-19-remaining33-batch1/5.png",
+        "sha256": "31fd6cb3e795e6eb7c8a247190138c982ff5c38b5182dcde22791c9883e6c2fc"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/6.webp",
+      "sha256": "7f0ad1540c87d2a12bdde4442174321caa4c82dbaecc5fedf82de271a09c2b10",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-19-remaining33-batch1/6.png",
+        "sha256": "80343be8f95c707a780ed5dcb23f3148db74cf09417d2e7809aeda837fa22965"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "Fix the remaining illustration issues in those33 sets too, same model and colours, no shorts, and get it all merged. Stop asking for approval.",
+    "context": "Explicit authority for source corrections, local activation, final checks and normal merge. Does not replace passing strict evidence."
+  },
+  "findings": [
+    "Retain original frames1-4 pixel-exact at common y+100 padding. New full connected half-kneel and standing sources keep front foot on right and far loaded arm consistent, correcting wrong facing and flat-profile camera change. Entire source5/6 uniformly normalized, no individual anatomical transforms or head/shoe grafts.",
+    "Existing discrete source poses and minor inherited source contour/projection differences remain qualitative. This scoped correction does not claim calibrated3D or blanket strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Retain original frames1-4 pixel-exact at common y+100 padding. New full connected half-kneel and standing sources keep front foot on right and far loaded arm consistent, correcting wrong facing and flat-profile camera change. Entire source5/6 uniformly normalized, no individual anatomical transforms or head/shoe grafts."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-19-illustration-polish/turkish-get-up.json",
+    "sha256": "ec2102019fedc356ffce8876a2e7509f5e3651c84abc3e0fb3501c402d1e3bcb",
+    "disposition": "Historical source findings preserved verbatim in prior record and portable archive. Corrected issues are described separately; no blanket erasure of source/strict limitations."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/turkish-get-up/2026-10-19-remaining33-batch1",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/turkish-get-up/2026-10-19-remaining33-batch1/turkish-get-up-native-correction.zip",
+      "sha256": "8c5704a94ebf7db40c96e3439fe79b6f1dc89ad3584846eabc147a57b14e1e54",
+      "bytes": 6791969
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-19-illustration-polish/turkish-get-up.json",
+    "method": "Retain original frames1-4 pixel-exact at common y+100 padding. New full connected half-kneel and standing sources keep front foot on right and far loaded arm consistent, correcting wrong facing and flat-profile camera change. Entire source5/6 uniformly normalized, no individual anatomical transforms or head/shoe grafts.",
+    "reproductionScope": "Independent byte-exact re-execution of frozen native editable sources and exports, not independent anatomy certification.",
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-remaining33-batch1/review.json",
+  "playback": "sequence",
+  "physicalPoses": 6,
+  "sourcePoseOrder": [1, 2, 3, 4, 5, 6]
+}

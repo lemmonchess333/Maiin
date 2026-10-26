@@ -6,7 +6,11 @@
  * new followers off, and no prompt nudging anyone to turn more on. Crews,
  * which S3 also named, were retired before this was built; their place went
  * to Circles and Spaces, both on by default, as every notification was
- * before the switches existed.
+ * before the switches existed. Follow requests (Polish2) are on by default:
+ * an account approves each follower unless it turns that off, and a
+ * request nobody hears about just waits. The same switch carries the
+ * answer to a request the person made: one switch for the request, both
+ * ways.
  *
  * `createNotification` (socialFanout.js) reads `users/{uid}.
  * notificationPreferences` and writes nothing for a kind that is off: a
@@ -24,6 +28,7 @@ const NOTIFICATION_CATEGORIES = Object.freeze([
   "kudos",
   "comments",
   "follows",
+  "followRequests",
   "circles",
   "spaces",
 ]);
@@ -33,6 +38,7 @@ const NOTIFICATION_DEFAULTS = Object.freeze({
   kudos: true,
   comments: true,
   follows: false,
+  followRequests: true,
   circles: true,
   spaces: true,
 });
@@ -51,6 +57,8 @@ const CATEGORY_BY_TYPE = Object.freeze({
   kudos: "kudos",
   comment: "comments",
   follow: "follows",
+  follow_request: "followRequests",
+  follow_accepted: "followRequests",
   challenge_milestone: null,
   circle_focus_backed: "circles",
   circle_milestone: "circles",

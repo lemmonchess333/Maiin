@@ -87,6 +87,8 @@ function makeStubs(opts = {}) {
     });
 
     const topLevelDocStub = (parent, uid) => ({
+      // No such document: here, an account that is not restricted.
+      get: async () => ({ exists: false, data: () => undefined }),
       collection: (sub) => ({
         get: async () => {
           calls.push(`firestore.${parent}.${uid}.${sub}.get`);
@@ -294,6 +296,9 @@ function makeStubs(opts = {}) {
 
   const firestore = makeBatchAndCollectionGraph(opts);
   const auth = {
+    // A restricted account's identities are read before cleanup (S4e,
+    // STATUS 2026-10-20); this account has none to keep.
+    getUser: async (uid) => ({ uid, email: null, providerData: [] }),
     deleteUser: async (uid) => {
       calls.push(`auth.deleteUser(${uid})`);
       if (opts.authDeleteThrows) throw new Error(opts.authDeleteThrows);
@@ -494,6 +499,8 @@ describe("deleteAccount — coverage of cleanup targets", () => {
     const paths = [
       "challengeAnnouncement-2026-10",
       "challengeAnnouncement-2026-11",
+      "challengeReminder-2026-10",
+      "challengeReminder-2026-11",
       "push",
     ].map((id) => `users/${TEST_UID}/settings/${id}`);
     const stubs = makeStubs({
@@ -949,6 +956,7 @@ describe("deleteAccount — Chunk 3 lease + write-freeze (audit F2)", () => {
   });
 
   // ── Audit F8 — appleSubscriptions sweep (step 3c) ────────────────
+  // unit::accountDeletion.appleSubscriptions
   it("F8: tombstones the binding identity BEFORE deleting the binding", async () => {
     process.env.BILLING_HMAC_SECRET = "f8-test-secret";
     try {

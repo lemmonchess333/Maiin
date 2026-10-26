@@ -19,7 +19,9 @@ test.describe("Security & CSP", () => {
       .locator('meta[http-equiv="Content-Security-Policy"]')
       .getAttribute("content");
     expect(csp).toContain("script-src 'self'");
-    expect(csp).toContain("https://js.stripe.com");
+    // The app loads no Stripe script and makes no Stripe request (Sub4),
+    // so no Stripe host is allowed anywhere in the policy.
+    expect(csp).not.toContain("stripe.com");
   });
 
   test("CSP allows required connect sources", async ({ page }) => {
@@ -33,16 +35,12 @@ test.describe("Security & CSP", () => {
     expect(csp).toContain("wss://*.firebaseio.com");
   });
 
-  test("CSP restricts frame sources to Stripe and Firebase", async ({
-    page,
-  }) => {
+  test("CSP restricts frame sources to Firebase sign-in", async ({ page }) => {
     await page.goto("");
     const csp = await page
       .locator('meta[http-equiv="Content-Security-Policy"]')
       .getAttribute("content");
-    expect(csp).toContain(
-      "frame-src https://js.stripe.com https://*.firebaseapp.com"
-    );
+    expect(csp).toContain("frame-src https://*.firebaseapp.com");
   });
 
   test("CSP allows Firebase Analytics (gtag) domains", async ({ page }) => {

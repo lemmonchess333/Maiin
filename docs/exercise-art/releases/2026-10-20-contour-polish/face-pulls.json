@@ -1,0 +1,216 @@
+{
+  "exerciseId": "face-pulls",
+  "version": "anatomy-v3-2026-10-20-contour-polish-v1",
+  "width": 982,
+  "height": 1258,
+  "reference": {
+    "path": "form-frames/face-pulls/1.webp",
+    "sha256": "8fbd7988188c866d260ae28e919ebb1667ff6f6f34c76bebe1a969ec5be18335"
+  },
+  "cueSha256": "56e28e9d01418ebeeafd0b3540677531fb85812d30932287ff520b56653bf68b",
+  "decision": "approved",
+  "reviewer": "Codex scoped native contour review, source-preservation proof, actual mobile light/dark review",
+  "reviewedAt": "2026-10-20T19:00:00.101385+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved. Current scoped correction: Existing secondary upper-back fields retain their native per-pixel value and current #9590E0 base. Small pale interior gaps no longer interrupt those fields. Open anatomical borders, white spine, primary rear-delt contours, full silhouette, rope, grips and apparatus are preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review. Current fixed-material proof confirms original same-coordinate anchor patches and complete measured support/hardware regions are decoded-pixel exact. Existing coordinates and dimensions remain valid with unchanged limits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Hands draw toward face as elbows rise and shoulders externally rotate; cable remains taut and torso/feet stay steady. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed. Current scoped correction: Existing secondary upper-back fields retain their native per-pixel value and current #9590E0 base. Small pale interior gaps no longer interrupt those fields. Open anatomical borders, white spine, primary rear-delt contours, full silhouette, rope, grips and apparatus are preserved."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed high cable tower with two rope branches and closed end grips. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors. Current scoped correction: Existing secondary upper-back fields retain their native per-pixel value and current #9590E0 base. Small pale interior gaps no longer interrupt those fields. Open anatomical borders, white spine, primary rear-delt contours, full silhouette, rope, grips and apparatus are preserved."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Hands draw toward face as elbows rise and shoulders externally rotate; cable remains taut and torso/feet stay steady. Actual named native supports are measured in all six frames: fixedTowerTopCrossmemberMaterialFeature1, fixedTowerTopCrossmemberMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedTowerTopCrossmemberProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%. Current fixed-material proof confirms original same-coordinate anchor patches and complete measured support/hardware regions are decoded-pixel exact. Existing coordinates and dimensions remain valid with unchanged limits."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Hands draw toward face as elbows rise and shoulders externally rotate; cable remains taut and torso/feet stay steady. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification. Current fixed-material proof confirms original same-coordinate anchor patches and complete measured support/hardware regions are decoded-pixel exact. Existing coordinates and dimensions remain valid with unchanged limits."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Rear Delts #7B72E9; secondary Rhomboids, Traps, Rotator Cuff #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region. Current scoped correction: Existing secondary upper-back fields retain their native per-pixel value and current #9590E0 base. Small pale interior gaps no longer interrupt those fields. Open anatomical borders, white spine, primary rear-delt contours, full silhouette, rope, grips and apparatus are preserved."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Reach: Extend arms toward pulley, palms down. / Brace: Stay steady; set your shoulder blades. / Rotate: Pull toward face, separating grips past ears. / Squeeze: Keep elbows high and knuckles up. / Return: Return slowly with your elbows high. / Reset: Straighten arms; keep cable tension.. Preparation remains [\"Set a rope at or slightly above face height and grip the ends with palms down.\", \"Step back for tension, arms extended straight toward the pulley.\"]. Hands draw toward face as elbows rise and shoulders externally rotate; cable remains taut and torso/feet stay steady. Exact existing cues, physical pose order and playback mode retained; actual current playback/manual wrap reviewed."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Hands draw toward face as elbows rise and shoulders externally rotate; cable remains taut and torso/feet stay steady. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted. Exact existing cues, physical pose order and playback mode retained; actual current playback/manual wrap reviewed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual 390x844 production ExerciseFormContent/ExerciseThumb with staged then registered current assets reviewed in light theme. All six decoded frame paths, manual wraps, corrected native pose, captions, legend, preparation and three normal card sizes inspected; current observations and screenshots retained in this review bundle."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual 390x844 production ExerciseFormContent/ExerciseThumb with staged then registered current assets reviewed in dark theme. All six decoded frame paths, manual wraps, corrected native pose, captions, legend, preparation and three normal card sizes inspected; current observations and screenshots retained in this review bundle."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/face-pulls/1.webp",
+      "sha256": "8fbd7988188c866d260ae28e919ebb1667ff6f6f34c76bebe1a969ec5be18335",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    },
+    {
+      "path": "form-frames/face-pulls/2.webp",
+      "sha256": "8fbd7988188c866d260ae28e919ebb1667ff6f6f34c76bebe1a969ec5be18335",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    },
+    {
+      "path": "form-frames/face-pulls/3.webp",
+      "sha256": "e95aef45a354b1941c35716c9100543d409ab7a35ad640d8419e03ffae312568",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    },
+    {
+      "path": "form-frames/face-pulls/4.webp",
+      "sha256": "e95aef45a354b1941c35716c9100543d409ab7a35ad640d8419e03ffae312568",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    },
+    {
+      "path": "form-frames/face-pulls/5.webp",
+      "sha256": "8fbd7988188c866d260ae28e919ebb1667ff6f6f34c76bebe1a969ec5be18335",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    },
+    {
+      "path": "form-frames/face-pulls/6.webp",
+      "sha256": "8fbd7988188c866d260ae28e919ebb1667ff6f6f34c76bebe1a969ec5be18335",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": {
+      "anchorAxisPx": 1,
+      "invariantRelative": 0.01
+    },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json",
+    "currentPreservationProof": "docs/exercise-art/reviews/2026-10-20-contour-polish/fixed-material-proof.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-20-strict-review/face-pulls.json",
+    "sha256": "7b2b2140feccaf37a84b6eb5c94e8282f78f600eb8b50fe340b0228b5ca70e9e"
+  },
+  "historicalFindings": [
+    "The far-start terminal palm support/free-end ordering is naturally occluded or uncertain in the flat source and is not visually certified.",
+    "The generic ergonomic attachment follows an evidenced real topology but is not an exact branded product replica; minor neutral equipment shading variation remains.",
+    "Projected cable payout approximately79-83px and selected-stack rise approximately75px are consistent local observations, not calibrated3D rope/stack geometry or world-length certification.",
+    "Two physical endpoint drawings repeat across six named instruction paths; no separately illustrated intermediate or continuous trajectory is supplied.",
+    "Fine inherited pale muscle-highlight islands remain visible after prescribed colour remap; parent accepted their native/card/mobile appearance as a minor cosmetic finding."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete authored stills and normal pose-dependent foreshortening; no calibrated three-dimensional body reconstruction or continuous animation is claimed."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-contour-polish/mobile/observations.json",
+    "sha256": "2b659fd8804e38950bbf248d00df820329dfcb0a09a04c3c58e418c2c5a2af6f"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false,
+  "correctionScope": "Existing secondary upper-back fields retain their native per-pixel value and current #9590E0 base. Small pale interior gaps no longer interrupt those fields. Open anatomical borders, white spine, primary rear-delt contours, full silhouette, rope, grips and apparatus are preserved.",
+  "currentContourReview": {
+    "path": "docs/exercise-art/reviews/2026-10-20-contour-polish/README.md",
+    "scope": "Existing secondary upper-back fields retain their native per-pixel value and current #9590E0 base. Small pale interior gaps no longer interrupt those fields. Open anatomical borders, white spine, primary rear-delt contours, full silhouette, rope, grips and apparatus are preserved."
+  },
+  "nativeSourceArchive": {
+    "path": "docs/exercise-art/sources/face-pulls/2026-10-20-contour-polish/native-source.zip",
+    "sha256": "08804e265109e2f0c0ea82fafb34b8af7477fcac7980d064b0db97ec75a3eaa4",
+    "bytes": 5480028,
+    "scope": "Existing secondary upper-back fields retain their native per-pixel value and current #9590E0 base. Small pale interior gaps no longer interrupt those fields. Open anatomical borders, white spine, primary rear-delt contours, full silhouette, rope, grips and apparatus are preserved.",
+    "independentReproductionExact": true
+  }
+}

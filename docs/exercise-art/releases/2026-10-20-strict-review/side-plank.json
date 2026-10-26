@@ -1,0 +1,162 @@
+{
+  "exerciseId": "side-plank",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1480,
+  "height": 696,
+  "reference": {
+    "path": "form-frames/side-plank/3.webp",
+    "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032"
+  },
+  "cueSha256": "8798276e69dd97eb3b30b42cc6441e9c02e26a123dee04a0d02fe6d0a3b69e6d",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:50.107742+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Six named coaching slots describe one static side-plank hold. Supported forearm and stacked trainers stay fixed, with a coherent shoulder-hip-ankle line. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bodyweight hold with no invented apparatus. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Six named coaching slots describe one static side-plank hold. Supported forearm and stacked trainers stay fixed, with a coherent shoulder-hip-ankle line. Actual named native supports are measured in all six frames: supportedForearmMaterialFeature1, supportedForearmMaterialFeature2. Maximum axis drift 0px. Dimensions: supportedForearmProjectedFeatureSpan, stackedTrainerProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Six named coaching slots describe one static side-plank hold. Supported forearm and stacked trainers stay fixed, with a coherent shoulder-hip-ankle line. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Obliques #7B72E9; secondary Core, Shoulders #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Support: Keep your elbow beneath your shoulder. / Stack: Keep your feet stacked and steady. / Align: Keep head, hips and feet aligned. / Brace: Keep your hips raised and core braced. / Breathe: Breathe normally without dropping your hips. / Time: Hold for time; then repeat opposite side.. Preparation remains [\"Lie on your side with your forearm on the floor, elbow under your shoulder.\", \"Stack your feet (or stagger for easier) and brace your core.\", \"Lift your hips off the floor into a straight line from head to feet.\"]. Six named coaching slots describe one static side-plank hold. Supported forearm and stacked trainers stay fixed, with a coherent shoulder-hip-ankle line."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Six named coaching slots describe one static side-plank hold. Supported forearm and stacked trainers stay fixed, with a coherent shoulder-hip-ankle line. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/side-plank.json (sha256 43a5ba5c8311d4dbfe1aca11816aa0a9ff84e52b135d48392eeff46936b67371). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/side-plank.json (sha256 43a5ba5c8311d4dbfe1aca11816aa0a9ff84e52b135d48392eeff46936b67371). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/side-plank/1.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {
+        "supportedForearmMaterialFeature1": { "x": 67, "y": 578 },
+        "supportedForearmMaterialFeature2": { "x": 210, "y": 603 }
+      },
+      "invariantDimensions": {
+        "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+        "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+      }
+    },
+    {
+      "path": "form-frames/side-plank/2.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {
+        "supportedForearmMaterialFeature1": { "x": 67, "y": 578 },
+        "supportedForearmMaterialFeature2": { "x": 210, "y": 603 }
+      },
+      "invariantDimensions": {
+        "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+        "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+      }
+    },
+    {
+      "path": "form-frames/side-plank/3.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {
+        "supportedForearmMaterialFeature1": { "x": 67, "y": 578 },
+        "supportedForearmMaterialFeature2": { "x": 210, "y": 603 }
+      },
+      "invariantDimensions": {
+        "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+        "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+      }
+    },
+    {
+      "path": "form-frames/side-plank/4.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {
+        "supportedForearmMaterialFeature1": { "x": 67, "y": 578 },
+        "supportedForearmMaterialFeature2": { "x": 210, "y": 603 }
+      },
+      "invariantDimensions": {
+        "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+        "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+      }
+    },
+    {
+      "path": "form-frames/side-plank/5.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {
+        "supportedForearmMaterialFeature1": { "x": 67, "y": 578 },
+        "supportedForearmMaterialFeature2": { "x": 210, "y": 603 }
+      },
+      "invariantDimensions": {
+        "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+        "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+      }
+    },
+    {
+      "path": "form-frames/side-plank/6.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {
+        "supportedForearmMaterialFeature1": { "x": 67, "y": 578 },
+        "supportedForearmMaterialFeature2": { "x": 210, "y": 603 }
+      },
+      "invariantDimensions": {
+        "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+        "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-19-illustration-polish/side-plank.json",
+    "sha256": "43a5ba5c8311d4dbfe1aca11816aa0a9ff84e52b135d48392eeff46936b67371"
+  },
+  "historicalFindings": [
+    "Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/side-plank.json",
+    "sha256": "9a260a95dddfe986b0b5d8343a82ad94b64a1b93b0eafc9ee7a3bfcb63144988"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

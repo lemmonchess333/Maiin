@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
+import Select from "@/components/ui/Select";
 import {
   MEAL_ORDER,
   MEAL_LABELS,
@@ -77,9 +78,8 @@ export default function QuickMealPortionSheet({
         <label htmlFor="quick-meal-slot" className="block text-sm">
           Add to
         </label>
-        <select
+        <Select
           id="quick-meal-slot"
-          className="ds-input w-full min-h-11"
           value={selectedSlot}
           disabled={saving}
           onChange={(event) => setSelectedSlot(event.target.value as MealKey)}
@@ -89,8 +89,9 @@ export default function QuickMealPortionSheet({
               {MEAL_LABELS[key]}
             </option>
           ))}
-        </select>
+        </Select>
         <Button
+          variant="nutrition"
           fullWidth
           disabled={!valid}
           loading={saving}

@@ -99,7 +99,7 @@ function buildFirstWeekNudgeMessage() {
     data: {
       type: "streak",
       route: "/",
-      title: "Yesterday was a good start 💪",
+      title: "Yesterday was a good start",
       body: "A quick log today keeps it going.",
     },
   };
@@ -118,8 +118,8 @@ function buildBadgeNudgeMessage() {
     data: {
       type: "badge",
       route: "/",
-      title: "New badge unlocked 🏅",
-      body: "Open Tropos to see what you earned.",
+      title: "New badge earned",
+      body: "Open Tropos to see it.",
     },
   };
 }
@@ -138,7 +138,7 @@ function buildWeeklyRecapMessage() {
     data: {
       type: "recap",
       route: "/",
-      title: "Your week in review 📊",
+      title: "Your week in review",
       body: "Open Tropos to see how last week went.",
     },
   };
@@ -158,8 +158,8 @@ function buildFellBehindRecapMessage() {
     data: {
       type: "fellbehind",
       route: "/program",
-      title: "Let's realign this week 🎯",
-      body: "Last week didn't go to plan — tap to adjust your runs.",
+      title: "The week ahead",
+      body: "Open Tropos to adjust this week's runs.",
     },
   };
 }

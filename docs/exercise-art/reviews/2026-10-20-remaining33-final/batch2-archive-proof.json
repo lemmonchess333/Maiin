@@ -1,0 +1,30 @@
+[
+  {
+    "id": "assault-bike",
+    "archive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining33-illustration-fixes-20261019\\batch2-archives\\assault-bike-native-correction.zip",
+    "sha256": "15b5fcc75118f17b0e64cdb166397014f427007cd923899efb47f5c85e89fa57",
+    "bytes": 15249607,
+    "independentFiles": 15
+  },
+  {
+    "id": "stairmaster",
+    "archive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining33-illustration-fixes-20261019\\batch2-archives\\stairmaster-native-correction.zip",
+    "sha256": "efd8b10fcd130da3a3de8dd2916239815de2d068c6910e90064a3002bd2854f2",
+    "bytes": 20903690,
+    "independentFiles": 16
+  },
+  {
+    "id": "rowing-machine",
+    "archive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining33-illustration-fixes-20261019\\batch2-archives\\rowing-machine-native-correction.zip",
+    "sha256": "eb8fb0aa1241eb5f2b843f5ce2d5196cf0b3d4416ea392c3600ee5ccf4d01dd0",
+    "bytes": 17919561,
+    "independentFiles": 16
+  },
+  {
+    "id": "swimming",
+    "archive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining33-illustration-fixes-20261019\\batch2-archives\\swimming-native-correction.zip",
+    "sha256": "d5037fc6db66a9038fe8e5816d4c2d135fa2b758b0217379f9775ceb2c572f89",
+    "bytes": 13310071,
+    "independentFiles": 19
+  }
+]

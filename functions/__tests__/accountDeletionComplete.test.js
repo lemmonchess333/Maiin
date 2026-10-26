@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
@@ -45,6 +45,20 @@ function setup(extra = {}) {
     "following/bob/users/alice": { followedAt: now },
     "followers/bob/users/alice": { followedAt: now },
     "blocks/carol/users/alice": { blockedAt: now },
+    // Polish3: who blocked whom, the server-written copy. Carol blocked
+    // Alice (a row under Alice), Alice blocked Dave (a row naming Alice
+    // under Dave), and Carol blocked Bob, which is not Alice's.
+    "blocks/alice/users/dave": { blockedAt: now },
+    "blockedBy/alice/users/carol": {},
+    "blockedBy/dave/users/alice": {},
+    "blockedBy/bob/users/carol": {},
+    // Polish2: a request to Alice, one she sent, and one between others.
+    "followRequests/alice/users/bob": { requestedAt: now },
+    "followRequests/carol/users/alice": { requestedAt: now },
+    "followRequests/carol/users/bob": { requestedAt: now },
+    // Polish2: the week on followers' boards, Alice's and Bob's.
+    "friendsBoard/alice": { sessions: 3 },
+    "friendsBoard/bob": { sessions: 1 },
     "spaces/running/posts/bobs-post": { authorId: "bob", likeCount: 2 },
     "spaces/running/posts/bobs-post/likes/alice": { createdAt: now },
     "spaces/running/posts/bobs-post/likes/carol": { createdAt: now },
@@ -90,6 +104,23 @@ function setup(extra = {}) {
     "groups/legacy/members/alice": { name: "Alice" },
     "spaces/retired-room/members/alice": { joinedAt: now },
     "challenges/missing-parent/participants/alice": { name: "Alice" },
+    "challenges/missing-parent/participants/alice/applied/run-1": {
+      sourceId: "run-1",
+    },
+    "challenges/weekly": { title: "This week" },
+    "challenges/weekly/participants/alice": { currentValue: 1 },
+    "challenges/weekly/participants/alice/applied/run-2": { sourceId: "run-2" },
+    // A challenge Alice left: the markers stay, by design, with no
+    // participant doc above them.
+    "challenges/left/participants/alice/applied/run-3": { sourceId: "run-3" },
+    "challenges/left": { title: "Left" },
+    "challenges/weekly/participants/bob/applied/run-4": { sourceId: "run-4" },
+    "appleNotifications/n-alice": {
+      type: "DID_RENEW",
+      originalTransactionId: "otx-alice",
+      uid: "alice",
+    },
+    "appleNotifications/n-bob": { type: "DID_RENEW", uid: "bob" },
     "spaces/retired-room/posts/own": { authorId: "alice" },
     "spaces/retired-room/posts/own/comments/bob": {
       authorId: "bob",
@@ -100,11 +131,38 @@ function setup(extra = {}) {
     "rateLimits/alice_scan": { recent: [1] },
     "rateLimits/alice2_scan": { recent: [1] },
     "rateLimits/verifyemail_alice_verificationEmail": { recent: [1] },
+    "audit_checkout_sessions/alice-checkout": {
+      uid: "alice",
+      stripeSessionId: "cs_alice",
+      priceId: "price_monthly",
+    },
+    "audit_checkout_sessions/bob-checkout": { uid: "bob" },
+    "commentModeration/alice-comment": {
+      action: "auto_delete",
+      reason: "profanity",
+      activityId: "other",
+      commentId: "alice-comment",
+      authorId: "alice",
+      textRedacted: "Alice's ****",
+      createdAt: now,
+    },
+    "commentModeration/bob-comment": {
+      action: "auto_delete",
+      authorId: "bob",
+      textRedacted: "Bob's ****",
+    },
     ...extra,
   });
   return {
     firestore,
-    auth: { deleteUser: vi.fn().mockResolvedValue(undefined) },
+    auth: {
+      getUser: vi.fn().mockResolvedValue({
+        uid: "alice",
+        email: "alice@example.com",
+        providerData: [{ providerId: "google.com", uid: "alice-google" }],
+      }),
+      deleteUser: vi.fn().mockResolvedValue(undefined),
+    },
     storageBucket: { deleteFiles: vi.fn().mockResolvedValue(undefined) },
     uid: "alice",
     logger,
@@ -125,6 +183,25 @@ function setup(extra = {}) {
 // smoke::blocksReverse
 // smoke::crewMemberships
 // smoke::kudosByMe
+// smoke::topLevelQuery::checkoutAudit
+// smoke::topLevelQuery::appleNotifications
+// smoke::topLevelOwn::followRequests
+// smoke::followRequests::sent
+// smoke::topLevelOwn::friendsBoard
+// smoke::topLevelOwn::blockedBy
+// smoke::blockedByReverse
+/* The billing tombstone's secret, which a restricted account's kept
+   identities are hashed with. */
+let priorSecret;
+beforeEach(() => {
+  priorSecret = process.env.BILLING_HMAC_SECRET;
+  process.env.BILLING_HMAC_SECRET = "test-secret-0123456789abcdef";
+});
+afterEach(() => {
+  if (priorSecret === undefined) delete process.env.BILLING_HMAC_SECRET;
+  else process.env.BILLING_HMAC_SECRET = priorSecret;
+});
+
 describe("complete account erasure", () => {
   it("removes nested personal data and cross-user copies, preserving other accounts and bounded private evidence", async () => {
     const ctx = setup();
@@ -141,6 +218,12 @@ describe("complete account erasure", () => {
       "following/bob/users/alice",
       "followers/bob/users/alice",
       "blocks/carol/users/alice",
+      "blocks/alice/users/dave",
+      "blockedBy/alice/users/carol",
+      "blockedBy/dave/users/alice",
+      "followRequests/alice/users/bob",
+      "followRequests/carol/users/alice",
+      "friendsBoard/alice",
       "notifications/bob/items/from-alice",
       "spaces/running/posts/bobs-post/likes/alice",
       "goalSpaces/old/events/event",
@@ -154,8 +237,35 @@ describe("complete account erasure", () => {
       "challenges/missing-parent/participants/alice",
       "spaces/retired-room/posts/own/comments/bob",
       "spaces/retired-room/posts/own/likes/bob",
+      // Before 2026-10-20 neither the inventory nor the executor knew these.
+      "audit_checkout_sessions/alice-checkout",
+      "appleNotifications/n-alice",
+      // Deletes do not cascade: these outlived the participant docs.
+      "challenges/missing-parent/participants/alice/applied/run-1",
+      "challenges/weekly/participants/alice",
+      "challenges/weekly/participants/alice/applied/run-2",
+      "challenges/left/participants/alice/applied/run-3",
     ])
       expect(data.has(path), path).toBe(false);
+    for (const path of [
+      "audit_checkout_sessions/bob-checkout",
+      "appleNotifications/n-bob",
+      "followRequests/carol/users/bob",
+      "blockedBy/bob/users/carol",
+      "friendsBoard/bob",
+      "challenges/weekly/participants/bob/applied/run-4",
+    ])
+      expect(data.has(path), path).toBe(true);
+    // The removal is still counted; who wrote it, and what, is not.
+    expect(data.get("commentModeration/alice-comment")).toEqual({
+      action: "auto_delete",
+      reason: "profanity",
+      activityId: "other",
+      commentId: "alice-comment",
+      createdAt: now,
+      authorId: null,
+    });
+    expect(data.get("commentModeration/bob-comment").authorId).toBe("bob");
     expect(data.get("users/bob/meals/lunch")).toEqual({ name: "Bob's meal" });
     expect(data.get("activities/other")).toMatchObject({
       kudosCount: 1,
@@ -207,6 +317,22 @@ describe("complete account erasure", () => {
     expect(
       data.get("accountDeletionRequests/alice").cleanupAfter
     ).toBeInstanceOf(Date);
+    // Alice was restricted, so her sign-in identities are kept, hashed,
+    // for a new account to meet (S4e, STATUS 2026-10-20): nothing that
+    // names her, and an expiry.
+    const keptIdentities = [...data].filter(([path]) =>
+      path.startsWith("restrictedIdentities/")
+    );
+    expect(keptIdentities).toHaveLength(2);
+    for (const [, row] of keptIdentities) {
+      expect(Object.keys(row).sort()).toEqual([
+        "createdAt",
+        "expiresAt",
+        "reason",
+      ]);
+      expect(row.expiresAt).toBeInstanceOf(Date);
+    }
+    expect(JSON.stringify(keptIdentities)).not.toMatch(/alice/);
     expect(ctx.auth.deleteUser).toHaveBeenCalledOnce();
   });
 

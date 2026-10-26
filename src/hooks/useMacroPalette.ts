@@ -1,23 +1,5 @@
-import { useSyncExternalStore } from "react";
 import { THEME, MACROS_TEXT_LIGHT } from "@/lib/theme";
-
-// Subscribe to class-attribute changes on documentElement so macro tiles
-// recolour when the user toggles dark mode at runtime (Settings writes
-// .dark on the root element — see Settings.tsx:205). Mirrors the pattern
-// used by MuscleHeatMap.
-function subscribeDarkMode(cb: () => void) {
-  const observer = new MutationObserver(cb);
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
-  return () => observer.disconnect();
-}
-
-function getIsDark() {
-  if (typeof document === "undefined") return false;
-  return document.documentElement.classList.contains("dark");
-}
+import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 
 /**
  * Returns a macro colour palette split into two tracks:
@@ -33,11 +15,9 @@ function getIsDark() {
  * `color: text.carbs`.
  */
 export function useMacroPalette() {
-  const isDark = useSyncExternalStore(
-    subscribeDarkMode,
-    getIsDark,
-    () => false
-  );
+  // Recolours when the theme flips at runtime (Settings writes .dark on
+  // the root element).
+  const isDark = useIsDarkTheme();
 
   const accent = {
     protein: THEME.macros.protein,

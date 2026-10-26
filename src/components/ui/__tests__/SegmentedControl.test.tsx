@@ -51,6 +51,107 @@ describe("SegmentedControl", () => {
     expect(onChange).toHaveBeenCalledWith(5);
   });
 
+  it.each(["click", " ", "Enter"])(
+    "does not change an already-selected radio on %j by default",
+    (activation) => {
+      const onChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={DAYS}
+          value={4}
+          onChange={onChange}
+          ariaLabel="Lift days"
+        />
+      );
+      const selected = screen.getByRole("radio", { name: "4" });
+      if (activation === "click") fireEvent.click(selected);
+      else fireEvent.keyDown(selected, { key: activation });
+      expect(onChange).not.toHaveBeenCalled();
+      expect(selected).toHaveAttribute("aria-checked", "true");
+    }
+  );
+
+  it.each(["click", " ", "Enter"])(
+    "calls the opt-in reselect action once on %j",
+    (activation) => {
+      const onChange = vi.fn();
+      const onReselect = vi.fn();
+      render(
+        <SegmentedControl
+          options={DAYS}
+          value={4}
+          onChange={onChange}
+          onReselect={onReselect}
+          ariaLabel="Lift days"
+        />
+      );
+      const selected = screen.getByRole("radio", { name: "4" });
+      if (activation === "click") fireEvent.click(selected);
+      else fireEvent.keyDown(selected, { key: activation });
+      expect(onReselect).toHaveBeenCalledExactlyOnceWith(4);
+      expect(onChange).not.toHaveBeenCalled();
+      expect(selected).toHaveFocus();
+    }
+  );
+
+  it("does not call the reselect action when changing to another option", () => {
+    const onChange = vi.fn();
+    const onReselect = vi.fn();
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={onChange}
+        onReselect={onReselect}
+        ariaLabel="Lift days"
+      />
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "5" }));
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(5);
+    expect(onReselect).not.toHaveBeenCalled();
+  });
+
+  it.each(["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Home", "End"])(
+    "does not reselect with %s when only the selected option is enabled",
+    (key) => {
+      const onChange = vi.fn();
+      const onReselect = vi.fn();
+      render(
+        <SegmentedControl
+          options={DAYS.map((day) => ({ ...day, disabled: day.value !== 4 }))}
+          value={4}
+          onChange={onChange}
+          onReselect={onReselect}
+          ariaLabel="Lift days"
+        />
+      );
+      fireEvent.keyDown(screen.getByRole("radio", { name: "4" }), { key });
+      expect(onChange).not.toHaveBeenCalled();
+      expect(onReselect).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([false, true])(
+    "never reselects a disabled option (whole-group disable: %s)",
+    (disabled) => {
+      const onReselect = vi.fn();
+      render(
+        <SegmentedControl
+          options={DAYS.map((day) => ({ ...day, disabled: day.value === 4 }))}
+          value={4}
+          onChange={vi.fn()}
+          onReselect={onReselect}
+          ariaLabel="Lift days"
+          disabled={disabled}
+        />
+      );
+      const selected = screen.getByRole("radio", { name: "4" });
+      fireEvent.click(selected);
+      fireEvent.keyDown(selected, { key: "Enter" });
+      expect(onReselect).not.toHaveBeenCalled();
+    }
+  );
+
   it("uses roving tabindex — only the selected radio is tabbable", () => {
     render(
       <SegmentedControl
@@ -169,7 +270,7 @@ describe("SegmentedControl", () => {
     expect(onChange).toHaveBeenCalledWith(5);
   });
 
-  it("lifts the selected option onto a white card (iOS track look)", () => {
+  it("fills the selected option grey under a white label, with no edge (iOS track look)", () => {
     render(
       <SegmentedControl
         options={DAYS}
@@ -178,11 +279,49 @@ describe("SegmentedControl", () => {
         ariaLabel="Lift days"
       />
     );
-    const selected = screen.getByRole("radio", { name: "4" });
-    expect(selected.className).toContain("bg-card");
+    const selected = screen.getByRole("radio", { name: "4" }).className;
+    expect(selected.split(" ")).toEqual(
+      expect.arrayContaining(["bg-segment-selected", "text-white"])
+    );
+    expect(selected).not.toMatch(/\bborder\b|shadow-sm|bg-card/);
     // Unselected segments are transparent on the shared track.
-    const unselected = screen.getByRole("radio", { name: "3" });
-    expect(unselected.className).not.toContain("bg-card");
+    const unselected = screen.getByRole("radio", { name: "3" }).className;
+    expect(unselected).not.toMatch(/bg-segment-selected|bg-card/);
+    expect(unselected).toContain("text-muted-foreground");
+  });
+
+  it("wrapped, the unselected pills are muted and the selected one is filled", () => {
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={() => {}}
+        ariaLabel="Lift days"
+        layout="wrap"
+      />
+    );
+    expect(screen.getByRole("radio", { name: "4" }).className).toContain(
+      "bg-segment-selected"
+    );
+    expect(screen.getByRole("radio", { name: "3" }).className).toContain(
+      "bg-muted"
+    );
+  });
+
+  it("the solid emphasis keeps the filled nutrition pill", () => {
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={() => {}}
+        ariaLabel="Meal"
+        emphasis="solid"
+        tone="nutrition"
+      />
+    );
+    const selected = screen.getByRole("radio", { name: "4" }).className;
+    expect(selected).toContain("bg-nutrition-fill");
+    expect(selected).not.toContain("bg-segment-selected");
   });
 
   it("eases the press rather than snapping it", () => {
@@ -208,22 +347,34 @@ describe("SegmentedControl", () => {
     );
   });
 
-  it("running tone tints the selected label coral", () => {
-    render(
-      <SegmentedControl
-        options={[
-          { value: "5k", label: "5K" },
-          { value: "10k", label: "10K" },
-        ]}
-        value="10k"
-        onChange={() => {}}
-        ariaLabel="Race distance"
-        tone="running"
-      />
-    );
-    const selected = screen.getByRole("radio", { name: "10K" });
-    // DS1b: running tone resolves via the --running token class — now on
-    // the selected label (the track keeps the segment itself a white card).
-    expect(selected.className).toContain("text-running");
-  });
+  it.each([
+    ["running", "bg-running-fill"],
+    ["lifting", "bg-lifting-fill"],
+  ] as const)(
+    "%s tone fills the selected segment in its sport's fill step",
+    (tone, fill) => {
+      render(
+        <SegmentedControl
+          options={[
+            { value: "a", label: "A" },
+            { value: "b", label: "B" },
+          ]}
+          value="b"
+          onChange={() => {}}
+          ariaLabel="Sport"
+          tone={tone}
+        />
+      );
+      // The sport colour rides in the fill, under a white label: a coral
+      // or purple label on the grey fill would miss AA.
+      const selected = screen.getByRole("radio", { name: "B" }).className;
+      expect(selected.split(" ")).toEqual(
+        expect.arrayContaining([fill, "text-white"])
+      );
+      expect(selected).not.toContain("bg-segment-selected");
+      expect(screen.getByRole("radio", { name: "A" }).className).not.toContain(
+        fill
+      );
+    }
+  );
 });

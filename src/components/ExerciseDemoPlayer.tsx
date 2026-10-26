@@ -150,7 +150,7 @@ export default function ExerciseDemoPlayer({
               onError={() => onImgError(src)}
               className="w-full h-auto aspect-square object-cover"
             />
-            <figcaption className="text-caption uppercase tracking-wide text-muted-foreground text-center py-1">
+            <figcaption className="text-micro text-muted-foreground text-center py-1">
               {i === 0 ? "Start" : "Finish"}
             </figcaption>
           </figure>

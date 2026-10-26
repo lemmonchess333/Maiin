@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import VerifyEmailNotice from "./VerifyEmailNotice";
 import RestrictedNotice from "./RestrictedNotice";
-
-/** Both comment callables refuse a comment longer than this. */
-const COMMENT_MAX_CHARS = 1000;
+import { COMMENT_MAX_CHARS } from "@/lib/commentLimit";
 
 interface CommentComposerProps {
   text: string;
@@ -154,7 +152,7 @@ function CommentComposer({
           placeholder="Add a comment…"
           aria-label="Add a comment"
           disabled={held}
-          className="flex-1 min-w-0 text-sm px-3 py-2.5 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground"
+          className="ds-input flex-1 min-w-0 text-sm"
         />
         <Button onClick={onSend} disabled={held || !text.trim()}>
           Send

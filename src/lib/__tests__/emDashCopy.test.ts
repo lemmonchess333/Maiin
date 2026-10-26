@@ -19,6 +19,16 @@
  *
  * Lower both numbers when you rewrite copy; never raise either without
  * writing the reason here.
+ *
+ * The components were never where most of the copy lives. The modules
+ * that write a session's reason, a weather tip or the weekly review's
+ * verdict are .ts, and they had the shape at its densest: every one of
+ * the twenty lines in runSessionExplainer read "Name — explanation", all
+ * nine weather tips did, and four of the review's seven verdicts. So the
+ * .ts modules have a ratchet of their own, a total only: a worst-file cap
+ * would be set by the exercise library's how-to text and the spoken run
+ * cues ("Last one — leave nothing!", the genre exception the house voice
+ * keeps), and would hold nothing else.
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -41,11 +51,36 @@ import { globSync } from "tinyglobby";
  * ("Calorie deficit · lose fat, keep muscle"), and a statement followed
  * by a second statement took a full stop. A genuine parenthetical aside
  * was left exactly as it was, because that is what the character is for.
+ *
+ * 123 once the Together copy pass took the collective card's line, the
+ * founding line and the challenge card's progress lines to the middot or
+ * to nothing (128 before it: passes since had lowered the count and left
+ * this number where it was). 121 once Food's empty diary and its weekly
+ * logging focus each said their line in one sentence. 120 once the run
+ * plan page's helpers each took one short line, and 119 once the race
+ * card's Phase tile, with its "—" for no phase, went.
  */
-const EM_DASH_COPY_BASELINE = 174;
+const EM_DASH_COPY_BASELINE = 119;
 /** ExerciseHistory, 8, and every one of them the bare "—" placeholder
  *  rather than the construction. Lower this only against real copy. */
 const WORST_FILE_BASELINE = 8;
+/**
+ * 331 across the .ts modules, from 343 when they were first counted:
+ * seven of runSessionExplainer's twenty, three of the nine weather tips
+ * and two of the four review verdicts took another shape. A label and its
+ * reason became one sentence ("The whole plan has led to race day."), a
+ * cause took "so" ("Windy, so expect a slower pace"), and a statement with
+ * its detail took "with" ("A strong week, with training load running
+ * high."). The rest stayed: where every line of a set opened the same way,
+ * a third reshaped is enough to break the cadence without making a set
+ * that reads as nine rewrites. 327 is where the count already stood when
+ * the Together copy pass found this number four above it. 322 once the
+ * performance verdict's five supporting lines took a full stop ("Quiet
+ * week. Log when you're back"): they follow the verb's own full stop, so
+ * a dash was a second rhythm inside one line. 319 once the effort cues
+ * and the finish screen's all-done line took a full stop too.
+ */
+const EM_DASH_TS_COPY_BASELINE = 319;
 
 const SRC = join(process.cwd(), "src");
 
@@ -77,6 +112,17 @@ function componentFiles(): string[] {
   );
 }
 
+/** The .ts modules: copy, engines and helpers alike, since copy is not
+ *  kept in one folder. Not the test harnesses under src/test, which no
+ *  user reads, nor type declarations. */
+function moduleFiles(): string[] {
+  return globSync("**/*.ts", {
+    cwd: SRC,
+    absolute: true,
+    ignore: ["**/__tests__/**", "**/*.test.ts", "**/*.d.ts", "test/**"],
+  });
+}
+
 describe("em-dash copy ratchet", () => {
   it("the total does not grow", () => {
     const total = componentFiles().reduce(
@@ -92,6 +138,29 @@ describe("em-dash copy ratchet", () => {
     if (total < EM_DASH_COPY_BASELINE) {
       console.warn(
         `[em-dash ratchet] ${total} < baseline ${EM_DASH_COPY_BASELINE} — lower the baseline to ${total}.`
+      );
+    }
+  });
+
+  it("the .ts modules' total does not grow", () => {
+    const files = moduleFiles();
+    expect(
+      files.some((f) => f.endsWith("runSessionExplainer.ts")),
+      "the module scan reads no copy modules, so its total proves nothing"
+    ).toBe(true);
+    const total = files.reduce(
+      (sum, f) => sum + emDashCopy(readFileSync(f, "utf8")).length,
+      0
+    );
+    expect(
+      total,
+      `${total} em-dash strings in the .ts modules, baseline ` +
+        `${EM_DASH_TS_COPY_BASELINE}. One sentence, "so" for a cause, ` +
+        `"with" for a detail, or a full stop between two statements.`
+    ).toBeLessThanOrEqual(EM_DASH_TS_COPY_BASELINE);
+    if (total < EM_DASH_TS_COPY_BASELINE) {
+      console.warn(
+        `[em-dash ratchet] .ts ${total} < baseline ${EM_DASH_TS_COPY_BASELINE} — lower the baseline to ${total}.`
       );
     }
   });

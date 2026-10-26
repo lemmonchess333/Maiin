@@ -32,7 +32,15 @@ vi.mock("../../lib/socialApi", () => ({
   })),
   // The removed post is left out, as a missing or refused read is.
   fetchActivitiesByIds: vi.fn(async () => ({
-    live: { id: "live", authorId: "friend", type: "workout" },
+    live: {
+      id: "live",
+      authorId: "friend",
+      authorName: "Current name",
+      type: "workout",
+      authorPhotoURL: "current.jpg",
+      prHit: true,
+      badgeEarned: "first-lift",
+    },
   })),
   batchGetKudos: vi.fn(async () => ({})),
 }));
@@ -52,5 +60,14 @@ describe("useSocialFeed — a copy whose post is gone", () => {
     // feed of a load that has not landed.
     expect(result.current.items.map((i) => i.activityId)).toEqual(["live"]);
     expect(result.current.error).toBeNull();
+    expect(result.current.items[0]).toMatchObject({
+      authorName: "Current name",
+      authorPhotoURL: "current.jpg",
+      prHit: true,
+      badgeEarned: "first-lift",
+      summary: "",
+    });
+    // Even a legacy cached feed response cannot supply a stale summary.
+    expect(result.current.items[0].summary).not.toBe("Push day");
   });
 });

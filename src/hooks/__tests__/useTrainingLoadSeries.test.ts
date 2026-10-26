@@ -41,6 +41,7 @@ import {
   failNextFirestore,
   deferReads,
   pendingReads,
+  readLog,
   releaseAllReads,
 } from "@/test/firestoreHarness";
 import { Timestamp } from "firebase/firestore";
@@ -171,6 +172,23 @@ describe("useTrainingLoadSeries", () => {
     const { result } = renderHook(() => useTrainingLoadSeries(30));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.points).toEqual([]);
+  });
+
+  it("reads nothing while it is not enabled, and reads once it is", async () => {
+    // History draws the curve on its Performance page only.
+    seedFirestore({ "users/u1/runs/r1": run(3) });
+    const { result, rerender } = renderHook(
+      ({ enabled }) => useTrainingLoadSeries(30, { enabled }),
+      { initialProps: { enabled: false } }
+    );
+    await act(async () => {});
+    expect(readLog()).toEqual([]);
+    expect(result.current).toEqual({ points: [], loading: false });
+
+    rerender({ enabled: true });
+    expect(result.current.loading).toBe(true);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.points).toHaveLength(30);
   });
 
   it("returns nothing when signed out", async () => {

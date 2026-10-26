@@ -1,0 +1,230 @@
+{
+  "id": "face-pulls",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Face Pulls, Reach",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/1.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Reach 1/6",
+          "id": "face-pulls",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Face Pulls, Brace",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/2.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "face-pulls",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Face Pulls, Rotate",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/3.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Rotate 3/6",
+          "id": "face-pulls",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Face Pulls, Squeeze",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/4.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Squeeze 4/6",
+          "id": "face-pulls",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Face Pulls, Return",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/5.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Return 5/6",
+          "id": "face-pulls",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Face Pulls, Reset",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/6.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "face-pulls",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1845,\n    \"alt\": \"Face Pulls, Rotate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Face Pulls, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2881,\n    \"alt\": \"Face Pulls, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Face Pulls, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5123,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Face Pulls, Brace",
+            "decoded": true,
+            "height": 1258,
+            "src": "/Maiin/.strict33.local/candidate/face-pulls/2.webp",
+            "width": 982
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "face-pulls",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / face-pulls\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nFace Pulls\nBack\nCable Machine\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nRear Delts\nSECONDARY\nRhomboids, Traps, Rotator Cuff\n\nInstructions\n\nPreparation: Set a rope at or slightly above face height and grip the ends with palms down. Step back for tension, arms extended straight toward the pulley.\n\n1\n\nExtend arms toward pulley, palms down.\n\n2\n\nStay steady; set your shoulder blades.\n\n3\n\nPull toward face, separating grips past ears.\n\n4\n\nKeep elbows high and knuckles up.\n\n5\n\nReturn slowly with your elbows high.\n\n6\n\nStraighten arms; keep cable tension.\n\nWatch out\n\nPulling low turns it into a row. Set the cable at face height, pull towards your eyes with elbows high, and finish with knuckles facing the ceiling.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1845,\n    \"alt\": \"Face Pulls, Rotate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Face Pulls, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2881,\n    \"alt\": \"Face Pulls, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Face Pulls, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5123,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6562,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7768,\n    \"alt\": \"Face Pulls, Rotate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9044,\n    \"alt\": \"Face Pulls, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10244,\n    \"alt\": \"Face Pulls, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11445,\n    \"alt\": \"Face Pulls, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12645,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13844,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Face Pulls, Reach",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/1.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Reach 1/6",
+          "id": "face-pulls",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Face Pulls, Brace",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/2.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "face-pulls",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Face Pulls, Rotate",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/3.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Rotate 3/6",
+          "id": "face-pulls",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Face Pulls, Squeeze",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/4.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Squeeze 4/6",
+          "id": "face-pulls",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Face Pulls, Return",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/5.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Return 5/6",
+          "id": "face-pulls",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Face Pulls, Reset",
+              "decoded": true,
+              "height": 1258,
+              "src": "/Maiin/.strict33.local/candidate/face-pulls/6.webp",
+              "width": 982
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "face-pulls",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1845,\n    \"alt\": \"Face Pulls, Rotate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Face Pulls, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2881,\n    \"alt\": \"Face Pulls, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Face Pulls, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5123,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6562,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7768,\n    \"alt\": \"Face Pulls, Rotate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9044,\n    \"alt\": \"Face Pulls, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10244,\n    \"alt\": \"Face Pulls, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11445,\n    \"alt\": \"Face Pulls, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12645,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13844,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15045,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15603,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16161,\n    \"alt\": \"Face Pulls, Rotate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16723,\n    \"alt\": \"Face Pulls, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17281,\n    \"alt\": \"Face Pulls, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17843,\n    \"alt\": \"Face Pulls, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19453,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Face Pulls, Brace",
+            "decoded": true,
+            "height": 1258,
+            "src": "/Maiin/.strict33.local/candidate/face-pulls/2.webp",
+            "width": 982
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "face-pulls",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / face-pulls\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nFace Pulls\nBack\nCable Machine\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nRear Delts\nSECONDARY\nRhomboids, Traps, Rotator Cuff\n\nInstructions\n\nPreparation: Set a rope at or slightly above face height and grip the ends with palms down. Step back for tension, arms extended straight toward the pulley.\n\n1\n\nExtend arms toward pulley, palms down.\n\n2\n\nStay steady; set your shoulder blades.\n\n3\n\nPull toward face, separating grips past ears.\n\n4\n\nKeep elbows high and knuckles up.\n\n5\n\nReturn slowly with your elbows high.\n\n6\n\nStraighten arms; keep cable tension.\n\nWatch out\n\nPulling low turns it into a row. Set the cable at face height, pull towards your eyes with elbows high, and finish with knuckles facing the ceiling.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1845,\n    \"alt\": \"Face Pulls, Rotate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Face Pulls, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2881,\n    \"alt\": \"Face Pulls, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Face Pulls, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5123,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6562,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7768,\n    \"alt\": \"Face Pulls, Rotate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9044,\n    \"alt\": \"Face Pulls, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10244,\n    \"alt\": \"Face Pulls, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11445,\n    \"alt\": \"Face Pulls, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12645,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13844,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15045,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15603,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16161,\n    \"alt\": \"Face Pulls, Rotate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16723,\n    \"alt\": \"Face Pulls, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17281,\n    \"alt\": \"Face Pulls, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17843,\n    \"alt\": \"Face Pulls, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19453,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 20961,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22162,\n    \"alt\": \"Face Pulls, Rotate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23444,\n    \"alt\": \"Face Pulls, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24644,\n    \"alt\": \"Face Pulls, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25843,\n    \"alt\": \"Face Pulls, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27044,\n    \"alt\": \"Face Pulls, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28244,\n    \"alt\": \"Face Pulls, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/face-pulls/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

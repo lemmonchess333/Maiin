@@ -46,6 +46,7 @@ vi.mock("firebase/auth", () => ({
 import {
   getGoogleCredentialNative,
   getAppleCredentialNative,
+  getAppleSignInNative,
 } from "../nativeAuth";
 
 describe("nativeAuth", () => {
@@ -76,6 +77,23 @@ describe("nativeAuth", () => {
       rawNonce: "a-nonce",
     });
     expect(cred).toMatchObject({ providerId: "apple.com", idToken: "a-id" });
+  });
+
+  it("Apple: hands on the name Apple shares on the first sign-in", async () => {
+    signInWithApple.mockResolvedValue({
+      credential: { idToken: "a-id", nonce: "a-nonce" },
+      user: { displayName: " Sam Jones " },
+    });
+    await expect(getAppleSignInNative()).resolves.toMatchObject({
+      displayName: "Sam Jones",
+    });
+    signInWithApple.mockResolvedValue({
+      credential: { idToken: "a-id", nonce: "a-nonce" },
+      user: null,
+    });
+    await expect(getAppleSignInNative()).resolves.toMatchObject({
+      displayName: null,
+    });
   });
 
   it("Apple: tolerates a null credential (undefined fields, never throws)", async () => {

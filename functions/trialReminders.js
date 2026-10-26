@@ -19,6 +19,7 @@ const trialReminder = require("./lib/trialReminder");
 const { buildTrialReminderEmail } = require("./lib/trialReminderEmail");
 const { sendViaResend } = require("./email/accountEmails");
 const { syncUser } = require("./revenueCat");
+const jobRuns = require("./lib/jobRuns");
 
 // Both are already provisioned and bound elsewhere (email/accountEmails.js,
 // revenueCat.js); defineSecret registers by name.
@@ -164,17 +165,22 @@ exports.trialReminderSweep = functions
   })
   .pubsub.schedule("0 * * * *")
   .timeZone("Etc/UTC")
-  .onRun(async () => {
-    try {
-      const outcomes = await runSweep(productionDeps(Date.now()));
-      functions.logger.log("trialReminderSweep: done", outcomes);
-    } catch (err) {
-      functions.logger.error("trialReminderSweep: run failed", {
-        error: redact(err && err.message),
-      });
-    }
-    return null;
-  });
+  .onRun(() =>
+    // The run is recorded in jobRuns/trialReminderSweep, with the count of
+    // each outcome; a failed one is recorded as failed (lib/jobRuns.js).
+    jobRuns.recordJobRun(admin.firestore(), "trialReminderSweep", async () => {
+      try {
+        const outcomes = await runSweep(productionDeps(Date.now()));
+        functions.logger.log("trialReminderSweep: done", outcomes);
+        return outcomes;
+      } catch (err) {
+        functions.logger.error("trialReminderSweep: run failed", {
+          error: redact(err && err.message),
+        });
+        throw err;
+      }
+    })
+  );
 
 exports._internals = {
   LOOKBACK_MS,

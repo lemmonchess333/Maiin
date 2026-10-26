@@ -68,8 +68,10 @@ export default function HeartRateZonesSection({
       <div className="rounded-xl bg-card border border-border/40 p-3 space-y-3">
         {maxHr > 0 ? (
           <>
-            <div className="flex items-center justify-between">
-              <div>
+            {/* The button drops under the words, at the right, once they
+                would be narrower than 8em (larger text on the phone). */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <div className="min-w-[min(100%,8em)] flex-1">
                 <p className="text-sm font-semibold text-foreground">
                   Max heart rate{" "}
                   <span className="font-mono tabular-nums">{maxHr}</span> bpm
@@ -77,12 +79,12 @@ export default function HeartRateZonesSection({
                 <p className="text-xs text-muted-foreground">
                   {maxHrSource === "measured"
                     ? "Your measured max"
-                    : "Estimated from your age — set your real max for sharper zones"}
+                    : "Estimated from your age. Set your max for closer zones."}
                 </p>
               </div>
               <Button
-                variant="ghost"
-                size="sm"
+                variant="secondary"
+                className="ml-auto"
                 onClick={() => {
                   haptic("light");
                   setEditing((v) => !v);
@@ -117,10 +119,6 @@ export default function HeartRateZonesSection({
                 </div>
               ))}
             </div>
-
-            <p className="text-xs text-muted-foreground">
-              Zones come from your age, or from the max heart rate you enter.
-            </p>
           </>
         ) : (
           <div>
@@ -133,8 +131,7 @@ export default function HeartRateZonesSection({
             </p>
             {!editing && (
               <Button
-                variant="primary"
-                size="sm"
+                variant="sport"
                 className="mt-2"
                 onClick={() => {
                   haptic("light");
@@ -159,14 +156,14 @@ export default function HeartRateZonesSection({
               placeholder="188"
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              className="w-full rounded-lg bg-muted border border-border/40 px-3 py-2 text-sm font-mono tabular-nums text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="ds-input text-sm font-mono tabular-nums"
             />
             {error && (
               <p className="text-xs text-destructive-strong">{error}</p>
             )}
             <div className="flex gap-2">
               <Button
-                variant="primary"
+                variant="sport"
                 fullWidth
                 loading={saving}
                 onClick={handleSubmit}

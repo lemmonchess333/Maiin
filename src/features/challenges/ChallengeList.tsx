@@ -5,26 +5,32 @@ import {
   useChallenges,
   getTimeRemaining,
   moreChallengesLabel,
-  soonestEndingChallenge,
+  type Challenge,
 } from "./useChallenges";
 import { getWeeklyAccountability } from "./weeklyAccountability";
-import { featuredChallengesFirst } from "./challengeOrder";
+import { featuredChallengesFirst, isFeaturedChallenge } from "./challengeOrder";
+import {
+  cardsShowingTimeLeft,
+  finalDayLine,
+  inFinalDay,
+  joinedMessage,
+} from "./challengeEditions";
 import { ChallengeCard } from "./ChallengeCard";
+import ChallengeRow from "./ChallengeRow";
 import { ChallengeFinaleCard } from "./ChallengeFinaleCard";
 import CollectivePulse from "./CollectivePulse";
 import { Trophy, ChevronRight } from "lucide-react";
 import { THEME, RANK_COLORS } from "@/lib/theme";
+import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/Button";
+import { cardClasses } from "@/components/ui/cardClasses";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
-import { buildLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
+import { countMyWeekLifts } from "@/lib/leaderboard";
+import { rankNamedBoard, useFriendsBoard } from "@/hooks/useFriendsBoard";
 import Avatar from "@/components/Avatar";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
-
-interface EnrichedEntry extends LeaderboardEntry {
-  photoURL?: string;
-}
 
 export function ChallengeList({
   onFindFriends,
@@ -58,19 +64,19 @@ export function ChallengeList({
     refreshRef.current = refreshProgress;
   }, [refreshRef, refreshProgress]);
 
-  /* This week's standings among people you follow, stamped with the
-     account they were built for. Loading and the list are derived from it
-     against the signed-in uid, so another account reads as loading, with
-     no standings, from its first render. That matters beyond the rows:
-     the accountability card below reads the list even while it loads. */
-  const [rankings, setRankings] = useState<{
-    uid: string;
-    entries: EnrichedEntry[];
-  } | null>(null);
-  const settledRankings =
-    rankings !== null && rankings.uid === user?.uid ? rankings : null;
-  const rankingsLoading = settledRankings === null;
-  const weeklyRankings = settledRankings?.entries ?? [];
+  /* This week's lift standings among you and the people you follow who
+     share their week (the friends board's tallies). The accountability
+     card below reads your own count from your own sessions, so it holds
+     whether or not you share. Both are stamped with the account they were
+     read for, so another account reads as loading from its first render. */
+  const board = useFriendsBoard();
+  const rankingsLoading = board.loading;
+  const weeklyRankings = rankNamedBoard(board.weeks, "weekly_workouts");
+  const [myWeek, setMyWeek] = useState<{ uid: string; lifts: number } | null>(
+    null
+  );
+  const myWeeklyCount =
+    myWeek !== null && myWeek.uid === user?.uid ? myWeek.lifts : 0;
   // SOC-P1e: not-joined challenges collapse behind a disclosure row.
   const [showAllAvailable, setShowAllAvailable] = useState(false);
   const [weeklyBusy, setWeeklyBusy] = useState(false);
@@ -81,69 +87,36 @@ export function ChallengeList({
   );
   const weeklyJoined = !!(weeklyCh && myProgress[weeklyCh.id]);
 
+  /* Joining confirms which edition the person is in and when the next
+     one opens: each edition is joined on its own. */
+  async function join(challenge: Challenge) {
+    if (await joinChallenge(challenge.id))
+      toast.success(joinedMessage(challenge));
+  }
+
   async function changeWeeklyMembership() {
     if (!weeklyCh || weeklyBusy) return;
     setWeeklyBusy(true);
     haptic("light");
     try {
       if (weeklyJoined) await leaveChallenge(weeklyCh.id);
-      else await joinChallenge(weeklyCh.id);
+      else await join(weeklyCh);
     } finally {
       setWeeklyBusy(false);
     }
   }
 
-  // Build friend workout rankings for the weekly card
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    buildLeaderboard(user.uid, "weekly_workouts")
-      .then(async (raw) => {
-        if (cancelled) return;
-        const { getDoc, doc } = await import("firebase/firestore");
-        const { db } = await import("@/lib/firebase");
-        // Source from `users/{uid}/public/profile` (cross-user readable) —
-        // the owner-only `users/{uid}` path silently failed for anyone
-        // other than the current user and left them all rendered as
-        // "Athlete". Same bug + fix as LeaderboardCard / FullLeaderboard.
-        const enriched = await Promise.all(
-          raw.map(async (e) => {
-            try {
-              const snap = await getDoc(
-                doc(db, "users", e.uid, "public", "profile")
-              );
-              const data = snap.data() as
-                | { displayName?: string; photoURL?: string }
-                | undefined;
-              return {
-                ...e,
-                name:
-                  data?.displayName || (e.uid === user.uid ? "You" : "Athlete"),
-                photoURL: data?.photoURL,
-              } as EnrichedEntry;
-            } catch {
-              return {
-                ...e,
-                name: e.uid === user.uid ? "You" : "Athlete",
-              } as EnrichedEntry;
-            }
-          })
-        );
-        if (!cancelled) {
-          setRankings({
-            uid: user.uid,
-            entries: enriched.filter((e) => e.value > 0),
-          });
-        }
-      })
-      .catch(() => {
-        // Settle so the skeleton gives way. A refetch for the same account
-        // that fails keeps the standings it already had.
-        if (!cancelled)
-          setRankings((prev) =>
-            prev?.uid === user.uid ? prev : { uid: user.uid, entries: [] }
-          );
-      });
+    countMyWeekLifts(user.uid).then(
+      (lifts) => {
+        if (!cancelled) setMyWeek({ uid: user.uid, lifts });
+      },
+      // A failed read keeps the count it had: the card's copy then reads
+      // as the week before the read, never as a week of nothing.
+      () => {}
+    );
     return () => {
       cancelled = true;
     };
@@ -166,20 +139,17 @@ export function ChallengeList({
   );
   // The one rotating invitation stays visible; core goals retain the compact
   // disclosure until someone chooses to browse the rest.
-  const featuredAvailable = otherAvailable.find((c) =>
-    c.id.startsWith("featured-monthly-")
-  );
+  const featuredAvailable = otherAvailable.find(isFeaturedChallenge);
   const remainingAvailable = otherAvailable.filter(
     (c) => c.id !== featuredAvailable?.id
   );
-  /* Soonest-ending available challenge keeps the time pressure visible
-     on the collapsed row ("5 days left" was a real join driver).
-     Null-safe: the active list keeps docs with no endDate, and the old
-     inline reduce crashed the whole section on one of them. */
-  const soonestChallenge = soonestEndingChallenge(remainingAvailable);
-  const soonestAvailable = soonestChallenge
-    ? getTimeRemaining(soonestChallenge.endDate)
-    : null;
+  // Time left is said once for the month, and again only by a challenge
+  // that ends on another day.
+  const showsTimeLeft = cardsShowingTimeLeft([
+    ...otherMy,
+    ...(featuredAvailable ? [featuredAvailable] : []),
+    ...remainingAvailable,
+  ]);
 
   if (loading) {
     return (
@@ -237,17 +207,21 @@ export function ChallengeList({
   }
 
   const maxValue = weeklyRankings.length > 0 ? weeklyRankings[0].value : 1;
-  const timeLeft = weeklyCh ? getTimeRemaining(weeklyCh.endDate) : "";
+  /* In the week's last day a person who has not joined is offered no
+     Join: nobody can meet the week's goal in its final hours. The card
+     says when the next one starts instead, in place of the countdown. */
+  const weeklyClosing =
+    !!weeklyCh && !weeklyJoined && inFinalDay(weeklyCh.endDate);
+  const timeLeft =
+    weeklyCh && !weeklyClosing ? getTimeRemaining(weeklyCh.endDate) : "";
 
   /* Accountability-first framing (Phase 1). The weekly card leads with the
      next useful action, not a ranking — beginners, returning users, and
      anyone with a sparse social graph get a personal consistency loop instead
      of a comparison surface. The leaderboard stays below as secondary detail.
-     Population is the follow graph (buildLeaderboard reads following/{uid}),
+     Population is the follow graph (loadBoardWeeks reads following/{uid}),
      so copy says "people you follow", never "crew". Cold-start (no follows /
      nobody trained) falls back to a PERSONAL goal, not fake social proof. */
-  const myWeeklyCount =
-    weeklyRankings.find((e) => e.uid === user?.uid)?.value ?? 0;
   const othersTrained = weeklyRankings.filter(
     (e) => e.uid !== user?.uid
   ).length;
@@ -267,11 +241,6 @@ export function ChallengeList({
 
   return (
     <div className="space-y-4">
-      <p className="text-small text-muted-foreground">
-        Monthly challenges refresh on the 1st, with a featured goal alternating
-        between active days and training minutes. Join each new edition to take
-        part. Seasonal challenges run for three months.
-      </p>
       {/* A restricted account can follow its challenges and leave them,
           but not join one (S4e). */}
       {restricted && availableChallenges.length > 0 && <RestrictedNotice />}
@@ -299,9 +268,13 @@ export function ChallengeList({
 
       {/* Weekly accountability card — action first, ranking second */}
       <div className="p-4 rounded-2xl bg-card border border-border/50 card-shadow">
-        <div className="flex items-start gap-3 mb-3">
+        {/* The icon and its gap in px, so larger text keeps the room for
+            the words; the countdown drops under them once they would be
+            narrower than 8em beside it, rather than running over the
+            title at 320 px and double text. */}
+        <div className="flex items-start gap-[12px] mb-3">
           <div
-            className="size-9 rounded-xl flex items-center justify-center shrink-0"
+            className="size-[36px] rounded-xl flex items-center justify-center shrink-0"
             style={{
               background: goalMet
                 ? `${THEME.semantic.positive}14`
@@ -315,22 +288,28 @@ export function ChallengeList({
               }}
             />
           </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-bold leading-snug text-foreground">
-              {accTitle}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-              {accSub}
-            </p>
+          <div className="min-w-0 flex-1 flex flex-wrap items-start justify-between gap-x-[12px] gap-y-1">
+            <div className="min-w-[min(8em,100%)] flex-1">
+              <h3 className="text-sm font-bold leading-snug text-foreground">
+                {accTitle}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                {accSub}
+              </p>
+            </div>
+            {timeLeft && (
+              <span className="text-caption text-muted-foreground shrink-0 mt-0.5">
+                {timeLeft}
+              </span>
+            )}
           </div>
-          {timeLeft && (
-            <span className="text-caption text-muted-foreground shrink-0 mt-0.5">
-              {timeLeft}
-            </span>
-          )}
         </div>
 
-        {weeklyCh && !weeklyJoined ? (
+        {weeklyClosing && weeklyCh ? (
+          <p className="text-sm text-muted-foreground">
+            {finalDayLine(weeklyCh.endDate)}
+          </p>
+        ) : weeklyCh && !weeklyJoined ? (
           <Button
             fullWidth
             loading={weeklyBusy}
@@ -395,14 +374,17 @@ export function ChallengeList({
                       : ""
                   }`}
                 >
+                  {/* Numeral in the text colour, the medal metal as its
+                      ring (see LeaderboardRow). */}
                   <span
-                    className="w-5 text-xs font-bold text-center shrink-0"
-                    style={{
-                      color:
-                        entry.rank <= 3
-                          ? RANK_COLORS[entry.rank - 1]
-                          : undefined,
-                    }}
+                    className="min-w-5 h-5 px-0.5 rounded-full inline-flex items-center justify-center text-xs font-bold text-foreground shrink-0"
+                    style={
+                      entry.rank <= 3
+                        ? {
+                            boxShadow: `inset 0 0 0 2px ${RANK_COLORS[entry.rank - 1]}`,
+                          }
+                        : undefined
+                    }
                   >
                     {entry.rank}
                   </span>
@@ -462,9 +444,7 @@ export function ChallengeList({
               joined
               onJoin={() => {}}
               onLeave={() => leaveChallenge(ch.id)}
-              /* leaveChallenge is async; ChallengeCard awaits it for
-                 the busy flag. Wrapping in arrow keeps the type as
-                 `() => Promise<void>` rather than the `(id) =>` shape. */
+              showTimeLeft={showsTimeLeft.has(ch.id)}
             />
           ))}
         </div>
@@ -477,31 +457,38 @@ export function ChallengeList({
             challenge={featuredAvailable}
             leaderboard={leaderboards[featuredAvailable.id]}
             joined={false}
-            onJoin={() => joinChallenge(featuredAvailable.id)}
+            onJoin={() => join(featuredAvailable)}
             onLeave={() => {}}
+            showTimeLeft={showsTimeLeft.has(featuredAvailable.id)}
           />
         </div>
       )}
 
-      {/* Other available challenges — SOC-P1e: collapsed behind a
-          disclosure row. Three full photo-header cards of not-joined
-          challenges dominated Together with equal weight to the joined
-          surface; the row keeps the entry (with the soonest deadline's
-          urgency) without three competing lobbies above the fold. */}
+      {/* The other available challenges, collapsed behind one row until
+          someone chooses to browse them, then as compact rows in one
+          grouped card: the big picture card is the featured one's alone,
+          so the list does not read as five competing lobbies. */}
       {remainingAvailable.length > 0 &&
         (showAllAvailable ? (
           <div className="space-y-2">
             <SectionHeading>Available</SectionHeading>
-            {remainingAvailable.map((ch) => (
-              <ChallengeCard
-                key={ch.id}
-                challenge={ch}
-                leaderboard={leaderboards[ch.id]}
-                joined={false}
-                onJoin={() => joinChallenge(ch.id)}
-                onLeave={() => {}}
-              />
-            ))}
+            <ul
+              className={cardClasses({
+                size: "compact",
+                padded: false,
+                className:
+                  "@container overflow-hidden divide-y divide-border/40",
+              })}
+            >
+              {remainingAvailable.map((ch) => (
+                <ChallengeRow
+                  key={ch.id}
+                  challenge={ch}
+                  onJoin={() => join(ch)}
+                  showTimeLeft={showsTimeLeft.has(ch.id)}
+                />
+              ))}
+            </ul>
           </div>
         ) : (
           <Button
@@ -509,17 +496,9 @@ export function ChallengeList({
             fullWidth
             onClick={() => setShowAllAvailable(true)}
           >
-            {moreChallengesLabel(remainingAvailable.length, soonestAvailable)}
+            {moreChallengesLabel(remainingAvailable.length)}
           </Button>
         ))}
-
-      {/* "More coming soon" placeholder removed in PR-bug-fix:
-          PR 5 actually shipped two new challenges (Fastest 5K,
-          Together 1,000km) so the caption was lying to users and the
-          "Notify me" button asked them to be notified about features
-          that already exist. ChallengeList already renders all
-          available challenges from the global collection, so no
-          replacement copy is needed. */}
     </div>
   );
 }

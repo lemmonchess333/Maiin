@@ -76,7 +76,11 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: "automatic",
-    scheme: "Tropos",
+    // No `scheme`: in the CLI that is the Xcode BUILD scheme (default
+    // "App", the only one ios/App has), not the web view's URL scheme, so
+    // "Tropos" made a local `npx cap run ios` look for a scheme that does
+    // not exist. The URL scheme stays capacitor:// (`server.iosScheme`
+    // unset), the origin the AI endpoints' CORS list admits.
   },
   android: {
     backgroundColor: "#0e0e11",

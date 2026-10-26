@@ -66,3 +66,6 @@ scripts/art/.work-badges/
 
 # Local race-date audit; CI records its output in the Actions summary.
 /race-date-report.json
+
+# Python bytecode from the deploy verifiers' tests (`npm run test:verifiers`).
+__pycache__/

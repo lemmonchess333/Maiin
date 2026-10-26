@@ -1,0 +1,156 @@
+{
+  "exerciseId": "stairmaster",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1264,
+  "height": 848,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration polish review",
+  "reviewedAt": "2026-10-19T19:53:59.014379+00:00",
+  "reference": {
+    "path": "form-frames/stairmaster/1.webp",
+    "sha256": "f08f44f67149914b24b24a71a594a5c5fbf2066fab1547eb9b3f547c8e135ca3"
+  },
+  "cueSha256": "e1c03ab37ef0fc06f68b5431c44577119100ed37972e0fd0445f0e5f62a24f71",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/stairmaster/1.webp",
+      "sha256": "f08f44f67149914b24b24a71a594a5c5fbf2066fab1547eb9b3f547c8e135ca3",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-19-illustration-polish/1.png",
+        "sha256": "71718afc01bb590cf24d5048c3fed3d120fdb132c2c6fc5f38e22f1183e1e4c0"
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/2.webp",
+      "sha256": "f08f44f67149914b24b24a71a594a5c5fbf2066fab1547eb9b3f547c8e135ca3",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-19-illustration-polish/2.png",
+        "sha256": "71718afc01bb590cf24d5048c3fed3d120fdb132c2c6fc5f38e22f1183e1e4c0"
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/3.webp",
+      "sha256": "36f8c42474a7b8c4d809c5cd66eb800954a40ef287c3d6e724c227d6573c729b",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-19-illustration-polish/3.png",
+        "sha256": "9c24e044abd883e1dd3ee55ab7ef3bca64aaf42503416f3c2c792a1e677f5218"
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/4.webp",
+      "sha256": "36f8c42474a7b8c4d809c5cd66eb800954a40ef287c3d6e724c227d6573c729b",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-19-illustration-polish/4.png",
+        "sha256": "9c24e044abd883e1dd3ee55ab7ef3bca64aaf42503416f3c2c792a1e677f5218"
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/5.webp",
+      "sha256": "f08f44f67149914b24b24a71a594a5c5fbf2066fab1547eb9b3f547c8e135ca3",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-19-illustration-polish/5.png",
+        "sha256": "71718afc01bb590cf24d5048c3fed3d120fdb132c2c6fc5f38e22f1183e1e4c0"
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/6.webp",
+      "sha256": "f08f44f67149914b24b24a71a594a5c5fbf2066fab1547eb9b3f547c8e135ca3",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-19-illustration-polish/6.png",
+        "sha256": "71718afc01bb590cf24d5048c3fed3d120fdb132c2c6fc5f38e22f1183e1e4c0"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "What minor illustration issues are still left? Fix those too, same model and colours, no shorts, and get them merged. Stop asking for approval.",
+    "context": "Explicit authority for scoped native colour/equipment/cutout corrections, local registration, verification and normal merge. Not strict certification."
+  },
+  "findings": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-17/stairmaster.json",
+    "sha256": "98acbceb8e453dbda4a0989a4527e1e9d220ca72cc0787b9117a0d839fb6f853",
+    "disposition": "Historical record preserved verbatim. Cosmetic issues addressed here are described separately; prior strict-measurement and source-provenance statements are not erased.",
+    "hashScope": "Exact repository blob bytes, independent of Windows checkout CRLF."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/stairmaster/2026-10-19-illustration-polish",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/stairmaster/2026-10-19-illustration-polish/stairmaster-native-polish.zip",
+      "sha256": "fd07d551b68c6312528b7a4c9fa7c89274d65e08d2093bfb85ab9e54b6be3bc0",
+      "bytes": 10768899
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-17/stairmaster.json",
+    "method": "Exact native original drawings plus sparse editable colour/equipment pixels; alpha-only stray-mark cleanup for prepared cards. Portable source layers and deterministic lossless exports independently re-executed byte-for-byte.",
+    "reproductionScope": "Same-layer composition and export reproduction; no independent anatomy/physics certification.",
+    "newImageGenerationCalls": 0,
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-illustration-polish/review.json"
+}

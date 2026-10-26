@@ -33,7 +33,12 @@
 
 import { useMemo } from "react";
 import type { ProgramState } from "@/features/program/programTypes";
-import { localDateString } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import type { ClaimState, SavedRunLike } from "@/lib/scheduledRunCompletion";
 import type { RunWindow, SavedRun } from "@/lib/savedRuns";
 import { claimableRuns, claimMapFor, type SavedRunDoc } from "@/lib/runClaims";
@@ -68,8 +73,8 @@ interface UseClaimMapResult {
   /** Saved runs that don't claim any runDay slot. Keyed by date for
    *  Q5 extras display in RunWeekStrip / DayPeekCard. */
   unclaimedByDate: Map<string, SavedRunDoc[]>;
-  /** Every saved run, as read: the week's counts (`trainingWeek`) apply
-   *  their own rule to them. */
+  /** The saved runs from `claimWindowStart` on, as read: the week's counts
+   *  (`trainingWeek`) apply their own rule to them. */
   runs: readonly SavedRun[];
   /** Local YYYY-MM-DD used to compute the claim map. Callers
    *  watching midnight rollover key off this. */
@@ -77,8 +82,28 @@ interface UseClaimMapResult {
   loading: boolean;
 }
 
-/** Every saved run: a planned day can be claimed by any run on its date. */
-const ALL_RUNS: RunWindow = { all: true };
+/**
+ * The runs that can matter here. A planned day is claimed only by a run on
+ * its date or the day after (computeClaims), and the week's counts read
+ * this week (trainingWeek), so nothing before the earlier of this week's
+ * first day and the earliest planned day can claim or count. Reading every
+ * run the account has, each with its route, on every Home visit, read
+ * years of them for nothing.
+ */
+export function claimWindowStart(
+  today: string,
+  runDays: readonly { date?: string }[]
+): string {
+  let since = localWeekKey(parseLocalDate(today));
+  for (const day of runDays) {
+    if (typeof day.date === "string" && day.date.length === 10)
+      if (day.date < since) since = day.date;
+  }
+  // A day early: the window is read by completion time from local
+  // midnight, and a run recorded east of here completed before this
+  // zone's midnight of the day it belongs to.
+  return localDateString(addLocalDays(parseLocalDate(since), -1));
+}
 
 /**
  * @param dateAnchor optional override for "today" (test fixtures,
@@ -94,14 +119,15 @@ export function useClaimMapForProgram(
      slots, not even for the render before the new listener lands), and
      with runs saved on this phone but not yet synced, so an offline run
      fills its day on Home at once. */
-  const { runs, loading } = useSavedRuns(ALL_RUNS);
+  const today = dateAnchor ?? localDateString(new Date());
+  const runDays = programState?.runDays ?? [];
+  const since = claimWindowStart(today, runDays);
+  const window = useMemo<RunWindow>(() => ({ since }), [since]);
+  const { runs, loading } = useSavedRuns(window);
   /* Only runs that count fill a planned day or show as an extra
      (`claimableRuns`). */
   const savedRuns = useMemo(() => claimableRuns(runs), [runs]);
 
-  const today = dateAnchor ?? localDateString(new Date());
-
-  const runDays = programState?.runDays ?? [];
   const manualCompletions = programState?.manualCompletions ?? {};
 
   // Stable-by-content fingerprint catches Firestore's new-array-ref

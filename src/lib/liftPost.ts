@@ -16,7 +16,7 @@
  */
 import { EXERCISES } from "@/lib/exercises";
 import { getFormArtCutout, type FormArtCutout } from "@/lib/formArtCutouts";
-import { formatExerciseSummary } from "@/lib/exerciseSummary";
+import { formatExerciseSummary, NO_SETS_SUMMARY } from "@/lib/exerciseSummary";
 import { workoutTonnageKg, type WorkoutExercise } from "@/lib/savedWorkouts";
 import type { ActivityPreview, ShareDecision } from "@/lib/shareComposer";
 import type { ActivityPost, PostedExercise } from "@/lib/activityPost";
@@ -135,8 +135,66 @@ const isNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
 /**
- * The exercise rows of any lift post in the feed. Posts carry one of three
- * shapes, and the card draws all of them:
+ * One stored row, read: the row to draw, "not done" for an exercise the
+ * post lists with no set done, or null for an item that is not a row.
+ */
+function readRow(
+  item: unknown,
+  unit: LiftUnit
+): LiftPostRow | "not done" | null {
+  if (!item || typeof item !== "object") return null;
+  const ex = item as Record<string, unknown>;
+  const name = typeof ex.name === "string" ? ex.name : "Exercise";
+  const structured =
+    isNumber(ex.setCount) &&
+    isNumber(ex.targetReps) &&
+    isNumber(ex.targetWeightKg)
+      ? {
+          setCount: ex.setCount,
+          targetReps: ex.targetReps,
+          targetWeightKg: ex.targetWeightKg,
+        }
+      : isNumber(ex.sets) && isNumber(ex.reps) && isNumber(ex.weightKg)
+        ? {
+            setCount: ex.sets,
+            targetReps: ex.reps,
+            targetWeightKg: ex.weightKg,
+          }
+        : null;
+  if (!structured) {
+    const summary = typeof ex.summary === "string" ? ex.summary : "";
+    if (summary.trim() === NO_SETS_SUMMARY) return "not done";
+    return { name, summary, structured: null };
+  }
+  if (Math.round(structured.setCount) <= 0) return "not done";
+  // Which lift it is decides "BW" and seconds. Older posts carry no id,
+  // and the catalogue names the lift.
+  const exerciseId =
+    typeof ex.exerciseId === "string" && ex.exerciseId
+      ? ex.exerciseId
+      : EXERCISES.find((e) => e.name === name)?.id;
+  return {
+    name,
+    summary: formatExerciseSummary({ ...structured, exerciseId }, unit),
+    structured,
+  };
+}
+
+/**
+ * Whether a stored row is an exercise with a set done. Posts written now
+ * list only those (`postedExercises`); posts shared from `/workout/:id`
+ * before this module list every exercise in the workout, a skipped one
+ * with no sets among them. A row that says nothing either way (a name
+ * alone) counts as done.
+ */
+export function liftPostRowDone(item: unknown): boolean {
+  return readRow(item, "kg") !== "not done";
+}
+
+/**
+ * The exercise rows of any lift post in the feed, leaving out an exercise
+ * with no set done. Posts carry one of three shapes, and the card draws
+ * all of them:
  *
  * - `postedExercises`' (every post written now, and the finish screens'
  *   before it): the figures and a summary.
@@ -154,53 +212,47 @@ export function liftPostRows(
   if (!Array.isArray(raw)) return [];
   const rows: LiftPostRow[] = [];
   for (const item of raw) {
-    if (!item || typeof item !== "object") continue;
-    const ex = item as Record<string, unknown>;
-    const name = typeof ex.name === "string" ? ex.name : "Exercise";
-    const structured =
-      isNumber(ex.setCount) &&
-      isNumber(ex.targetReps) &&
-      isNumber(ex.targetWeightKg)
-        ? {
-            setCount: ex.setCount,
-            targetReps: ex.targetReps,
-            targetWeightKg: ex.targetWeightKg,
-          }
-        : isNumber(ex.sets) && isNumber(ex.reps) && isNumber(ex.weightKg)
-          ? {
-              setCount: ex.sets,
-              targetReps: ex.reps,
-              targetWeightKg: ex.weightKg,
-            }
-          : null;
-    if (!structured) {
-      rows.push({
-        name,
-        summary: typeof ex.summary === "string" ? ex.summary : "",
-        structured: null,
-      });
-      continue;
-    }
-    // Which lift it is decides "BW" and seconds. Older posts carry no id,
-    // and the catalogue names the lift.
-    const exerciseId =
-      typeof ex.exerciseId === "string" && ex.exerciseId
-        ? ex.exerciseId
-        : EXERCISES.find((e) => e.name === name)?.id;
-    rows.push({
-      name,
-      summary: formatExerciseSummary({ ...structured, exerciseId }, unit),
-      structured,
-    });
+    const row = readRow(item, unit);
+    if (row && row !== "not done") rows.push(row);
   }
   return rows;
 }
 
 /**
+ * How many exercises a lift post says were done, which is how many rows
+ * its own page lists: a post whose rows carry figures holds every
+ * exercise, so it is those rows. The oldest posts stored three rows with
+ * no figures and the whole count, so theirs is the stored count, less any
+ * row for an exercise with no set done, and never fewer than the rows.
+ */
+export function liftPostExerciseCount(post: {
+  exercises?: unknown;
+  exerciseCount?: unknown;
+}): number {
+  let drawn = 0;
+  let notDone = 0;
+  let wholeList = false;
+  for (const item of Array.isArray(post.exercises) ? post.exercises : []) {
+    const row = readRow(item, "kg");
+    if (row === "not done") notDone += 1;
+    else if (row) {
+      drawn += 1;
+      if (row.structured) wholeList = true;
+    }
+  }
+  if (wholeList) return drawn;
+  const stored = isNumber(post.exerciseCount)
+    ? Math.max(0, Math.round(post.exerciseCount))
+    : 0;
+  return Math.max(drawn, stored - notDone);
+}
+
+/**
  * The drawing a lift post leads with: the first exercise done that has a
  * card cut-out, which the post's own order makes the session's lead lift.
- * Older posts carry no ids, and the catalogue names the lift. Null when
- * no exercise on the post has a drawing.
+ * Older posts carry no ids, and the catalogue names the lift; they can
+ * list an exercise with no set done, which is passed over. Null when no
+ * exercise on the post has a drawing.
  */
 export function liftPostLeadArt(raw: unknown): FormArtCutout | null {
   const id = liftPostLeadExerciseId(raw);
@@ -212,7 +264,7 @@ export function liftPostLeadArt(raw: unknown): FormArtCutout | null {
 export function liftPostLeadExerciseId(raw: unknown): string | null {
   if (!Array.isArray(raw)) return null;
   for (const item of raw) {
-    if (!item || typeof item !== "object") continue;
+    if (!item || typeof item !== "object" || !liftPostRowDone(item)) continue;
     const ex = item as Record<string, unknown>;
     const id =
       typeof ex.exerciseId === "string" && ex.exerciseId

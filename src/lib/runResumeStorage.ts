@@ -349,6 +349,40 @@ export function readStoredRun(
   };
 }
 
+/** What a screen outside the run needs to offer it back: the run without
+ *  its trail. */
+export type StoredRunSummary = Omit<StoredRun, "points" | "playerCheckpoint">;
+
+/**
+ * The stored run, without its trail, for the screens that offer it back
+ * (Home's and Train's In progress strip). Reads the small META record
+ * only, so a marathon's chunks are never parsed off the run page, and
+ * changes nothing: the run page's own read (`readStoredRun`) still
+ * validates the trail and discards a broken one when the run is opened.
+ */
+export function readStoredRunSummary(
+  uid: string,
+  now: number = Date.now()
+): StoredRunSummary | null {
+  if (!uid) return null;
+  const meta = readMetaRaw(uid);
+  if (!meta || meta.v !== RUN_RESUME_SCHEMA_VERSION) return null;
+  if (now - meta.lastWriteAt > RUN_RESUME_MAX_AGE_MS) return null;
+  const manualDistanceDraft = parseManualDistanceDraft(
+    meta.manualDistanceDraft
+  );
+  return {
+    v: meta.v,
+    config: meta.config,
+    startedAt: meta.startedAt,
+    accumulatedSeconds: meta.accumulatedSeconds,
+    isRunning: meta.isRunning,
+    lastWriteAt: meta.lastWriteAt,
+    phase: meta.phase,
+    ...(manualDistanceDraft ? { manualDistanceDraft } : {}),
+  };
+}
+
 /**
  * Best-effort removal of the legacy un-scoped key. Idempotent; never
  * throws. The legacy key has no `:uid` suffix so it can never collide

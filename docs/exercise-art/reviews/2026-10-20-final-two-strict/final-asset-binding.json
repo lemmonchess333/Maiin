@@ -1,0 +1,90 @@
+[
+  {
+    "id": "swimming",
+    "status": "approved",
+    "version": "anatomy-v3-2026-10-20-swim-fixed-poolside-v1",
+    "frames": [
+      {
+        "path": "form-frames/swimming/1.webp",
+        "sha256": "ddea3ccdcbffc4b5da60ed0b00055c1575fb80756f496377ed53dc542e09b12d"
+      },
+      {
+        "path": "form-frames/swimming/2.webp",
+        "sha256": "12dc95ebf1cb96a5185c08fa71e02007668669615d83610fe1c3f2580ee0d28e"
+      },
+      {
+        "path": "form-frames/swimming/3.webp",
+        "sha256": "19e08456cb4fd7b958b4f68aeaa621eb45aaa9144e745d2aecafceed6a0f9a37"
+      },
+      {
+        "path": "form-frames/swimming/4.webp",
+        "sha256": "da30a0c84df06d8350d92cee4d392d2a17550eb8a7a7c4b355a6ceb37871bd5d"
+      },
+      {
+        "path": "form-frames/swimming/5.webp",
+        "sha256": "1cbeec91bda7005b484ee5b040431dcb4e4ba3d5eb0b645291f79666afe5a1b7"
+      },
+      {
+        "path": "form-frames/swimming/6.webp",
+        "sha256": "ae845c638287cd07be7c997705dc6c7bc67fbfdb5362fc06c75010ffc46b6217"
+      }
+    ],
+    "reference": "form-frames/swimming/2.webp",
+    "card": {
+      "src": "form-art/swimming.webp",
+      "width": 480,
+      "height": 262,
+      "keyed": false,
+      "source": "form-frames/swimming/2.webp",
+      "sourceSha256": "12dc95ebf1cb96a5185c08fa71e02007668669615d83610fe1c3f2580ee0d28e",
+      "sha256": "ee5b0a2d710c6f8678525aa194bb0f716bf9a345a72237cf450084c132fb7d01"
+    },
+    "preparedSourceSha256": "f8d29e4d8cc11e2e5a4d736231fd12f75bc514a3180b9e254623592e6738a31d",
+    "normalCardReproductionExact": true,
+    "actualRegisteredCardSizes": ["sm", "md", "lg"]
+  },
+  {
+    "id": "turkish-get-up",
+    "status": "approved",
+    "version": "anatomy-v3-2026-10-20-tgu-fixed-mat-rigid-bell-v1",
+    "frames": [
+      {
+        "path": "form-frames/turkish-get-up/1.webp",
+        "sha256": "49eb3272aca92b4bf760fc88edd62c0dfaf504db6c6c7823991e22b60c8b84c8"
+      },
+      {
+        "path": "form-frames/turkish-get-up/2.webp",
+        "sha256": "9fc1e694eb08c7c0214731e9f5489e8ec048985c6b977de9feb82e47b6ac68a1"
+      },
+      {
+        "path": "form-frames/turkish-get-up/3.webp",
+        "sha256": "8b73cfcc69ea94713322076822758a945039c2209c9201622e10f8e18de0ad8b"
+      },
+      {
+        "path": "form-frames/turkish-get-up/4.webp",
+        "sha256": "daf883d61517fba8c876fc504a4f346172ac5c3537520af3b9e51bddd9c80452"
+      },
+      {
+        "path": "form-frames/turkish-get-up/5.webp",
+        "sha256": "23026d00607a2aad0ad45a8f214c0ae0904600f2c4bb9e6870c10539438a2dd5"
+      },
+      {
+        "path": "form-frames/turkish-get-up/6.webp",
+        "sha256": "d904cc714188b802becf191dfacbe52b34a091bb4b6fb3e468dec264195f6851"
+      }
+    ],
+    "reference": "form-frames/turkish-get-up/5.webp",
+    "card": {
+      "src": "form-art/turkish-get-up.webp",
+      "width": 320,
+      "height": 480,
+      "keyed": false,
+      "source": "form-frames/turkish-get-up/5.webp",
+      "sourceSha256": "23026d00607a2aad0ad45a8f214c0ae0904600f2c4bb9e6870c10539438a2dd5",
+      "sha256": "b446e8c9f9d9e58a6cf528bc60690a57ec25be1c4df034f308aa1db6b6631682"
+    },
+    "preparedSourceSha256": "fdb59bd4a82f5ceb64de3be5eae5bf1833b04cd4923f2a10c801fe5a2bb9dd46",
+    "normalCardReproductionExact": true,
+    "actualRegisteredCardSizes": ["sm", "md", "lg"]
+  }
+]

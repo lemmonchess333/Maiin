@@ -47,6 +47,9 @@ interface QueuedWrite {
   durable?: boolean;
   workoutCompletion?: { programme?: ProgrammeCompletionContext };
   failed?: boolean;
+  /** The last failure was one no retry can change (`refusedForGood`), so
+   *  the person may discard it. */
+  refused?: boolean;
 }
 
 const queueListeners = new Set<() => void>();
@@ -243,8 +246,10 @@ export function queueWorkoutCompletion(
       item.uid === uid && item.docId === workoutId && item.workoutCompletion
   );
   const id = existing?.id ?? crypto.randomUUID();
-  if (existing) existing.failed = false;
-  else
+  if (existing) {
+    existing.failed = false;
+    existing.refused = false;
+  } else
     queue.push({
       id,
       uid,
@@ -317,6 +322,17 @@ export function getFailedMealSaveCount(uid: string): number {
 }
 
 /**
+ * A refusal no retry can change: the rules turned the write down
+ * (`permission-denied`), or Firestore cannot store what was sent
+ * (`invalid-argument`). Anything else (offline, a timeout, a token being
+ * refreshed, a contended transaction) can land on a later flush.
+ */
+function refusedForGood(e: unknown): boolean {
+  const code = (e as { code?: unknown } | null)?.code;
+  return code === "permission-denied" || code === "invalid-argument";
+}
+
+/**
  * Serialises flushes. `AppRoutes` calls `flushQueue` on BOTH the auth-user
  * change and the `online` event, and signing in while already online fires
  * the two within a tick of each other — so two flushes overlapping is the
@@ -344,17 +360,88 @@ export function flushQueue(db: Firestore, uid: string): Promise<number> {
   return result;
 }
 
+/** The documents whose save this account's server refused for good. */
+function refusedDocuments(queue: QueuedWrite[], uid: string): Set<string> {
+  return new Set(
+    queue
+      .filter(
+        (item) =>
+          item.uid === uid && item.durable && item.failed && item.refused
+      )
+      .map((item) => `${item.collectionPath}/${item.docId}`)
+  );
+}
+
+/** Sessions and meals that will not save however often they are retried:
+ *  the ones the person can discard. */
+export function getRefusedSaveCount(uid: string): number {
+  return refusedDocuments(getQueue(), uid).size;
+}
+
+/**
+ * Remove what was refused for good, with every change queued behind it to
+ * the same document: applied on its own, a meal's Undo would create a meal
+ * that is only a deletion stamp. A discarded workout also retires its
+ * finished-session draft, which would otherwise wait for a save that
+ * cannot come. Chained behind any flush in flight, so the two never see
+ * different queues. Resolves to the number of records discarded.
+ */
+export function discardRefusedSaves(uid: string): Promise<number> {
+  const run = async () => {
+    const queue = getQueue();
+    const refused = refusedDocuments(queue, uid);
+    if (refused.size === 0) return 0;
+    const discarded = queue.filter(
+      (item) =>
+        item.uid === uid && refused.has(`${item.collectionPath}/${item.docId}`)
+    );
+    if (
+      !writeJson(
+        QUEUE_KEY,
+        queue.filter((item) => !discarded.includes(item))
+      )
+    )
+      throw new Error("Couldn't update this phone. Try again.");
+    notifyQueue();
+    const completions = discarded
+      .filter((item) => item.workoutCompletion)
+      .map(
+        (item) => (decode(item.data) as { completionId?: unknown }).completionId
+      )
+      .filter((id): id is string => typeof id === "string");
+    if (completions.length > 0) {
+      const { clearCompletedWorkoutDraft } =
+        await import("@/hooks/useWorkoutDraft");
+      for (const id of completions) clearCompletedWorkoutDraft(uid, id);
+    }
+    return refused.size;
+  };
+  const result = flushChain.then(run, run);
+  flushChain = result.catch(() => {});
+  return result;
+}
+
 async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
   const queue = getQueue();
   if (queue.length === 0) return 0;
 
   let flushed = 0;
   const landed = new Set<string>();
+  const dropped = new Set<string>();
+  // Documents with a save the rules refused for good still queued against
+  // them. A later write to the same document waits behind it (a meal's
+  // Undo behind its create, a session's notes behind its save); a write to
+  // any other document goes ahead. Stopping at the refusal, as every
+  // failure once did, left everything queued behind it unsynced, on every
+  // flush, for good.
+  const refused = new Set<string>();
   const { auth } = await import("@/lib/firebase");
 
   for (const item of queue) {
     // Not our user's item — leave it for the next time that user signs in.
     if (item.uid !== uid) continue;
+    const target = item.docId ? `${item.collectionPath}/${item.docId}` : null;
+    if (target && refused.has(target)) continue;
     try {
       // A queued flush can start after sign-out, or resume after another
       // account signs in while an earlier write awaits acknowledgement.
@@ -408,13 +495,22 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
         "network",
         { collectionPath: item.collectionPath, docId: item.docId }
       );
-      // Preserve create → undo ordering across a failed reconnect.
+      const forGood = refusedForGood(e);
       if (item.durable) {
+        // Kept, and shown as needing attention: the person's record.
         const latest = getQueue().map((entry) =>
-          entry.id === item.id ? { ...entry, failed: true } : entry
+          entry.id === item.id
+            ? { ...entry, failed: true, refused: forGood }
+            : entry
         );
         if (writeJson(QUEUE_KEY, latest)) notifyQueue();
-        break;
+        // Preserve create → undo ordering across a failed reconnect: a
+        // write that may land later holds back everything behind it.
+        if (!forGood) break;
+        if (target) refused.add(target);
+      } else if (forGood) {
+        // A best-effort write no flush can land, retried on every one.
+        dropped.add(item.id);
       }
     }
   }
@@ -435,8 +531,10 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
   // safe: items that FAILED, items belonging to another uid, and items
   // queued mid-flush were all never removed to begin with, so they need
   // no explicit preservation and cannot be resurrected by a stale copy.
-  if (landed.size > 0) {
-    saveQueue(getQueue().filter((item) => !landed.has(item.id)));
+  if (landed.size > 0 || dropped.size > 0) {
+    saveQueue(
+      getQueue().filter((item) => !landed.has(item.id) && !dropped.has(item.id))
+    );
   }
   return flushed;
 }
@@ -466,6 +564,9 @@ export async function safeSave(
       await setDoc(doc(db, collectionPath, docId), clean);
       return;
     } catch (e) {
+      // Queued, a refusal would be retried on every flush and reported to
+      // the caller as saved.
+      if (refusedForGood(e)) throw e;
       logger.error("[OfflineQueue] safeSave failed, queuing offline", e);
     }
   }
@@ -485,6 +586,8 @@ export async function safeMerge(
       await setDoc(doc(db, collectionPath, docId), clean, { merge: true });
       return;
     } catch (e) {
+      // As in safeSave: the caller hears a refusal rather than "saved".
+      if (refusedForGood(e)) throw e;
       logger.error("[OfflineQueue] safeMerge failed, queuing offline", e);
     }
   }

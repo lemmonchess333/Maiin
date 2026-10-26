@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/Button";
+import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
 import { cardClasses } from "@/components/ui/cardClasses";
 import { cn } from "@/lib/utils";
 
@@ -99,7 +100,7 @@ export default function CompactRestTimer({
       <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
         <Button
           variant="secondary"
-          className="whitespace-nowrap"
+          className={cn("whitespace-nowrap", SECONDARY_ON_CARD_EDGE)}
           aria-label="Add 15 seconds of rest"
           onClick={() => onExtend(15)}
         >

@@ -1,0 +1,230 @@
+{
+  "id": "handstand-push-ups",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Stack",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Stack 1/6",
+          "id": "handstand-push-ups",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Brace",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "handstand-push-ups",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Lower",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Lower 3/6",
+          "id": "handstand-push-ups",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Touch lightly",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Touch lightly 4/6",
+          "id": "handstand-push-ups",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Press",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Press 5/6",
+          "id": "handstand-push-ups",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Reset",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "handstand-push-ups",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2960,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Handstand Push-Ups, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5124,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Handstand Push-Ups, Press",
+            "decoded": true,
+            "height": 1504,
+            "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp",
+            "width": 688
+          }
+        ],
+        "caption": "Press 5/6",
+        "id": "handstand-push-ups",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / handstand-push-ups\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nHandstand Push-Ups\nShoulders\nBodyweight\n\nPRESS 5/6\n\nPause\nNormal\nPRIMARY\nShoulders\nSECONDARY\nTriceps, Core\n\nInstructions\n\nPreparation: Establish a stable wall-supported handstand before starting. Place both palms firmly on the floor and keep heels supported. Keep your neck neutral and control the descent.\n\n1\n\nStraight arms; keep heels against the wall.\n\n2\n\nBrace your torso; keep legs together.\n\n3\n\nBend elbows; lower under control.\n\n4\n\nTouch lightly; keep support through your palms.\n\n5\n\nPress through both palms to straight arms.\n\n6\n\nReset with head neutral and heels supported.\n\nWatch out\n\nPress through both palms; keep control as your crown approaches the floor.\n\nCOMMON MISTAKES\n\nDropping onto your head.\nLosing torso control or kicking to press.\nLetting the hands slide.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2960,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Handstand Push-Ups, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5124,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6645,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7845,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10323,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11523,\n    \"alt\": \"Handstand Push-Ups, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12723,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13922,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15121,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16320,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Stack",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Stack 1/6",
+          "id": "handstand-push-ups",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Brace",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "handstand-push-ups",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Lower",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Lower 3/6",
+          "id": "handstand-push-ups",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Touch lightly",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Touch lightly 4/6",
+          "id": "handstand-push-ups",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Press",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Press 5/6",
+          "id": "handstand-push-ups",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Handstand Push-Ups, Reset",
+              "decoded": true,
+              "height": 1504,
+              "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp",
+              "width": 688
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "handstand-push-ups",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2960,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Handstand Push-Ups, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5124,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6645,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7845,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10323,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11523,\n    \"alt\": \"Handstand Push-Ups, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12723,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13922,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15121,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16320,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17603,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18481,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19045,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19602,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 20162,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 20725,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21366,\n    \"alt\": \"Handstand Push-Ups, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22969,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Handstand Push-Ups, Brace",
+            "decoded": true,
+            "height": 1504,
+            "src": "/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp",
+            "width": 688
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "handstand-push-ups",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / handstand-push-ups\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nHandstand Push-Ups\nShoulders\nBodyweight\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nShoulders\nSECONDARY\nTriceps, Core\n\nInstructions\n\nPreparation: Establish a stable wall-supported handstand before starting. Place both palms firmly on the floor and keep heels supported. Keep your neck neutral and control the descent.\n\n1\n\nStraight arms; keep heels against the wall.\n\n2\n\nBrace your torso; keep legs together.\n\n3\n\nBend elbows; lower under control.\n\n4\n\nTouch lightly; keep support through your palms.\n\n5\n\nPress through both palms to straight arms.\n\n6\n\nReset with head neutral and heels supported.\n\nWatch out\n\nPress through both palms; keep control as your crown approaches the floor.\n\nCOMMON MISTAKES\n\nDropping onto your head.\nLosing torso control or kicking to press.\nLetting the hands slide.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2960,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Handstand Push-Ups, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5124,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6645,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7845,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10323,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11523,\n    \"alt\": \"Handstand Push-Ups, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12723,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13922,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15121,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16320,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17603,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18481,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19045,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19602,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 20162,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 20725,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21366,\n    \"alt\": \"Handstand Push-Ups, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22969,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24481,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25681,\n    \"alt\": \"Handstand Push-Ups, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 26884,\n    \"alt\": \"Handstand Push-Ups, Touch lightly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28166,\n    \"alt\": \"Handstand Push-Ups, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 29361,\n    \"alt\": \"Handstand Push-Ups, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 30561,\n    \"alt\": \"Handstand Push-Ups, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 31761,\n    \"alt\": \"Handstand Push-Ups, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/handstand-push-ups/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

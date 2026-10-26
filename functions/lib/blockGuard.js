@@ -69,20 +69,12 @@ async function isBlockedBetween(db, ownerUid, actorUid) {
   }
 }
 
-/**
- * The HttpsError a blocked interaction should raise.
- *
- * Deliberately says "not available" rather than "you are blocked": confirming
- * a block to the blocked party tells them something the blocker did not
- * choose to disclose, and invites them around it. `permission-denied` is the
- * honest code — the caller is authenticated and the request is well-formed;
- * they simply may not do this.
- */
-function blockedError(functions) {
-  return new functions.https.HttpsError(
-    "permission-denied",
-    "This content isn't available."
-  );
-}
+/* A blocked interaction is refused exactly as one on content the caller
+   cannot see: the same code and the same sentence, which each callable
+   already has for that case. Confirming a block to the blocked party tells
+   them something the blocker did not choose to disclose, and invites them
+   around it; and a refusal of its own, even a vague one, does both, because
+   it differs from the one a private or missing activity gets.
+   blockRefusalParity.test.js drives each callable both ways. */
 
-module.exports = { isBlockedBetween, blockedError };
+module.exports = { isBlockedBetween };

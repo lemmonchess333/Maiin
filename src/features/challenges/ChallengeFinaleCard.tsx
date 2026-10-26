@@ -63,14 +63,22 @@ export function ChallengeFinaleCard({
       }}
     >
       <div className="flex items-start gap-3">
+        {/* The badge carries the tier's metal as a ring round a trophy in
+            the text colour, as the live card's badge does; the words stay
+            in the text colours. Gold and silver as text or as an icon on
+            their own tint all but vanished on a light card. */}
         <div
-          className="size-10 rounded-xl flex items-center justify-center shrink-0"
-          style={{ backgroundColor: `${accent}20`, color: accent }}
+          className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${tier ? "bg-card text-foreground" : "bg-primary/10 text-lifting-strong"}`}
+          style={
+            tier
+              ? { boxShadow: `inset 0 0 0 2px ${TIER_COLORS[tier]}` }
+              : undefined
+          }
         >
           <Trophy size={18} />
         </div>
         <div className="flex-1 min-w-0">
-          <SectionLabel style={{ color: accent }}>Challenge ended</SectionLabel>
+          <SectionLabel>Challenge ended</SectionLabel>
           <p className="text-sm font-semibold text-foreground">
             {challenge.name}
           </p>
@@ -78,7 +86,7 @@ export function ChallengeFinaleCard({
             {tier ? (
               <>
                 You finished with{" "}
-                <span className="font-semibold" style={{ color: accent }}>
+                <span className="font-semibold text-foreground">
                   {TIER_LABELS[tier]}
                 </span>{" "}
                 —{" "}
@@ -110,7 +118,7 @@ export function ChallengeFinaleCard({
               <>
                 {" · "}
                 <span className="font-mono tabular-nums">
-                  #{rankIdx + 1}
+                  #{leaderboard[rankIdx].rank ?? rankIdx + 1}
                 </span>{" "}
                 of {challenge.participantCount}
               </>

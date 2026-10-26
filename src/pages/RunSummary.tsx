@@ -30,12 +30,8 @@ import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { logger } from "../lib/logger";
-import {
-  calculatePace,
-  detectBestEfforts,
-  toGPX,
-  estimateRunCalories,
-} from "../lib/gps";
+import { appErrorMessage } from "@/lib/callableErrors";
+import { detectBestEfforts, toGPX, estimateRunCalories } from "../lib/gps";
 import type { SessionShareAction } from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
@@ -51,7 +47,7 @@ import { Button } from "@/components/ui/Button";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
-import { fetchSavedRuns } from "../lib/savedRuns";
+import { fetchSavedRuns, type SavedRun } from "../lib/savedRuns";
 import PaceInsightCard from "../components/run/PaceInsightCard";
 import {
   usePaceInsightFromRuns,
@@ -70,6 +66,7 @@ import type { WorkPortion } from "../hooks/useSessionPlayer";
 import { paceMinSec, distanceLabel2, distanceValue } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import {
   distanceIn,
   type DistanceUnit,
@@ -149,13 +146,9 @@ function RetryBanner({
           {error || "We couldn't save this run."}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-running-fill"
-      >
+      <Button variant="sport" className="shrink-0" onClick={onRetry}>
         Retry
-      </button>
+      </Button>
     </div>
   );
 }
@@ -258,12 +251,12 @@ function InvalidRunReview({
   const heading = isSaved
     ? "Saved"
     : reason === "too-fast"
-      ? "Run looks invalid"
+      ? "Check the distance"
       : "Run too short";
   const bodyCopy = isSaved
     ? null
     : reason === "too-fast"
-      ? `We recorded ${formattedDuration} and ${formattedDistance}. The implied pace looks unrealistic — did you mean a different distance?`
+      ? `We recorded ${formattedDuration} and ${formattedDistance}, which works out faster than a sprint. Was the distance different?`
       : outdoorGps
         ? `We recorded ${formattedDuration} and ${formattedDistance}. This may have happened before GPS locked.`
         : `We recorded ${formattedDuration} and ${formattedDistance}. This is below the minimum distance or duration for a normal summary.`;
@@ -333,23 +326,19 @@ function InvalidRunReview({
       {(showSaveAnyway || showDiscard) && (
         <div className="space-y-2 pt-1">
           {showSaveAnyway && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              fullWidth
               onClick={onSave}
               disabled={saveStatus === "saving"}
-              className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90 bg-muted text-foreground border border-border"
             >
               {saveStatus === "saving" ? "Saving…" : "Save anyway"}
-            </button>
+            </Button>
           )}
           {showDiscard && (
-            <button
-              type="button"
-              onClick={onDiscard}
-              className="w-full py-2.5 rounded-xl text-sm font-medium bg-destructive/10 text-destructive-strong border border-destructive/20"
-            >
+            <Button variant="destructive-tinted" fullWidth onClick={onDiscard}>
               Discard
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -384,6 +373,8 @@ export default function RunSummary() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
+  // The basemap follows the theme on screen, not the profile field.
+  const darkTheme = useIsDarkTheme();
   const receipt = state?.savedRun?.uid === user?.uid ? state?.savedRun : null;
   const runOwnerRef = useRef(user?.uid);
   const {
@@ -500,10 +491,6 @@ export default function RunSummary() {
     if (!active || active === document.body)
       doneRef.current?.focus({ preventScroll: true });
   }, [doneShown]);
-  const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
-  // The historical run list, reused for BOTH the pace-trend badge and the
-  // Pro pace-insight card — one query, two consumers (no extra Firestore read).
-  const [paceHistory, setPaceHistory] = useState<PaceInsightRun[]>([]);
   const [notes, setNotes] = useState(receipt?.notes ?? "");
   /* RUN-03: optional one-tap post-run effort signal ("how did it feel vs
      what you expected?"). Structured so the engine can later distinguish
@@ -526,65 +513,66 @@ export default function RunSummary() {
     number | null
   >(null);
 
-  // Fetch past runs ONCE — feeds both the pace-trend badge and the Pro
-  // pace-insight card. Hardened with a cancelled flag + try/catch/finally so
-  // an unmount mid-flight or a failed read can't setState on a dead component
-  // or leave the insight loading forever. Depends on user?.uid (not the whole
-  // user object) so it doesn't re-query on unrelated identity changes.
+  // Fetch past runs ONCE per account — feeds both the pace-trend badge and
+  // the Pro pace-insight card, one query for two consumers. Hardened with a
+  // cancelled flag + try/catch so an unmount mid-flight or a failed read
+  // can't setState on a dead component or leave the insight loading
+  // forever. The run on this screen is handed to both separately (and
+  // dropped from the history by id), so the read does not follow it.
+  // Following it would read every run the account has, routes and all,
+  // again on every corrected distance and on the save.
   const uid = user?.uid;
-  /* The inputs the history above was last read for; loading is derived
-     from it. The read restarts whenever the uid, the run or its corrected
-     distance changes, and the insight reads as loading from that same
-     render until the read for THESE inputs settles. */
-  const [paceHistoryFor, setPaceHistoryFor] = useState<{
+  const hasRun = state != null;
+  const [historyRead, setHistoryRead] = useState<{
     uid: string;
-    state: RunData;
-    editedDistanceMeters: number | null;
+    runs: SavedRun[];
   } | null>(null);
-  const paceHistoryLoading =
-    paceHistoryFor === null ||
-    paceHistoryFor.uid !== uid ||
-    paceHistoryFor.state !== state ||
-    paceHistoryFor.editedDistanceMeters !== editedDistanceMeters;
   useEffect(() => {
-    if (!uid || !state) return;
+    if (!uid || !hasRun) return;
     let cancelled = false;
     (async () => {
+      let runs: SavedRun[] = [];
       try {
         /* Saved runs carry their source and validity fields, so
            paceTrends can exclude treadmill / manual / invalid /
            savedAnyway records — a treadmill 2:38/km can't masquerade as
            a PR against historical outdoor runs. */
-        const allRuns = await fetchSavedRuns(uid, { all: true });
-        if (cancelled) return;
-        setPaceHistory(allRuns);
-        const currentRun = {
-          // Once saved, this run is in the history read above.
-          id: state.savedRun?.id,
-          distance: state.distance,
-          avgPace:
-            state.elapsed > 0 && state.distance > 0
-              ? (state.elapsed / state.distance) * 1000
-              : 0,
-          completedAt: new Date(),
-          activityType: state.runConfig?.activityType,
-          // A treadmill run (Pgm8) has no trend, whatever its type.
-          place: state.runConfig?.place,
-          templateId: runTemplateIdOf(state.runConfig?.planMetadata),
-        };
-        setPaceTrend(calculatePaceTrend(currentRun, allRuns));
+        runs = await fetchSavedRuns(uid, { all: true });
       } catch (err) {
         if (cancelled) return;
         logger.error("[RunSummary] pace-history load failed", err);
-        setPaceHistory([]);
-      } finally {
-        if (!cancelled) setPaceHistoryFor({ uid, state, editedDistanceMeters });
       }
+      if (!cancelled) setHistoryRead({ uid, runs });
     })();
     return () => {
       cancelled = true;
     };
-  }, [uid, state, editedDistanceMeters]);
+  }, [uid, hasRun]);
+  const paceHistory = useMemo<PaceInsightRun[]>(
+    () => (historyRead && historyRead.uid === uid ? historyRead.runs : []),
+    [historyRead, uid]
+  );
+  const paceHistoryLoading = !historyRead || historyRead.uid !== uid;
+  const paceTrend = useMemo<PaceTrendResult | null>(() => {
+    if (!state || !historyRead || historyRead.uid !== uid) return null;
+    return calculatePaceTrend(
+      {
+        // Once saved, this run is in the history read above.
+        id: state.savedRun?.id,
+        distance: state.distance,
+        avgPace:
+          state.elapsed > 0 && state.distance > 0
+            ? (state.elapsed / state.distance) * 1000
+            : 0,
+        completedAt: new Date(),
+        activityType: state.runConfig?.activityType,
+        // A treadmill run (Pgm8) has no trend, whatever its type.
+        place: state.runConfig?.place,
+        templateId: runTemplateIdOf(state.runConfig?.planMetadata),
+      },
+      historyRead.runs
+    );
+  }, [state, historyRead, uid]);
 
   // Pace insight (Pro) — reuse the already-fetched history. The just-saved run
   // is the candidate that can cross the threshold; dedupe it out of the
@@ -651,6 +639,8 @@ export default function RunSummary() {
     () => (state ? applyPrivacyZones(state.points, privacyZones) : []),
     [state, privacyZones]
   );
+  // Keep the run's clock independently of the coordinates privacy zones cut.
+  const startedAt = state?.points[0]?.timestamp;
 
   /* This run as the screen's two week lines count it, saved or not yet.
      One read of the week (`useWeekPulse`, counted by `trainingWeek`) feeds
@@ -664,7 +654,7 @@ export default function RunSummary() {
     return {
       id: savedRunId,
       // A run with no trace (entered by hand) is today's.
-      date: points[0] ? localDateString(new Date(points[0].timestamp)) : null,
+      date: startedAt ? localDateString(new Date(startedAt)) : null,
       distance: runDistance,
       duration: state.elapsed,
       isInvalid: type
@@ -676,7 +666,7 @@ export default function RunSummary() {
           }) !== null
         : false,
     };
-  }, [state, editedDistanceMeters, savedRunId, points]);
+  }, [state, editedDistanceMeters, savedRunId, startedAt]);
   const weekPulse = useWeekPulse(0, pendingWeekRun);
 
   // A redirect is an element, not a call made while rendering: React Router
@@ -702,18 +692,18 @@ export default function RunSummary() {
      touching each call site. */
   const distance = editedDistanceMeters ?? originalDistance;
   /* Mile laps are recomputed from the trace rather than converted — a mile
-     split is a different CUT of the run. Privacy-zone trimming happens
-     first, so the rows match the map the user is looking at. */
+     split is a different CUT of the run. They and the best efforts read
+     the full trace: privacy zones hide where the run went, not how far
+     or how fast it was, so only the map and the shared route are cut. */
   const { splits: displaySplits, lapUnit } = splitsForDisplay(
     unit,
-    points,
+    state.points,
     splits
   );
-  const avgPace = calculatePace(distance, elapsed);
   const calories = estimateRunCalories(distance, profile?.weightKg || 70);
   const avgPaceSeconds =
     elapsed > 0 && distance > 0 ? (elapsed / distance) * 1000 : 0;
-  const bestEfforts = detectBestEfforts(points, distance);
+  const bestEfforts = detectBestEfforts(state.points, distance);
 
   /* `distance` is metres throughout the run flow (useGPS.ts:118-120
      accumulates via Haversine in metres, RunSummary already converts
@@ -1012,11 +1002,11 @@ export default function RunSummary() {
         runId: savedRunId ?? runIdRef.current,
         alreadySaved: savedRunId !== null,
         run: {
+          startedAt,
           points: savedPoints,
           distance,
           elapsed,
           avgPaceSeconds,
-          avgPace,
           calories,
           elevationGain,
           splits,
@@ -1120,8 +1110,9 @@ export default function RunSummary() {
          the screen until they tap Done. */
     } catch (error) {
       logger.error("[RunSave] Failed:", error);
-      const message =
-        error instanceof Error ? error.message : "Failed to save run";
+      // The privacy-zone and storage sentences are the app's own; an
+      // SDK error's text is not copy.
+      const message = appErrorMessage(error, "Failed to save run");
       setSaveStatus("error");
       setSaveError(message);
       /* Toast still fires as supplementary feedback for users who
@@ -1285,7 +1276,7 @@ export default function RunSummary() {
                   height="h-64"
                   paceColored={avgPaceSeconds > 0}
                   avgPaceSecPerKm={avgPaceSeconds}
-                  darkMode={!!profile?.darkMode}
+                  darkMode={darkTheme}
                 />
               </div>
               {avgPaceSeconds > 0 && <PaceLegend className="px-1" />}
@@ -1335,7 +1326,7 @@ export default function RunSummary() {
                 the same time and never wired, so only lifters got it —
                 an odd gap in an app whose identity is hybrid. Lives in
                 the VALID branch, so a sub-threshold GPS glitch never
-                claims "4 Great Wall sections". */}
+                claims "40 Olympic pool lengths". */}
             {funComparison && (
               <p className="mt-2 text-sm text-muted-foreground">
                 {funComparison}
@@ -1784,7 +1775,7 @@ export default function RunSummary() {
               placeholder="Any notes about this run..."
               aria-label="Run notes"
               rows={3}
-              className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
+              className="ds-input resize-none text-sm"
             />
 
             {canShowRetrySave({ saveStatus }) && (
@@ -1888,14 +1879,17 @@ export default function RunSummary() {
                  the EXISTING composer flow with a narrow context param
                  (Food renders a dismissible refuel line); no separate
                  recovery-meal flow, no target change. Only rendered in the
-                 valid-run path (this whole stack is), post-save. */
-              <button
-                type="button"
+                 valid-run path (this whole stack is), post-save. Logging
+                 food is the food orange on any page, tinted here because
+                 it is the skippable step and Done is the run's coral one
+                 (DESIGN_GUIDE §14i). */
+              <Button
+                variant="nutrition-tinted"
+                fullWidth
                 onClick={() => navigate("/food?context=post-run")}
-                className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
               >
                 Log recovery food
-              </button>
+              </Button>
             )}
 
             {/* One Share: the card, and under it the run's other ways out
@@ -1911,13 +1905,13 @@ export default function RunSummary() {
               </button>
             )}
             {canShowDiscard({ saveStatus }) && (
-              <button
-                type="button"
+              <Button
+                variant="destructive-tinted"
+                fullWidth
                 onClick={handleDiscard}
-                className="w-full py-2 text-sm text-destructive-strong"
               >
                 Discard
-              </button>
+              </Button>
             )}
           </div>
 

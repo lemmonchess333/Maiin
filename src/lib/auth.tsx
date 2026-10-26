@@ -20,16 +20,23 @@ import {
   getRedirectResult,
   signInWithCredential,
   fetchSignInMethodsForEmail,
+  updateProfile as updateAuthProfile,
   type User,
   type UserCredential,
 } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
+import { clearEmailChange } from "./emailChangeNote";
+import { settleWrite } from "./settleWrite";
+import {
+  reloadToClearFirestoreCache,
+  writesSettled,
+} from "./firestoreCacheClear";
 import { isNativePlatform } from "@/lib/platform";
 import {
   getGoogleCredentialNative,
-  getAppleCredentialNative,
+  getAppleSignInNative,
 } from "@/lib/nativeAuth";
 import { setErrorReportingUid } from "./errorReporting";
 import { readString, remove, writeString } from "@/lib/localStore";
@@ -45,6 +52,7 @@ import {
 import { clearStoredRun } from "@/lib/runResumeStorage";
 import { clearWorkoutDraft } from "@/hooks/useWorkoutDraft";
 import { stripUndefined } from "@/lib/firestoreGuards";
+import { clampDisplayName } from "@/lib/displayNameLimit";
 import {
   forgetDeviceShareDefaults,
   readDeviceShareDefaults,
@@ -57,6 +65,7 @@ import type { ShareType } from "@/lib/shareComposer";
 import type { NotificationPreferences } from "@/lib/notificationPreferences";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
+import { rememberSignInMethod, signInMethodOf } from "./signInMethod";
 import type { Goal } from "./types";
 import type { PreferredSplit } from "@/features/program/programTypes";
 
@@ -98,6 +107,14 @@ async function firestore() {
   ]);
   return { ...fs, ...write, db };
 }
+
+/* A device that has had an account almost always restores it, and the
+   profile read is the first thing that launch waits for. So Firestore
+   starts downloading now, while Auth reads its session from IndexedDB,
+   instead of after Auth has answered. A device that has never signed in
+   starts nothing: that person is about to see Login, which reads no
+   documents. A failed load is the post-auth call's to meet again. */
+if (hasSignedInOnThisDevice()) void firestore().catch(() => {});
 
 /* ================================
    OAUTH TRANSPORT (popup vs redirect)
@@ -385,6 +402,14 @@ export interface UserProfileSocial {
    *  (`notificationEnabled`); the server reads the same map in
    *  createNotification and writes nothing for a kind that is off. */
   notificationPreferences?: NotificationPreferences | null;
+  /** Whether each follower waits to be accepted (Polish2): Settings →
+   *  Privacy → Approve followers. Absent means yes, the default the rules
+   *  apply too (`approvesFollowers` in firestore.rules). */
+  approveFollowers?: boolean;
+  /** Whether this person's week shows on their followers' boards (Polish2):
+   *  absent = not asked yet (their own board row offers "Show my week"),
+   *  false = no. Server-written by setBoardSharing, never by the client. */
+  showWeekOnBoard?: boolean;
   /** LEGACY (share composer superseded these, #1416): the saved share
    *  default decides auto-posting now — `shareDefaults` above. Nothing has
    *  READ these three since; the Settings switches that wrote
@@ -639,7 +664,7 @@ function createDefaultProfile(
 ): UserProfile {
   return {
     uid,
-    displayName,
+    displayName: clampDisplayName(displayName),
     email,
     photoURL,
     athleteType: "Lifter",
@@ -901,6 +926,32 @@ const PROTECTED_FIELDS = [
   "subscriptionTrial",
 ] as const;
 
+// The backend owns entitlement and billing state. Keep this small projection
+// live without replacing unrelated settings the person is editing locally.
+const SUBSCRIPTION_FIELDS = [
+  ...PROTECTED_FIELDS,
+  "subscriptionExpiresAt",
+] as const;
+
+function mergeSubscriptionProfile(
+  profile: UserProfile,
+  data: Record<string, unknown>
+): UserProfile {
+  const patch = Object.fromEntries(
+    SUBSCRIPTION_FIELDS.map((field) => [field, data[field]])
+  ) as Partial<UserProfileSubscription>;
+  patch.subscriptionTier =
+    (data.subscriptionTier as UserProfileSubscription["subscriptionTier"]) ??
+    "free";
+  patch.trialExpiresAt = (data.trialExpiresAt as string | null) ?? null;
+  // A user-doc snapshot can be an unrelated workout/settings write. Avoid
+  // re-rendering every auth consumer when the subscription is unchanged.
+  const changed = SUBSCRIPTION_FIELDS.some(
+    (field) => JSON.stringify(profile[field]) !== JSON.stringify(patch[field])
+  );
+  return changed ? { ...profile, ...patch } : profile;
+}
+
 // Subset of UserProfile fields that also need to be mirrored onto the
 // cross-user-readable public/profile doc when they change.
 const PUBLIC_MIRRORED_FIELDS = [
@@ -909,10 +960,51 @@ const PUBLIC_MIRRORED_FIELDS = [
   "athleteType",
 ] as const;
 
+/**
+ * The meal, workout and streak reminders are scheduled on the device for the
+ * account that set them, and unmounting their hooks only stops the next
+ * pass: without this the next person on the phone, or nobody, kept getting
+ * the last account's "Time for breakfast" every morning. Best effort, unlike
+ * the push release: a reminder names no one, and sign-out must not wait on a
+ * chunk that will not load offline. Loaded on demand so the first chunk does
+ * not carry the notifications plugin.
+ */
+async function cancelOutgoingAccountReminders(): Promise<void> {
+  try {
+    const { cancelAllNotifications } = await import("@/lib/notifications");
+    await cancelAllNotifications();
+  } catch (err) {
+    logger.warn(
+      "[auth] could not cancel the outgoing account's reminders",
+      err
+    );
+  }
+}
+
+/**
+ * Whether the outgoing account has no writes left to send, so its cached
+ * copy can be cleared (firestoreCacheClear.ts). False offline, after the
+ * wait, or if Firestore will not load.
+ */
+async function outgoingWritesSettled(): Promise<boolean> {
+  try {
+    const { waitForPendingWrites, db } = await firestore();
+    return await writesSettled(() => waitForPendingWrites(db));
+  } catch (err) {
+    logger.warn("[auth] could not check the outgoing account's writes", err);
+    return false;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  /* A sign-out that clears the device's Firestore copy ends in a reload
+     (firestoreCacheClear.ts). Until it does, the app stays on its loading
+     screen: Login drawn on the page being left would take input the
+     reload then throws away. */
+  const [leavingForReload, setLeavingForReload] = useState(false);
   // Guards the once-per-session boot reconciliation writes (timezone capture +
   // email mirror) so they don't re-fire on every onAuthStateChanged emission —
   // it fires several times per sign-in (session restore, token refresh, popup),
@@ -927,6 +1019,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const authEpochRef = useRef(0);
   const activeUidRef = useRef<string | null>(null);
 
+  // The method this session signed in with, which Login marks "Last used"
+  // (signInMethod.ts); the token names it whichever path signed in. Only
+  // for an account that has finished setup: a new one the person backs out
+  // of ("Sign in another way") is not the account to steer them back to.
+  const onboarded = profile?.onboardingComplete === true;
+  useEffect(() => {
+    if (!user || !onboarded) return;
+    Promise.resolve()
+      .then(() => user.getIdTokenResult())
+      .then((token) =>
+        rememberSignInMethod(signInMethodOf(token?.signInProvider))
+      )
+      .catch(() => {});
+  }, [user, onboarded]);
+
   // Dark mode sync — dark is the default, so a null profile (signed out /
   // still loading) and a profile without an explicit choice both resolve dark.
   useEffect(() => {
@@ -935,6 +1042,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+    let stopSubscriptionUpdates = () => {};
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!isMounted) return;
@@ -944,6 +1052,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // generation. Reject it before incrementing the epoch.
       if ((auth.currentUser?.uid ?? null) !== uid) return;
 
+      stopSubscriptionUpdates();
+      stopSubscriptionUpdates = () => {};
       const epoch = ++authEpochRef.current;
       const previousUid = activeUidRef.current;
 
@@ -989,8 +1099,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // hydrateProfile does no writes, and the timezone-capture write stays
         // on the server branch only so it isn't double-fired.
         /* Inside `if (firebaseUser)`, so a profile exists to read. */
-        const { doc, getDoc, getDocFromCache, updateDocGuarded, db } =
-          await firestore();
+        const {
+          doc,
+          getDoc,
+          getDocFromCache,
+          onSnapshot,
+          updateDocGuarded,
+          db,
+        } = await firestore();
         try {
           const cachedDoc = await getDocFromCache(
             doc(db, "users", firebaseUser.uid)
@@ -1057,6 +1173,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }).catch((err) =>
                   logger.warn("[AuthProvider] email reconcile failed", err)
                 );
+                // The change has landed; Login has nothing left to explain.
+                clearEmailChange();
               }
               // Share answers this device saved before they were kept on
               // the account. Fire-and-forget; a failed move leaves them on
@@ -1073,6 +1191,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           logger.error("[AuthProvider] Failed to load profile", err);
           setProfile(null);
         }
+
+        if (!isCurrent()) return;
+        // A native purchase or restore does not navigate/restart AuthProvider.
+        // The sync callable and the delayed-webhook fallback both write this
+        // document, so listen once per account instead of leaving each paywall
+        // to refresh (and potentially read before the webhook arrives).
+        stopSubscriptionUpdates = onSnapshot(
+          doc(db, "users", firebaseUser.uid),
+          { includeMetadataChanges: true },
+          (snapshot) => {
+            if (
+              !isCurrent() ||
+              !snapshot.exists() ||
+              snapshot.metadata.fromCache ||
+              snapshot.metadata.hasPendingWrites
+            )
+              return;
+            const data = snapshot.data();
+            setProfile((previous) =>
+              isCurrent() && previous?.uid === uid
+                ? mergeSubscriptionProfile(previous, data)
+                : previous
+            );
+          },
+          (err) => {
+            if (isCurrent())
+              logger.warn("[AuthProvider] Subscription updates failed", err);
+          }
+        );
       } else {
         // No signed-in user (Login screen) — apply the dark default.
         setProfile(null);
@@ -1086,6 +1233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isMounted = false;
       authEpochRef.current += 1;
       activeUidRef.current = null;
+      stopSubscriptionUpdates();
       unsubscribe();
     };
   }, []);
@@ -1105,12 +1253,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await unregisterDeviceToken(outgoingUid);
       clearStoredRun(outgoingUid);
       clearWorkoutDraft(outgoingUid);
+      await cancelOutgoingAccountReminders();
     }, []);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
       await revokeOutgoingAccountDeviceState();
       await signInWithEmailAndPassword(auth, email, password);
+      clearEmailChange();
     },
     [revokeOutgoingAccountDeviceState]
   );
@@ -1151,9 +1301,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const newProfile = createDefaultProfile(uid, "", cred.user.email || "");
       // Always finish creating the account's docs; only gate local state +
       // analytics attribution if the credential is no longer current.
-      await writeNewProfileDocs(uid, newProfile);
+      // The account exists once the credential does. A profile write that
+      // fails here is put right by setup, whose server call writes the
+      // profile (completeOnboarding); stopping at it skipped the
+      // verification email and the sign-up event, and told the person the
+      // sign-up had failed while signing them in.
+      let profileWritten = true;
+      try {
+        await writeNewProfileDocs(uid, newProfile);
+      } catch (err) {
+        profileWritten = false;
+        logger.error("Signup profile write failed; setup writes it", err);
+      }
       if (auth.currentUser?.uid !== uid) return;
-      setProfile(newProfile);
+      if (profileWritten) setProfile(newProfile);
       trackLifecycle("signup_completed", { method: "email" });
       // The verification link goes out now, so it is waiting in the inbox
       // by the time the plan is made; onboarding no longer stops for it.
@@ -1253,9 +1414,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithApple = useCallback(async () => {
     if (isNativePlatform()) {
-      const credential = await getAppleCredentialNative();
+      const { credential, displayName } = await getAppleSignInNative();
       await revokeOutgoingAccountDeviceState();
       const cred = await signInWithCredential(auth, credential);
+      // The name Apple shares on the first sign-in, kept before the new
+      // profile is made from the account. Never over a name it has.
+      if (displayName && !cred.user.displayName) {
+        try {
+          await updateAuthProfile(cred.user, { displayName });
+        } catch (err) {
+          logger.warn("Keeping the Apple name on the account failed", err);
+        }
+      }
       await finishOAuthSignIn(cred, "apple");
       return;
     }
@@ -1343,14 +1513,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // sign-out, so the user stays on A and retries rather than handing A's
     // device binding to the next account. Also wipes A's run/draft state.
     await revokeOutgoingAccountDeviceState();
-    await firebaseSignOut(auth);
+    // Clear the device's copy of what this account read only once none of
+    // its writes is still waiting to go up: clearing drops them.
+    const clearCache = await outgoingWritesSettled();
+    if (clearCache) setLeavingForReload(true);
+    try {
+      await firebaseSignOut(auth);
+    } catch (err) {
+      setLeavingForReload(false);
+      throw err;
+    }
     setProfile(null);
+    // The person chose to leave, so they know where an email change is
+    // going; the next person on this device should not be shown it.
+    clearEmailChange();
     // Reset to the DARK default so the next user starts dark unless their
     // Firestore profile explicitly says light. (Clearing the stored key lets
     // init.js / the next profile load own the value; the signed-out auth
     // listener also re-applies the dark default.)
     document.documentElement.classList.add("dark");
     remove("tropos-dark-mode");
+    if (clearCache) reloadToClearFirestoreCache();
   }, [revokeOutgoingAccountDeviceState]);
 
   const updateProfile = useCallback(
@@ -1404,6 +1587,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // call sites that want to handle the error themselves.
       try {
         const { doc, writeBatch, setDocGuarded, db } = await firestore();
+        let write: Promise<void>;
         if (Object.keys(publicPatch).length > 0) {
           // Strip undefined from both writes — Firestore rejects any doc
           // containing an explicit `undefined` outright. The non-batch
@@ -1419,12 +1603,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             stripUndefined(publicPatch),
             { merge: true }
           );
-          await batch.commit();
+          write = batch.commit();
         } else {
-          await setDocGuarded(doc(db, "users", writeUid), writeData, {
+          write = setDocGuarded(doc(db, "users", writeUid), writeData, {
             merge: true,
           });
         }
+        // Offline the write is on the device and goes up on reconnect, but
+        // its promise waits for the server, so every Settings save spun
+        // until then (settleWrite.ts). Offline it counts as made; a refusal
+        // once back online is said then.
+        await settleWrite(write, {
+          label: "auth.updateProfile",
+          onLateFailure: () => {
+            if (auth.currentUser?.uid !== writeUid) return;
+            toast.error(
+              "A change you made offline couldn't be saved. Check your settings.",
+              { id: "update-profile-error" }
+            );
+          },
+        });
 
         // The remote write for A is committed and NOT rolled back — only stale
         // LOCAL hydration + theme mutation are suppressed if B is now current.
@@ -1580,7 +1778,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       profile,
-      loading,
+      loading: loading || leavingForReload,
       ...credentialActions,
       resetPassword,
       fetchSignInMethods,
@@ -1592,6 +1790,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       profile,
       loading,
+      leavingForReload,
       credentialActions,
       resetPassword,
       fetchSignInMethods,

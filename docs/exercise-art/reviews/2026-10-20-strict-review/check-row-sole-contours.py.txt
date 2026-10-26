@@ -1,0 +1,20 @@
+from pathlib import Path
+from PIL import Image
+import numpy as np,json
+H=Path(__file__).resolve().parent;R=H.parent/'Maiin-burpees';ns={'__file__':str(H/'measure-supports.py')}
+exec((H/'measure-supports.py').read_text().split('H=Path(__file__)')[0],ns);label=ns['label'];rows=[]
+for mode in ['original','staged']:
+ samples=[]
+ for n in range(1,7):
+  path=H/f'staged/barbell-row/{n}.png'if mode=='staged'else R/f'public/form-frames/barbell-row/{n}.webp'
+  im=Image.open(path).convert('RGB');w,h=im.size;box=(round(.25*w),round(.8*h),round(.78*w),round(.99*h));a=np.asarray(im.crop(box)).astype(int)
+  mask=(a.min(2)>40)&(np.ptp(a,axis=2)<30);lab,count=label(mask);objects=[]
+  for k in range(1,count+1):
+   yy,xx=np.nonzero(lab==k)
+   if len(xx)>50:objects.append((len(xx),xx,yy))
+  objects=sorted(sorted(objects,key=lambda q:q[0],reverse=True)[:2],key=lambda q:q[1].mean());dimensions={}
+  for name,(_,xx,yy)in zip(['farShoe','nearShoe'],objects):dimensions[name+'OuterNeutralContourSpan']=int(xx.max()-xx.min()+1)
+  samples.append({'frame':n,'input':str(path),'invariantDimensions':dimensions})
+ drift=max(abs(s['invariantDimensions'][k]/samples[0]['invariantDimensions'][k]-1)for s in samples for k in samples[0]['invariantDimensions'])
+ rows.append({'mode':mode,'method':'Actual neutral outer shoe silhouette above40 on black background, no mask morphology; white/grey calf and shoe connected component, actual shoe is widest portion in this low ROI. Not a calf/ankle brightness-core bound.','maximumDimensionDriftRatio':drift,'samples':samples})
+(H/'barbell-row-outer-sole-measurements.json').write_text(json.dumps(rows,indent=2)+'\n');print(json.dumps(rows,indent=2))

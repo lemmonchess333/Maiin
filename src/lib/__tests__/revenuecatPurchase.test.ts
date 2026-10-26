@@ -90,6 +90,20 @@ describe("rcPurchase", () => {
     expect(outcome.success).toBe(false);
   });
 
+  it("a failed purchase says so in the app's words, and keeps the SDK's for the log", async () => {
+    mockPurchases.getOfferings.mockResolvedValue(
+      offeringsWith([{ product: { identifier: PID, priceString: "£3.99" } }])
+    );
+    mockPurchases.purchasePackage.mockRejectedValue(
+      new Error("There was a problem with the App Store.")
+    );
+    const { rcPurchase } = await loadModule();
+
+    const outcome = await rcPurchase(PID);
+    expect(outcome.error).toBe("Purchase failed. Try again.");
+    expect(outcome.detail).toBe("There was a problem with the App Store.");
+  });
+
   it("fails plainly when the product is missing from the current offering", async () => {
     mockPurchases.getOfferings.mockResolvedValue(offeringsWith([]));
     const { rcPurchase } = await loadModule();
@@ -125,6 +139,17 @@ describe("rcPurchase", () => {
 });
 
 describe("rcRestore", () => {
+  it("a failed restore says so in the app's words", async () => {
+    mockPurchases.restorePurchases.mockRejectedValue(
+      new Error("Error performing request.")
+    );
+    const { rcRestore } = await loadModule();
+
+    const outcome = await rcRestore();
+    expect(outcome.error).toBe("Failed to restore purchases.");
+    expect(outcome.detail).toBe("Error performing request.");
+  });
+
   it("succeeds when restore returns an active pro entitlement", async () => {
     mockPurchases.restorePurchases.mockResolvedValue({
       customerInfo: proActiveInfo,

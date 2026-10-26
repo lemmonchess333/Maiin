@@ -9,6 +9,29 @@ import { renderHook, act } from "@testing-library/react";
 
 const mockGetBlockedUsers = vi.fn();
 
+/* The live list of who blocked the signed-in account. Each subscription
+   is recorded so a test can deliver snapshots or fail it. */
+interface Subscription {
+  uid: string;
+  deliver: (ids: string[]) => void;
+  fail: (err: unknown) => void;
+  unsubscribe: ReturnType<typeof vi.fn>;
+}
+const subscriptions: Subscription[] = [];
+const mockSubscribeBlockedBy = vi.fn(
+  (
+    uid: string,
+    onChange: (ids: string[]) => void,
+    onError: (err: unknown) => void
+  ) => {
+    const unsubscribe = vi.fn();
+    subscriptions.push({ uid, deliver: onChange, fail: onError, unsubscribe });
+    return unsubscribe;
+  }
+);
+const latest = (uid: string) =>
+  [...subscriptions].reverse().find((s) => s.uid === uid)!;
+
 vi.mock("../../lib/firebase", () => ({
   db: "mock-db",
   auth: { currentUser: { uid: "user1" } },
@@ -16,6 +39,11 @@ vi.mock("../../lib/firebase", () => ({
 
 vi.mock("../../lib/socialApi", () => ({
   getBlockedUsers: (uid: string) => mockGetBlockedUsers(uid),
+  subscribeBlockedBy: (
+    uid: string,
+    onChange: (ids: string[]) => void,
+    onError: (err: unknown) => void
+  ) => mockSubscribeBlockedBy(uid, onChange, onError),
 }));
 
 let currentAuthUser: { uid: string } | null = { uid: "user1" };
@@ -37,6 +65,8 @@ describe("useBlockedUsers", () => {
   beforeEach(() => {
     mockGetBlockedUsers.mockReset();
     mockGetBlockedUsers.mockResolvedValue([]);
+    mockSubscribeBlockedBy.mockClear();
+    subscriptions.length = 0;
   });
 
   it("propagates an addBlocked call to a sibling hook instance synchronously", () => {
@@ -111,6 +141,7 @@ describe("useBlockedUsers", () => {
     const { result } = renderHook(() => useBlockedUsers());
     // Fetch in flight — NOT ready (empty set here means "unknown").
     expect(result.current.ready).toBe(false);
+    act(() => latest("test-ready-resolve").deliver([]));
 
     await act(async () => {
       resolveFetch(["blocked-1"]);
@@ -129,6 +160,7 @@ describe("useBlockedUsers", () => {
 
     const { result } = renderHook(() => useBlockedUsers());
     expect(result.current.ready).toBe(false);
+    act(() => latest("test-ready-reject").deliver([]));
 
     await act(async () => {
       rejectFetch(new Error("network"));
@@ -143,5 +175,128 @@ describe("useBlockedUsers", () => {
     currentAuthUser = null;
     const { result } = renderHook(() => useBlockedUsers());
     expect(result.current.ready).toBe(false);
+  });
+});
+
+/* Polish3 call 1: blocking hides each person from the other. `blocked`
+   holds both directions, `youBlocked` and `blockedYou` each one. */
+describe("useBlockedUsers — both directions", () => {
+  beforeEach(() => {
+    mockGetBlockedUsers.mockReset();
+    mockGetBlockedUsers.mockResolvedValue([]);
+    mockSubscribeBlockedBy.mockClear();
+    subscriptions.length = 0;
+  });
+
+  const settle = async () => {
+    await act(async () => {
+      await Promise.resolve();
+    });
+  };
+
+  it("hides the people who blocked you as well as the people you blocked", async () => {
+    currentAuthUser = { uid: "both-merge" };
+    mockGetBlockedUsers.mockResolvedValue(["you-blocked"]);
+    const { result } = renderHook(() => useBlockedUsers());
+    await settle();
+    act(() => latest("both-merge").deliver(["blocked-you"]));
+
+    expect([...result.current.blocked].sort()).toEqual([
+      "blocked-you",
+      "you-blocked",
+    ]);
+    expect([...result.current.youBlocked]).toEqual(["you-blocked"]);
+    expect([...result.current.blockedYou]).toEqual(["blocked-you"]);
+    expect(mockSubscribeBlockedBy).toHaveBeenCalledWith(
+      "both-merge",
+      expect.any(Function),
+      expect.any(Function)
+    );
+  });
+
+  it("is not ready until who blocked you is known too", async () => {
+    currentAuthUser = { uid: "both-ready" };
+    const { result } = renderHook(() => useBlockedUsers());
+    await settle();
+    // Your own list has loaded; theirs has not.
+    expect(result.current.ready).toBe(false);
+    act(() => latest("both-ready").deliver([]));
+    expect(result.current.ready).toBe(true);
+  });
+
+  it("follows a block made while you are using the app, and its lifting", async () => {
+    currentAuthUser = { uid: "both-live" };
+    const { result } = renderHook(() => useBlockedUsers());
+    await settle();
+    act(() => latest("both-live").deliver([]));
+    expect(result.current.blocked.has("later")).toBe(false);
+
+    act(() => latest("both-live").deliver(["later"]));
+    expect(result.current.blocked.has("later")).toBe(true);
+
+    act(() => latest("both-live").deliver([]));
+    expect(result.current.blocked.has("later")).toBe(false);
+  });
+
+  it("keeps someone hidden after you unblock them while they still block you", async () => {
+    currentAuthUser = { uid: "both-mutual" };
+    mockGetBlockedUsers.mockResolvedValue(["mutual"]);
+    const { result } = renderHook(() => useBlockedUsers());
+    await settle();
+    act(() => latest("both-mutual").deliver(["mutual"]));
+
+    act(() => result.current.removeBlocked("mutual"));
+    expect(result.current.youBlocked.has("mutual")).toBe(false);
+    expect(result.current.blockedYou.has("mutual")).toBe(true);
+    expect(result.current.blocked.has("mutual")).toBe(true);
+  });
+
+  it("is ready, with your own blocks still hidden, when the listener fails", async () => {
+    currentAuthUser = { uid: "both-fail" };
+    mockGetBlockedUsers.mockResolvedValue(["you-blocked"]);
+    const { result } = renderHook(() => useBlockedUsers());
+    await settle();
+    act(() => latest("both-fail").fail(new Error("permission-denied")));
+
+    expect(result.current.ready).toBe(true);
+    expect([...result.current.blocked]).toEqual(["you-blocked"]);
+  });
+
+  it("shares one listener between consumers and stops it when the last goes", async () => {
+    currentAuthUser = { uid: "both-shared" };
+    const a = renderHook(() => useBlockedUsers());
+    const b = renderHook(() => useBlockedUsers());
+    await settle();
+    expect(subscriptions.filter((s) => s.uid === "both-shared")).toHaveLength(
+      1
+    );
+    const sub = latest("both-shared");
+
+    a.unmount();
+    expect(sub.unsubscribe).not.toHaveBeenCalled();
+    b.unmount();
+    expect(sub.unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("hands out the same set until it changes, so feed hooks do not refetch", async () => {
+    currentAuthUser = { uid: "both-stable" };
+    const { result, rerender } = renderHook(() => useBlockedUsers());
+    await settle();
+    act(() => latest("both-stable").deliver(["someone"]));
+    const first = result.current.blocked;
+    rerender();
+    expect(result.current.blocked).toBe(first);
+
+    act(() => latest("both-stable").deliver(["someone", "another"]));
+    expect(result.current.blocked).not.toBe(first);
+  });
+
+  it("never hides you from yourself", async () => {
+    currentAuthUser = { uid: "both-self" };
+    mockGetBlockedUsers.mockResolvedValue(["both-self"]);
+    const { result } = renderHook(() => useBlockedUsers());
+    await settle();
+    act(() => latest("both-self").deliver(["both-self"]));
+    expect(result.current.blocked.has("both-self")).toBe(false);
   });
 });

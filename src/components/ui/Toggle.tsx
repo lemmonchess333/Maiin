@@ -118,7 +118,10 @@ export function Toggle({
           "w-[40px] h-[24px] rounded-full transition-colors duration-200 flex items-center px-[4px]",
           checked
             ? "bg-primary justify-end"
-            : "bg-muted border border-border justify-start"
+            : // The off track's edge is the switch's boundary: 3:1 against
+              // the white card in light (muted-foreground/80), while the
+              // dark track already clears it with its own hairline.
+              "bg-muted border border-muted-foreground/80 dark:border-border justify-start"
         )}
       >
         <span

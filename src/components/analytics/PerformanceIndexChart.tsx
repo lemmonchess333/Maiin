@@ -15,6 +15,7 @@ import { THEME } from "@/lib/theme";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
 import {
   CHART_TOOLTIP_STYLE,
+  CHART_TOOLTIP_SEPARATOR,
   CHART_GRID_PROPS,
   CHART_AXIS_TICK,
 } from "./chartStyles";
@@ -145,16 +146,15 @@ export default function PerformanceIndexChart({ weeks }: Props) {
                  that boundary; one in the middle of a band reads as
                  something the series has to get around.
 
-                 Half opacity for the same reason — the bands are the
-                 reference scale, and a scale that competes with the
-                 series it exists to calibrate has the hierarchy
-                 backwards. */
+                 Full opacity at the micro step, in rem so it follows the
+                 phone's text size: the band fills carry the "reference
+                 scale, not series" weighting, and a faded word falls
+                 below AA. */
               label={{
                 value: b.label,
                 position: "insideTopRight",
                 fill: "hsl(var(--muted-foreground))",
-                fillOpacity: 0.65,
-                fontSize: 9,
+                fontSize: "0.75rem",
               }}
             />
           ))}
@@ -188,6 +188,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
 
           <Tooltip
             contentStyle={CHART_TOOLTIP_STYLE}
+            separator={CHART_TOOLTIP_SEPARATOR}
             labelFormatter={(label) => {
               const s = typeof label === "string" ? label : String(label ?? "");
               const d = new Date(s + "T00:00:00");

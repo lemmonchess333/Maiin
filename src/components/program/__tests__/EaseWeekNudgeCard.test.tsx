@@ -42,7 +42,8 @@ describe("easier-week evidence card", () => {
     );
     const time = screen.getByRole("link", { name: /12 Sept/ });
     expect(time).toHaveAttribute("href", "/run/time-run");
-    expect(time).toHaveTextContent("10:00 / 30:00");
+    // Durations, not clock times: "10:00" over a run reads as a time of day.
+    expect(time).toHaveTextContent("10 min / 30 min");
     expect(screen.getByRole("link", { name: /10 Sept/ })).toHaveTextContent(
       "1.9 mi / 6.2 mi"
     );

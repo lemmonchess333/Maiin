@@ -46,6 +46,7 @@ vi.mock("@/lib/bodyRig", () => ({
 }));
 vi.mock("@/lib/formGuides", () => ({
   getFormBeats: () => beatsRef.current,
+  getFormPlayback: () => "cycle",
   getFormSetup: () => setupRef.current,
   getFormAdvice: () => adviceRef.current,
   getDemoMuscleKey: () => keyRef.current,

@@ -1,0 +1,241 @@
+{
+  "exerciseId": "turkish-get-up",
+  "version": "anatomy-v3-2026-10-20-tgu-fixed-mat-rigid-bell-v1",
+  "width": 1024,
+  "height": 1152,
+  "frames": [
+    {
+      "path": "form-frames/turkish-get-up/1.webp",
+      "sha256": "49eb3272aca92b4bf760fc88edd62c0dfaf504db6c6c7823991e22b60c8b84c8",
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/2.webp",
+      "sha256": "9fc1e694eb08c7c0214731e9f5489e8ec048985c6b977de9feb82e47b6ac68a1",
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/3.webp",
+      "sha256": "8b73cfcc69ea94713322076822758a945039c2209c9201622e10f8e18de0ad8b",
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/4.webp",
+      "sha256": "daf883d61517fba8c876fc504a4f346172ac5c3537520af3b9e51bddd9c80452",
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/5.webp",
+      "sha256": "23026d00607a2aad0ad45a8f214c0ae0904600f2c4bb9e6870c10539438a2dd5",
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/6.webp",
+      "sha256": "d904cc714188b802becf191dfacbe52b34a091bb4b6fb3e468dec264195f6851",
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      }
+    }
+  ],
+  "reference": {
+    "path": "form-frames/turkish-get-up/5.webp",
+    "sha256": "23026d00607a2aad0ad45a8f214c0ae0904600f2c4bb9e6870c10539438a2dd5"
+  },
+  "cueSha256": "ef47e27eedd522dc2a95f35480974a7805650cdbb6dc8dff207b1ea406262925",
+  "decision": "approved",
+  "reviewer": "Codex native source, physical material measurement and actual mobile visual review",
+  "reviewedAt": "2026-10-20T16:29:33.809Z",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Native complete sources and final six drawings compared with the canonical FA56 athlete: adult bald faceless pale anatomy model, smooth featureless pelvis, no shorts, original fine grey contours and white trainers (swimming is barefoot). No new athlete generation. All retained native athlete/grip RGB pixels are exact; no anatomical warping, individual limb fitting or head/shoe grafts."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Original 1024x1152 camera and complete body drawing remain unchanged. A real dark exercise mat establishes the floor/support plane. Four visible material corners are independently located in each delivered frame; long and short physical mat edges remain invariant. No canvas edge, artificial marker or changing shoe projection is used as measurement evidence."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Six native complete poses inspected: supine press, free elbow, free hand, high bridge, half-kneel and standing. Limb chains stay connected, loaded elbow remains extended with neutral grip, free support changes visibly, and feet/knee remain coherent. Complete original anatomy is preserved; projection changes in trainers are not misrepresented as invariant dimensions."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "The previous grey kettlebell changed apparent size. It is replaced by one complete generated charcoal cast bell master at one 91x108px size in all six frames, with a closed handle attached on both sides. Rigid native placement behind preserved original fingers/forearm; old metal fragments removed only in scoped equipment regions. No body or grip rescaling."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Visible floor mat supports independent visual review: frame1 back/foot contact, frame2 free elbow support, frame3 free hand support, frame4 free palm/loaded foot bridge, frame5 knee and front foot half-kneel, frame6 both feet standing. The mat is physical context, not proof of body accuracy by itself; body support and grip were reviewed separately in native images and mobile playback."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Compared against primary StrongFirst get-up support and stacking guidance. Six ascent positions transfer support from back to elbow, hand, bridge, knee and feet with the loaded arm held overhead. Base width and joint angles vary naturally. Ascent-only sequence stops standing; descent is instructed as a controlled reverse, not faked by an automatic standing-to-supine loop."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Existing primary #7B72E9 and secondary #9590E0 fields and inherited shading are preserved without a new gradient. Live legend agrees with the catalogue muscle groups. Neutral skin/contours and equipment remain neutral. No painted highlight crosses an occluded surface."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound six labels/cues visually checked against their corresponding positions: Press: Press the bell up; eyes on it. / Elbow: Roll onto your free elbow, arm locked. / Hand: Push up onto your free hand. / Bridge: Lift your hips high off the floor. / Kneel: Sweep your leg back into a half-kneel. / Stand: Stand tall, then reverse each step down. Preparation describes clear non-slip floor/mat space and the initial two-hand setup."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Actual production ExerciseFormContent at 390x844: all six decoded native source paths reviewed manually, normal and slower playback observed, final frame holds with Replay, Replay starts frame1, and both manual 6-to-1/1-to-6 wraps work. Sequence playback deliberately avoids a physical discontinuity. Staged and final registered traces and settled screenshots retained in the review bundle. All current public paths match final-asset-binding.json."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual production guide and ExerciseThumb at 390x844 in light mode: all six frames decode at native dimensions, visible body/equipment fits the stage, captions/cues/legend match and normal transparent cutouts decode in all three card sizes. Settled separate-call stage and card screenshots reviewed. Final registered source paths and all three normal drawing card sizes were separately checked and retained in the review bundle."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual production guide and ExerciseThumb at 390x844 in dark mode: all six frames decode at native dimensions, body/equipment remains readable, captions/cues/legend match and all three normal card sizes use the athlete drawing. Settled separate-call stage and card screenshots reviewed. Final registered source paths and all three normal drawing card sizes were separately checked and retained in the review bundle."
+    }
+  },
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Manually scoped genuine material corners, unique 15x15 raw native RGB patch match searched independently within +/-6px in every lossless delivered frame. Two independent physical edge lengths derived from located corners. No canvas, padding, crosshair or artificial marker is measured. This scene measurement is separate from visual anatomy/contact/physics review.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": {
+      "anchorAxisPx": 1,
+      "invariantRelative": 0.01
+    },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-final-two-strict/turkish-get-up/strict-proof.json"
+  },
+  "nativeSourceArchive": {
+    "path": "docs/exercise-art/sources/turkish-get-up/2026-10-20-final-two-strict/native-source.zip",
+    "sha256": "c8378681e7f484e777cdf3f79c575e57e4aea79ad4ecd1f452a4e0b54d309493",
+    "bytes": 6635740,
+    "independentReproductionExact": true,
+    "archiveExtractionReproductionExact": true
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-20-final-two-strict/review.json",
+  "limits": "Strict current project visual/evidence contract, not a calibrated biomechanical or engineering certification. Small inherited illustrative contours remain. Physical scene measurements supplement independent visual anatomy, contact and movement review."
+}

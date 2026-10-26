@@ -37,7 +37,6 @@ import {
   type FinishedRun,
 } from "../runCompletion";
 import { pendingDocumentWrites } from "../offlineQueue";
-import { sampleRoute } from "../routeSegments";
 
 /* Started at 23:50 the night before last, finished after midnight. */
 const START = new Date(Date.now() - 2 * 86_400_000);
@@ -61,7 +60,6 @@ const run = (extra: Partial<FinishedRun> = {}): FinishedRun => ({
   distance: 6600,
   elapsed: 1830,
   avgPaceSeconds: 277,
-  avgPace: "4:37",
   calories: 420,
   elevationGain: 12,
   splits: [],
@@ -99,6 +97,26 @@ describe("runDocument", () => {
     const saved = runDocument(run({ points: [] }), FINISH);
     expect(saved.date).toBe(localDateString(FINISH));
   });
+
+  it.each(["clipped", "fully private"])(
+    "keeps the original start day when the saved route is %s",
+    (route) => {
+      const points =
+        route === "clipped"
+          ? trace(2).map((point, i) => ({
+              ...point,
+              timestamp: FINISH.getTime() + i * 1000,
+            }))
+          : [];
+      const saved = runDocument(
+        run({ points, startedAt: START.getTime() }),
+        FINISH
+      );
+      expect(saved.date).toBe(localDateString(START));
+      expect(saved.startedAt.toMillis()).toBe(START.getTime());
+      expect(saved.points).toEqual(points);
+    }
+  );
 
   it("keeps a run saved anyway apart from the runs that count", () => {
     expect(
@@ -179,8 +197,17 @@ describe("runDocument", () => {
 
   it("thins the trace, trims the notes and names the shoe", () => {
     const saved = runDocument(run(), FINISH);
-    expect(saved.points).toEqual(sampleRoute(trace(600), 500));
-    expect(saved.points.length).toBeLessThanOrEqual(500);
+    // 600 points a second apart, thinned to 500: both ends kept, in order,
+    // evenly spread. 599 s over 499 gaps is 399 gaps of 1 s and 100 of 2 s.
+    const seconds = saved.points.map(
+      (p) => (p.timestamp - START.getTime()) / 1000
+    );
+    expect(seconds).toHaveLength(500);
+    expect(seconds[0]).toBe(0);
+    expect(seconds.at(-1)).toBe(599);
+    const gaps = seconds.slice(1).map((s, i) => s - seconds[i]);
+    expect(gaps.filter((g) => g === 1)).toHaveLength(399);
+    expect(gaps.filter((g) => g === 2)).toHaveLength(100);
     expect(saved.notes).toBe("Windy on the bridge");
     expect(saved.shoeId).toBe("shoe-1");
     expect(saved).toMatchObject({
@@ -259,7 +286,7 @@ describe("the run's post", () => {
       activityTitle: "Run",
       distance: 6600,
       duration: 1830,
-      avgPace: "4:37",
+      avgPace: 277,
       elevationGain: 12,
       calories: 420,
       routePreview: route.routePreview,

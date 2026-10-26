@@ -192,10 +192,15 @@ export function onSnapshot(
       ? (b as (e: unknown) => void)
       : (a as { error?: (e: unknown) => void })?.error;
 
+  // The SDK ends a listener that errors: nothing reaches it afterwards,
+  // and the app has to subscribe again. A fake that kept delivering would
+  // let a later write revive it, which no device does.
+  let ended = false;
   return firestoreFake.addListener({
     ref,
     includeMetadataChanges,
     fire: () => {
+      if (ended) return;
       try {
         firestoreFake.failIfArmed("onSnapshot", ref.path);
         const snapshot = isDocRef(ref)
@@ -212,6 +217,7 @@ export function onSnapshot(
           })
         );
       } catch (err) {
+        ended = true;
         onError?.(err);
       }
     },
@@ -362,3 +368,9 @@ export function memoryLocalCache(): Record<string, never> {
   return {};
 }
 export function connectFirestoreEmulator(): void {}
+/** The fake has no server, so nothing is ever waiting to be sent. */
+export async function waitForPendingWrites(): Promise<void> {}
+/** The fake keeps no device copy to clear; it counts the requests. */
+export async function clearIndexedDbPersistence(): Promise<void> {
+  firestoreFake.persistenceClears += 1;
+}

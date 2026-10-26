@@ -7,7 +7,8 @@
  * Global defaults OFF (explicit opt-in — no cold sends); a per-type flag
  * that is ABSENT counts as on, so older docs written before a type existed
  * get the standard set rather than silently going dark. Monthly challenge
- * announcements are separate: they require explicit `challenges: true`.
+ * announcements and closing reminders are separate: each requires its own
+ * flag to be explicitly true.
  *
  * WHY IT LIVES HERE (2026-07-27). It used to be inlined in `index.js` under
  * a comment reading "Mirrors src/lib/pushConsent.mayTargetUser" — while the
@@ -31,18 +32,18 @@
  * net. It pins the copy that runs, which is the point (ADR-0008).
  */
 
-/** @typedef {"streak" | "recap" | "badge" | "challenges"} PushType */
+/** @typedef {"streak" | "recap" | "badge" | "challenges" | "challengeReminders"} PushType */
 
 /**
- * @param {{enabled?: boolean, streak?: boolean, recap?: boolean, badge?: boolean, challenges?: boolean} | null | undefined} consent
+ * @param {{enabled?: boolean, streak?: boolean, recap?: boolean, badge?: boolean, challenges?: boolean, challengeReminders?: boolean} | null | undefined} consent
  * @param {PushType} type
  * @returns {boolean}
  */
 function mayTargetUserConsent(consent, type) {
-  // Monthly announcements are a new, separate opt-in. Never enrol an older
+  // Monthly campaigns each have a separate opt-in. Never enrol an older
   // globally enabled account merely because this flag did not exist yet.
-  if (type === "challenges")
-    return consent?.enabled === true && consent.challenges === true;
+  if (type === "challenges" || type === "challengeReminders")
+    return consent?.enabled === true && consent[type] === true;
   if (!consent || !consent.enabled) return false;
   return consent[type] !== false;
 }

@@ -27,6 +27,9 @@
  * live elsewhere; this is the part worth unit-testing across timezones.
  */
 
+/** The most partner streaks one person holds. The server holds it
+ *  (functions/lib/partnerBonds.js, pinned by partnerLimit.cross.test.ts);
+ *  the app quotes it when a start is refused. */
 export const MAX_PARTNERS = 5;
 
 export interface PartnerStreakState {
@@ -41,13 +44,16 @@ export interface PartnerStreakState {
   freezeWeek: Record<string, string | null>;
 }
 
+/**
+ * The state a bond starts from.
+ *
+ * @oracle — test-only by design: the server writes every bond
+ * (startPartnerStreak), so this is the engine's statement of a cold bond
+ * that partnerLimit.cross.test.ts holds the server's `initialBond` to, and
+ * the starting state the engine suites replay from.
+ */
 export function emptyStreakState(): PartnerStreakState {
   return { streak: 0, lastSharedDay: null, lastActive: {}, freezeWeek: {} };
-}
-
-/** Bond cap: a user may hold at most MAX_PARTNERS active bonds. */
-export function canAddPartner(activeBondCount: number): boolean {
-  return activeBondCount < MAX_PARTNERS;
 }
 
 /** UTC-midnight epoch for a YYYY-MM-DD key — DST-proof day arithmetic

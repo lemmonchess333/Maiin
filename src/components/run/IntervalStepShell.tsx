@@ -202,7 +202,7 @@ export default function IntervalStepShell({
         </div>
 
         {/* The prescription IS the headline — white for maximum contrast. */}
-        <p className="text-lg font-extrabold leading-tight text-white">
+        <p className="text-lg font-bold leading-tight text-white">
           {headlineFor(current, unit, band)}
         </p>
 

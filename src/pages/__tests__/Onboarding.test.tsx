@@ -192,9 +192,7 @@ describe("onboarding chapters and commit", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "We couldn’t save your plan"
     );
-    expect(
-      screen.getByRole("button", { name: "Try creating my plan again" })
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
     expect(loadOnboardingDraft("setup-test", 7)?.weightKg).toBe(81.5);
     expect(refresh).not.toHaveBeenCalled();
   });
@@ -1269,5 +1267,81 @@ describe("goal weight and weekly pace", () => {
       "aria-invalid",
       "true"
     );
+  });
+});
+
+/* FV3: each answer shows what it changes in the plan, as it is given. */
+describe("what each answer changes (FV3)", () => {
+  it("shows the first lift for the kit chosen, and changes it with the kit", () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Build muscle/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Lifting" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    // Nothing chosen yet: no lift for a kit nobody picked.
+    expect(
+      screen.queryByRole("region", { name: "First lift preview" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Full gym/ }));
+    const fullGym = screen.getByRole("region", {
+      name: "First lift preview",
+    }).textContent;
+    expect(fullGym).toMatch(/exercises/);
+    fireEvent.click(screen.getByRole("button", { name: /Minimal/ }));
+    expect(
+      screen.getByRole("region", { name: "First lift preview" }).textContent
+    ).not.toBe(fullGym);
+  });
+
+  it("names the week's lifts in order under the draft week", () => {
+    saveOnboardingDraft("setup-test", { ...draft, step: 1, daysPerWeek: 4 });
+    open();
+    expect(
+      screen.getByRole("region", { name: "Draft week" })
+    ).toHaveTextContent("Upper A, Lower A, Upper B, Lower B");
+  });
+
+  it("says what a limitation swapped, and nothing once None is chosen", () => {
+    saveOnboardingDraft("setup-test", { ...draft, step: 4, injuries: [] });
+    open();
+    expect(
+      screen.getByRole("heading", { name: "Anything to work around?" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "What this changes" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Knee" }));
+    const changes = screen.getByRole("region", { name: "What this changes" });
+    expect(changes).toHaveTextContent(/becomes/);
+    expect(changes).not.toHaveTextContent(/exercise filters/);
+    fireEvent.click(screen.getByRole("button", { name: "None" }));
+    expect(
+      screen.queryByRole("region", { name: "What this changes" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the daily target on the numbers step once they're given, and moves it with the pace", () => {
+    saveOnboardingDraft("setup-test", { ...draft, step: 5 });
+    open();
+    expect(
+      screen.queryByRole("region", { name: "Your daily target" })
+    ).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Weight (kg)"), {
+      target: { value: "81.5" },
+    });
+    fireEvent.change(screen.getByLabelText("Height (cm)"), {
+      target: { value: "175" },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "25–34" }));
+    const target = () =>
+      screen.getByRole("region", { name: "Your daily target" });
+    expect(target()).toHaveTextContent("kcal");
+    expect(target()).toHaveTextContent("Enough to hold your weight");
+    const holding = target().textContent;
+    fireEvent.change(screen.getByLabelText(/Goal weight/), {
+      target: { value: "75" },
+    });
+    expect(target()).toHaveTextContent(/To lose about 0\.5 kg a week/);
+    expect(target().textContent).not.toBe(holding);
   });
 });

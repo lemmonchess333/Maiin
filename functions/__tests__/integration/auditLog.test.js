@@ -39,7 +39,9 @@ let db;
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   if (!admin.apps.length) {
-    admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || "demo-tropos" });
+    admin.initializeApp({
+      projectId: process.env.GCLOUD_PROJECT || "demo-tropos",
+    });
   }
   db = admin.firestore();
 });

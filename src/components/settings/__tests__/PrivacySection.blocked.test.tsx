@@ -23,7 +23,13 @@ import {
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 import PrivacySection from "../PrivacySection";
-import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+import {
+  seedFirestore,
+  resetFirestore,
+  failNextFirestore,
+  unfiredFailures,
+} from "@/test/firestoreHarness";
+import { toast } from "@/lib/toast";
 
 const unblockUser = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/lib/socialApi", () => ({
@@ -51,6 +57,7 @@ function renderSignedIn() {
       profile={{ aiAnalysisEnabled: false, hideSharedRouteEnds: false }}
       updateProfile={vi.fn().mockResolvedValue({ ok: true })}
       updateShareDefaults={vi.fn().mockResolvedValue({ ok: true })}
+      refreshProfile={vi.fn().mockResolvedValue(undefined)}
       privacyZones={[]}
       addZone={vi.fn().mockResolvedValue(undefined)}
       removeZone={vi.fn().mockResolvedValue(undefined)}
@@ -90,5 +97,31 @@ describe("PrivacySection — unblocking", () => {
     expect(await screen.findByText("Them")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Unblock" }));
     await waitFor(() => expect(screen.queryByText("Them")).toBeNull());
+  });
+});
+
+/* Polish3 call 1: the rules refuse the profile of someone who blocked you,
+   so after a block each way the name can't be read. The row still needs
+   its Unblock. */
+describe("PrivacySection — a blocked account whose name can't be read", () => {
+  it("keeps the row, nameless, and unblocks it", async () => {
+    vi.mocked(toast.error).mockClear();
+    vi.mocked(toast.success).mockClear();
+    failNextFirestore("getDoc", {
+      path: "users/them/public/profile",
+      code: "permission-denied",
+    });
+    renderSignedIn();
+    fireEvent.click(screen.getByRole("button", { name: "Show" }));
+    expect(await screen.findByText("Name unavailable")).toBeInTheDocument();
+    expect(unfiredFailures()).toEqual([]);
+    expect(toast.error).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Unblock" }));
+    await waitFor(() => expect(unblockUser).toHaveBeenCalledWith("me", "them"));
+    expect(removeBlocked).toHaveBeenCalledWith("them");
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("Unblocked")
+    );
   });
 });

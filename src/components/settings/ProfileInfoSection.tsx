@@ -7,6 +7,10 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { kgToLb, lbToKg } from "@/lib/weightUnits";
 import { HEIGHT_CM } from "@/lib/bodyMetrics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
+import { loadWordFilter } from "@/lib/wordFilter";
+import { flushQueuedWeights, queueWeightEntry } from "@/lib/weightQueue";
+import { localDateString } from "@/lib/dateHelpers";
+import { toast } from "@/lib/toast";
 
 type Gender = "male" | "female" | "unspecified";
 type AgeRange = "16-24" | "25-34" | "35-44" | "45-54" | "55+";
@@ -52,6 +56,8 @@ interface ProfileInfoSectionProps {
   name: string;
   setName: (v: string) => void;
   updateProfile: (data: Partial<UserProfile>) => Promise<UpdateProfileResult>;
+  /** Re-reads the profile once a weight saved here has been written. */
+  refreshProfile?: () => Promise<void>;
   /** Set1.2 — skip the AccordionSection shell when rendered inside a
    *  SettingsSection nested page (which provides its own chrome). */
   inline?: boolean;
@@ -62,11 +68,23 @@ export default function ProfileInfoSection({
   name,
   setName,
   updateProfile,
+  refreshProfile,
   inline = false,
 }: ProfileInfoSectionProps) {
   const weightUnit = profile.preferredWeightUnit === "lbs" ? "lbs" : "kg";
   const heightUnit = profile.preferredHeightUnit === "ft" ? "ft" : "cm";
-  const savedKg = profile.weightKg ?? 70;
+  /* The weight a change here last saved. The weigh-in queue writes the
+     profile on the server, not the profile this screen was handed, so
+     without it a second change compared against the old weight: putting a
+     mistake back to it saved nothing. Dropped when the profile itself
+     moves. */
+  const [savedHereKg, setSavedHereKg] = useState<number | null>(null);
+  const [seenProfileKg, setSeenProfileKg] = useState(profile.weightKg);
+  if (profile.weightKg !== seenProfileKg) {
+    setSeenProfileKg(profile.weightKg);
+    setSavedHereKg(null);
+  }
+  const savedKg = savedHereKg ?? profile.weightKg ?? 70;
   const savedCm = profile.heightCm ?? 170;
 
   // What each field shows, in the chosen unit. Compared as text on blur, so
@@ -94,8 +112,21 @@ export default function ProfileInfoSection({
       setWeight(shown);
       return;
     }
-    const result = await updateProfile({ weightKg: kg });
-    if (!result.ok) setWeight(shown);
+    // A weight changed here is today's weigh-in, as one from Home is: the
+    // log, Home's tile and trend, and the macros all follow it. A bare
+    // profile write left Home showing the last logged weight and the stored
+    // macro targets on the old one.
+    try {
+      queueWeightEntry(profile.uid, localDateString(), kg);
+      setSavedHereKg(kg);
+      if (refreshProfile)
+        void flushQueuedWeights(profile.uid).then(refreshProfile, () => {});
+    } catch (err) {
+      setWeight(shown);
+      toast.error(
+        err instanceof Error ? err.message : "Couldn't save your weight."
+      );
+    }
   }
 
   /** The bounds are profileSanitizer.js's heightCm range (bodyMetrics),
@@ -166,7 +197,12 @@ export default function ProfileInfoSection({
                directly, so it is held to Onboarding's rules here,
                word filter included. A refused name is not saved; the
                field keeps it so it can be corrected. */
-            const check = validateDisplayName(name);
+            const wordFilter = await loadWordFilter().catch(() => null);
+            if (!wordFilter) {
+              setNameError("Couldn't check the name. Try again.");
+              return;
+            }
+            const check = validateDisplayName(name, wordFilter);
             if (!check.valid) {
               setNameError(check.message);
               return;
@@ -176,7 +212,7 @@ export default function ProfileInfoSection({
             if (!result.ok) setName(prev);
           }}
           placeholder="Your name"
-          className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
+          className="ds-input mt-1 text-sm"
         />
         {nameError && (
           <p
@@ -203,7 +239,7 @@ export default function ProfileInfoSection({
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
             onBlur={() => void commitWeight()}
-            className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+            className="ds-input mt-1 text-sm font-mono tabular-nums"
           />
           <p className="text-xs text-muted-foreground mt-1">
             Sets your calorie target. Log your weight on Home to keep it
@@ -226,7 +262,7 @@ export default function ProfileInfoSection({
                 aria-label="Height, feet"
                 value={feet}
                 onChange={(e) => setFeet(e.target.value)}
-                className="w-full min-w-0 min-h-11 px-3 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+                className="ds-input min-w-0 text-sm font-mono tabular-nums"
               />
               <input
                 type="number"
@@ -234,7 +270,7 @@ export default function ProfileInfoSection({
                 aria-label="Height, inches"
                 value={inches}
                 onChange={(e) => setInches(e.target.value)}
-                className="w-full min-w-0 min-h-11 px-3 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+                className="ds-input min-w-0 text-sm font-mono tabular-nums"
               />
             </div>
           </div>
@@ -258,7 +294,7 @@ export default function ProfileInfoSection({
                   heightCmText.trim() === String(Number(savedCm.toFixed(1)))
                 )
               }
-              className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+              className="ds-input mt-1 text-sm font-mono tabular-nums"
             />
           </div>
         )}
@@ -313,7 +349,7 @@ export default function ProfileInfoSection({
             else setWhy(next);
           }}
           placeholder="What's driving you?"
-          className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
+          className="ds-input mt-1 text-sm"
         />
         <p className="text-xs text-muted-foreground mt-1">
           We resurface this in your weekly review.

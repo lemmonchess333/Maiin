@@ -10,9 +10,9 @@
  *    old file used `NSPrivacyCollectedDataTypeHealthFitness`, which is not
  *    one of Apple's keys, and nothing noticed.
  *  - Required-reason API entries cover what the app's plugins call without
- *    a manifest of their own (@capacitor/preferences, @capacitor/filesystem,
+ *    a manifest of their own (@capacitor/filesystem and
  *    capacitor-live-activities ship none), for as long as they are
- *    dependencies.
+ *    dependencies, and no longer than that.
  *  - Purpose strings name every use.
  *  - Nothing that can track is built in: Analytics without the
  *    advertising-ID trait, Authentication without the Facebook SDK, and the
@@ -229,11 +229,13 @@ describe("privacy manifest — required-reason APIs", () => {
     ])
   );
 
-  it("declares UserDefaults for the app's own preferences (kept)", () => {
+  it("declares the app's own UserDefaults reason exactly while @capacitor/preferences is a dependency", () => {
     // @capacitor/preferences writes UserDefaults.standard and ships no
-    // manifest of its own.
-    expect("@capacitor/preferences" in pkg.dependencies).toBe(true);
-    expect(reasons.UserDefaults).toContain("CA92.1");
+    // manifest of its own; nothing else in the app writes it. A reason
+    // declared for an API the app does not use is a question App Review
+    // asks, so the two move together.
+    const preferences = "@capacitor/preferences" in pkg.dependencies;
+    expect((reasons.UserDefaults ?? []).includes("CA92.1")).toBe(preferences);
   });
 
   it("declares App Group defaults and file timestamps while Live Activities is a dependency", () => {

@@ -1,6 +1,6 @@
 import { renderHook, waitFor, cleanup, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-let uid = "audit";
+let uid: string | null = "audit";
 vi.mock("@/lib/auth", () => ({ useUid: () => uid }));
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("firebase/firestore");
@@ -16,6 +16,7 @@ import {
   failNextFirestore,
   unfiredFailures,
   flushSnapshots,
+  setSnapshotMetadata,
 } from "@/test/firestoreHarness";
 import { localDateString } from "@/lib/dateHelpers";
 
@@ -27,6 +28,46 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("Food diary reads and recovery", () => {
+  it("confirms an empty diary only after the server's metadata acknowledgement", async () => {
+    setSnapshotMetadata("users/audit/meals", { fromCache: true });
+    const { result } = renderHook(() =>
+      useMeals({ from: "2026-10-01", to: "2026-10-15" })
+    );
+    await flushSnapshots();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.meals).toEqual([]);
+    expect(result.current.serverConfirmed).toBe(false);
+
+    act(() => {
+      setSnapshotMetadata("users/audit/meals", { fromCache: false });
+    });
+    await flushSnapshots();
+    expect(result.current.serverConfirmed).toBe(true);
+  });
+
+  it("waits for SDK pending meal writes to be acknowledged before confirming an empty diary", async () => {
+    setSnapshotMetadata("users/audit/meals", {
+      fromCache: false,
+      hasPendingWrites: true,
+    });
+    const { result } = renderHook(() =>
+      useMeals({ from: "2026-10-01", to: "2026-10-15" })
+    );
+    await flushSnapshots();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.meals).toEqual([]);
+    expect(result.current.serverConfirmed).toBe(false);
+
+    act(() => {
+      setSnapshotMetadata("users/audit/meals", {
+        fromCache: false,
+        hasPendingWrites: false,
+      });
+    });
+    await flushSnapshots();
+    expect(result.current.serverConfirmed).toBe(true);
+  });
+
   it("loads all five meals on an older selected date even past 400 newer records", async () => {
     const docs: Record<string, Record<string, unknown>> = {};
     let oldDate = "";
@@ -128,16 +169,22 @@ it("scopes queued meals and failed reads to the requested dates and account", as
     });
   });
   expect(result.current.meals.map((meal) => meal.id)).toEqual(["local"]);
+  expect(result.current.serverConfirmed).toBe(false);
   failNextFirestore("onSnapshot", { path: "users/audit/meals" });
   rerender({ from: "2026-09-02", to: "2026-09-02" });
   expect(result.current.meals).toEqual([]);
   await flushSnapshots();
   expect(result.current.error).toBeTruthy();
+  expect(result.current.serverConfirmed).toBe(false);
   uid = "other";
   rerender({ from: "2026-09-01", to: "2026-09-02" });
   expect(result.current.meals).toEqual([]);
   expect(result.current.error).toBeNull();
   await flushSnapshots();
   expect(result.current.meals).toEqual([]);
+  expect(result.current.serverConfirmed).toBe(true);
+  uid = null;
+  rerender({ from: "2026-09-01", to: "2026-09-02" });
+  expect(result.current.serverConfirmed).toBe(false);
   expect(unfiredFailures()).toHaveLength(0);
 });

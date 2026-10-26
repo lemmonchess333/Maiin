@@ -1,0 +1,166 @@
+{
+  "exerciseId": "elliptical",
+  "version": "anatomy-v3-2026-10-15-custom-rear-drive-elliptical-v1",
+  "width": 1047,
+  "height": 1072,
+  "reference": {
+    "path": "form-frames/elliptical/1.webp",
+    "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d"
+  },
+  "cueSha256": "3536ad6e961bfdab2d863eccbf78f485a83ff7b9524c7b5feeb5050b6625c7b1",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:49.041626+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Opposed stride phases keep both feet supported on platforms, hands at handles, and body above the fixed frame. It is an illustrated apparatus, not a manufacturer replica. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Custom rear-drive frame, continuous side rails and linked pedals/handles. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Opposed stride phases keep both feet supported on platforms, hands at handles, and body above the fixed frame. It is an illustrated apparatus, not a manufacturer replica. Actual named native supports are measured in all six frames: fixedLeftFloorBaseMaterialFeature1, fixedLeftFloorBaseMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedLeftFloorBaseProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Opposed stride phases keep both feet supported on platforms, hands at handles, and body above the fixed frame. It is an illustrated apparatus, not a manufacturer replica. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Quads, Glutes #7B72E9; secondary Front Delts, Upper Back, Hamstrings #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Stride A: Stand tall; keep both feet on pedals. / Hold A: Keep both feet planted in the pedals. / Stride B: Coordinate your push and pull with legs. / Hold B: Hold both grips; keep your chest tall. / Return A: Return smoothly to the first shown stride. / Reset: Keep your torso tall without leaning forward.. Preparation remains [\"Step on the pedals with feet evenly placed, grip the moving handles.\", \"Start with a smooth easy pace to find the stride rhythm.\"]. Opposed stride phases keep both feet supported on platforms, hands at handles, and body above the fixed frame. It is an illustrated apparatus, not a manufacturer replica."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Opposed stride phases keep both feet supported on platforms, hands at handles, and body above the fixed frame. It is an illustrated apparatus, not a manufacturer replica. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-16/elliptical.json (sha256 ea6165572a47af886030a75dd742d6e2fc0ba4c462b6bcd94fbb6b87cc67871d). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-16/elliptical.json (sha256 ea6165572a47af886030a75dd742d6e2fc0ba4c462b6bcd94fbb6b87cc67871d). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/elliptical/1.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 42, "y": 957 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 120, "y": 990 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+        "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+      }
+    },
+    {
+      "path": "form-frames/elliptical/2.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 42, "y": 957 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 120, "y": 990 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+        "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+      }
+    },
+    {
+      "path": "form-frames/elliptical/3.webp",
+      "sha256": "1b9862601b8c27b6ee101779b325cf9591a1a1175da9b35e18f8d29077864c1f",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 42, "y": 957 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 120, "y": 990 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+        "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+      }
+    },
+    {
+      "path": "form-frames/elliptical/4.webp",
+      "sha256": "1b9862601b8c27b6ee101779b325cf9591a1a1175da9b35e18f8d29077864c1f",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 42, "y": 957 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 120, "y": 990 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+        "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+      }
+    },
+    {
+      "path": "form-frames/elliptical/5.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 42, "y": 957 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 120, "y": 990 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+        "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+      }
+    },
+    {
+      "path": "form-frames/elliptical/6.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+      "anchors": {
+        "fixedLeftFloorBaseMaterialFeature1": { "x": 42, "y": 957 },
+        "fixedLeftFloorBaseMaterialFeature2": { "x": 120, "y": 990 }
+      },
+      "invariantDimensions": {
+        "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+        "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-16/elliptical.json",
+    "sha256": "ea6165572a47af886030a75dd742d6e2fc0ba4c462b6bcd94fbb6b87cc67871d"
+  },
+  "historicalFindings": [
+    "Custom rear-drive four-bar, passive pitching trays and mirrored offset-bearing D grips; no exact manufacturer-model or recovered source3D claim.",
+    "Near/far locked stem and pedal-bearing settings differ but stay fixed across both poses; dimensions/camera/phase closure are exposed in authoring/fixed-geometry.json.",
+    "Two genuine intact source body states repeated across six distinct paths. No generated human intermediates or continuous human trajectory claim.",
+    "Original source shading/contours and minor source pose/activation differences retained. Pose4posterior-thigh field is secondaryHamstrings, not silently relabelled as primaryQuads.",
+    "Five original dark upper-cylinder antialias pixels near pose4far index edge differ from new hardware. Parent reviewed this as a minor equipment edge finding, not missing white finger anatomy.",
+    "Shaded charcoal custom apparatus differs from original generated machine style and equipment geometry; parent source-construction eligibility is not final palette/mobile or strict acceptance."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/elliptical.json",
+    "sha256": "e42bb27ea899ba2b66967a885e1e42d5c5478ab1cb5e022ec3436faea5f2e423"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

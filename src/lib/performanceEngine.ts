@@ -2,7 +2,9 @@
 /* ─────────────────────────────────────────────
    Performance Engine — Computation
    Pure functions. No Firebase imports.
-   Can be extracted to Cloud Functions as-is.
+   The index the app shows is the server's (functions/lib/perfScoring.js).
+   This copy of it runs in tests and the seed scripts; the app itself uses
+   only the load bands and week keys.
    ───────────────────────────────────────────── */
 
 import type {
@@ -433,10 +435,34 @@ export function generatePlanAdjustments(
 // ── Profile shape + post-baseline scoring (the parity seam) ──
 
 export interface PerformanceProfile {
+  /** Lift days a week. */
   weeklyWorkoutsTarget?: number;
+  /** Run days a week; wins over the legacy `weeklyRunsTarget`. */
+  weeklyRunDaysTarget?: number;
+  weeklyRunsTarget?: number;
   targetCalories?: number | null;
   targetProtein?: number | null;
   goal?: string;
+}
+
+/**
+ * The sessions a week is scored against: the lift days plus the run days the
+ * person planned, because adherence counts lifts and runs together. A planned
+ * 0 is a real answer (a runner plans no lifts), so the goal's default stands
+ * in only when nothing at all is planned. `weeklyRunDaysTarget` wins over the
+ * legacy `weeklyRunsTarget`, as in `getWeeklyRunTarget`. Mirrors
+ * `weeklySessionTarget` in functions/lib/perfScoring.js.
+ */
+export function weeklySessionTarget(profile: PerformanceProfile): number {
+  const count = (v: unknown): number =>
+    typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0;
+  const runs =
+    typeof profile.weeklyRunDaysTarget === "number"
+      ? count(profile.weeklyRunDaysTarget)
+      : count(profile.weeklyRunsTarget);
+  const planned = count(profile.weeklyWorkoutsTarget) + runs;
+  if (planned > 0) return planned;
+  return profile.goal === "cut" ? 3 : profile.goal === "lean bulk" ? 5 : 4;
 }
 
 /** The deterministic scored fields shared with the server copy. Excludes
@@ -483,8 +509,7 @@ export function scorePerformance(
   const recoveryScore = computeRecoveryScore(agg, profile.goal);
   const adherenceScore = computeAdherenceScore(
     agg,
-    profile.weeklyWorkoutsTarget ||
-      (profile.goal === "cut" ? 3 : profile.goal === "lean bulk" ? 5 : 4),
+    weeklySessionTarget(profile),
     profile.targetCalories ?? null,
     profile.targetProtein ?? null,
     profile.goal

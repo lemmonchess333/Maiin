@@ -30,6 +30,8 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # Install, build and upload: 3 minutes on the release of 19 October.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -55,6 +57,9 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+          # Same Pro road-align / loop layer as the Pages and iOS builds.
+          # The callable still enforces Pro access and runtime configuration.
+          VITE_ROUTE_PLANNING_ENABLED: "true"
           # FCM Web push public VAPID key (#963). Public by design (it ships in
           # the client bundle); a secret only to match the other VITE_ vars.
           # Unset, `isPushSupported()` returns false, so the Settings toggle

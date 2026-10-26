@@ -8,7 +8,7 @@ import {
   type ExercisePR,
 } from "@/lib/prTracking";
 import { THEME } from "@/lib/theme";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, formatSigned } from "@/utils/formatters";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
@@ -74,7 +74,6 @@ export default function ExerciseCompareSheet({
   const bucket = getRepBucket(authorTargetReps);
   const yourPR: ExercisePR | null = prMap?.[exerciseName]?.[bucket] ?? null;
   const delta = yourPR ? yourPR.weight - authorTargetWeightKg : 0;
-  const deltaSign = delta > 0 ? "+" : "";
 
   const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
 
@@ -157,7 +156,7 @@ export default function ExerciseCompareSheet({
               <p className="text-xs font-semibold font-mono tabular-nums">
                 {delta === 0
                   ? "Matched"
-                  : `${deltaSign}${liftVolumeIn(delta, liftUnit).toFixed(1)} ${liftUnitLabel(liftUnit)} vs them`}
+                  : `${formatSigned(liftVolumeIn(delta, liftUnit), 1)} ${liftUnitLabel(liftUnit)} vs them`}
               </p>
             </div>
           </>

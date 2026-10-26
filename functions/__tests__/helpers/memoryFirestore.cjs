@@ -172,6 +172,7 @@ function memoryFirestore(seed = {}) {
     collection,
     collectionGroup: (name) => collection(name, true),
     batch: transaction,
+    getAll: async (...refs) => Promise.all(refs.map((r) => r.get())),
     runTransaction: async (fn) => {
       const tx = transaction();
       const value = await fn(tx);

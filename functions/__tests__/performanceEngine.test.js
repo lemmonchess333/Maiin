@@ -39,11 +39,15 @@ const {
   getWeekKey,
   isInRollingWindow,
   triggerComputeKey,
+  inTriggerReach,
+  runDayKey,
   _internal,
 } = require("../performanceEngine");
+const perfScoring = require("../lib/perfScoring");
 
 const {
   dateKeyMinusN,
+  personTodayKey,
   currentWindow,
   baselineWindow,
   aggregateWindow,
@@ -231,6 +235,82 @@ describe("triggerComputeKey", () => {
   });
 });
 
+/* G3-8 (20 October): the window was keyed by the server's day, and runs
+   were placed by the UTC instant they finished while lifts were placed by
+   their local day. */
+describe("the person's own week", () => {
+  // Wednesday 20 May 2026, 20:00 in New York (UTC-4).
+  const NOW = new Date("2026-05-21T00:00:00Z");
+
+  it("ends the window on the person's today", () => {
+    expect(personTodayKey("America/New_York", NOW, null)).toBe("2026-05-20");
+    expect(personTodayKey("Pacific/Auckland", NOW, null)).toBe("2026-05-21");
+    expect(personTodayKey("Pacific/Kiritimati", NOW, null)).toBe("2026-05-21");
+    expect(
+      personTodayKey("Pacific/Kiritimati", new Date("2026-05-20T12:00:00Z"))
+    ).toBe("2026-05-21");
+  });
+
+  it("keeps the server's day without a timezone, and its east-of-UTC case", () => {
+    expect(personTodayKey(null, NOW, null)).toBe("2026-05-21");
+    expect(personTodayKey("Not/AZone", NOW, null)).toBe("2026-05-21");
+    // A session one day ahead of the server's date is that day's.
+    expect(personTodayKey(null, NOW, "2026-05-22")).toBe("2026-05-22");
+    expect(personTodayKey(null, NOW, "2026-05-23")).toBe("2026-05-21");
+    // A timezone decides it: the session's label does not.
+    expect(personTodayKey("America/New_York", NOW, "2026-05-22")).toBe(
+      "2026-05-20"
+    );
+  });
+
+  it("dates a run by the day it started, else the day it finished there", () => {
+    const finished = { toDate: () => new Date("2026-05-15T01:40:00Z") };
+    expect(runDayKey({ date: "2026-05-14", completedAt: finished }, null)).toBe(
+      "2026-05-14"
+    );
+    expect(runDayKey({ completedAt: finished }, "America/New_York")).toBe(
+      "2026-05-14"
+    );
+    expect(runDayKey({ completedAt: finished }, null)).toBe("2026-05-15");
+    // Not a day: the finish time stands in.
+    expect(runDayKey({ date: "2026-02-30", completedAt: finished }, null)).toBe(
+      "2026-05-15"
+    );
+    expect(runDayKey({}, null)).toBeNull();
+  });
+
+  it("places a run and a lift on the same evening in the same window and week", () => {
+    const { start, end } = currentWindow("2026-05-20");
+    const workouts = [{ date: "2026-05-14", totalVolume: 1000, exercises: [] }];
+    const runs = [
+      {
+        date: "2026-05-14",
+        completedAt: { toDate: () => new Date("2026-05-15T01:40:00Z") },
+        distance: 5000,
+      },
+      // The evening before the window: Thursday in UTC.
+      {
+        date: "2026-05-13",
+        completedAt: { toDate: () => new Date("2026-05-14T01:40:00Z") },
+        distance: 5000,
+      },
+    ];
+    const agg = aggregateWindow(start, end, workouts, runs, [], []);
+    expect(agg.liftSessions).toBe(1);
+    expect(agg.runSessions).toBe(1);
+    expect(agg.activeWeeks).toBe(1);
+  });
+
+  it("lets a trigger through for a session a day either side of the window", () => {
+    const today = "2026-05-21";
+    expect(inTriggerReach("2026-05-22", today)).toBe(true);
+    expect(inTriggerReach("2026-05-14", today)).toBe(true);
+    expect(inTriggerReach("2026-05-13", today)).toBe(false);
+    expect(inTriggerReach("2026-05-23", today)).toBe(false);
+    expect(inTriggerReach(null, today)).toBe(false);
+  });
+});
+
 describe("aggregateWindow", () => {
   const start = new Date("2026-05-13T00:00:00Z");
   const end = new Date("2026-05-20T00:00:00Z"); // exclusive
@@ -371,6 +451,50 @@ describe("aggregateWindow", () => {
     const agg = aggregateWindow(start, end, [], [], meals, []);
     expect(agg.mealDaysLogged).toBe(2);
     expect(agg.avgDailyCalories).toBe(Math.round((500 + 700 + 800) / 2)); // 1000
+  });
+
+  it("counts a food day, and averages it, only from 800 kcal", () => {
+    // A cutter on a 2,000 target: five days at 2,000 and two rest days with
+    // one 150 kcal coffee each. Averaged in, the coffees made the week
+    // (5 x 2000 + 2 x 150) / 7 = 1,471, and the calorie factor
+    // 100 - |1 - 1471/2000| x 200 = 47.
+    const full = [
+      "2026-05-13",
+      "2026-05-14",
+      "2026-05-15",
+      "2026-05-16",
+      "2026-05-17",
+    ];
+    const meals = [
+      ...full.map((date) => ({ date, totalCalories: 2000, totalProtein: 150 })),
+      { date: "2026-05-18", totalCalories: 150, totalProtein: 2 },
+      { date: "2026-05-19", totalCalories: 150, totalProtein: 2 },
+    ];
+    const agg = aggregateWindow(start, end, [], [], meals, []);
+    expect(agg.mealDaysLogged).toBe(5);
+    expect(agg.avgDailyCalories).toBe(2000);
+    expect(agg.avgDailyProtein).toBe(150);
+    // Sessions out of the way: calories and protein are the two factors.
+    const adherence = perfScoring.computeAdherenceScore(
+      { ...agg, liftSessions: 0, runSessions: 0 },
+      0,
+      2000,
+      150,
+      "cut"
+    );
+    expect(adherence).toBe(100);
+  });
+
+  it("a day of several small meals that reaches 800 kcal counts", () => {
+    const meals = [
+      { date: "2026-05-13", totalCalories: 300, totalProtein: 20 },
+      { date: "2026-05-13", totalCalories: 500, totalProtein: 30 },
+      { date: "2026-05-14", totalCalories: 799, totalProtein: 40 },
+    ];
+    const agg = aggregateWindow(start, end, [], [], meals, []);
+    expect(agg.mealDaysLogged).toBe(1);
+    expect(agg.avgDailyCalories).toBe(800);
+    expect(agg.avgDailyProtein).toBe(50);
   });
 
   it("ignores bodyweight logs with a missing/non-numeric weight (no NaN)", () => {

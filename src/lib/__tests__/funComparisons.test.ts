@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { getDistanceComparison } from "../funComparisons";
 
-
 describe("getDistanceComparison", () => {
   it("returns null for 0 km", () => {
     expect(getDistanceComparison(0)).toBeNull();
@@ -68,13 +67,18 @@ describe("getDistanceComparison", () => {
     vi.restoreAllMocks();
   });
 
-  it("can return Great Wall comparison for large distances", () => {
+  it("never compares a run to a fraction of a Great Wall section", () => {
+    // "That's a 0.6× Great Wall section" read as nonsense, so the entry is
+    // gone. At 10 km the last of the four eligible is the pool.
     vi.spyOn(Math, "random").mockReturnValue(0.99);
-    // At 10 km, all 5 comparisons eligible. random=0.99 => floor(0.99*5)=4 => Great Wall (index 4)
     const result = getDistanceComparison(10);
     expect(result).toBe(
-      `That's a ${(10 / 8.851).toFixed(1)}× Great Wall section`
+      `That's ${Math.round((10 * 1000) / 50)} Olympic pool lengths`
     );
+    for (const r of [0, 0.3, 0.6, 0.99]) {
+      vi.spyOn(Math, "random").mockReturnValue(r);
+      expect(getDistanceComparison(10)).not.toMatch(/Great Wall/);
+    }
     vi.restoreAllMocks();
   });
 

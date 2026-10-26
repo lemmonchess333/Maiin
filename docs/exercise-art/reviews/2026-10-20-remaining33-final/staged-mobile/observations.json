@@ -1,0 +1,2354 @@
+[
+  {
+    "id": "assault-bike",
+    "theme": "dark",
+    "frame": 1,
+    "capture": "assault-bike-dark-1.png",
+    "sha256": "f010212a39f94c68522df8213c1a974b36dbf0dad2c3a1a5bcda87050bc6dc5e",
+    "captureModifiedAt": "2026-10-19T23:38:32.157Z",
+    "domRecheckedAt": "2026-10-19T23:41:06.455Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Drive",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/1.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nAssault Bike\n\nDRIVE 1/6\n\nPlay\nNormal\n\nDraft manual selection 1/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "assault-bike",
+    "theme": "dark",
+    "frame": 2,
+    "capture": "assault-bike-dark-2.png",
+    "sha256": "545bc81b40726247ad0143c304a3e1c45940ad56f3e85db8e91816caa3247665",
+    "captureModifiedAt": "2026-10-19T23:38:33.509Z",
+    "domRecheckedAt": "2026-10-19T23:41:06.773Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Arms",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/2.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nAssault Bike\n\nARMS 2/6\n\nPlay\nNormal\n\nDraft manual selection 2/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "assault-bike",
+    "theme": "dark",
+    "frame": 3,
+    "capture": "assault-bike-dark-3.png",
+    "sha256": "068f4664cb98114cf7cac3065a3e23ba52f59deaa4f8a078bb1166e4963d29ad",
+    "captureModifiedAt": "2026-10-19T23:38:34.859Z",
+    "domRecheckedAt": "2026-10-19T23:41:07.083Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Switch",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/3.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nAssault Bike\n\nSWITCH 3/6\n\nPlay\nNormal\n\nDraft manual selection 3/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "assault-bike",
+    "theme": "dark",
+    "frame": 4,
+    "capture": "assault-bike-dark-4.png",
+    "sha256": "9b4c5d7458639cd63f7b01a8f68d9b6ef31a529cbd86a9630a263e51d7182cc9",
+    "captureModifiedAt": "2026-10-19T23:38:36.210Z",
+    "domRecheckedAt": "2026-10-19T23:41:07.406Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Tall",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/4.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nAssault Bike\n\nTALL 4/6\n\nPlay\nNormal\n\nDraft manual selection 4/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "assault-bike",
+    "theme": "dark",
+    "frame": 5,
+    "capture": "assault-bike-dark-5.png",
+    "sha256": "3d5329a1b770c00ebe0ab6c5cdc55d4fa9f43158a9317fcc0b448862192326ba",
+    "captureModifiedAt": "2026-10-19T23:38:37.556Z",
+    "domRecheckedAt": "2026-10-19T23:41:07.720Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Breathe",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/5.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nAssault Bike\n\nBREATHE 5/6\n\nPlay\nNormal\n\nDraft manual selection 5/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "assault-bike",
+    "theme": "dark",
+    "frame": 6,
+    "capture": "assault-bike-dark-6.png",
+    "sha256": "3db24a562d577fe877ac4c3004073d5986ddea0cece5ba52b2e0afd4038342a0",
+    "captureModifiedAt": "2026-10-19T23:38:38.907Z",
+    "domRecheckedAt": "2026-10-19T23:41:08.034Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Steady",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/6.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nAssault Bike\n\nSTEADY 6/6\n\nPlay\nNormal\n\nDraft manual selection 6/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "assault-bike",
+    "theme": "light",
+    "frame": 1,
+    "capture": "assault-bike-light-1.png",
+    "sha256": "814676e2aa1e0da221ee16381ce60c2265e6a400f0b1d8ee202e61d666366ea6",
+    "captureModifiedAt": "2026-10-19T23:38:40.515Z",
+    "domRecheckedAt": "2026-10-19T23:41:08.619Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Drive",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/1.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nAssault Bike\n\nDRIVE 1/6\n\nPlay\nNormal\n\nDraft manual selection 1/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "assault-bike",
+    "theme": "light",
+    "frame": 2,
+    "capture": "assault-bike-light-2.png",
+    "sha256": "a8e4d829aadfd6d94f1625082717fb44498ef82f55c3c86f96a0617d6b639b5b",
+    "captureModifiedAt": "2026-10-19T23:38:41.866Z",
+    "domRecheckedAt": "2026-10-19T23:41:08.935Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Arms",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/2.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nAssault Bike\n\nARMS 2/6\n\nPlay\nNormal\n\nDraft manual selection 2/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "assault-bike",
+    "theme": "light",
+    "frame": 3,
+    "capture": "assault-bike-light-3.png",
+    "sha256": "fa3cb70cfcd1031d9ab73758abbda3bffe9e30fc317c4593b877eaf7e5d3fd7a",
+    "captureModifiedAt": "2026-10-19T23:38:43.217Z",
+    "domRecheckedAt": "2026-10-19T23:41:09.249Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Switch",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/3.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nAssault Bike\n\nSWITCH 3/6\n\nPlay\nNormal\n\nDraft manual selection 3/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "assault-bike",
+    "theme": "light",
+    "frame": 4,
+    "capture": "assault-bike-light-4.png",
+    "sha256": "7ea934e35a2a67ca0111c8359ca9c99295545e8c0d57b1fe7bcd0b8b167c02f4",
+    "captureModifiedAt": "2026-10-19T23:38:44.576Z",
+    "domRecheckedAt": "2026-10-19T23:41:09.569Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Tall",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/4.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nAssault Bike\n\nTALL 4/6\n\nPlay\nNormal\n\nDraft manual selection 4/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "assault-bike",
+    "theme": "light",
+    "frame": 5,
+    "capture": "assault-bike-light-5.png",
+    "sha256": "9746c5cfc3cb89abef0c3ae1f30a83bedfefc0fdcae49daddc9fea140f4cee21",
+    "captureModifiedAt": "2026-10-19T23:38:45.926Z",
+    "domRecheckedAt": "2026-10-19T23:41:09.874Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Breathe",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/5.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nAssault Bike\n\nBREATHE 5/6\n\nPlay\nNormal\n\nDraft manual selection 5/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "assault-bike",
+    "theme": "light",
+    "frame": 6,
+    "capture": "assault-bike-light-6.png",
+    "sha256": "58cc086239511cea4f2941c29e1451a30aa20c4859fa699a5a6aa4b9826b3bae",
+    "captureModifiedAt": "2026-10-19T23:38:47.277Z",
+    "domRecheckedAt": "2026-10-19T23:41:10.191Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Assault Bike, Steady",
+          "decoded": true,
+          "natural": [1024, 1024],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/6.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "/Maiin/.remaining33.local/candidate/assault-bike/card.webp"
+        },
+        {
+          "alt": "Assault Bike normal card preview",
+          "decoded": true,
+          "natural": [211, 480],
+          "src": "candidate/assault-bike/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / assault-bike\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nAssault Bike\n\nSTEADY 6/6\n\nPlay\nNormal\n\nDraft manual selection 6/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "dark",
+    "frame": 1,
+    "capture": "stairmaster-dark-1.png",
+    "sha256": "84c732e88b4c8cb482aa55228b67fe918d0a484536bf146525f4e39de9d5ea86",
+    "captureModifiedAt": "2026-10-19T23:38:48.744Z",
+    "domRecheckedAt": "2026-10-19T23:41:26.322Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Step",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/1.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nStairmaster\n\nSTEP 1/6\n\nPlay\nNormal\n\nDraft manual selection 1/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "dark",
+    "frame": 2,
+    "capture": "stairmaster-dark-2.png",
+    "sha256": "eef9ec427d53ff8136d69bff6e0a9237500b5b31ab248551782ffe101dba786f",
+    "captureModifiedAt": "2026-10-19T23:38:50.102Z",
+    "domRecheckedAt": "2026-10-19T23:41:26.630Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Drive",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/2.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nStairmaster\n\nDRIVE 2/6\n\nPlay\nNormal\n\nDraft manual selection 2/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "dark",
+    "frame": 3,
+    "capture": "stairmaster-dark-3.png",
+    "sha256": "ee69cb0ac8e5a34e0d4d4edb045016fd147130ed13cd1a83b42839a84928cc1f",
+    "captureModifiedAt": "2026-10-19T23:38:51.440Z",
+    "domRecheckedAt": "2026-10-19T23:41:26.949Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Knee up",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/3.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nStairmaster\n\nKNEE UP 3/6\n\nPlay\nNormal\n\nDraft manual selection 3/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "dark",
+    "frame": 4,
+    "capture": "stairmaster-dark-4.png",
+    "sha256": "70a11545c95409ad9c21440469aa05e3db8f5ab569458b76c7ff9b234c37cf6e",
+    "captureModifiedAt": "2026-10-19T23:38:52.798Z",
+    "domRecheckedAt": "2026-10-19T23:41:27.257Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Grip",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/4.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nStairmaster\n\nGRIP 4/6\n\nPlay\nNormal\n\nDraft manual selection 4/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "dark",
+    "frame": 5,
+    "capture": "stairmaster-dark-5.png",
+    "sha256": "7276c4efc1c444132ed2216e659dff4f19caca7eef08117495dd79442d16842a",
+    "captureModifiedAt": "2026-10-19T23:38:54.151Z",
+    "domRecheckedAt": "2026-10-19T23:41:27.580Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Land",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/5.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nStairmaster\n\nLAND 5/6\n\nPlay\nNormal\n\nDraft manual selection 5/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "dark",
+    "frame": 6,
+    "capture": "stairmaster-dark-6.png",
+    "sha256": "ea48dd4bcd9a37b03b00d520be320a33757e26adcf41949f23f792a810f14faf",
+    "captureModifiedAt": "2026-10-19T23:38:55.502Z",
+    "domRecheckedAt": "2026-10-19T23:41:27.893Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Steady",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/6.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nStairmaster\n\nSTEADY 6/6\n\nPlay\nNormal\n\nDraft manual selection 6/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "light",
+    "frame": 1,
+    "capture": "stairmaster-light-1.png",
+    "sha256": "5d013e509393d2a7f781a8bd39dc25998d6df0d87490c5118d499b0daab858ad",
+    "captureModifiedAt": "2026-10-19T23:38:57.126Z",
+    "domRecheckedAt": "2026-10-19T23:41:28.487Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Step",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/1.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nStairmaster\n\nSTEP 1/6\n\nPlay\nNormal\n\nDraft manual selection 1/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "light",
+    "frame": 2,
+    "capture": "stairmaster-light-2.png",
+    "sha256": "09882a47e88d3c98531ecbff31af6252c4fa22c0ea9a79d383748355f6b737b0",
+    "captureModifiedAt": "2026-10-19T23:38:58.472Z",
+    "domRecheckedAt": "2026-10-19T23:41:28.802Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Drive",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/2.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nStairmaster\n\nDRIVE 2/6\n\nPlay\nNormal\n\nDraft manual selection 2/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "light",
+    "frame": 3,
+    "capture": "stairmaster-light-3.png",
+    "sha256": "44a707dac8d28969090aa8af960ef49dab1e135e6e7a778119ef8faa525d58f7",
+    "captureModifiedAt": "2026-10-19T23:38:59.830Z",
+    "domRecheckedAt": "2026-10-19T23:41:29.108Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Knee up",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/3.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nStairmaster\n\nKNEE UP 3/6\n\nPlay\nNormal\n\nDraft manual selection 3/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "light",
+    "frame": 4,
+    "capture": "stairmaster-light-4.png",
+    "sha256": "bbfa799d056b137b23bc72a05e1f7ca43045a69f76530ebca0fc5c8068e9a5ee",
+    "captureModifiedAt": "2026-10-19T23:39:01.181Z",
+    "domRecheckedAt": "2026-10-19T23:41:29.418Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Grip",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/4.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nStairmaster\n\nGRIP 4/6\n\nPlay\nNormal\n\nDraft manual selection 4/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "light",
+    "frame": 5,
+    "capture": "stairmaster-light-5.png",
+    "sha256": "80ffd783df034695752104bdf83b7483a12b4c9619e41a0531a000eb11639eb6",
+    "captureModifiedAt": "2026-10-19T23:39:02.525Z",
+    "domRecheckedAt": "2026-10-19T23:41:29.732Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Land",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/5.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nStairmaster\n\nLAND 5/6\n\nPlay\nNormal\n\nDraft manual selection 5/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "stairmaster",
+    "theme": "light",
+    "frame": 6,
+    "capture": "stairmaster-light-6.png",
+    "sha256": "8ff9f55079ee8bebe00c14e52b7cd49181c83314aac0bc5d388f8d0e04153271",
+    "captureModifiedAt": "2026-10-19T23:39:03.883Z",
+    "domRecheckedAt": "2026-10-19T23:41:30.051Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Stairmaster, Steady",
+          "decoded": true,
+          "natural": [1024, 1536],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/6.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "/Maiin/.remaining33.local/candidate/stairmaster/card.webp"
+        },
+        {
+          "alt": "Stairmaster normal card preview",
+          "decoded": true,
+          "natural": [240, 480],
+          "src": "candidate/stairmaster/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / stairmaster\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nStairmaster\n\nSTEADY 6/6\n\nPlay\nNormal\n\nDraft manual selection 6/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "dark",
+    "frame": 1,
+    "capture": "rowing-machine-dark-1.png",
+    "sha256": "41486a9bb774eb8f97bb4cdcae40e8f6b695b4402439268faabd3210d1bb8ba4",
+    "captureModifiedAt": "2026-10-19T23:39:05.355Z",
+    "domRecheckedAt": "2026-10-19T23:41:30.520Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Catch",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/1.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nRowing Machine\n\nCATCH 1/6\n\nPlay\nNormal\n\nDraft manual selection 1/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "dark",
+    "frame": 2,
+    "capture": "rowing-machine-dark-2.png",
+    "sha256": "732647ae9854487b0e2a58392f96a60ce8111f71b213b799eeb3ae672aaec8af",
+    "captureModifiedAt": "2026-10-19T23:39:06.707Z",
+    "domRecheckedAt": "2026-10-19T23:41:30.834Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Drive",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/2.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nRowing Machine\n\nDRIVE 2/6\n\nPlay\nNormal\n\nDraft manual selection 2/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "dark",
+    "frame": 3,
+    "capture": "rowing-machine-dark-3.png",
+    "sha256": "fa3c1a539ddd8518619323c88d2d8c313cc9eb1d00d4da2f35d0319bb02902d5",
+    "captureModifiedAt": "2026-10-19T23:39:08.059Z",
+    "domRecheckedAt": "2026-10-19T23:41:31.146Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Finish",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/3.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nRowing Machine\n\nFINISH 3/6\n\nPlay\nNormal\n\nDraft manual selection 3/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "dark",
+    "frame": 4,
+    "capture": "rowing-machine-dark-4.png",
+    "sha256": "bc250b201891f6b4f4726acde13120151374c7bf6e6df5b51adff4ce7f5095a8",
+    "captureModifiedAt": "2026-10-19T23:39:09.399Z",
+    "domRecheckedAt": "2026-10-19T23:41:31.462Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Relax",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/4.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nRowing Machine\n\nRELAX 4/6\n\nPlay\nNormal\n\nDraft manual selection 4/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "dark",
+    "frame": 5,
+    "capture": "rowing-machine-dark-5.png",
+    "sha256": "04435f833456a3206fbc84087fcb63ad4c87151643a811adc2a69fb3c1236cba",
+    "captureModifiedAt": "2026-10-19T23:39:10.755Z",
+    "domRecheckedAt": "2026-10-19T23:41:31.775Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Recover",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/5.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nRowing Machine\n\nRECOVER 5/6\n\nPlay\nNormal\n\nDraft manual selection 5/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "dark",
+    "frame": 6,
+    "capture": "rowing-machine-dark-6.png",
+    "sha256": "eaa0b4e6ec08deb610851a53785b3b5a3a2ffee9a64f9b37c0236a9eb5bd0c82",
+    "captureModifiedAt": "2026-10-19T23:39:12.108Z",
+    "domRecheckedAt": "2026-10-19T23:41:32.085Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Reset",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/6.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nRowing Machine\n\nRESET 6/6\n\nPlay\nNormal\n\nDraft manual selection 6/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "light",
+    "frame": 1,
+    "capture": "rowing-machine-light-1.png",
+    "sha256": "b5b7ede40c399baf2ce21c689ee2fa0b9636fd96c7d9c9d22bb6ee4ccc3c5f81",
+    "captureModifiedAt": "2026-10-19T23:39:13.725Z",
+    "domRecheckedAt": "2026-10-19T23:41:32.674Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Catch",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/1.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nRowing Machine\n\nCATCH 1/6\n\nPlay\nNormal\n\nDraft manual selection 1/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "light",
+    "frame": 2,
+    "capture": "rowing-machine-light-2.png",
+    "sha256": "e19e364333ece01a5bb204165a4fdbc76f38015f283b30fc50310466df91836a",
+    "captureModifiedAt": "2026-10-19T23:39:15.070Z",
+    "domRecheckedAt": "2026-10-19T23:41:32.983Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Drive",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/2.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nRowing Machine\n\nDRIVE 2/6\n\nPlay\nNormal\n\nDraft manual selection 2/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "light",
+    "frame": 3,
+    "capture": "rowing-machine-light-3.png",
+    "sha256": "36f4f83cedfce603442e8c9222eb0bd141459fba5dc06d8371cabf307ea2d299",
+    "captureModifiedAt": "2026-10-19T23:39:16.437Z",
+    "domRecheckedAt": "2026-10-19T23:41:33.291Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Finish",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/3.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nRowing Machine\n\nFINISH 3/6\n\nPlay\nNormal\n\nDraft manual selection 3/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "light",
+    "frame": 4,
+    "capture": "rowing-machine-light-4.png",
+    "sha256": "945a756fb609c8c011fc3a9d2f2b5ffc4c7e72985819a8c9cf092dd85f4a116c",
+    "captureModifiedAt": "2026-10-19T23:39:17.794Z",
+    "domRecheckedAt": "2026-10-19T23:41:33.607Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Relax",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/4.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nRowing Machine\n\nRELAX 4/6\n\nPlay\nNormal\n\nDraft manual selection 4/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "light",
+    "frame": 5,
+    "capture": "rowing-machine-light-5.png",
+    "sha256": "1ad5cf49a7e9d6822dc9f1727b9140690c63e6c821579cb4b9e7ca2b5730c027",
+    "captureModifiedAt": "2026-10-19T23:39:19.145Z",
+    "domRecheckedAt": "2026-10-19T23:41:33.922Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Recover",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/5.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nRowing Machine\n\nRECOVER 5/6\n\nPlay\nNormal\n\nDraft manual selection 5/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "rowing-machine",
+    "theme": "light",
+    "frame": 6,
+    "capture": "rowing-machine-light-6.png",
+    "sha256": "50ccf8fbeeb3ae1d8bbf0003e54bb68a96b6753f84a2343f9f0bf8be0f9b1c88",
+    "captureModifiedAt": "2026-10-19T23:39:20.494Z",
+    "domRecheckedAt": "2026-10-19T23:41:34.236Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Rowing Machine, Reset",
+          "decoded": true,
+          "natural": [1416, 830],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/6.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "/Maiin/.remaining33.local/candidate/rowing-machine/card.webp"
+        },
+        {
+          "alt": "Rowing Machine normal card preview",
+          "decoded": true,
+          "natural": [480, 281],
+          "src": "candidate/rowing-machine/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / rowing-machine\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nRowing Machine\n\nRESET 6/6\n\nPlay\nNormal\n\nDraft manual selection 6/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "dark",
+    "frame": 1,
+    "capture": "swimming-dark-1.png",
+    "sha256": "756fab9e4064ad1e9e90bfbc3e94fb7912a5250b52da86f7138d65f54f8136b3",
+    "captureModifiedAt": "2026-10-19T23:39:21.877Z",
+    "domRecheckedAt": "2026-10-19T23:41:50.475Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Catch",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/1.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nSwimming\n\nCATCH 1/6\n\nPlay\nNormal\n\nDraft manual selection 1/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "dark",
+    "frame": 2,
+    "capture": "swimming-dark-2.png",
+    "sha256": "b01d2f225717379a0ae2154cc9f8f78b2761395280f5fa1fddf10f46a45fde40",
+    "captureModifiedAt": "2026-10-19T23:39:23.228Z",
+    "domRecheckedAt": "2026-10-19T23:41:50.800Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Pull",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/2.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nSwimming\n\nPULL 2/6\n\nPlay\nNormal\n\nDraft manual selection 2/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "dark",
+    "frame": 3,
+    "capture": "swimming-dark-3.png",
+    "sha256": "7c00b705117de56fc28def8b9aaf0ef30189917e3353eacab099b63f12260db8",
+    "captureModifiedAt": "2026-10-19T23:39:24.580Z",
+    "domRecheckedAt": "2026-10-19T23:41:51.117Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Breathe",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/3.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nSwimming\n\nBREATHE 3/6\n\nPlay\nNormal\n\nDraft manual selection 3/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "dark",
+    "frame": 4,
+    "capture": "swimming-dark-4.png",
+    "sha256": "c06d69c36002857450119755b5a2eb511695ffab1cb3ad5dbfaad69f78d2098f",
+    "captureModifiedAt": "2026-10-19T23:39:25.925Z",
+    "domRecheckedAt": "2026-10-19T23:41:51.435Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Switch",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/4.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nSwimming\n\nSWITCH 4/6\n\nPlay\nNormal\n\nDraft manual selection 4/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "dark",
+    "frame": 5,
+    "capture": "swimming-dark-5.png",
+    "sha256": "1d8847716c7ebe0889b173d573bfc5fe747eb55b1d9ab9b234afbc40adec525a",
+    "captureModifiedAt": "2026-10-19T23:39:27.276Z",
+    "domRecheckedAt": "2026-10-19T23:41:51.750Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Drive",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/5.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nSwimming\n\nDRIVE 5/6\n\nPlay\nNormal\n\nDraft manual selection 5/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "dark",
+    "frame": 6,
+    "capture": "swimming-dark-6.png",
+    "sha256": "743ad75992a84e0dc20e54091957d9950af0a3ac66569203d4d7814a697d95f2",
+    "captureModifiedAt": "2026-10-19T23:39:28.628Z",
+    "domRecheckedAt": "2026-10-19T23:41:52.067Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Enter",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/6.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse light\nSwimming\n\nENTER 6/6\n\nPlay\nNormal\n\nDraft manual selection 6/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "light",
+    "frame": 1,
+    "capture": "swimming-light-1.png",
+    "sha256": "f3521711101bac533807395f4574f1286b9ff00f0b006389e5023e8d32c8b54b",
+    "captureModifiedAt": "2026-10-19T23:39:30.259Z",
+    "domRecheckedAt": "2026-10-19T23:41:52.648Z",
+    "captureReusedAfterInterruptedBatch": true,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Catch",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/1.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nSwimming\n\nCATCH 1/6\n\nPlay\nNormal\n\nDraft manual selection 1/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "light",
+    "frame": 2,
+    "capture": "swimming-light-2.png",
+    "sha256": "e75c59f97cdeead4506cb4f32dbd73cb36e24a0115b9a45ea1ede7087f0b4a46",
+    "captureModifiedAt": "2026-10-19T23:41:54.018Z",
+    "domRecheckedAt": "2026-10-19T23:41:54.037Z",
+    "captureReusedAfterInterruptedBatch": false,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Pull",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/2.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nSwimming\n\nPULL 2/6\n\nPlay\nNormal\n\nDraft manual selection 2/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "light",
+    "frame": 3,
+    "capture": "swimming-light-3.png",
+    "sha256": "dabe3dfba8ed7ad1fff86095b9280df38b7361858293966699fd076059606a26",
+    "captureModifiedAt": "2026-10-19T23:41:55.416Z",
+    "domRecheckedAt": "2026-10-19T23:41:55.440Z",
+    "captureReusedAfterInterruptedBatch": false,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Breathe",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/3.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nSwimming\n\nBREATHE 3/6\n\nPlay\nNormal\n\nDraft manual selection 3/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "light",
+    "frame": 4,
+    "capture": "swimming-light-4.png",
+    "sha256": "4e4f062d084d0dfbc60c88640bb47f8ece34f7d9c19e06dbdcca5134f9c02d35",
+    "captureModifiedAt": "2026-10-19T23:41:56.837Z",
+    "domRecheckedAt": "2026-10-19T23:41:56.857Z",
+    "captureReusedAfterInterruptedBatch": false,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Switch",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/4.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nSwimming\n\nSWITCH 4/6\n\nPlay\nNormal\n\nDraft manual selection 4/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "light",
+    "frame": 5,
+    "capture": "swimming-light-5.png",
+    "sha256": "dc2147bc20b7deff18bc6675256169f85e6e593f7e451cb8959b09bb97977864",
+    "captureModifiedAt": "2026-10-19T23:41:58.239Z",
+    "domRecheckedAt": "2026-10-19T23:41:58.259Z",
+    "captureReusedAfterInterruptedBatch": false,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Drive",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/5.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nSwimming\n\nDRIVE 5/6\n\nPlay\nNormal\n\nDraft manual selection 5/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "id": "swimming",
+    "theme": "light",
+    "frame": 6,
+    "capture": "swimming-light-6.png",
+    "sha256": "d41875d0501846d62a7845ef7e192dd77e52929126fa174a8ad10ecc437b087a",
+    "captureModifiedAt": "2026-10-19T23:41:59.646Z",
+    "domRecheckedAt": "2026-10-19T23:41:59.665Z",
+    "captureReusedAfterInterruptedBatch": false,
+    "dom": {
+      "images": [
+        {
+          "alt": "Swimming, Enter",
+          "decoded": true,
+          "natural": [1264, 848],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/6.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "/Maiin/.remaining33.local/candidate/swimming/card.webp"
+        },
+        {
+          "alt": "Swimming normal card preview",
+          "decoded": true,
+          "natural": [480, 262],
+          "src": "candidate/swimming/card.webp"
+        }
+      ],
+      "text": "Illustration review\n\nStaged source in production player / swimming\n\nExercise\nAssault Bike\nStairmaster\nRowing Machine\nSwimming\nUse dark\nSwimming\n\nENTER 6/6\n\nPlay\nNormal\n\nDraft manual selection 6/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  }
+]

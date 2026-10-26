@@ -1,4 +1,3 @@
-/* @untested: context provider, not a hook — needs a render-tree test rather than renderHook; its two consumers (useMeals, useWorkouts) are covered. */
 import {
   createContext,
   use,
@@ -12,12 +11,13 @@ import {
   collection,
   query,
   orderBy,
-  limit,
+  where,
   onSnapshot,
   Timestamp,
 } from "firebase/firestore";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
-import { localDateString } from "@/lib/dateHelpers";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { safeMerge } from "@/lib/offlineQueue";
@@ -34,19 +34,28 @@ export interface DailyLog {
   createdAt: Timestamp;
 }
 
+// Each surface writes only the fields it owns; a meal-count correction must
+// not reset training, PRs or notes already kept on the same date.
+type DailyLogPatch = Pick<DailyLog, "date"> &
+  Partial<Omit<DailyLog, "id" | "date" | "createdAt">>;
+
 /**
- * Single authoritative subscription on `users/{uid}/logs`, last 90 days
- * by date desc. All the dashboard surfaces that used to subscribe to
- * this collection independently (useDailyLogs, useWeeklyStats,
- * useMonthlyStats, useWeeklyDayMap) now read from this provider — four
- * live listeners collapse to one.
- *
- * The 90-day window is a superset: the widest consumer (useDailyLogs)
- * wanted exactly that, and the narrower consumers (current week, current
- * month) sit strictly inside it. Weekly and monthly aggregates are
- * derived from the same in-memory array via useMemo so adding more
- * dashboard slices later costs nothing extra on the network path.
+ * Single authoritative subscription on `users/{uid}/logs`, by date desc,
+ * from the earlier of this week's Monday and this month's first day: the
+ * widest of the slices below (the week, the month). useDailyLogs,
+ * useWeeklyStats, useMonthlyStats and useWeeklyDayMap all read this
+ * provider, one live listener for the four. The window moves with the
+ * local day. Weekly and monthly aggregates are derived from the same
+ * in-memory array via useMemo, so another slice inside the window costs
+ * nothing extra on the network path.
  */
+// eslint-disable-next-line react-refresh/only-export-components
+export function dailyLogsFrom(todayKey: string): string {
+  const today = parseLocalDate(todayKey);
+  const monday = startOfWeek(today, { weekStartsOn: 1 });
+  const first = startOfMonth(today);
+  return localDateString(monday < first ? monday : first);
+}
 
 interface WeeklyStats {
   workoutsDone: number;
@@ -65,7 +74,7 @@ interface WeeklyDayEntry {
 interface DailyLogsValue {
   logs: DailyLog[];
   loading: boolean;
-  saveLog: (log: Omit<DailyLog, "id" | "createdAt">) => Promise<void>;
+  saveLog: (log: DailyLogPatch) => Promise<void>;
   weeklyStats: WeeklyStats;
   monthlyStats: WeeklyStats;
   weeklyDayMap: Map<string, WeeklyDayEntry>;
@@ -75,11 +84,10 @@ const DailyLogsContext = createContext<DailyLogsValue | null>(null);
 
 export function DailyLogsProvider({ children }: { children: ReactNode }) {
   const { user, profile } = useAuth();
+  const todayKey = useLocalDateKey();
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Single subscription. Mirrors the original useDailyLogs window (90
-  // docs, date desc) exactly so the migrated hook shape is identical.
   useEffect(() => {
     if (!user) {
       const reset = () => {
@@ -91,7 +99,11 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
     }
 
     const logsRef = collection(db, "users", user.uid, "logs");
-    const q = query(logsRef, orderBy("date", "desc"), limit(90));
+    const q = query(
+      logsRef,
+      where("date", ">=", dailyLogsFrom(todayKey)),
+      orderBy("date", "desc")
+    );
 
     const unsubscribe = onSnapshot(
       q,
@@ -109,10 +121,10 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
     );
 
     return unsubscribe;
-  }, [user]);
+  }, [user, todayKey]);
 
   const saveLog = useCallback(
-    async (log: Omit<DailyLog, "id" | "createdAt">) => {
+    async (log: DailyLogPatch) => {
       if (!user) return;
       await safeMerge(db, user.uid, `users/${user.uid}/logs`, log.date, {
         ...log,

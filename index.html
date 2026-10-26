@@ -48,8 +48,21 @@
          photo on a barcode result (FoodAnalyzer reads image_url from Open
          Food Facts); without it the result showed a broken image.
 
+         img-src also carries the two sign-in avatar hosts,
+         lh3.googleusercontent.com (Google) and appleid.cdn-apple.com
+         (Apple). A Google or Apple sign-in seeds the profile photo from
+         the provider, and firestore.rules' isAllowedPhotoUrl accepts
+         exactly these hosts; without them every such avatar was refused
+         here and drawn as an initial. cspAvatarHosts.test.ts holds this
+         list to the rule's.
+
+         No Stripe host: the app loads no Stripe script and makes no Stripe
+         request (Sub4). Checkout, if it is ever turned on for the web, is
+         a redirect to a URL the server returns, which no directive here
+         governs.
+
          form-action 'self': no form posts anywhere but the app's own
-         origin (Stripe Checkout is a redirect, not a form post). The
+         origin (a checkout would be a redirect, not a form post). The
          anti-framing directive, frame-ancestors, is deliberately NOT
          here: browsers ignore it in a <meta> policy, so it ships as a
          response header from Firebase Hosting (firebase.json). -->
@@ -57,10 +70,10 @@
       http-equiv="Content-Security-Policy"
       content="
       default-src 'self';
-      script-src 'self' https://js.stripe.com https://www.googletagmanager.com https://apis.google.com https://www.gstatic.com https://www.google.com/recaptcha/;
+      script-src 'self' https://www.googletagmanager.com https://apis.google.com https://www.gstatic.com https://www.google.com/recaptcha/;
       style-src 'self' 'unsafe-inline';
       font-src 'self';
-      img-src 'self' data: blob: https://*.appspot.com https://*.googleapis.com https://tiles.openfreemap.org https://images.openfoodfacts.org https://www.google-analytics.com https://www.googletagmanager.com;
+      img-src 'self' data: blob: https://*.appspot.com https://*.googleapis.com https://lh3.googleusercontent.com https://appleid.cdn-apple.com https://tiles.openfreemap.org https://images.openfoodfacts.org https://www.google-analytics.com https://www.googletagmanager.com;
       connect-src 'self'
         https://*.googleapis.com
         https://*.firebaseio.com
@@ -70,8 +83,6 @@
         https://world.openfoodfacts.org
         https://tiles.openfreemap.org
         https://raw.githubusercontent.com
-        https://js.stripe.com
-        https://api.stripe.com
         https://www.google-analytics.com
         https://*.google-analytics.com
         https://*.analytics.google.com
@@ -80,7 +91,7 @@
         https://accounts.google.com
         https://www.google.com/recaptcha/
         wss://*.firebaseio.com;
-      frame-src https://js.stripe.com https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/;
+      frame-src https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/;
       worker-src 'self' blob:;
       manifest-src 'self';
       object-src 'none';
@@ -115,8 +126,9 @@
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%icons/icon.svg" />
     <link rel="apple-touch-icon" href="%BASE_URL%icons/icon-192x192.png" />
 
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://firebaseio.com" crossorigin />
+    <!-- Resolve Firestore's host early. No preconnect to firebaseio.com:
+         that is the Realtime Database, which the app does not use
+         (indexPreconnect.test.ts), so it only cost a connection. -->
     <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
 
     <!-- Plus Jakarta Sans (text) + Archivo (numbers — replaced JetBrains Mono

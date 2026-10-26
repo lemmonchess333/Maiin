@@ -76,6 +76,7 @@ describe("resolveAdaptiveTarget — precedence ladder", () => {
       showWarmup: false,
       warmupFraction: 0,
       stalled: false,
+      maintenance: null,
     });
     expect(capState).toBeNull();
     expect(capChanged).toBe(false);
@@ -195,6 +196,8 @@ describe("resolveAdaptiveTarget — deficit/surplus preservation (C-NUTRITION)",
     // Pre-fix this walked toward bare maintenance 2350 (deficit silently erased).
     expect(view.value).toBe(1850);
     expect(capState?.lastApplied).toBe(1850);
+    // The maintenance History's energy balance is measured against.
+    expect(view.maintenance).toBe(2350);
   });
 
   it("lean bulk: learned target keeps the surplus (maintenance + offset)", () => {

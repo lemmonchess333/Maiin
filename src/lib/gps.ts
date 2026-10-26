@@ -543,7 +543,10 @@ export function calculateSplits(
 
   for (let i = 1; i < points.length; i++) {
     const segStart = accDistance;
-    const segDist = segmentMetres(points[i - 1], points[i]);
+    // A break (a GPX track break, a privacy cut) joins nothing.
+    const segDist = points[i].breakBefore
+      ? 0
+      : segmentMetres(points[i - 1], points[i]);
     accDistance += segDist;
     const segStartTime = clock;
     clock = Math.max(clock, movingClockMs(points[i]));
@@ -799,7 +802,9 @@ export function detectBestEfforts(
   cum[0] = 0;
   clock[0] = movingClockMs(points[0]);
   for (let i = 1; i < n; i++) {
-    cum[i] = cum[i - 1] + segmentMetres(points[i - 1], points[i]);
+    cum[i] =
+      cum[i - 1] +
+      (points[i].breakBefore ? 0 : segmentMetres(points[i - 1], points[i]));
     clock[i] = Math.max(clock[i - 1], movingClockMs(points[i]));
   }
 

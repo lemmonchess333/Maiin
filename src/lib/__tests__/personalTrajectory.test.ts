@@ -3,8 +3,7 @@
  *
  * The whole point of the module is that slice. Comparing a Tuesday
  * against a full previous week reads as a collapse every Monday, which
- * is the PR-G bug: (200 − 1000)/1000 = −80% for a user who is actually
- * ahead of pace.
+ * is the PR-G bug: a user who is ahead of pace is shown behind.
  *
  * This suite used to drive six `mockResolvedValueOnce` calls in sequence
  * and assert `getDocs` was called six times. That made the window
@@ -14,8 +13,8 @@
  * an inclusive/exclusive slip) could not fail it.
  *
  * Now the runs are seeded at real timestamps and the real
- * `where('completedAt', …)` bounds select them. Last week's 10 km is
- * deliberately SPLIT — 1 km before last Tuesday 14:00, 9 km after — so
+ * `where('completedAt', …)` bounds select them. Last week's three runs
+ * are deliberately SPLIT — one before last Tuesday 14:00, two after — so
  * the to-date window has to actually cut the week to produce the
  * expected numbers. Under the old suite that split didn't exist; the two
  * figures came from two different canned responses.
@@ -60,31 +59,34 @@ afterEach(() => {
 describe("getPersonalTrajectory", () => {
   it("returns zeroes for a user with nothing logged", async () => {
     const result = await getPersonalTrajectory("user1");
-    expect(result.thisWeek).toEqual({ km: 0, kg: 0, score: 0 });
-    expect(result.lastWeek).toEqual({ km: 0, kg: 0, score: 0 });
-    expect(result.lastWeekToDate).toEqual({ km: 0, kg: 0, score: 0 });
+    expect(result.thisWeek).toEqual({ sessions: 0, km: 0, kg: 0 });
+    expect(result.lastWeek).toEqual({ sessions: 0, km: 0, kg: 0 });
+    expect(result.lastWeekToDate).toEqual({ sessions: 0, km: 0, kg: 0 });
+    expect(result.delta).toBe(0);
   });
 
   it("compares against lastWeekToDate, not lastWeek (the PR-G bug)", async () => {
     seedFirestore({
-      // This week — Monday, 2 km.
-      "users/user1/runs/tw": run("2026-04-27T10:00:00", 2),
+      // This week — two runs on Monday, 2 km in all.
+      "users/user1/runs/tw_am": run("2026-04-27T07:00:00", 1),
+      "users/user1/runs/tw_pm": run("2026-04-27T18:00:00", 1),
       // Last week, INSIDE the to-date slice (Mon 20th, before Tue 14:00).
       "users/user1/runs/lw_early": run("2026-04-20T10:00:00", 1),
-      // Last week, AFTER the slice (Thu 23rd) — counts toward the full
-      // week only. The to-date window must exclude it.
-      "users/user1/runs/lw_late": run("2026-04-23T10:00:00", 9),
+      // Last week, AFTER the slice (Thu 23rd, Fri 24th) — they count
+      // toward the full week only. The to-date window must exclude them.
+      "users/user1/runs/lw_thu": run("2026-04-23T10:00:00", 4),
+      "users/user1/runs/lw_fri": run("2026-04-24T10:00:00", 5),
     });
 
     const result = await getPersonalTrajectory("user1");
 
-    expect(result.thisWeek.score).toBe(200); // 2 km × 100
-    expect(result.lastWeek.score).toBe(1000); // 10 km × 100, full week
-    expect(result.lastWeekToDate.score).toBe(100); // 1 km × 100, sliced
-    // Pre-PR-G this was (200 − 1000)/1000 = −80%: a misleading collapse
-    // shown to a user who is ahead of pace.
-    expect(result.deltaPct).toBe(100);
-    // The full-week total stays available for TrajectoryCard's baseline row.
+    expect(result.thisWeek.sessions).toBe(2);
+    expect(result.lastWeek.sessions).toBe(3); // the full week
+    expect(result.lastWeekToDate.sessions).toBe(1); // sliced
+    // Against the full week this would be 2 − 3 = −1: a user ahead of
+    // pace shown behind.
+    expect(result.delta).toBe(1);
+    // The full-week figures stay available for TrajectoryCard's rows.
     expect(result.lastWeek.km).toBe(10);
   });
 
@@ -114,7 +116,7 @@ describe("getPersonalTrajectory", () => {
     expect(result.thisWeek.km).toBe(0);
   });
 
-  it("returns deltaPct=null when lastWeekToDate is zero (no division)", async () => {
+  it("counts the difference when last week had nothing yet at this point", async () => {
     seedFirestore({
       "users/user1/runs/tw": run("2026-04-27T10:00:00", 3),
       // Last week's 5 km all lands AFTER the to-date cut, so the slice is
@@ -124,11 +126,10 @@ describe("getPersonalTrajectory", () => {
 
     const result = await getPersonalTrajectory("user1");
 
-    expect(result.thisWeek.score).toBe(300);
-    expect(result.lastWeek.score).toBe(500);
-    expect(result.lastWeekToDate.score).toBe(0);
-    // Caller renders "new" copy rather than a meaningless −100%.
-    expect(result.deltaPct).toBeNull();
+    expect(result.thisWeek.sessions).toBe(1);
+    expect(result.lastWeek.sessions).toBe(1);
+    expect(result.lastWeekToDate.sessions).toBe(0);
+    expect(result.delta).toBe(1);
   });
 
   it("cuts last week's Tuesday at the same time of day", async () => {
@@ -164,10 +165,11 @@ describe("getPersonalTrajectory", () => {
     });
     const result = await getPersonalTrajectory("user1");
     expect(result.thisWeek.km).toBe(0);
+    expect(result.thisWeek.sessions).toBe(0);
   });
 
   it("cuts last week's workouts at the same time of day too", async () => {
-    // 80 kg x 5 x 2 sets = 800 kg, 80 points, per seeded workout. Now is
+    // 80 kg x 5 x 2 sets = 800 kg per seeded workout. Now is
     // Tuesday 14:00: last Tuesday's 09:00 session is inside the slice, its
     // 19:00 session is not. The workouts read used to stop at last
     // Tuesday's date, so the morning session never counted either.
@@ -186,6 +188,8 @@ describe("getPersonalTrajectory", () => {
     const result = await getPersonalTrajectory("user1");
     expect(result.lastWeekToDate.kg).toBe(800);
     expect(result.lastWeek.kg).toBe(1600);
+    expect(result.lastWeekToDate.sessions).toBe(1);
+    expect(result.lastWeek.sessions).toBe(2);
   });
 
   it("counts a timed hold as no weight lifted", async () => {

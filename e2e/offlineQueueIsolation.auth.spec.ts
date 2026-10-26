@@ -519,6 +519,24 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     await page
       .getByLabel("What did you eat")
       .waitFor({ state: "visible", timeout: 20_000 });
+    // Food records a confirmed empty day while A is still online. Wait for
+    // that legitimate write before taking the offline baseline: composer
+    // visibility alone can precede the server acknowledgement.
+    const selectedDate = await page.locator('input[type="date"]').inputValue();
+    await expect
+      .poll(
+        async () =>
+          (await listLogDocs(uidA)).some(
+            (doc) =>
+              doc.name.endsWith(`/logs/${selectedDate}`) &&
+              doc.fields?.meals?.integerValue === "0"
+          ),
+        { timeout: 15_000 }
+      )
+      .toBe(true);
+    const logsBeforeOffline = await listLogDocs(uidA);
+    expect(logsBeforeOffline).toHaveLength(1);
+    expect(logsBeforeOffline[0].fields?._offlineCreatedAt).toBeUndefined();
     await goOffline(page);
 
     await logMealViaComposer(page, { expectAck: false });
@@ -540,8 +558,10 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     expect(queued.collectionPath).toBe(`users/${uidA}/logs`);
     const queuedDocId = queued.docId;
     expect(queuedDocId).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    // …and nothing landed in A's logs collection server-side.
-    expect(await listLogDocs(uidA)).toHaveLength(0);
+    expect(queuedDocId).toBe(selectedDate);
+    // The offline activity changes nothing in A's existing server log, and
+    // neither its meal nor its run has reached the server.
+    expect(await listLogDocs(uidA)).toEqual(logsBeforeOffline);
     expect(await listLogDocs(uidA, "meals")).toHaveLength(0);
     expect(await listLogDocs(uidA, "runs")).toHaveLength(0);
     // The user-facing offline banner counts the queued change.
@@ -743,7 +763,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     for (const kept of await readQueue(page)) {
       expect(kept.uid).toBe(uidA);
     }
-    expect(await listLogDocs(uidA)).toHaveLength(0);
+    expect(await listLogDocs(uidA)).toEqual(logsBeforeOffline);
     expect(await listLogDocs(uidA, "meals")).toHaveLength(0);
     expect(await listLogDocs(uidA, "runs")).toHaveLength(0);
 
@@ -765,9 +785,19 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // log a meal, see it ack and land beside the flushed anchor doc.
     await page.goto("food");
     await logMealViaComposer(page, { expectAck: true });
+    const selectedDateB = await page.locator('input[type="date"]').inputValue();
     await expect
-      .poll(async () => (await listLogDocs(uidB)).length, { timeout: 15_000 })
-      .toBe(2);
+      .poll(
+        async () =>
+          (await listLogDocs(uidB)).some(
+            (doc) =>
+              doc.name.endsWith(`/logs/${selectedDateB}`) &&
+              doc.fields?.meals?.integerValue === "1"
+          ),
+        { timeout: 15_000 }
+      )
+      .toBe(true);
+    expect(await listLogDocs(uidB)).toHaveLength(2);
 
     // ── Phase 4: B signs out, A returns; the queue flushes under A.
     await page.goto("settings/account");
@@ -775,10 +805,21 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     await signInFromLoginScreen(page, emailA);
 
     await expect
-      .poll(async () => (await listLogDocs(uidA)).length, { timeout: 20_000 })
-      .toBe(1);
-    const [flushed] = await listLogDocs(uidA);
-    // The doc id the queue carried is the doc that landed…
+      .poll(
+        async () =>
+          (await listLogDocs(uidA)).some(
+            (doc) =>
+              doc.name.endsWith(`/logs/${queuedDocId}`) &&
+              doc.fields?.meals?.integerValue === "1" &&
+              doc.fields?._offlineCreatedAt !== undefined
+          ),
+        { timeout: 20_000 }
+      )
+      .toBe(true);
+    const flushedLogs = await listLogDocs(uidA);
+    expect(flushedLogs).toHaveLength(1);
+    const [flushed] = flushedLogs;
+    // The date record the queue targeted is the one it updated…
     expect(flushed.name.endsWith(`/logs/${queuedDocId}`)).toBe(true);
     // …with A's offline activity…
     expect(flushed.fields?.meals?.integerValue).toBe("1");

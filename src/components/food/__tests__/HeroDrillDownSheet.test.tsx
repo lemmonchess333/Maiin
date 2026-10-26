@@ -67,6 +67,7 @@ function targets(o: Partial<EffectiveTargets> = {}): EffectiveTargets {
     hasCompletedActivity: false,
     finalTarget: 2500,
     adaptiveSource: "formula",
+    learnedMaintenance: null,
     showWarmup: false,
     warmupFraction: 0,
     adaptiveStalled: false,
@@ -337,5 +338,32 @@ describe("HeroDrillDownSheet — counts the way the card does (Food10 (1))", () 
     expect(text).toMatch(new RegExp(`993\\s*/ ${groupRe(2500)} kcal`));
     expect(text).toMatch(/73\s*\/ 180g/);
     expect(text).not.toMatch(/left of/);
+  });
+});
+
+describe("HeroDrillDownSheet — other nutrients keep each unit's treatment", () => {
+  /* Grams are the food surface's house style, unspaced; milligrams are
+     not grams, so they take the app's spaced unit and are grouped. The
+     rows shared one template that glued whichever unit it was handed, so
+     sodium read "2300mg" two rows under fiber's "38g". */
+  it("writes fiber in grams unspaced and sodium in spaced, grouped milligrams", () => {
+    render(
+      <HeroDrillDownSheet
+        open
+        onOpenChange={() => {}}
+        selectedDate="2026-07-13"
+        isToday
+        dailyTotals={{ ...totals, fiber: 18, sodium: 1840 }}
+        dailyTargets={targets()}
+      />
+    );
+    const text = document.body.textContent ?? "";
+    expect(text).toMatch(/18\s*\/ 38g/);
+    expect(text).toMatch(/20g to goal/);
+    expect(text).toMatch(
+      new RegExp(`${groupRe(1840)}\\s*/ ${groupRe(2300)} mg`)
+    );
+    expect(text).toMatch(/460 mg left/);
+    expect(text).not.toMatch(/\dmg\b/);
   });
 });

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { RUN } from "@/test/journeyScreens";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 // Mock framer-motion to render plain divs, preserving key/children
@@ -63,6 +63,7 @@ vi.mock("@/hooks/useCountUp", function () {
 
 import StackedCTACards from "../StackedCTACards";
 import { todayCard, todayCardTarget } from "@/lib/firstGuide";
+import { routineInProgress } from "@/lib/sessionsInFlight";
 import type {
   RestDayOffer,
   TodayLift,
@@ -655,6 +656,93 @@ describe("today's run card names a race-pace finish (Run21 (2))", function () {
     expect(title("Long 15K")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Open Long 15K in Train" })
+    ).toBeInTheDocument();
+  });
+});
+
+/* A session under way: where it goes is `todaySession`'s rule; these pin
+   that the card offers Resume in Start's place, and that another session
+   leads the stack on a strip of its own. */
+describe("StackedCTACards — a session under way", function () {
+  const pushUnderWay = {
+    sport: "lift" as const,
+    name: "Push",
+    sets: 4,
+    elapsedSeconds: 900,
+    resumeTarget: "/program?day=0&resume=1",
+  };
+  const runUnderWay = {
+    sport: "run" as const,
+    name: "Free run",
+    sets: null,
+    elapsedSeconds: 600,
+    resumeTarget: "/run?resume=1",
+  };
+
+  it("offers Resume on the workout's own card instead of Start", function () {
+    const navigate = vi.fn();
+    renderCards(liftDay({ index: 0, inProgress: pushUnderWay }), navigate);
+    expect(
+      screen.queryByRole("button", { name: "Start workout" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Resume Push" }));
+    expect(navigate).toHaveBeenCalledWith("/program?day=0&resume=1");
+  });
+
+  it("offers Resume on the run card instead of Start", function () {
+    const navigate = vi.fn();
+    renderCards(runDay({ inProgress: runUnderWay }), navigate);
+    expect(
+      screen.queryByRole("button", { name: "Start run" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Resume Free run" }));
+    expect(navigate).toHaveBeenCalledWith("/run?resume=1");
+  });
+
+  it("leads the stack with a routine's workout, whose Resume opens its page", function () {
+    const navigate = vi.fn();
+    const { container } = renderCards(
+      {
+        ...liftDay(),
+        inProgressElsewhere: [
+          routineInProgress({
+            routineId: "r1",
+            name: "Arms",
+            sets: 1,
+            elapsedSeconds: 640,
+          }),
+        ],
+      },
+      navigate
+    );
+    const strip = screen.getByRole("group", { name: "Arms in progress" });
+    expect(container.firstElementChild?.firstElementChild).toContainElement(
+      strip
+    );
+    // Named as the routine, with what was done.
+    expect(strip).toHaveTextContent("Arms");
+    expect(strip).toHaveTextContent("1 set");
+    expect(strip).toHaveTextContent("10:40");
+    fireEvent.click(within(strip).getByRole("button", { name: "Resume Arms" }));
+    expect(navigate).toHaveBeenCalledWith("/routine/r1?resume=1");
+    // Today's own card still offers its Start.
+    expect(
+      screen.getByRole("button", { name: "Start workout" })
+    ).toBeInTheDocument();
+  });
+
+  it("leads the stack with a session that is not today's card", function () {
+    const { container } = renderCards({
+      ...liftDay(),
+      inProgressElsewhere: [runUnderWay],
+    });
+    const strip = screen.getByRole("group", { name: "Free run in progress" });
+    expect(container.firstElementChild?.firstElementChild).toContainElement(
+      strip
+    );
+    // Today's own card still offers its Start.
+    expect(
+      screen.getByRole("button", { name: "Start workout" })
     ).toBeInTheDocument();
   });
 });

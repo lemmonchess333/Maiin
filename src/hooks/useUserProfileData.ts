@@ -19,6 +19,8 @@ import { activityToFeedItem, createdAtMs } from "@/lib/activityFeedItem";
 import { BADGE_DEFINITIONS, type EarnedBadge } from "@/features/streaks/badges";
 import { logger } from "@/lib/logger";
 import type { FeedItem } from "@/hooks/useSocialFeed";
+import { publicStreakAsOf } from "@/features/streaks/publicStreak";
+import { localDateString } from "@/lib/dateHelpers";
 
 /** Posts the profile lists, newest first. Also the window "This week"
  *  is counted from, so it is larger than a week's sessions for anyone. */
@@ -39,7 +41,11 @@ export type ProfileStatus = "loading" | "missing" | "error" | "ready";
 interface PostsState {
   items: FeedItem[];
   loading: boolean;
+  /** The read failed: no items is not "nothing shared". */
+  failed: boolean;
 }
+
+const POSTS_LOADING: PostsState = { items: [], loading: true, failed: false };
 
 function postsQuery(uid: string, visibility: string | string[]) {
   return query(
@@ -91,9 +97,12 @@ async function readPosts(uid: string, isOwn: boolean): Promise<FeedItem[]> {
     .slice(0, PROFILE_POSTS_LIMIT);
 }
 
-function newestBadges(earnedMap: Record<string, string>): EarnedBadge[] {
+function newestBadges(earnedMap: Record<string, unknown>): EarnedBadge[] {
   const earned: EarnedBadge[] = [];
   for (const [id, earnedAt] of Object.entries(earnedMap)) {
+    // Another person's app wrote this, and the rules bound its size, not
+    // each date's type: a number here made the sort below throw.
+    if (typeof earnedAt !== "string") continue;
     const def = BADGE_DEFINITIONS.find((b) => b.id === id);
     if (!def) {
       // Schema drift: an id the client catalogue doesn't know. Skip it.
@@ -125,8 +134,12 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
   );
   const [followers, setFollowers] = useState<number | null>(null);
   const [followingCount, setFollowingCount] = useState<number | null>(null);
+  // A count that couldn't be read stays null, not 0: "0 followers" is a
+  // claim about the person.
+  const [countsFailed, setCountsFailed] = useState(false);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
-  const [posts, setPosts] = useState<PostsState>({ items: [], loading: true });
+  const [badgesFailed, setBadgesFailed] = useState(false);
+  const [posts, setPosts] = useState<PostsState>(POSTS_LOADING);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
@@ -151,7 +164,15 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
           ? pub.value.data()
           : null;
       if (pubData) {
-        setStreak((pubData.currentStreak as number) ?? 0);
+        // The count the person's device last wrote, as of today: a lapsed
+        // streak reads 0 rather than what it was when they stopped.
+        setStreak(
+          publicStreakAsOf(
+            pubData.currentStreak,
+            pubData.lastActiveDate,
+            localDateString()
+          )
+        );
         // SOC-P2f — the chip validates kind + upcoming date itself.
         setTrainingForSpaceId(
           typeof pubData.trainingForSpaceId === "string"
@@ -160,7 +181,7 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
         );
         if (!isOwn) {
           const summary = pubData.badgeSummary as
-            | { earnedMap?: Record<string, string> }
+            | { earnedMap?: Record<string, unknown> }
             | undefined;
           setBadges(newestBadges(summary?.earnedMap ?? {}));
         }
@@ -172,6 +193,18 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
           photoURL: (source.photoURL as string | null | undefined) ?? undefined,
         });
         setStatus("ready");
+        return;
+      }
+      /* The rules refuse someone else's profile to a reader its owner
+         blocked (Polish3 call 1). That is not available, as a missing
+         profile is, not a connection worth retrying. */
+      if (
+        !isOwn &&
+        pub.status === "rejected" &&
+        (pub.reason as { code?: string } | undefined)?.code ===
+          "permission-denied"
+      ) {
+        setStatus("missing");
         return;
       }
       const failed = own.status === "rejected" || pub.status === "rejected";
@@ -186,12 +219,16 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
       setStatus(failed ? "error" : "missing");
     });
 
+    const countFailed = (err: unknown) => {
+      logger.warn(`[profile] follow counts read failed for ${uid}`, err);
+      if (live()) setCountsFailed(true);
+    };
     getFollowerCount(uid)
       .then((n) => live() && setFollowers(n))
-      .catch(() => live() && setFollowers(0));
+      .catch(countFailed);
     getFollowingCount(uid)
       .then((n) => live() && setFollowingCount(n))
-      .catch(() => live() && setFollowingCount(0));
+      .catch(countFailed);
 
     // Your own badges come from the live record (owner-only), so their
     // dates are the real ones rather than the public summary's copy.
@@ -205,7 +242,10 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
             )
           );
         })
-        .catch(() => {});
+        .catch((err) => {
+          logger.warn(`[profile] badges read failed for ${uid}`, err);
+          if (live()) setBadgesFailed(true);
+        });
     }
 
     readPosts(uid, isOwn)
@@ -220,10 +260,12 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
           liked: liked[i.activityId] || false,
         }));
       })
-      .then((items) => live() && setPosts({ items, loading: false }))
+      .then(
+        (items) => live() && setPosts({ items, loading: false, failed: false })
+      )
       .catch((err) => {
         logger.warn(`[profile] posts read failed for ${uid}`, err);
-        if (live()) setPosts({ items: [], loading: false });
+        if (live()) setPosts({ items: [], loading: false, failed: true });
       });
 
     return () => {
@@ -233,13 +275,22 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
 
   const retry = useCallback(() => {
     setStatus("loading");
-    setPosts({ items: [], loading: true });
+    setPosts(POSTS_LOADING);
+    setFollowers(null);
+    setFollowingCount(null);
+    setCountsFailed(false);
+    setBadgesFailed(false);
     setAttempt((n) => n + 1);
   }, []);
 
   /** Following or unfollowing from the page moves the count at once. */
   const adjustFollowers = useCallback((delta: number) => {
     setFollowers((n) => (n === null ? n : Math.max(0, n + delta)));
+  }, []);
+
+  /** Accepting their request from the page: they follow one more. */
+  const adjustFollowing = useCallback((delta: number) => {
+    setFollowingCount((n) => (n === null ? n : Math.max(0, n + delta)));
   }, []);
 
   return {
@@ -249,10 +300,14 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     trainingForSpaceId,
     followers,
     followingCount,
+    countsFailed,
     badges,
+    badgesFailed,
     posts: posts.items,
     postsLoading: posts.loading,
+    postsFailed: posts.failed,
     retry,
     adjustFollowers,
+    adjustFollowing,
   };
 }

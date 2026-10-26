@@ -72,7 +72,11 @@ async function wipe() {
       .listDocuments();
     for (const d of docs) await d.delete().catch(() => {});
   }
-  await db.collection("users").doc(UID).delete().catch(() => {});
+  await db
+    .collection("users")
+    .doc(UID)
+    .delete()
+    .catch(() => {});
   await db
     .collection("accountDeletionRequests")
     .doc(UID)
@@ -176,9 +180,9 @@ suite("cold-start milestone badges", () => {
       1
     );
     // Unchanged timestamp — a re-award would move it and rewrite history.
-    expect(
-      after.data().badges.find((b) => b.id === "first_5k").earnedAt
-    ).toBe(firstEarnedAt);
+    expect(after.data().badges.find((b) => b.id === "first_5k").earnedAt).toBe(
+      firstEarnedAt
+    );
   });
 
   it("does not create the streak document while the account is being deleted", async () => {

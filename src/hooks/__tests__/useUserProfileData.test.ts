@@ -38,6 +38,7 @@ import {
   unfiredFailures,
 } from "@/test/firestoreHarness";
 import { logger } from "@/lib/logger";
+import { localDateString } from "@/lib/dateHelpers";
 
 const post = (
   id: string,
@@ -93,6 +94,21 @@ describe("useUserProfileData — someone else's profile", () => {
     expect(result.current.followingCount).toBe(1);
   });
 
+  it("shows a lapsed streak as 0, not what it was when they stopped", async () => {
+    // Derived from the clock: a week ago is lapsed whatever today is.
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    seedFirestore({
+      "users/alice/public/profile": {
+        displayName: "Alice",
+        currentStreak: 40,
+        lastActiveDate: localDateString(weekAgo),
+      },
+    });
+    const { result } = await settled("alice", "viewer");
+    expect(result.current.streak).toBe(0);
+  });
+
   it("shows their newest badges from the public summary, at most four", async () => {
     seedFirestore({
       "users/alice/public/profile": {
@@ -117,6 +133,30 @@ describe("useUserProfileData — someone else's profile", () => {
       "first_5k",
     ]);
     expect(PROFILE_BADGES_SHOWN).toBe(4);
+  });
+
+  /* The summary is written by its owner's app and read by everyone else.
+     The rules bound its size, not each value's type, and sorting called
+     localeCompare on a number. */
+  it("leaves out a badge whose date is not a string, rather than failing", async () => {
+    seedFirestore({
+      "users/alice/public/profile": {
+        displayName: "Alice",
+        badgeSummary: {
+          earnedMap: {
+            first_step: "2026-01-01",
+            first_5k: 20260201,
+            "10k_club": true,
+            first_pr: "2026-04-01",
+          },
+        },
+      },
+    });
+    const { result } = await settled("alice", "viewer");
+    expect(result.current.badges.map((b) => b.id)).toEqual([
+      "first_pr",
+      "first_step",
+    ]);
   });
 
   it("asks for public and followers-only posts in separate queries", () => {

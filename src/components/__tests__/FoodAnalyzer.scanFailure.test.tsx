@@ -139,7 +139,8 @@ describe("FoodAnalyzer — scan outcome routing", () => {
   it("request failure → failure beat 'error', modal stays open", async () => {
     analyzeFoodMock.mockResolvedValue({
       data: null,
-      errorMessage: "Rate limit reached. Please wait a moment.",
+      errorMessage:
+        "Rate limit reached. Wait a few minutes before analysing more food.",
     });
     await openAndCapture();
     await waitFor(() => expect(modal().dataset.failure).toBe("error"));
@@ -148,7 +149,7 @@ describe("FoodAnalyzer — scan outcome routing", () => {
     // user must read "wait a moment", never a generic "try again"
     // pointed at a closed window.
     expect(modal().dataset.detail).toBe(
-      "Rate limit reached. Please wait a moment."
+      "Rate limit reached. Wait a few minutes before analysing more food."
     );
   });
 
@@ -244,7 +245,8 @@ describe("FoodAnalyzer — scan outcome routing", () => {
     setOnline(false);
     analyzeFoodMock.mockResolvedValue({
       data: null,
-      errorMessage: "Rate limit reached. Please wait a moment.",
+      errorMessage:
+        "Rate limit reached. Wait a few minutes before analysing more food.",
     });
     await openAndCapture();
     await waitFor(() => expect(modal().dataset.failure).toBe("offline"));
@@ -257,7 +259,8 @@ describe("FoodAnalyzer — scan outcome routing", () => {
   it("retake clears the failure and keeps the modal open for another go", async () => {
     analyzeFoodMock.mockResolvedValue({
       data: null,
-      errorMessage: "Rate limit reached. Please wait a moment.",
+      errorMessage:
+        "Rate limit reached. Wait a few minutes before analysing more food.",
     });
     await openAndCapture();
     await waitFor(() => expect(modal().dataset.failure).toBe("error"));
@@ -269,7 +272,8 @@ describe("FoodAnalyzer — scan outcome routing", () => {
   it("closing the modal clears the failure — a reopen never shows a stale verdict", async () => {
     analyzeFoodMock.mockResolvedValue({
       data: null,
-      errorMessage: "Rate limit reached. Please wait a moment.",
+      errorMessage:
+        "Rate limit reached. Wait a few minutes before analysing more food.",
     });
     await openAndCapture();
     await waitFor(() => expect(modal().dataset.failure).toBe("error"));

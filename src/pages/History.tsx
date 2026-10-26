@@ -553,8 +553,11 @@ export default function History() {
     coverage: "complete",
   });
   // Training-load curve feed — self-fetching (needs warmup history beyond
-  // the visible range, so it can't reuse the range-scoped runs above).
-  const trainingLoad = useTrainingLoadSeries(rangeDays);
+  // the visible range, so it can't reuse the range-scoped runs above), and
+  // only while the Performance page that draws it is open.
+  const trainingLoad = useTrainingLoadSeries(rangeDays, {
+    enabled: filter === "analytics" && view === "performance",
+  });
   const uid = useUid();
   const { meals, loading: mealsLoading } = useMeals();
   /* The nutrition section reads its OWN range-scoped query rather than
@@ -1132,8 +1135,10 @@ export default function History() {
             )}
 
             {/* The range scopes the history below it. The Body page's
-                weight chart keeps its own, so it gets none here. */}
-            {view !== "body" && (
+                weight chart keeps its own, so it gets none here, and on
+                the Performance page it scopes only the training load, so
+                it sits in that card. */}
+            {view !== "body" && view !== "performance" && (
               <TimeRangePills selected={timeRange} onChange={setTimeRange} />
             )}
 
@@ -1145,6 +1150,7 @@ export default function History() {
                 <TrainingLoadCard
                   points={trainingLoad.points}
                   loading={trainingLoad.loading}
+                  range={{ selected: timeRange, onChange: setTimeRange }}
                 />
               </SectionErrorBoundary>
             )}
@@ -1765,7 +1771,10 @@ export default function History() {
                     />
 
                     <SectionErrorBoundary sectionName="calorie-balance">
-                      <CalorieBalanceChart meals={meals} />
+                      <CalorieBalanceChart
+                        meals={meals}
+                        learnedMaintenance={effectiveTargets.learnedMaintenance}
+                      />
                     </SectionErrorBoundary>
                   </>
                 )}

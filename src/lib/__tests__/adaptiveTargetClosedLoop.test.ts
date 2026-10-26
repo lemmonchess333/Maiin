@@ -18,18 +18,25 @@
  *   does it converge, how fast, does it overshoot, and does it track a
  *   metabolism that MOVES?
  *
- * Measured 2026-08-11. It converges in every scenario, and the timeline is the
- * answer to "how long until the app knows my metabolism":
+ * Measured 2026-08-11, and again 2026-10-21 when the slope became Theil-Sen
+ * (Nutr5). It converges in every scenario, and the timeline is the answer to
+ * "how long until the app knows my metabolism":
  *
  *   formula error   learned first shown   within 25 kcal of truth
  *   ±0                       day 15                day 15
- *   ±400                     day 15                day 29
- *   +800                     day 15                day 50
+ *   400 high                 day 15                day 29
+ *   400 low                  day 15                day 43 (29 under least squares)
+ *   800 low                  day 15                day 50
  *
  * Day 15 is the estimator's warmup gate (14-day span + 10 trusted intake days
  * + 8 weigh-ins); everything after it is the ±150 kcal/7-day cap walking the
  * applied value across the gap. Final values land within 29 kcal of the truth
  * and the loop never overshoots by more than 38 — no ringing, no runaway.
+ *
+ * The 400-low row's day 43 is the target moving once a week, not a slower
+ * loop: under both fits the estimate runs 15-30 kcal under the truth while
+ * the cap walks, and the robust slope's day-29 step lands 30 kcal off rather
+ * than inside 25, so the next step is the one that counts.
  *
  * The estimator getting the answer right IMMEDIATELY at the gate is not luck,
  * and it is worth understanding before touching the cap: because the estimate
@@ -42,8 +49,10 @@
  *
  * The moving-metabolism case is the one the feature exists for — adaptive
  * thermogenesis on a long cut, or a user who starts training. With maintenance
- * drifting ±300 kcal over twelve weeks the target trails by at most ~57 kcal
- * mid-drift and closes to within 5 once it stabilises.
+ * drifting ±300 kcal over twelve weeks the target trails by at most 82 kcal
+ * mid-drift and closes to within 11 once it stabilises. Least squares trailed
+ * by 73 and closed to 4: that gap is what the robust slope costs (Nutr5), and
+ * one weigh-in 2 kg high no longer moves the estimate at all.
  *
  * ── A harness note, because it produced a false alarm ──
  *
@@ -225,7 +234,7 @@ describe("adaptive target — the loop closes on the truth", () => {
     }
   );
 
-  it("takes ~2 weeks to show a learned number and ~4 to trust it", () => {
+  it("takes ~2 weeks to show a learned number and 4 to 6 to trust it", () => {
     /* The user-facing timeline, and the reason the cap is the whole story
        after day 15: the ESTIMATE is already right at the gate (it reconciles
        intake against observed weight change, so a wrong formula cannot bias
@@ -239,10 +248,11 @@ describe("adaptive target — the loop closes on the truth", () => {
     const goal400 = 2350;
     expect(firstDay(at400, (r) => r.ready)).toBe(15);
     expect(firstDay(at400, (r) => r.source === "learned")).toBe(15);
-    expect(firstDay(at400, (r) => Math.abs(r.target - goal400) <= 25)).toBe(29);
+    // Within 30 at the day-29 step, within 25 a step later (see the header).
+    expect(firstDay(at400, (r) => Math.abs(r.target - goal400) <= 35)).toBe(29);
+    expect(firstDay(at400, (r) => Math.abs(r.target - goal400) <= 25)).toBe(43);
 
-    // Twice the error takes roughly twice as long — the cap is the rate limit,
-    // so the relationship is the pin, not just the two numbers.
+    // Twice the error is still the slowest case — the cap is the rate limit.
     const at800 = loop({
       maintenanceAt: steady(3300),
       formulaTdee: 2500,
@@ -285,13 +295,13 @@ describe("adaptive target — a metabolism that moves", () => {
     // Locked on before the drift starts.
     expect(Math.abs(rows[59].target - rows[59].truth)).toBeLessThanOrEqual(10);
     // Trails during it — the cap cannot move faster than 150/week — but never
-    // by more than a single window's worth of movement.
+    // by more than a single window's worth of movement. Measured 82 and 80.
     const during = rows.slice(60, 144);
     const worst = Math.max(...during.map((r) => Math.abs(r.target - r.truth)));
-    expect(worst).toBeLessThan(80);
-    // And closes once the metabolism stops moving.
+    expect(worst).toBeLessThanOrEqual(85);
+    // And closes once the metabolism stops moving. Measured 11 and 5.
     expect(Math.abs(rows[239].target - rows[239].truth)).toBeLessThanOrEqual(
-      10
+      12
     );
   });
 });
@@ -339,9 +349,12 @@ describe("adaptive target — the residual wobble is the SCALE, not the controll
      Measured, and worth knowing before anyone reads the ±38 above as drift:
 
        scale      maintaining      cutting       lean bulk
-       0.1 kg     [−29, +38]       [−3, +9]      [−8, +8]
-       0.01 kg    [−4, +4]         [−1, +1]      [−1, +1]
+       0.1 kg     [−31, +34]       [−4, +10]     [−3, +8]
+       0.01 kg    [0, 0]           [−2, 0]       [−1, +1]
        exact      [0, 0]           [0, 0]        [0, 0]
+
+     (Theil-Sen, Nutr5. Least squares read [−29, +38], [−3, +9] and [−8, +8]
+     on the 0.1 kg scale and ±4 for a maintainer on the 0.01 kg one.)
 
      The asymmetry is the point. A 0.1 kg bathroom scale is the normal case,
      and it costs a MAINTAINING user roughly ±35 kcal of target wobble while
@@ -371,16 +384,16 @@ describe("adaptive target — the residual wobble is the SCALE, not the controll
   };
 
   it("a 0.1 kg scale wobbles a maintainer far more than a cutter", () => {
-    expect(band({ maintenance: 2900, goalOffset: 0 })).toEqual([-29, 38]);
-    expect(band({ maintenance: 2900, goalOffset: -550 })).toEqual([-3, 9]);
-    expect(band({ maintenance: 3300, goalOffset: 330 })).toEqual([-8, 8]);
+    expect(band({ maintenance: 2900, goalOffset: 0 })).toEqual([-31, 34]);
+    expect(band({ maintenance: 2900, goalOffset: -550 })).toEqual([-4, 10]);
+    expect(band({ maintenance: 3300, goalOffset: 330 })).toEqual([-3, 8]);
   });
 
   it("a finer scale removes it, which is what identifies the cause", () => {
     const fine = (kg: number) => Math.round(kg * 100) / 100;
     expect(
       band({ maintenance: 2900, goalOffset: 0, roundWeight: fine })
-    ).toEqual([-4, 4]);
+    ).toEqual([0, 0]);
     // Exact weights settle dead on — no residual error anywhere in the loop.
     expect(
       band({ maintenance: 2900, goalOffset: 0, roundWeight: (kg) => kg })

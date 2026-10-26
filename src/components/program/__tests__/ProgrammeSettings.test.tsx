@@ -141,6 +141,23 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("names each control once, with no group title stacked over it", () => {
+    setup({}, "lift");
+    // "Goal" over "Training focus" read as two tiers of one heading.
+    for (const outer of ["Goal", "Weekly plan", "Constraints"])
+      expect(screen.queryByRole("heading", { name: outer })).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Training focus" })
+    ).toBeInTheDocument();
+    // The toggles have no headings of their own, so their group keeps one.
+    expect(
+      screen.getByRole("heading", { name: "Advanced" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("These save as you switch them.")
+    ).toBeInTheDocument();
+  });
+
   it("D14: no run controls in the lift editor — the run plan has its own page", () => {
     setup({
       runMode: "race_prep",
@@ -155,10 +172,19 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
   });
 
   it("D14: a rebuild threads the SAVED race plan through unchanged", async () => {
+    // Whole, with the race link and goal time: configurePlan stores the goal
+    // it is sent in place of the one there.
+    const raceGoal = {
+      distance: "half" as const,
+      targetDate: "2027-03-01",
+      eventName: "The Big Half",
+      eventSpaceId: "the-big-half",
+      targetTimeS: 6300,
+    };
     setup(
       {
         runMode: "race_prep",
-        raceGoal: { distance: "half", targetDate: "2027-03-01" },
+        raceGoal,
         weeklyRunDaysTarget: 3,
         runVolume: "lighter",
         runDifficulty: "harder",
@@ -173,17 +199,17 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
       profileUpdates?: Record<string, unknown>;
     };
     expect(arg.profileUpdates?.runMode).toBe("race_prep");
-    expect(arg.profileUpdates?.raceGoal).toMatchObject({
-      distance: "half",
-      targetDate: "2027-03-01",
-    });
+    expect(arg.profileUpdates?.raceGoal).toEqual(raceGoal);
   });
 
   it("a save refused for coming too often says to wait, and keeps the change", async () => {
     configureSpy.mockRejectedValueOnce(
-      Object.assign(new Error("Too many attempts. Please wait."), {
-        code: "functions/resource-exhausted",
-      })
+      Object.assign(
+        new Error("Too many attempts. Try again in a few minutes."),
+        {
+          code: "functions/resource-exhausted",
+        }
+      )
     );
     setup({}, "lift");
     fireEvent.click(screen.getByText("Get stronger"));
@@ -195,6 +221,39 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
     expect(
       screen.getByRole("button", { name: /save changes/i })
     ).toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      "says what changed, in the server's words",
+      Object.assign(
+        new Error(
+          "Your programme changed while you were editing. Review the latest plan and try again."
+        ),
+        { code: "functions/failed-precondition" }
+      ),
+      "Your programme changed while you were editing. Review the latest plan and try again.",
+    ],
+    [
+      "never shows a deletion lock's message, which names the account",
+      Object.assign(
+        new Error(
+          "Account u-123 has an in-progress deletion. Writes are frozen until the deletion completes or is cancelled."
+        ),
+        {
+          code: "functions/failed-precondition",
+          details: { errorCode: "account-deleting", uid: "u-123" },
+        }
+      ),
+      "Your programme changed. Reopen settings to review the latest plan before saving.",
+    ],
+  ])("a save refused as out of date %s", async (_label, err, shown) => {
+    configureSpy.mockRejectedValueOnce(err);
+    setup({}, "lift");
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(toast.error).toHaveBeenCalledWith(shown));
   });
 
   it("a lift edit still saves via configurePlan (rebuild path intact)", async () => {
@@ -444,11 +503,45 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
     fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
     expect(
       within(screen.getByRole("alertdialog")).getByText(
-        /logged workouts and runs stay in history/i
+        /logged workouts and runs stay in analytics/i
       )
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /^reset$/i }));
     expect(regenerateProgram).toHaveBeenCalledTimes(1);
+  });
+
+  it("the confirmation is named, takes focus, and Escape cancels it", async () => {
+    const { regenerateProgram } = setup({}, "overview");
+    fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
+    const dialog = screen.getByRole("alertdialog", {
+      name: "Reset programme?",
+    });
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+    // The safe button first: Enter on arrival does not reset.
+    expect(document.activeElement).toHaveTextContent("Cancel");
+    fireEvent.keyDown(document, { key: "Escape" });
+    // Gone once its exit animation has run.
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).toBeNull()
+    );
+    expect(regenerateProgram).not.toHaveBeenCalled();
+  });
+
+  it("a reset that fails says so, rather than nothing", async () => {
+    const { regenerateProgram } = setup({}, "overview");
+    regenerateProgram.mockRejectedValueOnce(
+      Object.assign(new Error("Missing or insufficient permissions."), {
+        code: "permission-denied",
+      })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^reset$/i }));
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't reset your programme. Try again."
+      )
+    );
+    expect(toast.success).not.toHaveBeenCalledWith("Programme reset");
   });
 });
 

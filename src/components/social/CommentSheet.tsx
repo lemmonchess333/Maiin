@@ -11,10 +11,8 @@ import {
   isPermissionDenied,
   type CommentReaction,
 } from "../../lib/socialApi";
-import {
-  containsProfanity,
-  OBJECTIONABLE_COMMENT_MESSAGE,
-} from "../../lib/profanityFilter";
+import { OBJECTIONABLE_COMMENT_MESSAGE } from "@/lib/objectionableMessages";
+import { loadWordFilter } from "@/lib/wordFilter";
 import { commentReportTargetId } from "@/lib/reportTargetIds";
 import { getTimeAgo } from "../../lib/timeAgo";
 import { haptic } from "../../lib/haptic";
@@ -57,6 +55,9 @@ interface CommentSheetProps {
   onOpenChange: (open: boolean) => void;
   commentCount?: number;
   quickChips?: string[];
+  /** Told +1 when a comment lands and -1 when one is deleted, so the
+   *  card that opened the sheet can move its count. */
+  onCountChange?: (delta: number) => void;
 }
 
 export default function CommentSheet({
@@ -66,6 +67,7 @@ export default function CommentSheet({
   onOpenChange,
   commentCount = 0,
   quickChips,
+  onCountChange,
 }: CommentSheetProps) {
   const { user, profile } = useAuth();
   const gate = useEmailVerificationGate(user);
@@ -97,6 +99,11 @@ export default function CommentSheet({
   const [settled, setSettled] = useState<{ key: string; failed: boolean }>();
   const loading = settled?.key !== loadKey;
   const failed = !loading && settled.failed;
+
+  // The word filter loads with the sheet, so Send rarely waits for it.
+  useEffect(() => {
+    if (open) void loadWordFilter().catch(() => {});
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -163,12 +170,18 @@ export default function CommentSheet({
     // trust boundary (addCommentCallable refuses the same text with
     // the same sentence, and the onCommentCreated trigger deletes
     // anything that got past it). Catching it here saves a round-trip.
-    if (containsProfanity(text)) {
-      toast.error(OBJECTIONABLE_COMMENT_MESSAGE);
+    setSending(true);
+    const filter = await loadWordFilter().catch(() => null);
+    if (!filter || filter.containsProfanity(text)) {
+      setSending(false);
+      toast.error(
+        filter
+          ? OBJECTIONABLE_COMMENT_MESSAGE
+          : "Couldn't post comment. Try again."
+      );
       haptic("error");
       return;
     }
-    setSending(true);
     haptic("light");
     try {
       await addComment(
@@ -180,6 +193,7 @@ export default function CommentSheet({
         profile?.photoURL || undefined
       );
       setText("");
+      onCountChange?.(1);
       const result = await getComments(activityId);
       setComments(result.comments as Comment[]);
       lastDocRef.current = result.lastDoc;
@@ -206,6 +220,7 @@ export default function CommentSheet({
     setDeletingId(commentId);
     try {
       await deleteComment(activityId, commentId);
+      onCountChange?.(-1);
       haptic("light");
       setComments((prev) => prev.filter((c) => c.id !== commentId));
     } catch (err) {
@@ -260,12 +275,14 @@ export default function CommentSheet({
       setComments((prev) => applyReaction(prev, commentId, reaction, user.uid));
       haptic("error");
       if (isRestrictedRefusal(err)) showRestrictedToast();
+      // The haptic alone says nothing on the web.
+      else toast.error("Couldn't update your reaction. Try again.");
     }
   };
 
-  /* Comments by someone you have blocked drop out of the list, as their
-     posts drop out of the feed (S4a: a block takes effect on the next
-     render). Your own are never in the blocked set. */
+  /* Comments by someone you blocked, or who blocked you, drop out of the
+     list, as their posts drop out of the feed (S4a: a block takes effect
+     on the next render). Your own are never in the blocked set. */
   const visibleComments = comments.filter(
     (c) => !c.authorId || !blocked.has(c.authorId)
   );
@@ -339,13 +356,16 @@ export default function CommentSheet({
               supporting metadata. Previously author, body AND meta
               were all text-xs with the body in muted grey. */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm leading-snug">
+                <p className="text-sm leading-snug break-words">
                   <span className="text-xs font-semibold text-foreground">
                     {c.authorName}
                   </span>{" "}
                   <span className="text-foreground/90">{c.text}</span>
                 </p>
-                <div className="flex items-center gap-2 mt-0.5">
+                {/* The time and the reactions wrap under each other when
+                    the column is too narrow for both (large text on a
+                    small phone) rather than running past the sheet. */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
                   <p className="text-caption text-muted-foreground">
                     {timeAgo}
                   </p>
@@ -389,13 +409,14 @@ export default function CommentSheet({
               </div>
               {/* Always visible (W10): the old opacity-0 group-hover reveal
               made delete unreachable on touch — this is a mobile bottom
-              sheet; there is no hover. */}
+              sheet; there is no hover. 44 px at every text size, so the
+              comment keeps the width the text gains. */}
               {isOwn ? (
                 <button
                   type="button"
                   onClick={() => setPanel({ kind: "delete", comment: c })}
                   disabled={deletingId === c.id}
-                  className="size-11 inline-flex items-center justify-center text-muted-foreground hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
+                  className="size-[44px] inline-flex items-center justify-center text-muted-foreground hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
                   aria-label="Delete comment"
                 >
                   <Trash2 className="size-3.5" />
@@ -411,7 +432,7 @@ export default function CommentSheet({
                   }
                   onClick={() => setPanel({ kind: "options", comment: c })}
                   icon={<MoreHorizontal className="size-4" />}
-                  className="text-muted-foreground"
+                  className="size-[44px] text-muted-foreground"
                 />
               ) : null}
             </motion.div>

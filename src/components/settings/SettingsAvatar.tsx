@@ -144,7 +144,8 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
             className="size-14"
           />
         ) : (
-          <div className="size-full rounded-full bg-primary/20 flex items-center justify-center">
+          // The brand /10 chip: on /20 the initials measured 4.13:1.
+          <div className="size-full rounded-full bg-primary/10 flex items-center justify-center">
             {initials ? (
               <span className="text-lg font-bold text-lifting-strong">
                 {initials}

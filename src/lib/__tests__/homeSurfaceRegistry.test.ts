@@ -90,6 +90,7 @@ describe("Home's tier-4 surface registry", () => {
         "first-visit-guide",
         "goal-reached",
         "lift-return",
+        "run-return",
         "trial-expired",
       ].sort()
     );
@@ -114,6 +115,24 @@ describe("Home's tier-4 surface registry", () => {
     // wired but unproven.
     const liftReturn = regs.find((r) => r.id === "lift-return")!;
     expect(liftReturn.suppressedBy).toContain("fell-behind");
+  });
+
+  it("lets the weekly check's sheet greet a runner before the run return", () => {
+    // Both speak to the same absence; the server's prompt carries the
+    // week's ledger and its flag, so the run return stands down.
+    const runReturn = regs.find((r) => r.id === "run-return")!;
+    expect(runReturn.suppressedBy).toContain("fell-behind");
+  });
+
+  it("asks a hybrid about the weights before the running", () => {
+    // Easing back is the only way a lifter's loads come down after a
+    // break; a race plan's weeks are already planned from the layoff read.
+    // So when both returns are owed, the lift's goes first, and the run's
+    // waits for the next visit.
+    const byId = Object.fromEntries(regs.map((r) => [r.id, r.priority]));
+    expect(byId["fell-behind"]).toBeGreaterThan(byId["run-return"]);
+    expect(byId["lift-return"]).toBeGreaterThan(byId["run-return"]);
+    expect(byId["run-return"]).toBeGreaterThan(byId["goal-reached"]);
   });
 
   it("lets a new account's first visit start with the walk", () => {

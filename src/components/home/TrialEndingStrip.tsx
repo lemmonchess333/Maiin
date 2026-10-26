@@ -34,7 +34,7 @@ export default function TrialEndingStrip({
       <span className="text-xs font-medium text-foreground flex-1 basis-[9em] min-w-0 text-pretty">
         {text}
       </span>
-      <span className="ml-auto text-caption font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
+      <span className="ml-auto text-micro font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
         Manage
       </span>
     </a>

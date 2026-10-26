@@ -100,6 +100,10 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     serverGuarded: true,
     undeclared: "Apple IAP product id, written by verifyApplePurchase",
   },
+  // Polish2 call 4: Settings → Privacy → Approve followers. Value-gated in
+  // firestore.rules (`approveFollowersValid`), which also reads it to
+  // decide whether a follow is direct or a request.
+  { field: "approveFollowers", sanitized: false },
   { field: "athleteType", sanitized: true },
   { field: "audioCues", sanitized: true },
   // LEGACY: superseded by the share composer's saved default (#1416) —
@@ -190,6 +194,10 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // value-gated in firestore.rules (`shareDefaultsValid`) and validated by
   // the sanitiser on the same vocabulary.
   { field: "shareDefaults", sanitized: true },
+  // Polish2 call 5: "Show my week" on friends' boards. Written only by the
+  // setBoardSharing callable, which keeps the tally (friendsBoard/{uid})
+  // in step with the answer.
+  { field: "showWeekOnBoard", sanitized: false, serverOnly: true },
   { field: "stripeCustomerId", sanitized: false, serverGuarded: true },
   { field: "stripeSubscriptionId", sanitized: false, serverGuarded: true },
   { field: "subscriptionExpiresAt", sanitized: false, serverGuarded: true },

@@ -99,7 +99,13 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // one line for a run and another for a run with a workout.
   // 42 → 41. Home's run card lost its run-type tile: a runner drawing is
   // the card's picture now, as the lift card's is its lead lift.
-  running: 41, // Calendar status icons now use the strong colour step.
+  // 2026-10-25: 41 → 42. The runner's welcome back (RunReturnSheet): its
+  // footprints ICON (3:1 non-text), as on FellBehindSheet; its words are
+  // foreground and muted text.
+  // 42 → 40. The run plan page asks about a race on the coral segmented
+  // control, so the two mode cards' footprints icon went; and the race
+  // card's Race community row is social, so its icon is neutral.
+  running: 40, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
@@ -177,11 +183,15 @@ const EXPECTED_INLINE_USES = {
   // water's teal (DESIGN_GUIDE §14): its 68px timer and the compact bar's
   // 22px bold distance, both large text, on a sheet that is dark in both
   // themes, where the coral measures about 5:1.
-  "THEME.running": 17,
+  // 2026-10-26: 17 → 16. The live run's 68px timer greys while the run is
+  // paused, so its coral is one side of a choice and no longer counted.
+  "THEME.running": 16,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
   // 2026-10-01: 5 → 4. The same recap card's volume figure.
-  "THEME.lifting": 4,
+  // 2026-10-26: 4 → 3. The exercise picker's dumbbell fallback, which
+  // moved into ExerciseThumb with the row's drawing.
+  "THEME.lifting": 3,
   // The brand, inline. Icon tints (notification glyphs, the ProModal
   // feature tiles, the Home tiles' arrows), legend and ring fills, and
   // TrajectoryCard's 3xl score. The text uses — Home's rest-day eyebrow,
@@ -199,7 +209,9 @@ const EXPECTED_INLINE_USES = {
   // the EmptyState primitive) and the solo feed's.
   // 2026-10-01: 33 → 32. The notifications sheet's empty state moved to
   // the EmptyState primitive too.
-  "THEME.brand": 32,
+  // 32 → 33. The week pulse's streak flame, an icon, follows the streak
+  // flame from amber to the brand purple.
+  "THEME.brand": 33,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
@@ -209,7 +221,11 @@ const EXPECTED_INLINE_USES = {
   // (its apple) went with the Settings pass; the phase is a row now.
   // 17 → 16 with the first-week pass: Home's welcome card (its Food tab
   // icon in the food orange) became the first-week card.
-  "THEME.semantic.nutrition": 16,
+  // 16 → 15: the food search's "Log manually" (12px, 2.77:1 on the card)
+  // took `text-nutrition-strong`.
+  // 15 → 14: Home's first-meal eyebrow, 12px on the orange tint, took
+  // `text-nutrition-strong` with the card's Log taking the fill step.
+  "THEME.semantic.nutrition": 14,
 } as const;
 
 type InlineToken = keyof typeof EXPECTED_INLINE_USES;

@@ -21,8 +21,7 @@ interface SecuritySectionProps {
   inline?: boolean;
 }
 
-const INPUT_CLASS =
-  "w-full min-h-11 rounded-xl border border-border bg-background px-3 py-2.5 text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+const INPUT_CLASS = "ds-input text-base";
 
 function oauthLabel(user: User): string | null {
   if (user.providerData.some((p) => p.providerId === "google.com"))
@@ -118,7 +117,9 @@ export default function SecuritySection({
       closeDialog();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
-      setFormError(friendlyAuthError(msg));
+      setFormError(
+        friendlyAuthError(msg, "Couldn't change your password. Try again.")
+      );
     } finally {
       setBusy(false);
     }
@@ -142,7 +143,9 @@ export default function SecuritySection({
       closeDialog();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
-      setFormError(friendlyAuthError(msg));
+      setFormError(
+        friendlyAuthError(msg, "Couldn't change your email. Try again.")
+      );
     } finally {
       setBusy(false);
     }

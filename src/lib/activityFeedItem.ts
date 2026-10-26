@@ -1,10 +1,10 @@
-import type { ActivityData, FeedItem } from "@/hooks/useSocialFeed";
+import type { ActivityData, FeedItem } from "./activityFeedTypes";
 
 /**
  * An `activities/{id}` document as the feed item ActivityCard draws.
  *
- * Following reads the fan-out copies under `feeds/{uid}/items`; Explore
- * and the profile page read activity documents directly, and both build
+ * Following resolves its routing indexes to readable activity documents;
+ * Explore and the profile page read activity documents directly. All build
  * their items here, so a session on someone's profile is the same card
  * the feed shows. (A hand-built one-line summary in its place printed a
  * run's pace as raw seconds and every lift as "0 PRs".)

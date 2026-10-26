@@ -4,6 +4,7 @@ import BottomSheet from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import SectionLabel from "@/components/ui/SectionLabel";
+import Select from "@/components/ui/Select";
 import ProgressPhotoThumb from "./ProgressPhotoThumb";
 import {
   POSES,
@@ -73,17 +74,13 @@ export default function ProgressPhotoCompareSheet({
   ) => (
     <label className="block space-y-1.5">
       <SectionLabel as="span">{label}</SectionLabel>
-      <select
-        className="ds-input min-h-11 w-full"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
+      <Select value={value} onChange={(e) => onChange(e.target.value)}>
         {days.map((d) => (
           <option key={d.date} value={d.date}>
             {dayLabel(d.date)}
           </option>
         ))}
-      </select>
+      </Select>
     </label>
   );
 

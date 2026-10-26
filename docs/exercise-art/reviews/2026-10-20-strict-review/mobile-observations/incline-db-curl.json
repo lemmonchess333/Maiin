@@ -1,0 +1,230 @@
+{
+  "id": "incline-db-curl",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Set",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/1.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Set 1/6",
+          "id": "incline-db-curl",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Brace",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/2.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "incline-db-curl",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Curl",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/3.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Curl 3/6",
+          "id": "incline-db-curl",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Squeeze",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/4.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Squeeze 4/6",
+          "id": "incline-db-curl",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Lower",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/5.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Lower 5/6",
+          "id": "incline-db-curl",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Alternate",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/6.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Alternate 6/6",
+          "id": "incline-db-curl",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1762,\n    \"alt\": \"Incline Dumbbell Curl, Curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2325,\n    \"alt\": \"Incline Dumbbell Curl, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2961,\n    \"alt\": \"Incline Dumbbell Curl, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Incline Dumbbell Curl, Alternate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5283,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Incline Dumbbell Curl, Brace",
+            "decoded": true,
+            "height": 784,
+            "src": "/Maiin/.strict33.local/candidate/incline-db-curl/2.webp",
+            "width": 992
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "incline-db-curl",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / incline-db-curl\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nIncline Dumbbell Curl\nBiceps\nDumbbells\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nBiceps\nSECONDARY\nForearms\n\nInstructions\n\nPreparation: Lie back on a low incline bench with both feet planted. Hold one dumbbell in each hand and curl one arm at a time. The near arm is demonstrated; repeat the same controlled curl on the other side.\n\n1\n\nLet the near arm hang beside you.\n\n2\n\nKeep your upper arm beside the bench.\n\n3\n\nCurl toward your shoulder; keep wrist straight.\n\n4\n\nPause without swinging your upper arm.\n\n5\n\nLower the weight under control.\n\n6\n\nRepeat with the opposite arm.\n\nWatch out\n\nKeep the working upper arm beside the bench and lower the dumbbell slowly before changing sides.\n\nCOMMON MISTAKES\n\nSwinging the upper arm to lift the weight.\nBending the wrist back.\nLifting the shoulder away from the bench.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1762,\n    \"alt\": \"Incline Dumbbell Curl, Curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2325,\n    \"alt\": \"Incline Dumbbell Curl, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2961,\n    \"alt\": \"Incline Dumbbell Curl, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Incline Dumbbell Curl, Alternate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5283,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6724,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7921,\n    \"alt\": \"Incline Dumbbell Curl, Curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Incline Dumbbell Curl, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10402,\n    \"alt\": \"Incline Dumbbell Curl, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11603,\n    \"alt\": \"Incline Dumbbell Curl, Alternate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12803,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14002,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Set",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/1.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Set 1/6",
+          "id": "incline-db-curl",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Brace",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/2.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "incline-db-curl",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Curl",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/3.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Curl 3/6",
+          "id": "incline-db-curl",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Squeeze",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/4.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Squeeze 4/6",
+          "id": "incline-db-curl",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Lower",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/5.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Lower 5/6",
+          "id": "incline-db-curl",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Incline Dumbbell Curl, Alternate",
+              "decoded": true,
+              "height": 784,
+              "src": "/Maiin/.strict33.local/candidate/incline-db-curl/6.webp",
+              "width": 992
+            }
+          ],
+          "caption": "Alternate 6/6",
+          "id": "incline-db-curl",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1762,\n    \"alt\": \"Incline Dumbbell Curl, Curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2325,\n    \"alt\": \"Incline Dumbbell Curl, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2961,\n    \"alt\": \"Incline Dumbbell Curl, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Incline Dumbbell Curl, Alternate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5283,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6724,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7921,\n    \"alt\": \"Incline Dumbbell Curl, Curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Incline Dumbbell Curl, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10402,\n    \"alt\": \"Incline Dumbbell Curl, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11603,\n    \"alt\": \"Incline Dumbbell Curl, Alternate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12803,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14002,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15120,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15682,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16245,\n    \"alt\": \"Incline Dumbbell Curl, Curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16803,\n    \"alt\": \"Incline Dumbbell Curl, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17361,\n    \"alt\": \"Incline Dumbbell Curl, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18003,\n    \"alt\": \"Incline Dumbbell Curl, Alternate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19603,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Incline Dumbbell Curl, Brace",
+            "decoded": true,
+            "height": 784,
+            "src": "/Maiin/.strict33.local/candidate/incline-db-curl/2.webp",
+            "width": 992
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "incline-db-curl",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / incline-db-curl\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nIncline Dumbbell Curl\nBiceps\nDumbbells\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nBiceps\nSECONDARY\nForearms\n\nInstructions\n\nPreparation: Lie back on a low incline bench with both feet planted. Hold one dumbbell in each hand and curl one arm at a time. The near arm is demonstrated; repeat the same controlled curl on the other side.\n\n1\n\nLet the near arm hang beside you.\n\n2\n\nKeep your upper arm beside the bench.\n\n3\n\nCurl toward your shoulder; keep wrist straight.\n\n4\n\nPause without swinging your upper arm.\n\n5\n\nLower the weight under control.\n\n6\n\nRepeat with the opposite arm.\n\nWatch out\n\nKeep the working upper arm beside the bench and lower the dumbbell slowly before changing sides.\n\nCOMMON MISTAKES\n\nSwinging the upper arm to lift the weight.\nBending the wrist back.\nLifting the shoulder away from the bench.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1762,\n    \"alt\": \"Incline Dumbbell Curl, Curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2325,\n    \"alt\": \"Incline Dumbbell Curl, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2961,\n    \"alt\": \"Incline Dumbbell Curl, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Incline Dumbbell Curl, Alternate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5283,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6724,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7921,\n    \"alt\": \"Incline Dumbbell Curl, Curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Incline Dumbbell Curl, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10402,\n    \"alt\": \"Incline Dumbbell Curl, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11603,\n    \"alt\": \"Incline Dumbbell Curl, Alternate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12803,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14002,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15120,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15682,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16245,\n    \"alt\": \"Incline Dumbbell Curl, Curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16803,\n    \"alt\": \"Incline Dumbbell Curl, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17361,\n    \"alt\": \"Incline Dumbbell Curl, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18003,\n    \"alt\": \"Incline Dumbbell Curl, Alternate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19603,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21040,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22247,\n    \"alt\": \"Incline Dumbbell Curl, Curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23523,\n    \"alt\": \"Incline Dumbbell Curl, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24724,\n    \"alt\": \"Incline Dumbbell Curl, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25924,\n    \"alt\": \"Incline Dumbbell Curl, Alternate\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27121,\n    \"alt\": \"Incline Dumbbell Curl, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28324,\n    \"alt\": \"Incline Dumbbell Curl, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/incline-db-curl/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

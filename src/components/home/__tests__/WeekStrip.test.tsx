@@ -593,6 +593,15 @@ describe("WeekStrip — accessible name and selection state", () => {
     );
   });
 
+  it("groups the seven days as one week, named by its Monday, as Food's strip is", () => {
+    const { getByRole } = renderAllDays("rest");
+    const monday = addLocalDays(new Date(), -todayIndex());
+    const week = getByRole("group", {
+      name: `Week of ${monday.getDate()} ${monday.toLocaleDateString("en-GB", { month: "long" })}`,
+    });
+    expect(week.querySelectorAll("button")).toHaveLength(7);
+  });
+
   it("still leads with the date, and marks today", () => {
     // The parts that already worked must survive the rewrite.
     const { container } = renderAllDays("rest");

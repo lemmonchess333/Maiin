@@ -1,7 +1,7 @@
 /**
  * Data-integrity guards on the built-in food table.
  *
- * `nlFoodParser`'s `FOOD_DB` is 232 hand-authored rows of calories, protein,
+ * `nlFoodParser`'s `FOOD_DB` is 234 hand-authored rows of calories, protein,
  * carbs, fat and a serving string. `nlFoodParser.test.ts` covers the PARSER
  * thoroughly — quantities, units, compound "X with Y", fuzzy matching — and
  * nothing at all checks the TABLE. A mistyped macro there is silent: the parse
@@ -107,6 +107,7 @@ const COMPOSITE_SERVINGS = new Set([
   "omelet",
   "wrap",
   "sandwich",
+  "toastie",
   "burger",
   "pizza",
   "burrito",
@@ -129,7 +130,7 @@ describe("FOOD_DB — the fixture reads the real table", () => {
     /* Guards the regex, not the data. A silently-empty scan would make every
        assertion below vacuously true — the exact shape of tautology this
        codebase keeps finding in its own tests. */
-    expect(ROWS.length).toBe(232);
+    expect(ROWS.length).toBe(235);
     expect(ROWS.map((r) => r.name)).toContain("chicken breast");
     expect(ROWS.find((r) => r.name === "chicken breast")).toMatchObject({
       calories: 248,
@@ -244,7 +245,7 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
     );
     expect(stillComposite).toHaveLength(COMPOSITE_SERVINGS.size);
     // 92% of the table is mass- or volume-scalable.
-    expect(ROWS.length - COMPOSITE_SERVINGS.size).toBe(213);
+    expect(ROWS.length - COMPOSITE_SERVINGS.size).toBe(215);
   });
 });
 

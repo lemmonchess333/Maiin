@@ -1,0 +1,60 @@
+{
+  "images": [
+    {
+      "decoded": true,
+      "height": 480,
+      "src": "/Maiin/form-art/face-pulls.webp",
+      "width": 375
+    },
+    {
+      "decoded": true,
+      "height": 480,
+      "src": "/Maiin/form-art/face-pulls.webp",
+      "width": 375
+    },
+    {
+      "decoded": true,
+      "height": 480,
+      "src": "/Maiin/form-art/face-pulls.webp",
+      "width": 375
+    },
+    {
+      "decoded": true,
+      "height": 377,
+      "src": "/Maiin/form-art/incline-db-curl.webp",
+      "width": 480
+    },
+    {
+      "decoded": true,
+      "height": 377,
+      "src": "/Maiin/form-art/incline-db-curl.webp",
+      "width": 480
+    },
+    {
+      "decoded": true,
+      "height": 377,
+      "src": "/Maiin/form-art/incline-db-curl.webp",
+      "width": 480
+    },
+    {
+      "decoded": true,
+      "height": 480,
+      "src": "/Maiin/form-art/overhead-extension.webp",
+      "width": 159
+    },
+    {
+      "decoded": true,
+      "height": 480,
+      "src": "/Maiin/form-art/overhead-extension.webp",
+      "width": 159
+    },
+    {
+      "decoded": true,
+      "height": 480,
+      "src": "/Maiin/form-art/overhead-extension.webp",
+      "width": 159
+    }
+  ],
+  "theme": "dark",
+  "viewport": [390, 844]
+}

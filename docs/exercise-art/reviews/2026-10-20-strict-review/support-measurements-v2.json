@@ -1,0 +1,2600 @@
+[
+  {
+    "id": "lu-raise",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 1,
+    "maximumDimensionDriftRatio": 0,
+    "numericPass": true,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/lu-raise/1.webp",
+        "sha256": "59fcfc366ae9148c1a3d5e799d150c842b5e7a6d9b57c063b45e1327396d4ab2",
+        "roi": [351, 978, 928, 1241],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 510.5, "y": 1183 },
+          "rightImageSupportLowestContourMidpoint": { "x": 666, "y": 1219 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 149,
+          "rightImageSupportProjectedHorizontalSpan": 120
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 14566,
+            "bbox": [467, 978, 616, 1184],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 15732,
+            "bbox": [622, 978, 742, 1220],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/lu-raise/2.webp",
+        "sha256": "e56ec5601eef1cf77f3054038ccb25a9ab3fb8aab6349162f1d1bc0e8a867fff",
+        "roi": [351, 978, 928, 1241],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 510.5, "y": 1183 },
+          "rightImageSupportLowestContourMidpoint": { "x": 666, "y": 1219 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 149,
+          "rightImageSupportProjectedHorizontalSpan": 120
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 14554,
+            "bbox": [467, 978, 616, 1184],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 15711,
+            "bbox": [622, 978, 742, 1220],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/lu-raise/3.webp",
+        "sha256": "da133900c53c1a5ed65c06f7eb93b2f0919e983cc247f195b1f68601201975fb",
+        "roi": [351, 978, 928, 1241],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 510.5, "y": 1183 },
+          "rightImageSupportLowestContourMidpoint": { "x": 666, "y": 1219 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 149,
+          "rightImageSupportProjectedHorizontalSpan": 120
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 14551,
+            "bbox": [467, 978, 616, 1184],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 15685,
+            "bbox": [622, 978, 742, 1220],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/lu-raise/4.webp",
+        "sha256": "dbc9f1223c0c915613e1f4fb0ee5a1db48466cca4d626b18553cf843ab7e4946",
+        "roi": [351, 978, 928, 1241],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 510, "y": 1183 },
+          "rightImageSupportLowestContourMidpoint": { "x": 667, "y": 1219 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 149,
+          "rightImageSupportProjectedHorizontalSpan": 120
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 14542,
+            "bbox": [467, 978, 616, 1184],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 15694,
+            "bbox": [622, 978, 742, 1220],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/lu-raise/5.webp",
+        "sha256": "da133900c53c1a5ed65c06f7eb93b2f0919e983cc247f195b1f68601201975fb",
+        "roi": [351, 978, 928, 1241],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 510.5, "y": 1183 },
+          "rightImageSupportLowestContourMidpoint": { "x": 666, "y": 1219 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 149,
+          "rightImageSupportProjectedHorizontalSpan": 120
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 14551,
+            "bbox": [467, 978, 616, 1184],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 15685,
+            "bbox": [622, 978, 742, 1220],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/lu-raise/6.webp",
+        "sha256": "e56ec5601eef1cf77f3054038ccb25a9ab3fb8aab6349162f1d1bc0e8a867fff",
+        "roi": [351, 978, 928, 1241],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 510.5, "y": 1183 },
+          "rightImageSupportLowestContourMidpoint": { "x": 666, "y": 1219 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 149,
+          "rightImageSupportProjectedHorizontalSpan": 120
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 14554,
+            "bbox": [467, 978, 616, 1184],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 15711,
+            "bbox": [622, 978, 742, 1220],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "incline-db-curl",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 0,
+    "maximumDimensionDriftRatio": 0,
+    "numericPass": true,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/incline-db-curl/1.webp",
+        "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+        "roi": [446, 564, 982, 776],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 642.5, "y": 721 },
+          "rightImageSupportLowestContourMidpoint": { "x": 875.5, "y": 648 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 16589,
+            "bbox": [446, 564, 704, 722],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 10058,
+            "bbox": [750, 564, 930, 649],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/incline-db-curl/2.webp",
+        "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+        "roi": [446, 564, 982, 776],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 642.5, "y": 721 },
+          "rightImageSupportLowestContourMidpoint": { "x": 875.5, "y": 648 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 16589,
+            "bbox": [446, 564, 704, 722],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 10058,
+            "bbox": [750, 564, 930, 649],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/incline-db-curl/3.webp",
+        "sha256": "25451a1d061e3436f5e592e1a57f52350fdd7847b22d4c4dd135fd22ef96c19a",
+        "roi": [446, 564, 982, 776],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 642.5, "y": 721 },
+          "rightImageSupportLowestContourMidpoint": { "x": 875.5, "y": 648 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 16589,
+            "bbox": [446, 564, 704, 722],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 10058,
+            "bbox": [750, 564, 930, 649],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/incline-db-curl/4.webp",
+        "sha256": "25451a1d061e3436f5e592e1a57f52350fdd7847b22d4c4dd135fd22ef96c19a",
+        "roi": [446, 564, 982, 776],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 642.5, "y": 721 },
+          "rightImageSupportLowestContourMidpoint": { "x": 875.5, "y": 648 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 16589,
+            "bbox": [446, 564, 704, 722],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 10058,
+            "bbox": [750, 564, 930, 649],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/incline-db-curl/5.webp",
+        "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+        "roi": [446, 564, 982, 776],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 642.5, "y": 721 },
+          "rightImageSupportLowestContourMidpoint": { "x": 875.5, "y": 648 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 16589,
+            "bbox": [446, 564, 704, 722],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 10058,
+            "bbox": [750, 564, 930, 649],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/incline-db-curl/6.webp",
+        "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+        "roi": [446, 564, 982, 776],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 642.5, "y": 721 },
+          "rightImageSupportLowestContourMidpoint": { "x": 875.5, "y": 648 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 16589,
+            "bbox": [446, 564, 704, 722],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 10058,
+            "bbox": [750, 564, 930, 649],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "handstand-push-ups",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 9,
+    "maximumDimensionDriftRatio": 0.3157894736842106,
+    "numericPass": false,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/handstand-push-ups/1.webp",
+        "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+        "roi": [7, 1248, 578, 1489],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 148.5, "y": 1471 },
+          "rightImageSupportLowestContourMidpoint": { "x": 424.5, "y": 1471 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 215,
+          "rightImageSupportProjectedHorizontalSpan": 114
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18725,
+            "bbox": [32, 1248, 247, 1472],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 13448,
+            "bbox": [379, 1248, 493, 1472],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/handstand-push-ups/2.webp",
+        "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+        "roi": [7, 1248, 578, 1489],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 148.5, "y": 1471 },
+          "rightImageSupportLowestContourMidpoint": { "x": 424.5, "y": 1471 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 215,
+          "rightImageSupportProjectedHorizontalSpan": 114
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18725,
+            "bbox": [32, 1248, 247, 1472],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 13448,
+            "bbox": [379, 1248, 493, 1472],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/handstand-push-ups/3.webp",
+        "sha256": "f042c84b2a1d70f7fc287a39515a22b2148c36a9830c8d8ea7e2f002afcd4b59",
+        "roi": [7, 1248, 578, 1489],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 155, "y": 1471 },
+          "rightImageSupportLowestContourMidpoint": { "x": 433.5, "y": 1471 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 244,
+          "rightImageSupportProjectedHorizontalSpan": 150
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 21739,
+            "bbox": [32, 1248, 276, 1472],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 15140,
+            "bbox": [379, 1248, 529, 1472],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/handstand-push-ups/4.webp",
+        "sha256": "f042c84b2a1d70f7fc287a39515a22b2148c36a9830c8d8ea7e2f002afcd4b59",
+        "roi": [7, 1248, 578, 1489],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 155, "y": 1471 },
+          "rightImageSupportLowestContourMidpoint": { "x": 433.5, "y": 1471 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 244,
+          "rightImageSupportProjectedHorizontalSpan": 150
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 21739,
+            "bbox": [32, 1248, 276, 1472],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 15140,
+            "bbox": [379, 1248, 529, 1472],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/handstand-push-ups/5.webp",
+        "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+        "roi": [7, 1248, 578, 1489],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 148.5, "y": 1471 },
+          "rightImageSupportLowestContourMidpoint": { "x": 424.5, "y": 1471 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 215,
+          "rightImageSupportProjectedHorizontalSpan": 114
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18725,
+            "bbox": [32, 1248, 247, 1472],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 13448,
+            "bbox": [379, 1248, 493, 1472],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/handstand-push-ups/6.webp",
+        "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+        "roi": [7, 1248, 578, 1489],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 148.5, "y": 1471 },
+          "rightImageSupportLowestContourMidpoint": { "x": 424.5, "y": 1471 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 215,
+          "rightImageSupportProjectedHorizontalSpan": 114
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18725,
+            "bbox": [32, 1248, 247, 1472],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 13448,
+            "bbox": [379, 1248, 493, 1472],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "straight-arm-pulldown",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 20,
+    "maximumDimensionDriftRatio": 0,
+    "numericPass": false,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/straight-arm-pulldown/1.webp",
+        "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+        "roi": [0, 0, 276, 1728],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 30, "y": 34 },
+          "towerUpperRightOuterContour": { "x": 275, "y": 154 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 260,
+          "towerProjectedVerticalSpan": 1624
+        },
+        "features": [{ "bbox": [16, 17, 276, 1641], "touchesROI": true }]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/straight-arm-pulldown/2.webp",
+        "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+        "roi": [0, 0, 276, 1728],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 30, "y": 34 },
+          "towerUpperRightOuterContour": { "x": 275, "y": 154 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 260,
+          "towerProjectedVerticalSpan": 1624
+        },
+        "features": [{ "bbox": [16, 17, 276, 1641], "touchesROI": true }]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/straight-arm-pulldown/3.webp",
+        "sha256": "a03e3b285e22bcc2a66712af85276d964302076ced16a81185360a3f6dbd92dd",
+        "roi": [0, 0, 276, 1728],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 30, "y": 34 },
+          "towerUpperRightOuterContour": { "x": 275, "y": 174 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 260,
+          "towerProjectedVerticalSpan": 1624
+        },
+        "features": [{ "bbox": [16, 17, 276, 1641], "touchesROI": true }]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/straight-arm-pulldown/4.webp",
+        "sha256": "a03e3b285e22bcc2a66712af85276d964302076ced16a81185360a3f6dbd92dd",
+        "roi": [0, 0, 276, 1728],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 30, "y": 34 },
+          "towerUpperRightOuterContour": { "x": 275, "y": 174 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 260,
+          "towerProjectedVerticalSpan": 1624
+        },
+        "features": [{ "bbox": [16, 17, 276, 1641], "touchesROI": true }]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/straight-arm-pulldown/5.webp",
+        "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+        "roi": [0, 0, 276, 1728],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 30, "y": 34 },
+          "towerUpperRightOuterContour": { "x": 275, "y": 154 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 260,
+          "towerProjectedVerticalSpan": 1624
+        },
+        "features": [{ "bbox": [16, 17, 276, 1641], "touchesROI": true }]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/straight-arm-pulldown/6.webp",
+        "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+        "roi": [0, 0, 276, 1728],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 30, "y": 34 },
+          "towerUpperRightOuterContour": { "x": 275, "y": 154 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 260,
+          "towerProjectedVerticalSpan": 1624
+        },
+        "features": [{ "bbox": [16, 17, 276, 1641], "touchesROI": true }]
+      }
+    ]
+  },
+  {
+    "id": "front-squat",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 1,
+    "maximumDimensionDriftRatio": 0,
+    "numericPass": true,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/front-squat/1.webp",
+        "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+        "roi": [184, 656, 530, 792],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 317.5, "y": 730 },
+          "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 4696,
+            "bbox": [263, 656, 364, 731],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 4812,
+            "bbox": [373, 656, 491, 721],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/front-squat/2.webp",
+        "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+        "roi": [184, 656, 530, 792],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 317.5, "y": 730 },
+          "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 4696,
+            "bbox": [263, 656, 364, 731],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 4812,
+            "bbox": [373, 656, 491, 721],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/front-squat/3.webp",
+        "sha256": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
+        "roi": [184, 656, 530, 792],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 317, "y": 729 },
+          "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 4709,
+            "bbox": [263, 656, 364, 730],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 4835,
+            "bbox": [373, 656, 491, 721],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/front-squat/4.webp",
+        "sha256": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
+        "roi": [184, 656, 530, 792],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 317, "y": 729 },
+          "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 4709,
+            "bbox": [263, 656, 364, 730],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 4835,
+            "bbox": [373, 656, 491, 721],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/front-squat/5.webp",
+        "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+        "roi": [184, 656, 530, 792],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 317.5, "y": 730 },
+          "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 4696,
+            "bbox": [263, 656, 364, 731],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 4812,
+            "bbox": [373, 656, 491, 721],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/front-squat/6.webp",
+        "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+        "roi": [184, 656, 530, 792],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 317.5, "y": 730 },
+          "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 4696,
+            "bbox": [263, 656, 364, 731],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 4812,
+            "bbox": [373, 656, 491, 721],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pendlay-row",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 1,
+    "maximumDimensionDriftRatio": 0,
+    "numericPass": true,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/pendlay-row/1.webp",
+        "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+        "roi": [295, 714, 826, 883],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+          "rightImageSupportLowestContourMidpoint": { "x": 649, "y": 820 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10611,
+            "bbox": [395, 714, 585, 793],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 12386,
+            "bbox": [584, 714, 766, 821],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/pendlay-row/2.webp",
+        "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+        "roi": [295, 714, 826, 883],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+          "rightImageSupportLowestContourMidpoint": { "x": 649, "y": 820 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10611,
+            "bbox": [395, 714, 585, 793],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 12386,
+            "bbox": [584, 714, 766, 821],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/pendlay-row/3.webp",
+        "sha256": "562e35b61473e979dfb727ea3bcf24187dc6009feb704a5e91ba174eb0208850",
+        "roi": [295, 714, 826, 883],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+          "rightImageSupportLowestContourMidpoint": { "x": 648, "y": 820 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10570,
+            "bbox": [395, 714, 585, 793],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 12409,
+            "bbox": [584, 714, 766, 821],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/pendlay-row/4.webp",
+        "sha256": "562e35b61473e979dfb727ea3bcf24187dc6009feb704a5e91ba174eb0208850",
+        "roi": [295, 714, 826, 883],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+          "rightImageSupportLowestContourMidpoint": { "x": 648, "y": 820 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10570,
+            "bbox": [395, 714, 585, 793],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 12409,
+            "bbox": [584, 714, 766, 821],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/pendlay-row/5.webp",
+        "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+        "roi": [295, 714, 826, 883],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+          "rightImageSupportLowestContourMidpoint": { "x": 649, "y": 820 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10611,
+            "bbox": [395, 714, 585, 793],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 12386,
+            "bbox": [584, 714, 766, 821],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/pendlay-row/6.webp",
+        "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+        "roi": [295, 714, 826, 883],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+          "rightImageSupportLowestContourMidpoint": { "x": 649, "y": 820 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10611,
+            "bbox": [395, 714, 585, 793],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 12386,
+            "bbox": [584, 714, 766, 821],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "overhead-extension",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 5.5,
+    "maximumDimensionDriftRatio": 0.03664921465968585,
+    "numericPass": false,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/overhead-extension/1.webp",
+        "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+        "roi": [0, 1299, 461, 1532],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 92.5, "y": 1455 },
+          "rightImageSupportLowestContourMidpoint": { "x": 295.5, "y": 1513 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 191,
+          "rightImageSupportProjectedHorizontalSpan": 164
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 16163,
+            "bbox": [32, 1299, 223, 1456],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 18421,
+            "bbox": [234, 1299, 398, 1514],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/overhead-extension/2.webp",
+        "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+        "roi": [0, 1299, 461, 1532],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 92.5, "y": 1455 },
+          "rightImageSupportLowestContourMidpoint": { "x": 295.5, "y": 1513 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 191,
+          "rightImageSupportProjectedHorizontalSpan": 164
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 16163,
+            "bbox": [32, 1299, 223, 1456],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 18421,
+            "bbox": [234, 1299, 398, 1514],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/overhead-extension/3.webp",
+        "sha256": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+        "roi": [0, 1299, 461, 1532],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 98, "y": 1454 },
+          "rightImageSupportLowestContourMidpoint": { "x": 295, "y": 1510 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 184,
+          "rightImageSupportProjectedHorizontalSpan": 160
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 15471,
+            "bbox": [40, 1299, 224, 1455],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 17660,
+            "bbox": [235, 1299, 395, 1511],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/overhead-extension/4.webp",
+        "sha256": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+        "roi": [0, 1299, 461, 1532],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 98, "y": 1454 },
+          "rightImageSupportLowestContourMidpoint": { "x": 295, "y": 1510 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 184,
+          "rightImageSupportProjectedHorizontalSpan": 160
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 15471,
+            "bbox": [40, 1299, 224, 1455],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 17660,
+            "bbox": [235, 1299, 395, 1511],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/overhead-extension/5.webp",
+        "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+        "roi": [0, 1299, 461, 1532],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 92.5, "y": 1455 },
+          "rightImageSupportLowestContourMidpoint": { "x": 295.5, "y": 1513 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 191,
+          "rightImageSupportProjectedHorizontalSpan": 164
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 16163,
+            "bbox": [32, 1299, 223, 1456],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 18421,
+            "bbox": [234, 1299, 398, 1514],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/overhead-extension/6.webp",
+        "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+        "roi": [0, 1299, 461, 1532],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 92.5, "y": 1455 },
+          "rightImageSupportLowestContourMidpoint": { "x": 295.5, "y": 1513 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 191,
+          "rightImageSupportProjectedHorizontalSpan": 164
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 16163,
+            "bbox": [32, 1299, 223, 1456],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 18421,
+            "bbox": [234, 1299, 398, 1514],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "face-pulls",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 61,
+    "maximumDimensionDriftRatio": 0,
+    "numericPass": false,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/face-pulls/1.webp",
+        "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+        "roi": [687, 0, 982, 1258],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 765, "y": 104 },
+          "towerUpperRightOuterContour": { "x": 944, "y": 33 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 271,
+          "towerProjectedVerticalSpan": 1137
+        },
+        "features": [{ "bbox": [687, 27, 958, 1164], "touchesROI": true }]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/face-pulls/2.webp",
+        "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+        "roi": [687, 0, 982, 1258],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 765, "y": 104 },
+          "towerUpperRightOuterContour": { "x": 944, "y": 33 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 271,
+          "towerProjectedVerticalSpan": 1137
+        },
+        "features": [{ "bbox": [687, 27, 958, 1164], "touchesROI": true }]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/face-pulls/3.webp",
+        "sha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+        "roi": [687, 0, 982, 1258],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 704, "y": 105 },
+          "towerUpperRightOuterContour": { "x": 944, "y": 34 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 271,
+          "towerProjectedVerticalSpan": 1137
+        },
+        "features": [{ "bbox": [687, 27, 958, 1164], "touchesROI": true }]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/face-pulls/4.webp",
+        "sha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+        "roi": [687, 0, 982, 1258],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 704, "y": 105 },
+          "towerUpperRightOuterContour": { "x": 944, "y": 34 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 271,
+          "towerProjectedVerticalSpan": 1137
+        },
+        "features": [{ "bbox": [687, 27, 958, 1164], "touchesROI": true }]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/face-pulls/5.webp",
+        "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+        "roi": [687, 0, 982, 1258],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 765, "y": 104 },
+          "towerUpperRightOuterContour": { "x": 944, "y": 33 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 271,
+          "towerProjectedVerticalSpan": 1137
+        },
+        "features": [{ "bbox": [687, 27, 958, 1164], "touchesROI": true }]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/face-pulls/6.webp",
+        "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+        "roi": [687, 0, 982, 1258],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 765, "y": 104 },
+          "towerUpperRightOuterContour": { "x": 944, "y": 33 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 271,
+          "towerProjectedVerticalSpan": 1137
+        },
+        "features": [{ "bbox": [687, 27, 958, 1164], "touchesROI": true }]
+      }
+    ]
+  },
+  {
+    "id": "goblet-squat",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 1.5,
+    "maximumDimensionDriftRatio": 0.010362694300518172,
+    "numericPass": false,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/goblet-squat/1.webp",
+        "sha256": "13fd26e58d89e3114662944cdbc779850bf8a152eae8679089ff9b83f1ed0cc6",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 331.5, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 581, "y": 1447 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 227,
+          "rightImageSupportProjectedHorizontalSpan": 193
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18706,
+            "bbox": [263, 1260, 490, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20682,
+            "bbox": [510, 1260, 703, 1448],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/goblet-squat/2.webp",
+        "sha256": "5adab9f01586a94d9eaf8db9253c4ee6270356613cbd276429e52caba953c0a6",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 332, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 580.5, "y": 1447 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 227,
+          "rightImageSupportProjectedHorizontalSpan": 193
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18635,
+            "bbox": [263, 1260, 490, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20632,
+            "bbox": [510, 1260, 703, 1448],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/goblet-squat/3.webp",
+        "sha256": "aaafbbcba395c804ffbcfffc4425e08064a5aa386e8f6851371aac1841a59501",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 332.5, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 582, "y": 1447 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 227,
+          "rightImageSupportProjectedHorizontalSpan": 191
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18619,
+            "bbox": [263, 1260, 490, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20466,
+            "bbox": [511, 1260, 702, 1448],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/goblet-squat/4.webp",
+        "sha256": "094f6fe821f13d15244cfb025850b9ef19e38adef361023d8f18d4a86deb9335",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 333, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 580.5, "y": 1446 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 227,
+          "rightImageSupportProjectedHorizontalSpan": 191
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18608,
+            "bbox": [263, 1260, 490, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20347,
+            "bbox": [511, 1260, 702, 1447],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/goblet-squat/5.webp",
+        "sha256": "aaafbbcba395c804ffbcfffc4425e08064a5aa386e8f6851371aac1841a59501",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 332.5, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 582, "y": 1447 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 227,
+          "rightImageSupportProjectedHorizontalSpan": 191
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18619,
+            "bbox": [263, 1260, 490, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20466,
+            "bbox": [511, 1260, 702, 1448],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/goblet-squat/6.webp",
+        "sha256": "5adab9f01586a94d9eaf8db9253c4ee6270356613cbd276429e52caba953c0a6",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 332, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 580.5, "y": 1447 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 227,
+          "rightImageSupportProjectedHorizontalSpan": 193
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18635,
+            "bbox": [263, 1260, 490, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20632,
+            "bbox": [510, 1260, 703, 1448],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "squat",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 2.5,
+    "maximumDimensionDriftRatio": 0.005235602094240788,
+    "numericPass": false,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/squat/1.webp",
+        "sha256": "c3f99a5813f8337762865f228b65fcea6b1ef13f66a6097e0a0eba58f6fa8b41",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 332, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 580, "y": 1446 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 226,
+          "rightImageSupportProjectedHorizontalSpan": 191
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18591,
+            "bbox": [264, 1260, 490, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20473,
+            "bbox": [511, 1260, 702, 1447],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/squat/2.webp",
+        "sha256": "bcdfcbd9f01d8872acae9908d5fd8056b99a3b625b6ac2e19ad0da297f982b9c",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 333, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 581, "y": 1446 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 226,
+          "rightImageSupportProjectedHorizontalSpan": 191
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18590,
+            "bbox": [264, 1260, 490, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20456,
+            "bbox": [511, 1260, 702, 1447],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/squat/3.webp",
+        "sha256": "a4837b8cc84276be8ad124a9b96b85ab5078c89b364fc6e141462f44b712ba27",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 333, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 582.5, "y": 1446 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 226,
+          "rightImageSupportProjectedHorizontalSpan": 191
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18541,
+            "bbox": [264, 1260, 490, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20273,
+            "bbox": [511, 1260, 702, 1447],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/squat/4.webp",
+        "sha256": "506e5698c794f6afce17c31f2dc74866a27eee404d130d14d47ea4258c85ca23",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 333.5, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 582.5, "y": 1446 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 225,
+          "rightImageSupportProjectedHorizontalSpan": 190
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18473,
+            "bbox": [264, 1260, 489, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20131,
+            "bbox": [511, 1260, 701, 1447],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/squat/5.webp",
+        "sha256": "c5417f6ec9b6a095151f31d8e74162872a59b90655e5d76d2bf654f372bd59c8",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 333, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 581.5, "y": 1446 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 226,
+          "rightImageSupportProjectedHorizontalSpan": 191
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18535,
+            "bbox": [264, 1260, 490, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20307,
+            "bbox": [511, 1260, 702, 1447],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/squat/6.webp",
+        "sha256": "c3f99a5813f8337762865f228b65fcea6b1ef13f66a6097e0a0eba58f6fa8b41",
+        "roi": [205, 1260, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 332, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 580, "y": 1446 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 226,
+          "rightImageSupportProjectedHorizontalSpan": 191
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18591,
+            "bbox": [264, 1260, 490, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20473,
+            "bbox": [511, 1260, 702, 1447],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "barbell-curl",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 1,
+    "maximumDimensionDriftRatio": 0.008888888888888835,
+    "numericPass": true,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/barbell-curl/1.webp",
+        "sha256": "c90649761627eaaa6da742d67cd8d3873817409b44890b975ed79ac9d4995e2f",
+        "roi": [205, 1290, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 338, "y": 1418 },
+          "rightImageSupportLowestContourMidpoint": { "x": 576, "y": 1479 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 225,
+          "rightImageSupportProjectedHorizontalSpan": 184
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18499,
+            "bbox": [269, 1290, 494, 1419],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20226,
+            "bbox": [506, 1290, 690, 1480],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/barbell-curl/2.webp",
+        "sha256": "9d4bfcdb02a7d35404532ecb9d798b9ee17a220ba8b348a32fa062a4583e496c",
+        "roi": [205, 1290, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 338.5, "y": 1418 },
+          "rightImageSupportLowestContourMidpoint": { "x": 575.5, "y": 1479 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 223,
+          "rightImageSupportProjectedHorizontalSpan": 184
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18503,
+            "bbox": [270, 1290, 493, 1419],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20181,
+            "bbox": [506, 1290, 690, 1480],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/barbell-curl/3.webp",
+        "sha256": "86f3d5a68c5779a0948940d1d83daff6858ed2bac4bfc0da7ae734919fdb6c10",
+        "roi": [205, 1290, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 337.5, "y": 1419 },
+          "rightImageSupportLowestContourMidpoint": { "x": 576, "y": 1479 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 224,
+          "rightImageSupportProjectedHorizontalSpan": 184
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18559,
+            "bbox": [270, 1290, 494, 1420],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20107,
+            "bbox": [506, 1290, 690, 1480],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/barbell-curl/4.webp",
+        "sha256": "4da03f12f518a7961d6ce0a903431ef6647444455795d4da920b476447c1f014",
+        "roi": [205, 1290, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 337.5, "y": 1419 },
+          "rightImageSupportLowestContourMidpoint": { "x": 575.5, "y": 1479 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 224,
+          "rightImageSupportProjectedHorizontalSpan": 183
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18588,
+            "bbox": [270, 1290, 494, 1420],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20085,
+            "bbox": [506, 1290, 689, 1480],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/barbell-curl/5.webp",
+        "sha256": "86f3d5a68c5779a0948940d1d83daff6858ed2bac4bfc0da7ae734919fdb6c10",
+        "roi": [205, 1290, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 337.5, "y": 1419 },
+          "rightImageSupportLowestContourMidpoint": { "x": 576, "y": 1479 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 224,
+          "rightImageSupportProjectedHorizontalSpan": 184
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18559,
+            "bbox": [270, 1290, 494, 1420],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20107,
+            "bbox": [506, 1290, 690, 1480],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/barbell-curl/6.webp",
+        "sha256": "9d4bfcdb02a7d35404532ecb9d798b9ee17a220ba8b348a32fa062a4583e496c",
+        "roi": [205, 1290, 799, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 338.5, "y": 1418 },
+          "rightImageSupportLowestContourMidpoint": { "x": 575.5, "y": 1479 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 223,
+          "rightImageSupportProjectedHorizontalSpan": 184
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 18503,
+            "bbox": [270, 1290, 493, 1419],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 20181,
+            "bbox": [506, 1290, 690, 1480],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "barbell-row",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 1,
+    "maximumDimensionDriftRatio": 0.011363636363636465,
+    "numericPass": false,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/barbell-row/1.webp",
+        "sha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8",
+        "roi": [285, 819, 889, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 386, "y": 900 },
+          "rightImageSupportLowestContourMidpoint": { "x": 622, "y": 954 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 187,
+          "rightImageSupportProjectedHorizontalSpan": 176
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10841,
+            "bbox": [330, 819, 517, 901],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 14383,
+            "bbox": [557, 819, 733, 955],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/barbell-row/2.webp",
+        "sha256": "67db4c3c4d4e28ff270af0424c23dd117c9297a7f27bec282b3de10b9b4cb81e",
+        "roi": [285, 819, 889, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 386.5, "y": 901 },
+          "rightImageSupportLowestContourMidpoint": { "x": 622, "y": 954 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 189,
+          "rightImageSupportProjectedHorizontalSpan": 177
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 11101,
+            "bbox": [330, 819, 519, 902],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 14456,
+            "bbox": [557, 819, 734, 955],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/barbell-row/3.webp",
+        "sha256": "c6252fc48d520586202aac07c1e814f4ebede5deb2eb8cd7b2e897be7daf6c75",
+        "roi": [285, 819, 889, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 386.5, "y": 900 },
+          "rightImageSupportLowestContourMidpoint": { "x": 622.5, "y": 955 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 188,
+          "rightImageSupportProjectedHorizontalSpan": 177
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 11059,
+            "bbox": [329, 819, 517, 901],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 14495,
+            "bbox": [556, 819, 733, 956],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/barbell-row/4.webp",
+        "sha256": "89d5812fc5e0168144ae8a5148c99e10a4eeb7579fdbe2cf9d36172f9a3fbb81",
+        "roi": [285, 819, 889, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 386.5, "y": 901 },
+          "rightImageSupportLowestContourMidpoint": { "x": 622, "y": 955 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 188,
+          "rightImageSupportProjectedHorizontalSpan": 178
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 11103,
+            "bbox": [329, 819, 517, 902],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 14539,
+            "bbox": [556, 819, 734, 956],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/barbell-row/5.webp",
+        "sha256": "c6252fc48d520586202aac07c1e814f4ebede5deb2eb8cd7b2e897be7daf6c75",
+        "roi": [285, 819, 889, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 386.5, "y": 900 },
+          "rightImageSupportLowestContourMidpoint": { "x": 622.5, "y": 955 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 188,
+          "rightImageSupportProjectedHorizontalSpan": 177
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 11059,
+            "bbox": [329, 819, 517, 901],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 14495,
+            "bbox": [556, 819, 733, 956],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/barbell-row/6.webp",
+        "sha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8",
+        "roi": [285, 819, 889, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 386, "y": 900 },
+          "rightImageSupportLowestContourMidpoint": { "x": 622, "y": 954 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 187,
+          "rightImageSupportProjectedHorizontalSpan": 176
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10841,
+            "bbox": [330, 819, 517, 901],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 14383,
+            "bbox": [557, 819, 733, 955],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bench-press",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 0.5,
+    "maximumDimensionDriftRatio": 0.0078125,
+    "numericPass": true,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/bench-press/1.webp",
+        "sha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+        "roi": [266, 778, 879, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+          "rightImageSupportLowestContourMidpoint": { "x": 762, "y": 876 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 128
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10501,
+            "bbox": [433, 778, 511, 975],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 7768,
+            "bbox": [666, 778, 794, 877],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/bench-press/2.webp",
+        "sha256": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+        "roi": [266, 778, 879, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+          "rightImageSupportLowestContourMidpoint": { "x": 762.5, "y": 876 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10501,
+            "bbox": [433, 778, 511, 975],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 7758,
+            "bbox": [667, 778, 794, 877],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/bench-press/3.webp",
+        "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+        "roi": [266, 778, 879, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+          "rightImageSupportLowestContourMidpoint": { "x": 762, "y": 876 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 128
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10500,
+            "bbox": [433, 778, 511, 975],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 7783,
+            "bbox": [666, 778, 794, 877],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/bench-press/4.webp",
+        "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+        "roi": [266, 778, 879, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+          "rightImageSupportLowestContourMidpoint": { "x": 762, "y": 876 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 128
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10500,
+            "bbox": [433, 778, 511, 975],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 7783,
+            "bbox": [666, 778, 794, 877],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/bench-press/5.webp",
+        "sha256": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+        "roi": [266, 778, 879, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+          "rightImageSupportLowestContourMidpoint": { "x": 762.5, "y": 876 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10501,
+            "bbox": [433, 778, 511, 975],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 7758,
+            "bbox": [667, 778, 794, 877],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/bench-press/6.webp",
+        "sha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+        "roi": [266, 778, 879, 1014],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+          "rightImageSupportLowestContourMidpoint": { "x": 762, "y": 876 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 128
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 10501,
+            "bbox": [433, 778, 511, 975],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 7768,
+            "bbox": [666, 778, 794, 877],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "overhead-press",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 1.5,
+    "maximumDimensionDriftRatio": 0.009090909090909038,
+    "numericPass": false,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/overhead-press/1.webp",
+        "sha256": "2e6f286cf0c46ec3f0943b77fc50c1b76d5b2307a85bce6ce00ac9749e48ddcc",
+        "roi": [256, 1260, 768, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 368.5, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 650, "y": 1388 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 110,
+          "rightImageSupportProjectedHorizontalSpan": 110
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 8357,
+            "bbox": [327, 1260, 437, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 8365,
+            "bbox": [583, 1260, 693, 1389],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/overhead-press/2.webp",
+        "sha256": "2e6f286cf0c46ec3f0943b77fc50c1b76d5b2307a85bce6ce00ac9749e48ddcc",
+        "roi": [256, 1260, 768, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 368.5, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 650, "y": 1388 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 110,
+          "rightImageSupportProjectedHorizontalSpan": 110
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 8357,
+            "bbox": [327, 1260, 437, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 8365,
+            "bbox": [583, 1260, 693, 1389],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/overhead-press/3.webp",
+        "sha256": "216e9680f3dd3b7bb0d1991bc3bb77c782d17bcae955772ee2d06a547117a3d4",
+        "roi": [256, 1260, 768, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 368, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 651, "y": 1388 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 110,
+          "rightImageSupportProjectedHorizontalSpan": 111
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 8401,
+            "bbox": [327, 1260, 437, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 8414,
+            "bbox": [582, 1260, 693, 1389],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/overhead-press/4.webp",
+        "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45",
+        "roi": [256, 1260, 768, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 367, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 651, "y": 1388 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 110,
+          "rightImageSupportProjectedHorizontalSpan": 110
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 8429,
+            "bbox": [327, 1260, 437, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 8400,
+            "bbox": [582, 1260, 692, 1389],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/overhead-press/5.webp",
+        "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45",
+        "roi": [256, 1260, 768, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 367, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 651, "y": 1388 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 110,
+          "rightImageSupportProjectedHorizontalSpan": 110
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 8429,
+            "bbox": [327, 1260, 437, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 8400,
+            "bbox": [582, 1260, 692, 1389],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/overhead-press/6.webp",
+        "sha256": "216e9680f3dd3b7bb0d1991bc3bb77c782d17bcae955772ee2d06a547117a3d4",
+        "roi": [256, 1260, 768, 1521],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 368, "y": 1388 },
+          "rightImageSupportLowestContourMidpoint": { "x": 651, "y": 1388 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 110,
+          "rightImageSupportProjectedHorizontalSpan": 111
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 8401,
+            "bbox": [327, 1260, 437, 1389],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 8414,
+            "bbox": [582, 1260, 693, 1389],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rope-tricep-pushdown",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 57,
+    "maximumDimensionDriftRatio": 0,
+    "numericPass": false,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/rope-tricep-pushdown/1.webp",
+        "sha256": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+        "roi": [717, 0, 1014, 1584],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 717, "y": 110 },
+          "towerUpperRightOuterContour": { "x": 954, "y": 22 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 274,
+          "towerProjectedVerticalSpan": 1472
+        },
+        "features": [{ "bbox": [717, 22, 991, 1494], "touchesROI": true }]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/rope-tricep-pushdown/2.webp",
+        "sha256": "67820b245285700597e51394bc9423f0c465bbca1f15f3776f45ad3a21efad46",
+        "roi": [717, 0, 1014, 1584],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 717, "y": 145 },
+          "towerUpperRightOuterContour": { "x": 954, "y": 22 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 274,
+          "towerProjectedVerticalSpan": 1472
+        },
+        "features": [{ "bbox": [717, 22, 991, 1494], "touchesROI": true }]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/rope-tricep-pushdown/3.webp",
+        "sha256": "a398a340fc3bfe428a84b57e4eedae720ea4f38f9ad7b3a1e58cde8f009adaa9",
+        "roi": [717, 0, 1014, 1584],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 717, "y": 156 },
+          "towerUpperRightOuterContour": { "x": 954, "y": 22 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 274,
+          "towerProjectedVerticalSpan": 1472
+        },
+        "features": [{ "bbox": [717, 22, 991, 1494], "touchesROI": true }]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/rope-tricep-pushdown/4.webp",
+        "sha256": "cd3d5475d2e54b0a55b7578b690312b38d5536a79dd441e9dd8bb87d1cc58778",
+        "roi": [717, 0, 1014, 1584],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 717, "y": 165 },
+          "towerUpperRightOuterContour": { "x": 954, "y": 22 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 274,
+          "towerProjectedVerticalSpan": 1472
+        },
+        "features": [{ "bbox": [717, 22, 991, 1494], "touchesROI": true }]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/rope-tricep-pushdown/5.webp",
+        "sha256": "eee2e2c13f44b600e784f6401623935f77f93143e5ced23d68af4e10df116c60",
+        "roi": [717, 0, 1014, 1584],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 717, "y": 167 },
+          "towerUpperRightOuterContour": { "x": 954, "y": 22 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 274,
+          "towerProjectedVerticalSpan": 1472
+        },
+        "features": [{ "bbox": [717, 22, 991, 1494], "touchesROI": true }]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/rope-tricep-pushdown/6.webp",
+        "sha256": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+        "roi": [717, 0, 1014, 1584],
+        "anchors": {
+          "towerUpperLeftOuterContour": { "x": 717, "y": 110 },
+          "towerUpperRightOuterContour": { "x": 954, "y": 22 }
+        },
+        "invariantDimensions": {
+          "towerProjectedHorizontalSpan": 274,
+          "towerProjectedVerticalSpan": 1472
+        },
+        "features": [{ "bbox": [717, 22, 991, 1494], "touchesROI": true }]
+      }
+    ]
+  },
+  {
+    "id": "skull-crushers",
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maximumAnchorDriftPx": 0,
+    "maximumDimensionDriftRatio": 0,
+    "numericPass": true,
+    "samples": [
+      {
+        "frame": 1,
+        "path": "form-frames/skull-crushers/1.webp",
+        "sha256": "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093",
+        "roi": [261, 815, 861, 1061],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+          "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 9465,
+            "bbox": [457, 815, 535, 992],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 6457,
+            "bbox": [691, 815, 818, 894],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "path": "form-frames/skull-crushers/2.webp",
+        "sha256": "02c6af1f80944dd6ba1aef18b4a62b65b94fba83831c221d5543718366b87323",
+        "roi": [261, 815, 861, 1061],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+          "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 9465,
+            "bbox": [457, 815, 535, 992],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 6457,
+            "bbox": [691, 815, 818, 894],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "path": "form-frames/skull-crushers/3.webp",
+        "sha256": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+        "roi": [261, 815, 861, 1061],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+          "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 9465,
+            "bbox": [457, 815, 535, 992],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 6457,
+            "bbox": [691, 815, 818, 894],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "path": "form-frames/skull-crushers/4.webp",
+        "sha256": "50833f00e3cddb12597589b010ce83ac0f11e114727d78abf3ec8091280cc739",
+        "roi": [261, 815, 861, 1061],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+          "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 9465,
+            "bbox": [457, 815, 535, 992],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 6457,
+            "bbox": [691, 815, 818, 894],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "path": "form-frames/skull-crushers/5.webp",
+        "sha256": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+        "roi": [261, 815, 861, 1061],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+          "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 9465,
+            "bbox": [457, 815, 535, 992],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 6457,
+            "bbox": [691, 815, 818, 894],
+            "topTouchesROI": true
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "path": "form-frames/skull-crushers/6.webp",
+        "sha256": "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093",
+        "roi": [261, 815, 861, 1061],
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+          "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        },
+        "features": [
+          {
+            "name": "leftImageSupport",
+            "maskPixels": 9465,
+            "bbox": [457, 815, 535, 992],
+            "topTouchesROI": true
+          },
+          {
+            "name": "rightImageSupport",
+            "maskPixels": 6457,
+            "bbox": [691, 815, 818, 894],
+            "topTouchesROI": true
+          }
+        ]
+      }
+    ]
+  }
+]

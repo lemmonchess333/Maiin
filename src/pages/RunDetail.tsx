@@ -50,6 +50,7 @@ import {
 import RunStatGrid from "@/components/run/RunStatGrid";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import { elevationLabel, runTitle } from "@/lib/runLabels";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 
@@ -89,6 +90,8 @@ export default function RunDetail() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  // The basemap follows the theme on screen, not the profile field.
+  const darkTheme = useIsDarkTheme();
   const shareRouteWithPrivacy = useShareRoute();
   const privacy = usePrivacyZones();
   const { save: saveRoute } = useSavedRoutes();
@@ -106,6 +109,7 @@ export default function RunDetail() {
   const [replaying, setReplaying] = useState(false);
   const [replayIndex, setReplayIndex] = useState(0);
   const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const replayEndRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const sharedPoints = useMemo(
     () =>
@@ -143,20 +147,25 @@ export default function RunDetail() {
   const startReplay = useCallback(() => {
     if (!run?.points?.length) return;
     if (replayRef.current) clearInterval(replayRef.current);
+    if (replayEndRef.current) clearTimeout(replayEndRef.current);
     setReplayIndex(0);
     setReplaying(true);
     const step = Math.max(1, Math.ceil(run.points.length / 60));
+    const last = run.points.length - 1;
+    // The index lives here, not in a state updater: React may call an
+    // updater twice, and each call would start its own end timer.
+    let index = 0;
     replayRef.current = setInterval(() => {
-      setReplayIndex((prev: number) => {
-        const next = prev + step;
-        if (next >= run.points.length - 1) {
-          clearInterval(replayRef.current!);
-          replayRef.current = null;
-          setTimeout(() => setReplaying(false), 600);
-          return run.points.length - 1;
-        }
-        return next;
-      });
+      index = Math.min(last, index + step);
+      setReplayIndex(index);
+      if (index >= last) {
+        clearInterval(replayRef.current!);
+        replayRef.current = null;
+        replayEndRef.current = setTimeout(() => {
+          replayEndRef.current = null;
+          setReplaying(false);
+        }, 600);
+      }
     }, 50);
   }, [run]);
 
@@ -164,6 +173,7 @@ export default function RunDetail() {
   useEffect(() => {
     return () => {
       if (replayRef.current) clearInterval(replayRef.current);
+      if (replayEndRef.current) clearTimeout(replayEndRef.current);
     };
   }, []);
 
@@ -292,7 +302,7 @@ export default function RunDetail() {
             height="h-full"
             paceColored={avgPace > 0}
             avgPaceSecPerKm={avgPace}
-            darkMode={!!profile?.darkMode}
+            darkMode={darkTheme}
             replayIndex={replaying ? replayIndex : undefined}
           />
           {/* Back button over map */}

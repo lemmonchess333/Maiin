@@ -65,13 +65,16 @@ concurrency:
 jobs:
   update-branches:
     runs-on: ubuntu-latest
+    # A loop of API calls, one per eligible PR: it finishes in about a
+    # minute when it runs at all.
+    timeout-minutes: 15
     steps:
       - name: Update every open PR branch with main
         env:
-          # Prefer the PAT; fall back to GITHUB_TOKEN. See the workflow
-          # header for the trade-off — both paths now leave the PR with
-          # fresh checks; the GITHUB_TOKEN path re-dispatches them
-          # explicitly (the workflow_dispatch anti-loop exception).
+          # The PAT is required: without it the script stands down before
+          # touching a branch (see the workflow header). With it, the
+          # script exports it as GH_TOKEN before its first `gh` call, so
+          # every call, read or write, runs under the PAT.
           PAT: ${{ secrets.AUTO_UPDATE_PR_BRANCHES_PAT }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
@@ -102,9 +105,8 @@ jobs:
           # enabled, OR carrying the `auto-update` label (an escape hatch for
           # PRs that want to stay current without auto-merge). Updating EVERY
           # open PR on every main push churned in-progress PRs needlessly —
-          # each update re-runs CI on a new head, and on ruleset-gated repos
-          # the GITHUB_TOKEN-dispatched checks (below) don't satisfy the gate,
-          # so a constantly-churned PR can sit green-but-unmergeable. Gating to
+          # each update re-runs CI on a new head, and a PR whose head keeps
+          # moving keeps waiting for its required checks to finish. Gating to
           # merge-intent PRs keeps the branches that need to be current current,
           # and leaves everything else alone until its author opts in.
           PR_NUMBERS=$(gh pr list --repo "$REPO" --base main --state open \

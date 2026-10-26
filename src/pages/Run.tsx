@@ -147,6 +147,9 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
+import { formatDuration } from "@/utils/formatters";
+import { goBackOr } from "@/lib/backNavigation";
+import { RESUME_PARAM } from "@/lib/resumeParam";
 
 function sessionSegmentsFor(
   config: RunConfig | null,
@@ -176,6 +179,10 @@ export default function Run() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  // Back, before a run starts, returns to where the run was opened from
+  // (Home's card, Train, a past run's route); opened directly, to Train's
+  // Run tab.
+  const leaveSetup = () => goBackOr(navigate, "/program?tab=run");
   // Optional route to follow — passed via navigation state from RunDetail's
   // "Re-run this route". Captured once on mount (the polyline of a past run);
   // null for a normal free run. Drives the RunMap ghost line + RouteFollowChip.
@@ -253,6 +260,14 @@ export default function Run() {
   );
   const [acquiringSeconds, setAcquiringSeconds] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The background-gap banner's dismissal, cleared if the screen goes first.
+  const bgGapBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (bgGapBannerTimer.current) clearTimeout(bgGapBannerTimer.current);
+    },
+    []
+  );
   // Latest timer, held in a ref so the auto-pause effect can call pause/resume
   // WITHOUT listing the (per-render-changing) timer object as a dep — otherwise
   // the effect re-runs every second and never lets the 5s stationary timer run.
@@ -399,13 +414,17 @@ export default function Run() {
 
         // Show a brief banner if the gap was significant (> 5 seconds)
         if (event.hiddenDuration > 5) {
-          const mins = Math.floor(event.hiddenDuration / 60);
-          const secs = Math.floor(event.hiddenDuration % 60);
-          const duration = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+          const duration = formatDuration(Math.floor(event.hiddenDuration), {
+            seconds: true,
+          });
           setBgGapBanner(
             `App was in background for ${duration} — GPS data may have gaps`
           );
-          setTimeout(() => setBgGapBanner(null), 6000);
+          if (bgGapBannerTimer.current) clearTimeout(bgGapBannerTimer.current);
+          bgGapBannerTimer.current = setTimeout(() => {
+            bgGapBannerTimer.current = null;
+            setBgGapBanner(null);
+          }, 6000);
         }
       } else if (
         // Section 7 (docs/run-background-gps.md): with an Always grant the
@@ -869,6 +888,26 @@ export default function Run() {
     setSnapshotWriteFailed(!saved);
   }, [runConfig, phase, timer, gps, profile?.uid, player.checkpoint]);
 
+  const keepFinishedRun = () => {
+    const uid = profile?.uid;
+    if (!uid || !runConfig || startedAtRef.current === null) return;
+    if (phase !== "active" && phase !== "paused") return;
+    writeStoredRun(uid, {
+      v: RUN_RESUME_SCHEMA_VERSION,
+      config: runConfig,
+      startedAt: startedAtRef.current,
+      accumulatedSeconds: timer.getAccumulatedSeconds(),
+      isRunning: false,
+      points: gps.getPoints(),
+      lastWriteAt: Date.now(),
+      phase: "paused",
+      ...(player.checkpoint ? { playerCheckpoint: player.checkpoint } : {}),
+      ...(requiresManualDistance(runConfig) && manualDistanceDraftRef.current
+        ? { manualDistanceDraft: manualDistanceDraftRef.current }
+        : {}),
+    });
+  };
+
   const handleManualDistanceDraftChange = useCallback(
     (draft: ManualDistanceDraft) => {
       replaceManualDistanceDraft(draft.raw === "" ? null : draft);
@@ -1033,6 +1072,44 @@ export default function Run() {
     setResumePrompt(null);
     navigate("/");
   }, [navigate, profileUid, replaceManualDistanceDraft]);
+
+  /* Resume on Home's or Train's In progress strip (`?resume=1`) carries on
+     with the stored run as soon as it is read, rather than asking again
+     here. A run whose coaching could not be restored keeps the chooser,
+     which says what is lost. The flag comes off the address once read, so
+     Back to this page never resumes twice. */
+  const resumeRequested = searchParams.get(RESUME_PARAM) === "1";
+  const resumeFromStrip = useEffectEvent(() => {
+    handleResumeFromPrompt().catch((err) =>
+      logger.error("[Run] Resume from the In progress strip failed", err)
+    );
+  });
+  const resumeState = location.state;
+  useEffect(() => {
+    if (!resumeRequested || phase !== "waiting" || !profileUid) return;
+    // The restore effect reads the stored run in this same pass; wait for
+    // its prompt rather than read the address as "nothing to resume".
+    if (!resumePrompt && readStoredRun(profileUid) !== null) return;
+    setSearchParams(
+      (params) => {
+        params.delete(RESUME_PARAM);
+        return params;
+      },
+      { replace: true, state: resumeState }
+    );
+    // A one-shot reaction to the address, consumed above so it cannot
+    // repeat; the stored run is read outside React.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
+    if (resumePrompt && !resumeCoaching?.fallback) resumeFromStrip();
+  }, [
+    resumeRequested,
+    phase,
+    profileUid,
+    resumePrompt,
+    resumeCoaching,
+    resumeState,
+    setSearchParams,
+  ]);
 
   // Count seconds spent in acquiring phase
   useEffect(() => {
@@ -1296,6 +1373,11 @@ export default function Run() {
   }, [player.state.index, player, sessionSegments, audioCues, cueSeed]);
 
   const finishRun = (distanceOverride?: number) => {
+    // The summary holds the run in memory until it is saved. Should the
+    // phone drop the page first, Home offers the run back from the stored
+    // copy, so it is kept as it finished: stopped, and resumed paused, not
+    // running on from wherever the phone is by then.
+    keepFinishedRun();
     timer.pause();
     gps.stop();
     wakeLock.release();
@@ -1602,7 +1684,7 @@ export default function Run() {
                 )
               }
               onCustomize={() => setForceModal(true)}
-              onBack={() => navigate("/program?tab=run")}
+              onBack={leaveSetup}
             />
           ) : forceModal || targetRoute != null ? (
             <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
@@ -1639,9 +1721,7 @@ export default function Run() {
                    `launchShoeId` lives on this page rather than in the
                    modal, so a shoe picked before the detour survives it. */
                 onCancel={() =>
-                  forceModal
-                    ? setForceModal(false)
-                    : navigate("/program?tab=run")
+                  forceModal ? setForceModal(false) : leaveSetup()
                 }
                 programContext={planDecision.strip}
                 sessionName={
@@ -1685,7 +1765,7 @@ export default function Run() {
                 )
               }
               onMoreOptions={() => setForceModal(true)}
-              onBack={() => navigate("/program?tab=run")}
+              onBack={leaveSetup}
             />
           )}
         </>
@@ -1695,6 +1775,7 @@ export default function Run() {
         (() => {
           const acc = gps.gpsAccuracy;
           const quality = gps.signalQuality;
+          const locationDenied = gps.permissionState === "denied";
           const { lit: bars, colour: barColor } = gpsSignalBars(quality);
           return (
             <div
@@ -1772,24 +1853,40 @@ export default function Run() {
                 </p>
               </div>
 
+              {/* A refusal is not a search: no signal will arrive until
+                  location is turned back on, so it gets its own words. */}
               <p className="text-white font-semibold text-lg mb-1">
-                {quality === "strong" || quality === "good"
-                  ? "GPS locked"
-                  : "Acquiring GPS..."}
+                {locationDenied
+                  ? "Location is off for Tropos"
+                  : quality === "strong" || quality === "good"
+                    ? "GPS locked"
+                    : "Acquiring GPS..."}
               </p>
               <p
                 className="text-sm text-center max-w-[260px]"
-                style={{ color: "rgba(255,255,255,0.4)" }}
+                style={{ color: "rgba(255,255,255,0.6)" }}
               >
-                {quality === "weak" || quality === "searching"
-                  ? "Move to an open area away from buildings"
-                  : "Getting accurate signal..."}
+                {locationDenied
+                  ? isNativePlatform()
+                    ? "Turn it on in Settings to track this run with GPS, or track it without GPS."
+                    : "Allow location for this site in your browser's settings to track this run with GPS, or track it without GPS."
+                  : quality === "weak" || quality === "searching"
+                    ? "Move to an open area away from buildings"
+                    : "Getting accurate signal..."}
               </p>
-              {gps.permissionState === "denied" ? (
-                <p className="text-xs text-destructive-strong mt-2 text-center max-w-[280px]">
-                  Location is turned off for Tropos. Turn it on in your phone's
-                  Settings, then come back and start again.
-                </p>
+              {locationDenied ? (
+                isNativePlatform() && (
+                  <div className="mt-4 w-full">
+                    <Button
+                      variant="ghost"
+                      fullWidth
+                      onClick={() => void openLocationSettings()}
+                      className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
+                    >
+                      Open settings
+                    </Button>
+                  </div>
+                )
               ) : gps.error ? (
                 <p className="text-xs text-destructive-strong mt-2 text-center max-w-[280px]">
                   Can't get a GPS signal right now. Move outside, or track
@@ -1798,7 +1895,7 @@ export default function Run() {
               ) : null}
 
               <div className="mt-8 flex flex-col items-center gap-3 w-full">
-                {(acquiringSeconds >= 15 || !!gps.error) && (
+                {(acquiringSeconds >= 15 || !!gps.error || locationDenied) && (
                   /* Replaces the old "Start without GPS" CTA. That one
                    started an outdoor run with zero GPS fixes \u2014 the
                    canonical 0km production bug. This sends the user
@@ -2169,7 +2266,7 @@ export default function Run() {
           }
           onStartNew={handleStartNewFromPrompt}
           onDiscard={handleDiscardFromPrompt}
-          onBack={() => navigate("/program?tab=run")}
+          onBack={leaveSetup}
         />
       )}
 

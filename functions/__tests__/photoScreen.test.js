@@ -31,11 +31,24 @@ describe("screenedOwner", () => {
     expect(screenedOwner("profile-photos/u1/avatar-1.jpg")).toBe("u1");
   });
 
+  it.each(["space-photos", "profile-photos"])(
+    "covers recursive Storage objects under %s, including dotted filenames",
+    (prefix) => {
+      expect(screenedOwner(`${prefix}/u1/nested/a.jpg`)).toBe("u1");
+      expect(screenedOwner(`${prefix}/u1/a..jpg`)).toBe("u1");
+      expect(screenedOwner(`${prefix}/u1/nested/../a.jpg`)).toBe("u1");
+      expect(screenedOwner(`${prefix}/u1/line\nbreak.jpg`)).toBe("u1");
+      expect(screenedOwner(`${prefix}/u1`)).toBe("u1");
+      expect(screenedOwner(`${prefix}/u1/`)).toBe("u1");
+    }
+  );
+
   it("leaves out what no one else sees, and anything malformed", () => {
     expect(screenedOwner("progress-photos/u1/a.bin")).toBeNull();
     expect(screenedOwner("food-photos/u1/m.jpg")).toBeNull();
-    expect(screenedOwner("space-photos/u1/nested/a.jpg")).toBeNull();
-    expect(screenedOwner("space-photos/../u2/a.jpg")).toBeNull();
+    expect(screenedOwner("space-photos//a.jpg")).toBeNull();
+    expect(screenedOwner("profile-photos/")).toBeNull();
+    expect(screenedOwner("space-photos")).toBeNull();
     expect(screenedOwner(undefined)).toBeNull();
   });
 });

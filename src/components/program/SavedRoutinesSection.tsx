@@ -13,6 +13,7 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { IconButton } from "@/components/ui/IconButton";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 /**
  * "Saved routines" surface on the Program page (PR 4 save half).
@@ -31,6 +32,8 @@ export default function SavedRoutinesSection() {
   const uid = useUid();
   const [routines, setRoutines] = useState<SavedRoutine[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,10 +44,13 @@ export default function SavedRoutinesSection() {
         const items = await listSavedRoutines(uid);
         if (cancelled) return;
         setRoutines(items);
-      } catch {
-        // Don't crash the Program page on a routine-list load failure;
-        // the rest of the page is unaffected.
-        if (!cancelled) setRoutines([]);
+        setLoadFailed(false);
+      } catch (err) {
+        // The rest of the Program page is unaffected. Hiding the section,
+        // as an empty list does, would tell someone with saved routines
+        // they have none, so a failed read says so instead.
+        logger.error("[SavedRoutines] list failed", err);
+        if (!cancelled) setLoadFailed(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -52,12 +58,12 @@ export default function SavedRoutinesSection() {
     return () => {
       cancelled = true;
     };
-  }, [uid]);
+  }, [uid, attempt]);
 
   if (!uid) return null;
   // Hide the section entirely when there's nothing saved AND we're not
   // loading — empty-state chrome on a non-essential surface adds noise.
-  if (!loading && routines.length === 0) return null;
+  if (!loading && !loadFailed && routines.length === 0) return null;
 
   // Undo writes the same document back under the same id, so the row and
   // any /routine/:id link to it return exactly as they were. The section
@@ -117,6 +123,19 @@ export default function SavedRoutinesSection() {
         </h2>
       </div>
 
+      {loadFailed && routines.length === 0 ? (
+        <ErrorState
+          title="Couldn't load your saved routines"
+          description="Check your connection and try again."
+          retry={{
+            onClick: () => {
+              setLoadFailed(false);
+              setAttempt((n) => n + 1);
+            },
+          }}
+        />
+      ) : null}
+
       <div className="space-y-2">
         {routines.map((routine) => {
           const setCount = routine.exercises.reduce(
@@ -149,7 +168,9 @@ export default function SavedRoutinesSection() {
                     From {routine.sourceAuthorName} · {routine.exercises.length}{" "}
                     exercise
                     {routine.exercises.length === 1 ? "" : "s"}
-                    {setCount > 0 ? ` · ${setCount} sets` : ""}
+                    {setCount > 0
+                      ? ` · ${setCount} ${setCount === 1 ? "set" : "sets"}`
+                      : ""}
                   </p>
                 </div>
               </Link>

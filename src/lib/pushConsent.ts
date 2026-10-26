@@ -8,7 +8,8 @@
  * the global switch AND that type's flag are both on. Global defaults OFF
  * (explicit opt-in — no cold sends); per-type default ON (so opting in to push
  * enables the standard set, which the user can then pare back). Monthly
- * challenge announcements require their own opt-in and default OFF.
+ * challenge announcements and closing reminders have independent opt-ins
+ * and both default OFF.
  *
  * The PREDICATE that enforces that model is NOT here. This header used to
  * claim "the senders import `mayTargetUser` directly and table-test it" — but
@@ -21,7 +22,12 @@
  * Keep it that way. "May a server sender target this user?" is a server
  * question; a client-side answer to it can only ever drift out of sight.
  */
-export type PushType = "streak" | "recap" | "badge" | "challenges";
+export type PushType =
+  | "streak"
+  | "recap"
+  | "badge"
+  | "challenges"
+  | "challengeReminders";
 
 export interface PushConsent {
   /** Global kill-switch. Off → no sender targets the user (tokens revoked). */
@@ -31,6 +37,8 @@ export interface PushConsent {
   badge: boolean;
   /** Separate opt-in: adding this type never enrolls existing push users. */
   challenges: boolean;
+  /** Separate opt-in for one unfinished-goal reminder near month end. */
+  challengeReminders: boolean;
 }
 
 export const DEFAULT_PUSH_CONSENT: PushConsent = {
@@ -39,4 +47,5 @@ export const DEFAULT_PUSH_CONSENT: PushConsent = {
   recap: true,
   badge: true,
   challenges: false,
+  challengeReminders: false,
 };

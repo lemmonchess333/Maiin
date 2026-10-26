@@ -34,7 +34,9 @@ vi.mock("@/features/streaks/useStreaks", () => ({
     awardEventBadges: vi.fn(),
   }),
 }));
-vi.mock("@/hooks/useWorkoutDraft", () => ({
+vi.mock("@/hooks/useWorkoutDraft", async (importOriginal) => ({
+  // The pure helpers (`draftLayout`) stay real.
+  ...(await importOriginal<typeof import("@/hooks/useWorkoutDraft")>()),
   useWorkoutDraft: () => ({ load: h.load, save: h.save, clear: h.clear }),
   computeDraftIdentity: () => "test",
   createWorkoutCompletionId: () => "test",
@@ -102,7 +104,8 @@ const lift = (over: Partial<ProgramExercise>) =>
   ({
     sets: 2,
     reps: 8,
-    weight: 0,
+    // Both lifts here are loaded, and a loaded lift can't be ticked at 0 kg.
+    weight: 15,
     restSeconds: 0,
     ...over,
   }) as ProgramExercise;
@@ -153,6 +156,12 @@ function completeCurrent() {
     const enabled = open.filter((b) => !(b as HTMLButtonElement).disabled);
     if (enabled.length === 0) return;
     fireEvent.click(enabled[0]);
+    // A tick the validator refuses leaves the box: fail rather than spin.
+    if (
+      enabled[0].isConnected &&
+      enabled[0].getAttribute("aria-label") === "Mark set complete"
+    )
+      throw new Error("A set did not complete");
   }
 }
 
@@ -231,6 +240,12 @@ describe("Swap for today", () => {
   }
 
   async function finish(complete: ReturnType<typeof openSession>) {
+    // This profile has no bodyweight to seed the swapped-in lift from, so
+    // it starts with no weight, and a loaded lift needs one to be ticked.
+    for (const field of screen.getAllByRole("spinbutton", {
+      name: /weight$/,
+    }) as HTMLInputElement[])
+      if (!field.value) fireEvent.change(field, { target: { value: "20" } });
     completeCurrent();
     completeCurrent();
     fireEvent.click(
@@ -288,8 +303,9 @@ describe("Swap for today", () => {
     expect(
       screen.queryByRole("button", { name: /^Swap for today/ })
     ).toBeNull();
+    // One line a choice: the label says it is for today.
     expect(
-      screen.getByRole("button", { name: /Leave the rest out/ })
-    ).toBeInTheDocument();
+      screen.getByRole("button", { name: "Skip today" })
+    ).toHaveTextContent(/^Skip today$/);
   });
 });

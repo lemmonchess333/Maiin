@@ -1,0 +1,157 @@
+{
+  "exerciseId": "overhead-press",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration polish review",
+  "reviewedAt": "2026-10-19T19:53:57.651380+00:00",
+  "reference": {
+    "path": "form-frames/overhead-press/4.webp",
+    "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45"
+  },
+  "cueSha256": "71159924512ffce704dbea114fdc96b785ef5bc496dff0549629253c15f4cbbd",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading. Actual registered component checks are recorded separately; no strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/overhead-press/1.webp",
+      "sha256": "2e6f286cf0c46ec3f0943b77fc50c1b76d5b2307a85bce6ce00ac9749e48ddcc",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-19-illustration-polish/1.png",
+        "sha256": "f97dd12665c705e590785ceb8101a00ed4479989685fbe2f1252144e23238fc5"
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/2.webp",
+      "sha256": "2e6f286cf0c46ec3f0943b77fc50c1b76d5b2307a85bce6ce00ac9749e48ddcc",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-19-illustration-polish/2.png",
+        "sha256": "f97dd12665c705e590785ceb8101a00ed4479989685fbe2f1252144e23238fc5"
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/3.webp",
+      "sha256": "216e9680f3dd3b7bb0d1991bc3bb77c782d17bcae955772ee2d06a547117a3d4",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-19-illustration-polish/3.png",
+        "sha256": "83525d8db5c398d26f587e45ef09bf30ee172268e4764d6886bae5dac5a5e103"
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/4.webp",
+      "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-19-illustration-polish/4.png",
+        "sha256": "d5109ba8d3c0bda0fc6d945415ff76bdecfb9ee6b50fbb4e3eef2013698d44c3"
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/5.webp",
+      "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-19-illustration-polish/5.png",
+        "sha256": "d5109ba8d3c0bda0fc6d945415ff76bdecfb9ee6b50fbb4e3eef2013698d44c3"
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/6.webp",
+      "sha256": "216e9680f3dd3b7bb0d1991bc3bb77c782d17bcae955772ee2d06a547117a3d4",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-19-illustration-polish/6.png",
+        "sha256": "83525d8db5c398d26f587e45ef09bf30ee172268e4764d6886bae5dac5a5e103"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "What minor illustration issues are still left? Fix those too, same model and colours, no shorts, and get them merged. Stop asking for approval.",
+    "context": "Explicit authority for scoped native colour/equipment/cutout corrections, local registration, verification and normal merge. Not strict certification."
+  },
+  "findings": [
+    "Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-17/overhead-press.json",
+    "sha256": "eaccffcbdcaa3e3d1a9e0305d0ab7d12142105a33e454e5c6caf9d082ffd34ce",
+    "disposition": "Historical record preserved verbatim. Cosmetic issues addressed here are described separately; prior strict-measurement and source-provenance statements are not erased.",
+    "hashScope": "Exact repository blob bytes, independent of Windows checkout CRLF."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/overhead-press/2026-10-19-illustration-polish",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/overhead-press/2026-10-19-illustration-polish/overhead-press-native-polish.zip",
+      "sha256": "8707083acbeae14a8b0536a6ad9b15f183ebf3ca6453ca4a0dab6f0aa97751f6",
+      "bytes": 14523970
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-17/overhead-press.json",
+    "method": "Exact native original drawings plus sparse editable colour/equipment pixels; alpha-only stray-mark cleanup for prepared cards. Portable source layers and deterministic lossless exports independently re-executed byte-for-byte.",
+    "reproductionScope": "Same-layer composition and export reproduction; no independent anatomy/physics certification.",
+    "newImageGenerationCalls": 0,
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-illustration-polish/review.json",
+  "sourcePoseOrder": ["A", "A", "B", "C", "C", "B"]
+}

@@ -526,12 +526,14 @@ function expectedWeekNumber(
 function rollOver(
   state: ProgramState,
   profile: UserProfile,
-  todayKey: string,
+  today: string,
   failures: RuleFailure[],
   layoff: LayoffClass
 ): ProgramState {
+  const todayKey = weekOf(today);
   for (let pass = 0; pass < 20; pass++) {
-    const run = rollRunWeeks(state, profile, todayKey, layoff);
+    // The day: the week reached plans no run before it.
+    const run = rollRunWeeks(state, profile, today, layoff);
     if (run.weeks > 0) {
       state = { ...run.state, updatedAt: Date.now() };
       continue;
@@ -945,7 +947,7 @@ export function simulateLiftSeason(
         state = rollOver(
           state,
           profile,
-          weekOf(date),
+          date,
           season.failures,
           runSide?.layoff(date) ?? "none"
         );

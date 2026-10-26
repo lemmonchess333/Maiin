@@ -10,6 +10,7 @@ import { useUid } from "@/lib/auth";
 import { searchUsers } from "@/lib/socialApi";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import FollowButton from "@/components/social/FollowButton";
+import FollowRequestsSection from "@/components/social/FollowRequestsSection";
 import FollowsYouBadge from "@/components/social/FollowsYouBadge";
 import PartnerReadyBadge from "@/components/social/PartnerReadyBadge";
 import { Share, Users, X, Search } from "lucide-react";
@@ -17,7 +18,9 @@ import { Spinner } from "@/components/ui/Spinner";
 import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
+import { IconButton } from "@/components/ui/IconButton";
 
 export interface PeopleViewProps {
   /** True when the People (find) tab is the active top-level tab.
@@ -152,7 +155,7 @@ export default function PeopleView({
       } catch {
         if (seq !== searchSeqRef.current) return;
         setSearchResults([]);
-        setSearchError("Couldn't search right now. Try again.");
+        setSearchError("Couldn't search right now");
       }
       if (seq === searchSeqRef.current) setSearching(false);
     },
@@ -195,8 +198,16 @@ export default function PeopleView({
         /* user cancelled */
       }
     } else {
-      await navigator.clipboard.writeText(text + " " + window.location.origin);
-      toast.success("Invite link copied");
+      // The clipboard can refuse (no permission, an insecure context), and
+      // a promise that rejected here said nothing at all.
+      try {
+        await navigator.clipboard.writeText(
+          text + " " + window.location.origin
+        );
+        toast.success("Invite link copied");
+      } catch {
+        toast.error("Couldn't copy the invite link. Try again.");
+      }
     }
   };
 
@@ -212,6 +223,9 @@ export default function PeopleView({
             account is restricted · Contact support"), whose Contact
             support now opens a mail to support. */}
         {isRestricted && <RestrictedNotice />}
+        {/* Polish2: requests to follow you, answered here whether or not
+            their notifications are on. Nothing while there are none. */}
+        <FollowRequestsSection active={active} />
         {/* Section order rebuilt per audit: search-first because
       that's the highest-intent task on this surface. Suggested
       people next (most relevant social action). Invite
@@ -237,7 +251,7 @@ export default function PeopleView({
             />
             <input
               type="text"
-              placeholder="Search athletes"
+              placeholder="Search people"
               value={searchQuery}
               onChange={(e) => handleSearchInputChange(e.target.value)}
               onKeyDown={(e) => {
@@ -250,7 +264,7 @@ export default function PeopleView({
               aria-label={
                 isRestricted
                   ? "Search is unavailable while your account is restricted"
-                  : "Search athletes"
+                  : "Search people"
               }
               disabled={isRestricted}
               className="w-full h-12 pl-10 pr-11 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
@@ -268,14 +282,12 @@ export default function PeopleView({
               /* Inline clear affordance — quicker than holding
            backspace on mobile and clears results in one tap
            via the empty-input branch of handleSearchInputChange. */
-              <button
-                type="button"
+              <IconButton
                 onClick={() => handleSearchInputChange("")}
                 aria-label="Clear search"
-                className="absolute right-1 top-1 size-10 flex items-center justify-center text-muted-foreground hover:text-foreground"
-              >
-                <X className="size-4" />
-              </button>
+                icon={<X />}
+                className="absolute right-0.5 top-0.5 text-muted-foreground hover:text-foreground"
+              />
             ) : null}
           </div>
           {searchResults.length > 0 && (
@@ -332,19 +344,11 @@ export default function PeopleView({
               </div>
             )}
           {searchError && (
-            <div
-              className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20"
-              aria-live="polite"
-            >
-              <p className="text-xs text-destructive-strong">{searchError}</p>
-              <button
-                type="button"
-                onClick={() => handleSearch()}
-                className="text-xs font-medium text-destructive-strong underline ml-2 shrink-0"
-              >
-                Retry
-              </button>
-            </div>
+            <ErrorState
+              title={searchError}
+              description="Check your connection and try again."
+              retry={{ label: "Retry", onClick: () => void handleSearch() }}
+            />
           )}
         </div>
 
@@ -425,17 +429,20 @@ export default function PeopleView({
                       <FollowsYouBadge uid={p.uid} />
                       <PartnerReadyBadge uid={p.uid} />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {suggestionReason(p)}
-                    </p>
+                    {/* No reason, no line: the name sits alone. */}
+                    {suggestionReason(p) && (
+                      <p className="text-sm text-muted-foreground">
+                        {suggestionReason(p)}
+                      </p>
+                    )}
                   </div>
                   <FollowButton
                     targetUid={p.uid}
                     disabled={isRestricted}
-                    onFollowChange={(isFollowing) => {
-                      // Moved from "Suggested" to the user's Following feed —
-                      // remove from the suggestion list for immediate feedback.
-                      if (isFollowing) removeSuggestion(p.uid);
+                    onFollowChange={(now) => {
+                      // Followed, or asked to: off the suggestion list at
+                      // once.
+                      if (now !== "not-following") removeSuggestion(p.uid);
                     }}
                   />
                 </div>

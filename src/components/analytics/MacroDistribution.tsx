@@ -2,7 +2,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
 import { THEME } from "@/lib/theme";
-import { CHART_TOOLTIP_STYLE } from "./chartStyles";
+import { CHART_TOOLTIP_STYLE, CHART_TOOLTIP_SEPARATOR } from "./chartStyles";
 import { percentagesSummingTo100 } from "@/utils/formatters";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 
@@ -106,12 +106,13 @@ export default function MacroDistribution({
                 div.size-24[aria-hidden]`. */}
             <PieChart accessibilityLayer={false}>
               {/* Hist5f S2 + P3: tooltip matches the other two
-                  Analytics charts. Shows "Protein · 38% (120g)" on
+                  Analytics charts. Shows "Protein: 38% · 120g" on
                   hover/touch — the same info the legend below
                   carries, surfaced at the slice for users reading
                   the donut directly. */}
               <Tooltip
                 contentStyle={CHART_TOOLTIP_STYLE}
+                separator={CHART_TOOLTIP_SEPARATOR}
                 formatter={(_value, _name, item) => {
                   const p = item?.payload as MacroSlice | undefined;
                   if (!p) return ["", ""];
@@ -137,7 +138,11 @@ export default function MacroDistribution({
                    with value === 0 short-circuits via the falsy
                    guard below (`!e?.value`). */
                 onClick={(entry) => {
-                  const e = entry as MacroSlice | undefined;
+                  /* The sector's `payload` is this slice's datum, as the
+                     tooltip's `item.payload` is above: recharts types it
+                     `any` and the sector itself as `PieSectorDataItem`,
+                     which no cast to MacroSlice survives from 3.10 on. */
+                  const e = entry?.payload as MacroSlice | undefined;
                   if (!e?.value) return;
                   trackHistoryEvent("history_chart_tap_attempted", {
                     chart: "macro",

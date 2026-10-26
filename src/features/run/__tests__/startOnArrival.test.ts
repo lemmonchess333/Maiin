@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { startOnArrival } from "../startOnArrival";
+import { startOnArrival, withStartOnArrival } from "../startOnArrival";
+
+describe("withStartOnArrival", () => {
+  it("adds the start after the run's own query, or as the first one", () => {
+    expect(
+      withStartOnArrival("/run?template=easy_30&scheduledRunId=runday_1")
+    ).toBe("/run?template=easy_30&scheduledRunId=runday_1&start=1");
+    expect(withStartOnArrival("/run")).toBe("/run?start=1");
+  });
+});
 
 const ready = {
   planReady: true,

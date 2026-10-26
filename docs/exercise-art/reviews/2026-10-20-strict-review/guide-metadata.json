@@ -1,0 +1,526 @@
+[
+  {
+    "id": "lu-raise",
+    "muscleKey": {
+      "primary": ["Deltoids"],
+      "secondary": [],
+      "secondaryFill": "solid"
+    },
+    "setup": null,
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/lu-raise/3.webp"
+  },
+  {
+    "id": "incline-db-curl",
+    "muscleKey": {
+      "primary": ["Biceps"],
+      "secondary": ["Forearms"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Lie back on a low incline bench with both feet planted.",
+      "Hold one dumbbell in each hand and curl one arm at a time.",
+      "The near arm is demonstrated; repeat the same controlled curl on the other side."
+    ],
+    "playback": "cycle",
+    "advice": {
+      "tip": "Keep the working upper arm beside the bench and lower the dumbbell slowly before changing sides.",
+      "commonMistakes": [
+        "Swinging the upper arm to lift the weight.",
+        "Bending the wrist back.",
+        "Lifting the shoulder away from the bench."
+      ]
+    },
+    "cardFrame": "form-frames/incline-db-curl/3.webp"
+  },
+  {
+    "id": "leg-press",
+    "muscleKey": {
+      "primary": ["Quads"],
+      "secondary": ["Glutes", "Hamstrings"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Sit against the back pad and hold the side handles.",
+      "Place both feet on the plate; keep heels supported.",
+      "Control the return and stop before your back rounds."
+    ],
+    "playback": "cycle",
+    "advice": {
+      "tip": "Keep your back supported and press through both feet without snapping your knees straight.",
+      "commonMistakes": [
+        "Rounding the lower back off the pad.",
+        "Lifting the heels off the plate.",
+        "Snapping the knees straight."
+      ]
+    },
+    "cardFrame": "form-frames/leg-press/1.webp"
+  },
+  {
+    "id": "handstand-push-ups",
+    "muscleKey": {
+      "primary": ["Shoulders"],
+      "secondary": ["Triceps", "Core"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Establish a stable wall-supported handstand before starting.",
+      "Place both palms firmly on the floor and keep heels supported.",
+      "Keep your neck neutral and control the descent."
+    ],
+    "playback": "cycle",
+    "advice": {
+      "tip": "Press through both palms; keep control as your crown approaches the floor.",
+      "commonMistakes": [
+        "Dropping onto your head.",
+        "Losing torso control or kicking to press.",
+        "Letting the hands slide."
+      ]
+    },
+    "cardFrame": "form-frames/handstand-push-ups/1.webp"
+  },
+  {
+    "id": "straight-arm-pulldown",
+    "muscleKey": {
+      "primary": ["Lats"],
+      "secondary": ["Triceps", "Core"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Use two high cable handles; start with a light load.",
+      "Stand tall with feet planted and handles around shoulder height.",
+      "Keep a small, steady bend in both elbows."
+    ],
+    "playback": "cycle",
+    "advice": {
+      "tip": "Pull through your upper arms while keeping your torso steady.",
+      "commonMistakes": [
+        "Turning the movement into an elbow-bending pulldown.",
+        "Leaning back or swinging to move the load.",
+        "Letting the weight stacks drop on the return."
+      ]
+    },
+    "cardFrame": "form-frames/straight-arm-pulldown/1.webp"
+  },
+  {
+    "id": "front-squat",
+    "muscleKey": {
+      "primary": ["Quads"],
+      "secondary": ["Glutes", "Core"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Shoulder-harness variation: use a fitted harness and start light.",
+      "Set both shoulder pads and bar catches before lifting from a rack.",
+      "Keep feet planted; brace before each squat."
+    ],
+    "playback": "cycle",
+    "advice": {
+      "tip": "Keep the harness supported on both shoulders and the bar secure in its catches.",
+      "commonMistakes": [
+        "Letting the harness tip or lose shoulder contact.",
+        "Lifting your heels or letting knees collapse inward.",
+        "Losing your brace or leaning far forward."
+      ]
+    },
+    "cardFrame": "form-frames/front-squat/3.webp"
+  },
+  {
+    "id": "seated-row",
+    "muscleKey": {
+      "primary": ["Upper back"],
+      "secondary": ["Biceps"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Controlled torso-hinge variation: start light and move smoothly.",
+      "Sit on the fixed bench; brace both feet with knees slightly bent."
+    ],
+    "playback": "cycle",
+    "advice": {
+      "tip": "Use a small, comfortable torso hinge. Avoid bouncing or leaning far back to move the load.",
+      "commonMistakes": [
+        "Jerking the handle or using excessive momentum.",
+        "Straightening the knees to drive the movement.",
+        "Pulling high toward the shoulders instead of the lower ribs."
+      ]
+    },
+    "cardFrame": "form-frames/seated-row/3.webp"
+  },
+  {
+    "id": "swimming",
+    "muscleKey": {
+      "primary": ["Lats", "Shoulders", "Triceps"],
+      "secondary": ["Core", "Glutes", "Quads"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Push off the wall in a long, flat line.",
+      "Swim an easy length first to settle your breathing."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/swimming/2.webp"
+  },
+  {
+    "id": "stairmaster",
+    "muscleKey": {
+      "primary": ["Glutes"],
+      "secondary": ["Hamstrings", "Calves"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Step on and start at a slow, steady pace.",
+      "Rest your hands lightly on the side rails."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/stairmaster/1.webp"
+  },
+  {
+    "id": "turkish-get-up",
+    "muscleKey": {
+      "primary": ["Shoulders", "Core"],
+      "secondary": ["Triceps", "Upper Back", "Glutes", "Quads"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Lie on your back with the bell beside your shoulder.",
+      "Press it up with both hands to a locked arm, then free one hand."
+    ],
+    "playback": "sequence",
+    "advice": null,
+    "cardFrame": "form-frames/turkish-get-up/5.webp"
+  },
+  {
+    "id": "assault-bike",
+    "muscleKey": {
+      "primary": ["Quads", "Glutes"],
+      "secondary": ["Chest", "Front Delts", "Biceps", "Calves"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Set the seat so your leg is almost straight at the bottom.",
+      "Hold the moving handles and put both feet on the pedals."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/assault-bike/1.webp"
+  },
+  {
+    "id": "spin-bike",
+    "muscleKey": {
+      "primary": ["Quads"],
+      "secondary": ["Core", "Calves", "Hamstrings"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Dial in seat and bar height — seat level with the bars for most.",
+      "Clip or strap in, grip the bars with a firm but relaxed hold."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/spin-bike/1.webp"
+  },
+  {
+    "id": "elliptical",
+    "muscleKey": {
+      "primary": ["Quads", "Glutes"],
+      "secondary": ["Front Delts", "Upper Back", "Hamstrings"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Step on the pedals with feet evenly placed, grip the moving handles.",
+      "Start with a smooth easy pace to find the stride rhythm."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/elliptical/1.webp"
+  },
+  {
+    "id": "rowing-machine",
+    "muscleKey": {
+      "primary": ["Quads", "Upper back"],
+      "secondary": ["Hamstrings", "Biceps"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Strap in, grip the handle, start compressed with shins vertical."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/rowing-machine/3.webp"
+  },
+  {
+    "id": "pendlay-row",
+    "muscleKey": {
+      "primary": ["Lats"],
+      "secondary": ["Rhomboids", "Rear Delts", "Biceps", "Core"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Set up with torso parallel to the floor, bar on the ground over midfoot.",
+      "Grip just outside your knees, back flat, core braced hard."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/pendlay-row/3.webp"
+  },
+  {
+    "id": "leg-extension",
+    "muscleKey": {
+      "primary": ["Quads"],
+      "secondary": ["Hip Flexors"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Sit in the machine, adjust the pad so it sits on your shins, just above the ankle."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/leg-extension/3.webp"
+  },
+  {
+    "id": "single-leg-calf-raise",
+    "muscleKey": {
+      "primary": ["Calves"],
+      "secondary": ["Soleus"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Stand on one foot on a step's edge, ball of the foot planted, heel hanging free.",
+      "Hold a wall or rail for balance only — don't pull yourself up with it."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/single-leg-calf-raise/3.webp"
+  },
+  {
+    "id": "side-plank",
+    "muscleKey": {
+      "primary": ["Obliques"],
+      "secondary": ["Core", "Shoulders"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Lie on your side with your forearm on the floor, elbow under your shoulder.",
+      "Stack your feet (or stagger for easier) and brace your core.",
+      "Lift your hips off the floor into a straight line from head to feet."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/side-plank/3.webp"
+  },
+  {
+    "id": "overhead-extension",
+    "muscleKey": {
+      "primary": ["Triceps"],
+      "secondary": ["Front Delts"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Stand or sit, hold one dumbbell with both hands straight overhead.",
+      "Keep elbows close to your ears and pointed at the ceiling."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/overhead-extension/3.webp"
+  },
+  {
+    "id": "face-pulls",
+    "muscleKey": {
+      "primary": ["Rear Delts"],
+      "secondary": ["Rhomboids", "Traps", "Rotator Cuff"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Set a rope at or slightly above face height and grip the ends with palms down.",
+      "Step back for tension, arms extended straight toward the pulley."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/face-pulls/3.webp"
+  },
+  {
+    "id": "t-bar-row",
+    "muscleKey": {
+      "primary": ["Mid Back"],
+      "secondary": ["Lats", "Rhomboids", "Biceps"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Straddle the loaded bar or landmine and grip the handles at your shins.",
+      "Hinge forward to about 45°, chest up, back flat, core braced."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/t-bar-row/3.webp"
+  },
+  {
+    "id": "bike",
+    "muscleKey": {
+      "primary": ["Quads"],
+      "secondary": ["Hamstrings"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Adjust the seat so your leg has a slight bend at the bottom of the pedal.",
+      "Sit with a neutral spine, grip the bars loosely."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/bike/1.webp"
+  },
+  {
+    "id": "goblet-squat",
+    "muscleKey": {
+      "primary": ["quadriceps"],
+      "secondary": ["gluteals"],
+      "secondaryFill": "solid"
+    },
+    "setup": null,
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/goblet-squat/4.webp"
+  },
+  {
+    "id": "squat",
+    "muscleKey": {
+      "primary": ["quadriceps"],
+      "secondary": ["gluteals"],
+      "secondaryFill": "solid"
+    },
+    "setup": null,
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/squat/4.webp"
+  },
+  {
+    "id": "barbell-curl",
+    "muscleKey": {
+      "primary": ["biceps"],
+      "secondary": ["brachialis", "brachioradialis"],
+      "secondaryFill": "solid"
+    },
+    "setup": null,
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/barbell-curl/4.webp"
+  },
+  {
+    "id": "barbell-row",
+    "muscleKey": {
+      "primary": ["Lats"],
+      "secondary": ["Rhomboids", "Rear deltoids", "Biceps"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Hinge at the hips with soft knees and a neutral back.",
+      "Hold the bar overhand outside the knees, with plates clear of the floor."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/barbell-row/4.webp"
+  },
+  {
+    "id": "bench-press",
+    "muscleKey": {
+      "primary": ["Pectorals"],
+      "secondary": ["Triceps", "Anterior deltoids"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Lie on the bench with both feet planted and shoulder blades set.",
+      "Grip the bar just outside shoulders and unrack before the shown cycle."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/bench-press/4.webp"
+  },
+  {
+    "id": "calf-raise",
+    "muscleKey": {
+      "primary": ["Gastrocnemius"],
+      "secondary": ["Soleus"],
+      "secondaryFill": "solid"
+    },
+    "setup": null,
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/calf-raise/3.webp"
+  },
+  {
+    "id": "standing-calf-raise",
+    "muscleKey": {
+      "primary": ["Gastrocnemius"],
+      "secondary": ["Soleus"],
+      "secondaryFill": "solid"
+    },
+    "setup": null,
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/standing-calf-raise/3.webp"
+  },
+  {
+    "id": "dips",
+    "muscleKey": {
+      "primary": ["Pectorals"],
+      "secondary": ["Triceps", "Anterior deltoids"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Hold the parallel bars and support your body on straight arms.",
+      "Lean slightly forward and keep your shoes clear of the floor."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/dips/4.webp"
+  },
+  {
+    "id": "overhead-press",
+    "muscleKey": {
+      "primary": ["Anterior deltoids"],
+      "secondary": ["Triceps", "Upper chest", "Core"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Stand with feet planted and the bar on the front shoulders.",
+      "Grip just outside shoulder width, brace and press without leg drive."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/overhead-press/4.webp"
+  },
+  {
+    "id": "rope-tricep-pushdown",
+    "muscleKey": {
+      "primary": ["Triceps"],
+      "secondary": ["Forearms"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Stand facing the high pulley and hold both rope ends.",
+      "Set elbows beside ribs and keep the trunk braced."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/rope-tricep-pushdown/1.webp"
+  },
+  {
+    "id": "skull-crushers",
+    "muscleKey": {
+      "primary": ["Triceps"],
+      "secondary": ["Chest", "Front deltoids"],
+      "secondaryFill": "solid"
+    },
+    "setup": [
+      "Lie supported on a flat bench with both feet planted.",
+      "Use a narrow overhand grip and angle your upper arms slightly toward your head.",
+      "Bend your elbows to lower the bar past your forehead toward the top of your skull; extend to return."
+    ],
+    "playback": "cycle",
+    "advice": null,
+    "cardFrame": "form-frames/skull-crushers/3.webp"
+  }
+]

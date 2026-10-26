@@ -6,7 +6,7 @@
  * service-worker registration. A mid-flight account switch aborts as
  * account-changed and never invokes the claim callable under the new account.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.stubEnv("VITE_FIREBASE_VAPID_KEY", "vapid-test-key");
 
@@ -312,6 +312,28 @@ describe("unregisterDeviceToken (packet 19 — fenced release)", () => {
     await expect(unregisterDeviceToken("u1")).resolves.toBeUndefined();
   });
 
+  it("an account being deleted signs out: the deletion removes the claim itself", async () => {
+    const { registerDeviceToken, unregisterDeviceToken } = await load();
+    await registerDeviceToken("u1");
+    h.releaseFn.mockRejectedValueOnce(
+      Object.assign(new Error("in-progress deletion"), {
+        code: "functions/failed-precondition",
+        details: { errorCode: "account-deleting" },
+      })
+    );
+    // Before: this threw, and sign-out stayed refused until the deletion
+    // finished.
+    await expect(unregisterDeviceToken("u1")).resolves.toBeUndefined();
+    // A second try is refused the same way, and signs out the same way.
+    h.releaseFn.mockRejectedValueOnce(
+      Object.assign(new Error("in-progress deletion"), {
+        code: "functions/failed-precondition",
+        details: { errorCode: "account-deleting" },
+      })
+    );
+    await expect(unregisterDeviceToken("u1")).resolves.toBeUndefined();
+  });
+
   it("a real release failure still fails closed (throws)", async () => {
     const { registerDeviceToken, unregisterDeviceToken } = await load();
     await registerDeviceToken("u1");
@@ -370,6 +392,67 @@ describe("refreshDeviceTokenForCurrentUser (consent-gated re-register)", () => {
     const { refreshDeviceTokenForCurrentUser } = await load();
     await refreshDeviceTokenForCurrentUser("u1");
     expect(h.claimFn).not.toHaveBeenCalled();
+  });
+});
+
+describe("refreshing an unchanged token", () => {
+  /* Every return to the app refreshes. Releasing and claiming again each
+     time left the server a 24-hour revocation fence per return, and past
+     64 live fences it refuses a release, which signing out needs. */
+  const HOUR = 3_600_000;
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-15T08:00:00Z"));
+    seedFirestore({ [PUSH_SETTINGS]: { enabled: true } });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("sends nothing while the server's claim of this token is fresh", async () => {
+    const { refreshDeviceTokenForCurrentUser } = await load();
+    await refreshDeviceTokenForCurrentUser("u1");
+    expect(h.claimFn).toHaveBeenCalledTimes(1);
+    for (let i = 0; i < 70; i++) {
+      vi.setSystemTime(new Date(Date.now() + 5 * 60_000));
+      await refreshDeviceTokenForCurrentUser("u1");
+    }
+    expect(h.claimFn).toHaveBeenCalledTimes(1);
+    expect(h.releaseFn).not.toHaveBeenCalled();
+  });
+
+  it("claims again twice a day, and at once for a new token", async () => {
+    const { refreshDeviceTokenForCurrentUser } = await load();
+    await refreshDeviceTokenForCurrentUser("u1");
+    vi.setSystemTime(new Date(Date.now() + 12 * HOUR));
+    await refreshDeviceTokenForCurrentUser("u1");
+    expect(h.releaseFn).toHaveBeenCalledTimes(1);
+    expect(h.claimFn).toHaveBeenCalledTimes(2);
+
+    h.getToken.mockResolvedValue("tok-rotated");
+    await refreshDeviceTokenForCurrentUser("u1");
+    expect(h.claimFn).toHaveBeenCalledTimes(3);
+    expect(h.claimFn).toHaveBeenLastCalledWith(
+      expect.objectContaining({ token: "tok-rotated" })
+    );
+  });
+
+  it("claims again when the last claim was never confirmed", async () => {
+    const { refreshDeviceTokenForCurrentUser } = await load();
+    h.claimFn.mockRejectedValueOnce(
+      Object.assign(new Error("lost"), { code: "functions/unavailable" })
+    );
+    await refreshDeviceTokenForCurrentUser("u1");
+    await refreshDeviceTokenForCurrentUser("u1");
+    expect(h.claimFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("turning push on in Settings always claims", async () => {
+    const { refreshDeviceTokenForCurrentUser, registerDeviceToken } =
+      await load();
+    await refreshDeviceTokenForCurrentUser("u1");
+    await registerDeviceToken("u1");
+    expect(h.claimFn).toHaveBeenCalledTimes(2);
   });
 });
 

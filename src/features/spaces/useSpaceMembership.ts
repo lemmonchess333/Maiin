@@ -8,6 +8,11 @@
  *
  * A restricted account can leave but not join (S4e): `restricted` lets
  * the page say so, and a Join tap says why instead of writing.
+ *
+ * The page is not remounted between spaces (a notification can open one
+ * Space over another), so what it knows is kept per space: another space
+ * reads as unknown until its own reads answer, and a join or leave that
+ * settles after the page has moved on changes nothing on the new one.
  */
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -23,15 +28,48 @@ import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { invalidateSpacesDirectory } from "./useSpacesDirectory";
 import { showRestrictedToast } from "@/lib/accountRestriction";
 import { spaceDef } from "./spaceDefs";
+
+interface Membership {
+  spaceId: string | undefined;
+  joined: boolean | null;
+  memberCount: number | null;
+}
+
+const unknownIn = (spaceId: string | undefined): Membership => ({
+  spaceId,
+  joined: null,
+  memberCount: null,
+});
 
 export function useSpaceMembership(spaceId: string | undefined) {
   const { user, profile } = useAuth();
   const { isRestricted } = useRestrictedStatus(user?.uid);
-  const [joined, setJoined] = useState<boolean | null>(null);
-  const [memberCount, setMemberCount] = useState<number | null>(null);
+  const [membership, setMembership] = useState<Membership>(() =>
+    unknownIn(spaceId)
+  );
   const [busy, setBusy] = useState(false);
+  const { joined, memberCount } =
+    membership.spaceId === spaceId ? membership : unknownIn(spaceId);
+
+  /* Change what is known about `id`. On a read or a tap the page is on
+     `id`; once a write settles it may not be, and then the result is
+     dropped rather than written over the space now open. */
+  const update = useCallback(
+    (
+      id: string,
+      change: (m: Membership) => Partial<Membership>,
+      settled = false
+    ) =>
+      setMembership((prev) => {
+        if (settled && prev.spaceId !== id) return prev;
+        const base = prev.spaceId === id ? prev : unknownIn(id);
+        return { ...base, ...change(base) };
+      }),
+    []
+  );
 
   useEffect(() => {
     if (!user || !spaceId || !spaceDef(spaceId)) return;
@@ -42,17 +80,19 @@ export function useSpaceMembership(spaceId: string | undefined) {
         getCountFromServer(collection(db, "spaces", spaceId, "members")),
       ]);
       if (cancelled) return;
-      if (memberRes.status === "fulfilled") {
-        setJoined(memberRes.value.exists());
-      }
-      if (countRes.status === "fulfilled") {
-        setMemberCount(countRes.value.data().count);
-      }
+      update(spaceId, () => ({
+        ...(memberRes.status === "fulfilled"
+          ? { joined: memberRes.value.exists() }
+          : {}),
+        ...(countRes.status === "fulfilled"
+          ? { memberCount: countRes.value.data().count }
+          : {}),
+      }));
     })();
     return () => {
       cancelled = true;
     };
-  }, [user, spaceId]);
+  }, [user, spaceId, update]);
 
   const join = useCallback(async () => {
     if (!user || !spaceId || busy) return;
@@ -62,8 +102,10 @@ export function useSpaceMembership(spaceId: string | undefined) {
       return;
     }
     setBusy(true);
-    setJoined(true);
-    setMemberCount((c) => (c === null ? c : c + 1));
+    update(spaceId, (m) => ({
+      joined: true,
+      memberCount: m.memberCount === null ? null : m.memberCount + 1,
+    }));
     haptic("light");
     try {
       await setDocGuarded(doc(db, "spaces", spaceId, "members", user.uid), {
@@ -75,33 +117,51 @@ export function useSpaceMembership(spaceId: string | undefined) {
         ...(profile?.photoURL ? { photoURL: profile.photoURL } : {}),
         uid: user.uid,
       });
+      invalidateSpacesDirectory(user.uid, spaceId);
     } catch {
-      setJoined(false);
-      setMemberCount((c) => (c === null ? c : Math.max(0, c - 1)));
+      update(
+        spaceId,
+        (m) => ({
+          joined: false,
+          memberCount:
+            m.memberCount === null ? null : Math.max(0, m.memberCount - 1),
+        }),
+        true
+      );
       haptic("error");
       toast.error("Couldn't join the space. Try again.");
     } finally {
       setBusy(false);
     }
-  }, [user, profile, spaceId, busy, isRestricted]);
+  }, [user, profile, spaceId, busy, isRestricted, update]);
 
   const leave = useCallback(async () => {
     if (!user || !spaceId || busy) return;
     setBusy(true);
-    setJoined(false);
-    setMemberCount((c) => (c === null ? c : Math.max(0, c - 1)));
+    update(spaceId, (m) => ({
+      joined: false,
+      memberCount:
+        m.memberCount === null ? null : Math.max(0, m.memberCount - 1),
+    }));
     haptic("light");
     try {
       await deleteDocGuarded(doc(db, "spaces", spaceId, "members", user.uid));
+      invalidateSpacesDirectory(user.uid, spaceId);
     } catch {
-      setJoined(true);
-      setMemberCount((c) => (c === null ? c : c + 1));
+      update(
+        spaceId,
+        (m) => ({
+          joined: true,
+          memberCount: m.memberCount === null ? null : m.memberCount + 1,
+        }),
+        true
+      );
       haptic("error");
       toast.error("Couldn't leave the space. Try again.");
     } finally {
       setBusy(false);
     }
-  }, [user, spaceId, busy]);
+  }, [user, spaceId, busy, update]);
 
   return { joined, memberCount, busy, join, leave, restricted: isRestricted };
 }

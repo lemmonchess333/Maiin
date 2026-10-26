@@ -1,47 +1,34 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 /**
- * partnerStreakApi — bond lifecycle + consent guards.
+ * partnerStreakApi — bond lifecycle.
  *
- * MIGRATED off the inline SDK factory 2026-07-26 (ADR-0009: one fake).
- * The old version stubbed `doc`/`collection` as `args.join("/")` and
- * asserted against those synthetic strings
- * (`"mock-db/partnerBonds/bob__me"`), which pinned the shape of the stub
- * rather than anything Firestore would do. Bonds are now real documents:
- * the cap and idempotency cases SEED `partnerBonds/*` and let the real
- * `where("members", "array-contains", uid)` query select them, instead of
- * handing `getDocs` a pre-built answer.
+ * Starting a bond is the server's: `createBond` asks the startPartnerStreak
+ * callable, which holds the mutual follow, a block either way and the
+ * partner limit for both people in one transaction
+ * (functions/__tests__/partnerBonds.test.js and its emulator test hold
+ * those). So what this file holds for a start is the hand-off: the local
+ * identity guards, the callable named with the partner, its bond id
+ * returned, a refusal passed through for the card to put into words, and
+ * no bond written by the client, which the rules would refuse.
  *
- * That is the substantive change. The old cap test fabricated its own
- * result set, so it never exercised the members filter at all — a bond
- * belonging to somebody else would have counted toward MY cap and the
- * test could not have noticed. The seeded version includes exactly that
- * row (see "another user's bonds do not count").
- *
- * The consent guards here were separately confirmed load-bearing by
- * mutation (each removal fails its own test), so they are not the
- * vacuous-negative class — `rejects.toThrow(/…/)` is a real positive
- * anchor. Keep them that way.
+ * Reading a pair's bond and ending it are still the client's, against the
+ * one Firestore fake (ADR-0009), with bonds as seeded documents.
  */
 
+const callable = vi.hoisted(() => vi.fn());
+vi.mock("firebase/functions", () => ({
+  getFunctions: vi.fn(() => ({})),
+  httpsCallable: vi.fn(() => callable),
+}));
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({
   db: {},
   auth: { currentUser: { uid: "me" } },
 }));
 
-const mockIsFollowing = vi.fn();
-vi.mock("@/lib/socialApi", () => ({
-  isFollowing: (...args: unknown[]) => mockIsFollowing(...args),
-}));
-
-import {
-  bondId,
-  createBond,
-  dissolveBond,
-  listMyBonds,
-} from "../partnerStreakApi";
-import { MAX_PARTNERS } from "../streakEngine";
+import { httpsCallable } from "firebase/functions";
+import { bondId, createBond, dissolveBond, getBond } from "../partnerStreakApi";
 import {
   seedFirestore,
   resetFirestore,
@@ -50,23 +37,13 @@ import {
   allPaths,
 } from "@/test/firestoreHarness";
 
-/** Bonds belonging to `me`, one per synthetic partner. */
-function seedMyBonds(count: number) {
-  const tree: Record<string, Record<string, unknown>> = {};
-  for (let i = 0; i < count; i++) {
-    tree[`partnerBonds/me__p${i}`] = { members: ["me", `p${i}`], streak: 0 };
-  }
-  seedFirestore(tree);
-}
-
 const bondWrites = () =>
   writeLog().filter((w) => w.path.startsWith("partnerBonds/"));
 
 beforeEach(() => {
   resetFirestore();
   vi.clearAllMocks();
-  // Default: mutual follow holds, no existing bonds.
-  mockIsFollowing.mockResolvedValue(true);
+  callable.mockResolvedValue({ data: { bondId: "bob__me", created: true } });
 });
 afterEach(() => {
   resetFirestore();
@@ -84,86 +61,43 @@ describe("bondId", () => {
 });
 
 describe("createBond", () => {
-  it("rejects an identity mismatch (me !== authed uid)", async () => {
+  it("rejects an identity mismatch (me !== authed uid) without asking the server", async () => {
     await expect(createBond("someone-else", "bob")).rejects.toThrow(
       /Identity mismatch/
     );
-    expect(bondWrites()).toEqual([]);
+    expect(callable).not.toHaveBeenCalled();
   });
 
-  it("rejects bonding with yourself", async () => {
+  it("rejects bonding with yourself without asking the server", async () => {
     await expect(createBond("me", "me")).rejects.toThrow(/yourself/);
-    expect(bondWrites()).toEqual([]);
+    expect(callable).not.toHaveBeenCalled();
   });
 
-  it("rejects when the follow is not mutual", async () => {
-    // I follow them, but they don't follow me.
-    mockIsFollowing.mockImplementation((a: string) =>
-      Promise.resolve(a === "me")
-    );
-    await expect(createBond("me", "bob")).rejects.toThrow(/Mutual follow/);
-    expect(bondWrites()).toEqual([]);
-  });
-
-  it("rejects once the partner cap is reached", async () => {
-    seedMyBonds(MAX_PARTNERS);
-    await expect(createBond("me", "bob")).rejects.toThrow(/limit reached/);
-    expect(bondWrites()).toEqual([]);
-  });
-
-  it("another user's bonds do not count toward my cap", async () => {
-    // One short of the cap for me, plus a full set belonging to someone
-    // else. The old suite handed `getDocs` a pre-built list, so the
-    // `array-contains` members filter was never exercised and a foreign
-    // bond leaking into my count was untestable.
-    seedMyBonds(MAX_PARTNERS - 1);
-    const foreign: Record<string, Record<string, unknown>> = {};
-    for (let i = 0; i < MAX_PARTNERS; i++) {
-      foreign[`partnerBonds/other__q${i}`] = {
-        members: ["other", `q${i}`],
-        streak: 0,
-      };
-    }
-    seedFirestore(foreign);
-
+  it("asks startPartnerStreak for the partner and returns its bond id", async () => {
     await expect(createBond("me", "bob")).resolves.toBe("bob__me");
-    expect(readDoc("partnerBonds/bob__me")).toBeTruthy();
+    expect(httpsCallable).toHaveBeenCalledWith(
+      expect.anything(),
+      "startPartnerStreak"
+    );
+    expect(callable).toHaveBeenCalledWith({ partnerUid: "bob" });
   });
 
-  it("writes a cold bond with sorted members and streak 0", async () => {
-    const id = await createBond("me", "bob");
-    expect(id).toBe("bob__me"); // sorted: bob < me
-
-    expect(bondWrites().map((w) => w.path)).toEqual(["partnerBonds/bob__me"]);
-    const stored = readDoc("partnerBonds/bob__me")!;
-    expect(stored.members).toEqual(["bob", "me"]);
-    expect(stored.streak).toBe(0);
-    expect(stored.lastSharedDay).toBeNull();
-    // serverTimestamp() materialises through the fake rather than
-    // staying the literal sentinel string the old stub returned.
-    expect(stored.createdAt).toBeTruthy();
+  it("returns the pair's existing bond when the server says it already has one", async () => {
+    callable.mockResolvedValue({ data: { bondId: "bob__me", created: false } });
+    await expect(createBond("me", "bob")).resolves.toBe("bob__me");
   });
 
-  it("is idempotent — returns the existing bond id without re-writing", async () => {
-    const id = bondId("me", "bob");
-    seedFirestore({
-      [`partnerBonds/${id}`]: { members: ["bob", "me"], streak: 3 },
+  it("passes a refusal through unchanged, for the card to say why", async () => {
+    const refusal = Object.assign(new Error("partner-limit-yours"), {
+      code: "functions/failed-precondition",
+      details: { reason: "partner-limit-yours" },
     });
-    await expect(createBond("me", "bob")).resolves.toBe(id);
-    expect(bondWrites()).toEqual([]);
-    // The existing streak survives — an idempotent create must not
-    // reset the pair to a cold bond.
-    expect(readDoc(`partnerBonds/${id}`)!.streak).toBe(3);
+    callable.mockRejectedValue(refusal);
+    await expect(createBond("me", "bob")).rejects.toBe(refusal);
   });
 
-  it("idempotent return wins even at the cap ceiling", async () => {
-    // At cap, but one of the bonds IS this pair → must return, not reject.
-    const id = bondId("me", "bob");
-    seedMyBonds(MAX_PARTNERS - 1);
-    seedFirestore({
-      [`partnerBonds/${id}`]: { members: ["bob", "me"], streak: 1 },
-    });
-    await expect(createBond("me", "bob")).resolves.toBe(id);
+  it("writes no bond itself: the rules refuse a client create", async () => {
+    await createBond("me", "bob");
     expect(bondWrites()).toEqual([]);
   });
 });
@@ -179,23 +113,20 @@ describe("dissolveBond", () => {
   });
 });
 
-describe("listMyBonds", () => {
-  it("maps docs to { id, ...data }", async () => {
+describe("getBond", () => {
+  it("reads the pair's bond as { id, ...data }, whichever way round it is asked", async () => {
     seedFirestore({
       "partnerBonds/bob__me": { members: ["bob", "me"], streak: 4 },
     });
-    const bonds = await listMyBonds("me");
-    expect(bonds).toEqual([
-      { id: "bob__me", members: ["bob", "me"], streak: 4 },
-    ]);
+    const bond = { id: "bob__me", members: ["bob", "me"], streak: 4 };
+    await expect(getBond("me", "bob")).resolves.toEqual(bond);
+    await expect(getBond("bob", "me")).resolves.toEqual(bond);
   });
 
-  it("returns only MY bonds", async () => {
+  it("is null for a pair with no bond", async () => {
     seedFirestore({
-      "partnerBonds/bob__me": { members: ["bob", "me"], streak: 4 },
       "partnerBonds/other__q1": { members: ["other", "q1"], streak: 9 },
     });
-    const bonds = await listMyBonds("me");
-    expect(bonds.map((b) => b.id)).toEqual(["bob__me"]);
+    await expect(getBond("me", "bob")).resolves.toBeNull();
   });
 });

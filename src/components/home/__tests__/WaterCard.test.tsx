@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
+import { restoreRealTimers } from "@/test/fakeTimers";
 import WaterCard from "../WaterCard";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
@@ -32,6 +33,15 @@ describe.each([false, true])("WaterCard compact=%s", (compact) => {
     expect(
       screen.queryByRole("button", { name: "Retry sync" })
     ).not.toBeInTheDocument();
+  });
+
+  it("heads the tile, outside its buttons, so Home steps through it by heading", () => {
+    render(
+      <WaterCard compact={compact} ml={1750} targetMl={2000} onLog={vi.fn()} />
+    );
+    const heading = screen.getByRole("heading", { level: 2, name: "Water" });
+    // Inside the tile's button it would be read as the button's name.
+    expect(heading.closest("button")).toBeNull();
   });
 
   it("offers Retry when a retry action exists", () => {
@@ -221,7 +231,7 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
     expect(onRemoveDrink).toHaveBeenCalledWith("newest");
   });
 
-  it("the line goes back to naming the step, and the tile never changes height", () => {
+  it("the line goes back to naming the step, and the tile never changes height", async () => {
     /* Only ever one of the two lines renders, both text-micro with the
        same mt-1, so the swap cannot resize the tile — the grid stretches
        the weight tile beside it, and a jump there on the most repeated
@@ -251,7 +261,7 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
       expect(screen.getByText("Tap + for 250 ml")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /^Undo/ })).toBeNull();
     } finally {
-      vi.useRealTimers();
+      await restoreRealTimers();
     }
   });
 
@@ -273,7 +283,7 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
     expect(screen.queryByRole("button", { name: /^Undo/ })).toBeNull();
   });
 
-  it("the sheet lists today's drinks, each removing the drink it names", () => {
+  it("the sheet lists today's drinks, each removing the drink it names", async () => {
     /* Replaces a row that read "Remove 250 ml" and subtracted an
        abstract amount: with a 500 and a 250 logged, that row took back
        the remembered serving rather than the drink you meant. Each row
@@ -294,7 +304,10 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /add water/i }));
-    const rows = screen.getAllByRole("button", { name: /^Remove \d+ ml/ });
+    // The sheet is lazy: it is not part of Home's first paint.
+    const rows = await screen.findAllByRole("button", {
+      name: /^Remove \d+ ml/,
+    });
     expect(rows).toHaveLength(2);
     fireEvent.click(rows[1]);
     expect(onRemoveDrink).toHaveBeenCalledWith("early");
@@ -306,7 +319,7 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
     ).toHaveLength(2);
   });
 
-  it("an empty day's sheet offers presets and no removals", () => {
+  it("an empty day's sheet offers presets and no removals", async () => {
     render(
       <WaterCard
         compact
@@ -318,8 +331,10 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /add water/i }));
+    // The sheet is lazy: it arrives after the tap, as in the test above,
+    // and only from a warm module cache does it arrive at once.
     expect(
-      screen.getByRole("button", { name: /^Add 250 ml glass$/i })
+      await screen.findByRole("button", { name: /^Add 250 ml glass$/i })
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Remove/ })).toBeNull();
   });
@@ -453,5 +468,113 @@ describe("WaterCard — it reports what you logged, not a score", () => {
     );
     const status = document.querySelector('[role="status"]') as HTMLElement;
     expect(status.textContent).toBe("");
+  });
+});
+
+/* An empty day's tile is as tall as Weight and Steps together. Its lower
+   half was blank before the first drink; it offers the everyday sizes
+   there, and the first drink's fill takes the space. */
+describe("WaterCard — an empty day's tile", () => {
+  it("offers 250 ml and 500 ml, one tap each, until the first drink", () => {
+    const onLog = vi.fn(() => true);
+    const { rerender } = render(
+      <WaterCard compact ml={0} targetMl={2500} onLog={onLog} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Log 500 ml" }));
+    expect(onLog).toHaveBeenCalledWith(500);
+    expect(
+      screen.getByRole("button", { name: "Log 250 ml" })
+    ).toBeInTheDocument();
+    rerender(<WaterCard compact ml={500} targetMl={2500} onLog={onLog} />);
+    expect(screen.queryByRole("button", { name: "Log 250 ml" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Log 500 ml" })).toBeNull();
+  });
+
+  it("is not on the full-width card, which has its own − and +", () => {
+    render(<WaterCard ml={0} targetMl={2500} onLog={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Log 250 ml" })).toBeNull();
+  });
+
+  it("does not show the plus's serving while the size buttons name it", () => {
+    /* "Tap + for 500 ml" sat beside a + and two buttons reading 250 ml
+       and 500 ml: the same amounts said three times. */
+    render(
+      <WaterCard
+        compact
+        ml={0}
+        targetMl={2500}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: "Add 500 ml" })
+    ).toBeInTheDocument();
+    /* The line keeps its place, unseen and unread, wrapped as it would
+       be, so the tile is exactly as tall as before at every text size.
+       On a narrow phone the two buttons stack and this tile sets the
+       row's height, so a missing line shrank the row and the glass. */
+    const line = screen.getByText("Tap + for 500 ml");
+    expect(line).toHaveClass("invisible", "text-micro", "mt-1");
+    expect(line).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("shows the serving again from the first drink, when the size buttons go", () => {
+    const { rerender } = render(
+      <WaterCard
+        compact
+        ml={0}
+        targetMl={2500}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    expect(screen.getByText("Tap + for 500 ml")).toHaveClass("invisible");
+    rerender(
+      <WaterCard
+        compact
+        ml={500}
+        targetMl={2500}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    const line = screen.getByText("Tap + for 500 ml");
+    expect(line).not.toHaveClass("invisible");
+    expect(line).not.toHaveAttribute("aria-hidden");
+    expect(screen.queryByRole("button", { name: "Log 500 ml" })).toBeNull();
+  });
+});
+
+/* Under 9em of tile the plus drops to the foot, where an empty day's size
+   buttons sit. On an empty day it gives way there rather than cover them;
+   once there is water the buttons are gone and the plus stays. */
+describe("WaterCard tile — the plus on a narrow empty day", () => {
+  it("gives way to the size buttons only while the day is empty", () => {
+    const { unmount } = render(
+      <WaterCard
+        compact
+        ml={0}
+        targetMl={2000}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: "Add 500 ml" })).toHaveClass(
+      "@max-[9em]:hidden"
+    );
+    unmount();
+    render(
+      <WaterCard
+        compact
+        ml={500}
+        targetMl={2000}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: "Add 500 ml" })).not.toHaveClass(
+      "@max-[9em]:hidden"
+    );
   });
 });

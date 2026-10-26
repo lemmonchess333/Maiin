@@ -20,7 +20,7 @@ const base = {
   loading: false,
   enabled: true,
   primingShown: true,
-  currentStreak: 3,
+  savableStreak: 3,
   hasLoggedToday: false,
 };
 
@@ -48,16 +48,16 @@ describe("shouldScheduleStreakReminder", () => {
   });
 
   it("does not schedule when streak is below 2", () => {
-    expect(shouldScheduleStreakReminder({ ...base, currentStreak: 1 })).toBe(
+    expect(shouldScheduleStreakReminder({ ...base, savableStreak: 1 })).toBe(
       false
     );
-    expect(shouldScheduleStreakReminder({ ...base, currentStreak: 0 })).toBe(
+    expect(shouldScheduleStreakReminder({ ...base, savableStreak: 0 })).toBe(
       false
     );
   });
 
   it("schedules at the 2-day boundary", () => {
-    expect(shouldScheduleStreakReminder({ ...base, currentStreak: 2 })).toBe(
+    expect(shouldScheduleStreakReminder({ ...base, savableStreak: 2 })).toBe(
       true
     );
   });
@@ -204,7 +204,6 @@ describe("FIRST_WEEK_NOTIFICATION_ID", () => {
     expect(FIRST_WEEK_NOTIFICATION_ID).not.toBe(STREAK_NOTIFICATION_ID);
   });
 });
-
 
 it("lets push own streak reminders and waits for consent to load", () => {
   expect(shouldScheduleStreakReminder({ ...base, pushOwns: true })).toBe(false);

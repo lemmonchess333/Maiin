@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Share2, Sparkles, Trophy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -13,7 +13,7 @@ import {
 } from "@/lib/weeklyReviewViewModel";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { parseLocalDate } from "@/lib/dateHelpers";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, withSign } from "@/utils/formatters";
 import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
 import { categoryFigureUri } from "@/lib/muscleFigureSvg";
 import { getExerciseById } from "@/lib/exercises";
@@ -235,7 +235,7 @@ function YourWeek({
                   : body.direction === "down"
                     ? "Down"
                     : "Up"
-                : `${body.deltaKg > 0 ? "+" : ""}${body.deltaKg}`
+                : withSign(body.deltaKg, String(Math.abs(body.deltaKg)))
             }
             caption={
               body.hidden || body.deltaKg === null
@@ -346,7 +346,9 @@ function BestMoment({
           <Trophy className="size-4" aria-hidden="true" />
           New best
         </span>
-        <p className="text-h2 font-bold text-foreground">{best.exerciseName}</p>
+        <p className="text-h2 font-extrabold text-foreground">
+          {best.exerciseName}
+        </p>
         <p className="text-foreground">
           <span className="text-display font-extrabold font-mono tabular-nums">
             {loadIn(best.weight, liftUnit)}
@@ -403,29 +405,29 @@ function WeekAhead({
     <div className="flex flex-1 flex-col">
       <h2 className="text-h1 font-extrabold text-foreground">The week ahead</h2>
       <div className="mt-6 space-y-6">
+        {/* The plan's week in the figures "Your week" counts the last one
+            in, so the card says it at the recap's size rather than as a
+            line over an empty page. */}
         {lifts !== null || runs !== null ? (
-          <div className="space-y-1">
-            <p className="text-h2 font-bold text-foreground">
-              {lifts !== null && (
-                <>
-                  <span className="font-mono tabular-nums">{lifts}</span>{" "}
-                  {plural(lifts, "lift", "lifts")}
-                </>
-              )}
-              {lifts !== null && runs !== null && (
-                <span className="text-muted-foreground"> · </span>
-              )}
-              {runs !== null && (
-                <>
-                  <span className="font-mono tabular-nums">{runs}</span>{" "}
-                  {plural(runs, "run", "runs")}
-                </>
-              )}
-            </p>
+          <>
+            {lifts !== null && (
+              <StatRow
+                rule="bg-lifting"
+                value={lifts}
+                caption={`${plural(lifts, "lift", "lifts")} planned`}
+              />
+            )}
+            {runs !== null && (
+              <StatRow
+                rule="bg-running"
+                value={runs}
+                caption={`${plural(runs, "run", "runs")} planned`}
+              />
+            )}
             {phaseNote && (
               <p className="text-sm text-muted-foreground">{phaseNote}</p>
             )}
-          </div>
+          </>
         ) : (
           <p className="text-base text-muted-foreground">
             Train when it suits you — log it and it counts.
@@ -466,18 +468,22 @@ function WeekAhead({
 export default function WeeklyReview() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { loading, review, weekKey } = useWeeklyReview();
+  const { loading, review, weekKey, failed, retry } = useWeeklyReview();
   const [shareOpen, setShareOpen] = useState(false);
 
   // D16 — the personal "why", resurfaced. Empty/whitespace = no why set.
   const trainingWhy = profile?.trainingWhy?.trim() || undefined;
 
-  // Opening the page IS the "viewed" event — it retires the Home entry.
+  // Seeing the review IS the "viewed" event — it retires the Home entry.
+  // A read that failed showed nothing, so the entry stays.
   const { dismiss } = useDismissOnce(reviewViewedKey(weekKey));
+  const viewedRef = useRef(false);
   useEffect(() => {
+    if (loading || failed || viewedRef.current) return;
+    viewedRef.current = true;
     dismiss();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: opening the page IS the viewed event; `dismiss` takes a new identity per render and must not re-fire
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once: `dismiss` takes a new identity per render and must not re-fire
+  }, [loading, failed]);
 
   /* Back to wherever the recap was opened from; opened directly (a
      notification, a bookmark), there is nowhere to go back to, so Home. */
@@ -502,6 +508,31 @@ export default function WeeklyReview() {
         render: () => (
           <div className="flex flex-1 items-center justify-center">
             <Spinner />
+          </div>
+        ),
+      },
+    ];
+  } else if (failed) {
+    slides = [
+      {
+        key: "failed",
+        label: "Couldn't load",
+        render: () => (
+          <div className="flex flex-1 flex-col" role="alert">
+            <h2 className="text-h1 font-extrabold text-foreground">
+              Couldn&rsquo;t load your review
+            </h2>
+            <p className="mt-3 text-base text-muted-foreground">
+              Check your connection and try again.
+            </p>
+            <div className="mt-auto space-y-2 pt-8">
+              <Button fullWidth onClick={retry}>
+                Try again
+              </Button>
+              <Button fullWidth variant="ghost" onClick={close}>
+                Done
+              </Button>
+            </div>
           </div>
         ),
       },

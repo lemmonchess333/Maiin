@@ -1,0 +1,2659 @@
+{
+  "duration": 10000,
+  "samples": [
+    {
+      "elapsed": 0,
+      "active": "1Press the bell up; eyes on it.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Press",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/1.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/2.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 271,
+      "active": "1Press the bell up; eyes on it.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Press",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/1.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/2.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 536,
+      "active": "1Press the bell up; eyes on it.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Press",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/1.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/2.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 804,
+      "active": "1Press the bell up; eyes on it.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Press",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/1.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/2.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 1070,
+      "active": "1Press the bell up; eyes on it.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Press",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/1.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/2.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 1343,
+      "active": "2Roll onto your free elbow, arm locked.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Elbow",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/2.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/3.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 1608,
+      "active": "2Roll onto your free elbow, arm locked.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Elbow",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/2.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/3.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 1871,
+      "active": "2Roll onto your free elbow, arm locked.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Elbow",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/2.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/3.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 2141,
+      "active": "2Roll onto your free elbow, arm locked.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Elbow",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/2.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/3.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 2407,
+      "active": "3Push up onto your free hand.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Hand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/3.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/4.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 2670,
+      "active": "3Push up onto your free hand.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Hand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/3.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/4.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 2942,
+      "active": "3Push up onto your free hand.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Hand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/3.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/4.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 3210,
+      "active": "3Push up onto your free hand.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Hand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/3.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/4.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 3477,
+      "active": "3Push up onto your free hand.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Hand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/3.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/4.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 3740,
+      "active": "4Lift your hips high off the floor.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Bridge",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/4.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/5.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 4004,
+      "active": "4Lift your hips high off the floor.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Bridge",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/4.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/5.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 4270,
+      "active": "4Lift your hips high off the floor.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Bridge",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/4.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/5.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 4536,
+      "active": "4Lift your hips high off the floor.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Bridge",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/4.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/5.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 4804,
+      "active": "5Sweep your leg back into a half-kneel.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Kneel",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/5.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 5064,
+      "active": "5Sweep your leg back into a half-kneel.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Kneel",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/5.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 5326,
+      "active": "5Sweep your leg back into a half-kneel.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Kneel",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/5.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 5592,
+      "active": "5Sweep your leg back into a half-kneel.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Kneel",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/5.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 5858,
+      "active": "5Sweep your leg back into a half-kneel.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Kneel",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/5.webp",
+          "width": 1024
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 1024,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 6119,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 6386,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 6653,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 6913,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 7180,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 7447,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 7707,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 7970,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 8234,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 8504,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 8767,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 9034,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 9295,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 9560,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 9822,
+      "active": "6Stand tall, then reverse each step down.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/turkish-get-up.webp",
+          "width": 412
+        }
+      ],
+      "dark": false,
+      "id": "turkish-get-up",
+      "images": [
+        {
+          "alt": "turkish-get-up, Stand",
+          "complete": true,
+          "height": 1024,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/turkish-get-up/6.webp",
+          "width": 1024
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    }
+  ]
+}

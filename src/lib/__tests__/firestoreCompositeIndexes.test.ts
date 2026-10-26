@@ -17,8 +17,8 @@
  * unhandled and the profile just shows no activities.
  *
  * WHAT THIS CAN AND CANNOT SEE. It reads literal `query(...)` calls: literal
- * collection name, literal field names, literal operators. A query whose
- * COLLECTION comes from a variable (every user-subcollection read) cannot be
+ * collection name (including a nested path's literal leaf), literal field
+ * names, literal operators. A query whose COLLECTION LEAF is a variable cannot be
  * matched against the index file — but whether a query needs a composite
  * index depends only on its FIELDS, so those are classified rather than
  * shrugged at: each one is checked for spanning more than one field, and the
@@ -59,6 +59,18 @@ function callArgs(src: string, name: string): string[] {
     out.push(src.slice(m.index + m[0].length, i - 1));
   }
   return out;
+}
+
+/** A nested collection's final literal segment is its index group, even
+ * when ancestor document ids are variables. A variable leaf remains
+ * unresolvable and must still go through the multi-field rejection below. */
+function queryCollection(body: string): string | null {
+  for (const name of ["collection", "collectionGroup"]) {
+    const args = callArgs(body, name)[0];
+    const leaf = args?.match(/,\s*["'`]([\w-]+)["'`]\s*$/);
+    if (leaf) return leaf[1];
+  }
+  return null;
 }
 
 interface Declared {
@@ -115,12 +127,10 @@ function scan(): { queries: Query[]; skipped: number; unresolvable: string[] } {
       );
       if (!wheres.length || !orders.length) continue;
 
-      const coll =
-        body.match(/collection\(\s*\w+\s*,\s*["'`]([\w-]+)["'`]\s*\)/) ??
-        body.match(/collectionGroup\(\s*\w+\s*,\s*["'`]([\w-]+)["'`]\s*\)/);
+      const coll = queryCollection(body);
       const fields = wheres.map((w) => w[1]);
       if (!coll) {
-        /* Collection built from variables (a user subcollection path). The
+        /* Collection leaf built from a variable. The
            NAME is unresolvable, but whether the query needs a composite
            index depends only on its FIELDS — so classify rather than shrug.
            Every such query in this codebase today is an inequality and an
@@ -134,12 +144,13 @@ function scan(): { queries: Query[]; skipped: number; unresolvable: string[] } {
         skipped += 1;
         continue;
       }
-      const eq = fields;
+      // A where on the order field (e.g. createdAt > since) uses that same
+      // index field, not a second copy of it in the equality prefix.
+      const eq = fields.filter((field) => !orders.includes(field));
       // A single equality on the SAME field as the orderBy needs no
       // composite index.
-      if (eq.length === 1 && orders.length === 1 && eq[0] === orders[0])
-        continue;
-      queries.push({ file: rel, coll: coll[1], eq, orders });
+      if (new Set([...fields, ...orders]).size === 1) continue;
+      queries.push({ file: rel, coll, eq, orders });
     }
   }
   return { queries, skipped, unresolvable };
@@ -148,6 +159,19 @@ function scan(): { queries: Query[]; skipped: number; unresolvable: string[] } {
 const { queries, skipped, unresolvable } = scan();
 
 describe("firestore composite indexes", () => {
+  it("resolves a literal collection leaf without guessing a dynamic one", () => {
+    expect(queryCollection('collection(db, "activities")')).toBe("activities");
+    expect(queryCollection('collection(db, "feeds", uid, "items")')).toBe(
+      "items"
+    );
+    expect(queryCollection('collection(doc(db, "users", uid), "runs")')).toBe(
+      "runs"
+    );
+    expect(queryCollection('collectionGroup(db, "items")')).toBe("items");
+    expect(queryCollection('collection(db, "feeds", uid, leaf)')).toBeNull();
+    expect(queryCollection("collection(db, dynamicPath)")).toBeNull();
+  });
+
   it("finds the queries it is supposed to be checking", () => {
     /* The positive control, and not a formality: the first version of this
        scanner matched nothing useful and reported a clean bill of health.
@@ -159,6 +183,23 @@ describe("firestore composite indexes", () => {
         (q) => q.coll === "activities" && q.orders.includes("createdAt")
       )
     ).toBe(true);
+    // Both the feed page and unread listener use the schema filter; the
+    // latter also bounds createdAt, already represented by its order field.
+    for (const file of [
+      "src/lib/socialApi.ts",
+      "src/hooks/useUnreadCount.ts",
+    ]) {
+      expect(
+        queries.some(
+          (q) =>
+            q.file.replaceAll("\\", "/") === file &&
+            q.coll === "items" &&
+            q.eq.includes("schemaVersion") &&
+            q.orders.includes("createdAt")
+        ),
+        file
+      ).toBe(true);
+    }
   });
 
   it("declares an index for every multi-field ordered query", () => {

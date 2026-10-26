@@ -1,5 +1,6 @@
 import { useState, type ComponentType, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import {
   Users,
   Clock,
@@ -27,14 +28,16 @@ import {
   isTierAchieved,
 } from "./useChallenges";
 import { THEME } from "@/lib/theme";
-import { formatChallengeValue } from "./challengeFormat";
+import { challengeGoal, formatChallengeValue } from "./challengeFormat";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { challengeEditorialImage } from "@/lib/editorialImages";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import { useChallengePercentile } from "./useChallengePercentile";
+import { challengeSport, SPORT_ACCENT, SPORT_BAR_FILL } from "./challengeSport";
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -46,6 +49,9 @@ interface ChallengeCardProps {
      "Joining…" / "Leaving…" and double-tap is suppressed. */
   onJoin: () => void | Promise<void>;
   onLeave: () => void | Promise<void>;
+  /** Off when another card already says how long this one has left:
+   *  the monthly challenges all end on the same day. */
+  showTimeLeft?: boolean;
 }
 
 const TIER_LABELS: Record<ChallengeTier, string> = {
@@ -54,28 +60,18 @@ const TIER_LABELS: Record<ChallengeTier, string> = {
   gold: "Gold",
 };
 
-/* SOC-P1a — founding state. Below this many participants the meta row
-   withholds the number and reads as a founding invitation instead:
-   "0 joined" (the loudest locked-lobby signal on the Social tab, and
-   the most-seen state for every cold-start user) never renders. Counts
-   are real or withheld — never inflated. */
+/* Below this many participants the meta row says nothing about who has
+   joined: "0 joined" is the loudest empty-lobby signal on the Social tab
+   and the most-seen state for every cold-start user. Counts are real or
+   withheld, never inflated, and nothing stands in for one. */
 const FOUNDING_COUNT_MIN = 3;
 
-/* Sport-coding by metric (visual polish, 2026-07). Every challenge card
-   used to wear brand purple regardless of discipline — a km challenge and
-   a volume challenge looked identical, ignoring the app's strongest visual
-   language (coral = running, purple = lifting, brand = hybrid/other).
-   The accent drives the icon tile, the progress fill pre-tier, and the
-   Join CTA variant. */
-const METRIC_ACCENT: Record<string, string> = {
-  total_km: THEME.running,
-  fastest_effort: THEME.running,
-  total_volume: THEME.lifting,
-  workout_count: THEME.lifting,
-  hybrid_score: THEME.brand,
-  active_days: THEME.brand,
-  training_minutes: THEME.brand,
-};
+/** A tier's metal as a ring around something drawn in the text colour,
+ *  the leaderboard's rank treatment: as a fill or as text, silver and gold
+ *  all but vanish on a light card. */
+const metalRing = (tier: ChallengeTier) => ({
+  boxShadow: `inset 0 0 0 2px ${TIER_COLORS[tier]}`,
+});
 
 /* Icon map for challenge cards. The seed definitions in
    useChallenges.ts store lucide icon names as strings ("footprints",
@@ -183,10 +179,12 @@ export function ChallengeCard({
   joined,
   onJoin,
   onLeave,
+  showTimeLeft = true,
 }: ChallengeCardProps) {
   const liftUnit = useLiftUnit();
   const distanceUnit = useDistanceUnit();
   const [expanded, setExpanded] = useState(false);
+  const motionSafe = useMotionSafe();
   const [busy, setBusy] = useState<"joining" | "leaving" | null>(null);
   const handleJoin = async () => {
     if (busy) return;
@@ -218,8 +216,17 @@ export function ChallengeCard({
   });
   const maxTier = challenge.tiers.gold;
   const pct = Math.min((currentValue / maxTier) * 100, 100);
-  const timeLeft = getTimeRemaining(challenge.endDate);
-  const accent = METRIC_ACCENT[challenge.metric] ?? THEME.brand;
+  const timeLeft = showTimeLeft ? getTimeRemaining(challenge.endDate) : "";
+  const goal = challengeGoal(challenge, liftUnit, distanceUnit);
+  const joinedCount =
+    challenge.participantCount >= FOUNDING_COUNT_MIN
+      ? challenge.participantCount
+      : null;
+  /* The card wears its sport (`challengeSport`): the hero band, the icon,
+     Join and the bar's fill. The tier metal never fills the bar. */
+  const sport = challengeSport(challenge.metric);
+  const accent = SPORT_ACCENT[sport];
+  const barFill = SPORT_BAR_FILL[sport];
 
   const nextTier: ChallengeTier | null = !currentTier
     ? "bronze"
@@ -239,7 +246,7 @@ export function ChallengeCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={motionSafe({ opacity: 0, y: 8 })}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl bg-card border border-border/50 overflow-hidden"
     >
@@ -308,13 +315,20 @@ export function ChallengeCard({
             aria-hidden
           />
         )}
-        <div className="absolute bottom-3 left-4 right-20 min-w-0">
-          <SectionLabel
-            className={`flex items-center gap-1 ${heroPhoto ? "text-white/85" : ""}`}
-          >
-            <Clock className="size-3" aria-hidden />
-            {timeLeft}
-          </SectionLabel>
+        {/* Insets in px: in rem the reserve for the ghosted icon grew with
+            the text and left "Distance" 64px at 320 px and 2× text. A
+            photo band draws no icon, so it keeps no reserve. */}
+        <div
+          className={`absolute bottom-3 left-[16px] min-w-0 ${heroPhoto ? "right-[16px]" : "right-[80px]"}`}
+        >
+          {timeLeft && (
+            <SectionLabel
+              className={`flex items-center gap-1 ${heroPhoto ? "text-white/85" : ""}`}
+            >
+              <Clock className="size-3" aria-hidden />
+              {timeLeft}
+            </SectionLabel>
+          )}
           {/* Two lines before it gives way: at 320 px and 135% text one
               line cut "July Distance Club" to "July Distan…". */}
           <p
@@ -323,48 +337,62 @@ export function ChallengeCard({
             {challenge.name}
           </p>
         </div>
+        {/* The tier badge: the trophy in the text colour on the card,
+            ringed in the tier's metal. White on gold was 1.4:1. */}
         {currentTier && (
           <div
-            className="absolute top-3 right-3 size-6 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: TIER_COLORS[currentTier] }}
+            className="absolute top-3 right-3 size-6 rounded-full flex items-center justify-center bg-card text-foreground"
+            style={metalRing(currentTier)}
             aria-label={`${TIER_LABELS[currentTier]} achieved`}
             role="img"
           >
-            <Trophy className="size-3.5 text-white" />
+            <Trophy className="size-3.5" />
           </div>
         )}
       </div>
       <div className="p-4 space-y-3">
+        {/* The goal, from the challenge's own target in the reader's
+            units; the stored description only for a metric it cannot
+            phrase. */}
         <p className="text-small text-muted-foreground">
-          {challenge.description}
+          {goal ? (
+            <InlineNumerals>{goal}</InlineNumerals>
+          ) : (
+            challenge.description
+          )}
         </p>
 
-        {/* Meta row — timeLeft lives on the hero band now. Facts (joined
-            count, season) are one line; the percentile is the user's
-            STANDING, so it keeps a status pill in the shared chip form. */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Users className="size-3.5" aria-hidden="true" />
-            <span>
-              {challenge.participantCount >= FOUNDING_COUNT_MIN
-                ? `${challenge.participantCount} joined`
-                : joined
-                  ? "You're in — founding member"
-                  : "Just launched · founding spots open"}
-            </span>
-            {challenge.season && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span>{challenge.season}</span>
-              </>
+        {/* Meta row: the facts (a real joined count, the season) on one
+            line, and the person's STANDING as a status pill in the shared
+            chip form. Drawn only when it has one of them. */}
+        {(joinedCount !== null || challenge.season || percentile !== null) && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-muted-foreground">
+            {(joinedCount !== null || challenge.season) && (
+              <span className="flex items-center gap-1">
+                {joinedCount !== null && (
+                  <>
+                    <Users className="size-3.5" aria-hidden="true" />
+                    <span>
+                      <span className="font-mono tabular-nums">
+                        {joinedCount.toLocaleString()}
+                      </span>{" "}
+                      joined
+                    </span>
+                  </>
+                )}
+                {joinedCount !== null && challenge.season && (
+                  <span aria-hidden="true">·</span>
+                )}
+                {challenge.season && <span>{challenge.season}</span>}
+              </span>
             )}
-          </span>
-          {percentile !== null && (
-            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-lifting-strong text-xs font-semibold font-mono tabular-nums">
-              Top {percentile}%
-            </span>
-          )}
-        </div>
+            {percentile !== null && (
+              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-lifting-strong text-xs font-semibold font-mono tabular-nums">
+                Top {percentile}%
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Top 3 leaderboard preview.
             Only rendered for *joined and progressing* participants.
@@ -387,7 +415,7 @@ export function ChallengeCard({
                   className="flex items-center gap-2 text-xs"
                 >
                   <span className="w-4 text-right font-medium text-muted-foreground">
-                    {i + 1}
+                    {p.rank ?? i + 1}
                   </span>
                   <BlockAwareAvatar
                     uid={p.uid}
@@ -424,7 +452,7 @@ export function ChallengeCard({
              (coral) variant, everything else the primary. The primitive
              also supplies the 44px floor the old py-2.5 button missed. */
           <Button
-            variant={accent === THEME.running ? "sport" : "primary"}
+            variant={sport === "running" ? "sport" : "primary"}
             fullWidth
             onClick={handleJoin}
             loading={busy === "joining"}
@@ -446,7 +474,6 @@ export function ChallengeCard({
             );
             const target = challenge.collectiveTarget!;
             const collPct = Math.min((collectiveTotal / target) * 100, 100);
-            const reached = collectiveTotal >= target;
             return (
               <div className="space-y-2">
                 <div className="relative pt-1 pb-1">
@@ -455,10 +482,9 @@ export function ChallengeCard({
                       initial={{ width: 0 }}
                       animate={{ width: `${collPct}%` }}
                       transition={{ duration: 0.6 }}
-                      className="h-full rounded-full"
-                      style={{
-                        backgroundColor: reached ? TIER_COLORS.gold : accent,
-                      }}
+                      /* The sport's colour, reached or not: a full bar says
+                         it, and gold is kept for a new best. */
+                      className={`h-full rounded-full ${barFill}`}
                     />
                   </div>
                 </div>
@@ -498,19 +524,20 @@ export function ChallengeCard({
              challenge yet, the full tiered progress bar + leaderboard
              slot reads as broken (an empty bar, "You're at 0",
              markers with no fill). Especially loud on fastest_effort
-             where a 0 currentValue means "no qualifying run yet" —
-             the rest of the chrome is irrelevant until they log one.
-             Compact variant: just the next-tier hint + leave action,
-             so the card stays informative without occupying half a
-             screen. The full progress bar reappears the moment the
-             user has any progress to show. */
-          <div className="space-y-1.5">
-            <p className="text-sm text-muted-foreground">
-              {nextTier && nextValue
-                ? `${TIER_LABELS[nextTier]} at ${formatChallengeValue(challenge.metric, nextValue, liftUnit, distanceUnit)}`
-                : "Log your first qualifying activity to start the board"}
-            </p>
-          </div>
+             where a 0 currentValue means "no qualifying run yet".
+             The goal line above already names the first tier's
+             target, so a card with a goal adds nothing here; one
+             without gets the next-tier hint. The full progress bar
+             appears the moment the user has any progress to show. */
+          goal ? null : (
+            <div className="space-y-1.5">
+              <p className="text-sm text-muted-foreground">
+                {nextTier && nextValue
+                  ? `${TIER_LABELS[nextTier]} at ${formatChallengeValue(challenge.metric, nextValue, liftUnit, distanceUnit)}`
+                  : "Log your first qualifying activity to start the board"}
+              </p>
+            </div>
+          )
         ) : (
           <div className="space-y-2">
             {/* Tiered progress bar.
@@ -536,12 +563,10 @@ export function ChallengeCard({
                         : `${pct}%`,
                   }}
                   transition={{ duration: 0.6 }}
-                  className="h-full rounded-full"
-                  style={{
-                    backgroundColor: currentTier
-                      ? TIER_COLORS[currentTier]
-                      : accent,
-                  }}
+                  /* The sport's colour at every tier. The tier shows on its
+                     marker below and on the badge, never as the fill: a
+                     bronze bar beside purple and coral read as food. */
+                  className={`h-full rounded-full ${barFill}`}
                 />
               </div>
               {/* Tier markers — `isTierAchieved` encapsulates the
@@ -607,9 +632,9 @@ export function ChallengeCard({
                       token is the same celebration register with a real
                       text step. The trophy keeps the metal. */}
                   <span className="font-semibold text-achievement-strong">
-                    Gold achieved!
+                    Gold achieved
                   </span>
-                  {" — "}
+                  {" · "}
                   {formatChallengeValue(
                     challenge.metric,
                     currentValue,
@@ -628,7 +653,7 @@ export function ChallengeCard({
                       distanceUnit
                     )}
                   </span>
-                  {" — "}
+                  {" · "}
                   {TIER_LABELS[nextTier]} at{" "}
                   {formatChallengeValue(
                     challenge.metric,
@@ -673,9 +698,9 @@ export function ChallengeCard({
       <AnimatePresence>
         {expanded && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
+            initial={motionSafe({ height: 0, opacity: 0 })}
             animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            exit={motionSafe({ height: 0, opacity: 0 })}
             className="overflow-hidden border-t border-border/50"
           >
             <div className="p-4 space-y-1.5 max-h-60 overflow-y-auto">
@@ -691,7 +716,7 @@ export function ChallengeCard({
                     className="flex items-center gap-2 text-xs"
                   >
                     <span className="w-5 text-right font-medium text-muted-foreground">
-                      {i + 1}
+                      {p.rank ?? i + 1}
                     </span>
                     <BlockAwareAvatar
                       uid={p.uid}
@@ -712,11 +737,8 @@ export function ChallengeCard({
                     </span>
                     {tier && (
                       <span
-                        className="text-xs font-medium px-1.5 py-0.5 rounded-full"
-                        style={{
-                          backgroundColor: TIER_COLORS[tier] + "20",
-                          color: TIER_COLORS[tier],
-                        }}
+                        className="text-xs font-medium px-1.5 py-0.5 rounded-full text-foreground"
+                        style={metalRing(tier)}
                       >
                         {TIER_LABELS[tier]}
                       </span>

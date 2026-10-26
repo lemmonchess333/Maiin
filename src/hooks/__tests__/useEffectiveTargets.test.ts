@@ -55,6 +55,7 @@ vi.mock("@/hooks/useAdaptiveTdee", () => ({
     showWarmup: false,
     warmupFraction: 0,
     stalled: false,
+    maintenance: null,
   }),
 }));
 

@@ -15,7 +15,7 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { isBlockedBetween, blockedError } = require("../lib/blockGuard");
+const { isBlockedBetween } = require("../lib/blockGuard");
 
 /** Minimal Firestore stand-in: a set of existing doc paths. */
 function dbWith(paths, opts = {}) {
@@ -100,29 +100,6 @@ describe("isBlockedBetween", () => {
   });
 });
 
-describe("blockedError", () => {
-  const fakeFunctions = {
-    https: {
-      HttpsError: class extends Error {
-        constructor(code, message) {
-          super(message);
-          this.code = code;
-        }
-      },
-    },
-  };
-
-  it("is permission-denied, and does not confirm the block", () => {
-    /* Telling the blocked party "you are blocked" discloses something the
-       blocker did not choose to share, and invites them around it.
-       `permission-denied` is honest: authenticated, well-formed, not allowed. */
-    const err = blockedError(fakeFunctions);
-    expect(err.code).toBe("permission-denied");
-    expect(err.message).toBe("This content isn't available.");
-    expect(err.message.toLowerCase()).not.toContain("block");
-  });
-});
-
 describe("the interaction callables actually call it", () => {
   /* The guard being correct and the callables invoking it are different
      claims, and this arc has been caught by the second one three times. The
@@ -150,12 +127,7 @@ describe("the interaction callables actually call it", () => {
     expect(guardAt).toBeLessThan(writeAt);
   });
 
-  it("throws the shared error rather than an ad-hoc one", () => {
-    // A bespoke message here would re-leak what blockedError is careful not
-    // to disclose.
-    expect(SOURCE).toContain("throw blockGuard.blockedError(functions)");
-    expect(
-      SOURCE.match(/throw blockGuard\.blockedError\(functions\)/g).length
-    ).toBeGreaterThanOrEqual(2);
-  });
+  // What the refusal says is pinned by behaviour, not source:
+  // blockRefusalParity.test.js drives each callable blocked and on an
+  // activity the caller cannot see, and requires the same answer.
 });

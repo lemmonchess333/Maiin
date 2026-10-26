@@ -1,12 +1,11 @@
 /**
- * ChallengeCard — founding state (SOC-P1a).
+ * ChallengeCard: the joined count, the goal and the time left.
  *
- * "0 joined" was the loudest locked-lobby signal on the Social tab: three
- * photo cards all reading zero above the fold, the most-seen state for
- * every cold-start user. Below FOUNDING_COUNT_MIN the meta row withholds
- * the number and reads as a founding invitation instead. Counts are real
- * or withheld — never inflated — so the numeric display must return the
- * moment the count clears the floor.
+ * Below FOUNDING_COUNT_MIN participants the card says nothing about who
+ * has joined. "0 joined" was the loudest empty-lobby signal on the Social
+ * tab, and the founding line that replaced it ("Just launched · founding
+ * spots open") said "just launched" late in the month. Counts are real or
+ * withheld, never inflated, and nothing stands in for one.
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -14,6 +13,7 @@ import { Timestamp } from "firebase/firestore";
 
 import { ChallengeCard } from "../ChallengeCard";
 import type { Challenge } from "../useChallenges";
+import { groupText } from "@/test/localeGrouping";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
@@ -29,56 +29,99 @@ vi.mock("@/components/social/BlockAwareAvatar", () => ({
   default: () => null,
 }));
 
-function makeChallenge(participantCount: number): Challenge {
+function makeChallenge(
+  participantCount: number,
+  over: Partial<Challenge> = {}
+): Challenge {
   const now = Date.now();
   return {
     id: "global-monthly-2026-07-01",
     name: "July Hybrid Hero",
-    description: "Combined workout volume + km run",
+    description: "Running and lifting both count, toward one score.",
     type: "monthly",
     metric: "hybrid_score",
     icon: "trophy",
     tiers: { bronze: 3000, silver: 8000, gold: 15000 },
     startDate: Timestamp.fromMillis(now - 86400_000),
-    endDate: Timestamp.fromMillis(now + 86400_000),
+    endDate: Timestamp.fromMillis(now + 6 * 86400_000),
     participantCount,
+    ...over,
   };
 }
 
-function renderCard(participantCount: number, joined: boolean) {
+function renderCard(
+  participantCount: number,
+  joined: boolean,
+  props: { showTimeLeft?: boolean; over?: Partial<Challenge> } = {}
+) {
   return render(
     <ChallengeCard
-      challenge={makeChallenge(participantCount)}
+      challenge={makeChallenge(participantCount, props.over)}
       joined={joined}
       onJoin={() => {}}
       onLeave={() => {}}
+      showTimeLeft={props.showTimeLeft}
     />
   );
 }
 
-describe("ChallengeCard — founding state below the count floor", () => {
-  it("never renders '0 joined' (not joined → founding invitation)", () => {
-    renderCard(0, false);
-    expect(screen.queryByText(/0 joined/)).toBeNull();
-    expect(screen.getByText(/founding spots open/i)).toBeInTheDocument();
+const text = (container: HTMLElement) =>
+  (container.textContent ?? "").replace(/\s+/g, " ");
+
+describe("ChallengeCard: the joined count below the floor", () => {
+  it("says nothing about who has joined, not '0 joined' and no founding line", () => {
+    const { container } = renderCard(0, false);
+    expect(text(container)).not.toMatch(/joined|founding|launched/i);
   });
 
-  it("reads as membership when the user is enrolled and the count is small", () => {
-    renderCard(1, true);
-    expect(screen.queryByText(/1 joined/)).toBeNull();
-    expect(
-      screen.getByText(/You're in — founding member/i)
-    ).toBeInTheDocument();
+  it("says nothing for an enrolled person either: the card is theirs already", () => {
+    const { container } = renderCard(1, true);
+    expect(text(container)).not.toMatch(/joined|founding|You're in/i);
+    expect(text(container)).not.toContain("—");
   });
 
   it("shows the real count once it clears the floor", () => {
-    renderCard(3, false);
-    expect(screen.getByText(/3 joined/)).toBeInTheDocument();
-    expect(screen.queryByText(/founding/i)).toBeNull();
+    const { container } = renderCard(3, false);
+    expect(text(container)).toContain("3 joined");
+    expect(text(container)).not.toMatch(/founding/i);
   });
 
   it("keeps the real count for large cohorts", () => {
-    renderCard(148, true);
-    expect(screen.getByText(/148 joined/)).toBeInTheDocument();
+    const { container } = renderCard(148, true);
+    expect(text(container)).toContain("148 joined");
+  });
+});
+
+describe("ChallengeCard: the goal", () => {
+  it("says the goal from the challenge's own target, not the stored description", () => {
+    const { container } = renderCard(0, false);
+    expect(text(container)).toContain(
+      `Score ${groupText(3000)} points from running and lifting this month.`
+    );
+    expect(text(container)).not.toContain("toward one score");
+  });
+
+  it("falls back to the stored description for a metric it cannot phrase", () => {
+    const { container } = renderCard(0, false, {
+      over: { metric: "streak_days", description: "Keep a streak going." },
+    });
+    expect(text(container)).toContain("Keep a streak going.");
+  });
+
+  it("does not repeat the first tier under the goal for a joined card at zero", () => {
+    const { container } = renderCard(0, true);
+    expect(text(container)).not.toMatch(/Bronze at/);
+  });
+});
+
+describe("ChallengeCard: time left", () => {
+  it("is on the hero by default", () => {
+    renderCard(0, false);
+    expect(screen.getByText(/^\d+ days left$/)).toBeInTheDocument();
+  });
+
+  it("is left off when another card says it", () => {
+    const { container } = renderCard(0, false, { showTimeLeft: false });
+    expect(text(container)).not.toMatch(/left/);
   });
 });

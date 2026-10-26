@@ -25,7 +25,7 @@ npm run verify       # Everything CI's unit job blocks a merge on: run before pu
 - **Maps:** MapLibre GL 6, with OpenFreeMap's tiles (`src/lib/basemap.ts`; the credit must stay on every map)
 - **Animation:** Framer Motion 12
 - **PWA:** a hand-written service worker, `public/sw.js`, registered by `src/lib/register-sw.ts`
-- **Native:** Capacitor (iOS/Android)
+- **Native:** Capacitor (iOS; Android is planned, with no `android/` yet)
 - **Payments:** RevenueCat (`@revenuecat/purchases-capacitor`) for native IAP (ADR-0006); Stripe Checkout is server-side only and dormant (Sub4) — the client loads no Stripe SDK
 - **Drag & Drop:** @dnd-kit (sortable exercise lists)
 - **Barcode:** @zxing/browser (food barcode scanning)
@@ -69,7 +69,7 @@ e2e/                    # Playwright specs; screenshot capture specs in e2e/scre
 ## Architecture Notes
 
 - **All pages are lazy-loaded** via `lazyRetry()` wrapper in App.tsx (handles stale cache)
-- **Manual chunks** in vite.config.ts: firebase-auth, firebase-db, charts, vendor, maplibre, motion, date-fns, barcode, body-highlighter
+- **Manual chunks** in vite.config.ts: firebase-auth, firebase-db, firebase-messaging, firebase-analytics, firebase-installations, charts, vendor, maplibre, motion, date-fns, barcode, body-highlighter. `check-dist-size` also holds which of them `index.html` preloads
 - **Path alias:** `@/` maps to `src/`
 - **Base path:** `/Maiin/` (for GitHub Pages deployment)
 - **Offline support:** `src/lib/offlineQueue.ts` queues writes when offline
@@ -99,7 +99,9 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `WeeklyReview.tsx`                     | `/review`                          | Sunday recap — passive narration of the week (Rev1)                            |
 | `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                      |
 | `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                       |
+| `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)        |
 | `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts           |
+| `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows) |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                    |
 | `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here) |
 | `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile — photo, name, body metrics in the chosen units                        |
@@ -131,7 +133,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 
 | File                    | Purpose                                                        |
 | ----------------------- | -------------------------------------------------------------- |
-| `performanceEngine.ts`  | Weekly performance index (0-100), load bands, deload detection |
+| `performanceEngine.ts`  | Load bands, week keys; a mirror of the server index, for tests |
 | `tdee.ts`               | Base TDEE calculation                                          |
 | `phaseNutrition.ts`     | Day-type specific macro adjustments (lift/run/rest)            |
 | `savedRuns.ts`          | The one saved-run reader: query, parse, Lift3 day, queued runs |
@@ -165,7 +167,8 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `offlineQueue.ts`       | Queues Firestore writes when offline, flushes on reconnect     |
 | `errorReporting.ts`     | Error reporting utilities                                      |
 | `logger.ts`             | Structured logging                                             |
-| `notifications.ts`      | Push notification setup                                        |
+| `notifications.ts`      | Local reminders (meal, workout, streak), scheduled on device   |
+| `pushNotifications.ts`  | Push: the device's token, web or native, and its binding       |
 | `types.ts`              | Shared TypeScript type definitions                             |
 | `performanceTypes.ts`   | Performance engine type definitions                            |
 | `macroConstants.ts`     | Macro/nutrition constants                                      |
@@ -187,8 +190,11 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 invites, weekly focus, check-ins. `spaces/` owns the space definitions,
 including the race spaces a `raceGoal.eventSpaceId` binds to.
 `partnerStreak/` owns partner bonds and shared-day streaks (the SERVER is
-the sole writer of bond streak state — see `docs/qa/pre-launch-backlog.md`). `run/` holds
-run-surface feature modules.
+the sole writer of bond streak state — see `docs/qa/pre-launch-backlog.md` —
+and makes every bond: the `startPartnerStreak` callable counts both people's
+bonds against `MAX_PARTNERS` in the transaction that creates one, and the
+rules refuse a client create; `partnerLimit.cross.test.ts` pins the limit
+both sides). `run/` holds run-surface feature modules.
 
 ### challenges/
 
@@ -264,12 +270,15 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 
 ## Data Model
 
-- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only)
+- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only), `friendsBoard/{uid}` (a person's week on their followers' boards, SERVER-written and only for someone who chose Show my week, `users/{uid}.showWeekOnBoard`, set through the `setBoardSharing` callable)
+- **A block hides each person from the other** (S4, Polish3 call 1). `blocks/{blocker}/users/{blocked}` is the blocker's own list; `blockedBy/{blocked}/users/{blocker}` is its copy for the person blocked, SERVER-written by `onBlockWritten` (`functions/lib/blockMirror.js`) and read only by them. `useBlockedUsers().blocked` merges the two, and every social surface filters on it; `youBlocked` and `blockedYou` are for the profile's Unblock and its not-available state alone (`blockedBothWays.test.tsx`). The rules refuse a single read of a blocker's public profile, and of a post across a block either way; queries (Explore, search, a profile's posts) are filtered in the app.
 - **Auth:** Firebase Auth (Email, Google, Apple Sign-In)
 - **Email sign-ups verify after the plan, not before it** (owner, 2026-10-01, reversing the 2026-09-15 wall). Sign-up sends the link (`signUp` in `auth.tsx`) and goes straight to onboarding, and `completeOnboarding` no longer asks for the claim. Home asks (`VerifyEmailBanner`, with Resend and a way to change a wrong address) until the app sees the address verified. The App-level gate rechecks on every return to the app, reloading Auth and refreshing the token, so tapping the link in Mail is enough. The social gate below is unchanged.
 - **Public writes need a verified email.** The `email_verified` token claim gates `activities` and `spaces/{id}/posts` creates in `firestore.rules` (`isEmailVerified()`) and comments in the two comment callables (`assertCallerEmailVerified`). Private logging under `users/{uid}/*` and every non-content interaction stay open to unverified accounts; OAuth accounts carry the claim already. The e2e rig marks its signup-form accounts verified through the Auth emulator REST API (seed scripts create users verified).
-- **A restricted account reaches no one** (S4e, 2026-10-06). `globalRestrictedUids/{uid}`, written by the moderation page's Restrict user (`resolveReport`) and removed by its Lift (`liftRestriction`), makes `isRestricted()` in `firestore.rules` refuse posts (a private one excepted), follows, Space and challenge joins, Circle events and partner bonds, and `functions/lib/restriction.js` refuse props, comments, likes, reactions and the Circle callables; the toggles refuse only adding. Logging, the person's own profile, blocking, reporting, unfollowing, leaving and deleting their own things stay open. The app says so before the server refuses: `RestrictedNotice` where an action would be, `showRestrictedToast()` for a refused tap (`src/lib/accountRestriction.ts`).
-- **Activity notifications follow the recipient's switches.** `notificationPreferences` on `users/{uid}` (S3: props, comments, circles and spaces on; new followers off) is read by `createNotification`, the one writer of `notifications/{uid}/items`, which writes nothing for a kind that is off. The client's copy (`src/lib/notificationPreferences.ts`) and the rules' value gate are pinned to the server's (`functions/lib/notificationPreferences.js`) by `notificationPreferences.cross.test.ts`. A new notification type has to be given a switch, or none on purpose, in that file.
+- **A restricted account reaches no one** (S4e, 2026-10-06). `globalRestrictedUids/{uid}`, written by the moderation page's Restrict user (`resolveReport`) and removed by its Lift (`liftRestriction`), makes `isRestricted()` in `firestore.rules` refuse posts (a private one excepted), follows, Space and challenge joins, Circle events and partner bonds, and `functions/lib/restriction.js` refuse props, comments, likes, reactions and the Circle callables; the toggles refuse only adding. Logging, the person's own profile, blocking, reporting, unfollowing, leaving and deleting their own things stay open. The app says so before the server refuses: `RestrictedNotice` where an action would be, `showRestrictedToast()` for a refused tap (`src/lib/accountRestriction.ts`). Deleting a restricted account keeps a keyed hash of its email and its Google and Apple sign-in ids in `restrictedIdentities/{hash}` for 13 months (`functions/lib/restrictedIdentities.js`, STATUS 2026-10-20): `onAuthUserCreated` restricts a new account carrying one, and `liftRestriction` forgets them.
+- **A follower is someone you accepted** (Polish2, 2026-10-20). `users/{uid}.approveFollowers` (Settings → Social & privacy; absent means on) makes `firestore.rules` refuse a direct follow, and the app writes `followRequests/{target}/users/{asker}` instead, seen only by the two. Only the person asked writes the two follow edges, on accepting (`acceptFollowRequest`). Requests have their own collection so every reader of `followers/`/`following/` still sees only accepted follows.
+- **Activity notifications follow the recipient's switches.** `notificationPreferences` on `users/{uid}` (S3: props, comments, circles and spaces on; new followers off; Polish2: follow requests on) is read by `createNotification`, the one writer of `notifications/{uid}/items`, which writes nothing for a kind that is off. The client's copy (`src/lib/notificationPreferences.ts`) and the rules' value gate are pinned to the server's (`functions/lib/notificationPreferences.js`) by `notificationPreferences.cross.test.ts`. A new notification type has to be given a switch, or none on purpose, in that file.
+- **A copied name and photo follow the profile.** Posts, comments, Space and Circle memberships and challenge places copy the author's name and photo when written, and a notification its sender's name (`fromName`, and the sentence that starts with it); `onPublicProfileIdentityChanged` carries a new public name or photo to the last 90 days of them (`functions/lib/identityResync.js` has the bounds), never a name the word filter refuses, a restricted account's new name or photo, or into an account being deleted. A new copy of a name goes on its list.
 - **User profile:** Defined in `src/lib/auth.tsx` as `UserProfile` interface
 - **Feed items:** Defined in `src/hooks/useSocialFeed.ts` as `FeedItem` / `ActivityData`
 
@@ -359,7 +368,8 @@ animation-frame counter AND motion-dom's batcher shut, so later
 module registry runs once per FILE, so its 0-then-1 was true only when
 it ran first. A suite that fakes timers must settle framer's frame loop
 while the fake clock is still installed — `src/test/setup.ts` cannot do
-it for you, and its header says why.
+it for you, and its header says why. Restore the clock with
+`restoreRealTimers()` from `src/test/fakeTimers.ts`, which does both.
 
 The seeds are FIXED, which pins the ORDER and nothing else. **The job
 is not deterministic.** Seed 23 went red
@@ -413,14 +423,14 @@ Tropos is pre-launch with one user. That is a temporary condition. Every UX, eng
 
 ## Build for the iOS app, not just the web
 
-Tropos ships as a native Capacitor iOS (and Android) app — that is the primary distribution channel, not the GitHub Pages web build. Every feature, integration, and infrastructure decision must work on the native app where it's technically possible, not just in the browser. A capability that only functions on the web — when the real users are on iOS — is wasted work, not a shipped feature.
+Tropos ships as a native Capacitor iOS app (Android is planned) — that is the primary distribution channel, not the GitHub Pages web build. Every feature, integration, and infrastructure decision must work on the native app where it's technically possible, not just in the browser. A capability that only functions on the web — when the real users are on iOS — is wasted work, not a shipped feature.
 
 - **Parity runs BOTH ways — the web build is the active development & preview surface.** Tropos is currently built and previewed on the web app, so every feature must render and be exercisable on web _and_ be wired to work on native iOS. Don't ship web-only (invisible to the real iOS users); equally, don't ship native-only (invisible in the web preview loop the developer is actually using). When a capability can only fully execute on-device (a Capacitor plugin, a native SDK), still leave a **web-visible path** — a fallback, a stub, or the same UI with the native call no-op'd — so the feature can be seen and reviewed on web _before_ it's pushed to iOS. "It only shows up once it's on a device" is a broken preview loop.
 
 - **Default to platform parity.** When wiring a third-party SDK, browser API, or build-time integration, check up front whether it works inside the native WKWebView / Capacitor shell. If the web SDK won't run natively (e.g. Firebase Analytics web SDK, reCAPTCHA, anything depending on browser-only APIs), find the native equivalent (a Capacitor plugin, the native Firebase SDK via `GoogleService-Info.plist` / `google-services.json`, etc.) **as part of the same task** — don't ship the web half and call it done.
 - **If native parity is genuinely deferred, say so loudly and leave the seam.** It's acceptable to land the web path first when the native path needs a plugin/native-project change that can't be done in the current environment — but only if (a) the limitation is stated explicitly to the user at decision time, not discovered later, and (b) the code leaves a native injection point (the `appCheck.ts` web/native split + `setNativeAppCheckProvider` seam is the reference pattern). A silent web-only implementation that reads as "done" is the failure mode to avoid.
 - **Don't spend effort on web-exclusive polish for an iOS-first product.** Weigh the value of any web-only work against the fact that the audience is on the native app. "It works on the web build" is not the bar; "it works where the users are" is.
-- **The analytics layer is the reference example of this rule done right.** The provider in `analyticsProvider.ts` delivers on BOTH platforms behind one seam: web via the `firebase/analytics` SDK, native via the `@capacitor-firebase/analytics` plugin → native Firebase SDK. Each loads in its own dynamic-import chunk so neither platform ships the other's code. The only remaining native step is operator-only — add `GoogleService-Info.plist` to the Xcode project and `cap sync ios`; the web env var (`VITE_FIREBASE_MEASUREMENT_ID`) drives web, the plist drives native.
+- **The analytics layer is the reference example of this rule done right.** The provider in `analyticsProvider.ts` delivers on BOTH platforms behind one seam: web via the `firebase/analytics` SDK, native via the `@capacitor-firebase/analytics` plugin → native Firebase SDK. Each loads in its own dynamic-import chunk so neither platform ships the other's code. Native reads its config from `GoogleService-Info.plist`, which `deploy-ios.yml` writes from a secret into every build (`docs/ios-release.md`); the web env var (`VITE_FIREBASE_MEASUREMENT_ID`) drives web, the plist drives native.
 
 ## Plan-file lock discipline
 

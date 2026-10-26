@@ -56,17 +56,24 @@ export function checkInTimelineCopy(weeklyFocus: WeeklyFocus | null): string {
  * Chosen-focus pulse count for one week: how many distinct members set
  * a focus. Counts, not rankings — there is deliberately no per-focus
  * breakdown, no ordering by member, and no streak memory.
+ *
+ * Only the Circle's current members count. A member's check-in outlives
+ * their leaving (only account deletion sweeps events), so a count over
+ * every event would read "3 of 2 focusing" after a mid-week departure.
+ * The members are a required argument so no caller can leave them out.
  */
 export function countWeeklyFocusSet(
   events: GoalSpaceEvent[],
-  weekKey: string
+  weekKey: string,
+  memberUids: ReadonlySet<string>
 ): number {
   const uids = new Set<string>();
   for (const e of events) {
     if (
       e.kind === "weekly_check_in" &&
       e.weekKey === weekKey &&
-      e.weeklyFocus
+      e.weeklyFocus &&
+      memberUids.has(e.uid)
     ) {
       uids.add(e.uid);
     }

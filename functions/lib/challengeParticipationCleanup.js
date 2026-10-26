@@ -114,6 +114,29 @@ async function removeChallengeParticipationsForUser({
     }
   }
 
+  // Deletes do not cascade, so each participation's progress markers
+  // (`applied/{key}`: the session counted, its day and amount) outlived the
+  // account under a path carrying its uid. A challenge left long ago keeps
+  // them too, by design (challengeMarkers.js), with no participant doc
+  // above them. recursiveDelete reaches descendants of a missing doc.
+  for (const cid of challengeIds) {
+    try {
+      await firestore.recursiveDelete(
+        firestore
+          .collection("challenges")
+          .doc(cid)
+          .collection("participants")
+          .doc(uid)
+      );
+    } catch (err) {
+      log.warn("deleteAccount.challenge_markers_failed", {
+        uid,
+        error: err && err.message,
+      });
+      throw err;
+    }
+  }
+
   log.info("deleteAccount.challenge_participations_swept", {
     uid,
     challenges: result.challenges,

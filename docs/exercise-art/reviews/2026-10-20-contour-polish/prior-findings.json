@@ -1,0 +1,424 @@
+[
+  {
+    "id": "assault-bike",
+    "historicalFindings": [
+      "Original rider and opposite arm/leg phases retained. Native grey fan, base, foot rests and two fixed lever pivots replace mirrored drifting apparatus; connected lever channels meet the same pivots in both phases. No anatomy transforms.",
+      "Discrete source poses and small illustrative contour/projection differences remain qualitative. Historical findings are preserved separately; no calibrated3D or strict certificate is asserted."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "barbell-curl",
+    "historicalFindings": [
+      "Same original athlete and grips. Reuse native reference equipment at integer offsets; rigid modest plate/collar/sleeve geometry no longer shrinks through the curl.",
+      "Existing discrete source poses and minor inherited source contour/projection differences remain qualitative. This scoped correction does not claim calibrated3D or blanket strict certification."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "barbell-row",
+    "historicalFindings": [
+      "Four genuine native continuous-hinge row poses, not a relabelled Pendlay floor reset.",
+      "Late middle is about72% projected shaft travel; early about25%; phase values describe the actual images, not equal spacing.",
+      "Small generated shoulder/chest/back/grip contour and width variations retained for native motion review. Whole head and trainers visually steady, not a calibrated3D or exact pixel identity claim.",
+      "Colour masks follow already tinted source fields; visible lat mask is traced per pose, remaining visible rear deltoid/rhomboid/biceps secondary. Anatomical ownership needs native inspection.",
+      "Current source colours retain inherited neutral contour/shading, with exact primary/secondary base palette; source and fresh reproduction proofs retained. Strict certification is not asserted."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "bench-press",
+    "historicalFindings": [
+      "Three genuine physical poses reused across six guide paths. Frames 3 and 4 intentionally share the supported chest-touch pose; frame 5 returns through the existing early state.",
+      "Native supported sources retain minor pre-existing illustration contour differences; no pixel-exact invariant-scene certification is asserted.",
+      "Early state remains about 12% descent. No new anatomical interpolation or intermediate source is invented."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "bike",
+    "historicalFindings": [
+      "Fixed bearing centre at native (498,1105), a clean shaded grey crank/bearing and the reference rear support in the opposed position. Original athlete, foot/strap and all upper-body pixels remain exact.",
+      "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "calf-raise",
+    "historicalFindings": [
+      "The prior early heel/body timing mismatch is corrected in the shared middle pose: heels, legs/hips, torso/head and shoulder load begin rising together.",
+      "Three genuine discrete poses1/2/3/3/2/1 remain; no continuous trajectory or exact biomechanical certification is claimed.",
+      "Minor inherited endpoint contour/contact differences and modest below-step heel stretch remain."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "dips",
+    "historicalFindings": [
+      "This is a new bodyweight chest-dip source derived from the approved weighted chest-dip motion, not a newly generated entire athlete or an upright triceps dip. Missing anatomy behind belt/chain/plate was newly authored in each actual pose.",
+      "Three genuine poses are reused as A,B,B,C,B,A. Frames 2, 3 and 5 show the identical intermediate at physical progress .5; frame 3 is explicitly a static Hold. The sequence uses t 0,.5,.5,1,.5,0 without claiming an unshown extra descent pose.",
+      "The source chest has inherited fine striation/contour lines and mild specular tone variation; those have not been erased. Primary and secondary are remapped to the exact established hues with inherited light/shade.",
+      "A few seam-adjacent lower torso/thigh contour differences from native occlusion reconstruction may remain, but native review shows coherent pelvis-to-knee/shin chains, no detached surfaces, no shorts and no visible residual accessories.",
+      "The bottom whole-image32px framing registration is measured from three equipment ROIs and applied uniformly before selecting source pixels; no limb/body alignment or source resampling occurs.",
+      "Full880x1088 framing preserves the entire station and all three athletes without per-pose scaling.",
+      "Native source/card/mobile validation does not assert strict anatomical or mechanical certification."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "elliptical",
+    "historicalFindings": [
+      "Custom rear-drive four-bar, passive pitching trays and mirrored offset-bearing D grips; no exact manufacturer-model or recovered source3D claim.",
+      "Near/far locked stem and pedal-bearing settings differ but stay fixed across both poses; dimensions/camera/phase closure are exposed in authoring/fixed-geometry.json.",
+      "Two genuine intact source body states repeated across six distinct paths. No generated human intermediates or continuous human trajectory claim.",
+      "Original source shading/contours and minor source pose/activation differences retained. Pose4posterior-thigh field is secondaryHamstrings, not silently relabelled as primaryQuads.",
+      "Five original dark upper-cylinder antialias pixels near pose4far index edge differ from new hardware. Parent reviewed this as a minor equipment edge finding, not missing white finger anatomy.",
+      "Shaded charcoal custom apparatus differs from original generated machine style and equipment geometry; parent source-construction eligibility is not final palette/mobile or strict acceptance."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "face-pulls",
+    "historicalFindings": [
+      "The far-start terminal palm support/free-end ordering is naturally occluded or uncertain in the flat source and is not visually certified.",
+      "The generic ergonomic attachment follows an evidenced real topology but is not an exact branded product replica; minor neutral equipment shading variation remains.",
+      "Projected cable payout approximately79-83px and selected-stack rise approximately75px are consistent local observations, not calibrated3D rope/stack geometry or world-length certification.",
+      "Two physical endpoint drawings repeat across six named instruction paths; no separately illustrated intermediate or continuous trajectory is supplied.",
+      "Fine inherited pale muscle-highlight islands remain visible after prescribed colour remap; parent accepted their native/card/mobile appearance as a minor cosmetic finding."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "front-squat",
+    "historicalFindings": [
+      "Two genuine intact squat states repeat across six delivery slots; this is a discrete illustrated guide.",
+      "Custom shoulder harness based on a real apparatus principle; not a stock manufacturer replica or ordinary direct-shoulder front rack.",
+      "Equipment projection is illustrative; the source body is not calibrated in3D. The old nominal51mm neck-envelope clearance is not adopted.",
+      "Original neutral source pixels remain exact; original violet fields use the exact target bases and per-pixel source tone. Neutralised source tint is not recovered pre-tint anatomy.",
+      "Retained source plate projections and hand contours have minor illustrative pose differences; a calibrated continuous human movement is not claimed.",
+      "Native scoped review uses the actual worn regular-harness reference for medial upper-shoulder support; strict review and exact anatomical depth remain unverified.",
+      "Raw playback contains brief image/cue observer transitions; settled selections agree. Preview-reset and truncated-read evidence are preserved beside the successful repeated light playback capture."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "goblet-squat",
+    "historicalFindings": [
+      "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+      "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "handstand-push-ups",
+    "historicalFindings": [
+      "Two genuine strict-press endpoints occupy six cue slots; kick-up is written setup, and no six-unique-pose or continuous-motion claim is made.",
+      "New native full-frame connected head/neck authoring corrects the old broad bottom profile without a pasted head, anatomy warp or code head resize. Whole generated bottom is retained; no outside-pixel invariance to the older bottom is claimed.",
+      "The same read-only profile diagnostic now measures0.47percent breadth and0.96percent length differences at threshold200, with corresponding threshold210/220 checks retained. These are projected contour diagnostics, not calibrated3D skull measurements.",
+      "The source endpoints retain minor palm/finger silhouette variation, wide bent-elbow projections and illustrative wall/floor depth. Exact fixed-joint coordinates and calibrated vertical forearm loading remain unverified.",
+      "Only original source-violet pixels are recoloured using the exact approved targets and per-pixel source tone. All neutral pixels, including the actual chosen heads and trainers, stay byte-exact during palette finishing.",
+      "Strict visual certification remains unverified under the owner-authorized release-with-findings workflow.",
+      "The normal220x480 cutout retains the grey wall/floor as apparatus context. At160px long-side limit the complete figure is small; no body-only transparent cutout or strict readability certificate is claimed.",
+      "Raw playback includes brief observer image/cue transitions; all settled selections agree. Initial desktop evidence and separately verified mobile evidence are retained with their actual viewport sizes."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "incline-db-curl",
+    "historicalFindings": [
+      "This is an alternating variation: one complete near-arm curl is demonstrated and the setup/cues explicitly say to repeat the opposite side. The far arm holds its weight stationary beside the body; a simultaneous bilateral curl is not claimed.",
+      "The older bilateral hang request remains closed. The retained complete near-arm endpoint is reused for a new actual elbow-flexed source, authored with the canonical identity reference. The earlier rough projected-arm-shortening concern was not a measured3D result; intact native chains are reviewed directly.",
+      "One connected near-arm/weight region is inserted from the new native B at unchanged coordinates. All source pixels outside this documented moving region are taken from A, including the head, lower body, trainers, far grip and bench. No anatomy warp, fitted limb or head/shoe graft.",
+      "The same restrained-grey near hex dumbbell and closed grip are visible at both endpoints. Minor local contour/shading joins at the moving-region edge remain qualitative; exact3D joint positions are unverified.",
+      "Biceps primary#7B72E9 and forearms secondary#9590E0 use the original source tone and saturation. No additional spatial body shading.",
+      "Two genuine near-arm elbow endpoints occupy six cue slots; no six-unique-pose or continuous-animation claim. Strict certification remains unverified.",
+      "Two genuine physical endpoints occupy six cue slots; no continuous-motion or six-unique-pose certificate.",
+      "Normal cards use the established lossy export and transparent-background treatment. The white athlete has reduced contrast against the light card; at160px the complete apparatus/athlete is small. No strict readability certificate.",
+      "Actual native-coordinate source joins, anatomical colour boundaries and projected contact depth are qualitative findings. Strict visual checks remain null.",
+      "Alternating variation demonstrates the near-arm cycle; opposite-side repetition is stated in setup and cues. Far arm and its weight remain stationary. Exact3D elbow coordinates are unverified; minor local contour/projection differences remain findings."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "leg-extension",
+    "historicalFindings": [
+      "Independent generic covered selectorized apparatus, not an exact branded replica.",
+      "A constructed common apparatus camera is used, not an original human-camera/depth recovery.",
+      "Covered resistance routing and unseen cams/belts/weights are not verified.",
+      "Original source body/seat/head/hand variations remain; human pixels are not fitted.",
+      "The held middle source2 and earlier long-pad diagnostic are not delivered.",
+      "Minor neutral-metal facet bands and simplified covered panels remain.",
+      "Only a constructed apparatus camera is proven; original human depth and covered resistance routing remain uncertain."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "leg-press",
+    "historicalFindings": [
+      "Two genuine hip-and-knee press endpoints occupy six cue slots; no six-unique-pose or continuous-animation claim.",
+      "New native shin repair and hip-and-knee-flexion authoring preserve the approved athlete. The B moving region is inserted at unchanged native coordinates onto A; the rest of that fixed source scene is byte-identical. A itself is an image-authored shin repair, so no byte-invariance to the older original is claimed.",
+      "A custom double-beam plate-loaded lever is drawn around the intact poses. Both beams retain identical endpoint lengths and fixed pivots; the same three load plates rise85.75px during extension and stay above the illustrated floor. This is screen-space mechanics, not calibrated anatomical3D or a factory replica.",
+      "Large rubber footplate supports both complete trainers in the two positions. Small projected toe/heel pitch differences and layered sole occlusion remain illustrative; no recovered3D contact certificate.",
+      "Source violet quads are finished in#7B72E9; visible source-tone posterior thigh fields use#9590E0. Manual anatomical boundaries are qualitative. No added body shading gradient.",
+      "Strict visual certification remains unverified under the owner-authorized release-with-findings workflow.",
+      "The gluteal surface is largely occluded by the supported pelvis/seat in this camera. It remains in the secondary-muscle legend without painting a false glute highlight onto the abdominal wall.",
+      "Two genuine physical endpoints occupy six cue slots; no continuous-motion or six-unique-pose certificate.",
+      "Normal cards use the established lossy export and transparent-background treatment. The white athlete has reduced contrast against the light card; at160px the complete apparatus/athlete is small. No strict readability certificate.",
+      "Actual native-coordinate source joins, anatomical colour boundaries and projected contact depth are qualitative findings. Strict visual checks remain null."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "lu-raise",
+    "historicalFindings": [],
+    "remainingIllustrationLimits": [
+      "Four discrete physical poses, not continuous interpolation or calibrated biomechanical certification.",
+      "Small source contour/projection variation and established low contrast of tiny white contours on light cards remain."
+    ]
+  },
+  {
+    "id": "overhead-extension",
+    "historicalFindings": [
+      "Residual source head/shoe outlines, proportions and placement differ slightly after integer whole-frame registration; no independent body-part fitting is used.",
+      "Original upper-arm/elbow positions vary between the two endpoints; they remain raised beside the head, but exact fixed-joint mechanics are not certified.",
+      "Original neutral dumbbell head/handle rendering and projected dimensions vary modestly; no calibrated rigid3D equivalence claim.",
+      "Two physical endpoints repeat across six distinct instruction paths; no separately drawn intermediate or continuous trajectory."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "overhead-press",
+    "historicalFindings": [
+      "Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading.",
+      "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "pendlay-row",
+    "historicalFindings": [
+      "Minor original head/neck/upperbody lift and knee/hip variation after ground registration; no strict fixed-torso certification.",
+      "Modest original far-hand/bar grip spacing variation remains; no exact rigid hand placement certification.",
+      "Two physical endpoints repeated across6separatepaths; no authored intermediate or continuous trajectory claim.",
+      "Biceps/Core remain neutral original source anatomy; legend includes their secondary functional role. No new highlight boundary is invented."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "rope-tricep-pushdown",
+    "historicalFindings": [
+      "Equipment-only correction replaces the thin poorly articulated stack with wider shaded solid plates, coherent oblique top/side faces, guide bores, a visible moving selector stem, seated fourth-plate selector pin and supported pulley bracket.",
+      "Only the two native equipment layers change. All athlete, muscle palette, trainers, rope grips/branches, cable and background layers remain exact decoded pixels. Every pixel left of x704, covering the entire athlete and rope contacts, is identical to the merged original.",
+      "Existing five physical poses and six-frame1/2/3/4/5/1 order, cues, setup,1024x1600 canvas, reference/card frame1,320px rope branches, finite24px-radius pulley path and constant cable length remain unchanged.",
+      "Selected4/resting8 plate counts and0-227.988px selected-stack rise remain. The selector stem is hidden behind resting plate fronts rather than showing through them.",
+      "Original illustrative upper-arm/elbow/forearm contour and generated rope-stub variations remain unchanged. This is an illustrative2D machine, not calibrated engineering or anatomical geometry.",
+      "Strict certification is not claimed. Scoped native source, actual registered390x844 light/dark normal/slower playback, manual wrap and normal-card reviews passed. Small48px light cards retain faint white athlete contours; equipment silhouettes remain identifiable. Original source/anatomical findings remain."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "rowing-machine",
+    "historicalFindings": [
+      "Original catch, drive and recovery sources retained. Complete connected image-authored finish extends the legs and slides the seat back; original fixed apparatus is preserved outside the native pose footprint. The exposed original catch rail supplies vacated seat background, and a native straight grey chain meets the original fixed outlet. One whole-source framing normalization; no individual anatomy transforms or head/shoe grafts.",
+      "Discrete source poses and small illustrative contour/projection differences remain qualitative. Historical findings are preserved separately; no calibrated3D or strict certificate is asserted."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "seated-row",
+    "historicalFindings": [
+      "Two genuine source poses repeat across six delivery slots; no six-unique-pose or calibrated continuous human movement claim.",
+      "A labelled flex-and-extend cable-row variation, with matching advice; the default still-torso catalogue remains unchanged.",
+      "The source body and native flexible straps retain minor illustrative pose variations; held bar projections differ between source poses.",
+      "New fixed geometric charcoal equipment is an illustrative custom station, not a manufacturer replica or recovered source-body calibration.",
+      "Existing lower-body colour fields are neutralised per source-pixel luminance; this is not a recovered original untinted body.",
+      "Strict review remains unverified.",
+      "Raw playback observation includes brief image/cue transition entries; all six settled selections agree in both themes. This is a discrete illustrated guide, not continuous animation."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "side-plank",
+    "historicalFindings": [
+      "Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged.",
+      "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "single-leg-calf-raise",
+    "historicalFindings": [
+      "Same original athlete/trainers/hand and calf timing. Reference fixed support pixels, native2px visible-step registration and grey tread-only texture repair remove support drift and displaced contact-shadow double edge.",
+      "Existing discrete source poses and minor inherited source contour/projection differences remain qualitative. This scoped correction does not claim calibrated3D or blanket strict certification."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "skull-crushers",
+    "historicalFindings": [
+      "Equipment-only correction: compact grey cast-disc plates, compact collars and sleeves replace the previous oversized flat plates and long sleeves. Constant490px shaft length and390px plate spacing, with110/104px projected plate heights, retain one coherent camera depth and the unchanged grip line.",
+      "All original non-equipment OpenRaster layers and all final native hand/arm, muscle-palette and visible neutral-athlete foreground pixels remain byte-exact. Native proof binds every changed pixel to the equipment replacement plus one isolated old-equipment remnant cleanup.",
+      "PoseB's detached old plate remnant is removed only within native rectangle[330,105,405,127]. No anatomical generation, fitting, warping, resampling or head/shoe grafts.",
+      "The existing four physical poses and A/B/C/D/C/A order, qualitative0/.3/.8/1/.8/0 coordinates, cues, setup,870x1072 delivered crop, triceps primary and chest/front-deltoid secondary remain unchanged.",
+      "Original supported-scene head/arm occlusion and minor projected upper-scene variation remain; the lower scene, planted white trainers and fixed bench are retained. This is an illustrative2D load, not calibrated factory or anatomical geometry.",
+      "Strict certification is not claimed. Scoped native source, actual registered390x844 light/dark normal/slower playback, manual wrap and normal-card reviews passed. Small48px light cards retain faint white athlete contours; equipment silhouettes remain identifiable. Original source/anatomical findings remain."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "spin-bike",
+    "historicalFindings": [
+      "Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact.",
+      "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "squat",
+    "historicalFindings": [
+      "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+      "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "stairmaster",
+    "historicalFindings": [
+      "New fixed rear camera shows the canonical athlete facing uphill with three genuine connected poses: left upper-tread support, right-leg swing, and right upper-tread landing. Upper body, grips, rails and apparatus outside native lower-body/contact-shadow footprints remain identical to one master. Source order A,A,B,C,C,A; visible-muscle key describes primary glutes and secondary hamstrings/calves, with quads occluded.",
+      "Discrete source poses and small illustrative contour/projection differences remain qualitative. Historical findings are preserved separately; no calibrated3D or strict certificate is asserted."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "standing-calf-raise",
+    "historicalFindings": [
+      "The prior early heel/body timing mismatch is corrected in the shared middle pose: heels, legs/hips, torso/head and shoulder load begin rising together.",
+      "Three genuine discrete poses1/2/3/3/2/1 remain; no continuous trajectory or exact biomechanical certification is claimed.",
+      "Minor inherited endpoint contour/contact differences and modest below-step heel stretch remain."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "straight-arm-pulldown",
+    "historicalFindings": [
+      "Two genuine source shoulder positions occupy six cue slots; no continuous or six-unique-pose motion claim.",
+      "The approved Front Raise source pair supplies the intact athlete. Newly image-authored local pixels restore the far forearm, near hand/thumb and occluded thigh surfaces at documented native coordinates; minor local shade joins remain illustrative.",
+      "Custom twin1:1 cable towers use finite sheave tangency, fixed hardware and conserved screen-space cable paths. This is a qualitative instructional drawing, not a factory replica or recovered3D human-camera calibration.",
+      "Visible latissimus is primary#7B72E9; the lowered near arm occludes it at the finish. Triceps/core secondary#9590E0 is restrained by uniform source-tone tint; highlight boundaries are manually traced qualitative regions, not measured activation.",
+      "Strict visual certification remains unverified under the owner-authorized release-with-findings workflow.",
+      "White anatomical athlete has reduced contrast on a light normal card, especially at160px long-side limit; the form guide retains its standard dark stage.",
+      "Raw playback includes brief observer image/cue transitions; all settled selections agree. A hot-reload theme reset and the fresh corrected light playback capture are retained in evidence."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "t-bar-row",
+    "historicalFindings": [
+      "Both retained original endpoints show two consistent grey plates instead of the later one-plate default. This departure is accepted explicitly under existing slight-requirements relaxation; no one/two-plate mixing or removal is supplied.",
+      "Actual fixed floor-base measurements pass within1px/1%, but articulated yoke pin/projected rotating shaft geometry is not calibrated3D invariance and is not certified.",
+      "Two physical start/top drawings repeat across six paths; illustrated intermediate/continuous trajectory/six unique poses are not supplied.",
+      "Exact original master prompt was unavailable in retained files. Exact successful master bytes, framing record generation31e3e68c, plan, peak prompt and original history are preserved; no prompt text is invented."
+    ],
+    "remainingIllustrationLimits": [
+      "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+      "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+    ]
+  },
+  {
+    "id": "swimming",
+    "historicalFindings": [],
+    "remainingIllustrationLimits": []
+  },
+  {
+    "id": "turkish-get-up",
+    "historicalFindings": [],
+    "remainingIllustrationLimits": []
+  }
+]

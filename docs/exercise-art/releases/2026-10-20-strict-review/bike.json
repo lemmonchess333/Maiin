@@ -1,0 +1,169 @@
+{
+  "exerciseId": "bike",
+  "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+  "width": 929,
+  "height": 1432,
+  "reference": {
+    "path": "form-frames/bike/1.webp",
+    "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6"
+  },
+  "cueSha256": "61d4591ab6c2c80331b79736d8970091bc08a318d05ac405f8dc72a709b279c5",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:52.307923+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. Preserve the original stationary front and rear floor pods at unchanged coordinates. No athlete or moving pedal pixels occur in the two equipment regions."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Opposed pedal phases preserve seated support and both grips. All athlete and pedal regions remain outside the two stationary-pod correction boxes. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same fixed stationary-bike body, saddle, crank and restored floor pods. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Opposed pedal phases preserve seated support and both grips. All athlete and pedal regions remain outside the two stationary-pod correction boxes. Actual named native supports are measured in all six frames: fixedFrontPodFastenerMaterialFeature1, fixedFrontPodFastenerMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedFrontPodFastenerProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Opposed pedal phases preserve seated support and both grips. All athlete and pedal regions remain outside the two stationary-pod correction boxes. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Quads #7B72E9; secondary Hamstrings #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Lower Pedal: Keep a slight bend at the bottom. / Posture: Sit tall; keep hips supported and level. / Opposed Legs: Let the other leg take its turn. / Relaxed Grip: Keep your grip relaxed and shoulders down. / Cadence: Pedal steadily without yanking on the upstroke. / Resistance: Adjust resistance to match your target effort.. Preparation remains [\"Adjust the seat so your leg has a slight bend at the bottom of the pedal.\", \"Sit with a neutral spine, grip the bars loosely.\"]. Opposed pedal phases preserve seated support and both grips. All athlete and pedal regions remain outside the two stationary-pod correction boxes."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Opposed pedal phases preserve seated support and both grips. All athlete and pedal regions remain outside the two stationary-pod correction boxes. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/bike.json (sha256 534a228880e366dd7fbc956a772f4dfa6a8e8382dea9a0a47b2add52784e863a). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/bike.json (sha256 534a228880e366dd7fbc956a772f4dfa6a8e8382dea9a0a47b2add52784e863a). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bike/1.webp",
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "anchors": {
+        "fixedFrontPodFastenerMaterialFeature1": { "x": 56, "y": 1374 },
+        "fixedFrontPodFastenerMaterialFeature2": { "x": 129, "y": 1375 }
+      },
+      "invariantDimensions": {
+        "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+        "oppositeFixedSupportProjectedFeatureSpan": 66
+      }
+    },
+    {
+      "path": "form-frames/bike/2.webp",
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "anchors": {
+        "fixedFrontPodFastenerMaterialFeature1": { "x": 56, "y": 1374 },
+        "fixedFrontPodFastenerMaterialFeature2": { "x": 129, "y": 1375 }
+      },
+      "invariantDimensions": {
+        "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+        "oppositeFixedSupportProjectedFeatureSpan": 66
+      }
+    },
+    {
+      "path": "form-frames/bike/3.webp",
+      "sha256": "8c1cb083d7040982b6bb8cbd48370c32ef393ad4d7efc20afbc4792966e50e6f",
+      "anchors": {
+        "fixedFrontPodFastenerMaterialFeature1": { "x": 56, "y": 1374 },
+        "fixedFrontPodFastenerMaterialFeature2": { "x": 129, "y": 1375 }
+      },
+      "invariantDimensions": {
+        "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+        "oppositeFixedSupportProjectedFeatureSpan": 66
+      }
+    },
+    {
+      "path": "form-frames/bike/4.webp",
+      "sha256": "8c1cb083d7040982b6bb8cbd48370c32ef393ad4d7efc20afbc4792966e50e6f",
+      "anchors": {
+        "fixedFrontPodFastenerMaterialFeature1": { "x": 56, "y": 1374 },
+        "fixedFrontPodFastenerMaterialFeature2": { "x": 129, "y": 1375 }
+      },
+      "invariantDimensions": {
+        "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+        "oppositeFixedSupportProjectedFeatureSpan": 66
+      }
+    },
+    {
+      "path": "form-frames/bike/5.webp",
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "anchors": {
+        "fixedFrontPodFastenerMaterialFeature1": { "x": 56, "y": 1374 },
+        "fixedFrontPodFastenerMaterialFeature2": { "x": 129, "y": 1375 }
+      },
+      "invariantDimensions": {
+        "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+        "oppositeFixedSupportProjectedFeatureSpan": 66
+      }
+    },
+    {
+      "path": "form-frames/bike/6.webp",
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "anchors": {
+        "fixedFrontPodFastenerMaterialFeature1": { "x": 56, "y": 1374 },
+        "fixedFrontPodFastenerMaterialFeature2": { "x": 129, "y": 1375 }
+      },
+      "invariantDimensions": {
+        "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+        "oppositeFixedSupportProjectedFeatureSpan": 66
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-19-illustration-polish/bike.json",
+    "sha256": "534a228880e366dd7fbc956a772f4dfa6a8e8382dea9a0a47b2add52784e863a"
+  },
+  "historicalFindings": [
+    "Fixed bearing centre at native (498,1105), a clean shaded grey crank/bearing and the reference rear support in the opposed position. Original athlete, foot/strap and all upper-body pixels remain exact.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/bike.json",
+    "sha256": "c577718b871a47ee7b47a9c57c32ba6f808debd79aaf229af3448bbca801f9f2"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false,
+  "nativeSourceArchive": {
+    "path": "docs/exercise-art/sources/bike/2026-10-20-strict-review/native-source.zip",
+    "sha256": "9fe43af7edd10ee083a1dfd50b13f808d195aba80be58b50bb00ab3ce014b30a",
+    "bytes": 15051621,
+    "scope": "Preserve the original stationary front and rear floor pods at unchanged coordinates. No athlete or moving pedal pixels occur in the two equipment regions.",
+    "independentReproductionExact": true
+  }
+}

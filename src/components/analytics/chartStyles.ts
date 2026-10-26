@@ -26,6 +26,14 @@ export const CHART_TOOLTIP_STYLE = {
   padding: "8px 12px",
 };
 
+/**
+ * Between a series' name and its value in a tooltip row that Recharts
+ * draws itself ("Fitness: 6"). Its own default is " : ", a space before
+ * the colon, which no other line in the app writes; the charts that draw
+ * their own rows write "Trend: 70.2 kg" and "Estimated gap: +200 cal".
+ */
+export const CHART_TOOLTIP_SEPARATOR = ": ";
+
 /** The one horizontal-rules-only grid every analytics chart uses. */
 export const CHART_GRID_PROPS = {
   strokeDasharray: "3 3",

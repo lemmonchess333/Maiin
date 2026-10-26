@@ -157,3 +157,39 @@ describe("useNotifications — one account's tray", () => {
     expect(result.current.unreadCount).toBe(1);
   });
 });
+
+/* A Space post row opens the post, so the row has to bring the post's
+   address with it: the callables store `spaceId` and `postId`
+   (functions/index.js, kept by sanitiseNotificationData). */
+describe("useNotifications — what a Space post row carries", () => {
+  it("reads the Space and the post a like or comment is about", () => {
+    seedFirestore({
+      "notifications/me/items/n-like": {
+        type: "space_post_like",
+        fromUserId: "friend",
+        spaceId: "womens-running",
+        postId: "p-1",
+        createdAt: Timestamp.fromDate(new Date(Date.now() - 60_000)),
+      },
+      "notifications/me/items/n-old": {
+        type: "space_post_comment",
+        fromUserId: "friend",
+        spaceId: "womens-running",
+        postId: 7,
+        createdAt: Timestamp.fromDate(new Date(Date.now() - 120_000)),
+      },
+    });
+    const { result } = renderHook(() => useNotifications());
+    expect(
+      result.current.items.map(({ id, spaceId, postId }) => ({
+        id,
+        spaceId,
+        postId,
+      }))
+    ).toEqual([
+      { id: "n-like", spaceId: "womens-running", postId: "p-1" },
+      // Not a string, so not an address: the row opens the Space.
+      { id: "n-old", spaceId: "womens-running", postId: undefined },
+    ]);
+  });
+});

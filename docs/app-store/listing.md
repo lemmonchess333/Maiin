@@ -203,7 +203,7 @@ The analytics plugin still links Google's ad-ID support by default; see
 | Purchases        | Purchase history      | App functionality            | Subscription status, product and expiry                                                                                                                                    |
 | Usage data       | Product interaction   | App functionality, analytics | Screens and actions sent to Google Analytics, and social actions such as props and follows                                                                                 |
 | Usage data       | Other usage data      | App functionality, analytics | Last active time, AI scan counts, settings                                                                                                                                 |
-| Diagnostics      | Crash data            | App functionality            | Crash reports saved to the account (`src/lib/errorReporting.ts`)                                                                                                           |
+| Diagnostics      | Crash data            | App functionality            | Crash reports saved to the account (`src/lib/errorReporting.ts`); on iOS also sent to Firebase Crashlytics with the account uid (`src/lib/crashReporting.ts`)              |
 | Diagnostics      | Performance data      | Analytics                    | Screen load times sent to Google Analytics                                                                                                                                 |
 | Diagnostics      | Other diagnostic data | App functionality            | Error reports with the device model and system version                                                                                                                     |
 
@@ -266,7 +266,7 @@ Where to find things
 - Account deletion: Settings > Account > Delete account.
 - Reporting and blocking: "More options" on a post (Report activity, Block user), "Post options" on a Space post (Report post, Block user), the "More options" button beside someone else's comment (Report comment, Block user) and "More options" on a profile (Report user, Block user). Blocked people are listed in Settings > Social & privacy.
 - Photo screening: a photo attached to a Space post or set as a profile photo is checked by Google Cloud Vision's SafeSearch before anyone else can see it; a photo with nudity is refused and deleted. Text in posts and comments goes through the objectionable-text filter.
-- Privacy Policy, Terms and support contact: Settings > Help & legal.
+- Privacy Policy, Terms and support contact: Settings > Support & legal.
 
 Pro and In-App Purchase
 Tropos Pro is sold as monthly and yearly auto-renewable subscriptions through In-App Purchase, with a 7-day free trial for new subscribers. Pro adds meal logging from a photo, AI reading of typed meals, an adaptive calorie target, macros that follow the day's training, adaptive pace targets and road-following route planning. Everything else is free.
@@ -397,7 +397,7 @@ These are yours; none of them can be done from the code.
    The app is iPhone-only, so no iPad set is needed. Apple runs iPhone
    apps on an iPad too, and buying there now goes through the App Store
    as it does on an iPhone.
-6. **Moderation and email settings** (`docs/LAUNCH_TODO.md`, section 19):
+6. **Moderation and email settings** (`docs/launch/owner-steps-2026-10-14.md`, Part 1):
    `ADMIN_UIDS`, `MODERATION_ALERT_EMAIL`, `RESEND_FROM` and
    `PUBLIC_APP_BASE_URL` as repository variables on GitHub, then a
    Deploy production run. `ADMIN_UIDS` opens the moderation page in the

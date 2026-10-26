@@ -13,8 +13,7 @@
  *   - One unauthenticated-user branch (toast + inline error, no
  *     dead disabled CTA)
  *   - One success path (Stripe redirects internally; Apple IAP
- *     resolves into a Firestore subscriptionTier update via the
- *     verifyApplePurchase callable)
+ *     resolves into a Firestore subscriptionTier update via RevenueCat)
  *   - One analytics emission (checkout_started / checkout_failed)
  *   - Plan captured at submit time so a fast re-tap mid-flight
  *     can't swap the plan during the network round-trip
@@ -130,7 +129,15 @@ export function useProCheckout(): UseProCheckoutResult {
             withTrial: options.withTrial,
           }
         );
-        if (!result.success) {
+        if (!result.success && result.cancelled) {
+          // Closing the store's sheet is a choice, not an error.
+          track("checkout_cancelled", {
+            source: options.source ?? "unknown",
+            featureKey: options.featureKey,
+            selectedPlan: submittedPlan,
+            platform,
+          });
+        } else if (!result.success) {
           const message = result.error || "Couldn't start checkout. Try again.";
           setError(message);
           toast.error(message);
@@ -139,19 +146,18 @@ export function useProCheckout(): UseProCheckoutResult {
             featureKey: options.featureKey,
             selectedPlan: submittedPlan,
             platform,
-            error: message,
+            // What went wrong underneath, where there is more to say than
+            // the sentence shown.
+            error: result.detail ?? message,
           });
         }
         // Success path: on Stripe, purchase() has already navigated
-        // the window away. On Apple IAP, success is a verified
-        // transaction — Firestore picks up the new tier via the
-        // verifyApplePurchase callable. Either way nothing to do
-        // here beyond clearing the loading flag in finally.
+        // the window away. On Apple IAP, AuthProvider's subscription
+        // listener picks up the server-confirmed tier, including a delayed
+        // webhook when the best-effort sync fails. Restore uses the same
+        // listener, so neither surface needs its own refresh race.
       } catch (err) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Couldn't start checkout. Try again.";
+        const message = "Couldn't start checkout. Try again.";
         setError(message);
         toast.error(message);
         track("checkout_failed", {
@@ -159,7 +165,7 @@ export function useProCheckout(): UseProCheckoutResult {
           featureKey: options.featureKey,
           selectedPlan: submittedPlan,
           platform,
-          error: message,
+          error: err instanceof Error ? err.message : String(err),
         });
       } finally {
         setLoading(false);

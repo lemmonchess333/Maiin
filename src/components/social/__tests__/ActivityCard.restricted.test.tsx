@@ -32,7 +32,7 @@ vi.mock("../../../hooks/useRestrictedStatus", () => ({
   useRestrictedStatus: () => H.restriction,
 }));
 vi.mock("../../../hooks/useBlockedUsers", () => ({
-  useBlockedUsers: () => ({ addBlocked: vi.fn(), blockedUsers: new Set() }),
+  useBlockedUsers: () => ({ addBlocked: vi.fn(), blocked: new Set() }),
 }));
 vi.mock("../../../hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km",
@@ -105,6 +105,18 @@ describe("ActivityCard props — a restricted account (S4e)", () => {
     expect(H.toastError).toHaveBeenCalledWith(
       RESTRICTED_TOAST,
       expect.anything()
+    );
+  });
+
+  it("says so when props fail for any other reason, not just the haptic", async () => {
+    H.giveHighFive.mockRejectedValue(
+      Object.assign(new Error("unavailable"), { code: "functions/unavailable" })
+    );
+    renderCard();
+    await giveProps();
+    expect(screen.getByRole("button", { name: "Give props" })).toBeEnabled();
+    expect(H.toastError).toHaveBeenCalledWith(
+      "Couldn't give props. Try again."
     );
   });
 

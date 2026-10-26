@@ -1,0 +1,32 @@
+{
+  "baseline": "1d100f0f2d85efd4f70874e61306a2278edcf105",
+  "changedGuideFiles": 13,
+  "unchangedGuideFiles": 899,
+  "changedCards": 3,
+  "unchangedRegisteredCards": 149,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sets": [
+    {
+      "id": "barbell-curl",
+      "publicFramesExactToFrozenExport": true,
+      "normalCardExactToStaged": true,
+      "cardSha256": "501b25222afda50114df4f94636b287a7d0836f7fb07ba37eb9de248100f7ea8",
+      "changedFrames": [2, 3, 4, 5, 6]
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "publicFramesExactToFrozenExport": true,
+      "normalCardExactToStaged": true,
+      "cardSha256": "d0d4c73e0c51acb2c37bd5eaa6fbe3eb57fd00918a539811e833ed06c6f43e06",
+      "changedFrames": [3, 4]
+    },
+    {
+      "id": "turkish-get-up",
+      "publicFramesExactToFrozenExport": true,
+      "normalCardExactToStaged": true,
+      "cardSha256": "d63b993dcc6d66b8c7ec5c7c9844100421dd7c8dbf7209825252c2d87bf74174",
+      "changedFrames": [1, 2, 3, 4, 5, 6]
+    }
+  ],
+  "noOtherGuideOrCardChanges": true
+}

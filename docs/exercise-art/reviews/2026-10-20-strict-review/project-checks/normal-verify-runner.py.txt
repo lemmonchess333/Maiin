@@ -1,0 +1,54 @@
+import argparse, hashlib, json, os, pathlib, subprocess, time
+from datetime import datetime, timezone
+p=argparse.ArgumentParser()
+p.add_argument("--label",required=True)
+p.add_argument("--expected-head",required=True)
+p.add_argument("--require-clean",action="store_true")
+a=p.parse_args()
+repo=pathlib.Path(r"C:\Users\myles\Documents\Codex\2026-10-04\lg\work\Maiin-burpees")
+root=pathlib.Path(r"C:\Users\myles\Documents\Codex\2026-10-04\lg\work\remaining19-execution-20261015\checks")
+root.mkdir(parents=True,exist_ok=True)
+out=root/a.label
+out.mkdir(exist_ok=False)
+node=pathlib.Path(r"C:\Users\myles\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe")
+npm=pathlib.Path(r"C:\Users\myles\Documents\Codex\2026-10-04\lg\work\merge-reviewed-20261012\runtime\node_modules\npm\bin\npm-cli.js")
+def git(*args): return subprocess.check_output(["git",*args],cwd=repo).decode("utf-8")
+def sha(b): return hashlib.sha256(b).hexdigest()
+def save(name,obj): (out/name).write_text(json.dumps(obj,indent=2)+"\n",encoding="utf-8")
+head=git("rev-parse","HEAD").strip()
+status=git("status","--porcelain=v1")
+if head!=a.expected_head: raise RuntimeError("Unexpected HEAD")
+if a.require_clean and status: raise RuntimeError("Baseline is not clean")
+tracked=git("ls-files","-z").split("\0")
+inputs=[x for x in tracked if x and (x.startswith(("src/","scripts/","functions/")) or "/" not in x) and (repo/x).is_file()]
+before={x:sha((repo/x).read_bytes()) for x in inputs}
+save("inputs-before.json",before)
+snapshots=[x for x in tracked if x and "planSweep" in x and x.endswith(".snap")]
+original={x:(repo/x).read_bytes() for x in snapshots}
+for i,(name,data) in enumerate(original.items()): (out/("snapshot-before-"+str(i)+".snap")).write_bytes(data)
+started=datetime.now(timezone.utc).isoformat()
+save("start.json",{"startedAt":started,"head":head,"tree":git("rev-parse","HEAD^{tree}").strip(),"status":status,"command":[str(node),str(npm),"run","verify"],"nodeSha256":sha(node.read_bytes()),"npmCliSha256":sha(npm.read_bytes()),"snapshotPaths":snapshots,"helperSha256":sha(pathlib.Path(__file__).read_bytes())})
+env=os.environ.copy()
+env["PATH"]=str(npm.parent.parent.parent/".bin")+";"+str(node.parent)+r";C:\Program Files\Git\bin;"+env.get("PATH","")
+t=time.monotonic()
+with (out/"verify.log").open("wb") as log:
+    result=subprocess.run([str(node),str(npm),"run","verify"],cwd=repo,env=env,stdout=log,stderr=subprocess.STDOUT)
+duration=time.monotonic()-t
+raw_status=git("status","--porcelain=v1")
+restored=[]
+for i,(name,data) in enumerate(original.items()):
+    actual=(repo/name).read_bytes()
+    if actual!=data:
+        (out/("snapshot-test-output-"+str(i)+".snap")).write_bytes(actual)
+        (repo/name).write_bytes(data)
+        restored.append({"path":name,"originalSha256":sha(data),"testOutputSha256":sha(actual),"restoredExact":(repo/name).read_bytes()==data})
+after={x:sha((repo/x).read_bytes()) if (repo/x).is_file() else None for x in inputs}
+save("inputs-after.json",after)
+changed=[x for x in inputs if before[x]!=after[x]]
+final_status=git("status","--porcelain=v1")
+final_head=git("rev-parse","HEAD").strip()
+report={"startedAt":started,"finishedAt":datetime.now(timezone.utc).isoformat(),"normalCommand":"npm run verify","exitCode":result.returncode,"durationSeconds":duration,"headBefore":head,"headAfter":final_head,"headUnchanged":head==final_head,"statusBefore":status,"statusAfterTestBeforeSnapshotRestore":raw_status,"statusAfter":final_status,"statusRestored":status==final_status,"snapshotRestores":restored,"inputCount":len(inputs),"changedInputsAfterRestoration":changed,"allInputsUnchanged":not changed,"log":str(out/"verify.log"),"logSha256":sha((out/"verify.log").read_bytes()),"fullVerificationPassed":result.returncode==0}
+save("result.json",report)
+print(json.dumps(report,indent=2))
+if changed or head!=final_head or status!=final_status: raise RuntimeError("Frozen verification inputs changed")
+

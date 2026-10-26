@@ -45,10 +45,9 @@ export default function FirstMealCard({
           />
         </div>
         <div className="flex-1 min-w-0">
-          <p
-            className="text-xs font-semibold mb-0.5"
-            style={{ color: THEME.semantic.nutrition }}
-          >
+          {/* The -strong step: the identity orange is a fill, and as 12px
+              text on this tint it reads under 3:1. */}
+          <p className="text-xs font-semibold mb-0.5 text-nutrition-strong">
             Today · Rest day
           </p>
           <p className="text-sm font-bold text-foreground truncate">
@@ -58,13 +57,9 @@ export default function FirstMealCard({
             Snap a photo or search
           </p>
         </div>
-        <div
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm"
-          style={{
-            backgroundColor: THEME.semantic.nutrition,
-            color: "white",
-          }}
-        >
+        {/* The nutrition variant's fill, so the white "Log" clears AA:
+            on the identity orange it measured 2.8:1. */}
+        <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm bg-nutrition-fill text-white">
           <Plus className="size-3" />
           Log
         </div>

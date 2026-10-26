@@ -5,8 +5,7 @@
  * code used only `navigator.vibrate`, which iOS Safari has never
  * implemented. The W1f fix routes to Capacitor's native Haptics
  * plugin on native shells and falls back to `navigator.vibrate` on
- * the web. Listed in LAUNCH_TODO.md item 23 as "Haptics platform
- * branching — real test value would be especially high".
+ * the web.
  *
  * This suite pins:
  *  - Web path: navigator.vibrate is called with the right argument

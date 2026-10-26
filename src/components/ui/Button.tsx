@@ -46,10 +46,10 @@
  *   - md   44px tall — DEFAULT. Meets iOS HIG 44pt touch-target rule.
  *   - lg   52px tall — for hero CTAs.
  *
- * Loading state: pass `loading` to swap the content for a Loader2
- * spinner. Sets `aria-busy="true"` and `disabled` together; the
- * spinner is `aria-hidden` so screen readers announce the parent
- * button's busy state, not the spinner itself.
+ * Loading state: pass `loading` to visually swap the content for a
+ * Loader2 spinner while preserving the label for screen readers.
+ * Sets `aria-busy="true"` and `disabled` together; the spinner is
+ * `aria-hidden` so it does not replace the button's accessible name.
  *
  * Icon-only buttons: use the dedicated `<IconButton>` component
  * (./IconButton.tsx). It enforces `aria-label` at compile time, sets
@@ -118,13 +118,16 @@ function Button({
       {...rest}
     >
       {loading ? (
-        <Loader2
-          aria-hidden="true"
-          className={cn(
-            "animate-spin",
-            size === "sm" ? "size-3.5" : size === "lg" ? "size-5" : "size-4"
-          )}
-        />
+        <>
+          <Loader2
+            aria-hidden="true"
+            className={cn(
+              "animate-spin",
+              size === "sm" ? "size-3.5" : size === "lg" ? "size-5" : "size-4"
+            )}
+          />
+          <span className="sr-only">{children}</span>
+        </>
       ) : (
         <>
           {leftIcon ? (

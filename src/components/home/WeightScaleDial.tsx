@@ -163,6 +163,11 @@ export default function WeightScaleDial({
     };
     frame.current = requestAnimationFrame(coast);
   };
+  /* A faded numeral reads as broken text, not as the drum curving away:
+     a label too faint to hold is left out, and one that shows keeps at
+     least 0.6 of its colour. The strokes still fade to nothing. */
+  const LABEL_HIDE_BELOW = 0.45;
+  const LABEL_MIN_OPACITY = 0.6;
   const ticks = Array.from(
     { length: 45 },
     (_, index) => Math.floor(position) - 22 + index
@@ -362,7 +367,7 @@ export default function WeightScaleDial({
           className="pointer-events-none absolute inset-0"
         >
           {marks
-            .filter((mark) => mark.major && mark.edgeFade > 0)
+            .filter((mark) => mark.major && mark.edgeFade >= LABEL_HIDE_BELOW)
             .map((mark) => (
               <span
                 key={mark.tick}
@@ -370,7 +375,7 @@ export default function WeightScaleDial({
                 style={{
                   left: `${(mark.labelX / 360) * 100}%`,
                   top: `${(mark.labelY / 128) * 100}%`,
-                  opacity: mark.edgeFade,
+                  opacity: Math.max(LABEL_MIN_OPACITY, mark.edgeFade),
                 }}
               >
                 {mark.label}

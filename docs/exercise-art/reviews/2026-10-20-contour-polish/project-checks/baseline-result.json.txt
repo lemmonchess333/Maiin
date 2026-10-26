@@ -1,0 +1,21 @@
+{
+  "startedAt": "2026-10-20T18:36:38.558687+00:00",
+  "finishedAt": "2026-10-20T18:38:07.406989+00:00",
+  "normalCommand": "npm run verify",
+  "exitCode": 9009,
+  "durationSeconds": 87.875,
+  "headBefore": "f9eb81072656598ce771953c264f8d7ea3d6f2a1",
+  "headAfter": "f9eb81072656598ce771953c264f8d7ea3d6f2a1",
+  "headUnchanged": true,
+  "statusBefore": "",
+  "statusAfterTestBeforeSnapshotRestore": "",
+  "statusAfter": "",
+  "statusRestored": true,
+  "snapshotRestores": [],
+  "inputCount": 2789,
+  "changedInputsAfterRestoration": [],
+  "allInputsUnchanged": true,
+  "log": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\contour-baseline-f9eb8107-20261020\\verify.log",
+  "logSha256": "384c7f81862a19a3f1dcb5df8b87636d0bed1a8cbee7cd6a1d1e74af2d2c0aba",
+  "fullVerificationPassed": false
+}

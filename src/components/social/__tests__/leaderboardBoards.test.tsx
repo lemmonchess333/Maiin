@@ -1,13 +1,7 @@
 /**
- * LeaderboardCard and FullLeaderboard each show ONE board, stamped with
- * the account and the board (the card's `challenge`, the full view's tab)
- * it was built for. Both derive their loading state and their rows from
- * that stamp, so:
- *   - a different board reads as loading until its own read lands — never
- *     as the previous board's athletes under the new board's name;
- *   - a slower read for a board already left can't land under the one on
- *     screen. Before, the full view had no guard at all: whichever tab's
- *     read finished LAST wrote its entries, under whichever tab was open.
+ * The friends board on both surfaces (Polish2 call 5), against the
+ * Firestore fake: one read of the week's tallies, each board ranked from
+ * it, and the signed-in person's own "Show my week" row until they choose.
  */
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -17,115 +11,209 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-import type { ChallengeType, LeaderboardEntry } from "@/lib/leaderboard";
+import type { ChallengeType } from "@/lib/leaderboard";
 
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {} }));
+vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
 
 const h = vi.hoisted(() => ({
-  boards: {} as Partial<Record<string, () => Promise<LeaderboardEntry[]>>>,
-  /* One object for the whole run, as AuthProvider holds it: both
-     components key their read effect on `user`, so a fresh object per
-     render would restart the read on every render. */
-  auth: { user: { uid: "me" }, profile: { displayName: "Me" } },
+  /* One object per test, as AuthProvider holds it: the board's read keys
+     on the uid, and a fresh object per render must not restart it. */
+  auth: {
+    user: { uid: "me", displayName: "Me" },
+    profile: { displayName: "Me" } as Record<string, unknown>,
+    refreshProfile: vi.fn(async () => {}),
+  },
+  share: vi.fn(async (_share: boolean) => {}),
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => h.auth,
   useUid: () => h.auth.user.uid,
 }));
-/* Partial: the names and units stay the real shared table; only the
-   board read is scripted per test. */
-vi.mock("@/lib/leaderboard", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/leaderboard")>()),
-  buildLeaderboard: (_uid: string, type: ChallengeType) => h.boards[type]!(),
+vi.mock("@/lib/boardSharing", () => ({
+  setBoardSharing: (share: boolean) => h.share(share),
 }));
+vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
+import { Timestamp } from "firebase/firestore";
 import LeaderboardCard from "../LeaderboardCard";
 import FullLeaderboard from "../FullLeaderboard";
 import { CHALLENGE_LABELS } from "@/lib/leaderboard";
-import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
+import {
+  failNextFirestore,
+  readLog,
+  resetFirestore,
+  seedFirestore,
+} from "@/test/firestoreHarness";
 
-/** `n` athletes with activity this week, highest first. */
-function athletes(n: number, prefix: string): LeaderboardEntry[] {
-  return Array.from({ length: n }, (_, i) => ({
-    uid: `${prefix}-${i}`,
-    name: "",
-    value: n - i,
-    rank: i + 1,
-  }));
-}
+const DAY = 86400000;
+const tally = (fields: Record<string, number>) => ({
+  weekEndsAt: Timestamp.fromMillis(Date.now() + 3 * DAY),
+  sessions: 0,
+  lifts: 0,
+  runs: 0,
+  distanceM: 0,
+  volumeKg: 0,
+  ...fields,
+});
 
-const never = () => new Promise<LeaderboardEntry[]>(() => {});
+/* Maya runs, Sam lifts heavy, you lift twice; Jo shares an empty week. */
+const BOARD = {
+  "following/me/users/maya": { followedAt: 1 },
+  "following/me/users/sam": { followedAt: 1 },
+  "following/me/users/jo": { followedAt: 1 },
+  "users/maya/public/profile": { displayName: "Maya" },
+  "users/sam/public/profile": { displayName: "Sam" },
+  "users/jo/public/profile": { displayName: "Jo" },
+  "users/me/public/profile": { displayName: "Me" },
+  "friendsBoard/maya": tally({ sessions: 3, runs: 3, distanceM: 15400 }),
+  "friendsBoard/sam": tally({ sessions: 1, lifts: 1, volumeKg: 4000 }),
+  "friendsBoard/me": tally({ sessions: 2, lifts: 2, volumeKg: 1800 }),
+  "friendsBoard/jo": tally({}),
+};
+
+const rowNames = () =>
+  screen.queryAllByText(/^(Maya|Sam|You|Jo)$/).map((el) => el.textContent);
 
 beforeEach(() => {
   resetFirestore();
-  h.boards = {};
+  h.auth = {
+    user: { uid: "me", displayName: "Me" },
+    profile: { displayName: "Me", showWeekOnBoard: true },
+    refreshProfile: vi.fn(async () => {}),
+  };
+  h.share.mockReset().mockResolvedValue(undefined);
 });
 afterEach(() => cleanup());
 
 describe("LeaderboardCard", () => {
-  it("a different board reads as loading until its own read lands", async () => {
-    seedFirestore({
-      "users/hy-0/public/profile": { displayName: "Hybrid Leader" },
-    });
-    h.boards = {
-      weekly_hybrid: async () => athletes(3, "hy"),
-      weekly_distance: never,
-    };
-    const view = render(<LeaderboardCard challenge="weekly_hybrid" />);
-    // POSITIVE anchor: the first board's athletes are showing.
-    expect(await screen.findByText("Hybrid Leader")).toBeInTheDocument();
+  it("ranks this week's sessions, leaving out anyone with none", async () => {
+    seedFirestore(BOARD);
+    render(<LeaderboardCard />);
 
-    view.rerender(<LeaderboardCard challenge="weekly_distance" />);
+    expect(await screen.findByText("Maya")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: CHALLENGE_LABELS.weekly_sessions.title,
+      })
+    ).toBeInTheDocument();
+    expect(rowNames()).toEqual(["Maya", "You", "Sam"]);
+    expect(screen.getByText("session")).toBeInTheDocument();
+  });
+
+  it("a board nobody shares yet says what fills it", async () => {
+    seedFirestore({ "following/me/users/maya": { followedAt: 1 } });
+    render(<LeaderboardCard />);
 
     expect(
-      screen.getByRole("status", { name: "Loading leaderboard" })
+      await screen.findByText("Nothing to compare yet")
     ).toBeInTheDocument();
-    expect(screen.queryByText("Hybrid Leader")).toBeNull();
   });
+
+  it("a board that could not be read says so, and Try again reads it again", async () => {
+    seedFirestore(BOARD);
+    failNextFirestore("getDocs", {
+      path: "following/me/users",
+      code: "unavailable",
+    });
+    render(<LeaderboardCard />);
+
+    expect(
+      await screen.findByText("Couldn’t load the board.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Nothing to compare yet")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Maya")).toBeInTheDocument();
+  });
+});
+
+describe("Show my week", () => {
+  it("asks until the person chooses, and sharing reads the board again", async () => {
+    h.auth.profile = { displayName: "Me" };
+    seedFirestore(BOARD);
+    render(<LeaderboardCard />);
+    await screen.findByText("Maya");
+    const readsBefore = readLog().filter((r) =>
+      r.path.startsWith("following/")
+    ).length;
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Show my week" }));
+    });
+
+    expect(h.share).toHaveBeenCalledWith(true);
+    expect(h.auth.refreshProfile).toHaveBeenCalledOnce();
+    expect(
+      readLog().filter((r) => r.path.startsWith("following/")).length
+    ).toBe(readsBefore + 1);
+  });
+
+  it.each([true, false])(
+    "is not asked once they have chosen (%s)",
+    async (choice) => {
+      h.auth.profile = { displayName: "Me", showWeekOnBoard: choice };
+      seedFirestore(BOARD);
+      render(<LeaderboardCard />);
+      await screen.findByText("Maya");
+
+      expect(screen.queryByRole("button", { name: "Show my week" })).toBeNull();
+    }
+  );
 });
 
 describe("FullLeaderboard", () => {
   const openTab = (type: ChallengeType) =>
     fireEvent.click(
-      screen.getByRole("button", { name: CHALLENGE_LABELS[type].title })
+      screen.getByRole("radio", { name: CHALLENGE_LABELS[type].title })
     );
 
-  it("a tab switch reads as loading until the new tab's read lands", async () => {
-    h.boards = {
-      weekly_hybrid: async () => athletes(3, "hy"),
-      weekly_volume: never,
-    };
+  it("has a Sessions, a Distance and a Volume board, and no points", () => {
+    seedFirestore(BOARD);
     render(<FullLeaderboard onBack={() => {}} />);
-    // POSITIVE anchor: the first tab's board (a sub-cohort one) is showing.
-    expect(await screen.findByText(/3 active this week/)).toBeInTheDocument();
 
-    openTab("weekly_volume");
-
-    expect(screen.queryByText(/active this week/)).toBeNull();
-    expect(screen.queryByText("No activity this week")).toBeNull();
+    expect(
+      ["weekly_sessions", "weekly_distance", "weekly_volume"].map((type) =>
+        screen.getByRole("radio", {
+          name: CHALLENGE_LABELS[type as ChallengeType].title,
+        })
+      )
+    ).toHaveLength(3);
+    expect(screen.queryByText(/pts/)).toBeNull();
   });
 
-  it("a slower read for a tab already left can't land under the one on screen", async () => {
-    let landHybrid!: (entries: LeaderboardEntry[]) => void;
-    h.boards = {
-      weekly_hybrid: () =>
-        new Promise<LeaderboardEntry[]>((resolve) => {
-          landHybrid = resolve;
-        }),
-      weekly_volume: async () => athletes(5, "vol"),
-    };
+  it("each tab ranks the same read: switching reads nothing new", async () => {
+    seedFirestore(BOARD);
     render(<FullLeaderboard onBack={() => {}} />);
+    // Below Soc8's cohort gate, the board says how many are active.
+    expect(await screen.findByText(/3 active this week/)).toBeInTheDocument();
+    const reads = readLog().length;
+
+    openTab("weekly_distance");
+    expect(screen.getByText(/1 active this week/)).toBeInTheDocument();
     openTab("weekly_volume");
-    // POSITIVE anchor: the tab on screen has its own board.
-    expect(await screen.findByText(/5 active this week/)).toBeInTheDocument();
+    expect(screen.getByText(/2 active this week/)).toBeInTheDocument();
 
-    // The first tab's read finishes late.
-    await act(async () => {
-      landHybrid(athletes(3, "hy"));
+    expect(readLog().length).toBe(reads);
+  });
+
+  it("a board that could not be read says so rather than looking empty", async () => {
+    seedFirestore(BOARD);
+    failNextFirestore("getDocs", {
+      path: "following/me/users",
+      code: "unavailable",
     });
+    render(<FullLeaderboard onBack={() => {}} />);
 
-    expect(screen.getByText(/5 active this week/)).toBeInTheDocument();
-    expect(screen.queryByText(/3 active this week/)).toBeNull();
+    expect(
+      await screen.findByText("Couldn’t load the board.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No activity this week")).toBeNull();
+
+    // Try again reads it again: four athletes this week, under the cohort
+    // gate, so the board says how many rather than ranking them.
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText(/active this week/)).toBeInTheDocument();
+    expect(screen.queryByText("Couldn’t load the board.")).toBeNull();
   });
 });

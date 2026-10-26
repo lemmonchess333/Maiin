@@ -36,7 +36,7 @@ const OWNED: Record<string, ReadonlySet<string> | undefined> = {
 
 /** The generator's lifts each injury option's words name. */
 const PROMISED: Record<string, readonly string[]> = {
-  // "We'll avoid heavy axial loading"
+  // "Avoids heavy loads on your spine"
   lower_back: [
     "deadlift",
     "db-rdl",
@@ -45,9 +45,9 @@ const PROMISED: Record<string, readonly string[]> = {
     "front-squat",
     "overhead-press",
   ],
-  // "We'll adjust squat and lunge variations"
+  // "Adjusts squat and lunge variations"
   knee: ["squat", "front-squat", "hack-squat", "leg-press"],
-  // "We'll modify pressing movements"
+  // "Adjusts pressing movements"
   shoulder: [
     "overhead-press",
     "db-shoulder-press",
@@ -56,7 +56,7 @@ const PROMISED: Record<string, readonly string[]> = {
     "tricep-dips",
     "pull-ups",
   ],
-  // "We'll swap heavy curls/dips for cable work"
+  // "Swaps heavy curls and dips for cable work"
   elbow: [
     "barbell-curl",
     "db-curl",
@@ -66,7 +66,7 @@ const PROMISED: Record<string, readonly string[]> = {
     "skull-crushers",
     "overhead-extension",
   ],
-  // "We'll pick neutral-grip and machine variants"
+  // "Picks neutral-grip and machine variants"
   wrist: [
     "bench-press",
     "overhead-press",

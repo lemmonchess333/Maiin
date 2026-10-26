@@ -200,6 +200,26 @@ describe("addComment", () => {
     expect(updateOp.data.commentCount).toEqual({ tag: INC_TAG, by: 1 });
   });
 
+  it("caps the stored name at the display-name limit", async () => {
+    const { addComment } = require("../lib/socialCounters");
+    const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
+    const firestore = makeFirestoreStub({
+      initial: { "activities/A1": { commentCount: 0 } },
+    });
+    await addComment({
+      firestore,
+      uid: "alice",
+      activityId: "A1",
+      text: "Nice run!",
+      authorName: "A".repeat(80),
+      increment,
+      serverTimestamp,
+    });
+    const setOp = firestore._writes.find((w) => w.op === "set");
+    expect(MAX_DISPLAY_NAME_LENGTH).toBe(50);
+    expect(setOp.data.authorName).toBe("A".repeat(50));
+  });
+
   it("Cycle 2: blank text → rejected", async () => {
     const { addComment } = require("../lib/socialCounters");
     const firestore = makeFirestoreStub({

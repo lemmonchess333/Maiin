@@ -1,0 +1,79 @@
+[
+  {
+    "id": "assault-bike",
+    "archiveSha256": "874688e96ed98c8cd493f57bd39e4652eb7a689349d4de7460a402035fd913f1",
+    "archiveBytes": 12383886,
+    "allOutputBytesExact": true,
+    "outputCount": 15
+  },
+  {
+    "id": "barbell-curl",
+    "archiveSha256": "7c493f42f406245d588c9d9470963b8ea8dbdea76a9138bd50f7ff2a2e98bc0c",
+    "archiveBytes": 6387649,
+    "allOutputBytesExact": true,
+    "outputCount": 17
+  },
+  {
+    "id": "bike",
+    "archiveSha256": "74d43de7d577b8b30b76d1d6fae146fb1f85feb7c997c99dd5862c7cbb5551aa",
+    "archiveBytes": 14951208,
+    "allOutputBytesExact": true,
+    "outputCount": 15
+  },
+  {
+    "id": "goblet-squat",
+    "archiveSha256": "ddc11e1cde04d7470cc756a166678823b373b8afecdd79fa8d1660cdcc7c5ea3",
+    "archiveBytes": 6111843,
+    "allOutputBytesExact": true,
+    "outputCount": 17
+  },
+  {
+    "id": "overhead-press",
+    "archiveSha256": "8707083acbeae14a8b0536a6ad9b15f183ebf3ca6453ca4a0dab6f0aa97751f6",
+    "archiveBytes": 14523970,
+    "allOutputBytesExact": true,
+    "outputCount": 16
+  },
+  {
+    "id": "side-plank",
+    "archiveSha256": "af47d52e6c8577877d9f798974bbdddad1bcfa9030153a15e7087e1a2eb7e677",
+    "archiveBytes": 11026637,
+    "allOutputBytesExact": true,
+    "outputCount": 15
+  },
+  {
+    "id": "spin-bike",
+    "archiveSha256": "ac4a72aa45751cddacacfdee7227288c4da69ee71ccef759381ab83bd846fb53",
+    "archiveBytes": 2853916,
+    "allOutputBytesExact": true,
+    "outputCount": 16
+  },
+  {
+    "id": "squat",
+    "archiveSha256": "884797915c0ebcd6733be218db5831c52afcc83f856634790a1cc0f69a505d98",
+    "archiveBytes": 8263463,
+    "allOutputBytesExact": true,
+    "outputCount": 18
+  },
+  {
+    "id": "stairmaster",
+    "archiveSha256": "fd07d551b68c6312528b7a4c9fa7c89274d65e08d2093bfb85ab9e54b6be3bc0",
+    "archiveBytes": 10768899,
+    "allOutputBytesExact": true,
+    "outputCount": 15
+  },
+  {
+    "id": "swimming",
+    "archiveSha256": "b210caa284fa6e93fe6e7718247b6f6b44b052c8c6390bb3e082765fd863b44b",
+    "archiveBytes": 16873504,
+    "allOutputBytesExact": true,
+    "outputCount": 20
+  },
+  {
+    "id": "turkish-get-up",
+    "archiveSha256": "abdda62ca31521de0014560bc7a92e94c2b22af59679a2c0b2118184a81239a8",
+    "archiveBytes": 6190512,
+    "allOutputBytesExact": true,
+    "outputCount": 19
+  }
+]

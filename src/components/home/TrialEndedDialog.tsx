@@ -1,6 +1,6 @@
-import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
 
 /**
  * TrialEndedDialog — the one-time prompt on Home when the 7-day trial
@@ -23,25 +23,18 @@ interface Props {
 }
 
 export default function TrialEndedDialog({ onDismiss, onKeep }: Props) {
+  /* The shared dialog: focus moves in (to Not now) and stays there,
+     Escape and the device's Back mean Not now, and focus goes back where
+     it was. Home mounts this only while the prompt is due. */
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 z-40"
-        onClick={onDismiss}
-        data-testid="trial-ended-backdrop"
-      />
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="trial-ended-title"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto rounded-2xl bg-card p-6 space-y-4 shadow-xl border border-border/50"
-      >
+    <Dialog
+      open
+      onClose={onDismiss}
+      labelledBy="trial-ended-title"
+      size="md"
+      className="p-6"
+    >
+      <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Sparkles className="size-5 text-primary" aria-hidden="true" />
           <p
@@ -71,7 +64,7 @@ export default function TrialEndedDialog({ onDismiss, onKeep }: Props) {
             Keep Pro
           </Button>
         </div>
-      </motion.div>
-    </>
+      </div>
+    </Dialog>
   );
 }

@@ -15,15 +15,16 @@
  * the installed native Firebase Messaging plugin's FCM token. Neither refresh
  * path requests notification permission.
  */
-import {
-  deleteToken,
-  getMessaging,
-  getToken,
-  isSupported,
-  onMessage,
-} from "firebase/messaging";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app, auth } from "@/lib/firebaseApp";
+
+/* The web push SDK on first use, not at import. AuthProvider imports this
+   module eagerly, so a static import would put firebase/messaging on every
+   cold start, the iPhone app's included, where push is the native plugin's.
+   Every use below is already async. */
+function messaging() {
+  return import("firebase/messaging");
+}
 
 /* Firestore on first read, not at import. AuthProvider imports this module
    eagerly (it releases the device token on sign-out), so a static Firestore
@@ -134,6 +135,7 @@ export async function isPushSupported(): Promise<boolean> {
     return false;
   }
   try {
+    const { isSupported } = await messaging();
     return await isSupported();
   } catch {
     return false;
@@ -168,6 +170,7 @@ async function hasRemotePushPermission(): Promise<boolean> {
 async function getDevicePushToken(): Promise<string | null> {
   if (isNativePlatform()) return getNativePushToken();
   const registration = await getAppServiceWorkerRegistration();
+  const { getMessaging, getToken } = await messaging();
   return getToken(getMessaging(app), {
     vapidKey: VAPID_KEY,
     serviceWorkerRegistration: registration,
@@ -175,8 +178,12 @@ async function getDevicePushToken(): Promise<string | null> {
 }
 
 async function deleteDevicePushToken(): Promise<void> {
-  if (isNativePlatform()) await deleteNativePushToken();
-  else await deleteToken(getMessaging(app));
+  if (isNativePlatform()) {
+    await deleteNativePushToken();
+    return;
+  }
+  const { deleteToken, getMessaging } = await messaging();
+  await deleteToken(getMessaging(app));
 }
 
 export type PushRegisterResult =
@@ -198,7 +205,19 @@ type StoredDeviceBinding = {
   bindingId: string;
   /** Absent on existing v2 web bindings. */
   platform?: "web" | "ios";
+  /** When the server last confirmed the claim. Absent until it has: the
+   *  binding is written before the claim, so its presence alone proves
+   *  nothing. */
+  claimedAtMs?: number;
 };
+
+/** How long a confirmed claim of an unchanged token stands for the app's
+ *  own refreshes (each return to the app). Releasing and claiming again
+ *  leaves the server a revocation fence for 24 hours, and past 64 live
+ *  fences it refuses a release, which sign-out needs; so a refresh only
+ *  re-claims an unchanged token twice a day. A new token, an explicit
+ *  enable and a sign-in still claim at once. */
+const CLAIM_REUSE_MS = 12 * 3_600_000;
 
 type PushTokenCallableInput = {
   ownerUid: string;
@@ -232,7 +251,9 @@ function isStoredDeviceBinding(value: unknown): value is StoredDeviceBinding {
     /^[A-Za-z0-9_-]{16,128}$/.test((value as StoredDeviceBinding).bindingId) &&
     ((value as StoredDeviceBinding).platform === undefined ||
       (value as StoredDeviceBinding).platform === "web" ||
-      (value as StoredDeviceBinding).platform === "ios")
+      (value as StoredDeviceBinding).platform === "ios") &&
+    ((value as StoredDeviceBinding).claimedAtMs === undefined ||
+      Number.isFinite((value as StoredDeviceBinding).claimedAtMs))
   );
 }
 
@@ -332,6 +353,15 @@ function isCallableNotDeployed(error: unknown): boolean {
   );
 }
 
+/** The server refused because this account is being, or has been,
+ *  deleted (accountDeletionLocks: failed-precondition, with the stable
+ *  errorCode on details). */
+function isAccountDeletionRefusal(error: unknown): boolean {
+  const errorCode = (error as { details?: { errorCode?: unknown } } | null)
+    ?.details?.errorCode;
+  return errorCode === "account-deleting" || errorCode === "account-deleted";
+}
+
 function removeBindingIfStillCurrent(
   uid: string,
   binding: StoredDeviceBinding,
@@ -345,11 +375,19 @@ function removeBindingIfStillCurrent(
 }
 
 // ── registration (serialised per uid) ───────────────────────────────────
-export function registerDeviceToken(uid: string): Promise<PushRegisterResult> {
+/**
+ * `reuseFreshClaim`: the app's own refresh. When this device's token is the
+ * one the server confirmed for this account within CLAIM_REUSE_MS, nothing
+ * is sent.
+ */
+export function registerDeviceToken(
+  uid: string,
+  { reuseFreshClaim = false }: { reuseFreshClaim?: boolean } = {}
+): Promise<PushRegisterResult> {
   const existing = pendingRegistrations.get(uid);
   if (existing) return existing;
 
-  const operation = registerDeviceTokenInternal(uid);
+  const operation = registerDeviceTokenInternal(uid, reuseFreshClaim);
   pendingRegistrations.set(uid, operation);
   const clear = () => {
     if (pendingRegistrations.get(uid) === operation) {
@@ -360,8 +398,24 @@ export function registerDeviceToken(uid: string): Promise<PushRegisterResult> {
   return operation;
 }
 
+function isFreshClaim(
+  binding: StoredDeviceBinding,
+  token: string,
+  platform: "web" | "ios",
+  nowMs: number
+): boolean {
+  return (
+    binding.token === token &&
+    (binding.platform ?? "web") === platform &&
+    typeof binding.claimedAtMs === "number" &&
+    binding.claimedAtMs <= nowMs &&
+    nowMs - binding.claimedAtMs < CLAIM_REUSE_MS
+  );
+}
+
 async function registerDeviceTokenInternal(
-  uid: string
+  uid: string,
+  reuseFreshClaim: boolean
 ): Promise<PushRegisterResult> {
   if (!uid) return { ok: false, reason: "no-uid" };
   const generation = tokenLifecycleGeneration;
@@ -384,7 +438,15 @@ async function registerDeviceTokenInternal(
       return { ok: false, reason: "account-changed" };
     }
 
+    const platform = isNativePlatform() ? "ios" : "web";
     const previous = readStoredDeviceBindings()[uid];
+    if (
+      reuseFreshClaim &&
+      previous &&
+      isFreshClaim(previous, token, platform, Date.now())
+    ) {
+      return { ok: true, token };
+    }
     if (previous) {
       // If a prior request is still in flight, this writes its durable fence
       // before a new binding can replace it.
@@ -398,7 +460,7 @@ async function registerDeviceTokenInternal(
     const binding: StoredDeviceBinding = {
       token,
       bindingId: newBindingId(),
-      platform: isNativePlatform() ? "ios" : "web",
+      platform,
     };
     const latest = readStoredDeviceBindings();
     latest[uid] = binding;
@@ -409,6 +471,12 @@ async function registerDeviceTokenInternal(
     await claimBinding(uid, binding);
     if (!isRegistrationCurrent(uid, generation)) {
       return { ok: false, reason: "account-changed" };
+    }
+    // The server confirmed it: record when, if nothing has replaced it.
+    const claimed = readStoredDeviceBindings();
+    if (sameBinding(claimed[uid], binding)) {
+      claimed[uid] = { ...binding, claimedAtMs: Date.now() };
+      writeStoredDeviceBindings(claimed);
     }
     return { ok: true, token };
   } catch (error) {
@@ -477,9 +545,18 @@ export async function unregisterDeviceToken(uid: string): Promise<void> {
       );
       return;
     }
-    // Preserve the binding; a later same-account session can retry safely.
-    logger.error("[push] unregisterDeviceToken failed", error);
-    throw error;
+    if (isAccountDeletionRefusal(error)) {
+      // The deletion removes this device's claim itself (accountDeletion.js,
+      // FCM token claims), so there is nothing left to release. Failing
+      // closed here kept a person whose deletion was under way from
+      // signing out. The local token still goes, below.
+      logger.warn("[push] release refused for a deleting account", error);
+      if (binding) removeBindingIfStillCurrent(uid, binding, generation);
+    } else {
+      // Preserve the binding; a later same-account session can retry safely.
+      logger.error("[push] unregisterDeviceToken failed", error);
+      throw error;
+    }
   }
 
   // Server release is the Auth safety barrier. Once it has succeeded, a
@@ -537,7 +614,7 @@ export async function refreshDeviceTokenForCurrentUser(
       ...(snapshot.exists() ? (snapshot.data() as Partial<PushConsent>) : {}),
     };
     if (!consent.enabled) return;
-    await registerDeviceToken(uid);
+    await registerDeviceToken(uid, { reuseFreshClaim: true });
   } catch (error) {
     logger.warn("[push] token refresh failed", error);
   }
@@ -555,6 +632,7 @@ export async function listenForForegroundPush(): Promise<() => void> {
 
   try {
     const registration = await getAppServiceWorkerRegistration();
+    const { getMessaging, onMessage } = await messaging();
     foregroundUnsub = onMessage(getMessaging(app), (payload) => {
       const data = payload.data || {};
       const title = data.title || payload.notification?.title || "Tropos";

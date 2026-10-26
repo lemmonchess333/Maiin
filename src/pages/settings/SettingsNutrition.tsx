@@ -16,6 +16,8 @@ import { setDocGuarded } from "@/lib/firestoreWrite";
 import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
 import { buildGoalWeightPersistPayload } from "@/lib/goalWeightPlan";
 import { logger } from "@/lib/logger";
+import { localDateString } from "@/lib/dateHelpers";
+import { useTrainingFuelData } from "@/hooks/useTrainingFuelData";
 import { resolveProgramGoalMirror } from "./resolveProgramGoalMirror";
 import SettingsSection from "@/components/settings/SettingsSection";
 import NutritionSection from "@/components/settings/NutritionSection";
@@ -29,6 +31,9 @@ export default function SettingsNutrition() {
   // real goal weight. The input guards now block NEW zeros; this keeps
   // stored ones from disagreeing across surfaces.
   const currentKg = profile?.weightKg || 70;
+  // The programme Home's targets read (one shared listener), so the protein
+  // shown here is the training block's, as on Home.
+  const { program } = useTrainingFuelData(user?.uid ?? null, localDateString());
 
   const [age, setAge] = useState(profile?.age ?? 25);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>(
@@ -134,6 +139,7 @@ export default function SettingsNutrition() {
         tdee={tdee}
         updateProfile={updateProfile}
         onRecalculate={() => updateProfile(payload)}
+        program={program}
       />
     </SettingsSection>
   );

@@ -27,6 +27,7 @@ export default function WeightStepsTiles({
   weightTrend = null,
   stepsStatus = "unavailable",
   steps = null,
+  stepsPending = false,
   onConnectSteps,
   loading = false,
 }: {
@@ -48,6 +49,9 @@ export default function WeightStepsTiles({
      web the tile shows its Connect state whatever the status. */
   stepsStatus?: StepsStatus;
   steps?: number | null;
+  /** Today's steps are still being read: the figure is a placeholder,
+   *  not a 0. */
+  stepsPending?: boolean;
   onConnectSteps?: () => void;
   /* True while the home data that carries the last weight is still
      loading. The tile then shows a skeleton, not the "not yet logged"
@@ -107,7 +111,9 @@ export default function WeightStepsTiles({
     stepsStatus === "connected" || stepsStatus === "ambiguous";
   const stepsValue = steps ?? 0;
   const stepsAriaLabel = stepsConnected
-    ? `${stepsValue.toLocaleString()} steps today.`
+    ? stepsPending
+      ? "Steps today, loading."
+      : `${stepsValue.toLocaleString()} steps today.`
     : "Steps not yet connected. Connect Apple Health to track steps.";
 
   const stepsBody = (
@@ -134,9 +140,13 @@ export default function WeightStepsTiles({
                 tiles stacked in one column, so the same size and weight
                 (DESIGN_GUIDE: never mix 700 and 800 in one tier). Only
                 the phone shows this state; the web shows Connect. */}
-            <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
-              {stepsValue.toLocaleString()}
-            </p>
+            {stepsPending ? (
+              <Skeleton className="h-6 w-16" />
+            ) : (
+              <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+                {stepsValue.toLocaleString()}
+              </p>
+            )}
           </div>
           <p
             className="text-micro mt-1"
@@ -171,8 +181,12 @@ export default function WeightStepsTiles({
        stretch to match the water tile beside it. DS3: both tiles sit on
        the card surface, like the water tile, rather than the darker
        muted tile. Under 9em of tile (larger text on the phone) the
-       icons give their room to the labels, which ran off the tile. */
+       icons give their room to the labels, which ran off the tile.
+       Each tile has an unseen heading, so Home's cards can be stepped
+       through by heading: the visible label sits inside the tile's
+       button, where a heading is no heading. */
     <div className="@container grid grid-cols-1 gap-2 h-full">
+      <h2 className="sr-only">Weight</h2>
       <button
         type="button"
         onClick={function () {
@@ -250,6 +264,7 @@ export default function WeightStepsTiles({
           {syncStatus ?? saveAnnouncement}
         </span>
       </button>
+      {stepsTileEnabled && <h2 className="sr-only">Steps</h2>}
       {stepsTileEnabled &&
         (native ? (
           <button

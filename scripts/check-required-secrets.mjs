@@ -6,7 +6,7 @@
  * `defineSecret("NAME")` (firebase-functions/params). This is the
  * authoritative list an operator MUST provision in Secret Manager
  * before a `functions/` deploy — per the safety gate documented in
- * CLAUDE.md + docs/LAUNCH_TODO.md: a deploy that references a bound
+ * docs/agents/functions-deploy.md: a deploy that references a bound
  * secret which isn't provisioned FAILS. Better to learn the full list
  * from source in one command than to grep by hand or discover a missing
  * secret mid-deploy.
@@ -34,7 +34,7 @@ import { fileURLToPath } from "node:url";
 const FUNCTIONS_DIR = join(
   dirname(fileURLToPath(import.meta.url)),
   "..",
-  "functions",
+  "functions"
 );
 
 /** Recursively collect functions/ .js files, skipping node_modules + tests. */
@@ -78,7 +78,7 @@ const required = names.filter((n) => !ROTATION_ONLY.has(n));
 const rotationOnly = names.filter((n) => ROTATION_ONLY.has(n));
 
 console.log(
-  `\nSecret Manager secrets bound by functions/ (defineSecret) — ${names.length} total:\n`,
+  `\nSecret Manager secrets bound by functions/ (defineSecret) — ${names.length} total:\n`
 );
 for (const name of required) {
   console.log(`  • ${name}`);
@@ -99,13 +99,13 @@ for (const name of required) {
 console.log(
   `\nThen confirm each is set (errors if missing):\n` +
     required.map((n) => `  firebase functions:secrets:access ${n}`).join("\n") +
-    `\n`,
+    `\n`
 );
 
 if (names.length === 0) {
   console.error(
     "No defineSecret(...) calls found — the parse may be broken or the " +
-      "secret-binding convention changed. Investigate before trusting this list.",
+      "secret-binding convention changed. Investigate before trusting this list."
   );
   process.exit(1);
 }

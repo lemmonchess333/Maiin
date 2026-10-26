@@ -65,6 +65,12 @@ describe("ExercisePicker row: see it vs add it", () => {
     expect(screen.queryByText(/exercise selected/)).toBeNull();
   });
 
+  it("shows each exercise's drawing, as Train's list does", () => {
+    mount();
+    const row = screen.getByRole("button", { name: "Bench Press details" });
+    expect(row.querySelector('[data-thumb="drawing"]')).not.toBeNull();
+  });
+
   it("the sheet's action toggles the same selection the batch bar reads", () => {
     mount();
     fireEvent.click(screen.getByRole("button", { name: "Dips details" }));

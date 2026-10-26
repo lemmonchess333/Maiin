@@ -10,10 +10,30 @@
  * Future surfaces (link-account, change-password, MFA enrolment)
  * should route through here too. The contract: take a raw Firebase
  * Auth error message (often "Firebase: Error (auth/<code>).") and
- * return a user-facing string. Falls through to the raw message if
- * no branch matches — callers should treat the return value as the
- * thing to display, not as a discriminated union.
+ * return a user-facing string. A code with no branch gets the caller's
+ * plain fallback sentence, never the SDK's own text, and is reported so
+ * the code can be given a branch — callers should treat the return value
+ * as the thing to display, not as a discriminated union.
  */
+import { captureError } from "./errorReporting";
+
+export const AUTH_ERROR_FALLBACK = "Something went wrong. Try again.";
+
+/**
+ * The person closed the sign-in sheet: say nothing. The web SDK reports it
+ * as `auth/popup-closed-by-user` (or `cancelled-popup-request` for a second
+ * tap); the native Google sheet as "The user canceled the sign-in flow.";
+ * Sign in with Apple as AuthorizationError 1001. The Login screen matched
+ * only the web code, so a cancel on the phone showed Apple's or Google's
+ * raw sentence as an error.
+ */
+export function isSignInCancelled(err: unknown): boolean {
+  const code = String((err as { code?: unknown } | null)?.code ?? "");
+  const message = err instanceof Error ? err.message : String(err ?? "");
+  return /popup-closed-by-user|cancelled-popup-request|canceled|cancelled|1001/i.test(
+    `${code} ${message}`
+  );
+}
 
 /**
  * If an email is registered ONLY with a social provider (no password),
@@ -26,10 +46,10 @@
 export function providerHint(methods: string[]): string | null {
   if (methods.length === 0 || methods.includes("password")) return null;
   if (methods.includes("google.com")) {
-    return "This account uses Google — tap Continue with Google to sign in.";
+    return "This account uses Google. Use Continue with Google to sign in.";
   }
   if (methods.includes("apple.com")) {
-    return "This account uses Apple — tap Continue with Apple to sign in.";
+    return "This account uses Apple. Use Continue with Apple to sign in.";
   }
   return null;
 }
@@ -45,12 +65,21 @@ export function providerHint(methods: string[]): string | null {
  */
 export function duplicateEmailHint(methods: string[]): string | null {
   if (methods.includes("password")) {
-    return "This email already has a Tropos account with a password — sign in with your email and password.";
+    return "This email already has a Tropos account with a password. Sign in with your email and password.";
   }
   return providerHint(methods);
 }
 
-export function friendlyAuthError(message: string): string {
+export function friendlyAuthError(
+  message: string,
+  fallback: string = AUTH_ERROR_FALLBACK
+): string {
+  if (message.includes("missing-email")) {
+    return "Enter your email address";
+  }
+  if (message.includes("missing-password")) {
+    return "Enter your password";
+  }
   if (
     message.includes("user-not-found") ||
     message.includes("wrong-password") ||
@@ -65,10 +94,10 @@ export function friendlyAuthError(message: string): string {
     return "Password must be at least 6 characters";
   }
   if (message.includes("invalid-email")) {
-    return "Please enter a valid email address";
+    return "Enter a valid email address";
   }
   if (message.includes("network-request-failed")) {
-    return "Network issue — check your connection and try again";
+    return "Network issue. Check your connection and try again";
   }
   if (message.includes("too-many-requests")) {
     return "Too many attempts. Wait a moment and try again";
@@ -95,5 +124,8 @@ export function friendlyAuthError(message: string): string {
   if (message.includes("operation-not-supported-in-this-environment")) {
     return "Sign-in unavailable in this browser. Try a different browser";
   }
-  return message;
+  if (message) {
+    captureError(new Error(message), "error", { surface: "authErrors" });
+  }
+  return fallback;
 }

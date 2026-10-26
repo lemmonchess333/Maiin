@@ -81,47 +81,57 @@ suite(
         await setDoc(doc(ctx.firestore(), path), data);
       });
 
-    describe("monthly challenge announcement ledger — server writes only", () => {
-      const path = `users/${OWNER}/settings/challengeAnnouncement-2026-11`;
+    describe.each(["challengeAnnouncement", "challengeReminder"])(
+      "%s ledger — server writes only",
+      (prefix) => {
+        const path = `users/${OWNER}/settings/${prefix}-2026-11`;
 
-      it.each([false, true])(
-        "owner cannot create, update or erase a delivery claim (deleting=%s)",
-        async (deleting) => {
-          if (deleting)
-            await seed(`accountDeletionRequests/${OWNER}`, {
-              status: "running",
+        it.each([false, true])(
+          "owner cannot create, update or erase a delivery claim (deleting=%s)",
+          async (deleting) => {
+            if (deleting)
+              await seed(`accountDeletionRequests/${OWNER}`, {
+                status: "running",
+              });
+            const ref = doc(asOwner(), path);
+            await assertFails(setDoc(ref, { status: "sent" }));
+            await seed(path, {
+              status: "sending",
+              attemptId: "server-attempt",
             });
-          const ref = doc(asOwner(), path);
-          await assertFails(setDoc(ref, { status: "sent" }));
-          await seed(path, { status: "sending", attemptId: "server-attempt" });
-          await assertSucceeds(getDoc(ref));
-          await assertFails(updateDoc(ref, { status: "retryable" }));
-          await assertFails(deleteDoc(ref));
-          for (const db of [asOther(), asAnon()]) {
-            await assertFails(getDoc(doc(db, path)));
-            await assertFails(setDoc(doc(db, path), { status: "sent" }));
-            await assertFails(deleteDoc(doc(db, path)));
+            await assertSucceeds(getDoc(ref));
+            await assertFails(updateDoc(ref, { status: "retryable" }));
+            await assertFails(deleteDoc(ref));
+            for (const db of [asOther(), asAnon()]) {
+              await assertFails(getDoc(doc(db, path)));
+              await assertFails(setDoc(doc(db, path), { status: "sent" }));
+              await assertFails(deleteDoc(doc(db, path)));
+            }
           }
-        }
-      );
+        );
 
-      it("ordinary push settings stay owner-writable", async () => {
-        const ref = doc(asOwner(), `users/${OWNER}/settings/push`);
-        await assertSucceeds(setDoc(ref, { enabled: true, challenges: false }));
-        await assertSucceeds(updateDoc(ref, { challenges: true }));
-        await assertSucceeds(getDoc(ref));
-        await assertSucceeds(deleteDoc(ref));
-      });
+        it("ordinary push settings stay owner-writable", async () => {
+          const ref = doc(asOwner(), `users/${OWNER}/settings/push`);
+          await assertSucceeds(
+            setDoc(ref, { enabled: true, challenges: false })
+          );
+          await assertSucceeds(
+            updateDoc(ref, { challenges: true, challengeReminders: true })
+          );
+          await assertSucceeds(getDoc(ref));
+          await assertSucceeds(deleteDoc(ref));
+        });
 
-      it("ordinary push settings still respect account deletion", async () => {
-        await seed(`accountDeletionRequests/${OWNER}`, { status: "running" });
-        const path = `users/${OWNER}/settings/push`;
-        await assertFails(setDoc(doc(asOwner(), path), { enabled: true }));
-        await seed(path, { enabled: false });
-        await assertFails(updateDoc(doc(asOwner(), path), { enabled: true }));
-        await assertFails(deleteDoc(doc(asOwner(), path)));
-      });
-    });
+        it("ordinary push settings still respect account deletion", async () => {
+          await seed(`accountDeletionRequests/${OWNER}`, { status: "running" });
+          const path = `users/${OWNER}/settings/push`;
+          await assertFails(setDoc(doc(asOwner(), path), { enabled: true }));
+          await seed(path, { enabled: false });
+          await assertFails(updateDoc(doc(asOwner(), path), { enabled: true }));
+          await assertFails(deleteDoc(doc(asOwner(), path)));
+        });
+      }
+    );
 
     describe("owner-only subcollections — owner reads and writes, nobody else", () => {
       const OWNER_WRITABLE = [

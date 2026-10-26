@@ -14,22 +14,31 @@ const h = vi.hoisted(() => ({
   user: { uid: "weekly-member" },
   profile: { displayName: "Test member" },
   toastError: vi.fn(),
+  toastSuccess: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: h.user, profile: h.profile }),
   useUid: () => h.user.uid,
 }));
-vi.mock("@/lib/leaderboard", () => ({ buildLeaderboard: async () => [] }));
+vi.mock("@/lib/leaderboard", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/leaderboard")>()),
+  loadBoardWeeks: async () => [],
+  countMyWeekLifts: async () => 0,
+}));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
 vi.mock("@/hooks/useRestrictedStatus", () => ({
   useRestrictedStatus: () => restriction,
 }));
-vi.mock("@/lib/toast", () => ({ toast: { error: h.toastError } }));
+vi.mock("@/lib/toast", () => ({
+  toast: { error: h.toastError, success: h.toastSuccess },
+}));
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 
 import { ChallengeList } from "../ChallengeList";
+import { getTimeRemaining } from "../useChallenges";
 import { Timestamp } from "firebase/firestore";
+import { group } from "@/test/localeGrouping";
 import {
   failNextFirestore,
   flushSnapshots,
@@ -47,6 +56,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-09-11T12:00:00Z"));
   resetFirestore();
   h.toastError.mockClear();
+  h.toastSuccess.mockClear();
   seedFirestore({
     "users/weekly-member": h.profile,
     ["challenges/" + ID]: {
@@ -90,6 +100,10 @@ describe("weekly challenge membership", () => {
       displayName: "Test member",
       currentValue: 0,
     });
+    // The join says which edition it is and when the next one opens.
+    expect(h.toastSuccess).toHaveBeenCalledWith(
+      "You're in for this week. Next week's opens on Monday."
+    );
     expect(
       screen.getByRole("button", { name: /Start today's session/ })
     ).toBeInTheDocument();
@@ -112,6 +126,7 @@ describe("weekly challenge membership", () => {
     );
     await waitFor(() => expect(join).toBeEnabled());
     expect(readDoc(PATH)).toBeUndefined();
+    expect(h.toastSuccess).not.toHaveBeenCalled();
     fireEvent.click(join);
     await screen.findByRole("button", { name: "Leave weekly challenge" });
     expect(readDoc(PATH)).toBeDefined();
@@ -161,6 +176,53 @@ describe("weekly challenge membership", () => {
     expect(
       screen.queryByRole("button", { name: "Join weekly challenge" })
     ).toBeNull();
+  });
+});
+
+describe("the weekly challenge in its last day", () => {
+  /* Sunday midday on the person's own clock: the week ends at their
+     midnight, so twelve hours are left of a two-session goal. */
+  beforeEach(() => {
+    vi.setSystemTime(new Date(2026, 8, 13, 12, 0, 0));
+  });
+
+  it("offers no Join to someone outside it, and says when the next one starts", async () => {
+    render(
+      <MemoryRouter>
+        <ChallengeList />
+      </MemoryRouter>
+    );
+    await flushSnapshots();
+    expect(
+      await screen.findByText("Ends tonight. The next one starts Monday.")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Join weekly challenge" })
+    ).toBeNull();
+    // The line takes the countdown's place rather than sitting beside it.
+    expect(screen.queryByText(/hours? left|min left/)).toBeNull();
+  });
+
+  it("still shows a member their week, with the time left", async () => {
+    seedFirestore({
+      [PATH]: {
+        currentValue: 1,
+        tierAchieved: null,
+        joinedAt: Timestamp.fromDate(new Date("2026-09-08T09:00:00Z")),
+        displayName: "Test member",
+      },
+    });
+    render(
+      <MemoryRouter>
+        <ChallengeList />
+      </MemoryRouter>
+    );
+    await flushSnapshots();
+    expect(
+      await screen.findByRole("button", { name: "Leave weekly challenge" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("12 hours left")).toBeInTheDocument();
+    expect(screen.queryByText(/^Ends tonight/)).toBeNull();
   });
 });
 
@@ -236,10 +298,68 @@ describe("the featured monthly challenge", () => {
       screen.queryByText("September Strength Builder")
     ).not.toBeInTheDocument();
     fireEvent.click(
-      screen.getByRole("button", { name: /See 2 more challenges/ })
+      screen.getByRole("button", { name: "See 2 more challenges" })
     );
     expect(await screen.findByText("September Mileage")).toBeInTheDocument();
     expect(screen.getAllByText("September Active Days")).toHaveLength(1);
+  });
+
+  it("says the month's time left once, on the featured card", async () => {
+    await openList();
+    await screen.findByText("September Active Days");
+    fireEvent.click(
+      screen.getByRole("button", { name: "See 2 more challenges" })
+    );
+    await screen.findByText("September Mileage");
+    // Read as the app reads them, so the figures hold in every time zone.
+    const month = getTimeRemaining(
+      Timestamp.fromDate(new Date("2026-10-01T00:00:00Z"))
+    );
+    const week = getTimeRemaining(
+      Timestamp.fromDate(new Date("2026-09-14T00:00:00Z"))
+    );
+    expect(month).not.toBe(week);
+    // The week's own countdown, on its card, and the month's once.
+    expect(screen.getAllByText(week)).toHaveLength(1);
+    expect(screen.getAllByText(month)).toHaveLength(1);
+    expect(
+      screen.getByText("September Active Days").closest(".rounded-2xl")!
+        .textContent
+    ).toContain(month);
+  });
+
+  it("lists the others as compact rows that say their goal, each with a Join", async () => {
+    await openList();
+    await screen.findByText("September Active Days");
+    fireEvent.click(
+      screen.getByRole("button", { name: "See 2 more challenges" })
+    );
+    const mileage = (await screen.findByText("September Mileage")).closest(
+      "li"
+    )!;
+    expect(mileage.textContent).toContain("Run 10 km this month.");
+    expect(mileage.textContent).not.toContain("Every run adds up");
+    const strength = screen
+      .getByText("September Strength Builder")
+      .closest("li")!;
+    expect(strength.textContent).toContain(
+      `Lift ${group(5000)} kg in total this month.`
+    );
+    expect(
+      screen.getByRole("button", { name: "Join September Mileage" })
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Join September Strength Builder" })
+    );
+    await waitFor(() =>
+      expect(readDoc(participantPath(STRENGTH_ID))).toMatchObject({
+        currentValue: 0,
+      })
+    );
+    expect(h.toastSuccess).toHaveBeenCalledWith(
+      "You're in for September. October's opens on 1 Oct."
+    );
+    expect(readDoc(participantPath(CORE_ID))).toBeUndefined();
   });
 
   it("puts a joined featured goal first and leaves other memberships intact", async () => {
@@ -277,7 +397,13 @@ describe("the featured monthly challenge", () => {
       currentValue: 0,
     });
     expect(screen.queryByText("Featured this month")).not.toBeInTheDocument();
-    expect(screen.getByText("Bronze at 8 days")).toBeInTheDocument();
+    expect(h.toastSuccess).toHaveBeenCalledWith(
+      "You're in for September. October's opens on 1 Oct."
+    );
+    expect(
+      screen.getByText("September Active Days").closest(".rounded-2xl")!
+        .textContent
+    ).toContain("Train on 8 days this month.");
     expect(readDoc(participantPath(CORE_ID))).toBeUndefined();
     expect(readDoc(participantPath(STRENGTH_ID))).toBeUndefined();
     expect(readDoc(PATH)).toBeUndefined();
@@ -285,8 +411,16 @@ describe("the featured monthly challenge", () => {
     await screen.findByText("Featured this month");
     expect(readDoc(participantPath(FEATURED_ID))).toBeUndefined();
     expect(
-      screen.getByRole("button", { name: /See 2 more challenges/ })
+      screen.getByRole("button", { name: "See 2 more challenges" })
     ).toBeInTheDocument();
     expect(screen.queryByText("September Mileage")).not.toBeInTheDocument();
+  });
+});
+
+describe("the section has no standing intro", () => {
+  it("leaves the edition rule to the join, not a paragraph above the list", async () => {
+    await openList();
+    expect(screen.queryByText(/refresh on the 1st/)).toBeNull();
+    expect(screen.queryByText(/Join each new edition/)).toBeNull();
   });
 });

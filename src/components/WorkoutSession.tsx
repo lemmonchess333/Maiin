@@ -40,6 +40,10 @@ import {
   SkipForward,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import {
+  FIELD_EDGE,
+  SECONDARY_ON_CARD_EDGE,
+} from "@/components/ui/buttonClasses";
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
@@ -104,13 +108,18 @@ import {
 import {
   commitLiftRecords,
   loadLiftRecords,
+  markLiftRecordsStale,
   type LiftRecords,
 } from "@/lib/liftRecordsStore";
 import { effortCueFor, rpeReserveWords } from "@/features/program/effortCue";
 import Tooltip from "@/components/ui/Tooltip";
 import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
-import { validateSet, type SetValidationWarn } from "@/lib/setValidation";
-import { getExerciseById } from "@/lib/exercises";
+import {
+  needsLoad,
+  validateSet,
+  type SetValidationWarn,
+} from "@/lib/setValidation";
+import { getExerciseById, isBodyweightExerciseId } from "@/lib/exercises";
 import {
   clampExerciseIndex,
   isExerciseDone,
@@ -133,6 +142,7 @@ import {
   useWorkoutDraft,
   computeDraftIdentity,
   createWorkoutCompletionId,
+  draftLayout,
 } from "@/hooks/useWorkoutDraft";
 import { logger } from "@/lib/logger";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
@@ -149,9 +159,11 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import ExerciseFormSheet from "@/components/program/ExerciseFormSheet";
 import { IconButton } from "@/components/ui/IconButton";
 import InlineNumerals from "@/components/ui/InlineNumerals";
-import { localDateString } from "@/lib/dateHelpers";
 import type { SessionShareAction } from "@/lib/sessionPost";
-import type { LiftCompletionReceipt } from "@/lib/liftCompletion";
+import {
+  liftSessionDay,
+  type LiftCompletionReceipt,
+} from "@/lib/liftCompletion";
 import GuideHint from "@/components/guide/GuideHint";
 import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
 import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
@@ -246,7 +258,7 @@ interface Props {
    *  `day.dayName` stays the stored name, which the draft and the save
    *  key on; without this the screen names the day without its week. */
   dayLabel?: string;
-  planContext?: { progress: string; next: string };
+  planContext?: { next: string };
   /** LIFT-01 draft-identity scope: `"programme"` (default) for
    *  scheduled programme days, `"routine:<id>"` for saved-routine
    *  sessions so each routine gets its own draft isolation. */
@@ -285,6 +297,9 @@ interface Props {
   /** Whether a long or hard run finished in the 24 hours before a start
    *  (`useHardRunBefore`); the finish records it. Train passes it. */
   hardRunBefore?: (startedAt: number) => boolean;
+  /** Opened from a Resume tap (the In progress strip): a draft found for
+   *  this session carries on without asking "Resume workout?" again. */
+  resumeDraft?: boolean;
 }
 
 export default function WorkoutSession({
@@ -304,6 +319,7 @@ export default function WorkoutSession({
   onClose,
   firstWorkout = false,
   hardRunBefore,
+  resumeDraft = false,
 }: Props) {
   const { user, profile } = useAuth();
   // Loads are stored in kg; the lifter reads and types them in this unit.
@@ -321,10 +337,7 @@ export default function WorkoutSession({
         epoch: draftEpoch ?? 0,
         dayIndex,
         dayName: initialDay.dayName,
-        layout: initialDay.exercises.map((ex) => ({
-          id: ex.exerciseId || ex.name,
-          sets: ex.sets,
-        })),
+        layout: draftLayout(initialDay.exercises),
       }),
     [draftScope, draftEpoch, dayIndex, initialDay.dayName, initialDay.exercises]
   );
@@ -363,8 +376,13 @@ export default function WorkoutSession({
   const [originalStartedAt, setOriginalStartedAt] = useState(
     () => initialDraft?.startedAt ?? Date.now()
   );
+  /** The day the workout is saved under (Lift3: the day it started), and
+   *  so the day its records are dated: dated as each set was logged, a
+   *  best set at 00:05 in a session begun at 23:40 sat on a day the
+   *  workout is not. */
+  const sessionDay = liftSessionDay(originalStartedAt);
   const [showResumePrompt, setShowResumePrompt] = useState(
-    initialDraft !== null && !initialDraft.completionPending
+    initialDraft !== null && !initialDraft.completionPending && !resumeDraft
   );
   // CIRCLE-SESSION-01 — explicit Circle share from the completion
   // screen. The sheet mounts ONLY while open so its Circle reads
@@ -622,6 +640,35 @@ export default function WorkoutSession({
 
   const formatElapsed = formatClock;
 
+  /* Leaving keeps a workout that has a draft, and Home and Train offer it
+     back with Resume, so every way out says so, once, and a close does not
+     read as a discard: Close, the device's Back (Train closes the session
+     over it; a routine's page is left), and anything else that takes the
+     screen away. The screen going is the one moment they all share, so it
+     is said here and nowhere else. Nothing is said for a workout finished
+     or waiting for the server, for one started afresh with nothing done
+     since, or once its account has signed out. */
+  const sessionUid = user?.uid;
+  const onScreen = useRef(false);
+  useEffect(() => {
+    onScreen.current = true;
+    return () => {
+      onScreen.current = false;
+      // Development runs each cleanup once at mount and sets the effect up
+      // again at once, so the screen has gone only if nothing set it up by
+      // the time this runs.
+      queueMicrotask(() => {
+        if (onScreen.current) return;
+        if (!hasRecoveryDraft.current || completionPendingRef.current) return;
+        if (!sessionUid || auth.currentUser?.uid !== sessionUid) return;
+        // A programme day's and a routine's alike: both are offered back.
+        toast.message("Workout kept", {
+          description: "Resume it from Home or Train.",
+        });
+      });
+    };
+  }, [sessionUid]);
+
   // Rest timer: the rest fixed in Settings → Workout preferences, or the
   // plan's suggestion by role and reps, shorter in a plan built for 30
   // minutes (`restSecondsFor`, Lift4 (5)).
@@ -665,7 +712,6 @@ export default function WorkoutSession({
   const [sessionComplete, setSessionComplete] = useState(
     initialDraft?.completionPending ?? false
   );
-  const [showFinishEarly, setShowFinishEarly] = useState(false);
   /* Lift16: a set far past today's plan or the best for its reps waits
      for a yes. Kept after the question closes so the dialog's words
      hold while it animates out. */
@@ -803,15 +849,18 @@ export default function WorkoutSession({
 
   const currentExercise = day.exercises[safeExIndex];
 
-  // #985 — barbell plate breakdown for the prescribed weight. Read-only hint;
-  // barbell-only (dumbbell/machine lifts don't load plates). The standard set
-  // runs down to 1.25 kg a side, which is the plan's 2.5 kg step.
+  // Plates belong to a barbell only: the per-side hint and the plate
+  // calculator both read this, so a cable or dumbbell lift offers neither.
+  const isBarbell = currentExercise
+    ? getExerciseById(currentExercise.exerciseId)?.equipment === "Barbell"
+    : false;
+  // Barbell plate breakdown for the prescribed weight, a read-only hint. The
+  // standard set runs down to 1.25 kg a side, which is the plan's 2.5 kg step.
   const plateLoad = useMemo(() => {
-    if (!currentExercise || currentExercise.weight <= 0) return null;
-    if (getExerciseById(currentExercise.exerciseId)?.equipment !== "Barbell")
+    if (!currentExercise || currentExercise.weight <= 0 || !isBarbell)
       return null;
     return platesInKit(currentExercise.weight, liftUnit);
-  }, [currentExercise, liftUnit]);
+  }, [currentExercise, isBarbell, liftUnit]);
 
   const currentSets = setLogs[currentExIndex] ?? [];
   // Warm-ups are optional, so the session's progress counts the sets that
@@ -863,6 +912,17 @@ export default function WorkoutSession({
   );
 
   const stopRest = useCallback(() => setRest(null), []);
+
+  /* What the rest timer says to a screen reader, held here in a region
+     that is always on the page (the card's own would arrive with its
+     words in it). Each line is a node of its own, so a second rest of the
+     same length is still read out. */
+  const [restWords, setRestWords] = useState({ line: 0, words: "" });
+  const announceRest = useCallback(
+    (words: string) =>
+      setRestWords((spoken) => ({ line: spoken.line + 1, words })),
+    []
+  );
 
   /* The set being logged stays on screen. Ticking a set moves the current
      one down the table while the rest card (and a new best) dock under
@@ -1024,11 +1084,11 @@ export default function WorkoutSession({
     const validation = validateSet({
       reps: set.reps,
       weight: set.weight,
-      // Body-highlighter exercises map heuristically — for now we
-      // treat any zero-weight set on an exercise the user is logging
-      // as bodyweight. If a richer bodyweight-flag arrives via the
-      // exercise registry it can plug in here.
-      isBodyweight: (set.weight ?? 0) === 0 && !currentBucketPR,
+      // The catalog says what the lift is: a bodyweight lift completes
+      // at 0 kg, and a barbell, dumbbell, machine, cable or kettlebell
+      // lift asks for a weight first.
+      isBodyweight: isBodyweightExerciseId(currentExercise.exerciseId),
+      equipment: getExerciseById(currentExercise.exerciseId)?.equipment,
       timed: currentExercise.repUnit === "seconds",
       currentBestForBucket: currentBucketPR?.weight,
       plannedWeight: weightToCheckAgainst(currentExercise, currentSets),
@@ -1076,7 +1136,7 @@ export default function WorkoutSession({
       const nextMap = recordSetBest(prMap, exName, {
         weight: set.weight,
         reps: set.reps,
-        date: localDateString(),
+        date: sessionDay,
       });
       if (nextMap !== prMap || prResult) {
         prContext = {
@@ -1158,7 +1218,7 @@ export default function WorkoutSession({
             ...prev,
             [exName]: {
               volume: sessionVolume,
-              date: localDateString(),
+              date: sessionDay,
             },
           }));
         }
@@ -1206,7 +1266,7 @@ export default function WorkoutSession({
       sessionCounts,
       day.exercises,
       logs,
-      localDateString()
+      sessionDay
     );
     setPrMap(next.map);
     setPrResults(next.results);
@@ -1232,7 +1292,8 @@ export default function WorkoutSession({
       recordBaseline.current[exercise.name]?.[getRepBucket(values.reps)];
     const validation = validateSet({
       ...values,
-      isBodyweight: values.weight === 0 && !best,
+      isBodyweight: isBodyweightExerciseId(exercise.exerciseId),
+      equipment: getExerciseById(exercise.exerciseId)?.equipment,
       timed: exercise.repUnit === "seconds",
       currentBestForBucket: best?.weight,
       plannedWeight: weightToCheckAgainst(exercise, setLogs[exIdx] ?? []),
@@ -1501,8 +1562,18 @@ export default function WorkoutSession({
       if (user?.uid && loadedRecords && Object.keys(prMap).length > 0) {
         void (async () => {
           try {
-            if (queuedReceipt && (await queuedReceipt) !== "synced") return;
+            // Saved on this phone, not yet on the server: the commit is a
+            // transaction, which cannot run offline, and waiting here for
+            // the sync dies with the app. Closed first, the map stayed
+            // complete without this session, so the next one celebrated a
+            // best below a lift already logged. Marked stale now, it is
+            // rebuilt from the whole history, which holds the queued
+            // workout (`fetchSavedWorkouts` includes this phone's queue).
             if (auth.currentUser?.uid !== user.uid) return;
+            if (queuedReceipt) {
+              await markLiftRecordsStale(user.uid);
+              return;
+            }
             // From the FINAL set logs, so an undone set never inflates a
             // record. Warm-ups are not volume, and an exercise with none
             // of its working sets done was not trained.
@@ -1515,10 +1586,21 @@ export default function WorkoutSession({
                   .filter((s2) => s2.completed && s2.type !== "warmup")
                   .map((s2) => ({ weightKg: s2.weight, reps: s2.reps })),
               })),
-              date: localDateString(),
+              date: sessionDay,
             });
-          } catch {
-            // Non-critical — map can be rebuilt from history
+          } catch (err) {
+            // The workout is saved; its records are not. The map would
+            // stay complete at the revision the next session loads, which
+            // would build on it without this session's sets, so it is
+            // marked stale and rebuilt from the whole history instead.
+            logger.warn("[WorkoutSession] lift records not saved", err);
+            if (auth.currentUser?.uid !== user.uid) return;
+            await markLiftRecordsStale(user.uid).catch((staleErr) =>
+              logger.warn(
+                "[WorkoutSession] lift records not marked stale",
+                staleErr
+              )
+            );
           }
         })();
       }
@@ -1698,7 +1780,15 @@ export default function WorkoutSession({
           stored name. A routine's own name reads as written. */}
       <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/50">
         <div className="min-w-0">
-          <p className="truncate text-base font-bold text-foreground">
+          {/* The session's title is the screen's heading, so a screen
+              reader finds where it is from. A heading by role rather than
+              an h1 element: the global h1 rule in index.css is unlayered,
+              so it would beat this line's own leading and tracking. */}
+          <p
+            role="heading"
+            aria-level={1}
+            className="truncate text-base font-bold text-foreground"
+          >
             {dayLabel ?? liftDayLine(day.dayName)}
           </p>
           <WorkoutProgress
@@ -1713,13 +1803,17 @@ export default function WorkoutSession({
             from the list on every set after the first. Offered once a working set is
             done and while sets remain; when none remain, the bar's own
             "Finish workout" takes over, so there is one Finish at a
-            time. */}
+            time. It goes straight to the review, which is the check: the
+            review counts the sets left unticked and has Edit workout to go
+            back for them, so a dialog asking first was a second check on a
+            step that can be undone. */}
         <div className="flex shrink-0 items-center gap-1">
           {finishEarlyOffered && (
             <Button
               variant="secondary"
+              className={SECONDARY_ON_CARD_EDGE}
               aria-label="Finish workout"
-              onClick={() => setShowFinishEarly(true)}
+              onClick={completeSession}
             >
               Finish
             </Button>
@@ -1805,11 +1899,12 @@ export default function WorkoutSession({
                     </span>
                   )}
                 </span>
-                {/* Two lines, not one: cut to one, "Barbell Row" and
-                    "Barbell Curl" both read "Barbell…". */}
+                {/* Up to three lines: cut to one, "Barbell Row" and
+                    "Barbell Curl" both read "Barbell…", and cut to two,
+                    "Straight-Arm Pulldown" reads "Straight-Arm…". */}
                 <span
                   className={cn(
-                    "line-clamp-2 w-full text-center text-xs leading-tight break-words",
+                    "line-clamp-3 w-full text-center text-xs leading-tight break-words",
                     active
                       ? "font-bold text-foreground"
                       : "font-medium text-muted-foreground"
@@ -2013,11 +2108,18 @@ export default function WorkoutSession({
           {(() => {
             const lastSets = previousSets[currentExIndex];
             const lastPerformance = currentExercise?.lastPerformance;
-            const isBWExercise = currentExercise
-              ? getExerciseById(currentExercise.exerciseId)?.equipment ===
-                "Bodyweight"
-              : false;
+            const equipment = currentExercise
+              ? getExerciseById(currentExercise.exerciseId)?.equipment
+              : undefined;
+            const isBWExercise = equipment === "Bodyweight";
             const isTimedExercise = currentExercise?.repUnit === "seconds";
+            // An empty weight on a loaded lift is a blank to fill, not a
+            // 0 to accept: the tick asks for a weight there.
+            const emptyWeight = isBWExercise
+              ? "BW"
+              : needsLoad(equipment) && !isTimedExercise
+                ? "–"
+                : "0";
             const columns =
               "grid grid-cols-[44px_minmax(0,1.1fr)_minmax(0,1.25fr)_minmax(0,1fr)_44px] @max-[19em]:grid-cols-[44px_minmax(0,1.25fr)_minmax(0,1fr)_44px] items-center gap-x-[8px]";
 
@@ -2035,17 +2137,19 @@ export default function WorkoutSession({
                   </div>
                   <div className="flex items-center justify-center">
                     {liftUnitLabel(liftUnit)}
-                    <button
-                      type="button"
-                      aria-label="Plate calculator"
-                      onClick={() => {
-                        haptic("light");
-                        setShowPlates(true);
-                      }}
-                      className="-my-3 flex size-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <Disc className="size-3.5" aria-hidden="true" />
-                    </button>
+                    {isBarbell && (
+                      <button
+                        type="button"
+                        aria-label="Plate calculator"
+                        onClick={() => {
+                          haptic("light");
+                          setShowPlates(true);
+                        }}
+                        className="-my-3 flex size-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <Disc className="size-3.5" aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
                   <div className="text-center">
                     {isTimedExercise ? "Seconds" : "Reps"}
@@ -2180,9 +2284,7 @@ export default function WorkoutSession({
                               currentExercise.exerciseId
                             ) || ""
                           }
-                          placeholder={
-                            set.weight === 0 ? (isBWExercise ? "BW" : "0") : ""
-                          }
+                          placeholder={set.weight === 0 ? emptyWeight : ""}
                           aria-label={`${name} weight`}
                           onChange={(e) =>
                             updateSetLog(
@@ -2197,7 +2299,10 @@ export default function WorkoutSession({
                             )
                           }
                           disabled={set.completed}
-                          className="min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
+                          className={cn(
+                            FIELD_EDGE,
+                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
+                          )}
                         />
                         <input
                           type="number"
@@ -2215,7 +2320,10 @@ export default function WorkoutSession({
                             )
                           }
                           disabled={set.completed}
-                          className="min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
+                          className={cn(
+                            FIELD_EDGE,
+                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
+                          )}
                         />
                         {/* Keyed by exercise as well as set: a return to an
                             earlier exercise remounts its checks, so only a
@@ -2245,20 +2353,25 @@ export default function WorkoutSession({
                       {/* Pick effort before completion so it reaches the
                           progression call made when the final set is logged. */}
                       {showRPE && !set.completed && set.type !== "warmup" && (
-                        <div className="flex flex-wrap items-center gap-1 px-4 py-1.5 border-t border-border/30 bg-muted/30">
-                          <span className="text-xs text-muted-foreground mr-1 self-center">
-                            RPE:
-                          </span>
+                        /* One row of nine, never wrapping: a label in
+                           front of the chips pushed "10" onto a line of
+                           its own. The group carries the name. */
+                        <div
+                          role="group"
+                          aria-label={`RPE for ${lowerFirst(name)}`}
+                          className="grid grid-cols-9 gap-1 border-t border-border/30 bg-muted/30 px-3 py-1.5"
+                        >
                           {RPE_OPTIONS.map((rpe) => (
                             <button
                               type="button"
                               key={rpe}
+                              aria-pressed={set.rpe === rpe}
                               onClick={() => {
                                 haptic(10);
                                 updateSetRPE(currentExIndex, setIdx, rpe);
                               }}
                               className={cn(
-                                "min-h-11 px-2.5 rounded text-xs font-mono tabular-nums transition-colors",
+                                "min-h-11 min-w-0 rounded text-xs font-mono tabular-nums transition-colors",
                                 set.rpe === rpe
                                   ? "bg-primary-strong text-primary-foreground"
                                   : "bg-muted text-muted-foreground hover:text-foreground"
@@ -2268,7 +2381,7 @@ export default function WorkoutSession({
                             </button>
                           ))}
                           {typeof set.rpe === "number" && (
-                            <span className="w-full pl-1 pt-0.5 text-xs text-muted-foreground">
+                            <span className="col-span-9 pl-1 pt-0.5 text-xs text-muted-foreground">
                               <span className="font-mono tabular-nums">
                                 {set.rpe}
                               </span>{" "}
@@ -2291,7 +2404,7 @@ export default function WorkoutSession({
             <Button
               variant="secondary"
               size="sm"
-              className="min-w-fit flex-1"
+              className={cn("min-w-fit flex-1", SECONDARY_ON_CARD_EDGE)}
               leftIcon={<Plus className="size-4" aria-hidden="true" />}
               onClick={() => addSet(currentExIndex)}
             >
@@ -2321,15 +2434,15 @@ export default function WorkoutSession({
             </p>
             <LoweredLine exercise={currentExercise} />
             <StretchedLine exercise={currentExercise} />
-            {/* #985 — plate breakdown per side (barbell only). */}
+            {/* The plates for each side of the bar, in the lifter's unit. */}
             {plateLoad && plateLoad.perSide.length > 0 && (
               <p className="font-mono tabular-nums">
-                Per side:{" "}
                 {plateLoad.perSide
                   .flatMap(({ plate, count }) =>
                     Array<number>(count).fill(plate)
                   )
-                  .join(" + ")}
+                  .join(" + ")}{" "}
+                {liftUnitLabel(liftUnit)} a side
                 {plateLoad.remainder > 0 &&
                   ` · ${plateLoad.remainder} ${liftUnitLabel(liftUnit)} short`}
               </p>
@@ -2499,6 +2612,9 @@ export default function WorkoutSession({
           another comes in. With auto-start off (D-LIFT-16) the manual
           start waits in the same place, so starting a rest moves nothing
           either. */}
+      <p role="status" className="sr-only">
+        <span key={restWords.line}>{restWords.words}</span>
+      </p>
       <AnimatePresence initial={false}>
         {rest ? (
           <motion.div
@@ -2515,6 +2631,7 @@ export default function WorkoutSession({
               initialTarget={rest.target}
               exerciseName={day.exercises[currentExIndex]?.name}
               onStop={stopRest}
+              onAnnounce={announceRest}
             />
           </motion.div>
         ) : !autoRest && currentSets.some((st) => st.completed) ? (
@@ -2633,19 +2750,6 @@ export default function WorkoutSession({
           setAskingJump(false);
           if (jumpQuestion?.exIdx === currentExIndex)
             void completeSet(jumpQuestion.setIdx, true);
-        }}
-      />
-
-      <ConfirmDialog
-        open={showFinishEarly}
-        title="Finish early?"
-        description="Sets you haven't ticked won't be saved."
-        confirmLabel="Finish"
-        cancelLabel="Keep training"
-        onCancel={() => setShowFinishEarly(false)}
-        onConfirm={() => {
-          setShowFinishEarly(false);
-          completeSession();
         }}
       />
 

@@ -33,7 +33,9 @@ let db;
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   if (!admin.apps.length) {
-    admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || "demo-tropos" });
+    admin.initializeApp({
+      projectId: process.env.GCLOUD_PROJECT || "demo-tropos",
+    });
   }
   db = admin.firestore();
 });
@@ -83,8 +85,8 @@ suite("rateLimiter — emulator integration", () => {
     // folded into the global once #542's sibling did the same).
     const results = await Promise.all(
       Array.from({ length: 10 }, () =>
-        isRateLimited(db, "user-c", "askGemini", 5, 60_000),
-      ),
+        isRateLimited(db, "user-c", "askGemini", 5, 60_000)
+      )
     );
     const allowed = results.filter((r) => r === false).length;
     const blocked = results.filter((r) => r === true).length;
@@ -99,7 +101,9 @@ suite("rateLimiter — emulator integration", () => {
     const clock = vi.spyOn(Date, "now").mockReturnValue(1_800_000_000_000);
     try {
       for (let i = 0; i < 3; i++) {
-        expect(await isRateLimited(db, "user-d", "askGemini", 3, 50)).toBe(false);
+        expect(await isRateLimited(db, "user-d", "askGemini", 3, 50)).toBe(
+          false
+        );
       }
       clock.mockReturnValue(1_800_000_000_049);
       expect(await isRateLimited(db, "user-d", "askGemini", 3, 50)).toBe(true);
@@ -117,8 +121,14 @@ suite("rateLimiter — emulator integration", () => {
     for (let i = 0; i < 3; i++) {
       await isRateLimited(db, "user-e", "askGemini", 3, 60_000);
     }
-    expect(await isRateLimited(db, "user-e", "askGemini", 3, 60_000)).toBe(true);
-    expect(await isRateLimited(db, "user-e", "analyzeFood", 3, 60_000)).toBe(false);
-    expect(await isRateLimited(db, "user-f", "askGemini", 3, 60_000)).toBe(false);
+    expect(await isRateLimited(db, "user-e", "askGemini", 3, 60_000)).toBe(
+      true
+    );
+    expect(await isRateLimited(db, "user-e", "analyzeFood", 3, 60_000)).toBe(
+      false
+    );
+    expect(await isRateLimited(db, "user-f", "askGemini", 3, 60_000)).toBe(
+      false
+    );
   });
 });

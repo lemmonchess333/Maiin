@@ -25,7 +25,6 @@ import {
 import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
 import { normalizeProgramState, type ProgramState } from "../programTypes";
 import { migrateProgramState } from "../migrations";
-import { isRunStepBackWeek } from "../runPlanTiming";
 import { rollRunWeeks } from "../weekRollover";
 import {
   MAX_WEEKS_AHEAD,
@@ -187,11 +186,12 @@ describe("a race plan's coming weeks", () => {
   it("marks the plan's lighter weeks, whose long run steps back", () => {
     const plan = racePlan({ raceDistance: "half", weeksOut: 16 });
     const weeks = outline(plan);
-    const totalWeeks = plan.state.runPlan!.totalWeeks!;
-    // This week is a new plan's week 0, so row i is the plan's week i + 1.
-    weeks.forEach((w, i) => {
-      expect(w.lighter).toBe(isRunStepBackWeek(i + 1, totalWeeks, "half"));
-    });
+    // Weeks 0 to 16, race week the 16th; the half's taper is 14 and 15.
+    expect(plan.state.runPlan!.totalWeeks).toBe(17);
+    // Every 4th week of the ramp steps back: weeks 3, 7 and 11 (15 is the
+    // taper's). This week is a new plan's week 0, so row i is the plan's
+    // week i + 1, and those are rows 2, 6 and 10.
+    expect(weeks.flatMap((w, i) => (w.lighter ? [i] : []))).toEqual([2, 6, 10]);
     const lighter = weeks.flatMap((w, i) => (w.lighter && i > 0 ? [i] : []));
     expect(lighter.length).toBeGreaterThan(1);
     const longKm = (i: number) => km(weeks[i].holds.long!.templateId);

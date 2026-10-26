@@ -106,7 +106,7 @@ function resolveDayKey(timezone, now = new Date()) {
 async function checkDailyAiQuota(db, { uid, action, now = new Date() } = {}) {
   if (!VALID_ACTIONS.includes(action)) {
     throw new Error(
-      `checkDailyAiQuota: action must be one of ${VALID_ACTIONS.join("|")}, got ${JSON.stringify(action)}`,
+      `checkDailyAiQuota: action must be one of ${VALID_ACTIONS.join("|")}, got ${JSON.stringify(action)}`
     );
   }
 
@@ -136,9 +136,10 @@ async function checkDailyAiQuota(db, { uid, action, now = new Date() } = {}) {
         actionState &&
         typeof actionState === "object" &&
         actionState.day === dayKey;
-      const count = sameDay && typeof actionState.count === "number"
-        ? actionState.count
-        : 0;
+      const count =
+        sameDay && typeof actionState.count === "number"
+          ? actionState.count
+          : 0;
 
       if (count >= limit) {
         return { allowed: false, remaining: 0, limit, tier };
@@ -152,7 +153,7 @@ async function checkDailyAiQuota(db, { uid, action, now = new Date() } = {}) {
           timezone: userData?.timezone ?? null,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
-        { merge: true },
+        { merge: true }
       );
 
       return {
@@ -160,6 +161,8 @@ async function checkDailyAiQuota(db, { uid, action, now = new Date() } = {}) {
         remaining: limit - count - 1,
         limit,
         tier,
+        // The day this scan was counted against, for a refund.
+        dayKey,
       };
     });
   } catch (err) {
@@ -176,7 +179,75 @@ async function checkDailyAiQuota(db, { uid, action, now = new Date() } = {}) {
   }
 }
 
+/**
+ * Give back a scan the service failed, not the person: the model answered
+ * 429 (busy) or 5xx, or with nothing that could be read. Before, that cost
+ * the day's scan all the same, and a free account has one. A 4xx the
+ * request caused keeps the charge, so a bad request cannot be retried for
+ * free. Never throws: the refund is not the response.
+ */
+function isServiceFailure(modelStatus) {
+  return modelStatus === undefined || modelStatus === 429 || modelStatus >= 500;
+}
+
+async function refundDailyAiQuota(db, { uid, action, dayKey } = {}) {
+  if (!uid || !VALID_ACTIONS.includes(action) || !dayKey) return false;
+  const usageRef = db.collection("scanUsage").doc(uid);
+  try {
+    return await db.runTransaction(async (tx) => {
+      const usage = await tx.get(usageRef);
+      const state = usage.exists ? usage.data()[action] : null;
+      if (
+        !state ||
+        state.day !== dayKey ||
+        typeof state.count !== "number" ||
+        state.count <= 0
+      )
+        return false;
+      tx.set(
+        usageRef,
+        { [action]: { day: dayKey, count: state.count - 1 } },
+        { merge: true }
+      );
+      return true;
+    });
+  } catch (err) {
+    console.error(
+      `refundDailyAiQuota error for ${uid}/${action}:`,
+      err.message
+    );
+    return false;
+  }
+}
+
+/** What the person is told when the scan failed after it was counted. */
+function failedScanResponse(modelStatus) {
+  if (modelStatus === 429) {
+    return {
+      status: 503,
+      body: {
+        error: "ai-busy",
+        message:
+          "Food analysis is busy right now. Try again in a minute. This one didn't use a scan.",
+      },
+    };
+  }
+  return {
+    status: 500,
+    body: isServiceFailure(modelStatus)
+      ? {
+          error: "ai-failed",
+          message:
+            "Couldn't analyse this. Try again. This one didn't use a scan.",
+        }
+      : { error: "ai-failed", message: "Couldn't analyse this. Try again." },
+  };
+}
+
 module.exports = {
+  isServiceFailure,
+  refundDailyAiQuota,
+  failedScanResponse,
   ACTION_TEXT_AI,
   ACTION_IMAGE_AI,
   VALID_ACTIONS,

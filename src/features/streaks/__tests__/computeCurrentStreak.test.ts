@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { format } from "date-fns";
 import {
-  computeCurrentStreak,
   computeStreakSpan,
   computeStreakSpanAnchored,
+  computeStreakState,
 } from "../useStreaks";
 
 // Pinned "now" — mid-May is well clear of any DST transition in either
@@ -15,11 +15,11 @@ const dayKey = (offset: number) =>
   format(new Date(NOW.getTime() - offset * 86400000), "yyyy-MM-dd");
 const activeSet = (...offsets: number[]) => new Set(offsets.map(dayKey));
 const streak = (...offsets: number[]) =>
-  computeCurrentStreak(activeSet(...offsets), NOW);
+  computeStreakSpan(activeSet(...offsets), NOW).streak;
 
-describe("computeCurrentStreak — base behaviour", () => {
+describe("the streak walk — base behaviour", () => {
   it("returns 0 for an empty set", () => {
-    expect(computeCurrentStreak(new Set(), NOW)).toBe(0);
+    expect(computeStreakSpan(new Set(), NOW).streak).toBe(0);
   });
 
   it("counts a single active today as 1", () => {
@@ -39,7 +39,7 @@ describe("computeCurrentStreak — base behaviour", () => {
   });
 });
 
-describe("computeCurrentStreak — grace forgiveness", () => {
+describe("the streak walk — grace forgiveness", () => {
   it("bridges a single isolated gap (active–gap–active)", () => {
     // today active, yesterday missed, day-2 active → 3-day span
     expect(streak(0, 2)).toBe(3);
@@ -114,7 +114,7 @@ describe("backfill rescue mechanism (Tier B) — simulation property", () => {
   const withYesterday = (...offsets: number[]) => {
     const set = activeSet(...offsets);
     set.add(dayKey(1));
-    return computeCurrentStreak(set, NOW);
+    return computeStreakSpan(set, NOW).streak;
   };
 
   it("is broken when the last active day is 2 days ago", () => {
@@ -213,12 +213,44 @@ describe("computeStreakSpanAnchored — long streaks survive a bounded window", 
   });
 
   it("grace still bridges on the way to the anchor", () => {
-    // Today..day4 active, day5 missed (bridgeable), day6 = anchor day.
-    const set = new Set([key(0), key(1), key(2), key(3), key(4), key(6)]);
+    // Today..day4 active, day5 missed (bridgeable), day6 = anchor day. The
+    // days just before the anchor are in the window, as they are in the app
+    // (the pair is saved on every visit): the walk checks them because its
+    // own grace is within a week of the anchor.
+    const set = new Set([
+      key(0),
+      key(1),
+      key(2),
+      key(3),
+      key(4),
+      ...Array.from({ length: 10 }, (_, i) => key(6 + i)),
+    ]);
     const anchor = { streak: 100, lastActiveDate: key(6) };
     const span = computeStreakSpanAnchored(set, anchor, NOW);
     expect(span.streak).toBe(106); // 5 walked + 1 bridged + 100 certified
     expect(span.bridgedDates).toContain(key(5));
+  });
+
+  it("deleting the anchor day's only log keeps the certificate, one day shorter", () => {
+    // 200 days saved through today, then today's one log deleted: the
+    // window shows 90 days ending yesterday. The span still certifies 199
+    // through yesterday; the plain walk alone reads 90, and the save would
+    // store that over the 200.
+    const set = new Set(Array.from({ length: 90 }, (_, i) => key(i + 1)));
+    const anchor = { streak: 200, lastActiveDate: key(0) };
+    expect(computeStreakSpanAnchored(set, anchor, NOW).streak).toBe(199);
+    expect(computeStreakState(set, anchor, NOW).anchor).toEqual({
+      streak: 199,
+      lastActiveDate: key(1),
+    });
+  });
+
+  it("deleting three days of logs still ends the streak", () => {
+    // Three days of logs deleted: the span certifies 197 through key(3),
+    // but today and the two days before are empty, so the streak is over.
+    const set = new Set(Array.from({ length: 60 }, (_, i) => key(i + 3)));
+    const anchor = { streak: 200, lastActiveDate: key(0) };
+    expect(computeStreakSpanAnchored(set, anchor, NOW).streak).toBe(0);
   });
 
   it("garbage anchors fall back to the pure walk", () => {
@@ -232,5 +264,110 @@ describe("computeStreakSpanAnchored — long streaks survive a bounded window", 
     ]) {
       expect(computeStreakSpanAnchored(set, anchor, NOW).streak).toBe(4);
     }
+  });
+});
+
+describe("the anchor and the grace spacing", () => {
+  /* The anchor certifies its own forgiven days against each other, not
+     against one the walk has just spent. Credited at once, every-other-day
+     logging with the pair written back each day added two days a day. */
+  const NOW = new Date("2026-08-05T12:00:00");
+  const key = (daysAgo: number) =>
+    format(new Date(NOW.getTime() - daysAgo * 86_400_000), "yyyy-MM-dd");
+
+  it("a forgiven day inside the anchored span, a few days behind this walk's, ends the chain", () => {
+    // Active today, day 2, day 4, ... (every other day). The pair saved on
+    // day 2 says 21. Today bridges yesterday; day 3 is a second miss two
+    // days later, so the rule allows 3 (today, yesterday, day 2).
+    const set = new Set(Array.from({ length: 21 }, (_, i) => key(i * 2)));
+    const anchor = { streak: 21, lastActiveDate: key(2) };
+    expect(computeStreakSpanAnchored(set, anchor, NOW).streak).toBe(3);
+  });
+
+  it("a forgiven day a week behind this walk's is the anchor's own, and holds", () => {
+    // Today, yesterday missed, days 2..8 active, day 9 missed, then the
+    // anchored span. Day 9 is 8 days behind yesterday: both forgiven.
+    const set = new Set([
+      key(0),
+      ...Array.from({ length: 7 }, (_, i) => key(2 + i)),
+      ...Array.from({ length: 30 }, (_, i) => key(10 + i)),
+    ]);
+    const anchor = { streak: 100, lastActiveDate: key(2) };
+    // today + bridged yesterday + the certified 100 (which includes day 9).
+    expect(computeStreakSpanAnchored(set, anchor, NOW).streak).toBe(102);
+  });
+
+  it("with no grace near it, the anchor is credited without the days behind it", () => {
+    // The window can end right at the anchor then: nothing needs checking.
+    const set = new Set([key(0), key(1), key(2)]);
+    expect(
+      computeStreakSpanAnchored(
+        set,
+        { streak: 300, lastActiveDate: key(2) },
+        NOW
+      ).streak
+    ).toBe(302);
+  });
+});
+
+describe("computeStreakState — what is shown, what is savable, what is stored", () => {
+  const NOW = new Date("2026-08-05T12:00:00");
+  const key = (daysAgo: number) =>
+    format(new Date(NOW.getTime() - daysAgo * 86_400_000), "yyyy-MM-dd");
+  const days = (from: number, to: number) =>
+    Array.from({ length: to - from + 1 }, (_, i) => key(from + i));
+
+  it("the morning after a rest day: shows 0, keeps the 100-day certificate, 100 is savable", () => {
+    // 100 days ending the day before yesterday; yesterday rested; today
+    // nothing yet. Saving the 0 threw the certificate away, so the evening's
+    // log read only the window: 32 in the probe, for 102.
+    const set = new Set(days(2, 40));
+    const stored = { streak: 100, lastActiveDate: key(2) };
+    const morning = computeStreakState(set, stored, NOW);
+    expect(morning.live.streak).toBe(0);
+    expect(morning.savable).toBe(100);
+    expect(morning.anchor).toEqual(stored);
+    // The evening's log, walked from what the morning stored.
+    const evening = computeStreakState(
+      new Set([key(0), ...set]),
+      morning.anchor,
+      NOW
+    );
+    expect(evening.live.streak).toBe(102);
+    expect(evening.anchor).toEqual({ streak: 102, lastActiveDate: key(0) });
+  });
+
+  it("backfilling yesterday stores the span it counts, so today's log reads 102, not 103", () => {
+    const stored = { streak: 100, lastActiveDate: key(2) };
+    // This morning: yesterday backfilled. The streak ends yesterday.
+    const backfilled = computeStreakState(new Set(days(1, 40)), stored, NOW);
+    expect(backfilled.live.streak).toBe(101);
+    expect(backfilled.anchor).toEqual({ streak: 101, lastActiveDate: key(1) });
+    // Saved against the day before (101 through day 2), today's log read 103.
+    const logged = computeStreakState(
+      new Set(days(0, 40)),
+      backfilled.anchor,
+      NOW
+    );
+    expect(logged.live.streak).toBe(102);
+  });
+
+  it("a broken streak leaves the stored pair alone and has nothing savable", () => {
+    const set = new Set(days(3, 40));
+    const state = computeStreakState(
+      set,
+      { streak: 100, lastActiveDate: key(3) },
+      NOW
+    );
+    expect(state.live.streak).toBe(0);
+    expect(state.savable).toBe(0);
+    expect(state.anchor).toBeNull();
+  });
+
+  it("a live streak is its own savable count, stored with the day it ends", () => {
+    const state = computeStreakState(new Set(days(1, 10)), null, NOW);
+    expect(state.live.streak).toBe(10);
+    expect(state.savable).toBe(10);
+    expect(state.anchor).toEqual({ streak: 10, lastActiveDate: key(1) });
   });
 });

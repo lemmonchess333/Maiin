@@ -1,0 +1,23 @@
+[
+  {
+    "id": "face-pulls",
+    "archiveSha256": "08804e265109e2f0c0ea82fafb34b8af7477fcac7980d064b0db97ec75a3eaa4",
+    "archiveBytes": 5480028,
+    "nativeRgbaAndEncodedReproductionExact": true,
+    "uniquePhysicalPoses": 2
+  },
+  {
+    "id": "incline-db-curl",
+    "archiveSha256": "359a34161a0ffccaa1826a87efd07feff9d61d873a78819b5ff3417b282dbbf3",
+    "archiveBytes": 2665691,
+    "nativeRgbaAndEncodedReproductionExact": true,
+    "uniquePhysicalPoses": 2
+  },
+  {
+    "id": "overhead-extension",
+    "archiveSha256": "277d5c93b803a0eadb8539c2dbd72b8ca33ecbdead80bd64d9eb2fca622c6ec8",
+    "archiveBytes": 3102896,
+    "nativeRgbaAndEncodedReproductionExact": true,
+    "uniquePhysicalPoses": 2
+  }
+]

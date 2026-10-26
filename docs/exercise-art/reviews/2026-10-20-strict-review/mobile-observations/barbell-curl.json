@@ -1,0 +1,230 @@
+{
+  "id": "barbell-curl",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Barbell Curl, Start",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Start 1/6",
+          "id": "barbell-curl",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Barbell Curl, Initiate curl",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Initiate curl 2/6",
+          "id": "barbell-curl",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Barbell Curl, Mid curl",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Mid curl 3/6",
+          "id": "barbell-curl",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Barbell Curl, Top curl",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Top curl 4/6",
+          "id": "barbell-curl",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Barbell Curl, Controlled lower",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Controlled lower 5/6",
+          "id": "barbell-curl",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Barbell Curl, Return",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Return 6/6",
+          "id": "barbell-curl",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 86,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Barbell Curl, Mid curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Barbell Curl, Top curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2884,\n    \"alt\": \"Barbell Curl, Controlled lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3442,\n    \"alt\": \"Barbell Curl, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5120,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Barbell Curl, Initiate curl",
+            "decoded": true,
+            "height": 1536,
+            "src": "/Maiin/.strict33.local/candidate/barbell-curl/2.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Initiate curl 2/6",
+        "id": "barbell-curl",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / barbell-curl\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nBarbell Curl\nBiceps\nBarbell\n\nINITIATE CURL 2/6\n\nPause\nNormal\nPRIMARY\nBiceps\nSECONDARY\nBrachialis, Brachioradialis\n\nInstructions\n\n1\n\nHold the bar with an underhand grip.\n\n2\n\nCurl without swinging your upper arms.\n\n3\n\nKeep elbows beside ribs and wrists straight.\n\n4\n\nFinish the curl without lifting your elbows.\n\n5\n\nLower the bar slowly under control.\n\n6\n\nReturn towards straight arms without bouncing.\n\nWatch out\n\nRocking your hips back to fling the bar up is ego lifting, not biceps training. Lock the torso or drop weight — clean reps grow arms.\n\nCOMMON MISTAKES\n\nSwinging the hips to throw the bar up once it gets heavy.\nLetting the elbows drift forward so the front delts take over at the top.\nDropping the bar through the lowering phase instead of controlling it.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 86,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Barbell Curl, Mid curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Barbell Curl, Top curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2884,\n    \"alt\": \"Barbell Curl, Controlled lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3442,\n    \"alt\": \"Barbell Curl, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5120,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Barbell Curl, Mid curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Barbell Curl, Top curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10244,\n    \"alt\": \"Barbell Curl, Controlled lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Barbell Curl, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12726,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13927,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Barbell Curl, Start",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Start 1/6",
+          "id": "barbell-curl",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Barbell Curl, Initiate curl",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Initiate curl 2/6",
+          "id": "barbell-curl",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Barbell Curl, Mid curl",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Mid curl 3/6",
+          "id": "barbell-curl",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Barbell Curl, Top curl",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Top curl 4/6",
+          "id": "barbell-curl",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Barbell Curl, Controlled lower",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Controlled lower 5/6",
+          "id": "barbell-curl",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Barbell Curl, Return",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/barbell-curl/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Return 6/6",
+          "id": "barbell-curl",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 86,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Barbell Curl, Mid curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Barbell Curl, Top curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2884,\n    \"alt\": \"Barbell Curl, Controlled lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3442,\n    \"alt\": \"Barbell Curl, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5120,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Barbell Curl, Mid curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Barbell Curl, Top curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10244,\n    \"alt\": \"Barbell Curl, Controlled lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Barbell Curl, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12726,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13927,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15041,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15605,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16162,\n    \"alt\": \"Barbell Curl, Mid curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16721,\n    \"alt\": \"Barbell Curl, Top curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17284,\n    \"alt\": \"Barbell Curl, Controlled lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17843,\n    \"alt\": \"Barbell Curl, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19521,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Barbell Curl, Mid curl",
+            "decoded": true,
+            "height": 1536,
+            "src": "/Maiin/.strict33.local/candidate/barbell-curl/3.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Mid curl 3/6",
+        "id": "barbell-curl",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / barbell-curl\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nBarbell Curl\nBiceps\nBarbell\n\nMID CURL 3/6\n\nPause\nNormal\nPRIMARY\nBiceps\nSECONDARY\nBrachialis, Brachioradialis\n\nInstructions\n\n1\n\nHold the bar with an underhand grip.\n\n2\n\nCurl without swinging your upper arms.\n\n3\n\nKeep elbows beside ribs and wrists straight.\n\n4\n\nFinish the curl without lifting your elbows.\n\n5\n\nLower the bar slowly under control.\n\n6\n\nReturn towards straight arms without bouncing.\n\nWatch out\n\nRocking your hips back to fling the bar up is ego lifting, not biceps training. Lock the torso or drop weight — clean reps grow arms.\n\nCOMMON MISTAKES\n\nSwinging the hips to throw the bar up once it gets heavy.\nLetting the elbows drift forward so the front delts take over at the top.\nDropping the bar through the lowering phase instead of controlling it.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 86,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Barbell Curl, Mid curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Barbell Curl, Top curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2884,\n    \"alt\": \"Barbell Curl, Controlled lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3442,\n    \"alt\": \"Barbell Curl, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5120,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Barbell Curl, Mid curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Barbell Curl, Top curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10244,\n    \"alt\": \"Barbell Curl, Controlled lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Barbell Curl, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12726,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13927,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15041,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15605,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16162,\n    \"alt\": \"Barbell Curl, Mid curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16721,\n    \"alt\": \"Barbell Curl, Top curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17284,\n    \"alt\": \"Barbell Curl, Controlled lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17843,\n    \"alt\": \"Barbell Curl, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19521,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21041,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22241,\n    \"alt\": \"Barbell Curl, Mid curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23441,\n    \"alt\": \"Barbell Curl, Top curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24642,\n    \"alt\": \"Barbell Curl, Controlled lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25841,\n    \"alt\": \"Barbell Curl, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27041,\n    \"alt\": \"Barbell Curl, Start\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28241,\n    \"alt\": \"Barbell Curl, Initiate curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 29442,\n    \"alt\": \"Barbell Curl, Mid curl\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-curl/3.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

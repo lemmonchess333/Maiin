@@ -13,8 +13,11 @@ import { saveFoodPhoto } from "@/lib/foodPhotoStore";
 import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
 import { useUid } from "@/lib/auth";
 import { OFF_CREDIT, offProductToPortion } from "@/lib/offNutrition";
-import { safeNum } from "@/lib/foodParseHelpers";
+// The scan reads the model's figures; a barcode result's are numbers already.
+import { modelNumber } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
+import { logger } from "@/lib/logger";
+import { appErrorMessage } from "@/lib/callableErrors";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
 import FoodCameraModal, {
@@ -383,10 +386,10 @@ export default function FoodAnalyzer({
     if (isMultiItem) {
       return activeItems.reduce(
         (sum, item) => ({
-          calories: sum.calories + safeNum(item.calories) * item.multiplier,
-          protein: sum.protein + safeNum(item.protein) * item.multiplier,
-          carbs: sum.carbs + safeNum(item.carbs) * item.multiplier,
-          fat: sum.fat + safeNum(item.fat) * item.multiplier,
+          calories: sum.calories + modelNumber(item.calories) * item.multiplier,
+          protein: sum.protein + modelNumber(item.protein) * item.multiplier,
+          carbs: sum.carbs + modelNumber(item.carbs) * item.multiplier,
+          fat: sum.fat + modelNumber(item.fat) * item.multiplier,
         }),
         { calories: 0, protein: 0, carbs: 0, fat: 0 }
       );
@@ -402,18 +405,18 @@ export default function FoodAnalyzer({
     if (!isBarcode && activeResult.items.length === 1) {
       const only = activeResult.items[0];
       return {
-        calories: safeNum(only.calories),
-        protein: safeNum(only.protein),
-        carbs: safeNum(only.carbs),
-        fat: safeNum(only.fat),
+        calories: modelNumber(only.calories),
+        protein: modelNumber(only.protein),
+        carbs: modelNumber(only.carbs),
+        fat: modelNumber(only.fat),
       };
     }
     const factor = isBarcode ? servings : 1;
     return {
-      calories: safeNum(activeResult.totalCalories) * factor,
-      protein: safeNum(activeResult.totalProtein) * factor,
-      carbs: safeNum(activeResult.totalCarbs) * factor,
-      fat: safeNum(activeResult.totalFat) * factor,
+      calories: modelNumber(activeResult.totalCalories) * factor,
+      protein: modelNumber(activeResult.totalProtein) * factor,
+      carbs: modelNumber(activeResult.totalCarbs) * factor,
+      fat: modelNumber(activeResult.totalFat) * factor,
     };
   }, [activeResult, activeItems, isMultiItem, isBarcode, servings]);
 
@@ -517,10 +520,10 @@ export default function FoodAnalyzer({
               item.multiplier !== 1
                 ? `${item.multiplier}x ${item.portionSize}`
                 : item.portionSize,
-            calories: Math.round(safeNum(item.calories) * item.multiplier),
-            protein: Math.round(safeNum(item.protein) * item.multiplier),
-            carbs: Math.round(safeNum(item.carbs) * item.multiplier),
-            fat: Math.round(safeNum(item.fat) * item.multiplier),
+            calories: Math.round(modelNumber(item.calories) * item.multiplier),
+            protein: Math.round(modelNumber(item.protein) * item.multiplier),
+            carbs: Math.round(modelNumber(item.carbs) * item.multiplier),
+            fat: Math.round(modelNumber(item.fat) * item.multiplier),
           }))
         : meal.items.map((item) => ({
             ...item,
@@ -531,10 +534,10 @@ export default function FoodAnalyzer({
                otherwise persist NaN into the diary doc (setDocGuarded
                strips undefined, not NaN) and poison every downstream
                consumer that sums item macros. */
-            calories: Math.round(safeNum(item.calories) * s),
-            protein: Math.round(safeNum(item.protein) * s),
-            carbs: Math.round(safeNum(item.carbs) * s),
-            fat: Math.round(safeNum(item.fat) * s),
+            calories: Math.round(modelNumber(item.calories) * s),
+            protein: Math.round(modelNumber(item.protein) * s),
+            carbs: Math.round(modelNumber(item.carbs) * s),
+            fat: Math.round(modelNumber(item.fat) * s),
           }));
 
       /* Diary row name derived from items, not from the AI's
@@ -642,11 +645,8 @@ export default function FoodAnalyzer({
       // to close. Toast + reset so the user gets feedback and can
       // retry.
       setSaving(false);
-      const message =
-        err instanceof Error && err.message
-          ? err.message
-          : "Couldn't save — please try again.";
-      toast.error(message);
+      logger.error("[FoodAnalyzer] save failed", err);
+      toast.error(appErrorMessage(err, "Couldn't save. Try again."));
     }
   };
 
@@ -711,10 +711,10 @@ export default function FoodAnalyzer({
     const meal: MealResult = {
       foodName: activeResult.foodName ?? "Meal",
       items: activeResult.items ?? [],
-      totalCalories: safeNum(activeResult.totalCalories),
-      totalProtein: safeNum(activeResult.totalProtein),
-      totalCarbs: safeNum(activeResult.totalCarbs),
-      totalFat: safeNum(activeResult.totalFat),
+      totalCalories: modelNumber(activeResult.totalCalories),
+      totalProtein: modelNumber(activeResult.totalProtein),
+      totalCarbs: modelNumber(activeResult.totalCarbs),
+      totalFat: modelNumber(activeResult.totalFat),
       confidence: activeResult.confidence ?? "low",
       barcode: activeResult.barcode,
       brand: activeResult.brand,
@@ -932,25 +932,26 @@ export default function FoodAnalyzer({
           <p className="text-sm text-destructive-strong">
             Couldn't identify food.
           </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="secondary"
               onClick={handleResetAll}
-              aria-label="Try food analysis again"
-              className="text-sm text-destructive-strong font-medium flex items-center gap-1"
+              leftIcon={<RotateCcw className="size-4" />}
             >
-              <RotateCcw className="size-3.5" /> Try again
-            </button>
-            <button
-              type="button"
+              Try again
+            </Button>
+            <Button
+              variant="ghost"
               onClick={() => {
+                // As the empty result's Log manually: hand off to the
+                // parent's manual logger, not just close the camera.
                 handleResetAll();
                 setCameraOpen(false);
+                onRequestManualLog?.();
               }}
-              className="text-sm text-lifting-strong font-medium"
             >
-              Switch to manual entry
-            </button>
+              Log manually
+            </Button>
           </div>
         </div>
       )}
@@ -1160,7 +1161,7 @@ export default function FoodAnalyzer({
                   {editedItems.map((item) => {
                     const i = item.index;
                     const itemCal = Math.round(
-                      safeNum(item.calories) * item.multiplier
+                      modelNumber(item.calories) * item.multiplier
                     );
                     if (item.removed) {
                       return (

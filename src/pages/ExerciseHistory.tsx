@@ -7,7 +7,7 @@ import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { epley1RMExact } from "@/lib/analytics";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, withSign } from "@/utils/formatters";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { liftUnitLabel, liftVolumeIn, wholeLoadIn } from "@/lib/liftLoad";
 import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
@@ -15,6 +15,7 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import {
   localDateString,
   parseLocalDate,
@@ -83,7 +84,12 @@ export default function ExerciseHistory() {
   const params = useParams<{ name: string }>();
   const decodedName = params.name ? decodeURIComponent(params.name) : "";
   // All-range sessions / all-time PRs need EVERY workout, not just the newest 50.
-  const { workouts, loading } = useWorkouts({ coverage: "complete" });
+  const {
+    workouts,
+    loading,
+    failed,
+    refresh: retryWorkouts,
+  } = useWorkouts({ coverage: "complete" });
   const navigate = useNavigate();
   const location = useLocation();
   // Loads are kg in the log; the lifter reads them in their unit (Lift18).
@@ -298,6 +304,19 @@ export default function ExerciseHistory() {
     );
   }
 
+  // A failed read is not an exercise nobody has logged: both empty states
+  // below would tell the person something untrue.
+  if (failed && (tab !== "form" || !exercise)) {
+    return (
+      <div className="pt-2">
+        <ErrorState
+          title="Couldn't load your sessions"
+          retry={{ onClick: retryWorkouts }}
+        />
+      </div>
+    );
+  }
+
   // Exercise name didn't match anything in the database (user renamed
   // an exercise, or a typo in the URL). Still handle gracefully — the
   // shared hexagon EmptyState carries the single back affordance, so the
@@ -479,7 +498,7 @@ export default function ExerciseHistory() {
                         </>
                       )}
                     </p>
-                    <p className="text-caption text-muted-foreground mt-0.5">
+                    <p className="text-micro text-muted-foreground mt-0.5">
                       {formatDayMonth(parseLocalDate(pr.date))}
                     </p>
                   </div>
@@ -526,7 +545,7 @@ export default function ExerciseHistory() {
                         haptic("light");
                         setMetric(m);
                       }}
-                      className={`px-2 py-1 rounded-full text-caption font-semibold transition-colors ${
+                      className={`px-2 py-1 rounded-full text-micro font-semibold transition-colors ${
                         displayMetric === m
                           ? "bg-card text-foreground"
                           : "text-muted-foreground"
@@ -594,14 +613,10 @@ export default function ExerciseHistory() {
                           <p className="text-xs font-medium text-foreground">
                             {formatDayMonth(parseLocalDate(s.date))}
                           </p>
+                          {/* The PR chip every other best wears. White on
+                              the food orange measured 2.76:1. */}
                           {isPR && (
-                            <span
-                              className="text-caption font-bold tracking-wider px-1.5 py-0.5 rounded-full"
-                              style={{
-                                backgroundColor: THEME.semantic.nutrition,
-                                color: "white",
-                              }}
-                            >
+                            <span className="text-caption font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
                               PR
                             </span>
                           )}
@@ -626,7 +641,7 @@ export default function ExerciseHistory() {
                         </p>
                         {delta != null && delta !== 0 && (
                           <p
-                            className="text-caption font-medium mt-0.5"
+                            className="text-micro font-medium mt-0.5"
                             style={{
                               color:
                                 delta > 0
@@ -634,11 +649,17 @@ export default function ExerciseHistory() {
                                   : "hsl(var(--muted-foreground))",
                             }}
                           >
-                            {delta > 0 ? "+" : ""}
-                            {isTimed
-                              ? `${delta} s`
-                              : `${kitLoadIn(delta, liftUnit, exercise?.id)} ${unitLabel}`}{" "}
-                            from last
+                            {withSign(
+                              delta,
+                              String(
+                                Math.abs(
+                                  isTimed
+                                    ? delta
+                                    : kitLoadIn(delta, liftUnit, exercise?.id)
+                                )
+                              )
+                            )}{" "}
+                            {isTimed ? "s" : unitLabel} from last
                           </p>
                         )}
                       </div>
