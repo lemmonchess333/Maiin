@@ -260,7 +260,7 @@ export default function HeroDrillDownSheet({
               <div className="flex items-baseline gap-1.5">
                 {/* Counted the way the bar and the percentage are, as
                     each macro row is (Food10 (1)). */}
-                <span className="font-mono tabular-nums text-2xl font-extrabold text-foreground">
+                <span className="font-figure tabular-nums text-2xl font-extrabold text-foreground">
                   {formatCalories(
                     mode === "left" ? Math.abs(remaining) : dailyTotals.calories
                   )}

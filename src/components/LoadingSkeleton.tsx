@@ -204,7 +204,7 @@ export function PerformanceCardSkeleton() {
     >
       <div className="flex flex-wrap items-start gap-3">
         <LineBar
-          text="text-display font-extrabold font-mono tabular-nums leading-none"
+          text="text-display font-extrabold font-figure tabular-nums leading-none"
           className="w-[2ch]"
         />
         <div className="min-w-[min(100%,9em)] flex-1 space-y-1 pt-0.5">
@@ -297,7 +297,7 @@ export function PeriodSummarySkeleton() {
             <div key={i} className="min-w-0 px-2 py-2">
               <LineBar
                 as="span"
-                text="text-h2 font-extrabold font-mono tabular-nums leading-tight"
+                text="text-h2 font-extrabold font-figure tabular-nums leading-tight"
                 className="w-14"
               />
               <LineBar as="span" text="text-sm" className="w-16" />

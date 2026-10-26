@@ -357,7 +357,45 @@ describe("ExerciseRowSummary — one row's words", () => {
     expect(container).toHaveTextContent("Last: 30s, 25s");
   });
 
-  it("keeps every number in the numeral face", () => {
+  it("sets the numbers in the lines as the words are: one face, one weight", () => {
+    /* The owner's Train screenshot: "3 sets × 8 reps · 52.5 kg" and
+       "Last: 52.5 kg × 10, 10, 10" read as misaligned, Archivo digits
+       heavier and taller than the Plus Jakarta Sans words beside them.
+       A number inside a line of text is the inline tier (DESIGN_GUIDE
+       §4): `font-mono`, the text face with tabular digits, inheriting
+       the line's weight. So no number span carries the figure face or a
+       weight of its own. */
+    const { container } = render(
+      <ExerciseRowSummary
+        exercise={exercise({ weight: 52.5 })}
+        lastSets={[
+          { weightKg: 52.5, reps: 10 },
+          { weightKg: 52.5, reps: 10 },
+          { weightKg: 52.5, reps: 10 },
+        ]}
+      />
+    );
+    const lines = [...container.querySelectorAll("p")].filter((p) =>
+      /sets ×|^Last:/.test(p.textContent ?? "")
+    );
+    expect(lines.map((p) => p.textContent)).toEqual([
+      "3 sets × 8 reps · 52.5 kg",
+      "Last: 52.5 kg × 10, 10, 10",
+    ]);
+    for (const line of lines) {
+      expect(line.className).not.toMatch(/\bfont-(?:figure|mono)\b/);
+      const numbers = [...line.querySelectorAll("span")];
+      expect(numbers.length).toBeGreaterThan(0);
+      for (const span of numbers) {
+        expect(span).toHaveClass("font-mono", "tabular-nums");
+        expect(span.className).not.toMatch(
+          /\bfont-(?:figure|medium|semibold|bold|extrabold)\b/
+        );
+      }
+    }
+  });
+
+  it("keeps every number in the inline number tier", () => {
     const { container } = render(
       <ExerciseRowSummary
         exercise={exercise()}

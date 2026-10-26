@@ -143,7 +143,7 @@ export default function WeightStepsTiles({
             {stepsPending ? (
               <Skeleton className="h-6 w-16" />
             ) : (
-              <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+              <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
                 {stepsValue.toLocaleString()}
               </p>
             )}
@@ -229,7 +229,7 @@ export default function WeightStepsTiles({
             </div>
           ) : (
             <div className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
-              <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+              <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
                 {lastWeight ? lastWeight : "\u2014"}
               </p>
               {lastWeight && (

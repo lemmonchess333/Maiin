@@ -112,7 +112,7 @@ export default function WeightRateCard({
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <div className="min-w-0">
-              <span className="block whitespace-nowrap text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
+              <span className="block whitespace-nowrap text-h2 font-extrabold font-figure tabular-nums leading-tight text-foreground">
                 {signed(rate.kgPerWeek, unit, 2)}
               </span>
               <span className="block text-sm text-muted-foreground">
@@ -121,7 +121,7 @@ export default function WeightRateCard({
             </div>
             {targetKgPerWeek !== null && (
               <div className="min-w-0">
-                <span className="block whitespace-nowrap text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
+                <span className="block whitespace-nowrap text-h2 font-extrabold font-figure tabular-nums leading-tight text-foreground">
                   {signed(targetKgPerWeek, unit, 2)}
                 </span>
                 <span className="block text-sm text-muted-foreground">

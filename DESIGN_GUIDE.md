@@ -22,9 +22,12 @@ If you only remember ten things:
    is a regression, not an improvement.
 2. **Purple = lifting/brand. Coral = running.** This sport-coding is everywhere
    (dots, labels, icons, CTAs). Never cross the wires.
-3. **All numbers are Archivo (the numeral font) + `tabular-nums`.** Calories, weight, reps,
-   pace, volume — every numeric display. Use the `.stat-number` class or
-   `font-mono tabular-nums`.
+3. **Numbers come in two tiers, both with tabular figures.** A figure that
+   stands on its own at display size (the calorie ring's 2,336, a tile's
+   81.7, a hero stat, a timer, a set log's inputs) is Archivo:
+   `font-figure tabular-nums`. A number inside a line of text ("3 sets ×
+   8 reps · 52.5 kg", "about 59 min", "Last: 105 kg × 5") is the text
+   face at the words' own weight: `font-mono tabular-nums`. See §4.
 4. **All other text is Plus Jakarta Sans.** Two fonts total. No third font, ever
    (not even for one decorative glyph).
 5. **44px minimum touch target.** This is an iOS app shell. Buttons default to
@@ -228,15 +231,35 @@ the count can only fall.
 
 ## 4. Typography
 
-- **Display / text font:** Plus Jakarta Sans (everything that isn't a number).
-- **Numeral font:** **Archivo** (every number) — chosen in the brand bake-off
-  to replace JetBrains Mono (see `docs/visual-audit/bakeoff/DECISION.md`). It is
-  proportional, not monospace, so digit alignment comes from tabular figures:
-  the `.font-mono` rule in `index.css` forces `tnum` on every numeral element,
-  and you should still add `tabular-nums` on numbers in columns. **The
-  `font-mono` Tailwind utility / `--font-mono` token still carries numbers —
-  the `mono` name is historical; it now resolves to Archivo.** Keep using
-  `font-mono` for numbers; don't reintroduce a monospace face.
+- **Display / text font:** Plus Jakarta Sans — every word, and every number
+  inside a line of text.
+- **Figure font:** **Archivo**, for a figure that stands on its own — chosen
+  in the brand bake-off to replace JetBrains Mono (see
+  `docs/visual-audit/bakeoff/DECISION.md`).
+- **Two number tiers** (owner, 26 October 2026; §14c):
+
+  | Tier   | Class                      | Face              | Where                                                                                                                                                                                                      |
+  | ------ | -------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | Figure | `font-figure tabular-nums` | Archivo           | A number that is the thing on its own line or tile, at text-lg and up: the calorie ring, the macro grams, the weight and water tiles, "0 of 5", hero stats, chart and ring centres, timers, set-log inputs |
+  | Inline | `font-mono tabular-nums`   | Plus Jakarta Sans | A number inside a sentence, a meta line, a caption, a "Last:" line, a chip or a list row's small text, at the weight of the words beside it                                                                |
+
+  The test: if the number reads as part of a sentence, it is inline; if it
+  is its own block and the words are its caption, it is a figure. A figure
+  below text-lg is a ring's centre, and each one is named in
+  `designSystemInvariants.test.ts`, as is any inline number at text-xl or
+  above. Inline numbers never carry a weight of their own: "3 sets" is one
+  run of text, not a bold 3 beside a regular "sets".
+
+- Both faces are proportional, so digit alignment comes from tabular
+  figures: the `.font-mono, .font-figure` rule in `index.css` forces `tnum`
+  on both. **`font-mono` means "a number", not a monospace face**; it
+  resolves to the text face. Don't reintroduce a monospace face.
+- **Units.** A unit inside a figure is a word: step it back to the text
+  face with `font-sans` (which resolves to Plus Jakarta Sans), smaller
+  than the figure and on its baseline — "81.7 kg", "0 ml", "91g". Food
+  grams stay unspaced ("128g"); every other unit takes one space. Inside a
+  `Button`, keep a number and its unit in one span: the button lays its
+  children out with a gap, which turns "250 ml" into "250 ml".
 - **Scale** (1.25 modular; available as `text-display`, `text-h1`, … Tailwind classes):
 
 | Token          | Size  | Use                                                              |
@@ -631,7 +654,7 @@ no new colours, no gradient, no emoji.
 - [ ] No new colours / gradients / decorative elements introduced.
 - [ ] No hardcoded hex — everything via tokens (`bg-*`) or `THEME.*`.
 - [ ] Sport-coding correct (purple = lift, coral = run) and semantic colours intact.
-- [ ] Numbers use Archivo (the numeral font, via `font-mono`) + `tabular-nums`; text uses Plus Jakarta Sans.
+- [ ] A figure that stands on its own uses Archivo (`font-figure`); a number inside a line of text uses the text face at the words' weight (`font-mono`); both `tabular-nums` (§4). Words use Plus Jakarta Sans.
 - [ ] Font weights follow the 600/700/800 tier rules (no 700+800 mixing).
 - [ ] Used primitives (`Button`/`IconButton`/`Banner`/`BottomSheet`/`.ds-card`)
       instead of hand-rolled markup.
@@ -702,8 +725,37 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
 
 ### 14c. Typography (Plus Jakarta Sans + Archivo)
 
-- **Display font:** Plus Jakarta Sans (all UI text)
-- **Numeral font:** Archivo (stat numbers — calories, weight, reps, volume). Proportional, not monospace; tabular figures forced on `.font-mono`. Replaced JetBrains Mono (brand bake-off — `docs/visual-audit/bakeoff/DECISION.md`). The `font-mono` utility / `--font-mono` token still means "numbers"; the name is historical.
+- **Display font:** Plus Jakarta Sans (all UI text, and every number inside a line of text)
+- **Figure font:** Archivo (a figure that stands on its own — the calorie ring, a tile, a hero stat, a timer). Proportional, not monospace; tabular figures forced on `.font-mono` and `.font-figure`. Replaced JetBrains Mono (brand bake-off — `docs/visual-audit/bakeoff/DECISION.md`). The `font-mono` utility means "a number inside text" and resolves to the text face; `font-figure` resolves to Archivo.
+- **Two number tiers (owner, 2026-10-26).** The owner, on phone captures of
+  Home and Train: "I feel like the writing of the text is weird a lot,
+  does this make sense? The numbers saying what weight to do then the reps
+  and such misalign and same with a lot of the typography's and such." On
+  the proposal — figures keep Archivo, numbers inside text take the text
+  face — "Yeah you figure it out." What was wrong: every number was
+  Archivo, so "3 sets × 8 reps · 52.5 kg" and "Last: 52.5 kg × 10, 10, 10"
+  set Archivo digits, taller and heavier-looking, between Plus Jakarta
+  Sans words; "~59 min" and "about 59 min" did the same in the session
+  cards. Decided:
+  1. A figure that stands on its own at display size keeps Archivo
+     (`font-figure`): the calorie ring, the macro grams, the weight,
+     water and steps tiles, "0 of 5", hero and analytics stats, ring and
+     chart centres, the run HUD's readouts, the rest timer, the set log's
+     inputs, finish-screen stats.
+  2. A number inside a line of text is the text face at the same weight
+     as the words beside it, with tabular figures (`font-mono`): meta
+     lines, captions, sentences, "Last:" lines, durations, counts, chips
+     and small list text.
+  3. A unit sits on its number's baseline in the text face, without an
+     odd size drop or a gap: the macro tiles' "g" is 14px medium under a
+     20px figure (16px under 24px on the Food page), not a 12px bold
+     subscript, and still unspaced ("91g"); the water chips read "250 ml"
+     with one space, not the button's gap; "0 ml" matches "81.7 kg" beside
+     it. `font-sans` resolves to Plus Jakarta Sans, so a unit stepping out
+     of a figure never lands on the system font.
+     `designSystemInvariants.test.ts` pins the tokens and both size
+     boundaries; the share card (`ShareCardRenderer`) keeps its own
+     rasterised look.
 - **Scale (1.25 modular):**
   - Display: 3rem/48px — hero stat numbers (health score)
   - H1: ~31px — page titles ("Program", "Social", "Analytics")
@@ -713,7 +765,7 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
   - Small: 14px — secondary descriptions
   - Micro: 12px — labels and captions, in sentence case
 - **Weight rules:** 800 (extrabold) for hero numbers and page titles. 700 (bold) for section headings and card titles. 600 (semibold) for pill text and button labels. Never mix 700 and 800 in the same visual tier.
-- **Numeric displays:** Always use font-mono + tabular-nums for alignment
+- **Numeric displays:** a stand-alone figure is `font-figure tabular-nums` (Archivo); a number in a line of text is `font-mono tabular-nums` (the text face, at the words' weight). See §4 and the owner decision below.
 - **Medium (500, `font-medium`) IS a tier — the small-text emphasis
   weight.** Use it at `text-sm` and `text-xs` for secondary labels, meta
   rows and pill text; hierarchy at `text-lg` and above is carried by
@@ -1020,7 +1072,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **Calm over flashy** — subtle shadows, soft tinted backgrounds, no harsh contrasts
 - **Breathing room over density** — generous padding, clear visual hierarchy
 - **iOS conventions** — grouped background, card-based layout, safe area padding, 44px minimum touch targets
-- **Consistent numeric treatment** — all numbers in Archivo (the numeral font) with tabular-nums
+- **Consistent numeric treatment** — stand-alone figures in Archivo (`font-figure`), numbers inside text in the text face (`font-mono`), all with tabular-nums
 - **Sport-coding everywhere** — lift content uses purple tints, run content uses coral tints
 - **Semantic colour consistency** — orange always = nutrition, teal always = hydration, coral always = vitals/running, purple always = brand/lifting
 - **Progressive disclosure** — cards link to detail views, sheets for editing, don't overload screens

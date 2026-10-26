@@ -159,6 +159,87 @@ suite("a follow request is announced unless switched off", () => {
   });
 });
 
+suite.each([
+  {
+    type: "follow",
+    collection: "followers",
+    param: "followerUid",
+    handler: () => onFollowerCreated,
+  },
+  {
+    type: "follow_request",
+    collection: "followRequests",
+    param: "requesterUid",
+    handler: () => onFollowRequestCreated,
+  },
+])("$type source-event delivery", ({ type, collection, param, handler }) => {
+  beforeEach(async () => {
+    await wipe();
+    await db
+      .doc(`users/${RECIPIENT}`)
+      .set({ notificationPreferences: { follows: true } });
+    await db
+      .doc(`users/${FOLLOWER}/public/profile`)
+      .set({ displayName: "Bob" });
+  });
+
+  const notice = () =>
+    db.doc(`notifications/${RECIPIENT}/items/${type}_${FOLLOWER}`);
+  const source = () => db.doc(`${collection}/${RECIPIENT}/users/${FOLLOWER}`);
+  const deliver = (snapshot, eventId) =>
+    handler().run(snapshot, {
+      eventId,
+      params: { uid: RECIPIENT, [param]: FOLLOWER },
+    });
+
+  it("preserves delivery time and TTL on same-event redelivery", async () => {
+    await source().create({});
+    const snapshot = await source().get();
+    await deliver(snapshot, "first-source-event");
+    const original = await notice().get();
+
+    await deliver(snapshot, "first-source-event");
+
+    const repeated = await notice().get();
+    expect(repeated.data()).toEqual(original.data());
+    expect(repeated.updateTime.isEqual(original.updateTime)).toBe(true);
+  });
+
+  it("commits only one notification write for concurrent same-event deliveries", async () => {
+    await source().create({});
+    const snapshot = await source().get();
+
+    await Promise.all(
+      Array.from({ length: 8 }, () => deliver(snapshot, "concurrent-event"))
+    );
+
+    const result = await notice().get();
+    expect(result.exists).toBe(true);
+    expect(result.createTime.isEqual(result.updateTime)).toBe(true);
+    expect(await items()).toHaveLength(1);
+  });
+
+  it("refreshes a new source but never lets an older source overwrite it afterwards", async () => {
+    await source().create({});
+    const first = await source().get();
+    await deliver(first, "source-A");
+    const initial = await notice().get();
+    await source().delete();
+    await source().create({});
+    const next = await source().get();
+    await deliver(next, "source-B");
+    const newest = await notice().get();
+    expect(newest.updateTime.isEqual(initial.updateTime)).toBe(false);
+
+    await deliver(first, "source-A");
+
+    const result = await notice().get();
+    expect(result.data()).toEqual(newest.data());
+    expect(result.updateTime.isEqual(newest.updateTime)).toBe(true);
+    expect(await items()).toHaveLength(1);
+  });
+});
+
 suite("the person who asked hears that they were accepted", () => {
   beforeEach(async () => {
     await wipe();

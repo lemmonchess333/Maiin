@@ -138,7 +138,7 @@ export default function PerformanceOverviewCard({
           {/* The words keep at least 9em and go under the score when they
             cannot, rather than one word to a line at larger text. */}
           <div className="flex flex-wrap items-start gap-3">
-            <p className="text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
+            <p className="text-display font-extrabold font-figure tabular-nums leading-none text-foreground">
               <span className="sr-only">Performance Index </span>
               {pi}
             </p>

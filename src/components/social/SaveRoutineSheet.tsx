@@ -20,7 +20,7 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
-/** Keep the preview and feed on one formatter; only numbers use Archivo.
+/** Keep the preview and feed on one formatter; its numbers take the inline number tier.
  *  In the reader's unit, as the feed card's rows are (Lift18). */
 function ExerciseSummary(props: ExerciseSummaryInput) {
   const liftUnit = useLiftUnit();

@@ -11,7 +11,7 @@ import {
 
 type WeightUnit = "kg" | "lbs" | "st";
 const valueClass =
-  "ds-input w-full min-w-0 min-h-16 text-center text-display font-mono tabular-nums";
+  "ds-input w-full min-w-0 min-h-16 text-center text-display font-figure tabular-nums";
 /* Each box says its unit under it, and, before anything is entered, shows
    the figure the dial points at as its placeholder: an unanswered box
    stays empty (nothing advances on numbers nobody entered), but an empty

@@ -224,7 +224,7 @@ export default function PeriodSummaryCard({
                   selected && "bg-muted"
                 )}
               >
-                <span className="block text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
+                <span className="block text-h2 font-extrabold font-figure tabular-nums leading-tight text-foreground">
                   {f.value}
                 </span>
                 <span className="block text-sm text-muted-foreground truncate">

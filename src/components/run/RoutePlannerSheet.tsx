@@ -357,7 +357,7 @@ export default function RoutePlannerSheet({
                 : "Tap the map to drop points along your route."}
             </p>
           </div>
-          <p className="shrink-0 font-mono text-lg font-extrabold tabular-nums text-running-strong">
+          <p className="shrink-0 font-figure text-lg font-extrabold tabular-nums text-running-strong">
             {distanceLabel2(distanceM, unit)}
           </p>
         </div>

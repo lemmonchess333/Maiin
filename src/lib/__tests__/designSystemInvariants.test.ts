@@ -2,7 +2,7 @@
  * Design-system invariants as tests, not vigilance (D15).
  *
  * CLAUDE.md names three invariants that "regress constantly and keep getting
- * swept up after the fact": (1) numeric displays use font-mono + tabular-nums,
+ * swept up after the fact": (1) numeric displays use font-mono or font-figure + tabular-nums,
  * (2) every colour is a THEME/token (no hex), (3) interactive elements clear
  * 44px via the Button/IconButton/Toggle primitives.
  *
@@ -195,49 +195,125 @@ describe("D15 · DS invariant — touch-target primitive (44px floor)", () => {
   });
 });
 
-describe("D15 · DS invariant — numeric displays use the mono numeral font", () => {
-  /* Only ONE direction of this is a defect, and it is worth saying so
-     because the other one scans as if it were. `font-mono` WITHOUT
-     `tabular-nums` looks like the same class of miss and is not: `index.css`
-     applies `font-variant-numeric: tabular-nums` (and `tnum`) to every
-     `.font-mono` element, precisely because Archivo is proportional. So the
-     class is redundant wherever `font-mono` is present, and a sweep to add
-     it — the live run HUD's big numbers among them — would change nothing.
-     That rests entirely on the stylesheet rule, so the rule is pinned below
-     rather than trusted: if it ever goes, those sites become real defects
-     the same day.
+describe("D15 · DS invariant — numbers take one of the two number tiers", () => {
+  /* Two tiers (DESIGN_GUIDE §0 rule 3, §4). A number inside a line of
+     text is `font-mono`: the text face, Plus Jakarta Sans, with tabular
+     figures, at the weight of the words beside it. A figure that stands
+     on its own at display size is `font-figure`: Archivo, also tabular.
+     The owner's call: Archivo digits inside a Jakarta sentence ("3 sets
+     × 8 reps · 52.5 kg") have their own x-height and cap height and
+     look heavier, so the line read as misaligned.
 
-     The direction after that IS real: `tabular-nums` alone opts into aligned
-     columns while leaving the text in the proportional UI face, which is the
-     week-strip bug's exact shape. */
+     `font-mono` or `font-figure` WITHOUT `tabular-nums` is not a defect:
+     `index.css` applies `font-variant-numeric: tabular-nums` (and `tnum`)
+     to every element of either class, because both faces are
+     proportional. That rests entirely on the stylesheet rule, so the
+     rule is pinned below rather than trusted.
 
-  it("`.font-mono` forces tabular figures, so the class alone is enough", () => {
-    // Archivo is proportional (it replaced JetBrains Mono in the brand
-    // bake-off), so digit alignment is not inherent to the face — it comes
-    // from this rule. Everything that writes `font-mono` and omits
-    // `tabular-nums` depends on it.
-    const css = readFileSync(resolve(repoRoot, "src/index.css"), "utf8");
-    const rule = /\.font-mono\s*\{[^}]*\}/.exec(css)?.[0] ?? "";
-    expect(rule, "no `.font-mono` rule in index.css").not.toBe("");
+     The direction after that IS real: `tabular-nums` with neither class
+     is a number that has not said which tier it is, the week-strip bug's
+     exact shape. */
+
+  const css = readFileSync(resolve(repoRoot, "src/index.css"), "utf8");
+
+  it("`.font-mono` and `.font-figure` force tabular figures, so either class alone is enough", () => {
+    const rule =
+      /\.font-mono,\s*\.font-figure\s*\{[^}]*\}/.exec(css)?.[0] ?? "";
+    expect(rule, "no `.font-mono, .font-figure` rule in index.css").not.toBe(
+      ""
+    );
     expect(rule).toMatch(/font-variant-numeric:\s*tabular-nums/);
+    expect(rule).toMatch(/font-feature-settings:\s*"tnum" 1/);
+  });
+
+  /** The first family a `@theme` font token names. */
+  function firstFamily(token: string): string {
+    const m = new RegExp(`--font-${token}:\\s*"([^"]+)"`).exec(css);
+    return m?.[1] ?? "";
+  }
+
+  it("an inline number is the text face; a figure is Archivo", () => {
+    expect(firstFamily("display")).toBe("Plus Jakarta Sans Variable");
+    // `font-mono` means "a number", not a monospace face: inside a line
+    // of text it is the words' own face.
+    expect(firstFamily("mono")).toBe(firstFamily("display"));
+    expect(firstFamily("figure")).toBe("Archivo Variable");
+    // A unit or word inside a figure steps back to the text face with
+    // `font-sans`; Tailwind's default there is the system font, a third
+    // face.
+    expect(firstFamily("sans")).toBe(firstFamily("display"));
+  });
+
+  /* Sizes, by tier. A figure stands on its own at display size, so
+     `font-figure` below text-lg is a ring's or a donut's centre, where
+     the ring is the block; each one is named here. And `font-mono` at
+     text-xl or larger is a figure left in the inline tier. */
+  const SMALL = /^text-(?:xs|sm|base|caption|micro|small|body)$/;
+  const LARGE = /^text-(?:xl|[2-9]xl|h1|h2|h3|display)$/;
+  const SMALL_FIGURES = new Map([
+    // The Performance Index inside Home's progress ring.
+    ["src/components/home/PerformanceHeroCard.tsx", 2],
+    // The average day's calories inside Analytics' macro donut.
+    ["src/components/analytics/MacroDistribution.tsx", 1],
+  ]);
+  const LARGE_INLINE = new Map([
+    // "Easy run 5 km": the dose sits on the session name's line, beside
+    // the heading, so it takes the heading's face.
+    ["src/components/run/RunLaunchCard.tsx", 2],
+  ]);
+
+  function tierOutliers(cls: "font-mono" | "font-figure", size: RegExp) {
+    const found = new Map<string, number>();
+    for (const file of FILES) {
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
+      for (const chunk of classNameChunks(readFileSync(file, "utf8"))) {
+        const tokens = chunk.split(/\s+/);
+        if (!tokens.includes(cls)) continue;
+        // A chunk can carry a size per branch (`compact ? "text-xl" :
+        // "text-2xl"`); it is an outlier only when every size it can
+        // take is.
+        const sizes = tokens.filter((t) =>
+          /^text-(?:xs|sm|base|lg|xl|[2-9]xl|h1|h2|h3|display|caption|micro|small|body)$/.test(
+            t
+          )
+        );
+        if (sizes.length > 0 && sizes.every((t) => size.test(t)))
+          found.set(rel, (found.get(rel) ?? 0) + 1);
+      }
+    }
+    return found;
+  }
+
+  it("a figure below text-lg is one of the named ring centres", () => {
+    expect(Object.fromEntries(tierOutliers("font-figure", SMALL))).toEqual(
+      Object.fromEntries(SMALL_FIGURES)
+    );
+  });
+
+  it("an inline number at text-xl or larger is one of the named heading lines", () => {
+    expect(Object.fromEntries(tierOutliers("font-mono", LARGE))).toEqual(
+      Object.fromEntries(LARGE_INLINE)
+    );
   });
 
   // Invariant #1 proxy: `tabular-nums` is a NUMERIC-display utility — if a
   // className opts into tabular figures, it's rendering numbers, so it must
-  // also carry `font-mono` (the Archivo numeral font; CLAUDE.md). `tabular-nums`
-  // WITHOUT `font-mono` is the week-strip-bug shape: aligned columns in the
-  // wrong (proportional UI) font.
-  const MONO_BASELINE = 0; // fully burned down from 30 → 14 → 0 (price/macro/usage/rank/date displays given font-mono; the FoodMealSection uppercase-label tabular-nums removed as spurious). Floor is 0: any tabular-nums without font-mono now fails. Keep numbers on the Archivo numeral font.
-  it("tabular-nums classes also carry font-mono (no proportional-font numbers)", () => {
+  // also say which tier it is.
+  const MONO_BASELINE = 0; // Floor is 0: any tabular-nums without font-mono or font-figure fails.
+  it("tabular-nums classes also carry font-mono or font-figure", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
       for (const cls of classNameChunks(src)) {
-        if (cls.includes("tabular-nums") && !cls.includes("font-mono")) n += 1;
+        if (
+          cls.includes("tabular-nums") &&
+          !/\bfont-(?:mono|figure)\b/.test(cls)
+        )
+          n += 1;
       }
       return n;
     });
     expectRatchet(
-      "tabular-nums without font-mono",
+      "tabular-nums without font-mono or font-figure",
       total,
       MONO_BASELINE,
       byFile
@@ -640,7 +716,7 @@ describe("DS ratchets — surface-level drift", () => {
 
 describe("type tiers", () => {
   /* `text-caption` (11px) is the floor for dense numerals and units
-     (DESIGN_GUIDE §10). A unit with neither `font-mono` nor `tabular-nums`
+     (DESIGN_GUIDE §10). A unit with none of `font-mono`, `font-figure` or `tabular-nums`
      is counted as words; words belong on `text-micro` (12px) or above.
      The count holds the remaining word uses and may only fall. */
   const CAPTION_WORDS_BASELINE = 66;
@@ -650,7 +726,7 @@ describe("type tiers", () => {
       for (const chunk of classNameChunks(src)) {
         if (
           /\btext-caption\b/.test(chunk) &&
-          !/\b(?:font-mono|tabular-nums)\b/.test(chunk)
+          !/\b(?:font-mono|font-figure|tabular-nums)\b/.test(chunk)
         )
           n++;
       }
@@ -665,7 +741,7 @@ describe("type tiers", () => {
   });
 
   /* "Never mix 700 and 800 in the same visual tier" (§4 weight rules). A
-     tier is a size step plus its register: numerals (`font-mono` or
+     tier is a size step plus its register: numerals (`font-mono`, `font-figure` or
      `tabular-nums`) are hero figures and words are headings, so the two
      registers are separate tiers. Every tier listed here carries one
      weight; a tier joins the list once it is aligned. */
@@ -693,7 +769,8 @@ describe("type tiers", () => {
         );
         if (!size) continue;
         const register = tokens.some(
-          (t) => t === "font-mono" || t === "tabular-nums"
+          (t) =>
+            t === "font-mono" || t === "font-figure" || t === "tabular-nums"
         )
           ? "num"
           : "word";

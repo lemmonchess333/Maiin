@@ -93,7 +93,7 @@ export default function GuidedRunOverlay({
               {current?.label}
             </span>
           </div>
-          <span className="text-2xl font-extrabold font-mono tabular-nums text-white">
+          <span className="text-2xl font-extrabold font-figure tabular-nums text-white">
             {formatTime(timeRemaining)}
           </span>
         </div>

@@ -121,7 +121,7 @@ export default function SpacePostCard({
           <RouteScene preview={activity.routePreview!} />
           {(activity.distance ?? 0) > 0 && (
             <div className="absolute bottom-2.5 left-3.5">
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
+              <p className="text-xl font-bold font-figure tabular-nums leading-none text-running">
                 {distanceValue(activity.distance ?? 0, unit, 2)}
               </p>
               <SectionLabel className="mt-0.5">
@@ -171,7 +171,7 @@ export default function SpacePostCard({
           )}
           {(activity.totalVolume ?? 0) > 0 && (
             <div className="absolute bottom-2.5 left-3.5">
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-lifting">
+              <p className="text-xl font-bold font-figure tabular-nums leading-none text-lifting">
                 {Math.round(
                   liftVolumeIn(activity.totalVolume ?? 0, liftUnit)
                 ).toLocaleString()}

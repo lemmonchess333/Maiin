@@ -45,6 +45,8 @@ interface QueuedWrite {
   data: Record<string, unknown>;
   timestamp: number;
   durable?: boolean;
+  /** New best-effort entries use the same Timestamp codec as durable ones. */
+  encoded?: boolean;
   workoutCompletion?: { programme?: ProgrammeCompletionContext };
   failed?: boolean;
   /** The last failure was one no retry can change (`refusedForGood`), so
@@ -65,12 +67,18 @@ function notifyQueue() {
   queueVersion++;
   queueListeners.forEach((listener) => listener());
 }
-// Durable entries encode SDK timestamps explicitly; JSON alone loses their type.
+// Encode SDK timestamps explicitly; JSON alone loses their type. Other class
+// instances retain JSON's own serialization (for example Date.toJSON).
 function encode(value: unknown): unknown {
   if (value instanceof Timestamp)
     return { __queuedTimestamp: [value.seconds, value.nanoseconds] };
   if (Array.isArray(value)) return value.map(encode);
-  if (value && typeof value === "object")
+  if (
+    value &&
+    typeof value === "object" &&
+    (Object.getPrototypeOf(value) === Object.prototype ||
+      Object.getPrototypeOf(value) === null)
+  )
     return Object.fromEntries(
       Object.entries(value).map(([key, child]) => [key, encode(child)])
     );
@@ -160,7 +168,8 @@ export function queueWrite(
     collectionPath,
     docId,
     merge,
-    data,
+    data: encode(data) as Record<string, unknown>,
+    encoded: true,
     timestamp: Date.now(),
   });
   saveQueue(queue);
@@ -448,9 +457,10 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
       // Check the live identity for EVERY write, including legacy entries.
       if (auth.currentUser?.uid !== uid) break;
       if (item.durable && !navigator.onLine) break;
-      const decoded = item.durable
-        ? (decode(item.data) as Record<string, unknown>)
-        : item.data;
+      const decoded =
+        item.durable || item.encoded
+          ? (decode(item.data) as Record<string, unknown>)
+          : item.data;
       const payload = { ...decoded, _offlineCreatedAt: item.timestamp };
       if (item.docId) {
         const docRef = doc(db, item.collectionPath, item.docId);

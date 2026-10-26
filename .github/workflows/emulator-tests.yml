@@ -61,7 +61,7 @@ jobs:
     # for the full browser suite, design-QA and cleanup on a slow runner.
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -234,7 +234,7 @@ jobs:
       # Keep the two focused mobile previews on success as well as failure.
       - name: Upload weekly-layout mobile previews
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: weekly-layout-mobile-previews
           path: test-results/**/layout-confirmation-*.png
@@ -244,7 +244,7 @@ jobs:
       # Upload Playwright artefacts on failure so investigating a CI
       # break doesn't require re-running locally.
       - if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report
           path: playwright-report/
@@ -271,7 +271,7 @@ jobs:
             'npm run seed:e2e && npm run test:design-qa'
 
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: design-qa-report
           path: design-qa-report/
@@ -314,9 +314,11 @@ jobs:
   # runner; the visual-diff channel remains app-screenshots.yml's job.
   capture-specs:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The specs take 25 to 29 minutes on a busy runner, so a 30-minute
+    # cap cancelled green runs and left their PRs unmergeable.
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -388,7 +390,7 @@ jobs:
             'npm run seed:e2e && npm run seed:rich && npm run seed:circles && npm run seed:experience && npm run seed:fellbehind && npm run seed:liftreturn && npm run seed:season && npm run test:e2e -- capture.spec.ts --project=auth-emulator'
 
       - if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: capture-report
           path: capture-report/
@@ -415,7 +417,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -485,7 +487,7 @@ jobs:
             'npm run test:e2e:journeys'
 
       - if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: journeys-report
           path: journeys-report/
@@ -504,7 +506,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -564,7 +566,7 @@ jobs:
             'npm run test:e2e -- smoke.spec.ts navigation.spec.ts legal-pages.spec.ts --project=chromium --reporter=line,html'
 
       - if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: signed-out-report
           path: signed-out-report/

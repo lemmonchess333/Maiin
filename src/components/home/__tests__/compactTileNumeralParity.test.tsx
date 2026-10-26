@@ -33,7 +33,7 @@ vi.mock("@/lib/platform", () => ({
  */
 function numeralOf(root: HTMLElement, text: RegExp): HTMLElement {
   const el = Array.from(root.querySelectorAll("p")).find(
-    (p) => text.test(p.textContent ?? "") && p.className.includes("font-mono")
+    (p) => text.test(p.textContent ?? "") && p.className.includes("font-figure")
   );
   if (!el) throw new Error(`no numeral matching ${text} in ${root.innerHTML}`);
   return el as HTMLElement;
@@ -56,7 +56,12 @@ describe("Home compact tiles share one numeral tier", () => {
     const waterNum = numeralOf(water, /0/);
     const weightNum = numeralOf(weight, /70\.0/);
 
-    for (const cls of ["text-2xl", "font-extrabold", "tabular-nums"]) {
+    for (const cls of [
+      "text-2xl",
+      "font-extrabold",
+      "font-figure",
+      "tabular-nums",
+    ]) {
       expect(waterNum, `water numeral missing ${cls}`).toHaveClass(cls);
       expect(weightNum, `weight numeral missing ${cls}`).toHaveClass(cls);
     }
@@ -64,6 +69,31 @@ describe("Home compact tiles share one numeral tier", () => {
     expect(waterNum.className.match(/text-\dxl/)?.[0]).toBe(
       weightNum.className.match(/text-\dxl/)?.[0]
     );
+  });
+
+  it("the water unit is set as the weight unit is: the text face, small, medium", () => {
+    /* "0 ml" and "81.7 kg" sit side by side. The water unit inherited
+       the figure's face (Archivo) at a regular weight while "kg" was the
+       text face at medium, so the two units in one row did not match.
+       Each unit is a word in the text face (`font-sans`), text-sm,
+       font-medium. */
+    const { container: water } = render(
+      <WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />
+    );
+    const { getByText: inWeight } = render(
+      <WeightStepsTiles
+        lastWeight="70.0"
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="From profile"
+      />
+    );
+    const waterUnit = numeralOf(water, /0/).querySelector("span");
+    expect(waterUnit).toHaveTextContent(/^ml$/);
+    expect(waterUnit).toHaveClass("font-sans", "text-sm", "font-medium");
+    expect(inWeight("kg")).toHaveClass("text-sm", "font-medium");
+    // "kg" is outside the figure, so it is the text face already.
+    expect(inWeight("kg").closest(".font-figure")).toBeNull();
   });
 
   it("the steps figure is rendered at the same size and weight as the weight figure above it", () => {
@@ -94,7 +124,12 @@ describe("Home compact tiles share one numeral tier", () => {
       const weightNum = numeralOf(container, /70\.0/);
       const stepsNum = numeralOf(container, new RegExp(groupRe(8432)));
 
-      for (const cls of ["text-2xl", "font-extrabold", "tabular-nums"]) {
+      for (const cls of [
+        "text-2xl",
+        "font-extrabold",
+        "font-figure",
+        "tabular-nums",
+      ]) {
         expect(weightNum, `weight numeral missing ${cls}`).toHaveClass(cls);
         expect(stepsNum, `steps numeral missing ${cls}`).toHaveClass(cls);
       }

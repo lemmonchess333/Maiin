@@ -275,10 +275,15 @@ export default function MacroColumn({
          number keeps text-2xl: it is glanceable data, and shrinking it
          to fix a problem caused by its neighbour is the wrong lever.
          whitespace-nowrap keeps a three-digit value and its unit on one
-         line now that the column can be narrower. */}
+         line now that the column can be narrower.
+         The "g" is a word, so it takes the text face at the weight of the
+         tile's other words, about two thirds of the figure's size, as the
+         weight tile's "kg" does. A 12px bold "g" under a 20px figure read
+         as a subscript. It stays unspaced: grams on the food surface are
+         "128g". */}
       <p
         className={cn(
-          "font-extrabold font-mono tabular-nums leading-none tracking-tight text-foreground whitespace-nowrap",
+          "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground whitespace-nowrap",
           compact ? "text-xl mt-1.5" : "text-2xl mt-2"
         )}
       >
@@ -289,9 +294,10 @@ export default function MacroColumn({
           fromZero={drawIn}
         />
         <span
+          data-macro-unit=""
           className={cn(
-            "font-bold text-muted-foreground",
-            compact ? "text-xs" : "text-small"
+            "font-sans font-medium tracking-normal text-muted-foreground",
+            compact ? "text-sm" : "text-base"
           )}
         >
           g

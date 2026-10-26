@@ -163,19 +163,19 @@ export function BadgeGrid() {
               so) — as light-mode text it measured 2.15:1, under even the
               3:1 large-text floor. The achievement token is the same
               celebration register, theme-aware, AA both sides. */}
-          <p className="text-3xl font-extrabold font-mono tabular-nums text-achievement-strong">
+          <p className="text-3xl font-extrabold font-figure tabular-nums text-achievement-strong">
             {currentStreak}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Current streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-3xl font-extrabold font-mono tabular-nums text-primary">
+          <p className="text-3xl font-extrabold font-figure tabular-nums text-primary">
             {Number.isFinite(longestStreak) ? longestStreak : 0}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Longest streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-3xl font-extrabold font-mono tabular-nums text-foreground">
+          <p className="text-3xl font-extrabold font-figure tabular-nums text-foreground">
             {earnedBadges.length}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Badges earned</p>
