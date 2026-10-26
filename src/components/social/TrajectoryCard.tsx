@@ -61,7 +61,7 @@ export default function TrajectoryCard({
       <div className="flex items-center gap-2 mb-3">
         <Zap className="size-5" style={{ color: THEME.brand }} />
         <div className="flex-1">
-          <h3 className="text-sm font-bold">Your trajectory</h3>
+          <h3 className="text-base font-bold">Your trajectory</h3>
         </div>
         <span className="text-xs text-muted-foreground">This week</span>
       </div>

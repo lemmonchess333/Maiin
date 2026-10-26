@@ -124,7 +124,7 @@ export default function TodayEnergy({
       className={cardClasses({ className: "@container" })}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-foreground">Food</h2>
+        <h2 className="text-base font-bold text-foreground">Food</h2>
         {/* The one way into the food log: nutrition-tinted, a full 44px
             target. The orange is the -strong step, not the identity: the
             identity is a fill colour and reads 2.77:1 as text here. */}

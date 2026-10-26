@@ -140,7 +140,7 @@ export default function RunTilePicker({
                 <div className="size-9 rounded-lg flex items-center justify-center bg-running/9">
                   <Icon className="size-5 text-running" />
                 </div>
-                <span className="text-sm font-bold mt-1">{opt.name}</span>
+                <span className="text-base font-bold mt-1">{opt.name}</span>
                 <span className="text-micro text-foreground">
                   {band ? (
                     <span className="font-mono tabular-nums">{band}</span>

@@ -471,7 +471,7 @@ export default function ExerciseHistory() {
                     only when its reps EQUAL the bucket. The honest
                     wording already existed three characters away, on the
                     bodyweight side of this same ternary. */}
-                <h3 className="text-sm font-semibold text-foreground">
+                <h3 className="text-base font-bold text-foreground">
                   Personal bests by reps
                 </h3>
               </div>
@@ -590,7 +590,7 @@ export default function ExerciseHistory() {
           {/* ── Recent sessions list ────────────────────────────────── */}
           <div className="rounded-2xl bg-card overflow-hidden card-shadow">
             <div className="px-4 pt-4 pb-3 border-b border-border/30">
-              <h3 className="text-sm font-semibold text-foreground">
+              <h3 className="text-base font-bold text-foreground">
                 Recent sessions
               </h3>
             </div>

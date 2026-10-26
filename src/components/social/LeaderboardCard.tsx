@@ -61,7 +61,7 @@ export default function LeaderboardCard({
           <Zap className="size-5" style={{ color: THEME.brand }} />
         )}
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-bold truncate">{title}</h3>
+          <h3 className="text-base font-bold truncate">{title}</h3>
         </div>
         {/* Quiet, and never the element that gives up room: the title is
             the variable-length half ("Running Distance" vs "Workouts"),

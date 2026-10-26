@@ -339,7 +339,7 @@ export default function PerformanceTab({
   if (!weeks.length || !currentWeek) {
     return (
       <div className="p-4 rounded-2xl bg-card">
-        <h3 className="text-sm font-semibold text-foreground">Performance</h3>
+        <h3 className="text-base font-bold text-foreground">Performance</h3>
         <p className="text-sm text-muted-foreground mt-1">
           No performance weeks yet. Log workouts/runs and your weekly index will
           appear here.
@@ -511,7 +511,7 @@ export default function PerformanceTab({
             <div className="space-y-4">
               {/* Breakdown bars */}
               <div className="p-4 rounded-2xl bg-card space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">
+                <h3 className="text-base font-bold text-foreground">
                   Breakdown
                 </h3>
                 <ScoreBar
@@ -587,7 +587,7 @@ export default function PerformanceTab({
                 <div className="p-4 rounded-2xl bg-running/8">
                   <div className="flex items-center gap-2 mb-2">
                     <Footprints className="size-4 text-running" />
-                    <h3 className="text-sm font-semibold text-running-strong">
+                    <h3 className="text-base font-bold text-running-strong">
                       Running suggestions
                     </h3>
                   </div>

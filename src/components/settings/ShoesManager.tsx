@@ -182,7 +182,9 @@ export default function ShoesManager() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Footprints className="size-5 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">My shoes</h3>
+          <SectionHeading size="compact" as="h3">
+            My shoes
+          </SectionHeading>
         </div>
         <div className="flex items-center gap-3">
           {activeShoes.length > 0 && (

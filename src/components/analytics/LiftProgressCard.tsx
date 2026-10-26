@@ -68,7 +68,7 @@ export default function LiftProgressCard({
   return (
     <Card as="section" aria-label="Your lifts" className="space-y-3">
       <div>
-        <h2 className="text-h3 font-bold text-foreground">Your lifts</h2>
+        <h2 className="text-base font-bold text-foreground">Your lifts</h2>
         <p className="text-sm text-muted-foreground">
           Each session&apos;s top set · {subtitle}
         </p>

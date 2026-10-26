@@ -88,7 +88,9 @@ export default function RacePredictionsCard() {
     <div className="p-4 rounded-2xl bg-card card-shadow mt-2">
       <div className="flex items-center gap-2 mb-3">
         <Timer className="size-4 text-running" aria-hidden="true" />
-        <h3 className="text-sm font-bold text-foreground">Race predictions</h3>
+        <h3 className="text-base font-bold text-foreground">
+          Race predictions
+        </h3>
       </div>
 
       {/* Two across while 13em of card allows, one per row below that:

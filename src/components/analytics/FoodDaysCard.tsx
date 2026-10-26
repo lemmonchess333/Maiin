@@ -72,7 +72,9 @@ export default function FoodDaysCard({
   return (
     <Card as="section" aria-label="How the days went" className="space-y-3">
       <div>
-        <h2 className="text-h3 font-bold text-foreground">How the days went</h2>
+        <h2 className="text-base font-bold text-foreground">
+          How the days went
+        </h2>
         <p className="text-sm text-muted-foreground">
           Before today. On target is within{" "}
           {Math.round(CALORIE_TARGET_BAND * 100)}% of that day&apos;s calories;
