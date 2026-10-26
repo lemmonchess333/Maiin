@@ -72,7 +72,8 @@ describe("CalorieRing — the label is plain text", () => {
 
 describe("CalorieRing — the number is the text colour", () => {
   function number(container: HTMLElement) {
-    return container.querySelector<HTMLElement>("p.font-mono")!;
+    // The ring's centre number is a stand-alone figure: `font-figure`.
+    return container.querySelector<HTMLElement>("p.font-figure")!;
   }
 
   it("draws the number in the foreground colour, not the orange", () => {

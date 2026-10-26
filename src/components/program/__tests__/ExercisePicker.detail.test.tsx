@@ -26,18 +26,25 @@ import ExercisePicker from "../ExercisePicker";
 
 function mount() {
   const onMultiSelect = vi.fn();
+  const onClose = vi.fn();
   render(
     <MemoryRouter>
       <ExercisePicker
         open
         onSelect={vi.fn()}
         onMultiSelect={onMultiSelect}
-        onClose={vi.fn()}
+        onClose={onClose}
         headerTitle="Add exercise"
       />
     </MemoryRouter>
   );
-  return { onMultiSelect };
+  return { onMultiSelect, onClose };
+}
+
+/** The z-index a Tailwind `z-[N]` or `z-N` class sets, if any. */
+function zClass(el: Element | null): number {
+  const m = el?.className.toString().match(/(?:^|\s)z-\[?(\d+)\]?(?:\s|$)/);
+  return m ? Number(m[1]) : Number.NaN;
 }
 
 describe("ExercisePicker row: see it vs add it", () => {
@@ -81,6 +88,46 @@ describe("ExercisePicker row: see it vs add it", () => {
     expect(
       screen.getByRole("button", { name: "Selected — tap to unselect" })
     ).toBeInTheDocument();
+    expect(screen.getByText(/1 exercise selected/)).toBeInTheDocument();
+  });
+
+  it("opens the sheet above the picker, not behind it", () => {
+    /* On a phone the sheet opened at its default z-50 under the picker's
+       9999: nothing showed, and the open sheet made everything else inert,
+       so the screen froze. */
+    mount();
+    const picker = Array.from(document.body.querySelectorAll("div")).find(
+      (el) => el.style.zIndex === "9999"
+    );
+    expect(picker).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Dips details" }));
+    const sheet = screen.getByRole("dialog", { name: "Dips" });
+    expect(zClass(sheet)).toBeGreaterThan(9999);
+    expect(
+      zClass(document.querySelector("[data-vaul-overlay]"))
+    ).toBeGreaterThan(9999);
+  });
+
+  it("scrolls the form and keeps the action in reach under it", async () => {
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: "Dips details" }));
+    const form = await screen.findByTestId("form-content");
+    expect(form.closest(".overflow-y-auto")).not.toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: "Add to workout" })
+        .closest(".overflow-y-auto")
+    ).toBeNull();
+  });
+
+  it("Escape closes the sheet and leaves the picker and its ticks", () => {
+    const { onClose } = mount();
+    fireEvent.click(screen.getByRole("button", { name: "Dips details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to workout" }));
+    fireEvent.keyDown(screen.getByRole("dialog", { name: "Dips" }), {
+      key: "Escape",
+    });
+    expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByText(/1 exercise selected/)).toBeInTheDocument();
   });
 });

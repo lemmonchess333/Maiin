@@ -86,7 +86,7 @@ export default function WeekSummary({
                 className="mt-1 text-sm text-muted-foreground"
                 aria-hidden="true"
               >
-                <span className="text-lg font-extrabold font-mono tabular-nums text-foreground">
+                <span className="text-lg font-extrabold font-figure tabular-nums text-foreground">
                   {c.done}
                 </span>
                 {c.of !== null && (

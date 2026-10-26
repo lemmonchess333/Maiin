@@ -265,7 +265,7 @@ export default function WeekStrip({
            most. Today is a ring, selection a second ring outside it, and
            the two compose.
 
-           Day numbers are numeric displays → font-mono (Archivo) +
+           Day numbers are numbers inside the strip → font-mono (the text face) +
            tabular-nums per the design-system invariant. */
         const style =
           day.state === "both-done"

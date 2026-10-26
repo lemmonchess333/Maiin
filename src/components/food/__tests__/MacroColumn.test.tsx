@@ -234,17 +234,51 @@ describe("MacroColumn — numeric hierarchy", () => {
       (el) => el.textContent === "g"
     );
     expect(unit).toBeDefined();
-    expect(unit).toHaveClass("text-small");
+    expect(unit).toHaveClass("text-base");
     expect(unit).not.toHaveClass("text-2xl");
 
     const figure = unit?.closest("p");
     expect(figure).toHaveClass("text-2xl");
-    expect(figure).toHaveClass("font-mono");
+    // The tile's number is a stand-alone figure: Archivo (DESIGN_GUIDE §4).
+    expect(figure).toHaveClass("font-figure");
     expect(figure).toHaveClass("tabular-nums");
     // A three-digit value plus its unit must stay on one line now the
     // column can be narrower than it was under flex-1.
     expect(figure).toHaveClass("whitespace-nowrap");
   });
+
+  it.each([
+    [false, "text-base"],
+    [true, "text-sm"],
+  ])(
+    "sets the g as a word on the figure's baseline (compact: %s)",
+    (compact, size) => {
+      /* The owner read "150g left" on Home as a big number with a much
+         smaller "g" glued to it: a 12px bold g under a 20px figure sits
+         like a subscript. The g is a word, so it takes the text face at
+         the weight of the tile's other words, about two thirds of the
+         figure, as the weight tile's "kg" does — and stays unspaced,
+         the food surface's "128g". */
+      const { container } = render(
+        <MacroColumn
+          macroKey="protein"
+          Icon={Beef}
+          consumed={42}
+          target={120}
+          label="Protein"
+          color="#000"
+          mode="eaten"
+          size={compact ? "compact" : "tile"}
+        />
+      );
+      const unit = container.querySelector("[data-macro-unit]");
+      expect(unit).toHaveTextContent(/^g$/);
+      expect(unit).toHaveClass("font-sans", "font-medium", size);
+      expect(unit).not.toHaveClass("font-bold");
+      expect(unit).not.toHaveClass("text-xs");
+      expect(unit?.previousSibling?.textContent).toMatch(/\d$/);
+    }
+  );
 });
 
 describe("MacroColumn — the goal-reached state stays in the accessible name", () => {

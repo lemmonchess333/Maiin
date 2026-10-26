@@ -142,7 +142,7 @@ export default function RunResumePrompt({
                 Time
               </p>
               <p
-                className="font-mono tabular-nums text-xl font-bold"
+                className="font-figure tabular-nums text-xl font-bold"
                 style={{ color: "white" }}
               >
                 {formatElapsed(accumulatedSeconds)}
@@ -156,7 +156,7 @@ export default function RunResumePrompt({
                 Distance
               </p>
               <p
-                className="font-mono tabular-nums text-xl font-bold"
+                className="font-figure tabular-nums text-xl font-bold"
                 style={{ color: "white" }}
               >
                 {distance} {distanceUnitLabel(unit)}

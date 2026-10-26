@@ -1343,7 +1343,7 @@ export default function ProgrammeRunSection({
                 </div>
               )}
               {/* Prose labels in the body font; only the numerals take
-                  the numeral font. */}
+                  tabular digits (`font-mono`). */}
               {lastRun && (
                 <p className="text-sm text-muted-foreground">
                   <span className="text-foreground">Last run</span>

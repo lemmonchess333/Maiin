@@ -673,7 +673,7 @@ function ResultSheet({ live }: { live: boolean }) {
           <div className="space-y-2 rounded-xl bg-muted/30 p-3">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <p className="text-foreground">
-                <span className="text-xl font-extrabold font-mono tabular-nums">
+                <span className="text-xl font-extrabold font-figure tabular-nums">
                   {r.calories}
                 </span>
                 <span className="ml-1 text-sm font-normal text-muted-foreground">

@@ -864,7 +864,7 @@ export function toGPX(points: GPSPoint[], name: string): string {
     })
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Tropos">
+<gpx version="1.1" creator="Tropos" xmlns="http://www.topografix.com/GPX/1/1">
   <trk><name>${escapeXml(name)}</name>
 ${segments}
   </trk>

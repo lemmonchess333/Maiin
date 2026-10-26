@@ -1551,10 +1551,10 @@ export default function Run() {
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
         </div>
-        <p className="text-5xl font-mono tabular-nums text-white/40 font-bold">
+        <p className="text-5xl font-figure tabular-nums text-white/40 font-bold">
           {timer.formatTime(timer.elapsed)}
         </p>
-        <p className="text-2xl font-mono tabular-nums text-white/30 mt-3">
+        <p className="text-2xl font-figure tabular-nums text-white/30 mt-3">
           {/* In the reader's unit, as the sheet under it reads: this said
               "km" over a kilometre figure to a runner who reads miles. */}
           {distanceValue(

@@ -95,7 +95,7 @@ export default function PerformanceHeroCard({
         }
       >
         <ProgressRing value={0} size={RING} stroke={STROKE} color="transparent">
-          <span className="text-base font-extrabold font-mono tabular-nums text-muted-foreground">
+          <span className="text-base font-extrabold font-figure tabular-nums text-muted-foreground">
             —
           </span>
         </ProgressRing>
@@ -153,7 +153,7 @@ export default function PerformanceHeroCard({
         color={hue}
       >
         <motion.span
-          className="text-base font-extrabold font-mono tabular-nums leading-none"
+          className="text-base font-extrabold font-figure tabular-nums leading-none"
           style={{ color: textHue }}
         >
           {piDisplay}

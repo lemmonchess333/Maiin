@@ -155,7 +155,9 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
         targets = verifier.source_targets()
         expected = {
             "onActivityCreated": {"index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js"},
-            "onGoalSpaceEventCreated": {"index.js", "package-lock.json", "rateLimiter.js"},
+            "onGoalSpaceEventCreated": {"index.js", "package-lock.json", "rateLimiter.js", "lib/socialFanout.js"},
+            "onFollowerCreated": {"index.js", "package-lock.json", "lib/socialFanout.js"},
+            "onFollowRequestCreated": {"index.js", "package-lock.json", "lib/socialFanout.js"},
         }
         for name, artifacts in expected.items():
             with self.subTest(function=name):
@@ -163,7 +165,7 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
 
     def test_retry_enabled_social_fanout_exports_require_deployed_retries(self):
-        self.assertTrue({"onActivityCreated", "onGoalSpaceEventCreated"}
+        self.assertTrue({"onActivityCreated", "onGoalSpaceEventCreated", "onFollowerCreated", "onFollowRequestCreated"}
                         .issubset(verifier.RETRY_REQUIRED))
 
     def test_native_push_targets_cover_every_changed_sender_and_owner(self):
@@ -274,7 +276,7 @@ class DeployedSourceIdentityTest(unittest.TestCase):
                     self.check(self.deployed(stale), name)
 
     def test_social_fanout_exact_bundles_accept_enabled_empty_retry_objects(self):
-        for name in ("onActivityCreated", "onGoalSpaceEventCreated"):
+        for name in ("onActivityCreated", "onGoalSpaceEventCreated", "onFollowerCreated", "onFollowRequestCreated"):
             with self.subTest(function=name):
                 self.use_source_target(name)
                 printed, reader = self.check(self.deployed(), name)
@@ -282,7 +284,7 @@ class DeployedSourceIdentityTest(unittest.TestCase):
                 self.assertEqual(reader.call_count, 3)
 
     def test_any_stale_social_fanout_artifact_fails_despite_active_retry_enabled_function(self):
-        for name in ("onActivityCreated", "onGoalSpaceEventCreated"):
+        for name in ("onActivityCreated", "onGoalSpaceEventCreated", "onFollowerCreated", "onFollowRequestCreated"):
             self.use_source_target(name)
             for path in self.paths:
                 with self.subTest(function=name, artifact=path):
@@ -291,7 +293,7 @@ class DeployedSourceIdentityTest(unittest.TestCase):
                         self.check(self.deployed(stale), name)
 
     def test_missing_social_fanout_artifacts_fail_readback(self):
-        for name in ("onActivityCreated", "onGoalSpaceEventCreated"):
+        for name in ("onActivityCreated", "onGoalSpaceEventCreated", "onFollowerCreated", "onFollowRequestCreated"):
             self.use_source_target(name)
             for path in self.paths:
                 with self.subTest(function=name, artifact=path):

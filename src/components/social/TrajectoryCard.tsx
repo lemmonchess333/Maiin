@@ -82,7 +82,7 @@ export default function TrajectoryCard({
               prompt to action. */}
           <div className="flex items-baseline gap-3 mb-3">
             <span
-              className="text-3xl font-mono tabular-nums font-extrabold"
+              className="text-3xl font-figure tabular-nums font-extrabold"
               style={{ color: THEME.brand }}
             >
               {thisWeek.sessions}

@@ -78,7 +78,7 @@ export default function WaterSizeSheet({
             tile the moment it opens — without it you are adding to a
             number you can no longer see. */}
         {totalMl !== undefined && (
-          <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+          <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
             {formatWaterVolume(totalMl)}
             <span className="ml-2 text-xs font-medium font-sans text-muted-foreground">
               today
