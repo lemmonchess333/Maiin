@@ -90,7 +90,7 @@ export default function SettingsRunPlan() {
     // a row on the Settings list.
     <SettingsSection
       title="Run plan"
-      subtitle="Mode, race goal, run days, fitness and heart-rate zones"
+      subtitle="Your race, run days and zones"
       backTo="/settings/training"
       backLabel="Programme"
     >

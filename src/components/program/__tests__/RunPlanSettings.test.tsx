@@ -389,6 +389,48 @@ describe("RunPlanSettings", () => {
     }
   });
 
+  /* One heading tier for the page. Its groups opened three ways: a 16px
+     bold heading, a 14px medium label ("Goal time", "Run days / week",
+     "Long-run volume") and a 12px caption ("Distance"), and two of them
+     sat in cards of their own while the rest sat bare. Every group now
+     opens with the compact SectionHeading and none is boxed. */
+  it("opens every race-prep group with the compact section heading", () => {
+    renderPage({ ...baseProfile, weeklyWorkoutsTarget: 3 } as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: "Training for a race" }));
+    for (const name of [
+      "Race goal",
+      "Distance",
+      "Event name (optional)",
+      "Target date",
+      "Goal time (optional)",
+      "Run days / week",
+      "Time for running",
+      "Your running starting point",
+      "Long-run volume",
+      "Intensity",
+      "Lighten leg sessions while your runs build",
+    ]) {
+      const heading = screen.getByRole("heading", { name });
+      expect(heading.className, name).toContain("text-base font-bold");
+      expect(heading.closest(".bg-card"), name).toBeNull();
+    }
+  });
+
+  it("keeps each helper line short", () => {
+    renderPage({ ...baseProfile, weeklyWorkoutsTarget: 3 } as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: "Training for a race" }));
+    for (const line of [
+      "The longest your runs can be. Race day stays as planned.",
+      "Your recent weekly running, so the plan starts near it.",
+      "How long your longest runs get.",
+      "How much tempo and interval work each week has.",
+      "A third fewer leg sets, at the same weights.",
+    ]) {
+      expect(screen.getByText(line)).toBeInTheDocument();
+      expect(line.length).toBeLessThanOrEqual(60);
+    }
+  });
+
   it("shows only run controls — no lift/nutrition/equipment fields", () => {
     renderPage(baseProfile);
     expect(screen.getByText("Race goal")).toBeInTheDocument();
@@ -602,10 +644,12 @@ describe("RunPlanSettings", () => {
     expect(screen.getByText("Long-run volume")).toBeInTheDocument();
     expect(screen.getByText("Intensity")).toBeInTheDocument();
     // Pgm6's knob scales the race's own peak (runScheduler's
-    // LIGHTER_PEAK_FACTOR, 0.75): Lighter no longer means 10K.
+    // LIGHTER_PEAK_FACTOR, 0.75): Lighter no longer means 10K. The helper
+    // is one short line now, saying what the knob moves and no amount; the
+    // segment's own words carry the direction.
     expect(screen.queryByText(/caps them at 10K/)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/Lighter peaks about a quarter lower/)
+      screen.getByText("How long your longest runs get.")
     ).toBeInTheDocument();
 
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;

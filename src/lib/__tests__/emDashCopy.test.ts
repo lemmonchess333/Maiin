@@ -56,9 +56,10 @@ import { globSync } from "tinyglobby";
  * founding line and the challenge card's progress lines to the middot or
  * to nothing (128 before it: passes since had lowered the count and left
  * this number where it was). 121 once Food's empty diary and its weekly
- * logging focus each said their line in one sentence.
+ * logging focus each said their line in one sentence. 120 once the run
+ * plan page's helpers each took one short line.
  */
-const EM_DASH_COPY_BASELINE = 121;
+const EM_DASH_COPY_BASELINE = 120;
 /** ExerciseHistory, 8, and every one of them the bare "—" placeholder
  *  rather than the construction. Lower this only against real copy. */
 const WORST_FILE_BASELINE = 8;

@@ -40,11 +40,10 @@ describe("RunFitnessSection", () => {
   it("prompts to set fitness when no benchmark", () => {
     renderWith({ runFitness: null });
     expect(screen.getByText("Set your fitness")).toBeInTheDocument();
-    // In British spelling, as "personalised paces" are below.
+    // One short line, under 60 characters, as the page's other helpers.
+    // It promised to "personalise every run pace to you" in 61.
     expect(
-      screen.getByText(
-        "Add a recent race and we'll personalise every run pace to you."
-      )
+      screen.getByText("Add a recent race to set your paces.")
     ).toBeInTheDocument();
   });
 

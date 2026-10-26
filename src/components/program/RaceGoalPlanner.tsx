@@ -21,6 +21,7 @@ import { formatDayMonthYear } from "@/utils/formatters";
 import { Check, ChevronDown, Flag } from "lucide-react";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -262,7 +263,9 @@ export default function RaceGoalPlanner({
     state.status === "below-floor";
 
   return (
-    <div className="mt-3 space-y-3 p-3 rounded-xl bg-card card-shadow">
+    // The race's fields sit on the page like the groups below them, each
+    // under its own heading, with no card around them.
+    <div className="space-y-4">
       {/* Door 2 — catalogue picker (collapses when nothing upcoming) */}
       {trainingRaces.length > 0 && (
         <UpcomingRacePicker
@@ -277,8 +280,8 @@ export default function RaceGoalPlanner({
       )}
 
       {/* Distance */}
-      <div>
-        <SectionLabel className="mb-1.5">Distance</SectionLabel>
+      <div className="space-y-2">
+        <SectionHeading size="compact">Distance</SectionHeading>
         <SegmentedControl
           ariaLabel="Race distance"
           tone="running"
@@ -289,13 +292,10 @@ export default function RaceGoalPlanner({
       </div>
 
       {/* Event name (optional) */}
-      <div>
-        <label
-          htmlFor="ps-race-event-name"
-          className="text-xs text-muted-foreground"
-        >
-          Event name (optional)
-        </label>
+      <div className="space-y-2">
+        <SectionHeading size="compact">
+          <label htmlFor="ps-race-event-name">Event name (optional)</label>
+        </SectionHeading>
         <input
           id="ps-race-event-name"
           type="text"
@@ -304,22 +304,22 @@ export default function RaceGoalPlanner({
           maxLength={60}
           placeholder="London Marathon 2026"
           autoComplete="off"
-          className="ds-input block min-w-0 appearance-none mt-1 text-sm"
+          className="ds-input block min-w-0 appearance-none text-sm"
         />
       </div>
 
       {/* Target date */}
-      <div>
-        <label htmlFor="ps-race-date" className="text-xs text-muted-foreground">
-          Target date
-        </label>
+      <div className="space-y-2">
+        <SectionHeading size="compact">
+          <label htmlFor="ps-race-date">Target date</label>
+        </SectionHeading>
         <input
           id="ps-race-date"
           type="date"
           value={targetDate}
           onChange={(e) => onTargetDateChange(e.target.value)}
           min={minDate}
-          className="ds-input block min-w-0 appearance-none mt-1 text-sm"
+          className="ds-input block min-w-0 appearance-none text-sm"
         />
       </div>
 

@@ -658,7 +658,7 @@ export default function RunPlanSettings({
             : "Save run plan";
 
   return (
-    <div className="space-y-5 pb-6">
+    <div className="space-y-4 pb-6">
       {/* ── Race or not ───────────────────────────────────────────────
           Run9a: the plan is a race goal or nothing, so the question is
           whether there is a race. The same control as the race's
@@ -700,13 +700,10 @@ export default function RunPlanSettings({
 
       {/* ── A2: goal time (optional) + feasibility verdict ───────────── */}
       {runMode === "race_prep" && (
-        <div className="rounded-2xl bg-card border border-border/40 px-3.5 py-3 space-y-2">
-          <label
-            htmlFor="ps-race-time"
-            className="text-sm font-medium text-foreground"
-          >
-            Goal time (optional)
-          </label>
+        <div className="space-y-2">
+          <SectionHeading size="compact">
+            <label htmlFor="ps-race-time">Goal time (optional)</label>
+          </SectionHeading>
           <input
             id="ps-race-time"
             type="text"
@@ -751,21 +748,19 @@ export default function RunPlanSettings({
 
       {/* ── Run days / week (race prep only — freeform has no schedule) ── */}
       {runMode === "race_prep" && (
-        <div className="flex items-center justify-between rounded-2xl bg-card border border-border/40 px-3.5 py-3">
+        <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">
-              Run days / week
-            </p>
+            <SectionHeading size="compact">Run days / week</SectionHeading>
             {liftDays + weeklyRunDays > 7 && (
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 <span className="font-mono tabular-nums">{liftDays}</span> lift
-                +{" "}
+                and{" "}
                 <span className="font-mono tabular-nums">{weeklyRunDays}</span>{" "}
-                run — some days combine both.
+                run days, so some days hold both.
               </p>
             )}
             {raceRunDaysNote(raceDistance, weeklyRunDays) && (
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {raceRunDaysNote(raceDistance, weeklyRunDays)}
               </p>
             )}
@@ -832,15 +827,14 @@ export default function RunPlanSettings({
           run editor is the ONE place run-plan fields are edited. Bounded
           presets; `standard` is byte-identical to the untuned plan. */}
       {runMode === "race_prep" && (
-        <div className="space-y-3">
-          <div>
-            <p className="text-sm font-medium text-foreground">
-              Long-run volume
-            </p>
-            <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-              How big your long runs build — Lighter peaks about a quarter
-              lower, Bigger about a quarter higher.
-            </p>
+        <>
+          <div className="space-y-2">
+            <div>
+              <SectionHeading size="compact">Long-run volume</SectionHeading>
+              <p className="mt-1 text-xs text-muted-foreground">
+                How long your longest runs get.
+              </p>
+            </div>
             <SegmentedControl
               options={[
                 { value: "lighter", label: "Lighter" },
@@ -853,12 +847,13 @@ export default function RunPlanSettings({
               tone="running"
             />
           </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">Intensity</p>
-            <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-              How much tempo &amp; interval work each week carries. Paces stay
-              personalised either way.
-            </p>
+          <div className="space-y-2">
+            <div>
+              <SectionHeading size="compact">Intensity</SectionHeading>
+              <p className="mt-1 text-xs text-muted-foreground">
+                How much tempo and interval work each week has.
+              </p>
+            </div>
             <SegmentedControl
               options={[
                 { value: "gentler", label: "Gentler" },
@@ -874,26 +869,23 @@ export default function RunPlanSettings({
           {/* Lift4 (10): the race-setup answer on the leg trim, changeable
               here for as long as the race runs. */}
           {lifts && (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <SectionHeading size="compact">
                   Lighten leg sessions while your runs build
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  A third fewer sets on leg lifts, at the same weights, from
-                  your plan&apos;s build weeks until the two lighter weeks
-                  before your race.
+                </SectionHeading>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  A third fewer leg sets, at the same weights.
                 </p>
               </div>
               <Toggle
                 checked={raceLegTrim}
                 label="Lighten leg sessions while your runs build"
-                className="ml-3"
                 onChange={() => setRaceLegTrim((v) => !v)}
               />
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* ── The way back to the Programme page ───────────────────────── */}
