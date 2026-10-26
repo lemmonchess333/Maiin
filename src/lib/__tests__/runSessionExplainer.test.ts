@@ -368,7 +368,7 @@ describe("a tempo at the goal race pace (Run21 (3))", () => {
 
   it("keeps the tempo's own reasons without it", () => {
     expect(runSessionExplainer({ ...tempo, currentWeek: 5 })).toMatch(
-      /^Tempo — /
+      /^A tempo builds how long you can hold/
     );
   });
 

@@ -45,6 +45,13 @@ function setup(extra = {}) {
     "following/bob/users/alice": { followedAt: now },
     "followers/bob/users/alice": { followedAt: now },
     "blocks/carol/users/alice": { blockedAt: now },
+    // Polish3: who blocked whom, the server-written copy. Carol blocked
+    // Alice (a row under Alice), Alice blocked Dave (a row naming Alice
+    // under Dave), and Carol blocked Bob, which is not Alice's.
+    "blocks/alice/users/dave": { blockedAt: now },
+    "blockedBy/alice/users/carol": {},
+    "blockedBy/dave/users/alice": {},
+    "blockedBy/bob/users/carol": {},
     // Polish2: a request to Alice, one she sent, and one between others.
     "followRequests/alice/users/bob": { requestedAt: now },
     "followRequests/carol/users/alice": { requestedAt: now },
@@ -181,6 +188,8 @@ function setup(extra = {}) {
 // smoke::topLevelOwn::followRequests
 // smoke::followRequests::sent
 // smoke::topLevelOwn::friendsBoard
+// smoke::topLevelOwn::blockedBy
+// smoke::blockedByReverse
 /* The billing tombstone's secret, which a restricted account's kept
    identities are hashed with. */
 let priorSecret;
@@ -209,6 +218,9 @@ describe("complete account erasure", () => {
       "following/bob/users/alice",
       "followers/bob/users/alice",
       "blocks/carol/users/alice",
+      "blocks/alice/users/dave",
+      "blockedBy/alice/users/carol",
+      "blockedBy/dave/users/alice",
       "followRequests/alice/users/bob",
       "followRequests/carol/users/alice",
       "friendsBoard/alice",
@@ -239,6 +251,7 @@ describe("complete account erasure", () => {
       "audit_checkout_sessions/bob-checkout",
       "appleNotifications/n-bob",
       "followRequests/carol/users/bob",
+      "blockedBy/bob/users/carol",
       "friendsBoard/bob",
       "challenges/weekly/participants/bob/applied/run-4",
     ])

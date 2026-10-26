@@ -149,9 +149,7 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
     .getByRole("button", { name: "Start my plan", exact: true })
     .click();
   await expect(page.getByText(/We couldn’t save your plan/)).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Try creating my plan again" })
-  ).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Try again" })).toBeEnabled();
   expect(requests).toBe(1);
   await capture(page, "save-retry");
 });

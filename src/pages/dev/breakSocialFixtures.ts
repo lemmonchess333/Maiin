@@ -219,7 +219,8 @@ const WORST: FeedItem[] = [
     },
   },
   {
-    // A CJK name and a German compound title: no spaces to break at.
+    // A CJK name and a German compound title: no spaces to break at. Its
+    // one lift has no drawing, so the muscle figure carries the volume.
     id: "worst-compound",
     activityId: "worst-compound",
     authorId: "worst-wang",
@@ -235,6 +236,7 @@ const WORST: FeedItem[] = [
       exerciseCount: 1,
       prCount: 1,
       duration: 1800,
+      muscleGroups: ["horizontal_push"],
       exercises: [lift("Bankdrücken", 5, 5, 80)],
       commentCount: 0,
     },

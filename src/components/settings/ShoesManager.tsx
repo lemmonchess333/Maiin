@@ -67,6 +67,7 @@ export default function ShoesManager() {
   const [newMax, setNewMax] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   // Only show suggestions when the user is actively typing into the name
   // field and hasn't yet picked an exact match (substring match against
@@ -135,24 +136,40 @@ export default function ShoesManager() {
     return (
       <div className="text-center py-4">
         <p className="text-xs text-destructive-strong">Failed to load shoes</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Please try again later
-        </p>
+        <p className="text-xs text-muted-foreground mt-1">Try again later</p>
       </div>
     );
 
   const retired = shoes.filter((s) => s.retired);
 
   const handleAdd = async () => {
-    if (!newName.trim()) return;
-    await addShoe(
-      newName.trim(),
-      newBrand.trim(),
-      /* `maxKm` is stored in kilometres, so a value typed in miles has to
-         convert on the way IN — the one place in this component where the
-         conversion runs toward storage. */
-      distanceToMetres(Number(newMax), unit) / 1000 || SHOE_MAX_DEFAULT_KM
-    );
+    if (!newName.trim() || adding) return;
+    /* `maxKm` is stored in kilometres, so a value typed in miles has to
+       convert on the way IN — the one place in this component where the
+       conversion runs toward storage. Left empty, it is the default. The
+       input's `min` does not stop typing, so the floor is held here: a
+       0 or negative limit flagged the shoe as worn out on its first run. */
+    const typed = newMax.trim();
+    const maxKm =
+      typed === ""
+        ? SHOE_MAX_DEFAULT_KM
+        : distanceToMetres(Number(typed), unit) / 1000;
+    if (!Number.isFinite(maxKm) || maxKm < SHOE_MAX_MIN_KM) {
+      toast.error(
+        `Replace at needs to be at least ${storedKmLabel(SHOE_MAX_MIN_KM, unit)}.`
+      );
+      return;
+    }
+    setAdding(true);
+    try {
+      await addShoe(newName.trim(), newBrand.trim(), maxKm);
+    } catch (err) {
+      logger.error("[ShoesManager] addShoe failed", err);
+      toast.error("Couldn't add the shoe. Try again.");
+      return;
+    } finally {
+      setAdding(false);
+    }
     setNewName("");
     setNewBrand("");
     setNewMax("");
@@ -218,7 +235,7 @@ export default function ShoesManager() {
               }}
               placeholder="Shoe name (e.g., Pegasus 41)"
               aria-label="Shoe name"
-              className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm"
+              className="ds-input text-sm"
             />
             {suggestions.length > 0 && (
               <div
@@ -252,7 +269,7 @@ export default function ShoesManager() {
             onChange={(e) => setNewBrand(e.target.value)}
             placeholder="Brand (e.g., Nike)"
             aria-label="Brand"
-            className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm"
+            className="ds-input text-sm"
           />
 
           {/* Max km — previously only had "Max km" as a placeholder which
@@ -277,13 +294,15 @@ export default function ShoesManager() {
                   placeholder={storedKmLabel(SHOE_MAX_DEFAULT_KM, unit, false)}
                   onChange={(e) => setNewMax(e.target.value)}
                   aria-describedby="shoe-max-km-hint"
-                  className="w-full px-3 py-2 pr-10 rounded-lg bg-muted border border-border text-sm"
+                  className="ds-input pr-10 text-sm"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
                   {distanceUnitLabel(unit)}
                 </span>
               </div>
-              <Button onClick={handleAdd}>Save</Button>
+              <Button onClick={handleAdd} loading={adding}>
+                Save
+              </Button>
             </div>
             <p id="shoe-max-km-hint" className="text-xs text-muted-foreground">
               We'll flag the shoe for replacement at this mileage. Most daily

@@ -52,13 +52,14 @@ const NOT_DISPLAY: Record<string, string> = {
    arithmetic at the display site, so printing it with a hardcoded `km`
    is invisible here — no `/ 1000` for the pattern to find.
 
-   Three surfaces were doing exactly that with the user's own logged
-   distance, and a miles reader saw kilometres on all three: the Weekly
+   Four surfaces were doing exactly that with the user's own logged
+   distance, and a miles reader saw kilometres on all four: the Weekly
    Review's run lane (`runs.km`, `runs.longestKm`), "Your week so far"
-   (`pulse.runs.km`), and the Programme Run tab's "This week" line — the
-   last of which converted the PACE on the same line and not the
-   distance. All three now go through `storedKmLabel`, and each is pinned
-   at its own surface in both units.
+   (`pulse.runs.km`), the Programme Run tab's "This week" line — which
+   converted the PACE on the same line and not the distance — and the
+   Following tab's trajectory card (`thisWeek.km`, found 2026-10-25,
+   beside a lift column that did convert). All four now go through
+   `storedKmLabel`, and each is pinned at its own surface in both units.
 
    Still outstanding, and a product call rather than a bug: the PRESCRIBED
    distances, `config.targetDistanceKm` in `DayActionSheet`,

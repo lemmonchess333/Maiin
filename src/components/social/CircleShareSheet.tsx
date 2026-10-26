@@ -31,7 +31,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { GOAL_SPACE_TEXT_MAX } from "@/features/goalSpace/goalSpaceTypes";
 import { useGoalSpaces } from "@/features/goalSpace/useGoalSpaces";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import { containsProfanity } from "@/lib/profanityFilter";
+import { loadWordFilter } from "@/lib/wordFilter";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import { circleTitle } from "@/features/goalSpace/circleTitle";
 import RestrictedNotice from "./RestrictedNotice";
 
@@ -46,8 +47,17 @@ export default function CircleShareSheet({
   onOpenChange,
   uid,
 }: CircleShareSheetProps) {
-  const { loading, circles, loadFailed, reload, publishEvent } =
-    useGoalSpaces(uid);
+  const {
+    loading: circlesLoading,
+    circles,
+    loadFailed,
+    reload,
+    publishEvent,
+  } = useGoalSpaces(uid);
+  /* The names go through the word filter (circleTitle), and so does the
+     note: it loads as the sheet opens, and the list waits for it. */
+  const wordFilter = useWordFilter(open);
+  const loading = circlesLoading || !wordFilter;
   // A restricted account shares nothing with a Circle (S4e).
   const { isRestricted } = useRestrictedStatus(uid);
   const navigate = useNavigate();
@@ -70,7 +80,12 @@ export default function CircleShareSheet({
     if (!selectedId || busy || isRestricted) return;
     // The server takes a refused note back out (onGoalSpaceEventCreated);
     // saying so here keeps the person's words in the box to reword.
-    if (containsProfanity(note)) {
+    const filter = wordFilter ?? (await loadWordFilter().catch(() => null));
+    if (!filter) {
+      toast.error("Couldn't share. Try again.");
+      return;
+    }
+    if (filter.containsProfanity(note)) {
       toast.error(
         "This note contains objectionable language. Reword it and try again."
       );
@@ -114,7 +129,7 @@ export default function CircleShareSheet({
             className="flex items-center justify-between gap-3 rounded-xl bg-card p-3"
           >
             <p className="text-small text-muted-foreground">
-              Couldn&rsquo;t load your Circles.
+              Couldn&rsquo;t load your circles.
             </p>
             <Button variant="secondary" onClick={() => void reload()}>
               Try again
@@ -127,7 +142,7 @@ export default function CircleShareSheet({
             <EmptyState
               compact
               icon={Users}
-              headline="No Circles yet"
+              headline="No circles yet"
               sub="Circles are small, invite-only groups around one shared goal."
             />
             <Button
@@ -169,7 +184,7 @@ export default function CircleShareSheet({
                   )}
                 >
                   <p className="text-sm font-semibold text-foreground truncate">
-                    {circleTitle(c.space)}
+                    {circleTitle(c.space, wordFilter)}
                     {!c.space.active && (
                       <span className="font-normal text-muted-foreground">
                         {" "}
@@ -194,7 +209,7 @@ export default function CircleShareSheet({
               maxLength={GOAL_SPACE_TEXT_MAX}
               placeholder="Add a note — optional"
               aria-label="Note"
-              className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="ds-input text-sm"
             />
 
             {isRestricted && <RestrictedNotice />}

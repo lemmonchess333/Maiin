@@ -9,7 +9,7 @@ import { useSavedRoutes } from "@/hooks/useSavedRoutes";
 import { distanceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useShareRoute } from "@/hooks/useShareRoute";
-import { useAuth } from "@/lib/auth";
+import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Dialog } from "@/components/ui/Dialog";
@@ -52,7 +52,8 @@ export default function RouteSetupSection({
   onClearRoute,
   currentPosition = null,
 }: RouteSetupSectionProps) {
-  const { profile } = useAuth();
+  // The maps in the two sheets draw the theme on screen.
+  const darkTheme = useIsDarkTheme();
   const unit = useDistanceUnit();
   const { routes, save, remove } = useSavedRoutes();
   const shareRouteWithPrivacy = useShareRoute();
@@ -128,7 +129,7 @@ export default function RouteSetupSection({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Route name"
-              className="mb-4 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="ds-input mb-4 text-sm"
             />
             <div className="flex gap-2">
               <Button
@@ -247,9 +248,7 @@ export default function RouteSetupSection({
           defaultName={preview.name}
           source={preview.source}
           showSave={preview.showSave}
-          /* Same default-dark reasoning as the planner below: only an
-             explicit `false` means light, and this sheet renders a map too. */
-          darkMode={profile?.darkMode !== false}
+          darkMode={darkTheme}
           onFollow={onLoadRoute}
           onSave={(n, points, source) => save({ name: n, points, source })}
         />
@@ -261,11 +260,7 @@ export default function RouteSetupSection({
             open
             onClose={() => setPlannerOpen(false)}
             initialCenter={currentPosition}
-            /* Dark is the DEFAULT theme, so an unloaded profile must not read
-               as light — `!!profile?.darkMode` was false until the profile
-               arrived and could open the planner on the light basemap inside
-               a dark app. */
-            darkMode={profile?.darkMode !== false}
+            darkMode={darkTheme}
             onSave={(n, points) => save({ name: n, points, source: "planned" })}
             onFollow={(points) => onLoadRoute(points, "planned")}
           />

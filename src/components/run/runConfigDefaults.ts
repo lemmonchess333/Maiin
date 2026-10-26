@@ -184,7 +184,7 @@ export const ACTIVITY_TYPES: ActivityTypeOption[] = [
   {
     type: "freerun",
     label: "Free",
-    name: "Free Run",
+    name: "Free run",
     icon: "Footprints",
     cardDescription: "Run at your own pace",
     cardChip: "Outdoor GPS",
@@ -195,7 +195,7 @@ export const ACTIVITY_TYPES: ActivityTypeOption[] = [
   {
     type: "easy",
     label: "Easy",
-    name: "Easy Run",
+    name: "Easy run",
     icon: "PersonStanding",
     cardDescription: "Conversational pace",
     cardChip: "Outdoor GPS",
@@ -206,7 +206,7 @@ export const ACTIVITY_TYPES: ActivityTypeOption[] = [
   {
     type: "tempo",
     label: "Tempo",
-    name: "Tempo Run",
+    name: "Tempo run",
     icon: "Zap",
     cardDescription: "Sustained effort",
     cardChip: "Outdoor GPS",
@@ -228,7 +228,7 @@ export const ACTIVITY_TYPES: ActivityTypeOption[] = [
   {
     type: "long",
     label: "Long",
-    name: "Long Run",
+    name: "Long run",
     icon: "Route",
     cardDescription: "Distance-focused",
     cardChip: "Outdoor GPS",
@@ -250,7 +250,7 @@ export const ACTIVITY_TYPES: ActivityTypeOption[] = [
   {
     type: "guided",
     label: "Guided",
-    name: "Guided Run",
+    name: "Guided run",
     icon: "Headphones",
     cardDescription: "Coach-led workout",
     cardChip: "Audio",

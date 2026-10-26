@@ -34,9 +34,18 @@ describe("levelSuggestionCopy", () => {
 
   it("keeps the exercises and promises no other cadence", () => {
     for (const to of ["intermediate", "beginner"] as const) {
-      const { body } = levelSuggestionCopy({ to }, "hypertrophy");
+      const { body, summary } = levelSuggestionCopy({ to }, "hypertrophy");
       expect(body).toContain("Your exercises stay as they are.");
       expect(body).not.toMatch(/week to week/i);
+      expect(summary).not.toMatch(/week to week/i);
+    }
+  });
+
+  it("says the suggestion in one sentence, which the body does not repeat", () => {
+    for (const to of ["intermediate", "beginner"] as const) {
+      const { body, summary } = levelSuggestionCopy({ to }, "general");
+      expect(summary.split(". ")).toHaveLength(1);
+      expect(body).not.toContain(summary);
     }
   });
 });

@@ -223,13 +223,12 @@ export default function RunFitnessSection({
                 Set your fitness
               </p>
               <p className="text-xs text-muted-foreground">
-                Add a recent race and we'll personalise every run pace to you.
+                Add a recent race to set your paces.
               </p>
             </div>
             {!editing && (
               <Button
-                variant="primary"
-                size="sm"
+                variant="sport"
                 className="ml-auto"
                 onClick={() => {
                   haptic("light");
@@ -271,7 +270,7 @@ export default function RunFitnessSection({
                 placeholder={distance === "5k" ? "22:30" : "1:45:00"}
                 value={timeStr}
                 onChange={(e) => setTimeStr(e.target.value)}
-                className="mt-1 w-full rounded-lg bg-muted border border-border/40 px-3 py-2 text-sm font-mono tabular-nums text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                className="ds-input mt-1 text-sm font-mono tabular-nums"
               />
             </div>
             {error && (

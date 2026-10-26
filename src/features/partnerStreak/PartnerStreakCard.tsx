@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Flame } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { useUid } from "@/lib/auth";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { usePartnerStreak } from "./usePartnerStreak";
+import { describeStartRejection } from "./startRejection";
 
 interface PartnerStreakCardProps {
   /** The profile being viewed. */
@@ -27,7 +28,7 @@ interface PartnerStreakCardProps {
  * rather than showing a misleading "0 days".
  *
  * A restricted account is not offered a new streak (S4e): starting one
- * reaches the partner, and the rules refuse it. A streak that already
+ * reaches the partner, and the server refuses it. A streak that already
  * exists still shows, and can still be ended.
  */
 export default function PartnerStreakCard({
@@ -51,7 +52,9 @@ export default function PartnerStreakCard({
     } catch (err) {
       logger.error("[PartnerStreakCard] start failed", err);
       haptic("error");
-      toast.error("Couldn't start the streak. Try again.");
+      // The server says why (a full set of partners on either side, no
+      // longer following each other), and the sentence says what to do.
+      toast.error(describeStartRejection(err, partnerName));
     }
   };
 

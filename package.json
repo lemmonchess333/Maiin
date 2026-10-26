@@ -28,7 +28,7 @@
     "test:e2e:auth": "playwright test --project=auth-emulator --workers=1",
     "test:e2e:journeys": "playwright test --project=journeys --workers=1",
     "test:design-qa": "playwright test --project=auth-emulator e2e/design-qa",
-    "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts firestore.spaces.rules.test.ts firestore.profile.rules.test.ts firestore.goalSpaces.rules.test.ts firestore.partnerBonds.rules.test.ts firestore.ownerSubcollections.rules.test.ts firestore.restriction.rules.test.ts firestore.followRequests.rules.test.ts firestore.friendsBoard.rules.test.ts firestore.collectionGroup.test.ts'",
+    "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts firestore.spaces.rules.test.ts firestore.profile.rules.test.ts firestore.goalSpaces.rules.test.ts firestore.partnerBonds.rules.test.ts firestore.ownerSubcollections.rules.test.ts firestore.restriction.rules.test.ts firestore.followRequests.rules.test.ts firestore.friendsBoard.rules.test.ts firestore.blocks.rules.test.ts firestore.collectionGroup.test.ts'",
     "test:rules:storage": "firebase emulators:exec --only firestore,storage --project demo-tropos 'vitest run storage.rules.test.ts'",
     "secrets:check": "node scripts/check-required-secrets.mjs",
     "env:check:web": "node scripts/check-web-env.mjs",
@@ -43,6 +43,7 @@
     "seed:fellbehind": "tsx --tsconfig tsconfig.app.json scripts/seed-fellbehind-capture.ts",
     "seed:liftreturn": "tsx --tsconfig tsconfig.app.json scripts/seed-liftreturn-capture.ts",
     "seed:season": "tsx --tsconfig tsconfig.app.json scripts/seed-season-athlete.ts",
+    "seed:review": "tsx --tsconfig tsconfig.app.json scripts/seed-review-user.ts",
     "check:form-art": "node --import tsx scripts/audit-form-art.ts",
     "art:cutouts": "node --import tsx scripts/art/cut-out-form-art.ts",
     "art:releases": "node --import tsx scripts/art/gen-form-art-releases.ts",
@@ -96,6 +97,7 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@capacitor/cli": "^8.5.3",
     "@eslint/js": "^9.39.1",
     "@firebase/rules-unit-testing": "^5.0.1",

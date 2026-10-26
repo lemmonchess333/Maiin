@@ -2,6 +2,7 @@ import { useUid } from "../../lib/auth";
 import { useFollowState, type FollowState } from "@/hooks/useFollowState";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { showRestrictedToast } from "@/lib/accountRestriction";
+import { toast } from "@/lib/toast";
 import { haptic } from "../../lib/haptic";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/utils";
@@ -85,7 +86,16 @@ export default function FollowButton({
     if (now) {
       onFollowChange?.(now, before);
     } else {
+      // The write failed and the button is back where it was; say so, as
+      // the post's Follow link (InlineFollow) does.
       haptic("error");
+      toast.error(
+        before === "following"
+          ? "Couldn't unfollow. Try again."
+          : before === "requested"
+            ? "Couldn't cancel the request. Try again."
+            : "Couldn't follow. Try again."
+      );
     }
   };
 

@@ -3,7 +3,8 @@
    Reusable component styles
 
    Primitive usage (May 2026 visual cohesion pass):
-     .ds-input             Text/email/password/search inputs.
+     .ds-input             Every form field: typed inputs, textareas,
+                           and the Select primitive's select.
      .ds-status-banner     Global online/offline + app-state banners.
      .ds-auth-shell        Full-page login/signup shell only.
      .ds-auth-card         Login/signup elevated card surface only.
@@ -183,21 +184,57 @@
    sometimes draw from the global rule rather than the primitive.
    Adding the tag name bumps specificity to 0,1,1 so .ds-input
    always wins. index.css also excludes `.ds-input` from its
-   global selector belt-and-braces. */
+   global selector belt-and-braces.
+
+   The resting fill and edge are theme tokens (tokens.css, "Input
+   states"). Light: a card-white box with the shared control boundary,
+   muted-foreground at 80%, as its edge, 3:1 or more on the card and the
+   page. Dark: a filled box on the raised --muted with the --border
+   hairline, so no field wears a bright outline; its label or placeholder
+   names it. controlBoundaries.test.ts measures both. */
 input.ds-input,
 textarea.ds-input,
 select.ds-input {
-  width: 100%;
   min-height: 3rem;
   border-radius: 0.875rem;
-  border: 1px solid hsl(var(--border) / 0.7);
-  background: hsl(var(--card));
+  border: 1px solid var(--ds-color-input-border-rest);
+  background: var(--ds-color-input-fill-rest);
   color: hsl(var(--foreground));
   box-shadow: var(--ds-shadow-input-rest);
   transition:
     border-color var(--ds-transition-fast),
     box-shadow var(--ds-transition-fast),
     background var(--ds-transition-fast);
+}
+
+/* The field's width and inset are defaults, in the components layer:
+   under the utilities, so a field that sets its own (`w-auto` beside a
+   label in a settings row, `px-1` on the weight readout, `pl-10` beside
+   an icon) keeps it, and above Tailwind's preflight, whose `padding: 0`
+   otherwise sets the typed text against the edge. */
+@layer components {
+  input.ds-input,
+  textarea.ds-input,
+  select.ds-input {
+    width: 100%;
+    padding-inline: 0.75rem;
+  }
+  textarea.ds-input {
+    padding-block: 0.625rem;
+  }
+}
+
+/* A number field is typed into, never stepped: Chromium's spin arrows
+   sit over the value's end and step by one on a scroll, and Firefox
+   draws its own. WebKit on iOS draws none. */
+input.ds-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input.ds-input[type="number"]::-webkit-inner-spin-button,
+input.ds-input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 input.ds-input::placeholder,
@@ -216,7 +253,7 @@ textarea.ds-input::placeholder {
 input.ds-input:focus,
 textarea.ds-input:focus,
 select.ds-input:focus {
-  border-color: hsl(var(--primary) / 0.42);
+  border-color: hsl(var(--primary));
   box-shadow:
     0 4px 14px -8px hsl(var(--primary) / 0.32),
     0 0 0 2.5px hsl(var(--primary) / 0.13);
@@ -228,18 +265,18 @@ select.ds-input:focus {
    `:focus-visible` there (the control is keyboard-operable the moment
    it has focus, so the engine treats the focus as visible-worthy), so
    an iPhone user tapping the weight unit got the full 2px solid
-   `--primary` outline plus this rule's 42% primary border — measured
+   `--primary` outline plus this rule's primary border — measured
    off a device screenshot as a uniform purple frame, which is what the
    owner reported. React cannot express "focus that arrived by pointer"
-   in a selector, so the component sets this class on pointerdown and
-   drops it on blur; a keyboard focus never carries it and keeps the
-   compliant 4.47:1 outline.
+   in a selector, so the `Select` primitive sets this class on
+   pointerdown and drops it on blur; a keyboard focus never carries it
+   and keeps the compliant 4.47:1 outline.
 
    Specificity 0,3,1 to beat the rule above (0,2,1) and the global
    `:focus-visible` outline (0,1,0). */
 .ds-input.ds-input-pointer-focus:focus {
   outline: none;
-  border-color: hsl(var(--border) / 0.7);
+  border-color: var(--ds-color-input-border-rest);
   box-shadow: var(--ds-shadow-input-rest);
 }
 

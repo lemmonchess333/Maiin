@@ -17,10 +17,11 @@
  * performance promises.
  */
 import { useState } from "react";
-import { format } from "date-fns";
+import { formatDayMonthYear } from "@/utils/formatters";
 import { Check, ChevronDown, Flag } from "lucide-react";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -133,7 +134,14 @@ function UpcomingRacePicker({
 
       <Collapse open={open}>
         <div className="mt-3 space-y-2">
-          <RaceFilters value={filters} onChange={setFilters} trainingOnly />
+          {/* No Distance filter: the goal's own Distance sits just below
+              and narrows the list already. */}
+          <RaceFilters
+            value={filters}
+            onChange={setFilters}
+            trainingOnly
+            showDistance={false}
+          />
           {raceDays.length === 0 ? (
             <EmptyState
               compact
@@ -161,7 +169,7 @@ function UpcomingRacePicker({
                     key={`${race.id}:${dateKey}`}
                     type="button"
                     role="option"
-                    aria-label={`${race.name} ${format(parseLocalDate(dateKey), "d MMM yyyy")} ${RACE_DISTANCE_LABELS[race.event!.distance]}`}
+                    aria-label={`${race.name} ${formatDayMonthYear(parseLocalDate(dateKey))} ${RACE_DISTANCE_LABELS[race.event!.distance]}`}
                     aria-selected={isSelected}
                     onClick={() => {
                       haptic();
@@ -202,7 +210,7 @@ function UpcomingRacePicker({
                     </span>
                     <span className="shrink-0 flex items-center gap-2">
                       <span className="text-caption text-muted-foreground font-mono tabular-nums">
-                        {format(parseLocalDate(dateKey), "d MMM yyyy")}
+                        {formatDayMonthYear(parseLocalDate(dateKey))}
                       </span>
                       <span
                         className="text-caption text-muted-foreground"
@@ -262,7 +270,9 @@ export default function RaceGoalPlanner({
     state.status === "below-floor";
 
   return (
-    <div className="mt-3 space-y-3 p-3 rounded-xl bg-card card-shadow">
+    // The race's fields sit on the page like the groups below them, each
+    // under its own heading, with no card around them.
+    <div className="space-y-4">
       {/* Door 2 — catalogue picker (collapses when nothing upcoming) */}
       {trainingRaces.length > 0 && (
         <UpcomingRacePicker
@@ -277,8 +287,8 @@ export default function RaceGoalPlanner({
       )}
 
       {/* Distance */}
-      <div>
-        <SectionLabel className="mb-1.5">Distance</SectionLabel>
+      <div className="space-y-2">
+        <SectionHeading size="compact">Distance</SectionHeading>
         <SegmentedControl
           ariaLabel="Race distance"
           tone="running"
@@ -288,38 +298,35 @@ export default function RaceGoalPlanner({
         />
       </div>
 
-      {/* Event name (optional) */}
-      <div>
-        <label
-          htmlFor="ps-race-event-name"
-          className="text-xs text-muted-foreground"
-        >
-          Event name (optional)
-        </label>
+      {/* Race name (optional). No example in the field: a race the
+          person had not entered read as one already filled in. */}
+      <div className="space-y-2">
+        <SectionHeading size="compact">
+          <label htmlFor="ps-race-event-name">Race name (optional)</label>
+        </SectionHeading>
         <input
           id="ps-race-event-name"
           type="text"
           value={eventName}
           onChange={(e) => onEventNameChange(e.target.value)}
           maxLength={60}
-          placeholder="London Marathon 2026"
           autoComplete="off"
-          className="block w-full min-w-0 appearance-none mt-1 px-3 py-2.5 min-h-11 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="ds-input block min-w-0 appearance-none text-sm"
         />
       </div>
 
       {/* Target date */}
-      <div>
-        <label htmlFor="ps-race-date" className="text-xs text-muted-foreground">
-          Target date
-        </label>
+      <div className="space-y-2">
+        <SectionHeading size="compact">
+          <label htmlFor="ps-race-date">Target date</label>
+        </SectionHeading>
         <input
           id="ps-race-date"
           type="date"
           value={targetDate}
           onChange={(e) => onTargetDateChange(e.target.value)}
           min={minDate}
-          className="block w-full min-w-0 appearance-none mt-1 px-3 py-2.5 min-h-11 rounded-lg bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="ds-input block min-w-0 appearance-none text-sm"
         />
       </div>
 

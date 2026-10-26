@@ -2,7 +2,12 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { circleTitle } from "../circleTitle";
+import * as wordFilter from "@/lib/profanityFilter";
+import { circleTitle as circleTitleWith } from "../circleTitle";
+
+/** With the word filter loaded, as the Circle lists draw once it has. */
+const circleTitle = (space: Parameters<typeof circleTitleWith>[0]) =>
+  circleTitleWith(space, wordFilter);
 
 /* A Circle named before a word joined the filter keeps that name in
    Firestore: a "Hitler" Circle made before 14 Oct 2026 (#2802) still read
@@ -28,6 +33,15 @@ describe("circleTitle", () => {
     expect(
       circleTitle({ title: "nazi-gym", type: "nutrition_consistency" })
     ).toBe("Consistency Reset");
+  });
+
+  it("shows no name the filter has not seen: the kind, until it loads", () => {
+    expect(
+      circleTitleWith(
+        { title: "Autumn strength block", type: "strength_block" },
+        null
+      )
+    ).toBe("Strength Block");
   });
 
   it("falls back to a plain word for a kind with no template", () => {

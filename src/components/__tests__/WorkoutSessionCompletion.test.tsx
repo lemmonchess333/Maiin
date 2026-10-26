@@ -19,6 +19,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProgramExercise } from "@/features/program/programTypes";
@@ -60,7 +61,9 @@ vi.mock("@/features/streaks/useStreaks", () => ({
     awardEventBadges: h.awardEventBadges,
   }),
 }));
-vi.mock("@/hooks/useWorkoutDraft", () => ({
+vi.mock("@/hooks/useWorkoutDraft", async (importOriginal) => ({
+  // The pure helpers (`draftLayout`) stay real.
+  ...(await importOriginal<typeof import("@/hooks/useWorkoutDraft")>()),
   useWorkoutDraft: () => ({ load: h.load, save: h.save, clear: h.clear }),
   computeDraftIdentity: () => "test",
   createWorkoutCompletionId: () => "test",
@@ -187,6 +190,15 @@ it("finishes a session by the names the journeys use", async () => {
   expect(log).toHaveBeenCalledTimes(1);
 });
 
+it("gives the session screen its heading, the day it names at the top", () => {
+  // Full screen over Train, or alone from a saved routine, the session is
+  // a screen of its own, and a screen reader finds it by this heading.
+  openSession(writer(), vi.fn(), {}, { dayLabel: "Pull B" });
+  const title = screen.getByRole("heading", { level: 1, name: "Pull B" });
+  expect(title).toHaveClass("text-base", "font-bold");
+  expect(screen.getAllByRole("heading", { level: 1 })).toEqual([title]);
+});
+
 describe("set completion through row controls", () => {
   it("rejects an invalid later set and keeps it editable", () => {
     openSession();
@@ -298,7 +310,10 @@ describe("set completion through row controls", () => {
   /* Finish sits in the top bar by Close (owner, 2026-10-12), offered once
      a working set is done and while sets remain; under the set action it
      took a row from the list on every set after the first. */
-  it("offers Finish in the top bar once a set is done, asking first", async () => {
+  /* Finishing early is undone by the review's Edit workout, so it asks
+     nothing first: the review is the check, and it counts the sets left
+     unticked. */
+  it("offers Finish in the top bar once a set is done, going to the review", async () => {
     openSession();
     const finish = () =>
       screen.queryByRole("button", { name: "Finish workout" });
@@ -308,9 +323,15 @@ describe("set completion through row controls", () => {
     expect(finish()).toHaveTextContent("Finish");
     expect(screen.queryByRole("button", { name: "Finish early" })).toBeNull();
     fireEvent.click(finish()!);
+    expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(
-      screen.getByRole("alertdialog", { name: "Finish early?" })
+      screen.getByRole("heading", { name: "Review workout" })
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(/sets? you haven't ticked won't be saved\./)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Edit workout" }));
+    expect(finish()).toBeVisible();
   });
 
   /* The exercise's name and set count head the list rather than sit fixed
@@ -889,7 +910,7 @@ it("keeps the recovery draft while queued, then clears it only when synced", asy
     expect.objectContaining({ completionPending: true, completionId: "test" })
   );
   await act(async () => settle("synced"));
-  expect(screen.getByText("Synced")).toBeVisible();
+  expect(screen.getByText("Saved")).toBeVisible();
   expect(
     screen.getByRole("heading", { name: "Workout saved" })
   ).toBeInTheDocument();
@@ -918,7 +939,7 @@ it("a reconnect rejection keeps the session and retries the same completion", as
   ).toBeInTheDocument();
   expect(h.clear).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Retry sync" }));
-  await vi.waitFor(() => expect(screen.getByText("Synced")).toBeVisible());
+  await vi.waitFor(() => expect(screen.getByText("Saved")).toBeVisible());
   expect(complete.mock.calls[0][1]).toEqual(complete.mock.calls[1][1]);
 });
 
@@ -1009,7 +1030,7 @@ it("reopens an unsynced completion with its original date and retry identity", a
   openSession(complete);
   expect(screen.queryByText("Resume workout?")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Retry sync" }));
-  await vi.waitFor(() => expect(screen.getByText("Synced")).toBeVisible());
+  await vi.waitFor(() => expect(screen.getByText("Saved")).toBeVisible());
   expect(complete).toHaveBeenCalledWith(
     0,
     expect.objectContaining({
@@ -1044,7 +1065,7 @@ it("recognises a server-acknowledged completion after reopening instead of writi
   });
   const complete = vi.fn();
   await act(async () => openSession(complete));
-  await vi.waitFor(() => expect(screen.getByText("Synced")).toBeVisible());
+  await vi.waitFor(() => expect(screen.getByText("Saved")).toBeVisible());
   expect(complete).not.toHaveBeenCalled();
   expect(h.clear).toHaveBeenCalledWith("landed-original");
 });
@@ -1614,6 +1635,7 @@ describe("WorkoutSession — rest timer", () => {
       exerciseId: "bench-press",
       name: "Bench Press",
       reps: 5,
+      weight: 20,
     });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
     expect(restLabel()).toContain("3:00");
@@ -1832,6 +1854,31 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     hidden.mockRestore();
   });
 
+  it("tells a screen reader when a rest starts and when it is over, not every second", async () => {
+    /* The countdown is plain text and the rest's end is a buzz and a
+       chime, so the start and the end are put into words. The region is
+       on the page before the rest is, since one that arrives with its
+       words already in it is often not read. */
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
+    const regions = screen.getAllByRole("status");
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    await act(async () => {});
+    const region = screen.getByText("Rest, 1:30").closest('[role="status"]');
+    expect(regions).toContain(region);
+    await act(async () => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(region).toHaveTextContent(/^Rest, 1:30$/);
+    await background(90_000);
+    expect(region).toHaveTextContent(/^Rest over$/);
+    // A rest that is put away takes its words with it.
+    fireEvent.click(screen.getByRole("button", { name: "End rest" }));
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("group", { name: "Rest timer" })).toBeNull()
+    );
+    expect(region).toHaveTextContent(/^$/);
+  });
+
   it("re-arms the completion alert when an expired rest is extended", async () => {
     /* Extending an already-finished rest starts a fresh countdown. The
        chime flag stayed set from the first expiry, so the second one passed
@@ -1869,7 +1916,6 @@ it("Undo followed by finishing early saves only the final completed work", async
   fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
   expect(complete).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
-  fireEvent.click(screen.getByRole("button", { name: "Finish" }));
   fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
   expect(
@@ -2129,9 +2175,7 @@ describe("the plate hint (Lift4 (6))", () => {
       name: "Bench Press",
       weight: 62.5,
     });
-    expect(screen.getByText(/Per side:/)).toHaveTextContent(
-      "Per side: 20 + 1.25"
-    );
+    expect(screen.getByText(/a side/)).toHaveTextContent("20 + 1.25 kg a side");
     expect(screen.queryByText(/kg short/)).toBeNull();
   });
 
@@ -2141,9 +2185,130 @@ describe("the plate hint (Lift4 (6))", () => {
       name: "Bench Press",
       weight: 61,
     });
-    expect(screen.getByText(/Per side:/)).toHaveTextContent(
-      "Per side: 20 · 1 kg short"
+    expect(screen.getByText(/a side/)).toHaveTextContent(
+      "20 kg a side · 1 kg short"
     );
+  });
+
+  it("offers the plate calculator on a barbell only", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 60,
+    });
+    expect(
+      screen.getByRole("button", { name: "Plate calculator" })
+    ).toBeInTheDocument();
+    cleanup();
+    // A cable lift loads no plates: the calculator said "That's below the
+    // bar (20 kg)" for a Straight-Arm Pulldown.
+    openSession(writer(), vi.fn(), {
+      exerciseId: "straight-arm-pulldown",
+      name: "Straight-Arm Pulldown",
+      weight: 15,
+    });
+    expect(
+      screen.queryByRole("button", { name: "Plate calculator" })
+    ).toBeNull();
+    expect(screen.queryByText(/a side/)).toBeNull();
+  });
+});
+
+describe("a loaded lift needs a weight to be ticked", () => {
+  const tick = () =>
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+
+  it("refuses a barbell set at 0 kg, and its empty weight reads –", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 0,
+      sets: 1,
+    });
+    const weight = screen.getByRole("spinbutton", { name: "Set 1 weight" });
+    expect(weight).toHaveAttribute("placeholder", "–");
+    tick();
+    expect(h.error).toHaveBeenCalledWith("Enter a weight.");
+    expect(screen.getAllByLabelText("Mark set complete")).toHaveLength(1);
+    // With a weight, the same set ticks.
+    fireEvent.change(weight, { target: { value: "40" } });
+    tick();
+    expect(screen.queryAllByLabelText("Mark set complete")).toHaveLength(0);
+  });
+
+  it("ticks a bodyweight set at 0 kg, whatever the records hold", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "pull-ups",
+      name: "Pull-Ups",
+      weight: 0,
+      sets: 1,
+    });
+    expect(
+      screen.getByRole("spinbutton", { name: "Set 1 weight" })
+    ).toHaveAttribute("placeholder", "BW");
+    tick();
+    expect(h.error).not.toHaveBeenCalled();
+    expect(screen.queryAllByLabelText("Mark set complete")).toHaveLength(0);
+  });
+
+  it("ticks a timed hold at 0 kg", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "plank",
+      name: "Plank",
+      weight: 0,
+      reps: 30,
+      repUnit: "seconds",
+      sets: 1,
+    });
+    tick();
+    expect(h.error).not.toHaveBeenCalled();
+    expect(screen.queryAllByLabelText("Mark set complete")).toHaveLength(0);
+  });
+
+  it("ticks a lift with no load to enter (an ab wheel, a custom lift) at 0", () => {
+    for (const [exerciseId, name] of [
+      ["ab-wheel", "Ab Wheel Rollout"],
+      ["my-band-pull-apart", "Band Pull-Apart"],
+    ]) {
+      openSession(writer(), vi.fn(), { exerciseId, name, weight: 0, sets: 1 });
+      expect(
+        screen.getByRole("spinbutton", { name: "Set 1 weight" })
+      ).toHaveAttribute("placeholder", "0");
+      tick();
+      expect(screen.queryAllByLabelText("Mark set complete")).toHaveLength(0);
+      cleanup();
+    }
+    expect(h.error).not.toHaveBeenCalled();
+  });
+});
+
+describe("the RPE row", () => {
+  it("is one row of nine named chips, with no label in front", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 60,
+      sets: 1,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Show RPE" }));
+    const row = screen.getByRole("group", { name: "RPE for set 1" });
+    expect(row).toHaveClass("grid", "grid-cols-9");
+    expect(screen.queryByText("RPE:")).toBeNull();
+    const chips = within(row).getAllByRole("button");
+    expect(chips.map((chip) => chip.textContent)).toEqual([
+      "6",
+      "6.5",
+      "7",
+      "7.5",
+      "8",
+      "8.5",
+      "9",
+      "9.5",
+      "10",
+    ]);
+    for (const chip of chips) expect(chip).toHaveClass("min-h-11");
+    fireEvent.click(chips[4]);
+    expect(chips[4]).toHaveAttribute("aria-pressed", "true");
   });
 });
 
@@ -2159,7 +2324,7 @@ describe("the plan's lines caption the set table", () => {
       weight: 62.5,
     });
     const target = screen.getByText(/^Target:/);
-    const plates = screen.getByText(/Per side:/);
+    const plates = screen.getByText(/a side/);
     const note = screen.getByRole("textbox", { name: "Exercise notes" });
     expect(target.parentElement).toBe(plates.parentElement);
     expect(
@@ -2210,6 +2375,7 @@ describe("WorkoutSession — the rest after a warm-up", () => {
       exerciseId: "bench-press",
       name: "Bench Press",
       reps: 5,
+      weight: 20,
     });
     fireEvent.click(
       screen.getByRole("button", { name: "Set 1. Change set type" })

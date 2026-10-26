@@ -5,6 +5,7 @@ import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import { Users, MapPin, Trash2, Plus, Shield } from "lucide-react";
 import { Toggle } from "@/components/ui/Toggle";
+import Select from "@/components/ui/Select";
 import { toast } from "@/lib/toast";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -70,7 +71,7 @@ export default function PrivacySection({
     useState<PrivacyZone | null>(null);
   const { removeBlocked } = useBlockedUsers();
   const [blockedUsersList, setBlockedUsersList] = useState<
-    { uid: string; displayName: string }[]
+    { uid: string; displayName: string | null }[]
   >([]);
   const [blockedUsersLoading, setBlockedUsersLoading] = useState(false);
   const [blockedUsersLoaded, setBlockedUsersLoaded] = useState(false);
@@ -105,8 +106,7 @@ export default function PrivacySection({
               Approve followers
             </p>
             <p className="text-xs text-muted-foreground">
-              People ask to follow you, and you choose who sees what you share
-              with followers. Off, anyone can follow you.
+              You choose who follows you. Off, anyone can.
             </p>
           </div>
           <Toggle
@@ -168,8 +168,8 @@ export default function PrivacySection({
               Hide route start &amp; end on shared runs
             </p>
             <p className="text-xs text-muted-foreground">
-              Clips ~200m off each end of the route shown to followers, so your
-              home isn&apos;t broadcast. Your own map keeps the full route.
+              Followers don&apos;t see the first and last 200 m. Your own map
+              keeps the whole route.
             </p>
           </div>
           <Toggle
@@ -235,19 +235,19 @@ export default function PrivacySection({
               value={newZoneName}
               onChange={(e) => setNewZoneName(e.target.value)}
               placeholder="Zone name (e.g. Home)"
-              className="min-w-[min(100%,8em)] flex-1 min-h-11 px-3 rounded-lg bg-card border border-border text-sm"
+              className="ds-input min-w-[min(100%,8em)] flex-1 text-sm"
             />
-            <select
+            <Select
               aria-label="Privacy zone radius"
               value={newZoneRadius}
               onChange={(e) => setNewZoneRadius(Number(e.target.value))}
-              className="min-h-11 max-w-full px-3 rounded-lg bg-card border border-border text-sm"
+              className="w-auto max-w-full"
             >
               <option value={200}>200 m</option>
               <option value={500}>500 m</option>
               <option value={750}>750 m</option>
               <option value={1000}>1 km</option>
-            </select>
+            </Select>
           </div>
           <Button
             variant="primary"
@@ -316,16 +316,22 @@ export default function PrivacySection({
                     // private user docs; this site would silently break.
                     // The public mirror is the supported read surface
                     // for cross-user displays anyway.
+                    /* One name that can't be read leaves that row
+                       nameless rather than failing the list: the rules
+                       refuse the profile of someone who blocked you
+                       back, and the row still needs its Unblock. */
                     const users = await Promise.all(
                       ids.map(async (uid) => {
                         const snap = await getDoc(
                           doc(db, "users", uid, "public", "profile")
-                        );
+                        ).catch(() => null);
                         return {
                           uid,
-                          displayName: snap.exists()
-                            ? snap.data().displayName || "User"
-                            : "Deleted user",
+                          displayName: !snap
+                            ? null
+                            : snap.exists()
+                              ? snap.data().displayName || "User"
+                              : "Deleted user",
                         };
                       })
                     );
@@ -355,7 +361,7 @@ export default function PrivacySection({
                     className="flex items-center justify-between p-2.5 rounded-lg bg-card"
                   >
                     <span className="text-xs font-medium text-foreground">
-                      {bu.displayName}
+                      {bu.displayName ?? "Name unavailable"}
                     </span>
                     <button
                       type="button"
@@ -374,7 +380,11 @@ export default function PrivacySection({
                         setBlockedUsersList((prev) =>
                           prev.filter((u) => u.uid !== bu.uid)
                         );
-                        toast.success(`Unblocked ${bu.displayName}`);
+                        toast.success(
+                          bu.displayName
+                            ? `Unblocked ${bu.displayName}`
+                            : "Unblocked"
+                        );
                       }}
                       className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-destructive/10 hover:text-destructive-strong transition-colors"
                     >

@@ -93,10 +93,13 @@ export function EmptyState({
       };
 
   // Side padding in px, as iOS keeps its margins: in rem, double text
-  // inside a card left a 320pt phone 128px for "Weight trend".
+  // inside a card left a 320pt phone 128px for "Weight trend". A compact
+  // state sits inside a sheet that already has its own margins, so it
+  // keeps 16px: at double text on a 320pt phone, "notifications" needs
+  // the width 24px took.
   return (
     <div
-      className={`text-center px-[24px] ${compact ? "py-6 space-y-2.5" : "py-10 space-y-4"} ${className ?? ""}`}
+      className={`text-center ${compact ? "px-[16px] py-6 space-y-2.5" : "px-[24px] py-10 space-y-4"} ${className ?? ""}`}
       role="status"
     >
       <div className="relative mx-auto" style={{ width: size, height: size }}>
@@ -144,7 +147,11 @@ export function EmptyState({
         )}
       </div>
       <div className="space-y-1.5">
-        <p className="text-h3 font-bold text-foreground">{headline}</p>
+        {/* A word wider than the screen breaks rather than spilling past
+            it; the margins above are what keep the words in use whole. */}
+        <p className="text-h3 font-bold text-foreground break-words">
+          {headline}
+        </p>
         {sub && (
           <p className="text-small text-muted-foreground max-w-[260px] mx-auto leading-relaxed">
             {sub}

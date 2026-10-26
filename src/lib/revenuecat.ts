@@ -168,7 +168,7 @@ export async function rcPurchase(
       return {
         success: false,
         isProActive: false,
-        error: "This plan isn't available right now. Please try again later.",
+        error: "This plan isn't available right now. Try again later.",
       };
     }
     const result = await Purchases.purchasePackage({ aPackage: pkg });

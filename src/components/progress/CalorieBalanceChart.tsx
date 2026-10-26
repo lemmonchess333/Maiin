@@ -23,7 +23,8 @@ import {
 } from "recharts";
 import { calcDayBalance, getBalanceColor } from "@/utils/calorieBalance";
 import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
-import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
+import { formatDayMonthYear, withSign } from "@/utils/formatters";
 import { computeDataConfidence, T5_BARS_MIN_COUNT } from "@/lib/dataConfidence";
 import { AnimatePresence, motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -199,14 +200,14 @@ export default function CalorieBalanceChart({
                       return (
                         <div style={CHART_TOOLTIP_STYLE}>
                           <p className="font-semibold">
-                            {format(
-                              new Date(point.date + "T12:00:00"),
-                              "d MMM yyyy"
+                            {formatDayMonthYear(
+                              new Date(point.date + "T12:00:00")
                             )}
                           </p>
                           <p>
-                            Estimated gap: {value > 0 ? "+" : ""}
-                            {Math.round(value).toLocaleString()} {CALORIE_UNIT}
+                            Estimated gap:{" "}
+                            {withSign(value, formatCalories(Math.abs(value)))}{" "}
+                            {CALORIE_UNIT}
                           </p>
                           {/* The tooltip is dark in both themes, so its
                               quieter line takes the on-dark secondary, not
@@ -285,7 +286,7 @@ export default function CalorieBalanceChart({
           <p className="text-sm font-bold font-mono tabular-nums text-foreground">
             {average === null
               ? "Not enough data"
-              : `${average >= 0 ? "+" : ""}${formatCalories(average)} ${CALORIE_UNIT}`}
+              : `${withSign(average, formatCalories(Math.abs(average)))} ${CALORIE_UNIT}`}
           </p>
         </div>
         <div className="text-center">

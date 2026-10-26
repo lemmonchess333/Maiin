@@ -46,7 +46,7 @@ export async function deleteAccount(
       response?.ok !== true ||
       (response.status && response.status !== "completed")
     ) {
-      throw new Error("Deletion wasn't confirmed. Please try again.");
+      throw new Error("Deletion wasn't confirmed. Try again.");
     }
   } catch (error) {
     assertIdentity();

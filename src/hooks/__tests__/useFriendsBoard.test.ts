@@ -95,6 +95,38 @@ describe("useFriendsBoard", () => {
   });
 });
 
+/* Polish3 call 1: nobody either side of a block is on your board. Blocking
+   ends both follows, so this is the backstop for a follow left behind. */
+describe("useFriendsBoard across a block", () => {
+  it("leaves out whoever blocked you and whoever you blocked", async () => {
+    // A viewer of its own: the block lists are cached per signed-in uid.
+    h.user = { uid: "board-viewer" };
+    seedFirestore({
+      "following/board-viewer/users/maya": { followedAt: 1 },
+      "following/board-viewer/users/sam": { followedAt: 1 },
+      "following/board-viewer/users/ola": { followedAt: 1 },
+      "friendsBoard/board-viewer": tally(1),
+      "friendsBoard/ola": tally(4),
+      "friendsBoard/maya": tally(3),
+      "friendsBoard/sam": tally(2),
+      // Maya blocked the viewer (the server's copy); the viewer blocked Sam.
+      "blockedBy/board-viewer/users/maya": {},
+      "blocks/board-viewer/users/sam": { blockedAt: 1 },
+    });
+    const { result } = renderHook(() => useFriendsBoard());
+    // POSITIVE anchor: Ola, on neither side of a block, is there.
+    await waitFor(() =>
+      expect(result.current.weeks.map((w) => w.uid)).toContain("ola")
+    );
+    await waitFor(() =>
+      expect(result.current.weeks.map((w) => w.uid)).toEqual([
+        "board-viewer",
+        "ola",
+      ])
+    );
+  });
+});
+
 describe("rankNamedBoard", () => {
   it("ranks one board, named, leaving out anyone with nothing on it", async () => {
     const { result } = renderHook(() => useFriendsBoard());

@@ -57,7 +57,11 @@ export default function SetCheck({
         onClick={onComplete}
         className="group mx-auto flex size-[44px] items-center justify-center transition-transform active:scale-90"
       >
-        <span className="size-[32px] rounded-lg border-2 border-border transition-colors group-hover:border-primary/60" />
+        {/* Light draws the 3:1 boundary. Dark draws a filled square on the
+            hairline, as the dark field does: a bright ring there was the
+            loudest edge on the screen, and the set's number and fields
+            beside it already say what the box is for. */}
+        <span className="size-[32px] rounded-lg border-2 border-muted-foreground/80 transition-colors group-hover:border-primary/60 dark:border dark:border-border dark:bg-muted" />
       </button>
     );
   }

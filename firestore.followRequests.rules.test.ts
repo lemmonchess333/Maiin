@@ -137,6 +137,19 @@ suite("firestore.rules — follow approval", () => {
       await seed(`users/${ALICE}`, { approveFollowers: true });
       await assertFails(followDirectly(db(BOB)));
     });
+
+    it("cannot claim to be an accepted request", async () => {
+      // `fromRequest` makes onFollowerCreated tell the follower they were
+      // accepted; only the person asked may write that.
+      await seed(`users/${ALICE}`, { approveFollowers: false });
+      await assertFails(
+        setDoc(doc(db(BOB), "followers", ALICE, "users", BOB), {
+          followedAt: Timestamp.now(),
+          fromRequest: true,
+        })
+      );
+      await assertSucceeds(followDirectly(db(BOB)));
+    });
   });
 
   describe("a request", () => {
@@ -240,6 +253,72 @@ suite("firestore.rules — follow approval", () => {
       await ask(db(BOB));
       await seed(`blocks/${ALICE}/users/${BOB}`, { blockedAt: 1 });
       await assertFails(accept(db(ALICE)));
+    });
+  });
+
+  /* Both edges are readable by anyone signed in, and their shape was open:
+     a follower could park up to a megabyte on someone else's followers
+     list, paid for by every reader of it. An edge holds when it was made
+     and, from an accepted request, that it was one. */
+  describe("what an edge holds", () => {
+    const openToFollows = () =>
+      seed(`users/${ALICE}`, { approveFollowers: false });
+    const edgeWith = (
+      as: Firestore,
+      path: "following" | "followers",
+      data: Record<string, unknown>
+    ) =>
+      path === "following"
+        ? setDoc(doc(as, "following", BOB, "users", ALICE), data)
+        : setDoc(doc(as, "followers", ALICE, "users", BOB), data);
+
+    it.each(["following", "followers"] as const)(
+      "a direct %s edge refuses any field beside followedAt",
+      async (path) => {
+        await openToFollows();
+        await assertFails(
+          edgeWith(db(BOB), path, {
+            followedAt: Timestamp.now(),
+            note: "x".repeat(5000),
+          })
+        );
+      }
+    );
+
+    it.each(["following", "followers"] as const)(
+      "a direct %s edge needs followedAt to be a time",
+      async (path) => {
+        await openToFollows();
+        await assertFails(edgeWith(db(BOB), path, { followedAt: "today" }));
+        await assertFails(edgeWith(db(BOB), path, {}));
+      }
+    );
+
+    it("a direct following edge cannot claim to be an accepted request either", async () => {
+      await openToFollows();
+      await assertFails(
+        edgeWith(db(BOB), "following", {
+          followedAt: Timestamp.now(),
+          fromRequest: true,
+        })
+      );
+    });
+
+    it("an accepted request's edges refuse any other field", async () => {
+      await ask(db(BOB));
+      const alice = db(ALICE);
+      const batch = writeBatch(alice);
+      const edge = {
+        followedAt: Timestamp.now(),
+        fromRequest: true,
+        note: "x",
+      };
+      batch.set(doc(alice, "following", BOB, "users", ALICE), edge);
+      batch.set(doc(alice, "followers", ALICE, "users", BOB), edge);
+      batch.delete(doc(alice, "followRequests", ALICE, "users", BOB));
+      await assertFails(batch.commit());
+      // The app's own shape still goes through.
+      await assertSucceeds(accept(alice));
     });
   });
 });

@@ -52,6 +52,26 @@ const BASE_CLASSES = [
  * (the prior `${THEME.running}1A` — 1A hex alpha ≈ 10%). The token is
  * theme-invariant — coral is a fixed sport-coding identity, identical in
  * light and dark. */
+/** The edge a secondary pill takes where it sits on the white card: the
+ *  muted fill reads ~1.06:1 there in light, so the boundary carries the
+ *  3:1 a control needs (muted-foreground/80 measures 3.2:1 or more on
+ *  every light surface). Dark keeps the fill alone. */
+export const SECONDARY_ON_CARD_EDGE =
+  "border border-muted-foreground/80 dark:border-transparent";
+
+/** The edge a field takes. In light its box reads 3:1 against the card
+ *  (muted-foreground/80: 3.3:1). In dark it is the hairline `.ds-input`
+ *  rests on: the muted fill shows the box, and the field's label or
+ *  figure says what it is, so no bright outline is drawn. */
+export const FIELD_EDGE =
+  "border border-muted-foreground/80 dark:border-border";
+
+/** A field's keyboard focus, the house outline (2px primary, offset 2).
+ *  The global input `:focus` rule clears outlines unlayered, so these
+ *  carry `!` to win over it; the border still turns primary beneath. */
+export const FIELD_FOCUS_RING =
+  "focus:border-primary focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-primary!";
+
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
     "bg-primary-strong text-primary-foreground hover:bg-primary-strong/90",

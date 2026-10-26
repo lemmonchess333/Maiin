@@ -107,6 +107,50 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
         self.assertEqual(len(paths), len(set(paths)))
         self.assertIn("onPublicProfileWritten", verifier.RETRY_REQUIRED)
 
+    def test_identity_resync_reads_back_its_bounds_filters_and_guards(self):
+        paths = verifier.source_targets()["onPublicProfileIdentityChanged"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/identityResync.js",
+                         "lib/publicPhotoUrl.js", "lib/objectionableText.js",
+                         "lib/deletionTransactionGuard.js", "lib/restriction.js",
+                         "lib/triggerRetry.js", "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+        self.assertIn("onPublicProfileIdentityChanged", verifier.RETRY_REQUIRED)
+
+    def test_circle_invite_callables_read_back_the_expiry_they_enforce(self):
+        targets = verifier.source_targets()
+        for name in ("joinGoalSpace", "renewGoalSpaceInviteCode"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/goalSpaceMembership.js",
+                                 "lib/restriction.js", "lib/accountDeletionLocks.js"}
+                                .issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
+    def test_partner_streak_start_reads_back_the_limit_it_counts(self):
+        paths = verifier.source_targets()["startPartnerStreak"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/partnerBonds.js",
+                         "lib/deletionTransactionGuard.js", "lib/restriction.js",
+                         "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+
+    def test_block_mirror_reads_back_its_reconciler_and_retry_guard(self):
+        paths = verifier.source_targets()["onBlockWritten"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/blockMirror.js",
+                         "lib/triggerRetry.js", "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+        self.assertIn("onBlockWritten", verifier.RETRY_REQUIRED)
+
+    def test_comment_callables_and_deletion_read_back_the_shared_comment_rules(self):
+        targets = verifier.source_targets()
+        for name in ("addCommentCallable", "addSpacePostCommentCallable"):
+            with self.subTest(function=name):
+                self.assertTrue({"lib/commentLimit.js", "lib/commentRejection.js"}
+                                .issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        for name in ("deleteMyAccount", "resumeAccountDeletions"):
+            with self.subTest(function=name):
+                self.assertIn("lib/commentReactions.js", targets[name])
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
     def test_social_fanout_targets_cover_changed_privacy_and_retry_artifacts(self):
         targets = verifier.source_targets()
         expected = {

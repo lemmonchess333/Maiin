@@ -28,7 +28,7 @@ const aiConsent = require("../lib/aiConsent");
 const { analyzeFood, analyzeFoodText } = require("../index");
 
 const KILL_SWITCH_MESSAGE =
-  "AI food scan is temporarily unavailable. Please use manual entry.";
+  "AI food scan is temporarily unavailable. Use manual entry instead.";
 
 function makeMockRes() {
   let resolveDone;

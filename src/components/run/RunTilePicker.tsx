@@ -89,7 +89,9 @@ export default function RunTilePicker({
         <h1 className="ml-1 text-lg font-bold">Start a run</h1>
       </header>
 
-      <div className="flex-1 flex flex-col justify-center gap-3 min-h-0">
+      {/* From the top, under the heading: centred, the tiles left a blank
+          third of the screen above them on a tall phone. */}
+      <div className="flex-1 flex flex-col gap-3 min-h-0 pt-2">
         {repeatOpt && (
           /* RUN-04: recognition row for the user's recurring type. Same
              onPickType gesture path as the tiles (audio primes, config via
@@ -111,7 +113,7 @@ export default function RunTilePicker({
               <span className="block text-sm font-bold">
                 Repeat {repeatOpt.name.toLowerCase()}
               </span>
-              <span className="text-micro text-muted-foreground">
+              <span className="text-micro text-foreground">
                 {repeatBand ? (
                   <span className="font-mono tabular-nums">{repeatBand}</span>
                 ) : (
@@ -139,7 +141,7 @@ export default function RunTilePicker({
                   <Icon className="size-5 text-running" />
                 </div>
                 <span className="text-sm font-bold mt-1">{opt.name}</span>
-                <span className="text-micro text-muted-foreground">
+                <span className="text-micro text-foreground">
                   {band ? (
                     <span className="font-mono tabular-nums">{band}</span>
                   ) : (

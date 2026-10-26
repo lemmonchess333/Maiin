@@ -117,3 +117,40 @@ describe("FollowButton — follow requests (Polish2)", () => {
     expect(changed).not.toHaveBeenCalled();
   });
 });
+
+/* A failed write put the button back with a buzz and no word, while the
+   post's Follow link (InlineFollow) said "Couldn't follow". Both say so
+   now, in the words of what failed. */
+describe("FollowButton — a write that fails", () => {
+  it.each([
+    [
+      "a follow",
+      { following: false, requested: false },
+      "Couldn't follow. Try again.",
+    ],
+    [
+      "an unfollow",
+      { following: true, requested: false },
+      "Couldn't unfollow. Try again.",
+    ],
+    [
+      "a cancelled request",
+      { following: false, requested: true },
+      "Couldn't cancel the request. Try again.",
+    ],
+  ])("says so for %s", async (_label, state, message) => {
+    H.state = { ...H.state, ...state };
+    H.toggle.mockResolvedValue(null);
+    const changed = vi.fn();
+    render(<FollowButton targetUid="maya" onFollowChange={changed} />);
+    await tap();
+    expect(H.toastError).toHaveBeenCalledWith(message);
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it("says nothing when the write lands", async () => {
+    render(<FollowButton targetUid="maya" />);
+    await tap();
+    expect(H.toastError).not.toHaveBeenCalled();
+  });
+});

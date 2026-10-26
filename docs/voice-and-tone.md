@@ -13,6 +13,7 @@ When writing or reviewing any user-facing string — button, toast, empty state,
 5. **Every word must be legible.** No metaphor the user has to decode. "Steady" not "Cruising"; "keep it going" not "keep the line"; "balanced week" not "hybrid output". If a runner/lifter wouldn't instantly know what it means, rewrite it.
 6. **No gym-bro / hype vocabulary.** Banned: beast mode, crush(ing) it, smash, unleash, grind, savage, go hard, on fire, level up, dialed/locked in (as praise), "execute the plan". These read as cringe and off-brand.
 7. **Action copy is a verb, not a sentence.** "Log", "Start run", "Update fitness" — not "Tap to log", "Click here to start".
+8. **No "please".** An error says what happened and what to do: "Couldn't save. Try again.", "Sign in again to log food." The courtesy word reads as a form letter beside the plain sentences around it. Pinned across the app, the server's messages, the public pages and the iOS prompts by `src/lib/__tests__/pleaseCopy.test.ts`.
 
 ## Quick swaps (reference)
 
@@ -28,6 +29,8 @@ When writing or reviewing any user-facing string — button, toast, empty state,
 | No worries — we'll wrap up your plan         | (drop it; state the fact)                         |
 | Tap to log today's meals                     | Log today's meals                                 |
 | logged!                                      | logged                                            |
+| Please try again                             | Try again                                         |
+| Let's realign this week 🎯                   | The week ahead                                    |
 
 ## Where the rules already live (keep them)
 
@@ -77,6 +80,11 @@ or leave the coin-flip in place.
 `circle` and `space` are common nouns here, settled by counting rather
 than taste: running copy had them lowercase 42 and 33 times against 16
 and 3 capitalised. So "Share to circle", not "Share to Circle".
+
+A run type is a kind of run, not the name of one: "Tempo run", "Long
+run", "Save treadmill run", and mid-sentence "Start tempo run". A
+planned session keeps the name its template gives it ("Easy 30",
+"Run-walk 3").
 
 Pinned by `src/lib/__tests__/copyCasing.test.ts`.
 

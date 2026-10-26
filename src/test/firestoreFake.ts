@@ -280,8 +280,15 @@ export class FirestoreFake {
    */
   readonly reads: { op: "getDoc" | "getDocs" | "onSnapshot"; path: string }[] =
     [];
+  /**
+   * How many times the code asked to clear the device copy
+   * (`clearIndexedDbPersistence`). The fake keeps none; the count is what
+   * firebase.ts's boot is held to (firestoreCacheClear.ts).
+   */
+  persistenceClears = 0;
 
   reset(): void {
+    this.persistenceClears = 0;
     this.snapshotMetadata.clear();
     // Settle held writes before the clears — see `settleDeferredWrites`.
     this.settleDeferredWrites();

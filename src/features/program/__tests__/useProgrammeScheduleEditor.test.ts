@@ -18,6 +18,7 @@ import { renderHook, act } from "@testing-library/react";
 import { useProgrammeScheduleEditor } from "../useProgrammeScheduleEditor";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
+import { toast } from "@/lib/toast";
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
@@ -333,6 +334,7 @@ describe("useProgrammeScheduleEditor — restructure flow", () => {
       weeklyWorkoutsTarget: 3,
       weeklyRunDaysTarget: 2,
     });
+    const success = vi.spyOn(toast, "success");
     const { result } = renderHook(() => useProgrammeScheduleEditor(args));
     act(() => result.current.handleDayToggle(5)); // rest → lift → 4 lift days
     await act(async () => {
@@ -342,6 +344,10 @@ describe("useProgrammeScheduleEditor — restructure flow", () => {
     await act(async () => {
       await result.current.handleConfirmRestructure();
     });
+    // The editor says what it did. The writer it calls says nothing, so a
+    // reset from Settings shows one toast, not two.
+    expect(success).toHaveBeenCalledWith("Programme rebuilt");
+    success.mockRestore();
     expect(args.updateProfile).not.toHaveBeenCalled();
     expect(args.regenerateProgram).toHaveBeenCalledOnce();
     expect(

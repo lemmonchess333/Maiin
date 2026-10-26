@@ -49,13 +49,15 @@ const OPTIONS: { value: Choice; label: string }[] = [
 
 /** What the current choice actually does. "Public" on its own is ambiguous
  *  (public what, when?) — the segment names the option, this names the
- *  behaviour. */
-const DESCRIBE: Record<Choice, string> = {
-  ask: "You'll be asked when you next finish one",
+ *  behaviour. "Ask" is said once for the card (ASK_LINE), not under each
+ *  type, where two types left on Ask said the same line twice. */
+const DESCRIBE: Record<Exclude<Choice, "ask">, string> = {
   followers: "Shared with your followers automatically",
   public: "Shared publicly automatically",
   never: "Never shared",
 };
+
+const ASK_LINE = "Ask: you'll be asked when you next finish one.";
 
 function confirmCopy(noun: string, choice: Choice): string {
   switch (choice) {
@@ -94,8 +96,13 @@ export default function ShareDefaultsRow({
     toast.success(confirmCopy(noun, next));
   };
 
+  const choices = TYPES.map(({ type }) => ({
+    type,
+    choice: (savedShareDefault(shareDefaults, type) ?? "ask") as Choice,
+  }));
+
   return (
-    <div className="p-4 rounded-2xl bg-card space-y-4">
+    <div className="@container p-4 rounded-2xl bg-card space-y-4">
       <div className="flex items-center gap-2">
         <MessageSquare className="size-4 text-primary" />
         <div>
@@ -106,29 +113,34 @@ export default function ShareDefaultsRow({
         </div>
       </div>
 
-      {TYPES.map(({ type, noun }) => {
-        const choice: Choice = savedShareDefault(shareDefaults, type) ?? "ask";
+      {TYPES.map(({ type, noun }, i) => {
+        const { choice } = choices[i];
         return (
           <div key={type} className="space-y-2">
             <div>
               <p className="text-xs font-medium text-foreground">{noun}</p>
-              <p className="text-xs text-muted-foreground">
-                {DESCRIBE[choice]}
-              </p>
+              {choice !== "ask" && (
+                <p className="text-xs text-muted-foreground">
+                  {DESCRIBE[choice]}
+                </p>
+              )}
             </div>
             <SegmentedControl
               options={OPTIONS}
               value={choice}
               onChange={(next) => change(type, noun, next)}
               ariaLabel={`Default sharing for ${noun.toLowerCase()}`}
-              // One row of four. They wrapped ("Never" alone on a second
-              // line) while each type sat in a box of its own inside this
-              // card; without the inner box the row is 24px wider and the
-              // four fit at 375px.
+              // One row of four where they fit, two rows of two on a
+              // narrower card: at 320px the four cut "Followers" short.
+              className="@max-[17.5em]:grid @max-[17.5em]:grid-cols-2"
             />
           </div>
         );
       })}
+
+      {choices.some(({ choice }) => choice === "ask") && (
+        <p className="text-xs text-muted-foreground">{ASK_LINE}</p>
+      )}
     </div>
   );
 }

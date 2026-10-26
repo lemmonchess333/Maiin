@@ -61,6 +61,10 @@ concurrency:
   group: ios-testflight
   cancel-in-progress: false
 
+# Reads the repository and nothing else; it writes nothing with the token.
+permissions:
+  contents: read
+
 jobs:
   testflight:
     # macos-14 is deprecated (actions/runner-images#13518). macos-26 carries

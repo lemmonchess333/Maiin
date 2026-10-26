@@ -294,19 +294,24 @@ function FoodComposerCard({
                  edge clears the send button only while there is text
                  for it to send (the one time it shows): beside the
                  camera button the field is narrower, and an empty field
-                 needs that width for its placeholder. */
+                 needs that width for its placeholder.
+
+                 The box is the field primitive's (`.ds-input`: its edge,
+                 fill and radius). Its 3rem floor is unlayered, so the
+                 56px floor carries `!` to win; focus keeps the food
+                 orange edge and glow. */
               className={cn(
-                "block min-h-[56px] max-h-40 field-sizing-content w-full pl-[44px] py-[17px] rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out",
+                "ds-input block min-h-[56px]! max-h-40 field-sizing-content pl-[44px] py-[17px] text-sm resize-none",
                 nlInput.trim() ? "pr-11" : "pr-3"
               )}
               style={{
                 borderColor: inputFocused
                   ? "var(--ds-color-input-border-focus-nutrition)"
-                  : "var(--ds-color-input-border-rest)",
+                  : undefined,
                 outline: "none",
                 boxShadow: inputFocused
                   ? "var(--ds-shadow-input-focus-nutrition)"
-                  : "var(--ds-shadow-input-rest)",
+                  : undefined,
               }}
             />
             {nlInput.trim() && (

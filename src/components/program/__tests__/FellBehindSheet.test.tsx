@@ -227,6 +227,73 @@ describe("FellBehindSheet — detrained register", () => {
   });
 });
 
+/**
+ * The race plan's run return (`runReturn.ts`) opens this sheet for a
+ * runner three weeks or more away whom the weekly check has not flagged.
+ * There is no server prompt then, so no week's ledger: the sheet must be
+ * in its welcome-back register, offer the same rebuild, and report the
+ * answer under the surface that opened it.
+ */
+describe("FellBehindSheet — opened by the run return", () => {
+  function setupReturn(recentLayoff: "none" | "detrained" = "detrained") {
+    const dismissFellBehindPrompt = vi.fn(async () => APPLIED);
+    const realignRacePlan = vi.fn(async () => {});
+    const onClose = vi.fn();
+    render(
+      <FellBehindSheet
+        open={true}
+        onClose={onClose}
+        dismissFellBehindPrompt={dismissFellBehindPrompt}
+        realignRacePlan={realignRacePlan}
+        onRaceMoved={vi.fn()}
+        raceModeActive={true}
+        recentLayoff={recentLayoff}
+        surface="run-return"
+      />
+    );
+    return { dismissFellBehindPrompt, realignRacePlan, onClose };
+  }
+
+  it("speaks in the welcome-back register and offers the rebuild", async () => {
+    const { realignRacePlan, onClose } = setupReturn();
+    expect(
+      screen.getByText(/It's been a while between runs/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/ of .* runs \(/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Rebuild my plan/i }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(realignRacePlan).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps that register before the layoff read lands", () => {
+    // Home's layoff read is "none" until it lands; with no ledger to show
+    // the sheet still greets rather than drawing an empty scoreboard.
+    setupReturn("none");
+    expect(
+      screen.getByText(/It's been a while between runs/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Rebuild my plan/i })
+    ).toBeInTheDocument();
+  });
+
+  it("reports the answer under the run return", async () => {
+    const lifecycle = await import("@/lib/lifecycleAnalytics");
+    const track = vi.spyOn(lifecycle, "track").mockImplementation(() => {});
+    try {
+      const { onClose } = setupReturn();
+      fireEvent.click(screen.getByRole("button", { name: /Not now/i }));
+      await waitFor(() => expect(onClose).toHaveBeenCalled());
+      expect(track).toHaveBeenCalledWith("return_choice", {
+        surface: "run-return",
+        choice: "skip",
+      });
+    } finally {
+      track.mockRestore();
+    }
+  });
+});
+
 describe("sport-coding — the return sheets are two colours, not one", () => {
   /* The Run return sheet's main CTA was `primary` (purple), the same as
      the LIFT return sheet's, while its own icon was `text-running`. So

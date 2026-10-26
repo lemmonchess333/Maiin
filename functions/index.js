@@ -48,6 +48,8 @@ const {
 const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const blockGuard = require("./lib/blockGuard");
+const blockMirror = require("./lib/blockMirror");
+const identityResync = require("./lib/identityResync");
 // S4e: a restricted account is refused anything that reaches another person.
 const restriction = require("./lib/restriction");
 const {
@@ -160,6 +162,7 @@ const challengeMarkers = require("./lib/challengeMarkers");
 const lifetimeAccrual = require("./lib/lifetimeAccrual");
 const workoutVolume = require("./lib/workoutVolume");
 const activityReversal = require("./lib/activityReversal");
+const spacePostPhoto = require("./lib/spacePostPhoto");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -173,6 +176,8 @@ const profanityFilter = require("./profanityFilter");
 // (comments, display names) and the sentences a refused person reads.
 const objectionableText = require("./lib/objectionableText");
 const { commentRejection } = require("./lib/commentRejection");
+const { engagementRejection } = require("./lib/engagementRejection");
+const { isDocumentId } = require("./lib/documentId");
 // The same filter over Community Space posts (onSpacePostWritten).
 const spacePostModeration = require("./lib/spacePostModeration");
 // The email that tells the owner a report has come in (createReport).
@@ -289,6 +294,16 @@ const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // same BILLING_HMAC_SECRET restoreApplePurchases reads with. Already
 // provisioned (bound on restoreApplePurchases) — no new secret to set.
 const BILLING_HMAC_SECRET = defineSecret("BILLING_HMAC_SECRET");
+// The key before a rotation. lib/restrictedIdentities looks a restricted
+// identity up under the active AND the previous key, so a function that
+// reads or forgets them must be able to read both: bound on
+// onAuthUserCreated and liftRestriction for that, as restoreApplePurchases
+// binds it (appleIAP.js). Already provisioned there, so no new secret and
+// no new accessor grant. Without it a restricted person who deleted and
+// signed up again during a rotation was not restricted again.
+const BILLING_PREVIOUS_HMAC_SECRET = defineSecret(
+  "BILLING_PREVIOUS_HMAC_SECRET"
+);
 // Run11 (Mapbox supersession 2026-07-17): the Directions token lives ONLY
 // here — never in a VITE_* var, Actions variable, browser bundle, or
 // native app. A key in the client can be extracted and cannot enforce
@@ -453,7 +468,7 @@ exports.deleteMyAccount = functions
         functions.logger.warn("deleteMyAccount.kill_switch_trip", { uid });
         throw new functions.https.HttpsError(
           "failed-precondition",
-          "Account deletion is temporarily paused. Please try again later.",
+          "Account deletion is temporarily paused. Try again later.",
           { reason: "executor-disabled" }
         );
       }
@@ -481,7 +496,7 @@ exports.deleteMyAccount = functions
       });
       throw new functions.https.HttpsError(
         "internal",
-        "Account cleanup couldn't finish. Please retry account deletion.",
+        "Account cleanup couldn't finish. Try deleting your account again.",
         { reason: "cleanup-incomplete" }
       );
     }
@@ -742,7 +757,7 @@ exports.completeOnboarding = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many attempts. Please wait."
+        "Too many attempts. Try again in a few minutes."
       );
     }
 
@@ -857,7 +872,10 @@ exports.completeOnboarding = functions
 
       // Force correct ownership + subscription tier. These overwrite
       // any sanitiser-passing values from the input — they're
-      // server-managed regardless of what the client sent.
+      // server-managed regardless of what the client sent. The tier is
+      // "free" for an account that has none yet; one billing has already
+      // set is left alone below, as configurePlan leaves it, so setup run
+      // again cannot downgrade a Pro account until the next store sync.
       profileData.uid = uid;
       profileData.subscriptionTier = "free";
       profileData.onboardingComplete = true;
@@ -918,6 +936,9 @@ exports.completeOnboarding = functions
         profileData.raceGoal !== undefined
           ? profileData.raceGoal
           : storedRaceGoal;
+      if (existing.exists && existing.data().subscriptionTier !== undefined) {
+        delete profileData.subscriptionTier;
+      }
       const batch = db.batch();
       if (existing.exists) {
         batch.set(
@@ -1059,7 +1080,7 @@ exports.configurePlan = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many attempts. Please wait."
+        "Too many attempts. Try again in a few minutes."
       );
     }
 
@@ -1452,7 +1473,7 @@ exports.analyzeFood = functions
         if (!(await isFlagEnabled("geminiEnabled"))) {
           res.status(503).json({
             error:
-              "AI food scan is temporarily unavailable. Please use manual entry.",
+              "AI food scan is temporarily unavailable. Use manual entry instead.",
           });
           return;
         }
@@ -1467,7 +1488,7 @@ exports.analyzeFood = functions
         if (limited) {
           res.status(429).json({
             error:
-              "Rate limit reached. Please wait before analyzing more food.",
+              "Rate limit reached. Wait a few minutes before analysing more food.",
           });
           return;
         }
@@ -1503,8 +1524,7 @@ exports.analyzeFood = functions
         if (!quota.allowed) {
           if (quota.error === "quota-check-failed") {
             res.status(503).json({
-              error:
-                "Couldn't verify your scan quota. Please try again in a moment.",
+              error: "Couldn't verify your scan quota. Try again in a moment.",
               transient: true,
             });
             return;
@@ -1695,7 +1715,7 @@ exports.analyzeFoodText = functions
         if (!(await isFlagEnabled("geminiEnabled"))) {
           res.status(503).json({
             error:
-              "AI food scan is temporarily unavailable. Please use manual entry.",
+              "AI food scan is temporarily unavailable. Use manual entry instead.",
           });
           return;
         }
@@ -1710,7 +1730,7 @@ exports.analyzeFoodText = functions
         if (limited) {
           res.status(429).json({
             error:
-              "Rate limit reached. Please wait before analyzing more food.",
+              "Rate limit reached. Wait a few minutes before analysing more food.",
           });
           return;
         }
@@ -1742,8 +1762,7 @@ exports.analyzeFoodText = functions
         if (!quota.allowed) {
           if (quota.error === "quota-check-failed") {
             res.status(503).json({
-              error:
-                "Couldn't verify your scan quota. Please try again in a moment.",
+              error: "Couldn't verify your scan quota. Try again in a moment.",
               transient: true,
             });
             return;
@@ -2005,9 +2024,9 @@ exports.createCheckoutSession = functions
           600_000
         );
         if (limited) {
-          res
-            .status(429)
-            .json({ error: "Too many checkout attempts. Please wait." });
+          res.status(429).json({
+            error: "Too many checkout attempts. Try again in a few minutes.",
+          });
           return;
         }
 
@@ -2584,7 +2603,7 @@ exports.computePerformanceWeek = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many requests. Please wait."
+        "Too many requests. Try again in a few minutes."
       );
     }
 
@@ -3648,8 +3667,10 @@ exports.sendTestPush = functions
     }
     const uid = context.auth.uid;
     // Outside the try below, which converts every throw into an
-    // `ok: false` result: a rate limit is a refusal the client must see
-    // as an error, not as a delivery report.
+    // `ok: false` result: a deleting account and a rate limit are refusals
+    // the client must see as errors, not as delivery reports. The lock
+    // goes first because the limiter writes, and so does the send lease.
+    await accountDeletionLocks.assertCallableActorNotDeleting(db, uid);
     if (await isRateLimited(uid, "sendTestPush", 5, 600_000)) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
@@ -3674,8 +3695,8 @@ exports.sendTestPush = functions
               data: {
                 type: "test",
                 route: "/",
-                title: "Tropos 🔔",
-                body: "Push notifications are working — you're all set.",
+                title: "Tropos",
+                body: "Push notifications are working on this device.",
               },
             },
             uid
@@ -5252,6 +5273,8 @@ exports.onWorkoutUpdated = functions
     const before = change.before.data() || {};
     const after = change.after.data() || {};
     const { uid, workoutId } = context.params;
+    // Reconciles from the current source documents, so a retry is safe.
+    if (pastRetryWindow(context)) return null;
     if (
       !(await accountDeletionLocks.shouldSystemWriteProceed(
         db,
@@ -5298,6 +5321,8 @@ exports.onRunUpdated = functions
   .firestore.document("users/{uid}/runs/{runId}")
   .onUpdate(async (change, context) => {
     const { uid } = context.params;
+    // Reconciles from the current source documents, so a retry is safe.
+    if (pastRetryWindow(context)) return null;
     if (
       !(await accountDeletionLocks.shouldSystemWriteProceed(
         db,
@@ -5360,6 +5385,13 @@ exports.onWorkoutDeleted = functions
   .firestore.document("users/{uid}/workouts/{workoutId}")
   .onDelete(async (snap, context) => {
     const { uid, workoutId } = context.params;
+    if (pastRetryWindow(context)) {
+      console.error("onWorkoutDeleted: retry window closed, dropping", {
+        uid,
+        workoutId,
+      });
+      return null;
+    }
     if (
       !(await accountDeletionLocks.shouldSystemWriteProceed(
         db,
@@ -5380,29 +5412,28 @@ exports.onWorkoutDeleted = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
-    try {
-      const data = snap.data() || {};
-      await activityReversal.reverseChallengeProgressForSource(
-        db,
-        uid,
-        workoutId
-      );
-      await activityReversal.reverseLifetimeStat(
+    // Each reversal runs whatever happens to the other, and a failure
+    // fails the event so failurePolicy delivers it again. The source is
+    // already gone, so nothing else would ever re-fire: caught and logged,
+    // as it was, a contended transaction left the deleted workout's credit
+    // standing for good. Both reversals delete their marker in the same
+    // transaction, so the retry applies only what did not land.
+    const data = snap.data() || {};
+    const steps = triggerSteps(`onWorkoutDeleted ${uid}/${workoutId}`);
+    await steps.run("challenges", () =>
+      activityReversal.reverseChallengeProgressForSource(db, uid, workoutId)
+    );
+    await steps.run("lifetime volume", () =>
+      activityReversal.reverseLifetimeStat(
         db,
         uid,
         "lift",
         workoutId,
         lifetimeAccrual.liftVolumeKgFor(data)
-      );
-      console.log(`onWorkoutDeleted: reversed ${workoutId} for ${uid}`);
-    } catch (err) {
-      console.error("onWorkoutDeleted: fatal error:", {
-        uid,
-        workoutId,
-        message: err.message,
-        stack: err.stack,
-      });
-    }
+      )
+    );
+    steps.settle();
+    console.log(`onWorkoutDeleted: reversed ${workoutId} for ${uid}`);
     return null;
   });
 
@@ -5411,6 +5442,13 @@ exports.onRunDeleted = functions
   .firestore.document("users/{uid}/runs/{runId}")
   .onDelete(async (snap, context) => {
     const { uid, runId } = context.params;
+    if (pastRetryWindow(context)) {
+      console.error("onRunDeleted: retry window closed, dropping", {
+        uid,
+        runId,
+      });
+      return null;
+    }
     if (
       !(await accountDeletionLocks.shouldSystemWriteProceed(
         db,
@@ -5431,31 +5469,28 @@ exports.onRunDeleted = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
-    try {
-      const data = snap.data() || {};
-      // No isVolumeEligibleRun re-check here, unlike the create side. An
-      // ineligible run never credited, so it has no markers and every
-      // reversal below is already a no-op for it. The marker is the
-      // record of what happened; re-deriving that judgement from flags
-      // that may since have been edited would be a second opinion where a
-      // fact is available.
-      await activityReversal.reverseChallengeProgressForSource(db, uid, runId);
-      await activityReversal.reverseLifetimeStat(
+    const data = snap.data() || {};
+    // No isVolumeEligibleRun re-check here, unlike the create side. An
+    // ineligible run never credited, so it has no markers and every
+    // reversal below is already a no-op for it. The marker is the record
+    // of what happened; re-deriving that judgement from flags that may
+    // since have been edited would be a second opinion where a fact is
+    // available. Retried on failure, as onWorkoutDeleted says why.
+    const steps = triggerSteps(`onRunDeleted ${uid}/${runId}`);
+    await steps.run("challenges", () =>
+      activityReversal.reverseChallengeProgressForSource(db, uid, runId)
+    );
+    await steps.run("lifetime distance", () =>
+      activityReversal.reverseLifetimeStat(
         db,
         uid,
         "run",
         runId,
         lifetimeAccrual.runMetersFor(data)
-      );
-      console.log(`onRunDeleted: reversed ${runId} for ${uid}`);
-    } catch (err) {
-      console.error("onRunDeleted: fatal error:", {
-        uid,
-        runId,
-        message: err.message,
-        stack: err.stack,
-      });
-    }
+      )
+    );
+    steps.settle();
+    console.log(`onRunDeleted: reversed ${runId} for ${uid}`);
     return null;
   });
 
@@ -5601,6 +5636,10 @@ exports.backfillMyActivityCategories = functions
     }
     const uid = context.auth.uid;
 
+    // Before the limiter, which writes: a deleting account receives no new
+    // server writes, and this one rewrites its activities.
+    await accountDeletionLocks.assertCallableActorNotDeleting(db, uid);
+
     // A 500-document scan plus a batched write per call; the client runs
     // it once per account per device. Three an hour covers every honest
     // retry and bounds the read cost a looping caller can incur.
@@ -5731,6 +5770,11 @@ exports.recreditMyLiftVolume = functions
         );
       }
     }
+
+    // Before the limiter, which writes: a deleting account receives no new
+    // server writes, and this one would credit lifetime totals and
+    // challenge markers the deletion executor may already have swept.
+    await accountDeletionLocks.assertCallableActorNotDeleting(db, uid);
 
     // Before the first read. The client drains a history page by page in
     // ONE session, so the window must fit a whole drain: thirty pages is
@@ -6132,14 +6176,25 @@ exports.onSpacePostWritten = functions
   .firestore.document("spaces/{spaceId}/posts/{postId}")
   .onWrite(async (change, context) => {
     const { spaceId, postId } = context.params;
-    // Retried: the removal re-reads the post in its transaction.
+    // Retried: the removal re-reads the post in its transaction, and the
+    // photo's delete treats a file already gone as done.
     if (pastRetryWindow(context)) return null;
+    const before = change.before.exists ? change.before.data() : null;
+    const after = change.after.exists ? change.after.data() : null;
     try {
       await spacePostModeration.removeObjectionableSpacePost({
         firestore: admin.firestore(),
         ref: change.after.ref,
-        before: change.before.exists ? change.before.data() : null,
-        after: change.after.exists ? change.after.data() : null,
+        before,
+        after,
+        logger: functions.logger,
+      });
+      // A deleted post's photo goes with it (lib/spacePostPhoto.js). Only
+      // a file under the author's own prefix in this bucket is deleted.
+      await spacePostPhoto.deleteOrphanedPhoto({
+        before,
+        after,
+        getBucket: () => admin.storage().bucket(),
         logger: functions.logger,
       });
     } catch (err) {
@@ -6317,7 +6372,7 @@ exports.createReport = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many reports. Please try again later."
+        "Too many reports. Try again later."
       );
     }
 
@@ -6718,7 +6773,10 @@ exports.listRestrictedUsers = functions
  * succeeds with `lifted: false`, so a second tap is harmless.
  */
 exports.liftRestriction = functions
-  .runWith({ ...ADMIN_HTTP_CAP, secrets: [BILLING_HMAC_SECRET] })
+  .runWith({
+    ...ADMIN_HTTP_CAP,
+    secrets: [BILLING_HMAC_SECRET, BILLING_PREVIOUS_HMAC_SECRET],
+  })
   .https.onCall(async (data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -6820,7 +6878,9 @@ exports.onPublicProfileWritten = functions
       const current = await transaction.get(change.after.ref);
       if (
         !current.exists ||
-        !objectionableText.displayNameRefusal((current.data() || {}).displayName)
+        !objectionableText.displayNameRefusal(
+          (current.data() || {}).displayName
+        )
       )
         return false;
       transaction.update(change.after.ref, {
@@ -6831,6 +6891,57 @@ exports.onPublicProfileWritten = functions
     });
     if (removed)
       functions.logger.info("onPublicProfileWritten.name_removed", { uid });
+    return null;
+  });
+
+/**
+ * A new public name or photo, carried to the copies of the person other
+ * people read: their posts and comments from the last 90 days, their Space
+ * and Circle memberships, their place in recent challenges
+ * (lib/identityResync.js has what, and the bounds). Each copy took the
+ * name and photo when it was written, and nothing updated them after.
+ *
+ * Runs only when the name or the photo changed, and carries only that one.
+ * It reads the profile as it is now, never the event, so a refused name
+ * the filter above takes back is never carried, and an older delivery
+ * cannot undo a newer one. Retried: a second run writes nothing that is
+ * already right.
+ */
+exports.onPublicProfileIdentityChanged = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true, timeoutSeconds: 120 })
+  .firestore.document("users/{uid}/public/{docId}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { uid, docId } = context.params;
+    if (docId !== "profile" || !change.after.exists) return null;
+    const before = change.before.exists ? change.before.data() || {} : {};
+    const after = change.after.data() || {};
+    const fields = {
+      name: before.displayName !== after.displayName,
+      photo: before.photoURL !== after.photoURL,
+    };
+    if (!fields.name && !fields.photo) return null;
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onPublicProfileIdentityChanged"
+      ))
+    )
+      return null;
+    const at = Date.parse(context.timestamp || "");
+    const result = await identityResync.resyncAuthorIdentity({
+      firestore: db,
+      uid,
+      fields,
+      // The event's own time, so a retry looks back over the same days.
+      now: Number.isFinite(at) ? at : Date.now(),
+      deleteField: admin.firestore.FieldValue.delete,
+    });
+    functions.logger.info("onPublicProfileIdentityChanged.resynced", {
+      uid,
+      ...result,
+    });
     return null;
   });
 
@@ -6846,7 +6957,7 @@ exports.onAuthUserCreated = functions
   .runWith({
     ...TRIGGER_CAP,
     failurePolicy: true,
-    secrets: [BILLING_HMAC_SECRET],
+    secrets: [BILLING_HMAC_SECRET, BILLING_PREVIOUS_HMAC_SECRET],
   })
   .auth.user()
   .onCreate(async (user, context) => {
@@ -6883,7 +6994,8 @@ exports.toggleKudosCallable = functions
       );
     }
     const activityId = data && data.activityId;
-    if (typeof activityId !== "string" || !activityId.trim()) {
+    // One document's id: a "/" would point .doc() somewhere else.
+    if (!isDocumentId(activityId)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "activityId required."
@@ -6910,7 +7022,7 @@ exports.toggleKudosCallable = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many kudos updates. Slow down."
+        "Too many props at once. Slow down."
       );
     }
     /* Blocking is enforced HERE, before any write. It used to be client-side
@@ -6931,7 +7043,14 @@ exports.toggleKudosCallable = functions
         context.auth.uid
       ))
     ) {
-      throw blockGuard.blockedError(functions);
+      // Answered exactly as a private or missing activity is below: a
+      // different sentence would tell the person blocked that the activity
+      // exists and that its author blocked them (lib/blockGuard says why
+      // that must not be said).
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "This activity is unavailable."
+      );
     }
 
     try {
@@ -6995,13 +7114,14 @@ exports.toggleKudosCallable = functions
       });
       // A visibility denial maps to a GENERIC permission-denied — never
       // disclose whether the activity exists, is private, or followers-only.
-      const isAccessError = err && err.code === "activity-not-accessible";
-      throw new functions.https.HttpsError(
-        isAccessError ? "permission-denied" : "failed-precondition",
-        isAccessError
-          ? "This activity is unavailable."
-          : (err && err.message) || "Kudos toggle failed."
-      );
+      // Anything else is a sentence for the person or a generic internal,
+      // never the engine's own message (lib/engagementRejection.js).
+      throw engagementRejection(err, {
+        functions,
+        isAccessError: err && err.code === "activity-not-accessible",
+        accessMessage: "This activity is unavailable.",
+        fallback: "Couldn't give props. Try again.",
+      });
     }
   });
 
@@ -7028,8 +7148,7 @@ exports.toggleSpacePostLikeCallable = functions
     if (
       typeof spaceId !== "string" ||
       !KNOWN_SPACE_IDS.includes(spaceId) ||
-      typeof postId !== "string" ||
-      !postId.trim()
+      !isDocumentId(postId)
     ) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -7117,14 +7236,13 @@ exports.toggleSpacePostLikeCallable = functions
         postId,
         error: err && err.message,
       });
-      const isAccessError =
-        err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE;
-      throw new functions.https.HttpsError(
-        isAccessError ? "permission-denied" : "failed-precondition",
-        isAccessError
-          ? "This post is unavailable."
-          : (err && err.message) || "Like toggle failed."
-      );
+      throw engagementRejection(err, {
+        functions,
+        isAccessError:
+          err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE,
+        accessMessage: "This post is unavailable.",
+        fallback: "Couldn't like the post. Try again.",
+      });
     }
   });
 
@@ -7344,7 +7462,7 @@ exports.addCommentCallable = functions
     }
     assertCallerEmailVerified(context);
     const { activityId, text, authorName, authorPhotoURL } = data || {};
-    if (typeof activityId !== "string" || !activityId.trim()) {
+    if (!isDocumentId(activityId)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "activityId required."
@@ -7391,7 +7509,13 @@ exports.addCommentCallable = functions
         context.auth.uid
       ))
     ) {
-      throw blockGuard.blockedError(functions);
+      // Answered exactly as an activity the person cannot see is below, so
+      // the refusal does not confirm the activity or the block (blockGuard).
+      throw commentRejection(null, {
+        functions,
+        isAccessError: true,
+        accessMessage: "This activity is unavailable.",
+      });
     }
 
     // The name on the comment and in the notification is the commenter's
@@ -7526,10 +7650,8 @@ exports.toggleCommentReactionCallable = functions
     }
     const { activityId, commentId, reaction } = data || {};
     if (
-      typeof activityId !== "string" ||
-      !activityId.trim() ||
-      typeof commentId !== "string" ||
-      !commentId.trim() ||
+      !isDocumentId(activityId) ||
+      !isDocumentId(commentId) ||
       !commentReactions.REACTION_KEYS.includes(reaction)
     ) {
       throw new functions.https.HttpsError(
@@ -7577,13 +7699,12 @@ exports.toggleCommentReactionCallable = functions
         commentId,
         error: err && err.message,
       });
-      const isAccessError = err && err.code === "activity-not-accessible";
-      throw new functions.https.HttpsError(
-        isAccessError ? "permission-denied" : "failed-precondition",
-        isAccessError
-          ? "This activity is unavailable."
-          : (err && err.message) || "Reaction failed."
-      );
+      throw engagementRejection(err, {
+        functions,
+        isAccessError: err && err.code === "activity-not-accessible",
+        accessMessage: "This activity is unavailable.",
+        fallback: "Couldn't react. Try again.",
+      });
     }
   });
 
@@ -7757,6 +7878,50 @@ exports._decideFellBehindFlag = _decideFellBehindFlag;
 exports._runWeeklyFellBehindCheckForUser = _runWeeklyFellBehindCheckForUser;
 
 // ═══════════════════════════════════════════════════════════════
+// Partner streaks: the one way a bond is made. The rules refuse every
+// client create, because only a transaction can count each person's
+// bonds against the limit (lib/partnerBonds.js). A restricted account
+// is refused, as the rules refused it, and so is one being deleted.
+// ═══════════════════════════════════════════════════════════════
+const partnerBonds = require("./lib/partnerBonds");
+
+exports.startPartnerStreak = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const uid = context.auth.uid;
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
+    if (await isRateLimited(uid, "partnerStreakStart", 10, 600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many requests. Try again in a few minutes."
+      );
+    }
+    try {
+      return await partnerBonds.startPartnerBond({
+        firestore: admin.firestore(),
+        uid,
+        partnerUid: data?.partnerUid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (err) {
+      if (err instanceof partnerBonds.PartnerBondError) {
+        throw new functions.https.HttpsError(err.code, err.reason, {
+          reason: err.reason,
+        });
+      }
+      functions.logger.error("startPartnerStreak failed", err);
+      throw new functions.https.HttpsError("internal", "Something went wrong.");
+    }
+  });
+
+// ═══════════════════════════════════════════════════════════════
 // GOALS-CORE-01 (slice 3) — Goal Space membership callables.
 // Server-owned membership: the rules lock goalSpaces/{id} + members
 // to `write: if false`, so these callables are the ONLY writers.
@@ -7825,7 +7990,7 @@ async function goalSpaceCallableGate(
   if (limited) {
     throw new functions.https.HttpsError(
       "resource-exhausted",
-      "Too many requests. Please wait."
+      "Too many requests. Try again in a few minutes."
     );
   }
   return uid;
@@ -7874,6 +8039,29 @@ exports.joinGoalSpace = functions
         makeId: goalSpaceRandomId,
       });
       return { ok: true };
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
+/* The owner's new invite code: the old one stops working at once, and
+   the new one works for seven days (lib/goalSpaceMembership). Handing
+   out a way in reaches the people who use it, so a restricted owner is
+   refused it as they are refused starting a Circle. */
+exports.renewGoalSpaceInviteCode = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(context, "goalSpaceRenewCode", 10, {
+      reachesOthers: true,
+    });
+    try {
+      return await goalSpaceMembership.renewGoalSpaceInviteCode({
+        firestore: admin.firestore(),
+        uid,
+        spaceId: String(data?.spaceId || ""),
+        now: Date.now(),
+        makeCode: goalSpaceInviteCode,
+      });
     } catch (err) {
       throw mapGoalSpaceError(err);
     }
@@ -8134,15 +8322,24 @@ exports.onGoalSpaceEventCreated = functions
   });
 
 /**
- * The two follow notices: "X started following you" and "X asked to follow
- * you". The person following writes the doc each one fires on themselves
- * (socialApi), so these triggers are the only place the server sees a
- * follow or a request. Each id is fixed per person: a new follow/request
- * refreshes one row, while its source receipt makes retries preserve the
- * delivery time the recipient has seen. createNotification holds the block check and each
- * recipient's switch, and skips an account that is being deleted.
+ * The follow notices: "X started following you", "X asked to follow you"
+ * and "X accepted your follow request". Each fires on a doc a client
+ * writes (socialApi), so these triggers are the only place the server sees
+ * a follow, a request or an answer. Each id is fixed per person, so the
+ * same person following, asking or accepting again refreshes one row
+ * instead of adding another, and its source receipt makes a retry of the
+ * same event keep the delivery time the recipient has already seen.
+ * createNotification holds the block check and each recipient's switch,
+ * and skips an account that is being deleted.
  */
-async function sendFollowNotice({ toUid, fromUid, type, verb, logKey, sourceEvent }) {
+async function sendFollowNotice({
+  toUid,
+  fromUid,
+  type,
+  verb,
+  logKey,
+  sourceEvent,
+}) {
   try {
     const profileSnap = await db.doc(`users/${fromUid}/public/profile`).get();
     const fromName =
@@ -8169,11 +8366,14 @@ async function sendFollowNotice({ toUid, fromUid, type, verb, logKey, sourceEven
 /**
  * onFollowerCreated — "X started following you", for the people who turn
  * New followers on in Settings → Notifications (S3: off by default, so
- * createNotification skips everyone else before writing anything). Before
- * it, "follow" was an allowed notification type nothing sent.
+ * createNotification skips everyone else before writing anything).
  *
  * A follow the person accepted from a request (`fromRequest` on the edge,
- * written by acceptFollowRequest) sends nothing: they have just said yes.
+ * written by acceptFollowRequest) tells them nothing, since they have just
+ * said yes. It tells the person who asked instead: "X accepted your follow
+ * request", under the Follow requests switch. Only the person asked can
+ * write an edge carrying `fromRequest` (firestore.rules), so the notice
+ * cannot be forged by the asker.
  */
 exports.onFollowerCreated = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -8183,7 +8383,17 @@ exports.onFollowerCreated = functions
     if (!uid || !followerUid || uid === followerUid) return null;
     // Retried: the notification's id is fixed per follower (above).
     if (pastRetryWindow(context)) return null;
-    if (snap.data() && snap.data().fromRequest === true) return null;
+    if (snap.data() && snap.data().fromRequest === true) {
+      await sendFollowNotice({
+        toUid: followerUid,
+        fromUid: uid,
+        type: "follow_accepted",
+        verb: "accepted your follow request",
+        logKey: "onFollowerCreated",
+        sourceEvent: socialFanout.notificationSourceEvent(snap, context),
+      });
+      return null;
+    }
     await sendFollowNotice({
       toUid: uid,
       fromUid: followerUid,
@@ -8222,6 +8432,32 @@ exports.onFollowRequestCreated = functions
   });
 
 /**
+ * onBlockWritten — keeps `blockedBy/{blocked}/users/{blocker}` matching
+ * `blocks/{blocker}/users/{blocked}` (Polish3 call 1), so the app of the
+ * person blocked can leave the blocker out of everything it shows them.
+ * Only the person blocking can read their block; this row is the copy the
+ * other person's app reads (lib/blockMirror.js).
+ *
+ * On every write, and each delivery sets the row to what the block is now,
+ * read in the transaction that writes it, so a retry or a delivery out of
+ * order changes nothing that is already right.
+ */
+exports.onBlockWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("blocks/{blockerUid}/users/{blockedUid}")
+  .onWrite(async (_change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { blockerUid, blockedUid } = context.params;
+    const result = await blockMirror.reconcileBlockMirror({
+      firestore: admin.firestore(),
+      blockerUid,
+      blockedUid,
+    });
+    functions.logger.info("onBlockWritten.reconciled", { result });
+    return null;
+  });
+
+/**
  * setBoardSharing — the person's answer to "Show my week" on friends'
  * boards (Polish2 call 5). Yes stores the answer and computes this week's
  * tally at once (friendsBoard.js); no stores the answer and deletes the
@@ -8254,7 +8490,7 @@ exports.setBoardSharing = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many attempts. Please wait."
+        "Too many attempts. Try again in a minute."
       );
     }
     await friendsBoard.setBoardSharing(db, uid, share);
@@ -8317,7 +8553,7 @@ exports.planRunningRoute = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many route requests. Please wait a few minutes."
+        "Too many route requests. Try again in a few minutes."
       );
     }
 

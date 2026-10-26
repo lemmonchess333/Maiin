@@ -221,7 +221,7 @@ export default function TermsOfService() {
               him.
             </p>
             <p>
-              For questions about these Terms, please contact us at
+              For questions about these Terms, contact us at
               support@troposfit.com
             </p>
           </section>

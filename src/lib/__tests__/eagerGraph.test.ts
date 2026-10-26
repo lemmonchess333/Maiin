@@ -25,7 +25,7 @@
  * import line, and the cost lands on every cold start.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { resolve, dirname, relative } from "node:path";
 
 const ROOT = process.cwd();
@@ -214,6 +214,15 @@ const DEFERRED_PACKAGES: { spec: string; why: string }[] = [
       "the web analytics SDK. analyticsProvider starts it once the app " +
       "has, on the web only; nothing waits on it to draw",
   },
+  {
+    spec: "framer-motion",
+    why:
+      "the animation library, the largest chunk a new visitor would " +
+      "fetch for nothing: Login and the legal pages draw without it. " +
+      "Signed-in surfaces get its MotionConfig from MotionRoot, which " +
+      "App.tsx loads lazily; render motion inside a lazy page, not at " +
+      "the root",
+  },
 ];
 
 describe("eager import graph — packages Login pays for", () => {
@@ -250,6 +259,59 @@ describe("Home programme loading", () => {
         graph.get(resolve(SRC, path)),
         `Home eagerly imports ${path}`
       ).toBeUndefined();
+    }
+  });
+});
+
+describe("the word filter's lists", () => {
+  it("load only through wordFilter.ts, never with a static import", () => {
+    /* About 100 KB of word lists. A static import anywhere puts them in
+       that screen's first paint (they rode in through the Social tab, a
+       run's finish screen, setup and the root share sheet); a composer
+       takes the filter from useWordFilter or loadWordFilter instead. */
+    const target = resolve(SRC, "lib/profanityFilter.ts");
+    const files: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir, { withFileTypes: true })) {
+        const path = resolve(dir, name.name);
+        if (name.isDirectory()) {
+          if (name.name !== "__tests__") walk(path);
+        } else if (/\.tsx?$/.test(name.name) && !/\.test\./.test(name.name))
+          files.push(path);
+      }
+    };
+    walk(SRC);
+    expect(files.length).toBeGreaterThan(200);
+    const offenders = files.filter((file) => {
+      const staticOnly = readFileSync(file, "utf8").replace(
+        /\bimport\s*\(/g,
+        "DYNAMIC_IMPORT("
+      );
+      STATIC_IMPORT.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      while ((m = STATIC_IMPORT.exec(staticOnly)))
+        if (resolveSpecifier(m[1], file) === target) return true;
+      return false;
+    });
+    expect(offenders.map((f) => relative(ROOT, f))).toEqual([]);
+  });
+});
+
+describe("Home's closed sheets", () => {
+  it("draws Home without a sheet that is closed when it first draws", () => {
+    /* The bottom sheet is vaul and Radix, and the badge modal is its own
+       13 KB; none is open on Home's first paint. Load a new one with
+       lazyRetry, as DayActionSheet is. */
+    const graph = eagerGraph(resolve(SRC, "pages/Home.tsx"));
+    for (const path of [
+      "components/ui/BottomSheet.tsx",
+      "features/streaks/BadgeEarnedModal.tsx",
+    ]) {
+      const chain = graph.get(resolve(SRC, path));
+      expect(
+        chain ? chain.join("\n    → ") : null,
+        `Home eagerly imports ${path}:\n    `
+      ).toBeNull();
     }
   });
 });

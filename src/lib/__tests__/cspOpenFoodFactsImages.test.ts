@@ -18,10 +18,17 @@ describe("CSP: Open Food Facts product photos", () => {
     const scanner = read("../../components/FoodAnalyzer.tsx");
     expect(scanner).toMatch(/fields=[^`"']*image_url/);
 
-    const imgSrc = read("../../../index.html").match(/img-src ([^;]*);/);
-    expect(imgSrc).not.toBeNull();
-    expect(imgSrc![1].split(/\s+/)).toContain(
-      "https://images.openfoodfacts.org"
+    // The policy attribute, not the first "img-src" in the file: the
+    // comment above the tag names the host too, and this read it.
+    const policy = read("../../../index.html").match(
+      /http-equiv="Content-Security-Policy"\s+content="([\s\S]*?)"/
     );
+    expect(policy).not.toBeNull();
+    const imgSrc = policy![1]
+      .split(";")
+      .map((part) => part.trim().split(/\s+/))
+      .find(([name]) => name === "img-src");
+    expect(imgSrc).toBeDefined();
+    expect(imgSrc!.slice(1)).toContain("https://images.openfoodfacts.org");
   });
 });

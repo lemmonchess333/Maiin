@@ -48,3 +48,65 @@ export function formatChallengeValue(
     return `${Math.max(0, Math.floor(value)).toLocaleString()} min`;
   return Math.round(value).toLocaleString();
 }
+
+const PERIOD: Readonly<Record<string, string>> = {
+  weekly: " this week",
+  monthly: " this month",
+  seasonal: " this season",
+};
+
+/** What a challenge's goal needs: its metric, its period and its target. */
+export interface ChallengeGoalSource {
+  metric: string;
+  type?: string;
+  tiers?: { bronze: number };
+  targetDistance?: number;
+  collectiveTarget?: number;
+}
+
+/**
+ * What the person is aiming for, as one sentence built from the
+ * challenge's own target and metric, in the reader's units: "Run 10 km
+ * this month.", "Train on 8 days this month.", "Run a 5K in 35:00 or
+ * faster this month." The target is the first tier (bronze), the one a
+ * two-day-a-week trainer can reach; the ladder above it shows once they
+ * have joined. A collective challenge aims at its shared total.
+ *
+ * Built here rather than stored, because the stored description cannot
+ * carry a unit: a reader sees miles or pounds. Null for a metric this
+ * does not know, and the card then shows the stored description.
+ */
+export function challengeGoal(
+  challenge: ChallengeGoalSource,
+  liftUnit: LiftUnit = "kg",
+  distanceUnit: DistanceUnit = "km"
+): string | null {
+  const { metric, collectiveTarget } = challenge;
+  const period = PERIOD[challenge.type ?? ""] ?? "";
+  const collective = (collectiveTarget ?? 0) > 0;
+  const target = collective ? collectiveTarget! : challenge.tiers?.bronze;
+  if (!target || !(target > 0)) return null;
+  const value = formatChallengeValue(metric, target, liftUnit, distanceUnit);
+  if (collective)
+    return metric === "total_km" ? `Run ${value} together${period}.` : null;
+  switch (metric) {
+    case "total_km":
+      return `Run ${value}${period}.`;
+    case "fastest_effort": {
+      const km = (challenge.targetDistance ?? 5000) / 1000;
+      return `Run a ${Math.round(km * 10) / 10}K in ${value} or faster${period}.`;
+    }
+    case "total_volume":
+      return `Lift ${value} in total${period}.`;
+    case "workout_count":
+      return `Lift ${target === 1 ? "once" : `${value} times`}${period}.`;
+    case "hybrid_score":
+      return `Score ${value} points from running and lifting${period}.`;
+    case "active_days":
+      return `Train on ${value}${period}.`;
+    case "training_minutes":
+      return `Train for ${value}${period}.`;
+    default:
+      return null;
+  }
+}

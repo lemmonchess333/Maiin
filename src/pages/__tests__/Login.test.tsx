@@ -11,7 +11,7 @@ import {
   cleanup,
   act,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 
 const h = vi.hoisted(() => ({
   signedInBefore: false,
@@ -255,3 +255,66 @@ describe("Login — the way in this phone last used (Polish2 call 3)", () => {
     expect(screen.queryByText("Last used")).toBeNull();
   });
 });
+
+/* The Terms and the Privacy Policy are pages of their own, so reading one
+   leaves this screen; Back brings the form back as it was, except the
+   password, which is never written down. */
+describe("Login — reading the Terms and coming back", () => {
+  beforeEach(() => sessionStorage.clear());
+
+  function withLegalPages() {
+    return render(
+      <MemoryRouter>
+        <Routes>
+          <Route path="*" element={<Login />} />
+          <Route path="/terms" element={<BackLink />} />
+          <Route path="/privacy" element={<BackLink />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it("keeps the screen and the email, not the password", () => {
+    withLegalPages();
+    fireEvent.click(screen.getByRole("button", { name: "Get started" }));
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "sam@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "secret-pass" },
+    });
+    fireEvent.click(screen.getByRole("link", { name: "Terms" }));
+    expect(screen.queryByLabelText(/email/i)).toBeNull();
+    expect(JSON.stringify({ ...sessionStorage })).not.toContain("secret-pass");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(
+      screen.getByRole("heading", { name: "Create your account" })
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toHaveValue("sam@example.com");
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+  });
+
+  it("brings the form back once, not on every later visit", () => {
+    withLegalPages();
+    fireEvent.click(screen.getByRole("button", { name: "I have an account" }));
+    fireEvent.click(screen.getByRole("link", { name: "Privacy Policy" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(
+      screen.getByRole("heading", { name: "Welcome back" })
+    ).toBeInTheDocument();
+    cleanup();
+    show();
+    expect(
+      screen.getByRole("button", { name: "Get started" })
+    ).toBeInTheDocument();
+  });
+});
+
+function BackLink() {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate(-1)}>
+      Back
+    </button>
+  );
+}

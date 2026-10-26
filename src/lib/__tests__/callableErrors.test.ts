@@ -77,7 +77,7 @@ describe("isRateLimitedRejection", () => {
     expect(
       isRateLimitedRejection({
         code: "functions/resource-exhausted",
-        message: "Too many attempts. Please wait.",
+        message: "Too many attempts. Try again in a few minutes.",
       })
     ).toBe(true);
     expect(isRateLimitedRejection({ code: "resource-exhausted" })).toBe(true);

@@ -81,7 +81,7 @@ export function useHomeProgram() {
       requests
         .splice(0)
         .forEach(({ reject }) =>
-          reject(new Error("Account or page changed. Please try again."))
+          reject(new Error("Account or page changed. Try again."))
         );
     };
   }, [uid]);
@@ -94,10 +94,7 @@ export function useHomeProgram() {
       if (value.readiness !== "pending") {
         pending.current.splice(0).forEach(({ resolve, reject }) => {
           if (value.readiness === "ready" && value.programState) resolve(value);
-          else
-            reject(
-              new Error("Couldn't load your programme. Please try again.")
-            );
+          else reject(new Error("Couldn't load your programme. Try again."));
         });
       }
     },

@@ -137,6 +137,21 @@ export interface DraftIdentityParts {
 }
 
 /**
+ * A session's executable layout as its draft identity records it: each
+ * exercise's id (its name when it has none) and planned set count. The
+ * workout screen and the readers that look for a session to resume both
+ * take it from here, so the two cannot fingerprint a day differently.
+ */
+export function draftLayout(
+  exercises: readonly { exerciseId?: string; name: string; sets: number }[]
+): DraftIdentityParts["layout"] {
+  return exercises.map((ex) => ({
+    id: ex.exerciseId || ex.name,
+    sets: ex.sets,
+  }));
+}
+
+/**
  * Deterministic identity for the session a draft belongs to. Plain
  * readable string (not a hash) — trivially small for ≤~15 exercises
  * and debuggable straight out of localStorage.
@@ -150,6 +165,13 @@ export function computeDraftIdentity(parts: DraftIdentityParts): string {
     parts.dayName,
     parts.layout.map((l) => `${l.id}x${l.sets}`).join(","),
   ].join("|");
+}
+
+/** The scope an identity was computed with (`computeDraftIdentity`), or
+ *  null for one in no form this version writes. */
+export function draftIdentityScope(identity: string): string | null {
+  const [version, scope] = identity.split("|");
+  return version === "v1" && scope ? scope : null;
 }
 
 function writeDraftAt(key: string, draft: WorkoutDraft): boolean {
@@ -240,6 +262,23 @@ export function clearWorkoutDraft(uid: string): void {
   for (const key of keysWithPrefix(v2UserKeyPrefix(uid))) remove(key);
   remove(v1StorageKey(uid));
   remove(LEGACY_STORAGE_KEY);
+}
+
+/**
+ * Every workout under way on this phone for a uid, newest first: each
+ * draft that has not expired and is not a finished session waiting for
+ * the server. Read by the screens outside the workout that offer it back
+ * (`useSessionsInFlight`); which of them can still be resumed is the
+ * reader's question, answered by matching identities.
+ */
+export function listWorkoutDrafts(uid: string): WorkoutDraft[] {
+  if (!uid) return [];
+  const drafts: WorkoutDraft[] = [];
+  for (const key of keysWithPrefix(v2UserKeyPrefix(uid))) {
+    const draft = readDraftAt(key);
+    if (draft && !draft.completionPending) drafts.push(draft);
+  }
+  return drafts.sort((a, b) => b.savedAt - a.savedAt);
 }
 
 /** Retire a server-acknowledged completion even after the user changes week. */

@@ -1135,8 +1135,10 @@ export default function History() {
             )}
 
             {/* The range scopes the history below it. The Body page's
-                weight chart keeps its own, so it gets none here. */}
-            {view !== "body" && (
+                weight chart keeps its own, so it gets none here, and on
+                the Performance page it scopes only the training load, so
+                it sits in that card. */}
+            {view !== "body" && view !== "performance" && (
               <TimeRangePills selected={timeRange} onChange={setTimeRange} />
             )}
 
@@ -1148,6 +1150,7 @@ export default function History() {
                 <TrainingLoadCard
                   points={trainingLoad.points}
                   loading={trainingLoad.loading}
+                  range={{ selected: timeRange, onChange: setTimeRange }}
                 />
               </SectionErrorBoundary>
             )}

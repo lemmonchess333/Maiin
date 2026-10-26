@@ -14,6 +14,7 @@ import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
 import { settleImages } from "../helpers/settleImages";
 import { settleFullPageHeight } from "../helpers/settleHeight";
+import { settleMapTheme } from "../helpers/settleMapTheme";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -93,6 +94,7 @@ test("the run finish screen leads with the map and the distance", async ({
       (value) => document.documentElement.classList.toggle("dark", value),
       dark
     );
+    await settleMapTheme(page);
     await settleImages(page);
     await settleFullPageHeight(page);
     await page.screenshot({

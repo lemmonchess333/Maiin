@@ -49,14 +49,14 @@ function setup(
 describe("RunTilePicker", () => {
   it("renders the four direct-launch tiles", () => {
     setup();
-    ["Easy Run", "Tempo Run", "Long Run", "Free Run"].forEach((name) =>
+    ["Easy run", "Tempo run", "Long run", "Free run"].forEach((name) =>
       expect(screen.getByText(name)).toBeInTheDocument()
     );
   });
 
   it("tapping a tile calls onPickType with its activityType", () => {
     const { onPickType } = setup();
-    fireEvent.click(screen.getByText("Tempo Run"));
+    fireEvent.click(screen.getByText("Tempo run"));
     expect(onPickType).toHaveBeenCalledWith("tempo");
   });
 
@@ -70,5 +70,12 @@ describe("RunTilePicker", () => {
     const { onBack } = setup();
     fireEvent.click(screen.getByRole("button", { name: /Back/i }));
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts the tiles at the top, under the heading, not centred", () => {
+    setup();
+    const column = screen.getByText("Tempo run").closest("div.flex-col.gap-3");
+    expect(column).not.toBeNull();
+    expect(column).not.toHaveClass("justify-center");
   });
 });

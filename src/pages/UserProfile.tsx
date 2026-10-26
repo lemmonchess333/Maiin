@@ -1,5 +1,5 @@
 import { BLOCK_DIALOG_DESCRIPTION } from "@/lib/blockCopy";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { blockUser, unblockUser } from "../lib/socialApi";
 import { useBlockedUsers } from "../hooks/useBlockedUsers";
@@ -43,6 +43,7 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { useUserProfileData } from "@/hooks/useUserProfileData";
+import { useMenuButton } from "@/hooks/useMenuButton";
 import { profileWeek } from "@/lib/profileWeek";
 
 /**
@@ -69,7 +70,74 @@ function plural(n: number, one: string, many: string) {
   return n === 1 ? one : many;
 }
 
+/* The same words for a profile that is gone and one whose owner blocked
+   the reader, so the page never tells anyone they were blocked (S4,
+   Polish3 call 1). Reference apps answer a block the way they answer a
+   missing page. */
+function ProfileUnavailable({ back }: { back: ReactNode }) {
+  const navigate = useNavigate();
+  return (
+    <div className="space-y-4">
+      {back}
+      <EmptyState
+        icon={UserX}
+        headline="This profile isn't available"
+        sub="The account may have been deleted, or the link is out of date."
+        action={{
+          label: "Go back",
+          onClick: () => navigate(-1),
+          variant: "secondary",
+        }}
+      />
+    </div>
+  );
+}
+
+function BackButton() {
+  const navigate = useNavigate();
+  return (
+    <Button
+      onClick={() => navigate(-1)}
+      variant="ghost"
+      size="sm"
+      leftIcon={<ChevronLeft className="size-4" />}
+      className="-ml-2 text-muted-foreground hover:text-foreground"
+    >
+      Back
+    </Button>
+  );
+}
+
+/**
+ * Blocking hides each person from the other. A profile whose owner blocked
+ * the reader is not read at all: nothing from it (name, photo, badges, the
+ * race chip, sessions) reaches the page, and the rules refuse its public
+ * projection besides. Waits for both block lists, so a blocker's profile
+ * cannot show while they load.
+ */
 function ProfilePage({
+  uid,
+  viewerUid,
+}: {
+  uid: string;
+  viewerUid: string | null;
+}) {
+  const { blockedYou, ready } = useBlockedUsers();
+  const isOwnProfile = viewerUid === uid;
+  if (!isOwnProfile && !ready) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <Spinner size="md" variant="muted" label="Loading profile" />
+      </div>
+    );
+  }
+  if (!isOwnProfile && blockedYou.has(uid)) {
+    return <ProfileUnavailable back={<BackButton />} />;
+  }
+  return <ProfileContent uid={uid} viewerUid={viewerUid} />;
+}
+
+function ProfileContent({
   uid,
   viewerUid,
 }: {
@@ -99,23 +167,20 @@ function ProfilePage({
     adjustFollowing,
   } = useUserProfileData(uid, viewerUid);
   const week = useMemo(() => profileWeek(posts), [posts]);
-  const [showMenu, setShowMenu] = useState(false);
+  const {
+    open: menuOpen,
+    close: closeMenu,
+    choose: chooseFromMenu,
+    buttonProps: menuButtonProps,
+    menuProps,
+    itemProps: menuItemProps,
+  } = useMenuButton();
   const [showReport, setShowReport] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
-  const { blocked, addBlocked, removeBlocked } = useBlockedUsers();
-  const youBlockedThem = !!uid && blocked.has(uid);
+  const { youBlocked, addBlocked, removeBlocked } = useBlockedUsers();
+  const youBlockedThem = !isOwnProfile && youBlocked.has(uid);
 
-  const back = (
-    <Button
-      onClick={() => navigate(-1)}
-      variant="ghost"
-      size="sm"
-      leftIcon={<ChevronLeft className="size-4" />}
-      className="-ml-2 text-muted-foreground hover:text-foreground"
-    >
-      Back
-    </Button>
-  );
+  const back = <BackButton />;
 
   if (status === "loading") {
     return (
@@ -129,31 +194,21 @@ function ProfilePage({
      waited for a profile document that was never coming. A failed read
      is not the same thing, so it offers a retry rather than saying the
      profile is gone. */
-  if (status === "missing" || status === "error" || !identity) {
+  if (status === "error") {
     return (
       <div className="space-y-4">
         {back}
-        {status === "error" ? (
-          <EmptyState
-            icon={WifiOff}
-            headline="Couldn't load this profile"
-            sub="Check your connection and try again."
-            action={{ label: "Try again", onClick: retry }}
-          />
-        ) : (
-          <EmptyState
-            icon={UserX}
-            headline="This profile isn't available"
-            sub="The account may have been deleted, or the link is out of date."
-            action={{
-              label: "Go back",
-              onClick: () => navigate(-1),
-              variant: "secondary",
-            }}
-          />
-        )}
+        <EmptyState
+          icon={WifiOff}
+          headline="Couldn't load this profile"
+          sub="Check your connection and try again."
+          action={{ label: "Try again", onClick: retry }}
+        />
       </div>
     );
+  }
+  if (status === "missing" || !identity) {
+    return <ProfileUnavailable back={back} />;
   }
 
   const name = identity.displayName;
@@ -188,8 +243,10 @@ function ProfilePage({
       {back}
 
       <div className="flex items-center gap-4">
+        {/* No photo for someone you blocked, as BlockAwareAvatar does
+            everywhere else. */}
         <Avatar
-          photoURL={identity.photoURL}
+          photoURL={youBlockedThem ? null : identity.photoURL}
           displayName={name}
           size="xl"
           className="size-16 text-2xl"
@@ -223,7 +280,7 @@ function ProfilePage({
               following
             </p>
           )}
-          {trainingForSpaceId && (
+          {trainingForSpaceId && !youBlockedThem && (
             <div className="mt-2">
               <TrainingForChip spaceId={trainingForSpaceId} />
             </div>
@@ -271,33 +328,34 @@ function ProfilePage({
               />
             )}
             <div className="relative">
+              {/* A menu button (`useMenuButton`): it says it opens a menu,
+                  the menu takes focus and arrow keys, and Escape puts
+                  focus back here. A tap outside closes it, on a backdrop
+                  that is not a control of its own, since a screen-sized
+                  "Close menu" button would be a stop for every reader
+                  and every Tab. */}
               <IconButton
                 aria-label="More options"
-                onClick={() => setShowMenu(!showMenu)}
+                {...menuButtonProps}
                 icon={<MoreHorizontal />}
                 className="bg-muted hover:bg-muted/80 text-muted-foreground"
               />
-              {showMenu && (
+              {menuOpen && (
                 <>
                   <div
                     className="fixed inset-0 z-10"
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Close menu"
-                    onClick={() => setShowMenu(false)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ")
-                        setShowMenu(false);
-                    }}
+                    aria-hidden="true"
+                    onClick={closeMenu}
                   />
-                  <div className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden">
+                  <div
+                    {...menuProps}
+                    className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden"
+                  >
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowMenu(false);
-                        setShowReport(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                      {...menuItemProps}
+                      onClick={chooseFromMenu(() => setShowReport(true))}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted focus-visible:bg-muted focus-visible:outline-none transition-colors"
                     >
                       <Flag className="size-4" />
                       Report user
@@ -305,11 +363,11 @@ function ProfilePage({
                     {!youBlockedThem && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setShowMenu(false);
-                          setShowBlockConfirm(true);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive-strong hover:bg-destructive/10 transition-colors"
+                        {...menuItemProps}
+                        onClick={chooseFromMenu(() =>
+                          setShowBlockConfirm(true)
+                        )}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive-strong hover:bg-destructive/10 focus-visible:bg-destructive/10 focus-visible:outline-none transition-colors"
                       >
                         <Ban className="size-4" />
                         Block user
@@ -323,110 +381,128 @@ function ProfilePage({
         </>
       )}
 
-      {/* Partner-streak entry (SOCIAL S3) — renders only for another
+      {/* Someone you blocked: the name and the way back, and nothing
+          they have shared, so the promise in the Block dialog holds. */}
+      {youBlockedThem ? (
+        <EmptyState
+          icon={Ban}
+          headline={`You blocked ${name}`}
+          sub="Their sessions and badges stay hidden until you unblock them."
+        />
+      ) : (
+        <>
+          {/* Partner-streak entry (SOCIAL S3) — renders only for another
           user you mutually follow; null otherwise. */}
-      {!isOwnProfile && (
-        <PartnerStreakCard partnerUid={uid} partnerName={name} />
-      )}
+          {!isOwnProfile && (
+            <PartnerStreakCard partnerUid={uid} partnerName={name} />
+          )}
 
-      {/* This week, from what they shared: all a profile can read, and
+          {/* This week, from what they shared: all a profile can read, and
           the label says so. Replaced two lifetime-looking pills that
           summed the last ten shared posts. */}
-      <Card>
-        <div className="flex items-center justify-between gap-3">
-          <SectionLabel>Shared this week</SectionLabel>
-          {streak > 0 && (
-            <p className="flex items-center gap-1 text-xs font-semibold text-foreground">
-              <Flame size={14} className="text-streak" aria-hidden="true" />
-              <span>
-                <span className="font-mono tabular-nums">{streak}</span>-day
-                streak
-              </span>
+          <Card>
+            <div className="flex items-center justify-between gap-3">
+              <SectionLabel>Shared this week</SectionLabel>
+              {streak > 0 && (
+                <p className="flex items-center gap-1 text-xs font-semibold text-foreground">
+                  <Flame size={14} className="text-streak" aria-hidden="true" />
+                  <span>
+                    <span className="font-mono tabular-nums">{streak}</span>-day
+                    streak
+                  </span>
+                </p>
+              )}
+            </div>
+            {postsLoading ? (
+              <Skeleton className="mt-3 h-12 w-full rounded-lg" />
+            ) : postsFailed ? (
+              <p className="mt-2 text-small text-muted-foreground">
+                Couldn't load this week's sessions.
+              </p>
+            ) : week.sessions > 0 ? (
+              <div className="mt-3 grid grid-cols-3 divide-x divide-border">
+                <StatFigure
+                  value={String(week.sessions)}
+                  unit={plural(week.sessions, "session", "sessions")}
+                />
+                <StatFigure
+                  value={distanceValue(week.distanceM, unit, 1)}
+                  unit={`${distanceUnitLabel(unit)} run`}
+                />
+                <StatFigure
+                  value={Math.round(
+                    liftVolumeIn(week.volumeKg, liftUnit)
+                  ).toLocaleString()}
+                  unit={`${liftUnitLabel(liftUnit)} lifted`}
+                />
+              </div>
+            ) : (
+              <p className="mt-2 text-small text-muted-foreground">
+                Nothing yet.
+              </p>
+            )}
+          </Card>
+
+          {badgesFailed && (
+            <p className="text-small text-muted-foreground">
+              Couldn't load badges.
             </p>
           )}
-        </div>
-        {postsLoading ? (
-          <Skeleton className="mt-3 h-12 w-full rounded-lg" />
-        ) : postsFailed ? (
-          <p className="mt-2 text-small text-muted-foreground">
-            Couldn't load this week's sessions.
-          </p>
-        ) : week.sessions > 0 ? (
-          <div className="mt-3 grid grid-cols-3 divide-x divide-border">
-            <StatFigure
-              value={String(week.sessions)}
-              unit={plural(week.sessions, "session", "sessions")}
-            />
-            <StatFigure
-              value={distanceValue(week.distanceM, unit, 1)}
-              unit={`${distanceUnitLabel(unit)} run`}
-            />
-            <StatFigure
-              value={Math.round(
-                liftVolumeIn(week.volumeKg, liftUnit)
-              ).toLocaleString()}
-              unit={`${liftUnitLabel(liftUnit)} lifted`}
-            />
-          </div>
-        ) : (
-          <p className="mt-2 text-small text-muted-foreground">Nothing yet.</p>
-        )}
-      </Card>
+          {badges.length > 0 && (
+            <ul className="grid grid-cols-4 gap-2" aria-label="Recent badges">
+              {badges.map((badge) => (
+                <li key={badge.id} className="flex flex-col items-center gap-1">
+                  <BadgeHex
+                    Icon={BADGE_ICONS[badge.lucideIcon] ?? Trophy}
+                    tier={badge.tier}
+                    earned
+                    size={56}
+                    imageSrc={BADGE_ART[badge.id]}
+                  />
+                  <span className="text-xs text-muted-foreground text-center leading-tight">
+                    {badge.name}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
 
-      {badgesFailed && (
-        <p className="text-small text-muted-foreground">
-          Couldn't load badges.
-        </p>
-      )}
-      {badges.length > 0 && (
-        <ul className="grid grid-cols-4 gap-2" aria-label="Recent badges">
-          {badges.map((badge) => (
-            <li key={badge.id} className="flex flex-col items-center gap-1">
-              <BadgeHex
-                Icon={BADGE_ICONS[badge.lucideIcon] ?? Trophy}
-                tier={badge.tier}
-                earned
-                size={56}
-                imageSrc={BADGE_ART[badge.id]}
+          <section className="space-y-2" aria-labelledby="profile-sessions">
+            <SectionHeading id="profile-sessions">
+              Recent sessions
+            </SectionHeading>
+            {postsLoading ? (
+              <>
+                <ActivityCardSkeleton />
+                <ActivityCardSkeleton stagger={1} />
+              </>
+            ) : postsFailed ? (
+              <ErrorState
+                title="Couldn't load sessions"
+                description="Check your connection and try again."
+                retry={{ onClick: retry }}
               />
-              <span className="text-xs text-muted-foreground text-center leading-tight">
-                {badge.name}
-              </span>
-            </li>
-          ))}
-        </ul>
+            ) : posts.length > 0 ? (
+              posts.map((item) => (
+                <ActivityCard key={item.id} feedItem={item} />
+              ))
+            ) : isOwnProfile ? (
+              <EmptyState
+                icon={Users}
+                headline="Nothing shared yet"
+                sub="Sessions you share show here and in your followers' feeds."
+                action={{ label: "Start a workout", href: "/program" }}
+              />
+            ) : (
+              <EmptyState
+                icon={Users}
+                headline="No shared sessions yet"
+                sub={`When ${name} shares a workout or run, it shows here.`}
+              />
+            )}
+          </section>
+        </>
       )}
-
-      <section className="space-y-2" aria-labelledby="profile-sessions">
-        <SectionHeading id="profile-sessions">Recent sessions</SectionHeading>
-        {postsLoading ? (
-          <>
-            <ActivityCardSkeleton />
-            <ActivityCardSkeleton stagger={1} />
-          </>
-        ) : postsFailed ? (
-          <ErrorState
-            title="Couldn't load sessions"
-            description="Check your connection and try again."
-            retry={{ onClick: retry }}
-          />
-        ) : posts.length > 0 ? (
-          posts.map((item) => <ActivityCard key={item.id} feedItem={item} />)
-        ) : isOwnProfile ? (
-          <EmptyState
-            icon={Users}
-            headline="Nothing shared yet"
-            sub="Sessions you share show here and in your followers' feeds."
-            action={{ label: "Start a workout", href: "/program" }}
-          />
-        ) : (
-          <EmptyState
-            icon={Users}
-            headline="No shared sessions yet"
-            sub={`When ${name} shares a workout or run, it shows here.`}
-          />
-        )}
-      </section>
 
       {showReport && (
         <ReportModal

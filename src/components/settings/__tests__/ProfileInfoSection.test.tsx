@@ -14,6 +14,7 @@ import {
   fireEvent,
   cleanup,
   act,
+  waitFor,
 } from "@testing-library/react";
 import { afterEach } from "vitest";
 import { useState } from "react";
@@ -542,8 +543,10 @@ describe("ProfileInfoSection — the display name", () => {
     const { updateProfile, input } = renderName();
     fireEvent.change(input, { target: { value: "  Sam Kerr  " } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" });
+    // The word filter loads on the first check.
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" })
+    );
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -551,8 +554,7 @@ describe("ProfileInfoSection — the display name", () => {
     const { updateProfile, input } = renderName();
     fireEvent.change(input, { target: { value: "shit head" } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       OBJECTIONABLE_NAME_MESSAGE
     );
     expect(input).toHaveAttribute("aria-invalid", "true");
@@ -565,8 +567,7 @@ describe("ProfileInfoSection — the display name", () => {
     const { updateProfile, input } = renderName();
     fireEvent.change(input, { target: { value: "S" } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       DISPLAY_NAME_LENGTH_MESSAGE
     );
     expect(updateProfile).not.toHaveBeenCalled();
@@ -576,8 +577,7 @@ describe("ProfileInfoSection — the display name", () => {
     const { input } = renderName();
     fireEvent.change(input, { target: { value: "shit head" } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
     fireEvent.change(input, { target: { value: "Sam" } });
     expect(screen.queryByRole("alert")).toBeNull();
   });
@@ -588,17 +588,21 @@ describe("ProfileInfoSection — the display name", () => {
     updateProfile.mockReturnValueOnce(pending.promise);
     fireEvent.change(input, { target: { value: "Sam Kerr" } });
     fireEvent.blur(input);
-    expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" });
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" })
+    );
     fireEvent.change(input, { target: { value: "Alex Smith" } });
     await act(async () => {
       pending.resolve({ ok: false, error: new Error("offline") });
       await pending.promise;
     });
     expect(input).toHaveValue("Alex Smith");
-    await act(async () => fireEvent.blur(input));
-    expect(updateProfile).toHaveBeenLastCalledWith({
-      displayName: "Alex Smith",
-    });
+    fireEvent.blur(input);
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenLastCalledWith({
+        displayName: "Alex Smith",
+      })
+    );
   });
 
   it("still restores the saved name after failure without a newer edit", async () => {
@@ -607,6 +611,7 @@ describe("ProfileInfoSection — the display name", () => {
     updateProfile.mockReturnValueOnce(pending.promise);
     fireEvent.change(input, { target: { value: "Sam Kerr" } });
     fireEvent.blur(input);
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledOnce());
     await act(async () => {
       pending.resolve({ ok: false, error: new Error("offline") });
       await pending.promise;
@@ -614,6 +619,19 @@ describe("ProfileInfoSection — the display name", () => {
     expect(input).toHaveValue("Test");
     await act(async () => fireEvent.blur(input));
     expect(updateProfile).toHaveBeenCalledOnce();
+  });
+
+  it("does not save a draft edited again while the word filter loads", async () => {
+    const { updateProfile, input } = renderName();
+    fireEvent.change(input, { target: { value: "Sam Kerr" } });
+    fireEvent.blur(input);
+    fireEvent.change(input, { target: { value: "Alex Smith" } });
+    fireEvent.blur(input);
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith({ displayName: "Alex Smith" })
+    );
+    expect(updateProfile).toHaveBeenCalledOnce();
+    expect(input).toHaveValue("Alex Smith");
   });
 
   it("persists a return to the original name while another save is pending", async () => {
@@ -625,8 +643,10 @@ describe("ProfileInfoSection — the display name", () => {
       .mockReturnValueOnce(second.promise);
     fireEvent.change(input, { target: { value: "Sam Kerr" } });
     fireEvent.blur(input);
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledOnce());
     fireEvent.change(input, { target: { value: "Test" } });
     fireEvent.blur(input);
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(2));
     await act(async () => {
       first.resolve({ ok: true });
       await first.promise;
@@ -651,7 +671,9 @@ describe("ProfileInfoSection — the display name", () => {
       />
     );
     fireEvent.blur(screen.getByLabelText("Name"));
-    expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" });
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" })
+    );
     unmount();
     setName.mockClear();
     await act(async () => {

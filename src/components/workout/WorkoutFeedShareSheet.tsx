@@ -26,7 +26,7 @@ import { logger } from "@/lib/logger";
 import { recordSharedActivity } from "@/lib/sessionDelete";
 import { postActivity } from "@/lib/socialApi";
 import { CAPTION_MAX } from "@/lib/activityPost";
-import { containsProfanity } from "@/lib/profanityFilter";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import type { Workout } from "@/hooks/useWorkouts";
@@ -66,7 +66,10 @@ export default function WorkoutFeedShareSheet({
   const liftUnit = useLiftUnit();
   const [posting, setPosting] = useState(false);
 
-  const captionIsProfane = containsProfanity(caption);
+  // The word filter loads as the sheet opens; posting waits for it.
+  const wordFilter = useWordFilter(open);
+  const captionIsProfane = !!wordFilter?.containsProfanity(caption);
+  const unchecked = !wordFilter;
   const lift: LiftForPost = {
     title,
     exercises: workout.exercises ?? [],
@@ -78,7 +81,7 @@ export default function WorkoutFeedShareSheet({
     // Held while the email is unverified or the account is restricted —
     // the rules refuse the write.
     if (held) return;
-    if (captionIsProfane || posting) {
+    if (captionIsProfane || posting || unchecked) {
       if (captionIsProfane) haptic("error");
       return;
     }
@@ -142,7 +145,7 @@ export default function WorkoutFeedShareSheet({
             rows={2}
             aria-label="Add a note (optional)"
             aria-invalid={captionIsProfane}
-            className="w-full resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="ds-input resize-none text-sm"
           />
           {caption.length > 0 && (
             <span className="absolute bottom-2 right-3 text-caption font-mono tabular-nums text-muted-foreground">
@@ -155,7 +158,7 @@ export default function WorkoutFeedShareSheet({
             role="alert"
             className="text-xs text-destructive-strong font-medium px-1"
           >
-            Please remove objectionable language before sharing.
+            Remove objectionable language before sharing.
           </p>
         )}
 
@@ -171,7 +174,7 @@ export default function WorkoutFeedShareSheet({
           <Button
             fullWidth
             loading={posting}
-            disabled={captionIsProfane || !isOnline || held}
+            disabled={captionIsProfane || !isOnline || held || unchecked}
             onClick={() => share("followers")}
             leftIcon={<Users className="size-4 shrink-0" aria-hidden="true" />}
           >
@@ -181,7 +184,7 @@ export default function WorkoutFeedShareSheet({
             fullWidth
             variant="secondary"
             loading={posting}
-            disabled={captionIsProfane || !isOnline || held}
+            disabled={captionIsProfane || !isOnline || held || unchecked}
             onClick={() => share("public")}
             leftIcon={<Globe className="size-4 shrink-0" aria-hidden="true" />}
           >

@@ -72,7 +72,7 @@ export default function EditDistance({
         max={maximum}
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
-        className="w-full min-h-11 px-3 py-2 rounded-lg bg-background border border-border text-sm text-center font-mono tabular-nums"
+        className="ds-input text-sm text-center font-mono tabular-nums"
       />
       {!editValid && editValue !== "" && (
         <p className="text-xs" style={{ color: THEME.running }}>

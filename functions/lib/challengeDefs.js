@@ -69,8 +69,7 @@ function featuredMonthlyFor(now) {
   if (now.getUTCMonth() % 2 === 0) {
     return {
       name: `${monthName} Active Days`,
-      description:
-        "Log a lift or a run. Each date counts once, with room for rest days.",
+      description: "Each day with a logged lift or run counts once.",
       metric: "active_days",
       icon: "calendar-days",
       tiers: { bronze: 8, silver: 12, gold: 20 },
@@ -91,8 +90,7 @@ function seasonFor(now) {
   if (month >= 2 && month <= 4) {
     return {
       name: "Spring Reset",
-      description:
-        "Your logged lifting sessions this season count. Rest days are welcome.",
+      description: "Every lifting session you log this season counts.",
       metric: "workout_count",
       icon: "sprout",
       tiers: { bronze: 8, silver: 20, gold: 36 },
@@ -101,7 +99,7 @@ function seasonFor(now) {
   if (month >= 5 && month <= 7) {
     return {
       name: "Summer Shred",
-      description: "Running and lifting both count. Train however you like.",
+      description: "Running and lifting both count, toward one score.",
       metric: "hybrid_score",
       icon: "sun",
       tiers: { bronze: 500, silver: 2000, gold: 5000 },
@@ -192,7 +190,7 @@ function buildCurrentChallenges(now = new Date()) {
     {
       id: `strength-monthly-${ymd(monthStart)}`,
       name: `${monthName} Strength Builder`,
-      description: "Your logged lifting volume this month. Follow your usual plan.",
+      description: "Everything you lift this month adds up.",
       type: "monthly",
       metric: "total_volume",
       icon: "dumbbell",
@@ -218,7 +216,7 @@ function buildCurrentChallenges(now = new Date()) {
       // Push, which now also progresses thanks to the Soc8 trigger sync.)
       id: `global-monthly-${ymd(monthStart)}`,
       name: `${monthName} Hybrid Hero`,
-      description: "Running and lifting both count. Train however you like.",
+      description: "Running and lifting both count, toward one score.",
       type: "monthly",
       metric: "hybrid_score",
       icon: "trophy",

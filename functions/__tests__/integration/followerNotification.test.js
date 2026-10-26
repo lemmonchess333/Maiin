@@ -1,6 +1,6 @@
 /**
  * Integration: "X started following you" reaches only the people who asked
- * for it.
+ * for it, and "X accepted your follow request" reaches the person who asked.
  *
  * S3 put new followers behind a switch that is off by default (Settings →
  * Notifications → Activity). `onFollowerCreated` is the only sender: the
@@ -38,6 +38,7 @@ beforeAll(() => {
 async function wipe() {
   for (const path of [
     `notifications/${RECIPIENT}/items`,
+    `notifications/${FOLLOWER}/items`,
     `followers/${RECIPIENT}/users`,
     `followRequests/${RECIPIENT}/users`,
   ]) {
@@ -46,6 +47,8 @@ async function wipe() {
     }
   }
   await db.doc(`users/${RECIPIENT}`).delete();
+  await db.doc(`users/${FOLLOWER}`).delete();
+  await db.doc(`users/${RECIPIENT}/public/profile`).delete();
   await db.doc(`users/${FOLLOWER}/public/profile`).delete();
 }
 
@@ -68,8 +71,8 @@ async function ask() {
   });
 }
 
-async function items() {
-  const snap = await db.collection(`notifications/${RECIPIENT}/items`).get();
+async function items(uid = RECIPIENT) {
+  const snap = await db.collection(`notifications/${uid}/items`).get();
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
@@ -157,20 +160,37 @@ suite("a follow request is announced unless switched off", () => {
 });
 
 suite.each([
-  { type: "follow", collection: "followers", param: "followerUid", handler: () => onFollowerCreated },
-  { type: "follow_request", collection: "followRequests", param: "requesterUid", handler: () => onFollowRequestCreated },
+  {
+    type: "follow",
+    collection: "followers",
+    param: "followerUid",
+    handler: () => onFollowerCreated,
+  },
+  {
+    type: "follow_request",
+    collection: "followRequests",
+    param: "requesterUid",
+    handler: () => onFollowRequestCreated,
+  },
 ])("$type source-event delivery", ({ type, collection, param, handler }) => {
   beforeEach(async () => {
     await wipe();
-    await db.doc(`users/${RECIPIENT}`).set({ notificationPreferences: { follows: true } });
-    await db.doc(`users/${FOLLOWER}/public/profile`).set({ displayName: "Bob" });
+    await db
+      .doc(`users/${RECIPIENT}`)
+      .set({ notificationPreferences: { follows: true } });
+    await db
+      .doc(`users/${FOLLOWER}/public/profile`)
+      .set({ displayName: "Bob" });
   });
 
-  const notice = () => db.doc(`notifications/${RECIPIENT}/items/${type}_${FOLLOWER}`);
+  const notice = () =>
+    db.doc(`notifications/${RECIPIENT}/items/${type}_${FOLLOWER}`);
   const source = () => db.doc(`${collection}/${RECIPIENT}/users/${FOLLOWER}`);
-  const deliver = (snapshot, eventId) => handler().run(snapshot, {
-    eventId, params: { uid: RECIPIENT, [param]: FOLLOWER },
-  });
+  const deliver = (snapshot, eventId) =>
+    handler().run(snapshot, {
+      eventId,
+      params: { uid: RECIPIENT, [param]: FOLLOWER },
+    });
 
   it("preserves delivery time and TTL on same-event redelivery", async () => {
     await source().create({});
@@ -189,7 +209,9 @@ suite.each([
     await source().create({});
     const snapshot = await source().get();
 
-    await Promise.all(Array.from({ length: 8 }, () => deliver(snapshot, "concurrent-event")));
+    await Promise.all(
+      Array.from({ length: 8 }, () => deliver(snapshot, "concurrent-event"))
+    );
 
     const result = await notice().get();
     expect(result.exists).toBe(true);
@@ -215,5 +237,46 @@ suite.each([
     expect(result.data()).toEqual(newest.data());
     expect(result.updateTime.isEqual(newest.updateTime)).toBe(true);
     expect(await items()).toHaveLength(1);
+  });
+});
+
+suite("the person who asked hears that they were accepted", () => {
+  beforeEach(async () => {
+    await wipe();
+    await db
+      .doc(`users/${RECIPIENT}/public/profile`)
+      .set({ displayName: "Alice" });
+    await db
+      .doc(`users/${FOLLOWER}/public/profile`)
+      .set({ displayName: "Bob" });
+  });
+
+  it("names who said yes, on by default, in one row however often it runs", async () => {
+    await db.doc(`users/${FOLLOWER}`).set({ displayName: "Bob" });
+    await follow({ fromRequest: true });
+    await follow({ fromRequest: true });
+    const rows = await items(FOLLOWER);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      id: `follow_accepted_${RECIPIENT}`,
+      type: "follow_accepted",
+      fromUserId: RECIPIENT,
+      fromName: "Alice",
+      message: "Alice accepted your follow request",
+    });
+  });
+
+  it("writes nothing when the asker switched follow requests off", async () => {
+    await db
+      .doc(`users/${FOLLOWER}`)
+      .set({ notificationPreferences: { followRequests: false } });
+    await follow({ fromRequest: true });
+    expect(await items(FOLLOWER)).toEqual([]);
+  });
+
+  it("a direct follow tells the follower nothing", async () => {
+    await db.doc(`users/${FOLLOWER}`).set({ displayName: "Bob" });
+    await follow();
+    expect(await items(FOLLOWER)).toEqual([]);
   });
 });

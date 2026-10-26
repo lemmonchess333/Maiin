@@ -168,7 +168,9 @@ export default function SavedRoutinesSection() {
                     From {routine.sourceAuthorName} · {routine.exercises.length}{" "}
                     exercise
                     {routine.exercises.length === 1 ? "" : "s"}
-                    {setCount > 0 ? ` · ${setCount} sets` : ""}
+                    {setCount > 0
+                      ? ` · ${setCount} ${setCount === 1 ? "set" : "sets"}`
+                      : ""}
                   </p>
                 </div>
               </Link>

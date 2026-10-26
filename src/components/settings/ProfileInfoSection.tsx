@@ -7,6 +7,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { kgToLb, lbToKg } from "@/lib/weightUnits";
 import { HEIGHT_CM } from "@/lib/bodyMetrics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
+import { loadWordFilter } from "@/lib/wordFilter";
 import { flushQueuedWeights, queueWeightEntry } from "@/lib/weightQueue";
 import { localDateString } from "@/lib/dateHelpers";
 import { toast } from "@/lib/toast";
@@ -233,7 +234,15 @@ export default function ProfileInfoSection({
                directly, so it is held to Onboarding's rules here,
                word filter included. A refused name is not saved; the
                field keeps it so it can be corrected. */
-            const check = validateDisplayName(name);
+            const wordFilter = await loadWordFilter().catch(() => null);
+            // Edited again while the filter loaded: the next blur saves
+            // that draft, and this one would overwrite it.
+            if (nameRevision.current !== submitted) return;
+            if (!wordFilter) {
+              setNameError("Couldn't check the name. Try again.");
+              return;
+            }
+            const check = validateDisplayName(name, wordFilter);
             if (!check.valid) {
               setNameError(check.message);
               return;
@@ -245,7 +254,7 @@ export default function ProfileInfoSection({
             if (!result.ok && nameRevision.current === submitted) setName(prev);
           }}
           placeholder="Your name"
-          className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
+          className="ds-input mt-1 text-sm"
         />
         {nameError && (
           <p
@@ -272,7 +281,7 @@ export default function ProfileInfoSection({
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
             onBlur={() => void commitWeight()}
-            className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+            className="ds-input mt-1 text-sm font-mono tabular-nums"
           />
           <p className="text-xs text-muted-foreground mt-1">
             Sets your calorie target. Log your weight on Home to keep it
@@ -298,7 +307,7 @@ export default function ProfileInfoSection({
                   heightRevision.current++;
                   setFeet(e.target.value);
                 }}
-                className="w-full min-w-0 min-h-11 px-3 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+                className="ds-input min-w-0 text-sm font-mono tabular-nums"
               />
               <input
                 type="number"
@@ -309,7 +318,7 @@ export default function ProfileInfoSection({
                   heightRevision.current++;
                   setInches(e.target.value);
                 }}
-                className="w-full min-w-0 min-h-11 px-3 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+                className="ds-input min-w-0 text-sm font-mono tabular-nums"
               />
             </div>
           </div>
@@ -336,7 +345,7 @@ export default function ProfileInfoSection({
                   heightCmText.trim() === String(Number(savedCm.toFixed(1)))
                 )
               }
-              className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+              className="ds-input mt-1 text-sm font-mono tabular-nums"
             />
           </div>
         )}
@@ -396,7 +405,7 @@ export default function ProfileInfoSection({
             else setWhy(next);
           }}
           placeholder="What's driving you?"
-          className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
+          className="ds-input mt-1 text-sm"
         />
         <p className="text-xs text-muted-foreground mt-1">
           We resurface this in your weekly review.

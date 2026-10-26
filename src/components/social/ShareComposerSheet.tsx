@@ -10,7 +10,7 @@ import { useAuth, useUid } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { CAPTION_MAX } from "@/lib/activityPost";
 import { recordSharedActivity } from "@/lib/sessionDelete";
-import { containsProfanity } from "@/lib/profanityFilter";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import VerifyEmailNotice from "./VerifyEmailNotice";
 import RestrictedNotice from "./RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
@@ -37,8 +37,8 @@ const REMEMBER_LABEL: Record<ShareType, string> = {
 /** Explain the scope before the user chooses an audience. */
 const REMEMBER_HINT: Record<ShareType, string> = {
   workout:
-    "Your choice will apply automatically to future workouts. Change it any time in Settings → Privacy.",
-  run: "Your choice will apply automatically to future runs. Change it any time in Settings → Privacy.",
+    "Your choice will apply automatically to future workouts. Change it any time in Settings → Social & privacy.",
+  run: "Your choice will apply automatically to future runs. Change it any time in Settings → Social & privacy.",
 };
 
 /**
@@ -67,6 +67,8 @@ export default function ShareComposerSheet() {
   // A restricted account cannot share to the feed (S4e).
   const { isRestricted } = useRestrictedStatus(user?.uid);
   const held = gate.needsVerification || isRestricted;
+  // The word filter loads as the sheet opens; sharing waits for it.
+  const wordFilter = useWordFilter(state.open);
 
   // Subscribe to singleton state changes.
   useEffect(() => {
@@ -124,7 +126,8 @@ export default function ShareComposerSheet() {
   // the post is created. The server-side onActivityCreated trigger
   // auto-flags the same content; surfacing the rejection here saves
   // the user a confusing "my post became invisible" surprise.
-  const captionIsProfane = containsProfanity(caption);
+  const captionIsProfane = !!wordFilter?.containsProfanity(caption);
+  const unchecked = !wordFilter;
 
   /* "Make this my default": saved on the account, for this type only, and
      only while the account that opened the sheet is the one signed in. */
@@ -135,7 +138,7 @@ export default function ShareComposerSheet() {
   const choose = (visibility: ShareVisibility) => {
     // The buttons are disabled while gated; this keeps a stale click or a
     // keyboard activation from resolving a post the rules will refuse.
-    if (held) return;
+    if (held || unchecked) return;
     if (captionIsProfane) {
       haptic("error");
       return;
@@ -215,7 +218,7 @@ export default function ShareComposerSheet() {
             rows={2}
             aria-label="Add a note (optional)"
             aria-invalid={captionIsProfane}
-            className="w-full resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="ds-input resize-none text-sm"
           />
           {caption.length > 0 && (
             <span className="absolute bottom-2 right-3 text-caption font-mono tabular-nums text-muted-foreground">
@@ -228,7 +231,7 @@ export default function ShareComposerSheet() {
             role="alert"
             className="text-xs text-destructive-strong font-medium px-1"
           >
-            Please remove objectionable language before sharing.
+            Remove objectionable language before sharing.
           </p>
         )}
 
@@ -257,7 +260,7 @@ export default function ShareComposerSheet() {
             fullWidth
             variant="secondary"
             onClick={() => choose("followers")}
-            disabled={captionIsProfane || held}
+            disabled={captionIsProfane || held || unchecked}
             leftIcon={<Users className="size-4 shrink-0" aria-hidden="true" />}
           >
             Share to followers
@@ -266,7 +269,7 @@ export default function ShareComposerSheet() {
             fullWidth
             variant="secondary"
             onClick={() => choose("public")}
-            disabled={captionIsProfane || held}
+            disabled={captionIsProfane || held || unchecked}
             leftIcon={<Globe className="size-4 shrink-0" aria-hidden="true" />}
           >
             Make public
@@ -298,7 +301,7 @@ export default function ShareComposerSheet() {
         <p className="text-caption text-muted-foreground px-1 -mt-1">
           {remember
             ? REMEMBER_HINT[state.type]
-            : "Applies to this session only. Set a default in Settings → Privacy."}
+            : "Applies to this session only. Set a default in Settings → Social & privacy."}
         </p>
 
         {!isOnline && (

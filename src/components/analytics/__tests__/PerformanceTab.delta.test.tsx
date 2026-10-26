@@ -98,6 +98,6 @@ describe("PI delta chip", () => {
     /* The negative side matters most — suppressing zero must not
        suppress a decline, which is the signal a user needs to act on. */
     renderWeeks(76, 72);
-    expect(screen.getByText(/-4 pts/)).toBeInTheDocument();
+    expect(screen.getByText(/\u22124 pts/)).toBeInTheDocument();
   });
 });

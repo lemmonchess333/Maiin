@@ -271,6 +271,47 @@ describe("useSteps connect / priming persistence", () => {
     expect(toastError).toHaveBeenCalledWith("Couldn't connect Apple Health");
   });
 
+  /* A failed save of the flags went unsaid, and the next launch asked to
+     connect again. */
+  it("says so when the connection cannot be saved", async () => {
+    isHealthAvailable.mockResolvedValue(true);
+    setDocGuarded.mockRejectedValueOnce(new Error("unavailable"));
+    const { result } = renderHook(() => useSteps());
+    await waitFor(() => expect(result.current.status).toBe("unprompted"));
+    await act(async () => {
+      await result.current.connect();
+    });
+    expect(toastError).toHaveBeenCalledWith(
+      "Couldn't save your Apple Health setting. Try again."
+    );
+  });
+
+  /* Steps come from the phone and need no connection, but connecting
+     waited for the flags' save to reach the server first, so offline
+     nobody who connected ever saw a step count. */
+  it("offline, reads today's steps without waiting for the flags to reach the server", async () => {
+    isHealthAvailable.mockResolvedValue(true);
+    getTodayStepTotal.mockResolvedValue(4321);
+    const online = Object.getOwnPropertyDescriptor(navigator, "onLine");
+    Object.defineProperty(navigator, "onLine", {
+      configurable: true,
+      get: () => false,
+    });
+    setDocGuarded.mockReturnValueOnce(new Promise<void>(() => {}));
+    try {
+      const { result } = renderHook(() => useSteps());
+      await waitFor(() => expect(result.current.status).toBe("unprompted"));
+      await act(async () => {
+        await result.current.connect();
+      });
+      expect(result.current.steps).toBe(4321);
+      expect(result.current.status).toBe("connected");
+    } finally {
+      if (online) Object.defineProperty(navigator, "onLine", online);
+      else delete (navigator as { onLine?: boolean }).onLine;
+    }
+  });
+
   it("dismissPriming() persists primingShown without connecting", async () => {
     isHealthAvailable.mockResolvedValue(true);
     const { result } = renderHook(() => useSteps());

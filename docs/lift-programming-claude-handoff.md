@@ -669,6 +669,13 @@ writer (ADR-0011). Sessions that keep no record (Easier today, a lighter
 week's) count as time away, which can only put a drop off, never bring one
 on.
 
+STATUS 2026-10-26 (Lift4 (3)): Train's ⓘ beside the week label is gone.
+The owner, looking at the lift tab: two controls opened the same sheet,
+"there's two and it's not needed". "Why this session" under the session
+card stays, on a day still to train; its sheet already ends on "How your
+plan works". A done, missed or past day on Train now has no way into the
+rules.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

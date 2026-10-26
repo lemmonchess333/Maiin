@@ -65,7 +65,7 @@ async function refuseUnlessAiAllowed(db, uid, res) {
   if (consent.allowed) return false;
   if (consent.error) {
     res.status(503).json({
-      error: "Couldn't check your AI settings. Please try again in a moment.",
+      error: "Couldn't check your AI settings. Try again in a moment.",
       transient: true,
     });
     return true;

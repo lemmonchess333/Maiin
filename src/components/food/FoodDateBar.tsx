@@ -1,6 +1,6 @@
 import { memo, useRef } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
-import { format } from "date-fns";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import { haptic } from "@/lib/haptic";
 
 interface FoodDateBarProps {
@@ -73,12 +73,13 @@ function FoodDateBar({
           className="size-3.5 text-muted-foreground"
         />
         {/* Semibold at text-sm: it is a control's label now, not a
-            caption. "EEE d MMM" — day before month, the app's one date
-            treatment — short enough to share the row with the title. */}
+            caption. The short weekday form, day before month, the app's
+            one date treatment, short enough to share the row with the
+            title. */}
         <p className="text-sm font-semibold text-foreground whitespace-nowrap">
           {isToday
             ? "Today"
-            : format(new Date(selectedDate + "T12:00:00"), "EEE d MMM")}
+            : formatShortWeekdayDayMonth(new Date(selectedDate + "T12:00:00"))}
         </p>
       </button>
       <input

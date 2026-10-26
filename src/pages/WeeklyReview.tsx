@@ -13,7 +13,7 @@ import {
 } from "@/lib/weeklyReviewViewModel";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { parseLocalDate } from "@/lib/dateHelpers";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, withSign } from "@/utils/formatters";
 import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
 import { categoryFigureUri } from "@/lib/muscleFigureSvg";
 import { getExerciseById } from "@/lib/exercises";
@@ -235,7 +235,7 @@ function YourWeek({
                   : body.direction === "down"
                     ? "Down"
                     : "Up"
-                : `${body.deltaKg > 0 ? "+" : ""}${body.deltaKg}`
+                : withSign(body.deltaKg, String(Math.abs(body.deltaKg)))
             }
             caption={
               body.hidden || body.deltaKg === null
@@ -346,7 +346,9 @@ function BestMoment({
           <Trophy className="size-4" aria-hidden="true" />
           New best
         </span>
-        <p className="text-h2 font-bold text-foreground">{best.exerciseName}</p>
+        <p className="text-h2 font-extrabold text-foreground">
+          {best.exerciseName}
+        </p>
         <p className="text-foreground">
           <span className="text-display font-extrabold font-mono tabular-nums">
             {loadIn(best.weight, liftUnit)}
@@ -403,29 +405,29 @@ function WeekAhead({
     <div className="flex flex-1 flex-col">
       <h2 className="text-h1 font-extrabold text-foreground">The week ahead</h2>
       <div className="mt-6 space-y-6">
+        {/* The plan's week in the figures "Your week" counts the last one
+            in, so the card says it at the recap's size rather than as a
+            line over an empty page. */}
         {lifts !== null || runs !== null ? (
-          <div className="space-y-1">
-            <p className="text-h2 font-bold text-foreground">
-              {lifts !== null && (
-                <>
-                  <span className="font-mono tabular-nums">{lifts}</span>{" "}
-                  {plural(lifts, "lift", "lifts")}
-                </>
-              )}
-              {lifts !== null && runs !== null && (
-                <span className="text-muted-foreground"> · </span>
-              )}
-              {runs !== null && (
-                <>
-                  <span className="font-mono tabular-nums">{runs}</span>{" "}
-                  {plural(runs, "run", "runs")}
-                </>
-              )}
-            </p>
+          <>
+            {lifts !== null && (
+              <StatRow
+                rule="bg-lifting"
+                value={lifts}
+                caption={`${plural(lifts, "lift", "lifts")} planned`}
+              />
+            )}
+            {runs !== null && (
+              <StatRow
+                rule="bg-running"
+                value={runs}
+                caption={`${plural(runs, "run", "runs")} planned`}
+              />
+            )}
             {phaseNote && (
               <p className="text-sm text-muted-foreground">{phaseNote}</p>
             )}
-          </div>
+          </>
         ) : (
           <p className="text-base text-muted-foreground">
             Train when it suits you — log it and it counts.

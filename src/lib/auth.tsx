@@ -28,6 +28,11 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { clearEmailChange } from "./emailChangeNote";
+import { settleWrite } from "./settleWrite";
+import {
+  reloadToClearFirestoreCache,
+  writesSettled,
+} from "./firestoreCacheClear";
 import { isNativePlatform } from "@/lib/platform";
 import {
   getGoogleCredentialNative,
@@ -102,6 +107,14 @@ async function firestore() {
   ]);
   return { ...fs, ...write, db };
 }
+
+/* A device that has had an account almost always restores it, and the
+   profile read is the first thing that launch waits for. So Firestore
+   starts downloading now, while Auth reads its session from IndexedDB,
+   instead of after Auth has answered. A device that has never signed in
+   starts nothing: that person is about to see Login, which reads no
+   documents. A failed load is the post-auth call's to meet again. */
+if (hasSignedInOnThisDevice()) void firestore().catch(() => {});
 
 /* ================================
    OAUTH TRANSPORT (popup vs redirect)
@@ -968,10 +981,30 @@ async function cancelOutgoingAccountReminders(): Promise<void> {
   }
 }
 
+/**
+ * Whether the outgoing account has no writes left to send, so its cached
+ * copy can be cleared (firestoreCacheClear.ts). False offline, after the
+ * wait, or if Firestore will not load.
+ */
+async function outgoingWritesSettled(): Promise<boolean> {
+  try {
+    const { waitForPendingWrites, db } = await firestore();
+    return await writesSettled(() => waitForPendingWrites(db));
+  } catch (err) {
+    logger.warn("[auth] could not check the outgoing account's writes", err);
+    return false;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  /* A sign-out that clears the device's Firestore copy ends in a reload
+     (firestoreCacheClear.ts). Until it does, the app stays on its loading
+     screen: Login drawn on the page being left would take input the
+     reload then throws away. */
+  const [leavingForReload, setLeavingForReload] = useState(false);
   // Guards the once-per-session boot reconciliation writes (timezone capture +
   // email mirror) so they don't re-fire on every onAuthStateChanged emission —
   // it fires several times per sign-in (session restore, token refresh, popup),
@@ -1066,8 +1099,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // hydrateProfile does no writes, and the timezone-capture write stays
         // on the server branch only so it isn't double-fired.
         /* Inside `if (firebaseUser)`, so a profile exists to read. */
-        const { doc, getDoc, getDocFromCache, onSnapshot, updateDocGuarded, db } =
-          await firestore();
+        const {
+          doc,
+          getDoc,
+          getDocFromCache,
+          onSnapshot,
+          updateDocGuarded,
+          db,
+        } = await firestore();
         try {
           const cachedDoc = await getDocFromCache(
             doc(db, "users", firebaseUser.uid)
@@ -1474,14 +1513,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // sign-out, so the user stays on A and retries rather than handing A's
     // device binding to the next account. Also wipes A's run/draft state.
     await revokeOutgoingAccountDeviceState();
-    await firebaseSignOut(auth);
+    // Clear the device's copy of what this account read only once none of
+    // its writes is still waiting to go up: clearing drops them.
+    const clearCache = await outgoingWritesSettled();
+    if (clearCache) setLeavingForReload(true);
+    try {
+      await firebaseSignOut(auth);
+    } catch (err) {
+      setLeavingForReload(false);
+      throw err;
+    }
     setProfile(null);
+    // The person chose to leave, so they know where an email change is
+    // going; the next person on this device should not be shown it.
+    clearEmailChange();
     // Reset to the DARK default so the next user starts dark unless their
     // Firestore profile explicitly says light. (Clearing the stored key lets
     // init.js / the next profile load own the value; the signed-out auth
     // listener also re-applies the dark default.)
     document.documentElement.classList.add("dark");
     remove("tropos-dark-mode");
+    if (clearCache) reloadToClearFirestoreCache();
   }, [revokeOutgoingAccountDeviceState]);
 
   const updateProfile = useCallback(
@@ -1535,6 +1587,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // call sites that want to handle the error themselves.
       try {
         const { doc, writeBatch, setDocGuarded, db } = await firestore();
+        let write: Promise<void>;
         if (Object.keys(publicPatch).length > 0) {
           // Strip undefined from both writes — Firestore rejects any doc
           // containing an explicit `undefined` outright. The non-batch
@@ -1550,12 +1603,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             stripUndefined(publicPatch),
             { merge: true }
           );
-          await batch.commit();
+          write = batch.commit();
         } else {
-          await setDocGuarded(doc(db, "users", writeUid), writeData, {
+          write = setDocGuarded(doc(db, "users", writeUid), writeData, {
             merge: true,
           });
         }
+        // Offline the write is on the device and goes up on reconnect, but
+        // its promise waits for the server, so every Settings save spun
+        // until then (settleWrite.ts). Offline it counts as made; a refusal
+        // once back online is said then.
+        await settleWrite(write, {
+          label: "auth.updateProfile",
+          onLateFailure: () => {
+            if (auth.currentUser?.uid !== writeUid) return;
+            toast.error(
+              "A change you made offline couldn't be saved. Check your settings.",
+              { id: "update-profile-error" }
+            );
+          },
+        });
 
         // The remote write for A is committed and NOT rolled back — only stale
         // LOCAL hydration + theme mutation are suppressed if B is now current.
@@ -1711,7 +1778,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       profile,
-      loading,
+      loading: loading || leavingForReload,
       ...credentialActions,
       resetPassword,
       fetchSignInMethods,
@@ -1723,6 +1790,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       profile,
       loading,
+      leavingForReload,
       credentialActions,
       resetPassword,
       fetchSignInMethods,

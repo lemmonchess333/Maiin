@@ -30,6 +30,7 @@
 import type { ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
 
 interface ErrorStateProps {
   title: string;
@@ -70,8 +71,14 @@ export function ErrorState({
           </p>
         ) : null}
       </div>
+      {/* The default size, for the 44px target; the edge because the
+          muted pill is 1.06:1 against this card in light. */}
       {retry ? (
-        <Button onClick={retry.onClick} size="sm" variant="secondary">
+        <Button
+          onClick={retry.onClick}
+          variant="secondary"
+          className={SECONDARY_ON_CARD_EDGE}
+        >
           {retry.label ?? "Try again"}
         </Button>
       ) : null}

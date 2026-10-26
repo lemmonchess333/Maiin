@@ -140,9 +140,9 @@ test("running feedback follows edits and opens a reversible easier-week preview"
   // arrive after the profile and programme on a busy emulator runner.
   await expect(review).toBeVisible({ timeout: 20_000 });
   await page.getByRole("button", { name: "See runs", exact: true }).click();
-  await expect(page.getByRole("link", { name: /10:00 \/ 20:00/ })).toHaveCount(
-    2
-  );
+  await expect(
+    page.getByRole("link", { name: /10 min \/ 20 min/ })
+  ).toHaveCount(2);
   const card = review.locator("../..");
   for (const dark of [false, true]) {
     await page.evaluate(

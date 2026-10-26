@@ -294,7 +294,7 @@ export function noSplitsReason(
   if (!hasRoute) return "No GPS route";
   const lapM = lapUnit === "mi" ? METRES_PER_MILE : 1000;
   if (distanceM < lapM) return lapUnit === "mi" ? "Under a mile" : "Under 1 km";
-  return "No splits yet";
+  return "No splits for this run";
 }
 
 /**
@@ -315,14 +315,14 @@ export function formatRaceDistance(distance: string | undefined): string {
 }
 
 const RUN_TYPE_TITLES: Record<string, string> = {
-  freerun: "Free Run",
-  easy: "Easy Run",
-  tempo: "Tempo Run",
+  freerun: "Free run",
+  easy: "Easy run",
+  tempo: "Tempo run",
   intervals: "Intervals",
-  long: "Long Run",
+  long: "Long run",
   // The other spelling of a long run in use (`paceVerdict` reads both).
-  longrun: "Long Run",
-  guided: "Guided Run",
+  longrun: "Long run",
+  guided: "Guided run",
   race: "Race",
   /* The type a treadmill run was saved under before Pgm8 made the
      treadmill a place (`runTitle` names a newer one). */
@@ -330,7 +330,7 @@ const RUN_TYPE_TITLES: Record<string, string> = {
   /* 'manual' = "Track without GPS" path. Outdoor user, GPS never
      locked. Distinguished from treadmill so the detail header reads
      honestly. */
-  manual: "Manual Run",
+  manual: "Manual run",
 };
 
 /**
@@ -348,7 +348,7 @@ const TREADMILL_TITLE = "Treadmill";
 /**
  * A saved run's title on its own page: its type's, and the treadmill when
  * it was on one, so a treadmill run never reads as an outdoor run. Since
- * Pgm8 a treadmill run keeps its session's type ("Long Run · Treadmill");
+ * Pgm8 a treadmill run keeps its session's type ("Long run · Treadmill");
  * one with no session of its own, a free run, is "Treadmill", the title
  * every treadmill run had before, and so is a run saved then.
  */

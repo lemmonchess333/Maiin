@@ -209,6 +209,8 @@ describe("Train's run, as the journeys open it", () => {
       "utf8"
     );
     expect(section).toContain(`: "${TRAIN.viewRun}"`);
+    // Today's run starts from the same card.
+    expect(section).toContain(`: "${TRAIN.startRun}"`);
   });
 });
 

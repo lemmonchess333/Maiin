@@ -122,7 +122,7 @@ export default function LeaderboardCard({
 
             {entries.length < 3 && (
               <p className="text-xs text-muted-foreground text-center pt-2">
-                Follow more athletes to grow the leaderboard
+                Follow more people to grow the leaderboard
               </p>
             )}
 

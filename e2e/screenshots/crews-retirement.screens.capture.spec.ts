@@ -14,6 +14,7 @@
 import { test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
+import { settleCommunity } from "../helpers/settleCommunity";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -76,15 +77,12 @@ test.describe("crews retirement screenshots", () => {
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
-    // Spaces directory heading proves the middle block rendered.
+    // The three blocks with their data in: the seeded circle's featured
+    // card, not the Circles skeleton, and no Challenges skeleton either.
+    await settleCommunity(page);
     await page
-      .getByText(/spaces/i)
-      .first()
-      .waitFor({ state: "visible", timeout: 15000 })
-      .catch(() =>
-        console.log("[capture] spaces heading not visible — capturing as-is")
-      );
-    await page.waitForTimeout(1200);
+      .getByRole("button", { name: /autumn strength crew/i })
+      .waitFor({ state: "visible", timeout: 15000 });
     await shootLightDark(page, "crews-retirement-together");
   });
 });

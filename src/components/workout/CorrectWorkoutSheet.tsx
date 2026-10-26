@@ -9,7 +9,7 @@ import {
   type CorrectionQuestion,
 } from "@/lib/workoutCorrection";
 import { createWorkoutCompletionId } from "@/hooks/useWorkoutDraft";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { liftUnitLabel, loadIn, type LiftUnit } from "@/lib/liftLoad";
 import { kitLoadIn, kitLoadToKg } from "@/features/program/loadSteps";
 

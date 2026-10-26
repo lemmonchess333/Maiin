@@ -135,6 +135,30 @@ describe("useUserProfileData — someone else's profile", () => {
     expect(PROFILE_BADGES_SHOWN).toBe(4);
   });
 
+  /* The summary is written by its owner's app and read by everyone else.
+     The rules bound its size, not each value's type, and sorting called
+     localeCompare on a number. */
+  it("leaves out a badge whose date is not a string, rather than failing", async () => {
+    seedFirestore({
+      "users/alice/public/profile": {
+        displayName: "Alice",
+        badgeSummary: {
+          earnedMap: {
+            first_step: "2026-01-01",
+            first_5k: 20260201,
+            "10k_club": true,
+            first_pr: "2026-04-01",
+          },
+        },
+      },
+    });
+    const { result } = await settled("alice", "viewer");
+    expect(result.current.badges.map((b) => b.id)).toEqual([
+      "first_pr",
+      "first_step",
+    ]);
+  });
+
   it("asks for public and followers-only posts in separate queries", () => {
     expect(profilePostVisibilities(false)).toEqual(["public", "followers"]);
   });

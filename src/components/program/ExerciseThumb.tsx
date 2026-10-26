@@ -2,7 +2,7 @@ import { Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
 import { categoryFigureUri } from "@/lib/muscleFigureSvg";
-import { getExerciseById } from "@/lib/exercises";
+import { findCatalogueExercise } from "@/lib/exercises";
 
 const BOX = {
   sm: "size-10 rounded-lg",
@@ -19,6 +19,10 @@ const BOX = {
  * library does not know, a dumbbell. The tile is the raised surface, so a
  * white drawing reads on both themes.
  *
+ * `exerciseId` may be a logged id or name: it is resolved to the catalogue
+ * exercise first (`findCatalogueExercise`), so a session logged as "Back
+ * Squat" shows the squat's drawing rather than the generic tile.
+ *
  * Decorative: the exercise's name always sits beside it.
  */
 export default function ExerciseThumb({
@@ -30,10 +34,9 @@ export default function ExerciseThumb({
   size?: keyof typeof BOX;
   className?: string;
 }) {
-  const cutout = getFormArtCutout(exerciseId);
-  const figure = cutout
-    ? null
-    : categoryFigureUri(getExerciseById(exerciseId)?.category ?? "");
+  const exercise = findCatalogueExercise(exerciseId);
+  const cutout = getFormArtCutout(exercise?.id ?? exerciseId);
+  const figure = cutout ? null : categoryFigureUri(exercise?.category ?? "");
   return (
     <div
       aria-hidden="true"

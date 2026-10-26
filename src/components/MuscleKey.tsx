@@ -50,9 +50,7 @@ function Row({
           className="size-2.5 shrink-0 rounded-full"
           style={swatch}
         />
-        <span className="text-caption uppercase tracking-wider text-muted-foreground">
-          {label}
-        </span>
+        <span className="text-micro text-muted-foreground">{label}</span>
       </span>
       <span className="text-small text-foreground/85">
         {names.map(titleCaseMuscle).join(", ")}

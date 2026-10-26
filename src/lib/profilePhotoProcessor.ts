@@ -92,10 +92,7 @@ export async function processProfilePhoto(file: File): Promise<Blob> {
   }
 
   if (!(file.type || "").startsWith("image/")) {
-    throw new ProfilePhotoProcessingError(
-      "non_image",
-      "Please choose an image file."
-    );
+    throw new ProfilePhotoProcessingError("non_image", "Choose an image file.");
   }
 
   const img = await loadImage(file);

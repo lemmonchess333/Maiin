@@ -3,6 +3,7 @@ import { Footprints, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { storedKmLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import Select from "@/components/ui/Select";
 
 interface Props {
   selectedShoeId: string | null;
@@ -38,7 +39,7 @@ export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
         <span className="min-w-[min(100%,8em)] flex-1 text-sm text-muted-foreground">
           Track your shoe mileage
         </span>
-        <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-lifting-strong">
+        <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-running-strong">
           <Plus className="size-3.5" aria-hidden="true" />
           Add shoes
         </span>
@@ -51,20 +52,17 @@ export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
     : defaultShoe;
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card">
-      <Footprints className="size-4 text-muted-foreground shrink-0" />
-      <select
-        aria-label="Shoe"
-        value={selected?.id ?? ""}
-        onChange={(e) => onSelect(e.target.value)}
-        className="flex-1 min-h-11 bg-transparent text-sm text-foreground appearance-none cursor-pointer"
-      >
-        {activeShoes.map((shoe) => (
-          <option key={shoe.id} value={shoe.id}>
-            {shoe.name} — {storedKmLabel(shoe.totalKm, unit)}
-          </option>
-        ))}
-      </select>
-    </div>
+    <Select
+      aria-label="Shoe"
+      value={selected?.id ?? ""}
+      onChange={(e) => onSelect(e.target.value)}
+      icon={<Footprints className="size-4" />}
+    >
+      {activeShoes.map((shoe) => (
+        <option key={shoe.id} value={shoe.id}>
+          {shoe.name} — {storedKmLabel(shoe.totalKm, unit)}
+        </option>
+      ))}
+    </Select>
   );
 }

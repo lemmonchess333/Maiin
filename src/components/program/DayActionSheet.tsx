@@ -37,6 +37,7 @@ import LiftPurpose from "@/components/program/LiftPurpose";
 import { useMemo, useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import MetaLine from "@/components/ui/MetaLine";
+import Select from "@/components/ui/Select";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
   Footprints,
@@ -71,7 +72,7 @@ import {
 } from "@/lib/runPaces";
 import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge, zoneMetaItems } from "@/lib/hrZones";
-import { format } from "date-fns";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import {
   parseLocalDate,
   localWeekKey,
@@ -79,6 +80,7 @@ import {
 } from "@/lib/dateHelpers";
 import { resolveRunMoveOptions } from "@/lib/runReschedule";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import { liftOnDate } from "@/lib/homeLift";
 import { hasHybridInterference } from "@/lib/runProgrammeViewModel";
 import {
   getCompletionKind,
@@ -145,7 +147,13 @@ interface DayActionSheetProps {
    *    has its own tab with richer management). Lift skipping on the Run tab
    *    was never the job of this affordance. */
   scope?: "day" | "run";
+  /** Ids of the sessions logged on `dateKey`. Today's lift is the one
+   *  Home's card offers, and a session done today keeps it on the sheet,
+   *  done (`liftOnDate`). */
+  sessionsOnDate?: ReadonlySet<string>;
 }
+
+const NO_SESSIONS: ReadonlySet<string> = new Set();
 
 export default function DayActionSheet({
   open,
@@ -163,6 +171,7 @@ export default function DayActionSheet({
   restoreWorkoutDay,
   moveRunDay,
   scope = "day",
+  sessionsOnDate = NO_SESSIONS,
 }: DayActionSheetProps) {
   const unit = useDistanceUnit();
   // RUN-RESCHEDULE-01: reveal the destination-day picker inline.
@@ -184,7 +193,7 @@ export default function DayActionSheet({
 
   const dayLabel = useMemo(() => {
     if (!dateKey) return "";
-    return format(parseLocalDate(dateKey), "EEE d MMM");
+    return formatShortWeekdayDayMonth(parseLocalDate(dateKey));
   }, [dateKey]);
 
   // Q5 P74 same-date paradox (chunk B3f). When a saved run exists
@@ -202,7 +211,15 @@ export default function DayActionSheet({
 
   if (!open || !resolved || !dateKey) return null;
 
-  const { lift, run } = resolved;
+  const { run } = resolved;
+  // Today's lift is the today card's, so Skip skips the session it offers.
+  const lift = liftOnDate({
+    dateKey,
+    todayKey: localDateString(new Date()),
+    scheduled: resolved.lift,
+    programme: programState,
+    sessionsOnDate,
+  });
   const hasLift = lift.workout !== null && lift.index !== null;
   const hasRun = run.runDay !== null;
   // Run-scoped invocations (Programme Run tab) never surface the lift block —
@@ -390,7 +407,7 @@ export default function DayActionSheet({
               </div>
               <div className="min-w-0 flex-1">
                 <SectionLabel>Run</SectionLabel>
-                <p className="text-lg font-extrabold leading-tight text-foreground truncate">
+                <p className="text-lg font-bold leading-tight text-foreground truncate">
                   {runSessionName(selectedRunTemplate, selectedRacePace, unit)}
                 </p>
                 {/* Run21 (2): the session's one feel line. Its shape is
@@ -449,13 +466,7 @@ export default function DayActionSheet({
                       : null;
                     const isManual = completionKind === "manual";
                     return (
-                      <span
-                        className={cn(
-                          "text-xs font-medium",
-                          isManual && "opacity-70"
-                        )}
-                        style={{ color: THEME.success }}
-                      >
+                      <span className="text-xs font-medium text-success-strong">
                         {isManual ? "Marked complete" : "Completed"}
                       </span>
                     );
@@ -487,7 +498,8 @@ export default function DayActionSheet({
                   ordinary run. */}
               <label className="block">
                 <SectionLabel as="span">Template</SectionLabel>
-                <select
+                <Select
+                  className="mt-1"
                   value={run.runDay.userOverride || run.runDay.templateId}
                   onChange={(e) =>
                     overrideRunDay(
@@ -503,14 +515,13 @@ export default function DayActionSheet({
                         ? "Run template"
                         : `${run.status} — template locked`
                   }
-                  className="w-full mt-1 bg-background/80 rounded-xl px-3 py-3 text-base border border-border/60 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {RUN_TEMPLATES.map((t) => (
                     <option key={t.id} value={t.id}>
                       {runTemplateName(t.name, unit)} ({t.type})
                     </option>
                   ))}
-                </select>
+                </Select>
                 {isRaceTemplate ? (
                   <span className="mt-1 block text-caption text-muted-foreground">
                     Race day — the template is locked.
@@ -768,7 +779,7 @@ export default function DayActionSheet({
               </div>
               <div className="min-w-0 flex-1">
                 <SectionLabel>Lift</SectionLabel>
-                <p className="text-lg font-extrabold leading-tight text-foreground truncate">
+                <p className="text-lg font-bold leading-tight text-foreground truncate">
                   {liftDayNameIn(
                     (programState?.workouts ?? []).map((w) => w.dayName),
                     lift.index,
@@ -784,10 +795,7 @@ export default function DayActionSheet({
               </div>
               <div className="shrink-0 pt-1">
                 {lift.status === "completed" && (
-                  <span
-                    className="text-xs font-medium"
-                    style={{ color: THEME.success }}
-                  >
+                  <span className="text-xs font-medium text-success-strong">
                     Completed
                   </span>
                 )}

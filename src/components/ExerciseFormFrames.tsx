@@ -135,7 +135,7 @@ export default function ExerciseFormFrames({
         </div>
         <p
           aria-live={running ? "off" : "polite"}
-          className="mt-2 text-center text-micro uppercase tracking-wider text-stage-muted"
+          className="mt-2 text-center text-micro text-stage-muted"
         >
           {beats[index].label}{" "}
           <span className="font-mono tabular-nums">{index + 1}/6</span>

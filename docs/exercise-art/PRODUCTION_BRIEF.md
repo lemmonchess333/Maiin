@@ -50,11 +50,36 @@ an automated integrity check.
 10. Review all six together and in actual sequential playback, including 6→1.
     Reject shifting anchors, changing anatomy/scale/equipment, broken grip,
     impossible machine physics, wrong sequence, colour drift or poor sharpness.
+    Reject, too, a set that fails any of the three card checks in step 12.
     The sixth beat normally shows controlled return, unless the exercise's
     written sequence legitimately ends at its starting position.
 11. Keep candidates outside `public/` until review passes. Record image/reference
     and cue hashes, named fixed anchors, invariant dimensions, technique checks
     and mobile light/dark evidence. Any asset or cue edit invalidates approval.
+12. Check the set against the library, not only against itself. Its card
+    cut-out (`npm run art:cutouts`) sits beside other sets' on Home's Today
+    card, Train's rows and the finish screen, so a new or regenerated set must
+    arrive normalised:
+    - **One highlight purple.** The primary muscles are one purple in every
+      set, with the secondary lilac and the stabiliser pale purple as its
+      tints. A set whose primary purple is not the library's is rejected, not
+      graded. The released library does not meet this yet: its primary purple
+      runs from #4e40c7 to #8d3db6, about half each, and the regeneration pass
+      that normalises it fixes the one value and writes it into this item.
+    - **A shared bounding box.** The athlete is drawn at one scale across the
+      library: the same head-to-sole height for a standing figure at the same
+      camera distance, never enlarged or shrunk to fill a canvas. Released
+      figures run from 220 to 371 px tall within one card, so one lift reads
+      as a bigger person than the lift beside it.
+    - **No ground.** Nothing is drawn under the athlete: no floor line, mat,
+      plinth, cast shadow or reflection. The card and the guide's stage are
+      the ground. Two released sets carry a baked-in ground.
+
+    Record the evidence under the release record's `muscles` check (the
+    purple) and `camera` check (the scale and the ground). The validator's
+    eleven checks are unchanged, so every existing record stays valid: these
+    criteria apply to a set when it is next drawn, and are not by themselves
+    a reason to regenerate one.
 
 For a sequence with changing floor contacts, the release record may declare
 `contactPhases`: named groups of at least two one-based frame numbers, each

@@ -2,11 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   recordPartnerActivity,
   emptyStreakState,
-  canAddPartner,
   partnerToNudge,
   dayDiff,
   weekKey,
-  MAX_PARTNERS,
   type PartnerStreakState,
 } from "../streakEngine";
 
@@ -23,14 +21,8 @@ function run(
   );
 }
 
-describe("bond cap", () => {
-  it("allows up to MAX_PARTNERS, then blocks", () => {
-    expect(canAddPartner(0)).toBe(true);
-    expect(canAddPartner(MAX_PARTNERS - 1)).toBe(true);
-    expect(canAddPartner(MAX_PARTNERS)).toBe(false);
-    expect(canAddPartner(MAX_PARTNERS + 3)).toBe(false);
-  });
-});
+/* The bond limit is the server's (functions/__tests__/partnerBonds.test.js
+   holds it, partnerLimit.cross.test.ts pins the number to MAX_PARTNERS). */
 
 describe("day arithmetic is DST/UTC-proof", () => {
   it("counts whole days across a spring-forward boundary", () => {

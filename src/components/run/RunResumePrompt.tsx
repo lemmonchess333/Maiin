@@ -20,7 +20,7 @@
 
 import { useCallback, useState } from "react";
 import { ArrowLeft, Play, Plus, Trash2 } from "lucide-react";
-import { formatClock } from "@/utils/formatters";
+import { formatClock, formatDuration } from "@/utils/formatters";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialogActions } from "@/components/ui/ConfirmDialog";
@@ -60,7 +60,7 @@ function formatStartedAgo(startedAt: number): string {
   const remMins = mins % 60;
   if (remMins === 0)
     return `Started ${hours} hour${hours === 1 ? "" : "s"} ago`;
-  return `Started ${hours}h ${remMins}m ago`;
+  return `Started ${formatDuration(mins * 60)} ago`;
 }
 
 export default function RunResumePrompt({

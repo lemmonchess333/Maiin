@@ -110,7 +110,7 @@ for (const budget of [null, 30] as const) {
           animations: "disabled",
         });
       }
-      await page.getByRole("radio", { name: /Race prep/ }).click();
+      await page.getByRole("radio", { name: /Training for a race/ }).click();
       await page
         .getByRole("button", { name: "Add starting point", exact: true })
         .click();
@@ -235,7 +235,6 @@ for (const budget of [null, 30] as const) {
     await page
       .getByRole("button", { name: "Finish workout", exact: true })
       .click();
-    await page.getByRole("button", { name: "Finish", exact: true }).click();
     await expect(
       page.getByRole("region", { name: "Session completion" })
     ).toBeVisible();

@@ -16,8 +16,16 @@
  * Invite model: the space doc carries a server-generated inviteCode.
  * Space docs are member-only readable, so the code never leaks via
  * reads — the owner shares it out-of-band (link/message). Joining
- * requires the current code; the owner can rotate it by recreating
- * the space in v1 (rotation callable is a later nicety).
+ * requires the current code, made in the last INVITE_CODE_TTL_DAYS
+ * days. The owner makes a new one at any time
+ * (renewGoalSpaceInviteCode), and the one it replaces stops working at
+ * once. Expiry gates joining only: nobody already in a Circle is
+ * affected by it.
+ *
+ * A code made before codes carried an expiry was made with its Circle
+ * (nothing could replace one then), so its age is the Circle's: it
+ * expires INVITE_CODE_TTL_DAYS after the Circle's createdAt. No
+ * migration, and an old code cannot stay valid for good.
  */
 
 const { isCalendarDate } = require("./dateUtils");
@@ -25,6 +33,12 @@ const { displayNameRefusal } = require("./objectionableText");
 
 const GOAL_SPACE_MAX_MEMBERS = 8;
 const GOAL_SPACE_TEXT_MAX = 200;
+/** How long an invite code works after it is made. Mirrored by
+ *  src/features/goalSpace/inviteCode.ts (inviteCode.cross.test.ts). */
+const INVITE_CODE_TTL_DAYS = 7;
+const INVITE_CODE_TTL_MS = INVITE_CODE_TTL_DAYS * 86_400_000;
+/** How many fresh codes to try before giving up on a collision. */
+const CODE_ATTEMPTS = 6;
 const GOAL_SPACE_TYPES = Object.freeze([
   "race",
   "strength_block",
@@ -46,6 +60,22 @@ function sanitizeDisplay(value, fallback) {
   return value.trim().slice(0, GOAL_SPACE_TEXT_MAX);
 }
 
+/**
+ * When a Circle's current invite code stops working, in ms. A code
+ * stamped with its expiry uses it; an older one is as old as its Circle.
+ * A Circle with neither reads as expired, so a code of unknown age lets
+ * nobody in; its owner can make a new one.
+ */
+function inviteCodeExpiresAt(space) {
+  const stamped = space && space.inviteCodeExpiresAt;
+  if (typeof stamped === "number" && Number.isFinite(stamped)) return stamped;
+  const made = space && space.createdAt;
+  if (typeof made === "number" && Number.isFinite(made)) {
+    return made + INVITE_CODE_TTL_MS;
+  }
+  return 0;
+}
+
 // Short human-shareable invite codes. A pasted/typed code is normalised
 // by upper-casing and dropping every non-alphanumeric char, so the
 // display form (`K7P4-9M2H`), a bare form (`K7P49M2H`), and stray spaces
@@ -63,8 +93,9 @@ async function reserveInviteCode({
   firestore,
   spaceId,
   now,
+  expiresAt,
   makeCode,
-  attempts = 6,
+  attempts = CODE_ATTEMPTS,
 }) {
   for (let i = 0; i < attempts; i++) {
     const code = normalizeInviteCode(makeCode());
@@ -73,7 +104,7 @@ async function reserveInviteCode({
     const claimed = await firestore.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if (snap.exists) return false;
-      tx.set(ref, { spaceId, createdAt: now });
+      tx.set(ref, { spaceId, createdAt: now, expiresAt });
       return true;
     });
     if (claimed) return code;
@@ -147,13 +178,20 @@ async function createGoalSpace({
     : null;
 
   const spaceId = makeId();
+  const inviteCodeExpiresAt = now + INVITE_CODE_TTL_MS;
   // Short, human-shareable invite code (e.g. "K7P4-9M2H") — reserved via a
   // server-only goalSpaceInvites/{code} lookup so the shared string is just
   // the code, not spaceId.token. Falls back to makeId() if no makeCode is
   // injected (keeps older callers/tests working — legacy UUID codes still
   // join via the explicit spaceId+inviteCode path).
   const inviteCode = makeCode
-    ? await reserveInviteCode({ firestore, spaceId, now, makeCode })
+    ? await reserveInviteCode({
+        firestore,
+        spaceId,
+        now,
+        expiresAt: inviteCodeExpiresAt,
+        makeCode,
+      })
     : makeId();
   const batch = firestore.batch();
   batch.set(firestore.doc(`goalSpaces/${spaceId}`), {
@@ -167,6 +205,7 @@ async function createGoalSpace({
     targetDate,
     active: true,
     inviteCode,
+    inviteCodeExpiresAt,
     createdAt: now,
   });
   batch.set(
@@ -193,10 +232,10 @@ async function createGoalSpace({
     createdAt: now,
   });
   await batch.commit();
-  return { spaceId, inviteCode };
+  return { spaceId, inviteCode, inviteCodeExpiresAt };
 }
 
-/** Join via invite code — capacity + blocked-pair + idempotency. */
+/** Join via invite code — expiry + capacity + blocked-pair + idempotency. */
 async function joinGoalSpace({
   firestore,
   uid,
@@ -214,6 +253,9 @@ async function joinGoalSpace({
     // string, or a short code that maps to a space via the lookup.
     let sid = spaceId;
     let ic = inviteCode;
+    // A short code found in the lookup was made for that Circle, so when
+    // it is no longer the Circle's code it was replaced, not mistyped.
+    let viaLookup = false;
     if (
       (typeof sid !== "string" || typeof ic !== "string") &&
       typeof code === "string"
@@ -230,6 +272,7 @@ async function joinGoalSpace({
           if (look.exists && typeof look.data().spaceId === "string") {
             sid = look.data().spaceId;
             ic = norm;
+            viaLookup = true;
           }
         }
       }
@@ -247,13 +290,19 @@ async function joinGoalSpace({
     if (space.active !== true) {
       throw new GoalSpaceError("failed-precondition", "circle inactive");
     }
-    if (space.inviteCode !== ic) {
+    const current = space.inviteCode === ic;
+    if (!current && !viaLookup) {
       throw new GoalSpaceError("permission-denied", "bad invite");
     }
     const selfSnap = await tx.get(
       firestore.doc(`goalSpaces/${sid}/members/${uid}`)
     );
-    if (selfSnap.exists) return; // idempotent re-join: no-op
+    // Idempotent re-join: no-op. Before the expiry check, so a member is
+    // never told their own Circle's code has run out.
+    if (selfSnap.exists) return;
+    if (!current || now >= inviteCodeExpiresAt(space)) {
+      throw new GoalSpaceError("failed-precondition", "invite expired");
+    }
     if (space.memberCount >= (space.maxMembers ?? GOAL_SPACE_MAX_MEMBERS)) {
       throw new GoalSpaceError("failed-precondition", "circle full");
     }
@@ -283,6 +332,63 @@ async function joinGoalSpace({
       targetDate: space.targetDate ?? null,
       createdAt: now,
     });
+  });
+}
+
+/**
+ * A new invite code for a Circle, from its owner, at any time: the code
+ * it replaces stops working at once, and the new one works for
+ * INVITE_CODE_TTL_DAYS. One transaction reads the Circle, finds a free
+ * code and writes both, so a refusal leaves nothing behind.
+ *
+ * The replaced code's lookup is kept. It still names the Circle, which
+ * is how a join with it is told the code has expired rather than that
+ * it was mistyped; it lets nobody in, because joining needs the
+ * Circle's current code.
+ */
+async function renewGoalSpaceInviteCode({
+  firestore,
+  uid,
+  spaceId,
+  now,
+  makeCode,
+}) {
+  if (typeof spaceId !== "string" || !spaceId) {
+    throw new GoalSpaceError("invalid-argument", "spaceId required");
+  }
+  return firestore.runTransaction(async (tx) => {
+    const spaceRef = firestore.doc(`goalSpaces/${spaceId}`);
+    const spaceSnap = await tx.get(spaceRef);
+    if (!spaceSnap.exists) {
+      throw new GoalSpaceError("not-found", "no such circle");
+    }
+    const space = spaceSnap.data();
+    if (space.ownerId !== uid) {
+      throw new GoalSpaceError("permission-denied", "owner only");
+    }
+    if (space.active !== true) {
+      throw new GoalSpaceError("failed-precondition", "circle inactive");
+    }
+    let code = null;
+    for (let i = 0; i < CODE_ATTEMPTS && code === null; i++) {
+      const candidate = normalizeInviteCode(makeCode());
+      if (!candidate || candidate === space.inviteCode) continue;
+      const taken = await tx.get(
+        firestore.doc(`goalSpaceInvites/${candidate}`)
+      );
+      if (!taken.exists) code = candidate;
+    }
+    if (code === null) {
+      throw new GoalSpaceError("internal", "could not allocate invite code");
+    }
+    const inviteCodeExpiresAt = now + INVITE_CODE_TTL_MS;
+    tx.set(firestore.doc(`goalSpaceInvites/${code}`), {
+      spaceId,
+      createdAt: now,
+      expiresAt: inviteCodeExpiresAt,
+    });
+    tx.update(spaceRef, { inviteCode: code, inviteCodeExpiresAt });
+    return { inviteCode: code, inviteCodeExpiresAt };
   });
 }
 
@@ -342,10 +448,14 @@ module.exports = {
   // nothing pinned it AND nothing outside this file could see it.
   GOAL_SPACE_TEXT_MAX,
   GOAL_SPACE_TYPES,
+  INVITE_CODE_TTL_DAYS,
+  INVITE_CODE_TTL_MS,
   GoalSpaceError,
   assertNoBlockedPair,
+  inviteCodeExpiresAt,
   createGoalSpace,
   joinGoalSpace,
+  renewGoalSpaceInviteCode,
   leaveGoalSpace,
   removeGoalSpaceMember,
 };

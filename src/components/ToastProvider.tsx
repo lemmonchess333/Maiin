@@ -1,4 +1,5 @@
 import { Toaster } from "sonner";
+import { TOAST_DURATION_MS } from "@/lib/toastDurations";
 
 /** Clears the bottom tab bar (~64px) plus a small gap, so a toast never
  *  sits on the bar or takes its taps. */
@@ -112,16 +113,17 @@ export function ToastProvider() {
         // update prompt) made the whole nav permanently untappable on iOS.
         mobileOffset={{ bottom: ABOVE_TAB_BAR }}
         aria-live="polite"
-        // 1500ms matches the convention across the apps audited; Sonner's
-        // 4000ms default reads as slow/lingering on a fitness surface
-        // where users add multiple items in quick succession.
-        duration={1500}
+        // The shortest life a toast gets. Errors and toasts with an action
+        // stay longer, set per toast by `@/lib/toast` (sonner has no
+        // duration by kind); this covers what does not go through it, a
+        // promise's or a custom toast.
+        duration={TOAST_DURATION_MS.default}
         // Cap at 2 visible — beyond that the stack starts to obscure the
         // app behind it and feels chatty.
         visibleToasts={2}
         toastOptions={{
           style: {
-            fontSize: "14px",
+            fontSize: "0.875rem",
           },
         }}
         closeButton

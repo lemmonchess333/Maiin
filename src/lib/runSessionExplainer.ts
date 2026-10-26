@@ -131,9 +131,9 @@ export function runSessionExplainer(
 
   if (phase === "race") {
     if (type === "race") {
-      return "Race day — the whole plan has led to this. Trust the training you've done.";
+      return "The whole plan has led to race day. Trust the training you've done.";
     }
-    return "Race-week shakeout — short and conversational; there's nothing left to gain from more.";
+    return "A short, conversational shakeout for race week. There's nothing left to gain from more.";
   }
 
   if (phase === "taper") {
@@ -145,7 +145,7 @@ export function runSessionExplainer(
       return "Taper — a short tempo keeps the legs used to a comfortably hard effort while the volume drops.";
     }
     if (type === "intervals") {
-      return "Taper sharpener — fast but small, keeping the legs quick while the volume drops.";
+      return "A taper sharpener, fast but small, keeps the legs quick while the volume drops.";
     }
     if (type === "long") {
       return "Taper long run — shorter on purpose, so the training you've banked shows up fresh.";
@@ -160,7 +160,7 @@ export function runSessionExplainer(
   // Base / build.
   if (type === "long") {
     if (phase === "base") {
-      return "The week's anchor run — long-run volume ramps gradually through the base.";
+      return "The long run anchors the week, and its volume ramps gradually through the base.";
     }
     return input.racePace === "finish"
       ? "It rehearses race day on tired legs: your pace, your fuelling and your focus."
@@ -172,10 +172,10 @@ export function runSessionExplainer(
     return "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts.";
   }
   if (type === "tempo") {
-    return "Tempo — builds how long you can hold a sustained, even pace. The tempo blocks get longer through the plan.";
+    return "A tempo builds how long you can hold a sustained, even pace. The tempo blocks get longer through the plan.";
   }
   if (type === "intervals") {
-    return "Intervals — short, fast repeats raise the pace you can race at. The recovery between reps is part of the session, not a failure of it.";
+    return "Short, fast repeats raise the pace you can race at. The recovery between reps is part of the session, not a failure of it.";
   }
   // Easy family.
   if (isMediumLong) {
@@ -185,7 +185,7 @@ export function runSessionExplainer(
     return "Easy day with strides — relaxed 20-second accelerations keep leg speed awake at almost no cost. Not a hard session.";
   }
   if (phase === "base") {
-    return "Base phase — easy running now is the foundation everything later stands on.";
+    return "Easy running in the base phase is the foundation everything later stands on.";
   }
   return weekHasQuality
     ? "Easy day — it makes the quality sessions work. If it feels too easy, it's right."
