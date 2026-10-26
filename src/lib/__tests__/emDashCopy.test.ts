@@ -55,9 +55,10 @@ import { globSync } from "tinyglobby";
  * 123 once the Together copy pass took the collective card's line, the
  * founding line and the challenge card's progress lines to the middot or
  * to nothing (128 before it: passes since had lowered the count and left
- * this number where it was).
+ * this number where it was). 121 once Food's empty diary and its weekly
+ * logging focus each said their line in one sentence.
  */
-const EM_DASH_COPY_BASELINE = 123;
+const EM_DASH_COPY_BASELINE = 121;
 /** ExerciseHistory, 8, and every one of them the bare "—" placeholder
  *  rather than the construction. Lower this only against real copy. */
 const WORST_FILE_BASELINE = 8;
@@ -71,9 +72,12 @@ const WORST_FILE_BASELINE = 8;
  * high."). The rest stayed: where every line of a set opened the same way,
  * a third reshaped is enough to break the cadence without making a set
  * that reads as nine rewrites. 327 is where the count already stood when
- * the Together copy pass found this number four above it.
+ * the Together copy pass found this number four above it. 322 once the
+ * performance verdict's five supporting lines took a full stop ("Quiet
+ * week. Log when you're back"): they follow the verb's own full stop, so
+ * a dash was a second rhythm inside one line.
  */
-const EM_DASH_TS_COPY_BASELINE = 327;
+const EM_DASH_TS_COPY_BASELINE = 322;
 
 const SRC = join(process.cwd(), "src");
 

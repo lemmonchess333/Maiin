@@ -8,18 +8,23 @@
  * all; others hand-rolled `role="radio"` inconsistently). See
  * docs/adr/0003-ui-primitives-contract.md.
  *
- * Visual: the canonical iOS "track" look — a `bg-muted` track with the
- * selected segment lifted to a white `bg-card` card (`shadow-sm`),
- * unselected segments are plain muted-foreground text. This is the ONE
- * segmented-control language across the app (Social tabs/sub-tabs/sort,
- * Analytics section tabs + time range, plus the programme/run pickers);
- * the earlier per-screen "solid brand-fill pill" + scrolling-chip
- * variants were consolidated onto this in the Social-uniformity pass.
- * `tone="running"` tints the SELECTED segment's label coral so the
- * sport-coding survives the neutral track (lifting/brand keeps neutral
- * foreground text — the most iOS-faithful default).
- * `layout="wrap"` drops the shared track and renders individual
- * white-on-muted pills (a contiguous track can't wrap cleanly).
+ * Visual: the iOS "track" look as iOS draws it in dark mode — a
+ * `bg-muted` track, the selected segment a filled pill under a white
+ * label with no outline, unselected segments plain muted-foreground text.
+ * This is the ONE segmented-control language across the app (Social
+ * tabs/sub-tabs/sort, Analytics section tabs + time range, plus the
+ * programme/run pickers).
+ *
+ * The fill carries the selected state, so it is held to WCAG 1.4.11's
+ * 3:1 against the track it sits in, and its label to 4.5:1 on it
+ * (controlBoundaries.test.ts measures both themes). The neutral fill is
+ * `--segment-selected`; the sport tones take their sport's white-text
+ * fill step (`--running-fill` coral, `--lifting-fill` purple), so the
+ * Lift/Run switch keeps its sport coding. A coloured LABEL on a grey fill
+ * cannot do that job: any fill bright enough to clear 3:1 on the dark
+ * track leaves the -strong labels near 2:1 on it.
+ * `layout="wrap"` drops the shared track and renders individual pills,
+ * muted when unselected (a contiguous track can't wrap cleanly).
  *
  * NOT for the tall multi-part "option card" pickers (plan selectors,
  * report categories) — those are a different control and are already
@@ -56,11 +61,13 @@ export interface SegmentedControlProps<T extends string | number> {
   onReselect?: (value: T) => void;
   /** Required accessible name for the radiogroup. */
   ariaLabel: string;
-  /** Selected-label tint. `brand` = neutral foreground (default),
-   *  `running` = coral, `lifting` = brand purple, `nutrition` = food
-   *  orange. The sport tones colour the selected segment's label +
-   *  (currentColor) icon so the Programme Lift/Run switch reads its sport
-   *  identity symmetrically; `nutrition` exists for `emphasis="solid"`. */
+  /** Selected-segment colour. `brand` = the neutral grey fill (default),
+   *  `running` = the coral fill, `lifting` = the purple fill, each under
+   *  a white label and (currentColor) icon, so the Programme Lift/Run
+   *  switch reads its sport identity symmetrically. `nutrition` = the
+   *  food orange fill, and exists for `emphasis="solid"`; on the track it
+   *  takes the neutral fill, because `--nutrition-fill` is under 3:1
+   *  against the dark track. */
   tone?: "brand" | "running" | "lifting" | "nutrition";
   /** `track` = the iOS track look (default). `solid` = rounded-full pills
    *  with the SELECTED one filled in the tone colour. Solid is for a
@@ -78,8 +85,8 @@ export interface SegmentedControlProps<T extends string | number> {
 }
 
 // `scale-[0.97]` sets the `scale` property, which transition-colors leaves
-// out, so the press snapped. The default list eases it with the colours and
-// the selected card's shadow, at DESIGN_GUIDE §8's 150ms curve.
+// out, so the press would snap. The default list eases it with the
+// colours, at DESIGN_GUIDE §8's 150ms curve.
 const OPTION_BASE = [
   "min-h-[44px] rounded-lg text-sm font-semibold",
   "active:scale-[0.97] motion-safe:transition",
@@ -198,9 +205,6 @@ function SegmentedControl<T extends string | number>({
                     // ("Analytics PRs Badges" on a 320px phone).
                     "flex-1 min-w-0 truncate"
                   : "px-4",
-              // Every option carries a border so the selected pill can draw
-              // a 3:1 edge without shifting the row.
-              emphasis !== "solid" && "border",
               emphasis === "solid"
                 ? selected
                   ? cn(
@@ -210,20 +214,20 @@ function SegmentedControl<T extends string | number>({
                   : "border-border/80 bg-card text-muted-foreground hover:bg-muted/60"
                 : selected
                   ? cn(
-                      // The card pill on the muted track measures ~1:1 in
-                      // dark, so the selected state is carried by its edge.
-                      "bg-card shadow-sm border-muted-foreground/80",
+                      // The fill is the selected state: 3:1 or more
+                      // against the track, white 4.5:1 or more on it.
+                      "text-white",
                       tone === "running"
-                        ? "text-running-strong"
+                        ? "bg-running-fill"
                         : tone === "lifting"
-                          ? "text-lifting-strong"
-                          : "text-foreground"
+                          ? "bg-lifting-fill"
+                          : "bg-segment-selected"
                     )
                   : // Unselected: transparent on the shared track (fill), or
                     // an individual muted pill when wrapped (no track behind).
                     layout === "wrap"
-                    ? "border-transparent bg-muted text-muted-foreground"
-                    : "border-transparent text-muted-foreground"
+                    ? "bg-muted text-muted-foreground"
+                    : "text-muted-foreground"
             )}
           >
             {opt.label}

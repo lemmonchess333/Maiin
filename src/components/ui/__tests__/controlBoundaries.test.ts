@@ -7,6 +7,11 @@
  * 3:1 on every surface they sit on, in both themes. The source half pins
  * each control to that boundary, so a revert to the hairline `--border`
  * (1.1–1.3:1) or a faint grip fails here rather than in a sweep.
+ *
+ * Two controls carry their state or their box another way, and are
+ * measured on their own terms below: the segmented control's selected
+ * segment is a filled pill (3:1 against its track), and the dark field is
+ * a filled box with a hairline rim.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -82,38 +87,35 @@ describe("the shared control boundary measures 3:1", () => {
 describe("controls draw that boundary", () => {
   it("the shared class strings name it", () => {
     expect(FIELD_EDGE).toContain("border-muted-foreground/80");
+    // Dark rests on the hairline, as the field primitive does.
+    expect(FIELD_EDGE).toContain("dark:border-border");
     expect(SECONDARY_ON_CARD_EDGE).toContain("border-muted-foreground/80");
     expect(FIELD_FOCUS_RING).toContain("focus-visible:outline-primary!");
   });
 
-  it("the field primitive's edge is the boundary, at rest and on a tapped select", () => {
-    // `.ds-input` fills with the card, so on a card its edge is all that
-    // marks the box. Every text field, textarea and select draws it.
+  it("the field primitive draws its resting edge and fill from the input tokens", () => {
+    // Every text field, textarea and select, at rest and on a tapped
+    // select. What the tokens measure is in "the field primitive at rest".
     const css = read("src/styles/components.css").replace(
       /\/\*[\s\S]*?\*\//g,
       ""
     );
     const rest = /select\.ds-input\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
     expect(rest).toMatch(
-      /border:\s*1px solid hsl\(var\(--muted-foreground\) \/ 0\.8\)/
+      /border:\s*1px solid var\(--ds-color-input-border-rest\)/
     );
+    expect(rest).toMatch(/background:\s*var\(--ds-color-input-fill-rest\)/);
     const tapped =
       css.split(".ds-input.ds-input-pointer-focus:focus")[1]?.split("}")[0] ??
       "";
     expect(tapped).toMatch(
-      /border-color:\s*hsl\(var\(--muted-foreground\) \/ 0\.8\)/
+      /border-color:\s*var\(--ds-color-input-border-rest\)/
     );
   });
 
   it("Toggle's off track edge is the boundary in light", () => {
     expect(read("src/components/ui/Toggle.tsx")).toMatch(
       /bg-muted border border-muted-foreground\/80 dark:border-border/
-    );
-  });
-
-  it("SegmentedControl's selected pill carries an edge on the track", () => {
-    expect(read("src/components/ui/SegmentedControl.tsx")).toContain(
-      '"bg-card shadow-sm border-muted-foreground/80"'
     );
   });
 
@@ -155,5 +157,159 @@ describe("controls draw that boundary", () => {
     expect(src).toContain("LABEL_HIDE_BELOW = 0.45");
     expect(src).toContain("LABEL_MIN_OPACITY = 0.6");
     expect(src).toContain("Math.max(LABEL_MIN_OPACITY, mark.edgeFade)");
+  });
+});
+
+/* The selected segment is a filled pill under a white label, with no
+   outline. The fill is the state indicator, so it is what clears 3:1, and
+   against everything it can sit beside: the --muted track, Train's
+   lighter `bg-muted/50` track over the page, and (wrapped, no track) the
+   card, the page and the muted unselected pills. */
+describe("the selected segment's fill is its state, at 3:1", () => {
+  const WHITE: Rgb = [1, 1, 1];
+  const FILLS = ["segment-selected", "running-fill", "lifting-fill"];
+  const neighbours = (block: string): [string, Rgb][] => [
+    ["the --muted track", readHsl(block, "muted")],
+    [
+      "Train's muted/50 track",
+      over(readHsl(block, "muted"), readHsl(block, "background"), 0.5),
+    ],
+    ["the card", readHsl(block, "card")],
+    ["the page", readHsl(block, "background")],
+  ];
+
+  for (const [theme, block] of Object.entries(THEMES)) {
+    for (const fill of FILLS) {
+      it(`--${fill} clears 3:1 beside the track and its surfaces, white 4.5:1 on it (${theme})`, () => {
+        const f = readHsl(block, fill);
+        for (const [what, next] of neighbours(block)) {
+          expect(
+            ratio(f, next),
+            `--${fill} on ${what} (${theme})`
+          ).toBeGreaterThanOrEqual(3);
+        }
+        expect(ratio(WHITE, f)).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+  }
+
+  it("a sport label on the grey fill misses AA (why the sport tones fill)", () => {
+    // Any neutral fill bright enough for 3:1 on the dark track leaves the
+    // -strong text steps near 2:1 on it, so coral and purple ride in the
+    // fill rather than the label.
+    for (const block of Object.values(THEMES)) {
+      const grey = readHsl(block, "segment-selected");
+      for (const label of ["running-strong", "lifting-strong"]) {
+        expect(ratio(readHsl(block, label), grey)).toBeLessThan(4.5);
+      }
+    }
+  });
+
+  it("the card pill it replaces was ~1:1 on the track (why the fill)", () => {
+    for (const block of Object.values(THEMES)) {
+      expect(
+        ratio(readHsl(block, "card"), readHsl(block, "muted"))
+      ).toBeLessThan(1.2);
+    }
+  });
+
+  it("SegmentedControl's selected segment is the fill, under white, with no edge", () => {
+    const src = read("src/components/ui/SegmentedControl.tsx");
+    for (const cls of [
+      '"bg-segment-selected"',
+      '"bg-running-fill"',
+      '"bg-lifting-fill"',
+    ])
+      expect(src).toContain(cls);
+    expect(src).toMatch(/"text-white",\s*tone === "running"/);
+    expect(src).not.toContain("border-muted-foreground");
+    expect(src).not.toContain("bg-card shadow-sm");
+  });
+});
+
+/* `.ds-input` at rest, from the tokens it really paints (tokens.css,
+   "Input states"), measured against the theme tokens in index.css.
+
+   Light keeps the shared 3:1 boundary: a light fill parts from a white
+   card at about 1.1:1, so there the edge has to mark the box.
+
+   Dark is a filled box on --muted with the --border hairline, and that
+   is a deliberate step under the 3:1 boundary. The 80% grey edge it
+   replaces measured 4.9–5.2:1 on the dark page and card, and on the
+   phone it read as a white outline round every field (owner's report).
+   WCAG 1.4.11 asks for a 3:1 boundary only where nothing else identifies
+   the input (Understanding 1.4.11, "Boundaries", and its failing example
+   is a field with no label); every field here has a label or a
+   placeholder, and the placeholder is held to AA on the fill below and in
+   tokenContrast.test.ts. A 3:1 edge at the minimum (muted-foreground at
+   58%) was tried and still read as an outline. Focus turns the edge
+   primary, 3:1 or more against the page and the card. */
+describe("the field primitive at rest", () => {
+  const TOKENS = read("src/styles/tokens.css");
+  const tokenDarkAt = TOKENS.indexOf(".dark {");
+  const TOKEN_THEMES = {
+    light: TOKENS.slice(0, tokenDarkAt),
+    dark: TOKENS.slice(tokenDarkAt),
+  };
+  /** `--ds-color-input-<name>-rest: hsl(var(--token) [/ alpha])`. */
+  function restToken(theme: "light" | "dark", name: "fill" | "border") {
+    const m = new RegExp(
+      `--ds-color-input-${name}-rest:\\s*hsl\\(var\\(--([a-z-]+)\\)(?:\\s*\\/\\s*([\\d.]+))?\\)`
+    ).exec(TOKEN_THEMES[theme]);
+    if (!m) throw new Error(`--ds-color-input-${name}-rest not in ${theme}`);
+    return { token: m[1], alpha: m[2] ? Number(m[2]) : 1 };
+  }
+  /** The field as painted: its fill, and its edge laid over that fill. */
+  function field(theme: "light" | "dark") {
+    const block = THEMES[theme];
+    const fillT = restToken(theme, "fill");
+    const edgeT = restToken(theme, "border");
+    const fill = readHsl(block, fillT.token);
+    const edge = over(readHsl(block, edgeT.token), fill, edgeT.alpha);
+    return { block, fill, edge };
+  }
+  const AROUND = ["card", "background"];
+
+  it("light: the edge is the shared boundary, 3:1 on the card and the page", () => {
+    const { block, edge } = field("light");
+    for (const surface of AROUND) {
+      expect(
+        ratio(edge, readHsl(block, surface)),
+        `light field edge on --${surface}`
+      ).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("dark: no bright edge; a fill a step up from the card and the page", () => {
+    const { block, fill, edge } = field("dark");
+    for (const surface of AROUND) {
+      const s = readHsl(block, surface);
+      expect(ratio(edge, s), `dark field edge on --${surface}`).toBeLessThan(2);
+      expect(lum(fill), `dark field fill above --${surface}`).toBeGreaterThan(
+        lum(s)
+      );
+    }
+  });
+
+  it.each(["light", "dark"] as const)(
+    "the placeholder and the typed text clear AA on the fill (%s)",
+    (theme) => {
+      const { block, fill } = field(theme);
+      expect(
+        ratio(readHsl(block, "muted-foreground"), fill)
+      ).toBeGreaterThanOrEqual(4.5);
+      expect(ratio(readHsl(block, "foreground"), fill)).toBeGreaterThanOrEqual(
+        4.5
+      );
+    }
+  );
+
+  it("dark: focus turns the edge primary, 3:1 on the page and the card", () => {
+    const block = THEMES.dark;
+    for (const surface of AROUND) {
+      expect(
+        ratio(readHsl(block, "primary"), readHsl(block, surface))
+      ).toBeGreaterThanOrEqual(3);
+    }
   });
 });

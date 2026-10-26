@@ -59,9 +59,12 @@ const BASE_CLASSES = [
 export const SECONDARY_ON_CARD_EDGE =
   "border border-muted-foreground/80 dark:border-transparent";
 
-/** The edge a field takes so its box reads 3:1 against the card in both
- *  themes (muted-foreground/80: 3.3:1 light, 4.5:1 dark on muted). */
-export const FIELD_EDGE = "border border-muted-foreground/80";
+/** The edge a field takes. In light its box reads 3:1 against the card
+ *  (muted-foreground/80: 3.3:1). In dark it is the hairline `.ds-input`
+ *  rests on: the muted fill shows the box, and the field's label or
+ *  figure says what it is, so no bright outline is drawn. */
+export const FIELD_EDGE =
+  "border border-muted-foreground/80 dark:border-border";
 
 /** A field's keyboard focus, the house outline (2px primary, offset 2).
  *  The global input `:focus` rule clears outlines unlayered, so these

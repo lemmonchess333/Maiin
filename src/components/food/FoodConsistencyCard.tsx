@@ -196,7 +196,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
               Set a weekly logging focus
             </p>
             <p className="text-xs text-muted-foreground">
-              One small, realistic commitment — private by default.
+              A small goal for the week, kept private.
             </p>
           </div>
         </button>
