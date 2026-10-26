@@ -180,11 +180,12 @@ describe("Home compact tiles share one numeral tier", () => {
        three rows — icon and label, the figure, a meta line — and water's
        one control is a disc at the end of its label row, not on row 3.
        Two components, so no per-file check could see the peer
-       relationship. */
+       relationship. A day with water: on an empty day the meta line
+       holds its place unseen, as the size buttons name the amounts. */
     const { container: water } = render(
       <WaterCard
         compact
-        ml={0}
+        ml={500}
         targetMl={2000}
         servingMl={250}
         onLog={vi.fn()}

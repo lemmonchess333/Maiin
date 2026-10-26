@@ -407,7 +407,13 @@ export default function WaterCard({
             {/* The meta line, where Weight keeps its date. At rest it
                 names the step: `servingMl` follows the last container
                 logged, so a sighted user must be able to see whether the
-                plus means 250 ml or 750.
+                plus means 250 ml or 750. On an empty day it is unseen and
+                unread: the two size buttons below already name the
+                amounts, and the line said the same thing a third time. It
+                still holds its place there, wrapped exactly as it would
+                be, because on a narrow phone the size buttons stack and
+                this tile is the taller of the pair, so a missing line
+                would shrink the row and the glass with it.
 
                 For a few seconds after a tap it becomes the way back
                 instead. That job belonged to a toast for one release,
@@ -425,7 +431,8 @@ export default function WaterCard({
                 two cannot disagree — no captured amount to go stale. */}
             {!showUndo && (
               <p
-                className="text-micro mt-1"
+                aria-hidden={hasWater ? undefined : true}
+                className={cn("text-micro mt-1", !hasWater && "invisible")}
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 Tap + for {formatWaterVolume(servingMl)}
