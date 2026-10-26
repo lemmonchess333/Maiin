@@ -447,15 +447,15 @@ describe("runTitle", () => {
 describe("noSplitsReason", () => {
   it("measures a miles reader's run against a mile, the lap they are cut in", () => {
     // 1.2 km crosses a kilometre and no mile. A miles reader's laps are
-    // miles, so there is not one whole lap to show, and "No splits yet"
+    // miles, so there is not one whole lap to show, and "No splits for this run"
     // would suggest a split had gone missing.
     expect(noSplitsReason(true, 1200, "mi")).toBe("Under a mile");
-    expect(noSplitsReason(true, 1700, "mi")).toBe("No splits yet");
+    expect(noSplitsReason(true, 1700, "mi")).toBe("No splits for this run");
   });
 
   it("measures a kilometre reader's run against a kilometre", () => {
     expect(noSplitsReason(true, 800, "km")).toBe("Under 1 km");
-    expect(noSplitsReason(true, 1200, "km")).toBe("No splits yet");
+    expect(noSplitsReason(true, 1200, "km")).toBe("No splits for this run");
   });
 
   it("says a run with no route has none to cut", () => {

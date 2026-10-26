@@ -374,6 +374,20 @@ behaviour.
   (`role="status"`), `warning` = amber 8% tint (`role="alert"`). **There is no
   `error` variant** — transient errors go through **sonner toasts**, never a
   banner.
+- **`SegmentedControl`**: the one single-select pill group (Train's
+  Lift/Run, Social's Together/Feed, Analytics' tabs and ranges). The
+  selected segment is a filled pill under a white label, with no outline,
+  as iOS draws its dark-mode control: grey (`--segment-selected`) by
+  default, coral (`--running-fill`) or purple (`--lifting-fill`) for
+  `tone="running"` / `"lifting"`. The fill is the selected state, so it
+  clears 3:1 against the track in both themes and its label 4.5:1
+  (`controlBoundaries.test.ts`). A coloured label on the grey cannot keep
+  the sport coding at AA, which is why the sport rides in the fill.
+  `emphasis="solid"` is the Food meal pills (§3f).
+- **`.ds-input`**: every text field, textarea and select. Light: a white
+  box with the 3:1 control edge. Dark: a filled box on `--muted` with the
+  `--border` hairline, no bright outline; its label or placeholder names
+  it. Focus turns the edge primary, or food orange in the Food composer.
 - **`BottomSheet`** (vaul): the standard editing surface (exercises, weight
   logging). Sheets for editing, dialogs for confirmation.
 - **`ConfirmDialog`** for destructive confirmations.
@@ -643,7 +657,7 @@ inventing._
 
 **The live run screen (owner call, 2026-10-12, the run screen pass):** its accent is the run's coral: the timer, the km bar, the best lap, Resume, the step card, the route and the position dot on the live map, and the GPS search. It was teal, water's colour, from before DS3. Teal stays only as the first step of the heart-rate zone scale, which is a scale, not the accent. `runScreenCoral.test.ts` holds it.
 
-**The rules sheet (owner lock Lift4 (3), 2026-10-05):** "Why this session" keeps its place on all three surfaces, but opens one sheet rather than a disclosure: the session's reasons first, then "How your plan works", the plan's rules for this person (`liftRules.ts`, its numbers read from the engine's constants), ending on "Stuck on a lift? A variation often gets it moving." Train also has an ⓘ beside the week label that opens the same rules on any day. The sheet loads when first opened (`LiftRulesSheet`). "Why this run" stays a disclosure.
+**The rules sheet (owner lock Lift4 (3), 2026-10-05):** "Why this session" keeps its place on all three surfaces, but opens one sheet rather than a disclosure: the session's reasons first, then "How your plan works", the plan's rules for this person (`liftRules.ts`, its numbers read from the engine's constants), ending on "Stuck on a lift? A variation often gets it moving." Train had an ⓘ beside the week label too, opening the same rules on any day; the owner took it out on 2026-10-26 ("there's two and it's not needed"), so "Why this session" is Train's one way in. The sheet loads when first opened (`LiftRulesSheet`). "Why this run" stays a disclosure.
 
 **Daily logging refinement (user direction, 2026-09-09):** The Food calorie
 summary may use a subtle, static halo made from existing theme tokens to
@@ -667,7 +681,7 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
 - **Aesthetic:** Dark is the DEFAULT theme — a deep, cool neutral: page #0E0E11, cards #17171B, raised #212127, text #F4F4F6 (DS3, 2026-09-27; it was #121214 / #1A1A1F under DS2). It is what new users and the signed-out/Login state see. There is no ambient glow: DS3 retired the brand-purple wash that sat at the top of every signed-in page (`AmbientGlow`), so colour belongs to content.
 - **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page had its own pass. The owner kept Food's layout and its one timeline (Food8) on 2026-09-28, and chose two changes from the mockups: a week strip above the calorie card (`FoodWeekStrip`, Home's strip with each day a ring of calories eaten against that day's target), and the calorie ring in the food orange instead of purple. On 2026-09-29 Home's food card took the Food page's own ring and macro tiles, smaller and side by side (`size="compact"` on `CalorieRing` and `MacroColumn`), with the one left/logged switch shared: the two screens draw the same object, so change it in one place. The same day the ring went quiet: its number is the text colour, "kcal left" / "kcal logged" is plain grey text under it (no tag, no swap arrow), and the arc is one solid orange on a grey groove with no gradient, track shadow or pulsing glow; Home's macros sit on the card with no box of their own. The second view says "logged", not "eaten": the number counts what is in the diary, not what the person ate. The stored mode key is still `"eaten"`. Read the DS3 row before re-deciding any of it.
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
-- **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as a full background: its only fills are the primary button and the auth logo, and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
+- **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as a full background: its only fills are the primary button, the auth logo and, as `--lifting-fill` under a white label, the selected segment of a lifting `SegmentedControl` (§7), and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
 - **Logo:** a hexagon with rounded corners and an upward chevron cut out of it, white on a purple field that lightens toward the top on the app icon, and brand purple in the app. The owner chose this refinement of the bake-off mark on 2026-10-01 (`docs/visual-audit/bakeoff/DECISION.md`, decision 4). It is the app icon (with dark and tinted versions for iOS's home-screen modes), the sign-in screen's logo (the icon itself), and the launch image (the hexagon alone). Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`), so "Today" keeps the left edge the cards below it start on. The geometry lives in `src/lib/brandMark.ts` and `src/assets/brand/app-icon.svg`, held together by `BrandMark.test.tsx`; after changing it, run `node scripts/art/gen-app-icon.mjs` (every app and web icon) and `node scripts/art/gen-splash.mjs` (the launch image).
 - **Launch animation:** `LaunchSplash` takes over from the launch image (index.html paints the same hexagon, `#boot-splash`, until the bundle runs). Once its first frame is up it takes the native launch image down (`nativeLaunchImage.ts`; the two frames are the same), so the rise is seen and not played underneath it. The chevron rises into the hexagon, cut out so it shows whatever is behind it; if the app is still loading a beat later, the mark breathes until it leaves. Once the app is ready (on Home, once Home's header mark holds still and Home has drawn today's session and food, `data-page-ready`, waited for at most a second) the mark flies into Home's header mark on a soft arc that leaves upward, on a spring with no bounce, as the page shows; anywhere but Home it lifts a little as the overlay fades. Every movement is a transform or an opacity, played by the Web Animations API on a layer of its own, so it keeps its frames while the app starts underneath. Reduce Motion: the chevron fades in where it stays, nothing breathes, and the overlay fades. Its ground is the launch colour in both themes (`--launch`, the dark page), as the launch image is, so a light-mode user's page turns light only as it is revealed, never under the logo. It never shows under automation (`navigator.webdriver`), so specs and captures see the app as before. The four copies of the first frame (launch PNG, index.html, the overlay's CSS size, `brandMark.ts`) are pinned together by `launchSplash.test.ts`.
@@ -745,8 +759,10 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
 `src/lib/runProgrammeViewModel.ts`):
 
 - **`RaceCockpitCard`** — race-prep identity card: readable distance heading
-  (Marathon / Half Marathon / 10K / 5K), target date, days-out countdown,
-  week N of M, current phase, and a phase rail. The rail reflects the REAL
+  (Marathon / Half Marathon / 10K / 5K), one date line ("28 Dec 2026 · 63
+  days out · week 1 of 10"), "Edit run plan" at the top right, and a phase
+  rail. There are no Week or Phase tiles: the date line carries the week,
+  the rail the phase. The rail reflects the REAL
   engine phases (`getPhaseForWeek`): **Base · Build · Taper · Race** — no
   invented "Peak" segment, so the active highlight always maps to a phase
   the scheduler can emit. Renders ONLY in the race-goal overlay.
@@ -754,7 +770,21 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   (`RaceWeeksAhead`, R23 in Pgm8, 2026-10-11): one row a week to race
   week, each week's long run and quality sessions by name and "Lighter
   week" on a step-back week, with no days, no easy runs and no base, build
-  or peak (E3a). It is worked out when opened.
+  or peak (E3a). It is worked out when opened. Below it, quiet neutral
+  rows (a muted fill, an icon, a chevron, 44px): Adjust this week (not in
+  recovery or after the race), Train together, and Race community when
+  the goal is bound to a race space. A Circle and a race space are social,
+  so their rows are neutral, never a coral button.
+- **One way into each (owner, 2026-10-26).** The owner, on the Run tab
+  and Settings → Run plan: "edit plan also appears as I edit plan and
+  adjust". So the Run tab offers each once. With a race card on screen,
+  its "Edit run plan" is the way into `/settings/run-plan` and its Adjust
+  this week row the way into the week's sheet; the tab's footer "Edit run
+  plan" shows only when there is no race card (a free runner, or a race
+  plan that is over or recovering). Settings → Run plan no longer has an
+  Adjust this week row. This changes Run13 (1), which put the sheet's
+  entry in both the cockpit and `/settings/run-plan`; the plan file's
+  Run13 row is updated on its own lock branch.
 - **`SessionCommandCard`** — the "what's next" command surface. Eyebrow +
   title (the card's one big line, H2) + one quiet meta line + a single
   primary action (its own control, NOT the whole card) + an overflow that
@@ -765,7 +795,26 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   on Home's cards: a lift day's muscles (`figure`), or a run's type in a
   tile (`icon`, from `runTemplateIcon`); the halo went with the app's
   other glows. A free runner's Run tab leads with the same card ("Start a
-  run" over "Pick your pace today"). Train's day list below it draws each
+  run" over "Pick your pace today").
+- **Run and Lift pick the day the same way (owner, 2026-10-26).** The
+  owner: "the lifting and running are very different for selecting the
+  current day for example start exercise but then for run its a lot
+  smaller and looks weird", and left the answer to the review ("you
+  figure it out"). So every Run tab state is a `SessionCommandCard`, the
+  Lift tab's size. The tab opens on today's run, or, when today has none
+  to start, on the week's next one ("Up next · Tue 27 Oct"), as the Lift
+  tab opens on its next session; the week strip still rings today
+  (`defaultRunDayKey`). Runs stay date-pinned (ADR-0002), so there is no
+  Make this next. A day with no run to start is the same card: its date
+  as the eyebrow, "Rest day" or "Lift day" as the title, and Start free
+  run. Today's run says "Start run" and goes straight into the run
+  (`?start=1`), as the Lift tab's Start begins its workout; another day's
+  says "View run" and opens the run's own card. The run card's meta is
+  the dose, the pace when there is one, and the zone: "30 min · Z2
+  112–130 bpm". That changes Run21 (1)'s "Z2 · Easy" on this card only:
+  the feel line just above it starts with the effort's name, and the
+  day's sheet keeps "Z2 · Easy · 112–130 bpm". A tomorrow's run with
+  none before it is "Up next", not "Tomorrow". Train's day list below it draws each
   exercise through `ExerciseRowSummary` (`ExerciseThumb`: the cut-out
   drawing, else the category's muscles, else a dumbbell), and Train shows
   one advice notice at a time (`programNotices`).
@@ -792,7 +841,10 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
 Locked model (Run9a): the Run surface is **two states only** — freeform
 substrate + optional race-goal overlay (`resolveRunPlanSurface`). There is
 NO user-facing freeform/structured/race_prep toggle and no mode chips. Do
-not reintroduce structured mode or structured-mode transitions.
+not reintroduce structured mode or structured-mode transitions. Settings →
+Run plan asks the one question the model has, whether there is a race:
+a coral `SegmentedControl`, "No race | Training for a race", the same
+control as the race's Distance. It never names the stored mode.
 
 Constraints these primitives must keep:
 

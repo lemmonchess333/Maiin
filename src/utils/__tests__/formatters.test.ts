@@ -12,6 +12,8 @@ import {
   formatDayMonthLong,
   formatDayMonthYearLong,
   formatWeekdayDayMonthYear,
+  formatWeekday,
+  formatMonth,
   formatDuration,
   formatSigned,
   withSign,
@@ -208,6 +210,11 @@ describe("the long date forms", () => {
 
   it("put the year after the weekday form with no comma", () => {
     expect(formatWeekdayDayMonthYear(d)).toBe("Saturday 22 August 2026");
+  });
+
+  it("name the weekday and the month alone, in full", () => {
+    expect(formatWeekday(d)).toBe("Saturday");
+    expect(formatMonth(d)).toBe("August");
   });
 });
 

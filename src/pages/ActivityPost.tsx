@@ -5,7 +5,8 @@
  * The notification tray opens it for props and a comment on your session:
  * the post is the thing the notice is about, and its comments are where
  * you answer. `?comments=1` opens the comments at once, for a comment
- * notice.
+ * notice. A feed card's "+N more" opens it too: here a lift lists every
+ * exercise, where the card lists three.
  *
  * The post is read as anyone reads it, so the rules decide: a post that
  * was deleted, or one the viewer can no longer see, is refused rather than
@@ -144,7 +145,11 @@ function ActivityPostPage({
           }}
         />
       ) : read.status === "ready" && (blocksReady || authorId === uid) ? (
-        <ActivityCard feedItem={read.item} openComments={openComments} />
+        <ActivityCard
+          feedItem={read.item}
+          openComments={openComments}
+          allExercises
+        />
       ) : (
         <ActivityCardSkeleton />
       )}

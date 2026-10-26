@@ -110,7 +110,7 @@ for (const budget of [null, 30] as const) {
           animations: "disabled",
         });
       }
-      await page.getByRole("radio", { name: /Race prep/ }).click();
+      await page.getByRole("radio", { name: /Training for a race/ }).click();
       await page
         .getByRole("button", { name: "Add starting point", exact: true })
         .click();

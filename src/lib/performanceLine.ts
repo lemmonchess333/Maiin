@@ -100,7 +100,7 @@ const runningAbove = (s: PerformanceSignals) =>
  */
 export function getEstablishingLine(signals: PerformanceSignals): string {
   if (signals.daysSinceLastTraining > 7)
-    return "Re-engaging — log a session to refresh";
+    return "Re-engaging. Log a session to refresh";
   return (signals.lifetimeWeeks ?? 0) <= 1
     ? "Establishing your week"
     : "Settling in";
@@ -110,8 +110,8 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
   switch (state) {
     case "backing-off":
       if (signals.recoveryWeak)
-        return "Recovery score is low — ease off this week";
-      return "Load is high — ease off this week";
+        return "Recovery score is low. Ease off this week";
+      return "Load is high. Ease off this week";
 
     case "sharpening":
       if (signals.bothLoadsStrong)
@@ -149,8 +149,8 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
     case "recovering":
       // Recently active recovery vs lapsed/sick gap
       if (signals.daysSinceLastTraining > 7)
-        return "Quiet week — log when you're back";
-      return "Light week — take it easy";
+        return "Quiet week. Log when you're back";
+      return "Light week. Take it easy";
   }
 }
 

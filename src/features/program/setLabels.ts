@@ -25,7 +25,8 @@ export const SET_TYPE_ORDER: readonly SetType[] = [
   "failure",
 ];
 
-/** The set type menu: what each type is called and what it does here. */
+/** The set type menu: what each type is called and what it does here,
+ *  in one line each. */
 export const SET_TYPE_COPY: Record<
   SetType,
   { name: string; letter: string; detail: string }
@@ -33,25 +34,22 @@ export const SET_TYPE_COPY: Record<
   working: {
     name: "Working set",
     letter: "",
-    detail:
-      "A normal set. It counts toward your volume and your bests, and sets your next weights.",
+    detail: "Counts toward your bests and next weights.",
   },
   warmup: {
     name: "Warm-up",
     letter: "W",
-    detail:
-      "A lighter set before your working sets. Optional, and not saved with your workout.",
+    detail: "Lighter and optional. It's not saved.",
   },
   dropset: {
     name: "Drop set",
     letter: "D",
-    detail:
-      "Straight after a set, with less weight and no rest. Counts toward your volume, not your next weights.",
+    detail: "Less weight, no rest, not your next weights.",
   },
   failure: {
     name: "To failure",
     letter: "F",
-    detail: "As many reps as you can. Log the last rep you finished.",
+    detail: "As many reps as you can.",
   },
 };
 

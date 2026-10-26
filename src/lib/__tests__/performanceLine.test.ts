@@ -90,12 +90,12 @@ describe("getLine — backing-off state", () => {
   it("recoveryWeak signal: names the recovery score", () => {
     expect(
       getLine("backing-off", { ...ZERO_SIGNALS, recoveryWeak: true })
-    ).toBe("Recovery score is low — ease off this week");
+    ).toBe("Recovery score is low. Ease off this week");
   });
 
   it("no recoveryWeak: the load", () => {
     expect(getLine("backing-off", ZERO_SIGNALS)).toBe(
-      "Load is high — ease off this week"
+      "Load is high. Ease off this week"
     );
   });
 });
@@ -183,19 +183,19 @@ describe("getLine — building state", () => {
 });
 
 describe("getLine — recovering state", () => {
-  it("daysSinceLastTraining > 7: 'Quiet week — log when you're back'", () => {
+  it("daysSinceLastTraining > 7: 'Quiet week. Log when you're back'", () => {
     expect(
       getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 10 })
-    ).toBe("Quiet week — log when you're back");
+    ).toBe("Quiet week. Log when you're back");
   });
 
-  it("daysSinceLastTraining <= 7: 'Light week — take it easy'", () => {
+  it("daysSinceLastTraining <= 7: 'Light week. Take it easy'", () => {
     expect(
       getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 7 })
-    ).toBe("Light week — take it easy");
+    ).toBe("Light week. Take it easy");
     expect(
       getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 0 })
-    ).toBe("Light week — take it easy");
+    ).toBe("Light week. Take it easy");
   });
 });
 
@@ -282,6 +282,30 @@ describe("getEstablishingLine — while the baseline forms", () => {
   it("asks for a session after more than a week off", () => {
     expect(
       getEstablishingLine({ ...ZERO_SIGNALS, daysSinceLastTraining: 9 })
-    ).toBe("Re-engaging — log a session to refresh");
+    ).toBe("Re-engaging. Log a session to refresh");
+  });
+});
+
+describe("the supporting line's shape", () => {
+  it("joins two statements with a full stop, never an em dash", () => {
+    /* It renders after the verb ("Recovering. Quiet week. Log when you're
+       back"), so a dash read as a second rhythm in the same sentence. */
+    const variants: PerformanceSignals[] = [
+      ZERO_SIGNALS,
+      { ...ZERO_SIGNALS, daysSinceLastTraining: 9 },
+      { ...ZERO_SIGNALS, recoveryWeak: true },
+      { ...ZERO_SIGNALS, bothLoadsStrong: true },
+      { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.4 },
+      { ...ZERO_SIGNALS, runAheadOfBaseline: 0.4 },
+      { ...ZERO_SIGNALS, adherenceWeak: true },
+      { ...ZERO_SIGNALS, lifetimeWeeks: 6 },
+    ];
+    const states = Object.keys(VERB_LABEL) as VerbState[];
+    for (const signals of variants) {
+      expect(getEstablishingLine(signals)).not.toMatch(/\u2014/);
+      for (const state of states) {
+        expect(getLine(state, signals), state).not.toMatch(/\u2014/);
+      }
+    }
   });
 });

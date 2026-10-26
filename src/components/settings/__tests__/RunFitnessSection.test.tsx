@@ -40,12 +40,22 @@ describe("RunFitnessSection", () => {
   it("prompts to set fitness when no benchmark", () => {
     renderWith({ runFitness: null });
     expect(screen.getByText("Set your fitness")).toBeInTheDocument();
-    // In British spelling, as "personalised paces" are below.
+    // One short line, under 60 characters, as the page's other helpers.
+    // It promised to "personalise every run pace to you" in 61.
     expect(
-      screen.getByText(
-        "Add a recent race and we'll personalise every run pace to you."
-      )
+      screen.getByText("Add a recent race to set your paces.")
     ).toBeInTheDocument();
+  });
+
+  /* Setting run paces is a running action, so its button is the coral
+     run CTA at the full 44px. It was the purple brand button at the 36px
+     small size, purple in a page of coral controls. */
+  it("offers Add as the coral run button at full size", () => {
+    renderWith({ runFitness: null });
+    const add = screen.getByRole("button", { name: "Add" });
+    expect(add.className).toContain("bg-running-fill");
+    expect(add.className).toContain("min-h-[44px]");
+    expect(add.className).not.toContain("bg-primary");
   });
 
   it("shows VDOT + personalised paces when a benchmark exists", () => {

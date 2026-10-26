@@ -1039,8 +1039,8 @@ need a phone and a deploy.
 
 - [ ] **Maps on the phone.** A live run, a saved run (RunDetail), the
       finish screen and the route planner draw OpenFreeMap's basemap in
-      both themes. The credit shows as each map opens and folds to its
-      (i) after five seconds; the (i) opens it again, and its links open
+      both themes. The credit starts folded to its (i) on each map; the
+      (i) opens it, a tap on the map folds it again, and its links open
       outside the app. On the live run it sits top-right, clear of the
       GPS pill and the sheet; on RunDetail bottom-left, clear of Replay.
 - [ ] **Weather after the deploy.** `getCurrentWeather` is a new function
@@ -2671,6 +2671,32 @@ shared (pinned by the "profile:" cases in `firestore.rules.test.ts`).
 - [x] _(Proven 2026-10-18: on the real Firestore SDK with the backend unreachable, getComments resolved an empty page from the cache instead of failing, so the sheet said "No comments yet". It now treats an empty answer from the cache as a failed read: `src/lib/__tests__/socialApi.test.ts` 'fails when there is no connection and nothing cached, rather than reading as empty' (red before the fix), and CommentSheet.test.tsx 'says a failed read failed, and Try again reads again' shows the rejection as "Couldn't load comments". A thread read before still shows its cached comments.)_ **Comments with no signal:** open a post's comments in airplane
       mode. It says "Couldn't load comments" with Try again, never "No
       comments yet" (which it also used to show while comments loaded).
+
+## The Together copy pass (owner, 2026-10-26)
+
+Affects: `ChallengeList`, `ChallengeCard`, the new `ChallengeRow`,
+`challengeEditions.ts`, `challengeFormat.ts` (`challengeGoal`),
+`CollectivePulse`, `SpacesDirectory`, and the descriptions in
+`functions/lib/challengeDefs.js` (deploys with the functions; the daily
+`rolloverChallenges` rewrites a running challenge's description).
+
+The intro paragraph went; joining confirms the edition and when the next
+one opens. Time left is said once for the month. Cards say their goal
+from the target in the reader's units, the "See N more" list is compact
+rows, no founding or "New space" line stands in for a count, the
+collective card shows "0 of 1,000 km", and an unjoined Weekly Warrior in
+its last day offers no Join.
+
+- [ ] **The new words reach the running challenges.** After the functions
+      deploy and the next 00:05 UTC `rolloverChallenges`, read
+      `challenges/strength-monthly-<YYYY-MM-01>`: its description is
+      "Everything you lift this month adds up.", and
+      `global-monthly-<YYYY-MM-01>`'s is "Running and lifting both count,
+      toward one score." (The cards show the goal either way.)
+- [ ] **On a phone:** join a monthly challenge from the "See N more" rows
+      and read the toast ("You're in for … opens on 1 …"); on a Sunday,
+      with Weekly Warrior not joined, the card says "Ends tonight. The
+      next one starts Monday." and offers no Join.
 
 ## The Settings pass (owner, 2026-10-01)
 

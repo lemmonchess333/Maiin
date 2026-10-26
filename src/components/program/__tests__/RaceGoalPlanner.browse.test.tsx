@@ -1,6 +1,13 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import RaceGoalPlanner from "../RaceGoalPlanner";
+import RaceFilters from "@/features/spaces/RaceFilters";
 import { upcomingRaceSpaceDefs, spaceDef } from "@/features/spaces/spaceDefs";
 import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 
@@ -53,14 +60,23 @@ describe("race picker browsing", () => {
     );
   });
   it("keeps ultras out of the plan picker even after clearing all filters", () => {
-    render(<RaceGoalPlanner {...base} {...callbacks()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Boston Marathon" }));
+    // A 5K goal in a country with no 5K races leaves the list empty, and
+    // its Clear filters opens every country and every distance.
+    render(
+      <RaceGoalPlanner
+        {...base}
+        {...callbacks()}
+        distance="5k"
+        selectedEventSpaceId=""
+      />
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Choose an upcoming race" })
+    );
     fireEvent.change(screen.getByLabelText("Country"), {
-      target: { value: "all" },
+      target: { value: "US" },
     });
-    fireEvent.change(screen.getByLabelText("Distance"), {
-      target: { value: "all" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(
       screen.queryByRole("option", { name: "Ultra" })
     ).not.toBeInTheDocument();
@@ -102,18 +118,43 @@ describe("race picker browsing", () => {
       screen.getByRole("option", { name: /London Marathon 25 Apr 2027/ })
     ).toBeInTheDocument();
   });
+  /* The picker has no Distance filter of its own: the goal's Distance sits
+     just below it and narrows the list, where a second Distance above it
+     asked the same question twice. */
+  it("narrows by the goal's distance, with no Distance filter of its own", () => {
+    render(<RaceGoalPlanner {...base} {...callbacks()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Boston Marathon" }));
+    expect(screen.queryByLabelText("Distance")).not.toBeInTheDocument();
+    const races = within(
+      screen.getByRole("listbox", { name: "Upcoming races" })
+    ).getAllByRole("option");
+    expect(races.length).toBeGreaterThan(0);
+    for (const race of races)
+      expect(race.getAttribute("aria-label")).toMatch(/Marathon$/);
+  });
+
   it("starts in the selected race's country and preserves the goal through empty filters", async () => {
     const handlers = callbacks();
-    render(<RaceGoalPlanner {...base} {...handlers} />);
+    // Two upcoming marathons, neither in the United Kingdom, so choosing
+    // that country empties the list (the distance follows the goal).
+    render(
+      <RaceGoalPlanner
+        {...base}
+        {...handlers}
+        upcomingRaces={[
+          spaceDef("boston-marathon")!,
+          spaceDef("paris-marathon")!,
+        ]}
+      />
+    );
     fireEvent.click(screen.getByRole("button", { name: "Boston Marathon" }));
     expect(screen.getByLabelText("Country")).toHaveValue("US");
-    expect(screen.getByLabelText("Distance")).toHaveValue("marathon");
-    fireEvent.change(screen.getByLabelText("Distance"), {
-      target: { value: "half" },
+    fireEvent.change(screen.getByLabelText("Country"), {
+      target: { value: "GB" },
     });
     expect(screen.getByText("No matching races")).toBeInTheDocument();
     expect(screen.getByLabelText("Target date")).toHaveValue("2027-04-19");
-    expect(screen.getByLabelText("Event name (optional)")).toHaveValue(
+    expect(screen.getByLabelText("Race name (optional)")).toHaveValue(
       "Boston Marathon"
     );
     for (const handler of Object.values(handlers))
@@ -154,10 +195,51 @@ describe("race picker browsing", () => {
       target: { value: "US" },
     });
     expect(screen.getByText("No matching races")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Event name (optional)"), {
+    fireEvent.change(screen.getByLabelText("Race name (optional)"), {
       target: { value: "My summer 5K" },
     });
     expect(handlers.onEventNameChange).toHaveBeenCalledWith("My summer 5K");
     expect(handlers.onPickRace).not.toHaveBeenCalled();
+  });
+
+  /* "Event name" with "London Marathon 2026" in the field read as a race
+     already filled in. It is the race's name, and the field is empty
+     until the person types one. */
+  it("asks for the race's name with no example in the field", () => {
+    render(
+      <RaceGoalPlanner
+        {...base}
+        {...callbacks()}
+        eventName=""
+        selectedEventSpaceId=""
+      />
+    );
+    const field = screen.getByLabelText("Race name (optional)");
+    expect(field).not.toHaveAttribute("placeholder");
+    expect(screen.queryByText(/Event name/)).not.toBeInTheDocument();
+  });
+});
+
+describe("RaceFilters", () => {
+  const value = { country: "GB", distance: "all" } as const;
+
+  /* Side by side on a 320px phone, the Country select cut "United
+     Kingdom" to "United King". Under 20em of row the two stack. */
+  it("stacks its two selects on a narrow row", () => {
+    render(<RaceFilters value={value} onChange={vi.fn()} />);
+    const grid = screen.getByLabelText("Country").closest(".grid")!;
+    expect(grid.className).toContain("grid-cols-2");
+    expect(grid.className).toContain("@max-[20em]:grid-cols-1");
+    expect(screen.getByLabelText("Distance")).toBeInTheDocument();
+  });
+
+  it("can leave the Distance filter out, Country then the row's width", () => {
+    render(
+      <RaceFilters value={value} onChange={vi.fn()} showDistance={false} />
+    );
+    expect(screen.queryByLabelText("Distance")).not.toBeInTheDocument();
+    const grid = screen.getByLabelText("Country").closest(".grid")!;
+    expect(grid.className).toContain("grid-cols-1");
+    expect(grid.className).not.toContain("grid-cols-2");
   });
 });

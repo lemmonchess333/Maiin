@@ -73,9 +73,7 @@ describe("PrivacySection — the Approve followers switch", () => {
   it("says what it does either way", () => {
     renderWith(undefined);
     expect(
-      screen.getByText(
-        "People ask to follow you, and you choose who sees what you share with followers. Off, anyone can follow you."
-      )
+      screen.getByText("You choose who follows you. Off, anyone can.")
     ).toBeInTheDocument();
   });
 

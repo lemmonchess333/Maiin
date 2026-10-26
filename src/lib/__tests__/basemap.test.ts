@@ -8,12 +8,11 @@
  *    index.html);
  *  - every map built in src/ must add the credit, because the maps are
  *    built with `attributionControl: false` so the credit can be placed;
- *  - the credit opens, then folds to its (i) five seconds after it shows
- *    (not after the map's `load`, which waits for every tile) or on a tap
- *    on the map, and a map torn down before the fold does not leave a
- *    timer or a listener reaching into it.
+ *  - the credit starts folded to its (i): it folds the moment MapLibre
+ *    opens it, and again on a tap on the map, and a map torn down first
+ *    does not leave a listener reaching into it.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve, relative } from "node:path";
 
@@ -57,7 +56,6 @@ vi.mock("maplibre-gl", () => ({
 import {
   BASEMAP_ORIGIN,
   BASEMAP_STYLES,
-  CREDIT_OPEN_MS,
   addBasemapCredit,
   basemapStyle,
 } from "../basemap";
@@ -222,11 +220,7 @@ describe("addBasemapCredit", () => {
   }
 
   beforeEach(() => {
-    vi.useFakeTimers();
     credit.made.length = 0;
-  });
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it("adds MapLibre's compact credit in the corner it is given", () => {
@@ -240,40 +234,26 @@ describe("addBasemapCredit", () => {
     );
   });
 
-  it("keeps the credit open for five seconds once it shows, then folds it", () => {
+  it("folds the credit to its (i) the moment MapLibre opens it", () => {
     const map = fakeMap();
     addBasemapCredit(map as never, "bottom-left");
     const { fold, container } = credit.made[0];
 
     // The style arrives before its source has named a credit: nothing on
-    // screen yet, so nothing to time.
+    // screen yet, so nothing to fold.
     map.fire("styledata");
-    vi.advanceTimersByTime(CREDIT_OPEN_MS * 2);
     expect(fold).not.toHaveBeenCalled();
 
     showCredit(container);
     map.fire("sourcedata");
-    vi.advanceTimersByTime(CREDIT_OPEN_MS - 1);
-    expect(fold).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(1);
     expect(fold).toHaveBeenCalledOnce();
 
-    // One clock: later style and source events start no other.
+    // Once: an (i) the person opens stays open through later loads.
     map.fire("sourcedata");
-    vi.advanceTimersByTime(CREDIT_OPEN_MS * 2);
+    map.fire("styledata");
     expect(fold).toHaveBeenCalledOnce();
-  });
-
-  it("does not wait for the map's load, which waits for every tile", () => {
-    const map = fakeMap();
-    addBasemapCredit(map as never, "top-right");
-    const { fold, container } = credit.made[0];
-    showCredit(container);
-    map.fire("sourcedata");
-    // Tiles still coming in on a weak connection: no `load` yet.
-    vi.advanceTimersByTime(CREDIT_OPEN_MS);
-    expect(fold).toHaveBeenCalledOnce();
-    expect(map.listening("load")).toBe(0);
+    expect(map.listening("styledata")).toBe(0);
+    expect(map.listening("sourcedata")).toBe(0);
   });
 
   it("folds the credit on a tap on the map", () => {
@@ -284,20 +264,11 @@ describe("addBasemapCredit", () => {
     expect(fold).toHaveBeenCalledOnce();
   });
 
-  it("a map removed before the fold leaves no timer or listener behind", () => {
+  it("a map removed before its credit shows leaves no listener behind", () => {
     const map = fakeMap();
-    const remove = addBasemapCredit(map as never, "bottom-left");
-    const { fold, container } = credit.made[0];
-    showCredit(container);
-    map.fire("sourcedata");
-    remove();
-    vi.advanceTimersByTime(CREDIT_OPEN_MS * 2);
-    expect(fold).not.toHaveBeenCalled();
-    // And a credit that never showed is unsubscribed, not left waiting.
-    const unshown = fakeMap();
-    addBasemapCredit(unshown as never, "bottom-left")();
+    addBasemapCredit(map as never, "bottom-left")();
     for (const event of ["styledata", "sourcedata", "click"]) {
-      expect(unshown.listening(event)).toBe(0);
+      expect(map.listening(event)).toBe(0);
     }
   });
 });

@@ -8,7 +8,8 @@
  *
  * The screens: Home, Train, History's five pages (and its charts again
  * on a Monday), Food and its manual entry and edit sheets, Social's
- * Together tab and its feed, a Space, a profile, Settings and every
+ * Together tab (again with its other challenges opened) and its feed, a
+ * Space, a profile, Settings and every
  * section of it, Train's exercise menu, a workout, a run before, during
  * and after, the exercise, run and workout detail pages, the Weekly
  * review, sign-up, setup and the Pro page. The sheets: the weight log,
@@ -422,6 +423,15 @@ test.describe("large text", () => {
       await settleCommunity(page);
       await measure(page, "social-together", width, found);
 
+      // The challenges behind "See N more", opened into their compact rows.
+      await page
+        .getByRole("button", { name: /^See \d+ more challenges?$/ })
+        .click();
+      await page
+        .getByRole("heading", { name: "Available" })
+        .waitFor({ state: "visible", timeout: 10_000 });
+      await measure(page, "social-together-more", width, found);
+
       await page.goto("social?tab=feed&feed=explore");
       await ready(page, page.getByText("Maya Chen").first());
       await measure(page, "social-feed", width, found);
@@ -737,6 +747,17 @@ test.describe("large text", () => {
       // The warm-ups first, then the first working set, which is what the
       // strip counts.
       const leaveAfterOneSet = async () => {
+        // A routine saved from someone's post carries no loads, and a
+        // loaded lift can't be ticked at 0 kg: give its empty sets one.
+        await page
+          .getByRole("spinbutton", { name: /weight$/ })
+          .first()
+          .waitFor({ timeout: 20_000 });
+        for (const field of await page
+          .getByRole("spinbutton", { name: /weight$/ })
+          .all())
+          if ((await field.getAttribute("placeholder")) === "–")
+            await field.fill("20");
         for (let i = 0; i < 4; i++) {
           const next = page.getByRole("button", { name: /^Complete / }).first();
           await next.waitFor({ timeout: 20_000 });

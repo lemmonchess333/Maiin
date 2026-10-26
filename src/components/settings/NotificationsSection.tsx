@@ -4,6 +4,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import AccordionSection from "@/components/AccordionSection";
+import SectionHeading from "@/components/ui/SectionHeading";
 import {
   getNotificationPermissionState,
   requestNotificationPermission,
@@ -284,15 +285,20 @@ export default function NotificationsSection({
         </div>
       )}
 
-      {/* Meal reminders */}
-      <div className="space-y-3">
-        <p className="text-sm font-medium text-foreground">Meal reminders</p>
+      {/* One Reminders group: a row each for meals, workouts and the
+          streak, each with its times under it once it is on. A heading
+          over each one repeated its only switch. */}
+      <SectionHeading size="compact" className="px-1">
+        Reminders
+      </SectionHeading>
 
+      {/* Meals */}
+      <div className="space-y-3">
         <div className={ROW}>
           <div className={LABEL}>
-            <p className="text-sm text-foreground">Enable meal reminders</p>
+            <p className="text-sm text-foreground">Meals</p>
             <p className="text-xs text-muted-foreground">
-              Get notified when it&apos;s time to eat
+              When it&apos;s time to eat
             </p>
           </div>
           <Toggle
@@ -369,15 +375,13 @@ export default function NotificationsSection({
         )}
       </div>
 
-      {/* Workout reminders */}
+      {/* Workouts */}
       <div className="space-y-3">
-        <p className="text-sm font-medium text-foreground">Workout reminders</p>
-
         <div className={ROW}>
           <div className={LABEL}>
-            <p className="text-sm text-foreground">Enable workout reminders</p>
+            <p className="text-sm text-foreground">Workouts</p>
             <p className="text-xs text-muted-foreground">
-              Get notified when it&apos;s time to train
+              On the days you train
             </p>
           </div>
           <Toggle
@@ -424,23 +428,15 @@ export default function NotificationsSection({
             />
           </div>
         )}
-
-        {workoutReminders.enabled && (
-          <p className="text-xs text-muted-foreground">
-            Reminders fire on scheduled workout days only (Lift, Run, or Both)
-          </p>
-        )}
       </div>
 
-      {/* Streak reminders */}
+      {/* Streak */}
       <div className="space-y-3">
-        <p className="text-sm font-medium text-foreground">Streak reminders</p>
-
         <div className={ROW}>
           <div className={LABEL}>
-            <p className="text-sm text-foreground">Streak reminder</p>
+            <p className="text-sm text-foreground">Streak</p>
             <p className="text-xs text-muted-foreground">
-              Remind me if I haven&apos;t logged today
+              If you haven&apos;t logged today
             </p>
           </div>
           <Toggle

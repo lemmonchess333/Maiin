@@ -117,15 +117,13 @@ export default function HoldToFinishButton({
 
   return (
     <RunControlButton
-      /* The accessible name has to CONTAIN the visible label — WCAG 2.5.3
-         Label in Name. "HOLD" against "Finish run" shared no words, so a
-         voice-control user saying "tap HOLD" matched nothing, and this was
-         the only control in the cluster that broke the pattern its siblings
-         keep (LOCK/"Lock screen", PAUSE/"Pause run", STOP/"Stop run").
-         Naming the gesture also tells a screen-reader user what the control
-         actually wants, which the outcome-only name did not. */
+      /* The label says what the control does, as its siblings' do (LOCK,
+         PAUSE, STOP); the ring that fills under a press shows it wants a
+         hold. The accessible name CONTAINS the label (WCAG 2.5.3 Label in
+         Name), so a voice-control user saying "tap finish" reaches it, and
+         it names the gesture for a screen-reader user. */
       aria-label="Hold to finish run"
-      label="HOLD"
+      label="FINISH"
       size="sm"
       variant="neutral"
       className="relative touch-none"

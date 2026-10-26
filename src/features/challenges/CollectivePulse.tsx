@@ -18,10 +18,9 @@ import type { Challenge, ChallengeParticipant } from "./useChallenges";
  * collectiveTarget) from a card buried in "Available" into a compact
  * strip at the top of the challenges section.
  *
- * Framing is counting-up momentum, never percent-complete shortfall —
- * a nearly-empty bar on day one must read as "the board just opened",
- * not "the community failed". Static bar; no animation (WKWebView
- * rule).
+ * The line under the name is the figure and nothing else, from the first
+ * kilometre: "0 of 1,000 km", then "412.5 of 1,000 km". Counting up, never
+ * a shortfall or a percentage. Static bar; no animation (WKWebView rule).
  */
 export default function CollectivePulse({
   challenge,
@@ -40,6 +39,12 @@ export default function CollectivePulse({
   const pct = Math.min((total / target) * 100, 100);
   const shown = (km: number) => distanceIn(km * 1000, unit);
   const label = distanceUnitLabel(unit);
+  // To a tenth, a whole number without its ".0", grouped as the reader's
+  // locale groups.
+  const totalText = shown(total).toLocaleString(undefined, {
+    maximumFractionDigits: 1,
+  });
+  const targetText = Math.round(shown(target)).toLocaleString();
 
   return (
     <div className="p-3.5 rounded-xl bg-card border border-border/40">
@@ -55,20 +60,11 @@ export default function CollectivePulse({
             {challenge.name}
           </p>
           <p className="text-xs text-muted-foreground leading-snug">
-            {total > 0 ? (
-              <>
-                <span className="font-mono tabular-nums font-semibold text-foreground">
-                  {shown(total).toFixed(1)}
-                </span>{" "}
-                of{" "}
-                <span className="font-mono tabular-nums">
-                  {Math.round(shown(target)).toLocaleString()}
-                </span>{" "}
-                {label} · every run counts
-              </>
-            ) : (
-              `Every run counts — the first ${label} starts the board`
-            )}
+            <span className="font-mono tabular-nums font-semibold text-foreground">
+              {totalText}
+            </span>{" "}
+            of <span className="font-mono tabular-nums">{targetText}</span>{" "}
+            {label}
           </p>
         </div>
       </div>
@@ -78,7 +74,7 @@ export default function CollectivePulse({
         aria-valuenow={Math.round(total)}
         aria-valuemin={0}
         aria-valuemax={target}
-        aria-label={`Community total: ${shown(total).toFixed(1)} of ${Math.round(shown(target))} ${spokenDistanceUnit(unit, 2)}`}
+        aria-label={`Community total: ${totalText} of ${targetText} ${spokenDistanceUnit(unit, 2)}`}
       >
         <div
           className="h-full rounded-full"

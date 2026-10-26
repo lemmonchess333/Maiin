@@ -52,6 +52,16 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import type { FeedSubTab } from "./socialTabs";
 import { Button } from "@/components/ui/Button";
+import { liftPostExerciseCount } from "@/lib/liftPost";
+
+/** Each feed source by the name people see: the chip, its sheet and the
+ *  chip's accessible name. The joined-Spaces source keeps its internal
+ *  key, `communities`, which the URL carries. */
+const FEED_SOURCE_NAMES: Record<FeedSubTab, string> = {
+  following: "Following",
+  communities: "Spaces",
+  explore: "Explore",
+};
 
 export interface FeedViewProps {
   /** True when the Feed tab is the active top-level tab. Gates the
@@ -133,7 +143,7 @@ export default function FeedView({
     blockedUsers,
     hiddenActivityIds
   );
-  /* SOC-P3a — "My communities": posts from joined spaces as a third
+  /* SOC-P3a — the Spaces source: posts from joined spaces as a third
      source. The directory hook resolves joined ids (bounded reads,
      only meaningful once the user opens the Feed tab); the feed hook
      fires only while this sub-tab is active. */
@@ -238,7 +248,7 @@ export default function FeedView({
             handle: item.authorName,
             date,
             totalVolumeKg: a.totalVolume,
-            exerciseCount: a.exerciseCount,
+            exerciseCount: liftPostExerciseCount(a),
             prCount: a.prCount,
             prExercise: a.prExercise,
           }
@@ -453,19 +463,9 @@ export default function FeedView({
                 type="button"
                 onClick={() => setSourceMenuOpen(true)}
                 className="relative inline-flex items-center gap-1 min-h-[44px] px-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition active:scale-[0.97]"
-                aria-label={`Feed source: ${
-                  feedSubTab === "following"
-                    ? "Following"
-                    : feedSubTab === "communities"
-                      ? "My communities"
-                      : "Explore"
-                }`}
+                aria-label={`Feed source: ${FEED_SOURCE_NAMES[feedSubTab]}`}
               >
-                {feedSubTab === "following"
-                  ? "Following"
-                  : feedSubTab === "communities"
-                    ? "My communities"
-                    : "Explore"}
+                {FEED_SOURCE_NAMES[feedSubTab]}
                 <ChevronDown className="size-4" aria-hidden="true" />
                 {(feedSubTab === "following"
                   ? exploreHasNew
@@ -499,17 +499,12 @@ export default function FeedView({
                         : st === "explore"
                           ? exploreHasNew
                           : false; // communities has no freshness pointer (v1)
-                    const text =
-                      st === "following"
-                        ? "Following"
-                        : st === "communities"
-                          ? "My communities"
-                          : "Explore";
+                    const text = FEED_SOURCE_NAMES[st];
                     const sub =
                       st === "following"
                         ? "Activities from people you follow"
                         : st === "communities"
-                          ? "Posts from spaces you've joined"
+                          ? "Posts from Spaces you've joined"
                           : "Public activity across Tropos";
                     return (
                       <button
@@ -653,7 +648,7 @@ export default function FeedView({
                     <div
                       className="space-y-3"
                       aria-live="polite"
-                      aria-label="Loading communities feed"
+                      aria-label="Loading posts from your Spaces"
                     >
                       <ActivityCardSkeleton stagger={0} />
                       <ActivityCardSkeleton stagger={1} />

@@ -144,6 +144,23 @@ describe("ShareDefaultsRow", () => {
     expect(selected("workouts")).toBe("Never");
   });
 
+  it("says what Ask does once for the card, not under each type", () => {
+    render(<Harness />);
+    expect(
+      screen.getAllByText("Ask: you'll be asked when you next finish one.")
+    ).toHaveLength(1);
+    cleanup();
+    render(<Harness initial={{ run: "public", workout: "never" }} />);
+    expect(screen.queryByText(/next finish one/)).toBeNull();
+  });
+
+  it("puts the four in two rows on a narrow card", () => {
+    render(<Harness />);
+    expect(
+      screen.getByRole("radiogroup", { name: "Default sharing for runs" })
+    ).toHaveClass("@max-[17.5em]:grid-cols-2");
+  });
+
   it.each([
     ["Never", "never"],
     ["Public", "public"],
