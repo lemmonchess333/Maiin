@@ -48,9 +48,20 @@ import { shouldRenderFollowingList } from "@/lib/socialGates";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import type { FeedSubTab } from "./socialTabs";
 import { Button } from "@/components/ui/Button";
+import { liftPostExerciseCount } from "@/lib/liftPost";
+
+/** Each feed source by the name people see: the chip, its sheet and the
+ *  chip's accessible name. The joined-Spaces source keeps its internal
+ *  key, `communities`, which the URL carries. */
+const FEED_SOURCE_NAMES: Record<FeedSubTab, string> = {
+  following: "Following",
+  communities: "Spaces",
+  explore: "Explore",
+};
 
 export interface FeedViewProps {
   /** True when the Feed tab is the active top-level tab. Gates the
@@ -132,7 +143,7 @@ export default function FeedView({
     blockedUsers,
     hiddenActivityIds
   );
-  /* SOC-P3a — "My communities": posts from joined spaces as a third
+  /* SOC-P3a — the Spaces source: posts from joined spaces as a third
      source. The directory hook resolves joined ids (bounded reads,
      only meaningful once the user opens the Feed tab); the feed hook
      fires only while this sub-tab is active. */
@@ -237,7 +248,7 @@ export default function FeedView({
             handle: item.authorName,
             date,
             totalVolumeKg: a.totalVolume,
-            exerciseCount: a.exerciseCount,
+            exerciseCount: liftPostExerciseCount(a),
             prCount: a.prCount,
             prExercise: a.prExercise,
           }
@@ -419,7 +430,9 @@ export default function FeedView({
                 the current source and opens a two-option sheet. The
                 Soc5b freshness dot rides on the chip when the OTHER
                 source has new content, and on each sheet option. */}
-            <div className="flex items-center justify-between gap-3">
+            {/* Wraps: at 320 px and 2× text the source chip beside the
+                line left "Find people" no room. */}
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               {/* While you follow fewer than three people, one line says
                   how many, with the way to more. It replaced a whole
                   card under the points card ("Following 1 of 3 — your
@@ -450,19 +463,9 @@ export default function FeedView({
                 type="button"
                 onClick={() => setSourceMenuOpen(true)}
                 className="relative inline-flex items-center gap-1 min-h-[44px] px-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition active:scale-[0.97]"
-                aria-label={`Feed source: ${
-                  feedSubTab === "following"
-                    ? "Following"
-                    : feedSubTab === "communities"
-                      ? "My communities"
-                      : "Explore"
-                }`}
+                aria-label={`Feed source: ${FEED_SOURCE_NAMES[feedSubTab]}`}
               >
-                {feedSubTab === "following"
-                  ? "Following"
-                  : feedSubTab === "communities"
-                    ? "My communities"
-                    : "Explore"}
+                {FEED_SOURCE_NAMES[feedSubTab]}
                 <ChevronDown className="size-4" aria-hidden="true" />
                 {(feedSubTab === "following"
                   ? exploreHasNew
@@ -496,17 +499,12 @@ export default function FeedView({
                         : st === "explore"
                           ? exploreHasNew
                           : false; // communities has no freshness pointer (v1)
-                    const text =
-                      st === "following"
-                        ? "Following"
-                        : st === "communities"
-                          ? "My communities"
-                          : "Explore";
+                    const text = FEED_SOURCE_NAMES[st];
                     const sub =
                       st === "following"
                         ? "Activities from people you follow"
                         : st === "communities"
-                          ? "Posts from spaces you've joined"
+                          ? "Posts from Spaces you've joined"
                           : "Public activity across Tropos";
                     return (
                       <button
@@ -608,25 +606,15 @@ export default function FeedView({
               handlers on this container, so the button was redundant
               affordance for the same action. Removed in PR-bug-fix. */}
 
+            {/* The hook keeps the raw error for the log; it is the SDK's
+                text ("Missing or insufficient permissions."), not a
+                sentence for the person. */}
             {feedSubTab === "following" && followingFeed.error && (
-              <div
-                className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20"
-                aria-live="polite"
-              >
-                {/* The hook keeps the raw error for the log; it is the
-                    SDK's text ("Missing or insufficient permissions."),
-                    not a sentence for the person. */}
-                <p className="text-xs text-destructive-strong">
-                  Couldn't load your feed. Check your connection.
-                </p>
-                <button
-                  type="button"
-                  onClick={followingFeed.refresh}
-                  className="text-xs font-medium text-destructive-strong underline ml-2 shrink-0"
-                >
-                  Retry
-                </button>
-              </div>
+              <ErrorState
+                title="Couldn't load your feed"
+                description="Check your connection and try again."
+                retry={{ label: "Retry", onClick: followingFeed.refresh }}
+              />
             )}
 
             {/* Sprint 5: Discover feed errors now surface a retry banner
@@ -641,21 +629,11 @@ export default function FeedView({
               exploreFeed.error &&
               exploreFeed.items.length === 0 &&
               !exploreFeed.loading && (
-                <div
-                  className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20"
-                  aria-live="polite"
-                >
-                  <p className="text-xs text-destructive-strong">
-                    Couldn't load the community feed. Check your connection.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={exploreFeed.refresh}
-                    className="text-xs font-medium text-destructive-strong underline ml-2 shrink-0"
-                  >
-                    Retry
-                  </button>
-                </div>
+                <ErrorState
+                  title="Couldn't load the community feed"
+                  description="Check your connection and try again."
+                  retry={{ label: "Retry", onClick: exploreFeed.refresh }}
+                />
               )}
 
             {/* SOC-P3a — the communities stream: joined-space posts,
@@ -670,7 +648,7 @@ export default function FeedView({
                     <div
                       className="space-y-3"
                       aria-live="polite"
-                      aria-label="Loading communities feed"
+                      aria-label="Loading posts from your Spaces"
                     >
                       <ActivityCardSkeleton stagger={0} />
                       <ActivityCardSkeleton stagger={1} />
@@ -691,7 +669,7 @@ export default function FeedView({
                           : "When members post in your spaces, their posts appear here."
                       }
                       accent={THEME.brand}
-                      action={{ label: "Browse Spaces", onClick: openTogether }}
+                      action={{ label: "Browse spaces", onClick: openTogether }}
                     />
                   )}
                 {communitiesFeed.items.map((item) => {
@@ -828,7 +806,7 @@ export default function FeedView({
                     <HexEmptyState
                       icon={Globe}
                       headline="Tropos is quiet right now"
-                      sub="Your Circles don't need a crowd"
+                      sub="Your circles don't need a crowd"
                       accent={THEME.brand}
                       action={{
                         label: "Open Together",

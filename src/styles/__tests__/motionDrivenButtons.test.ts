@@ -73,8 +73,10 @@ describe("motion buttons opt out of the global button transition", () => {
         }
       }
     }
-    // The scan has to be finding them, or the guard proves nothing.
-    expect(seen).toBeGreaterThanOrEqual(8);
+    // The scan has to be finding them, or the guard proves nothing. Seven
+    // since the run plan page's two mode cards, one motion button drawn
+    // twice, became a segmented control.
+    expect(seen).toBeGreaterThanOrEqual(7);
     expect(
       offenders,
       "A motion element that is a button needs data-motion-driven, or " +

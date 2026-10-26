@@ -497,10 +497,10 @@ describe("food text logging", () => {
   it("falls back to local food parsing after a stalled request and preserves the next draft", async () => {
     vi.useFakeTimers();
     /* Pin the clock to the middle of the day before advancing it.
-       `Food.tsx` recomputes `todayStr` from `new Date()` on every
-       render, and this test advances fake timers by 50 seconds in
-       total. Run it inside the last minute before local midnight and
-       the rollover flips `selectedDate`, whose own guard clears the
+       `Food.tsx` reads `todayStr` from the shared day key, which checks
+       the clock every 30 seconds, and this test advances fake timers by
+       50 seconds in total. Run it inside the last minute before local
+       midnight and the rollover flips `selectedDate`, whose own guard clears the
        typed draft on purpose — so the draft assertion at the end fails
        on the calendar rather than on the behaviour it is about.
        Measured: 23:59:20 fails, 12:00 passes, same code.
@@ -551,6 +551,53 @@ describe("food text logging", () => {
     );
     expect(input).toHaveValue("toast");
     expect(screen.getByLabelText("Log meal")).toBeEnabled();
+  });
+});
+
+/* A meal typed and not logged survives a tab switch (`foodDraft`), and a
+   meal the words could not be read into offers the manual form. */
+describe("a typed meal, kept and recovered", () => {
+  beforeEach(() => sessionStorage.clear());
+
+  it("comes back after leaving the page before it was logged", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: true, json: async () => ({ products: [] }) }))
+    );
+    const first = render(
+      <MemoryRouter>
+        <Food />
+      </MemoryRouter>
+    );
+    fireEvent.change(screen.getByLabelText("What did you eat"), {
+      target: { value: "2 eggs and toast" },
+    });
+    first.unmount();
+    render(
+      <MemoryRouter>
+        <Food />
+      </MemoryRouter>
+    );
+    expect(screen.getByLabelText("What did you eat")).toHaveValue(
+      "2 eggs and toast"
+    );
+  });
+
+  it("offers to log it manually when a food can't be read", async () => {
+    const warning = vi.spyOn(toast, "warning");
+    try {
+      submitLocalText("xylophone");
+      await waitFor(() =>
+        expect(warning).toHaveBeenCalledWith(
+          expect.stringMatching(/couldn't find macros for/i),
+          expect.objectContaining({
+            cancel: expect.objectContaining({ label: "Log manually" }),
+          })
+        )
+      );
+    } finally {
+      warning.mockRestore();
+    }
   });
 });
 

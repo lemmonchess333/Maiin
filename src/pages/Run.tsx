@@ -147,6 +147,9 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
+import { formatDuration } from "@/utils/formatters";
+import { goBackOr } from "@/lib/backNavigation";
+import { RESUME_PARAM } from "@/lib/resumeParam";
 
 function sessionSegmentsFor(
   config: RunConfig | null,
@@ -176,6 +179,10 @@ export default function Run() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  // Back, before a run starts, returns to where the run was opened from
+  // (Home's card, Train, a past run's route); opened directly, to Train's
+  // Run tab.
+  const leaveSetup = () => goBackOr(navigate, "/program?tab=run");
   // Optional route to follow — passed via navigation state from RunDetail's
   // "Re-run this route". Captured once on mount (the polyline of a past run);
   // null for a normal free run. Drives the RunMap ghost line + RouteFollowChip.
@@ -407,9 +414,9 @@ export default function Run() {
 
         // Show a brief banner if the gap was significant (> 5 seconds)
         if (event.hiddenDuration > 5) {
-          const mins = Math.floor(event.hiddenDuration / 60);
-          const secs = Math.floor(event.hiddenDuration % 60);
-          const duration = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+          const duration = formatDuration(Math.floor(event.hiddenDuration), {
+            seconds: true,
+          });
           setBgGapBanner(
             `App was in background for ${duration} — GPS data may have gaps`
           );
@@ -881,6 +888,26 @@ export default function Run() {
     setSnapshotWriteFailed(!saved);
   }, [runConfig, phase, timer, gps, profile?.uid, player.checkpoint]);
 
+  const keepFinishedRun = () => {
+    const uid = profile?.uid;
+    if (!uid || !runConfig || startedAtRef.current === null) return;
+    if (phase !== "active" && phase !== "paused") return;
+    writeStoredRun(uid, {
+      v: RUN_RESUME_SCHEMA_VERSION,
+      config: runConfig,
+      startedAt: startedAtRef.current,
+      accumulatedSeconds: timer.getAccumulatedSeconds(),
+      isRunning: false,
+      points: gps.getPoints(),
+      lastWriteAt: Date.now(),
+      phase: "paused",
+      ...(player.checkpoint ? { playerCheckpoint: player.checkpoint } : {}),
+      ...(requiresManualDistance(runConfig) && manualDistanceDraftRef.current
+        ? { manualDistanceDraft: manualDistanceDraftRef.current }
+        : {}),
+    });
+  };
+
   const handleManualDistanceDraftChange = useCallback(
     (draft: ManualDistanceDraft) => {
       replaceManualDistanceDraft(draft.raw === "" ? null : draft);
@@ -1045,6 +1072,44 @@ export default function Run() {
     setResumePrompt(null);
     navigate("/");
   }, [navigate, profileUid, replaceManualDistanceDraft]);
+
+  /* Resume on Home's or Train's In progress strip (`?resume=1`) carries on
+     with the stored run as soon as it is read, rather than asking again
+     here. A run whose coaching could not be restored keeps the chooser,
+     which says what is lost. The flag comes off the address once read, so
+     Back to this page never resumes twice. */
+  const resumeRequested = searchParams.get(RESUME_PARAM) === "1";
+  const resumeFromStrip = useEffectEvent(() => {
+    handleResumeFromPrompt().catch((err) =>
+      logger.error("[Run] Resume from the In progress strip failed", err)
+    );
+  });
+  const resumeState = location.state;
+  useEffect(() => {
+    if (!resumeRequested || phase !== "waiting" || !profileUid) return;
+    // The restore effect reads the stored run in this same pass; wait for
+    // its prompt rather than read the address as "nothing to resume".
+    if (!resumePrompt && readStoredRun(profileUid) !== null) return;
+    setSearchParams(
+      (params) => {
+        params.delete(RESUME_PARAM);
+        return params;
+      },
+      { replace: true, state: resumeState }
+    );
+    // A one-shot reaction to the address, consumed above so it cannot
+    // repeat; the stored run is read outside React.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
+    if (resumePrompt && !resumeCoaching?.fallback) resumeFromStrip();
+  }, [
+    resumeRequested,
+    phase,
+    profileUid,
+    resumePrompt,
+    resumeCoaching,
+    resumeState,
+    setSearchParams,
+  ]);
 
   // Count seconds spent in acquiring phase
   useEffect(() => {
@@ -1308,6 +1373,11 @@ export default function Run() {
   }, [player.state.index, player, sessionSegments, audioCues, cueSeed]);
 
   const finishRun = (distanceOverride?: number) => {
+    // The summary holds the run in memory until it is saved. Should the
+    // phone drop the page first, Home offers the run back from the stored
+    // copy, so it is kept as it finished: stopped, and resumed paused, not
+    // running on from wherever the phone is by then.
+    keepFinishedRun();
     timer.pause();
     gps.stop();
     wakeLock.release();
@@ -1614,7 +1684,7 @@ export default function Run() {
                 )
               }
               onCustomize={() => setForceModal(true)}
-              onBack={() => navigate("/program?tab=run")}
+              onBack={leaveSetup}
             />
           ) : forceModal || targetRoute != null ? (
             <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
@@ -1651,9 +1721,7 @@ export default function Run() {
                    `launchShoeId` lives on this page rather than in the
                    modal, so a shoe picked before the detour survives it. */
                 onCancel={() =>
-                  forceModal
-                    ? setForceModal(false)
-                    : navigate("/program?tab=run")
+                  forceModal ? setForceModal(false) : leaveSetup()
                 }
                 programContext={planDecision.strip}
                 sessionName={
@@ -1697,7 +1765,7 @@ export default function Run() {
                 )
               }
               onMoreOptions={() => setForceModal(true)}
-              onBack={() => navigate("/program?tab=run")}
+              onBack={leaveSetup}
             />
           )}
         </>
@@ -2198,7 +2266,7 @@ export default function Run() {
           }
           onStartNew={handleStartNewFromPrompt}
           onDiscard={handleDiscardFromPrompt}
-          onBack={() => navigate("/program?tab=run")}
+          onBack={leaveSetup}
         />
       )}
 

@@ -1,17 +1,18 @@
 /**
  * The signed-in shell's chunks load side by side, not one after another.
  *
- * Three providers, the layout and Home are lazy and nested, and React
- * starts a lazy component's import only when it renders, so a cold start
- * waited on five round trips in series before Home painted. App.tsx now
- * starts all five once the session is known.
+ * The motion root, three providers, the layout and Home are lazy and
+ * nested, and React starts a lazy component's import only when it renders,
+ * so a cold start would wait on six round trips in series before Home
+ * painted. App.tsx starts all six once the session is known.
  *
  * Pinned at the source: App.tsx mounts every provider and route, and
  * nothing renders it whole in jsdom. What is pinned is what keeps the
  * prefetch useful: each lazy layer imports through the same loader the
  * prefetch calls (so the module map hands both one promise), and the
- * prefetch waits for a uid (so a signed-out visitor never loads Firestore
- * for it, which the eager-graph test exists to stop).
+ * prefetch waits for a uid or for a device that has signed in before (so a
+ * first visit never loads Firestore for it, which the eager-graph test
+ * exists to stop).
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -24,6 +25,11 @@ const code = readFileSync(resolve(repoRoot, "src/App.tsx"), "utf8")
   .replace(/\/\/[^\n]*/g, " ");
 
 const LAYERS = [
+  {
+    loader: "loadMotionRoot",
+    module: "@/components/MotionRoot",
+    lazy: "MotionRoot",
+  },
   {
     loader: "loadStreaks",
     module: "@/features/streaks/useStreaks",
@@ -63,11 +69,18 @@ describe("the signed-in shell's prefetch", () => {
     });
   }
 
-  it("runs once a session is known, never at module load", () => {
+  it("runs at module load on a device that has signed in, and on sign-in", () => {
+    // Module load: only behind the device's signed-in-before mark, so a
+    // first visit loads none of it (returningDevicePrefetch.test.ts runs
+    // both cases).
+    expect(code).toMatch(
+      /^if \(hasSignedInOnThisDevice\(\)\) prefetchSignedInShell\(\);$/m
+    );
+    // The first sign-in on a device: once a session is known.
     expect(code).toMatch(
       /useEffect\(\(\) => \{\s*if \(uid\) prefetchSignedInShell\(\);\s*\}, \[uid\]\);/
     );
     const calls = code.match(/(?<!function )prefetchSignedInShell\(\)/g) ?? [];
-    expect(calls).toHaveLength(1);
+    expect(calls).toHaveLength(2);
   });
 });

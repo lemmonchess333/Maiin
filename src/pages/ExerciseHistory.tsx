@@ -7,7 +7,7 @@ import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { epley1RMExact } from "@/lib/analytics";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, withSign } from "@/utils/formatters";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { liftUnitLabel, liftVolumeIn, wholeLoadIn } from "@/lib/liftLoad";
 import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
@@ -498,7 +498,7 @@ export default function ExerciseHistory() {
                         </>
                       )}
                     </p>
-                    <p className="text-caption text-muted-foreground mt-0.5">
+                    <p className="text-micro text-muted-foreground mt-0.5">
                       {formatDayMonth(parseLocalDate(pr.date))}
                     </p>
                   </div>
@@ -545,7 +545,7 @@ export default function ExerciseHistory() {
                         haptic("light");
                         setMetric(m);
                       }}
-                      className={`px-2 py-1 rounded-full text-caption font-semibold transition-colors ${
+                      className={`px-2 py-1 rounded-full text-micro font-semibold transition-colors ${
                         displayMetric === m
                           ? "bg-card text-foreground"
                           : "text-muted-foreground"
@@ -613,14 +613,10 @@ export default function ExerciseHistory() {
                           <p className="text-xs font-medium text-foreground">
                             {formatDayMonth(parseLocalDate(s.date))}
                           </p>
+                          {/* The PR chip every other best wears. White on
+                              the food orange measured 2.76:1. */}
                           {isPR && (
-                            <span
-                              className="text-caption font-bold tracking-wider px-1.5 py-0.5 rounded-full"
-                              style={{
-                                backgroundColor: THEME.semantic.nutrition,
-                                color: "white",
-                              }}
-                            >
+                            <span className="text-caption font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
                               PR
                             </span>
                           )}
@@ -645,7 +641,7 @@ export default function ExerciseHistory() {
                         </p>
                         {delta != null && delta !== 0 && (
                           <p
-                            className="text-caption font-medium mt-0.5"
+                            className="text-micro font-medium mt-0.5"
                             style={{
                               color:
                                 delta > 0
@@ -653,11 +649,17 @@ export default function ExerciseHistory() {
                                   : "hsl(var(--muted-foreground))",
                             }}
                           >
-                            {delta > 0 ? "+" : ""}
-                            {isTimed
-                              ? `${delta} s`
-                              : `${kitLoadIn(delta, liftUnit, exercise?.id)} ${unitLabel}`}{" "}
-                            from last
+                            {withSign(
+                              delta,
+                              String(
+                                Math.abs(
+                                  isTimed
+                                    ? delta
+                                    : kitLoadIn(delta, liftUnit, exercise?.id)
+                                )
+                              )
+                            )}{" "}
+                            {isTimed ? "s" : unitLabel} from last
                           </p>
                         )}
                       </div>

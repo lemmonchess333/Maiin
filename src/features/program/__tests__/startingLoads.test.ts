@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  addedExerciseWeight,
   startingWeightForCategory,
   startingWeightForExercise,
   seedStartingLoads,
@@ -714,5 +715,37 @@ describe("a start on the equipment's own weights", () => {
                 }
             }
     expect([...off]).toEqual([]);
+  });
+});
+
+describe("addedExerciseWeight: a lift added by hand starts at a weight", () => {
+  it("scales a loaded lift to the person, as Replace does", () => {
+    const seed = addedExerciseWeight("db-row", ctx());
+    expect(seed).toBeGreaterThan(0);
+    expect(seed).toBe(
+      startingWeightForExercise(
+        "db-row",
+        inferMovementCategory("Dumbbell Row", "db-row"),
+        ctx()
+      )
+    );
+  });
+
+  it("starts with no bodyweight from the bar, or from the first guess", () => {
+    expect(
+      addedExerciseWeight("bench-press", undefined)
+    ).toBeGreaterThanOrEqual(20);
+    expect(addedExerciseWeight("lat-pulldown", undefined)).toBeGreaterThan(0);
+  });
+
+  it("never starts a barbell lift under the empty bar", () => {
+    expect(
+      addedExerciseWeight("barbell-curl", ctx({ bodyweightKg: 45 }))
+    ).toBeGreaterThanOrEqual(20);
+  });
+
+  it("leaves a bodyweight lift and an unknown id at 0", () => {
+    expect(addedExerciseWeight("pull-ups", ctx())).toBe(0);
+    expect(addedExerciseWeight("not-a-lift", ctx())).toBe(0);
   });
 });

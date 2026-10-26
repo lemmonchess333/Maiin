@@ -101,6 +101,40 @@ export function formatWeekdayDayMonth(d: Date): string {
   });
 }
 
+/** "22 August" — the month in full, without a weekday (an aria-label's
+ *  "Week of 22 August"). */
+export function formatDayMonthLong(d: Date): string {
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+}
+
+/** "Monday": the weekday alone, in full ("The next one starts Monday."). */
+export function formatWeekday(d: Date): string {
+  return d.toLocaleDateString("en-GB", { weekday: "long" });
+}
+
+/** "November": the month alone, in full ("You're in for November."). */
+export function formatMonth(d: Date): string {
+  return d.toLocaleDateString("en-GB", { month: "long" });
+}
+
+/** "22 August 2026" — the full month with its year (a race's date, said
+ *  in full). */
+export function formatDayMonthYearLong(d: Date): string {
+  return d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/** "Saturday 22 August 2026" — the long weekday form with its year.
+ *  Built on formatWeekdayDayMonth rather than asked of Intl with a year,
+ *  which puts a comma after the weekday ("Saturday, 22 August 2026") that
+ *  none of the forms above carries. */
+export function formatWeekdayDayMonthYear(d: Date): string {
+  return `${formatWeekdayDayMonth(d)} ${d.getFullYear()}`;
+}
+
 /**
  * "07:10", "13:13" — a clock time of day: 24-hour, the hour zero-padded,
  * in the device's time zone. The app's one time format, as day-first is
@@ -113,6 +147,55 @@ export function formatTimeOfDay(d: Date): string {
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
   return `${hh}:${mm}`;
+}
+
+/** U+2212, the typographic minus. A screen reader says it as "minus",
+ *  where it reads the hyphen a negative number prints with as "dash", and
+ *  it is the width of the plus beside it. */
+export const MINUS_SIGN = "\u2212";
+
+/**
+ * A figure with its sign, given its size already written the way it
+ * should read: `withSign(-2400, formatCalories(2400))` is "−2,400",
+ * `withSign(3, "3")` is "+3". Negative takes the true minus (MINUS_SIGN),
+ * not the hyphen `toFixed` and `toLocaleString` print, and a size that
+ * reads as zero ("0", "0.00") takes no sign at all, so a rate of −0.001
+ * is not "−0.00". unitTreatment.test.ts refuses the hand-rolled
+ * `x > 0 ? "+" : ""`, which leaves a negative to print its hyphen.
+ */
+export function withSign(value: number, magnitude: string): string {
+  if (!/[1-9]/.test(magnitude)) return magnitude;
+  return `${value < 0 ? MINUS_SIGN : "+"}${magnitude}`;
+}
+
+/** A signed figure to `decimals` places: "+0.25", "−0.27", "0.00". */
+export function formatSigned(value: number, decimals = 0): string {
+  return withSign(value, Math.abs(value).toFixed(decimals));
+}
+
+/**
+ * A span of time in words, its units spaced like every other unit's:
+ * "45 s", "12 min", "1 h", "1 h 5 min". Whole minutes by default, rounded,
+ * which is what a planned or estimated span needs; `seconds` keeps the
+ * part minute, which an interval's work time needs ("1 min 30 s"). Under
+ * a minute is always seconds. Not for a stopwatch or a run's moving time,
+ * which read as a clock: that is formatClock.
+ */
+export function formatDuration(
+  totalSeconds: number,
+  { seconds = false }: { seconds?: boolean } = {}
+): string {
+  const total = Math.max(0, Math.round(totalSeconds));
+  if (total < 60) return `${total} s`;
+  const wholeMinutes = seconds
+    ? Math.floor(total / 60)
+    : Math.round(total / 60);
+  const h = Math.floor(wholeMinutes / 60);
+  const m = wholeMinutes % 60;
+  const s = seconds ? total % 60 : 0;
+  return [h > 0 && `${h} h`, m > 0 && `${m} min`, s > 0 && `${s} s`]
+    .filter(Boolean)
+    .join(" ");
 }
 
 /**

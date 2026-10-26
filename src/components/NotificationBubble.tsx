@@ -8,6 +8,7 @@ import {
 } from "react";
 import { THEME } from "@/lib/theme";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { Trophy, CheckCircle, Bell } from "lucide-react";
 
 type BubbleVariant = "pr" | "complete" | "generic";
@@ -73,6 +74,7 @@ export function NotificationBubbleProvider({
   children: React.ReactNode;
 }) {
   const [bubble, setBubble] = useState<BubbleData | null>(null);
+  const motionSafe = useMotionSafe();
   const [progress, setProgress] = useState(1);
 
   const showBubble = useCallback(
@@ -118,9 +120,9 @@ export function NotificationBubbleProvider({
         {bubble && (
           <motion.div
             key={bubble.id}
-            initial={{ y: -80, opacity: 0 }}
+            initial={motionSafe({ y: -80, opacity: 0 })}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -80, opacity: 0 }}
+            exit={motionSafe({ y: -80, opacity: 0 })}
             drag="y"
             dragConstraints={{ top: -100, bottom: 0 }}
             onDragEnd={(_, info) => {

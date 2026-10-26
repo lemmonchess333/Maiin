@@ -80,23 +80,25 @@ test.describe("race event header + door-2 picker screenshots", () => {
     test.setTimeout(120_000);
     await page.goto("settings/run-plan");
     await page
-      .getByRole("radio", { name: /race prep/i })
+      .getByRole("radio", { name: /training for a race/i })
       .waitFor({ state: "visible", timeout: 15000 });
-    await page.getByRole("radio", { name: /race prep/i }).click();
+    await page.getByRole("radio", { name: /training for a race/i }).click();
+    // The picker browses at the goal's distance (it has no Distance
+    // filter of its own), and the draft's may have no catalogue matches
+    // (e.g. 5K). Set the goal to the full marathon first.
+    await page
+      .getByRole("radiogroup", { name: "Race distance", exact: true })
+      .getByRole("radio", { name: "Full", exact: true })
+      .click();
     await page
       .getByRole("button", { name: /choose an upcoming race/i })
       .waitFor({ state: "visible", timeout: 8000 });
     await page
       .getByRole("button", { name: /choose an upcoming race/i })
       .click();
-    // Browsing starts at the draft distance, which may have no catalogue
-    // matches (e.g. 5K). Select the full-marathon catalogue explicitly.
     await page
       .getByRole("combobox", { name: "Country", exact: true })
       .selectOption("GB");
-    await page
-      .getByRole("combobox", { name: "Distance", exact: true })
-      .selectOption("marathon");
     await page
       .getByRole("option", { name: /loch ness marathon/i })
       .waitFor({ state: "visible", timeout: 8000 });

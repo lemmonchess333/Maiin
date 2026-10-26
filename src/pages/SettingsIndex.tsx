@@ -164,7 +164,7 @@ const GROUPS: SectionGroup[] = [
       },
       {
         slug: "support-legal",
-        label: "Help & legal",
+        label: "Support & legal",
         description: "Support, privacy, terms",
         icon: HelpCircle,
         migrated: true,

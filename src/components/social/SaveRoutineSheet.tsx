@@ -105,14 +105,14 @@ export default function SaveRoutineSheet({
       });
       /* Post-save continuity: hold the sheet open briefly with a
          visible "Saved" state, then close. The toast still fires with
-         a "View in Program" action so a user who looks up after the
+         an "Open routine" action so a user who looks up after the
          sheet has gone has a clear path back to the routine. */
       setSaving(false);
       setSaved(true);
       haptic("success");
       toast.success("Saved to your routines", {
         action: {
-          label: "View in Program",
+          label: "Open routine",
           onClick: () => {
             navigate(`/routine/${routineId}`);
           },
@@ -161,7 +161,7 @@ export default function SaveRoutineSheet({
             value={name}
             onChange={(e) => setName(e.target.value.slice(0, NAME_MAX))}
             placeholder="e.g. Push A"
-            className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="ds-input text-sm"
           />
         </div>
 

@@ -10,6 +10,313 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Space post notices open the post (2026-10-25)
+
+Props and a comment on someone's Space post now open that post at
+`/space/{spaceId}/post/{postId}`, with the comments showing for a comment,
+instead of the Space's list. The page reads the one post, draws it with the
+Space page's own card and comment sheet, and opens the Space when the post
+is gone, refused, or someone else's across a block. Client only: the
+callables already store both ids on the notification. The unit suites drive
+the tray and the page against the Firestore fake; only two real accounts
+show the round trip.
+
+- [ ] **Open a props and a comment notice on a Space post.** On two phones
+      (or a phone and the web build), A posts in a Space; B gives the post
+      props and comments on it. Passing, on A: the props row opens the post,
+      with the Space's name above it opening the Space and A's flame state
+      as A left it; the comment row opens it with the comments showing and
+      B's comment in the list, and a reply from A there raises the card's
+      count. A deletes the post from its menu and lands on the Space; the
+      comment row then opens the Space too.
+
+## A routine's workout under way (2026-10-25)
+
+A saved routine's workout left with a set done is offered on Home and
+Train ("In progress · Arms · 3 sets · 12:40", Resume), and Resume opens
+the routine's page carrying on without asking. It is offered only while
+the routine still builds the same session, which the app learns by
+following that routine's document. The unit suite covers the rules and
+the page; these need a phone and a second device.
+
+- [ ] **Resume from Home, on an iPhone.** Start a routine from Train,
+      tick a set, close it. Passing: Home shows the strip with the
+      routine's name, the sets done and the time; Resume opens the
+      routine with the set ticked and no "Resume workout?" question;
+      Train's lift tab shows the same strip at its top.
+- [ ] **Deleted on another device.** With a routine's workout kept on
+      phone A, delete the routine on device B. Passing: within a few
+      seconds, A's Home and Train stop offering it, without reopening
+      the app.
+- [ ] **Offline in the gym.** In airplane mode, close a routine's workout
+      with a set done and open Home. Passing: the strip shows (the
+      routine was read on this phone when it was started), and Resume
+      opens the workout.
+
+## Leaving a workout says it was kept (2026-10-25)
+
+Every way out of a workout with a set done says "Workout kept" once, as
+the workout screen goes: Close, the browser's Back, Android's back button
+and leaving a routine's page. The unit suite drives each of those
+(`WorkoutSessionDraftRecovery.test.tsx`); the gestures only a phone has
+are below.
+
+- [ ] **The edge swipe in the iPhone app.** Capacitor's web view leaves
+      back and forward swipes off, and the app does not turn them on, so
+      swiping in from the left edge during a workout with a set done
+      should do nothing. Passing: nothing happens; or, if the swipe does
+      go back, "Workout kept" shows once and Home's In progress strip
+      offers the workout.
+- [ ] **The edge swipe in Safari on an iPhone.** In the web build, on
+      Train with a set done, swipe back from the left edge. Passing: the
+      workout closes to Train, "Workout kept · Resume it from Home or
+      Train." shows once, and the day's card offers Resume. Tap Close on
+      another workout instead: one toast, not two.
+- [ ] **Android's back button**, once the Android app exists. Passing:
+      Back during a workout with a set done closes it to Train with one
+      "Workout kept", and Back on a routine's workout leaves the page with
+      one too.
+
+## A runner's welcome back (survey item 49, 2026-10-25)
+
+Home greets a runner coming back: a free runner two weeks or more since
+their last run is offered an easy run (`RunReturnSheet`), and a race plan
+three weeks or more since opens the fell-behind sheet in its welcome-back
+register (`run-return`, ADR-0004's amendment). The rule, the read and both
+sheets are covered by unit suites against the Firestore fake; only a phone
+can confirm the run starts with its voice, and only a real account with
+real history can confirm the timing.
+
+- [ ] **Free runner, on the phone.** An account whose athlete type is
+      Runner or Hybrid, free running, whose last saved run is 15 or more
+      days old (the emulator's seed, or a real account left alone).
+      Passing: Home opens "Welcome back · It's been about 2 weeks since
+      your last run" once, alone, after the launch animation. Start with
+      an easy run lands on the Run page and starts Easy 20 with the GPS
+      search and its voice cue, with no second Start. Back on Home, the
+      sheet does not open again, then or after the app is closed and
+      reopened.
+- [ ] **Race plan, three weeks out.** A race-prep account, race still
+      ahead, whose last run and last workout are both more than 30 days
+      old: the weekly check sweeps only accounts active in the last 30
+      days, so no weekly prompt is pending. Passing: Home
+      opens "Welcome back · It's been a while between runs" with Rebuild
+      my plan, My race moved and Not now, and no runs-of-target line;
+      Rebuild re-plans with easy running first and toasts the plan's
+      length; the sheet does not come back.
+- [ ] **Offline.** With the phone in airplane mode, the same accounts
+      open Home and see no welcome back (the absence is measured only from
+      a server-confirmed read).
+
+## A new name reaches the notifications already sent (2026-10-25)
+
+`onPublicProfileIdentityChanged` now carries a new public name to the
+notifications the person sent in the last 90 days: `fromName`, and the
+sentence the tray shows, which starts with it. It reads them through a new
+`items` (fromUserId, createdAt newest first) collection-group index, which
+the emulator does not enforce. Notifications store no photo. A rename from
+before the deploy is not carried back; those notifications expire within
+90 days. The unit and emulator suites cover it; only a deploy confirms the
+index and the trigger in production.
+
+- [ ] **Rename, then read the other tray.** After Deploy production has
+      shipped (the Firestore step waits for the new index to be READY), on
+      account A give B props and comment on B's session, then change A's
+      name in Settings → Profile. Passing, on B within a minute: the rows
+      read "{new name} gave you props" and "{new name} commented on your
+      activity". The log line `onPublicProfileIdentityChanged.resynced`
+      counts `notification` and names no one, and Cloud Logging has no
+      "requires an index" error from the function.
+
+## Partner streaks are counted on the server (2026-10-25)
+
+The rules no longer let an app create a partner bond. The
+`startPartnerStreak` callable makes each one, counting both people's bonds
+against the limit of five in the transaction that creates it, with the
+mutual follow, a block either way, both accounts' deletion state and a
+restriction checked as the rules checked them. An iPhone build from before
+this change writes the bond itself, so on it Start streak now fails with
+"Couldn't start the streak. Try again."; nothing is lost, and an existing
+streak still shows and can be ended. The unit, rules and emulator suites
+cover each part, including two starts racing for one person's last place;
+only a deploy confirms the callable in production.
+
+- [ ] **Start a streak, then hit the limit.** After Deploy production has
+      shipped (`startPartnerStreak` is on the deployed-source list), on
+      two accounts that follow each other, tap Start streak on one's
+      profile from the other. Passing: "Streak started with …", and in the
+      console `partnerBonds/{a}__{b}` with streak 0 and a server
+      `createdAt`. With five streaks on either account, a sixth says whose
+      five it is ("You have 5 streak partners already. End one to start
+      another." or "{name} has 5 streak partners already.") and writes no
+      bond.
+- [ ] **Older iPhone builds.** Once a build carrying `startPartnerStreak`
+      is on TestFlight or the App Store, and if anyone still runs an
+      older one, set `config/client.minSupportedVersion` to that build's
+      version, so the older build shows the update screen instead of a
+      Start streak button that fails.
+
+## Circle invite codes expire (2026-10-25)
+
+A Circle's invite code works for seven days after it is made, and
+`joinGoalSpace` refuses it after that; the owner makes a new one from the
+Circle's sheet (`renewGoalSpaceInviteCode`), which stops the old one at
+once. A code made before this deploy is as old as its Circle, so a Circle
+more than a week old needs a new code before anyone else can join; nobody
+already in one is affected. The unit suites hold the rule on both sides;
+only a deploy can confirm the callables run it.
+
+- [ ] **A new code, a replaced code, an old Circle's code.** After Deploy
+      production has shipped (`joinGoalSpace` and
+      `renewGoalSpaceInviteCode` are on the deployed-source list), on
+      account A start a Circle. Passing: the invite sheet shows the code
+      and "Works until HH:MM on Ddd D Mmm", seven days on. In the Circle's
+      sheet tap New code, then on account B join with the first code:
+      "That invite code has expired. Ask whoever invited you for a new
+      one." Join with the new code: B is in. A Circle A made more than a
+      week before the deploy shows "This code has expired." and Make a new
+      code, and everyone already in it still opens it.
+
+## Names that follow you, and notices that open the post (survey items 57 and 58, 2026-10-24)
+
+A new public name or photo is carried to the person's recent posts,
+comments, memberships and challenge places by
+`onPublicProfileIdentityChanged`, which reads activity comments through a
+new `items` (authorId, text) collection-group index. Accepting a follow
+request tells the person who asked; a props or comment notice opens the
+post. The unit and emulator suites cover each; only a deploy and real
+accounts can confirm them in production.
+
+- [ ] **Rename, then look from another account.** After Deploy production
+      has shipped (the Firestore step waits for the new index to be READY;
+      `onPublicProfileIdentityChanged` is on the deployed-source list), on
+      account A change the name and the photo in Settings → Profile.
+      Passing, from account B within a minute: A's recent post in the feed,
+      A's comment on B's post, A's Space post and comment, A in a shared
+      Circle and on a challenge leaderboard all show the new name and
+      photo. The function's log line `onPublicProfileIdentityChanged.resynced`
+      shows the counts and no name. A post older than 90 days keeps the old
+      name, by design.
+- [ ] **Accept a request on one phone, read it on the other.** B asks to
+      follow A (A approves followers); A accepts from the tray. Passing: B's
+      tray shows "A accepted your follow request" and the row opens A's
+      profile, which now shows A's followers-only sessions.
+- [ ] **Open a props and a comment notice.** B gives props on and comments
+      on A's session. Passing, on A: the props row opens the session, the
+      comment row opens it with the comments showing. Delete the session
+      and tap the comment row again: it opens B's profile.
+
+## Cold start: what loads before the first paint (step 8, 2026-10-24)
+
+Login paints without framer, Home without its closed sheets, the composers
+without the word lists; a returning device starts Firestore and the
+signed-in shell with the app's own code; `dist/index.html` preloads the two
+first-paint fonts; and the diary row reads a 160 px thumbnail of a meal
+photo instead of the 1280 px photo. The dist checks and unit tests cover
+what ships; these need a browser's Network panel or an iPhone.
+
+- [ ] **The meal photo thumbnail, on an iPhone.** Scan a meal: the diary
+      row shows its photo, sharp at 52 pt. Delete the meal and both files
+      go (`food-photos/{uid}/{mealId}.jpg` and `.thumb.jpg`). A photo scanned
+      before this build still shows in its row, read from the photo itself.
+- [ ] **The fonts, on a first web visit.** In a private window, open the
+      app: the Network panel shows both Latin woff2 files requested from
+      the HTML (initiator: preload), the text never swaps face, and the
+      console has no "preloaded but not used" warning on Home.
+      STATUS 2026-10-25: on the live Hosting build in Chromium, both files
+      were requested from the HTML at the entry's moment and once each (so
+      `crossorigin` matches). The Welcome screen draws no Archivo, so that
+      preload waits there for the first figure; headless Chromium logged
+      no warning for it within 7 s. Home still needs an account.
+      STATUS 2026-10-25 (emulator): Home's half, on the e2e build against
+      the Auth and Firestore emulators, served by `vite preview` on
+      localhost, NOT on production. Signed in as the seeded account,
+      Home reloaded eight times in headless Chromium (five with the cache,
+      three with it disabled) with CDP's Network and Log domains on: both
+      woff2 files were requested from the HTML (initiator: parser) at the
+      entry's moment, once each, and no "preloaded but not used" warning
+      reached `Log.entryAdded` or the console within 7 s of any reload.
+      The face swap was not checked. Production with an account remains.
+- [ ] **A returning launch.** Signed in, reload with the Network panel
+      open: the firebase-db, Home and Layout chunks start alongside the
+      entry, not after Auth's requests; signed out with the device never
+      signed in, none of them load on Login.
+      STATUS 2026-10-25: checked on the live Hosting build in Chromium. A
+      first visit's Welcome screen preloaded both fonts from the HTML, each
+      fetched once, and loaded no Home, Layout or motion code, but it did
+      load firebase-db: `MinVersionGate` imported Firestore before seeing
+      that nobody was signed in. It now waits for Auth first
+      (`MinVersionGate.test.tsx`), so recheck after that deploys. With the
+      signed-in-before mark set, firebase-db, Home, Layout and the motion
+      root started about 270 ms after the entry, ahead of Login and every
+      Google request. The signed-in reload and Home's fonts still need an
+      account.
+      STATUS 2026-10-25 (later): with the gate's fix live, a first visit
+      still loaded firebase-db. The share sheet and the one-time
+      maintenance were mounted at the root for everyone, and both import
+      Firestore; they now mount only for a signed-in person
+      (`signedInRootOverlays.test.tsx`). Recheck after that deploys.
+      STATUS 2026-10-25 (emulator): the signed-in reload, on the e2e build
+      against the Auth and Firestore emulators, served by `vite preview`
+      on localhost, NOT on production, so no network latency is in these
+      figures. Signed in as the seeded account, Home reloaded eight times
+      in headless Chromium (five with the cache, three with it disabled),
+      timed from CDP `Network.requestWillBeSent`. The entry started 29 to
+      37 ms after the document; firebase-db 26 to 61 ms after the entry,
+      Layout 33 to 77 ms and Home 35 to 81 ms after it. Auth's first
+      request (the emulator's `accounts:lookup`) came 170 to 308 ms after
+      the document, so firebase-db started 104 to 215 ms before it, Layout
+      93 to 199 ms and Home 88 to 195 ms before it. The three chunks start
+      alongside the entry, not after Auth. Production with an account
+      remains.
+- [ ] **Analytics' config read, on the web.** Every web visit logs a 403
+      from `firebase.googleapis.com/.../webConfig`: Google answers
+      `API_KEY_SERVICE_BLOCKED`, because the web API key's API restrictions
+      leave out the Firebase Management API, which Analytics calls for its
+      config. Analytics falls back to the measurement ID in the app's
+      config, so events still arrive; the cost is an error in every
+      visit's console. In Google Cloud → APIs & Services → Credentials, add
+      Firebase Management API to the browser key's allowed APIs. Passing:
+      a private window shows no 403 and no "Failed to fetch this Firebase
+      app's measurement ID" warning.
+
+## Blocking both ways (Polish3 call 1, 2026-10-24)
+
+A block now hides each person from the other. `onBlockWritten` writes the
+person blocked's copy of each block (`blockedBy/{them}/users/{blocker}`),
+`useBlockedUsers` merges it into the set the feed, Explore, Spaces,
+comments, props, boards, search and the tray filter on, a blocker's profile
+reads as not available, and the rules refuse a single read of the
+blocker's public profile or of either's post. The unit, rules and emulator
+suites cover each half; only a deploy and two real accounts can confirm the
+trigger runs in production and the two apps agree.
+
+- [x] **Backfill the blocks made before the deploy.** Once Deploy
+      production has shipped `onBlockWritten` (check its deployed source),
+      run the backfill with credentials that can write Firestore:
+      `node functions/scripts/backfill-block-mirror.js adaptive-fitness-af8bb`,
+      or let the Backfill block mirror workflow run it with the deploy's
+      credentials: it runs by itself when the workflow, the backfill or
+      `functions/lib/blockMirror.js` changes on main, and from the Actions
+      tab on demand.
+      Passing: it prints its totals, and a second run prints `mirrored: 0`
+      and `removed: 0` (the workflow runs it twice and checks this).
+      STATUS 2026-10-25: done by the workflow's first run, on the merge
+      that made it run by itself. Both passes printed `checked: 0`,
+      `mirrored: 0`, `removed: 0`: production had no blocks yet, so the
+      trigger alone keeps the mirror from here.
+- [ ] **Block from one account, look from the other.** On two phones (or
+      a phone and the web build), account A follows B and both have shared
+      a public session; A blocks B from B's profile. Passing, on B, without
+      reopening the app: A's posts leave the feed, Explore and any Space;
+      A's comments and props leave B's posts; A is gone from the friends
+      board and challenge leaderboards; searching A's name finds nothing;
+      opening a link to A's profile says "This profile isn't available"
+      with no name or photo, the same words as a deleted account. On A:
+      B's profile shows B's name, Unblock and nothing B shared. In the
+      Firebase console, `blockedBy/{B}/users/{A}` exists. Unblock on A, and
+      both ways come back (follows do not: blocking ended them).
+
 ## Apple's name, and the second account made visible (survey item 22, Polish2 call 3, 2026-10-21)
 
 Native Apple sign-in now keeps the name Apple shares on the first
@@ -252,6 +559,14 @@ shows what the deploy set.
       (`functions/lib/triggerRetry.js`). Passing: a week after the release,
       Logs Explorer shows no `will be retried` line repeating for one event,
       and no `retry window closed` line.
+- [ ] **A deleted session's reversal retries too (2026-10-25).** The delete
+      triggers caught their reversal's failure, so a contended transaction
+      left the deleted session's challenge credit and lifetime total standing
+      for good; they now fail the event and are retried for a day
+      (`functions/__tests__/sessionDeleteRetry.test.js`). Passing: after the
+      release, the deployed source of onWorkoutDeleted and onRunDeleted
+      contains `triggerSteps`, and of `lib/activityReversal.js` contains
+      `not reversed for` (Deploy production reads both back).
 
 ## Reminders, sign-in and posting on the phone (2026-10-20)
 
@@ -724,8 +1039,8 @@ need a phone and a deploy.
 
 - [ ] **Maps on the phone.** A live run, a saved run (RunDetail), the
       finish screen and the route planner draw OpenFreeMap's basemap in
-      both themes. The credit shows as each map opens and folds to its
-      (i) after five seconds; the (i) opens it again, and its links open
+      both themes. The credit starts folded to its (i) on each map; the
+      (i) opens it, a tap on the map folds it again, and its links open
       outside the app. On the live run it sits top-right, clear of the
       GPS pill and the sheet; on RunDetail bottom-left, clear of Replay.
 - [ ] **Weather after the deploy.** `getCurrentWeather` is a new function
@@ -1141,6 +1456,21 @@ them is a separate piece of work. Until it happens, "Tropos stores no
 meal photos" is true of everything written from 2026-08-18 onward and
 NOT of what came before — do not read the Food9 lock as meaning the
 bucket is empty.
+
+STATUS 2026-10-25 — `storage.rules` now refuses every upload under
+`food-photos/` (`allow write: if false`), so even a client that tried could
+not add to the legacy set; read and delete stay for the owner. The sweep of
+what is already there is still not done.
+
+- [ ] **Public photos can be fetched, not listed (2026-10-25).** Space-post
+      and profile photos grant `get`, not `read`, so nobody can list a
+      person's folder; a deleted Space post's photo is now deleted with it
+      (`functions/lib/spacePostPhoto.js`, run by onSpacePostWritten). Passing:
+      after the release, post a Space photo from a test account, delete the
+      post, and the file is gone from Storage within a minute; a post photo
+      and an avatar still load in the feed and on a profile, on web and on
+      the phone. Photos from posts deleted before the release stay until
+      their account is deleted.
 
 ## Scan failure beat + no-food prompt contract (2026-08-18, PR #2066)
 
@@ -2342,6 +2672,32 @@ shared (pinned by the "profile:" cases in `firestore.rules.test.ts`).
       mode. It says "Couldn't load comments" with Try again, never "No
       comments yet" (which it also used to show while comments loaded).
 
+## The Together copy pass (owner, 2026-10-26)
+
+Affects: `ChallengeList`, `ChallengeCard`, the new `ChallengeRow`,
+`challengeEditions.ts`, `challengeFormat.ts` (`challengeGoal`),
+`CollectivePulse`, `SpacesDirectory`, and the descriptions in
+`functions/lib/challengeDefs.js` (deploys with the functions; the daily
+`rolloverChallenges` rewrites a running challenge's description).
+
+The intro paragraph went; joining confirms the edition and when the next
+one opens. Time left is said once for the month. Cards say their goal
+from the target in the reader's units, the "See N more" list is compact
+rows, no founding or "New space" line stands in for a count, the
+collective card shows "0 of 1,000 km", and an unjoined Weekly Warrior in
+its last day offers no Join.
+
+- [ ] **The new words reach the running challenges.** After the functions
+      deploy and the next 00:05 UTC `rolloverChallenges`, read
+      `challenges/strength-monthly-<YYYY-MM-01>`: its description is
+      "Everything you lift this month adds up.", and
+      `global-monthly-<YYYY-MM-01>`'s is "Running and lifting both count,
+      toward one score." (The cards show the goal either way.)
+- [ ] **On a phone:** join a monthly challenge from the "See N more" rows
+      and read the toast ("You're in for … opens on 1 …"); on a Sunday,
+      with Weekly Warrior not joined, the card says "Ends tonight. The
+      next one starts Monday." and offers no Join.
+
 ## The Settings pass (owner, 2026-10-01)
 
 Affects: `SettingsIndex.tsx`, `settings/SettingsList.tsx` (new),
@@ -2538,6 +2894,19 @@ Rollout sequence (operator, not agent) — do these in order, ideally after pack
 - [x] **(Optional) re-enable CI auto-deploy** — set 2026-09-15, between the first attempt of run 34976838538 (deploy skipped) and its re-run (deployed). For future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then the ONLY way to ship a storage-rules change is the manual `firebase deploy` above — **re-running Deploy production (`workflow_dispatch`) does not work as an escape hatch here**, unlike for functions. The `deploy` job's `if: vars.STORAGE_XSERVICE_APPROVED == 'true'` is evaluated for dispatch runs too, so a manual re-run skips the deploy and still reports green. (This doc line claimed the opposite until 2026-07-26; an operator following it in an incident would have believed the rules shipped when nothing had.) The `report-not-deployed` job now fails on any gated run so the skip is legible instead of silent.
 - [x] Spot-check the deployed rule in the Firebase Console (Storage → Rules) contains `isDeletionWriteFrozen`. Automated: each backend release's `Verify active Storage Rules source` step matches the live ruleset to `storage.rules`, which carries it.
 
+## Console checks a fix depends on (2026-10-25)
+
+- [ ] **Email Enumeration Protection is on.** Firebase console →
+      Authentication → Settings → User actions. A failed password sign-in
+      asks `fetchSignInMethods` for the address and, for a Google- or
+      Apple-only account, says which button to use (`src/pages/Login.tsx`,
+      `authErrors.ts`). With protection on, that call answers nothing for
+      any address, so Login cannot be used to learn whether an account
+      exists. With it off, typing any email reveals that, and the provider.
+      Passing: the switch reads enabled, and a wrong password for a
+      Google-only test account shows "Invalid email or password", not the
+      Google hint.
+
 ## App Check enforcement rollout — operator-in-loop
 
 Affects: every callable in `functions/`. NOT a code change — a Firebase Console + monitoring exercise.
@@ -2551,3 +2920,57 @@ Rollout sequence (operator, not agent):
 - [ ] Open **Firebase Console → App Check → APIs tab → Cloud Functions for Firebase**. Look for "Verified requests %". Target: ≥99% sustained for ≥7 days before any per-callable flip.
 - [ ] If verified % is low and the cause isn't obvious, query Cloud Logging: `resource.type="cloud_function" jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see exactly which callables would reject and which uids are missing tokens. Usual culprits: ad-blockers killing reCAPTCHA (rare, swallowed) or native iOS (all `MISSING` until the Capacitor App Check plugin is wired).
 - [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints that the client **actually calls** — `sendTestPush`, `backfillMyActivityCategories`. (This line named `askGeminiText` until 2026-07-26; it had no client caller, so flipping it would have produced no telemetry and no rejection signal. It has since been retired. `docs/app-check-rollout.md` carries the full tier table and the traffic check.) Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
+
+## Follow edges, photo URLs and profile fields, held by the rules (2026-10-25)
+
+Rules-tested on the emulator; only the deployed rules and real profiles
+show whether anything already stored falls outside them.
+
+- [ ] **Every stored photo URL is in this project's bucket.** The photo
+      gate (`isAllowedPhotoUrl`, and `functions/lib/publicPhotoUrl.js` on the
+      server) now takes a Storage URL only from
+      `adaptive-fitness-af8bb.firebasestorage.app` or `.appspot.com`. A
+      profile whose stored `photoURL` names another bucket could not save
+      any profile change until its photo is replaced. Before the release,
+      in the Firestore console query `users/*/public/profile` (a collection
+      group on `public`) for `photoURL` values starting
+      `https://firebasestorage.googleapis.com/` and check each names this
+      project's bucket. Passing: none names another.
+- [ ] **Following still works after the release.** Follow an account that
+      accepts followers, and accept a request on one that approves them.
+      Passing: both land, and the accepted follower is told.
+
+## Signing out clears the device's copy; sign-in avatars draw (2026-10-25)
+
+Unit-tested with the Firestore fake and jsdom, which have no IndexedDB, no
+reload and no CSP; only a browser and the phone show them doing their part.
+
+- [ ] **A sign-out clears Firestore's copy on the web.** Sign in on the web
+      build, open a few screens, sign out while online. Passing: the page
+      reloads to Login, and DevTools → Application → IndexedDB has no
+      `firestore/[DEFAULT]/…` database holding the account's documents (or
+      it is empty). Sign out with the network off instead: no reload, the
+      copy stays, and the account's offline changes go up on its next sign-in.
+- [ ] **The same on the phone.** Sign out on the iOS build while online.
+      Passing: the app reloads straight to Login, with no second Login flash
+      and no error screen, and signing back in works.
+- [ ] **Google and Apple avatars draw.** Sign in with Google on the web
+      build and on the phone, with no photo uploaded. Passing: the feed,
+      the profile and a comment show the Google photo, not an initial, and
+      the console shows no CSP refusal for `lh3.googleusercontent.com`.
+
+## Saving offline counts as saved (2026-10-25)
+
+The SDK keeps an offline write on the device and sends it on reconnect,
+but its promise waits for the server, so every profile save offline spun
+until the connection came back (`src/lib/settleWrite.ts`). Unit-tested
+with the fake; only the phone shows the SDK replaying the write.
+
+- [ ] **A Settings change offline sticks.** On the phone, turn on Airplane
+      Mode, change a Settings value (units, max heart rate, a toggle).
+      Passing: it saves at once with no spinner left turning, and after
+      turning the connection back on and reopening the app, the value is
+      still the changed one.
+- [ ] **Connecting Apple Health offline shows steps.** With Airplane Mode
+      on, connect Apple Health from Settings → Health. Passing: today's
+      steps appear without waiting for a connection.

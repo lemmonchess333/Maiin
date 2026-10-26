@@ -259,7 +259,7 @@ describe("DS ratchets — surface-level drift", () => {
   // Raw <button> elements. CTAs belong on the Button / IconButton
   // primitives (44px floor, focus ring, press feedback come with them);
   // pressable cards, rows, chips and day-cells are legitimately bare.
-  const RAW_BUTTON_BASELINE = 320;
+  const RAW_BUTTON_BASELINE = 293;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
@@ -465,7 +465,7 @@ describe("DS ratchets — surface-level drift", () => {
      `tracking-*` utility. Grandfathered until touched (Diagnostics carries
      8 of them, RunDetail 4, WorkoutDetail 3); `pages/dev/*` is outside
      the scan as usual. */
-  const HAND_ROLLED_LABEL_BASELINE = 28;
+  const HAND_ROLLED_LABEL_BASELINE = 20;
   const LABEL_PRIMITIVE = "src/components/ui/SectionLabel.tsx";
   it("hand-rolled uppercase tracked labels do not increase (use SectionLabel)", () => {
     const { total, byFile } = scan((src, rel) => {
@@ -635,5 +635,471 @@ describe("DS ratchets — surface-level drift", () => {
       (src) => (src.match(/\btext-\[\d+(?:\.\d+)?px\]/g) ?? []).length
     );
     expectRatchet("text-[Npx]", total, OFF_SCALE_TEXT_BASELINE, byFile);
+  });
+});
+
+describe("type tiers", () => {
+  /* `text-caption` (11px) is the floor for dense numerals and units
+     (DESIGN_GUIDE §10). A unit with neither `font-mono` nor `tabular-nums`
+     is counted as words; words belong on `text-micro` (12px) or above.
+     The count holds the remaining word uses and may only fall. */
+  const CAPTION_WORDS_BASELINE = 66;
+  it("text-caption on words does not increase (words sit on text-micro)", () => {
+    const { total, byFile } = scan((src) => {
+      let n = 0;
+      for (const chunk of classNameChunks(src)) {
+        if (
+          /\btext-caption\b/.test(chunk) &&
+          !/\b(?:font-mono|tabular-nums)\b/.test(chunk)
+        )
+          n++;
+      }
+      return n;
+    });
+    expectRatchet(
+      "text-caption on words",
+      total,
+      CAPTION_WORDS_BASELINE,
+      byFile
+    );
+  });
+
+  /* "Never mix 700 and 800 in the same visual tier" (§4 weight rules). A
+     tier is a size step plus its register: numerals (`font-mono` or
+     `tabular-nums`) are hero figures and words are headings, so the two
+     registers are separate tiers. Every tier listed here carries one
+     weight; a tier joins the list once it is aligned. */
+  const SINGLE_WEIGHT_TIERS = [
+    "text-display num",
+    "text-3xl num",
+    "text-h1 word",
+    "text-h2 word",
+    "text-h2 num",
+    "text-h3 word",
+    "text-lg word",
+  ];
+  it("a pinned type tier uses one weight, never 700 beside 800", () => {
+    const seen = new Map<string, Map<string, string[]>>();
+    for (const file of FILES) {
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
+      for (const chunk of classNameChunks(readFileSync(file, "utf8"))) {
+        const tokens = chunk.split(/\s+/);
+        const weights = tokens.filter(
+          (t) => t === "font-bold" || t === "font-extrabold"
+        );
+        if (weights.length !== 1) continue;
+        const size = tokens.find((t) =>
+          /^text-(?:lg|xl|2xl|3xl|h1|h2|h3|display)$/.test(t)
+        );
+        if (!size) continue;
+        const register = tokens.some(
+          (t) => t === "font-mono" || t === "tabular-nums"
+        )
+          ? "num"
+          : "word";
+        const tier = `${size} ${register}`;
+        const byWeight = seen.get(tier) ?? new Map<string, string[]>();
+        byWeight.set(weights[0], [...(byWeight.get(weights[0]) ?? []), rel]);
+        seen.set(tier, byWeight);
+      }
+    }
+    const mixed = SINGLE_WEIGHT_TIERS.filter(
+      (tier) => (seen.get(tier)?.size ?? 0) > 1
+    ).map(
+      (tier) =>
+        `${tier}: ` +
+        [...seen.get(tier)!.entries()]
+          .map(([w, files]) => `${w} ×${files.length} (${files.join(", ")})`)
+          .join(" | ")
+    );
+    expect(mixed, mixed.join("\n")).toEqual([]);
+  });
+});
+
+/* Form controls on one field. A text input, a select and a textarea are
+   the same kind of box to the person filling them in, and `.ds-input`
+   (src/styles/components.css) is that box: radius, its resting edge and
+   fill (tokens.css), the inset and a floor above 44px. Selects render through the
+   `Select` primitive, which puts a native <select> on that field (so iOS
+   keeps its picker) and owns the tapped-select focus fix. Floors are 0
+   for selects and textareas; typed inputs off the field are a named list,
+   each with its reason, and the list only shrinks. */
+describe("form controls share the field primitive", () => {
+  const SELECT_PRIMITIVE = "src/components/ui/Select.tsx";
+
+  /** Source with comments blanked, so prose that names `<select>` or
+   *  `<input type=file>` is not counted. A `//` after a colon or a quote
+   *  is a URL in a string, not a comment. */
+  const code = (src: string) =>
+    src
+      .replace(/\/\*[\s\S]*?\*\//g, " ")
+      .replace(/(^|[^:"'`\\])\/\/[^\n]*/gm, "$1");
+
+  /** A JSX opening tag from `<` to its `>`, skipping a `>` inside braces
+   *  (an arrow function in an onChange) or inside a string. */
+  function openingTag(src: string, start: number): string {
+    let depth = 0;
+    let quote: string | null = null;
+    for (let i = start; i < src.length; i++) {
+      const c = src[i];
+      if (quote) {
+        if (c === quote) quote = null;
+        continue;
+      }
+      if (c === '"' || c === "'" || c === "`") quote = c;
+      else if (c === "{") depth++;
+      else if (c === "}") depth--;
+      else if (c === ">" && depth === 0) return src.slice(start, i + 1);
+    }
+    return src.slice(start);
+  }
+
+  /** Whether a tag's class carries `.ds-input`: a literal, a cn() call,
+   *  or a module constant (`className={INPUT_CLASS}`) read from the file. */
+  function onField(tag: string, src: string): boolean {
+    if (/\bds-input\b/.test(tag)) return true;
+    const ident = /className=\{([A-Z_a-z]\w*)\}/.exec(tag)?.[1];
+    if (!ident) return false;
+    const decl = new RegExp(`const ${ident}\\s*=\\s*["'\`]([^"'\`]*)`).exec(
+      src
+    );
+    return !!decl && /\bds-input\b/.test(decl[1]);
+  }
+
+  const lineOf = (src: string, index: number) =>
+    src.slice(0, index).split("\n").length;
+
+  it("a <select> renders only inside the Select primitive", () => {
+    const offenders: string[] = [];
+    scan((src, rel) => {
+      if (rel === SELECT_PRIMITIVE) return 0;
+      const body = code(src);
+      for (const m of body.matchAll(/<select\b/g))
+        offenders.push(`${rel}:${lineOf(body, m.index!)}`);
+      return 0;
+    });
+    expect(
+      offenders,
+      `Raw <select> outside the primitive. Render it through <Select> ` +
+        `(src/components/ui/Select.tsx): the field, the chevron and the ` +
+        `tapped-select focus fix come with it.\n  ` +
+        offenders.join("\n  ")
+    ).toEqual([]);
+  });
+
+  it("every <textarea> is on .ds-input", () => {
+    const offenders: string[] = [];
+    scan((src, rel) => {
+      const body = code(src);
+      for (const m of body.matchAll(/<textarea\b/g)) {
+        const tag = openingTag(body, m.index!);
+        if (!onField(tag, body))
+          offenders.push(`${rel}:${lineOf(body, m.index!)}`);
+      }
+      return 0;
+    });
+    expect(
+      offenders,
+      `A <textarea> off the field primitive. Give it \`ds-input\` and ` +
+        `keep only its own type size, rows and resize.\n  ` +
+        offenders.join("\n  ")
+    ).toEqual([]);
+  });
+
+  /* The typed inputs that are deliberately their own control. The counts
+     are exact, so an exception that moves onto the field comes off the
+     list rather than lingering with a stale reason, and nothing new goes
+     on without its reason written beside it. */
+  const INPUTS_OFF_FIELD: Record<string, { count: number; why: string }> = {
+    "src/components/WorkoutSession.tsx": {
+      count: 2,
+      why: "the set row's weight and reps: compact 44px cells on FIELD_EDGE",
+    },
+    "src/components/food/EditServingsSheet.tsx": {
+      count: 2,
+      why: "the serving editor's quantity and unit, sized per field, on FIELD_FOCUS_RING",
+    },
+    "src/components/food/FoodDateBar.tsx": {
+      count: 1,
+      why: "an sr-only date input that the visible day button opens",
+    },
+    "src/components/nutrition/ServingSizeDrawer.tsx": {
+      count: 1,
+      why: "the stepper's readout between its minus and plus",
+    },
+    "src/components/program/ExercisePicker.tsx": {
+      count: 1,
+      why: "a search bar: filled, borderless, with its magnifier",
+    },
+    "src/components/social/views/PeopleView.tsx": {
+      count: 1,
+      why: "a search bar: filled, borderless, with its magnifier",
+    },
+    "src/components/run/TreadmillMode.tsx": {
+      count: 1,
+      why: "the run screen's dark stage, white on translucent white",
+    },
+  };
+  const NOT_TYPED = /\btype="(checkbox|radio|range|hidden|file|color)"/;
+
+  it("typed inputs off .ds-input are only the named exceptions", () => {
+    const { byFile } = scan((src) => {
+      const body = code(src);
+      let n = 0;
+      for (const m of body.matchAll(/<input\b/g)) {
+        const tag = openingTag(body, m.index!);
+        if (NOT_TYPED.test(tag)) continue;
+        if (!onField(tag, body)) n++;
+      }
+      return n;
+    });
+    const sorted = (entries: [string, number][]) =>
+      Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b)));
+    expect(
+      sorted([...byFile.entries()]),
+      `Typed inputs off the field primitive, by file. Put a new field on ` +
+        `\`ds-input\`; when an exception moves onto it, take it off ` +
+        `INPUTS_OFF_FIELD.`
+    ).toEqual(
+      sorted(Object.entries(INPUTS_OFF_FIELD).map(([f, e]) => [f, e.count]))
+    );
+  });
+
+  it("the Select primitive is a native select on the field, with its chevron (positive pin)", () => {
+    // The guards above are only a fix if what they send people to is the
+    // field and keeps the platform's picker.
+    const body = code(
+      readFileSync(resolve(repoRoot, SELECT_PRIMITIVE), "utf8")
+    );
+    expect(body.match(/<select\b/g)?.length).toBe(1);
+    expect(body).toMatch(/"peer ds-input appearance-none/);
+    expect(body).toMatch(/<ChevronDown\b/);
+    expect(body).toMatch(/pointerFocus && "ds-input-pointer-focus"/);
+  });
+
+  it(".ds-input clears the 44px floor and hides the number spinners (positive pin)", () => {
+    const css = readFileSync(
+      resolve(repoRoot, "src/styles/components.css"),
+      "utf8"
+    ).replace(/\/\*[\s\S]*?\*\//g, "");
+    const box = /select\.ds-input\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+    // 3rem is 48px at the default root size, and grows with the text.
+    expect(box).toMatch(/min-height:\s*3rem/);
+    expect(css).toMatch(
+      /input\.ds-input\[type="number"\]\s*\{[^}]*appearance:\s*textfield/
+    );
+    expect(css).toMatch(
+      /input\.ds-input\[type="number"\]::-webkit-inner-spin-button/
+    );
+  });
+});
+
+/* An action takes its domain's colour wherever it appears (DESIGN_GUIDE
+   §14i). The colour says what the button does, not which page it sits on:
+   logging food is the food orange on Home, Analytics and the run summary as
+   much as on Food; starting a run is coral; starting a lift is purple.
+
+   It is a scan of the source, not a render, because the drift it stops is
+   a call site written with the default variant on a page whose own colour
+   is something else. Food10 made every Log on Food orange while the
+   manual logger, the search result's serving sheet and the portion sheet
+   kept logging in purple, and the run summary's "Log recovery food" was a
+   bare grey button. The control is found by its label: a literal label
+   that logs food (or a bare "Log" in a food file), starts a run or starts
+   a lift. A label built at run time is not seen, which is why the test
+   also names the controls it must find. */
+describe("an action takes its domain's colour wherever it appears", () => {
+  type Hue = "food" | "running" | "lifting" | "other";
+  interface Control {
+    file: string;
+    line: number;
+    label: string;
+    hue: Hue;
+  }
+
+  /** Comments blanked to spaces, so offsets and line numbers still hold
+   *  and an apostrophe in a comment cannot open a string. `://` is kept,
+   *  so a URL in copy is not cut short. */
+  function blankComments(src: string): string {
+    const blank = (m: string) => m.replace(/[^\n]/g, " ");
+    return src
+      .replace(/\/\*[\s\S]*?\*\//g, blank)
+      .replace(
+        /(^|[^:\\])\/\/[^\n]*/g,
+        (m, lead: string) => lead + blank(m.slice(lead.length))
+      );
+  }
+
+  /** Where an opening tag ends: the first `>` outside braces and strings. */
+  function openTagEnd(src: string, from: number): number {
+    let depth = 0;
+    let quote: string | null = null;
+    for (let i = from; i < src.length; i++) {
+      const c = src[i];
+      if (quote) {
+        if (c === quote && src[i - 1] !== "\\") quote = null;
+        continue;
+      }
+      if (c === '"' || c === "'" || c === "`") quote = c;
+      else if (c === "{") depth++;
+      else if (c === "}") depth--;
+      else if (c === ">" && depth === 0) return i;
+    }
+    return -1;
+  }
+
+  /** The `{…}` expressions of a run of JSX children, outermost only. */
+  function expressions(text: string): string[] {
+    const out: string[] = [];
+    let depth = 0;
+    let start = -1;
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === "{") {
+        if (depth === 0) start = i + 1;
+        depth++;
+      } else if (text[i] === "}" && depth > 0) {
+        depth--;
+        if (depth === 0) out.push(text.slice(start, i));
+      }
+    }
+    return out;
+  }
+
+  /** What the control says: its aria-label or ctaLabel, its plain text,
+   *  and the string literals its children choose between. */
+  function labelsOf(open: string, body: string): string[] {
+    const out: string[] = [];
+    for (const m of open.matchAll(
+      /\b(?:aria-label|ctaLabel)=(?:"([^"]*)"|\{`([^`$]*))/g
+    ))
+      out.push(m[1] ?? m[2] ?? "");
+    const children = body.replace(/<[^>]*>/g, " ");
+    const exprs = expressions(children);
+    let plain = children;
+    for (const e of exprs) plain = plain.replace(`{${e}}`, " ");
+    out.push(plain);
+    for (const e of exprs)
+      for (const m of e.matchAll(/"([^"]+)"|'([^']+)'|`([^`$]+)/g))
+        out.push(m[1] ?? m[2] ?? m[3] ?? "");
+    return out.map((s) => s.replace(/\s+/g, " ").trim()).filter(Boolean);
+  }
+
+  /** The hue the control paints: its variant, else a fill class, else the
+   *  primitive's default (`primary`). */
+  function hueOf(tag: string, open: string): Hue {
+    const variant = /\bvariant(?:=\{?\s*|:\s*)["']([a-z-]+)["']/.exec(
+      open
+    )?.[1];
+    if (variant)
+      return variant.startsWith("nutrition")
+        ? "food"
+        : variant.startsWith("sport")
+          ? "running"
+          : variant === "primary"
+            ? "lifting"
+            : "other";
+    if (
+      /\b(bg|text)-nutrition(-fill|-strong|\/)|THEME\.semantic\.nutrition/.test(
+        open
+      )
+    )
+      return "food";
+    if (/\b(bg|text)-running(-fill|-strong|\/)|THEME\.running\b/.test(open))
+      return "running";
+    if (/\bbg-(lifting-fill|primary-strong)\b/.test(open)) return "lifting";
+    if (tag === "Button" || /\bbuttonClasses\(/.test(open)) return "lifting";
+    return "other";
+  }
+
+  const FOOD_FILE =
+    /^src\/(components\/(food|nutrition)\/|pages\/Food\.tsx$|components\/(FoodAnalyzer|ManualFoodLogger|FoodCameraModal)\.tsx$)/;
+
+  /** The domain an action label belongs to, if it names one. A Pro
+   *  offer is the brand's, whatever it promises to log. A bare "Log" is
+   *  read only on the Button primitive in a food file: on a raw button it
+   *  is the hint inside a pressable row, which keeps the row's look. */
+  function domainOf(label: string, file: string, tag: string): Hue | null {
+    if (/\bPro\b/.test(label)) return null;
+    if (/^Log\b.*\b(food|meals?|portion)\b|^Log to\b/i.test(label))
+      return "food";
+    if (label === "Log" && tag === "Button" && FOOD_FILE.test(file))
+      return "food";
+    if (/^Start (a )?run$/i.test(label)) return "running";
+    if (/^Start (lift|workout)$/i.test(label)) return "lifting";
+    return null;
+  }
+
+  function domainControls(): (Control & { domain: Hue })[] {
+    const found: (Control & { domain: Hue })[] = [];
+    for (const full of FILES) {
+      const file = relative(repoRoot, full).replaceAll("\\", "/");
+      const src = blankComments(readFileSync(full, "utf8"));
+      for (const m of src.matchAll(
+        /<(Button|button|Link|SectionEmptyCTA)(?=[\s>/])/g
+      )) {
+        const tag = m[1];
+        const end = openTagEnd(src, m.index + 1);
+        if (end < 0) continue;
+        const open = src.slice(m.index, end + 1);
+        const close = src.indexOf(`</${tag}>`, end);
+        const body =
+          src[end - 1] === "/" || close < 0 ? "" : src.slice(end + 1, close);
+        const line = src.slice(0, m.index).split("\n").length;
+        for (const label of labelsOf(open, body)) {
+          const domain = domainOf(label, file, tag);
+          if (!domain) continue;
+          found.push({ file, line, label, hue: hueOf(tag, open), domain });
+          break;
+        }
+      }
+    }
+    return found;
+  }
+
+  it("finds the food logs it knows of (positive pin)", () => {
+    const food = domainControls()
+      .filter((c) => c.domain === "food")
+      .map((c) => `${c.file} ${c.label}`);
+    for (const known of [
+      "src/pages/History.tsx Log meal",
+      "src/components/home/TodayEnergy.tsx Log food",
+      "src/components/nutrition/ServingSizeDrawer.tsx Log food",
+      "src/components/ManualFoodLogger.tsx Log meal",
+      "src/components/food/QuickMealPortionSheet.tsx Log this portion",
+      "src/components/food/CopyMealsSheet.tsx Log selected meals",
+      "src/components/FoodAnalyzer.tsx Log to",
+      "src/pages/RunSummary.tsx Log recovery food",
+      "src/pages/Food.tsx Log",
+    ])
+      expect(food, `the scan no longer finds ${known}`).toContain(known);
+  });
+
+  it("finds the run and lift starts it knows of (positive pin)", () => {
+    const starts = domainControls()
+      .filter((c) => c.domain !== "food")
+      .map((c) => `${c.file} ${c.label}`);
+    for (const known of [
+      "src/pages/History.tsx Start run",
+      "src/pages/History.tsx Start lift",
+      "src/components/home/RunCTACard.tsx Start run",
+      "src/components/home/LiftCTACard.tsx Start workout",
+    ])
+      expect(starts, `the scan no longer finds ${known}`).toContain(known);
+  });
+
+  it("every one of them wears its domain's colour", () => {
+    const wrong = domainControls()
+      .filter((c) => c.hue !== c.domain)
+      .map(
+        (c) =>
+          `${c.file}:${c.line} "${c.label}" is ${c.hue}, should be ${c.domain}`
+      );
+    expect(
+      wrong,
+      `An action takes its domain's colour on every page (DESIGN_GUIDE ` +
+        `§14i): logging food is \`nutrition\` / \`nutrition-tinted\`, a ` +
+        `run is \`sport\` / \`sport-tinted\`, a lift is \`primary\`.\n` +
+        wrong.join("\n")
+    ).toEqual([]);
   });
 });

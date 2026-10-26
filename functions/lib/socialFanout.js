@@ -231,6 +231,8 @@ const VALID_NOTIFICATION_TYPES = [
   // Polish2: someone asked to follow the recipient, who approves each
   // follower (onFollowRequestCreated).
   "follow_request",
+  // The person asked said yes (onFollowerCreated, on an accepted edge).
+  "follow_accepted",
   "challenge_milestone",
   // SOCIAL-FOCUS-01: a Circle member backed the recipient's weekly
   // focus. Deliberately GENERIC — the message never names the backer
@@ -247,7 +249,8 @@ const VALID_NOTIFICATION_TYPES = [
   "circle_routine_shared",
   // SOC-P2g: space-post engagement (like = "props" flame, comment). NAMED
   // types — the actor is already visible on the post itself, so naming is
-  // consistent, not a leak. These deep-link via spaceId (see the sanitiser).
+  // consistent, not a leak. These open the post via spaceId and postId
+  // (see the sanitiser).
   //
   // Added 2026-07-27, AFTER the callables shipped emitting them: the P2g
   // callables threw here on every single notification, the throw landed in
@@ -271,9 +274,10 @@ function sanitiseNotificationData(data) {
   if (typeof data.message === "string" && data.message) {
     out.message = data.message.slice(0, 200);
   }
-  // SOC-P2g deep-link payload. The tray navigates to the space via
-  // data.spaceId (useNotifications.ts parses it; NotificationsSheet routes
-  // on it), so stripping it here ships rows that render but go nowhere —
+  // SOC-P2g deep-link payload. The tray opens the post via data.spaceId
+  // and data.postId (useNotifications.ts parses them; notificationTarget.ts
+  // routes on them), so stripping them here ships rows that render but go
+  // nowhere —
   // which is exactly what happened before 2026-07-27: the callables SENT
   // spaceId/postId and this allowlist dropped them. spaceId is a closed
   // server-side vocabulary (SPACE_IDS, ~20 short ids) and postId is a

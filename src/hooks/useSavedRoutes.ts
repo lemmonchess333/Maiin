@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { toast } from "@/lib/toast";
 import {
   listSavedRoutes,
   saveRoute,
@@ -42,6 +43,8 @@ export function useSavedRoutes() {
   // The account a list may still be answered for, moved by the effect
   // below. A read that resolves for any other uid is stale and dropped.
   const currentUidRef = useRef<string | null>(null);
+  // A newer read or mutation supersedes an older answer for the same uid too.
+  const readVersionRef = useRef(0);
 
   const ownList = uid !== null && list.uid === uid;
   const routes = ownList ? list.routes : NO_ROUTES;
@@ -50,36 +53,40 @@ export function useSavedRoutes() {
 
   /** Read `forUid`'s list; the answer commits only while it is still the
    *  signed-in account. */
-  const readList = useCallback(
-    (forUid: string): Promise<void> =>
-      listSavedRoutes(forUid).then(
-        (next) => {
-          if (currentUidRef.current !== forUid) return;
-          setList({
-            uid: forUid,
-            routes: next,
-            error: false,
-            reloading: false,
-          });
-        },
-        (e) => {
-          logger.warn("[useSavedRoutes] list failed", e);
-          if (currentUidRef.current !== forUid) return;
-          // A failed reload keeps this account's routes; never another's.
-          setList((current) => ({
-            uid: forUid,
-            routes: current.uid === forUid ? current.routes : NO_ROUTES,
-            error: true,
-            reloading: false,
-          }));
-        }
-      ),
-    []
-  );
+  const readList = useCallback((forUid: string): Promise<void> => {
+    const version = ++readVersionRef.current;
+    const current = () =>
+      currentUidRef.current === forUid && readVersionRef.current === version;
+    return listSavedRoutes(forUid).then(
+      (next) => {
+        if (!current()) return;
+        setList({
+          uid: forUid,
+          routes: next,
+          error: false,
+          reloading: false,
+        });
+      },
+      (e) => {
+        if (!current()) return;
+        logger.warn("[useSavedRoutes] list failed", e);
+        // A failed reload keeps this account's routes; never another's.
+        setList((current) => ({
+          uid: forUid,
+          routes: current.uid === forUid ? current.routes : NO_ROUTES,
+          error: true,
+          reloading: false,
+        }));
+      }
+    );
+  }, []);
 
   useEffect(() => {
     currentUidRef.current = uid;
     if (uid) void readList(uid);
+    return () => {
+      currentUidRef.current = null;
+    };
   }, [uid, readList]);
 
   const refresh = useCallback(async () => {
@@ -111,19 +118,29 @@ export function useSavedRoutes() {
 
   const remove = useCallback(
     async (id: string): Promise<void> => {
-      if (!uid) return;
+      if (!uid || currentUidRef.current !== uid) return;
+      // A list requested before this deletion must not put the route back.
+      ++readVersionRef.current;
       // Optimistic — drop locally, then delete server-side.
       setList((current) =>
         current.uid === uid
-          ? { ...current, routes: current.routes.filter((r) => r.id !== id) }
+          ? {
+              ...current,
+              routes: current.routes.filter((r) => r.id !== id),
+              reloading: false,
+            }
           : current
       );
       try {
         await deleteSavedRoute(uid, id);
       } catch (e) {
         logger.warn("[useSavedRoutes] delete failed", e);
-        refresh();
+        // The refresh below puts the route back; say why it came back.
+        toast.error("Couldn't delete the route. Try again.");
       }
+      // Settle the invalidated reload against the current server list. On
+      // failure this also restores the route; a failed read stays retryable.
+      await refresh();
     },
     [uid, refresh]
   );

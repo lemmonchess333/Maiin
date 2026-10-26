@@ -70,9 +70,9 @@ describe("friendlyAuthError — sign-up-specific codes", () => {
     );
   });
 
-  it("invalid-email → 'Please enter a valid email address'", () => {
+  it("invalid-email → 'Enter a valid email address'", () => {
     expect(friendlyAuthError(wrap("invalid-email"))).toBe(
-      "Please enter a valid email address"
+      "Enter a valid email address"
     );
   });
 });
@@ -80,7 +80,7 @@ describe("friendlyAuthError — sign-up-specific codes", () => {
 describe("friendlyAuthError — transient / network", () => {
   it("network-request-failed → connection guidance", () => {
     expect(friendlyAuthError(wrap("network-request-failed"))).toBe(
-      "Network issue — check your connection and try again"
+      "Network issue. Check your connection and try again"
     );
   });
 
@@ -200,13 +200,13 @@ describe("friendlyAuthError — substring matching robustness", () => {
 describe("providerHint", () => {
   it("steers a Google-only account to the Google button", () => {
     expect(providerHint(["google.com"])).toBe(
-      "This account uses Google — tap Continue with Google to sign in."
+      "This account uses Google. Use Continue with Google to sign in."
     );
   });
 
   it("steers an Apple-only account to the Apple button", () => {
     expect(providerHint(["apple.com"])).toBe(
-      "This account uses Apple — tap Continue with Apple to sign in."
+      "This account uses Apple. Use Continue with Apple to sign in."
     );
   });
 
@@ -223,19 +223,19 @@ describe("providerHint", () => {
 describe("duplicateEmailHint", () => {
   it("names the password case (unlike providerHint)", () => {
     expect(duplicateEmailHint(["password"])).toBe(
-      "This email already has a Tropos account with a password — sign in with your email and password."
+      "This email already has a Tropos account with a password. Sign in with your email and password."
     );
     expect(duplicateEmailHint(["password", "google.com"])).toBe(
-      "This email already has a Tropos account with a password — sign in with your email and password."
+      "This email already has a Tropos account with a password. Sign in with your email and password."
     );
   });
 
   it("falls back to the provider steer for OAuth-only accounts", () => {
     expect(duplicateEmailHint(["apple.com"])).toBe(
-      "This account uses Apple — tap Continue with Apple to sign in."
+      "This account uses Apple. Use Continue with Apple to sign in."
     );
     expect(duplicateEmailHint(["google.com"])).toBe(
-      "This account uses Google — tap Continue with Google to sign in."
+      "This account uses Google. Use Continue with Google to sign in."
     );
   });
 

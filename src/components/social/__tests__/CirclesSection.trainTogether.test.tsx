@@ -69,6 +69,7 @@ function summary(
       createdAt: 1,
     },
     inviteCode: null,
+    inviteCodeExpiresAt: null,
   };
 }
 
@@ -81,6 +82,7 @@ function hookValue(overrides: Record<string, unknown> = {}) {
     createCircle: vi.fn(async () => ({
       spaceId: "new-space",
       inviteCode: "new-code",
+      inviteCodeExpiresAt: Date.now() + 7 * 86_400_000,
     })),
     joinCircle: vi.fn(),
     leaveCircle: vi.fn(),

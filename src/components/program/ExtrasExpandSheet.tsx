@@ -25,7 +25,7 @@
 import { useNavigate } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Footprints } from "lucide-react";
-import { format } from "date-fns";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -53,7 +53,9 @@ export default function ExtrasExpandSheet({
 }: ExtrasExpandSheetProps) {
   const navigate = useNavigate();
 
-  const dateLabel = dateKey ? format(parseLocalDate(dateKey), "EEE d MMM") : "";
+  const dateLabel = dateKey
+    ? formatShortWeekdayDayMonth(parseLocalDate(dateKey))
+    : "";
   const headerCount = extras.length;
   const headerCountLabel = `${headerCount} ${headerCount === 1 ? "run" : "runs"}`;
 

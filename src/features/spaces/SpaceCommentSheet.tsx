@@ -14,10 +14,8 @@ import {
   getSpacePostComments,
   type SpacePostComment,
 } from "@/lib/socialApi";
-import {
-  containsProfanity,
-  OBJECTIONABLE_COMMENT_MESSAGE,
-} from "@/lib/profanityFilter";
+import { OBJECTIONABLE_COMMENT_MESSAGE } from "@/lib/objectionableMessages";
+import { loadWordFilter } from "@/lib/wordFilter";
 import { spacePostCommentReportTargetId } from "@/lib/reportTargetIds";
 import { getTimeAgo } from "@/lib/timeAgo";
 import { toast } from "@/lib/toast";
@@ -100,6 +98,11 @@ export default function SpaceCommentSheet({
     }
   }, [spaceId, postId]);
 
+  // The word filter loads with the sheet, so Send rarely waits for it.
+  useEffect(() => {
+    if (open) void loadWordFilter().catch(() => {});
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const key = `${spaceId}/${postId}`;
@@ -116,12 +119,18 @@ export default function SpaceCommentSheet({
       return;
     // The word filter, caught before the round-trip. The callable is the
     // boundary and refuses the same text with the same sentence.
-    if (containsProfanity(trimmed)) {
-      toast.error(OBJECTIONABLE_COMMENT_MESSAGE);
+    setSending(true);
+    const filter = await loadWordFilter().catch(() => null);
+    if (!filter || filter.containsProfanity(trimmed)) {
+      setSending(false);
+      toast.error(
+        filter
+          ? OBJECTIONABLE_COMMENT_MESSAGE
+          : "Couldn't post the comment. Try again."
+      );
       haptic("error");
       return;
     }
-    setSending(true);
     haptic("light");
     try {
       const commentId = await addSpacePostComment(
@@ -178,8 +187,9 @@ export default function SpaceCommentSheet({
     }
   };
 
-  /* A blocked author's comments drop out, as their posts drop out of the
-     space (Space.tsx). Your own are never in the blocked set. */
+  /* Comments by someone either side of a block with you drop out, as
+     their posts drop out of the space (Space.tsx). Your own are never in
+     the blocked set. */
   const visibleComments =
     comments?.filter((c) => !c.authorId || !blocked.has(c.authorId)) ?? null;
 
@@ -243,16 +253,18 @@ export default function SpaceCommentSheet({
                   {c.createdAt?.toDate ? getTimeAgo(c.createdAt.toDate()) : ""}
                 </span>
               </div>
-              <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap">
+              <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap break-words">
                 {c.text}
               </p>
             </div>
+            {/* The row's control is 44 px at every text size, so the
+                comment keeps the width the text gains. */}
             {isOwn ? (
               <IconButton
                 aria-label="Delete comment"
                 onClick={() => setPanel({ kind: "delete", comment: c })}
                 icon={<Trash2 className="size-4" />}
-                className="text-muted-foreground"
+                className="size-[44px] text-muted-foreground"
               />
             ) : c.authorId ? (
               // Someone else's comment: Report and Block user.
@@ -264,7 +276,7 @@ export default function SpaceCommentSheet({
                 }
                 onClick={() => setPanel({ kind: "options", comment: c })}
                 icon={<MoreHorizontal className="size-4" />}
-                className="text-muted-foreground"
+                className="size-[44px] text-muted-foreground"
               />
             ) : null}
           </div>

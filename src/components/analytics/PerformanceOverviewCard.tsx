@@ -20,7 +20,7 @@ import {
 } from "@/lib/performanceLine";
 import { getCardColour } from "@/lib/performanceColour";
 import { addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, formatSigned } from "@/utils/formatters";
 import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";
 
@@ -157,10 +157,7 @@ export default function PerformanceOverviewCard({
                   ) : (
                     <TrendingDown className="size-3" aria-hidden="true" />
                   )}
-                  <span aria-hidden="true">
-                    {delta! > 0 ? "+" : ""}
-                    {delta}
-                  </span>
+                  <span aria-hidden="true">{formatSigned(delta!)}</span>
                   <span className="sr-only">
                     {`${delta! > 0 ? "Up" : "Down"} ${Math.abs(delta!)} on last week`}
                   </span>

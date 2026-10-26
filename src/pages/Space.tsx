@@ -4,15 +4,27 @@
  * A photo hero with the space's name, its size and this week's post
  * count, and one small membership control (Join, or Joined with a
  * confirmed Leave). Below it: the tagline, the race header on race spaces,
- * any pinned Tropos Team note, then the members' posts. The retired
- * weekly coach posts and blocked authors are filtered out. An empty space
- * offers to share the member's last session. Post cards carry the
- * moderation kit (author delete / report / block) and likes and comments.
+ * any pinned Tropos Team note, then the members' posts, a page at a time
+ * with Load more. The retired weekly coach posts and blocked authors are
+ * filtered out. An empty space offers to share the member's last session.
+ * Post cards carry the moderation kit (author delete / report / block) and
+ * likes and comments.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
-import { format } from "date-fns";
+import {
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  startAfter,
+  type QueryDocumentSnapshot,
+} from "firebase/firestore";
+import {
+  formatDayMonthYear,
+  formatWeekdayDayMonthYear,
+} from "@/utils/formatters";
 import {
   ArrowLeft,
   Check,
@@ -33,6 +45,7 @@ import {
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
@@ -42,6 +55,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { IconButton } from "@/components/ui/IconButton";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionHeading from "@/components/ui/SectionHeading";
+import Select from "@/components/ui/Select";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
@@ -62,6 +76,7 @@ import {
 import { useSpaceMembership } from "@/features/spaces/useSpaceMembership";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
 import SpacePostCard from "@/features/spaces/SpacePostCard";
+import { SPACE_ACCENT_HEX } from "@/features/spaces/spaceAccent";
 import { useSpacePostLikes } from "@/features/spaces/useSpacePostLikes";
 import RaceIdentityToggle from "@/features/spaces/RaceIdentityToggle";
 import SpaceCommentSheet from "@/features/spaces/SpaceCommentSheet";
@@ -135,7 +150,7 @@ function RaceEventHeader({
     <div className="rounded-2xl bg-card card-shadow p-4 space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
         <span
-          className="inline-flex items-center px-2.5 py-1 rounded-full text-caption font-semibold"
+          className="inline-flex items-center px-2.5 py-1 rounded-full text-micro font-semibold"
           style={{
             /* Ink on the -strong step — the coral identity is 3.12:1 as
                11px text on its light tint; the tint concat stays hex. */
@@ -148,7 +163,7 @@ function RaceEventHeader({
           </span>
         </span>
         {event.elevation && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-caption font-semibold bg-muted text-muted-foreground">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-micro font-semibold bg-muted text-muted-foreground">
             {ELEVATION_LABEL[event.elevation]}
           </span>
         )}
@@ -174,9 +189,8 @@ function RaceEventHeader({
           <label htmlFor="space-race-day" className="text-sm font-medium">
             Your assigned race day
           </label>
-          <select
+          <Select
             id="space-race-day"
-            className="ds-input w-full"
             value={trainingDate}
             onChange={(e) => setChosenDay(e.target.value)}
           >
@@ -185,10 +199,10 @@ function RaceEventHeader({
               .filter((d) => d >= todayKey)
               .map((d) => (
                 <option key={d} value={d}>
-                  {format(parseLocalDate(d), "EEEE d MMMM yyyy")}
+                  {formatWeekdayDayMonthYear(parseLocalDate(d))}
                 </option>
               ))}
-          </select>
+          </Select>
         </div>
       )}
 
@@ -202,9 +216,8 @@ function RaceEventHeader({
             Your race ·{" "}
             <span className="font-mono tabular-nums">
               {profile?.raceGoal?.targetDate
-                ? format(
-                    parseLocalDate(profile.raceGoal.targetDate),
-                    "d MMM yyyy"
+                ? formatDayMonthYear(
+                    parseLocalDate(profile.raceGoal.targetDate)
                   )
                 : shortDay}
             </span>
@@ -260,16 +273,24 @@ const PHOTO_CHIP =
   "rounded-full text-white backdrop-blur-md border border-white/20";
 const PLAIN_CHIP = "rounded-full bg-background/80 border border-border/60";
 
-const ACCENT_HEX: Record<"running" | "lifting" | "brand", string> = {
-  running: THEME.running,
-  lifting: THEME.lifting,
-  brand: THEME.brand,
-};
-
 type PostItem = SpacePostDoc & { id: string };
 
-/** Posts one page load reads. The week count says "50+" when it hits it. */
-const POSTS_FETCH_LIMIT = 50;
+/** Posts one page reads, the first and each Load more. While the oldest
+ *  post loaded is from this week and more wait, the count says "50+". */
+const POSTS_PAGE_SIZE = 50;
+
+/** One page of a space's posts, newest first, after `cursor` when given. */
+function postsPage(spaceId: string, cursor: QueryDocumentSnapshot | null) {
+  const posts = collection(db, "spaces", spaceId, "posts");
+  return cursor
+    ? query(
+        posts,
+        orderBy("createdAt", "desc"),
+        startAfter(cursor),
+        limit(POSTS_PAGE_SIZE)
+      )
+    : query(posts, orderBy("createdAt", "desc"), limit(POSTS_PAGE_SIZE));
+}
 
 export default function Space() {
   const { spaceId } = useParams<{ spaceId: string }>();
@@ -281,6 +302,14 @@ export default function Space() {
   const { blocked: blockedUsers } = useBlockedUsers();
   const sessions = useRecentSessions();
   const [posts, setPosts] = useState<PostItem[] | null>(null);
+  /* Where the next page starts: the last post document read. `hasMore` is
+     whether the last page came back full. */
+  const [cursor, setCursor] = useState<QueryDocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  /* Bumped by each first-page read, so a Load more that answers after the
+     list was read again (a new post, a retry) cannot append to it. */
+  const generation = useRef(0);
   /* SOC-P2g — comment sheet target + per-post optimistic count deltas
      (same grammar as likes; server owns the stored count). */
   const [commentsFor, setCommentsFor] = useState<string | null>(null);
@@ -328,21 +357,19 @@ export default function Space() {
   useEffect(() => {
     if (!def || !spaceId) return;
     let cancelled = false;
+    const mine = ++generation.current;
     (async () => {
       try {
-        const snap = await getDocs(
-          query(
-            collection(db, "spaces", spaceId, "posts"),
-            orderBy("createdAt", "desc"),
-            limit(POSTS_FETCH_LIMIT)
-          )
-        );
+        const snap = await getDocs(postsPage(spaceId, null));
         if (cancelled) return;
         // Offline, the read answers from this phone's cache instead of
         // failing, and an empty cache says nothing about the space.
         if (snap.empty && snap.metadata.fromCache)
           throw new Error("No posts cached on this device");
+        if (mine !== generation.current) return;
         setPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PostItem));
+        setCursor(snap.docs.at(-1) ?? null);
+        setHasMore(snap.docs.length >= POSTS_PAGE_SIZE);
         setPostsFailed(false);
       } catch {
         // Posts already on screen stay; a first read that failed says so.
@@ -391,6 +418,30 @@ export default function Space() {
     setPosts((prev) => prev?.filter((p) => p.id !== postId) ?? prev);
   }, []);
 
+  const loadMore = async () => {
+    if (!spaceId || !cursor || !hasMore || loadingMore) return;
+    const mine = generation.current;
+    setLoadingMore(true);
+    try {
+      const snap = await getDocs(postsPage(spaceId, cursor));
+      if (mine !== generation.current) return;
+      const next = snap.docs.map(
+        (d) => ({ id: d.id, ...d.data() }) as PostItem
+      );
+      setPosts((prev) => {
+        const seen = new Set((prev ?? []).map((p) => p.id));
+        return [...(prev ?? []), ...next.filter((p) => !seen.has(p.id))];
+      });
+      setCursor(snap.docs.at(-1) ?? cursor);
+      setHasMore(snap.docs.length >= POSTS_PAGE_SIZE);
+    } catch {
+      // The posts already shown stay, and the button stays to try again.
+      toast.error("Couldn't load more posts. Try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   if (!def) {
     return (
       <div className="px-4 pt-8">
@@ -404,11 +455,10 @@ export default function Space() {
     );
   }
 
-  const accent = ACCENT_HEX[def.accent];
+  const accent = SPACE_ACCENT_HEX[def.accent];
   const Icon = ICON_MAP[def.icon] ?? Users;
   const week = countPostsThisWeek(visiblePosts, new Date(), {
-    size: posts?.length ?? 0,
-    limit: POSTS_FETCH_LIMIT,
+    hasMore,
     oldest: posts?.[posts.length - 1],
   });
   const meta = spaceHeroMeta({
@@ -465,7 +515,10 @@ export default function Space() {
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(to top, ${THEME.scrim} 0%, ${THEME.scrimSoft} 45%, transparent 70%)`,
+                /* Full scrim through the band the name and caption sit in
+                   (the bottom 40% of the 176px hero), so white words hold
+                   4.5:1 over even a white photo; it thins only above them. */
+                background: `linear-gradient(to top, ${THEME.scrim} 0%, ${THEME.scrim} 40%, ${THEME.scrimSoft} 62%, transparent 80%)`,
               }}
             />
           </>
@@ -496,8 +549,11 @@ export default function Space() {
             style={photo ? { background: THEME.scrim } : undefined}
           />
         </div>
-        <div className="absolute bottom-4 left-4 right-4 flex items-end gap-3">
-          <div className="flex-1 min-w-0">
+        {/* Join or Joined drops under the name where the two do not fit
+            side by side (larger text), rather than squeezing the name
+            out of its column. */}
+        <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-end gap-x-3 gap-y-2">
+          <div className="min-w-[min(100%,10em)] flex-1">
             <h1
               className={`text-h2 font-extrabold leading-tight ${
                 photo ? "text-white" : "text-foreground"
@@ -507,7 +563,7 @@ export default function Space() {
             </h1>
             <p
               className={`text-caption font-medium mt-1 ${
-                photo ? "text-white/85" : "text-muted-foreground"
+                photo ? "text-white" : "text-muted-foreground"
               }`}
             >
               <InlineNumerals>{meta}</InlineNumerals>
@@ -565,7 +621,7 @@ export default function Space() {
         {pinnedPosts.map(renderPost)}
 
         <section className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <SectionHeading>From members</SectionHeading>
             {joined === true && memberPosts.length > 0 && (
               <Button
@@ -594,7 +650,7 @@ export default function Space() {
               className="h-24 rounded-2xl bg-muted/40 motion-safe:animate-pulse"
               aria-hidden
             />
-          ) : memberPosts.length === 0 ? (
+          ) : memberPosts.length === 0 && !hasMore ? (
             <EmptyState
               icon={MessagesSquare}
               headline="No posts from members yet"
@@ -623,6 +679,16 @@ export default function Space() {
             />
           ) : (
             memberPosts.map(renderPost)
+          )}
+          {posts !== null && hasMore && (
+            <Button
+              variant="ghost"
+              fullWidth
+              loading={loadingMore}
+              onClick={() => void loadMore()}
+            >
+              Load more posts
+            </Button>
           )}
         </section>
       </div>

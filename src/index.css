@@ -8,6 +8,11 @@
    file is ever added outside src/, it needs its own @source line. */
 @import "tailwindcss" source(".");
 @source "../index.html";
+/* `dark:` follows the app's theme, the `.dark` class public/init.js sets
+   before first paint, not the phone's own appearance setting. Without
+   this, Tailwind v4 compiles `dark:` to prefers-color-scheme, so the
+   app's dark mode on a phone set to Light drew the light-mode edges. */
+@custom-variant dark (&:where(.dark, .dark *));
 @import "./styles/tokens.css";
 @import "./styles/components.css";
 @import "./styles/animations.css";
@@ -79,6 +84,10 @@
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-border: hsl(var(--border));
+  /* The selected segment of a SegmentedControl: a filled grey pill under
+     a white label, iOS's dark-mode segmented control. Definitions in
+     :root + .dark below. */
+  --color-segment-selected: hsl(var(--segment-selected));
   /* Semantic status colours — exposed to Tailwind so classes like
      bg-destructive, text-destructive, bg-destructive/10,
      text-destructive-foreground, text-success, bg-warning-bg
@@ -116,8 +125,9 @@
   --color-achievement: hsl(var(--achievement));
   --color-achievement-strong: hsl(var(--achievement-strong));
   --color-achievement-bg: hsl(var(--achievement-bg));
-  /* Streak flame. `--ds-orange-500`'s own comment in tokens.css names
-     "streak flame" as one of its uses, but there was no Tailwind colour
+  /* The partner streak's flame (the activity streak's is brand purple,
+     `flameTiers.ts`). `--ds-orange-500`'s own comment in tokens.css names
+     it as one of its uses, but there was no Tailwind colour
      pointing at it, so every flame site reached for `text-orange-500`
      instead — raw Tailwind palette (#ff6900), not a Tropos token, and
      invisible to the hex-literal lint because it is a class name rather
@@ -208,8 +218,8 @@
      NOT --primary (246 88% 70%, hand-tuned for white-text AA). */
   --running: 348 57% 61%; /* #D4637A coral */
   --running-strong: 348 57% 43%; /* #AC2F48 — worst case 4.53:1 (18% tint over background) */
-  --running-fill: 348 57% 54%; /* #CD4762 — 4.51:1 under white */
-  --lifting-strong: 245 73% 59%; /* #574AE3 — worst case 4.51:1 (12% tint over background) */
+  --running-fill: 348 57% 53.5%; /* #CC4560 — 4.58:1 under white */
+  --lifting-strong: 245 73% 58.5%; /* #5548E2 — worst case 4.60:1 (12% tint over background) */
   --lifting-fill: 245 73% 64.5%; /* #6D62E7 — 4.60:1 under white */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Nutrition domain colour. `--nutrition` is the FIXED warm-orange
@@ -227,7 +237,7 @@
      the CSS token contradicted it. */
   --nutrition: 25 65% 58%; /* #D9884E warm orange */
   --nutrition-fill: 26 91% 37%; /* #B45309 amber-700 — 5.02:1 under white */
-  --nutrition-strong: 26 91% 34%; /* #A64C08 — worst case 4.50:1 (chip over background) */
+  --nutrition-strong: 26 91% 33.5%; /* #A34B08 — worst case 4.61:1 (chip over background) */
   /* AA text step for red, same shape as the sport steps. The identity
      `--destructive` is 3.52:1 on a destructive/10 chip over the page
      background — under the 4.5:1 floor for the button labels
@@ -260,6 +270,12 @@
      de-emphasis is the type scale's job, not alpha's. Pinned by
      tokenContrast.test.ts across both themes. */
   --muted-foreground: 240 3.8% 43%;
+  /* The selected segment's fill, under a white label. One grey for both
+     themes, like the sport -fill steps: white on it is 4.83:1 whatever
+     the theme, and it clears 3:1 against the track in both (4.55:1 on
+     this --muted, 3.31:1 on the dark one, the tighter of the two).
+     Pinned by controlBoundaries.test.ts. */
+  --segment-selected: 240 4% 46%; /* #71717A */
   --border: 240 6% 88%; /* DS2: a hair stronger so hairlines register on the lighter canvas */
   --radius: 0.625rem; /* DS2: 8→10px base (premium radius curve) */
   --input-fill: 240 6% 95.5%; /* DS2: lighter than the deepened page so fields stay distinct */
@@ -288,7 +304,7 @@
   --success-bg: 138 76% 97%;
   /* AA text step — the identity is 3.79:1 on a `bg-success/10` chip over
      the page canvas. Hue + saturation unchanged. */
-  --success-strong: 142 72% 26%; /* #137236 */
+  --success-strong: 142 72% 25.5%; /* #127035 */
   --warning: 26 90% 37%;
   --warning-foreground: 0 0% 98%;
   --warning-bg: 48 100% 96%;
@@ -334,7 +350,7 @@
   --running: 348 57% 61%; /* #D4637A coral */
   --running-strong: 348 57% 71%; /* #DF8B9C — worst case 4.52:1 (18% tint over muted) */
   /* IDENTICAL to :root — a fill under white text is theme-independent. */
-  --running-fill: 348 57% 54%; /* #CD4762 — 4.51:1 under white */
+  --running-fill: 348 57% 53.5%; /* #CC4560 — 4.58:1 under white */
   --lifting-strong: 245 73% 75.5%; /* #9B93EE — worst case 4.60:1 (12% tint over muted) */
   --lifting-fill: 245 73% 64.5%; /* #6D62E7 — 4.60:1 under white */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
@@ -359,6 +375,8 @@
   /* Raised: a chip, a track, a tile inside a card. */
   --muted: 240 8% 14.1%; /* #212127 */
   --muted-foreground: 240 5% 65%; /* #A1A1AA */
+  /* IDENTICAL to :root — a fill under white text is theme-independent. */
+  --segment-selected: 240 4% 46%; /* #71717A */
   --border: 240 6% 17%; /* #29292E */
   --input-fill: 240 7% 12.5%; /* #1E1E22 */
   --glass-bg: rgba(18, 18, 22, 0.97);
@@ -717,9 +735,13 @@ select:disabled {
   cursor: not-allowed;
 }
 
+/* The secondary grey at full strength: 4.86:1 on the light field fill,
+   5.40 on the card, 6.53 on the dark field. Alpha thinned it under 2.5:1.
+   opacity 1 also overrides the reduced placeholder opacity some engines
+   apply by default, which reaches `.ds-input` too. */
 ::placeholder {
   color: hsl(var(--muted-foreground));
-  opacity: 0.6;
+  opacity: 1;
 }
 
 /* Smooth scrolling */

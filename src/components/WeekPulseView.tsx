@@ -58,11 +58,12 @@ export default function WeekPulseView({ pulse }: { pulse: WeekPulse | null }) {
         )}
         {pulse.streak !== null && (
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
-            {/* Streak identity is amber (StreakFlame.tsx) — NOT nutrition
-                orange, which is reserved for the food domain. */}
+            {/* The streak's flame is brand purple, as Home's streak pill
+                draws it (StreakFlame). Amber is the warning register and
+                orange the food's. */}
             <Flame
               className="size-4"
-              style={{ color: THEME.amber }}
+              style={{ color: THEME.brand }}
               aria-hidden="true"
             />
             <span className="font-mono tabular-nums">{pulse.streak}</span>{" "}

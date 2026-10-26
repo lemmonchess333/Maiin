@@ -16,7 +16,13 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { HEIGHT_CM, WEIGHT_KG, heightRangeInFeet } from "../bodyMetrics";
+import {
+  AGE_YEARS,
+  HEIGHT_CM,
+  WEIGHT_KG,
+  heightRangeInFeet,
+  parseAgeYears,
+} from "../bodyMetrics";
 import { DRAFT_GENDERS } from "../onboardingDraft";
 
 const require = createRequire(import.meta.url);
@@ -51,6 +57,34 @@ describe("onboarding's body metrics are the server's", () => {
     // way (3 ft 11 in, 7 ft 7 in) is outside 120-230.
     expect(heightRangeInFeet()).toBe("4 ft to 7 ft 6 in");
   });
+});
+
+/* Settings' age field took any number and saved it; the sanitizer keeps
+   whole years from 16 to 120, so the field takes the same. */
+describe("the age a profile keeps is the server's", () => {
+  it("both bounds survive, a year past either and a fraction are dropped", () => {
+    expect(kept("age", AGE_YEARS.min)).toBe(AGE_YEARS.min);
+    expect(kept("age", AGE_YEARS.max)).toBe(AGE_YEARS.max);
+    expect(kept("age", AGE_YEARS.min - 1)).toBeUndefined();
+    expect(kept("age", AGE_YEARS.max + 1)).toBeUndefined();
+    expect(kept("age", 30.5)).toBeUndefined();
+  });
+
+  it.each([
+    ["30", 30],
+    [" 16 ", 16],
+    ["120", 120],
+  ])("parses %j as %i", (text, years) => {
+    expect(parseAgeYears(text)).toBe(years);
+    expect(kept("age", years)).toBe(years);
+  });
+
+  it.each(["", "15", "121", "0", "-5", "30.5", "3e1", "abc"])(
+    "refuses %j",
+    (text) => {
+      expect(parseAgeYears(text)).toBeNull();
+    }
+  );
 });
 
 describe("onboarding's gender answers are the server's", () => {

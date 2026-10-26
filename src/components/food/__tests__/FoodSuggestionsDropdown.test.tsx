@@ -520,6 +520,20 @@ describe("FoodSuggestionsDropdown — each row says what tapping it does", () =>
     expect(screen.getByText("Select")).toBeInTheDocument();
     expect(screen.queryByText("Log")).not.toBeInTheDocument();
   });
+
+  /* Logging food is orange wherever it appears (Food10, Polish3 call 3):
+     a row that logs says so in the food colour, and a row that only
+     fills the box stays grey. */
+  it("says Log in the food colour, and Select in the row's grey", () => {
+    renderQuickAdd({ items: [makeItem()], asExamples: false });
+    expect(screen.getByText("Log")).toHaveClass("text-nutrition-strong");
+    cleanup();
+    renderQuickAdd({
+      items: [{ ...makeItem(), example: true }],
+      asExamples: true,
+    });
+    expect(screen.getByText("Select")).toHaveClass("text-muted-foreground");
+  });
 });
 
 describe("FoodSuggestionsDropdown — the Open Food Facts credit", () => {

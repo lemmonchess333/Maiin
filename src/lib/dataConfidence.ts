@@ -256,7 +256,7 @@ function computeETA(
 ): string | null {
   if (!ratePerDay || ratePerDay <= 0) return null;
   const remaining = Math.max(1, Math.ceil((target - current) / ratePerDay));
-  return `${prefix} ~${remaining} days`;
+  return `${prefix} ~${remaining} ${remaining === 1 ? "day" : "days"}`;
 }
 
 // ── Telemetry batching ─────────────────────────────────────────

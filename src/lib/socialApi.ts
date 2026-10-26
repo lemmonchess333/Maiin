@@ -7,6 +7,7 @@ import {
   getDocs,
   getDoc,
   getCountFromServer,
+  onSnapshot,
   query,
   orderBy,
   limit,
@@ -499,8 +500,11 @@ export async function deleteComment(
   await fn({ activityId, commentId });
 }
 
-/** One-tap comment reactions (💪 = "muscle", 🔥 = "fire"). */
-export type CommentReaction = "muscle" | "fire";
+/** One-tap comment reactions (💪 = "muscle", 🔥 = "fire"). The callable
+ *  takes only REACTION_KEYS (functions/lib/commentReactions.js), and
+ *  commentReactions.cross.test.ts holds this list to it. */
+export const COMMENT_REACTIONS = ["muscle", "fire"] as const;
+export type CommentReaction = (typeof COMMENT_REACTIONS)[number];
 
 /**
  * Toggle the caller's reaction on a comment. Comments are server-write-only
@@ -1056,6 +1060,24 @@ export async function isBlocked(
 export async function getBlockedUsers(uid: string): Promise<string[]> {
   const snap = await getDocs(collection(db, "blocks", uid, "users"));
   return snap.docs.map((d) => d.id);
+}
+
+/**
+ * Who has blocked this account, live (Polish3 call 1). The server's copy
+ * of their blocks, `blockedBy/{uid}/users/{blocker}`, written by
+ * onBlockWritten and readable only by this account; each row is just the
+ * blocker's id. Returns the unsubscribe.
+ */
+export function subscribeBlockedBy(
+  uid: string,
+  onChange: (ids: string[]) => void,
+  onError: (err: unknown) => void
+): () => void {
+  return onSnapshot(
+    collection(db, "blockedBy", uid, "users"),
+    (snap) => onChange(snap.docs.map((d) => d.id)),
+    onError
+  );
 }
 
 // ============================================

@@ -435,7 +435,7 @@ export default function AdminModeration() {
       )}
 
       <section aria-labelledby="restricted-heading" className="space-y-3 pt-4">
-        <h2 id="restricted-heading" className="text-lg font-extrabold">
+        <h2 id="restricted-heading" className="text-lg font-bold">
           Restricted accounts
         </h2>
         {restrictedError && (

@@ -344,10 +344,10 @@ export function ShareCardSheet({
                   aria-pressed={visible}
                   className={`flex items-center gap-1.5 min-h-[44px] px-3 rounded-xl text-sm font-medium transition-colors ${
                     visible
-                      ? // -strong: bare --primary on its /10 tint is 2.92:1
-                        // light / 4.02 dark at text-sm (index.css documents
-                        // -strong as the AA text step).
-                        "bg-primary/10 text-primary-strong"
+                      ? // Brand words on a brand tint take --lifting-strong,
+                        // the brand's tint-aware text step. --primary-strong
+                        // is the white-on-fill step and misses AA here.
+                        "bg-primary/10 text-lifting-strong"
                       : "bg-muted text-muted-foreground"
                   }`}
                 >

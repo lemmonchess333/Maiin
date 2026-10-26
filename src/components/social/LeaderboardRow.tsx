@@ -40,9 +40,16 @@ export default function LeaderboardRow({
         isSelf ? "bg-primary/10 border border-primary/25" : ""
       }`}
     >
+      {/* The numeral is the rank and stays in the text colour; the medal
+          metal rings it, a marker beside the words rather than the words,
+          since gold and silver are near-invisible as text on a light card. */}
       <span
-        className="min-w-6 text-sm font-bold font-mono tabular-nums text-center shrink-0"
-        style={{ color: rank <= 3 ? RANK_COLORS[rank - 1] : undefined }}
+        className="min-w-6 h-6 px-1 rounded-full inline-flex items-center justify-center text-sm font-bold font-mono tabular-nums text-foreground shrink-0"
+        style={
+          rank <= 3
+            ? { boxShadow: `inset 0 0 0 2px ${RANK_COLORS[rank - 1]}` }
+            : undefined
+        }
       >
         {rank}
       </span>

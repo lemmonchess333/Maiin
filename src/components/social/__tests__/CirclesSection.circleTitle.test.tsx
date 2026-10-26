@@ -2,7 +2,8 @@
  * A Circle saved under a name the filter now refuses is drawn as its
  * kind, in the featured card, the list and the detail sheet (circleTitle).
  */
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeAll } from "vitest";
+import { loadWordFilter } from "@/lib/wordFilter";
 import { render, screen, cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { CircleSummary } from "@/features/goalSpace/useGoalSpaces";
@@ -33,6 +34,7 @@ function circle(id: string, title: string): CircleSummary {
       createdAt: 1,
     },
     inviteCode: null,
+    inviteCodeExpiresAt: null,
   };
 }
 
@@ -63,4 +65,10 @@ describe("a Circle under a refused name", () => {
       2
     );
   });
+});
+
+/* The word filter as a session that has used it holds it: loaded, so the
+   sheet draws on its first render (useWordFilter covers the wait). */
+beforeAll(async () => {
+  await loadWordFilter();
 });

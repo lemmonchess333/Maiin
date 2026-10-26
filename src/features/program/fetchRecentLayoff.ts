@@ -18,7 +18,7 @@
  * toward an unearned re-entry plan.
  */
 
-import { fetchSavedRuns } from "@/lib/savedRuns";
+import { fetchSavedRuns, type SavedRun } from "@/lib/savedRuns";
 import { logger } from "@/lib/logger";
 import {
   layoffFromRuns,
@@ -26,8 +26,25 @@ import {
   type LayoffClass,
 } from "./layoffDetection";
 
-/** How many recent runs to inspect. See "why the cap is safe" above. */
+/** How many recent runs to inspect. See "why the cap is safe" above. Home's
+ *  run return reads the same window (`useRunReturn`), so the welcome back
+ *  it shows and the re-entry plan a rebuild makes measure the same runs. */
 export const RECENT_RUN_SCAN_LIMIT = 20;
+
+/**
+ * Saved runs as layoff detection reads them: each dated by its Lift3 day,
+ * with the fields `isVolumeEligible` judges. The one mapping, shared by
+ * this read and Home's run return.
+ */
+export function datedRuns(saved: readonly SavedRun[]): DatedRun[] {
+  return saved.map((run) => ({
+    date: run.day,
+    distance: run.distance,
+    duration: run.duration,
+    isInvalid: run.isInvalid === true,
+    savedAnyway: run.savedAnyway === true,
+  }));
+}
 
 /**
  * Resolve the runner's layoff class, or `"none"` if it cannot be determined.
@@ -49,14 +66,7 @@ export async function fetchRecentLayoff(
     // saved run has (none has a `createdAt`, so ordering by that read none),
     // dated by the run's Lift3 day, and including runs saved on this phone.
     const saved = await fetchSavedRuns(uid, { latest: RECENT_RUN_SCAN_LIMIT });
-    const runs: DatedRun[] = saved.map((run) => ({
-      date: run.day,
-      distance: run.distance,
-      duration: run.duration,
-      isInvalid: run.isInvalid === true,
-      savedAnyway: run.savedAnyway === true,
-    }));
-    return layoffFromRuns(runs, todayKey);
+    return layoffFromRuns(datedRuns(saved), todayKey);
   } catch (err) {
     logger.warn("[layoff] recent-run read failed; treating as no layoff", err);
     return "none";

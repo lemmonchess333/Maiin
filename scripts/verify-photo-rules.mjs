@@ -66,10 +66,11 @@ await check("Firebase Storage URL is allowed", async () =>
   assertSucceeds(
     setDoc(profileRef, {
       ...base,
-      photoURL: "https://firebasestorage.googleapis.com/v0/b/x.appspot.com/o/profile-photos%2Falice%2F1.jpg?alt=media&token=abc",
+      photoURL:
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Falice%2F1.jpg?alt=media&token=abc",
       photoStoragePath: "profile-photos/alice/1.jpg",
-    }),
-  ),
+    })
+  )
 );
 
 await check("Google CDN URL (lh3.googleusercontent.com) is allowed", async () =>
@@ -78,8 +79,8 @@ await check("Google CDN URL (lh3.googleusercontent.com) is allowed", async () =>
       ...base,
       photoURL: "https://lh3.googleusercontent.com/a/AAAA",
       photoStoragePath: null,
-    }),
-  ),
+    })
+  )
 );
 
 await check("Apple CDN URL is allowed", async () =>
@@ -88,14 +89,14 @@ await check("Apple CDN URL is allowed", async () =>
       ...base,
       photoURL: "https://appleid.cdn-apple.com/static/img/x.png",
       photoStoragePath: null,
-    }),
-  ),
+    })
+  )
 );
 
 await check("Empty string (removal) is allowed", async () =>
   assertSucceeds(
-    setDoc(profileRef, { ...base, photoURL: "", photoStoragePath: null }),
-  ),
+    setDoc(profileRef, { ...base, photoURL: "", photoStoragePath: null })
+  )
 );
 
 console.log("\n[B] Non-allowlisted photoURL values are rejected:");
@@ -106,8 +107,8 @@ await check("Tracking-pixel URL is rejected", async () =>
       ...base,
       photoURL: "https://tracker.example.com/pixel.gif?u=alice",
       photoStoragePath: null,
-    }),
-  ),
+    })
+  )
 );
 
 await check("javascript: URL is rejected", async () =>
@@ -116,8 +117,8 @@ await check("javascript: URL is rejected", async () =>
       ...base,
       photoURL: "javascript:alert(1)",
       photoStoragePath: null,
-    }),
-  ),
+    })
+  )
 );
 
 await check("data: URL is rejected", async () =>
@@ -126,8 +127,8 @@ await check("data: URL is rejected", async () =>
       ...base,
       photoURL: "data:image/png;base64,iVBOR",
       photoStoragePath: null,
-    }),
-  ),
+    })
+  )
 );
 
 await check("URL with allowed host as a path component is rejected", async () =>
@@ -136,8 +137,8 @@ await check("URL with allowed host as a path component is rejected", async () =>
       ...base,
       photoURL: "https://evil.example.com/firebasestorage.googleapis.com/x.jpg",
       photoStoragePath: null,
-    }),
-  ),
+    })
+  )
 );
 
 console.log("\n[C] Cross-user write is rejected:");
@@ -146,32 +147,37 @@ await check("Mallory cannot write Alice's profile", async () =>
   assertFails(
     setDoc(profileRefAsMallory, {
       ...base,
-      photoURL: "https://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
+      photoURL:
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
       photoStoragePath: "profile-photos/alice/1.jpg",
-    }),
-  ),
+    })
+  )
 );
 
 console.log("\n[D] photoStoragePath must point to the owner's own folder:");
 
-await check("Mallory's path on Alice's doc is rejected (same-user-different-prefix)", async () =>
-  assertFails(
-    setDoc(profileRef, {
-      ...base,
-      photoURL: "https://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
-      photoStoragePath: "profile-photos/mallory/1.jpg",
-    }),
-  ),
+await check(
+  "Mallory's path on Alice's doc is rejected (same-user-different-prefix)",
+  async () =>
+    assertFails(
+      setDoc(profileRef, {
+        ...base,
+        photoURL:
+          "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
+        photoStoragePath: "profile-photos/mallory/1.jpg",
+      })
+    )
 );
 
 await check("Path outside profile-photos/ entirely is rejected", async () =>
   assertFails(
     setDoc(profileRef, {
       ...base,
-      photoURL: "https://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
+      photoURL:
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
       photoStoragePath: "progress-photos/alice/1.enc",
-    }),
-  ),
+    })
+  )
 );
 
 await check("Null photoStoragePath is allowed (OAuth-only users)", async () =>
@@ -180,8 +186,8 @@ await check("Null photoStoragePath is allowed (OAuth-only users)", async () =>
       ...base,
       photoURL: "https://lh3.googleusercontent.com/a/X",
       photoStoragePath: null,
-    }),
-  ),
+    })
+  )
 );
 
 console.log("\n[E] PR K mirror-write — both docs in one writeBatch:");
@@ -197,34 +203,42 @@ await assertSucceeds(
     photoURL: null,
     subscriptionTier: "free",
     createdAt: serverTimestamp(),
-  }),
+  })
 );
 await assertSucceeds(
   setDoc(profileRef, {
     ...base,
     photoURL: null,
     photoStoragePath: null,
-  }),
+  })
 );
 
-await check("writeBatch updates both public mirror AND main doc with photoURL", async () => {
-  const batch = writeBatch(alice);
-  batch.update(profileRef, {
-    photoURL: "https://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
-    photoStoragePath: "profile-photos/alice/2.jpg",
-  });
-  batch.update(doc(alice, "users/alice"), {
-    photoURL: "https://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
-  });
-  await assertSucceeds(batch.commit());
-});
+await check(
+  "writeBatch updates both public mirror AND main doc with photoURL",
+  async () => {
+    const batch = writeBatch(alice);
+    batch.update(profileRef, {
+      photoURL:
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
+      photoStoragePath: "profile-photos/alice/2.jpg",
+    });
+    batch.update(doc(alice, "users/alice"), {
+      photoURL:
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
+    });
+    await assertSucceeds(batch.commit());
+  }
+);
 
-await check("writeBatch with empty photoURL (removal flow) succeeds", async () => {
-  const batch = writeBatch(alice);
-  batch.update(profileRef, { photoURL: "", photoStoragePath: null });
-  batch.update(doc(alice, "users/alice"), { photoURL: "" });
-  await assertSucceeds(batch.commit());
-});
+await check(
+  "writeBatch with empty photoURL (removal flow) succeeds",
+  async () => {
+    const batch = writeBatch(alice);
+    batch.update(profileRef, { photoURL: "", photoStoragePath: null });
+    batch.update(doc(alice, "users/alice"), { photoURL: "" });
+    await assertSucceeds(batch.commit());
+  }
+);
 
 console.log(`\n${pass} passed, ${fail} failed\n`);
 await env.cleanup();

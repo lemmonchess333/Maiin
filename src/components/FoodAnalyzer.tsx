@@ -646,7 +646,7 @@ export default function FoodAnalyzer({
       // retry.
       setSaving(false);
       logger.error("[FoodAnalyzer] save failed", err);
-      toast.error(appErrorMessage(err, "Couldn't save — please try again."));
+      toast.error(appErrorMessage(err, "Couldn't save. Try again."));
     }
   };
 

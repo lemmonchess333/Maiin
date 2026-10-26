@@ -57,6 +57,8 @@
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 
@@ -385,8 +387,9 @@ const EXPECTED = {
     kind: "callable",
     maxInstances: 10,
     // S4e, STATUS 2026-10-20: forgets the hashed identities a deleted
-    // restricted account left.
-    secrets: ["BILLING_HMAC_SECRET"],
+    // restricted account left, under the active key and the one before a
+    // rotation (2026-10-25: it read the active key only).
+    secrets: ["BILLING_HMAC_SECRET", "BILLING_PREVIOUS_HMAC_SECRET"],
   },
   // Survey item 18: the public name held to the word filter on the server.
   onPublicProfileWritten: {
@@ -397,12 +400,23 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/users/{uid}/public/{docId}",
   },
+  // A new public name or photo, carried to the person's recent copies.
+  onPublicProfileIdentityChanged: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    timeoutSeconds: 120,
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/public/{docId}",
+  },
   // S4e, STATUS 2026-10-20: a new account carrying a deleted restricted
   // account's email or sign-in id is restricted as it is created.
   onAuthUserCreated: {
     kind: "event",
     maxInstances: 50,
-    secrets: ["BILLING_HMAC_SECRET"],
+    // Both keys, as liftRestriction: the lookup tries the previous one.
+    secrets: ["BILLING_HMAC_SECRET", "BILLING_PREVIOUS_HMAC_SECRET"],
     eventType: "providers/firebase.auth/eventTypes/user.create",
     resource: "projects/{project}",
   },
@@ -460,12 +474,22 @@ const EXPECTED = {
     schedule: "0 5 * * 1",
     timeoutSeconds: 540,
   },
+  startPartnerStreak: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   createGoalSpace: {
     kind: "callable",
     maxInstances: 100,
     secrets: [],
   },
   joinGoalSpace: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  renewGoalSpaceInviteCode: {
     kind: "callable",
     maxInstances: 100,
     secrets: [],
@@ -523,6 +547,15 @@ const EXPECTED = {
     eventType: "providers/cloud.firestore/eventTypes/document.create",
     resource:
       "projects/{project}/databases/(default)/documents/followRequests/{uid}/users/{requesterUid}",
+  },
+  // Polish3 call 1: the person blocked's copy of a block, on every write.
+  onBlockWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/blocks/{blockerUid}/users/{blockedUid}",
   },
 };
 
@@ -629,6 +662,52 @@ describe("functions trigger metadata snapshot", () => {
       .map(([name]) => name)
       .sort();
     expect(noRetry).toEqual(Object.keys(NO_RETRY).sort());
+  });
+
+  /* A retried trigger that throws on a bug is delivered again, with
+     backoff, for seven days; `pastRetryWindow` drops it after one
+     (lib/triggerRetry.js). The two session updates and the two session
+     deletes had no window until 2026-10-25. Read from the source, because
+     the window is a call inside the handler that no endpoint metadata can
+     show. A trigger that keeps the platform's full retry goes here, with
+     its reason. */
+  const NO_RETRY_WINDOW = {
+    // The join backfill credits a mid-period joiner's history from the
+    // join's commit time (`context.timestamp`), and nothing else ever
+    // runs it: one dropped after a day leaves them at zero for the whole
+    // period (integration/challengeRejoinCredit.test.js delivers joins
+    // inside fixed past windows for exactly that reason).
+    onChallengeParticipantCreated:
+      "the join backfill has no other path, and its join time is the event's",
+  };
+
+  it("every retried Firestore trigger drops an event past the retry window", () => {
+    const source = readFileSync(
+      fileURLToPath(new URL("../index.js", import.meta.url)),
+      "utf8"
+    );
+    const starts = [...source.matchAll(/^exports\.([A-Za-z0-9_]+)\s*=/gm)];
+    const bodyOf = (name) => {
+      const i = starts.findIndex((m) => m[1] === name);
+      expect(i, `${name} is exported from index.js`).toBeGreaterThan(-1);
+      const end = i + 1 < starts.length ? starts[i + 1].index : source.length;
+      return source.slice(starts[i].index, end);
+    };
+    const retried = Object.entries(fns)
+      .filter(([, fn]) => {
+        const trigger = fn && fn.__endpoint && fn.__endpoint.eventTrigger;
+        return (
+          trigger &&
+          /cloud\.firestore/.test(trigger.eventType) &&
+          trigger.retry === true
+        );
+      })
+      .map(([name]) => name);
+    expect(retried.length).toBeGreaterThan(10);
+    const unwindowed = retried
+      .filter((name) => !/pastRetryWindow\(context\)/.test(bodyOf(name)))
+      .sort();
+    expect(unwindowed).toEqual(Object.keys(NO_RETRY_WINDOW).sort());
   });
 
   it("monthly announcements keep a UTC hourly schedule", () => {

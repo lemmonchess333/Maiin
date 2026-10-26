@@ -95,8 +95,9 @@ export default function TodayEnergy({
       ? postWorkoutNudge.type === "run"
         ? "Post-run: refuel with carbs and protein soon"
         : // HOME-TARGET-01: grams left to the user's own protein target,
-          // not a claimed recovery effect.
-          `Post-lift: ${postWorkoutNudge.proteinRemaining} g protein to your target`
+          // not a claimed recovery effect. Unspaced, as the macro tiles
+          // above it write grams: this card is the food surface on Home.
+          `Post-lift: ${postWorkoutNudge.proteinRemaining}g protein to your target`
       : null;
 
   const macros: {

@@ -29,6 +29,7 @@ import {
   CloudLightning,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Toggle } from "@/components/ui/Toggle";
 import { fetchSavedRuns } from "@/lib/savedRuns";
@@ -208,6 +209,7 @@ export default function RunSetupModal({
 }: RunSetupModalProps) {
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
+  const motionSafe = useMotionSafe();
   // Adaptive Paces: the user's pace table (null when no benchmark). Used to
   // personalize the prescription when picking a run type in the ad-hoc
   // launcher (the programme path personalizes via templateToPrefill).
@@ -429,20 +431,20 @@ export default function RunSetupModal({
         {lastRun &&
           (() => {
             const labelMap: Record<string, string> = {
-              freerun: "Free Run",
-              easy: "Easy Run",
+              freerun: "Free run",
+              easy: "Easy run",
               tempo: "Tempo",
               intervals: "Intervals",
-              long: "Long Run",
-              longrun: "Long Run",
+              long: "Long run",
+              longrun: "Long run",
               race: "Race",
-              manual: "Manual Run",
+              manual: "Manual run",
               guided: "Guided",
             };
             const km = distanceValue(lastRun.distanceM, unit, 2);
             const time = formatClock(Math.floor(lastRun.durationS));
             // A treadmill run says so, old or new (Pgm8): "Treadmill",
-            // or its type with the treadmill, "Easy Run · Treadmill".
+            // or its type with the treadmill, "Easy run · Treadmill".
             const type = isTreadmillRun(lastRun)
               ? runTitle(lastRun)
               : labelMap[lastRun.activityType] || "Run";
@@ -463,7 +465,7 @@ export default function RunSetupModal({
         {/* Weather strip */}
         {!weatherLoading && weather && (
           <motion.div
-            initial={{ opacity: 0, y: -4 }}
+            initial={motionSafe({ opacity: 0, y: -4 })}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3 p-3 rounded-xl"
             style={{
@@ -499,7 +501,7 @@ export default function RunSetupModal({
                 return (
                   <motion.p
                     key={config.activityType}
-                    initial={{ opacity: 0 }}
+                    initial={motionSafe({ opacity: 0 })}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.2 }}
                     className="text-xs text-muted-foreground"
@@ -546,9 +548,9 @@ export default function RunSetupModal({
         <AnimatePresence>
           {config.activityType === "intervals" && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
+              initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
+              exit={motionSafe({ opacity: 0, height: 0 })}
               className="overflow-hidden space-y-2"
             >
               <SessionStructureView
@@ -572,9 +574,9 @@ export default function RunSetupModal({
                 {showCustomise && (
                   <motion.div
                     id="interval-customise-panel"
-                    initial={{ opacity: 0, height: 0 }}
+                    initial={motionSafe({ opacity: 0, height: 0 })}
                     animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
+                    exit={motionSafe({ opacity: 0, height: 0 })}
                     className="overflow-hidden"
                   >
                     <div className="p-4 rounded-xl border border-border space-y-3 bg-card">
@@ -627,7 +629,7 @@ export default function RunSetupModal({
                                   },
                                 })
                               }
-                              className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                              className="ds-input mt-1 text-sm text-center font-mono tabular-nums"
                             />
                           </div>
                         ))}
@@ -642,7 +644,7 @@ export default function RunSetupModal({
                             id="interval-target-pace"
                             type="text"
                             placeholder="4:30"
-                            className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                            className="ds-input mt-1 text-sm text-center font-mono tabular-nums"
                             onChange={(e) => {
                               const [m, s] = e.target.value
                                 .split(":")
@@ -671,9 +673,9 @@ export default function RunSetupModal({
         <AnimatePresence>
           {config.activityType === "guided" && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
+              initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
+              exit={motionSafe({ opacity: 0, height: 0 })}
               className="overflow-hidden space-y-2"
             >
               <GuidedRunPicker
@@ -852,7 +854,7 @@ export default function RunSetupModal({
                                 });
                               }
                             }}
-                            className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                            className="ds-input mt-1 text-sm text-center font-mono tabular-nums"
                           />
                         </>
                       )}
@@ -956,7 +958,7 @@ export default function RunSetupModal({
                                 });
                               }
                             }}
-                            className="w-full min-h-11 mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center font-mono tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="ds-input mt-1 text-sm text-center font-mono tabular-nums"
                           />
                         </>
                       )}
@@ -1034,7 +1036,7 @@ export default function RunSetupModal({
                                 });
                               }
                             }}
-                            className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                            className="ds-input mt-1 text-sm text-center font-mono tabular-nums"
                           />
                         </>
                       )}
@@ -1124,9 +1126,9 @@ export default function RunSetupModal({
         <AnimatePresence>
           {showAdvanced && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
+              initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
+              exit={motionSafe({ opacity: 0, height: 0 })}
               className="overflow-hidden space-y-2"
             >
               {/* Auto-pause hides for manual-distance modes —
@@ -1217,8 +1219,8 @@ export default function RunSetupModal({
 
       {/* Sticky CTA. Underlined "Change type" link removed — the
           selected-run card at the top now owns that affordance.
-          Start text is contextual per run type ("Start Free Run",
-          "Start Guided Run") so the button mirrors the user's
+          Start text is contextual per run type ("Start free run",
+          "Start guided run") so the button mirrors the user's
           selection; on the treadmill it says where the run starts
           ("Start on the treadmill"), whatever its type (Pgm8). */}
       {/* Pinned to the viewport bottom with `fixed` (was `sticky bottom-0`).
@@ -1242,7 +1244,7 @@ export default function RunSetupModal({
           const Icon = onTreadmill ? Dumbbell : Footprints;
           /* The planned session keeps the name its card gave it ("Start
              Easy 30") until the run stops being it: another type, target
-             or set of intervals starts as its type ("Start Tempo Run"). */
+             or set of intervals starts as its type ("Start tempo run"). */
           const isPlannedSession =
             sessionName !== undefined &&
             config.activityType === savedPreferences?.activityType &&
@@ -1273,7 +1275,7 @@ export default function RunSetupModal({
               <Icon className="inline size-5 mr-1" />{" "}
               {onTreadmill
                 ? "Start on the treadmill"
-                : `Start ${isPlannedSession ? sessionName : selected.name}`}
+                : `Start ${isPlannedSession ? sessionName : selected.name.toLowerCase()}`}
             </button>
           );
         })()}

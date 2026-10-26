@@ -37,6 +37,7 @@ import { RunControlButton } from "@/components/ui/RunControlButton";
 import HoldToFinishButton from "./HoldToFinishButton";
 import { Dialog } from "@/components/ui/Dialog";
 import { elevationLabel } from "@/lib/runLabels";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 // HR zone → colour ramp (cool→hot), all THEME tokens (no hex literals).
 // Z1 recovery teal · Z2 easy green · Z3 aerobic amber · Z4 threshold orange ·
@@ -495,7 +496,10 @@ export default function RunBottomSheet({
         {/* Drag handle — the whole sheet is draggable now, but the handle
             stays as the visible affordance + a keyboard target. */}
         <div
-          className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing select-none flex-shrink-0"
+          // The sheet is the run's dark stage in both themes, so its focus
+          // ring is the running coral (5:1 on it), not the lifting purple
+          // with a page-coloured offset.
+          className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing select-none flex-shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-running"
           role="button"
           tabIndex={0}
           aria-label="Drag to resize the run panel"
@@ -524,18 +528,19 @@ export default function RunBottomSheet({
           <div className="flex-1 flex flex-col px-6 pb-6 overflow-hidden">
             {/* Primary stats */}
             <div className="flex flex-col items-center justify-center flex-1 gap-3">
-              {/* Time — hero number */}
+              {/* Time, the hero number. Paused, it greys and its caption
+                  says so: a stopped clock in coral read as still running. */}
               <div className="text-center">
                 <p
+                  data-testid="run-hud-time"
                   style={{
                     fontSize: 68,
                     fontWeight: 800,
                     fontVariantNumeric: "tabular-nums",
                     fontFamily: "var(--font-mono)",
-                    color: THEME.running,
+                    color: isPaused ? HUD_SECONDARY.color : THEME.running,
                     lineHeight: 1,
                     letterSpacing: "-2px",
-                    textShadow: `0 0 40px ${THEME.running}55`,
                   }}
                 >
                   {formatTime(elapsed)}
@@ -547,7 +552,7 @@ export default function RunBottomSheet({
                     marginTop: 4,
                   }}
                 >
-                  TIME
+                  {isPaused ? "PAUSED" : "TIME"}
                 </p>
               </div>
 
@@ -651,7 +656,8 @@ export default function RunBottomSheet({
                     marginTop: 2,
                   }}
                 >
-                  CAL
+                  {/* The unit the run summary and run pages print. */}
+                  {CALORIE_UNIT.toUpperCase()}
                 </p>
               </div>
               <div
@@ -892,7 +898,7 @@ export default function RunBottomSheet({
                 style={{
                   fontSize: 22,
                   fontWeight: 700,
-                  color: "white",
+                  color: isPaused ? HUD_SECONDARY.color : "white",
                   fontVariantNumeric: "tabular-nums",
                   fontFamily: "var(--font-mono)",
                 }}
@@ -905,7 +911,7 @@ export default function RunBottomSheet({
                   letterSpacing: "0.1em",
                 }}
               >
-                TIME
+                {isPaused ? "PAUSED" : "TIME"}
               </p>
             </div>
             <div className="text-center">
@@ -967,7 +973,7 @@ export default function RunBottomSheet({
                 }
                 haptic("medium");
               }}
-              className="size-12 rounded-full flex items-center justify-center active:scale-[0.92] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="size-12 rounded-full flex items-center justify-center active:scale-[0.92] transition-transform duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-running"
               style={{
                 background: isPaused ? THEME.running : "rgba(255,255,255,0.1)",
                 border: "2px solid rgba(255,255,255,0.18)",

@@ -1,5 +1,6 @@
 /**
- * Pins the per-user rate limits on four callables, each driven through
+ * Pins the per-user rate limits on four callables, and that each asks the
+ * deletion lock before the limiter writes, each driven through
  * `.run(data, context)` with the limiter and the deletion lock swapped
  * on their shared module objects (index.js calls both through the
  * module, so the swap is what it sees). Nothing here reaches Firestore:
@@ -106,25 +107,6 @@ describe("applyProgramCommand — rate limit", () => {
       },
     ]);
   });
-
-  it("consults the deletion lock BEFORE the limiter writes", async () => {
-    await applyProgramCommand.run({}, CONTEXT).catch(() => {});
-    expect(order).toEqual(["lock", "limiter"]);
-  });
-
-  it("never reaches the limiter for a deleting account", async () => {
-    accountDeletionLocks.assertCallableActorNotDeleting = async () => {
-      order.push("lock");
-      const err = new Error("Account deletion in progress.");
-      err.code = "failed-precondition";
-      throw err;
-    };
-    await expect(applyProgramCommand.run({}, CONTEXT)).rejects.toMatchObject({
-      message: "Account deletion in progress.",
-    });
-    expect(order).toEqual(["lock"]);
-    expect(limiterCalls).toEqual([]);
-  });
 });
 
 describe("sendTestPush — rate limit", () => {
@@ -136,6 +118,49 @@ describe("sendTestPush — rate limit", () => {
       { uid: UID, action: "sendTestPush", maxCalls: 5, windowMs: TEN_MINUTES },
     ]);
   });
+});
+
+/* The limiter writes `rateLimits/{uid}_…`, and a deleting account must
+   receive no new server writes, so every one of these asks the deletion
+   lock first. Three of the four did not: recreditMyLiftVolume, which the
+   app calls by itself on each device, could re-create lifetime totals and
+   challenge markers the deletion executor had already swept. */
+describe("rate-limited callables — deletion lock first", () => {
+  const CALLS = [
+    ["applyProgramCommand", applyProgramCommand, {}],
+    ["backfillMyActivityCategories", backfillMyActivityCategories, {}],
+    ["recreditMyLiftVolume", recreditMyLiftVolume, { startAfter: "w1" }],
+    ["sendTestPush", sendTestPush, {}],
+  ];
+
+  it.each(CALLS)(
+    "%s consults the deletion lock BEFORE the limiter writes",
+    async (_n, fn, data) => {
+      await fn.run(data, CONTEXT).catch(() => {});
+      expect(order).toEqual(["lock", "limiter"]);
+    }
+  );
+
+  it.each(CALLS)(
+    "%s never reaches the limiter for a deleting account",
+    async (_n, fn, data) => {
+      accountDeletionLocks.assertCallableActorNotDeleting = async (
+        _db,
+        uid
+      ) => {
+        order.push("lock");
+        expect(uid).toBe(UID);
+        const err = new Error("Account deletion in progress.");
+        err.code = "failed-precondition";
+        throw err;
+      };
+      await expect(fn.run(data, CONTEXT)).rejects.toMatchObject({
+        message: "Account deletion in progress.",
+      });
+      expect(order).toEqual(["lock"]);
+      expect(limiterCalls).toEqual([]);
+    }
+  );
 });
 
 describe("rate-limited callables — auth precedence", () => {

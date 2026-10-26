@@ -8,7 +8,13 @@
  * Firebase emulator.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach } from "vitest";
 import { useState } from "react";
 import ProfileInfoSection from "../ProfileInfoSection";
@@ -352,8 +358,10 @@ describe("ProfileInfoSection — the display name", () => {
     const { updateProfile, input } = renderName();
     fireEvent.change(input, { target: { value: "  Sam Kerr  " } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" });
+    // The word filter loads on the first check.
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" })
+    );
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -361,8 +369,7 @@ describe("ProfileInfoSection — the display name", () => {
     const { updateProfile, input } = renderName();
     fireEvent.change(input, { target: { value: "shit head" } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       OBJECTIONABLE_NAME_MESSAGE
     );
     expect(input).toHaveAttribute("aria-invalid", "true");
@@ -375,8 +382,7 @@ describe("ProfileInfoSection — the display name", () => {
     const { updateProfile, input } = renderName();
     fireEvent.change(input, { target: { value: "S" } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       DISPLAY_NAME_LENGTH_MESSAGE
     );
     expect(updateProfile).not.toHaveBeenCalled();
@@ -386,8 +392,7 @@ describe("ProfileInfoSection — the display name", () => {
     const { input } = renderName();
     fireEvent.change(input, { target: { value: "shit head" } });
     fireEvent.blur(input);
-    await Promise.resolve();
-    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
     fireEvent.change(input, { target: { value: "Sam" } });
     expect(screen.queryByRole("alert")).toBeNull();
   });

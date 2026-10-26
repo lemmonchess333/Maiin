@@ -1,21 +1,29 @@
 import Button from "@/components/ui/Button";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
 import { haptic } from "@/lib/haptic";
+import { cn } from "@/lib/utils";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import IconButton from "@/components/ui/IconButton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import WaterWave from "@/components/home/WaterWave";
 import WaterBubbles from "@/components/home/WaterBubbles";
-import WaterSizeSheet from "@/components/home/WaterSizeSheet";
 import {
   GLASS_ML,
+  WATER_PRESETS,
   formatWaterVolume,
   splitWaterVolume,
   waterProgress,
 } from "@/lib/waterUnits";
 import type { WaterDrink } from "@/lib/waterActions";
+import { lazyRetry } from "@/lib/lazyRetry";
+
+/* Closed when Home first draws, and it brings the bottom sheet (vaul and
+   Radix) with it, so it stays out of Home's first paint. The card fetches
+   it once it has drawn, so a tap on the drink size does not wait. */
+const loadWaterSizeSheet = () => import("@/components/home/WaterSizeSheet");
+const WaterSizeSheet = lazyRetry(loadWaterSizeSheet);
 
 /** How long the tile offers to take the last drink back. Long enough to
  *  notice a mis-tap, short enough that the line is the step size again
@@ -47,6 +55,36 @@ function spokenVolume(ml: number): string {
  * identity is unchanged — only the underlying unit moved from whole
  * glasses to millilitres.
  */
+/** The everyday sizes, one tap each, on an empty day's tile. Each keeps
+ *  its words whole: with larger text the second wraps under the first
+ *  rather than both squeezing past their edges. */
+function WaterPresetRow({
+  className,
+  onPick,
+}: {
+  className: string;
+  onPick: (ml: number) => void;
+}) {
+  return (
+    <div className="mt-auto flex flex-wrap gap-2 pt-3">
+      {WATER_PRESETS.slice(0, 2).map((preset) => (
+        <Button
+          key={preset.id}
+          variant="ghost"
+          aria-label={`Log ${formatWaterVolume(preset.ml)}`}
+          className={cn("min-w-fit flex-1 basis-0 px-2", className)}
+          onClick={() => onPick(preset.ml)}
+        >
+          <span className="font-mono tabular-nums">
+            {splitWaterVolume(preset.ml).value}
+          </span>{" "}
+          {splitWaterVolume(preset.ml).unit}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
 export default function WaterCard({
   ml,
   targetMl,
@@ -78,6 +116,9 @@ export default function WaterCard({
 }) {
   const [rippleKey, setRippleKey] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
+  useEffect(() => {
+    void loadWaterSizeSheet().catch(() => {});
+  }, []);
   /* The moment of the last add, or null. It only decides WHETHER the
      undo line shows; what it says comes from the newest drink at render
      time, so the line and the button can never name different drinks. */
@@ -160,6 +201,10 @@ export default function WaterCard({
   function quickRemove() {
     quickLog(-servingMl);
   }
+  function presetAdd(presetMl: number) {
+    if (!quickLog(presetMl)) return;
+    if (onRemoveDrink) setJustLogged(Date.now());
+  }
   function openSheet() {
     haptic();
     trackHomeEvent("home_card_tapped", { card: "water" });
@@ -221,20 +266,22 @@ export default function WaterCard({
   );
 
   const sheet = sheetOpen && (
-    <WaterSizeSheet
-      open={sheetOpen}
-      onClose={() => setSheetOpen(false)}
-      onLog={(v) => {
-        const saved = onLog(v);
-        if (saved !== false) setRippleKey((k) => k + 1);
-        return saved;
-      }}
-      /* Only the compact tile routes removal through the sheet; the
-         full-width card has its minus beside the reading. */
-      totalMl={compact ? ml : undefined}
-      drinks={compact ? drinks : undefined}
-      onRemoveDrink={compact ? onRemoveDrink : undefined}
-    />
+    <Suspense fallback={null}>
+      <WaterSizeSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onLog={(v) => {
+          const saved = onLog(v);
+          if (saved !== false) setRippleKey((k) => k + 1);
+          return saved;
+        }}
+        /* Only the compact tile routes removal through the sheet; the
+           full-width card has its minus beside the reading. */
+        totalMl={compact ? ml : undefined}
+        drinks={compact ? drinks : undefined}
+        onRemoveDrink={compact ? onRemoveDrink : undefined}
+      />
+    </Suspense>
   );
 
   const iconBoxShadow = hasWater
@@ -244,12 +291,19 @@ export default function WaterCard({
     ? "linear-gradient(0deg, rgba(30, 120, 155, 0.25) 0%, rgba(58, 153, 186, 0.15) 40%, rgba(82, 163, 189, 0.08) 100%)"
     : "transparent";
 
+  /* The tile's heading, so Home's cards can be stepped through by heading.
+     Unseen: the visible "Water" sits inside the tile's button, and a
+     heading inside a button is no heading (the button's name replaces
+     what is in it, and the HTML is invalid). */
+  const heading = <h2 className="sr-only">Water</h2>;
+
   if (compact) {
     return (
       <div
         className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col"
         style={{ boxShadow: iconBoxShadow }}
       >
+        {heading}
         <motion.div
           className="absolute inset-x-0 bottom-0 pointer-events-none rounded-xl"
           style={{ background: fillBg }}
@@ -289,12 +343,19 @@ export default function WaterCard({
             for this serving, and the size sheet gains a "Remove" row
             (only while there is something to remove). The full-width card
             keeps its − / + pair, so the design guide's "equal minus/plus"
-            line now names that card only. */}
+            line now names that card only.
+
+            Under 9em the disc drops to the tile's foot, where an empty
+            day's size buttons sit, and would cover them. On an empty day
+            it gives way there: the buttons beside it add the same water. */}
         <IconButton
           onClick={quickAdd}
           aria-label={`Add ${servingMl} ml`}
           size="sm"
-          className="absolute top-3 right-3 @max-[9em]:top-auto @max-[9em]:bottom-3 z-20 size-8 rounded-full bg-teal text-teal-foreground hover:bg-teal/90 before:absolute before:-inset-1.5 before:content-['']"
+          className={cn(
+            "absolute top-3 right-3 @max-[9em]:top-auto @max-[9em]:bottom-3 z-20 size-8 rounded-full bg-teal text-teal-foreground hover:bg-teal/90 before:absolute before:-inset-1.5 before:content-['']",
+            !hasWater && "@max-[9em]:hidden"
+          )}
           icon={<Plus className="size-4" />}
         />
         <div className="relative z-10 flex flex-col flex-1">
@@ -353,7 +414,13 @@ export default function WaterCard({
             {/* The meta line, where Weight keeps its date. At rest it
                 names the step: `servingMl` follows the last container
                 logged, so a sighted user must be able to see whether the
-                plus means 250 ml or 750.
+                plus means 250 ml or 750. On an empty day it is unseen and
+                unread: the two size buttons below already name the
+                amounts, and the line said the same thing a third time. It
+                still holds its place there, wrapped exactly as it would
+                be, because on a narrow phone the size buttons stack and
+                this tile is the taller of the pair, so a missing line
+                would shrink the row and the glass with it.
 
                 For a few seconds after a tap it becomes the way back
                 instead. That job belonged to a toast for one release,
@@ -371,7 +438,8 @@ export default function WaterCard({
                 two cannot disagree — no captured amount to go stale. */}
             {!showUndo && (
               <p
-                className="text-micro mt-1"
+                aria-hidden={hasWater ? undefined : true}
+                className={cn("text-micro mt-1", !hasWater && "invisible")}
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 Tap + for {formatWaterVolume(servingMl)}
@@ -391,6 +459,17 @@ export default function WaterCard({
               It is under the 44px floor, deliberately — a transient
               affordance whose permanent, full-size equivalent is the
               sheet's log, one tap away on the same tile. */}
+          {/* An empty day's tile is as tall as Weight and Steps together,
+              and before the first drink its lower half was blank. It
+              offers the two everyday sizes there instead, one tap each.
+              The first drink fills the tile from the bottom, and the
+              wave takes the space. */}
+          {!hasWater && (
+            <WaterPresetRow
+              className={quickControlClass}
+              onPick={(presetMl) => presetAdd(presetMl)}
+            />
+          )}
           {showUndo && newestDrink && (
             <p className="text-micro mt-1 flex items-center gap-2 text-foreground">
               <span className="font-medium">
@@ -447,6 +526,7 @@ export default function WaterCard({
       className="relative overflow-hidden p-4 rounded-2xl bg-card"
       style={{ boxShadow: iconBoxShadow }}
     >
+      {heading}
       <motion.div
         className="absolute inset-x-0 bottom-0 pointer-events-none rounded-2xl"
         style={{ background: fillBg }}

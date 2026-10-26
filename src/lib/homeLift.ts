@@ -47,6 +47,33 @@ export function resolveHomeLift({
   return lift(next, workouts[next], "planned");
 }
 
+/**
+ * The lift a day names and acts on, in the week strip's day peek and its
+ * Manage day sheet. Today's is the one the today card offers, so the peek,
+ * the sheet and the card name one session, and Skip skips that one, as
+ * Train's Skip session does. Any other day keeps its slot in the week's
+ * schedule.
+ */
+export function liftOnDate({
+  dateKey,
+  todayKey,
+  scheduled,
+  programme,
+  sessionsOnDate,
+}: {
+  dateKey: string;
+  todayKey: string;
+  /** The day's lift as the week's schedule resolves it. */
+  scheduled: ResolvedLift;
+  programme: Programme | null | undefined;
+  /** Ids of the sessions logged on the day. */
+  sessionsOnDate: ReadonlySet<string>;
+}): ResolvedLift {
+  return dateKey === todayKey
+    ? resolveHomeLift({ scheduled, programme, sessionsToday: sessionsOnDate })
+    : scheduled;
+}
+
 function lift(
   index: number,
   workout: WorkoutDay,

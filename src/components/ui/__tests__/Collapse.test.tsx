@@ -83,6 +83,44 @@ describe("Collapse", () => {
     expect(section.style.height).not.toBe("0px");
   });
 
+  it("under Reduce Motion, opens and closes without a fade", async () => {
+    const real = window.matchMedia;
+    window.matchMedia = (query: string) =>
+      ({
+        matches: query.includes("prefers-reduced-motion"),
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      }) as unknown as MediaQueryList;
+    try {
+      const { rerender } = render(
+        <Collapse open={false} id="details">
+          <p>Details</p>
+        </Collapse>
+      );
+      rerender(
+        <Collapse open id="details">
+          <p>Details</p>
+        </Collapse>
+      );
+      // The height still opens from nothing (MotionConfig settles it in
+      // the app); the opacity is never taken down to start a fade.
+      const section = document.getElementById("details")!;
+      expect(section.style.opacity).not.toBe("0");
+      rerender(
+        <Collapse open={false} id="details">
+          <p>Details</p>
+        </Collapse>
+      );
+      expect(section.style.opacity).not.toBe("0");
+      await waitFor(() =>
+        expect(document.getElementById("details")).toBeNull()
+      );
+    } finally {
+      window.matchMedia = real;
+    }
+  });
+
   it("builds function content only while open, and closes on what it last drew", async () => {
     const build = vi.fn(() => <p>Days</p>);
     const { rerender } = render(<Collapse open={false}>{build}</Collapse>);

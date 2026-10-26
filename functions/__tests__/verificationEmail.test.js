@@ -40,6 +40,6 @@ describe("sendVerificationEmail", () => {
   it("html embeds the link in both the button and the copy-paste fallback", () => {
     const html = verifyEmailHtml("https://x.y/z", "Tropos");
     expect(html.split("https://x.y/z").length - 1).toBeGreaterThanOrEqual(2);
-    expect(html).toContain("Confirm your email");
+    expect(html).toContain("Verify your email");
   });
 });

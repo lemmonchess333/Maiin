@@ -30,6 +30,7 @@ const {
 const { refusedAddError } = require("./restriction");
 const { publicPhotoUrl } = require("./publicPhotoUrl");
 const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
+const { MAX_COMMENT_LENGTH } = require("./commentLimit");
 
 /**
  * Toggle kudos: if the kudos sub-doc exists for {uid} on
@@ -99,7 +100,7 @@ async function toggleKudos({
  *
  * Args:
  *   - firestore, uid, activityId — as above
- *   - text:        comment body (1-1000 chars, validated)
+ *   - text:        comment body (1 to MAX_COMMENT_LENGTH chars, validated)
  *   - authorName:  denormalised display name on the comment doc
  *   - authorPhotoURL: optional avatar
  *   - increment, serverTimestamp — sentinel factories
@@ -107,7 +108,7 @@ async function toggleKudos({
  * Returns: { commentId } — the generated comment doc id.
  *
  * Validation:
- *   - text trimmed length 1..1000
+ *   - text trimmed length 1..MAX_COMMENT_LENGTH (lib/commentLimit.js)
  *   - authorName length 1..MAX_DISPLAY_NAME_LENGTH
  *
  * Caller (the CF wrapper in index.js) translates throw → HttpsError.
@@ -126,8 +127,8 @@ async function addComment({
     throw new Error("addComment: firestore, uid, activityId required");
   }
   const trimmed = typeof text === "string" ? text.trim() : "";
-  if (trimmed.length < 1 || trimmed.length > 1000) {
-    throw new Error("addComment: text must be 1-1000 chars");
+  if (trimmed.length < 1 || trimmed.length > MAX_COMMENT_LENGTH) {
+    throw new Error(`addComment: text must be 1-${MAX_COMMENT_LENGTH} chars`);
   }
   const name =
     typeof authorName === "string" && authorName.trim().length > 0

@@ -161,7 +161,7 @@ export function getRunningTip(
 
   // Thunderstorm
   if (weatherCode >= 95) {
-    return "Thunderstorm — consider postponing or using a treadmill";
+    return "Consider postponing for the thunderstorm, or use a treadmill";
   }
 
   // Windy
@@ -169,7 +169,7 @@ export function getRunningTip(
     return "Very windy — start into the wind, finish with it behind you";
   }
   if (windSpeed >= 20) {
-    return "Windy — expect a slower pace for the same effort";
+    return "Windy, so expect a slower pace for the same effort";
   }
 
   // Cold
@@ -187,7 +187,7 @@ export function getRunningTip(
     humidity < 70 &&
     windSpeed < 15
   ) {
-    return "Good conditions — no adjustments needed";
+    return "Good conditions, with nothing to adjust";
   }
 
   return null;

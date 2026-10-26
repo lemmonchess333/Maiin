@@ -1,7 +1,8 @@
 import { BLOCK_DIALOG_DESCRIPTION } from "@/lib/blockCopy";
-import { useState, memo, useEffect, useRef } from "react";
+import { useState, memo, useEffect, useRef, type ReactNode } from "react";
 import { formatClock } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
+import MetaLine from "@/components/ui/MetaLine";
 import { Link } from "react-router-dom";
 import InlineFollow from "@/components/social/InlineFollow";
 import { useAuth } from "../../lib/auth";
@@ -16,7 +17,12 @@ import {
   activityExercisesToRoutine,
   type SavedRoutineExercise,
 } from "../../lib/savedRoutines";
-import { liftPostLeadArt, liftPostRows } from "../../lib/liftPost";
+import {
+  liftPostExerciseCount,
+  liftPostLeadArt,
+  liftPostRowDone,
+  liftPostRows,
+} from "../../lib/liftPost";
 import { generatedDayType } from "@/lib/liftDayLabel";
 import { formArtCutoutUrl, type FormArtCutout } from "@/lib/formArtCutouts";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
@@ -72,15 +78,31 @@ const RUN_STAT_COLUMNS =
   "grid-cols-[repeat(3,minmax(max-content,1fr))] @max-[17.5em]:grid-cols-[repeat(2,minmax(max-content,1fr))] @max-[14.5em]:grid-cols-[minmax(max-content,1fr)]";
 const LIFT_CHIPS = ["Great lift", "Solid session", "Strong work"];
 
+/** The exercise rows a card in a list draws; the post's own page draws
+ *  them all. */
+const FEED_EXERCISE_ROWS = 3;
+
 interface ActivityCardProps {
   feedItem: FeedItem;
   onShare?: (item: FeedItem) => void;
   /** Offer Follow beside the author when the viewer doesn't follow them
    *  (Explore). Never on your own post. */
   followAuthor?: boolean;
+  /** Open the comments as the card mounts: a comment notice opens the
+   *  post to answer it. */
+  openComments?: boolean;
+  /** Draw every exercise on the post, as its own page does. A card in a
+   *  list draws the first three and links the rest to that page. */
+  allExercises?: boolean;
 }
 
-function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
+function ActivityCard({
+  feedItem,
+  onShare,
+  followAuthor,
+  openComments = false,
+  allExercises = false,
+}: ActivityCardProps) {
   const { user, profile } = useAuth();
   /* The VIEWER's unit, not the poster's — a feed reads in the units of
      whoever is reading it, which is what every social running app does. */
@@ -91,11 +113,11 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   const volumeFigure = (kg: number) =>
     Math.round(liftVolumeIn(kg, liftUnit)).toLocaleString();
   const volumeLabel = `${liftUnitLabel(liftUnit)} volume`;
-  const { addBlocked } = useBlockedUsers();
+  const { blocked, addBlocked } = useBlockedUsers();
   const { isRestricted } = useRestrictedStatus(user?.uid);
   const [liked, setLiked] = useState(feedItem.liked ?? false);
   const [kudosCount, setKudosCount] = useState(feedItem.kudosCount ?? 0);
-  const [showCommentSheet, setShowCommentSheet] = useState(false);
+  const [showCommentSheet, setShowCommentSheet] = useState(openComments);
   /* Comments added or deleted from this card's sheet. The post's own
      count is written by the server and reaches the card only on the next
      feed read, so the card adds what it saw happen. */
@@ -147,8 +169,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
     rawExercises.length > 0 &&
     typeof (rawExercises[0] as { setCount?: unknown }).setCount === "number";
   const canSaveRoutine = feedItem.type === "workout" && hasStructuredExercises;
+  /* The exercises the card draws: one with no set done is left out of
+     the routine as it is left off the card. */
   const routineExercises: SavedRoutineExercise[] = canSaveRoutine
-    ? activityExercisesToRoutine(rawExercises)
+    ? activityExercisesToRoutine(rawExercises.filter(liftPostRowDone))
     : [];
 
   const rawTitle = (activity?.activityTitle ||
@@ -245,6 +269,24 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
      from a saved workout once wrote rows with no summary, and drawing them
      broke the card. */
   const exercises = liftPostRows(activity?.exercises, liftUnit);
+  const shownExercises = allExercises
+    ? exercises
+    : exercises.slice(0, FEED_EXERCISE_ROWS);
+  const moreExercises = exercises.length - shownExercises.length;
+  /* The exercises done, as the post's page lists them: a stored count can
+     include one with no set done. */
+  const exerciseCount = activity ? liftPostExerciseCount(activity) : 0;
+  /* The movement labels, less one that only repeats the title (or the
+     summary drawn in its place): a Push day's post is titled "Push"
+     already. */
+  const titleKey = (activityTitle || feedItem.summary)?.trim().toLowerCase();
+  const muscleLabels = Array.from(
+    new Set(
+      ((activity?.muscleGroups as string[] | undefined) ?? []).map(
+        movementCategoryLabel
+      )
+    )
+  ).filter((label) => label.trim().toLowerCase() !== titleKey);
   const prCount = activity?.prCount as number | undefined;
 
   /* ---- Hero panels (Social uplift v1) -------------------------------
@@ -296,72 +338,113 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
 
   /* The volume numeral and the PR chip a lift's hero carries, whichever
      hero it is. */
-  const renderVolumeOverlay = () => (
-    <div className="absolute bottom-3 left-4">
+  const renderVolumeFigure = (className: string) => (
+    <div className={className}>
       <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting">
         {volumeFigure(activity?.totalVolume ?? 0)}
       </p>
       <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
     </div>
   );
-  const renderPrChip = (side: "left-4" | "right-4") => (
+  const renderPrChip = (className: string) => (
     <span
-      className={`absolute top-3 ${side} inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong`}
+      className={`${className} inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong`}
     >
       <Star className="size-3.5 fill-achievement" />
       {prCount} PR{prCount === 1 ? "" : "s"}
     </span>
   );
 
+  const liftHeroBackground = {
+    background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
+  };
+
   /* The lead lift's drawing at the right, the numbers at the left: Home's
-     Today card, in the feed. Alone, the drawing takes the middle. */
+     Today card, in the feed. Alone, the drawing takes the middle.
+     Beside the numbers, the two share one row, so a wide number
+     ("128,450") narrows the drawing instead of being drawn through it.
+     On a card under 12em, as at large text sizes, what is left for the
+     drawing is a thumbnail in a tall panel: it goes, and the panel
+     closes up around the numbers. The volume still reads before the PR
+     chip. */
   const renderDrawingHero = (art: FormArtCutout) => {
     const flanked = showVolumeOverlay || showPrChip;
+    const drawing = (className: string) => (
+      <img
+        src={formArtCutoutUrl(art)}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        decoding="async"
+        loading="lazy"
+        data-lead-drawing=""
+        className={`exercise-drawing pointer-events-none object-contain ${className}`}
+      />
+    );
+    if (!flanked) {
+      return (
+        <div
+          className="relative h-40 border-b border-border/50 overflow-hidden"
+          style={liftHeroBackground}
+        >
+          {drawing(
+            "absolute inset-y-3 h-[calc(100%-1.5rem)] inset-x-3 w-[calc(100%-1.5rem)] object-bottom"
+          )}
+        </div>
+      );
+    }
     return (
       <div
-        className="relative h-40 border-b border-border/50 overflow-hidden"
-        style={{
-          background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
-        }}
+        className="flex h-40 gap-3 border-b border-border/50 overflow-hidden @max-[12em]:h-auto"
+        style={liftHeroBackground}
       >
-        <img
-          src={formArtCutoutUrl(art)}
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          decoding="async"
-          loading="lazy"
-          data-lead-drawing=""
-          className={
-            "exercise-drawing pointer-events-none absolute inset-y-3 h-[calc(100%-1.5rem)] object-contain " +
-            (flanked
-              ? "right-3 w-[58%] object-right-bottom"
-              : "inset-x-3 w-[calc(100%-1.5rem)] object-bottom")
-          }
-        />
-        {showVolumeOverlay && renderVolumeOverlay()}
-        {showPrChip && renderPrChip("left-4")}
+        <div className="my-3 ml-4 flex shrink-0 flex-col-reverse items-start gap-2">
+          {showVolumeOverlay && renderVolumeFigure("mt-auto")}
+          {showPrChip && renderPrChip("mb-auto")}
+        </div>
+        {drawing(
+          "my-3 mr-3 ml-auto h-[calc(100%-1.5rem)] min-w-0 max-w-[58%] flex-1 object-right-bottom @max-[12em]:hidden"
+        )}
       </div>
     );
   };
 
-  const renderMuscleHero = () => (
-    <div
-      className="relative h-32 border-b border-border/50 overflow-hidden"
-      style={{
-        background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
-      }}
-    >
-      <div className="absolute inset-0 flex items-center justify-center py-2">
-        <MiniMuscleFigure
-          categories={muscleCategories}
-          className="h-full w-auto"
-        />
+  /* The muscle figure in the middle, the volume at its left and the PR
+     chip at its right, in one row: the two sides take equal shares, so
+     the figure sits in the middle while they fit beside it, moves aside
+     for a wide number and then narrows. Under 14em the figure goes and
+     the panel closes up around the numbers, as the drawing's does; the
+     chip takes a column of its own here, so it needs more room. */
+  const renderMuscleHero = () => {
+    const flanked = showVolumeOverlay || showPrChip;
+    return (
+      <div
+        className={`flex h-32 gap-3 border-b border-border/50 overflow-hidden ${
+          flanked
+            ? "@max-[14em]:h-auto @max-[14em]:flex-col-reverse @max-[14em]:gap-2 @max-[14em]:py-3"
+            : ""
+        }`}
+        style={liftHeroBackground}
+      >
+        <div className="my-3 ml-4 flex min-w-max flex-1 items-end @max-[14em]:my-0 @max-[14em]:flex-none @max-[14em]:empty:hidden">
+          {showVolumeOverlay && renderVolumeFigure("")}
+        </div>
+        <div
+          className={`flex min-w-0 items-center justify-center py-2 ${
+            flanked ? "@max-[14em]:hidden" : ""
+          }`}
+        >
+          <MiniMuscleFigure
+            categories={muscleCategories}
+            className="h-28 w-auto max-w-full"
+          />
+        </div>
+        <div className="my-3 mr-4 flex min-w-max flex-1 items-start justify-end @max-[14em]:my-0 @max-[14em]:ml-4 @max-[14em]:flex-none @max-[14em]:justify-start @max-[14em]:empty:hidden">
+          {showPrChip && renderPrChip("")}
+        </div>
       </div>
-      {showVolumeOverlay && renderVolumeOverlay()}
-      {showPrChip && renderPrChip("right-4")}
-    </div>
-  );
+    );
+  };
 
   /* The words on the post: its title, the summary older posts carry in
      its place, and the author's caption. One block for the standard and
@@ -451,9 +534,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
           {/* A pace posted as text is per km whatever the reader's unit,
                so it keeps its own label rather than borrowing "/mi". */}
           <SectionLabel className="mt-0.5">
-            {paceUnitLabel(
-              typeof activity.avgPace === "string" ? "km" : unit
-            )}
+            {paceUnitLabel(typeof activity.avgPace === "string" ? "km" : unit)}
           </SectionLabel>
         </div>
         {(activity.duration ?? 0) > 0 && (
@@ -466,12 +547,14 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
         )}
         {(activity.elevationGain || 0) > 0 && (
           <div className="min-w-0">
-            {/* Elevation was the one metric fusing its unit into the
-                  numeral — `elevationLabel` returns "120m", so the "m"
-                  rendered at text-xl/700 while every sibling metric
-                  puts its unit in the muted SectionLabel beneath. Pass
-                  withUnit=false and render the unit as its own
-                  secondary span so the four cells finally agree.
+            {/* The unit is its own muted span, smaller than the
+                  numeral, because this cell's caption is taken by
+                  "Elevation" where its siblings' captions carry their
+                  units. A space before it, as the run screens' stat grid
+                  writes "342 m": nothing here is short of room (the cell
+                  is at least as wide as its figure), so a glued unit
+                  would be no compact variant, only the one unit on the
+                  card drawn another way.
 
                   The Mountain icon used to be a SIBLING of this stack
                   inside a `flex gap-1`, which pushed the numeral and its
@@ -480,7 +563,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                   caption, so the figures line up and the icon still
                   marks the cell. */}
             <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
-              {elevationLabel(activity.elevationGain ?? 0, unit, false)}
+              {elevationLabel(activity.elevationGain ?? 0, unit, false)}{" "}
               <span className="text-caption font-semibold text-muted-foreground">
                 {elevationUnitLabel(unit)}
               </span>
@@ -498,16 +581,15 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   const renderWorkoutContent = () =>
     activity && (
       <div className="space-y-2">
-        {/* Exercise details — top 3 visually. PR 4 dropped the
-            slice(0, 3) cap on the persisted payload (full list goes
-            to the doc so feed viewers can save the routine), so the
-            slice now lives here on the render side for compactness.
-            PR 4.5: rows are tappable for compare-this-lift when the
-            payload has structured fields and the user isn't the
-            author (no point comparing yourself to yourself). */}
+        {/* Exercise details — the first three in a list, every one on
+            the post's own page, which "+N more" opens. The post holds
+            the full list, so feed viewers can save the routine.
+            Rows are tappable for compare-this-lift when the payload has
+            structured fields and the user isn't the author (no point
+            comparing yourself to yourself). */}
         {exercises.length > 0 && (
           <div className="space-y-1">
-            {exercises.slice(0, 3).map((ex, i) => {
+            {shownExercises.map((ex, i) => {
               /* The summary is formatted from the row's figures when it
                  has any, so the "0kg" in old posts is fixed as it is drawn,
                  without a backfill. */
@@ -570,29 +652,36 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                 </button>
               );
             })}
+            {/* The rest of the list, one quiet row that opens the post.
+                Its own row height clears the touch floor, so it does not
+                reach over the compare row above it. */}
+            {moreExercises > 0 && (
+              <Link
+                to={`/activity/${encodeURIComponent(feedItem.activityId)}`}
+                className="flex min-h-[44px] w-full items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <span>
+                  <span className="font-mono tabular-nums">
+                    +{moreExercises}
+                  </span>{" "}
+                  more{" "}
+                  <span className="sr-only">
+                    {moreExercises === 1 ? "exercise" : "exercises"}
+                  </span>
+                </span>
+              </Link>
+            )}
           </div>
         )}
         {/* Muscle groups — internal taxonomy keys (horizontal_push, etc.)
             mapped to session-level labels via movementCategoryLabel
             (Push / Pull / Legs / Arms / Core). Multiple raw categories
-            now collapse to the same label (horizontal_push and
-            vertical_push both → "Push"), so we dedupe the labels here.
+            collapse to the same label (horizontal_push and
+            vertical_push both → "Push"), so the labels are deduped, and
+            one the title already says is left out (`muscleLabels`).
             Static facts, so one quiet line rather than chips — pills on
             this surface mean a state (the PR badge), not a fact. */}
-        {activity.muscleGroups &&
-          activity.muscleGroups.length > 0 &&
-          (() => {
-            const labels = Array.from(
-              new Set(
-                (activity.muscleGroups as string[]).map(movementCategoryLabel)
-              )
-            );
-            return (
-              <p className="text-xs text-muted-foreground">
-                {labels.join(" · ")}
-              </p>
-            );
-          })()}
+        <MetaLine size="xs" items={muscleLabels} />
         {/* Workout volume/duration/PR count. Cells already printed on
             the lift's hero panel (volume numeral, PR chip) drop out
             here — same no-double-printing rule as the run card's km. */}
@@ -614,13 +703,13 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
             </div>
           )}
-          {(activity.exerciseCount ?? 0) > 0 && (
+          {exerciseCount > 0 && (
             <div className="min-w-0">
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
-                {activity.exerciseCount}
+                {exerciseCount}
               </p>
               <SectionLabel className="mt-0.5">
-                {activity.exerciseCount === 1 ? "exercise" : "exercises"}
+                {exerciseCount === 1 ? "exercise" : "exercises"}
               </SectionLabel>
             </div>
           )}
@@ -661,35 +750,13 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
         <>
           {routePreview && renderRouteHero("h-[120px]")}
           <div className="p-4 pb-0">
-            {/* Author row */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
-              <Link
-                to={`/user/${feedItem.authorId}`}
-                className="flex items-center gap-3 flex-1 min-w-[min(8em,100%)]"
-              >
-                <Avatar
-                  photoURL={feedItem.authorPhotoURL}
-                  displayName={feedItem.authorName}
-                  size="lg"
-                  fallbackBg={`${THEME.brand}20`}
-                  fallbackColor={THEME.brand}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <p
-                      dir="auto"
-                      className="text-left text-sm font-semibold truncate text-foreground"
-                    >
-                      {feedItem.authorName}
-                    </p>
-                  </div>
-                  <p className="text-small text-muted-foreground whitespace-nowrap @max-[14em]:whitespace-normal">
-                    {timeAgo}
-                  </p>
-                </div>
-              </Link>
-              {renderAuthorActions()}
-            </div>
+            {renderAuthorRow(
+              `${THEME.brand}20`,
+              THEME.brand,
+              <p className="text-small text-muted-foreground whitespace-nowrap @max-[14em]:whitespace-normal">
+                {timeAgo}
+              </p>
+            )}
             {renderPostText()}
             {renderRunStats()}
             <div className="border-b border-border/30 mb-3" />
@@ -706,42 +773,20 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
           {showMuscleHero && renderMuscleHero()}
 
           <div className="p-4">
-            {/* Author row */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
-              <Link
-                to={`/user/${feedItem.authorId}`}
-                className="flex items-center gap-3 flex-1 min-w-[min(8em,100%)]"
-              >
-                <Avatar
-                  photoURL={feedItem.authorPhotoURL}
-                  displayName={feedItem.authorName}
-                  size="lg"
-                  fallbackBg={avatarBg}
-                  fallbackColor={avatarColor}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <p
-                      dir="auto"
-                      className="text-left text-sm font-semibold truncate text-foreground"
-                    >
-                      {feedItem.authorName}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    {isRun ? (
-                      <Footprints className="size-3.5 text-running" />
-                    ) : (
-                      <Dumbbell className="size-3.5 text-lifting" />
-                    )}
-                    <p className="text-small whitespace-nowrap @max-[14em]:whitespace-normal">
-                      {timeAgo}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-              {renderAuthorActions()}
-            </div>
+            {renderAuthorRow(
+              avatarBg,
+              avatarColor,
+              <div className="flex items-center gap-1 text-muted-foreground">
+                {isRun ? (
+                  <Footprints className="size-3.5 text-running" />
+                ) : (
+                  <Dumbbell className="size-3.5 text-lifting" />
+                )}
+                <p className="text-small whitespace-nowrap @max-[14em]:whitespace-normal">
+                  {timeAgo}
+                </p>
+              </div>
+            )}
 
             {renderPostText()}
 
@@ -762,11 +807,17 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
       )}
 
       <div className="px-4 pb-4">
+        {/* The PR and challenge lines: an icon, then the words. Beside the
+            icon, a large-text line can be narrower than one word, which
+            then splits ("Comple/ted"). So on a card under 16em the icon
+            stands above the words, which have the line's whole width and
+            wrap between words; breaking inside a word is left for a string
+            with nowhere else to go. */}
         {/* PR Highlight */}
         {(feedItem.prHit || activity?.prHit) && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 bg-achievement/10 border border-achievement/20">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 bg-achievement/10 border border-achievement/20 @max-[16em]:flex-col @max-[16em]:items-start @max-[16em]:gap-1">
             <Trophy className="size-4 text-achievement shrink-0" />
-            <p className="min-w-0 break-words text-xs font-medium text-achievement-strong">
+            <p className="min-w-0 max-w-full break-words text-xs font-medium text-achievement-strong">
               New PR:{" "}
               {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
               {feedItem.prWeight || activity?.prWeight
@@ -782,7 +833,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
         {/* Challenge Milestone */}
         {(feedItem.challengeMilestone || activity?.challengeMilestone) && (
           <div
-            className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 @max-[16em]:flex-col @max-[16em]:items-start @max-[16em]:gap-1"
             style={{
               background: `${THEME.brand}10`,
               border: `1px solid ${THEME.brand}25`,
@@ -795,7 +846,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
             {/* Text on the -strong step — brand is 3.87:1 as 12px text on
                 the light card; the Target icon keeps the identity. */}
             <p
-              className="min-w-0 break-words text-xs font-medium"
+              className="min-w-0 max-w-full break-words text-xs font-medium"
               style={{ color: "hsl(var(--primary-strong))" }}
             >
               {feedItem.challengeMilestone || activity?.challengeMilestone}
@@ -898,22 +949,26 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                 Couldn&apos;t load props right now. Try again.
               </p>
             ) : (
-              kudosUsers.map((u) => (
-                <div key={u.userId} className="flex items-center gap-2">
-                  <BlockAwareAvatar
-                    uid={u.userId}
-                    photoURL={u.photoURL}
-                    displayName={u.userName}
-                    size="sm"
-                  />
-                  <span
-                    dir="auto"
-                    className="min-w-0 truncate text-left text-xs font-medium text-foreground"
-                  >
-                    {u.userName}
-                  </span>
-                </div>
-              ))
+              /* Nobody either side of a block with you, as in the
+                 comments below. */
+              kudosUsers
+                .filter((u) => !blocked.has(u.userId))
+                .map((u) => (
+                  <div key={u.userId} className="flex items-center gap-2">
+                    <BlockAwareAvatar
+                      uid={u.userId}
+                      photoURL={u.photoURL}
+                      displayName={u.userName}
+                      size="sm"
+                    />
+                    <span
+                      dir="auto"
+                      className="min-w-0 truncate text-left text-xs font-medium text-foreground"
+                    >
+                      {u.userName}
+                    </span>
+                  </div>
+                ))
             )}
           </div>
         )}
@@ -1007,6 +1062,46 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
       />
     </div>
   );
+
+  /* The author's avatar, name and time, which open their profile, with
+     Follow and the menu at the row's end. A card 18em wide or more keeps
+     the name on one line beside the avatar, ending in an ellipsis if it
+     must. Narrower, as at large text sizes, the name wraps instead, and
+     a name too long to sit beside the avatar goes under it, with the
+     row's whole width: beside it, the name would be cut to its first
+     letters ("Ale…"). One row for the standard and the hybrid card. */
+  function renderAuthorRow(
+    fallbackBg: string,
+    fallbackColor: string,
+    time: ReactNode
+  ) {
+    return (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2 @max-[18em]:items-start">
+        <Link
+          to={`/user/${feedItem.authorId}`}
+          className="flex items-center gap-3 flex-1 min-w-[min(8em,100%)] @max-[18em]:flex-wrap @max-[18em]:gap-y-2"
+        >
+          <Avatar
+            photoURL={feedItem.authorPhotoURL}
+            displayName={feedItem.authorName}
+            size="lg"
+            fallbackBg={fallbackBg}
+            fallbackColor={fallbackColor}
+          />
+          <div className="flex-1 min-w-0 @max-[18em]:flex-auto @max-[18em]:max-w-full">
+            <p
+              dir="auto"
+              className="text-left text-sm font-semibold truncate break-words text-foreground @max-[18em]:whitespace-normal"
+            >
+              {feedItem.authorName}
+            </p>
+            {time}
+          </div>
+        </Link>
+        {renderAuthorActions()}
+      </div>
+    );
+  }
 
   /* Follow and the menu, kept together. The name beside them keeps at
      least 8em; when the row cannot also hold these, they take a line of

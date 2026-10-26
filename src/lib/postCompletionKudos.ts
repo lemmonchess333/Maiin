@@ -3,7 +3,7 @@
  *
  * The proposal's safest social pattern: AFTER the user finishes a workout/run,
  * if someone they FOLLOW also trained today, offer a one-tap, dismissible
- * "Send kudos?" prompt. Social appears after achievement, never before action;
+ * "Give them props?" prompt. Social appears after achievement, never before action;
  * it's optional, rate-limited to once/day, and needs no push notification.
  *
  * This module is the pure decision layer — given the user's feed items (which

@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "@/lib/logger";
 import { toast } from "@/lib/toast";
+import { settleWrite } from "@/lib/settleWrite";
 import {
   isHealthAvailable,
   requestStepsReadPermission,
@@ -114,10 +115,17 @@ export function useSteps(): UseStepsResult {
       const merged = { ...flagsRef.current, ...next };
       setFlags(merged);
       if (!ref) return;
+      // Settled for the screen (settleWrite.ts): connecting reads today's
+      // steps from the phone after this, which needs no connection, so
+      // offline it does not wait for one. A failed save says so, or the
+      // next launch would ask again with no reason given.
       try {
-        await setDocGuarded(ref, merged, { merge: true });
+        await settleWrite(setDocGuarded(ref, merged, { merge: true }), {
+          label: "steps.settings",
+        });
       } catch (err) {
         logger.error("[steps] settings save failed", err);
+        toast.error("Couldn't save your Apple Health setting. Try again.");
       }
     },
     [settingsRef]

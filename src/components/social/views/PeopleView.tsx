@@ -18,6 +18,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import { IconButton } from "@/components/ui/IconButton";
 
@@ -154,7 +155,7 @@ export default function PeopleView({
       } catch {
         if (seq !== searchSeqRef.current) return;
         setSearchResults([]);
-        setSearchError("Couldn't search right now. Try again.");
+        setSearchError("Couldn't search right now");
       }
       if (seq === searchSeqRef.current) setSearching(false);
     },
@@ -250,7 +251,7 @@ export default function PeopleView({
             />
             <input
               type="text"
-              placeholder="Search athletes"
+              placeholder="Search people"
               value={searchQuery}
               onChange={(e) => handleSearchInputChange(e.target.value)}
               onKeyDown={(e) => {
@@ -263,7 +264,7 @@ export default function PeopleView({
               aria-label={
                 isRestricted
                   ? "Search is unavailable while your account is restricted"
-                  : "Search athletes"
+                  : "Search people"
               }
               disabled={isRestricted}
               className="w-full h-12 pl-10 pr-11 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
@@ -343,19 +344,11 @@ export default function PeopleView({
               </div>
             )}
           {searchError && (
-            <div
-              className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20"
-              aria-live="polite"
-            >
-              <p className="text-xs text-destructive-strong">{searchError}</p>
-              <button
-                type="button"
-                onClick={() => handleSearch()}
-                className="text-xs font-medium text-destructive-strong underline ml-2 shrink-0"
-              >
-                Retry
-              </button>
-            </div>
+            <ErrorState
+              title={searchError}
+              description="Check your connection and try again."
+              retry={{ label: "Retry", onClick: () => void handleSearch() }}
+            />
           )}
         </div>
 
@@ -436,9 +429,12 @@ export default function PeopleView({
                       <FollowsYouBadge uid={p.uid} />
                       <PartnerReadyBadge uid={p.uid} />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {suggestionReason(p)}
-                    </p>
+                    {/* No reason, no line: the name sits alone. */}
+                    {suggestionReason(p) && (
+                      <p className="text-sm text-muted-foreground">
+                        {suggestionReason(p)}
+                      </p>
+                    )}
                   </div>
                   <FollowButton
                     targetUid={p.uid}

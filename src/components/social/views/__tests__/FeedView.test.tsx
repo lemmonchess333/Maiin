@@ -6,7 +6,13 @@
  * the third post, and someone following nobody sees Explore's posts.
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { MutableRefObject } from "react";
 import FeedView from "../FeedView";
@@ -202,9 +208,9 @@ describe("FeedView — a failed Following feed", () => {
   it("says the feed couldn't load, not the SDK's error text", () => {
     followingError = "Missing or insufficient permissions.";
     setup({ feedSubTab: "following" });
-    expect(
-      screen.getByText("Couldn't load your feed. Check your connection.")
-    ).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn't load your feed"
+    );
     expect(screen.queryByText(/insufficient permissions/)).toBeNull();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
@@ -465,27 +471,38 @@ describe("FeedView — following nobody (the retired solo-first stack)", () => {
   });
 });
 
-describe("FeedView — My communities source (SOC-P3a)", () => {
+describe("FeedView — the Spaces source (SOC-P3a)", () => {
   it("the source sheet offers all three sources", () => {
     setup();
     fireEvent.click(
       screen.getByRole("button", { name: /feed source: explore/i })
     );
-    expect(
-      screen.getByRole("radio", { name: /my communities/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /^Spaces/ })).toBeInTheDocument();
     expect(
       screen.getByRole("radio", { name: /following/i })
     ).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /explore/i })).toBeInTheDocument();
   });
 
-  it("picking My communities drives the URL-writing callback", () => {
+  it("names the joined-Spaces source Spaces, as the rest of the app does", () => {
+    setup({ feedSubTab: "communities" });
+    const chip = screen.getByRole("button", { name: "Feed source: Spaces" });
+    expect(chip).toHaveTextContent("Spaces");
+    fireEvent.click(chip);
+    const option = screen.getByRole("radio", { name: /^Spaces/ });
+    expect(option).toHaveAttribute("aria-checked", "true");
+    expect(
+      within(option).getByText("Posts from Spaces you've joined")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/my communities/i)).toBeNull();
+  });
+
+  it("picking Spaces drives the URL-writing callback", () => {
     const { selectFeedSubTab } = setup();
     fireEvent.click(
       screen.getByRole("button", { name: /feed source: explore/i })
     );
-    fireEvent.click(screen.getByRole("radio", { name: /my communities/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /^Spaces/ }));
     expect(selectFeedSubTab).toHaveBeenCalledWith("communities");
   });
 
@@ -536,7 +553,7 @@ describe("FeedView — My communities source (SOC-P3a)", () => {
       screen.getByText("Join a space to fill this feed")
     ).toBeInTheDocument();
     expect(screen.queryByText(/your spaces are quiet right now/i)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Browse Spaces" }));
+    fireEvent.click(screen.getByRole("button", { name: "Browse spaces" }));
     expect(openTogether).toHaveBeenCalled();
   });
 

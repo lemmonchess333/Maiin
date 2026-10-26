@@ -93,3 +93,30 @@ describe("every job that takes a runner has a timeout", () => {
     ).toEqual([]);
   });
 });
+
+it("gives the shared emulator job time for setup, all suites and cleanup", () => {
+  const shared = jobsIn("emulator-tests.yml").find(
+    (job) => job.name === "emulator-tests"
+  );
+  expect(shared, "the shared emulator job must exist").toBeDefined();
+  const body = shared!.body;
+  // Pin the actual combined job: neither a step timeout nor a neighbouring
+  // capture/journey job's larger budget protects this sequence of suites.
+  for (const stage of [
+    "Run firestore.rules tests",
+    "Run storage.rules tests",
+    "Run functions integration tests",
+    "Run authenticated E2E",
+    "Design-QA transitions (non-blocking)",
+  ]) {
+    expect(body).toContain(`- name: ${stage}`);
+  }
+  const timeout = /^ {4}timeout-minutes: (\d+)\s*$/m.exec(body);
+  expect(timeout, "timeout must be set on the job itself").not.toBeNull();
+  // Main run 39985990688 used 9m48 before authenticated E2E, then hit
+  // the former 15m job limit while that suite was still running. Allow
+  // 10m for that measured prefix, 10m for the browser suite and 5m for
+  // design-QA plus cleanup, rather than interrupting passing assertions.
+  const minimumMinutes = 10 + 10 + 5;
+  expect(Number(timeout![1])).toBeGreaterThanOrEqual(minimumMinutes);
+});

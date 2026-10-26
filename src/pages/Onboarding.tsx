@@ -61,6 +61,7 @@ import SessionLengthLabel from "@/components/program/SessionLengthLabel";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import { describeRejection } from "@/lib/callableErrors";
 import {
   formatWeightInUnit,
@@ -574,7 +575,10 @@ export default function Onboarding() {
       runFrequency,
     ]
   );
-  const displayNameValidation = validateDisplayName(displayName);
+  /* The name step is the last; the word filter loads from the first, and
+     until it has, the name waits (valid false, nothing to say). */
+  const wordFilter = useWordFilter();
+  const displayNameValidation = validateDisplayName(displayName, wordFilter);
   /* A race with no date is not a race plan. Run9a lands a persisted
      race_prep with no usable date on the freeform substrate rather than
      leaving a dangling raceGoal — correct, and it stays as the backstop for
@@ -889,9 +893,9 @@ export default function Onboarding() {
         code === "failed-precondition" ? describeRejection(err) : null;
       setSaveError(
         code === "unauthenticated"
-          ? "Please sign in again to finish setting up your account. Your answers are saved on this device."
+          ? "Sign in again to finish setting up your account. Your answers are saved on this device."
           : code === "resource-exhausted"
-            ? "Please wait a moment, then try creating your plan again. Your answers are saved."
+            ? "Wait a moment, then try creating your plan again. Your answers are saved."
             : refusal
               ? refusal
               : code === "invalid-argument"
@@ -982,7 +986,7 @@ export default function Onboarding() {
             step === 3 ||
             step === 2 ||
             step === 4) && (
-            <p className="text-caption text-muted-foreground">
+            <p className="text-micro text-muted-foreground">
               {step === 1 || step === 2 ? "1 of 2" : "2 of 2"} in this chapter
             </p>
           )}
@@ -1666,11 +1670,14 @@ export default function Onboarding() {
                     (optional)
                   </span>
                 </label>
+                {/* The field is 8rem wide, 256px at double text: it may
+                    shrink below that so the unit beside it stays on a 320px
+                    screen, and the unit itself never shrinks. */}
                 <div className="flex items-center gap-2">
                   <input
                     id="onboarding-goal-weight"
                     inputMode="decimal"
-                    className="ds-input w-32 min-h-11 font-mono tabular-nums"
+                    className="ds-input w-32 min-w-0 min-h-11 font-mono tabular-nums"
                     value={goalWeightText}
                     aria-invalid={goalWeightInvalid}
                     aria-describedby={
@@ -1681,7 +1688,7 @@ export default function Onboarding() {
                     placeholder={formatWeightInUnit(weightKg, weightUnit)}
                     onChange={(event) => setGoalWeightText(event.target.value)}
                   />
-                  <span className="text-sm text-muted-foreground">
+                  <span className="shrink-0 text-sm text-muted-foreground">
                     {weightUnit === "lbs" ? "lb" : "kg"}
                   </span>
                 </div>
@@ -1880,7 +1887,7 @@ export default function Onboarding() {
                   className="ds-input w-full min-h-11"
                   value={displayName}
                   maxLength={DISPLAY_NAME_MAX}
-                  aria-invalid={!displayNameValidation.valid}
+                  aria-invalid={displayNameValidation.problem !== null}
                   onChange={(event) => {
                     setNameTyped(true);
                     setDisplayName(event.target.value);
@@ -1890,7 +1897,7 @@ export default function Onboarding() {
                   Other people can see this name on your profile. You can change
                   it later.
                 </p>
-                {!displayNameValidation.valid && (
+                {displayNameValidation.message && (
                   <p className="text-sm text-destructive-strong" role="alert">
                     {displayNameValidation.message}
                   </p>
@@ -1954,7 +1961,7 @@ export default function Onboarding() {
               ? "Creating your plan…"
               : step === 7
                 ? saveError
-                  ? "Try creating my plan again"
+                  ? "Try again"
                   : "Start my plan"
                 : returnToReview
                   ? "Back to review"

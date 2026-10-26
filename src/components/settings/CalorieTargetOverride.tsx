@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import type { UpdateProfileResult } from "@/lib/auth";
 import { MIN_TARGET_CALORIES } from "@/lib/macroConstants";
 import { Button } from "@/components/ui/Button";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 
 interface Props {
   value?: number;
@@ -51,8 +52,10 @@ export default function CalorieTargetOverride({
         className="text-xs text-muted-foreground mt-0.5 mb-2"
       >
         Leave blank to use calculated target of{" "}
-        <span className="font-mono tabular-nums">{calculatedTarget}</span> cal.
-        Changes save when you leave this field.
+        <span className="font-mono tabular-nums">
+          {formatCalories(calculatedTarget)}
+        </span>{" "}
+        {CALORIE_UNIT}. Changes save when you leave this field.
       </p>
       <input
         id="tdee-custom-target"
@@ -90,11 +93,11 @@ export default function CalorieTargetOverride({
           >
             Below the{" "}
             <span className="font-mono tabular-nums">
-              {MIN_TARGET_CALORIES}
+              {formatCalories(MIN_TARGET_CALORIES)}
             </span>{" "}
-            cal floor Tropos uses everywhere else. Your plan will keep this
-            figure — very low targets make protein and essential fat hard to
-            fit.
+            {CALORIE_UNIT} floor Tropos uses everywhere else. Your plan will
+            keep this figure — very low targets make protein and essential fat
+            hard to fit.
           </p>
         )}
     </div>

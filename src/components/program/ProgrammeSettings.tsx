@@ -413,31 +413,31 @@ const INJURY_OPTIONS: {
   {
     id: "lower_back",
     label: "Lower back",
-    desc: "We'll avoid heavy axial loading",
+    desc: "Avoids heavy loads on your spine",
     icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
   },
   {
     id: "shoulder",
     label: "Shoulder",
-    desc: "We'll modify pressing movements",
+    desc: "Adjusts pressing movements",
     icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
   },
   {
     id: "knee",
     label: "Knee",
-    desc: "We'll adjust squat and lunge variations",
+    desc: "Adjusts squat and lunge variations",
     icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
   },
   {
     id: "elbow",
     label: "Elbow",
-    desc: "We'll swap heavy curls/dips for cable work",
+    desc: "Swaps heavy curls and dips for cable work",
     icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
   },
   {
     id: "wrist",
     label: "Wrist",
-    desc: "We'll pick neutral-grip and machine variants",
+    desc: "Picks neutral-grip and machine variants",
     icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
   },
 ];
@@ -772,7 +772,7 @@ export default function ProgrammeSettings({
       logger.error("[ProgrammeSettings] save failed:", err);
       const code = (err as { code?: string })?.code;
       if (code === "functions/unauthenticated" || code === "unauthenticated") {
-        toast.error("Please sign in again to update your plan.");
+        toast.error("Sign in again to update your plan.");
       } else if (code?.endsWith("failed-precondition")) {
         await refreshProfile().catch((error) =>
           logger.warn("Plan refresh failed", error)
@@ -872,7 +872,7 @@ export default function ProgrammeSettings({
             </h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
               {confirmReset
-                ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in History."
+                ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in Analytics."
                 : focusChangedSameFrequency
                   ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal, experience)} reps — weights adjust down where a target rises, and ${sessionMinutesChanged ? "your exercises, history and week number stay, with your sets refitted to the new session length" : "your exercises, sets, history and week number stay"}. Or keep your current sessions and change the focus only.`
                   : programmePreservationNote({
@@ -1016,7 +1016,7 @@ export default function ProgrammeSettings({
           />
         </SettingsGroup>
         <div className="pt-4">
-          <SettingsGroup footer="Rebuilds your programme from Week 1. Past week summaries clear; logged workouts and runs stay in History.">
+          <SettingsGroup footer="Rebuilds your programme from Week 1. Past week summaries clear; logged workouts and runs stay in Analytics.">
             <SettingsRow
               tone="destructive"
               label="Reset programme"
@@ -1031,11 +1031,10 @@ export default function ProgrammeSettings({
 
   return (
     <div className="space-y-6 pb-6">
-      {/* ── Group 1: Goal — "What are we optimizing for?" ── */}
-      <ProgrammeSettingsGroup
-        title="Goal"
-        subtitle="We'll shape the programme around this."
-      >
+      {/* Each group's controls carry their own headings, so the first
+          three groups take no title above them (`ProgrammeSettingsGroup`).
+          Group 1: the goal. */}
+      <ProgrammeSettingsGroup>
         <div>
           <GroupHeading>Training focus</GroupHeading>
           {activeBlockFocus ? (
@@ -1091,11 +1090,8 @@ export default function ProgrammeSettings({
         </div>
       </ProgrammeSettingsGroup>
 
-      {/* ── Group 2: Weekly plan — "How does training fit into my week?" ── */}
-      <ProgrammeSettingsGroup
-        title="Weekly plan"
-        subtitle="Set the training rhythm we'll build around."
-      >
+      {/* Group 2: the week. */}
+      <ProgrammeSettingsGroup>
         <div>
           <GroupHeading>Lift days per week</GroupHeading>
           <SegmentedControl
@@ -1208,11 +1204,8 @@ export default function ProgrammeSettings({
         </div>
       </ProgrammeSettingsGroup>
 
-      {/* ── Group 3: Constraints — "What must the plan adapt around?" ── */}
-      <ProgrammeSettingsGroup
-        title="Constraints"
-        subtitle="We'll choose exercises around what you have and what you need to avoid."
-      >
+      {/* Group 3: what the plan works around. */}
+      <ProgrammeSettingsGroup>
         <div>
           <GroupHeading>Equipment access</GroupHeading>
           <div className="space-y-2">
@@ -1268,7 +1261,7 @@ export default function ProgrammeSettings({
       {/* ── Group 4: Advanced (engine toggles — live-save, no rebuild) ── */}
       <ProgrammeSettingsGroup
         title="Advanced"
-        subtitle="Fine-tune progression behaviour. Saved instantly, with no rebuild."
+        subtitle="These save as you switch them."
       >
         <div className="space-y-3">
           <div className="flex items-center justify-between">

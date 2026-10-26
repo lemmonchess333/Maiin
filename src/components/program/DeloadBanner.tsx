@@ -242,7 +242,9 @@ export default function DeloadBanner({
                 >
                   {deloadActive ? active.title : "Consider a lighter week"}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                {/* Foreground on the tinted banner, where the grey misses
+                    AA. */}
+                <p className="text-xs text-foreground mt-0.5 leading-snug">
                   {deloadActive
                     ? active.body
                     : "Your running load has been high, with signs of reduced recovery. A lighter week can help you come back stronger."}

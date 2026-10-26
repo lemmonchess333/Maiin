@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  readSessionJson,
+  removeSessionKey,
+  writeSessionJson,
+} from "@/lib/sessionStore";
 import { readString, remove } from "@/lib/localStore";
 import { pendingEmailChange } from "@/lib/emailChangeNote";
 import { hasSignedInOnThisDevice, useAuth } from "@/lib/auth";
@@ -45,6 +50,26 @@ type View = "welcome" | "signIn" | "signUp";
    without relying on colour; 44px tall for the thumb, with the negative
    margin keeping the sentence's own line height (the Sign up toggle below
    uses the same trick). */
+/* The form, kept while the person reads the Terms or the Privacy Policy:
+   those are pages of their own, so opening one leaves this screen, and
+   Back would otherwise bring an empty form. The screen and the email come
+   back once; a password is never written down, so it is typed again. */
+const LOGIN_FORM_KEY = "tropos.login.form";
+
+function takeLoginForm(): { view: View; email: string } | null {
+  const form = readSessionJson<{ view?: unknown; email?: unknown }>(
+    LOGIN_FORM_KEY
+  );
+  removeSessionKey(LOGIN_FORM_KEY);
+  if (!form) return null;
+  const view =
+    form.view === "welcome" || form.view === "signIn" || form.view === "signUp"
+      ? form.view
+      : null;
+  if (!view) return null;
+  return { view, email: typeof form.email === "string" ? form.email : "" };
+}
+
 const AGREEMENT_LINK =
   "inline-flex items-center align-middle min-h-[44px] -my-3 font-medium text-foreground underline underline-offset-2 hover:text-lifting-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm";
 
@@ -60,11 +85,14 @@ export default function Login() {
   /* An email change, once confirmed, signs this phone out; say so, and
      offer the new address (emailChangeNote.ts). */
   const [changedEmail] = useState(() => pendingEmailChange());
+  const [returning] = useState(takeLoginForm);
   const [lastMethod] = useState<SignInMethod | null>(() =>
     readLastSignInMethod()
   );
-  const [view, setView] = useState<View>(() =>
-    changedEmail || hasSignedInOnThisDevice() ? "signIn" : "welcome"
+  const [view, setView] = useState<View>(
+    () =>
+      returning?.view ??
+      (changedEmail || hasSignedInOnThisDevice() ? "signIn" : "welcome")
   );
   const isSignUp = view === "signUp";
   // The first rungs of the funnel: who sees the welcome screen, and who
@@ -80,7 +108,13 @@ export default function Login() {
     });
   }, [view]);
   const setIsSignUp = (next: boolean) => setView(next ? "signUp" : "signIn");
-  const [email, setEmail] = useState(() => changedEmail ?? "");
+  const [email, setEmail] = useState(
+    () => returning?.email || changedEmail || ""
+  );
+  // Opening a legal page keeps the form for the way back.
+  const keepForm = () => {
+    writeSessionJson(LOGIN_FORM_KEY, { view, email });
+  };
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -317,6 +351,7 @@ export default function Login() {
           <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
             <Link
               to="/privacy"
+              onClick={keepForm}
               className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
             >
               Privacy Policy
@@ -324,6 +359,7 @@ export default function Login() {
             <span aria-hidden="true">·</span>
             <Link
               to="/terms"
+              onClick={keepForm}
               className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
             >
               Terms of Service
@@ -537,11 +573,11 @@ export default function Login() {
             links are the signed-out /terms and /privacy routes. */}
         <p className="text-center text-xs text-muted-foreground">
           By continuing, you agree to the{" "}
-          <Link to="/terms" className={AGREEMENT_LINK}>
+          <Link to="/terms" onClick={keepForm} className={AGREEMENT_LINK}>
             Terms
           </Link>{" "}
           and{" "}
-          <Link to="/privacy" className={AGREEMENT_LINK}>
+          <Link to="/privacy" onClick={keepForm} className={AGREEMENT_LINK}>
             Privacy Policy
           </Link>
           .

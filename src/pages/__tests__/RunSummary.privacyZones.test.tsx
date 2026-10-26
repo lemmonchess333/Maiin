@@ -31,6 +31,7 @@ vi.mock("@/lib/firebase", () => ({
 
 const h = vi.hoisted(() => ({
   auth: { user: { uid: "runner" }, profile: { displayName: "Runner" } },
+  weekPulse: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => h.auth,
@@ -60,7 +61,7 @@ vi.mock("@/hooks/useOnlineStatus", () => ({
 vi.mock("@/hooks/useShoes", () => ({
   useShoes: () => ({ updateMileage: vi.fn(), defaultShoe: null }),
 }));
-vi.mock("@/hooks/useWeekPulse", () => ({ useWeekPulse: () => null }));
+vi.mock("@/hooks/useWeekPulse", () => ({ useWeekPulse: h.weekPulse }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/analytics/ElevationProfile", () => ({
@@ -86,6 +87,7 @@ import {
   warmPrivacyZones,
 } from "@/hooks/usePrivacyZones";
 import { haversine } from "@/lib/gps";
+import { localDateString } from "@/lib/dateHelpers";
 import { pendingDocumentWrites } from "@/lib/offlineQueue";
 import {
   deferReads,
@@ -120,14 +122,14 @@ function trace() {
   }));
 }
 
-function renderFinished() {
+function renderFinished(points = trace()) {
   return render(
     <MemoryRouter
       initialEntries={[
         {
           pathname: "/run-summary",
           state: {
-            points: trace(),
+            points,
             distance: 1334,
             elapsed: 360,
             splits: [],
@@ -170,6 +172,7 @@ async function saveWithReadsHeld() {
 let online: ReturnType<typeof vi.spyOn>;
 beforeEach(() => {
   resetFirestore();
+  h.weekPulse.mockReset().mockReturnValue(null);
   // The confirmed lists outlive a screen, as they would in the app; each
   // test starts from a fresh launch.
   __resetConfirmedPrivacyZonesForTests();
@@ -185,6 +188,51 @@ afterEach(() => {
 });
 
 describe("RunSummary — privacy zones are cut before a run is written", () => {
+  it.each([200, 10_000])(
+    "keeps the original start day when a %i m zone hides the first fixes",
+    async (radiusMeters) => {
+      // Sunday into Monday: clipping the start must not move the session
+      // into the next training week, even when the whole route is private.
+      const start = new Date(2026, 8, 6, 23, 59, 30).getTime();
+      const original = trace().map((point, i) => ({
+        ...point,
+        timestamp: start + i * 30_000,
+      }));
+      seedFirestore({
+        [`${ZONES}/home`]: { name: "Home", ...HOME, radiusMeters },
+      });
+      renderFinished(original);
+      fireEvent.click(await screen.findByRole("button", { name: "Save run" }));
+      await screen.findByRole("button", { name: "Done" });
+
+      const saved = queued()[0].data as {
+        date: string;
+        startedAt: { toMillis: () => number };
+        points: ReturnType<typeof trace>;
+      };
+      expect(saved.date).toBe(localDateString(new Date(start)));
+      expect(saved.startedAt.toMillis()).toBe(start);
+      expect(h.weekPulse).toHaveBeenLastCalledWith(
+        0,
+        expect.objectContaining({ date: saved.date })
+      );
+      expect(
+        saved.points.filter(
+          (point) =>
+            haversine(point.lat, point.lon, HOME.lat, HOME.lon) <= radiusMeters
+        )
+      ).toEqual([]);
+      if (radiusMeters === 10_000) expect(saved.points).toEqual([]);
+      else {
+        expect(saved.points.length).toBeGreaterThan(0);
+        expect(saved.points[0].timestamp).toBeGreaterThan(start);
+        expect(localDateString(new Date(saved.points[0].timestamp))).toBe(
+          "2026-09-07"
+        );
+      }
+    }
+  );
+
   it("after the zone listener failed, the save waits for a server read and writes no zone point", async () => {
     // The listener never answers, so the screen's trace is uncut.
     failNextFirestore("onSnapshot", { path: ZONES });

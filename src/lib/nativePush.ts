@@ -48,7 +48,7 @@ export async function getNativePushToken(): Promise<string> {
       const timeout = setTimeout(
         () =>
           finish(
-            new Error("Apple push registration did not complete. Please retry.")
+            new Error("Apple push registration did not complete. Try again.")
           ),
         12_000
       );

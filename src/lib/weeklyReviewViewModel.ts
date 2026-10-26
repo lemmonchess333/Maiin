@@ -289,7 +289,7 @@ export function verdictFor(args: {
      lock decided on, and it is a choice about emphasis rather than a
      claim about why. */
   if (deloadRecommended) {
-    return "Load has run high — this is a good week to ease off.";
+    return "Load has run high, so this is a good week to ease off.";
   }
   if (loadBand === "deload") {
     return "A light week — the plan picks up from here.";
@@ -298,7 +298,7 @@ export function verdictFor(args: {
     return "A big week. Keep an eye on recovery going into this one.";
   }
   if (loadBand === "high") {
-    return "Strong week — training load ran high.";
+    return "A strong week, with training load running high.";
   }
   if (delta !== null && delta >= 5) return "Momentum's building.";
   if (delta !== null && delta <= -5) {

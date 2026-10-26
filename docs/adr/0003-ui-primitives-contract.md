@@ -111,3 +111,20 @@ unless the a11y gap is the point of the change.
 overlay it pointed into, and the first-visit guide's `GuideHint`
 (`src/components/guide/`) is now the app's one kind of one-time hint.
 `Tooltip` stays, for the tap-to-explain ⓘ.
+
+## Amendment 2026-10-24
+
+`Select` joins the set (`src/components/ui/Select.tsx`): a native
+`<select>` on the `.ds-input` field with the house chevron. Native so iOS
+keeps its picker wheel and assistive tech keeps the platform's handling.
+It also owns the tapped-select focus fix (`.ds-input-pointer-focus`) for
+every select. The table above gains two rows:
+
+| Surface         | Primitive                                                               |
+| --------------- | ----------------------------------------------------------------------- |
+| Single choices  | `Select` (native picker), or `SegmentedControl` for a few short options |
+| Multi-line text | `textarea.ds-input`                                                     |
+
+`designSystemInvariants.test.ts` fails on a `<select>` outside the
+primitive and on a `<textarea>` off `.ds-input`, and holds the typed
+inputs off `.ds-input` to a named list of exceptions.

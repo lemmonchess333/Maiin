@@ -278,9 +278,7 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
       calories: 1200,
       postWorkoutNudge: { type: "lift", proteinRemaining: 40 },
     });
-    expect(
-      screen.getByText(/40 g protein to your target/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/40g protein to your target/i)).toBeInTheDocument();
     expect(screen.queryByText(/for recovery/i)).toBeNull();
   });
 

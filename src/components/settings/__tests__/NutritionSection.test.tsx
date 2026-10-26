@@ -482,9 +482,9 @@ describe("NutritionSection — sub-floor override notice", () => {
         inline
       />
     );
-    const notice = screen.getByText(/cal floor Tropos uses everywhere else/);
+    const notice = screen.getByText(/kcal floor Tropos uses everywhere else/);
     // Names the actual constant, not a hardcoded string that could drift.
-    expect(notice.textContent).toContain(String(MIN_TARGET_CALORIES));
+    expect(notice.textContent).toContain(group(MIN_TARGET_CALORIES));
   });
 
   it("stays silent at or above the floor, and when no override is set", () => {
@@ -569,15 +569,15 @@ describe("NutritionSection — target drift notice", () => {
   it("names both paces — the real one and the chosen one", () => {
     renderDrift({});
     const notice = screen.getByText(/Your body has changed since this target/);
-    expect(notice.textContent).toContain("-0.33 kg/wk"); // what it now is
-    expect(notice.textContent).toContain("-0.50 kg/wk"); // what was picked
+    expect(notice.textContent).toContain("\u22120.33 kg/wk"); // what it now is
+    expect(notice.textContent).toContain("\u22120.50 kg/wk"); // what was picked
   });
 
   it("uses pounds for both drift paces and the recalculation action", () => {
     renderDrift({ preferredWeightUnit: "lbs" });
     const notice = screen.getByText(/Your body has changed since this target/);
-    expect(notice.textContent).toContain("-0.73 lb/wk");
-    expect(notice.textContent).toContain("-1.10 lb/wk");
+    expect(notice.textContent).toContain("\u22120.73 lb/wk");
+    expect(notice.textContent).toContain("\u22121.10 lb/wk");
     expect(
       screen.getByRole("button", { name: "Recalculate for 172.0 lb" })
     ).toBeInTheDocument();
@@ -680,7 +680,7 @@ describe("the adapting status line is wired to the learned target", () => {
  * call the gap "Recomp offset −2400 cal", a plan choice the user never made.
  */
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
-import { groupText } from "@/test/localeGrouping";
+import { group, groupText } from "@/test/localeGrouping";
 
 describe("NutritionSection — manual target naming and the infeasible notice", () => {
   function renderWith(profile: Partial<UserProfile>, tdee: TDEEResult) {
@@ -884,4 +884,81 @@ describe("NutritionSection — the calorie-target deep-link target", () => {
       await restoreRealTimers();
     }
   });
+});
+
+/* The age field wrote `Number(text) || 25` on every keystroke: a cleared
+   field became 25 at once (typing 3 next read 253), and 0, a negative or
+   300 was saved on blur and fed the TDEE. It holds the typed text now and
+   lets through only an age the profile keeps (bodyMetrics' AGE_YEARS). */
+describe("NutritionSection — the age field", () => {
+  function AgeHarness({
+    profileAge,
+    updateProfile,
+  }: {
+    profileAge: number;
+    updateProfile: (d: Partial<UserProfile>) => Promise<UpdateProfileResult>;
+  }) {
+    const [age, setAge] = useState(profileAge);
+    return (
+      <>
+        <output data-testid="age-in-use">{age}</output>
+        <NutritionSection
+          profile={{ uid: "u-1", age: profileAge } as UserProfile}
+          age={age}
+          setAge={setAge}
+          activityLevel={"moderate" as ActivityLevel}
+          setActivityLevel={vi.fn()}
+          currentKg={75}
+          goalWeightKg={76.5}
+          setGoalWeightKg={vi.fn()}
+          weeklyRateKg={0.5}
+          setWeeklyRateKg={vi.fn()}
+          goalPlan={goalPlan}
+          tdee={DEFAULT_TDEE}
+          updateProfile={updateProfile}
+          inline
+        />
+      </>
+    );
+  }
+
+  function setup(profileAge = 30) {
+    const updateProfile = vi.fn(
+      async (_data: Partial<UserProfile>) =>
+        ({ ok: true }) as UpdateProfileResult
+    );
+    render(
+      <AgeHarness profileAge={profileAge} updateProfile={updateProfile} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /TDEE calculator/ }));
+    const input = screen.getByLabelText("Age") as HTMLInputElement;
+    const inUse = () => screen.getByTestId("age-in-use").textContent;
+    return { updateProfile, input, inUse };
+  }
+
+  it("a cleared field stays empty while typing, and the new age is saved", () => {
+    const { updateProfile, input, inUse } = setup(30);
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input.value).toBe("");
+    // Nothing invented while the field is empty.
+    expect(inUse()).toBe("30");
+    fireEvent.change(input, { target: { value: "3" } });
+    expect(input.value).toBe("3");
+    fireEvent.change(input, { target: { value: "34" } });
+    expect(inUse()).toBe("34");
+    fireEvent.blur(input);
+    expect(updateProfile).toHaveBeenCalledWith({ age: 34 });
+  });
+
+  it.each(["300", "0", "-5", "15", ""])(
+    "puts %j back on blur and saves nothing",
+    (typed) => {
+      const { updateProfile, input, inUse } = setup(30);
+      fireEvent.change(input, { target: { value: typed } });
+      fireEvent.blur(input);
+      expect(updateProfile).not.toHaveBeenCalled();
+      expect(input.value).toBe("30");
+      expect(inUse()).toBe("30");
+    }
+  );
 });

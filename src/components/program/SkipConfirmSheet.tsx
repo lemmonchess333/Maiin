@@ -1,4 +1,5 @@
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { Button } from "@/components/ui/Button";
 
 interface SkipConfirmSheetProps {
   open: boolean;
@@ -48,20 +49,12 @@ export default function SkipConfirmSheet({
         </div>
 
         <div className="mt-5 space-y-2">
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="w-full py-3 rounded-xl text-sm font-semibold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
-          >
+          <Button variant="destructive-tinted" fullWidth onClick={onConfirm}>
             Skip
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="w-full py-3 rounded-xl text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
-          >
+          </Button>
+          <Button variant="ghost" fullWidth onClick={onCancel}>
             Cancel
-          </button>
+          </Button>
         </div>
       </div>
     </BottomSheet>

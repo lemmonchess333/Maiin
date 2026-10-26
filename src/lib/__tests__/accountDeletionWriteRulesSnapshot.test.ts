@@ -94,13 +94,13 @@ const PROTECTED_PATHS = [
   // data-recreation vector, so both are fully frozen now.
   "match /activities/{activityId}",
   "match /participants/{uid}",
-  // SOCIAL S3 — partner-streak bond. Client-writable create + delete
-  // (either of the two members); Soc7 made UPDATE server-only
-  // (`if false` — streak state is written by the Admin SDK persist path).
-  // Create freezes BOTH members (!isDeleting on members[0] AND members[1])
-  // so a bond can't be minted naming a mid-deletion user. Still a
-  // protected path (create+delete are client-writable). R1A executor
-  // sweeps these in step 3b (inventory key: partnerBondsMember).
+  // SOCIAL S3 — partner-streak bond. Client-writable delete (either of
+  // the two members), frozen on the actor. CREATE is server-only (the
+  // startPartnerStreak callable counts both members' bonds and reads
+  // their deletion state in one transaction) and UPDATE is server-only
+  // (streak state is written by the Admin SDK persist path). Still a
+  // protected path (delete is client-writable). R1A executor sweeps
+  // these in step 3b (inventory key: partnerBondsMember).
   "match /partnerBonds/{bondId}",
   // Spc1 PR1 — Community Spaces. Parser sees the bare nested forms
   // (like /participants/{uid} under challenges): semantic paths are
@@ -184,6 +184,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // setBoardSharing callable (actor-locked) and the session triggers
   // (system-writer guard) write it, and the executor deletes it.
   "match /friendsBoard/{uid}",
+  // Polish3 call 1: who has blocked this account. Read by that account
+  // only; onBlockWritten writes it (system-writer guard), and the
+  // executor deletes it both ways (blockedByOwn, blockedByReverse).
+  "match /blockedBy/{uid}/users/{blockerUid}",
   // S4e (PR #722) — restricted-user marker. Admin SDK writes only
   // (Cloud Function resolveReport sets the doc); clients can read
   // their own doc but cannot write. R1A cleanup is wired via the

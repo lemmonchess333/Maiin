@@ -5,7 +5,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import { Trophy, ChevronRight, Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
-import { EXERCISES } from "@/lib/exercises";
+import { findCatalogueExercise } from "@/lib/exercises";
 import { estimate1RMRange, formatOneRepMaxRange } from "@/lib/analytics";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth } from "@/utils/formatters";
@@ -91,7 +91,7 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
      anchors on its midpoint either way. */
   const e1rm = estimate1RMRange(pr.weight, pr.reps);
   const dateLabel = formatDayMonth(parseLocalDate(pr.date));
-  const exercise = EXERCISES.find((e) => e.name === pr.name);
+  const exercise = findCatalogueExercise(pr.name);
   const isBW = exercise?.equipment === "Bodyweight";
   return (
     <Link

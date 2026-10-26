@@ -19,6 +19,11 @@ const {
 } = require("./activityAccess");
 const { refusedAddError } = require("./restriction");
 
+/** The reactions there are. The app offers COMMENT_REACTIONS
+ *  (src/lib/socialApi.ts), held to this list by
+ *  commentReactions.cross.test.ts; account deletion takes a deleted
+ *  person's reactions back for each one (accountDeletionSocial.js), which
+ *  needs a collection-group index on each field. */
 const REACTION_KEYS = ["muscle", "fire"];
 
 /**

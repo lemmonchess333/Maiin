@@ -17,10 +17,11 @@ import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
-import { Search, X, Plus, Check, Dumbbell } from "lucide-react";
+import { Search, X, Plus, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { haptic } from "@/lib/haptic";
-import { categoryFigureUri } from "@/lib/muscleFigureSvg";
+import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Button } from "@/components/ui/Button";
@@ -61,6 +62,7 @@ export default function ExercisePicker({
   currentExerciseId,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
+  const motionSafe = useMotionSafe();
   const [selectedCategory, setSelectedCategory] = useState<string>(
     () =>
       (currentExerciseId &&
@@ -208,9 +210,9 @@ export default function ExercisePicker({
         <>
           <motion.div
             key="picker-backdrop"
-            initial={{ opacity: 0 }}
+            initial={motionSafe({ opacity: 0 })}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={motionSafe({ opacity: 0 })}
             transition={{ duration: 0.2 }}
             className="fixed inset-0"
             style={{ zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" }}
@@ -236,10 +238,7 @@ export default function ExercisePicker({
               >
                 <X className="size-5 text-muted-foreground" />
               </button>
-              <p
-                className="text-foreground"
-                style={{ fontSize: 17, fontWeight: 600 }}
-              >
+              <p className="text-body font-semibold text-foreground">
                 {headerTitle}
               </p>
               <div style={{ width: 32 }} />
@@ -249,31 +248,31 @@ export default function ExercisePicker({
             <AnimatePresence>
               {showDiscardConfirm && (
                 <motion.div
-                  initial={{ height: 0, opacity: 0 }}
+                  initial={motionSafe({ height: 0, opacity: 0 })}
                   animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
+                  exit={motionSafe({ height: 0, opacity: 0 })}
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden px-4 pb-3"
                 >
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-muted">
-                    <p className="text-sm text-foreground">
+                  {/* The question keeps 8em beside its two answers, or
+                      the answers go under it. */}
+                  <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-muted">
+                    <p className="min-w-[min(100%,8em)] flex-1 text-sm text-foreground">
                       Discard {newlySelectedCount} selections?
                     </p>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
+                    <div className="ml-auto flex items-center gap-2">
+                      <Button
+                        variant="ghost"
                         onClick={() => setShowDiscardConfirm(false)}
-                        className="px-3 py-1.5 text-xs font-medium text-muted-foreground rounded-lg hover:bg-card"
                       >
                         Keep browsing
-                      </button>
-                      <button
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="destructive-tinted"
                         onClick={confirmDiscard}
-                        className="px-3 py-1.5 text-xs font-medium text-destructive-strong bg-destructive/10 rounded-lg"
                       >
                         Discard
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </motion.div>
@@ -298,9 +297,9 @@ export default function ExercisePicker({
                 {searchQuery && (
                   <motion.button
                     data-motion-driven
-                    initial={{ opacity: 0, width: 0 }}
+                    initial={motionSafe({ opacity: 0, width: 0 })}
                     animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
+                    exit={motionSafe({ opacity: 0, width: 0 })}
                     transition={{ duration: 0.2 }}
                     onClick={cancelSearch}
                     className="text-sm font-medium shrink-0 overflow-hidden text-lifting-strong"
@@ -492,10 +491,10 @@ export default function ExercisePicker({
   );
 }
 
-/** One picker row — compact card grammar: anatomy-figure tile (shared
- *  data-URI per category, cheap in a 151-row list), name + meta, and a
- *  lifting-tinted selection state (the old green + floating plus-circle
- *  predates the token guardrail). */
+/** One picker row: the exercise's picture (`ExerciseThumb`, as on Train's
+ *  list, so the drawing where there is one and the category's muscles
+ *  where there is not), name and meta, and a lifting-tinted selection
+ *  state. Tapping the picture or the name opens the exercise's form. */
 function ExerciseRow({
   exercise,
   isSelected,
@@ -510,7 +509,6 @@ function ExerciseRow({
   onToggle: (id: string) => void;
   onOpen: (exercise: Exercise) => void;
 }) {
-  const figure = categoryFigureUri(exercise.category);
   return (
     <div
       className={cn(
@@ -527,16 +525,7 @@ function ExerciseRow({
         aria-label={`${exercise.name} details`}
         className="flex-1 min-w-0 flex items-center gap-3 text-left min-h-[44px] active:opacity-80"
       >
-        <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
-          style={{ background: `${THEME.lifting}0F` }}
-        >
-          {figure ? (
-            <img src={figure} alt="" aria-hidden className="h-9 w-auto" />
-          ) : (
-            <Dumbbell className="size-4" style={{ color: THEME.lifting }} />
-          )}
-        </div>
+        <ExerciseThumb exerciseId={exercise.id} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">
             {exercise.name}

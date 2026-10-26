@@ -14,6 +14,8 @@ import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { settleImages } from "../helpers/settleImages";
 import { emulatorActive } from "../helpers/emulator";
+import { settleCommunity } from "../helpers/settleCommunity";
+import { settleMapTheme } from "../helpers/settleMapTheme";
 
 // iPhone-15-ish portrait. Overrides the auth-emulator project's desktop
 // viewport while keeping its bypassCSP (needed for the emulator).
@@ -140,19 +142,9 @@ test.describe("app screenshots", () => {
       // circle card / circles section, or the cold-start selector —
       // before capturing so we don't shoot a perpetual-skeleton frame.
       if (name === "social") {
-        // Post-LOAD content only — the "CIRCLES" section label renders
-        // during the loading skeleton, so gate on the resolved states:
-        // the no-circle card (its goal choices open from Start a
-        // circle since 2026-10-01), a featured card's focus button
-        // (has circles), or the retry block.
-        await page
-          .getByText(/Train with a few friends|weekly focus|Couldn't load/i)
-          .first()
-          .waitFor({ state: "visible", timeout: 15000 })
-          .catch(() => {
-            /* still gated/loading after the wait — capture whatever's there */
-          });
-        await page.waitForTimeout(900); // let Spaces/Challenges settle
+        // Circles, Challenges and their boards past their skeletons: the
+        // section label renders during loading, so it proves nothing.
+        await settleCommunity(page);
       }
       // Explore feed: wait for the seeded author's first card so the
       // hero panels are actually in the shot, not skeletons.
@@ -215,9 +207,11 @@ test.describe("app screenshots", () => {
         document.documentElement.classList.remove("dark")
       );
       await page.waitForTimeout(400);
+      await settleMapTheme(page);
       await shoot(page, `${name}-light`);
       await page.evaluate(() => document.documentElement.classList.add("dark"));
       await page.waitForTimeout(350);
+      await settleMapTheme(page);
       await shoot(page, `${name}-dark`);
       await page.evaluate(() =>
         document.documentElement.classList.remove("dark")
@@ -228,22 +222,27 @@ test.describe("app screenshots", () => {
     // from users/{uid}/runs/{runId}; run pages render full-screen (no nav), so
     // wait on a fixed settle rather than the nav proxy.
     await page.goto("run/rich-r0");
-    await page.waitForTimeout(2500);
+    await page
+      .getByRole("button", { name: "Share" })
+      .first()
+      .waitFor({ state: "visible", timeout: 20000 });
     await shootLightDark("run-detail");
 
-    // User Profile (own) — reached via Settings → View Profile so the spec
-    // never has to know the uid.
-    await page.goto("settings");
+    // User Profile (own), the page others see: Settings → Profile → "See
+    // your profile as others do", so the spec never has to know the uid.
+    // Asserted, not best-effort: a missed button leaves the frame on
+    // Settings, and user-profile-* comes out byte-identical to settings-*.
+    await page.goto("settings/profile");
     await page
-      .getByRole("navigation", { name: /main navigation/i })
+      .getByRole("button", { name: "See your profile as others do" })
+      .click({ timeout: 20000 });
+    await page.waitForURL(/\/user\//);
+    await page
+      .getByRole("heading", { level: 1 })
       .waitFor({ state: "visible", timeout: 20000 });
-    await page
-      .getByRole("button", { name: /view profile/i })
-      .click({ timeout: 4000 })
-      .catch(() => {
-        /* button moved/absent — capture lands on settings, still useful */
-      });
-    await page.waitForTimeout(2000);
+    await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
+      timeout: 20000,
+    });
     await shootLightDark("user-profile");
   });
 
@@ -341,9 +340,11 @@ test.describe("app screenshots", () => {
       .click({ timeout: 4000 })
       .catch(() => {});
     await page.waitForTimeout(1400); // share-card preview renders (html-to-image)
+    await settleMapTheme(page);
     await shoot(page, "sheet-share-light");
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(350);
+    await settleMapTheme(page);
     await shoot(page, "sheet-share-dark");
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
@@ -415,7 +416,9 @@ test.describe("app screenshots", () => {
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
-    await page.waitForTimeout(1600);
+    // The cold-start card, not the Circles skeleton in its place.
+    await settleCommunity(page);
+    await expect(page.getByText("Train with a few friends")).toBeVisible();
     await shootLightDarkOn(page, "circles-crews");
   });
 

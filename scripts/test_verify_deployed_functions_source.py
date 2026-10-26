@@ -99,6 +99,73 @@ class ReadBackRetryTest(unittest.TestCase):
 
 
 class ChallengeSourceTargetsTest(unittest.TestCase):
+    def test_profile_name_moderation_reads_back_its_filter_and_retry_guard(self):
+        paths = verifier.source_targets()["onPublicProfileWritten"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/objectionableText.js",
+                         "profanityFilter.js", "lib/hateTerms.js", "lib/triggerRetry.js",
+                         "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+        self.assertIn("onPublicProfileWritten", verifier.RETRY_REQUIRED)
+
+    def test_identity_resync_reads_back_its_bounds_filters_and_guards(self):
+        paths = verifier.source_targets()["onPublicProfileIdentityChanged"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/identityResync.js",
+                         "lib/publicPhotoUrl.js", "lib/objectionableText.js",
+                         "lib/deletionTransactionGuard.js", "lib/restriction.js",
+                         "lib/triggerRetry.js", "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+        self.assertIn("onPublicProfileIdentityChanged", verifier.RETRY_REQUIRED)
+
+    def test_circle_invite_callables_read_back_the_expiry_they_enforce(self):
+        targets = verifier.source_targets()
+        for name in ("joinGoalSpace", "renewGoalSpaceInviteCode"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/goalSpaceMembership.js",
+                                 "lib/restriction.js", "lib/accountDeletionLocks.js"}
+                                .issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
+    def test_partner_streak_start_reads_back_the_limit_it_counts(self):
+        paths = verifier.source_targets()["startPartnerStreak"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/partnerBonds.js",
+                         "lib/deletionTransactionGuard.js", "lib/restriction.js",
+                         "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+
+    def test_block_mirror_reads_back_its_reconciler_and_retry_guard(self):
+        paths = verifier.source_targets()["onBlockWritten"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/blockMirror.js",
+                         "lib/triggerRetry.js", "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+        self.assertIn("onBlockWritten", verifier.RETRY_REQUIRED)
+
+    def test_comment_callables_and_deletion_read_back_the_shared_comment_rules(self):
+        targets = verifier.source_targets()
+        for name in ("addCommentCallable", "addSpacePostCommentCallable"):
+            with self.subTest(function=name):
+                self.assertTrue({"lib/commentLimit.js", "lib/commentRejection.js"}
+                                .issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        for name in ("deleteMyAccount", "resumeAccountDeletions"):
+            with self.subTest(function=name):
+                self.assertIn("lib/commentReactions.js", targets[name])
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
+    def test_social_fanout_targets_cover_changed_privacy_and_retry_artifacts(self):
+        targets = verifier.source_targets()
+        expected = {
+            "onActivityCreated": {"index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js"},
+            "onGoalSpaceEventCreated": {"index.js", "package-lock.json", "rateLimiter.js"},
+        }
+        for name, artifacts in expected.items():
+            with self.subTest(function=name):
+                self.assertTrue(artifacts.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
+    def test_retry_enabled_social_fanout_exports_require_deployed_retries(self):
+        self.assertTrue({"onActivityCreated", "onGoalSpaceEventCreated"}
+                        .issubset(verifier.RETRY_REQUIRED))
+
     def test_native_push_targets_cover_every_changed_sender_and_owner(self):
         targets = verifier.source_targets()
         token_artifacts = {"index.js", "package-lock.json", "lib/pushTokenOwnership.js"}
@@ -155,9 +222,12 @@ class DeployedSourceIdentityTest(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name)
-        self.paths = verifier.source_targets()["onRunUpdated"]
+        self.use_source_target("onRunUpdated")
+
+    def use_source_target(self, name):
+        self.paths = verifier.source_targets()[name]
         self.uploaded = {path: f"uploaded {path}\n".encode() for path in self.paths}
-        self.uploaded["index.js"] = b"// CI build: current-commit @ now\nexports.onRunUpdated = handler;\n"
+        self.uploaded["index.js"] = f"// CI build: current-commit @ now\nexports.{name} = handler;\n".encode()
         for name, contents in self.uploaded.items():
             path = self.root / name
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -191,6 +261,45 @@ class DeployedSourceIdentityTest(unittest.TestCase):
         self.assertNotIn("https://", printed)
         self.assertEqual(reader.call_count, 3)
 
+    def test_profile_name_moderation_accepts_current_retry_enabled_source_and_rejects_any_stale_artifact(self):
+        name = "onPublicProfileWritten"
+        self.use_source_target(name)
+        printed, reader = self.check(self.deployed(), name)
+        self.assertIn(f"Verified deployed source: {name}, version 123", printed)
+        self.assertEqual(reader.call_count, 3)
+        for path in self.paths:
+            with self.subTest(artifact=path):
+                stale = {**self.uploaded, path: b"previous deployment"}
+                with self.assertRaisesRegex(RuntimeError, "deployed .* differs from uploaded source"):
+                    self.check(self.deployed(stale), name)
+
+    def test_social_fanout_exact_bundles_accept_enabled_empty_retry_objects(self):
+        for name in ("onActivityCreated", "onGoalSpaceEventCreated"):
+            with self.subTest(function=name):
+                self.use_source_target(name)
+                printed, reader = self.check(self.deployed(), name)
+                self.assertIn(f"Verified deployed source: {name}, version 123", printed)
+                self.assertEqual(reader.call_count, 3)
+
+    def test_any_stale_social_fanout_artifact_fails_despite_active_retry_enabled_function(self):
+        for name in ("onActivityCreated", "onGoalSpaceEventCreated"):
+            self.use_source_target(name)
+            for path in self.paths:
+                with self.subTest(function=name, artifact=path):
+                    stale = {**self.uploaded, path: b"previous deployment"}
+                    with self.assertRaisesRegex(RuntimeError, "deployed .* differs from uploaded source"):
+                        self.check(self.deployed(stale), name)
+
+    def test_missing_social_fanout_artifacts_fail_readback(self):
+        for name in ("onActivityCreated", "onGoalSpaceEventCreated"):
+            self.use_source_target(name)
+            for path in self.paths:
+                with self.subTest(function=name, artifact=path):
+                    previous = dict(self.uploaded)
+                    del previous[path]
+                    with self.assertRaises(KeyError):
+                        self.check(self.deployed(previous), name)
+
     def test_any_stale_participation_artifact_fails_despite_active_metadata(self):
         for path in self.paths:
             with self.subTest(artifact=path):
@@ -217,9 +326,9 @@ class DeployedSourceIdentityTest(unittest.TestCase):
                 verifier.verify_function_source("onRunUpdated", self.paths, self.root, "private-token")
         self.assertEqual(reader.call_count, 1)
 
-    def test_participation_exports_require_deployed_retry_policy(self):
+    def test_retry_enabled_exports_require_deployed_retry_policy(self):
         for name in verifier.RETRY_REQUIRED:
-            for policy in ({}, {"retry": False}, {"retry": None}):
+            for policy in ({}, {"retry": False}, {"retry": None}, {"retry": []}):
                 with self.subTest(function=name, policy=policy):
                     metadata = json.dumps({"status": "ACTIVE", "eventTrigger": {"failurePolicy": policy}}).encode()
                     with patch.object(verifier, "read", return_value=metadata) as reader:

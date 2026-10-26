@@ -31,6 +31,23 @@ import {
   localWeekKey,
   parseLocalDate,
 } from "@/lib/dateHelpers";
+import { sessionDayContext } from "@/features/program/sessionDay";
+import {
+  getScheduledRunStatus,
+  isScheduledRunStartable,
+} from "@/lib/scheduledRunStatus";
+import {
+  liftInProgress,
+  resumableWorkout,
+  routineInProgress,
+  runInProgress,
+  storedRunName,
+  storedRunTemplate,
+  type RoutinesInFlight,
+  type SessionInProgress,
+} from "@/lib/sessionsInFlight";
+import type { WorkoutDraft } from "@/hooks/useWorkoutDraft";
+import type { StoredRunSummary } from "@/lib/runResumeStorage";
 
 /**
  * Today's session on Home: which card shows, and what it says.
@@ -50,7 +67,10 @@ import {
  *    new person's first;
  *  - on a rest day, what the card offers instead: a new lifter's first
  *    workout, a run for someone who runs freely, a new person's first meal,
- *    or tomorrow's session.
+ *    or tomorrow's session;
+ *  - a session under way on this phone (`sessionsInFlight.ts`): on its own
+ *    card, in Start's place, when the card is that session, and otherwise
+ *    on a strip of its own above the cards.
  */
 export interface TodaySessionInput {
   /** The day, "yyyy-MM-dd". Every rule here reads this one day. */
@@ -69,7 +89,18 @@ export interface TodaySessionInput {
   lifetimeRuns: number | null;
   /** Meals logged over the account's life. */
   lifetimeMeals: number;
+  /** The sessions under way on this phone (`useSessionsInFlight`). Absent
+   *  reads as none. */
+  inFlight?: {
+    drafts: readonly WorkoutDraft[];
+    run: StoredRunSummary | null;
+    /** The saved routines the drafts were kept from, as they are now.
+     *  Absent reads as none read: no routine's workout is offered. */
+    routines?: RoutinesInFlight;
+  };
 }
+
+const NO_ROUTINES: RoutinesInFlight = new Map();
 
 export interface TodayLift {
   /** The workout the card offers, or null when the schedule names a lifting
@@ -84,6 +115,9 @@ export interface TodayLift {
   status: LiftSlotStatus;
   /** Up to three muscle groups, "Chest · Shoulders · Triceps". */
   muscleGroups: string;
+  /** This workout is under way: the card offers Resume in Start's place.
+   *  Absent reads as not. */
+  inProgress?: SessionInProgress | null;
 }
 
 export interface TodayRun {
@@ -102,6 +136,9 @@ export interface TodayRun {
   /** Its name as its card names it ("Easy 30", "Long 15K with race pace"),
    *  or null with no planned run. Absent reads as unnamed. */
   name?: string | null;
+  /** A run is under way: the card offers Resume in Start's place. Absent
+   *  reads as not. */
+  inProgress?: SessionInProgress | null;
 }
 
 /** Tomorrow's session, as the rest-day card names it. */
@@ -121,9 +158,11 @@ export type RestDayOffer =
       /** As Train names it in its week. Absent reads as the day's name
        *  without its week. */
       name?: string;
+      /** Already under way. Absent reads as not. */
+      inProgress?: SessionInProgress | null;
     }
   /** Free running plans no days, so a free runner's rest day offers a run. */
-  | { kind: "free-run" }
+  | { kind: "free-run"; inProgress?: SessionInProgress | null }
   /** A new person with no meal logged yet. */
   | { kind: "first-meal" }
   | { kind: "rest"; tomorrow: TomorrowSession | null };
@@ -139,6 +178,9 @@ export interface TodaySession {
   run: TodayRun | null;
   /** Set on a rest day. */
   rest: RestDayOffer | null;
+  /** Sessions under way that are not today's card: each gets a strip of
+   *  its own above the cards. Absent reads as none. */
+  inProgressElsewhere?: SessionInProgress[];
 }
 
 export function todaySession(input: TodaySessionInput): TodaySession {
@@ -185,7 +227,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
   };
   const framing = getActivationFraming(framingInput);
 
-  return {
+  return placeInProgress(input, {
     type,
     restContext: {
       fixedRest: profile?.defaultRestSeconds,
@@ -226,7 +268,72 @@ export function todaySession(input: TodaySessionInput): TodaySession {
             firstMeal: framing.firstMeal,
           })
         : null,
-  };
+  });
+}
+
+/**
+ * Put each session under way on the card it belongs to, or on a strip of
+ * its own. A workout belongs to today's lift card, or a new lifter's first
+ * workout, when the card is that programme day; a saved routine's has no
+ * card, so it always has a strip. A run belongs to today's run card while
+ * that card could still start one, or to a free runner's run card; a run
+ * can be under way only one at a time, so the one in flight is the one
+ * Start would have begun.
+ */
+function placeInProgress(
+  input: TodaySessionInput,
+  session: TodaySession
+): TodaySession {
+  const { profile, programState, inFlight } = input;
+  if (!inFlight) return { ...session, inProgressElsewhere: [] };
+  const elsewhere: SessionInProgress[] = [];
+  let { lift, run, rest } = session;
+
+  const workout = resumableWorkout(
+    inFlight.drafts,
+    programState,
+    sessionDayContext(programState, profile),
+    inFlight.routines ?? NO_ROUTINES
+  );
+  if (workout?.kind === "routine") elsewhere.push(routineInProgress(workout));
+  const resumable = workout?.kind === "programme" ? workout : null;
+  if (resumable) {
+    const day = programState?.workouts?.[resumable.dayIndex];
+    const strip = liftInProgress(
+      resumable,
+      day ? weekDayName(programState, resumable.dayIndex, day) : "Workout"
+    );
+    if (lift?.workout && lift.index === resumable.dayIndex)
+      lift = { ...lift, inProgress: strip };
+    else if (
+      rest?.kind === "first-workout" &&
+      rest.index === resumable.dayIndex
+    )
+      rest = { ...rest, inProgress: strip };
+    else elsewhere.push(strip);
+  }
+
+  if (inFlight.run) {
+    const template = storedRunTemplate(inFlight.run.config);
+    const strip = runInProgress(
+      inFlight.run,
+      storedRunName(
+        inFlight.run.config,
+        racePaceWorkFor(template, profile, programState?.runPlan),
+        resolveDistanceUnit(profile?.preferredDistanceUnit)
+      )
+    );
+    const runCardStarts =
+      run !== null &&
+      !run.completed &&
+      (run.runDay === null ||
+        isScheduledRunStartable(getScheduledRunStatus(run.runDay)));
+    if (runCardStarts && run) run = { ...run, inProgress: strip };
+    else if (rest?.kind === "free-run") rest = { ...rest, inProgress: strip };
+    else elsewhere.push(strip);
+  }
+
+  return { ...session, lift, run, rest, inProgressElsewhere: elsewhere };
 }
 
 function restDayOffer(

@@ -45,6 +45,19 @@ describe("RunBottomSheet — the paused controls", () => {
     expect(stop.outerHTML).not.toMatch(/239,\s*68,\s*68|#EF4444|destructive/i);
   });
 
+  it("greys the clock and says it is paused", () => {
+    renderPaused();
+    const time = screen.getByTestId("run-hud-time");
+    const style = time.getAttribute("style") ?? "";
+    expect(style).not.toContain("rgb(212, 99, 122)");
+    expect(style).not.toMatch(/text-shadow/);
+    expect(screen.getAllByText("PAUSED").length).toBeGreaterThan(0);
+    expect(screen.queryByText("TIME")).toBeNull();
+    // The calories say the unit the summary and the run page say.
+    expect(screen.getByText("KCAL")).toBeInTheDocument();
+    expect(screen.queryByText("CAL")).toBeNull();
+  });
+
   it("leaves Resume the one coral fill", () => {
     renderPaused();
     const resume = screen.getByRole("button", { name: "Resume run" });

@@ -333,8 +333,13 @@ suite("configurePlan — emulator integration", () => {
   async function seedLondon() {
     const user = db.collection("users").doc(TEST_UID);
     const publicRef = user.collection("public").doc("profile");
-    await user.set(validProfileUpdates({ runMode: "race_prep", raceGoal: london }));
-    await publicRef.set({ uid: TEST_UID, trainingForSpaceId: "london-marathon" });
+    await user.set(
+      validProfileUpdates({ runMode: "race_prep", raceGoal: london })
+    );
+    await publicRef.set({
+      uid: TEST_UID,
+      trainingForSpaceId: "london-marathon",
+    });
     return { user, publicRef };
   }
 
@@ -580,6 +585,37 @@ suite("completeOnboarding — emulator integration", () => {
     expect(psData.programSchemaVersion).toBe(2);
     expect(Array.isArray(psData.runDays)).toBe(true);
     expect(psData.runDays[0].status).toBe("planned");
+  });
+
+  /* The tier is billing's. completeOnboarding wrote "free" over whatever
+     an existing profile held, so a setup run again (a direct call today, a
+     "start over" flow tomorrow) downgraded a Pro account until the next
+     store sync. configurePlan already leaves it alone. */
+  it("keeps the tier an existing profile already has", async () => {
+    await db
+      .collection("users")
+      .doc(TEST_UID)
+      .set({ uid: TEST_UID, subscriptionTier: "pro" });
+    const result = await completeOnboarding.run(
+      {
+        profileData: {
+          ...validProfileUpdates(),
+          weightKg: 72,
+          heightCm: 180,
+          age: 28,
+          sex: "male",
+          activityLevel: "active",
+          subscriptionTier: "free",
+        },
+        programState: validProgramState(),
+        weekSchedule: validWeekSchedule(),
+      },
+      { auth: { uid: TEST_UID } }
+    );
+    expect(result).toMatchObject({ success: true });
+    const userDoc = await getDocSettled(db.collection("users").doc(TEST_UID));
+    expect(userDoc.data().subscriptionTier).toBe("pro");
+    expect(userDoc.data().onboardingComplete).toBe(true);
   });
 
   /* The app's own copy of the public profile is best-effort; one that

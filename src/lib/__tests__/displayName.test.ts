@@ -6,63 +6,67 @@ import {
   DISPLAY_NAME_LENGTH_MESSAGE,
 } from "../displayName";
 import { OBJECTIONABLE_NAME_MESSAGE } from "../profanityFilter";
+import * as wordFilter from "../profanityFilter";
+
+/** With the word filter loaded, as every screen passes it once it has. */
+const validate = (raw: string) => validateDisplayName(raw, wordFilter);
 
 describe("validateDisplayName", () => {
   describe("invalid inputs", () => {
     it("rejects empty string", () => {
-      const v = validateDisplayName("");
+      const v = validate("");
       expect(v.valid).toBe(false);
       expect(v.trimmed).toBe("");
     });
 
     it("rejects whitespace-only", () => {
-      const v = validateDisplayName("   ");
+      const v = validate("   ");
       expect(v.valid).toBe(false);
       expect(v.trimmed).toBe("");
     });
 
     it("rejects single character (below minimum)", () => {
-      expect(validateDisplayName("T").valid).toBe(false);
+      expect(validate("T").valid).toBe(false);
     });
 
     it("rejects 51-character name (above maximum)", () => {
       const s = "a".repeat(51);
       expect(s.length).toBe(51);
-      expect(validateDisplayName(s).valid).toBe(false);
+      expect(validate(s).valid).toBe(false);
     });
   });
 
   describe("valid inputs", () => {
     it("accepts two characters (at minimum)", () => {
-      const v = validateDisplayName("To");
+      const v = validate("To");
       expect(v.valid).toBe(true);
       expect(v.trimmed).toBe("To");
     });
 
     it("accepts three characters", () => {
-      expect(validateDisplayName("Tom").valid).toBe(true);
+      expect(validate("Tom").valid).toBe(true);
     });
 
     it("accepts 50 characters (at maximum)", () => {
       const s = "a".repeat(50);
       expect(s.length).toBe(50);
-      expect(validateDisplayName(s).valid).toBe(true);
+      expect(validate(s).valid).toBe(true);
     });
 
     it("accepts name with space", () => {
-      expect(validateDisplayName("Tom Brady").valid).toBe(true);
+      expect(validate("Tom Brady").valid).toBe(true);
     });
 
     it("accepts apostrophe (O'Brien)", () => {
-      expect(validateDisplayName("O'Brien").valid).toBe(true);
+      expect(validate("O'Brien").valid).toBe(true);
     });
 
     it("accepts non-ASCII (Łukasz)", () => {
-      expect(validateDisplayName("Łukasz").valid).toBe(true);
+      expect(validate("Łukasz").valid).toBe(true);
     });
 
     it("accepts CJK (田中)", () => {
-      const v = validateDisplayName("田中");
+      const v = validate("田中");
       expect(v.valid).toBe(true);
       expect(v.trimmed).toBe("田中");
     });
@@ -73,31 +77,31 @@ describe("validateDisplayName", () => {
       // can pick emoji-only display names if they want.
       const emoji = "🏃";
       expect(emoji.length).toBe(2);
-      expect(validateDisplayName(emoji).valid).toBe(true);
+      expect(validate(emoji).valid).toBe(true);
     });
   });
 
   describe("trimming behaviour", () => {
     it("trims leading and trailing whitespace", () => {
-      const v = validateDisplayName("  Tom  ");
+      const v = validate("  Tom  ");
       expect(v.valid).toBe(true);
       expect(v.trimmed).toBe("Tom");
     });
 
     it("preserves interior whitespace", () => {
-      const v = validateDisplayName("  Tom Brady  ");
+      const v = validate("  Tom Brady  ");
       expect(v.valid).toBe(true);
       expect(v.trimmed).toBe("Tom Brady");
     });
 
     it("rejects when trimmed length falls below minimum", () => {
       // "A" + leading/trailing spaces — trimmed is "A", length 1 < min.
-      expect(validateDisplayName("  A  ").valid).toBe(false);
+      expect(validate("  A  ").valid).toBe(false);
     });
 
     it("rejects when trimmed length exceeds maximum", () => {
       // 52-char core, length 52 > max after trim.
-      const v = validateDisplayName(`  ${"x".repeat(52)}  `);
+      const v = validate(`  ${"x".repeat(52)}  `);
       expect(v.valid).toBe(false);
       expect(v.trimmed.length).toBe(52);
     });
@@ -115,7 +119,7 @@ describe("validateDisplayName", () => {
 
   describe("the word filter (App Review 1.2: a display name is public)", () => {
     it("refuses a name the filter flags, with the sentence to show", () => {
-      const v = validateDisplayName("  shit head  ");
+      const v = validate("  shit head  ");
       expect(v).toEqual({
         valid: false,
         trimmed: "shit head",
@@ -126,12 +130,12 @@ describe("validateDisplayName", () => {
 
     it("leaves names that only look tough alone", () => {
       for (const name of ["Beast Mode", "Killer Legs", "Ripped Ron"]) {
-        expect(validateDisplayName(name).valid).toBe(true);
+        expect(validate(name).valid).toBe(true);
       }
     });
 
     it("says the length when that is the problem", () => {
-      expect(validateDisplayName("T")).toMatchObject({
+      expect(validate("T")).toMatchObject({
         valid: false,
         problem: "length",
         message: DISPLAY_NAME_LENGTH_MESSAGE,
@@ -142,10 +146,28 @@ describe("validateDisplayName", () => {
     });
 
     it("has no problem and no message for a valid name", () => {
-      expect(validateDisplayName("Tom")).toMatchObject({
+      expect(validate("Tom")).toMatchObject({
         problem: null,
         message: null,
       });
+    });
+  });
+});
+
+describe("before the word filter has loaded", () => {
+  it("holds a name of the right length, with nothing to say yet", () => {
+    expect(validateDisplayName("  Tom  ", null)).toEqual({
+      valid: false,
+      trimmed: "Tom",
+      problem: null,
+      message: null,
+    });
+  });
+
+  it("still says the length, which needs no filter", () => {
+    expect(validateDisplayName("T", null)).toMatchObject({
+      valid: false,
+      problem: "length",
     });
   });
 });

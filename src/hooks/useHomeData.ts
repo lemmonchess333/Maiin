@@ -3,7 +3,7 @@ import { pendingWeights, weightSyncFailed } from "@/lib/weightQueue";
 import { formatWeightInUnit } from "@/lib/weightUnits";
 import { collection, query, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { format } from "date-fns";
+import { formatDayMonth } from "@/utils/formatters";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import type { Workout } from "@/hooks/useWorkouts";
 import type { UserProfile } from "@/lib/auth";
@@ -123,7 +123,7 @@ export function useHomeData(
             lastWeightInfo: {
               kg: latest.kg,
               weight: formatWeightInUnit(latest.kg, weightUnit),
-              date: format(new Date(`${latest.date}T12:00:00`), "d MMM"),
+              date: formatDayMonth(new Date(`${latest.date}T12:00:00`)),
               rawDate: latest.date,
             },
           };
@@ -247,7 +247,7 @@ export function useHomeData(
               weightInfo = {
                 kg: latest.weight,
                 weight: w,
-                date: format(new Date(latest.date + "T12:00:00"), "d MMM"),
+                date: formatDayMonth(new Date(latest.date + "T12:00:00")),
                 rawDate: latest.date,
               };
               // #984 — derive direction from the logged history via
@@ -396,7 +396,7 @@ export function useHomeData(
       ? {
           kg: latestPending[1],
           weight: formatWeightInUnit(latestPending[1], weightUnit),
-          date: format(new Date(`${latestPending[0]}T12:00:00`), "d MMM"),
+          date: formatDayMonth(new Date(`${latestPending[0]}T12:00:00`)),
           rawDate: latestPending[0],
         }
       : state.lastWeightInfo;

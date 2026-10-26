@@ -163,7 +163,7 @@ function AccountSectionContent({
       toast.error(
         navigator.onLine === false
           ? "Signing out needs a connection, so this phone stops getting this account's notifications. Try again when you're online."
-          : "Couldn't sign out. Please try again."
+          : "Couldn't sign out. Try again."
       );
     }
   };
@@ -203,7 +203,7 @@ function AccountSectionContent({
     } catch (error) {
       logger.error("Deleted-account sign-out failed", error);
       setDeleteError(
-        "Your account has been deleted. Sign-out didn't finish. Please try again."
+        "Your account has been deleted. Sign-out didn't finish. Try again."
       );
     } finally {
       setFinishing(false);
@@ -231,9 +231,7 @@ function AccountSectionContent({
         fe?.details?.reason === "executor-disabled" ||
         msg.includes("executor-disabled")
       ) {
-        toast.error(
-          "Account deletion is temporarily paused. Please try again later."
-        );
+        toast.error("Account deletion is temporarily paused. Try again later.");
         closeAndReset();
       } else if (
         fe?.details?.errorCode === "requires-recent-auth" ||
@@ -265,7 +263,7 @@ function AccountSectionContent({
               : fe?.code === "functions/deadline-exceeded" ||
                   fe?.code === "functions/unavailable"
                 ? "We couldn't confirm deletion. Check your connection and retry. If cleanup is still running, it will continue on the server."
-                : "Account cleanup couldn't finish. Please retry account deletion. Your sign-in is kept until cleanup succeeds.";
+                : "Account cleanup couldn't finish. Try deleting your account again. Your sign-in is kept until cleanup succeeds.";
         setDeleteError(message);
         dispatchModal({ type: "CANCEL_REAUTH" });
       }
@@ -596,7 +594,7 @@ function AccountSectionContent({
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Password"
                   disabled={busy}
-                  className="min-h-11 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
+                  className="ds-input text-base"
                 />
               )}
               <div className="space-y-2">

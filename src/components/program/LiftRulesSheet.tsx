@@ -9,9 +9,9 @@ import type { LiftReason } from "@/lib/liftExerciseReasons";
  * The plan's rules on one sheet, merged with "Why this session" (Lift4
  * (3)): the session's reasons first, when there is a session to explain,
  * then why each of its lifts is in it (`liftExerciseReasons`), then how
- * the plan works. Loaded only when opened (`LiftPurpose`,
- * `LiftRulesInfo`): the rules read the engine's constants, which a day
- * card on Home has no other need for.
+ * the plan works. Loaded only when opened (`LiftPurpose`): the rules
+ * read the engine's constants, which a day card on Home has no other
+ * need for.
  */
 export default function LiftRulesSheet({
   open,

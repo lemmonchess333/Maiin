@@ -25,6 +25,7 @@ import {
   resetFirestore,
   writeLog,
 } from "@/test/firestoreHarness";
+import { toast } from "sonner";
 import GoalReachedSheet from "../GoalReachedSheet";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
@@ -124,5 +125,31 @@ describe("GoalReachedSheet", () => {
     expect(
       writeLog().filter((w) => w.path === PROGRAM && w.op.startsWith("set"))
     ).toEqual([]);
+  });
+  /* updateProfile is asked with throwOnError, which silences auth's own
+     toast, and the sheet's only catch logged. A failed switch reset the
+     row and said nothing: the person's macros were unchanged and they
+     were not told. */
+  it("a failed switch says so, keeps the sheet open and resolves nothing", async () => {
+    const { updateProfile, onResolved } = setup("cut");
+    updateProfile.mockRejectedValueOnce(new Error("permission-denied"));
+    vi.mocked(toast.error).mockClear();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Switch to maintenance/i })
+    );
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't switch to maintenance. Try again.",
+        expect.anything()
+      )
+    );
+    expect(onResolved).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalledWith(
+      "Maintenance calories set. Nice work.",
+      expect.anything()
+    );
+    expect(
+      screen.getByRole("button", { name: /Switch to maintenance/i })
+    ).toBeEnabled();
   });
 });

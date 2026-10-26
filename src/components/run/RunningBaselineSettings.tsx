@@ -7,6 +7,8 @@ import {
 } from "@/features/program/runningBaseline";
 import type { RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import Button from "@/components/ui/Button";
+import Select from "@/components/ui/Select";
+import SectionHeading from "@/components/ui/SectionHeading";
 
 export default function RunningBaselineSettings({
   value,
@@ -35,22 +37,20 @@ export default function RunningBaselineSettings({
     });
   const valid = isRunningBaseline(value);
   return (
-    <section aria-label="Running starting point" className="space-y-3">
+    <section aria-label="Running starting point" className="space-y-2">
       <div>
-        <p className="text-sm font-medium text-foreground">
+        <SectionHeading size="compact">
           Your running starting point
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-          Use recent training to keep planned runs within a familiar amount.
-          Include running you do outside Tropos.
+        </SectionHeading>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Your recent weekly running, so the plan starts near it.
         </p>
       </div>
       {value ? (
         <>
           <label className="block space-y-2 text-xs text-muted-foreground">
             <span>Running experience</span>
-            <select
-              className="ds-input min-h-11 w-full"
+            <Select
               value={value.experience}
               onChange={(e) =>
                 edit({
@@ -63,7 +63,7 @@ export default function RunningBaselineSettings({
               <option value="regular">
                 Running regularly, including faster sessions
               </option>
-            </select>
+            </Select>
           </label>
           <div className="grid grid-cols-2 gap-3">
             {(

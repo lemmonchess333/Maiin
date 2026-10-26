@@ -31,11 +31,7 @@ import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { logger } from "../lib/logger";
 import { appErrorMessage } from "@/lib/callableErrors";
-import {
-  detectBestEfforts,
-  toGPX,
-  estimateRunCalories,
-} from "../lib/gps";
+import { detectBestEfforts, toGPX, estimateRunCalories } from "../lib/gps";
 import type { SessionShareAction } from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
@@ -70,6 +66,7 @@ import type { WorkPortion } from "../hooks/useSessionPlayer";
 import { paceMinSec, distanceLabel2, distanceValue } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import {
   distanceIn,
   type DistanceUnit,
@@ -149,13 +146,9 @@ function RetryBanner({
           {error || "We couldn't save this run."}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-running-fill"
-      >
+      <Button variant="sport" className="shrink-0" onClick={onRetry}>
         Retry
-      </button>
+      </Button>
     </div>
   );
 }
@@ -258,12 +251,12 @@ function InvalidRunReview({
   const heading = isSaved
     ? "Saved"
     : reason === "too-fast"
-      ? "Run looks invalid"
+      ? "Check the distance"
       : "Run too short";
   const bodyCopy = isSaved
     ? null
     : reason === "too-fast"
-      ? `We recorded ${formattedDuration} and ${formattedDistance}. The implied pace looks unrealistic — did you mean a different distance?`
+      ? `We recorded ${formattedDuration} and ${formattedDistance}, which works out faster than a sprint. Was the distance different?`
       : outdoorGps
         ? `We recorded ${formattedDuration} and ${formattedDistance}. This may have happened before GPS locked.`
         : `We recorded ${formattedDuration} and ${formattedDistance}. This is below the minimum distance or duration for a normal summary.`;
@@ -333,23 +326,19 @@ function InvalidRunReview({
       {(showSaveAnyway || showDiscard) && (
         <div className="space-y-2 pt-1">
           {showSaveAnyway && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              fullWidth
               onClick={onSave}
               disabled={saveStatus === "saving"}
-              className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90 bg-muted text-foreground border border-border"
             >
               {saveStatus === "saving" ? "Saving…" : "Save anyway"}
-            </button>
+            </Button>
           )}
           {showDiscard && (
-            <button
-              type="button"
-              onClick={onDiscard}
-              className="w-full py-2.5 rounded-xl text-sm font-medium bg-destructive/10 text-destructive-strong border border-destructive/20"
-            >
+            <Button variant="destructive-tinted" fullWidth onClick={onDiscard}>
               Discard
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -384,6 +373,8 @@ export default function RunSummary() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
+  // The basemap follows the theme on screen, not the profile field.
+  const darkTheme = useIsDarkTheme();
   const receipt = state?.savedRun?.uid === user?.uid ? state?.savedRun : null;
   const runOwnerRef = useRef(user?.uid);
   const {
@@ -648,6 +639,8 @@ export default function RunSummary() {
     () => (state ? applyPrivacyZones(state.points, privacyZones) : []),
     [state, privacyZones]
   );
+  // Keep the run's clock independently of the coordinates privacy zones cut.
+  const startedAt = state?.points[0]?.timestamp;
 
   /* This run as the screen's two week lines count it, saved or not yet.
      One read of the week (`useWeekPulse`, counted by `trainingWeek`) feeds
@@ -661,7 +654,7 @@ export default function RunSummary() {
     return {
       id: savedRunId,
       // A run with no trace (entered by hand) is today's.
-      date: points[0] ? localDateString(new Date(points[0].timestamp)) : null,
+      date: startedAt ? localDateString(new Date(startedAt)) : null,
       distance: runDistance,
       duration: state.elapsed,
       isInvalid: type
@@ -673,7 +666,7 @@ export default function RunSummary() {
           }) !== null
         : false,
     };
-  }, [state, editedDistanceMeters, savedRunId, points]);
+  }, [state, editedDistanceMeters, savedRunId, startedAt]);
   const weekPulse = useWeekPulse(0, pendingWeekRun);
 
   // A redirect is an element, not a call made while rendering: React Router
@@ -1009,6 +1002,7 @@ export default function RunSummary() {
         runId: savedRunId ?? runIdRef.current,
         alreadySaved: savedRunId !== null,
         run: {
+          startedAt,
           points: savedPoints,
           distance,
           elapsed,
@@ -1282,7 +1276,7 @@ export default function RunSummary() {
                   height="h-64"
                   paceColored={avgPaceSeconds > 0}
                   avgPaceSecPerKm={avgPaceSeconds}
-                  darkMode={!!profile?.darkMode}
+                  darkMode={darkTheme}
                 />
               </div>
               {avgPaceSeconds > 0 && <PaceLegend className="px-1" />}
@@ -1332,7 +1326,7 @@ export default function RunSummary() {
                 the same time and never wired, so only lifters got it —
                 an odd gap in an app whose identity is hybrid. Lives in
                 the VALID branch, so a sub-threshold GPS glitch never
-                claims "4 Great Wall sections". */}
+                claims "40 Olympic pool lengths". */}
             {funComparison && (
               <p className="mt-2 text-sm text-muted-foreground">
                 {funComparison}
@@ -1781,7 +1775,7 @@ export default function RunSummary() {
               placeholder="Any notes about this run..."
               aria-label="Run notes"
               rows={3}
-              className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
+              className="ds-input resize-none text-sm"
             />
 
             {canShowRetrySave({ saveStatus }) && (
@@ -1885,14 +1879,17 @@ export default function RunSummary() {
                  the EXISTING composer flow with a narrow context param
                  (Food renders a dismissible refuel line); no separate
                  recovery-meal flow, no target change. Only rendered in the
-                 valid-run path (this whole stack is), post-save. */
-              <button
-                type="button"
+                 valid-run path (this whole stack is), post-save. Logging
+                 food is the food orange on any page, tinted here because
+                 it is the skippable step and Done is the run's coral one
+                 (DESIGN_GUIDE §14i). */
+              <Button
+                variant="nutrition-tinted"
+                fullWidth
                 onClick={() => navigate("/food?context=post-run")}
-                className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
               >
                 Log recovery food
-              </button>
+              </Button>
             )}
 
             {/* One Share: the card, and under it the run's other ways out
@@ -1908,13 +1905,13 @@ export default function RunSummary() {
               </button>
             )}
             {canShowDiscard({ saveStatus }) && (
-              <button
-                type="button"
+              <Button
+                variant="destructive-tinted"
+                fullWidth
                 onClick={handleDiscard}
-                className="w-full py-2 text-sm text-destructive-strong"
               >
                 Discard
-              </button>
+              </Button>
             )}
           </div>
 

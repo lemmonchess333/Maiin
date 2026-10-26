@@ -128,6 +128,20 @@ service cloud.firestore {
         || exists(/databases/$(database)/documents/blocks/$(b)/users/$(a));
     }
 
+    /* Who besides its author may read a feed post: anyone signed in for a
+       public one; for a followers-only one, a follower of the author when
+       neither has blocked the other. A follow edge can outlive a block
+       (blockUser's delete of it can fail), so the edge alone is not
+       enough. */
+    function activityVisibleTo(activity) {
+      return activity.visibility == 'public'
+        || (
+          activity.visibility == 'followers'
+          && exists(/databases/$(database)/documents/followers/$(activity.authorId)/users/$(request.auth.uid))
+          && !blockExistsBetween(activity.authorId, request.auth.uid)
+        );
+    }
+
     /* Has a moderator restricted the signed-in account? (S4e, STATUS
        2026-10-06.)
 
@@ -169,6 +183,22 @@ service cloud.firestore {
         && !blockExistsBetween(targetUid, requesterUid);
     }
 
+    /* What a follow edge holds: when it was made and, from an accepted
+       request, that it was one (onFollowerCreated reads `fromRequest` to
+       tell the follower). Nothing else. Both edges are readable by anyone
+       signed in, and an open shape let a follower park up to a megabyte
+       on someone else's followers list, paid for by every reader of it. */
+    function isDirectFollowEdge() {
+      return request.resource.data.keys().hasOnly(['followedAt'])
+        && request.resource.data.followedAt is timestamp;
+    }
+
+    function isAcceptedFollowEdge() {
+      return request.resource.data.keys().hasOnly(['followedAt', 'fromRequest'])
+        && request.resource.data.followedAt is timestamp
+        && request.resource.data.fromRequest == true;
+    }
+
     /* approveFollowers is a boolean when present (Settings → Privacy); a
        null, like the other switches', means none chosen: approval on. */
     function approveFollowersValid() {
@@ -190,7 +220,12 @@ service cloud.firestore {
        identity rows. A URL a stranger's browser fetches is a tracking
        pixel with a per-viewer IP unless its origin is one Tropos already
        trusts to serve avatars:
-         - own-bucket Firebase Storage (custom uploads, space photos)
+         - THIS project's Firebase Storage bucket (custom uploads, space
+           photos). The host alone was not enough: every Firebase project
+           serves from firebasestorage.googleapis.com, so a URL into an
+           attacker's own bucket passed, and its access logs carry every
+           viewer's IP. Both default bucket names a project can have are
+           listed; each is reserved to this project.
          - Google OAuth CDN (lh3.googleusercontent.com)
          - Apple OAuth CDN (appleid.cdn-apple.com)
        `https` only and anchored with `^`, so a downgrade or a
@@ -204,7 +239,7 @@ service cloud.firestore {
       return v is string
         && v.size() <= 2048
         && (
-          v.matches('^https://firebasestorage\\.googleapis\\.com/.*')
+          v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/.*')
           || v.matches('^https://lh3\\.googleusercontent\\.com/.*')
           || v.matches('^https://appleid\\.cdn-apple\\.com/.*')
         );
@@ -614,7 +649,17 @@ service cloud.firestore {
     // call sites in the same PR.
     // ========================================
     match /users/{uid}/public/{doc} {
-      allow read: if request.auth != null;
+      /* One profile, read on its own, is refused to someone its owner
+         blocked (Polish3 call 1): the profile page, a props list, a
+         follow request's name. The other way round is allowed, so the
+         person who blocked can still see whom they blocked to unblock
+         them, and the app hides the rest. A query cannot be checked per
+         document, so search (the collection group, below) is filtered in
+         the app. */
+      allow get: if request.auth != null
+        && (request.auth.uid == uid
+            || !exists(/databases/$(database)/documents/blocks/$(uid)/users/$(request.auth.uid)));
+      allow list: if request.auth != null;
       allow write: if isOwnerAndNotDeleting(uid)
         /* The one document this collection holds. User search reads the
            whole collection group, so any other id under a user's own
@@ -743,6 +788,19 @@ service cloud.firestore {
               && request.resource.data.createdAt
                    == resource.data.get('createdAt', null))
         )
+        // The sanitizer's bound (profileSanitizer.js: 30 characters). Every
+        // search result and profile view downloads this document, so an
+        // unbounded string was a near-megabyte for every reader. A stored
+        // value left as it is passes, as the badges below do.
+        && (
+          !('athleteType' in request.resource.data)
+          || request.resource.data.athleteType == null
+          || (request.resource.data.athleteType is string
+              && request.resource.data.athleteType.size() <= 30)
+          || (resource != null
+              && request.resource.data.athleteType
+                   == resource.data.get('athleteType', null))
+        )
         && publicProfileDaysValid('currentStreak')
         && publicProfileDaysValid('longestStreak')
         && (
@@ -754,6 +812,16 @@ service cloud.firestore {
               && request.resource.data.badgeSummary.keys().hasOnly(['earnedMap', 'count'])
               && request.resource.data.badgeSummary.earnedMap is map
               && request.resource.data.badgeSummary.earnedMap.size() <= 100
+              /* Each entry is a badge id (18 characters at most) and an
+                 ISO date (24). The entry cap alone left both unbounded in
+                 a document every search result downloads. Rules cannot
+                 visit each value, so the ids and dates are each held to
+                 100 entries of 40 characters in all. join() writes a
+                 number or a boolean out as text and refuses a nested map,
+                 so a value's type is the reader's to check
+                 (useUserProfileData skips a date that is not a string). */
+              && request.resource.data.badgeSummary.earnedMap.keys().join('').size() <= 4000
+              && request.resource.data.badgeSummary.earnedMap.values().join('').size() <= 4000
               && request.resource.data.badgeSummary.count
                    == request.resource.data.badgeSummary.earnedMap.size())
         );
@@ -776,8 +844,10 @@ service cloud.firestore {
     // collection at ANY depth, so we need this recursive-wildcard rule
     // in addition to the per-user rule above. The per-user rule still
     // enforces owner-only writes; this one only grants read.
+    // Queries only. This also matches a single profile read, which the
+    // rule above decides.
     match /{path=**}/public/{doc} {
-      allow read: if request.auth != null;
+      allow list: if request.auth != null;
     }
 
     // ========================================
@@ -826,21 +896,18 @@ service cloud.firestore {
     // whole write).
     // ========================================
     match /activities/{activityId} {
-      allow read: if request.auth != null && (
-        // Public — any authed user
-        resource.data.visibility == 'public'
-        // Owner — always
-        || resource.data.authorId == request.auth.uid
-        // Followers-only — read iff caller is a follower of the author,
-        // and neither has blocked the other. A follow edge can outlive a
-        // block (blockUser could not remove the blocked person's side
-        // until the two delete clauses below), so the edge alone is not
-        // enough.
-        || (
-          resource.data.visibility == 'followers'
-          && exists(/databases/$(database)/documents/followers/$(resource.data.authorId)/users/$(request.auth.uid))
-          && !blockExistsBetween(resource.data.authorId, request.auth.uid)
-        )
+      /* One post, read on its own, is refused across a block in either
+         direction (Polish3 call 1): a feed copy's post, a notification's.
+         A query (Explore, a profile's posts) cannot be checked per
+         document, so the app filters those. */
+      allow get: if request.auth != null && (
+        resource.data.authorId == request.auth.uid
+        || (activityVisibleTo(resource.data)
+            && !blockExistsBetween(resource.data.authorId, request.auth.uid))
+      );
+      allow list: if request.auth != null && (
+        resource.data.authorId == request.auth.uid
+        || activityVisibleTo(resource.data)
       );
 
       allow create: if request.auth != null
@@ -985,6 +1052,8 @@ service cloud.firestore {
         && resource.data.authorId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['visibility'])
+        // The same three values a create may hold.
+        && request.resource.data.visibility in ['public', 'followers', 'private']
         // A flagged activity stays private. The word filter
         // (onActivityCreated) and a moderator's Hide content both flag
         // it and make it private; without this its author could make
@@ -1396,9 +1465,11 @@ service cloud.firestore {
             !('photoUrl' in request.resource.data)
             || isAllowedPhotoUrl(request.resource.data.photoUrl)
           )
-          // The attached session is the composer's snapshot (toSnapshot in
-          // SpacePostComposer.tsx), served to every viewer of the Space.
-          // `is map` alone took 500 KB of anything.
+          // The attached session is the composer's snapshot
+          // (src/features/spaces/spacePostSnapshot.ts, whose key list
+          // spacePostSnapshot.cross.test.ts pins to this one), served to
+          // every viewer of the Space. `is map` alone took 500 KB of
+          // anything.
           && (
             !('activity' in request.resource.data)
             || (request.resource.data.activity is map
@@ -1634,15 +1705,18 @@ service cloud.firestore {
           && !blockExistsBetween(uid, targetUid)
           && !isRestricted()
           && !approvesFollowers(targetUid)
+          && isDirectFollowEdge()
         )
-        || acceptsFollowRequest(targetUid, uid);
+        || (acceptsFollowRequest(targetUid, uid) && isAcceptedFollowEdge());
     }
 
     match /followers/{uid}/users/{followerUid} {
       allow read: if request.auth != null;
       // Follower doc is written by the person doing the following.
       // R1A-Deletion: writer (followerUid) and recipient (uid) both
-      // must be writable.
+      // must be writable. A direct follow never carries `fromRequest`:
+      // onFollowerCreated reads it as "the person asked said yes" and
+      // tells the follower so, which only the person asked may say.
       allow delete: if (
           request.auth != null
           && request.auth.uid == followerUid
@@ -1658,6 +1732,11 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/blocks/$(uid)/users/$(followerUid))
           && !isWriteFrozen(uid)
         );
+      // Documents this reads: each isWriteFrozen reads a deletion request
+      // and a tombstone, blockExistsBetween two block records, isRestricted
+      // and approvesFollowers one each. Eight, against Firestore's limit of
+      // ten access calls for a single-document request; count before adding
+      // another get() or exists() here.
       allow create: if (
           request.auth != null
           && request.auth.uid == followerUid
@@ -1666,8 +1745,11 @@ service cloud.firestore {
           && !blockExistsBetween(uid, followerUid)
           && !isRestricted()
           && !approvesFollowers(uid)
+          // A direct follow never carries `fromRequest`: only the person
+          // asked may say they said yes.
+          && isDirectFollowEdge()
         )
-        || acceptsFollowRequest(uid, followerUid);
+        || (acceptsFollowRequest(uid, followerUid) && isAcceptedFollowEdge());
     }
 
     /* A follow waiting to be accepted (Polish2 call 4): who asked
@@ -1716,10 +1798,14 @@ service cloud.firestore {
     // members may read or write their bond.
     //
     //   - READ: either member.
-    //   - CREATE: the creator must be one of exactly two DISTINCT members,
-    //     and the streak must start COLD (streak == 0) so no one can mint
-    //     a bond with a forged head-start. Neither member may be
-    //     mid-deletion (R1A: both endpoints must be writable).
+    //   - CREATE: SERVER-ONLY (`if false`). Each person holds at most five
+    //     bonds, and rules cannot count documents, so the
+    //     startPartnerStreak callable makes every bond in a transaction
+    //     that counts both people's (functions/lib/partnerBonds.js). It
+    //     holds what this rule held: two distinct members at the pair's
+    //     sorted id, a mutual follow, no block either way, neither account
+    //     mid-deletion, the starter not restricted, and the cold initial
+    //     state the engine reads.
     //   - UPDATE: SERVER-ONLY (`if false`). Streak state is materialized by
     //     the Cloud Function persist path (applyPartnerActivity on
     //     onWorkoutCreated / onRunCreated, via the Admin SDK which bypasses
@@ -1727,9 +1813,9 @@ service cloud.firestore {
     //     either member to write streak fields; once the engine moved
     //     server-side that client path became BOTH unused AND a cheat vector
     //     (a member could hand-edit their own shared streak). `if false`
-    //     removes it and the client/server double-writer race. The client
-    //     only ever creates + deletes a bond (lifecycle).
-    //   - DELETE: either member may dissolve the bond.
+    //     removes it and the client/server double-writer race.
+    //   - DELETE: either member may dissolve the bond. It is the one
+    //     client write left.
     //
     // R1A-Deletion: bonds the deleted user is a member of are tombstoned
     // by the account-deletion executor (added to accountDeletionInventory).
@@ -1739,59 +1825,11 @@ service cloud.firestore {
         return request.auth != null
           && request.auth.uid in resource.data.members;
       }
-      // Consent is the mutual follow (partnerStreakApi.createBond). It was
-      // checked only in the client, so anyone could bond a stranger: the
-      // bond then carries the stranger's last active day, which the server
-      // writes on every session they save, and takes one of their five
-      // partner slots. With these two the create reads nine documents, one
-      // under the per-request limit of ten.
-      function followEachOther(a, b) {
-        return exists(/databases/$(database)/documents/following/$(a)/users/$(b))
-          && exists(/databases/$(database)/documents/following/$(b)/users/$(a));
-      }
       allow read: if bondMember();
-      // The whole INITIAL state is pinned, not just `streak`. `update` is
-      // server-only (below), so create is the one client-reachable moment —
-      // and `applyPartnerActivity` reads `lastSharedDay`, `lastActive` and
-      // `freezeWeek` straight off the document and feeds them to the engine.
-      // Pinning `streak == 0` alone left the rest forgeable: a bond created
-      // with a partner's `lastActive` already set to today makes the very
-      // next real session register as a SHARED day that never happened, and
-      // a pre-filled `freezeWeek` hands out streak freezes. `hasOnly` keeps
-      // the shape from silently growing a field the engine would then trust
-      // — the same guard the public-profile projection uses.
-      allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly([
-             'members', 'streak', 'lastSharedDay', 'lastActive',
-             'freezeWeek', 'createdAt'
-           ])
-        && request.resource.data.members is list
-        && request.resource.data.members.size() == 2
-        && request.resource.data.members[0] != request.resource.data.members[1]
-        && request.auth.uid in request.resource.data.members
-        // One bond per pair, at the id createBond derives (sorted uids), so
-        // a pair cannot take a second slot under another id.
-        && request.resource.data.members[0] < request.resource.data.members[1]
-        && bondId == request.resource.data.members[0] + '__'
-             + request.resource.data.members[1]
-        && followEachOther(
-             request.resource.data.members[0],
-             request.resource.data.members[1]
-           )
-        && request.resource.data.streak == 0
-        && request.resource.data.lastSharedDay == null
-        && request.resource.data.lastActive.size() == 0
-        && request.resource.data.freezeWeek.size() == 0
-        && !isWriteFrozen(request.resource.data.members[0])
-        && !isWriteFrozen(request.resource.data.members[1])
-        // A bond puts the two names side by side on both profiles and
-        // writes the partner's activity into it. A block either way
-        // refuses one, as it refuses a follow.
-        && !blockExistsBetween(
-             request.resource.data.members[0],
-             request.resource.data.members[1]
-           )
-        && !isRestricted();
+      // Server-only: a create here could not count the bonds either person
+      // already holds (see the header). The startPartnerStreak callable is
+      // the one writer.
+      allow create: if false;
       // Soc7: streak state is server-written (Admin SDK). No client update.
       allow update: if false;
       // A frozen/tombstoned member cannot dissolve the bond client-side;
@@ -1833,6 +1871,21 @@ service cloud.firestore {
       // The owner can still remove an existing block while the target deletes.
       allow create, update: if isOwnerAndNotDeleting(uid) && !isWriteFrozen(targetUid);
       allow delete: if isOwnerAndNotDeleting(uid);
+    }
+
+    // ========================================
+    // Social: Blocked by — who has blocked this account (Polish3 call 1)
+    //
+    // The copy of blocks/{blocker}/users/{uid} that the person blocked
+    // can read, so their app leaves the blocker out of what it shows
+    // them. Only onBlockWritten writes it (functions/lib/blockMirror.js).
+    // No rule consults it, so a forged row would only hide someone from
+    // the forger; it is server-only all the same, because a copy with two
+    // writers drifts from what it copies.
+    // ========================================
+    match /blockedBy/{uid}/users/{blockerUid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
     }
 
     // ========================================

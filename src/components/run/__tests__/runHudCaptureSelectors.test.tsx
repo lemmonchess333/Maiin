@@ -93,12 +93,12 @@ describe("run-HUD capture spec — selectors", () => {
     expect(specButtonPatterns().length).toBeGreaterThanOrEqual(4);
   });
 
-  it('"Free Run" is really the tile the spec taps', () => {
+  it('"Free run" is really the tile the spec taps', () => {
     // The spec enters the run through the freeform tile picker. The name
     // comes from the ACTIVITY_TYPES catalogue, so assert the catalogue AND
     // the render — a renamed tile would otherwise only surface in CI.
     const freerun = ACTIVITY_TYPES.find((a) => a.type === "freerun");
-    expect(freerun?.name).toBe("Free Run");
+    expect(freerun?.name).toBe("Free run");
     expect(DIRECT_LAUNCH_TYPES).toContain("freerun");
 
     render(

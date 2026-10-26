@@ -49,10 +49,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# Reads the repository and nothing else; it writes nothing with the token.
+permissions:
+  contents: read
+
 jobs:
   emulator-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Main run 39985990688 spent 9m48 on setup, build and server suites,
+    # then hit the former 15m limit during authenticated E2E. Leave time
+    # for the full browser suite, design-QA and cleanup on a slow runner.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -211,6 +218,9 @@ jobs:
       # Do not inline only part of the env before one command; that
       # caused seed:e2e to fail with E2E_AUTH_EMULATOR unset (the
       # shared e2e/helpers/emulator gate refused to run, by design).
+      #
+      # seed:review is a second account, one with a Weekly Review to
+      # open: the test user stays the cold-start fixture, which has none.
       - name: Run authenticated E2E
         env:
           E2E_AUTH_EMULATOR: "1"
@@ -219,7 +229,7 @@ jobs:
           GCLOUD_PROJECT: demo-tropos
         run: |
           firebase emulators:exec --only auth,firestore --project demo-tropos \
-            'npm run seed:e2e && npm run test:e2e -- auth.spec.ts --project=auth-emulator'
+            'npm run seed:e2e && npm run seed:review && npm run test:e2e -- auth.spec.ts --project=auth-emulator'
 
       # Keep the two focused mobile previews on success as well as failure.
       - name: Upload weekly-layout mobile previews

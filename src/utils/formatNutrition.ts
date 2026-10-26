@@ -26,6 +26,28 @@ export function formatMacro(value: number): string {
   return String(Math.round(value));
 }
 
+/** A nutrient's figure without its unit: grams as `formatMacro` writes
+ *  them, milligrams grouped for the reader's locale, because sodium runs
+ *  to four figures ("2,300"). */
+export function formatNutrientFigure(value: number, unit: "g" | "mg"): string {
+  return unit === "mg"
+    ? Math.round(value).toLocaleString()
+    : formatMacro(value);
+}
+
+/**
+ * A nutrient amount with its unit. Grams keep the food surface's house
+ * style, unspaced ("30g", as MacroColumn writes them); milligrams are
+ * spaced like every other unit in the app ("2,300 mg"), because the gram
+ * exception is the food surface's alone and names grams only. The two sit
+ * in one list (fiber, sugar, sodium), so the rule lives here rather than
+ * in a row's template, where one way of joining would serve both units.
+ */
+export function formatNutrientAmount(value: number, unit: "g" | "mg"): string {
+  const figure = formatNutrientFigure(value, unit);
+  return unit === "mg" ? `${figure} mg` : `${figure}g`;
+}
+
 /**
  * The calorie unit label, in one place.
  *

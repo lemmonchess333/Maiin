@@ -85,7 +85,6 @@ function screenProps(
     sessionDurationMinutes: 41,
     completing: false,
     planContext: {
-      progress: "Week 1 · 2 of 6 planned lifts complete",
       next: "Next: Legs · Squat focus",
     },
     onFinish: () => {},
@@ -111,11 +110,11 @@ describe("SessionCompleteScreen — saved (Pol1)", () => {
     const badge = screen.getByTestId("session-badge");
     const bests = screen.getByRole("heading", { name: /New bests/ });
     expect(follows(bests, badge)).toBe(true);
-    // The plan line's figures are split into numeral spans; its second
-    // line has none.
     expect(follows(badge, screen.getByText("Next: Legs · Squat focus"))).toBe(
       true
     );
+    // The week's count is the week card's; the plan line does not repeat it.
+    expect(screen.queryByText(/planned lifts complete/)).toBeNull();
     expect(
       follows(
         badge,
@@ -135,8 +134,16 @@ describe("SessionCompleteScreen — saved (Pol1)", () => {
     expect(buttons[buttons.length - 1]).toBe(done);
     expect(follows(screen.getByText("Session details"), done)).toBe(true);
     expect(follows(done, screen.getByRole("status"))).toBe(true);
-    expect(screen.getByRole("status")).toHaveTextContent("Synced");
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(done.parentElement).toHaveClass("sticky", "bottom-0");
+  });
+
+  it("opens Session details on the app's chevron, not the browser's triangle", () => {
+    render(<SessionCompleteScreen {...screenProps({ saved: true })} />);
+    const summary = screen.getByText("Session details");
+    expect(summary.tagName).toBe("SUMMARY");
+    expect(summary).toHaveClass("list-none");
+    expect(summary.querySelector("svg.lucide-chevron-down")).not.toBeNull();
   });
 
   it("keeps the review's order: the decision before the session's detail", () => {
