@@ -17,6 +17,7 @@
  *   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
  *   GCLOUD_PROJECT=demo-tropos npm run seed:rich
  */
+import { createRequire } from "node:module";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
@@ -544,6 +545,35 @@ async function main() {
       endDate: in3Weeks,
       participantCount: 84,
     });
+  // This week's Weekly Warrior, as the server defines it, not joined: the
+  // weekly card's Join and countdown (or, on a Sunday, its "Ends tonight"
+  // line) are on every production account's Together tab, and the large
+  // text and axe captures measure that card only when a weekly exists.
+  const { buildCurrentChallenges } = createRequire(import.meta.url)(
+    "../functions/lib/challengeDefs.js"
+  ) as {
+    buildCurrentChallenges: (now: Date) => {
+      id: string;
+      type: string;
+      startDate: Date;
+      endDate: Date;
+    }[];
+  };
+  const weekly = buildCurrentChallenges(new Date()).find(
+    (c) => c.type === "weekly"
+  );
+  if (weekly) {
+    const { id, startDate, endDate, ...rest } = weekly;
+    await db
+      .collection("challenges")
+      .doc(id)
+      .set({
+        ...rest,
+        startDate: Timestamp.fromDate(startDate),
+        endDate: Timestamp.fromDate(endDate),
+        participantCount: 0,
+      });
+  }
 
   // One follow relationship: Social's zero-follow gate once hid the
   // activity list entirely (the solo-first layout, retired in Soc12), so

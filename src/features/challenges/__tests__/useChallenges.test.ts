@@ -150,15 +150,18 @@ describe("getTimeRemaining", () => {
     );
   });
 
-  it("returns hours inside the final day", () => {
+  it("returns hours inside the final day, in words", () => {
     expect(getTimeRemaining(endDate, endBoundary - 12 * 3_600_000)).toBe(
-      "12h left"
+      "12 hours left"
+    );
+    expect(getTimeRemaining(endDate, endBoundary - 90 * 60_000)).toBe(
+      "1 hour left"
     );
   });
 
-  it("returns minutes inside the final hour", () => {
+  it("returns minutes inside the final hour, spaced as 'min'", () => {
     expect(getTimeRemaining(endDate, endBoundary - 54 * 60_000)).toBe(
-      "54m left"
+      "54 min left"
     );
   });
 });

@@ -2672,6 +2672,32 @@ shared (pinned by the "profile:" cases in `firestore.rules.test.ts`).
       mode. It says "Couldn't load comments" with Try again, never "No
       comments yet" (which it also used to show while comments loaded).
 
+## The Together copy pass (owner, 2026-10-26)
+
+Affects: `ChallengeList`, `ChallengeCard`, the new `ChallengeRow`,
+`challengeEditions.ts`, `challengeFormat.ts` (`challengeGoal`),
+`CollectivePulse`, `SpacesDirectory`, and the descriptions in
+`functions/lib/challengeDefs.js` (deploys with the functions; the daily
+`rolloverChallenges` rewrites a running challenge's description).
+
+The intro paragraph went; joining confirms the edition and when the next
+one opens. Time left is said once for the month. Cards say their goal
+from the target in the reader's units, the "See N more" list is compact
+rows, no founding or "New space" line stands in for a count, the
+collective card shows "0 of 1,000 km", and an unjoined Weekly Warrior in
+its last day offers no Join.
+
+- [ ] **The new words reach the running challenges.** After the functions
+      deploy and the next 00:05 UTC `rolloverChallenges`, read
+      `challenges/strength-monthly-<YYYY-MM-01>`: its description is
+      "Everything you lift this month adds up.", and
+      `global-monthly-<YYYY-MM-01>`'s is "Running and lifting both count,
+      toward one score." (The cards show the goal either way.)
+- [ ] **On a phone:** join a monthly challenge from the "See N more" rows
+      and read the toast ("You're in for … opens on 1 …"); on a Sunday,
+      with Weekly Warrior not joined, the card says "Ends tonight. The
+      next one starts Monday." and offers no Join.
+
 ## The Settings pass (owner, 2026-10-01)
 
 Affects: `SettingsIndex.tsx`, `settings/SettingsList.tsx` (new),

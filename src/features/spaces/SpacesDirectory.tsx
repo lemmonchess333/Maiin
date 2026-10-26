@@ -14,9 +14,9 @@
  * pass). The Feed's compact "Spaces for you" row went in the same pass:
  * Together already leads with this directory.
  *
- * Density gate (Spc1c): member counts below
- * SPACE_MEMBER_COUNT_MIN_VISIBLE render as a "New space" chip, never a
- * shame-count. No animation loops (WKWebView).
+ * Density gate (Spc1c): a member count below
+ * SPACE_MEMBER_COUNT_MIN_VISIBLE is not shown, and nothing stands in for
+ * it until the count is real. No animation loops (WKWebView).
  */
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
@@ -177,38 +177,43 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
         >
           {def.name}
         </p>
-        <p
-          className={`text-caption font-medium mt-0.5 flex items-center gap-1 ${
-            photo ? "text-white/85" : "text-muted-foreground"
-          }`}
-        >
-          {event ? (
-            /* Runna's race-card anatomy: race day + city, not a member
+        {(event || showCount) && (
+          <p
+            className={`text-caption font-medium mt-0.5 flex items-center gap-1 ${
+              photo ? "text-white/85" : "text-muted-foreground"
+            }`}
+          >
+            {event ? (
+              /* Runna's race-card anatomy: race day + city, not a member
                count (membership lives on the space page header). */
-            <span className="truncate">
-              <span
-                className={
-                  event.dateKey < localDateString()
-                    ? undefined
-                    : "font-mono tabular-nums"
-                }
-              >
-                {event.dateKey < localDateString()
-                  ? "Next date TBA"
-                  : formatRaceEventDate(event)}
+              <span className="truncate">
+                <span
+                  className={
+                    event.dateKey < localDateString()
+                      ? undefined
+                      : "font-mono tabular-nums"
+                  }
+                >
+                  {event.dateKey < localDateString()
+                    ? "Next date TBA"
+                    : formatRaceEventDate(event)}
+                </span>
+                {" · "}
+                {event.city} {event.countryFlag}
               </span>
-              {" · "}
-              {event.city} {event.countryFlag}
-            </span>
-          ) : (
-            <>
-              <Users className="size-3" aria-hidden />
-              {showCount
-                ? `${memberCount.toLocaleString()} members`
-                : "New space"}
-            </>
-          )}
-        </p>
+            ) : (
+              <>
+                <Users className="size-3" aria-hidden />
+                <span>
+                  <span className="font-mono tabular-nums">
+                    {memberCount?.toLocaleString()}
+                  </span>{" "}
+                  members
+                </span>
+              </>
+            )}
+          </p>
+        )}
       </div>
     </Link>
   );

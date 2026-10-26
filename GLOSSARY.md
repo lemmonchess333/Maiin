@@ -116,7 +116,7 @@ Two axes, from the food-logging reference set:
 
 - **Space** — a Tropos-created public topic room (`spaces/{spaceId}` namespace; taxonomy in `src/features/spaces/spaceDefs.ts`). Users join (`members/{uid}`) and post (`posts/{postId}`); nobody creates public spaces — S1's rejection of user-created public communities stands. Seven at launch; `kind: interest | race | location` is schema-ready for later sections.
 - **Tropos Team badge** — `official: true` on a post, rules-validated against `system/config.officialUids` (fails closed when unset). Officials pin posts and moderate-delete.
-- **Density gate (spaces)** — member counts below `SPACE_MEMBER_COUNT_MIN_VISIBLE` render "New space", never a shame-count (Soc8 idiom).
+- **Density gate (spaces)** — a member count below `SPACE_MEMBER_COUNT_MIN_VISIBLE` is never shown (Soc8 idiom). The directory card shows nothing in its place until the count is real (owner, Together copy pass); the Space page's hero says "New space" when it has nothing else to say. Challenges keep the same rule: a joined count below three is not shown, and no "founding" line stands in for it.
 - **Circles vs Spaces** — Circles stay the private 2–8-person support layer; Spaces are the public curated layer. Same tab (Community), different trust models.
 
 ### Following (Polish2, 2026-10-20)

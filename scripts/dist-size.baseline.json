@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6407465,
+  "total": 6410935,
   "coldStart": ["firebase-auth", "vendor"],
   "chunks": {
     "ActivityCard": 33696,
@@ -47,7 +47,7 @@
     "CalorieBalanceChart": 4839,
     "camera": 337,
     "Card": 549,
-    "ChallengeList": 31179,
+    "ChallengeList": 34649,
     "ChartAreaGradient": 332,
     "chartGranularity": 582,
     "charts": 401242,

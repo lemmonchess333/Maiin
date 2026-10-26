@@ -107,6 +107,16 @@ export function formatDayMonthLong(d: Date): string {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
 }
 
+/** "Monday": the weekday alone, in full ("The next one starts Monday."). */
+export function formatWeekday(d: Date): string {
+  return d.toLocaleDateString("en-GB", { weekday: "long" });
+}
+
+/** "November": the month alone, in full ("You're in for November."). */
+export function formatMonth(d: Date): string {
+  return d.toLocaleDateString("en-GB", { month: "long" });
+}
+
 /** "22 August 2026" — the full month with its year (a race's date, said
  *  in full). */
 export function formatDayMonthYearLong(d: Date): string {
