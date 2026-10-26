@@ -759,8 +759,10 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
 `src/lib/runProgrammeViewModel.ts`):
 
 - **`RaceCockpitCard`** — race-prep identity card: readable distance heading
-  (Marathon / Half Marathon / 10K / 5K), target date, days-out countdown,
-  week N of M, current phase, and a phase rail. The rail reflects the REAL
+  (Marathon / Half Marathon / 10K / 5K), one date line ("28 Dec 2026 · 63
+  days out · week 1 of 10"), "Edit run plan" at the top right, and a phase
+  rail. There are no Week or Phase tiles: the date line carries the week,
+  the rail the phase. The rail reflects the REAL
   engine phases (`getPhaseForWeek`): **Base · Build · Taper · Race** — no
   invented "Peak" segment, so the active highlight always maps to a phase
   the scheduler can emit. Renders ONLY in the race-goal overlay.
@@ -768,7 +770,21 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   (`RaceWeeksAhead`, R23 in Pgm8, 2026-10-11): one row a week to race
   week, each week's long run and quality sessions by name and "Lighter
   week" on a step-back week, with no days, no easy runs and no base, build
-  or peak (E3a). It is worked out when opened.
+  or peak (E3a). It is worked out when opened. Below it, quiet neutral
+  rows (a muted fill, an icon, a chevron, 44px): Adjust this week (not in
+  recovery or after the race), Train together, and Race community when
+  the goal is bound to a race space. A Circle and a race space are social,
+  so their rows are neutral, never a coral button.
+- **One way into each (owner, 2026-10-26).** The owner, on the Run tab
+  and Settings → Run plan: "edit plan also appears as I edit plan and
+  adjust". So the Run tab offers each once. With a race card on screen,
+  its "Edit run plan" is the way into `/settings/run-plan` and its Adjust
+  this week row the way into the week's sheet; the tab's footer "Edit run
+  plan" shows only when there is no race card (a free runner, or a race
+  plan that is over or recovering). Settings → Run plan no longer has an
+  Adjust this week row. This changes Run13 (1), which put the sheet's
+  entry in both the cockpit and `/settings/run-plan`; the plan file's
+  Run13 row is updated on its own lock branch.
 - **`SessionCommandCard`** — the "what's next" command surface. Eyebrow +
   title (the card's one big line, H2) + one quiet meta line + a single
   primary action (its own control, NOT the whole card) + an overflow that
@@ -779,7 +795,26 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   on Home's cards: a lift day's muscles (`figure`), or a run's type in a
   tile (`icon`, from `runTemplateIcon`); the halo went with the app's
   other glows. A free runner's Run tab leads with the same card ("Start a
-  run" over "Pick your pace today"). Train's day list below it draws each
+  run" over "Pick your pace today").
+- **Run and Lift pick the day the same way (owner, 2026-10-26).** The
+  owner: "the lifting and running are very different for selecting the
+  current day for example start exercise but then for run its a lot
+  smaller and looks weird", and left the answer to the review ("you
+  figure it out"). So every Run tab state is a `SessionCommandCard`, the
+  Lift tab's size. The tab opens on today's run, or, when today has none
+  to start, on the week's next one ("Up next · Tue 27 Oct"), as the Lift
+  tab opens on its next session; the week strip still rings today
+  (`defaultRunDayKey`). Runs stay date-pinned (ADR-0002), so there is no
+  Make this next. A day with no run to start is the same card: its date
+  as the eyebrow, "Rest day" or "Lift day" as the title, and Start free
+  run. Today's run says "Start run" and goes straight into the run
+  (`?start=1`), as the Lift tab's Start begins its workout; another day's
+  says "View run" and opens the run's own card. The run card's meta is
+  the dose, the pace when there is one, and the zone: "30 min · Z2
+  112–130 bpm". That changes Run21 (1)'s "Z2 · Easy" on this card only:
+  the feel line just above it starts with the effort's name, and the
+  day's sheet keeps "Z2 · Easy · 112–130 bpm". A tomorrow's run with
+  none before it is "Up next", not "Tomorrow". Train's day list below it draws each
   exercise through `ExerciseRowSummary` (`ExerciseThumb`: the cut-out
   drawing, else the category's muscles, else a dumbbell), and Train shows
   one advice notice at a time (`programNotices`).
@@ -806,7 +841,10 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
 Locked model (Run9a): the Run surface is **two states only** — freeform
 substrate + optional race-goal overlay (`resolveRunPlanSurface`). There is
 NO user-facing freeform/structured/race_prep toggle and no mode chips. Do
-not reintroduce structured mode or structured-mode transitions.
+not reintroduce structured mode or structured-mode transitions. Settings →
+Run plan asks the one question the model has, whether there is a race:
+a coral `SegmentedControl`, "No race | Training for a race", the same
+control as the race's Distance. It never names the stored mode.
 
 Constraints these primitives must keep:
 

@@ -415,6 +415,10 @@ describe("ProgrammeRunSection — the no-run card names the day it is on", () =>
       type: day === TODAY_DOW ? type : ("rest" as const),
     }));
 
+  /* The day is the card's title, on the same SessionCommandCard as a
+     planned run: the 25px heading and the full-width Start. It was a
+     hand-built small card, a 14px bold "No run scheduled" over a 12px
+     line, beside the Lift tab's full-size card. */
   it("says lift day on a lift-only day, not rest day", () => {
     renderSection(
       {
@@ -425,9 +429,15 @@ describe("ProgrammeRunSection — the no-run card names the day it is on", () =>
       },
       makeProgramState([])
     );
-    expect(screen.getByText("No run scheduled")).toBeInTheDocument();
-    expect(screen.getByText(/^Lift day\./)).toBeInTheDocument();
-    expect(screen.queryByText(/^Rest day\./)).toBeNull();
+    const title = screen.getByRole("heading", { name: "Lift day" });
+    expect(title.className).toContain("text-h2");
+    expect(
+      screen.getByText("Head out for a free run if you like.")
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Rest day" })).toBeNull();
+    expect(screen.queryByText("No run scheduled")).toBeNull();
+    const start = screen.getByRole("button", { name: "Start free run" });
+    expect(start.className).toContain("min-h-[52px]");
   });
 
   it("still says rest day on a day with nothing on it", () => {
@@ -440,9 +450,11 @@ describe("ProgrammeRunSection — the no-run card names the day it is on", () =>
       },
       makeProgramState([])
     );
-    expect(screen.getByText("No run scheduled")).toBeInTheDocument();
-    expect(screen.getByText(/^Rest day\./)).toBeInTheDocument();
-    expect(screen.queryByText(/^Lift day\./)).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Rest day" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Head out whenever you like.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Lift day" })).toBeNull();
   });
 
   it("opens the running form guide from the runner", async () => {
@@ -481,12 +493,14 @@ describe("ProgrammeRunSection — the no-run card names the day it is on", () =>
       },
       makeProgramState([])
     );
-    expect(screen.getByText("No run scheduled")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Rest day" })
+    ).toBeInTheDocument();
     expect(
       container
         .querySelector('img[src$="/form-art/run-easy.webp"]')
-        ?.getAttribute("aria-hidden")
-    ).toBe("true");
+        ?.closest('[aria-hidden="true"]')
+    ).not.toBeNull();
   });
 });
 
@@ -533,16 +547,85 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
     expect(navigateMock).toHaveBeenCalledWith("/settings/run-plan");
   });
 
-  // Run8 PR1a — footer is a single muted-gray "Manage Run Plan ›"
-  // text-link (was "Change plan ›"). Mode is conveyed by the section
-  // subtitle in non-freeform; freeform shows no subtitle and the
-  // hero IS the mode reveal.
-  it("footer is a single Manage Run Plan link with no 'Running mode:' status prefix", () => {
+  // The way into the editor is one muted text link with no "Running
+  // mode:" status prefix.
+  it("has a single Edit run plan link with no 'Running mode:' status prefix", () => {
     renderSection(commonProps(), makeProgramState([makeRunDay()]));
     expect(screen.queryByText(/Running mode:/i)).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Edit run plan/i })
     ).toBeInTheDocument();
+  });
+
+  /* Owner: "edit plan also appears as I edit plan and adjust". With a
+     race card on screen, its "Edit run plan" and its "Adjust this week"
+     row are the tab's only ways into each, where the tab's footer had a
+     second Edit run plan and a floating "Adjust this week ›" link. */
+  it("race prep: one Edit run plan and one Adjust this week, both on the race card", () => {
+    renderSection(commonProps(), makeProgramState([makeRunDay()]));
+    const card = screen.getByRole("region", { name: "Race plan" });
+    const edits = screen.getAllByRole("button", { name: /Edit run plan/i });
+    expect(edits).toHaveLength(1);
+    expect(card).toContainElement(edits[0]);
+    const adjusts = screen.getAllByRole("button", {
+      name: /Adjust this week/i,
+    });
+    expect(adjusts).toHaveLength(1);
+    expect(card).toContainElement(adjusts[0]);
+    expect(screen.queryByText(/Adjust this week ›/)).not.toBeInTheDocument();
+  });
+
+  /* The week was said four ways: the page header, the race card's tiles,
+     its rail and the run card's meta ("Base · week 1 of 10"). The run
+     card keeps the session; the race card's date line keeps the week. */
+  it("race prep: the run card's meta carries no plan position", () => {
+    renderSection(
+      commonProps(),
+      makeProgramState(
+        [
+          makeRunDay({
+            id: "runday_today",
+            templateId: "easy_30",
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ],
+        {
+          runPlan: {
+            mode: "race_prep",
+            raceGoal: { distance: "10k", targetDate: "2099-04-18" },
+            totalWeeks: 12,
+            currentWeek: 0,
+          },
+        }
+      )
+    );
+    const runCard = screen
+      .getAllByRole("region")
+      .find((r) => /^Due today/.test(r.getAttribute("aria-label") ?? ""))!;
+    expect(runCard).toBeDefined();
+    expect(runCard).not.toHaveTextContent(/week \d+ of/i);
+    expect(screen.getByRole("region", { name: "Race plan" })).toHaveTextContent(
+      /week 1 of 12/
+    );
+  });
+
+  it("freeform: the footer link is the way in, and there is no Adjust this week", () => {
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />
+    );
+    expect(
+      screen.getAllByRole("button", { name: /Edit run plan/i })
+    ).toHaveLength(1);
+    expect(
+      screen.queryByRole("button", { name: /Adjust this week/i })
+    ).not.toBeInTheDocument();
   });
 
   // Run7 Q5 — race goal form collapses to a one-line summary when a
@@ -566,7 +649,7 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
     expect(screen.getByText(/days out/i)).toBeInTheDocument();
     // Edit affordance is the muted-gray text-link (navigation discipline),
     // not a coral fill.
-    const editBtn = screen.getByRole("button", { name: /Edit race goal/i });
+    const editBtn = screen.getByRole("button", { name: /Edit run plan/i });
     expect(editBtn.className).toContain("text-muted-foreground");
     expect(editBtn.style.color).toBe("");
   });
@@ -767,15 +850,39 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
       />
     );
     expect(
-      screen.getByRole("button", { name: /View run/i })
+      screen.getByRole("button", { name: "Start run" })
     ).toBeInTheDocument();
     expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
+  });
+
+  /* Today's run starts from Train, straight into the run, as the Lift
+     tab's Start begins its workout. It said "View run" and opened a launch
+     screen that repeated the card with a Start of its own. Another day's
+     run still opens its card to look over. */
+  it("starts today's run straight away, and views another day's", () => {
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        programState={makeProgramState([
+          makeRunDay({
+            id: "runday_today",
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ])}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Start run" }));
+    expect(navigateMock).toHaveBeenLastCalledWith(
+      expect.stringMatching(/^\/run\?.*scheduledRunId=runday_today.*&start=1$/)
+    );
   });
 
   it("draws the runner on the run card, the fast stride for a tempo", () => {
     const runnerOnCard = () =>
       screen
-        .getByRole("button", { name: /View run/i })
+        .getByRole("button", { name: "Start run" })
         .closest("section")!
         .querySelector("img")
         ?.getAttribute("src");
@@ -869,11 +976,11 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
       },
     } as Partial<UserProfile>);
     // The meta line sets each token in its own span; read it whole. It
-    // opens with the plan position ("Base · week 1 of 12").
+    // opens with the dose: the plan position is not on the card.
     const metaLine = () =>
       Array.from(document.querySelectorAll("p"))
         .map((el) => el.textContent ?? "")
-        .find((text) => /· \d+ min\b/.test(text));
+        .find((text) => /^\d+ min\b/.test(text));
     const renderToday = (templateId: string) =>
       renderWith(
         <ProgrammeRunSection
@@ -891,10 +998,12 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         />
       );
     const easy = renderToday("easy_30");
-    expect(metaLine()).toMatch(/· 30 min · .*\/km/);
+    expect(metaLine()).toMatch(/^30 min · .*\/km/);
     easy.unmount();
     renderToday("run_walk_1");
-    expect(metaLine()).toMatch(/· 29 min · /);
+    // The type word went from the line (the title names the session), so
+    // a run-walk with no zone reads its time alone.
+    expect(metaLine()).toMatch(/^29 min\b/);
     expect(metaLine()).not.toMatch(/\/km/);
   });
 
@@ -1000,7 +1109,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     const metaLine = () =>
       Array.from(document.querySelectorAll("p"))
         .map((el) => el.textContent ?? "")
-        .find((text) => /· 15 km\b/.test(text));
+        .find((text) => /^15 km\b/.test(text));
     const renderToday = (extra: Partial<UserProfile>) =>
       renderWith(
         <ProgrammeRunSection
@@ -1026,10 +1135,10 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         pendingConfirmation: false,
       },
     } as Partial<UserProfile>);
-    expect(metaLine()).toMatch(/· 15 km · about 100 min\b/);
+    expect(metaLine()).toMatch(/^15 km · about 100 min\b/);
     confirmed.unmount();
     renderToday({});
-    expect(metaLine()).toMatch(/· 15 km\b/);
+    expect(metaLine()).toMatch(/^15 km\b/);
     expect(metaLine()).not.toMatch(/about \d+ min/);
   });
 
@@ -1987,6 +2096,38 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
     );
   });
 
+  /* A lift day or a rest day opened on today's empty card while the week's
+     next run sat a tap away. The tab opens on that run, as the Lift tab
+     opens on its next session, and the strip still rings today. */
+  it("opens on the week's next run when today has none, today still marked", () => {
+    renderSection(
+      commonProps(),
+      makeProgramState([
+        makeRunDay({
+          id: "runday_sat",
+          date: "2026-09-12",
+          weekKey: "2026-09-07",
+          dayIndex: 6,
+          status: "planned",
+        }),
+      ])
+    );
+    expect(screen.getByRole("tab", { name: "Easy 30" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    expect(screen.getByRole("tab", { name: /^11, today$/ })).toHaveAttribute(
+      "aria-selected",
+      "false"
+    );
+    expect(
+      screen.getByRole("region", { name: /^Up next · Sat\s12\sSep — Easy 30$/ })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "View run" })
+    ).toBeInTheDocument();
+  });
+
   it("falls back to today when ?rday points outside the week", () => {
     /* The fallback was `runWindow[0]`, which meant "today" only while the
        window began on today. On a calendar week index 0 is MONDAY, so a
@@ -2006,10 +2147,13 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
   });
 });
 
-describe("ProgrammeRunSection — the heart-rate zone carries its name", () => {
-  // Run21 (1): "Z2 · Easy", not "Z2" alone; the run's own type word isn't
-  // said twice beside it.
-  it("names the zone on the selected run's line", () => {
+describe("ProgrammeRunSection — the run card's one short meta line", () => {
+  /* The card's meta read "Base · week 1 of 10 · 30 min" over "Z2 · Easy ·
+     112–130 bpm", clipped at 320 px. It is the dose, the pace when there
+     is one, and the zone with its range: "30 min · Z2 120–140 bpm". The
+     effort's name ("Easy", Run21 (1)) is the feel line's first word just
+     above it, and the day's sheet keeps "Z2 · Easy · 120–140 bpm". */
+  it("gives the zone and its range, without its name or the type", () => {
     const today = new Date();
     renderWith(
       <ProgrammeRunSection
@@ -2026,9 +2170,10 @@ describe("ProgrammeRunSection — the heart-rate zone carries its name", () => {
         ])}
       />
     );
-    const text = document.body.textContent ?? "";
-    expect(text).toContain("Z2 · Easy · 120–140 bpm");
-    expect(text).not.toContain("120–140 bpm · Easy");
+    const meta = Array.from(document.querySelectorAll("p"))
+      .map((el) => el.textContent ?? "")
+      .find((text) => /^30 min\b/.test(text));
+    expect(meta).toBe("30 min · Z2 120–140 bpm");
   });
 });
 
@@ -2176,10 +2321,16 @@ describe("ProgrammeRunSection — one run is up next", () => {
       )
     );
 
+  /* Monday holds no run, so Tuesday's is the one up next, and the tab
+     opens on it: tomorrow's run says "Up next" as the Lift tab's next
+     session does, where it said "Tomorrow". */
   it("calls the runs after the next one upcoming", () => {
     renderSection(commonProps(), week());
+    expect(
+      screen.getByRole("region", { name: /^Up next · Tue\s20\sOct/ })
+    ).toBeVisible();
     open("Easy 30");
-    expect(screen.getByRole("region", { name: /^Tomorrow · / })).toBeVisible();
+    expect(screen.getByRole("region", { name: /^Up next · / })).toBeVisible();
     open("Easy 30 + strides");
     expect(screen.getByRole("region", { name: /^Upcoming · / })).toBeVisible();
     open("Long 15K");

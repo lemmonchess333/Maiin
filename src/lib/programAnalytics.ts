@@ -33,7 +33,7 @@ export interface ProgramEventMetadata {
   /** adjust_week_applied (easier_week): number of days swapped. */
   swapCount?: number;
   /** adjust_week_opened: which entry point. */
-  source?: "cockpit" | "settings";
+  source?: "cockpit";
   /** ease_week_nudge_shown: the evidence surfaced in the card. */
   harderCount?: number;
   ratedCount?: number;

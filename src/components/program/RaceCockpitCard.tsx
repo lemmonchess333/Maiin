@@ -17,10 +17,17 @@
  */
 
 import type { ReactNode } from "react";
-import { ChevronRight, Flag, Users } from "lucide-react";
+import {
+  ChevronRight,
+  Flag,
+  SlidersHorizontal,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
-import { Button } from "@/components/ui/Button";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { haptic } from "@/lib/haptic";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -54,6 +61,9 @@ interface RaceCockpitCardProps {
   /** The plan's coming weeks (`RaceWeeksAhead`, R23), under the phase
    *  rail: where the plan is, then what is ahead of it. */
   weeksAhead?: ReactNode;
+  /** Opens the Adjust this week sheet. Omitted while the week cannot be
+   *  adjusted (recovery, just after the race), and the row goes with it. */
+  onAdjustWeek?: () => void;
   onEdit: () => void;
 }
 
@@ -70,6 +80,7 @@ export default function RaceCockpitCard({
   belowFloor = false,
   raceSpaceId,
   weeksAhead,
+  onAdjustWeek,
   onEdit,
 }: RaceCockpitCardProps) {
   const navigate = useNavigate();
@@ -94,8 +105,12 @@ export default function RaceCockpitCard({
       aria-label="Race plan"
       className="rounded-2xl bg-card border border-border p-4 space-y-4 card-shadow"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1 min-w-0">
+      {/* "Edit run plan" drops under the heading, at the right, once the
+          heading would be narrower than 9em (a long event name, or larger
+          text on the phone). It is the Run tab's one way into the run plan
+          editor while a race is set. */}
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+        <div className="space-y-1 min-w-[min(100%,9em)] flex-1">
           <SectionLabel
             as="span"
             className="inline-flex items-center gap-1.5 font-bold text-running-strong"
@@ -106,49 +121,44 @@ export default function RaceCockpitCard({
           <h3 className="text-2xl font-extrabold tracking-tight text-foreground leading-tight">
             {eventName || distanceLabel}
           </h3>
+          {/* The week sits on the date line. The rail below marks the
+              phase, and the page header names the week too, so tiles for
+              Week and Phase said both a third time. */}
+          {/* Each fact keeps to one line, so a narrow card breaks the line
+              at a middot, never inside "week 1 of 10". */}
           <p className="text-sm text-muted-foreground">
             {/* When the event name takes the heading, the distance demotes
                 into this meta row. */}
             {eventName && (
               <>
-                {distanceLabel}
+                <span className="whitespace-nowrap">{distanceLabel}</span>
                 {" · "}
               </>
             )}
-            {dateLabel}
+            <span className="whitespace-nowrap">{dateLabel}</span>
             {" · "}
-            <span className="font-medium text-foreground">
+            <span className="whitespace-nowrap font-medium text-foreground">
               {daysToRace} {daysToRace === 1 ? "day" : "days"} out
             </span>
+            {hasProgress && (
+              <>
+                {" · "}
+                <span className="whitespace-nowrap">
+                  <InlineNumerals>{`week ${currentWeek! + 1} of ${totalWeeks!}`}</InlineNumerals>
+                </span>
+              </>
+            )}
           </p>
         </div>
         <button
           type="button"
           onClick={onEdit}
-          aria-label="Edit race goal"
-          className="shrink-0 inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
+          className="ml-auto shrink-0 inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-2 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
         >
-          Edit
+          Edit run plan
           <ChevronRight className="size-3.5" aria-hidden="true" />
         </button>
       </div>
-
-      {hasProgress && (
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-muted/60 p-3">
-            <SectionLabel>Week</SectionLabel>
-            <p className="text-lg font-semibold tabular-nums font-mono text-foreground">
-              {currentWeek! + 1} / {totalWeeks!}
-            </p>
-          </div>
-          <div className="rounded-xl bg-muted/60 p-3">
-            <SectionLabel>Phase</SectionLabel>
-            <p className="text-lg font-semibold text-foreground">
-              {phaseLabel ?? "—"}
-            </p>
-          </div>
-        </div>
-      )}
 
       {hasProgress && (
         <div className="space-y-2">
@@ -164,47 +174,45 @@ export default function RaceCockpitCard({
 
       {weeksAhead}
 
-      {/* PROGRAM-CIRCLE-01 (slice 4a) — hand the race plan off to a
-          Circle. Running non-critical action → sport-tinted (coral).
-          Privacy fence: ONLY the space type, a readable title and the
-          race date travel — never routes, GPS, paces or plan internals. */}
-      <Button
-        variant="sport-tinted"
-        fullWidth
-        onClick={() => {
-          haptic("light");
-          navigate(
-            `/social?circleCreate=race&circleTitle=${encodeURIComponent(
-              `${distanceLabel} training`
-            )}&circleDate=${targetDate}`
-          );
-        }}
-      >
-        Train together
-      </Button>
-
-      {raceSpaceLinked && (
-        /* Races plan PR4 — cockpit → race space cross-link. Quiet row,
-           not a second CTA: the community is a place to visit, not an
-           action to take. */
-        <button
-          type="button"
-          onClick={() => {
-            haptic("light");
-            navigate(`/space/${raceSpace!.id}`);
-          }}
-          className="w-full min-h-[44px] flex items-center justify-between gap-2 rounded-xl bg-muted/60 px-3.5 text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
-        >
-          <span className="flex items-center gap-2 min-w-0">
-            <Users className="size-4 shrink-0 text-running" aria-hidden />
-            <span className="truncate">Race community</span>
-          </span>
-          <ChevronRight
-            className="size-4 shrink-0 text-muted-foreground"
-            aria-hidden
+      {/* The card's quiet rows, under the rail. A Circle and a race space
+          are social, not a sport, so they are neutral rows rather than
+          coral buttons.
+          Adjust this week (Run13) opens the week's sheet. It lives here
+          only: the race plan is what it adjusts, and the owner asked for
+          one way into it.
+          PROGRAM-CIRCLE-01 (slice 4a): Train together hands the race plan
+          off to a Circle. Privacy fence: ONLY the space type, a readable
+          title and the race date travel, never routes, GPS, paces or plan
+          internals. */}
+      <div className="space-y-2">
+        {onAdjustWeek && (
+          <CardRow
+            icon={SlidersHorizontal}
+            label="Adjust this week"
+            onClick={onAdjustWeek}
           />
-        </button>
-      )}
+        )}
+        <CardRow
+          icon={UserPlus}
+          label="Train together"
+          onClick={() =>
+            navigate(
+              `/social?circleCreate=race&circleTitle=${encodeURIComponent(
+                `${distanceLabel} training`
+              )}&circleDate=${targetDate}`
+            )
+          }
+        />
+        {raceSpaceLinked && (
+          /* Races plan PR4: cockpit → race space cross-link. The community
+             is a place to visit, not an action to take. */
+          <CardRow
+            icon={Users}
+            label="Race community"
+            onClick={() => navigate(`/space/${raceSpace!.id}`)}
+          />
+        )}
+      </div>
 
       {inTaper && (
         <SectionLabel className="text-running-strong">
@@ -261,5 +269,38 @@ export default function RaceCockpitCard({
         )
       )}
     </section>
+  );
+}
+
+/** One quiet row inside the card: a muted fill, an icon, the words and a
+ *  chevron, 44px tall. For the card's ways out to somewhere else, which
+ *  must not compete with the session card's one filled button. */
+function CardRow({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        haptic("light");
+        onClick();
+      }}
+      className="w-full min-h-[44px] flex items-center justify-between gap-2 rounded-xl bg-muted/60 px-3.5 text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
+    >
+      <span className="flex items-center gap-2 min-w-0">
+        <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        <span className="truncate">{label}</span>
+      </span>
+      <ChevronRight
+        className="size-4 shrink-0 text-muted-foreground"
+        aria-hidden
+      />
+    </button>
   );
 }

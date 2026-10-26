@@ -152,6 +152,8 @@ export const TRAIN = {
   runWeek: "Run week",
   /** A planned day's card opens the run's own card (`ProgrammeRunSection`). */
   viewRun: "View run",
+  /** Today's planned run starts from its card, straight into the run. */
+  startRun: "Start run",
 } as const;
 
 /** A run's name on Train's run week, from its template: the function
