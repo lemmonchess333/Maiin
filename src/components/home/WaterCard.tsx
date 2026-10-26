@@ -343,12 +343,19 @@ export default function WaterCard({
             for this serving, and the size sheet gains a "Remove" row
             (only while there is something to remove). The full-width card
             keeps its − / + pair, so the design guide's "equal minus/plus"
-            line now names that card only. */}
+            line now names that card only.
+
+            Under 9em the disc drops to the tile's foot, where an empty
+            day's size buttons sit, and would cover them. On an empty day
+            it gives way there: the buttons beside it add the same water. */}
         <IconButton
           onClick={quickAdd}
           aria-label={`Add ${servingMl} ml`}
           size="sm"
-          className="absolute top-3 right-3 @max-[9em]:top-auto @max-[9em]:bottom-3 z-20 size-8 rounded-full bg-teal text-teal-foreground hover:bg-teal/90 before:absolute before:-inset-1.5 before:content-['']"
+          className={cn(
+            "absolute top-3 right-3 @max-[9em]:top-auto @max-[9em]:bottom-3 z-20 size-8 rounded-full bg-teal text-teal-foreground hover:bg-teal/90 before:absolute before:-inset-1.5 before:content-['']",
+            !hasWater && "@max-[9em]:hidden"
+          )}
           icon={<Plus className="size-4" />}
         />
         <div className="relative z-10 flex flex-col flex-1">

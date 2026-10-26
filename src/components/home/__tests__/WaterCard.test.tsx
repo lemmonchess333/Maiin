@@ -545,3 +545,36 @@ describe("WaterCard — an empty day's tile", () => {
     expect(screen.queryByRole("button", { name: "Log 500 ml" })).toBeNull();
   });
 });
+
+/* Under 9em of tile the plus drops to the foot, where an empty day's size
+   buttons sit. On an empty day it gives way there rather than cover them;
+   once there is water the buttons are gone and the plus stays. */
+describe("WaterCard tile — the plus on a narrow empty day", () => {
+  it("gives way to the size buttons only while the day is empty", () => {
+    const { unmount } = render(
+      <WaterCard
+        compact
+        ml={0}
+        targetMl={2000}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: "Add 500 ml" })).toHaveClass(
+      "@max-[9em]:hidden"
+    );
+    unmount();
+    render(
+      <WaterCard
+        compact
+        ml={500}
+        targetMl={2000}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: "Add 500 ml" })).not.toHaveClass(
+      "@max-[9em]:hidden"
+    );
+  });
+});

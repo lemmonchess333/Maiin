@@ -87,6 +87,8 @@ describe("the shared control boundary measures 3:1", () => {
 describe("controls draw that boundary", () => {
   it("the shared class strings name it", () => {
     expect(FIELD_EDGE).toContain("border-muted-foreground/80");
+    // Dark rests on the hairline, as the field primitive does.
+    expect(FIELD_EDGE).toContain("dark:border-border");
     expect(SECONDARY_ON_CARD_EDGE).toContain("border-muted-foreground/80");
     expect(FIELD_FOCUS_RING).toContain("focus-visible:outline-primary!");
   });
