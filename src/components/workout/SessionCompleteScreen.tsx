@@ -15,7 +15,7 @@ import { CATEGORY_DISPLAY } from "@/components/analytics/muscleGroupTaxonomy";
 import { movementCategoryLabel } from "@/lib/exerciseMovementCategory";
 import { liftDayLine } from "@/lib/liftDayLabel";
 import { durationFigure, setsFigure, workFigure } from "@/lib/liftFigures";
-import { Trophy } from "lucide-react";
+import { ChevronDown, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -49,7 +49,7 @@ interface SessionCompleteScreenProps {
   completing: boolean;
   saved?: boolean;
   saveStatus?: "queued" | "synced" | "needs-attention";
-  planContext?: { progress: string; next: string };
+  planContext?: { next: string };
   /** The saved session's feed post. The finish screen asks once, posts
    *  automatically, or offers the one-off share (`SessionShareRow`). */
   share?: SessionShareAction;
@@ -93,7 +93,7 @@ export default function SessionCompleteScreen({
       : saveStatus === "needs-attention"
         ? "Needs attention · your session is here to retry"
         : saved
-          ? "Synced"
+          ? "Saved"
           : "Not saved yet";
 
   /* Saving swaps the review's Save for the saved screen's Done, pinned at
@@ -478,21 +478,21 @@ export default function SessionCompleteScreen({
             </Button>
           </div>
         )}
+        {/* Only what comes next: the week's count is the card under it. */}
         {saved && planContext && (
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>
-              <InlineNumerals>{planContext.progress}</InlineNumerals>
-            </p>
-            <p>
-              <InlineNumerals>{planContext.next}</InlineNumerals>
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            <InlineNumerals>{planContext.next}</InlineNumerals>
+          </p>
         )}
         {saved && <WeekPulseCard />}
         {saved && <CompletionExtras share={share} badge={false} />}
-        <details className="space-y-4">
-          <summary className="min-h-11 py-3 cursor-pointer text-sm font-semibold text-foreground">
+        <details className="group space-y-4">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 [&::-webkit-details-marker]:hidden">
             Session details
+            <ChevronDown
+              className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
           </summary>
           {/* Exercise Breakdown */}
           <motion.div

@@ -63,7 +63,6 @@ import {
 } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import LiftPurpose from "@/components/program/LiftPurpose";
-import LiftRulesInfo from "@/components/program/LiftRulesInfo";
 import { deloadDismissKey, pickLiftAdvice } from "@/lib/programNotices";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
@@ -1032,7 +1031,10 @@ function ProgramInner() {
     // Settings' words, as everywhere else on Train.
     if (dayCount === 0)
       return `${focusLabel(programState.primaryGoal ?? "general")} · no lift days`;
-    const daysLabel = dayCount === 1 ? "1 day/week" : `${dayCount} days/week`;
+    // A no-break space: the line wraps on a phone, and "5" alone at the end
+    // of one line with "days/week" opening the next reads as two things.
+    const daysLabel =
+      dayCount === 1 ? "1\u00a0day/week" : `${dayCount}\u00a0days/week`;
     // The focus is deliberately absent from this branch. The week row
     // states it on every render, in Settings' words (`focusLabel`), with
     // or without a block running. Carrying it here as well named one
@@ -1168,11 +1170,15 @@ function ProgramInner() {
       title="Train"
       banner={<ProgramOfflineBanner />}
       /* Tab-aware, so the Run tab does not read as an add-on under a
-         lifting-only header. Two lines reserved: the lift line often wraps
-         while the run line is one, and without the reserve everything
-         below shifted ~12px on Lift↔Run. */
+         lifting-only header. It wraps rather than truncating: a five-day
+         split ("Push / Pull / Legs + Upper / Lower · 5 days/week") is two
+         lines on a phone. The other tab's line holds its place unseen, so
+         the header is as tall as the longer of the two and nothing below
+         moves on Lift↔Run. */
       subtitle={activeTab === "run" ? programRunHeaderLine : programHeaderLine}
-      subtitleReserveLines={1}
+      subtitleAlternates={[
+        activeTab === "run" ? programHeaderLine : programRunHeaderLine,
+      ]}
       /* Overflow, plus a "Done" exit only while reordering. */
       actions={
         <>
@@ -1302,13 +1308,6 @@ function ProgramInner() {
                 onNextWeek={goForward}
                 canGoPrev={canGoBack}
                 canGoNext={canGoForward}
-                info={
-                  <LiftRulesInfo
-                    purpose={null}
-                    programme={programState}
-                    experience={profile?.experience}
-                  />
-                }
               />
             </div>
           </TrackProgrammeSectionView>
@@ -2215,12 +2214,7 @@ function ProgramInner() {
                 sessionDayIndex,
                 storedDay.dayName
               )}
-              planContext={liftCompletionContext(
-                programState,
-                sessionDayIndex,
-                todayKey,
-                profile?.experience
-              )}
+              planContext={liftCompletionContext(programState, sessionDayIndex)}
               draftEpoch={programState.weekNumber}
               // Variant-scoped draft namespace (PROGRAM-ADAPT-01
               // follow-up): the draft identity fingerprints the

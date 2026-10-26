@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { Spinner } from "@/components/ui/Spinner";
+import { CirclesCardSkeleton } from "@/components/LoadingSkeleton";
 import { getTimeAgo } from "@/lib/timeAgo";
 import { formatDayMonth } from "@/utils/formatters";
 import { localWeekKey, localDateString } from "@/lib/dateHelpers";
@@ -266,10 +267,12 @@ export default function CirclesSection({
     backCheckIn,
     resolveTarget,
   } = useGoalSpaces(uid);
-  /* Circle names go through the word filter (circleTitle), so the list
-     waits for it as it waits for the Circles: no name is drawn unseen. */
+  /* Circle names go through the word filter (circleTitle), so a list with
+     Circles in it waits for it as it waits for the Circles: no name is
+     drawn unseen. A list with none has no name to draw, so the empty card
+     shows as soon as the list lands. */
   const wordFilter = useWordFilter();
-  const loading = circlesLoading || !wordFilter;
+  const loading = circlesLoading || (circles.length > 0 && !wordFilter);
 
   /* A restricted account can read its Circles and leave them, but not
      start, join, check in, back a check-in or share (S4e). The section
@@ -778,12 +781,10 @@ export default function CirclesSection({
 
       {isRestricted && <RestrictedNotice />}
 
-      {loading && (
-        <div
-          className="h-16 rounded-xl bg-muted/40 motion-safe:animate-pulse"
-          aria-hidden="true"
-        />
-      )}
+      {/* The card's shape while the list loads, not a bare block: on a
+          phone the list lands seconds after the heading, and a grey box
+          with nothing in it reads as broken. */}
+      {loading && <CirclesCardSkeleton />}
 
       {/* SOCIAL-HOME-01 — a failed list read is NOT an empty list: the
           retry block replaces the list/empty state so a network blip

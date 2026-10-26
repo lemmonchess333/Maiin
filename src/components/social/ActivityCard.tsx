@@ -17,7 +17,12 @@ import {
   activityExercisesToRoutine,
   type SavedRoutineExercise,
 } from "../../lib/savedRoutines";
-import { liftPostLeadArt, liftPostRows } from "../../lib/liftPost";
+import {
+  liftPostExerciseCount,
+  liftPostLeadArt,
+  liftPostRowDone,
+  liftPostRows,
+} from "../../lib/liftPost";
 import { generatedDayType } from "@/lib/liftDayLabel";
 import { formArtCutoutUrl, type FormArtCutout } from "@/lib/formArtCutouts";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
@@ -73,6 +78,10 @@ const RUN_STAT_COLUMNS =
   "grid-cols-[repeat(3,minmax(max-content,1fr))] @max-[17.5em]:grid-cols-[repeat(2,minmax(max-content,1fr))] @max-[14.5em]:grid-cols-[minmax(max-content,1fr)]";
 const LIFT_CHIPS = ["Great lift", "Solid session", "Strong work"];
 
+/** The exercise rows a card in a list draws; the post's own page draws
+ *  them all. */
+const FEED_EXERCISE_ROWS = 3;
+
 interface ActivityCardProps {
   feedItem: FeedItem;
   onShare?: (item: FeedItem) => void;
@@ -82,6 +91,9 @@ interface ActivityCardProps {
   /** Open the comments as the card mounts: a comment notice opens the
    *  post to answer it. */
   openComments?: boolean;
+  /** Draw every exercise on the post, as its own page does. A card in a
+   *  list draws the first three and links the rest to that page. */
+  allExercises?: boolean;
 }
 
 function ActivityCard({
@@ -89,6 +101,7 @@ function ActivityCard({
   onShare,
   followAuthor,
   openComments = false,
+  allExercises = false,
 }: ActivityCardProps) {
   const { user, profile } = useAuth();
   /* The VIEWER's unit, not the poster's — a feed reads in the units of
@@ -156,8 +169,10 @@ function ActivityCard({
     rawExercises.length > 0 &&
     typeof (rawExercises[0] as { setCount?: unknown }).setCount === "number";
   const canSaveRoutine = feedItem.type === "workout" && hasStructuredExercises;
+  /* The exercises the card draws: one with no set done is left out of
+     the routine as it is left off the card. */
   const routineExercises: SavedRoutineExercise[] = canSaveRoutine
-    ? activityExercisesToRoutine(rawExercises)
+    ? activityExercisesToRoutine(rawExercises.filter(liftPostRowDone))
     : [];
 
   const rawTitle = (activity?.activityTitle ||
@@ -254,6 +269,24 @@ function ActivityCard({
      from a saved workout once wrote rows with no summary, and drawing them
      broke the card. */
   const exercises = liftPostRows(activity?.exercises, liftUnit);
+  const shownExercises = allExercises
+    ? exercises
+    : exercises.slice(0, FEED_EXERCISE_ROWS);
+  const moreExercises = exercises.length - shownExercises.length;
+  /* The exercises done, as the post's page lists them: a stored count can
+     include one with no set done. */
+  const exerciseCount = activity ? liftPostExerciseCount(activity) : 0;
+  /* The movement labels, less one that only repeats the title (or the
+     summary drawn in its place): a Push day's post is titled "Push"
+     already. */
+  const titleKey = (activityTitle || feedItem.summary)?.trim().toLowerCase();
+  const muscleLabels = Array.from(
+    new Set(
+      ((activity?.muscleGroups as string[] | undefined) ?? []).map(
+        movementCategoryLabel
+      )
+    )
+  ).filter((label) => label.trim().toLowerCase() !== titleKey);
   const prCount = activity?.prCount as number | undefined;
 
   /* ---- Hero panels (Social uplift v1) -------------------------------
@@ -548,16 +581,15 @@ function ActivityCard({
   const renderWorkoutContent = () =>
     activity && (
       <div className="space-y-2">
-        {/* Exercise details — top 3 visually. PR 4 dropped the
-            slice(0, 3) cap on the persisted payload (full list goes
-            to the doc so feed viewers can save the routine), so the
-            slice now lives here on the render side for compactness.
-            PR 4.5: rows are tappable for compare-this-lift when the
-            payload has structured fields and the user isn't the
-            author (no point comparing yourself to yourself). */}
+        {/* Exercise details — the first three in a list, every one on
+            the post's own page, which "+N more" opens. The post holds
+            the full list, so feed viewers can save the routine.
+            Rows are tappable for compare-this-lift when the payload has
+            structured fields and the user isn't the author (no point
+            comparing yourself to yourself). */}
         {exercises.length > 0 && (
           <div className="space-y-1">
-            {exercises.slice(0, 3).map((ex, i) => {
+            {shownExercises.map((ex, i) => {
               /* The summary is formatted from the row's figures when it
                  has any, so the "0kg" in old posts is fixed as it is drawn,
                  without a backfill. */
@@ -620,25 +652,36 @@ function ActivityCard({
                 </button>
               );
             })}
+            {/* The rest of the list, one quiet row that opens the post.
+                Its own row height clears the touch floor, so it does not
+                reach over the compare row above it. */}
+            {moreExercises > 0 && (
+              <Link
+                to={`/activity/${encodeURIComponent(feedItem.activityId)}`}
+                className="flex min-h-[44px] w-full items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <span>
+                  <span className="font-mono tabular-nums">
+                    +{moreExercises}
+                  </span>{" "}
+                  more{" "}
+                  <span className="sr-only">
+                    {moreExercises === 1 ? "exercise" : "exercises"}
+                  </span>
+                </span>
+              </Link>
+            )}
           </div>
         )}
         {/* Muscle groups — internal taxonomy keys (horizontal_push, etc.)
             mapped to session-level labels via movementCategoryLabel
             (Push / Pull / Legs / Arms / Core). Multiple raw categories
-            now collapse to the same label (horizontal_push and
-            vertical_push both → "Push"), so we dedupe the labels here.
+            collapse to the same label (horizontal_push and
+            vertical_push both → "Push"), so the labels are deduped, and
+            one the title already says is left out (`muscleLabels`).
             Static facts, so one quiet line rather than chips — pills on
             this surface mean a state (the PR badge), not a fact. */}
-        {activity.muscleGroups &&
-          activity.muscleGroups.length > 0 &&
-          (() => {
-            const labels = Array.from(
-              new Set(
-                (activity.muscleGroups as string[]).map(movementCategoryLabel)
-              )
-            );
-            return <MetaLine size="xs" items={labels} />;
-          })()}
+        <MetaLine size="xs" items={muscleLabels} />
         {/* Workout volume/duration/PR count. Cells already printed on
             the lift's hero panel (volume numeral, PR chip) drop out
             here — same no-double-printing rule as the run card's km. */}
@@ -660,13 +703,13 @@ function ActivityCard({
               <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
             </div>
           )}
-          {(activity.exerciseCount ?? 0) > 0 && (
+          {exerciseCount > 0 && (
             <div className="min-w-0">
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
-                {activity.exerciseCount}
+                {exerciseCount}
               </p>
               <SectionLabel className="mt-0.5">
-                {activity.exerciseCount === 1 ? "exercise" : "exercises"}
+                {exerciseCount === 1 ? "exercise" : "exercises"}
               </SectionLabel>
             </div>
           )}

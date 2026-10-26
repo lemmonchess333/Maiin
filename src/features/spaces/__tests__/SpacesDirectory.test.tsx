@@ -140,6 +140,26 @@ describe("SpacesDirectory — Races & Events", () => {
     }
   });
 
+  it("an interest card shows a real member count, and nothing below the gate", () => {
+    const small: SpaceDirectoryEntry = {
+      ...INTEREST,
+      def: { ...INTEREST.def, id: "strength", name: "Strength" },
+      memberCount: 2,
+    };
+    mockUseSpacesDirectory.mockReturnValue({
+      entries: [INTEREST, small],
+      upcomingRaces: [],
+      refresh: vi.fn(),
+    });
+    renderDirectory();
+    expect(
+      screen.getByRole("link", { name: "Runners space" }).textContent
+    ).toContain("12 members");
+    const smallCard = screen.getByRole("link", { name: "Strength space" });
+    expect(smallCard.textContent).toBe("Strength");
+    expect(screen.queryByText(/New space/)).not.toBeInTheDocument();
+  });
+
   it("races row collapses when no upcoming races are in the entries", () => {
     mockUseSpacesDirectory.mockReturnValue({
       entries: [INTEREST],

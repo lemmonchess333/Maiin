@@ -115,9 +115,9 @@ test.describe("core user journeys", () => {
       timeout: 15_000,
     });
 
-    // Run mode is a radiogroup (Freeform / Race prep). Selecting Race prep
+    // "Race goal" is a radiogroup (No race / Training for a race). Choosing a race
     // reveals the RaceGoalPlanner.
-    await page.getByRole("radio", { name: /Race prep/i }).click();
+    await page.getByRole("radio", { name: /Training for a race/i }).click();
 
     // Distance picker is a SegmentedControl (role=radio options); date
     // is #ps-race-date. 70 days out → classifyRaceTiming "healthy".

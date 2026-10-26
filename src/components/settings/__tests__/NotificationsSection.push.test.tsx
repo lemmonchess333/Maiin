@@ -110,6 +110,25 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
+describe("NotificationsSection — the reminders", () => {
+  it("are one Reminders group with a row each, not a heading over each switch", () => {
+    renderSection();
+    expect(
+      screen.getByRole("heading", { name: "Reminders" })
+    ).toBeInTheDocument();
+    for (const row of ["Meals", "Workouts", "Streak"])
+      expect(screen.getByText(row)).toBeInTheDocument();
+    for (const gone of [
+      "Meal reminders",
+      "Enable meal reminders",
+      "Workout reminders",
+      "Enable workout reminders",
+      "Streak reminders",
+    ])
+      expect(screen.queryByText(gone)).toBeNull();
+  });
+});
+
 describe("NotificationsSection — monthly challenge push", () => {
   it("offers a separate challenge opt-in without asking permission on mount", () => {
     renderSection();

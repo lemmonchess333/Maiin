@@ -70,11 +70,16 @@ function renderJoined(challenge: Challenge, currentValue: number) {
   );
 }
 
-/** The marker wrapper div carries the style.left — walk up from the label. */
+/** The marker wrapper div carries the style.left — walk up from the label.
+ *  The goal line above can carry the same figure ("Score 3.000 points" in
+ *  de-DE), so the label is the match whose wrapper is positioned. */
 function markerLeft(label: string): string {
-  const el = screen.getByText(label);
-  const wrapper = el.parentElement as HTMLElement;
-  return wrapper.style.left;
+  const wrappers = screen
+    .getAllByText(label)
+    .map((el) => el.parentElement as HTMLElement)
+    .filter((wrapper) => wrapper.style.left !== "");
+  expect(wrappers).toHaveLength(1);
+  return wrappers[0].style.left;
 }
 
 describe("fastest_effort tier markers", () => {
@@ -127,7 +132,7 @@ describe("featured monthly progress units", () => {
     expect(screen.getByText("20 days")).toBeInTheDocument();
     expect(screen.getByText("5 days")).toBeInTheDocument();
     expect(screen.getByText(/You're at/)).toHaveTextContent(
-      "You're at 5 days — Bronze at 6 days"
+      "You're at 5 days · Bronze at 6 days"
     );
   });
 
@@ -149,7 +154,7 @@ describe("featured monthly progress units", () => {
     expect(screen.getByText("600 min")).toBeInTheDocument();
     expect(screen.getByText("149 min")).toBeInTheDocument();
     expect(screen.getByText(/You're at/)).toHaveTextContent(
-      "You're at 149 min — Bronze at 150 min"
+      "You're at 149 min · Bronze at 150 min"
     );
   });
 });

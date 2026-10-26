@@ -39,41 +39,48 @@ export default function PeopleToFollowRow({
         People to follow
       </SectionHeading>
       <ul className="-mx-[16px] flex gap-2 overflow-x-auto px-[16px] pb-1 snap-x snap-mandatory">
-        {people.map((person) => (
-          <li
-            key={person.uid}
-            className="flex w-[148px] shrink-0 snap-start flex-col items-center gap-2 rounded-xl bg-card card-shadow p-3 text-center"
-          >
-            <Link
-              to={`/user/${person.uid}`}
-              className="flex w-full min-w-0 flex-col items-center gap-1"
+        {people.map((person) => {
+          const reason = suggestionReason(person);
+          return (
+            <li
+              key={person.uid}
+              className="flex w-[148px] shrink-0 snap-start flex-col items-center gap-2 rounded-xl bg-card card-shadow p-3 text-center"
             >
-              <BlockAwareAvatar
-                uid={person.uid}
-                photoURL={person.photoURL}
-                displayName={person.displayName}
-                size="lg"
+              {/* A card with no reason line keeps its Follow at its foot
+                  (`mt-auto`), level with the other cards' in the row. */}
+              <Link
+                to={`/user/${person.uid}`}
+                className="flex w-full min-w-0 flex-col items-center gap-1"
+              >
+                <BlockAwareAvatar
+                  uid={person.uid}
+                  photoURL={person.photoURL}
+                  displayName={person.displayName}
+                  size="lg"
+                />
+                <span className="w-full truncate text-sm font-semibold text-foreground">
+                  {person.displayName}
+                </span>
+                {reason && (
+                  <span className="line-clamp-2 min-h-8 text-xs leading-4 text-muted-foreground">
+                    {reason}
+                  </span>
+                )}
+              </Link>
+              <FollowButton
+                targetUid={person.uid}
+                className="mt-auto w-full text-sm"
+                onFollowChange={(now) => {
+                  if (now === "not-following") return;
+                  trackSocialEvent("social_follow", {
+                    followSource: "people_row",
+                  });
+                  onFollowed(person.uid);
+                }}
               />
-              <span className="w-full truncate text-sm font-semibold text-foreground">
-                {person.displayName}
-              </span>
-              <span className="line-clamp-2 min-h-8 text-xs leading-4 text-muted-foreground">
-                {suggestionReason(person)}
-              </span>
-            </Link>
-            <FollowButton
-              targetUid={person.uid}
-              className="mt-auto w-full text-sm"
-              onFollowChange={(now) => {
-                if (now === "not-following") return;
-                trackSocialEvent("social_follow", {
-                  followSource: "people_row",
-                });
-                onFollowed(person.uid);
-              }}
-            />
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

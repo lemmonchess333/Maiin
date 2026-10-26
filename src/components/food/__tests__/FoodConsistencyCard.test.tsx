@@ -50,6 +50,20 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
+describe("weekly logging focus — before one is set", () => {
+  it("offers it in one short line that says it stays private", async () => {
+    resetFirestore();
+    render(<FoodConsistencyCard uid="u1" />);
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Set a weekly logging focus/ })
+      ).toBeInTheDocument()
+    );
+    const line = screen.getByText("A small goal for the week, kept private.");
+    expect(line.textContent).not.toMatch(/\u2014/);
+  });
+});
+
 describe("weekly logging focus — the count is live", () => {
   it("advances when the day's first meal is logged", async () => {
     render(<FoodConsistencyCard uid="u1" />);

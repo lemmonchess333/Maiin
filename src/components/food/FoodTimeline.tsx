@@ -206,7 +206,7 @@ export default function FoodTimeline({
           icon={UtensilsCrossed}
           accent={THEME.semantic.nutrition}
           headline="Nothing logged yet"
-          sub="Log a meal above — everything you eat shows up here."
+          sub="Meals you log show here."
         />
       </div>
     );

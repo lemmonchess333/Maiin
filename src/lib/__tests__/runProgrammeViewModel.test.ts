@@ -12,6 +12,7 @@ import {
   resolveRunPlanSurface,
   hasHybridInterference,
   runCardStatus,
+  defaultRunDayKey,
 } from "@/lib/runProgrammeViewModel";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -244,10 +245,18 @@ describe("runCardStatus", () => {
     day("2026-10-25"),
   ];
 
+  /* Tomorrow's run is "Up next" when nothing comes before it, as the Lift
+     tab's next session is: the tab opens on it from a lift or rest day,
+     and its eyebrow reads "Up next · Tue 20 Oct". It said "Tomorrow". */
   it("says Up next for one run only: the first still to do", () => {
-    expect(runCardStatus("2026-10-20", keys, week)).toBe("Tomorrow");
+    expect(runCardStatus("2026-10-20", keys, week)).toBe("Up next");
     expect(runCardStatus("2026-10-21", keys, week)).toBe("Upcoming");
     expect(runCardStatus("2026-10-24", keys, week)).toBe("Upcoming");
+  });
+
+  it("says Tomorrow when today's run still comes first", () => {
+    const today = [day("2026-10-19", "to do"), ...week.slice(1)];
+    expect(runCardStatus("2026-10-20", keys, today)).toBe("Tomorrow");
   });
 
   it("gives Up next to a later run when nothing comes before it", () => {
@@ -288,5 +297,52 @@ describe("runCardStatus", () => {
     ];
     expect(runCardStatus("2026-10-17", keys, missed)).toBe("Pending");
     expect(runCardStatus("2026-10-21", keys, missed)).toBe("Up next");
+  });
+});
+
+describe("defaultRunDayKey", () => {
+  const today = "2026-10-19";
+  const day = (
+    dateKey: string,
+    run: "none" | "to do" | "done" | "skipped" = "none"
+  ) => ({
+    dateKey,
+    run: {
+      isStartable: run === "to do",
+      isCompleted: run === "done",
+    },
+  });
+
+  it("opens on today when today holds a run to start", () => {
+    const week = [day("2026-10-19", "to do"), day("2026-10-20", "to do")];
+    expect(defaultRunDayKey(week, today)).toBe(today);
+  });
+
+  /* A lift day or a rest day opened on a small "No run scheduled" card
+     while the week's next run sat a tap away. The tab opens on that run,
+     as the Lift tab opens on its next session. */
+  it("opens on the next run to start when today has none", () => {
+    const week = [
+      day("2026-10-19"),
+      day("2026-10-20"),
+      day("2026-10-21", "to do"),
+      day("2026-10-24", "to do"),
+    ];
+    expect(defaultRunDayKey(week, today)).toBe("2026-10-21");
+  });
+
+  it("passes over today's run once it is done, and earlier days", () => {
+    const week = [
+      day("2026-10-17", "to do"),
+      day("2026-10-19", "done"),
+      day("2026-10-20", "skipped"),
+      day("2026-10-22", "to do"),
+    ];
+    expect(defaultRunDayKey(week, today)).toBe("2026-10-22");
+  });
+
+  it("stays on today when the rest of the week has no run", () => {
+    const week = [day("2026-10-17", "to do"), day("2026-10-19")];
+    expect(defaultRunDayKey(week, today)).toBe(today);
   });
 });

@@ -718,8 +718,8 @@ describe("type tiers", () => {
 
 /* Form controls on one field. A text input, a select and a textarea are
    the same kind of box to the person filling them in, and `.ds-input`
-   (src/styles/components.css) is that box: radius, the 3:1 edge, the card
-   fill, the inset and a floor above 44px. Selects render through the
+   (src/styles/components.css) is that box: radius, its resting edge and
+   fill (tokens.css), the inset and a floor above 44px. Selects render through the
    `Select` primitive, which puts a native <select> on that field (so iOS
    keeps its picker) and owns the tapped-select focus fix. Floors are 0
    for selects and textareas; typed inputs off the field are a named list,

@@ -28,9 +28,11 @@
  *            barbells use different micro-plate steps. Step
  *            normalisation lives at the input layer where it can
  *            be exercise-aware.
- *   bodyweight: when the row has no weight column (bodyweight
- *            movement), `weight: 0` is allowed and the validator
- *            only checks reps.
+ *   bodyweight: a bodyweight movement completes with no weight or
+ *            `weight: 0`, and the validator only checks reps.
+ *   loaded:  a barbell, dumbbell, machine, cable or kettlebell lift
+ *            (`equipment`) is refused at 0 kg, "Enter a weight.",
+ *            unless it is a timed hold.
  *
  * Jump rules (Lift16)
  *   A weight more than twice today's planned weight (`plannedWeight`),
@@ -73,9 +75,13 @@ export interface SetValidationWarn {
 export interface SetValidationInput {
   reps: unknown;
   weight: unknown;
-  /** True when the exercise has no weight column (bodyweight
-   *  movement). Skips weight checks; reps still validated. */
+  /** True for a bodyweight movement: an empty or zero weight completes
+   *  it, and only reps are checked. Added load is checked as usual. */
   isBodyweight?: boolean;
+  /** The exercise's equipment (`getExerciseById(id)?.equipment`). A
+   *  barbell, dumbbell, machine, cable or kettlebell lift is refused at
+   *  0 kg; absent, or any other equipment, keeps 0. */
+  equipment?: string;
   /** True for a timed hold, whose `reps` are seconds held. */
   timed?: boolean;
   /** When present, enables the huge-jump warning. Caller's current
@@ -97,6 +103,20 @@ const HOLD_MAX_SECONDS = 3600;
 const WEIGHT_MAX_KG = 500;
 const DEFAULT_JUMP_WARN_RATIO = 1.25;
 const PLAN_WARN_RATIO = 2;
+/** The equipment a set can't be done at 0 kg on. */
+const LOADED_EQUIPMENT: ReadonlySet<string> = new Set([
+  "Barbell",
+  "Dumbbells",
+  "Machine",
+  "Cable Machine",
+  "Kettlebell",
+]);
+
+/** A lift on this equipment needs a weight to be done: the validator
+ *  refuses it at 0 kg, and the set row's empty weight reads "–". */
+export function needsLoad(equipment: string | undefined): boolean {
+  return equipment !== undefined && LOADED_EQUIPMENT.has(equipment);
+}
 
 /**
  * Coerce raw user input (which may arrive as string from a text
@@ -165,14 +185,20 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
   }
 
   const weight = toFiniteNumber(input.weight);
-  // Bodyweight exercises have no weight column — accept null/0
-  // weight, validate only reps.
+  // A bodyweight movement needs no load, so an empty or zero weight
+  // completes it. Added load on one is checked like any other weight.
   const isBodyweight = input.isBodyweight === true;
-  if (isBodyweight) {
-    return { ok: true, normalized: { reps, weight: weight ?? 0 } };
+  if (isBodyweight && (weight === null || weight === 0)) {
+    return { ok: true, normalized: { reps, weight: 0 } };
   }
 
   if (weight === null) {
+    return { ok: false, severity: "block", message: "Enter a weight." };
+  }
+  // A loaded lift is not done at 0 kg: the bar, bell or stack is the
+  // exercise. A timed hold is exempt, and equipment outside the list
+  // (a band, an ab wheel, a box, a custom lift) keeps 0 as a real entry.
+  if (weight === 0 && !timed && needsLoad(input.equipment)) {
     return { ok: false, severity: "block", message: "Enter a weight." };
   }
   if (weight < 0) {

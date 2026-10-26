@@ -15,6 +15,7 @@ import { THEME } from "@/lib/theme";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
 import {
   CHART_TOOLTIP_STYLE,
+  CHART_TOOLTIP_SEPARATOR,
   CHART_GRID_PROPS,
   CHART_AXIS_TICK,
 } from "./chartStyles";
@@ -187,6 +188,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
 
           <Tooltip
             contentStyle={CHART_TOOLTIP_STYLE}
+            separator={CHART_TOOLTIP_SEPARATOR}
             labelFormatter={(label) => {
               const s = typeof label === "string" ? label : String(label ?? "");
               const d = new Date(s + "T00:00:00");

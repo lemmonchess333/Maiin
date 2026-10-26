@@ -1,38 +1,25 @@
-import type { Experience, ProgramState } from "@/features/program/programTypes";
+import type { ProgramState } from "@/features/program/programTypes";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
-import { blockWeekOf, focusLabel } from "@/features/program/trainingBlock";
 import { liftDayNameIn } from "@/lib/liftDayLabel";
-import { liftWeekCounter } from "@/lib/liftWeekLabel";
 
-/** Lift sessions are rotation-ordered, not date-bound (ADR-0002). */
+/** The line under Done on the finish screen: which lift comes next. The
+ *  week's count is the "Your week so far" card under it, so it is not
+ *  said twice. Lift sessions are rotation-ordered, not date-bound
+ *  (ADR-0002). */
 export function liftCompletionContext(
   state: ProgramState,
-  completedIndex: number,
-  today: string,
-  /** The person's level, for the counter Train's week row shows
-   *  (`liftWeekCounter`). */
-  experience?: Experience
+  completedIndex: number
 ) {
-  const block = state.trainingBlock;
-  const blockWeek = block ? blockWeekOf(block, today) : null;
-  const week =
-    block && blockWeek !== null
-      ? `Week ${blockWeek} of ${block.durationWeeks} · ${focusLabel(block.focus)}`
-      : (liftWeekCounter(state, experience) ?? `Week ${state.weekNumber}`);
-  const done = state.workouts.filter(
-    (day, index) => day.completed || index === completedIndex
-  ).length;
   // Passing over the session just finished: the plan may not show it done.
   const nextIndex = nextUpIndex(state, completedIndex);
   const next = state.workouts[nextIndex];
   return {
-    progress: `${week} · ${done} of ${state.workouts.length} planned lifts complete`,
     next: next
       ? `Next: ${liftDayNameIn(
           state.workouts.map((w) => w.dayName),
           nextIndex,
           next.dayName
         )}`
-      : "All planned lifts complete — review your week on Train",
+      : "All planned lifts complete. Review your week on Train.",
   };
 }

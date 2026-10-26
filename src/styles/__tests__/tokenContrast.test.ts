@@ -697,9 +697,11 @@ describe("placeholders — the secondary grey at full strength", () => {
   it.each([
     ["light", lightBlock],
     ["dark", darkBlock],
-  ] as const)("clears AA on the field fill and the card (%s)", (_n, block) => {
+  ] as const)("clears AA on the field fills and the card (%s)", (_n, block) => {
     const fg = hslToRgb(...readHsl(block(), "muted-foreground"));
-    for (const surface of ["input-fill", "card"]) {
+    // `.ds-input` fills with the card in light and --muted in dark
+    // (tokens.css, "Input states").
+    for (const surface of ["input-fill", "card", "muted"]) {
       const bg = hslToRgb(...readHsl(block(), surface));
       const ratio = contrast(over(fg, bg, opacity()), bg);
       expect(
