@@ -120,7 +120,7 @@ export default function SessionCommandCard({
             {/* The description and the dose take the foreground: on the
                 sport wash the grey misses AA. */}
             {description && (
-              <p className="mt-2 text-sm font-medium text-foreground text-balance">
+              <p className="mt-2 text-sm font-medium text-foreground">
                 <InlineNumerals>{description}</InlineNumerals>
               </p>
             )}

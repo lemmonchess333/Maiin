@@ -613,19 +613,25 @@ body {
 }
 
 /* ─── HEADING DEFAULTS ────────────────────────────────────── */
-h1,
-h2,
-h3,
-h4 {
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  font-kerning: normal;
-}
-/* Display-size headings (page titles, hero numbers) get a touch more
-   negative tracking so they read refined rather than airy. Pairs well
-   with Plus Jakarta Sans's geometric character at 24px+. */
-h1 {
-  letter-spacing: -0.02em;
+/* In @layer base, so a heading's own `tracking-*`, `leading-*` and
+   `text-*` line height win, as they do on any other element. Unlayered,
+   these would beat the utilities, and one title would set two ways by its
+   tag alone: the session card's is an h3 on Train and a p on Home. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    font-kerning: normal;
+  }
+  /* Display-size headings (page titles, hero numbers) get a touch more
+     negative tracking so they read refined rather than airy. Pairs well
+     with Plus Jakarta Sans's geometric character at 24px+. */
+  h1 {
+    letter-spacing: -0.02em;
+  }
 }
 
 /* Safe area padding for bottom nav (iPhone notch) */
