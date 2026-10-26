@@ -624,7 +624,7 @@ export default function Upgrade() {
           <div className="space-y-1">
             <h1
               id="pro-plans-heading"
-              className="text-h1 font-extrabold tracking-tight text-foreground"
+              className="text-h1 font-extrabold leading-tight tracking-tight text-foreground"
             >
               Choose your plan
             </h1>
