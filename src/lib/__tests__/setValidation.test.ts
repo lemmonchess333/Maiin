@@ -7,7 +7,7 @@
  * accept zero weight.
  */
 import { describe, it, expect } from "vitest";
-import { validateSet } from "../setValidation";
+import { needsLoad, validateSet } from "../setValidation";
 
 describe("validateSet — reps", () => {
   it("blocks empty reps", () => {
@@ -94,6 +94,66 @@ describe("validateSet — bodyweight exercises", () => {
   it("still validates reps on bodyweight exercises", () => {
     const r = validateSet({ reps: -1, weight: 0, isBodyweight: true });
     expect(r.ok).toBe(false);
+  });
+
+  it("checks added load on a bodyweight lift like any weight", () => {
+    // The caller passes the catalog's answer, so pull-ups are bodyweight
+    // at 10 kg added too: the cap and the sign still hold there.
+    expect(validateSet({ reps: 5, weight: 10, isBodyweight: true }).ok).toBe(
+      true
+    );
+    expect(validateSet({ reps: 5, weight: -5, isBodyweight: true })).toEqual({
+      ok: false,
+      severity: "block",
+      message: "Weight can't be negative.",
+    });
+    expect(validateSet({ reps: 5, weight: 600, isBodyweight: true }).ok).toBe(
+      false
+    );
+  });
+});
+
+describe("validateSet — a loaded lift needs a weight", () => {
+  const LOADED = [
+    "Barbell",
+    "Dumbbells",
+    "Machine",
+    "Cable Machine",
+    "Kettlebell",
+  ];
+
+  it("refuses 0 kg on a barbell, dumbbell, machine, cable or kettlebell lift", () => {
+    for (const equipment of LOADED) {
+      expect(validateSet({ reps: 8, weight: 0, equipment })).toEqual({
+        ok: false,
+        severity: "block",
+        message: "Enter a weight.",
+      });
+      expect(validateSet({ reps: 8, weight: 20, equipment }).ok).toBe(true);
+    }
+  });
+
+  it("keeps 0 for a bodyweight lift, a timed hold, and other equipment", () => {
+    expect(
+      validateSet({
+        reps: 8,
+        weight: 0,
+        equipment: "Bodyweight",
+        isBodyweight: true,
+      }).ok
+    ).toBe(true);
+    expect(
+      validateSet({ reps: 30, weight: 0, equipment: "Barbell", timed: true }).ok
+    ).toBe(true);
+    // A band, an ab wheel and a box carry no load to enter.
+    for (const equipment of ["Resistance Band", "Ab Wheel", "Box", undefined])
+      expect(validateSet({ reps: 8, weight: 0, equipment }).ok).toBe(true);
+  });
+
+  it("names the lifts that need a load", () => {
+    for (const equipment of LOADED) expect(needsLoad(equipment)).toBe(true);
+    for (const equipment of ["Bodyweight", "Ab Wheel", "Box", undefined])
+      expect(needsLoad(equipment)).toBe(false);
   });
 });
 

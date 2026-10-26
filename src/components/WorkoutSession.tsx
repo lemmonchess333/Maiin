@@ -114,8 +114,12 @@ import {
 import { effortCueFor, rpeReserveWords } from "@/features/program/effortCue";
 import Tooltip from "@/components/ui/Tooltip";
 import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
-import { validateSet, type SetValidationWarn } from "@/lib/setValidation";
-import { getExerciseById } from "@/lib/exercises";
+import {
+  needsLoad,
+  validateSet,
+  type SetValidationWarn,
+} from "@/lib/setValidation";
+import { getExerciseById, isBodyweightExerciseId } from "@/lib/exercises";
 import {
   clampExerciseIndex,
   isExerciseDone,
@@ -1080,11 +1084,11 @@ export default function WorkoutSession({
     const validation = validateSet({
       reps: set.reps,
       weight: set.weight,
-      // Body-highlighter exercises map heuristically — for now we
-      // treat any zero-weight set on an exercise the user is logging
-      // as bodyweight. If a richer bodyweight-flag arrives via the
-      // exercise registry it can plug in here.
-      isBodyweight: (set.weight ?? 0) === 0 && !currentBucketPR,
+      // The catalog says what the lift is: a bodyweight lift completes
+      // at 0 kg, and a barbell, dumbbell, machine, cable or kettlebell
+      // lift asks for a weight first.
+      isBodyweight: isBodyweightExerciseId(currentExercise.exerciseId),
+      equipment: getExerciseById(currentExercise.exerciseId)?.equipment,
       timed: currentExercise.repUnit === "seconds",
       currentBestForBucket: currentBucketPR?.weight,
       plannedWeight: weightToCheckAgainst(currentExercise, currentSets),
@@ -1288,7 +1292,8 @@ export default function WorkoutSession({
       recordBaseline.current[exercise.name]?.[getRepBucket(values.reps)];
     const validation = validateSet({
       ...values,
-      isBodyweight: values.weight === 0 && !best,
+      isBodyweight: isBodyweightExerciseId(exercise.exerciseId),
+      equipment: getExerciseById(exercise.exerciseId)?.equipment,
       timed: exercise.repUnit === "seconds",
       currentBestForBucket: best?.weight,
       plannedWeight: weightToCheckAgainst(exercise, setLogs[exIdx] ?? []),
@@ -2103,11 +2108,18 @@ export default function WorkoutSession({
           {(() => {
             const lastSets = previousSets[currentExIndex];
             const lastPerformance = currentExercise?.lastPerformance;
-            const isBWExercise = currentExercise
-              ? getExerciseById(currentExercise.exerciseId)?.equipment ===
-                "Bodyweight"
-              : false;
+            const equipment = currentExercise
+              ? getExerciseById(currentExercise.exerciseId)?.equipment
+              : undefined;
+            const isBWExercise = equipment === "Bodyweight";
             const isTimedExercise = currentExercise?.repUnit === "seconds";
+            // An empty weight on a loaded lift is a blank to fill, not a
+            // 0 to accept: the tick asks for a weight there.
+            const emptyWeight = isBWExercise
+              ? "BW"
+              : needsLoad(equipment) && !isTimedExercise
+                ? "–"
+                : "0";
             const columns =
               "grid grid-cols-[44px_minmax(0,1.1fr)_minmax(0,1.25fr)_minmax(0,1fr)_44px] @max-[19em]:grid-cols-[44px_minmax(0,1.25fr)_minmax(0,1fr)_44px] items-center gap-x-[8px]";
 
@@ -2272,9 +2284,7 @@ export default function WorkoutSession({
                               currentExercise.exerciseId
                             ) || ""
                           }
-                          placeholder={
-                            set.weight === 0 ? (isBWExercise ? "BW" : "0") : ""
-                          }
+                          placeholder={set.weight === 0 ? emptyWeight : ""}
                           aria-label={`${name} weight`}
                           onChange={(e) =>
                             updateSetLog(

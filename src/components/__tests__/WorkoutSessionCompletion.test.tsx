@@ -1635,6 +1635,7 @@ describe("WorkoutSession — rest timer", () => {
       exerciseId: "bench-press",
       name: "Bench Press",
       reps: 5,
+      weight: 20,
     });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
     expect(restLabel()).toContain("3:00");
@@ -2213,6 +2214,74 @@ describe("the plate hint (Lift4 (6))", () => {
   });
 });
 
+describe("a loaded lift needs a weight to be ticked", () => {
+  const tick = () =>
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+
+  it("refuses a barbell set at 0 kg, and its empty weight reads –", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 0,
+      sets: 1,
+    });
+    const weight = screen.getByRole("spinbutton", { name: "Set 1 weight" });
+    expect(weight).toHaveAttribute("placeholder", "–");
+    tick();
+    expect(h.error).toHaveBeenCalledWith("Enter a weight.");
+    expect(screen.getAllByLabelText("Mark set complete")).toHaveLength(1);
+    // With a weight, the same set ticks.
+    fireEvent.change(weight, { target: { value: "40" } });
+    tick();
+    expect(screen.queryAllByLabelText("Mark set complete")).toHaveLength(0);
+  });
+
+  it("ticks a bodyweight set at 0 kg, whatever the records hold", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "pull-ups",
+      name: "Pull-Ups",
+      weight: 0,
+      sets: 1,
+    });
+    expect(
+      screen.getByRole("spinbutton", { name: "Set 1 weight" })
+    ).toHaveAttribute("placeholder", "BW");
+    tick();
+    expect(h.error).not.toHaveBeenCalled();
+    expect(screen.queryAllByLabelText("Mark set complete")).toHaveLength(0);
+  });
+
+  it("ticks a timed hold at 0 kg", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "plank",
+      name: "Plank",
+      weight: 0,
+      reps: 30,
+      repUnit: "seconds",
+      sets: 1,
+    });
+    tick();
+    expect(h.error).not.toHaveBeenCalled();
+    expect(screen.queryAllByLabelText("Mark set complete")).toHaveLength(0);
+  });
+
+  it("ticks a lift with no load to enter (an ab wheel, a custom lift) at 0", () => {
+    for (const [exerciseId, name] of [
+      ["ab-wheel", "Ab Wheel Rollout"],
+      ["my-band-pull-apart", "Band Pull-Apart"],
+    ]) {
+      openSession(writer(), vi.fn(), { exerciseId, name, weight: 0, sets: 1 });
+      expect(
+        screen.getByRole("spinbutton", { name: "Set 1 weight" })
+      ).toHaveAttribute("placeholder", "0");
+      tick();
+      expect(screen.queryAllByLabelText("Mark set complete")).toHaveLength(0);
+      cleanup();
+    }
+    expect(h.error).not.toHaveBeenCalled();
+  });
+});
+
 describe("the RPE row", () => {
   it("is one row of nine named chips, with no label in front", () => {
     openSession(writer(), vi.fn(), {
@@ -2306,6 +2375,7 @@ describe("WorkoutSession — the rest after a warm-up", () => {
       exerciseId: "bench-press",
       name: "Bench Press",
       reps: 5,
+      weight: 20,
     });
     fireEvent.click(
       screen.getByRole("button", { name: "Set 1. Change set type" })
