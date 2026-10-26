@@ -1,8 +1,9 @@
 /**
  * Whether the Run page starts the run it was opened for as soon as it opens
- * (the owner, on Home's run card: "Should open then go"). Home's Start
- * asks for it with `?start=1`; Train's "View run" still opens the run's own
- * card, where the shoe and Customise are.
+ * (the owner, on Home's run card: "Should open then go"). Home's Start and
+ * Train's "Start run" on today's run ask for it with `?start=1`, as the
+ * Lift tab's Start begins its workout; Train's "View run" on any other day
+ * still opens the run's own card, where the shoe and Customise are.
  *
  * The page waits for what the start depends on: the plan, which names the
  * run, and, for an account the guide owes its first-run hint, whether this
@@ -21,6 +22,11 @@
 
 /** The query parameter Home's run card adds to ask for the start. */
 export const START_ON_ARRIVAL_PARAM = "start";
+
+/** A Run page address with the start asked for, after any query it has. */
+export function withStartOnArrival(url: string): string {
+  return `${url}${url.includes("?") ? "&" : "?"}${START_ON_ARRIVAL_PARAM}=1`;
+}
 
 /** How long the page waits to learn whether an account owed the first-run
  *  hint has any runs. Past it the run starts: a slow read must not keep

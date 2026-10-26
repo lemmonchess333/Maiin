@@ -14,9 +14,9 @@ import RunPlanPurpose from "@/components/run/RunPlanPurpose";
  *
  * Navigation cleanup (2026-05-31): the Run tab is now driven by a single
  * date-pinned ProgrammeWeekSelector (shared with the Lift tab) that controls
- * a selected-day command card — Start run / Start race for a planned day
- * (+ secondary Start free run), or a calm date-led "No run scheduled" + Start
- * free run. This replaced the global "next planned run" SessionCommandCard
+ * a selected-day command card: Start run for today's planned run, View run
+ * for another day's (+ secondary Start free run), or "Rest day" / "Lift
+ * day" + Start free run, all on the same SessionCommandCard. This replaced the global "next planned run" SessionCommandCard
  * (which ignored the selected day) and the in-tab HybridWeekRail. The
  * RaceCockpitCard (race progress) renders BELOW the command card. Freeform
  * keeps its "Start a run" hero with no selector ("start whenever" — no
@@ -134,7 +134,7 @@ import {
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
 import { runDoseLine } from "@/lib/runDose";
-import { targetZoneForRun, maxHrFromAge, zoneMetaItems } from "@/lib/hrZones";
+import { targetZoneForRun, maxHrFromAge, zoneShortLabel } from "@/lib/hrZones";
 import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
 import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
@@ -169,9 +169,11 @@ import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
 import {
   buildRaceCockpitViewModel,
+  defaultRunDayKey,
   runCardStatus,
   runStripLabel,
 } from "@/lib/runProgrammeViewModel";
+import { withStartOnArrival } from "@/features/run/startOnArrival";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import { Banner } from "@/components/ui/Banner";
 import { IconButton } from "@/components/ui/IconButton";
@@ -270,24 +272,23 @@ export default function ProgrammeRunSection({
   const todayKeyDerivation = useLocalDateKey();
   // PR-1: which row is opening DayActionSheet.
   const [manageDate, setManageDate] = useState<string | null>(null);
-  // The run-week selector's selected calendar day (date-pinned — ADR-0002).
-  // Defaults to today, which the calendar week below always contains, so the
-  // default selection is always on screen. Drives the selected-day command
-  // card so the selector actually controls the content beneath it.
-  // Mirror the selected run day into the URL (?rday=YYYY-MM-DD) — the sibling
-  // of the Lift day selector's ?day — so opening a run/plan detail and pressing
-  // back restores the day instead of snapping to today. An out-of-window value
-  // degrades gracefully (the runWindow lookup below falls back to today).
+  // The day the person picked on the run-week selector (date-pinned,
+  // ADR-0002), or null until they pick one; the tab then opens on
+  // `defaultRunDayKey` (today's run, else the week's next one). It drives
+  // the selected-day command card so the selector controls the content
+  // beneath it. Mirror the selected run day into the URL (?rday=YYYY-MM-DD),
+  // the sibling of the Lift day selector's ?day, so opening a run/plan
+  // detail and pressing back restores the day instead of snapping to today.
+  // An out-of-window value degrades gracefully (the runWindow lookup below
+  // falls back to today).
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedDateKey, setSelectedDateKey] = useState<string>(() => {
+  const [chosenDateKey, setChosenDateKey] = useState<string | null>(() => {
     const raw = searchParams.get("rday");
-    return raw && /^\d{4}-\d{2}-\d{2}$/.test(raw)
-      ? raw
-      : localDateString(new Date());
+    return raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
   });
   const selectRunDay = useCallback(
     (key: string) => {
-      setSelectedDateKey(key);
+      setChosenDateKey(key);
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -788,6 +789,12 @@ export default function ProgrammeRunSection({
     0,
     runWindow.findIndex((d) => d.dateKey === todayKeyDerivation)
   );
+  // Until the person picks a day, the tab opens on today's run, or on the
+  // week's next one when today has none to start, as the Lift tab opens on
+  // its next session. Derived on every render, so it follows the plan as it
+  // loads rather than freezing on the first, empty, paint.
+  const selectedDateKey =
+    chosenDateKey ?? defaultRunDayKey(runWindow, todayKeyDerivation);
   const selectedDay =
     runWindow.find((d) => d.dateKey === selectedDateKey) ?? runWindow[todayIdx];
   const selectedRun = selectedDay.run;
@@ -895,10 +902,13 @@ export default function ProgrammeRunSection({
       maxHr,
       selectedTemplate.config.targetDistanceKm
     );
-    return band ? zoneMetaItems(band) : [];
+    return band ? [zoneShortLabel(band)] : [];
   })();
 
-  // Meta line for the selected run (distance/duration · pace · HR zone · type).
+  // Meta line for the selected run: the dose, the pace when there is one,
+  // and the zone ("30 min · Z2 112–130 bpm"). The title names the session
+  // and the feel line above gives its effort in words, so neither the type
+  // nor the zone's name is said again here; the day's sheet keeps them.
   const selectedRunMeta: string[] = (() => {
     if (!selectedTemplate) return [];
     const meta: string[] = [];
@@ -908,19 +918,15 @@ export default function ProgrammeRunSection({
     );
     if (selectedPaceLabel) meta.push(selectedPaceLabel);
     meta.push(...selectedHrItems);
-    // The zone's name says "Easy" already for an easy run (Run21 (1)).
-    const typeWord =
-      selectedTemplate.type.charAt(0).toUpperCase() +
-      selectedTemplate.type.slice(1);
-    if (!meta.includes(typeWord)) meta.push(typeWord);
     return meta;
   })();
   // Free-run fallback URL (Run.tsx parses ?type=freerun on mount).
   const FREE_RUN_URL = "/run?type=freerun";
   // Suppress the selected-day card when a race state-overlay hero already
   // owns today's slot AND today is what's selected — avoids a double CTA.
+  const selectedIsToday = selectedDateKey === todayKeyDerivation;
   const heroOwnsSelectedToday =
-    selectedDateKey === todayKeyDerivation &&
+    selectedIsToday &&
     (heroState === "race-today" || heroState === "race-recent");
 
   // Selected-day card eyebrow — temporal status relative to the SELECTED
@@ -1627,12 +1633,25 @@ export default function ProgrammeRunSection({
                      header, the race card's date line and its rail say
                      it already. */
                   meta={selectedRunMeta}
-                  primaryActionLabel={selectedIsRace ? "View race" : "View run"}
+                  /* Today's run starts from here, straight into the run, as
+                     the Lift tab's Start begins its workout and Home's
+                     Start does (`startOnArrival`). Another day's opens the
+                     run's own card to look it over. */
+                  primaryActionLabel={
+                    selectedIsToday
+                      ? selectedIsRace
+                        ? "Start race"
+                        : "Start run"
+                      : selectedIsRace
+                        ? "View race"
+                        : "View run"
+                  }
                   onPrimaryAction={() => {
                     haptic();
                     // startUrl carries ?template=&scheduledRunId= so the run
                     // fulfils this exact planned slot (claim-map binding).
-                    navigate(selectedRun.startUrl ?? FREE_RUN_URL);
+                    const url = selectedRun.startUrl ?? FREE_RUN_URL;
+                    navigate(selectedIsToday ? withStartOnArrival(url) : url);
                   }}
                   onManage={() => {
                     haptic();
@@ -1647,101 +1666,95 @@ export default function ProgrammeRunSection({
                   runDays={runDays}
                 />
                 {/* Secondary: an ad-hoc run that does NOT fulfil the plan slot. */}
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  fullWidth
+                  className="text-muted-foreground"
                   onClick={() => {
                     haptic();
                     navigate(FREE_RUN_URL);
                   }}
-                  className="w-full min-h-[44px] text-xs font-medium text-muted-foreground hover:text-foreground transition motion-safe:active:scale-[0.99]"
                 >
                   Start free run instead
-                </button>
-              </div>
-            ) : (
-              // No startable run on the selected day: completed, skipped, or
-              // nothing scheduled. Calm, date-led, always offers a free run.
-              <div className="@container rounded-2xl border p-4 card-shadow bg-running/4 border-running/14">
-                {/* The runner beside the words, as on the run card, gives
-                    way under 14em of card. */}
-                <div className="flex items-start gap-3">
-                  <div className="min-w-0 flex-1">
-                    <SectionLabel>{selectedDateLabel}</SectionLabel>
-                    <p className="text-sm font-bold text-foreground mt-0.5">
-                      {selectedRun.isCompleted
-                        ? `${selectedName} · done`
-                        : selectedRun.status === "skipped"
-                          ? `${selectedName} · skipped`
-                          : "No run scheduled"}
-                    </p>
-                    <p className="text-micro text-muted-foreground mt-0.5">
-                      {selectedRun.isCompleted
-                        ? "Add another whenever you like."
-                        : selectedRun.status === "skipped"
-                          ? "Marked as skipped. You can still head out."
-                          : selectedDay.scheduleType === "lift"
-                            ? // Run-scope card, but the day is not a rest day:
-                              // Home names it a lift day and this said "Rest
-                              // day" beside it.
-                              "Lift day. Head out for a free run if you like."
-                            : "Rest day. Head out whenever you like."}
-                    </p>
-                    {/* Where the runner gives way, its guide is named in
-                        words, as on the run card. */}
-                    <Button
-                      variant="ghost"
-                      className="-ml-4 mt-1 hidden text-running-strong @max-[14em]:inline-flex"
-                      onClick={openRunForm}
-                    >
-                      Running form
-                    </Button>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    className="-my-1 h-auto shrink-0 p-0 @max-[14em]:hidden"
-                    aria-label="Running form"
-                    onClick={openRunForm}
-                  >
-                    <img
-                      src={runPoseUrl("run-easy")}
-                      alt=""
-                      aria-hidden="true"
-                      draggable={false}
-                      decoding="async"
-                      className="h-20 w-auto"
-                    />
-                  </Button>
-                </div>
-                {selectedRun.isCompleted && selectedSavedRunId && (
-                  <Button
-                    variant="sport"
-                    fullWidth
-                    className="mt-3"
-                    onClick={() => {
-                      haptic();
-                      navigate(`/run/${selectedSavedRunId}`);
-                    }}
-                  >
-                    View this run
-                  </Button>
-                )}
-                <Button
-                  variant={
-                    selectedRun.isCompleted && selectedSavedRunId
-                      ? "ghost"
-                      : "sport"
-                  }
-                  fullWidth
-                  className="mt-3 font-bold"
-                  onClick={() => {
-                    haptic();
-                    navigate(FREE_RUN_URL);
-                  }}
-                >
-                  <Play className="size-3.5" fill="white" />
-                  Start free run
                 </Button>
               </div>
+            ) : (
+              // No startable run on the selected day: done, skipped, or
+              // nothing planned. The same card as a planned run, so every
+              // day is drawn at one size, as the Lift tab's are; it always
+              // offers a free run.
+              <SessionCommandCard
+                sport="run"
+                figure={
+                  <img
+                    src={runPoseUrl("run-easy")}
+                    alt=""
+                    draggable={false}
+                    decoding="async"
+                    className="h-24 w-auto"
+                  />
+                }
+                onFigurePress={openRunForm}
+                figureLabel="Running form"
+                eyebrow={
+                  selectedRun.isCompleted
+                    ? `Done · ${selectedDateLabel}`
+                    : selectedRun.status === "skipped"
+                      ? `Skipped · ${selectedDateLabel}`
+                      : selectedDateLabel
+                }
+                title={
+                  selectedRun.isCompleted || selectedRun.status === "skipped"
+                    ? selectedName
+                    : selectedDay.scheduleType === "lift"
+                      ? // Run-scope card, but the day is not a rest day:
+                        // Home names it a lift day.
+                        "Lift day"
+                      : "Rest day"
+                }
+                description={
+                  selectedRun.isCompleted
+                    ? "Add another whenever you like."
+                    : selectedRun.status === "skipped"
+                      ? "You can still head out."
+                      : selectedDay.scheduleType === "lift"
+                        ? "Head out for a free run if you like."
+                        : "Head out whenever you like."
+                }
+                meta={[]}
+                primaryActionLabel="Start free run"
+                onPrimaryAction={() => {
+                  haptic();
+                  navigate(FREE_RUN_URL);
+                }}
+                action={
+                  selectedRun.isCompleted && selectedSavedRunId ? (
+                    <div className="space-y-2">
+                      <Button
+                        variant="sport"
+                        size="lg"
+                        fullWidth
+                        onClick={() => {
+                          haptic();
+                          navigate(`/run/${selectedSavedRunId}`);
+                        }}
+                      >
+                        View this run
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        fullWidth
+                        onClick={() => {
+                          haptic();
+                          navigate(FREE_RUN_URL);
+                        }}
+                      >
+                        Start free run
+                      </Button>
+                    </div>
+                  ) : undefined
+                }
+              />
             ))}
 
           {/* Race progress identity card — moved BELOW the selected-day card

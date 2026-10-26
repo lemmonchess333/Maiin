@@ -795,7 +795,26 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   on Home's cards: a lift day's muscles (`figure`), or a run's type in a
   tile (`icon`, from `runTemplateIcon`); the halo went with the app's
   other glows. A free runner's Run tab leads with the same card ("Start a
-  run" over "Pick your pace today"). Train's day list below it draws each
+  run" over "Pick your pace today").
+- **Run and Lift pick the day the same way (owner, 2026-10-26).** The
+  owner: "the lifting and running are very different for selecting the
+  current day for example start exercise but then for run its a lot
+  smaller and looks weird", and left the answer to the review ("you
+  figure it out"). So every Run tab state is a `SessionCommandCard`, the
+  Lift tab's size. The tab opens on today's run, or, when today has none
+  to start, on the week's next one ("Up next · Tue 27 Oct"), as the Lift
+  tab opens on its next session; the week strip still rings today
+  (`defaultRunDayKey`). Runs stay date-pinned (ADR-0002), so there is no
+  Make this next. A day with no run to start is the same card: its date
+  as the eyebrow, "Rest day" or "Lift day" as the title, and Start free
+  run. Today's run says "Start run" and goes straight into the run
+  (`?start=1`), as the Lift tab's Start begins its workout; another day's
+  says "View run" and opens the run's own card. The run card's meta is
+  the dose, the pace when there is one, and the zone: "30 min · Z2
+  112–130 bpm". That changes Run21 (1)'s "Z2 · Easy" on this card only:
+  the feel line just above it starts with the effort's name, and the
+  day's sheet keeps "Z2 · Easy · 112–130 bpm". A tomorrow's run with
+  none before it is "Up next", not "Tomorrow". Train's day list below it draws each
   exercise through `ExerciseRowSummary` (`ExerciseThumb`: the cut-out
   drawing, else the category's muscles, else a dumbbell), and Train shows
   one advice notice at a time (`programNotices`).
