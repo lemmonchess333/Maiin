@@ -319,6 +319,68 @@ describe("D15 · DS invariant — numbers take one of the two number tiers", () 
       byFile
     );
   });
+
+  /* A unit inside a stand-alone figure is a word, so it steps back to the
+     text face: `font-sans`, smaller, medium — the weight tile's "kg" and
+     the water tile's "ml" (§4 Units). Without it the unit inherits
+     Archivo from the figure ("0 m", "1.61 km" set whole in the figure
+     face). Read per element whose className carries `font-figure`: inside
+     it, a unit (a `*UnitLabel(…)` call, a `{unit}`/`{unitLabel}`/`{label}`
+     expression, or a unit typed as text) has to sit in an element that
+     carries `font-sans`. Screen-reader-only text is skipped. The share
+     card is rasterised and keeps its own register. */
+  it("a unit inside a font-figure figure is the text face (font-sans)", () => {
+    const UNIT_EXPR =
+      /\{\s*(?:unit|unitLabel|label)\s*\}|\b\w*[uU]nitLabel\(|`[^`]*\$\{[^}]*\}\s?(?:kg|lb|km|mi|kcal|ml|m|ft)\b/;
+    const UNIT_TEXT = /(?<![\w$])(?:kg|lbs?|km|mi|kcal|ml|bpm|ft)(?![\w])/;
+    const offenders: string[] = [];
+    for (const file of FILES) {
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
+      if (rel === "src/components/share/ShareCardRenderer.tsx") continue;
+      const src = readFileSync(file, "utf8");
+      const open = /<(\w+)\b((?:[^>{]|\{[^}]*\})*)>/g;
+      for (const m of src.matchAll(open)) {
+        if (!/className=(?:"[^"]*|\{[^}]*)\bfont-figure\b/.test(m[2])) continue;
+        if (m[2].trimEnd().endsWith("/")) continue;
+        // The element's body, to its own closing tag.
+        const tag = new RegExp(
+          `<(/?)${m[1]}\\b((?:[^>{]|\\{[^}]*\\})*?)(/?)>`,
+          "g"
+        );
+        tag.lastIndex = m.index + m[0].length;
+        let depth = 1;
+        let end = -1;
+        for (let t = tag.exec(src); t; t = tag.exec(src)) {
+          if (t[1]) depth--;
+          else if (!t[3]) depth++;
+          if (depth === 0) {
+            end = t.index;
+            break;
+          }
+        }
+        if (end < 0) continue;
+        let body = src.slice(m.index + m[0].length, end);
+        // Drop what is already the text face, comments and reader-only text.
+        body = body.replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
+        for (let i = 0; i < 4; i++)
+          body = body.replace(
+            /<(\w+)\b[^>]*(?:font-sans|sr-only)[^>]*>[\s\S]*?<\/\1>/g,
+            ""
+          );
+        const text = body.replace(/\{[^{}]*\}/g, "").replace(/<[^>]*>/g, "");
+        if (UNIT_EXPR.test(body) || UNIT_TEXT.test(text)) {
+          const line = src.slice(0, m.index).split("\n").length;
+          offenders.push(`${rel}:${line}`);
+        }
+      }
+    }
+    expect(
+      offenders,
+      `A unit set in the figure face. Wrap it in ` +
+        `<span className="font-sans text-sm font-medium">:\n  ` +
+        offenders.join("\n  ")
+    ).toEqual([]);
+  });
 });
 
 /**

@@ -72,8 +72,12 @@ describe("Run recovery choices", () => {
     (unit) => {
       vi.mocked(useDistanceUnit).mockReturnValue(unit);
       setup();
+      // The figure and its unit are two faces in one line: read it whole.
+      const want = unit === "mi" ? "1.00 mi" : "1.61 km";
       expect(
-        screen.getByText(unit === "mi" ? "1.00 mi" : "1.61 km")
+        screen.getByText(
+          (_, el) => el?.tagName === "P" && el.textContent === want
+        )
       ).toBeInTheDocument();
       expect(screen.getByText("3:05")).toBeInTheDocument();
     }

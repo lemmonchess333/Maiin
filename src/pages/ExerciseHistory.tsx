@@ -417,7 +417,7 @@ export default function ExerciseHistory() {
                 {!isTimed && !isBodyweight && headerStats.best1RM > 0 && (
                   <>
                     {" "}
-                    <span className="text-xs font-normal text-muted-foreground">
+                    <span className="font-sans text-sm font-medium text-muted-foreground">
                       {unitLabel}
                     </span>
                   </>

@@ -185,6 +185,11 @@ vi.mock("@/components/run/RunBottomSheet", () => ({
 
 const T0 = Date.parse("2026-10-04T08:00:00Z");
 
+/** A figure and its unit are two faces in one line (the unit is the text
+ *  face), so a line like "2.50 mi" is matched whole, not as one text node. */
+const figureLine = (text: string) => (_: string, el: Element | null) =>
+  el?.tagName === "P" && el.textContent === text;
+
 function point(metresNorth: number, timestamp: number): GPSPoint {
   const lat = 51.5 + metresNorth / 111_195;
   return {
@@ -915,7 +920,7 @@ describe("the figures a pause must not move", () => {
     });
     render(tree());
     // 2 s of running either side of the hold, at most 12 m/s: 24 m, 0.01 mi.
-    expect(screen.getByText("0.01 mi")).toBeInTheDocument();
+    expect(screen.getByText(figureLine("0.01 mi"))).toBeInTheDocument();
   });
 
   it("does not read the stops on a run as gaps in its GPS", async () => {
@@ -966,7 +971,7 @@ describe("the lock screen", () => {
     h.gps.distance = 1609.344 * 2.5;
     await resumeFromSnapshot("active");
     fireEvent.click(screen.getByRole("button", { name: "Lock" }));
-    expect(screen.getByText("2.50 mi")).toBeInTheDocument();
+    expect(screen.getByText(figureLine("2.50 mi"))).toBeInTheDocument();
     expect(screen.queryByText(/km/)).toBeNull();
   });
 });
@@ -1299,7 +1304,7 @@ describe("manual structured coaching through the real player", () => {
     h.unit = "km";
     const view = await startIntervals(true);
     expect(screen.getByText("HARD · REP 1/5")).toBeInTheDocument();
-    expect(screen.getByText("1.00 km target")).toBeInTheDocument();
+    expect(screen.getByText(figureLine("1.00 km target"))).toBeInTheDocument();
     expect(h.gpsCalls).not.toContain("start");
     // Time passing cannot invent metres on the machine.
     h.timer.elapsed = 240;

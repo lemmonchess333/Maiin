@@ -1564,7 +1564,9 @@ export default function Run() {
             unit,
             2
           )}{" "}
-          {distanceUnitLabel(unit)}
+          <span className="font-sans text-sm font-medium">
+            {distanceUnitLabel(unit)}
+          </span>
         </p>
         <div className="mt-12 flex flex-col items-center gap-2">
           <RunControlButton

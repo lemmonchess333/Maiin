@@ -159,7 +159,10 @@ export default function RunResumePrompt({
                 className="font-figure tabular-nums text-xl font-bold"
                 style={{ color: "white" }}
               >
-                {distance} {distanceUnitLabel(unit)}
+                {distance}{" "}
+                <span className="font-sans text-sm font-medium">
+                  {distanceUnitLabel(unit)}
+                </span>
               </p>
             </div>
           </div>
