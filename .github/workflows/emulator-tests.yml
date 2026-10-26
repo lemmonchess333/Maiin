@@ -314,7 +314,9 @@ jobs:
   # runner; the visual-diff channel remains app-screenshots.yml's job.
   capture-specs:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The specs take 25 to 29 minutes on a busy runner, so a 30-minute
+    # cap cancelled green runs and left their PRs unmergeable.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
