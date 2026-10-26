@@ -664,8 +664,8 @@ async function openWaitingBadges(page: Page) {
 
 /** RunDetail's map draws the route, and its start and finish markers, once
  *  the basemap has loaded. Wait for the route, then for MapLibre's credit
- *  to fold, which basemap.ts does CREDIT_OPEN_MS after the map loads: the
- *  map at rest, with that long for the fitted view's tiles. Where the
+ *  to sit folded, which basemap.ts does as soon as the credit shows: the
+ *  map at rest. Where the
  *  basemap cannot be fetched the map says "Map tiles unavailable" and the
  *  route never draws. Every wait here is capped and none fails the test:
  *  a frame without tiles is still a frame. */

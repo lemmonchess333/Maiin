@@ -183,7 +183,9 @@ const EXPECTED_INLINE_USES = {
   // water's teal (DESIGN_GUIDE §14): its 68px timer and the compact bar's
   // 22px bold distance, both large text, on a sheet that is dark in both
   // themes, where the coral measures about 5:1.
-  "THEME.running": 17,
+  // 2026-10-26: 17 → 16. The live run's 68px timer greys while the run is
+  // paused, so its coral is one side of a choice and no longer counted.
+  "THEME.running": 16,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
   // 2026-10-01: 5 → 4. The same recap card's volume figure.
