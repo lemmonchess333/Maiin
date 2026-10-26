@@ -1,7 +1,7 @@
 /**
  * The End-run dialog reads the pace in the runner's unit. Its caption was
- * a hardcoded "/KM", so a miles runner saw a per-mile pace labelled per
- * kilometre, over the bar behind it that said "/MI".
+ * a hardcoded "/km", so a miles runner saw a per-mile pace labelled per
+ * kilometre, over the bar behind it that said "/mi".
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
@@ -52,14 +52,14 @@ describe("RunBottomSheet — the End-run dialog's pace", () => {
   it("is per mile for a miles runner, and says so", () => {
     const dialog = openEndRunDialog("mi");
     const pace = within(dialog).getByText("9:27");
-    expect(pace.nextElementSibling?.textContent).toBe("/MI");
-    expect(within(dialog).queryByText("/KM")).toBeNull();
+    expect(pace.nextElementSibling?.textContent).toBe("/mi");
+    expect(within(dialog).queryByText("/km")).toBeNull();
   });
 
   it("is per kilometre for a kilometres runner", () => {
     const dialog = openEndRunDialog("km");
     const pace = within(dialog).getByText("5:52");
-    expect(pace.nextElementSibling?.textContent).toBe("/KM");
+    expect(pace.nextElementSibling?.textContent).toBe("/km");
   });
 });
 

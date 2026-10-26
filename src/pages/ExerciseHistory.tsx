@@ -616,7 +616,7 @@ export default function ExerciseHistory() {
                           {/* The PR chip every other best wears. White on
                               the food orange measured 2.76:1. */}
                           {isPR && (
-                            <span className="text-caption font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
+                            <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
                               PR
                             </span>
                           )}

@@ -136,7 +136,7 @@ export default function RunResumePrompt({
           >
             <div>
               <p
-                className="text-micro uppercase tracking-wider"
+                className="text-micro"
                 style={{ color: "rgba(255,255,255,0.5)" }}
               >
                 Time
@@ -150,7 +150,7 @@ export default function RunResumePrompt({
             </div>
             <div className="text-right">
               <p
-                className="text-micro uppercase tracking-wider"
+                className="text-micro"
                 style={{ color: "rgba(255,255,255,0.5)" }}
               >
                 Distance

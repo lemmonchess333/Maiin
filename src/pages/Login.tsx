@@ -283,6 +283,8 @@ export default function Login() {
               className="ds-auth-logo mx-auto overflow-hidden"
             />
             <div>
+              {/* The name as a wordmark beside the mark, one of the two
+                  places DESIGN_GUIDE §4 sets text in capitals. */}
               <p className="text-xs font-bold uppercase tracking-[0.28em] text-lifting-strong">
                 Tropos
               </p>

@@ -347,7 +347,7 @@ export default function AdminModeration() {
               >
                 <header className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                    <p className="text-xs text-muted-foreground font-semibold">
                       {report.targetType
                         ? TARGET_LABEL[report.targetType]
                         : (report.reportedTargetType ?? "unknown")}{" "}

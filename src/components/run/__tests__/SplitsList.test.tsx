@@ -36,7 +36,7 @@ const SEVEN: Split[] = [
 describe("SplitsList — the middle detent's content", () => {
   it("caps at the last five with an honest header, newest first", () => {
     render(<SplitsList splits={SEVEN} distance={7400} unit="km" />);
-    expect(screen.getByText("SPLITS · LAST 5 OF 7")).toBeInTheDocument();
+    expect(screen.getByText("Splits · last 5 of 7")).toBeInTheDocument();
     // Laps 1-2 fell off the cap; 3-7 remain, newest (7) rendered first.
     const laps = screen.getAllByText(/^km \d$/).map((el) => el.textContent);
     expect(laps).toEqual(["km 7", "km 6", "km 5", "km 4", "km 3"]);
@@ -66,16 +66,16 @@ describe("SplitsList — the middle detent's content", () => {
 
   it("plain header (no cap note) at five or fewer splits", () => {
     render(<SplitsList splits={SEVEN.slice(0, 3)} distance={3200} unit="km" />);
-    expect(screen.getByText("SPLITS")).toBeInTheDocument();
+    expect(screen.getByText("Splits")).toBeInTheDocument();
     expect(screen.queryByText(/LAST 5 OF/)).toBeNull();
   });
 
   it("sub-first-lap state is designed copy, not an empty box — and is unit-aware", () => {
     render(<SplitsList splits={[]} distance={150} unit="km" />);
-    expect(screen.getByText("SPLITS APPEAR AFTER EACH KM")).toBeInTheDocument();
+    expect(screen.getByText("Splits appear after each km")).toBeInTheDocument();
     render(<SplitsList splits={[]} distance={150} unit="mi" />);
     expect(
-      screen.getByText("SPLITS APPEAR AFTER EACH MILE")
+      screen.getByText("Splits appear after each mile")
     ).toBeInTheDocument();
   });
 });

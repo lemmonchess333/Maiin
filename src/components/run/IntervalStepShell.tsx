@@ -179,8 +179,8 @@ export default function IntervalStepShell({
       <div className="p-4 pt-3 space-y-1">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           {flash ? (
-            <p className="text-caption font-bold tracking-wider text-success-strong min-w-0 truncate">
-              ✓ {flash.toUpperCase()} DONE
+            <p className="text-caption font-bold text-success-strong min-w-0 truncate">
+              ✓ {flash} done
             </p>
           ) : (
             <p

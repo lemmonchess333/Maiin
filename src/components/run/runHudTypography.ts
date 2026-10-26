@@ -31,9 +31,15 @@
  * call sites, because those are layout and differ legitimately.
  */
 
-/** Uppercase caption under a figure — TIME, KM, CAL, ELEV, SPLITS. */
+/**
+ * The caption under a figure (Time, km, kcal, Elev, Splits) and under a
+ * control (Lock, Pause, Finish). Sentence case at the 12px word floor, as
+ * every other caption in the app is (DESIGN_GUIDE §4), with no
+ * letter-spacing. Units keep their symbols' own case: "km" and "kcal",
+ * never "KM".
+ */
 export const HUD_CAPTION = {
-  fontSize: 11,
+  fontSize: 12,
   color: "rgba(255,255,255,0.5)",
 } as const;
 

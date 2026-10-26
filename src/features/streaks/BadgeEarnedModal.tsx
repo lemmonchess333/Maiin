@@ -493,11 +493,8 @@ export function BadgeEarnedContent({
               transition={{ delay: reduce ? 0 : 0.3, duration: 0.3 }}
               className="relative z-10 space-y-1"
             >
-              <p
-                className="text-xs font-semibold uppercase tracking-widest"
-                style={{ color: tier }}
-              >
-                {badge.tier} badge
+              <p className="text-xs font-semibold" style={{ color: tier }}>
+                {badge.tier.charAt(0).toUpperCase() + badge.tier.slice(1)} badge
               </p>
               <p className="text-xl font-bold text-foreground">{badge.name}</p>
               <p className="text-sm text-muted-foreground">

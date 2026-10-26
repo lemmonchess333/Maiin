@@ -407,7 +407,7 @@ export default function FoodRow({
         style={{ opacity: deletePanelOpacity }}
       >
         <span
-          className="flex flex-col items-center justify-center gap-1 text-caption font-medium tracking-wide"
+          className="flex flex-col items-center justify-center gap-1 text-caption font-medium"
           style={{ width: Math.abs(OPEN_OFFSET) }}
         >
           <Trash2
