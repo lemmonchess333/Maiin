@@ -62,6 +62,17 @@ beforeEach(() => {
 
 afterEach(() => document.documentElement.classList.remove("dark"));
 
+describe("FoodTimeline — an empty day", () => {
+  it("says the diary is empty and what goes in it, without pointing at the composer", () => {
+    /* The composer sits directly above this card, so "Log a meal above"
+       pointed at something already in view. */
+    render(diary([]));
+    expect(screen.getByText("Nothing logged yet")).toBeInTheDocument();
+    expect(screen.getByText("Meals you log show here.")).toBeInTheDocument();
+    expect(screen.queryByText(/above/)).toBeNull();
+  });
+});
+
 describe("FoodTimeline — a deleted meal folds away (Pol1)", () => {
   it("keeps the row while it folds, then lets it go", async () => {
     // Its exit sat in a presence of its own that unmounted with it, so
