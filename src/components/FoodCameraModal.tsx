@@ -638,9 +638,8 @@ export default function FoodCameraModal({
 
     try {
       setBusy(true);
-      /* A shutter tap that takes nothing used to do nothing at all. The
-         analysis says its own failures (onCaptureBase64); this is only
-         the capture. */
+      /* A frame that cannot be taken says so. The analysis says its own
+         failures (onCaptureBase64); this is only the capture. */
       const frame = captureFrame();
       if (!frame) {
         toast.error("Couldn't take the photo. Try again.");

@@ -216,13 +216,11 @@ export default function NutritionSection({
           <label htmlFor="tdee-age" className="text-xs text-muted-foreground">
             Age
           </label>
-          {/* The field holds what is typed while it is being edited. It
-              used to write `Number(text) || 25` on every keystroke, so a
-              cleared field became 25 at once (typing 3 then read 253),
-              and 0, a negative or 300 went to the profile on blur. Only
-              an age the profile keeps (bodyMetrics' AGE_YEARS, the
-              server's range) reaches the calculation or the save; any
-              other is put back on blur. */}
+          {/* The field holds what is typed while it is being edited, so a
+              cleared field stays empty instead of becoming a default the
+              next digit is typed after. Only an age the profile keeps
+              (bodyMetrics' AGE_YEARS, the server's range) reaches the
+              calculation or the save; any other is put back on blur. */}
           <input
             id="tdee-age"
             type="number"

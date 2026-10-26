@@ -97,9 +97,12 @@ async function readPosts(uid: string, isOwn: boolean): Promise<FeedItem[]> {
     .slice(0, PROFILE_POSTS_LIMIT);
 }
 
-function newestBadges(earnedMap: Record<string, string>): EarnedBadge[] {
+function newestBadges(earnedMap: Record<string, unknown>): EarnedBadge[] {
   const earned: EarnedBadge[] = [];
   for (const [id, earnedAt] of Object.entries(earnedMap)) {
+    // Another person's app wrote this, and the rules bound its size, not
+    // each date's type: a number here made the sort below throw.
+    if (typeof earnedAt !== "string") continue;
     const def = BADGE_DEFINITIONS.find((b) => b.id === id);
     if (!def) {
       // Schema drift: an id the client catalogue doesn't know. Skip it.
@@ -178,7 +181,7 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
         );
         if (!isOwn) {
           const summary = pubData.badgeSummary as
-            | { earnedMap?: Record<string, string> }
+            | { earnedMap?: Record<string, unknown> }
             | undefined;
           setBadges(newestBadges(summary?.earnedMap ?? {}));
         }

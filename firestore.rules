@@ -812,6 +812,16 @@ service cloud.firestore {
               && request.resource.data.badgeSummary.keys().hasOnly(['earnedMap', 'count'])
               && request.resource.data.badgeSummary.earnedMap is map
               && request.resource.data.badgeSummary.earnedMap.size() <= 100
+              /* Each entry is a badge id (18 characters at most) and an
+                 ISO date (24). The entry cap alone left both unbounded in
+                 a document every search result downloads. Rules cannot
+                 visit each value, so the ids and dates are each held to
+                 100 entries of 40 characters in all. join() writes a
+                 number or a boolean out as text and refuses a nested map,
+                 so a value's type is the reader's to check
+                 (useUserProfileData skips a date that is not a string). */
+              && request.resource.data.badgeSummary.earnedMap.keys().join('').size() <= 4000
+              && request.resource.data.badgeSummary.earnedMap.values().join('').size() <= 4000
               && request.resource.data.badgeSummary.count
                    == request.resource.data.badgeSummary.earnedMap.size())
         );

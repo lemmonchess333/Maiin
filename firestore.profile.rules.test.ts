@@ -492,6 +492,64 @@ suite(
         );
       }
     });
+
+    /* The 100-entry cap left each entry unbounded: a 9 KB "date" a
+       hundred times parked most of a megabyte in a document every search
+       result downloads. The app writes a badge id (18 characters at most)
+       and an ISO date (24). */
+    it("takes every badge with its ISO date, but not a padded date or id", async () => {
+      // The refusals run first, on an empty document: a merge write merges
+      // the map into what is stored, so after the full map below each of
+      // these would fail the entry count instead, and prove nothing.
+      for (const bad of [
+        { earnedMap: { first_step: "x".repeat(4001) }, count: 1 },
+        // Firestore refuses a field name over 1,500 bytes itself, so the
+        // ids are padded short of that and over the total together.
+        {
+          earnedMap: {
+            ["a".repeat(1400)]: "2026-06-07",
+            ["b".repeat(1400)]: "2026-06-07",
+            ["c".repeat(1400)]: "2026-06-07",
+          },
+          count: 3,
+        },
+        // A nested map has no text form to measure. A number or boolean
+        // does, and is bounded like a date; the reader skips it.
+        { earnedMap: { first_step: { at: "x".repeat(5000) } }, count: 1 },
+      ]) {
+        await assertFails(
+          setDoc(ref(), { badgeSummary: bad }, { merge: true })
+        );
+      }
+      const all = Object.fromEntries(
+        Array.from({ length: 100 }, (_, i) => [
+          `programme_complete_${i}`,
+          "2026-06-07T08:09:10.123Z",
+        ])
+      );
+      await assertSucceeds(
+        setDoc(
+          ref(),
+          { badgeSummary: { earnedMap: all, count: 100 } },
+          { merge: true }
+        )
+      );
+    });
+
+    it("lets a profile holding an oversized stored badge summary write its other fields", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `users/${ME}/public/profile`), {
+          uid: ME,
+          badgeSummary: {
+            earnedMap: { first_step: "x".repeat(5000) },
+            count: 1,
+          },
+        });
+      });
+      await assertSucceeds(
+        setDoc(ref(), { displayName: "Sam" }, { merge: true })
+      );
+    });
   }
 );
 
