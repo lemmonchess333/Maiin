@@ -24,8 +24,18 @@ export default function ExerciseFormSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   return (
-    <BottomSheet open={open} onOpenChange={onOpenChange} title={exerciseName}>
-      <div className="px-4 pb-6">
+    <BottomSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={exerciseName}
+      // Over the workout screen (z-50) as its other sheets are, so the
+      // backdrop dims it and a tap on it closes the sheet.
+      overlayClassName="z-[60]"
+      className="z-[60]"
+    >
+      {/* The muscles, steps and common mistakes run past the sheet's
+          height: they scroll inside it. */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-6">
         <Suspense
           fallback={
             <div className="py-10 flex justify-center">
