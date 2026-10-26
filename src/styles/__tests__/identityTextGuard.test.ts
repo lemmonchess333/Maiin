@@ -102,7 +102,10 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-10-25: 41 → 42. The runner's welcome back (RunReturnSheet): its
   // footprints ICON (3:1 non-text), as on FellBehindSheet; its words are
   // foreground and muted text.
-  running: 42, // Calendar status icons now use the strong colour step.
+  // 42 → 40. The run plan page asks about a race on the coral segmented
+  // control, so the two mode cards' footprints icon went; and the race
+  // card's Race community row is social, so its icon is neutral.
+  running: 40, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell

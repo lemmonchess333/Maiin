@@ -28,8 +28,8 @@ import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
  * the user into an onboarding-style edit-everything form. Product-owner call:
  * split running into its own section.
  *
- * This screen edits ONLY the running plan — mode (Freeform / Race prep),
- * race goal + runway, run days/week. RUN-EV-02 (owner decision, P0): the
+ * This screen edits ONLY the running plan: whether there is a race (No race
+ * / Training for a race), race goal + runway, run days/week. RUN-EV-02 (owner decision, P0): the
  * save is ONE current-draft computation (`buildPlan`, threading the lift
  * slice unchanged from the saved profile with `preserveHistory: true`, so
  * committing a run change never regenerates the user's lifting) and ONE
@@ -52,19 +52,11 @@ import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatClock } from "@/utils/formatters";
 import { useSearchParams } from "react-router-dom";
-import {
-  ChevronRight,
-  Footprints,
-  Minus,
-  Plus,
-  SlidersHorizontal,
-} from "lucide-react";
-import { motion } from "framer-motion";
+import { ChevronRight, Minus, Plus, SlidersHorizontal } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
-import { THEME } from "@/lib/theme";
 import { Button } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -188,17 +180,11 @@ interface RunPlanSettingsProps {
  *  "3:59:00"). */
 const formatRaceTime = formatClock;
 
-const MODE_OPTIONS: { id: RunMode; label: string; desc: string }[] = [
-  {
-    id: "freeform",
-    label: "Freeform",
-    desc: "Run whenever you want, no auto-scheduling",
-  },
-  {
-    id: "race_prep",
-    label: "Race prep",
-    desc: "Periodised plan for a specific race",
-  },
+/** Whether the runner is training for a race. The stored mode follows from
+ *  the answer (Run9a); the words never name it. */
+const RACE_OR_NOT_OPTIONS: { value: RunMode; label: string }[] = [
+  { value: "freeform", label: "No race" },
+  { value: "race_prep", label: "Training for a race" },
 ];
 
 export default function RunPlanSettings({
@@ -673,61 +659,24 @@ export default function RunPlanSettings({
 
   return (
     <div className="space-y-5 pb-6">
-      {/* ── Mode ─────────────────────────────────────────────────────── */}
-      {/* Under 15em (larger text on the phone) the two cards stack: side
-          by side, "Periodised" no longer fit inside its half. Wide-first. */}
-      <div className="@container space-y-2">
-        <SectionHeading size="compact">Run mode</SectionHeading>
-        <div
-          role="radiogroup"
-          aria-label="Run mode"
-          className="grid grid-cols-2 gap-2 @max-[15em]:grid-cols-1"
-        >
-          {MODE_OPTIONS.map((opt) => {
-            const selected = runMode === opt.id;
-            return (
-              <motion.button
-                data-motion-driven
-                key={opt.id}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  haptic();
-                  setRunMode(opt.id);
-                  if (opt.id === "race_prep")
-                    setWeeklyRunDays((n) => Math.max(minRunDays, n));
-                }}
-                className={cn(
-                  "min-h-[68px] rounded-2xl border px-3.5 py-3 text-left bg-card shadow-sm transition-all",
-                  selected ? "border-transparent" : "border-border/70"
-                )}
-                style={
-                  selected
-                    ? {
-                        background: `${THEME.running}14`,
-                        borderColor: `${THEME.running}45`,
-                      }
-                    : undefined
-                }
-              >
-                <span className="flex items-center gap-2">
-                  <Footprints
-                    className="size-4 shrink-0 text-running"
-                    aria-hidden="true"
-                  />
-                  <span className="text-body font-bold leading-tight text-foreground">
-                    {opt.label}
-                  </span>
-                </span>
-                <span className="mt-1 block text-xs leading-snug text-muted-foreground">
-                  {opt.desc}
-                </span>
-              </motion.button>
-            );
-          })}
-        </div>
+      {/* ── Race or not ───────────────────────────────────────────────
+          Run9a: the plan is a race goal or nothing, so the question is
+          whether there is a race. The same control as the race's
+          Distance, in the running colour. */}
+      <div className="space-y-2">
+        <SectionHeading size="compact">Race goal</SectionHeading>
+        <SegmentedControl
+          ariaLabel="Race goal"
+          tone="running"
+          options={RACE_OR_NOT_OPTIONS}
+          value={runMode}
+          onChange={(next) => {
+            haptic();
+            setRunMode(next);
+            if (next === "race_prep")
+              setWeeklyRunDays((n) => Math.max(minRunDays, n));
+          }}
+        />
       </div>
 
       {/* ── Race goal + runway (race prep only) ──────────────────────── */}
@@ -901,6 +850,7 @@ export default function RunPlanSettings({
               value={runVolume}
               onChange={(v) => setRunVolume(v as RunVolumePreset)}
               ariaLabel="Long-run volume"
+              tone="running"
             />
           </div>
           <div>
@@ -918,6 +868,7 @@ export default function RunPlanSettings({
               value={runDifficulty}
               onChange={(v) => setRunDifficulty(v as RunDifficultyPreset)}
               ariaLabel="Plan intensity"
+              tone="running"
             />
           </div>
           {/* Lift4 (10): the race-setup answer on the leg trim, changeable

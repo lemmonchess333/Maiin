@@ -109,6 +109,20 @@ describe("HeartRateZonesSection", () => {
     expect(text).not.toMatch(/live heart rate|streams|apple watch|healthkit/i);
   });
 
+  /* Heart-rate zones are running physiology on the run plan page, so its
+     buttons take the run coral, as "Save fitness" above them does. They
+     were the purple brand button, "Set max HR" at the 36px small size. */
+  it("draws Set max HR and its Save in the run coral at full size", () => {
+    mockHeartRate.maxHr = 0;
+    renderSection();
+    const set = screen.getByRole("button", { name: "Set max HR" });
+    expect(set.className).toContain("bg-running-fill");
+    expect(set.className).toContain("min-h-[44px]");
+    fireEvent.click(set);
+    const save = screen.getByRole("button", { name: "Save max HR" });
+    expect(save.className).toContain("bg-running-fill");
+  });
+
   it("surfaces a failed save instead of pretending it worked", async () => {
     // `throwOnError: true` is passed precisely so this branch exists; a
     // silent failure here is the original bug wearing a different hat.

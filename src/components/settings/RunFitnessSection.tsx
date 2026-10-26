@@ -228,8 +228,7 @@ export default function RunFitnessSection({
             </div>
             {!editing && (
               <Button
-                variant="primary"
-                size="sm"
+                variant="sport"
                 className="ml-auto"
                 onClick={() => {
                   haptic("light");

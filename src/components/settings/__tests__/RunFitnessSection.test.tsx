@@ -48,6 +48,17 @@ describe("RunFitnessSection", () => {
     ).toBeInTheDocument();
   });
 
+  /* Setting run paces is a running action, so its button is the coral
+     run CTA at the full 44px. It was the purple brand button at the 36px
+     small size, purple in a page of coral controls. */
+  it("offers Add as the coral run button at full size", () => {
+    renderWith({ runFitness: null });
+    const add = screen.getByRole("button", { name: "Add" });
+    expect(add.className).toContain("bg-running-fill");
+    expect(add.className).toContain("min-h-[44px]");
+    expect(add.className).not.toContain("bg-primary");
+  });
+
   it("shows VDOT + personalised paces when a benchmark exists", () => {
     renderWith({
       runFitness: {

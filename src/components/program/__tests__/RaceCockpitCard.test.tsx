@@ -174,6 +174,16 @@ describe("RaceCockpitCard", () => {
     );
   });
 
+  /* A Circle is social, not a sport: Train together is a quiet neutral
+     row like Race community, where it was a coral-tinted button that
+     read as a second run action under the session card's Start. */
+  it("Train together is a neutral row, not a coral button", () => {
+    renderCard();
+    const row = screen.getByRole("button", { name: "Train together" });
+    expect(row.className).toContain("bg-muted/60");
+    expect(row.className).not.toMatch(/running/);
+  });
+
   it("Train together renders even without week counters", () => {
     renderCard({ currentWeek: null, totalWeeks: null });
     expect(

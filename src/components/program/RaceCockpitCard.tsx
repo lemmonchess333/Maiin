@@ -17,14 +17,15 @@
  */
 
 import type { ReactNode } from "react";
-import { ChevronRight, Flag, Users } from "lucide-react";
+import { ChevronRight, Flag, UserPlus, Users } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
-import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonthYear } from "@/utils/formatters";
+import { cn } from "@/lib/utils";
 import PhaseRail from "./PhaseRail";
 
 interface RaceCockpitCardProps {
@@ -164,47 +165,35 @@ export default function RaceCockpitCard({
 
       {weeksAhead}
 
-      {/* PROGRAM-CIRCLE-01 (slice 4a) — hand the race plan off to a
-          Circle. Running non-critical action → sport-tinted (coral).
-          Privacy fence: ONLY the space type, a readable title and the
-          race date travel — never routes, GPS, paces or plan internals. */}
-      <Button
-        variant="sport-tinted"
-        fullWidth
-        onClick={() => {
-          haptic("light");
-          navigate(
-            `/social?circleCreate=race&circleTitle=${encodeURIComponent(
-              `${distanceLabel} training`
-            )}&circleDate=${targetDate}`
-          );
-        }}
-      >
-        Train together
-      </Button>
-
-      {raceSpaceLinked && (
-        /* Races plan PR4 — cockpit → race space cross-link. Quiet row,
-           not a second CTA: the community is a place to visit, not an
-           action to take. */
-        <button
-          type="button"
-          onClick={() => {
-            haptic("light");
-            navigate(`/space/${raceSpace!.id}`);
-          }}
-          className="w-full min-h-[44px] flex items-center justify-between gap-2 rounded-xl bg-muted/60 px-3.5 text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
-        >
-          <span className="flex items-center gap-2 min-w-0">
-            <Users className="size-4 shrink-0 text-running" aria-hidden />
-            <span className="truncate">Race community</span>
-          </span>
-          <ChevronRight
-            className="size-4 shrink-0 text-muted-foreground"
-            aria-hidden
+      {/* The card's quiet rows, under the rail. A Circle and a race space
+          are social, not a sport, so they are neutral rows rather than
+          coral buttons.
+          PROGRAM-CIRCLE-01 (slice 4a): Train together hands the race plan
+          off to a Circle. Privacy fence: ONLY the space type, a readable
+          title and the race date travel, never routes, GPS, paces or plan
+          internals. */}
+      <div className="space-y-2">
+        <CardRow
+          icon={UserPlus}
+          label="Train together"
+          onClick={() =>
+            navigate(
+              `/social?circleCreate=race&circleTitle=${encodeURIComponent(
+                `${distanceLabel} training`
+              )}&circleDate=${targetDate}`
+            )
+          }
+        />
+        {raceSpaceLinked && (
+          /* Races plan PR4: cockpit → race space cross-link. The community
+             is a place to visit, not an action to take. */
+          <CardRow
+            icon={Users}
+            label="Race community"
+            onClick={() => navigate(`/space/${raceSpace!.id}`)}
           />
-        </button>
-      )}
+        )}
+      </div>
 
       {inTaper && (
         <SectionLabel className="text-running-strong">
@@ -261,5 +250,40 @@ export default function RaceCockpitCard({
         )
       )}
     </section>
+  );
+}
+
+/** One quiet row inside the card: a muted fill, an icon, the words and a
+ *  chevron, 44px tall. For the card's ways out to somewhere else, which
+ *  must not compete with the session card's one filled button. */
+function CardRow({
+  icon: Icon,
+  label,
+  onClick,
+  iconClassName = "text-muted-foreground",
+}: {
+  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+  iconClassName?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        haptic("light");
+        onClick();
+      }}
+      className="w-full min-h-[44px] flex items-center justify-between gap-2 rounded-xl bg-muted/60 px-3.5 text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
+    >
+      <span className="flex items-center gap-2 min-w-0">
+        <Icon className={cn("size-4 shrink-0", iconClassName)} aria-hidden />
+        <span className="truncate">{label}</span>
+      </span>
+      <ChevronRight
+        className="size-4 shrink-0 text-muted-foreground"
+        aria-hidden
+      />
+    </button>
   );
 }

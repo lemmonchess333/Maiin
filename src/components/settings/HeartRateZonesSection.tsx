@@ -133,8 +133,7 @@ export default function HeartRateZonesSection({
             </p>
             {!editing && (
               <Button
-                variant="primary"
-                size="sm"
+                variant="sport"
                 className="mt-2"
                 onClick={() => {
                   haptic("light");
@@ -166,7 +165,7 @@ export default function HeartRateZonesSection({
             )}
             <div className="flex gap-2">
               <Button
-                variant="primary"
+                variant="sport"
                 fullWidth
                 loading={saving}
                 onClick={handleSubmit}
