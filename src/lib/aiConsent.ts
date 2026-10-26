@@ -64,6 +64,5 @@ export const AI_CONSENT_COPY = {
 /** The Settings switch's line. Turning the switch on is the same yes the
  *  sheet asks for, so it says what is sent and to whom. */
 export const AI_SWITCH_DESCRIPTION =
-  "Sends the meal photos you take and the meals you type to Google's " +
-  "Gemini AI, which works out what's in them and their macros. Barcode " +
-  "scans don't use it.";
+  "Sends your meal photos and typed meals to Google's Gemini AI to work " +
+  "out their macros.";
