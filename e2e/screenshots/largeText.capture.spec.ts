@@ -8,7 +8,8 @@
  *
  * The screens: Home, Train, History's five pages (and its charts again
  * on a Monday), Food and its manual entry and edit sheets, Social's
- * Together tab and its feed, a Space, a profile, Settings and every
+ * Together tab (again with its other challenges opened) and its feed, a
+ * Space, a profile, Settings and every
  * section of it, Train's exercise menu, a workout, a run before, during
  * and after, the exercise, run and workout detail pages, the Weekly
  * review, sign-up, setup and the Pro page. The sheets: the weight log,
@@ -421,6 +422,15 @@ test.describe("large text", () => {
       await ready(page, nav);
       await settleCommunity(page);
       await measure(page, "social-together", width, found);
+
+      // The challenges behind "See N more", opened into their compact rows.
+      await page
+        .getByRole("button", { name: /^See \d+ more challenges?$/ })
+        .click();
+      await page
+        .getByRole("heading", { name: "Available" })
+        .waitFor({ state: "visible", timeout: 10_000 });
+      await measure(page, "social-together-more", width, found);
 
       await page.goto("social?tab=feed&feed=explore");
       await ready(page, page.getByText("Maya Chen").first());

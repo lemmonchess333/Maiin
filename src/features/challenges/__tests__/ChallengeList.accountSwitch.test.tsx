@@ -36,7 +36,9 @@ vi.mock("@/lib/leaderboard", async (importOriginal) => ({
   countMyWeekLifts: (uid: string) => h.lifts[uid](),
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
-vi.mock("@/lib/toast", () => ({ toast: { error: vi.fn() } }));
+vi.mock("@/lib/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 
 import { ChallengeList } from "../ChallengeList";

@@ -7,7 +7,8 @@
  * people use and inside the sheets they open.
  *
  * The screens: Home, Food, Train, History and its Lifting page, Social
- * (Together and the Explore feed), Settings and six of its sections, a
+ * (Together, again with its other challenges opened, and the Explore
+ * feed), Settings and six of its sections, a
  * profile, a Space, an exercise, a run, a workout and the Weekly review.
  * The sheets: Food's manual entry and a meal's edit sheet, the weight
  * log, Train's exercise menu, Social's notifications and a run's share
@@ -260,6 +261,15 @@ test.describe("axe", () => {
        account have done, so the marker names none of them. */
     await open(page, "social", page.getByRole("region", { name: "Community" }));
     await check(page, "social", found);
+
+    // The challenges behind "See N more", opened into their compact rows.
+    await page
+      .getByRole("button", { name: /^See \d+ more challenges?$/ })
+      .click();
+    await page
+      .getByRole("heading", { name: "Available" })
+      .waitFor({ state: "visible", timeout: 10_000 });
+    await check(page, "social-more-challenges", found);
 
     await open(
       page,
