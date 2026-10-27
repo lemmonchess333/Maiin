@@ -77,6 +77,13 @@ import {
 import RunStatGrid from "@/components/run/RunStatGrid";
 import { useWeekPulse, type PendingRun } from "../hooks/useWeekPulse";
 import { completeRun, runPostRoute } from "@/lib/runCompletion";
+import {
+  RUN_NAME_MAX,
+  runNameOf,
+  runNameTemplate,
+  runPostName,
+} from "@/lib/runName";
+import { racePaceWorkFor } from "@/lib/racePace";
 import { isPaceEligible } from "../lib/runStatsEligibility";
 import { clearStoredRun } from "../lib/runResumeStorage";
 import { announceRouteShare, shareGpx } from "@/lib/shareRoute";
@@ -88,6 +95,7 @@ import {
   Trophy,
   ChevronLeft,
   AlertCircle,
+  Pencil,
 } from "lucide-react";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import {
@@ -352,6 +360,8 @@ interface RunData {
     id: string;
     notes: string;
     relativeEffort: "easier" | "matched" | "harder" | null;
+    /** The name the run was saved and posted under. */
+    name?: string;
   };
   points: GPSPoint[];
   distance: number;
@@ -502,6 +512,10 @@ export default function RunSummary() {
   const [relativeEffort, setRelativeEffort] = useState<
     "easier" | "matched" | "harder" | null
   >(receipt?.relativeEffort ?? null);
+  /* The run's name as typed in its field; null until the runner types,
+     so the field shows the name the run was given (`runPostName`) and
+     follows it while the plan and profile load. */
+  const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   /* Sprint 3 Edit-distance: when the user corrects a fat-fingered
      manual / treadmill distance from InvalidRunReview, the new
@@ -800,6 +814,21 @@ export default function RunSummary() {
     const tmpl = RUN_TEMPLATES.find((t) => t.id === tmplId);
     return tmpl ? runTemplateName(tmpl.name, unit) : null;
   })();
+  /* The name the run is given before the runner changes it: the planned
+     session's, a race-pace finish included (Run21 (2)), else its type's,
+     else the time of day it started. */
+  const nameTemplate = runNameTemplate(runConfig);
+  const givenName = runPostName(
+    { runConfig, startedAt, points: state.points },
+    {
+      unit,
+      racePace: racePaceWorkFor(nameTemplate, profile, programState?.runPlan),
+    }
+  );
+  const runName = nameDraft ?? givenName;
+  /* What Save writes: the field's name, trimmed, else the given one. */
+  const nameToSave = runName.trim() ? runNameOf({ name: runName }) : givenName;
+
   const heroCopy = (() => {
     const sized = (distance || 0) > 200 && (elapsed || 0) > 60;
     /* "Run saved" is a claim about the WRITE, so it waits for one — see
@@ -1021,6 +1050,7 @@ export default function RunSummary() {
           workPortion: state.workPortion ?? null,
           shoeId: effectiveShoeId,
           bestEfforts,
+          name: nameToSave,
         },
         // Loading or unread privacy settings withhold the route.
         route: runPostRoute(savedPoints, {
@@ -1043,6 +1073,7 @@ export default function RunSummary() {
             id: savedId,
             notes: notes.trim(),
             relativeEffort,
+            name: nameToSave,
           },
         },
       });
@@ -1743,6 +1774,44 @@ export default function RunSummary() {
           plus optional caption, so duplicating the toggle here would
           be confusing. */}
           <div className="px-4 space-y-2">
+            {/* The run's name, edited where it stands: prefilled, and given
+                back if left empty. Once the run is written its name has
+                gone with it, and out on the post, so it is shown, not
+                edited; a Retry after that resumes the same run. */}
+            {savedRunId === null &&
+            (canShowNormalSave({ isInvalid: false, saveStatus }) ||
+              canShowRetrySave({ saveStatus })) ? (
+              <div className="relative">
+                <input
+                  type="text"
+                  value={runName}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onBlur={() => {
+                    if (!runName.trim()) setNameDraft(null);
+                  }}
+                  aria-label="Run name"
+                  readOnly={saveStatus === "saving"}
+                  maxLength={RUN_NAME_MAX}
+                  autoComplete="off"
+                  enterKeyHint="done"
+                  dir="auto"
+                  className="ds-input pr-11 text-base font-bold"
+                />
+                <Pencil
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                />
+              </div>
+            ) : (
+              receipt?.name && (
+                <p
+                  dir="auto"
+                  className="px-1 text-base font-bold text-foreground break-words"
+                >
+                  {receipt.name}
+                </p>
+              )
+            )}
             {/* RUN-03: optional one-tap effort check-in. Hidden for invalid
                 runs (nothing meaningful to calibrate against). Skippable —
                 null is a first-class answer, so no segment starts selected
