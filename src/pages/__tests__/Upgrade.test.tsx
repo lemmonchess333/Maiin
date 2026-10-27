@@ -340,6 +340,55 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     ).toBeInTheDocument();
   });
 
+  it("says what Pro includes and what Free keeps, before the Continue button", () => {
+    renderPage("/upgrade?from=onboarding");
+    const list = screen.getByRole("list", { name: "What Pro includes" });
+    expect(
+      within(list)
+        .getAllByRole("listitem")
+        .map((li) => li.textContent)
+    ).toEqual([
+      "AI photo food logging, up to 100 scans a day",
+      "A calorie target that adapts to you",
+      "Macros that shift with your training",
+    ]);
+    const freeKeeps = screen.getByText(
+      "Free keeps your training plan, run tracking, and typed and barcode food logging."
+    );
+    const cta = screen.getByRole("button", { name: "Continue" });
+    for (const el of [list, freeKeeps]) {
+      expect(
+        el.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    }
+    // The product still leads: the demo comes before the list.
+    expect(
+      screen
+        .getByRole("group", { name: "What Pro looks like" })
+        .compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("a Pro member sees the same list, and no Free line", () => {
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: true,
+      subscriptionSource: "stripe",
+    });
+    useSubscriptionMock.mockReturnValue({
+      tier: "pro",
+      isInTrial: false,
+      trialDaysLeft: 0,
+      isPro: true,
+    });
+    renderPage();
+    expect(
+      within(screen.getByRole("list", { name: "What Pro includes" }))
+        .getAllByRole("listitem")
+        .map((li) => li.textContent)
+    ).toHaveLength(3);
+    expect(screen.queryByText(/^Free keeps/)).toBeNull();
+  });
+
   it("tells a trial-eligible user nothing is due today, and when billing starts", () => {
     authProfileMock.mockReturnValue({ hasUsedTrial: false });
     renderPage();

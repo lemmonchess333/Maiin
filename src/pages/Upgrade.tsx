@@ -37,11 +37,7 @@
  */
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import {
-  useSubscription,
-  isCheckoutTrialEligible,
-  DAILY_AI_LIMITS,
-} from "@/lib/subscription";
+import { useSubscription, isCheckoutTrialEligible } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -90,6 +86,8 @@ import PlanPicker from "@/components/paywall/PlanPicker";
 import RenewalDisclosure from "@/components/paywall/RenewalDisclosure";
 import ProPreview from "@/components/paywall/ProPreview";
 import ProDemoVideo from "@/components/paywall/ProDemoVideo";
+import ProIncludes from "@/components/paywall/ProIncludes";
+import { FREE_KEEPS } from "@/lib/proFeatures";
 import { framesForFeature } from "@/components/paywall/previewFrames";
 
 type Beat = "offer" | "plans";
@@ -460,23 +458,7 @@ export default function Upgrade() {
             Full access to all features.
           </p>
           {storeTrial && <TrialDetails trial={storeTrial} />}
-          <ul className="space-y-1.5 text-sm text-foreground">
-            {[
-              // The server caps Pro scans (DAILY_AI_LIMITS), so not
-              // "unlimited": the number is the cap itself.
-              `AI photo food logging, up to ${DAILY_AI_LIMITS.pro.image_ai} scans a day`,
-              "A calorie target that adapts to you",
-              "Macros that shift with your training",
-            ].map((f) => (
-              <li key={f} className="flex items-start gap-1.5">
-                <Check
-                  className="size-3.5 text-primary mt-0.5 shrink-0"
-                  aria-hidden="true"
-                />
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
+          <ProIncludes />
           <button
             type="button"
             onClick={handleManageSubscription}
@@ -559,6 +541,14 @@ export default function Upgrade() {
               />
             }
           />
+
+          {/* What Pro adds, and what Free keeps, before any price: a
+              runner who has just finished setup would otherwise read an
+              offer about meal photos and nothing else. */}
+          <div className="space-y-2 max-w-[340px] mx-auto">
+            <ProIncludes />
+            <p className="text-xs text-muted-foreground">{FREE_KEEPS}</p>
+          </div>
 
           {/* What it costs leads. With the trial, the trial and the price
               are one bold sentence, so the amount billed is as prominent as
