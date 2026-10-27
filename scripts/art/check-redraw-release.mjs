@@ -1,12 +1,20 @@
 /** Browser-smoke a released versioned form-art set in the production player.
  * Start Vite with HOSTING_TARGET=firebase and run with one or more exercise IDs.
  *   node scripts/art/check-redraw-release.mjs db-bench hack-squat
+ *   node scripts/art/check-redraw-release.mjs --date=2026-10-28 front-squat
  */
 import { chromium } from "playwright";
 
-const ids = process.argv.slice(2);
-if (!ids.length || ids.some((id) => !/^[a-z0-9-]+$/.test(id))) {
-  throw new Error("Usage: check-redraw-release.mjs <exercise-id> [...]");
+const args = process.argv.slice(2);
+const dateOption = args.find((arg) => arg.startsWith("--date="));
+const date = dateOption?.slice("--date=".length) ?? "2026-10-27";
+const ids = args.filter((arg) => arg !== dateOption);
+if (
+  !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+  !ids.length ||
+  ids.some((id) => !/^[a-z0-9-]+$/.test(id))
+) {
+  throw new Error("Usage: check-redraw-release.mjs [--date=YYYY-MM-DD] <exercise-id> [...]");
 }
 const browser = await chromium.launch({ headless: true });
 try {
@@ -30,14 +38,14 @@ try {
           const img = /** @type {HTMLImageElement} */ (node);
           if (!img.src.endsWith(expected)) throw new Error(`Unexpected image ${img.src}`);
           await img.decode();
-        }, `/form-frames/${id}/2026-10-27/${frame}.webp`);
+        }, `/form-frames/${id}/${date}/${frame}.webp`);
         await guide.getByRole("button", { name: "Next frame" }).click();
       }
       await guide.locator('img[aria-hidden="false"]').evaluate(async (node, expected) => {
         const img = /** @type {HTMLImageElement} */ (node);
         if (!img.src.endsWith(expected)) throw new Error(`Loop did not return: ${img.src}`);
         await img.decode();
-      }, `/form-frames/${id}/2026-10-27/1.webp`);
+      }, `/form-frames/${id}/${date}/1.webp`);
       const tooWide = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
       if (tooWide || errors.length) throw new Error(`${id}/${theme}: overflow=${tooWide}; errors=${errors.join(" | ")}`);
       await page.close();
