@@ -155,6 +155,34 @@ describe("liftWorkoutExercises", () => {
     expect(rows[2]).not.toHaveProperty("superset");
   });
 
+  it("tags no superset an exercise was skipped from, nor a partner left alone", () => {
+    const slotted = [
+      { ...BENCH, instanceId: "bench-1" },
+      { ...CURL, instanceId: "curl-1" },
+      { ...PLANK, instanceId: "plank-1" },
+    ];
+    // Three in a superset, the curl skipped: the other two still are one.
+    const skipped = liftWorkoutExercises(
+      slotted,
+      [[done(8, 60)], [], [done(60, 20)]],
+      undefined,
+      [{ ids: ["bench-1", "curl-1", "plank-1"] }]
+    );
+    expect(skipped.map((row) => row.superset)).toEqual([1, undefined, 1]);
+    // A pair whose partner was never started: no superset at all.
+    const alone = liftWorkoutExercises(
+      slotted,
+      [[done(8, 60)], [{ ...done(12, 15), completed: false }], [done(60, 20)]],
+      undefined,
+      [{ ids: ["bench-1", "curl-1"] }]
+    );
+    expect(alone.map((row) => row.superset)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
   it("carries a timed hold's unit", () => {
     const [plank] = liftWorkoutExercises([PLANK], [[done(60, 20)]]);
     expect(plank.repUnit).toBe("seconds");

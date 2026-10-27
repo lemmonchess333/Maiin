@@ -153,18 +153,32 @@ export function nextInSuperset(
 }
 
 /** Each exercise's superset as the saved workout records it: 1 for the
- *  session's first group, 2 for its second, nothing for one in none. */
+ *  session's first group, 2 for its second, nothing for one in none.
+ *  With `done`, only exercises with a set done count: one skipped or not
+ *  started is in no superset, and a group left with one exercise done is
+ *  no superset either. */
 export function supersetNumbers(
   exercises: readonly Slotted[],
-  supersets: readonly SessionSuperset[] | undefined
+  supersets: readonly SessionSuperset[] | undefined,
+  done?: readonly boolean[]
 ): (number | undefined)[] {
-  const groups = tidy(exercises, supersets ?? []);
+  const counts = (i: number) => done?.[i] ?? true;
+  const countedIds = new Set(
+    exercises.flatMap((ex, i) =>
+      ex.instanceId && counts(i) ? [ex.instanceId] : []
+    )
+  );
+  const groups = tidy(exercises, supersets ?? [])
+    .map((g) => ({ ids: g.ids.filter((id) => countedIds.has(id)) }))
+    .filter((g) => g.ids.length >= 2);
   const order: SessionSuperset[] = [];
-  return exercises.map((ex) => {
-    const group = ex.instanceId
-      ? groups.find((g) => g.ids.includes(ex.instanceId!))
-      : undefined;
+  return exercises.map((ex, i) => {
+    const group =
+      ex.instanceId && counts(i)
+        ? groups.find((g) => g.ids.includes(ex.instanceId!))
+        : undefined;
     if (!group) return undefined;
+
     if (!order.includes(group)) order.push(group);
     return order.indexOf(group) + 1;
   });

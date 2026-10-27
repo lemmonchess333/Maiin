@@ -96,14 +96,13 @@ export function liftWorkoutExercises(
   notes?: Readonly<Record<number, string>>,
   supersets?: readonly SessionSuperset[]
 ): WorkoutExercise[] {
-  const groups = supersetNumbers(ran, supersets);
-  return ran.map((ex, index) => {
+  // D2: the planned pair on each set is the PRESCRIPTION, which
+  // `applyProgression` scores the sets against and overwrites a moment
+  // later. A day marked done without a live session has no logs; its
+  // sets are taken as the last attempt, the best guess there is.
+  const done = ran.map((ex, index) => {
     const logs = setLogs?.[index];
-    // D2: the planned pair on each set is the PRESCRIPTION, which
-    // `applyProgression` scores the sets against and overwrites a moment
-    // later. A day marked done without a live session has no logs; its
-    // sets are taken as the last attempt, the best guess there is.
-    const sets = projectWorkoutSets(
+    return projectWorkoutSets(
       logs,
       logs
         ? { sets: ex.sets, reps: ex.reps, weightKg: ex.weight }
@@ -113,6 +112,17 @@ export function liftWorkoutExercises(
             weightKg: ex.lastAttemptedWeight || ex.weight,
           }
     );
+  });
+  // A superset is what was done in it: an exercise skipped or not started
+  // is in none, and a partner left alone is not tagged.
+  const groups = supersetNumbers(
+    ran,
+    supersets,
+    done.map((sets) => sets.length > 0)
+  );
+  return ran.map((ex, index) => {
+    const sets = done[index];
+
     // Trimmed, and left out when empty: an empty string reads as "there
     // is a note" to every reader that checks for one.
     const note = notes?.[index]?.trim();
