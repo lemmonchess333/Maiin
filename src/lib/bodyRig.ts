@@ -5349,9 +5349,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     pose: (e) => {
       const c = hackSquatChain(e);
       // The ankle is the IK endpoint, but the shoe needs its own fixed
-      // transform. Inheriting the shank rotation made it rock and slide
-      // across a platform that is fixed for the whole rep.
+      // transform. The 45-degree turn plants its sole on the inclined
+      // platform; inheriting the shank rotation would rock and slide it.
       const foot: Op[] = [
+        { kind: "rotate", deg: -45, pivot: SIDE_ANCHORS.ankle },
         {
           kind: "translate",
           dx: HACK_ANKLE[0] - SIDE_ANCHORS.ankle[0],
@@ -5400,8 +5401,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         `<line x1="-35" y1="31" x2="102" y2="207" stroke="${GEAR_DARK}" stroke-width="6" stroke-linecap="round"/>` +
         `<line x1="-23" y1="31" x2="114" y2="207" stroke="${GEAR}" stroke-width="5" stroke-linecap="round"/>` +
         `<line x1="-35" y1="31" x2="-23" y2="31" stroke="${GEAR_EDGE}" stroke-width="4"/>` +
-        `<line x1="59" y1="203" x2="116" y2="203" stroke="${GEAR}" stroke-width="6" stroke-linecap="round"/>` +
-        `<line x1="104" y1="203" x2="104" y2="211" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<path d="M88 206 L118 176 L123 181 L93 211 Z" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="1.4"/>` +
+        `<line x1="88" y1="206" x2="118" y2="176" stroke="${GEAR}" stroke-width="2"/>` +
+        `<line x1="93" y1="211" x2="109" y2="211" stroke="${GEAR_DARK}" stroke-width="4"/>` +
         `<line x1="${(shoulder[0] - 12).toFixed(1)}" y1="${(shoulder[1] - 12).toFixed(1)}" x2="${(hip[0] - 12).toFixed(1)}" y2="${(hip[1] + 8).toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="10" stroke-linecap="round"/>` +
         `<line x1="${(shoulder[0] - 8).toFixed(1)}" y1="${(shoulder[1] - 12).toFixed(1)}" x2="${(hip[0] - 8).toFixed(1)}" y2="${(hip[1] + 8).toFixed(1)}" stroke="${GEAR}" stroke-width="4" stroke-linecap="round"/>` +
         `<rect x="${(shoulder[0] - 10).toFixed(1)}" y="${(shoulder[1] - 16).toFixed(1)}" width="21" height="8" rx="3" fill="${GEAR}"/>` +

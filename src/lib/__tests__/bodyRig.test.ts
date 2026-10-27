@@ -90,6 +90,8 @@ describe("machine fallback contacts", () => {
       const ankle = applyToPoint(SIDE_ANCHORS.ankle, pose.shankL ?? []);
       const shoeAnkle = applyToPoint(SIDE_ANCHORS.ankle, pose.footL ?? []);
       const shoeBall = applyToPoint(SIDE_ANCHORS.ball, pose.footL ?? []);
+      const shoeHeel = applyToPoint([42.4, 202.9], pose.footL ?? []);
+      const shoeToe = applyToPoint([65, 203], pose.footL ?? []);
       const hip = applyToPoint(SIDE_ANCHORS.hip, pose.pelvis ?? []);
       const hand = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
       const plate = scene.match(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="14"/);
@@ -99,9 +101,10 @@ describe("machine fallback contacts", () => {
       expect(scene).toContain(
         `<line x1="-35" y1="31" x2="102" y2="207"`
       );
-      expect(scene).toContain(
-        `<line x1="59" y1="203" x2="116" y2="203"`
-      );
+      expect(scene).toContain(`M88 206 L118 176 L123 181 L93 211 Z`);
+      // The two sole ends sit on the top edge of the 45-degree footplate.
+      expect(shoeHeel[0] + shoeHeel[1]).toBeCloseTo(294, 0);
+      expect(shoeToe[0] + shoeToe[1]).toBeCloseTo(294, 0);
       expect(
         Math.hypot(ankle[0] - shoeAnkle[0], ankle[1] - shoeAnkle[1])
       ).toBeLessThan(0.01);
