@@ -1778,14 +1778,6 @@ export default function RunSummary() {
               className="ds-input resize-none text-sm"
             />
 
-            {canShowRetrySave({ saveStatus }) && (
-              /* Same RetryBanner used by InvalidRunReview — durable
-             affordance for save failures. Toast still fires but can be
-             hidden behind Safari PWA bottom chrome; the banner sits in
-             the action row where the user is already looking. */
-              <RetryBanner error={saveError} onRetry={handleSave} />
-            )}
-
             {/* A manually-entered distance is a TYPED number, so it can be
                 wrong by any amount — 5 km for a 6 km treadmill run is as
                 wrong as it gets while still looking ordinary. The
@@ -1804,17 +1796,6 @@ export default function RunSummary() {
                   onCommit={setEditedDistanceMeters}
                 />
               )}
-
-            {canShowNormalSave({ isInvalid: false, saveStatus }) && (
-              <Button
-                variant="sport"
-                fullWidth
-                onClick={handleSave}
-                loading={saveStatus === "saving"}
-              >
-                Save run
-              </Button>
-            )}
 
             {/* Pace insight (Pro) — surfaced at the post-run decision moment,
                 before navigation. Only in this valid-run post-save stack;
@@ -1915,20 +1896,43 @@ export default function RunSummary() {
             )}
           </div>
 
-          {/* Saved, Done comes last and stays in thumb reach, as on the
+          {/* The page's one main action stays in thumb reach, as on the
               lift's finish (Pol1): pinned to the bottom of the screen
-              while the page scrolls under it. */}
-          {doneShown && (
-            <div className="sticky bottom-0 z-10 mt-4 border-t border-border/50 bg-background px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))]">
-              <Button
-                ref={doneRef}
-                variant="sport"
-                size="lg"
-                fullWidth
-                onClick={() => navigate("/program?tab=run")}
-              >
-                Done
-              </Button>
+              while the page scrolls under it. Save run before the save,
+              wherever the splits run to, then Done in its place. */}
+          {(canShowNormalSave({ isInvalid: false, saveStatus }) ||
+            canShowRetrySave({ saveStatus }) ||
+            doneShown) && (
+            <div
+              data-testid="summary-footer"
+              className="sticky bottom-0 z-10 mt-4 border-t border-border/50 bg-background px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))]"
+            >
+              {canShowRetrySave({ saveStatus }) ? (
+                /* A failed save keeps its answer where Save run was: the
+                   same RetryBanner InvalidRunReview uses. A toast fires
+                   too, but Safari's bottom chrome can hide it. */
+                <RetryBanner error={saveError} onRetry={handleSave} />
+              ) : doneShown ? (
+                <Button
+                  ref={doneRef}
+                  variant="sport"
+                  size="lg"
+                  fullWidth
+                  onClick={() => navigate("/program?tab=run")}
+                >
+                  Done
+                </Button>
+              ) : (
+                <Button
+                  variant="sport"
+                  size="lg"
+                  fullWidth
+                  onClick={handleSave}
+                  loading={saveStatus === "saving"}
+                >
+                  Save run
+                </Button>
+              )}
             </div>
           )}
         </>

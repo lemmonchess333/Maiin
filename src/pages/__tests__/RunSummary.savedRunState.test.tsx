@@ -443,6 +443,30 @@ describe("RunSummary — Save", () => {
     ).toBeInTheDocument();
   });
 
+  it("pins Save run to the bottom of the screen, where Done takes its place", async () => {
+    renderUnsaved();
+    const save = await screen.findByRole("button", { name: RUN.save });
+    const footer = save.closest("[data-testid='summary-footer']");
+    // The one action in reach: pinned, alone, and after the notes it saves.
+    expect(footer).not.toBeNull();
+    expect(within(footer as HTMLElement).getAllByRole("button")).toEqual([
+      save,
+    ]);
+    expect(screen.getAllByRole("button", { name: RUN.save })).toHaveLength(1);
+    expect(
+      screen.getByLabelText("Run notes").compareDocumentPosition(save) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    fireEvent.click(save);
+    const done = await screen.findByRole("button", { name: RUN.done });
+    const pinned = done.closest("[data-testid='summary-footer']");
+    expect(pinned).not.toBeNull();
+    expect(within(pinned as HTMLElement).getAllByRole("button")).toEqual([
+      done,
+    ]);
+    expect(screen.queryByRole("button", { name: RUN.save })).toBeNull();
+  });
+
   it("retains the distance draft until durable acceptance, including a refused queue write", async () => {
     const now = Date.now();
     expect(
@@ -470,9 +494,9 @@ describe("RunSummary — Save", () => {
       });
     try {
       fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
-      expect(
-        await screen.findByRole("button", { name: "Retry" })
-      ).toBeInTheDocument();
+      const retry = await screen.findByRole("button", { name: "Retry" });
+      // The failure answers where Save run was, not somewhere up the page.
+      expect(retry.closest("[data-testid='summary-footer']")).not.toBeNull();
       expect(queued()).toHaveLength(0);
       expect(readStoredRun("runner")?.manualDistanceDraft?.raw).toBe("3.10");
       refused.mockRestore();
