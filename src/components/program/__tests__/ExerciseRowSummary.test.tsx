@@ -28,7 +28,7 @@ describe("ExerciseThumb — each exercise's picture", () => {
   });
 
   it("shows muscles when an exercise's drawing is withheld", () => {
-    const { container } = render(<ExerciseThumb exerciseId="bench-press" />);
+    const { container } = render(<ExerciseThumb exerciseId="close-grip-bench" />);
     const tile = container.firstElementChild as HTMLElement;
     expect(tile.dataset.thumb).toBe("muscles");
     expect(tile.querySelector("img")!.getAttribute("src")).toMatch(

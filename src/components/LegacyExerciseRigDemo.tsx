@@ -103,9 +103,17 @@ const PHASE_LABEL: Record<RepPhase, string> = {
   cycle: "Steady rhythm",
 };
 
-/** These movements travel across or away from the body. A generic "Drive
- * up" or "Lower" cue would describe the opposite of the visible form. */
+/** Movement-specific cues where the generic direction omits essential form
+ * or describes the wrong path. */
 const MOVEMENT_PHASE_LABEL: Record<string, Partial<Record<RepPhase, string>>> = {
+  "front-squat": {
+    drive: "Stand tall with elbows high",
+    eccentric: "Squat down with elbows high",
+  },
+  "clean-and-press": {
+    drive: "Clean to rack, then press overhead",
+    eccentric: "Lower to rack, then floor",
+  },
   "seated-row": {
     drive: "Pull handle to lower ribs",
     eccentric: "Reach forward under control",

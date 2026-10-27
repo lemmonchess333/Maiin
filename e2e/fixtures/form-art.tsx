@@ -47,8 +47,33 @@ const batchDrafts = Object.fromEntries(
   ])
 );
 
+const candidateParams = new URLSearchParams(window.location.search);
+const candidateId = candidateParams.get("candidate");
+const candidateDate = candidateParams.get("date");
+const candidateCamera = ["scale", "x", "y"].map((key) =>
+  Number(candidateParams.get(key))
+);
+const candidateFraming =
+  candidateParams.has("scale") &&
+  candidateCamera.every(Number.isFinite) &&
+  candidateCamera[0] >= 1 &&
+  candidateCamera[0] <= 2
+    ? {
+        scale: candidateCamera[0],
+        x: candidateCamera[1],
+        y: candidateCamera[2],
+      }
+    : undefined;
+const reviewedCandidate =
+  candidateId &&
+  Object.hasOwn(FORM_ARTWORK, candidateId) &&
+  candidateDate &&
+  /^\d{4}-\d{2}-\d{2}$/.test(candidateDate)
+    ? candidateId
+    : null;
+
 export default function Review() {
-  const [id, setId] = useState("barbell-row");
+  const [id, setId] = useState(reviewedCandidate ?? "barbell-row");
   const [dark, setDark] = useState(true);
   // Theme tokens and app hooks resolve from html, not an inner preview wrapper.
   useEffect(() => {
@@ -70,7 +95,18 @@ export default function Review() {
     "6-return-candidate.png",
   ];
   const curlDraft = id === "db-curl (draft)";
-  const batchDraft = batchDrafts[id];
+  const candidate =
+    id === reviewedCandidate
+      ? {
+          name: id,
+          findings: [] as string[],
+          beats: (getAuthoredBeats(id) ?? []).map((beat, index) => ({
+            ...beat,
+            image: `form-frames/${id}/${candidateDate}/${index + 1}.webp`,
+          })),
+        }
+      : null;
+  const batchDraft = candidate ?? batchDrafts[id];
   const draft = curlDraft || Boolean(batchDraft);
   const cardArt = draft ? null : getFormArtCutout(id);
   const hasReleasedArtwork = Object.hasOwn(
@@ -115,7 +151,9 @@ export default function Review() {
           {draft ? (
             <>
               <p role="status" className="text-small text-muted-foreground">
-                {hasReleasedArtwork
+                {candidate
+                  ? "Versioned redraw candidate. Review all six frames and the loop before release."
+                  : hasReleasedArtwork
                   ? "Original PNG preview. Production artwork is available for this exercise; recorded review findings remain below."
                   : "Unreleased draft. Review findings and any outstanding checks are recorded below."}
               </p>
@@ -123,11 +161,12 @@ export default function Review() {
                 key={`${id}-${request?.serial ?? 0}`}
                 beats={beats}
                 name={batchDraft?.name ?? "Dumbbell Curl"}
+                framing={candidate ? candidateFraming : undefined}
                 onStep={setStep}
                 initialIndex={request?.index}
                 autoPlay={!request}
               />
-              {batchDraft && (
+              {batchDraft && batchDraft.findings.length > 0 && (
                 <details className="ds-card p-3 text-small">
                   <summary className="min-h-11 cursor-pointer font-semibold">
                     Recorded review findings

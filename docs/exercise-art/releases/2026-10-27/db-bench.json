@@ -1,0 +1,194 @@
+{
+  "exerciseId": "db-bench",
+  "version": "anatomy-v4-2026-10-27-flat-dumbbell-bench-v1",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and 393×852 player review",
+  "reviewedAt": "2026-10-27T17:23:05.051Z",
+  "reference": {
+    "path": "form-frames/db-bench/2026-10-27/1.webp",
+    "sha256": "f507f52fa3737c51ac5eafec64e79b02183da1d8f7dbe2a3f6174de05b80c8a2"
+  },
+  "cueSha256": "4d1abc9f66c9bd37b2779b617eb75a071d3b6fd23bb94b3bce04e9f286243342",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six native 1536×1024 frames use the same faceless anatomical figure, white trainers, black bench and paired black dumbbells; violet chest and pale supporting muscles match the established illustration style."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "One fixed side three-quarter view throughout. The two bench-foot corners are exactly (542,739) and (1055,834) in all six PNGs; a fixed 1.5× camera with x=-0.0215,y=0.0146 fills the phone stage without cropping."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "The head and back stay supported on a flat bench; elbows bend under the weights toward chest level and extend over the chest. Both hands remain attached to separate dumbbells and neither limb disappears in the native and phone sequences."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two complete dumbbells keep separate paired heads and visible handles through all six frames. The flat bench and both support feet remain in one position; measured support span is 719 px and foot vertical gap 95 px throughout."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both feet remain planted below the bench, head/back remain supported, and hands keep wrapped grips on each dumbbell. The fixed bench feet were measured separately from the moving arms and weights."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Frame order lowers both weights with bent elbows then presses them upward; wrists stay above forearms in the bottom and mid positions. There is no torso rise or bench tilt."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Pectoral region is the strongest violet field with smaller shoulder/triceps support; highlighting stays attached to the same anatomy in all six frames."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Top, lower, approach chest, bottom, press and finish cues now match the actual top→bottom→top redraw; the final cue has progress 0 and no longer calls the top frame a partial press."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six frames were stepped in the actual ExerciseFormFrames player. Frame 6 is byte-identical to frame 1 and the 6→1 button returns to the top position without a pose jump."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual light ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual dark ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/db-bench/2026-10-27/1.webp",
+      "sha256": "f507f52fa3737c51ac5eafec64e79b02183da1d8f7dbe2a3f6174de05b80c8a2",
+      "anchors": {
+        "leftBenchFoot": {
+          "x": 542,
+          "y": 739
+        },
+        "rightBenchFoot": {
+          "x": 1055,
+          "y": 834
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 719,
+        "benchFootVerticalGap": 95
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/db-bench/1.png",
+        "sha256": "a77ab669278281b2a3fabab5f12a9cd5b10ed64431aa47f6d88d5fe8c3cd6e98"
+      }
+    },
+    {
+      "path": "form-frames/db-bench/2026-10-27/2.webp",
+      "sha256": "0f4c2792e2404f9eac766c9e5af1e69a0e43df5efea1e04891e641edf5fa6e02",
+      "anchors": {
+        "leftBenchFoot": {
+          "x": 542,
+          "y": 739
+        },
+        "rightBenchFoot": {
+          "x": 1055,
+          "y": 834
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 719,
+        "benchFootVerticalGap": 95
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/db-bench/2.png",
+        "sha256": "a8e64aa9768a133f06637b2d987b9752e5e28d56202a49539ef21a953ea24d8e"
+      }
+    },
+    {
+      "path": "form-frames/db-bench/2026-10-27/3.webp",
+      "sha256": "b259b84498ecfed88a70f41e9833f38ba91215f6ca7425eca1531ebf53b5f899",
+      "anchors": {
+        "leftBenchFoot": {
+          "x": 542,
+          "y": 739
+        },
+        "rightBenchFoot": {
+          "x": 1055,
+          "y": 834
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 719,
+        "benchFootVerticalGap": 95
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/db-bench/3.png",
+        "sha256": "7d1d8614d1d8cf5875e3a594448af4ac07d50ed82a6fb634686f76f9fe32a0f1"
+      }
+    },
+    {
+      "path": "form-frames/db-bench/2026-10-27/4.webp",
+      "sha256": "a8f6c896e5da6a0c87c45ee32346d6ffad4b0bf6025cabddfeffd16415db20fb",
+      "anchors": {
+        "leftBenchFoot": {
+          "x": 542,
+          "y": 739
+        },
+        "rightBenchFoot": {
+          "x": 1055,
+          "y": 834
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 719,
+        "benchFootVerticalGap": 95
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/db-bench/4.png",
+        "sha256": "4ce7e4fdc91226a33d59e58afe3748f9ec44537e50ac52a115bbe8f3e6dd1dd0"
+      }
+    },
+    {
+      "path": "form-frames/db-bench/2026-10-27/5.webp",
+      "sha256": "d8c4c4eab976da2e6080f78cacaca1776755a4935bd7edbe13903c4375057943",
+      "anchors": {
+        "leftBenchFoot": {
+          "x": 542,
+          "y": 739
+        },
+        "rightBenchFoot": {
+          "x": 1055,
+          "y": 834
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 719,
+        "benchFootVerticalGap": 95
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/db-bench/5.png",
+        "sha256": "01c56d9bb3e13c338a1009585b27d9aa6f93b3a6c5c74591e7bf5ad5242f4352"
+      }
+    },
+    {
+      "path": "form-frames/db-bench/2026-10-27/6.webp",
+      "sha256": "f507f52fa3737c51ac5eafec64e79b02183da1d8f7dbe2a3f6174de05b80c8a2",
+      "anchors": {
+        "leftBenchFoot": {
+          "x": 542,
+          "y": 739
+        },
+        "rightBenchFoot": {
+          "x": 1055,
+          "y": 834
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 719,
+        "benchFootVerticalGap": 95
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/db-bench/6.png",
+        "sha256": "a77ab669278281b2a3fabab5f12a9cd5b10ed64431aa47f6d88d5fe8c3cd6e98"
+      }
+    }
+  ]
+}

@@ -120,6 +120,53 @@ describe("bike pedal contact", () => {
     expect(fan?.[1].match(/<polygon points=/g)).toHaveLength(5);
   });
 
+  it("links both Assault Bike hands to opposing moving handles and pedals", () => {
+    const demo = BODY_DEMOS["assault-bike"];
+    const samples: Record<"near" | "far", { grip: number; pedal: number }[]> = {
+      near: [],
+      far: [],
+    };
+    const fixed = new Set<string>();
+    for (const t of [0, 1 / 6, 1 / 3, 0.5, 2 / 3, 5 / 6, 1]) {
+      const pose = demo.pose(t);
+      const scene = demo.scene!(t, pose);
+      fixed.add(scene.match(/<line data-assault-fixed="true"[^>]*\/>/)?.[0] ?? "");
+      for (const [side, group, shift] of [
+        ["near", "handL", [0, 0]],
+        ["far", "handR", FAR_ARM_SHIFT],
+      ] as const) {
+        const lever = scene.match(
+          new RegExp(`data-assault-handle="${side}" x1="([\\d.]+)" y1="([\\d.]+)" x2="([\\d.]+)" y2="([\\d.]+)"`)
+        );
+        expect(lever, `${side} moving lever @${t}`).not.toBeNull();
+        const wrist = applyToPoint(SIDE_ANCHORS.hand, pose[group] ?? []);
+        expect(
+          Math.hypot(
+            wrist[0] + shift[0] - Number(lever![3]),
+            wrist[1] + shift[1] - Number(lever![4])
+          ),
+          `${side} hand stays on its grip @${t}`
+        ).toBeLessThan(0.12);
+        const pedal = scene.match(
+          new RegExp(`data-bike-crank="${side}" x1="66" y1="178" x2="([\\d.]+)"`)
+        );
+        expect(pedal, `${side} pedal crank @${t}`).not.toBeNull();
+        samples[side].push({ grip: Number(lever![3]), pedal: Number(pedal![1]) });
+      }
+    }
+    expect(fixed.size, "the fan support remains fixed").toBe(1);
+    expect(fixed.has("")).toBe(false);
+    expect(samples.near[0].grip - samples.far[0].grip).toBeGreaterThan(20);
+    expect(samples.far[3].grip - samples.near[3].grip).toBeGreaterThan(15);
+    for (const side of ["near", "far"] as const) {
+      const handleTravel = samples[side][0].grip - samples[side][3].grip;
+      const pedalTravel = samples[side][0].pedal - samples[side][3].pedal;
+      expect(Math.abs(handleTravel), `${side} handle travels`).toBeGreaterThan(24);
+      expect(handleTravel * pedalTravel, `${side} handle follows its pedal`).toBeGreaterThan(0);
+    }
+    expect(renderBodyDemo("assault-bike", 1)).toBe(renderBodyDemo("assault-bike", 0));
+  });
+
   it.each(["bike", "spin-bike", "assault-bike"])(
     "%s keeps both level shoes on visible opposing pedals above the base",
     (id) => {
@@ -756,8 +803,22 @@ describe("renderBodyDemo", () => {
       expect(Math.hypot(hand[0] - bar[0], hand[1] - bar[1])).toBeLessThan(0.1);
       expect(bar[0] - shoulder[0]).toBeGreaterThan(7);
       expect(Math.abs(bar[1] - shoulder[1])).toBeLessThan(5);
-      expect(elbow[0] - shoulder[0]).toBeGreaterThan(30);
-      expect(elbow[1] - shoulder[1]).toBeLessThan(7);
+      // The elbow projects forward, but the forearm must visibly fold
+      // back UP toward the supported bar instead of reading as a raise.
+      expect(elbow[0] - shoulder[0]).toBeGreaterThan(16);
+      expect(elbow[1] - shoulder[1]).toBeLessThan(20);
+      expect(elbow[0] - hand[0]).toBeGreaterThan(8);
+      expect(elbow[1] - hand[1]).toBeGreaterThan(12);
+      for (const [foot, shank] of [
+        ["footL", "shankL"],
+        ["footR", "shankR"],
+      ] as const) {
+        const ball = applyToPoint(
+          SIDE_ANCHORS.ball,
+          pose[foot] ?? pose[shank] ?? []
+        );
+        expect(ball, `${foot} stays planted @${t}`).toEqual(SIDE_ANCHORS.ball);
+      }
       expect(renderBodyDemo("front-squat", t)).toContain('r="11"');
     }
   });
@@ -5042,6 +5103,8 @@ describe("renderBodyDemo", () => {
       "incline-treadmill-walk",
       // Opposing elliptical handles follow the two pedal phases.
       "elliptical",
+      // Assault Bike push/pull handles also oppose each other.
+      "assault-bike",
       // Batch 16: the far arm is half a stroke behind the near one.
       "swimming",
       // Batch 17: the man-maker rows one arm at a time; the get-up holds

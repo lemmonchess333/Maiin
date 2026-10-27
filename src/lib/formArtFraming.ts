@@ -15,10 +15,12 @@ export interface FormArtFraming {
 
 export const FORM_ART_FRAMING: Readonly<Record<string, FormArtFraming>> = {
   "arnold-press": { scale: 1.4913, x: 0.0267, y: 0.0112 },
+  "bench-dips": { scale: 1.21, x: -0.0272, y: 0.0016 },
   "barbell-upright-row": { scale: 1.4993, x: 0.0005, y: 0.0215 },
   "chest-press-machine": { scale: 1.4691, x: 0.0516, y: 0.0187 },
   "concentration-curl": { scale: 1.1086, x: -0.0018, y: 0.0451 },
   "db-flyes": { scale: 1.2776, x: 0.0025, y: -0.0112 },
+  "db-bench": { scale: 1.5, x: -0.0215, y: 0.0146 },
   "db-shoulder-press": { scale: 1.123, x: 0.0044, y: 0.0479 },
   "donkey-calf-raise": { scale: 1.3921, x: -0.0186, y: -0.0399 },
   "incline-bench": { scale: 1.292, x: -0.0177, y: 0.0198 },
