@@ -336,6 +336,47 @@ describe("useFoodFavourites", () => {
       expect(faveSets()[1].data).not.toHaveProperty("source");
     });
 
+    it("keeps a typed-in product's barcode, and no later log clears it", async () => {
+      // F2d: a product the barcode database did not have is typed in, and
+      // the next scan of the same pack finds it here.
+      const { result } = renderHook(() => useFoodFavourites());
+      act(() => pumpSnapshot([]));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      await act(async () => {
+        await result.current.addFavourite({
+          name: "Corner shop flapjack",
+          calories: 320,
+          protein: 5,
+          carbs: 40,
+          fat: 15,
+          source: "barcode",
+          barcode: "5012345678900",
+        });
+      });
+      expect(readDoc(`${FAVES}/corner_shop_flapjack`)!.barcode).toBe(
+        "5012345678900"
+      );
+      await act(async () => {
+        await result.current.addFavourite({
+          name: "Corner shop flapjack",
+          calories: 320,
+          protein: 5,
+          carbs: 40,
+          fat: 15,
+        });
+      });
+      expect(faveSets()[1].data).not.toHaveProperty("barcode");
+      expect(readDoc(`${FAVES}/corner_shop_flapjack`)!.barcode).toBe(
+        "5012345678900"
+      );
+      await waitFor(() =>
+        expect(
+          result.current.favourites.find((f) => f.barcode === "5012345678900")
+            ?.name
+        ).toBe("Corner shop flapjack")
+      );
+    });
+
     it("flags graduation when previousCount=1 transitions to 2", async () => {
       const { result } = renderHook(() => useFoodFavourites());
       act(() =>

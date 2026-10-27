@@ -984,9 +984,9 @@ describe("form controls share the field primitive", () => {
       count: 1,
       why: "an sr-only date input that the visible day button opens",
     },
-    "src/components/nutrition/ServingSizeDrawer.tsx": {
+    "src/components/nutrition/PortionAmountField.tsx": {
       count: 1,
-      why: "the stepper's readout between its minus and plus",
+      why: "the portion amount's readout between its minus and plus",
     },
     "src/components/program/ExercisePicker.tsx": {
       count: 1,

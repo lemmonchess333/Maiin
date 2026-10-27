@@ -10,6 +10,8 @@ import {
   CameraOff,
   Keyboard,
   Lock,
+  PenLine,
+  ScanBarcode,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -101,7 +103,13 @@ type CameraState = "idle" | "granted" | "denied" | "unavailable";
  *                 connection, so we say so instantly instead of
  *                 burning the sweep on a fetch that must fail
  */
-export type ScanFailureKind = "no-food" | "error" | "offline";
+export type ScanFailureKind =
+  | "no-food"
+  | "error"
+  | "offline"
+  /* A barcode the food database does not have. The scanner resolves on
+     F2d's choice, Describe it or Type details, instead of a toast. */
+  | "barcode-not-found";
 
 /**
  * Photo scanning is not on this account's tier (a free account: its
@@ -164,6 +172,12 @@ type Props = {
    * should close the modal and focus the NL input.
    */
   onRequestTypedInput?: () => void;
+  /** A barcode with no match: describe the product in the composer
+   *  (F2d's primary choice). */
+  onDescribeProduct?: () => void;
+  /** A barcode with no match: type the product's details from the pack,
+   *  into the pantry under its code (F2d's second choice). */
+  onTypeProductDetails?: () => void;
   /** Set when photo scanning is not on the account's tier. The scanner
    *  opens on Barcode, which is free; the photo tabs show the Pro offer
    *  where the shutter would be; and the photo library is offered only
@@ -217,6 +231,8 @@ export default function FoodCameraModal({
   failureDetail = null,
   onScanRetry,
   onRequestTypedInput,
+  onDescribeProduct,
+  onTypeProductDetails,
   photoLock = null,
   aiOff = null,
   initialTab = "food",
@@ -718,6 +734,10 @@ export default function FoodCameraModal({
           title: "You're offline",
           sub: "Scanning needs a connection. Typing it in still works.",
         },
+        "barcode-not-found": {
+          title: "No match for this barcode",
+          sub: "Describe it, or type the details from the pack.",
+        },
       }[failure]
     : null;
 
@@ -760,6 +780,46 @@ export default function FoodCameraModal({
   ];
   if (failure === "offline" && failureButtons.length > 1)
     failureButtons.reverse();
+  /* A barcode with no match: F2d's two choices lead, Describe it in the
+     primary slot. Most products missing from the database are home or
+     shop-made, so a description is the likelier way in. Scan again is
+     last, for a code read off the wrong pack. */
+  const notFoundButtons = [
+    ...(onDescribeProduct
+      ? [
+          {
+            key: "describe",
+            icon: <Keyboard className="size-4" />,
+            label: "Describe it",
+            onClick: () => {
+              haptic("light");
+              onDescribeProduct();
+            },
+          },
+        ]
+      : []),
+    ...(onTypeProductDetails
+      ? [
+          {
+            key: "details",
+            icon: <PenLine className="size-4" />,
+            label: "Type details",
+            onClick: () => {
+              haptic("light");
+              onTypeProductDetails();
+            },
+          },
+        ]
+      : []),
+    {
+      key: "rescan",
+      icon: <ScanBarcode className="size-4" />,
+      label: "Scan again",
+      onClick: handleScanRetry,
+    },
+  ];
+  const actionButtons =
+    failure === "barcode-not-found" ? notFoundButtons : failureButtons;
 
   const failureActions = (
     <div className="flex w-full max-w-[300px] flex-col gap-2">
@@ -768,7 +828,7 @@ export default function FoodCameraModal({
           identity orange (#D9884E, ~2.8:1) keeps leaking under white
           text. The one surface where reading the button IS the way
           out cannot be the one that fails contrast. */}
-      {failureButtons.map((b, i) => (
+      {actionButtons.map((b, i) => (
         <button
           key={b.key}
           type="button"

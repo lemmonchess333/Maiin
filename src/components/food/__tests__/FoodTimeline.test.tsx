@@ -287,3 +287,61 @@ describe("FoodTimeline — portion identity", () => {
     );
   });
 });
+
+describe("FoodTimeline — the portion on each row", () => {
+  const caption = (name: string) =>
+    rowFor(name)?.querySelector("p.text-caption")?.textContent ?? null;
+  const one = (portionSize: string) => [
+    {
+      name: "Food",
+      portionSize,
+      calories: 400,
+      protein: 20,
+      carbs: 40,
+      fat: 10,
+    },
+  ];
+  /* A logged time, as Firestore hands one back. */
+  const at = (hour: number, minute: number) => ({
+    toDate: () => new Date(2026, 9, 11, hour, minute),
+  });
+
+  it("leads the caption with a scaled serving, then the slot and time", () => {
+    // A wrong serving can be spotted only if the row says what it was.
+    render(
+      diary([
+        meal("m1", "Granola", {
+          items: one("1.5x 1 serving"),
+          createdAt: at(12, 30),
+        }),
+      ])
+    );
+    expect(caption("Granola")).toBe("1.5 servings · Lunch · 12:30");
+  });
+
+  it("says grams unspaced, as the food surface does", () => {
+    render(
+      diary([
+        meal("m1", "Rice", {
+          items: one("1.5x 100g"),
+          createdAt: at(12, 30),
+        }),
+      ])
+    );
+    expect(caption("Rice")).toBe("150g · Lunch · 12:30");
+  });
+
+  it("keeps the slot and time alone for an entry with no portion", () => {
+    render(
+      diary([
+        meal("m1", "Soup", { items: one(""), createdAt: at(12, 30) }),
+        meal("m2", "Stew", {
+          items: [...one("200g"), ...one("1 cup")],
+          createdAt: at(13, 0),
+        }),
+      ])
+    );
+    expect(caption("Soup")).toBe("Lunch · 12:30");
+    expect(caption("Stew")).toBe("Lunch · 13:00");
+  });
+});

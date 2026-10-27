@@ -134,6 +134,11 @@ export interface EditMealUpdates {
   totalProtein?: number;
   totalCarbs?: number;
   totalFat?: number;
+  /** Scaled with the rest when a portion is corrected
+   *  (`rescaleMealPortion`), so a fixed amount moves every figure. */
+  totalFiber?: number;
+  totalSugar?: number;
+  totalSodium?: number;
   meal?: "breakfast" | "lunch" | "snacks" | "dinner";
 }
 
