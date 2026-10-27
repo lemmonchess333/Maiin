@@ -49,6 +49,37 @@ describe("body demo cycle timing", () => {
   });
 });
 
+describe("body demo cycle shadows", () => {
+  const shadowRadius = (id: string, t: number) => {
+    const match = renderBodyDemo(id, t, 0.85).match(/<ellipse[^>]*rx="([\d.]+)"/);
+    expect(match, `${id} shadow at ${t}`).not.toBeNull();
+    return Number(match![1]);
+  };
+
+  it("renders an exact frame seam for every registered cycle", () => {
+    const cycleIds = Object.entries(BODY_DEMOS)
+      .filter(([, demo]) => demo.cycle)
+      .map(([id]) => id);
+    expect(cycleIds).toHaveLength(12);
+    for (const id of cycleIds) {
+      expect(renderBodyDemo(id, 1, 0.85), `${id} loop seam`).toBe(
+        renderBodyDemo(id, 0, 0.85)
+      );
+    }
+  });
+
+  it("keeps static cycles steady while jump and Man Maker shadows track height", () => {
+    expect(shadowRadius("bike", 0)).toBe(shadowRadius("bike", 0.5));
+    expect(shadowRadius("box-jumps", 0)).toBeGreaterThan(
+      shadowRadius("box-jumps", 0.5)
+    );
+    expect(shadowRadius("man-maker", 0)).toBe(shadowRadius("man-maker", 0.5));
+    expect(shadowRadius("man-maker", 0.82)).toBeLessThan(
+      shadowRadius("man-maker", 0)
+    );
+  });
+});
+
 describe("machine fallback contacts", () => {
   it("keeps hack squat shoes and machine fixed while its loaded carriage travels on the rails", () => {
     const demo = BODY_DEMOS["hack-squat"];

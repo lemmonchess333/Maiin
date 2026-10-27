@@ -653,6 +653,9 @@ export interface BodyDemo {
   shadowCx?: number;
   /** Shadow radius override (a lying body casts a long shadow). */
   shadowRx?: number;
+  /** Cycle-specific shadow contact. Defaults to steady for stationary
+   *  cycles; animated height changes can opt into a periodic curve. */
+  cycleShadowDepth?: (e: number) => number;
 }
 
 const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
@@ -666,6 +669,10 @@ export function bodyDemoProgress(
   return demo.cycle && demo.cycleTiming === "linear"
     ? clamp01(t)
     : easeInOutSine(t);
+}
+function bodyDemoShadowDepth(demo: BodyDemo, e: number): number {
+  if (demo.cycle) return demo.cycleShadowDepth?.(e) ?? 0.5;
+  return demo.concentricTo === 0 ? e : 1 - e;
 }
 /** Smoothstep — used to stagger joints inside one rep without velocity
  *  kinks at the hand-over points. */
@@ -9317,6 +9324,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     groundY: 204,
     shadowCx: 70,
     shadowRx: 50,
+    // The ground shadow recedes through flight and while the athlete is
+    // on the box, then returns as the step-down reaches the floor.
+    cycleShadowDepth: (e) => (1 + Math.cos(2 * Math.PI * e)) / 2,
     concentricTo: 1,
     tint: { quadriceps: "primary", gluteal: "primary", calves: "secondary" },
     pose: boxJumpPose,
@@ -9567,6 +9577,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     groundY: 204,
     shadowCx: 40,
     shadowRx: 60,
+    // Rows keep the body at plank height; the shadow only retreats as
+    // the clean brings the body upright, then returns into the plank.
+    cycleShadowDepth: (e) =>
+      1 - 0.75 * smooth((e - 0.54) / 0.18) * (1 - smooth((e - 0.9) / 0.1)),
     concentricTo: 1,
     tint: {
       chest: "primary",
@@ -10205,10 +10219,9 @@ export function renderBodyDemo(
     })
     .join("");
 
-  // Ground shadow: breathes with how LOW the body sits — bigger/darker at
-  // the bottom of a squat, smaller/lighter at a press lockout or calf-
-  // raise top. Depth is e for descend-first lifts, 1−e for lift-first.
-  const depth = demo.concentricTo === 0 ? e : 1 - e;
+  // Ground shadow: reps breathe with the lift; cycles keep a periodic
+  // contact curve (or a steady shadow when the body stays in place).
+  const depth = bodyDemoShadowDepth(demo, e);
   const shadowRx = 26 + 6 * depth;
   const groundY = demo.groundY ?? (demo.view === "anterior" ? 199 : 222);
   const shadow =
@@ -10363,7 +10376,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
       .join("") +
     `</g>`;
 
-  const depth = demo.concentricTo === 0 ? e : 1 - e;
+  const depth = bodyDemoShadowDepth(demo, e);
   const shadow = `<ellipse cx="${demo.shadowCx ?? 50}" cy="${demo.groundY ?? 204}" rx="${((demo.shadowRx ?? 26) + 6 * depth).toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
   const scene = demo.scene?.(e, pose) ?? "";
 
