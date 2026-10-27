@@ -49,7 +49,7 @@ const Figure = memo(function Figure({
   return (
     <div
       ref={figureRef}
-      className="mx-auto max-w-[190px]"
+      className="mx-auto h-[360px] max-w-[360px] [&>svg]:size-full"
       dangerouslySetInnerHTML={html}
     />
   );

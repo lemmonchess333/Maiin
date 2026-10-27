@@ -4,10 +4,12 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import type { FormBeat } from "@/lib/formGuides";
+import type { FormArtFraming } from "@/lib/formArtFraming";
 
 interface Props {
   beats: readonly FormBeat[];
   name: string;
+  framing?: FormArtFraming;
   active?: boolean;
   initialIndex?: number;
   autoPlay?: boolean;
@@ -22,6 +24,7 @@ const frameUrl = (path: string) =>
 export default function ExerciseFormFrames({
   beats,
   name,
+  framing,
   active = true,
   initialIndex = 0,
   autoPlay = true,
@@ -92,7 +95,7 @@ export default function ExerciseFormFrames({
       data-demo-still={reducedMotion ? "placard" : undefined}
     >
       <div className="bg-stage rounded-2xl p-3">
-        <div className="relative mx-auto h-[360px] max-w-[360px]">
+        <div className="relative mx-auto aspect-square w-full max-w-[360px] overflow-hidden">
           {mounted.map((i) => (
             <img
               key={`${beats[i].image}-${attempt}`}
@@ -107,6 +110,9 @@ export default function ExerciseFormFrames({
               style={{
                 visibility:
                   i === index && failed !== index ? "visible" : "hidden",
+                transform: framing
+                  ? `translate(${framing.x * 100}%, ${framing.y * 100}%) scale(${framing.scale})`
+                  : undefined,
               }}
               onLoad={() =>
                 setLoaded((previous) =>

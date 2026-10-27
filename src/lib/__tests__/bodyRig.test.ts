@@ -17,7 +17,42 @@ import {
 import { PLACARD_CUE_WORDS } from "../exerciseTempo";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { EXERCISES } from "../exercises";
+import { isFormArtQuarantined } from "../formArtQuarantine";
 import { FAR_ARM_SHIFT, SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
+
+describe("machine fallback contacts", () => {
+  it("keeps both elliptical shoes on moving pedals and its hand on the lever", () => {
+    const demo = BODY_DEMOS.elliptical;
+    for (const t of [0, 0.25, 0.5, 0.75]) {
+      const pose = demo.pose(t);
+      const scene = demo.scene!(t, pose);
+      const lever = scene.match(
+        /<line x1="92" y1="168" x2="([\d.]+)" y2="([\d.]+)"/
+      );
+      expect(lever).not.toBeNull();
+      const hand = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      expect(
+        Math.hypot(hand[0] - Number(lever![1]), hand[1] - Number(lever![2])),
+        `elliptical grip @${t}`
+      ).toBeLessThan(0.1);
+      const pedals = [...scene.matchAll(/<rect x="[\d.]+" y="([\d.]+)" width="30" height="3"/g)];
+      expect(pedals).toHaveLength(2);
+      for (const [side, index] of [["R", 0], ["L", 1]] as const) {
+        const shank = pose[`shank${side}`] ?? [];
+        const sole = Math.max(
+          ...SIDE_PIECES.filter((part) => part.group === `foot${side}`)
+            .flatMap((part) => part.outline)
+            .map((point) => applyToPoint(point, shank)[1])
+        );
+        expect(
+          Number(pedals[index][1]) - sole,
+          `elliptical ${side} sole support @${t}`
+        ).toBeCloseTo(1, 0);
+      }
+    }
+  });
+
+});
 
 /** The measured wrist anchors — ON the art, since 2026-08-17. They used
  *  to be [10,100] / [9,106], ~6.5 units off the end of the forearm art,
@@ -41,6 +76,25 @@ describe("vendored body model", () => {
 });
 
 describe("renderBodyDemo", () => {
+  it("keeps the full bench-press plate inside the frame at lockout", () => {
+    const [left, top, width, height] = getBodyDemo("bench-press")!
+      .viewBox!.split(" ")
+      .map(Number);
+    for (const t of [0, 0.5, 1]) {
+      const svg = renderBodyDemo("bench-press", t);
+      const plate = svg.match(
+        /<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="10" fill="#[\dA-F]+"/
+      );
+      expect(plate, `plate at t=${t}`).not.toBeNull();
+      const x = Number(plate![1]);
+      const y = Number(plate![2]);
+      expect(x - 10.5).toBeGreaterThan(left);
+      expect(x + 10.5).toBeLessThan(left + width);
+      expect(y - 10.5).toBeGreaterThan(top);
+      expect(y + 10.5).toBeLessThan(top + height);
+    }
+  });
+
   it("an anterior demo renders the full vendored figure", () => {
     // Lateral raise at t=0: the arms sit 4° off rest and the head is
     // untouched (its top vertex still at the model's y≈0). 33 vendored
@@ -305,12 +359,10 @@ describe("renderBodyDemo", () => {
     expect(contact[1] - top[1]).toBeGreaterThan(30);
   });
 
-  it("gear-incompatible squat aliases keep the motion, lose the bar", () => {
-    // Stripped of the plate, the hands-behind-the-neck pose IS the
-    // prisoner squat — right for bodyweight; front-squat stays the
-    // accepted residue (a bar on the FRONT delts is a different arm).
-    // smith-machine-squat keeps the plate (true of it, minus the rails).
-    for (const id of ["bodyweight-squat", "front-squat"]) {
+  it("bodyweight squat loses the back-squat bar", () => {
+    // Stripped of the plate, the hands-behind-the-neck pose is a
+    // bodyweight prisoner squat. Smith squats still carry a bar.
+    for (const id of ["bodyweight-squat"]) {
       const svg = renderBodyDemo(id, 0.5);
       expect(svg.includes('r="11"'), `${id} plate`).toBe(false);
       expect(svg.match(/<polygon/g)!.length, `${id} alive`).toBeGreaterThan(20);
@@ -320,6 +372,24 @@ describe("renderBodyDemo", () => {
       true
     );
     expect(getBodyDemo("squat")!.equip).toBe("plate-end");
+  });
+
+  it("front squat keeps a bar on its front delts and its elbows high", () => {
+    const demo = BODY_DEMOS["front-squat"];
+    expect(demo.equip).toBe("plate-end");
+    for (const t of [0, 0.5, 1]) {
+      const pose = demo.pose(t);
+      const shoulder = applyToPoint(SIDE_ANCHORS.shoulder, pose.torso ?? []);
+      const elbow = applyToPoint(SIDE_ANCHORS.elbow, pose.upperArmL ?? []);
+      const hand = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      const bar = demo.bar!(t, pose)![0];
+      expect(Math.hypot(hand[0] - bar[0], hand[1] - bar[1])).toBeLessThan(0.1);
+      expect(bar[0] - shoulder[0]).toBeGreaterThan(7);
+      expect(Math.abs(bar[1] - shoulder[1])).toBeLessThan(5);
+      expect(elbow[0] - shoulder[0]).toBeGreaterThan(30);
+      expect(elbow[1] - shoulder[1]).toBeLessThan(7);
+      expect(renderBodyDemo("front-squat", t)).toContain('r="11"');
+    }
   });
 
   it("goblet squat: one bell cupped at the chest, riding the hinge", () => {
@@ -533,7 +603,6 @@ describe("renderBodyDemo", () => {
     for (const [id, canonical] of [
       ["hammer-curl", "db-curl"],
       ["ez-bar-curl", "barbell-curl"],
-      ["close-grip-bench", "bench-press"],
       ["walking-dumbbell-lunges", "lunges"],
     ] as const) {
       expect(getBodyDemo(id), id).toBe(BODY_DEMOS[canonical]);
@@ -544,6 +613,84 @@ describe("renderBodyDemo", () => {
       "bodyweight-lunge"
     ).toBeUndefined();
     expect(renderBodyDemo("bodyweight-lunge", 0.5)).not.toBe("");
+  });
+
+  it("flat dumbbell bench press keeps two weights on separate hands", () => {
+    const demo = getBodyDemo("db-bench")!;
+    expect(demo).toBe(BODY_DEMOS["db-bench"]);
+    expect(demo).not.toBe(BODY_DEMOS["bench-press"]);
+    expect(demo.equip).toBe("dumbbell");
+    expect(demo.viewBox).toBe("-64 20 186 162");
+
+    for (const t of [0, 0.5, 1]) {
+      const pose = demo.pose(t);
+      const grips = demo.bar!(t, pose)!;
+      expect(grips).toHaveLength(2);
+      expect(
+        Math.hypot(grips[0][0] - grips[1][0], grips[0][1] - grips[1][1])
+      ).toBeGreaterThan(8);
+      expect(demo.scene?.(t, pose)).toBe(
+        BODY_DEMOS["bench-press"].scene?.(t, pose)
+      );
+      const discs = [
+        ...renderBodyDemo("db-bench", t).matchAll(
+          /<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="5\.5"/g
+        ),
+      ];
+      expect(discs, `two dumbbell faces @${t}`).toHaveLength(2);
+      grips.forEach(([x, y], i) => {
+        expect(Number(discs[i][1]), `bell ${i} x @${t}`).toBeCloseTo(x, 1);
+        expect(Number(discs[i][2]), `bell ${i} y @${t}`).toBeCloseTo(y, 1);
+      });
+      expect(renderBodyDemo("db-bench", t)).toContain(
+        '<rect x="-64" y="109" width="136" height="7"'
+      );
+    }
+  });
+
+  it("close-grip bench press shows a narrow grip above a flat pad", () => {
+    const demo = getBodyDemo("close-grip-bench")!;
+    expect(demo).toBe(BODY_DEMOS["close-grip-bench"]);
+    expect(demo.view).toBe("anterior");
+    expect(demo.equip).toBe("barbell");
+    expect(demo.barHalfSpan).toBe(45);
+    const heights: number[] = [];
+    for (const t of [0, 0.5, 1]) {
+      const pose = demo.pose(t);
+      const [left, right] = demo.bar!(t, pose)!;
+      // The measured shoulder anchors are 52 units apart. These hands
+      // remain 18 units apart while the bar travels over the chest.
+      expect(right[0] - left[0], `grip width @${t}`).toBeGreaterThan(17);
+      expect(right[0] - left[0], `grip width @${t}`).toBeLessThan(20);
+      expect(Math.abs(left[1] - right[1]), `level bar @${t}`).toBeLessThan(0.1);
+      const leftElbow = applyToPoint([20, 71], pose.upperArmL ?? []);
+      const rightElbow = applyToPoint([80, 71], pose.upperArmR ?? []);
+      expect(leftElbow[0], `left elbow tucked @${t}`).toBeGreaterThan(24);
+      expect(leftElbow[0], `left elbow tucked @${t}`).toBeLessThan(31);
+      expect(rightElbow[0], `right elbow tucked @${t}`).toBeGreaterThan(69);
+      expect(rightElbow[0], `right elbow tucked @${t}`).toBeLessThan(76);
+      heights.push((left[1] + right[1]) / 2);
+      const svg = renderBodyDemo("close-grip-bench", t);
+      expect(svg).toContain('<rect x="27" y="18" width="46" height="133"');
+      expect(svg).toMatch(/<line x1="5\.0" y1="[^"]+" x2="95\.0"/);
+      expect(
+        svg.match(/<ellipse cx="[^"]+" cy="[^"]+" rx="3\.4" ry="10"/g)
+      ).toHaveLength(2);
+    }
+    expect(heights[0]).toBeGreaterThan(heights[1]);
+    expect(heights[1]).toBeGreaterThan(heights[2]);
+  });
+
+  it("clean-and-press overhead plate stays inside its fixed camera", () => {
+    const demo = BODY_DEMOS["clean-and-press"];
+    const [, top, , height] = demo.viewBox!.split(" ").map(Number);
+    for (const t of [0, 0.5, 1]) {
+      const hand = demo.bar!(t, demo.pose(t))![0];
+      expect(hand[1] - demo.plateR!, `plate top @${t}`).toBeGreaterThan(top);
+      expect(hand[1] + demo.plateR!, `plate bottom @${t}`).toBeLessThan(
+        top + height
+      );
+    }
   });
 
   it("repaired canonicals are production-enabled again", () => {
@@ -849,6 +996,24 @@ describe("renderBodyDemo", () => {
     expect(Math.hypot(H[0] - S[0], H[1] - S[1])).toBeLessThan(armLen);
   });
 
+  it("Smith bench press keeps its bar on a fixed guide over a flat bench", () => {
+    const demo = getBodyDemo("smith-bench-press");
+    expect(demo).not.toBeNull();
+    const hands = [0, 0.5, 1].map((t) => {
+      const pose = demo!.pose(t);
+      return demo!.bar!(t, pose)![0];
+    });
+    expect(
+      Math.max(...hands.map((hand) => hand[0])) -
+        Math.min(...hands.map((hand) => hand[0]))
+    ).toBeLessThan(0.1);
+    expect(hands[0][1]).toBeGreaterThan(hands[1][1]);
+    expect(hands[1][1]).toBeGreaterThan(hands[2][1]);
+    const scene = renderBodyDemo("smith-bench-press", 0);
+    expect(scene).toContain('<rect x="-64" y="109" width="136" height="7"');
+    expect(scene).toContain('<rect x="-10" y="18" width="4" height="152"');
+  });
+
   it("rig acceptance: barbell plate present and pinned for bar lifts", () => {
     for (const id of ["bench-press", "barbell-row", "romanian-deadlift"]) {
       for (const t of [0, 0.5, 1]) {
@@ -1003,8 +1168,12 @@ describe("renderBodyDemo", () => {
     const START: Record<string, "lockout" | "stretch"> = {
       // Begin at the finish and lower first.
       squat: "lockout",
+      "front-squat": "lockout",
       "goblet-squat": "lockout",
       "bench-press": "lockout",
+      "smith-bench-press": "lockout",
+      "db-bench": "lockout",
+      "close-grip-bench": "lockout",
       "push-ups": "lockout",
       dips: "lockout",
       "romanian-deadlift": "lockout",
@@ -2048,6 +2217,33 @@ describe("renderBodyDemo", () => {
       );
       for (const t of [0, 0.5, 1]) {
         const p = at(id, t);
+        const leftEdge = Number(BODY_DEMOS[id].viewBox?.split(" ")[0]);
+        const head = SIDE_PIECES.find((piece) => piece.group === "head")!;
+        const headMinX = Math.min(
+          ...head.outline.map((point) => pt(point, p.head)[0])
+        );
+        expect(
+          headMinX - leftEdge,
+          `inverted row: head remains inside the viewport @${t}`
+        ).toBeGreaterThan(4);
+        const scene = BODY_DEMOS[id].scene?.(t, p) ?? "";
+        const grip = scene.match(
+          /<circle cx="([\d.]+)" cy="([\d.]+)" r="3\.4"/
+        );
+        expect(grip, `inverted row: bar grip drawn @${t}`).not.toBeNull();
+        const hand = pt(SIDE_ANCHORS.hand, p.handL);
+        expect(
+          Math.hypot(hand[0] - Number(grip![1]), hand[1] - Number(grip![2])),
+          `inverted row: hand actually meets drawn bar @${t}`
+        ).toBeLessThan(0.1);
+        const shoe = SIDE_PIECES.find((piece) => piece.group === "footL")!;
+        const soleY = Math.max(
+          ...shoe.outline.map((point) => pt(point, p.shankL)[1])
+        );
+        expect(
+          Math.abs(soleY - 205),
+          `inverted row: sole touches drawn floor @${t}`
+        ).toBeLessThan(2);
         const bend =
           lineDeg(
             pt(SIDE_ANCHORS.ankle, p.shankL),
@@ -3275,7 +3471,36 @@ describe("renderBodyDemo", () => {
       expect(ab1.KR[0] - ab1.KL[0], "abduction: knees apart").toBeGreaterThan(
         46
       );
-      expect(ab1.AR[0] - ab1.AL[0], "abduction: feet wide").toBeGreaterThan(80);
+      expect(ab1.AR[0] - ab1.AL[0], "abduction: feet wide").toBeGreaterThan(70);
+      for (const t of [0, 0.5, 1]) {
+        const arms = antAt("hip-abduction-machine", t);
+        expect(
+          arms.HL[0],
+          `abduction: left hand on side grip @${t}`
+        ).toBeCloseTo(18, 1);
+        expect(
+          arms.HR[0],
+          `abduction: right hand on side grip @${t}`
+        ).toBeCloseTo(82, 1);
+        expect(arms.HL[1], `abduction: hands at seat @${t}`).toBeCloseTo(
+          101,
+          1
+        );
+        const pose = BODY_DEMOS["hip-abduction-machine"].pose(t);
+        const scene = BODY_DEMOS["hip-abduction-machine"].scene?.(t, pose);
+        expect(scene).toContain('<circle cx="18" cy="101" r="3"');
+        expect(scene).toContain('<circle cx="82" cy="101" r="3"');
+        expect(scene).toContain('width="92" height="13"');
+        const knees = antKnees("hip-abduction-machine", t);
+        expect(Math.abs(knees.AL[0] - knees.KL[0]), `left shin vertical @${t}`).toBeLessThan(4);
+        expect(Math.abs(knees.AR[0] - knees.KR[0]), `right shin vertical @${t}`).toBeLessThan(4);
+        const pads = [...(scene ?? "").matchAll(/<rect x="([\d.-]+)" y="([\d.-]+)" width="7" height="18"/g)];
+        expect(pads).toHaveLength(2);
+        expect(Math.abs(Number(pads[0][1]) + 12 - knees.KL[0]), `left pad follows knee @${t}`).toBeLessThan(0.1);
+        expect(Math.abs(Number(pads[0][2]) + 8 - knees.KL[1]), `left pad height @${t}`).toBeLessThan(0.1);
+        expect(Math.abs(Number(pads[1][1]) - 5 - knees.KR[0]), `right pad follows knee @${t}`).toBeLessThan(0.1);
+        expect(Math.abs(Number(pads[1][2]) + 8 - knees.KR[1]), `right pad height @${t}`).toBeLessThan(0.1);
+      }
       const ad0 = antKnees("hip-adduction-machine", 0);
       const ad1 = antKnees("hip-adduction-machine", 1);
       expect(
@@ -4333,6 +4558,9 @@ describe("renderBodyDemo", () => {
       // the bell in one hand and posts the other.
       "man-maker",
       "turkish-get-up",
+      // Two independent dumbbells are staggered slightly in profile so
+      // both wrists and both weights remain visible on the flat bench.
+      "db-bench",
     ]);
     for (const [id, d] of Object.entries(BODY_DEMOS)) {
       if (d.view !== "side" || UNILATERAL.has(id)) continue;
@@ -5230,7 +5458,7 @@ describe("a placard goes live with its art, not before", () => {
      exercise must play exactly as it did — authoring content is not a
      product change. */
   it("an authored placard with no frames is not live", () => {
-    const id = "bench-press";
+    const id = "dips";
     const authored = getAuthoredBeats(id)!;
     expect(getFormBeats(id)).not.toBeNull();
     expect(authored).toHaveLength(6);
@@ -5255,8 +5483,9 @@ describe("a placard goes live with its art, not before", () => {
   });
 
   it("a placard whose frames are all present IS live", () => {
-    const withArt = FORM_BEAT_IDS.filter((id) =>
-      getAuthoredBeats(id)!.every((b) => b.image)
+    const withArt = FORM_BEAT_IDS.filter(
+      (id) =>
+        !isFormArtQuarantined(id) && getAuthoredBeats(id)!.every((b) => b.image)
     );
     expect(withArt.length).toBeGreaterThan(0);
     for (const id of withArt) expect(getFormBeats(id), id).not.toBeNull();

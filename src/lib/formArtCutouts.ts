@@ -12,6 +12,7 @@
  * when a reference frame changes without a regenerate.
  */
 import { getReleasedFormArtwork } from "./formArtwork";
+import { isFormArtQuarantined } from "./formArtQuarantine";
 import { cardFrameOf } from "./formArtCardFrames";
 import { FORM_ART_CUTOUTS, type FormArtCutout } from "./formArtCutouts.data";
 
@@ -26,6 +27,7 @@ export type { FormArtCutout };
  * card.
  */
 export function getFormArtCutout(exerciseId: string): FormArtCutout | null {
+  if (isFormArtQuarantined(exerciseId)) return null;
   const art = getReleasedFormArtwork(exerciseId);
   const cutout = FORM_ART_CUTOUTS[exerciseId];
   if (!art || !cutout || cutout.source !== cardFrameOf(exerciseId, art))

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { getFormBeats, getFormPlayback } from "@/lib/formGuides";
+import { getFormArtFraming } from "@/lib/formArtFraming";
 import ExerciseFormFrames from "@/components/ExerciseFormFrames";
 import { Spinner } from "@/components/ui/Spinner";
 
@@ -26,6 +27,7 @@ export default function ExerciseRigDemo(props: ExerciseRigDemoProps) {
         key={`${props.exerciseId}-${props.stepRequest?.serial ?? 0}`}
         beats={beats}
         name={props.name}
+        framing={getFormArtFraming(props.exerciseId)}
         active={props.active}
         onStep={props.onStep}
         initialIndex={props.stepRequest?.index}
