@@ -9756,18 +9756,18 @@ BODY_DEMOS["close-grip-bench"] = {
     "front-deltoids": "secondary",
   },
   pose: (e) => {
-    // Both wrists stay close together as the bar moves from lower chest
-    // to the upper chest line. The shrinking projected arms represent
-    // the press toward the overhead camera. Elbows track beside the
-    // ribs instead of flaring to shoulder height.
+    // Hands sit just inside the 52-unit shoulder span, keeping each wrist
+    // nearly above its tucked elbow. The shrinking projected arms represent
+    // the press toward the overhead camera rather than a grip that narrows
+    // as the bar rises.
     const y = lerp(66, 47, e);
     const leftElbow: Pt = [lerp(27, 29, e), lerp(70, 55, e)];
     const rightElbow: Pt = [100 - leftElbow[0], leftElbow[1]];
     return {
       upperArmL: antElbowAt("L", leftElbow, "up").upper,
-      foreArmL: antForeToward("L", leftElbow, [41, y]),
+      foreArmL: antForeToward("L", leftElbow, [30, y]),
       upperArmR: antElbowAt("R", rightElbow, "up").upper,
-      foreArmR: antForeToward("R", rightElbow, [59, y]),
+      foreArmR: antForeToward("R", rightElbow, [70, y]),
     };
   },
   bar: antHands,

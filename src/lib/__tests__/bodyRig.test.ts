@@ -903,10 +903,10 @@ describe("renderBodyDemo", () => {
     for (const t of [0, 0.5, 1]) {
       const pose = demo.pose(t);
       const [left, right] = demo.bar!(t, pose)!;
-      // The measured shoulder anchors are 52 units apart. These hands
-      // remain 18 units apart while the bar travels over the chest.
-      expect(right[0] - left[0], `grip width @${t}`).toBeGreaterThan(17);
-      expect(right[0] - left[0], `grip width @${t}`).toBeLessThan(20);
+      // Shoulder anchors are 52 units apart. A grip around 40 units stays
+      // just inside them without forcing the wrists across the tucked elbows.
+      expect(right[0] - left[0], `grip width @${t}`).toBeGreaterThan(37);
+      expect(right[0] - left[0], `grip width @${t}`).toBeLessThan(45);
       expect(Math.abs(left[1] - right[1]), `level bar @${t}`).toBeLessThan(0.1);
       const leftElbow = applyToPoint([20, 71], pose.upperArmL ?? []);
       const rightElbow = applyToPoint([80, 71], pose.upperArmR ?? []);
@@ -914,6 +914,8 @@ describe("renderBodyDemo", () => {
       expect(leftElbow[0], `left elbow tucked @${t}`).toBeLessThan(31);
       expect(rightElbow[0], `right elbow tucked @${t}`).toBeGreaterThan(69);
       expect(rightElbow[0], `right elbow tucked @${t}`).toBeLessThan(76);
+      expect(Math.abs(left[0] - leftElbow[0]), `left forearm @${t}`).toBeLessThan(6);
+      expect(Math.abs(right[0] - rightElbow[0]), `right forearm @${t}`).toBeLessThan(6);
       heights.push((left[1] + right[1]) / 2);
       const svg = renderBodyDemo("close-grip-bench", t);
       expect(svg).toContain('<rect x="27" y="18" width="46" height="133"');
