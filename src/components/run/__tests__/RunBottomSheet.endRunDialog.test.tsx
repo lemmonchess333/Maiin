@@ -44,7 +44,7 @@ function openEndRunDialog(unit: DistanceUnit) {
       weightKg={72}
     />
   );
-  fireEvent.click(screen.getByRole("button", { name: /^stop run$/i }));
+  fireEvent.click(screen.getByRole("button", { name: "Hold to stop run" }));
   return screen.getByRole("alertdialog", { name: "End run?" });
 }
 

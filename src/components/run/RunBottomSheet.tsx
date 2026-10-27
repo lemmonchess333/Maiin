@@ -420,9 +420,7 @@ export default function RunBottomSheet({
     if (!draggingRef.current) return;
     draggingRef.current = false;
     const target = projectAndSnap(top.get(), velRef.current, snapTops) as
-      | 0
-      | 1
-      | 2;
+      0 | 1 | 2;
     if (target !== snapIdx) {
       setSnapIdx(target);
       haptic("light");
@@ -841,13 +839,16 @@ export default function RunBottomSheet({
                 {/* Stop is a grey ring like Pause and Lock, so Resume is the
                     paused screen's one filled colour. Stopping keeps the run
                     (its confirm offers End run), so it is not red; red
-                    belongs to Discard, which deletes it. */}
-                <RunControlButton
-                  aria-label="Stop run"
+                    belongs to Discard, which deletes it. It is a hold, as
+                    Finish is while running: a hold ends the run, and a tap,
+                    a key or a screen reader opens End run?, which keeps
+                    Discard and Keep going. */}
+                <HoldToFinishButton
+                  ariaLabel="Hold to stop run"
                   label="Stop"
                   size="lg"
-                  variant="neutral"
-                  onClick={() => setShowStopConfirm(true)}
+                  onFinish={onStop}
+                  onRequestConfirm={() => setShowStopConfirm(true)}
                   icon={
                     <div
                       style={{
