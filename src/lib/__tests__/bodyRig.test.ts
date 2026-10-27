@@ -5725,8 +5725,8 @@ describe("supplied placard frames", () => {
   });
 
   it("leaves no orphan frames in the directory", () => {
-    // A renamed beat that leaves its old picture behind ships dead
-    // weight in the bundle and reads as a frame that is still in use.
+    // A renamed beat must not leave unreviewed art behind. Earlier approved
+    // releases remain valid archives when a new release uses a dated folder.
     const dirs = new Set(
       framed.flatMap((id) =>
         getAuthoredBeats(id)!.map((b) => b.image!.replace(/\/[^/]+$/, ""))
@@ -5735,11 +5735,35 @@ describe("supplied placard frames", () => {
     const used = new Set(
       framed.flatMap((id) => getAuthoredBeats(id)!.map((b) => b.image!))
     );
-    for (const d of dirs) {
-      for (const f of readdirSync(resolve(process.cwd(), "public", d))) {
-        expect(used.has(`${d}/${f}`), `orphan frame ${d}/${f}`).toBe(true);
+    const releases = resolve(process.cwd(), "docs/exercise-art/releases");
+    for (const date of readdirSync(releases, { withFileTypes: true })) {
+      if (!date.isDirectory()) continue;
+      for (const file of readdirSync(resolve(releases, date.name))) {
+        if (!file.endsWith(".json")) continue;
+        const release = JSON.parse(
+          readFileSync(resolve(releases, date.name, file), "utf8")
+        );
+        if (release.decision !== "approved" || !Array.isArray(release.frames))
+          continue;
+        for (const frame of release.frames) {
+          if (typeof frame.path === "string") used.add(frame.path);
+        }
       }
     }
+    const checked = new Set<string>();
+    const checkDirectory = (dir: string) => {
+      for (const entry of readdirSync(resolve(process.cwd(), "public", dir), {
+        withFileTypes: true,
+      })) {
+        const path = `${dir}/${entry.name}`;
+        if (entry.isDirectory()) checkDirectory(path);
+        else if (!checked.has(path)) {
+          checked.add(path);
+          expect(used.has(path), `orphan frame ${path}`).toBe(true);
+        }
+      }
+    };
+    for (const dir of dirs) checkDirectory(dir);
   });
 });
 
