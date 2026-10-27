@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { FORM_ARTWORK, getReleasedFormArtwork } from "../formArtwork";
+import { isFormArtQuarantined } from "../formArtQuarantine";
 import { getAuthoredBeats, getFormBeats } from "../bodyRig";
 import { validateOwnerArtworkRelease } from "../formArtOwnerRelease";
 import {
@@ -62,14 +63,18 @@ describe("owner-authorized artwork activation", () => {
      release had to extend covered 26 of the 54. The budget is the one
      above, for the same reason: the whole library is hashed here, and
      under the full parallel suite the worker can wait for its turn. */
-  it("releases every approved set as its review recorded it, with its cues live", () => {
+  it("keeps every approved release recorded, with cues withheld for quarantined sets", () => {
     const approved = Object.keys(FORM_ARTWORK).filter(
       (id) => FORM_ARTWORK[id].status === "approved"
     );
     expect(approved).toHaveLength(152);
     for (const id of approved) {
       expect(getReleasedFormArtwork(id)?.status, id).toBe("approved");
-      expect(getFormBeats(id), id).toHaveLength(6);
+      if (isFormArtQuarantined(id)) {
+        expect(getFormBeats(id), id).toBeNull();
+      } else {
+        expect(getFormBeats(id), id).toHaveLength(6);
+      }
       const { review, expected } = evidence(id);
       expect(validateArtworkReview(review, expected), id).toEqual([]);
     }

@@ -390,7 +390,7 @@ describe("liftPostLeadArt", () => {
         { name: "Bench Press", exerciseId: "bench-press" },
         { name: "Barbell Squat", exerciseId: "squat" },
       ])?.src
-    ).toBe("form-art/bench-press.webp");
+    ).toBe("form-art/squat.webp");
   });
 
   it("names an older post's lift from the catalogue", () => {

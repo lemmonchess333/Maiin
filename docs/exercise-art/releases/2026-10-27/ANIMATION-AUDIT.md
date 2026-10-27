@@ -75,7 +75,10 @@ margin. Twelve focused suites passed: 543 tests.
 
 `npm run verify` passed lint, verifier tests, both art audits, circular dependency
 check, production build and bundle-size check. Its broad unit stage encountered
-unrelated failures, so it was stopped after confirming three representative
+failures in the local Node 24 environment, so it was stopped after confirming three representative
 suites failed with exactly the same counts on a separate unchanged `HEAD` copy:
 Run Summary 8/25, Space Post 10/11, and badge awards 4/4. The picker test
-affected by this change was updated and passes 7/7.
+affected by this change was updated and passes 7/7. The first Node 22 CI run
+also found eleven assertions that expected artwork now intentionally withheld
+at runtime. Those expectations were revised, and the Home gym onboarding tile
+now uses another approved bench illustration.
