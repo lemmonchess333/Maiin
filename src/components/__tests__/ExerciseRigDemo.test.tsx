@@ -199,6 +199,41 @@ describe("ExerciseRigDemo", () => {
     expect(screen.queryByText("Lower under control")).toBeNull();
   });
 
+  it.each([
+    [
+      "seated-row",
+      "Seated Cable Row",
+      "Pull handle to lower ribs",
+      "Reach forward under control",
+    ],
+    [
+      "hip-abduction-machine",
+      "Hip Abduction Machine",
+      "Press knees apart",
+      "Bring knees together slowly",
+    ],
+  ])("%s names its actual drive and return directions", async (id, name, drive, eccentric) => {
+    reduceRef.current = false;
+    demoRef.current = { concentricTo: 1, startsAt: "stretch" };
+    await render(<ExerciseRigDemo exerciseId={id} name={name} />);
+    step(40);
+    step(900);
+    expect(screen.getByText(drive)).toBeInTheDocument();
+    step(2400);
+    expect(screen.getByText(eccentric)).toBeInTheDocument();
+    expect(screen.queryByText("Drive up")).toBeNull();
+    expect(screen.queryByText("Lower under control")).toBeNull();
+  });
+
+  it("cues the burpee's plank brace and soft landing in its forward cycle", async () => {
+    reduceRef.current = false;
+    demoRef.current = { concentricTo: 1, cycle: true, cycleMs: 3600 };
+    await render(<ExerciseRigDemo exerciseId="burpees" name="Burpees" />);
+    step(40);
+    step(900);
+    expect(screen.getByText("Brace in plank, land softly")).toBeInTheDocument();
+  });
+
   it("reduced motion shows the START frame first", async () => {
     // The two-up is start → finish, so a deadlift reads floor-then-
     // standing rather than the reverse.

@@ -60,7 +60,7 @@ describe("body demo cycle shadows", () => {
     const cycleIds = Object.entries(BODY_DEMOS)
       .filter(([, demo]) => demo.cycle)
       .map(([id]) => id);
-    expect(cycleIds).toHaveLength(12);
+    expect(cycleIds).toHaveLength(13);
     for (const id of cycleIds) {
       expect(renderBodyDemo(id, 1, 0.85), `${id} loop seam`).toBe(
         renderBodyDemo(id, 0, 0.85)
@@ -72,6 +72,12 @@ describe("body demo cycle shadows", () => {
     expect(shadowRadius("bike", 0)).toBe(shadowRadius("bike", 0.5));
     expect(shadowRadius("box-jumps", 0)).toBeGreaterThan(
       shadowRadius("box-jumps", 0.5)
+    );
+    expect(shadowRadius("burpees", 0)).toBeGreaterThan(
+      shadowRadius("burpees", 0.84)
+    );
+    expect(shadowRadius("burpees", 0.91)).toBeLessThan(
+      shadowRadius("burpees", 0.97)
     );
     expect(shadowRadius("man-maker", 0)).toBe(shadowRadius("man-maker", 0.5));
     expect(shadowRadius("man-maker", 0.82)).toBeLessThan(
@@ -1584,8 +1590,8 @@ describe("renderBodyDemo", () => {
       "ski-erg": "stretch",
       "jump-rope": "stretch",
       "pallof-press": "stretch",
-      // Batch 14.
-      burpees: "stretch",
+      // Batch 14's burpee is now a closed forward cycle.
+      burpees: "lockout",
       // Batch 15: CYCLES have no start — t=1 is t=0 — so the default
       // stands and the player ignores it.
       treadmill: "lockout",
@@ -4119,21 +4125,22 @@ describe("renderBodyDemo", () => {
     }
 
     /* Batch 14: the burpee. */
-    // Hands on the floor from the drop through the feet-forward; a plank
-    // at 0.3 and 0.7 (body straight, feet back); chest to the floor at
-    // 0.5 (shoulder well below the plank's); feet off the floor with the
-    // arms overhead at the jump; nothing through the floor.
+    // Hands on the floor through the feet-forward phase; a plank at
+    // 0.24 and 0.56, chest to the floor at 0.4, then squat → jump →
+    // airborne recovery → landed squat. Nothing goes through the floor.
     {
       const id = "burpees";
+      expect(BODY_DEMOS[id].cycle).toBe(true);
+      expect(BODY_DEMOS[id].cycleTiming).toBe("linear");
       const H0 = pt(SIDE_ANCHORS.hand, at(id, 0).handL);
-      for (const t of [0.15, 0.3, 0.5, 0.7, 0.85]) {
+      for (const t of [0.12, 0.24, 0.4, 0.56, 0.72]) {
         const H = pt(SIDE_ANCHORS.hand, at(id, t).handL);
         expect(
           Math.hypot(H[0] - H0[0], H[1] - H0[1]),
           `burpee: hands on the floor @${t}`
         ).toBeLessThan(0.01);
       }
-      for (const t of [0.3, 0.7]) {
+      for (const t of [0.24, 0.56]) {
         const p = at(id, t);
         const S = pt(SIDE_ANCHORS.shoulder, p.torso);
         const A = pt(SIDE_ANCHORS.ankle, p.shankL);
@@ -4146,13 +4153,13 @@ describe("renderBodyDemo", () => {
           `burpee: plank legs straight @${t}`
         ).toBeGreaterThan(REST_KNEE - 3);
       }
-      const sPlank = pt(SIDE_ANCHORS.shoulder, at(id, 0.3).torso);
-      const sLow = pt(SIDE_ANCHORS.shoulder, at(id, 0.5).torso);
+      const sPlank = pt(SIDE_ANCHORS.shoulder, at(id, 0.24).torso);
+      const sLow = pt(SIDE_ANCHORS.shoulder, at(id, 0.4).torso);
       expect(sLow[1] - sPlank[1], "burpee: chest to the floor").toBeGreaterThan(
         14
       );
       for (const t of [
-        0, 0.1, 0.15, 0.2, 0.25, 0.5, 0.75, 0.8, 0.85, 0.9, 0.95, 1,
+        0, 0.1, 0.15, 0.2, 0.24, 0.4, 0.56, 0.72, 0.8, 0.84, 0.91, 0.95, 1,
       ]) {
         const p = at(id, t);
         for (const [anchor, group, label] of [
@@ -4166,15 +4173,38 @@ describe("renderBodyDemo", () => {
           ).toBeLessThan(204);
         }
       }
-      const p1 = at(id, 1);
+      const jump = at(id, 0.84);
       expect(
-        pt(SIDE_ANCHORS.ankle, p1.shankL)[1],
+        pt(SIDE_ANCHORS.ankle, jump.shankL)[1],
         "burpee: feet off the floor at the jump"
       ).toBeLessThan(SIDE_ANCHORS.ankle[1] - 6);
       expect(
-        pt(SIDE_ANCHORS.hand, p1.handL)[1],
+        pt(SIDE_ANCHORS.hand, jump.handL)[1],
         "burpee: arms overhead at the jump"
       ).toBeLessThan(0);
+      expect(at(id, 1), "burpee: lands into the next squat").toEqual(at(id, 0));
+      expect(at(id, 0.97), "burpee: grounded handoff").toEqual(at(id, 1));
+      const [left, top, width, height] = BODY_DEMOS[id].viewBox!
+        .split(" ")
+        .map(Number);
+      for (let n = 0; n <= 40; n++) {
+        const t = n / 40;
+        for (const polygon of renderBodyDemo(id, t).matchAll(
+          /<polygon points="([^"]+)"/g
+        )) {
+          for (const point of polygon[1].split(" ")) {
+            const [x, y] = point.split(",").map(Number);
+            expect(x, `burpee left edge at ${t}`).toBeGreaterThanOrEqual(left + 8);
+            expect(x, `burpee right edge at ${t}`).toBeLessThanOrEqual(
+              left + width - 8
+            );
+            expect(y, `burpee top edge at ${t}`).toBeGreaterThanOrEqual(top + 8);
+            expect(y, `burpee bottom edge at ${t}`).toBeLessThanOrEqual(
+              top + height - 8
+            );
+          }
+        }
+      }
     }
 
     /* Batch 15: cycles. */

@@ -1731,13 +1731,12 @@ function antSidePlank(e: number): Partial<Record<GroupName, Op[]>> {
   };
 }
 
-/* ── Batch 14: the burpee — a keyframed chain ──
- * Six positions on one e: squat with the hands down, high plank, chest
- * to the floor, plank, squat, jump. Each keyframe is a world hip, a
- * trunk angle, a world ankle and a world hand; the trunk is placed by
- * `trunkBetween`, the legs by `plantedLeg`, the arms by `armToWorld`,
- * and the frames interpolate. The two-way player reverses it into the
- * same sequence in the other order — a burpee's own second rep. */
+/* ── Batch 14: the burpee — a keyframed closed cycle ──
+ * Squat with hands down → high plank → chest to floor → high plank →
+ * squat → jump → land in the starting squat. The old two-way playback
+ * reversed the whole chain after the jump, adding a second push-up
+ * without another jump. Each keyframe is a world hip, trunk angle,
+ * ankle and hand; `burpeePose` interpolates between them. */
 interface BurpeeKey {
   e: number;
   hip: Pt;
@@ -1775,7 +1774,7 @@ const BURPEE_KEYS: BurpeeKey[] = (() => {
     hand: BURPEE_HAND,
   };
   const plankKey: BurpeeKey = {
-    e: 0.3,
+    e: 0.24,
     hip: plankHip,
     trunk: plankTrunk,
     ankle: plankAnkle,
@@ -1785,21 +1784,30 @@ const BURPEE_KEYS: BurpeeKey[] = (() => {
     squat,
     plankKey,
     {
-      e: 0.5,
+      e: 0.4,
       hip: lowHip,
       trunk: (-lowDeg * 180) / Math.PI,
       ankle: plankAnkle,
       hand: BURPEE_HAND,
     },
-    { ...plankKey, e: 0.7 },
-    { ...squat, e: 0.85 },
+    { ...plankKey, e: 0.56 },
+    { ...squat, e: 0.72 },
     {
-      e: 1,
-      hip: [42, 86],
+      e: 0.84,
+      hip: [42, 77],
       trunk: -90 + 5.4,
-      ankle: [46.6, 183],
-      hand: [50, -34],
+      ankle: [46.6, 174],
+      hand: [50, -43],
     },
+    {
+      e: 0.91,
+      hip: [45, 112],
+      trunk: -85,
+      ankle: [47, 184],
+      hand: [111, 85],
+    },
+    { ...squat, e: 0.97 },
+    { ...squat, e: 1 },
   ];
 })();
 function burpeePose(e: number): Partial<Record<GroupName, Op[]>> {
@@ -9135,17 +9143,22 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     /* "Drop into a squat with your hands on the floor in front of you.
      * Kick your feet back into a plank, lower your chest to the floor.
      * Press back up, jump your feet forward to your hands. Explode
-     * upward into a jump with arms overhead, then repeat." Six keyed
-     * positions on one e (`burpeePose`); the hands stay on the floor
-     * from the drop to the feet-forward, then go overhead with the jump.
-     * Played back, the order is a burpee's own next rep. */
+     * upward into a jump with arms overhead, then repeat." Six named
+     * positions with extra takeoff and landing keys on one e
+     * (`burpeePose`); the hands stay on the floor through the feet-forward
+     * phase, then go overhead with the jump. The final landing returns
+     * to the first squat without reversing the push-up and jump. */
     view: "side",
-    viewBox: "-60 -50 224 262",
+    cycle: true,
+    cycleTiming: "linear",
+    cycleMs: 3600,
+    viewBox: "-60 -60 224 288",
     groundY: 204,
     shadowCx: 40,
     shadowRx: 60,
+    cycleShadowDepth: (e) =>
+      1 - smooth((e - 0.72) / 0.12) * (1 - smooth((e - 0.91) / 0.06)),
     concentricTo: 1,
-    startsAt: "stretch",
     tint: {
       quadriceps: "primary",
       chest: "primary",

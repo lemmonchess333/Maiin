@@ -103,6 +103,20 @@ const PHASE_LABEL: Record<RepPhase, string> = {
   cycle: "Steady rhythm",
 };
 
+/** These movements travel across or away from the body. A generic "Drive
+ * up" or "Lower" cue would describe the opposite of the visible form. */
+const MOVEMENT_PHASE_LABEL: Record<string, Partial<Record<RepPhase, string>>> = {
+  "seated-row": {
+    drive: "Pull handle to lower ribs",
+    eccentric: "Reach forward under control",
+  },
+  "hip-abduction-machine": {
+    drive: "Press knees apart",
+    eccentric: "Bring knees together slowly",
+  },
+  burpees: { cycle: "Brace in plank, land softly" },
+};
+
 /**
  * Exercise demo built from the REAL muscle-map figure (bodyRig): the exact
  * react-body-highlighter polygons the Form view already renders, moved by
@@ -374,7 +388,7 @@ export default function LegacyExerciseRigDemo({
         aria-live="polite"
         className="mt-2 text-center text-micro text-stage-muted"
       >
-        {PHASE_LABEL[phase]}
+        {MOVEMENT_PHASE_LABEL[exerciseId]?.[phase] ?? PHASE_LABEL[phase]}
       </p>
     </div>
   );
