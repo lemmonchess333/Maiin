@@ -32,12 +32,27 @@ vi.mock("@/hooks/useFoodAnalysis", () => ({
 vi.mock("@/components/FoodCameraModal", () => ({
   default: (props: {
     open: boolean;
+    failure?: string | null;
+    initialTab?: string;
     onBarcodeDetected: (raw: string) => Promise<unknown>;
+    onDescribeProduct?: () => void;
+    onTypeProductDetails?: () => void;
   }) => (
-    <div data-testid="stub-modal" data-open={String(props.open)}>
+    <div
+      data-testid="stub-modal"
+      data-open={String(props.open)}
+      data-failure={props.failure ?? ""}
+      data-tab={props.initialTab ?? ""}
+    >
       <button onClick={() => void props.onBarcodeDetected("5000112637922")}>
         stub-barcode
       </button>
+      {props.onDescribeProduct && (
+        <button onClick={props.onDescribeProduct}>stub-describe</button>
+      )}
+      {props.onTypeProductDetails && (
+        <button onClick={props.onTypeProductDetails}>stub-details</button>
+      )}
     </div>
   ),
 }));
@@ -69,12 +84,17 @@ vi.mock("@/lib/sharePhoto", () => ({
   isPhotoShareSupported: () => false,
   sharePhotoToLibrary: vi.fn(),
 }));
+const pantry = vi.hoisted(() => ({ favourites: [] as unknown[] }));
 vi.mock("@/hooks/useFoodFavourites", () => ({
-  useFoodFavourites: () => ({ addFavourite: vi.fn() }),
+  useFoodFavourites: () => ({
+    addFavourite: vi.fn(),
+    favourites: pantry.favourites,
+  }),
 }));
 
 import FoodAnalyzer from "../FoodAnalyzer";
 import { createMealEntry } from "@/lib/mealEntry";
+import { toast } from "@/lib/toast";
 import { AI_ALLOWED } from "@/test/aiConsentFixtures";
 
 const modal = () => screen.getByTestId("stub-modal");
@@ -118,6 +138,7 @@ const savedEntry = () =>
   };
 
 beforeEach(() => {
+  pantry.favourites = [];
   Object.defineProperty(navigator, "onLine", {
     configurable: true,
     get: () => true,
@@ -166,5 +187,108 @@ describe("FoodAnalyzer — a barcode result's amount is typed", () => {
     expect(logButton()).toBeDisabled();
     fireEvent.click(logButton());
     expect(createMealEntry).not.toHaveBeenCalled();
+  });
+});
+
+describe("FoodAnalyzer — a barcode with no match (F2d)", () => {
+  function stubNotFound() {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ status: 0 }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  async function scanUnknown(props: Record<string, unknown> = {}) {
+    stubNotFound();
+    render(
+      <FoodAnalyzer
+        date="2026-09-23"
+        meal="breakfast"
+        aiConsent={AI_ALLOWED}
+        {...props}
+      />
+    );
+    await waitFor(() => expect(modal().dataset.open).toBe("true"));
+    fireEvent.click(screen.getByText("stub-barcode"));
+    await waitFor(() =>
+      expect(modal().dataset.failure).toBe("barcode-not-found")
+    );
+  }
+
+  it("keeps the scanner open on the choice, not a toast", async () => {
+    await scanUnknown();
+    expect(modal().dataset.open).toBe("true");
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("hands Type details the code, and closes the scanner", async () => {
+    const onTypeProductDetails = vi.fn();
+    await scanUnknown({ onTypeProductDetails });
+    fireEvent.click(screen.getByText("stub-details"));
+    expect(onTypeProductDetails).toHaveBeenCalledWith("5000112637922");
+    expect(modal().dataset.open).toBe("false");
+  });
+
+  it("hands Describe it to the composer, and closes the scanner", async () => {
+    const onDescribeProduct = vi.fn();
+    await scanUnknown({ onDescribeProduct });
+    fireEvent.click(screen.getByText("stub-describe"));
+    expect(onDescribeProduct).toHaveBeenCalledTimes(1);
+    expect(modal().dataset.open).toBe("false");
+  });
+
+  it("opens back on the choice for the code it was about", async () => {
+    // The way back from the product form: no second scan needed.
+    const onTypeProductDetails = vi.fn();
+    render(
+      <FoodAnalyzer
+        date="2026-09-23"
+        aiConsent={AI_ALLOWED}
+        notFoundBarcode="5012345678900"
+        onTypeProductDetails={onTypeProductDetails}
+      />
+    );
+    await waitFor(() => expect(modal().dataset.open).toBe("true"));
+    expect(modal().dataset.failure).toBe("barcode-not-found");
+    expect(modal().dataset.tab).toBe("barcode");
+    fireEvent.click(screen.getByText("stub-details"));
+    expect(onTypeProductDetails).toHaveBeenCalledWith("5012345678900");
+  });
+
+  it("finds a product typed in before in the pantry, without asking the database", async () => {
+    pantry.favourites = [
+      {
+        id: "flapjack",
+        name: "Corner shop flapjack",
+        calories: 320,
+        protein: 5,
+        carbs: 40,
+        fat: 15,
+        servingSize: "1 serving",
+        useCount: 1,
+        timeOfDay: "any",
+        source: "barcode",
+        barcode: "5000112637922",
+      },
+    ];
+    const fetchMock = stubNotFound();
+    render(
+      <FoodAnalyzer date="2026-09-23" meal="breakfast" aiConsent={AI_ALLOWED} />
+    );
+    await waitFor(() => expect(modal().dataset.open).toBe("true"));
+    fireEvent.click(screen.getByText("stub-barcode"));
+    await screen.findByTestId("scan-result-sheet");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("heading", { name: "Corner shop flapjack" })
+    ).toBeTruthy();
+    // Its own figures, not the database's, so no credit to it.
+    expect(screen.queryByText("Food data from Open Food Facts")).toBeNull();
+    fireEvent.click(logButton());
+    await waitFor(() => expect(createMealEntry).toHaveBeenCalledTimes(1));
+    expect(savedEntry().totalCalories).toBe(320);
   });
 });

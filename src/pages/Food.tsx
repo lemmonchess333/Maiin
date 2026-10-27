@@ -218,6 +218,14 @@ export default function Food() {
      it would close it, and a second tap would be needed to open it.
      Keying it by session remounts it, and its camera opens on every tap. */
   const [scanSession, setScanSession] = useState(0);
+  /* A barcode with no match (F2d). Type details opens the product form
+     with its code; leaving the form without saving reopens the scanner on
+     the same choice, so Describe it is still one tap away. Describe it
+     opens the composer asking what the product is. */
+  const [manualBarcode, setManualBarcode] = useState<string | null>(null);
+  const manualSavedRef = useRef(false);
+  const [scanForkCode, setScanForkCode] = useState<string | null>(null);
+  const [describeHint, setDescribeHint] = useState(false);
   /* The opening animation: the Scan button's box when tapped, until the
      layer that grows out of it has faded (null under reduced motion). */
   const [scanGrowFrom, setScanGrowFrom] = useState<DOMRect | null>(null);
@@ -407,6 +415,8 @@ export default function Food() {
       haptic();
       setScannerShown(false);
       setScanGrowFrom(origin && !reducedMotion ? origin : null);
+      setScanForkCode(null);
+      setDescribeHint(false);
       setScanSession((n) => n + 1);
       setScanOpen(true);
     }
@@ -2084,10 +2094,16 @@ export default function Food() {
                 slot: targetMeal ?? mealSlotFor(undefined),
               });
             }
+            // The no-match prompt is for the moment after the scan.
+            if (!v) setDescribeHint(false);
             setInputFocused(v);
           }}
           setSuggestionsActive={setSuggestionsActive}
-          placeholderPrompt={NL_EXAMPLE_PROMPTS[placeholderIdx]}
+          placeholderPrompt={
+            describeHint
+              ? "What is this product?"
+              : NL_EXAMPLE_PROMPTS[placeholderIdx]
+          }
           onParse={handleNLParse}
           inputRef={inputRef}
           targetMeal={targetMeal}
@@ -2256,6 +2272,25 @@ export default function Food() {
               setScanOpen(false);
               setTimeout(() => setManualOpen(true), 50);
             }}
+            notFoundBarcode={scanForkCode}
+            onDescribeProduct={() => {
+              // F2d's primary choice: the composer, asking what the
+              // product is, with nothing typed for the person.
+              setScanOpen(false);
+              setScanForkCode(null);
+              setDescribeHint(true);
+              setTimeout(() => {
+                inputRef.current?.focus();
+                setSuggestionsActive(true);
+              }, 100);
+            }}
+            onTypeProductDetails={(code) => {
+              setScanOpen(false);
+              setScanForkCode(null);
+              manualSavedRef.current = false;
+              setManualBarcode(code);
+              setTimeout(() => setManualOpen(true), 50);
+            }}
             onRequestTypedInput={() => {
               // Camera denied fallback path — close the scanner and
               // focus the NL composer so the user can type the meal
@@ -2336,7 +2371,26 @@ export default function Food() {
              that case (no default slot, matches NL convention). */
           meal={targetMeal}
           open={manualOpen}
-          onClose={() => setManualOpen(false)}
+          barcode={manualBarcode}
+          onSaved={() => {
+            manualSavedRef.current = true;
+          }}
+          onClose={() => {
+            setManualOpen(false);
+            const code = manualBarcode;
+            const saved = manualSavedRef.current;
+            manualSavedRef.current = false;
+            setManualBarcode(null);
+            /* Back from a product's form without saving: the scanner
+               reopens on the no-match choice for the same code. */
+            if (code && !saved) {
+              setScannerShown(false);
+              setScanGrowFrom(null);
+              setScanForkCode(code);
+              setScanSession((n) => n + 1);
+              setScanOpen(true);
+            }
+          }}
         />
       </Suspense>
       <ServingSizeDrawer

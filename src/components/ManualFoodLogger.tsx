@@ -7,6 +7,7 @@ import { localDateString } from "@/lib/dateHelpers";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
+import { Toggle } from "@/components/ui/Toggle";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
@@ -33,9 +34,24 @@ interface Props {
   meal?: "breakfast" | "lunch" | "snacks" | "dinner" | null;
   open: boolean;
   onClose: () => void;
+  /** Fired once the meal is saved, before `onClose`, so the parent can
+   *  tell a save from a dismissal. */
+  onSaved?: () => void;
+  /** A scanned barcode the food database did not have (F2d). The form is
+   *  then the product's details: the meal keeps the code, and "Add to my
+   *  pantry", on by default, files the product under it so the next scan
+   *  of the same pack finds it. */
+  barcode?: string | null;
 }
 
-export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
+export function ManualFoodLogger({
+  date,
+  meal,
+  open,
+  onClose,
+  onSaved,
+  barcode = null,
+}: Props) {
   const uid = useUid();
   const { addFavourite } = useFoodFavourites();
   const [name, setName] = useState("");
@@ -44,6 +60,10 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
   const [carbs, setCarbs] = useState("");
   const [fat, setFat] = useState("");
   const [saving, setSaving] = useState(false);
+  /* Every manual log goes into the pantry. A typed-in product offers the
+     switch, because a one-off pack is common there and unticking it is
+     one tap. */
+  const [addToPantry, setAddToPantry] = useState(true);
   /* ConfirmDialog state for suspicious-but-possible high values
      (>5000 cal etc). Negative / NaN values are blocked outright
      via inline toast — they never reach this prompt. */
@@ -73,6 +93,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
         totalCarbs: entry.carbs,
         totalFat: entry.fat,
         confidence: "manual",
+        ...(barcode ? { barcode } : {}),
         /* Optional `meal` slot mirrors the NL / quick-add
            convention — persisted only when the user explicitly
            picked one. No default. */
@@ -89,14 +110,17 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
          addFavourite's internal error handling) and the meal doc
          is already written, so a favourites-write failure should
          not bubble back to the user as a save error. */
-      void addFavourite({
-        name: entry.name,
-        calories: entry.calories,
-        protein: entry.protein,
-        carbs: entry.carbs,
-        fat: entry.fat,
-        source: "manual",
-      });
+      if (!barcode || addToPantry) {
+        void addFavourite({
+          name: entry.name,
+          calories: entry.calories,
+          protein: entry.protein,
+          carbs: entry.carbs,
+          fat: entry.fat,
+          source: barcode ? "barcode" : "manual",
+          ...(barcode ? { barcode } : {}),
+        });
+      }
 
       /* Clear and close on the save itself. A delayed reset stays armed on
          a component the sheet does not unmount, so dismissing and
@@ -110,6 +134,8 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
       setProtein("");
       setCarbs("");
       setFat("");
+      setAddToPantry(true);
+      onSaved?.();
       onClose();
     } catch {
       toast.error("Couldn't save this meal. Try again.", {
@@ -164,7 +190,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
       <BottomSheet
         open={open}
         onOpenChange={(o) => !o && onClose()}
-        title="Log a meal"
+        title={barcode ? "Add this product" : "Log a meal"}
         maxHeight="max-h-[85dvh]"
       >
         <div className="min-h-0 overflow-y-auto px-4 py-4">
@@ -173,10 +199,15 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Meal name"
-            aria-label="Meal name"
+            placeholder={barcode ? "Product name" : "Meal name"}
+            aria-label={barcode ? "Product name" : "Meal name"}
             className="ds-input px-3 py-3 text-base"
           />
+          {barcode && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Per serving, from the pack.
+            </p>
+          )}
 
           {/* Macro input grid */}
           <div className="grid grid-cols-2 gap-3 mt-4">
@@ -221,6 +252,21 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
               </div>
             ))}
           </div>
+          {barcode && (
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm text-foreground">Add to my pantry</p>
+                <p className="text-xs text-muted-foreground">
+                  The next scan of this barcode finds it.
+                </p>
+              </div>
+              <Toggle
+                checked={addToPantry}
+                onChange={() => setAddToPantry((on) => !on)}
+                label="Add to my pantry"
+              />
+            </div>
+          )}
         </div>
         {/* Sticky save footer. Pre-F2 the button lived inside the
               overflow-y-auto container, so on small iPhone viewports

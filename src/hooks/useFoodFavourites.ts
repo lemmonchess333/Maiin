@@ -30,6 +30,10 @@ export interface FoodFavourite {
   useCount: number;
   timeOfDay: "morning" | "midday" | "evening" | "any";
   source: "manual" | "photo" | "barcode" | "search" | "nl";
+  /** The product's barcode, for a product typed in after a scan found
+   *  nothing (F2d). The scanner looks here before Open Food Facts, so the
+   *  next scan of the same pack finds it. */
+  barcode?: string;
 }
 
 /** Pantry collection ceiling. Once the user has accumulated >50
@@ -112,6 +116,9 @@ function parseFavouriteDoc(
     useCount: safeNum(raw.useCount),
     timeOfDay,
     source,
+    ...(typeof raw.barcode === "string" && raw.barcode
+      ? { barcode: raw.barcode }
+      : {}),
   };
 }
 
@@ -311,6 +318,9 @@ export function useFoodFavourites() {
       sodium?: number;
       servingSize?: string;
       source?: FoodFavourite["source"];
+      /** Written only when given, so a later log of the same food from
+       *  another path never clears it. */
+      barcode?: string;
     }) => {
       if (!uid) return { isNew: false, count: 0 };
 
@@ -353,6 +363,7 @@ export function useFoodFavourites() {
         useCount: ReturnType<typeof increment>;
         timeOfDay?: FoodFavourite["timeOfDay"];
         source?: FoodFavourite["source"];
+        barcode?: string;
       };
       const payload: FavouritePayload = {
         name: meal.name.trim(),
@@ -366,6 +377,7 @@ export function useFoodFavourites() {
         servingSize: meal.servingSize || "1 serving",
         lastUsed: Timestamp.now(),
         useCount: increment(1),
+        ...(meal.barcode ? { barcode: meal.barcode } : {}),
       };
 
       // Set timeOfDay + source ONLY on first write. merge:true would
@@ -444,6 +456,7 @@ export function useFoodFavourites() {
             useCount: favourite.useCount,
             timeOfDay: favourite.timeOfDay,
             source: favourite.source,
+            ...(favourite.barcode ? { barcode: favourite.barcode } : {}),
           },
           { merge: false }
         );

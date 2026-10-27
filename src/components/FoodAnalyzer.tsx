@@ -2,7 +2,10 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { useFoodFavourites } from "@/hooks/useFoodFavourites";
+import {
+  useFoodFavourites,
+  type FoodFavourite,
+} from "@/hooks/useFoodFavourites";
 import { THEME } from "@/lib/theme";
 import { RotateCcw, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion } from "framer-motion";
@@ -79,6 +82,17 @@ interface Props {
   /** Fired each time the scanner comes on screen (the page's opening
    *  animation waits for it). */
   onCameraShown?: () => void;
+  /** A barcode with no match, and the person chose Describe it (F2d):
+   *  the scanner closes and the parent opens the composer. */
+  onDescribeProduct?: () => void;
+  /** A barcode with no match, and the person chose Type details (F2d):
+   *  the scanner closes and the parent opens the product form with this
+   *  code. */
+  onTypeProductDetails?: (barcode: string) => void;
+  /** Open on the no-match choice for this code rather than the live
+   *  scanner: the way back from the product form, so the person can
+   *  change their mind without scanning again. */
+  notFoundBarcode?: string | null;
 }
 
 type MealResult = {
@@ -102,11 +116,15 @@ type MealResult = {
   /** A barcode result's numbers are per 100 g ("low") or per the
    *  serving the product states ("high"). */
   unitConfidence?: "high" | "low";
+  /** The product came from the person's own pantry, not Open Food
+   *  Facts, so it carries no credit to the database. */
+  fromPantry?: boolean;
 };
 
-/** The database answered, and has no product with this code. */
+/** The database answered, and has no product with this code. The scanner
+ *  shows the no-match choice for it, not this message. */
 class BarcodeNotFoundError extends Error {}
-const BARCODE_NOT_FOUND = "Barcode not found. Log it manually instead.";
+const BARCODE_NOT_FOUND = "Barcode not found.";
 
 async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   const url =
@@ -122,9 +140,6 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   const data = await res.json();
 
   if (!data || data.status !== 1 || !data.product) {
-    /* Throw message becomes the toast body when caught at the
-       call site (onBarcodeDetected). Direct the user to
-       the manual fallback rather than a dead-end. */
     throw new BarcodeNotFoundError(BARCODE_NOT_FOUND);
   }
 
@@ -154,6 +169,32 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
     totalFat: fat,
     confidence: "barcode",
     unitConfidence: portion.unitConfidence,
+  };
+}
+
+/** A product typed in after a scan found nothing, as a barcode result:
+ *  its pantry figures are per serving, as the form took them. */
+function pantryProduct(fav: FoodFavourite, barcode: string): MealResult {
+  return {
+    foodName: fav.name,
+    barcode,
+    items: [
+      {
+        name: fav.name,
+        portionSize: fav.servingSize || "1 serving",
+        calories: fav.calories,
+        protein: fav.protein,
+        carbs: fav.carbs,
+        fat: fav.fat,
+      },
+    ],
+    totalCalories: fav.calories,
+    totalProtein: fav.protein,
+    totalCarbs: fav.carbs,
+    totalFat: fav.fat,
+    confidence: "barcode",
+    unitConfidence: "high",
+    fromPantry: true,
   };
 }
 
@@ -188,9 +229,12 @@ export default function FoodAnalyzer({
   photoLock = null,
   aiConsent,
   onCameraShown,
+  onDescribeProduct,
+  onTypeProductDetails,
+  notFoundBarcode = null,
 }: Props) {
   const uid = useUid();
-  const { addFavourite } = useFoodFavourites();
+  const { addFavourite, favourites } = useFoodFavourites();
 
   const {
     analyzeFood,
@@ -203,7 +247,9 @@ export default function FoodAnalyzer({
   const [cameraOpen, setCameraOpen] = useState(false);
   /* The mode a reopened scanner starts on: Retake on a barcode result
      goes back to Barcode, on a label photo back to Label. */
-  const [cameraTab, setCameraTab] = useState<ScanMode>("food");
+  const [cameraTab, setCameraTab] = useState<ScanMode>(
+    notFoundBarcode ? "barcode" : "food"
+  );
   const lastCaptureModeRef = useRef<"food" | "label">("food");
   /* Ref mirror for async capture handlers: `onCaptureBase64` awaits a
      network round-trip, and the `cameraOpen` it closed over is stale
@@ -232,7 +278,13 @@ export default function FoodAnalyzer({
      dumping the user on a page-level card. Cleared on retake and on
      every path that closes the modal, so a reopen can never show a
      stale verdict. */
-  const [scanFailure, setScanFailure] = useState<ScanFailureKind | null>(null);
+  const [scanFailure, setScanFailure] = useState<ScanFailureKind | null>(
+    notFoundBarcode ? "barcode-not-found" : null
+  );
+  /* The code the no-match choice is about, handed to Type details. */
+  const [notFoundCode, setNotFoundCode] = useState<string | null>(
+    notFoundBarcode
+  );
   /* The user-facing reason behind an "error" failure, straight from the
      hook (server rate-limit / quota / auth copy, or the hook's mapped
      network lines). Shown verbatim as the failure beat's sub-line so a
@@ -846,6 +898,21 @@ export default function FoodAnalyzer({
        rejected plate as the barcode product's hero (heroImageSrc prefers
        the capture) — and, pre-Food9, upload it as that meal's photo. */
     setCapturedBase64(null);
+    clearScanFailure();
+    setNotFoundCode(null);
+
+    /* A product typed in after an earlier scan found nothing is in the
+       pantry under its code. It is looked up first, so the same pack
+       scans in two taps the second time, offline too. */
+    const pantryHit = (favourites ?? []).find((f) => f.barcode === code);
+    if (pantryHit) {
+      setAmountText("1");
+      setBarcodeError(null);
+      setBarcodeResult(pantryProduct(pantryHit, code));
+      setCameraOpen(false);
+      toast.success("Found in your pantry");
+      return undefined;
+    }
 
     /* Same offline pre-empt as the photo path — without it, the fetch
        rejects with TypeError and the user was toasted the literal
@@ -875,6 +942,14 @@ export default function FoodAnalyzer({
       const failure =
         e instanceof BarcodeNotFoundError ? "not-found" : "unreachable";
       if (!cameraOpenRef.current) return failure;
+      /* No such product: the scanner resolves on the choice of Describe
+         it or Type details (F2d) rather than a toast that left the
+         person to find the manual form. */
+      if (failure === "not-found") {
+        setNotFoundCode(code);
+        setScanFailure("barcode-not-found");
+        return failure;
+      }
       /* TypeError = the fetch itself failed (connection dropped
          mid-lookup) — its message is browser-internal, never copy. */
       const msg =
@@ -933,6 +1008,25 @@ export default function FoodAnalyzer({
                 clearScanFailure();
                 setCameraOpen(false);
                 onRequestTypedInput();
+              }
+            : undefined
+        }
+        onDescribeProduct={
+          onDescribeProduct
+            ? () => {
+                clearScanFailure();
+                setCameraOpen(false);
+                onDescribeProduct();
+              }
+            : undefined
+        }
+        onTypeProductDetails={
+          onTypeProductDetails && notFoundCode
+            ? () => {
+                const code = notFoundCode;
+                clearScanFailure();
+                setCameraOpen(false);
+                onTypeProductDetails(code);
               }
             : undefined
         }
@@ -1152,8 +1246,9 @@ export default function FoodAnalyzer({
               )}
 
               {/* A barcode result is Open Food Facts' data, whose licence
-                  (ODbL) asks for a credit wherever it is shown. */}
-              {isBarcode && (
+                  (ODbL) asks for a credit wherever it is shown. One from
+                  the person's own pantry is not. */}
+              {isBarcode && !activeResult.fromPantry && (
                 <p className="text-micro text-muted-foreground text-center">
                   {OFF_CREDIT}
                 </p>
