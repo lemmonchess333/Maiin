@@ -172,6 +172,7 @@ async function inspectExercise(id: string) {
   const canvas = `${present[0].width}×${present[0].height}`;
   const dimensionsMatch = present.every((frame) => frame.width === present[0].width && frame.height === present[0].height);
   console.log(`  canvas ${canvas}${dimensionsMatch ? "" : " — MISMATCH"}`);
+  if (!dimensionsMatch) problems.push("frames have mismatched dimensions");
   const hashes = new Map<string, number[]>();
   for (let n = 0; n < frames.length; n++) {
     const frame = frames[n];
@@ -189,7 +190,11 @@ async function inspectExercise(id: string) {
   }
   const duplicates = [...hashes.values()].filter((group) => group.length > 1);
   console.log(`  identical files: ${duplicates.map((group) => group.join("=" )).join(", ") || "none"}`);
-  if (frames[0] && frames[5] && dimensionsMatch) {
+  if (
+    frames[0] && frames[5] &&
+    frames[0].width === frames[5].width &&
+    frames[0].height === frames[5].height
+  ) {
     const seam = compare(frames[0], frames[5]);
     console.log(`  frame 6→1: ${frames[0].sha256 === frames[5].sha256 ? "byte-identical" : `${seam.meanDifference} mean RGB difference, ${seam.changedPercent}% samples changed — inspect loop manually`}`);
   }
