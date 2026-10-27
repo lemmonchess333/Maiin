@@ -50,6 +50,92 @@ describe("body demo cycle timing", () => {
 });
 
 describe("machine fallback contacts", () => {
+  it("keeps hack squat shoes and machine fixed while its loaded carriage travels on the rails", () => {
+    const demo = BODY_DEMOS["hack-squat"];
+    expect(demo.mirrorX).toBe(true);
+    const positions = [0, 0.25, 0.5, 0.75, 1].map((t) => {
+      const pose = demo.pose(t);
+      const scene = demo.scene!(t, pose);
+      const ankle = applyToPoint(SIDE_ANCHORS.ankle, pose.shankL ?? []);
+      const shoeAnkle = applyToPoint(SIDE_ANCHORS.ankle, pose.footL ?? []);
+      const shoeBall = applyToPoint(SIDE_ANCHORS.ball, pose.footL ?? []);
+      const hip = applyToPoint(SIDE_ANCHORS.hip, pose.pelvis ?? []);
+      const hand = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      const plate = scene.match(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="14"/);
+      const grip = scene.match(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="2\.8"/);
+      expect(plate, `loaded carriage @${t}`).not.toBeNull();
+      expect(grip, `shoulder-pad handle @${t}`).not.toBeNull();
+      expect(scene).toContain(
+        `<line x1="-35" y1="31" x2="102" y2="207"`
+      );
+      expect(scene).toContain(
+        `<line x1="59" y1="203" x2="116" y2="203"`
+      );
+      expect(
+        Math.hypot(ankle[0] - shoeAnkle[0], ankle[1] - shoeAnkle[1])
+      ).toBeLessThan(0.01);
+      // Scene SVG rounds to one decimal place.
+      expect(Math.abs(Number(plate![1]) - (hip[0] - 36))).toBeLessThan(0.11);
+      expect(Math.abs(Number(plate![2]) - (hip[1] - 20))).toBeLessThan(0.11);
+      expect(Math.abs(Number(grip![1]) - hand[0])).toBeLessThan(0.11);
+      expect(Math.abs(Number(grip![2]) - hand[1])).toBeLessThan(0.11);
+      return { ankle, shoeBall, plate: [Number(plate![1]), Number(plate![2])] };
+    });
+    for (const p of positions.slice(1)) {
+      expect(
+        Math.hypot(
+          p.ankle[0] - positions[0].ankle[0],
+          p.ankle[1] - positions[0].ankle[1]
+        )
+      ).toBeLessThan(0.01);
+      expect(
+        Math.hypot(
+          p.shoeBall[0] - positions[0].shoeBall[0],
+          p.shoeBall[1] - positions[0].shoeBall[1]
+        )
+      ).toBeLessThan(0.01);
+    }
+    expect(positions[4].plate[0] - positions[0].plate[0]).toBeCloseTo(21, 1);
+    expect(positions[4].plate[1] - positions[0].plate[1]).toBeCloseTo(27, 1);
+    expect(renderBodyDemo("hack-squat", 0)).toContain(
+      `<g transform="translate(100 0) scale(-1 1)">`
+    );
+    const [left, top, width, height] = demo.viewBox!.split(" ").map(Number);
+    for (let frame = 0; frame <= 20; frame++) {
+      const pose = demo.pose(frame / 20);
+      const points = SIDE_PIECES.flatMap((piece) => {
+        const ops =
+          pose[piece.group] ??
+          (piece.group === "footL"
+            ? pose.shankL
+            : piece.group === "footR"
+              ? pose.shankR
+              : undefined) ??
+          [];
+        const depth = piece.depthShift
+          ? [
+              ...ops,
+              {
+                kind: "translate" as const,
+                dx: piece.depthShift[0],
+                dy: piece.depthShift[1],
+              },
+            ]
+          : ops;
+        return piece.outline.map((point) => {
+          const [x, y] = applyToPoint(point, depth);
+          return [100 - x, y];
+        });
+      });
+      const xs = points.map(([x]) => x);
+      const ys = points.map(([, y]) => y);
+      expect(Math.min(...xs), `left margin @${frame}`).toBeGreaterThan(left + 8);
+      expect(Math.max(...xs), `right margin @${frame}`).toBeLessThan(left + width - 8);
+      expect(Math.min(...ys), `top margin @${frame}`).toBeGreaterThan(top + 8);
+      expect(Math.max(...ys), `bottom margin @${frame}`).toBeLessThan(top + height - 8);
+    }
+  });
+
   it("keeps both elliptical shoes on moving pedals and both hands on opposing levers", () => {
     const demo = BODY_DEMOS.elliptical;
     const fixed: string[] = [];

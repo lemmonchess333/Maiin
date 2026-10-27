@@ -598,6 +598,9 @@ export interface BodyDemo {
   /** Movements whose envelope exceeds the body's column (e.g. a lateral
    *  raise at full span) declare a wider canvas. */
   viewBox?: string;
+  /** Mirror a side-view machine and figure around x=50. The hack squat's
+   *  footplate is to the left of its incline rails. */
+  mirrorX?: true;
   /** Group transforms as a function of eased progress e ∈ [0,1]. */
   pose: (e: number) => Partial<Record<GroupName, Op[]>>;
   /** STRUCTURAL equipment only (no held weights — the figure has no
@@ -5245,7 +5248,8 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * hip travels the pad line and the leg is planted-foot IK from it
      * to the fixed ankle, knee forward. */
     view: "side",
-    viewBox: "-22 -16 180 228",
+    mirrorX: true,
+    viewBox: "-38 8 198 220",
     groundY: 204,
     shadowCx: 60,
     shadowRx: 40,
@@ -5253,6 +5257,16 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     tint: { quadriceps: "primary", gluteal: "secondary" },
     pose: (e) => {
       const c = hackSquatChain(e);
+      // The ankle is the IK endpoint, but the shoe needs its own fixed
+      // transform. Inheriting the shank rotation made it rock and slide
+      // across a platform that is fixed for the whole rep.
+      const foot: Op[] = [
+        {
+          kind: "translate",
+          dx: HACK_ANKLE[0] - SIDE_ANCHORS.ankle[0],
+          dy: HACK_ANKLE[1] - SIDE_ANCHORS.ankle[1],
+        },
+      ];
       // Hands up on the shoulder-pad handles.
       const upper: Op[] = [
         { kind: "rotate", deg: -110, pivot: SIDE_ANCHORS.shoulder },
@@ -5270,6 +5284,8 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         thighR: c.leg.thigh,
         shankL: c.leg.shank,
         shankR: c.leg.shank,
+        footL: foot,
+        footR: foot,
         upperArmL: upper,
         foreArmL: fore,
         handL: fore,
@@ -5278,27 +5294,31 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         handR: fore,
       };
     },
-    scene: (e, pose) => {
-      // Back pad along the hip path (fixed in the world), the platform
-      // under the fixed feet, shoulder pads riding the body, the floor.
-      const top = HACK_HIP[0];
-      const bot = HACK_HIP[1];
-      const dx = bot[0] - top[0];
-      const dy = bot[1] - top[1];
-      const len = Math.hypot(dx, dy);
-      const ux = dx / len;
-      const uy = dy / len;
-      const padA: Pt = [top[0] - ux * 70 - 12, top[1] - uy * 70];
-      const padB: Pt = [bot[0] + ux * 16 - 12, bot[1] + uy * 16];
-      const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.torso ?? []);
-      const a = HACK_ANKLE;
-      void e;
+    scene: (_e, pose) => {
+      // The two rails, upright, and footplate never move. The carriage,
+      // shoulder pads, and plate all follow the shoulder/hip path, which
+      // is parallel to both rails. Mirroring the whole side view puts the
+      // fixed footplate on the left, matching the real machine.
+      const shoulder = applyToPoint(SIDE_ANCHORS.shoulder, pose.torso ?? []);
+      const hip = applyToPoint(SIDE_ANCHORS.hip, pose.pelvis ?? []);
+      const hand = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      const plate: Pt = [hip[0] - 36, hip[1] - 20];
       return (
-        `<line x1="${padA[0].toFixed(1)}" y1="${padA[1].toFixed(1)}" x2="${padB[0].toFixed(1)}" y2="${padB[1].toFixed(1)}" stroke="${GEAR}" stroke-width="8" stroke-linecap="round"/>` +
-        `<line x1="${padB[0].toFixed(1)}" y1="${padB[1].toFixed(1)}" x2="${padB[0].toFixed(1)}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
-        `<line x1="${(a[0] - 26).toFixed(1)}" y1="${(a[1] + 8).toFixed(1)}" x2="${(a[0] + 30).toFixed(1)}" y2="${(a[1] + 8).toFixed(1)}" stroke="${GEAR}" stroke-width="6" stroke-linecap="round"/>` +
-        `<rect x="${(S[0] - 6).toFixed(1)}" y="${(S[1] - 12).toFixed(1)}" width="14" height="8" rx="3" fill="${GEAR}"/>` +
-        `<line x1="-26" y1="${MACHINE_FLOOR + 1}" x2="150" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+        `<line x1="-47" y1="211" x2="128" y2="211" stroke="${GEAR_DARK}" stroke-width="5" stroke-linecap="round"/>` +
+        `<line x1="-35" y1="31" x2="-35" y2="211" stroke="${GEAR_DARK}" stroke-width="5"/>` +
+        `<line x1="-35" y1="31" x2="102" y2="207" stroke="${GEAR_DARK}" stroke-width="6" stroke-linecap="round"/>` +
+        `<line x1="-23" y1="31" x2="114" y2="207" stroke="${GEAR}" stroke-width="5" stroke-linecap="round"/>` +
+        `<line x1="-35" y1="31" x2="-23" y2="31" stroke="${GEAR_EDGE}" stroke-width="4"/>` +
+        `<line x1="59" y1="203" x2="116" y2="203" stroke="${GEAR}" stroke-width="6" stroke-linecap="round"/>` +
+        `<line x1="104" y1="203" x2="104" y2="211" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<line x1="${(shoulder[0] - 12).toFixed(1)}" y1="${(shoulder[1] - 12).toFixed(1)}" x2="${(hip[0] - 12).toFixed(1)}" y2="${(hip[1] + 8).toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="10" stroke-linecap="round"/>` +
+        `<line x1="${(shoulder[0] - 8).toFixed(1)}" y1="${(shoulder[1] - 12).toFixed(1)}" x2="${(hip[0] - 8).toFixed(1)}" y2="${(hip[1] + 8).toFixed(1)}" stroke="${GEAR}" stroke-width="4" stroke-linecap="round"/>` +
+        `<rect x="${(shoulder[0] - 10).toFixed(1)}" y="${(shoulder[1] - 16).toFixed(1)}" width="21" height="8" rx="3" fill="${GEAR}"/>` +
+        `<line x1="${(shoulder[0] - 4).toFixed(1)}" y1="${(shoulder[1] - 12).toFixed(1)}" x2="${hand[0].toFixed(1)}" y2="${hand[1].toFixed(1)}" stroke="${GEAR}" stroke-width="3" stroke-linecap="round"/>` +
+        `<circle cx="${hand[0].toFixed(1)}" cy="${hand[1].toFixed(1)}" r="2.8" fill="${GEAR}"/>` +
+        `<line x1="${(hip[0] - 12).toFixed(1)}" y1="${plate[1].toFixed(1)}" x2="${plate[0].toFixed(1)}" y2="${plate[1].toFixed(1)}" stroke="${GEAR}" stroke-width="4"/>` +
+        `<circle cx="${plate[0].toFixed(1)}" cy="${plate[1].toFixed(1)}" r="14" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="1.4"/>` +
+        `<circle cx="${plate[0].toFixed(1)}" cy="${plate[1].toFixed(1)}" r="4" fill="${GEAR}"/>`
       );
     },
   },
@@ -10298,6 +10318,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? "-8 -14 116 224"}" role="img">` +
+    (demo.mirrorX ? `<g transform="translate(100 0) scale(-1 1)">` : "") +
     shadow +
     scene +
     prop.behind +
@@ -10305,6 +10326,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     jointCaps +
     body +
     prop.front +
+    (demo.mirrorX ? `</g>` : "") +
     `</svg>`
   );
 }

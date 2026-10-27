@@ -14,6 +14,7 @@ export const FORM_ART_QUARANTINE_IDS = new Set([
   "db-bench",
   "elliptical",
   "front-squat",
+  "hack-squat",
   "hip-abduction-machine",
   "inverted-row",
   "seated-row",
