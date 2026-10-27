@@ -18,7 +18,9 @@ interface ExerciseMenuSheetProps {
   /** The planned exercise's name, when this one was swapped in for it. */
   swappedFor?: string;
   skipped: boolean;
-  onSwap: () => void;
+  /** Absent for an exercise added today, which stands in for no planned
+   *  lift. */
+  onSwap?: () => void;
   onSwapBack: () => void;
   onSkip: () => void;
   onUnskip: () => void;
@@ -47,9 +49,10 @@ export default function ExerciseMenuSheet({
   const choices: Choice[] = skipped
     ? [choice("unskip", "Don't skip", onUnskip)]
     : [
-        ...(nothingDone
+        ...(nothingDone && onSwap
           ? [
               choice("swap", "Swap for today", onSwap),
+
               ...(swappedFor
                 ? [choice("swap-back", `Back to ${swappedFor}`, onSwapBack)]
                 : []),

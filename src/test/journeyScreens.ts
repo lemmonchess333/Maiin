@@ -82,6 +82,9 @@ export const WORKOUT = {
   fullSession: /^Full session/,
   close: "Close workout",
   markSet: "Mark set complete",
+  /** The session's own Add exercise, and its picker's title
+   *  (`WorkoutSessionAddExercise.test.tsx`). */
+  addExercise: "Add exercise",
   save: "Save workout",
   done: "Done",
 } as const;

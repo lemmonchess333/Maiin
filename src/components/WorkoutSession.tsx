@@ -38,7 +38,12 @@ import {
   Plus,
   MoreHorizontal,
   SkipForward,
+  Dumbbell,
 } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
+import type { Exercise } from "@/lib/exercises";
+import { exerciseAddedToday } from "@/features/program/sessionAdd";
+import { generateInstanceId } from "@/features/program/programTypes";
 import { Button } from "@/components/ui/Button";
 import {
   FIELD_EDGE,
@@ -173,7 +178,8 @@ import {
   kitLoadToKg,
 } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
-// The exercise list for "Swap for today", loaded when it is opened.
+// The exercise list for "Swap for today" and "Add exercise", loaded when
+// it is opened.
 const ExercisePicker = lazyRetry(
   () => import("@/components/program/ExercisePicker")
 );
@@ -417,6 +423,8 @@ export default function WorkoutSession({
      question about today's swaps. */
   const [menuFor, setMenuFor] = useState<number | null>(null);
   const [swapFor, setSwapFor] = useState<number | null>(null);
+  /* "Add exercise" (Mob1 call 1): the picker, open to add to today. */
+  const [adding, setAdding] = useState(false);
   const [keepQuestion, setKeepQuestion] = useState<{
     open: boolean;
     swaps: SwapToKeep[];
@@ -479,8 +487,7 @@ export default function WorkoutSession({
   useEffect(() => {
     const container = tabsRef.current;
     const activeBtn = container?.children[currentExIndex] as
-      | HTMLElement
-      | undefined;
+      HTMLElement | undefined;
     /* No `behavior`: the default defers to the computed
        `scroll-behavior`, which Reduce Motion turns to `auto`. An
        explicit "smooth" would animate the rail regardless. */
@@ -517,7 +524,8 @@ export default function WorkoutSession({
 
   // Pre-fill weights/reps from most recent previous session + build PR map
   useEffect(() => {
-    if (!user?.uid || !day.exercises.length) return;
+    // An empty workout reads last time too: what it adds starts from there.
+    if (!user?.uid) return;
 
     const fetchPreviousWeights = async () => {
       // The 50 newest workouts, including one finished on this phone that
@@ -582,7 +590,10 @@ export default function WorkoutSession({
 
       // The best-lift map, as stored or rebuilt from history
       // (liftRecordsStore.ts). If it cannot be read, this session celebrates
-      // no bests and leaves the stored map alone.
+      // no bests and leaves the stored map alone. Read once: the list
+      // changing under the session (a swap, an added exercise) read it
+      // again, and the bests already set this session went with it.
+      if (loadedRecordsRef.current) return;
       try {
         const records = await loadLiftRecords(user.uid, recent);
         loadedRecordsRef.current = records;
@@ -1401,6 +1412,50 @@ export default function WorkoutSession({
     setCurrentSetIndex(0);
   };
 
+  /**
+   * "Add exercise" (Mob1 call 1): the exercises picked join the end of the
+   * session, for today, with the numbers and first weights an added lift
+   * takes (`exerciseAddedToday`), each set starting from what it did last
+   * time. They are saved with the session and leave the plan as it is.
+   * The session moves on to the first of them.
+   */
+  const addExercises = (picked: readonly Exercise[]) => {
+    if (picked.length === 0) return;
+    const start = day.exercises.length;
+    const experience = toExperience(profile?.experience);
+    const loadContext = loadContextFrom(profile);
+    const added = picked.map((exercise) => {
+      const last = lastSetsById.current.get(exercise.id);
+      return exerciseAddedToday(exercise.id, {
+        instanceId: generateInstanceId(),
+        goal: profile?.primaryGoal,
+        experience,
+        loadContext,
+        lastWeight: last ? followedWeight(last) : null,
+      });
+    });
+    // The warm-up ramp goes to the first loaded lift for each body part,
+    // so the rows are built as part of the whole session.
+    const rows = buildInitialSetLogs([...day.exercises, ...added], liftUnit)
+      .slice(start)
+      .map((built, k) =>
+        startingSetRows(
+          built,
+          added[k],
+          lastSetsById.current.get(added[k].exerciseId)
+        )
+      );
+    setPrescription((current) => ({
+      ...current,
+      exercises: [...current.exercises, ...added],
+    }));
+    setSetLogs((logs) => [...logs, ...rows]);
+    setLastCompleted(null);
+    setCurrentExIndex(start);
+    setCurrentSetIndex(0);
+    haptic("light");
+  };
+
   /** Skipping keeps the sets done and sets the rest aside. */
   const skipExercise = (index: number) => {
     const next = setLogs.map((rows, i) =>
@@ -1647,14 +1702,67 @@ export default function WorkoutSession({
     setShowResumePrompt(false);
   };
 
-  // A day with no exercises cannot be logged, and every render path below
-  // dereferences `currentExercise`. Clamping cannot save this case — there is
-  // no valid index into an empty list — so bail to the caller rather than
-  // throw the whole /program route into the error boundary. Placed AFTER every
-  // hook: this file's own header warns that gated early returns flipping
-  // between renders are the classic cause of React error #310.
+  /* The picker for "Add exercise", in add mode: as many as are ticked. */
+  const addPicker = adding && (
+    <Suspense fallback={null}>
+      <ExercisePicker
+        open
+        headerTitle="Add exercise"
+        onSelect={(picked) => addExercises([picked])}
+        onMultiSelect={addExercises}
+        onClose={() => setAdding(false)}
+      />
+    </Suspense>
+  );
+  const openAddPicker = () => {
+    haptic("light");
+    setAdding(true);
+  };
+
+  // A session with no exercises yet: an empty workout (Mob1 call 1), or a
+  // day with nothing in it. Every render path below dereferences
+  // `currentExercise`, so it has a screen of its own, whose one action is
+  // to add the first exercise. Placed AFTER every hook: this file's own
+  // header warns that gated early returns flipping between renders are the
+  // classic cause of React error #310.
   if (day.exercises.length === 0) {
-    return null;
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)] safe-area-pb">
+        <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/50">
+          <p
+            role="heading"
+            aria-level={1}
+            className="min-w-0 truncate text-base font-bold text-foreground"
+          >
+            {dayLabel ?? liftDayLine(day.dayName)}
+          </p>
+          <IconButton
+            variant="ghost"
+            aria-label="Close workout"
+            onClick={onClose}
+            icon={<X className="size-5 text-muted-foreground" />}
+          />
+        </div>
+        <div className="flex-1 overflow-y-auto px-4">
+          <EmptyState
+            icon={Dumbbell}
+            headline="No exercises yet"
+            sub="Add the first one, and its sets are ready to log."
+          />
+        </div>
+        <div className="px-4 py-3 border-t border-border/50 bg-background">
+          <Button
+            size="lg"
+            fullWidth
+            onClick={openAddPicker}
+            leftIcon={<Plus className="size-4" aria-hidden="true" />}
+          >
+            Add exercise
+          </Button>
+        </div>
+        {addPicker}
+      </div>
+    );
   }
 
   // Session complete screen
@@ -2588,6 +2696,17 @@ export default function WorkoutSession({
             <ExerciseRowSummary exercise={upNext} thumbSize="sm" />
           </Card>
         )}
+
+        {/* Another exercise, for today only (Mob1 call 1): it joins the
+            end of the session and leaves the plan as it is. */}
+        <Button
+          variant="secondary"
+          fullWidth
+          leftIcon={<Plus className="size-4" aria-hidden="true" />}
+          onClick={openAddPicker}
+        >
+          Add exercise
+        </Button>
       </div>
 
       {/* Docked above the bar, not in the scroll: it takes its room from
@@ -2763,7 +2882,9 @@ export default function WorkoutSession({
           nothingDone={!(setLogs[menuFor] ?? []).some((set) => set.completed)}
           swappedFor={swapAt(menuFor) ? plannedAt(menuFor)?.name : undefined}
           skipped={skippedRows[menuFor] !== undefined}
-          onSwap={() => setSwapFor(menuFor)}
+          // An exercise added today stands in for nothing: there is no
+          // planned lift to swap it for.
+          onSwap={plannedAt(menuFor) ? () => setSwapFor(menuFor) : undefined}
           onSwapBack={() => {
             const planned = plannedAt(menuFor);
             if (planned) swapForToday(menuFor, planned.exerciseId);
@@ -2787,6 +2908,7 @@ export default function WorkoutSession({
           />
         </Suspense>
       )}
+      {addPicker}
 
       <PlateCalculatorSheet
         open={showPlates}
