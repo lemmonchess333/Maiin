@@ -2271,9 +2271,9 @@ function swingHandle(
  * measured two-bone arm solves the elbow at each position. */
 const SWIM_HAND_PATH: readonly Pt[] = [
   [-58, 0], // hand finishes beside the hip
-  [-38, -24], // elbow exits first into recovery
-  [28, -30], // recover outside the head, moving forward
-  [66, -2], // fingertips enter beyond the head
+  [-40, -30], // elbow exits first into a high recovery
+  [28, -42], // hand travels outside the head, not into the shoulder
+  [66, -8], // fingertips enter in line with the shoulder
   [51, 8], // catch beyond the head, elbow high
   [-15, 26], // pull close underneath the torso
 ];
@@ -2331,28 +2331,33 @@ function swimPose(phi: number): Partial<Record<GroupName, Op[]>> {
   };
   const left = arm(phi, "L");
   const right = arm(phi + 0.5, "R");
-  // Two small alternating kicks per full stroke; the hips and trunk stay
-  // level, so this does not read as a side-to-side swimming snake.
+  // Two small alternating kicks per full stroke. From overhead, most of a
+  // flutter kick is vertical, so the legs stay close and the rising shank
+  // foreshortens slightly instead of sweeping sideways like a scissor kick.
   const kick = 2.5 * Math.sin(4 * Math.PI * phi);
+  const leftShankLength = 0.95 + 0.05 * Math.sin(4 * Math.PI * phi);
+  const rightShankLength = 0.95 - 0.05 * Math.sin(4 * Math.PI * phi);
   const thighL: Op[] = [
     { kind: "rotate", deg: kick, pivot: [34, 100] },
     ...body,
-    { kind: "translate", dx: 0, dy: 8 },
+    { kind: "translate", dx: 0, dy: 5 },
   ];
   const thighR: Op[] = [
     { kind: "rotate", deg: -kick, pivot: [66, 100] },
     ...body,
-    { kind: "translate", dx: 0, dy: -8 },
+    { kind: "translate", dx: 0, dy: -5 },
   ];
   // The posterior atlas's split calf facets are wide in an overhead pose;
   // narrow them around each knee so the flutter reads as two shins.
   const shankL: Op[] = [
     { kind: "scaleAxis", k: 0.72, deg: 90, pivot: [31, 160] },
+    { kind: "scaleAxis", k: leftShankLength, deg: 0, pivot: [31, 160] },
     { kind: "rotate", deg: -kick * 0.6, pivot: [30, 160] },
     ...thighL,
   ];
   const shankR: Op[] = [
     { kind: "scaleAxis", k: 0.72, deg: 90, pivot: [69, 160] },
+    { kind: "scaleAxis", k: rightShankLength, deg: 0, pivot: [69, 160] },
     { kind: "rotate", deg: kick * 0.6, pivot: [70, 160] },
     ...thighR,
   ];

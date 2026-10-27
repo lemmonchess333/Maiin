@@ -4431,6 +4431,36 @@ describe("renderBodyDemo", () => {
         L: [17, 78] as const,
         R: [83, 78] as const,
       };
+      const recoveryElbowAngle = (side: "L" | "R", t: number) => {
+        const pose = at(id, t);
+        const s = pt(shoulders[side], pose.torso);
+        const elbow = pt(elbows[side], pose[`foreArm${side}`]);
+        const h = pt(hands[side], pose[`hand${side}`]);
+        const upper = [s[0] - elbow[0], s[1] - elbow[1]];
+        const fore = [h[0] - elbow[0], h[1] - elbow[1]];
+        return (
+          (Math.acos(
+            (upper[0] * fore[0] + upper[1] * fore[1]) /
+              (Math.hypot(...upper) * Math.hypot(...fore))
+          ) *
+            180) /
+          Math.PI
+        );
+      };
+      expect(recoveryElbowAngle("L", 0.25)).toBeGreaterThan(70);
+      expect(recoveryElbowAngle("R", 0.75)).toBeGreaterThan(70);
+
+      const shankLength = (side: "L" | "R", t: number) => {
+        const shank = at(id, t)[`shank${side}`];
+        const x = side === "L" ? 31 : 69;
+        const knee = pt([x, 160], shank);
+        const toe = pt([x, 220], shank);
+        return Math.hypot(toe[0] - knee[0], toe[1] - knee[1]);
+      };
+      // A vertical flutter reads from above as alternating foreshortening,
+      // with the legs close together rather than sweeping like scissors.
+      expect(shankLength("L", 0.125) - shankLength("L", 0.375)).toBeGreaterThan(5);
+      expect(shankLength("R", 0.375) - shankLength("R", 0.125)).toBeGreaterThan(5);
       for (let i = 0; i < 120; i++) {
         const a = at(id, i / 120);
         const b = at(id, (i + 1) / 120);
