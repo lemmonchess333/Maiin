@@ -172,6 +172,38 @@ describe("Login — agreeing to the Terms", () => {
   });
 });
 
+/* A1a: Apple first, then Google, then the email form under an "or", so
+   the one-tap ways in are on screen before the keyboard comes up. */
+describe("Login — Apple and Google come before the email form (A1)", () => {
+  function expectOrder() {
+    const order = [
+      screen.getByRole("button", { name: /Continue with Apple/ }),
+      screen.getByRole("button", { name: /Continue with Google/ }),
+      screen.getByText("or"),
+      screen.getByLabelText("Email address"),
+      document.querySelector('button[type="submit"]')!,
+    ];
+    for (let i = 1; i < order.length; i++) {
+      expect(
+        order[i - 1].compareDocumentPosition(order[i]) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    }
+  }
+
+  it("on Sign up", () => {
+    show();
+    fireEvent.click(screen.getByRole("button", { name: "Get started" }));
+    expectOrder();
+  });
+
+  it("on Sign in", () => {
+    h.signedInBefore = true;
+    show();
+    expectOrder();
+  });
+});
+
 describe("Login — closing the Google or Apple sheet", () => {
   /* Only the web popup's code was silenced, so a cancel on the phone showed
      Google's or Apple's own sentence as an error. */
