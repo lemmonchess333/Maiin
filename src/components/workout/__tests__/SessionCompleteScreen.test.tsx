@@ -380,7 +380,7 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
     expect(screen.queryByText("kg lifted")).toBeNull();
   });
 
-  it("puts a new best in gold, with a muscle figure while its drawing is withheld", () => {
+  it("puts a new best in gold, with its reviewed drawing", () => {
     renderWith(
       { prResults: new Map([["Bench Press:8rm", benchBest]]) },
       [[{ reps: 8, weight: 80, completed: true, type: "working" }]],
@@ -393,7 +393,7 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
       "text-achievement-strong"
     );
     expect(card).toHaveTextContent("Was 77.5 kg × 8");
-    expect(card.querySelector('[data-thumb="muscles"]')).not.toBeNull();
+    expect(card.querySelector('[data-thumb="drawing"]')).not.toBeNull();
   });
 
   it("shows a new best against the best from before the session", () => {
@@ -464,13 +464,12 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
       "Chest3 sets",
       "Triceps1 set",
     ]);
-    /* Bench Press art is withheld, so the first completed lift with a
-       released drawing is Dips. */
+    /* Bench Press now has a released drawing, and is the first working lift. */
     expect(
       heading
         .closest("div")!
         .parentElement!.querySelector("[data-lead-drawing]")
-    ).toHaveAttribute("data-lead-drawing", "Dips");
+    ).toHaveAttribute("data-lead-drawing", "Bench Press");
     expect(
       screen.queryByRole("img", { name: "Muscles trained this session" })
     ).toBeNull();

@@ -12,6 +12,32 @@ export const ART_REVIEW_CHECKS = [
   "mobileDark",
 ] as const;
 
+/** QA-reviewed native-pixel limits for specific fixed scene landmarks.
+ * Every other anchor stays at the default one-pixel limit. A release record
+ * must also name and explain each exception before this limit applies. */
+const FIXED_ANCHOR_EXCEPTION_LIMITS: Readonly<
+  Record<string, Readonly<Record<string, number>>>
+> = {
+  "inverted-row": {
+    "frontRackFootBottomRight.y": 2,
+    "rearRackFootBottomLeft.y": 2,
+  },
+};
+
+type DimensionException = { unit: "percent" | "pixels"; limit: number };
+/** Only these measured dimensions may use a wider bound, and only when the
+ * release record explicitly names the dimension and its evidence. */
+const INVARIANT_DIMENSION_EXCEPTION_LIMITS: Readonly<
+  Record<string, Readonly<Record<string, DimensionException>>>
+> = {
+  "clean-and-press": {
+    leftPlateHeight: { unit: "percent", limit: 2 },
+    rightPlateHeight: { unit: "percent", limit: 2 },
+    nearSoleWidth: { unit: "pixels", limit: 2 },
+    farSoleWidth: { unit: "pixels", limit: 2 },
+  },
+};
+
 export interface ReviewedAsset {
   path: string;
   sha256: string;
@@ -127,6 +153,55 @@ export function validateArtworkReview(
       errors.push(`Frame ${i + 1}: asset changed since review.`);
   });
   const frames = review.frames.map(object);
+  const anchorExceptions = new Map<string, number>();
+  if (review.fixedAnchorExceptions !== undefined) {
+    if (!Array.isArray(review.fixedAnchorExceptions))
+      errors.push("Fixed anchor exceptions must be a list.");
+    else
+      for (const value of review.fixedAnchorExceptions) {
+        const exception = object(value);
+        const key = `${exception.anchor}.${exception.axis}`;
+        const permitted = FIXED_ANCHOR_EXCEPTION_LIMITS[expected.exerciseId]?.[key];
+        if (
+          !text(exception.anchor) ||
+          !["x", "y"].includes(String(exception.axis)) ||
+          !number(exception.maxDriftPx) ||
+          exception.maxDriftPx !== permitted ||
+          !text(exception.evidence) ||
+          !object(frames[0].anchors)[String(exception.anchor)] ||
+          anchorExceptions.has(key)
+        ) {
+          errors.push(`Unapproved fixed anchor exception: ${key}.`);
+          continue;
+        }
+        anchorExceptions.set(key, exception.maxDriftPx);
+      }
+  }
+  const dimensionExceptions = new Map<string, DimensionException>();
+  if (review.invariantDimensionExceptions !== undefined) {
+    if (!Array.isArray(review.invariantDimensionExceptions))
+      errors.push("Invariant dimension exceptions must be a list.");
+    else
+      for (const value of review.invariantDimensionExceptions) {
+        const exception = object(value);
+        const name = String(exception.dimension);
+        const permitted =
+          INVARIANT_DIMENSION_EXCEPTION_LIMITS[expected.exerciseId]?.[name];
+        if (
+          !text(exception.dimension) ||
+          !permitted ||
+          exception.unit !== permitted.unit ||
+          exception.limit !== permitted.limit ||
+          !text(exception.evidence) ||
+          !frames.some((frame) => number(object(frame.invariantDimensions)[name])) ||
+          dimensionExceptions.has(name)
+        ) {
+          errors.push(`Unapproved invariant dimension exception: ${name}.`);
+          continue;
+        }
+        dimensionExceptions.set(name, permitted);
+      }
+  }
   const measure = (
     frameIndex: number,
     referenceIndex: number,
@@ -149,7 +224,8 @@ export function validateArtworkReview(
           !number(origin) ||
           coordinate < 0 ||
           coordinate >= bound ||
-          Math.abs(coordinate - origin) > 1
+          Math.abs(coordinate - origin) >
+            (anchorExceptions.get(`${key}.${axis}`) ?? 1)
         )
           errors.push(`Frame ${i + 1}: fixed anchor ${key}.${axis} drift.`);
       }
@@ -157,13 +233,17 @@ export function validateArtworkReview(
     for (const key of dimensionNames) {
       const base = object(reference.invariantDimensions)[key];
       const size = object(frame.invariantDimensions)[key];
-      if (
-        !number(size) ||
-        !number(base) ||
-        base <= 0 ||
-        size <= 0 ||
-        Math.abs(size / base - 1) > 0.01
-      )
+      const exception = dimensionExceptions.get(key);
+      const withinLimit =
+        number(size) &&
+        number(base) &&
+        base > 0 &&
+        size > 0 &&
+        (exception?.unit === "pixels"
+          ? Math.abs(size - base) <= exception.limit
+          : Math.abs(size / base - 1) <=
+            (exception?.unit === "percent" ? exception.limit / 100 : 0.01));
+      if (!withinLimit)
         errors.push(`Frame ${i + 1}: invariant ${key} drift.`);
     }
   };

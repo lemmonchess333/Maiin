@@ -263,19 +263,19 @@ export const RELEASED_FORM_PLACARDS = {
     ["Upper back"],
     ["Biceps"],
     [
-      [0, "Reach", "Reach forward; keep both feet braced."],
-      [0, "Set", "Keep knees soft and wrists straight."],
-      [1, "Row", "Draw elbows back; bring chest upright."],
+      [0, "Reach", "Extend arms; keep both feet braced."],
+      [0.5, "Pull", "Pull smoothly with wrists straight."],
+      [1, "Row", "Draw elbows back; keep chest tall."],
       [1, "Squeeze", "Bring the handle toward your lower ribs."],
-      [0, "Return", "Extend arms; hinge forward under control."],
-      [0, "Reset", "Keep feet braced; avoid bouncing."],
+      [0.5, "Return", "Extend arms under control; avoid rocking."],
+      [0, "Reset", "Keep feet braced; keep back neutral."],
     ],
     [
-      "Controlled torso-hinge variation: start light and move smoothly.",
-      "Sit on the fixed bench; brace both feet with knees slightly bent.",
+      "Sit upright on the fixed bench with both feet braced and knees softly bent.",
+      "Pull the handle to your lower ribs while keeping your chest tall.",
     ],
     {
-      tip: "Use a small, comfortable torso hinge. Avoid bouncing or leaning far back to move the load.",
+      tip: "Keep your torso mostly still; move the handle with your back and arms.",
       commonMistakes: [
         "Jerking the handle or using excessive momentum.",
         "Straightening the knees to drive the movement.",
@@ -1426,8 +1426,8 @@ export const RELEASED_FORM_PLACARDS = {
     ["Chest", "Quadriceps"],
     ["Abs", "Front deltoids"],
     [
-      [0, "Squat", "Squat down; plant palms ahead of feet."],
-      [0.25, "Plank", "Jump feet back into a straight plank."],
+      [0, "Squat", "Land softly; squat and reach toward floor."],
+      [0.25, "Plank", "Plant palms; jump feet into straight plank."],
       [0.5, "Lower", "Bend elbows; lower chest to the floor."],
       [0.25, "Press", "Press back up without sagging your hips."],
       [0, "Tuck", "Jump feet toward hands; prepare to rise."],
@@ -1571,9 +1571,9 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Set up", "Feet hip-width; grip bar with flat back."],
       [0.25, "Pull", "Push through floor; keep the bar close."],
       [0.45, "Catch", "Extend hips; catch bar on front delts."],
-      [0.6, "Dip", "Dip shallowly with an upright, braced torso."],
-      [1, "Drive", "Drive overhead; finish with straight arms."],
-      [0.45, "Lower", "Lower to shoulders, then toward the floor."],
+      [1, "Press to lockout", "Brace; press overhead without a knee dip."],
+      [0.45, "Lower to rack", "Lower onto front shoulders; stay upright."],
+      [0.25, "Lower to thigh", "Lower to high thigh; hinge to floor."],
     ]
   ),
   "diamond-push-ups": placard(
@@ -2079,15 +2079,15 @@ export const RELEASED_FORM_PLACARDS = {
     ["Triceps", "Front Delts"],
     [
       [0, "Top", "Hold weights apart above your chest."],
-      [0.25, "Lower", "Bend elbows while keeping wrists stacked."],
+      [0.5, "Lower", "Bend elbows while keeping wrists stacked."],
       [
-        0.75,
+        0.5,
         "Approach chest",
         "Lower with control, keeping shoulders supported.",
       ],
       [1, "Bottom", "Keep forearms upright beside your chest."],
-      [0.65, "Press", "Press upward without bending your wrists."],
-      [0.25, "Late press", "Continue upward, keeping the weights apart."],
+      [0.5, "Press", "Press upward without bending your wrists."],
+      [0, "Finish", "Keep the weights apart above your chest."],
     ]
   ),
   "bodyweight-squat": placard(
@@ -2340,7 +2340,7 @@ export const RELEASED_FORM_PLACARDS = {
         "Turn to the side to inhale; exhale underwater and keep the kick small.",
       ]
     ),
-    playback: "sequence" as const,
+    playback: "cycle" as const,
   },
   stairmaster: placard(
     "stairmaster",

@@ -1,0 +1,194 @@
+{
+  "exerciseId": "swimming",
+  "version": "anatomy-v4-2026-10-27-overhead-front-crawl-v1",
+  "width": 1254,
+  "height": 1254,
+  "decision": "approved",
+  "reviewer": "Codex native and 393×852 player review",
+  "reviewedAt": "2026-10-27T18:04:23.004Z",
+  "reference": {
+    "path": "form-frames/swimming/2026-10-27/3.webp",
+    "sha256": "824a76286341ef6f4fc59a1940be40ce6fd811454bc407ca85b53621eadd85b4"
+  },
+  "cueSha256": "ccd8c9753a7f86f4cf42712e0127c26f76009e5fbd6e3c5635ee79cd43bef44f",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Six native 1254×1254 frames keep one faceless anatomical swimmer with exactly two continuous arms and legs, the same white-grey line style, and violet back/shoulder activation."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "One overhead poolside view throughout. Three coping-tile seams remain at x314, x626 and x938–939; top edge varies only y142–143 and lower seam y195–196 in all six frames."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Arms alternate a long forward reach and bent-elbow pull without extra or detached limbs. Frame 3 shows a distinct side head profile and shoulder roll for the breath; hips and legs retain a long body line."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "No exercise equipment is involved. The fixed three-tile pool coping strip is the spatial reference; adjacent tile spans are 312 px and 312–313 px across all frames."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "This is a water-borne front crawl, with no planted floor contacts to claim. Hands alternate entry/catch and underwater pull while feet flutter lightly; fixed tile seam anchors measure the stationary pool scene rather than pretending the moving swimmer is fixed."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Reach, pull, side breath, opposite-arm switch, drive and entry progress around an alternating crawl stroke. Body stays roughly horizontal with small kick and no standing or floating hardware."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Lats and shoulders remain the principal violet regions with supporting trunk/arm tones, consistently attached to the moving anatomy."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Catch, pull, breathe, switch, drive and enter cues correspond to six distinct stroke poses. The corrected third frame visibly rolls head and shoulder for a lateral breath."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six native and 393×852 player frames were stepped in order and frame 6→1 inspected. Different entry/reach poses continue the alternating crawl without an abrupt body-scale or camera jump."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual light ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual dark ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/swimming/2026-10-27/1.webp",
+      "sha256": "ab319925ffbeea603c6e62c386bbaedaccd82224507548ed7855adb842ccbf4a",
+      "anchors": {
+        "leftTileSeam": {
+          "x": 314,
+          "y": 170
+        },
+        "middleTileSeam": {
+          "x": 626,
+          "y": 170
+        }
+      },
+      "invariantDimensions": {
+        "leftTileSpan": 312,
+        "rightTileSpan": 313
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/swimming/1.png",
+        "sha256": "ac840110f689534ed5b66ec586efc2188d05da9cff34b298046df496ce4dea84"
+      }
+    },
+    {
+      "path": "form-frames/swimming/2026-10-27/2.webp",
+      "sha256": "05966b740ca71da12d7b8ab929b697cb641cc4a4001b370431559a05c1daf593",
+      "anchors": {
+        "leftTileSeam": {
+          "x": 314,
+          "y": 170
+        },
+        "middleTileSeam": {
+          "x": 626,
+          "y": 170
+        }
+      },
+      "invariantDimensions": {
+        "leftTileSpan": 312,
+        "rightTileSpan": 312
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/swimming/2.png",
+        "sha256": "c8ca96c22b6102556f34a0c7890bbf1386b8d9693424bcc9c260b933a8bef8b4"
+      }
+    },
+    {
+      "path": "form-frames/swimming/2026-10-27/3.webp",
+      "sha256": "824a76286341ef6f4fc59a1940be40ce6fd811454bc407ca85b53621eadd85b4",
+      "anchors": {
+        "leftTileSeam": {
+          "x": 314,
+          "y": 170
+        },
+        "middleTileSeam": {
+          "x": 626,
+          "y": 170
+        }
+      },
+      "invariantDimensions": {
+        "leftTileSpan": 312,
+        "rightTileSpan": 312
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/swimming/3.png",
+        "sha256": "8eaf4ceeeb5efe558e3751982416395760de66eedb1fe8fb5ed32b0f25b724e1"
+      }
+    },
+    {
+      "path": "form-frames/swimming/2026-10-27/4.webp",
+      "sha256": "31dfdd7023157320fe7b77d73b82edf7eae0d91a55b57022149a76b78d568dc4",
+      "anchors": {
+        "leftTileSeam": {
+          "x": 314,
+          "y": 170
+        },
+        "middleTileSeam": {
+          "x": 626,
+          "y": 170
+        }
+      },
+      "invariantDimensions": {
+        "leftTileSpan": 312,
+        "rightTileSpan": 313
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/swimming/4.png",
+        "sha256": "1f87c8212181d493621f414d61aa5ffa50792e39c1c96c81656f61e7bfd2c370"
+      }
+    },
+    {
+      "path": "form-frames/swimming/2026-10-27/5.webp",
+      "sha256": "33a409a5aed41fb12857da5b22b41951d30e066edb6d2fc3b3167b75217bb3ac",
+      "anchors": {
+        "leftTileSeam": {
+          "x": 314,
+          "y": 170
+        },
+        "middleTileSeam": {
+          "x": 626,
+          "y": 170
+        }
+      },
+      "invariantDimensions": {
+        "leftTileSpan": 312,
+        "rightTileSpan": 312
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/swimming/5.png",
+        "sha256": "70bc0b1ff9f6b268fab599fba142a632d9dc0a68ef2a8425bc8758f6ae7ce918"
+      }
+    },
+    {
+      "path": "form-frames/swimming/2026-10-27/6.webp",
+      "sha256": "21b3226c7286037abfc506d338f3e8d377936050392bb2d217b6ee7015757992",
+      "anchors": {
+        "leftTileSeam": {
+          "x": 314,
+          "y": 170
+        },
+        "middleTileSeam": {
+          "x": 626,
+          "y": 170
+        }
+      },
+      "invariantDimensions": {
+        "leftTileSpan": 312,
+        "rightTileSpan": 312
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/swimming/6.png",
+        "sha256": "7293e196bc3ce0cd30c0f9a9fa7113980035b04addbbd0233ac69df08eaeda86"
+      }
+    }
+  ]
+}

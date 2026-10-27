@@ -5,10 +5,9 @@ import { describe, expect, it } from "vitest";
 import { FORM_ART_FRAMING } from "../../src/lib/formArtFraming";
 import { isFormArtQuarantined } from "../../src/lib/formArtQuarantine";
 import { APPROVED_FORM_ART_RELEASES } from "../../src/lib/formArtReleases.data";
+import { formFramePaths } from "../../src/lib/formArtwork";
 
-const framesRoot = fileURLToPath(
-  new URL("../../public/form-frames/", import.meta.url)
-);
+const publicRoot = fileURLToPath(new URL("../../public/", import.meta.url));
 
 describe("fixed six-frame cameras", () => {
   it("only enlarges released artwork that is actually shown", () => {
@@ -21,9 +20,11 @@ describe("fixed six-frame cameras", () => {
 
   it("keeps visible anatomy and equipment inside the stage in every frame", async () => {
     for (const [id, camera] of Object.entries(FORM_ART_FRAMING)) {
+      const release = APPROVED_FORM_ART_RELEASES[id];
+      const frames = release.frames ?? formFramePaths(id);
       let sourceSize: string | undefined;
       for (let frame = 1; frame <= 6; frame += 1) {
-        const file = path.join(framesRoot, id, `${frame}.webp`);
+        const file = path.join(publicRoot, frames[frame - 1]);
         const { data, info } = await sharp(file)
           .resize({ width: 640, height: 640, fit: "inside" })
           .ensureAlpha()

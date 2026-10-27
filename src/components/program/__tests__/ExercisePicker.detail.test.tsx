@@ -76,8 +76,22 @@ describe("ExercisePicker row: see it vs add it", () => {
     mount();
     const reviewed = screen.getByRole("button", { name: "Dips details" });
     expect(reviewed.querySelector('[data-thumb="drawing"]')).not.toBeNull();
-    const withheld = screen.getByRole("button", {
+    const redrawn = screen.getByRole("button", {
       name: "Bench Press details",
+    });
+    expect(redrawn.querySelector('[data-thumb="drawing"]')).not.toBeNull();
+    fireEvent.change(screen.getByRole("textbox", { name: "Search exercises" }), {
+      target: { value: "Smith Machine Bench Press" },
+    });
+    const smith = screen.getByRole("button", {
+      name: "Smith Machine Bench Press details",
+    });
+    expect(smith.querySelector('[data-thumb="drawing"]')).not.toBeNull();
+    fireEvent.change(screen.getByRole("textbox", { name: "Search exercises" }), {
+      target: { value: "Front Squat" },
+    });
+    const withheld = screen.getByRole("button", {
+      name: "Front Squat details",
     });
     expect(withheld.querySelector('[data-thumb="muscles"]')).not.toBeNull();
   });

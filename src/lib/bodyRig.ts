@@ -2142,8 +2142,16 @@ const BIKE_BARS: Pt = [104, 104];
 const SPIN_HIP: Pt = [34, 104];
 const SPIN_BARS: Pt = [106, 112];
 const ASSAULT_HIP: Pt = [36, 106];
-const ASSAULT_HANDLE_PIVOT: Pt = [100, 178];
+const ASSAULT_NEAR_PIVOT: Pt = [97, 178];
+const ASSAULT_FAR_PIVOT: Pt = [91, 178];
 const ASSAULT_FAN_CENTER: Pt = [124, 138];
+/** Opposing grips stay within the measured reach of both drawn arms. */
+function assaultGrips(phi: number): { near: Pt; far: Pt } {
+  return {
+    near: swingHandle(phi, ASSAULT_NEAR_PIVOT, 84, 0.15, 0),
+    far: swingHandle(phi, ASSAULT_FAR_PIVOT, 84, 0.15, Math.PI),
+  };
+}
 const ELLIPTICAL_HIP: Pt = [42, 92];
 // The lowest level shoe must clear the machine base, with the knee still soft.
 const ELLIPTICAL_CRANK: Pt = [60, 176];
@@ -2237,7 +2245,8 @@ function bikeScene(
   bars: Pt,
   crank: Pt,
   r: number,
-  wheel = true
+  wheel = true,
+  fixedGrips = true
 ): string {
   const pedal = (phase: number, side: "near" | "far") => {
     const [x, y] = pedalAt(phase, crank, r, r);
@@ -2254,7 +2263,9 @@ function bikeScene(
     `<line x1="${crank[0]}" y1="${crank[1]}" x2="${hip[0] + 2}" y2="${hip[1] + 8}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
     `<rect x="${hip[0] - 12}" y="${hip[1] + 6}" width="26" height="6" rx="3" fill="${GEAR}"/>` +
     `<line x1="${crank[0]}" y1="${crank[1]}" x2="${bars[0] - 2}" y2="${bars[1] + 4}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
-    `<line x1="${bars[0] - 12}" y1="${bars[1] + 2}" x2="${bars[0] + 6}" y2="${bars[1] + 2}" stroke="${GEAR}" stroke-width="3.2" stroke-linecap="round"/>` +
+    (fixedGrips
+      ? `<line x1="${bars[0] - 12}" y1="${bars[1] + 2}" x2="${bars[0] + 6}" y2="${bars[1] + 2}" stroke="${GEAR}" stroke-width="3.2" stroke-linecap="round"/>`
+      : "") +
     `<line x1="${crank[0]}" y1="${crank[1] + r + 5}" x2="${crank[0]}" y2="${BIKE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
     pedal(phi + 0.5, "far") +
     pedal(phi, "near") +
@@ -3298,43 +3309,63 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         e,
         18
       );
-      // Front-rack elbows point forward near shoulder height while the
-      // wrists fold back to the bar on the delts. In profile that folds
-      // the far forearm toward the camera; shorten only the forearm's
-      // longitudinal axis to show that depth without moving its grip.
+      // Keep the elbow ahead of the torso, with the forearm folding
+      // back up to the bar on the delts. Both segments are foreshortened
+      // in profile: a full-length upper arm here projects as a straight
+      // front raise, hiding the elbow bend behind the near forearm.
       const shoulder = SIDE_ANCHORS.shoulder;
       const shoulderWorld = applyToPoint(shoulder, torsoOps);
       const elbowWorld: Pt = [
-        shoulderWorld[0] + SIDE_UPPER_LEN * Math.cos((8 * Math.PI) / 180),
-        shoulderWorld[1] + SIDE_UPPER_LEN * Math.sin((8 * Math.PI) / 180),
+        shoulderWorld[0] + 20,
+        shoulderWorld[1] + 14,
       ];
       const elbow = applyToPoint(elbowWorld, invertOps(torsoOps));
-      const frontArm = aimArm(
-        { S: shoulder, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
-        elbow,
-        FRONT_RACK,
-        0
-      );
-      const forearmShown = Math.hypot(
-        FRONT_RACK[0] - elbow[0],
-        FRONT_RACK[1] - elbow[1]
-      );
-      const foreAxis =
-        (-Math.atan2(
-          SIDE_ANCHORS.hand[0] - SIDE_ANCHORS.elbow[0],
-          SIDE_ANCHORS.hand[1] - SIDE_ANCHORS.elbow[1]
-        ) *
-          180) /
-        Math.PI;
-      const upperArm = [...frontArm.upper, ...torsoOps];
-      const foreArm = [
+      const upperDir: Pt = [elbow[0] - shoulder[0], elbow[1] - shoulder[1]];
+      const foreDir: Pt = [FRONT_RACK[0] - elbow[0], FRONT_RACK[1] - elbow[1]];
+      const axisDeg = ([dx, dy]: Pt) => (-Math.atan2(dx, dy) * 180) / Math.PI;
+      const upperArm: Op[] = [
         {
-          kind: "scaleAxis" as const,
-          k: forearmShown / SIDE_FORE_LEN,
-          deg: foreAxis,
+          kind: "rotate",
+          deg: angleBetween(
+            [
+              SIDE_ANCHORS.elbow[0] - shoulder[0],
+              SIDE_ANCHORS.elbow[1] - shoulder[1],
+            ],
+            upperDir
+          ),
+          pivot: shoulder,
+        },
+        {
+          kind: "scaleAxis",
+          k: Math.hypot(...upperDir) / SIDE_UPPER_LEN,
+          deg: axisDeg(upperDir),
+          pivot: shoulder,
+        },
+        ...torsoOps,
+      ];
+      const foreArm: Op[] = [
+        {
+          kind: "rotate",
+          deg: angleBetween(
+            [
+              SIDE_ANCHORS.hand[0] - SIDE_ANCHORS.elbow[0],
+              SIDE_ANCHORS.hand[1] - SIDE_ANCHORS.elbow[1],
+            ],
+            foreDir
+          ),
           pivot: SIDE_ANCHORS.elbow,
         },
-        ...frontArm.fore,
+        {
+          kind: "scaleAxis",
+          k: Math.hypot(...foreDir) / SIDE_FORE_LEN,
+          deg: axisDeg(foreDir),
+          pivot: SIDE_ANCHORS.elbow,
+        },
+        {
+          kind: "translate",
+          dx: elbow[0] - SIDE_ANCHORS.elbow[0],
+          dy: elbow[1] - SIDE_ANCHORS.elbow[1],
+        },
         ...torsoOps,
       ];
       return {
@@ -3345,6 +3376,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         thighR: thighOps,
         shankL: legOps,
         shankR: legOps,
+        // The shins rotate about planted ankles; the shoes do not tilt
+        // with them. An explicit empty pose prevents foot→shank fallback.
+        footL: [],
+        footR: [],
         upperArmL: upperArm,
         foreArmL: foreArm,
         handL: foreArm,
@@ -9463,9 +9498,8 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   "assault-bike": {
     /* "Grip the moving handles, place feet on the pedals. Push and pull
      * with the arms while driving the pedals hard." The crank cycle
-     * with the handles on a lever that swings with the stroke: the near
-     * hand pushes forward as the near foot drives down (pinned: the
-     * handle travels, the hand stays on it). */
+     * drives separate opposing levers. Each hand stays on its own grip,
+     * and the handles travel with their matching pedal's horizontal phase. */
     view: "side",
     cycle: true,
     cycleTiming: "linear",
@@ -9481,25 +9515,34 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       "upper-back": "secondary",
       triceps: "secondary",
     },
-    pose: (e) =>
-      pedalChain(e, {
+    pose: (e) => {
+      const { near, far } = assaultGrips(e);
+      return pedalChain(e, {
         hip: ASSAULT_HIP,
         lean: 20,
         crank: CRANK,
         rx: CRANK_R,
         ry: CRANK_R,
-        hands: swingHandle(e, ASSAULT_HANDLE_PIVOT, 84, 0.28, 0),
-      }),
+        hands: near,
+        // The profile renderer shifts the far arm AFTER posing it.
+        farHands: [far[0] - FAR_ARM_SHIFT[0], far[1] - FAR_ARM_SHIFT[1]],
+      });
+    },
     scene: (e) => {
-      const h = swingHandle(e, ASSAULT_HANDLE_PIVOT, 84, 0.28, 0);
+      const { near, far } = assaultGrips(e);
+      const lever = (side: "near" | "far", pivot: Pt, grip: Pt) =>
+        `<line data-assault-handle="${side}" x1="${pivot[0]}" y1="${pivot[1]}" x2="${grip[0].toFixed(2)}" y2="${grip[1].toFixed(2)}" stroke="${side === "far" ? GEAR_FAR : GEAR_DARK}" stroke-width="${side === "far" ? 2.6 : 3.4}" stroke-linecap="round"/>` +
+        `<rect x="${(grip[0] - 2.5).toFixed(2)}" y="${(grip[1] - 8).toFixed(2)}" width="5" height="16" rx="2.5" fill="${side === "far" ? GEAR_FAR : GEAR}"/>`;
       return (
-        bikeScene(e, ASSAULT_HIP, [h[0] - 40, h[1] + 30], CRANK, CRANK_R, false) +
-        // A fixed strut supports the spinning fan; the handle lever swings
-        // separately from its low pivot to keep the athlete's grip connected.
-        `<line x1="${ASSAULT_HANDLE_PIVOT[0]}" y1="${ASSAULT_HANDLE_PIVOT[1]}" x2="${ASSAULT_FAN_CENTER[0]}" y2="${ASSAULT_FAN_CENTER[1]}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+        bikeScene(e, ASSAULT_HIP, ASSAULT_FAN_CENTER, CRANK, CRANK_R, false, false) +
+        `<rect x="18" y="${BIKE_FLOOR - 1}" width="120" height="4" rx="2" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.6"/>` +
+        `<line x1="${CRANK[0]}" y1="${CRANK[1]}" x2="${ASSAULT_NEAR_PIVOT[0]}" y2="${ASSAULT_NEAR_PIVOT[1]}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+        `<line data-assault-fixed="true" x1="${ASSAULT_NEAR_PIVOT[0]}" y1="${ASSAULT_NEAR_PIVOT[1]}" x2="${ASSAULT_FAN_CENTER[0]}" y2="${ASSAULT_FAN_CENTER[1]}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
         assaultFan(e) +
-        `<line x1="${ASSAULT_HANDLE_PIVOT[0]}" y1="${ASSAULT_HANDLE_PIVOT[1]}" x2="${h[0].toFixed(1)}" y2="${h[1].toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="3.4" stroke-linecap="round"/>` +
-        `<circle cx="${ASSAULT_HANDLE_PIVOT[0]}" cy="${ASSAULT_HANDLE_PIVOT[1]}" r="3.2" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>`
+        lever("far", ASSAULT_FAR_PIVOT, far) +
+        lever("near", ASSAULT_NEAR_PIVOT, near) +
+        `<circle cx="${ASSAULT_FAR_PIVOT[0]}" cy="${ASSAULT_FAR_PIVOT[1]}" r="2.7" fill="${GEAR_FAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        `<circle cx="${ASSAULT_NEAR_PIVOT[0]}" cy="${ASSAULT_NEAR_PIVOT[1]}" r="3.2" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>`
       );
     },
   },

@@ -2258,10 +2258,10 @@ export const EXERCISES: Exercise[] = [
     instructions: [
       "Set up over the bar like a deadlift, feet hip-width, back flat.",
       "Explosively extend hips and catch the bar on your front delts.",
-      "Dip into a quarter squat and drive the bar overhead to lockout.",
-      "Lower to shoulders, then to the floor with control before the next rep.",
+      "Brace and press the bar overhead to lockout with straight legs; do not dip your knees.",
+      "Lower to your front shoulders, then guide the bar to high thigh and floor with control before the next rep.",
     ],
-    tip: "This is a technical Olympic-style lift — go light until the catch is clean. A soft back or a bar that lands on your collarbones means the pull needs more work first.",
+    tip: "This is a technical lift — go light until the catch and strict press are controlled. A soft back or a bar that lands on your collarbones means the pull needs more work first.",
   },
   {
     id: "kettlebell-swing",

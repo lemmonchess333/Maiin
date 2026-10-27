@@ -27,12 +27,12 @@ describe("ExerciseThumb — each exercise's picture", () => {
     );
   });
 
-  it("shows muscles when an exercise's drawing is withheld", () => {
-    const { container } = render(<ExerciseThumb exerciseId="bench-press" />);
+  it("shows the released Close Grip Bench drawing", () => {
+    const { container } = render(<ExerciseThumb exerciseId="close-grip-bench" />);
     const tile = container.firstElementChild as HTMLElement;
-    expect(tile.dataset.thumb).toBe("muscles");
+    expect(tile.dataset.thumb).toBe("drawing");
     expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
-      /^data:image\/svg\+xml,/
+      /form-art\/close-grip-bench\.webp$/
     );
   });
 
