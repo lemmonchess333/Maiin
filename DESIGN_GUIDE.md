@@ -267,7 +267,7 @@ the count can only fall.
 | `text-display` | 48px  | Hero stat numbers (e.g. health score)                            |
 | `text-h1`      | ~31px | Page titles ("Program", "Social")                                |
 | `text-h2`      | 25px  | Large display headings                                           |
-| `text-h3`      | 20px  | Page section headings ("This week", "Running"), hero card titles |
+| `text-h3`      | 20px  | Page section headings ("This week", "Running")                   |
 | `text-body`    | 16px  | Standard text (accessibility baseline — don't go below for body) |
 | `text-small`   | 14px  | Secondary descriptions                                           |
 | `text-micro`   | 12px  | Labels and captions, sentence case (floor)                       |
@@ -323,6 +323,46 @@ The label's legacy `section` tier (uppercase, bold, tracked) survives only
 on two Food surfaces until the Food redesign, and a test keeps it there.
 Nothing sits at 11px. Use the primitives rather than hand-rolling the
 classes.
+
+**One style per role (owner, 26 October 2026; §14c).** Every kind of text
+has one treatment across the app, so a screen reads as one system:
+
+| Role                             | Treatment                                                                                                                   | Where it comes from                                 |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Page title                       | `text-h1` (31px) 800, tight tracking                                                                                        | `PageShell`, `SettingsSection`                      |
+| Hero title                       | `text-h2` (25px) 800 — the day's session on the Today and Up next cards, one a screen                                       | `LiftCTACard`, `RunCTACard`, `SessionCommandCard`   |
+| Section heading                  | 20px 700 on a page or tab; 16px 700 inside a sheet, card or form                                                            | `SectionHeading` (`page` / `compact`)               |
+| Card title                       | 16px 700 (`text-base font-bold`), one step under the section heading above the card                                         | the `compact` step, or the same classes on the card |
+| Eyebrow on a hero card           | 14px 700 in the sport's `-strong` colour ("Planned for today", "Up next")                                                   | the session cards                                   |
+| Tile label, stat name            | 12px 600 muted, sentence case ("Water", "Weight", "Steps", "Lifts")                                                         | `SectionLabel` (caption)                            |
+| Meta line                        | 14px muted, facts joined by " · ", each fact whole; 12px in dense lists; 500 and the foreground on a hero card's sport wash | `MetaLine`                                          |
+| Caption, helper                  | 12px muted (14px for a description under a title)                                                                           | `text-xs` / `text-sm text-muted-foreground`         |
+| Button label                     | 600, sized by the button                                                                                                    | `Button`                                            |
+| Chip, segment                    | 14px 600; a day's number in a strip of days 14px 600                                                                        | `SegmentedControl`, `WeekStrip`, `FoodWeekStrip`    |
+| Figure caption on the run screen | 12px, sentence case, no letter-spacing ("Time", "km", "/km · live", "Pause")                                                | `HUD_CAPTION`                                       |
+
+**Capitals.** Text is written in sentence case, units in their symbols'
+own case ("km", "kcal", never "KM"). Spaced capitals (`uppercase` with a
+wide `tracking-*`) appear in two places, and nowhere else:
+
+1. **Table column headers** — the workout's set table, "SET · PREVIOUS ·
+   KG · REPS". A column header labels a column of numbers rather than
+   reading as a sentence, and the lifting apps the set table follows
+   (Hevy, Strong) set theirs the same way.
+2. **The brand wordmark** — "TROPOS" beside the mark on the welcome and
+   sign-in screens. It is the name set as a logo, not a label.
+
+The run screen is not an exception: its captions, its controls' captions
+("Lock", "Pause", "Finish") and its splits are sentence case like the rest
+of the app. `designSystemInvariants.test.ts` holds the two places as an
+exact list; a third is a decision for this section first.
+
+**Line breaks.** Headings balance their lines and running text avoids a
+lone last word: one base rule in `index.css` (`text-wrap: balance` on
+h1–h4, `pretty` on p, li, dd, figcaption, legend). A number and its unit
+never part: in a string, `keepTogether()` (`utils/formatters.ts`); in
+JSX, a `whitespace-nowrap` span around the fact; a dot-joined line of
+facts is a `MetaLine`.
 
 ---
 
@@ -656,6 +696,9 @@ no new colours, no gradient, no emoji.
 - [ ] Sport-coding correct (purple = lift, coral = run) and semantic colours intact.
 - [ ] A figure that stands on its own uses Archivo (`font-figure`); a number inside a line of text uses the text face at the words' weight (`font-mono`); both `tabular-nums` (§4). Words use Plus Jakarta Sans.
 - [ ] Font weights follow the 600/700/800 tier rules (no 700+800 mixing).
+- [ ] Each piece of text takes its role's one treatment (§4 "One style per
+      role"): a card title is 16px bold, labels are sentence case, a unit
+      in a figure is `font-sans`, and a number never parts from its unit.
 - [ ] Used primitives (`Button`/`IconButton`/`Banner`/`BottomSheet`/`.ds-card`)
       instead of hand-rolled markup.
 - [ ] Interactive targets ≥ 44px; press feedback + `focus-visible` ring present.
@@ -756,11 +799,36 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
      `designSystemInvariants.test.ts` pins the tokens and both size
      boundaries; the share card (`ShareCardRenderer`) keeps its own
      rasterised look.
+- **One style per role (owner, 2026-10-26).** After the number tiers the
+  owner asked "what's next in the same vein?", and said "Go" to giving
+  every kind of text one style across the app. A dark-mode probe of the
+  main screens at 393 px measured each role's variants first. What was
+  wrong: a card's title came at four sizes (20px bold on Analytics' chart
+  cards, the same size as the "Lifting" heading above them; 18px on Home's
+  Food card; 16px on Home's Performance row; 14px semibold or bold on
+  race predictions, training load, elevation, PRs); the run screen and a
+  dozen other places still set spaced capitals that DS3 had retired; six
+  figures set their unit in Archivo; facts broke across lines ("15 / kg"
+  on Train at 320 px). Decided:
+  1. The role table in §4: one treatment per role. A card title is 16px
+     bold, one step under its section heading; the session card keeps the
+     one hero title.
+  2. Same role, same weight: the session card's dose is 500 on Home and
+     Train alike, a day's number in a strip of days is 600 on Home, Food
+     and Train.
+  3. Capitals in two places only, table column headers and the brand
+     wordmark (§4 Capitals); the run screen is sentence case, and the
+     hold-to-finish control reads "Finish" with the accessible name "Hold
+     to finish run".
+  4. A unit inside a figure is the text face (`font-sans`, 14px medium),
+     pinned per figure in `designSystemInvariants.test.ts`.
+  5. Facts stay whole and helpers keep no lone last word (§4 Line
+     breaks).
 - **Scale (1.25 modular):**
   - Display: 3rem/48px — hero stat numbers (health score)
   - H1: ~31px — page titles ("Program", "Social", "Analytics")
   - H2: 25px
-  - H3: 20px — page section headings (`SectionHeading`, "This week", "Running") and hero card titles
+  - H3: 20px — page section headings (`SectionHeading`, "This week", "Running"); a card's own title is 16px bold, under it
   - Body: 16px — standard text
   - Small: 14px — secondary descriptions
   - Micro: 12px — labels and captions, in sentence case

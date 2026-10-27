@@ -2125,6 +2125,8 @@ export default function WorkoutSession({
 
             return (
               <>
+                {/* Column headers keep capitals, one of the two places
+                    DESIGN_GUIDE §4 sets text in them. */}
                 <div
                   className={cn(
                     columns,

@@ -527,7 +527,7 @@ export default function Upgrade() {
           <div className="text-center space-y-2 pt-2">
             <h1
               id="pro-offer-heading"
-              className="text-h1 font-extrabold text-foreground leading-tight text-balance"
+              className="text-h1 font-extrabold tracking-tight text-foreground leading-tight text-balance"
             >
               {/* Straight after Start my plan the page answers what the
                   person just did before it offers anything: a runner who
@@ -624,7 +624,7 @@ export default function Upgrade() {
           <div className="space-y-1">
             <h1
               id="pro-plans-heading"
-              className="text-h1 font-extrabold text-foreground"
+              className="text-h1 font-extrabold leading-tight tracking-tight text-foreground"
             >
               Choose your plan
             </h1>

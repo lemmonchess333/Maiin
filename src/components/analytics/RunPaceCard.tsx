@@ -56,7 +56,9 @@ export default function RunPaceCard({
   return (
     <Card as="section" aria-label="Pace by run type" className="space-y-3">
       <div>
-        <h2 className="text-h3 font-bold text-foreground">Pace by run type</h2>
+        <h2 className="text-base font-bold text-foreground">
+          Pace by run type
+        </h2>
         <p className="text-sm text-muted-foreground">
           {subtitle} against {comparedWith}, weighted by distance
         </p>

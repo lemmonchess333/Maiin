@@ -179,8 +179,8 @@ export default function IntervalStepShell({
       <div className="p-4 pt-3 space-y-1">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           {flash ? (
-            <p className="text-caption font-bold tracking-wider text-success-strong min-w-0 truncate">
-              ✓ {flash.toUpperCase()} DONE
+            <p className="text-caption font-bold text-success-strong min-w-0 truncate">
+              ✓ {flash} done
             </p>
           ) : (
             <p
@@ -193,11 +193,22 @@ export default function IntervalStepShell({
           <p
             className={`${manualDistance && isDistanceBased ? "text-lg" : "text-2xl"} font-extrabold font-figure tabular-nums text-white shrink-0 leading-none`}
           >
-            {isDistanceBased
-              ? manualDistance
-                ? `${distanceIn(targetValue, unit).toFixed(2)} ${distanceUnitLabel(unit)} target`
-                : `${Math.max(0, Math.round(targetValue - state.phaseDistanceCovered))} m`
-              : countdownLabel(targetValue - state.phaseElapsed)}
+            {isDistanceBased ? (
+              <>
+                {manualDistance
+                  ? distanceIn(targetValue, unit).toFixed(2)
+                  : Math.max(
+                      0,
+                      Math.round(targetValue - state.phaseDistanceCovered)
+                    )}{" "}
+                {/* The unit is a word beside the figure: the text face. */}
+                <span className="font-sans text-sm font-medium">
+                  {manualDistance ? `${distanceUnitLabel(unit)} target` : "m"}
+                </span>
+              </>
+            ) : (
+              countdownLabel(targetValue - state.phaseElapsed)
+            )}
           </p>
         </div>
 

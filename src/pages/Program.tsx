@@ -1824,7 +1824,7 @@ function ProgramInner() {
                               setAddPickerDayIndex(idx);
                               setShowAddPicker(true);
                             }}
-                            className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-lifting-strong font-medium text-sm"
+                            className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-lifting-strong font-semibold text-sm"
                           >
                             <Plus className="size-4" /> Add exercise
                           </button>

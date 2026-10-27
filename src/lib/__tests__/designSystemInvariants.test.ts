@@ -319,6 +319,68 @@ describe("D15 · DS invariant — numbers take one of the two number tiers", () 
       byFile
     );
   });
+
+  /* A unit inside a stand-alone figure is a word, so it steps back to the
+     text face: `font-sans`, smaller, medium — the weight tile's "kg" and
+     the water tile's "ml" (§4 Units). Without it the unit inherits
+     Archivo from the figure ("0 m", "1.61 km" set whole in the figure
+     face). Read per element whose className carries `font-figure`: inside
+     it, a unit (a `*UnitLabel(…)` call, a `{unit}`/`{unitLabel}`/`{label}`
+     expression, or a unit typed as text) has to sit in an element that
+     carries `font-sans`. Screen-reader-only text is skipped. The share
+     card is rasterised and keeps its own register. */
+  it("a unit inside a font-figure figure is the text face (font-sans)", () => {
+    const UNIT_EXPR =
+      /\{\s*(?:unit|unitLabel|label)\s*\}|\b\w*[uU]nitLabel\(|`[^`]*\$\{[^}]*\}\s?(?:kg|lb|km|mi|kcal|ml|m|ft)\b/;
+    const UNIT_TEXT = /(?<![\w$])(?:kg|lbs?|km|mi|kcal|ml|bpm|ft)(?![\w])/;
+    const offenders: string[] = [];
+    for (const file of FILES) {
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
+      if (rel === "src/components/share/ShareCardRenderer.tsx") continue;
+      const src = readFileSync(file, "utf8");
+      const open = /<(\w+)\b((?:[^>{]|\{[^}]*\})*)>/g;
+      for (const m of src.matchAll(open)) {
+        if (!/className=(?:"[^"]*|\{[^}]*)\bfont-figure\b/.test(m[2])) continue;
+        if (m[2].trimEnd().endsWith("/")) continue;
+        // The element's body, to its own closing tag.
+        const tag = new RegExp(
+          `<(/?)${m[1]}\\b((?:[^>{]|\\{[^}]*\\})*?)(/?)>`,
+          "g"
+        );
+        tag.lastIndex = m.index + m[0].length;
+        let depth = 1;
+        let end = -1;
+        for (let t = tag.exec(src); t; t = tag.exec(src)) {
+          if (t[1]) depth--;
+          else if (!t[3]) depth++;
+          if (depth === 0) {
+            end = t.index;
+            break;
+          }
+        }
+        if (end < 0) continue;
+        let body = src.slice(m.index + m[0].length, end);
+        // Drop what is already the text face, comments and reader-only text.
+        body = body.replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
+        for (let i = 0; i < 4; i++)
+          body = body.replace(
+            /<(\w+)\b[^>]*(?:font-sans|sr-only)[^>]*>[\s\S]*?<\/\1>/g,
+            ""
+          );
+        const text = body.replace(/\{[^{}]*\}/g, "").replace(/<[^>]*>/g, "");
+        if (UNIT_EXPR.test(body) || UNIT_TEXT.test(text)) {
+          const line = src.slice(0, m.index).split("\n").length;
+          offenders.push(`${rel}:${line}`);
+        }
+      }
+    }
+    expect(
+      offenders,
+      `A unit set in the figure face. Wrap it in ` +
+        `<span className="font-sans text-sm font-medium">:\n  ` +
+        offenders.join("\n  ")
+    ).toEqual([]);
+  });
 });
 
 /**
@@ -534,34 +596,46 @@ describe("DS ratchets — surface-level drift", () => {
     expectRatchet("shadow-card trap", total, SHADOW_TRAP_BASELINE, byFile);
   });
 
-  /* Uppercase tracked labels hand-rolled beside `SectionLabel`. The
-     primitive consolidated ~60 variants; the survivors below re-drift on
-     every axis it fixed (size, tracking, weight, colour) and cannot take
-     the role tiers. Counted: any class string carrying `uppercase` and a
-     `tracking-*` utility. Grandfathered until touched (Diagnostics carries
-     8 of them, RunDetail 4, WorkoutDetail 3); `pages/dev/*` is outside
-     the scan as usual. */
-  const HAND_ROLLED_LABEL_BASELINE = 20;
+  /* Capitals with letter-spacing are one register with two places, both
+     named in DESIGN_GUIDE §4: a table's column headers (the workout's set
+     table, "SET  PREVIOUS  KG  REPS", as Hevy and Strong set theirs) and
+     the brand name set as a wordmark beside the mark on the welcome and
+     sign-in screens. Every other label, caption, eyebrow, pill and control
+     caption is written in sentence case, the run screen's included.
+     An exact list, not a ratchet: a new site is a design decision, and it
+     goes into the guide and this list together. Counted: any string
+     literal carrying `uppercase` and a wide `tracking-*` utility (so a
+     class constant outside `className=` is seen too), and any inline
+     `textTransform: "uppercase"`. The share card is rasterised and keeps
+     its own register; `pages/dev/*` is outside the scan as usual. */
   const LABEL_PRIMITIVE = "src/components/ui/SectionLabel.tsx";
-  it("hand-rolled uppercase tracked labels do not increase (use SectionLabel)", () => {
-    const { total, byFile } = scan((src, rel) => {
-      if (rel === LABEL_PRIMITIVE) return 0;
+  const CAPS_REGISTER: Record<string, number> = {
+    "src/components/WorkoutSession.tsx": 1,
+    "src/pages/Login.tsx": 2,
+  };
+  const CAPS_EXEMPT = new Set(["src/components/share/ShareCardRenderer.tsx"]);
+  it("capitals with letter-spacing appear only in the two documented places", () => {
+    const caps = (lit: string) =>
+      /\buppercase\b/.test(lit) &&
+      /\btracking-(?:wide|wider|widest|\[[^\]]+\])/.test(lit);
+    const { byFile } = scan((raw, rel) => {
+      if (CAPS_EXEMPT.has(rel)) return 0;
+      // Comments name the register too; only code counts.
+      const src = raw.replace(/\/\*[\s\S]*?\*\//g, (c) =>
+        c.replace(/[^\n]/g, " ")
+      );
       let n = 0;
-      for (const chunk of classNameChunks(src)) {
-        if (
-          /\buppercase\b/.test(chunk) &&
-          /\btracking-(?:wide|wider|widest|\[[^\]]+\])/.test(chunk)
-        )
-          n++;
+      for (const line of src.split("\n")) {
+        for (const m of line.matchAll(/(["'`])([^"'`]*)\1/g))
+          if (caps(m[2])) n++;
       }
+      // A className template that spans lines, which the line scan misses.
+      for (const m of src.matchAll(/className=\{`([^`]*\n[^`]*)`\}/g))
+        if (caps(m[1])) n++;
+      n += (src.match(/textTransform:\s*["']uppercase["']/g) ?? []).length;
       return n;
     });
-    expectRatchet(
-      "hand-rolled uppercase label",
-      total,
-      HAND_ROLLED_LABEL_BASELINE,
-      byFile
-    );
+    expect(Object.fromEntries(byFile)).toEqual(CAPS_REGISTER);
   });
 
   it("SectionLabel's caption tier is sentence case, and the section tier stays 12px (positive pin)", () => {
@@ -715,11 +789,21 @@ describe("DS ratchets — surface-level drift", () => {
 });
 
 describe("type tiers", () => {
+  /* Line breaks (§4): headings balance, running text avoids a lone last
+     word. One base rule rather than a class at each of several hundred
+     sites; a `text-wrap` utility on an element still overrides it. */
+  it("headings balance and running text wraps pretty (positive pin)", () => {
+    const css = readFileSync(resolve(srcRoot, "index.css"), "utf8");
+    expect(css).toMatch(
+      /@layer base\s*\{\s*h1,\s*h2,\s*h3,\s*h4\s*\{\s*text-wrap:\s*balance;\s*\}\s*p,\s*li,[^{]*\{\s*text-wrap:\s*pretty;/
+    );
+  });
+
   /* `text-caption` (11px) is the floor for dense numerals and units
      (DESIGN_GUIDE §10). A unit with none of `font-mono`, `font-figure` or `tabular-nums`
      is counted as words; words belong on `text-micro` (12px) or above.
      The count holds the remaining word uses and may only fall. */
-  const CAPTION_WORDS_BASELINE = 66;
+  const CAPTION_WORDS_BASELINE = 58;
   it("text-caption on words does not increase (words sit on text-micro)", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;

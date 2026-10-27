@@ -62,11 +62,13 @@ export default function PlateCalculatorSheet({
             {breakdown.perSide.map(({ plate, count }) => (
               <span
                 key={plate}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-lifting/10 px-3 py-2 text-sm font-semibold text-lifting-strong"
+                className="inline-block whitespace-nowrap rounded-xl bg-lifting/10 px-3 py-2 text-sm font-semibold text-lifting-strong"
               >
+                {/* One run of text, so a space and not a flex gap sits
+                    between the plate and its unit. */}
                 <span className="font-mono tabular-nums">
                   {count} × {plate}
-                </span>
+                </span>{" "}
                 {label}
               </span>
             ))}

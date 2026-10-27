@@ -57,7 +57,10 @@ export function TrendWeight() {
           <p className="text-lg font-bold text-foreground">First weigh-in</p>
         ) : (
           <p className="text-lg font-bold text-foreground font-figure tabular-nums">
-            {convert(entry.weight)} {unit}
+            {convert(entry.weight)}{" "}
+            <span className="font-sans text-sm font-medium text-muted-foreground">
+              {unit}
+            </span>
           </p>
         )}
         <p className="text-xs text-muted-foreground">

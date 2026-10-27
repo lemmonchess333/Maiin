@@ -352,7 +352,7 @@ export default function LegacyExerciseRigDemo({
             and a label that only has to be recognised does not. */}
         <p
           aria-live="polite"
-          className="mt-2 text-center text-micro uppercase tracking-wider text-stage-muted"
+          className="mt-2 text-center text-micro text-stage-muted"
         >
           {beat.label}
           <span className="ml-2 font-mono tabular-nums opacity-70">
@@ -372,7 +372,7 @@ export default function LegacyExerciseRigDemo({
           the phase to screen-reader users without interrupting. */}
       <p
         aria-live="polite"
-        className="mt-2 text-center text-micro uppercase tracking-wider text-stage-muted"
+        className="mt-2 text-center text-micro text-stage-muted"
       >
         {PHASE_LABEL[phase]}
       </p>

@@ -417,7 +417,7 @@ export default function ExerciseHistory() {
                 {!isTimed && !isBodyweight && headerStats.best1RM > 0 && (
                   <>
                     {" "}
-                    <span className="text-xs font-normal text-muted-foreground">
+                    <span className="font-sans text-sm font-medium text-muted-foreground">
                       {unitLabel}
                     </span>
                   </>
@@ -471,7 +471,7 @@ export default function ExerciseHistory() {
                     only when its reps EQUAL the bucket. The honest
                     wording already existed three characters away, on the
                     bodyweight side of this same ternary. */}
-                <h3 className="text-sm font-semibold text-foreground">
+                <h3 className="text-base font-bold text-foreground">
                   Personal bests by reps
                 </h3>
               </div>
@@ -590,7 +590,7 @@ export default function ExerciseHistory() {
           {/* ── Recent sessions list ────────────────────────────────── */}
           <div className="rounded-2xl bg-card overflow-hidden card-shadow">
             <div className="px-4 pt-4 pb-3 border-b border-border/30">
-              <h3 className="text-sm font-semibold text-foreground">
+              <h3 className="text-base font-bold text-foreground">
                 Recent sessions
               </h3>
             </div>
@@ -616,7 +616,7 @@ export default function ExerciseHistory() {
                           {/* The PR chip every other best wears. White on
                               the food orange measured 2.76:1. */}
                           {isPR && (
-                            <span className="text-caption font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
+                            <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
                               PR
                             </span>
                           )}

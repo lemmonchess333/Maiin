@@ -90,9 +90,7 @@ export default function TreadmillMode({
   return (
     <div className="w-full max-w-lg mx-auto space-y-6 px-4 py-6 pb-[calc(1.5rem+var(--safe-bottom))]">
       <div className="text-center">
-        <p className="text-xs text-white/50 uppercase tracking-widest">
-          {title}
-        </p>
+        <p className="text-xs text-white/50">{title}</p>
         <p
           role="timer"
           aria-label="Elapsed time"

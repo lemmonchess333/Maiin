@@ -83,7 +83,7 @@ export default function TrainingLoadCard({
     if (!range) return <Skeleton className="h-56 w-full rounded-2xl" />;
     return (
       <div className="p-4 rounded-2xl bg-card card-shadow">
-        <h3 className="mb-3 text-sm font-bold text-foreground">
+        <h3 className="mb-3 text-base font-bold text-foreground">
           Training load
         </h3>
         {rangeRow}
@@ -97,7 +97,7 @@ export default function TrainingLoadCard({
     return (
       <div className="p-4 rounded-2xl bg-card card-shadow">
         {range && (
-          <h3 className="mb-3 text-sm font-bold text-foreground">
+          <h3 className="mb-3 text-base font-bold text-foreground">
             Training load
           </h3>
         )}
@@ -157,7 +157,7 @@ export default function TrainingLoadCard({
             style={{ color: THEME.brand }}
             aria-hidden="true"
           />
-          <h3 className="text-sm font-bold text-foreground">Training load</h3>
+          <h3 className="text-base font-bold text-foreground">Training load</h3>
           {/* How to read the chart, on request. It was a permanent
               paragraph under the plot — help text, re-read on every
               visit, holding ~60px between two charts on a page that is

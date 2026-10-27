@@ -458,7 +458,7 @@ function ActivityCard({
       {activityTitle && (
         <p
           dir="auto"
-          className="text-sm font-bold text-foreground mb-2 break-words"
+          className="text-base font-bold text-foreground mb-2 break-words"
         >
           {activityTitle}
         </p>
@@ -564,7 +564,7 @@ function ActivityCard({
                   marks the cell. */}
             <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
               {elevationLabel(activity.elevationGain ?? 0, unit, false)}{" "}
-              <span className="text-caption font-semibold text-muted-foreground">
+              <span className="font-sans text-sm font-medium text-muted-foreground">
                 {elevationUnitLabel(unit)}
               </span>
             </p>

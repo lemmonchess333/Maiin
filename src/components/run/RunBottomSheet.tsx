@@ -27,6 +27,7 @@ import { paceMinSec, distanceValue } from "@/lib/runLabels";
 import {
   type DistanceUnit,
   distanceUnitLabel,
+  elevationUnitLabel,
   paceUnitLabel,
   lapMetresFor,
   METRES_PER_MILE,
@@ -187,11 +188,8 @@ export function SplitsList({
     return (
       <div className="px-6 pt-1 pb-4 flex-shrink-0">
         {distance > 0 && <KmProgress distance={distance} unit={unit} />}
-        <p
-          className="text-center"
-          style={{ ...HUD_CAPTION, letterSpacing: "0.1em", marginTop: 10 }}
-        >
-          SPLITS APPEAR AFTER EACH {u === "mi" ? "MILE" : "KM"}
+        <p className="text-center" style={{ ...HUD_CAPTION, marginTop: 10 }}>
+          Splits appear after each {u === "mi" ? "mile" : "km"}
         </p>
       </div>
     );
@@ -202,14 +200,12 @@ export function SplitsList({
     <div className="px-6 pt-1 pb-4 flex-shrink-0">
       {distance > 0 && <KmProgress distance={distance} unit={unit} />}
       <div className="flex items-baseline justify-between mt-3 mb-1 px-1">
-        <p style={{ ...HUD_CAPTION, letterSpacing: "0.1em" }}>
+        <p style={{ ...HUD_CAPTION }}>
           {splits.length > SPLITS_LIST_MAX
-            ? `SPLITS · LAST ${SPLITS_LIST_MAX} OF ${splits.length}`
-            : "SPLITS"}
+            ? `Splits · last ${SPLITS_LIST_MAX} of ${splits.length}`
+            : "Splits"}
         </p>
-        <p style={{ ...HUD_CAPTION, letterSpacing: "0.1em" }}>
-          BEST {paceMinSec(bestPace, unit)}
-        </p>
+        <p style={{ ...HUD_CAPTION }}>Best {paceMinSec(bestPace, unit)}</p>
       </div>
       {recent.map((s) => {
         const prev = splits[s.km - 2];
@@ -548,11 +544,10 @@ export default function RunBottomSheet({
                 <p
                   style={{
                     ...HUD_CAPTION,
-                    letterSpacing: "0.12em",
                     marginTop: 4,
                   }}
                 >
-                  {isPaused ? "PAUSED" : "TIME"}
+                  {isPaused ? "Paused" : "Time"}
                 </p>
               </div>
 
@@ -577,11 +572,10 @@ export default function RunBottomSheet({
                   <p
                     style={{
                       ...HUD_CAPTION,
-                      letterSpacing: "0.12em",
                       marginTop: 3,
                     }}
                   >
-                    {distanceUnitLabel(unit).toUpperCase()}
+                    {distanceUnitLabel(unit)}
                   </p>
                 </div>
                 <div className="text-center">
@@ -601,11 +595,10 @@ export default function RunBottomSheet({
                   <p
                     style={{
                       ...HUD_CAPTION,
-                      letterSpacing: "0.12em",
                       marginTop: 3,
                     }}
                   >
-                    {paceUnitLabel(unit).toUpperCase()} · LIVE
+                    {paceUnitLabel(unit)} · live
                   </p>
                   {pace !== "--:--" && pace !== livePace && (
                     <p
@@ -616,7 +609,7 @@ export default function RunBottomSheet({
                         marginTop: 4,
                       }}
                     >
-                      AVG {pace}
+                      Avg {pace}
                     </p>
                   )}
                 </div>
@@ -652,12 +645,11 @@ export default function RunBottomSheet({
                 <p
                   style={{
                     ...HUD_CAPTION,
-                    letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
                 >
                   {/* The unit the run summary and run pages print. */}
-                  {CALORIE_UNIT.toUpperCase()}
+                  {CALORIE_UNIT}
                 </p>
               </div>
               <div
@@ -677,16 +669,24 @@ export default function RunBottomSheet({
                     fontFamily: "var(--font-figure)",
                   }}
                 >
-                  {elevationLabel(elevation, unit)}
+                  {elevationLabel(elevation, unit, false)}{" "}
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {elevationUnitLabel(unit)}
+                  </span>
                 </p>
                 <p
                   style={{
                     ...HUD_CAPTION,
-                    letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
                 >
-                  ELEV
+                  Elev
                 </p>
               </div>
               <div
@@ -711,11 +711,10 @@ export default function RunBottomSheet({
                 <p
                   style={{
                     ...HUD_CAPTION,
-                    letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
                 >
-                  SPLITS
+                  Splits
                 </p>
               </div>
 
@@ -745,7 +744,6 @@ export default function RunBottomSheet({
                     <p
                       style={{
                         ...HUD_CAPTION,
-                        letterSpacing: "0.1em",
                         marginTop: 2,
                       }}
                     >
@@ -774,7 +772,7 @@ export default function RunBottomSheet({
                 {/* Lock */}
                 <RunControlButton
                   aria-label="Lock screen"
-                  label="LOCK"
+                  label="Lock"
                   size="sm"
                   variant="neutral"
                   onClick={() => {
@@ -801,7 +799,7 @@ export default function RunBottomSheet({
                 {/* Pause — big centre */}
                 <RunControlButton
                   aria-label="Pause run"
-                  label="PAUSE"
+                  label="Pause"
                   size="lg"
                   variant="neutral"
                   onClick={() => {
@@ -846,7 +844,7 @@ export default function RunBottomSheet({
                     belongs to Discard, which deletes it. */}
                 <RunControlButton
                   aria-label="Stop run"
-                  label="STOP"
+                  label="Stop"
                   size="lg"
                   variant="neutral"
                   onClick={() => setShowStopConfirm(true)}
@@ -865,7 +863,7 @@ export default function RunBottomSheet({
                 {/* Resume */}
                 <RunControlButton
                   aria-label="Resume run"
-                  label="RESUME"
+                  label="Resume"
                   size="lg"
                   variant="primary"
                   glow
@@ -908,10 +906,9 @@ export default function RunBottomSheet({
               <p
                 style={{
                   ...HUD_CAPTION,
-                  letterSpacing: "0.1em",
                 }}
               >
-                {isPaused ? "PAUSED" : "TIME"}
+                {isPaused ? "Paused" : "Time"}
               </p>
             </div>
             <div className="text-center">
@@ -929,10 +926,9 @@ export default function RunBottomSheet({
               <p
                 style={{
                   ...HUD_CAPTION,
-                  letterSpacing: "0.1em",
                 }}
               >
-                {distanceUnitLabel(unit).toUpperCase()}
+                {distanceUnitLabel(unit)}
               </p>
             </div>
             <div className="text-center">
@@ -950,10 +946,9 @@ export default function RunBottomSheet({
               <p
                 style={{
                   ...HUD_CAPTION,
-                  letterSpacing: "0.1em",
                 }}
               >
-                {paceUnitLabel(unit).toUpperCase()}
+                {paceUnitLabel(unit)}
               </p>
             </div>
             {/* Collapsed-bar toggle stays bespoke at 48px (the primitive's
@@ -1054,9 +1049,7 @@ export default function RunBottomSheet({
               >
                 {distanceValue(distance, unit, 2)}
               </p>
-              <p style={{ ...HUD_CAPTION }}>
-                {distanceUnitLabel(unit).toUpperCase()}
-              </p>
+              <p style={{ ...HUD_CAPTION }}>{distanceUnitLabel(unit)}</p>
             </div>
             <div className="text-center">
               <p
@@ -1065,7 +1058,7 @@ export default function RunBottomSheet({
               >
                 {formatTime(elapsed)}
               </p>
-              <p style={{ ...HUD_CAPTION }}>TIME</p>
+              <p style={{ ...HUD_CAPTION }}>Time</p>
             </div>
             <div className="text-center">
               <p
@@ -1076,9 +1069,7 @@ export default function RunBottomSheet({
               </p>
               {/* The reader's unit, as the bar behind this dialog says it:
                   the pace above is converted, so its label must be too. */}
-              <p style={{ ...HUD_CAPTION }}>
-                {paceUnitLabel(unit).toUpperCase()}
-              </p>
+              <p style={{ ...HUD_CAPTION }}>{paceUnitLabel(unit)}</p>
             </div>
           </div>
           {/* Primary-action swap: for sub-threshold runs the safest

@@ -77,20 +77,30 @@ export default function ExerciseRowSummary({
         <p className="text-base font-semibold text-foreground truncate">
           {exercise.name}
         </p>
+        {/* The count and the load keep their number and word on one
+            line, so a wrap at 320px never leaves "15" above "kg". */}
         <p className="text-sm text-muted-foreground">
-          <span className="font-mono tabular-nums">{exercise.sets}</span> sets ×{" "}
+          <span className="whitespace-nowrap">
+            <span className="font-mono tabular-nums">{exercise.sets}</span> sets
+          </span>{" "}
+          {/* The rep range may wrap before "reps": held whole, "10–15
+              reps" is wider than the row at double text on a 320px
+              screen. */}
+          ×{" "}
           <span className="font-mono tabular-nums">
             {formatRepTarget(exercise)}
-          </span>{" "}
-          {exercise.repUnit === "seconds" ? "" : "reps"}
+          </span>
+          {exercise.repUnit === "seconds" ? "" : " reps"}
           {exercise.weight > 0 ? (
             <>
               {" · "}
-              <span className="font-mono tabular-nums">
-                {isBW ? "+" : ""}
-                {kitLoadIn(exercise.weight, liftUnit, exercise.exerciseId)}
+              <span className="whitespace-nowrap">
+                <span className="font-mono tabular-nums">
+                  {isBW ? "+" : ""}
+                  {kitLoadIn(exercise.weight, liftUnit, exercise.exerciseId)}
+                </span>
+                {` ${liftUnitLabel(liftUnit)}`}
               </span>
-              {` ${liftUnitLabel(liftUnit)}`}
             </>
           ) : null}
         </p>

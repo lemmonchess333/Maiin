@@ -66,7 +66,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
   return (
     <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-foreground">
+        <h3 className="text-base font-bold text-foreground">
           Performance Index
         </h3>
         <span className="text-xs font-mono tabular-nums text-muted-foreground">

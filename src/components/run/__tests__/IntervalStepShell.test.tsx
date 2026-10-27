@@ -122,8 +122,14 @@ describe("IntervalStepShell — manual distance", () => {
         paused
       />
     );
-    expect(screen.getByText("0.40 km target")).toBeInTheDocument();
-    expect(screen.queryByText("200 m")).toBeNull();
+    // The figure and its unit are two faces in one line, so the line is
+    // read whole rather than as one text node.
+    const line = (text: string) =>
+      screen.queryByText(
+        (_, el) => el?.tagName === "P" && el.textContent === text
+      );
+    expect(line("0.40 km target")).toBeInTheDocument();
+    expect(line("200 m")).toBeNull();
     const complete = screen.getByRole("button", {
       name: "Mark distance step complete",
     });

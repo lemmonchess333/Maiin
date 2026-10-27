@@ -100,7 +100,7 @@ describe("HoldToFinishButton", () => {
 
 describe("Label in Name (WCAG 2.5.3)", () => {
   /* The visible label and the accessible name have to share their words, or
-     a voice-control user reading "FINISH" off the screen says a phrase the
+     a voice-control user reading "Finish" off the screen says a phrase the
      control does not answer to. Asserted as containment rather than
      equality so the name can stay more descriptive than the label. */
   it("the accessible name contains the visible label", () => {
@@ -112,7 +112,7 @@ describe("Label in Name (WCAG 2.5.3)", () => {
       />
     );
     const btn = screen.getByRole("button");
-    const visible = "FINISH";
+    const visible = "Finish";
     const accessible = btn.getAttribute("aria-label") ?? "";
     expect(screen.getByText(visible)).toBeInTheDocument();
     expect(accessible.toLowerCase()).toContain(visible.toLowerCase());

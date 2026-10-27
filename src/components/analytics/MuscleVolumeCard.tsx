@@ -49,7 +49,7 @@ export default function MuscleVolumeCard({
   if (weeks === 0) {
     return (
       <Card as="section" aria-label="Sets per muscle" className="space-y-1">
-        <h2 className="text-h3 font-bold text-foreground">Sets per muscle</h2>
+        <h2 className="text-base font-bold text-foreground">Sets per muscle</h2>
         <p className="text-sm text-muted-foreground">
           After your first full week
         </p>
@@ -66,7 +66,7 @@ export default function MuscleVolumeCard({
   return (
     <Card as="section" aria-label="Sets per muscle" className="space-y-3">
       <div>
-        <h2 className="text-h3 font-bold text-foreground">Sets per muscle</h2>
+        <h2 className="text-base font-bold text-foreground">Sets per muscle</h2>
         <p className="text-sm text-muted-foreground">
           {weeks === 1
             ? "Your last full week"

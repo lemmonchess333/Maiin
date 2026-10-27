@@ -185,7 +185,7 @@ export default function PeriodSummaryCard({
   return (
     <Card as="section" aria-label={title} className="space-y-4">
       <div>
-        <h2 className="text-h3 font-bold text-foreground">{title}</h2>
+        <h2 className="text-base font-bold text-foreground">{title}</h2>
         <p className="text-sm text-muted-foreground">
           {comparedWith ? `Compared with ${comparedWith}` : sinceLabel}
         </p>

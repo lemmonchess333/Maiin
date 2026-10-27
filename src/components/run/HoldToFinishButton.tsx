@@ -117,13 +117,13 @@ export default function HoldToFinishButton({
 
   return (
     <RunControlButton
-      /* The label says what the control does, as its siblings' do (LOCK,
-         PAUSE, STOP); the ring that fills under a press shows it wants a
+      /* The label says what the control does, as its siblings' do (Lock,
+         Pause, Stop); the ring that fills under a press shows it wants a
          hold. The accessible name CONTAINS the label (WCAG 2.5.3 Label in
          Name), so a voice-control user saying "tap finish" reaches it, and
          it names the gesture for a screen-reader user. */
       aria-label="Hold to finish run"
-      label="FINISH"
+      label="Finish"
       size="sm"
       variant="neutral"
       className="relative touch-none"

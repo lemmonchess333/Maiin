@@ -51,11 +51,11 @@ describe("RunBottomSheet — the paused controls", () => {
     const style = time.getAttribute("style") ?? "";
     expect(style).not.toContain("rgb(212, 99, 122)");
     expect(style).not.toMatch(/text-shadow/);
-    expect(screen.getAllByText("PAUSED").length).toBeGreaterThan(0);
-    expect(screen.queryByText("TIME")).toBeNull();
+    expect(screen.getAllByText("Paused").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Time")).toBeNull();
     // The calories say the unit the summary and the run page say.
-    expect(screen.getByText("KCAL")).toBeInTheDocument();
-    expect(screen.queryByText("CAL")).toBeNull();
+    expect(screen.getByText("kcal")).toBeInTheDocument();
+    expect(screen.queryByText("cal")).toBeNull();
   });
 
   it("leaves Resume the one coral fill", () => {

@@ -123,7 +123,7 @@ function YourWeek({
       <div className="flex items-start justify-between gap-3">
         {/* The week the account began is reviewed from that day: "Your
             first 3 days", and food out of those days, not seven. */}
-        <h2 className="text-h1 font-extrabold text-foreground">
+        <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
           {firstDays
             ? firstDays.count === 1
               ? "Your first day"
@@ -403,7 +403,9 @@ function WeekAhead({
   const { lifts, runs, phaseNote } = review.weekAhead;
   return (
     <div className="flex flex-1 flex-col">
-      <h2 className="text-h1 font-extrabold text-foreground">The week ahead</h2>
+      <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
+        The week ahead
+      </h2>
       <div className="mt-6 space-y-6">
         {/* The plan's week in the figures "Your week" counts the last one
             in, so the card says it at the recap's size rather than as a
@@ -519,7 +521,7 @@ export default function WeeklyReview() {
         label: "Couldn't load",
         render: () => (
           <div className="flex flex-1 flex-col" role="alert">
-            <h2 className="text-h1 font-extrabold text-foreground">
+            <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
               Couldn&rsquo;t load your review
             </h2>
             <p className="mt-3 text-base text-muted-foreground">
@@ -544,7 +546,7 @@ export default function WeeklyReview() {
         label: "Your first review",
         render: () => (
           <div className="flex flex-1 flex-col">
-            <h2 className="text-h1 font-extrabold text-foreground">
+            <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
               Your first review
             </h2>
             <p className="mt-3 text-base text-muted-foreground">
@@ -583,7 +585,7 @@ export default function WeeklyReview() {
           label: "A quiet week",
           render: (next) => (
             <div className="flex flex-1 flex-col">
-              <h2 className="text-h1 font-extrabold text-foreground">
+              <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
                 A quiet week
               </h2>
               <p className="mt-3 text-base text-muted-foreground">

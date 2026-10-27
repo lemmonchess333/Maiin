@@ -1,4 +1,5 @@
 import InlineNumerals from "@/components/ui/InlineNumerals";
+import MetaLine from "@/components/ui/MetaLine";
 import { Button } from "@/components/ui/Button";
 import { localDateString } from "@/lib/dateHelpers";
 import { Play } from "lucide-react";
@@ -138,11 +139,14 @@ export default function RunCTACard({
         <p className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
           <InlineNumerals>{runLabel}</InlineNumerals>
         </p>
-        {/* Foreground on the running wash, where the grey misses AA. */}
+        {/* Foreground on the running wash, where the grey misses AA. A
+            fact line, as the lift card's dose is: "15 km · about 100 min"
+            wraps between its facts, never inside one. */}
         {tmpl && dose && (
-          <p className="mt-2 text-sm font-medium text-foreground">
-            <InlineNumerals>{dose}</InlineNumerals>
-          </p>
+          <MetaLine
+            className="mt-2 font-medium text-foreground"
+            items={dose.split(" · ")}
+          />
         )}
       </div>
       {/* Taps pass through the action row to the preview; only Start takes
