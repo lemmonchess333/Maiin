@@ -12,8 +12,8 @@ import {
 import { countedSets } from "@/features/program/setLabels";
 import {
   EMPTY_WORKOUT_NAME,
+  emptyWorkoutDraftSession,
   emptyWorkoutResumeTarget,
-  isEmptyWorkoutDraft,
 } from "@/features/program/emptyWorkout";
 import type { WorkoutDraft } from "@/hooks/useWorkoutDraft";
 import type { StoredRunSummary } from "@/lib/runResumeStorage";
@@ -75,6 +75,8 @@ export interface ResumableRoutine {
 /** An empty workout that can be picked up where it was left (Mob1 call
  *  1): there is one at a time, so its draft is always Resume's. */
 export interface ResumableEmptyWorkout {
+  /** The session its page names in its address. */
+  sessionId: string;
   sets: number;
   elapsedSeconds: number;
 }
@@ -187,9 +189,11 @@ export function resumableWorkout(
     if (lift) return { kind: "programme", ...lift };
     const routine = routineDraftResumable(draft, routines);
     if (routine) return { kind: "routine", ...routine };
-    if (isEmptyWorkoutDraft(draft))
+    const sessionId = emptyWorkoutDraftSession(draft);
+    if (sessionId)
       return {
         kind: "empty",
+        sessionId,
         sets: setsDone(draft),
         elapsedSeconds: draft.elapsedSeconds,
       };
@@ -234,7 +238,7 @@ export function emptyWorkoutInProgress(
     name: EMPTY_WORKOUT_NAME,
     sets: workout.sets,
     elapsedSeconds: workout.elapsedSeconds,
-    resumeTarget: emptyWorkoutResumeTarget(),
+    resumeTarget: emptyWorkoutResumeTarget(workout.sessionId),
   };
 }
 

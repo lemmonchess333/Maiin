@@ -8,11 +8,15 @@ import { useAuth } from "@/lib/auth";
 import {
   EMPTY_WORKOUT_DAY_INDEX,
   EMPTY_WORKOUT_DRAFT_EPOCH,
-  EMPTY_WORKOUT_DRAFT_SCOPE,
+  EMPTY_WORKOUT_SESSION_PARAM,
+  emptyWorkoutDraftScope,
+  isEmptyWorkoutSessionId,
   EMPTY_WORKOUT_NAME,
   emptyWorkoutDay,
 } from "@/features/program/emptyWorkout";
 import { RESUME_PARAM } from "@/lib/resumeParam";
+import { createWorkoutCompletionId } from "@/hooks/useWorkoutDraft";
+
 import WorkoutSession from "@/components/WorkoutSession";
 
 /**
@@ -31,17 +35,24 @@ export default function EmptyWorkout() {
   const [searchParams, setSearchParams] = useSearchParams();
   const resumeInAddress = searchParams.get(RESUME_PARAM) === "1";
   const [resumeOnOpen] = useState(resumeInAddress);
+  /* The session, named in the address: a Resume carries its id, and a
+     new empty workout mints one, written into the address so a reload
+     opens this session again rather than a new one. */
+  const addressed = searchParams.get(EMPTY_WORKOUT_SESSION_PARAM);
+  const [minted] = useState(createWorkoutCompletionId);
+  const sessionId = isEmptyWorkoutSessionId(addressed) ? addressed : minted;
   useEffect(() => {
-    if (!resumeInAddress) return;
+    if (!resumeInAddress && addressed === sessionId) return;
     setSearchParams(
       (params) => {
         const next = new URLSearchParams(params);
         next.delete(RESUME_PARAM);
+        next.set(EMPTY_WORKOUT_SESSION_PARAM, sessionId);
         return next;
       },
       { replace: true }
     );
-  }, [resumeInAddress, setSearchParams]);
+  }, [resumeInAddress, addressed, sessionId, setSearchParams]);
 
   const day = useMemo(() => emptyWorkoutDay(), []);
 
@@ -79,7 +90,8 @@ export default function EmptyWorkout() {
     <WorkoutSession
       day={day}
       dayIndex={EMPTY_WORKOUT_DAY_INDEX}
-      draftScope={EMPTY_WORKOUT_DRAFT_SCOPE}
+      key={sessionId}
+      draftScope={emptyWorkoutDraftScope(sessionId)}
       draftEpoch={EMPTY_WORKOUT_DRAFT_EPOCH}
       onCompleteDay={handleComplete}
       onClose={() => navigate("/program")}

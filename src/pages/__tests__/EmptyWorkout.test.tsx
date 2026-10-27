@@ -6,7 +6,7 @@
  */
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { ComponentProps } from "react";
 import type WorkoutSessionType from "@/components/WorkoutSession";
 
@@ -39,11 +39,25 @@ import {
   EMPTY_WORKOUT_PATH,
 } from "@/features/program/emptyWorkout";
 
+/** The address the page is at, as the test can read it. */
+function Address() {
+  const location = useLocation();
+  return <p data-testid="address">{location.search}</p>;
+}
+
 function open(path = EMPTY_WORKOUT_PATH) {
-  render(
+  return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path={EMPTY_WORKOUT_PATH} element={<EmptyWorkout />} />
+        <Route
+          path={EMPTY_WORKOUT_PATH}
+          element={
+            <>
+              <EmptyWorkout />
+              <Address />
+            </>
+          }
+        />
       </Routes>
     </MemoryRouter>
   );
@@ -70,9 +84,27 @@ describe("EmptyWorkout", () => {
     expect(h.session?.resumeDraft).toBe(false);
   });
 
-  it("carries on a workout under way when opened from Resume", () => {
-    open(`${EMPTY_WORKOUT_PATH}?resume=1`);
+  it("carries on the workout Resume names, on its own session", () => {
+    open(`${EMPTY_WORKOUT_PATH}?session=abc-1&resume=1`);
     expect(h.session?.resumeDraft).toBe(true);
+    expect(h.session?.draftScope).toBe("empty:abc-1");
+    // The resume flag comes off the address; the session stays on it.
+    expect(screen.getByTestId("address")).toHaveTextContent("?session=abc-1");
+  });
+
+  it("gives each new empty workout a session of its own, kept in the address", () => {
+    // One finished and still waiting for the server keeps its own draft:
+    // the next empty workout is a new session, not that finish screen.
+    const first = open();
+    const scope = h.session?.draftScope;
+    expect(scope).toMatch(/^empty:[A-Za-z0-9-]+$/);
+    expect(screen.getByTestId("address")).toHaveTextContent(
+      `?session=${scope!.slice("empty:".length)}`
+    );
+    first.unmount();
+    open();
+    expect(h.session?.draftScope).toMatch(/^empty:/);
+    expect(h.session?.draftScope).not.toBe(scope);
   });
 
   it("saves what was added as a free workout that moves no plan", async () => {

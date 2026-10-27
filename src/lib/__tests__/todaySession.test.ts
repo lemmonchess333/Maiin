@@ -1231,7 +1231,7 @@ describe("todaySession — an empty workout under way", () => {
     elapsedSeconds: 300,
     currentExIndex: 0,
     savedAt: 2_000,
-    identity: emptyWorkoutDraftIdentity(),
+    identity: emptyWorkoutDraftIdentity("s1"),
     completionId: "c3",
     completionCommandId: "c3",
     ...extra,
@@ -1257,7 +1257,7 @@ describe("todaySession — an empty workout under way", () => {
         name: "Workout",
         sets: 1,
         elapsedSeconds: 300,
-        resumeTarget: "/empty-workout?resume=1",
+        resumeTarget: "/empty-workout?session=s1&resume=1",
       },
     ]);
     // Today's planned day is untouched: its card still offers Start.
