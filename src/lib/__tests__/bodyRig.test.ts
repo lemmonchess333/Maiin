@@ -2519,6 +2519,22 @@ describe("renderBodyDemo", () => {
           Math.hypot(hand[0] - Number(grip![1]), hand[1] - Number(grip![2])),
           `inverted row: hand actually meets drawn bar @${t}`
         ).toBeLessThan(0.1);
+        const shaft = scene.match(
+          /<rect x="[\d.]+" y="([\d.]+)" width="[\d.]+" height="3"/
+        );
+        expect(shaft, `inverted row: shaft drawn @${t}`).not.toBeNull();
+        const shaftY = Number(shaft![1]) + 1.5;
+        const fist = SIDE_PIECES.find((piece) => piece.group === "handL")!;
+        const outline = fist.outline.map((point) => pt(point, p.handL));
+        const crossingX = outline.flatMap((a, i) => {
+          const b = outline[(i + 1) % outline.length];
+          if (shaftY < Math.min(a[1], b[1]) || shaftY > Math.max(a[1], b[1]) || a[1] === b[1])
+            return [];
+          return [a[0] + ((b[0] - a[0]) * (shaftY - a[1])) / (b[1] - a[1])];
+        });
+        expect(crossingX, `inverted row: shaft crosses visible fist @${t}`).toHaveLength(2);
+        expect(Math.min(...crossingX)).toBeLessThan(Number(grip![1]));
+        expect(Math.max(...crossingX)).toBeGreaterThan(Number(grip![1]) + 2);
         const shoe = SIDE_PIECES.find((piece) => piece.group === "footL")!;
         const soleY = Math.max(
           ...shoe.outline.map((point) => pt(point, p.shankL)[1])
