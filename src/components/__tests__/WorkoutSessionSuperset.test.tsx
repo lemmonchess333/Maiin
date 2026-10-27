@@ -249,6 +249,28 @@ describe("Supersets", () => {
     ]);
   });
 
+  it("does a lift's warm-ups before its partner comes in, then turns on working sets", async () => {
+    // At 60 kg the bench has a warm-up ramp; the push-ups have none.
+    const [bench, pushUps] = benchAndPushUps();
+    openSession([{ ...bench, weight: 60 }, pushUps]);
+    menu("Bench Press");
+    await choose("Superset with Push-Ups");
+    expect(counter()).toMatch(/^Warm-up 1 of/);
+    let warmUps = 0;
+    while (/^Warm-up/.test(counter() ?? "")) {
+      tick();
+      warmUps += 1;
+      // Each warm-up stays on the bench, with its short rest.
+      expect(heading()).toBe("Bench Press");
+      expect(resting()).not.toBeNull();
+    }
+    expect(warmUps).toBeGreaterThan(0);
+    expect(counter()).toMatch(/^Set 1 of 2/);
+    tick(); // A1, the first working set: now the partner.
+    expect(heading()).toBe("Push-Ups");
+    expect(counter()).toMatch(/^Set 1 of 2/);
+  });
+
   it("an exercise added today can join one", async () => {
     openSession(benchAndPushUps());
     await addLateralRaise();

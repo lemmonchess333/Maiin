@@ -1221,15 +1221,21 @@ export default function WorkoutSession({
     /* In a superset (Mob1 call 2) the next set is the next exercise's in
        the group, A1 → B1 → A2 → B2, and the rest waits for the end of the
        round: it runs after the group's last exercise, before its first
-       comes round again. Once the group has nothing left, the session
-       moves on as it does from any exercise. */
+       comes round again. A warm-up keeps to its exercise until its ramp
+       is done. Once the group has nothing left, the session moves on as
+       it does from any exercise. */
     const members = supersetAt(
       day.exercises,
       prescription.supersets,
       currentExIndex
     );
     const turn = members
-      ? nextInSuperset(updatedLogs, members, currentExIndex)
+      ? nextInSuperset(
+          updatedLogs,
+          members,
+          currentExIndex,
+          set.type === "warmup"
+        )
       : null;
     const takeTurn = (to: NonNullable<typeof turn>) => {
       setCurrentExIndex(to.exerciseIndex);

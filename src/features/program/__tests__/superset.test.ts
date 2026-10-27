@@ -92,6 +92,34 @@ describe("the order a superset is logged in", () => {
     });
   });
 
+  it("keeps a warm-up on its exercise, and turns on working sets only", () => {
+    /** Three warm-ups then two working sets, `done` of them ticked. */
+    const ramped = (done: number) =>
+      [
+        ...Array.from({ length: 3 }, () => ({ type: "warmup" })),
+        ...Array.from({ length: 2 }, () => ({ type: "working" })),
+      ].map((row, i) => ({ ...row, completed: i < done }));
+    // The first warm-up done: the next is the second, after a warm-up rest,
+    // not the partner's first working set.
+    expect(nextInSuperset([ramped(1), sets(0, 2)], members, 0, true)).toEqual({
+      exerciseIndex: 0,
+      setIndex: 1,
+      rest: true,
+    });
+    // The last warm-up done: this exercise's first working set.
+    expect(nextInSuperset([ramped(3), sets(0, 2)], members, 0, true)).toEqual({
+      exerciseIndex: 0,
+      setIndex: 3,
+      rest: true,
+    });
+    // Its first working set done: now the partner, with no rest between.
+    expect(nextInSuperset([ramped(4), sets(0, 2)], members, 0)).toEqual({
+      exerciseIndex: 1,
+      setIndex: 0,
+      rest: false,
+    });
+  });
+
   it("passes over an exercise skipped today", () => {
     // B's rows set aside: A goes on alone.
     expect(nextInSuperset([sets(1, 3), []], members, 0)).toEqual({

@@ -123,14 +123,24 @@ function outstanding(sets: readonly CursorSet[] | undefined): number {
  * exercise in the group with a set left, in the group's order, and back
  * to its start for the next round. `rest` says the round is over, so the
  * rest timer runs first. Null once nothing in the group is left.
+ *
+ * The group turns on working sets only. A warm-up stays on its exercise,
+ * with a warm-up's rest, until its ramp is done, so the next exercise's
+ * working sets never land in the middle of this one's warm-ups.
  */
 export function nextInSuperset(
   logs: readonly (readonly CursorSet[])[],
   members: readonly number[],
-  from: number
+  from: number,
+  afterWarmup = false
 ): { exerciseIndex: number; setIndex: number; rest: boolean } | null {
   const at = members.indexOf(from);
   if (at < 0) return null;
+  if (afterWarmup) {
+    const setIndex = outstanding(logs[from]);
+    if (setIndex >= 0) return { exerciseIndex: from, setIndex, rest: true };
+  }
+
   for (let step = 1; step <= members.length; step++) {
     const exerciseIndex = members[(at + step) % members.length];
     const setIndex = outstanding(logs[exerciseIndex]);
