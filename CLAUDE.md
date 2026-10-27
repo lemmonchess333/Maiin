@@ -92,6 +92,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                           |
 | `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                           |
 | `Routine.tsx`                          | `/routine/:routineId`              | Saved-routine workout runner (reuses `WorkoutSession`)                         |
+| `EmptyWorkout.tsx`                     | `/empty-workout`                   | A lift with no plan day, built with Add exercise (Mob1); saves, moves no plan  |
 | `WorkoutDetail.tsx`                    | `/workout/:workoutId`              | Saved lift session detail; the delete action lives here (ADR-0012)             |
 | `Run.tsx`                              | `/run`                             | Active GPS run tracking (full-screen, no nav)                                  |
 | `RunSummary.tsx`                       | `/run-summary`                     | Post-run stats & map review                                                    |

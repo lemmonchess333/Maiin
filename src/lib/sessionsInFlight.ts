@@ -10,6 +10,11 @@ import {
   type RoutineLayout,
 } from "@/features/program/routineSession";
 import { countedSets } from "@/features/program/setLabels";
+import {
+  EMPTY_WORKOUT_NAME,
+  emptyWorkoutResumeTarget,
+  isEmptyWorkoutDraft,
+} from "@/features/program/emptyWorkout";
 import type { WorkoutDraft } from "@/hooks/useWorkoutDraft";
 import type { StoredRunSummary } from "@/lib/runResumeStorage";
 import type { RunConfig } from "@/components/run/runConfigDefaults";
@@ -67,10 +72,19 @@ export interface ResumableRoutine {
   elapsedSeconds: number;
 }
 
-/** The workout under way: a programme day's or a saved routine's. */
+/** An empty workout that can be picked up where it was left (Mob1 call
+ *  1): there is one at a time, so its draft is always Resume's. */
+export interface ResumableEmptyWorkout {
+  sets: number;
+  elapsedSeconds: number;
+}
+
+/** The workout under way: a programme day's, a saved routine's or an
+ *  empty workout. */
 export type ResumableWorkout =
   | ({ kind: "programme" } & ResumableLift)
-  | ({ kind: "routine" } & ResumableRoutine);
+  | ({ kind: "routine" } & ResumableRoutine)
+  | ({ kind: "empty" } & ResumableEmptyWorkout);
 
 /** The saved routines the drafts were kept from, as they are now, by id
  *  (`useSessionsInFlight`). A routine deleted since is absent. */
@@ -173,6 +187,12 @@ export function resumableWorkout(
     if (lift) return { kind: "programme", ...lift };
     const routine = routineDraftResumable(draft, routines);
     if (routine) return { kind: "routine", ...routine };
+    if (isEmptyWorkoutDraft(draft))
+      return {
+        kind: "empty",
+        sets: setsDone(draft),
+        elapsedSeconds: draft.elapsedSeconds,
+      };
   }
   return null;
 }
@@ -201,6 +221,20 @@ export function routineInProgress(
     sets: routine.sets,
     elapsedSeconds: routine.elapsedSeconds,
     resumeTarget: `/routine/${encodeURIComponent(routine.routineId)}?${RESUME_PARAM}=1`,
+  };
+}
+
+/** An empty workout under way: Resume opens its page, which carries on
+ *  without asking again. */
+export function emptyWorkoutInProgress(
+  workout: ResumableEmptyWorkout
+): SessionInProgress {
+  return {
+    sport: "lift",
+    name: EMPTY_WORKOUT_NAME,
+    sets: workout.sets,
+    elapsedSeconds: workout.elapsedSeconds,
+    resumeTarget: emptyWorkoutResumeTarget(),
   };
 }
 

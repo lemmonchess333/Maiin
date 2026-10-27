@@ -44,6 +44,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import type { Exercise } from "@/lib/exercises";
 import { exerciseAddedToday } from "@/features/program/sessionAdd";
 import { generateInstanceId } from "@/features/program/programTypes";
+import { workoutSourceForScope } from "@/features/program/emptyWorkout";
 import { Button } from "@/components/ui/Button";
 import {
   FIELD_EDGE,
@@ -755,9 +756,7 @@ export default function WorkoutSession({
     void (async () => {
       try {
         const { doc, getDocFromServer } = await import("firebase/firestore");
-        const source = draftScope?.startsWith("routine:")
-          ? "routine"
-          : "programme";
+        const source = workoutSourceForScope(draftScope);
         const snapshot = await getDocFromServer(
           doc(
             db,

@@ -47,7 +47,8 @@ import {
 
 /** What a lift writer hands the workout screen. */
 export interface LiftCompletionReceipt {
-  /** `programme-<completionId>` or `routine-<completionId>`. */
+  /** `programme-<completionId>`, `routine-<completionId>` or, for an
+   *  empty workout, `free-<completionId>`. */
   workoutId: string;
   /** Posts the workout, with or without asking (`sessionPost`). */
   share: SessionShareAction;
@@ -60,7 +61,7 @@ export interface LiftCompletionReceipt {
 /** A finished lift's workout id. Deterministic, so a retried Finish
  *  writes the same workout rather than a second one. */
 export function liftWorkoutId(
-  source: "programme" | "routine",
+  source: "programme" | "routine" | "free",
   completionId: string
 ): string {
   return `${source}-${completionId}`;
@@ -167,8 +168,10 @@ export function liftTotals(
 export interface FinishedLift {
   uid: string;
   author: { displayName?: string | null; photoURL?: string | null };
-  /** Which writer: the workout's id prefix and its `source`. */
-  source: "programme" | "routine";
+  /** Which writer: the workout's id prefix and its `source`. An empty
+   *  workout (`EmptyWorkout.tsx`) is `free`, and moves no plan. */
+
+  source: "programme" | "routine" | "free";
   /** Stable across a session's retries: a retried Finish writes the same
    *  workout. */
   completionId: string;
