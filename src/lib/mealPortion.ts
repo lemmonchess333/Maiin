@@ -30,6 +30,40 @@ export function tidyAmount(n: number): string {
   return String(Math.round(n * 100) / 100);
 }
 
+/** What a typed amount counts: grams of a food measured by weight, or
+ *  servings of anything else. */
+export type AmountUnit = "grams" | "servings";
+
+/* The step is a convenience, the typed field is what makes any amount
+   reachable. Grams step by 10, not by half a serving: on a per-100g food
+   that was 50 g at a time, so 30 g and 125 g, ordinary portions, could not
+   be reached. */
+export const AMOUNT_STEP: Record<AmountUnit, number> = {
+  grams: 10,
+  servings: 0.5,
+};
+
+/** A typed amount, or null while it is blank, zero or not a number.
+ *  A comma reads as a decimal point ("1,5"). */
+export function parseAmount(text: string): number | null {
+  const raw = text.trim();
+  if (raw === "") return null;
+  const n = Number(raw.replace(",", "."));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** The amount one step up or down from the typed one, never below a step.
+ *  A blank or unreadable field steps from one step. */
+export function stepAmount(
+  text: string,
+  unit: AmountUnit,
+  direction: 1 | -1
+): string {
+  const step = AMOUNT_STEP[unit];
+  const current = parseAmount(text) ?? step;
+  return tidyAmount(Math.max(step, current + direction * step));
+}
+
 export interface PortionReading {
   /** How many of `base` the portion is. 1 when nothing is written. */
   multiplier: number;

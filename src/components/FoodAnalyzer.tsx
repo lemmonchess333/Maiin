@@ -27,6 +27,8 @@ import FoodCameraModal, {
   type ScanMode,
 } from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
+import PortionAmountField from "./nutrition/PortionAmountField";
+import { parseAmount, type AmountUnit } from "@/lib/mealPortion";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Spinner } from "@/components/ui/Spinner";
 import Button from "@/components/ui/Button";
@@ -97,6 +99,9 @@ type MealResult = {
   imageUrl?: string;
   barcode?: string;
   brand?: string;
+  /** A barcode result's numbers are per 100 g ("low") or per the
+   *  serving the product states ("high"). */
+  unitConfidence?: "high" | "low";
 };
 
 /** The database answered, and has no product with this code. */
@@ -148,6 +153,7 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
     totalCarbs: carbs,
     totalFat: fat,
     confidence: "barcode",
+    unitConfidence: portion.unitConfidence,
   };
 }
 
@@ -245,7 +251,11 @@ export default function FoodAnalyzer({
   const [barcodeLoading, setBarcodeLoading] = useState(false);
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
 
-  const [servings, setServings] = useState(1);
+  /* The barcode result's amount, as typed. Per-100g numbers are measured
+     in grams and everything else in servings, as the search result's
+     sheet measures them, so a product is logged the same way whether it
+     was scanned or searched. */
+  const [amountText, setAmountText] = useState("1");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   /* Suspicious-value confirm state. Only fires for AI photo
@@ -316,6 +326,20 @@ export default function FoodAnalyzer({
   }, [cleanedAiResult, barcodeResult]);
 
   const isBarcode = activeResult?.confidence === "barcode";
+  const amountUnit: AmountUnit =
+    barcodeResult?.unitConfidence === "low" ? "grams" : "servings";
+  const typedAmount = parseAmount(amountText);
+  /* Servings of what the numbers are per: per 100 g, 30 g is 0.3. Null
+     while the field is blank or unreadable, which holds the Log button. */
+  const barcodeServings =
+    typedAmount === null
+      ? null
+      : amountUnit === "grams"
+        ? typedAmount / 100
+        : typedAmount;
+  /* Mid-edit the figures show one serving rather than zeros, which would
+     read as "this food has no calories". */
+  const servings = barcodeServings ?? 1;
 
   /* ── Per-item edit state (PR N) ───────────────────────────────────────
      AI photo / text-parse results often need correction before save —
@@ -340,7 +364,7 @@ export default function FoodAnalyzer({
 
   /* The per-item editor only renders for multi-item AI / text results.
      - Barcode results are by definition single-item; their existing
-       global servings stepper is the right control there.
+       typed amount is the right control there.
      - Single-item AI results would mean only one row to edit, and the
        global totals are already the per-item totals — adding an editor
        would be redundant chrome. */
@@ -379,7 +403,7 @@ export default function FoodAnalyzer({
   /* Display totals.
      - Multi-item AI: sum of (item × per-item multiplier) over active items.
      - Single-item AI: pass-through totals × 1 (current behaviour).
-     - Barcode: pass-through totals × global servings (current behaviour).
+     - Barcode: pass-through totals × the typed servings.
      The single source of truth for what's rendered AND what's saved. */
   const displayTotals = useMemo(() => {
     if (!activeResult) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
@@ -486,7 +510,7 @@ export default function FoodAnalyzer({
     setBarcodeError(null);
     setBarcodeLoading(false);
     setCapturedBase64(null);
-    setServings(1);
+    setAmountText("1");
     clearScanFailure();
     resetAI();
   };
@@ -504,8 +528,8 @@ export default function FoodAnalyzer({
     if (!uid) return;
     setSaving(true);
     try {
-      /* For barcode + single-item AI we keep the original "scale by global
-       servings stepper" behaviour. For multi-item AI we use the per-item
+      /* For barcode + single-item AI we keep the original "scale by the
+       typed amount" behaviour. For multi-item AI we use the per-item
        multiplier edits and skip removed items entirely. The two paths
        converge on the same persisted shape. */
       const s = isBarcode ? servings : 1;
@@ -707,6 +731,7 @@ export default function FoodAnalyzer({
 
   const handleSave = async () => {
     if (!activeResult || saving || saved) return;
+    if (isBarcode && barcodeServings === null) return;
 
     const meal: MealResult = {
       foodName: activeResult.foodName ?? "Meal",
@@ -836,12 +861,12 @@ export default function FoodAnalyzer({
     setBarcodeLoading(true);
     setBarcodeError(null);
     setBarcodeResult(null);
-    setServings(1);
 
     try {
       const meal = await fetchOpenFoodFacts(code);
       /* Closed mid-lookup: the scan was abandoned, as with a photo. */
       if (!cameraOpenRef.current) return undefined;
+      setAmountText(meal.unitConfidence === "low" ? "100" : "1");
       setBarcodeResult(meal);
       setCameraOpen(false);
       toast.success("Barcode found");
@@ -1115,30 +1140,15 @@ export default function FoodAnalyzer({
                 />
               </div>
 
-              {/* Serving size adjuster — shown for barcode results */}
+              {/* The amount, typed, with the same control as the search
+                  result's sheet. */}
               {isBarcode && (
-                <div className="flex items-center justify-center gap-4">
-                  <IconButton
-                    variant="secondary"
-                    aria-label="Decrease servings"
-                    icon={<Minus className="size-4" />}
-                    onClick={() => setServings(Math.max(0.5, servings - 0.5))}
-                    className="rounded-full"
-                  />
-                  <div className="text-center">
-                    <p className="text-2xl font-bold font-figure tabular-nums text-foreground">
-                      {servings}
-                    </p>
-                    <p className="text-xs text-muted-foreground">servings</p>
-                  </div>
-                  <IconButton
-                    variant="secondary"
-                    aria-label="Increase servings"
-                    icon={<Plus className="size-4" />}
-                    onClick={() => setServings(servings + 0.5)}
-                    className="rounded-full"
-                  />
-                </div>
+                <PortionAmountField
+                  unit={amountUnit}
+                  value={amountText}
+                  onChange={setAmountText}
+                  disabled={saving || saved}
+                />
               )}
 
               {/* A barcode result is Open Food Facts' data, whose licence
@@ -1315,9 +1325,14 @@ export default function FoodAnalyzer({
                 size="lg"
                 className="flex-1"
                 onClick={handleSave}
-                /* Disabled while saving (no double-tap) and when every
-                   item was removed (a 0-calorie log is never meant). */
-                disabled={saving || allRemoved}
+                /* Disabled while saving (no double-tap), when every item
+                   was removed (a 0-calorie log is never meant), and while
+                   a barcode result's amount is blank. */
+                disabled={
+                  saving ||
+                  allRemoved ||
+                  (isBarcode && barcodeServings === null)
+                }
                 /* Saved-state fill from the palette. */
                 style={saved ? { background: THEME.success } : undefined}
               >
