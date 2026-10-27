@@ -2125,7 +2125,16 @@ const ASSAULT_HIP: Pt = [36, 106];
 const ASSAULT_HANDLE_PIVOT: Pt = [100, 178];
 const ELLIPTICAL_HIP: Pt = [42, 92];
 const ELLIPTICAL_CRANK: Pt = [60, 180];
-const ELLIPTICAL_HANDLE_PIVOT: Pt = [92, 168];
+const ELLIPTICAL_NEAR_PIVOT: Pt = [86, 168];
+const ELLIPTICAL_FAR_PIVOT: Pt = [91, 168];
+/** The pedal and the same-side handle travel in opposite directions.
+ * The far side is half a turn out of phase, like a walking gait. */
+function ellipticalGrips(phi: number): { near: Pt; far: Pt } {
+  return {
+    near: swingHandle(phi, ELLIPTICAL_NEAR_PIVOT, 94, 0.12, Math.PI),
+    far: swingHandle(phi, ELLIPTICAL_FAR_PIVOT, 94, 0.12, 0),
+  };
+}
 /** Pedal position at phase φ on a circle (ry = rx) or a flat ellipse;
  *  φ = 0 is the pedal at its FRONT, turning down and back — the drive. */
 function pedalAt(phi: number, c: Pt, rx: number, ry: number): Pt {
@@ -2140,6 +2149,8 @@ interface PedalOpts {
   ry: number;
   /** Fixed bars, or a moving handle (its world point at this phase). */
   hands: Pt;
+  /** A second moving grip for machines with opposing handles. */
+  farHands?: Pt;
 }
 function pedalChain(
   phi: number,
@@ -2170,7 +2181,8 @@ function pedalChain(
     pedalAt(phi + 0.5, o.crank, o.rx, o.ry),
     KNEE_FORWARD
   );
-  const arm = armToWorld(torso, o.hands, ELBOW_LOW);
+  const nearArm = armToWorld(torso, o.hands, ELBOW_LOW);
+  const farArm = armToWorld(torso, o.farHands ?? o.hands, ELBOW_LOW);
   return {
     head,
     torso,
@@ -2179,12 +2191,12 @@ function pedalChain(
     shankL: near.shank,
     thighR: far.thigh,
     shankR: far.shank,
-    upperArmL: arm.upper,
-    foreArmL: arm.fore,
-    handL: arm.fore,
-    upperArmR: arm.upper,
-    foreArmR: arm.fore,
-    handR: arm.fore,
+    upperArmL: nearArm.upper,
+    foreArmL: nearArm.fore,
+    handL: nearArm.fore,
+    upperArmR: farArm.upper,
+    foreArmR: farArm.fore,
+    handR: farArm.fore,
   };
 }
 /** A bike's frame: the crank wheel, a down tube to the saddle, the seat
@@ -9340,7 +9352,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "side",
     cycle: true,
     cycleMs: 1500,
-    viewBox: "-12 -6 160 218",
+    viewBox: "-8 -14 150 226",
     groundY: 204,
     shadowCx: 60,
     shadowRx: 50,
@@ -9351,18 +9363,22 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       "front-deltoids": "secondary",
       "upper-back": "secondary",
     },
-    pose: (e) =>
-      pedalChain(e, {
+    pose: (e) => {
+      const { near, far } = ellipticalGrips(e);
+      return pedalChain(e, {
         hip: ELLIPTICAL_HIP,
         lean: 4,
         crank: ELLIPTICAL_CRANK,
         rx: 20,
         ry: 6,
-        hands: swingHandle(e, ELLIPTICAL_HANDLE_PIVOT, 96, 0.15, Math.PI),
-      }),
+        hands: near,
+        // The profile renderer applies this depth shift AFTER the pose.
+        // Aim the far wrist before it so its visible fist meets the grip.
+        farHands: [far[0] - FAR_ARM_SHIFT[0], far[1] - FAR_ARM_SHIFT[1]],
+      });
+    },
     scene: (e, pose) => {
-      const h = swingHandle(e, ELLIPTICAL_HANDLE_PIVOT, 96, 0.15, Math.PI);
-      const c = ELLIPTICAL_CRANK;
+      const { near, far } = ellipticalGrips(e);
       const pedal = (side: "L" | "R") => {
         const ankle = applyToPoint(
           SIDE_ANCHORS.ankle,
@@ -9373,21 +9389,36 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
             .flatMap((piece) => piece.outline)
             .map((point) => applyToPoint(point, pose[`shank${side}`] ?? [])[1])
         );
-        const x = ankle[0] - 10;
+        const x = ankle[0] - 12;
         const y = sole + 1;
+        const isFar = side === "R";
         return (
-          `<line x1="${c[0]}" y1="${c[1]}" x2="${ankle[0].toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="2.4"/>` +
-          `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="30" height="3" rx="1" fill="${GEAR}"/>`
+          `<line x1="28" y1="180" x2="${x.toFixed(1)}" y2="${(y + 2).toFixed(1)}" stroke="${isFar ? GEAR_FAR : GEAR_DARK}" stroke-width="3.2" stroke-linecap="round"/>` +
+          `<rect data-elliptical-pedal="${isFar ? "far" : "near"}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="35" height="3" rx="1.5" fill="${isFar ? GEAR_FAR : GEAR}" stroke="${GEAR_EDGE}" stroke-width="0.5"/>`
         );
       };
+      const lever = (side: "near" | "far", pivot: Pt, grip: Pt) =>
+        `<line data-elliptical-handle="${side}" x1="${pivot[0]}" y1="${pivot[1]}" x2="${grip[0].toFixed(2)}" y2="${grip[1].toFixed(2)}" stroke="${side === "far" ? GEAR_FAR : GEAR_DARK}" stroke-width="${side === "far" ? 3.4 : 4.4}" stroke-linecap="round"/>` +
+        `<rect x="${(grip[0] - 2.5).toFixed(2)}" y="${(grip[1] - 8).toFixed(2)}" width="5" height="16" rx="2.5" fill="${side === "far" ? GEAR_FAR : GEAR}"/>`;
       return (
-        `<ellipse cx="${c[0]}" cy="${c[1]}" rx="22" ry="8" fill="none" stroke="${GEAR_DARK}" stroke-width="2.4"/>` +
+        `<g data-elliptical-fixed="true">` +
+        `<rect x="0" y="198" width="137" height="5" rx="2.5" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        `<rect x="4" y="201" width="17" height="4" rx="2" fill="${GEAR_FAR}"/>` +
+        `<rect x="116" y="201" width="17" height="4" rx="2" fill="${GEAR_FAR}"/>` +
+        `<circle cx="28" cy="179" r="17" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="1"/>` +
+        `<circle cx="28" cy="179" r="10" fill="${GEAR_FAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        `<circle cx="28" cy="179" r="3" fill="${GEAR}"/>` +
+        `<path d="M28 179 L61 198 L111 198 M88 168 L111 198 L132 198" fill="none" stroke="${GEAR}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>` +
+        `<path d="M108 198 L105 118" fill="none" stroke="${GEAR_DARK}" stroke-width="6" stroke-linecap="round"/>` +
+        `<path d="M97 124 L114 124 L118 109 L105 107 Z" fill="${GEAR_FAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        `<circle cx="${ELLIPTICAL_NEAR_PIVOT[0]}" cy="${ELLIPTICAL_NEAR_PIVOT[1]}" r="4" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        `</g>` +
         pedal("R") +
         pedal("L") +
-        `<line x1="${ELLIPTICAL_HANDLE_PIVOT[0]}" y1="${ELLIPTICAL_HANDLE_PIVOT[1]}" x2="${h[0].toFixed(1)}" y2="${h[1].toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="3.4" stroke-linecap="round"/>` +
-        `<circle cx="${ELLIPTICAL_HANDLE_PIVOT[0]}" cy="${ELLIPTICAL_HANDLE_PIVOT[1]}" r="3.2" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
-        `<line x1="${ELLIPTICAL_HANDLE_PIVOT[0] + 24}" y1="${ELLIPTICAL_HANDLE_PIVOT[1] + 6}" x2="${ELLIPTICAL_HANDLE_PIVOT[0] + 24}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
-        `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="150" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+        lever("far", ELLIPTICAL_FAR_PIVOT, far) +
+        lever("near", ELLIPTICAL_NEAR_PIVOT, near) +
+        `<circle cx="${ELLIPTICAL_FAR_PIVOT[0]}" cy="${ELLIPTICAL_FAR_PIVOT[1]}" r="2.6" fill="${GEAR_FAR}"/>` +
+        `<circle cx="${ELLIPTICAL_NEAR_PIVOT[0]}" cy="${ELLIPTICAL_NEAR_PIVOT[1]}" r="2.6" fill="${GEAR}"/>`
       );
     },
   },

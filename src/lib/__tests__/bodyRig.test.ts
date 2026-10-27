@@ -49,35 +49,59 @@ describe("body demo cycle timing", () => {
 });
 
 describe("machine fallback contacts", () => {
-  it("keeps both elliptical shoes on moving pedals and its hand on the lever", () => {
+  it("keeps both elliptical shoes on moving pedals and both hands on opposing levers", () => {
     const demo = BODY_DEMOS.elliptical;
-    for (const t of [0, 0.25, 0.5, 0.75]) {
+    const fixed: string[] = [];
+    const strideSignatures = new Set<string>();
+    const leverX: Record<"near" | "far", number[]> = { near: [], far: [] };
+    for (const t of [0, 1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6]) {
       const pose = demo.pose(t);
       const scene = demo.scene!(t, pose);
-      const lever = scene.match(
-        /<line x1="92" y1="168" x2="([\d.]+)" y2="([\d.]+)"/
-      );
-      expect(lever).not.toBeNull();
-      const hand = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
-      expect(
-        Math.hypot(hand[0] - Number(lever![1]), hand[1] - Number(lever![2])),
-        `elliptical grip @${t}`
-      ).toBeLessThan(0.1);
-      const pedals = [...scene.matchAll(/<rect x="[\d.]+" y="([\d.]+)" width="30" height="3"/g)];
-      expect(pedals).toHaveLength(2);
-      for (const [side, index] of [["R", 0], ["L", 1]] as const) {
+      fixed.push(scene.match(/<g data-elliptical-fixed="true">.*?<\/g>/)?.[0] ?? "");
+      for (const [side, group, shift] of [
+        ["near", "handL", [0, 0]],
+        ["far", "handR", FAR_ARM_SHIFT],
+      ] as const) {
+        const lever = scene.match(
+          new RegExp(`data-elliptical-handle="${side}" x1="([\\d.]+)" y1="([\\d.]+)" x2="([\\d.]+)" y2="([\\d.]+)"`)
+        );
+        expect(lever, `${side} lever @${t}`).not.toBeNull();
+        const wrist = applyToPoint(SIDE_ANCHORS.hand, pose[group] ?? []);
+        expect(
+          Math.hypot(
+            wrist[0] + shift[0] - Number(lever![3]),
+            wrist[1] + shift[1] - Number(lever![4])
+          ),
+          `elliptical ${side} grip @${t}`
+        ).toBeLessThan(0.12);
+        leverX[side].push(Number(lever![3]));
+      }
+      const ankles: string[] = [];
+      for (const [side, label] of [["R", "far"], ["L", "near"]] as const) {
         const shank = pose[`shank${side}`] ?? [];
+        const ankle = applyToPoint(SIDE_ANCHORS.ankle, shank);
+        ankles.push(`${ankle[0].toFixed(1)},${ankle[1].toFixed(1)}`);
         const sole = Math.max(
           ...SIDE_PIECES.filter((part) => part.group === `foot${side}`)
             .flatMap((part) => part.outline)
             .map((point) => applyToPoint(point, shank)[1])
         );
+        const pedal = scene.match(
+          new RegExp(`data-elliptical-pedal="${label}" x="([\\d.]+)" y="([\\d.]+)" width="35"`)
+        );
+        expect(pedal, `${label} pedal @${t}`).not.toBeNull();
         expect(
-          Number(pedals[index][1]) - sole,
+          Number(pedal![2]) - sole,
           `elliptical ${side} sole support @${t}`
         ).toBeCloseTo(1, 0);
       }
+      strideSignatures.add(ankles.join("|"));
     }
+    expect(new Set(fixed).size, "one fixed machine across six frames").toBe(1);
+    expect(strideSignatures.size, "six distinct stride poses").toBe(6);
+    expect(leverX.near[0]).toBeLessThan(leverX.near[3]);
+    expect(leverX.far[0]).toBeGreaterThan(leverX.far[3]);
+    expect(demo.scene!(0, demo.pose(0))).toBe(demo.scene!(1, demo.pose(1)));
   });
 
 });
@@ -4580,6 +4604,8 @@ describe("renderBodyDemo", () => {
       // cycle from the near one by construction.
       "treadmill",
       "incline-treadmill-walk",
+      // Opposing elliptical handles follow the two pedal phases.
+      "elliptical",
       // Batch 16: the far arm is half a stroke behind the near one.
       "swimming",
       // Batch 17: the man-maker rows one arm at a time; the get-up holds
