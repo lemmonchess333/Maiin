@@ -57,7 +57,8 @@ function serverPushes(): { name: string; title: string; body: string }[] {
 /** Files that write a notification's words inline, as `title:` / `body:`. */
 const INLINE = [
   "src/hooks/useStreakReminder.ts",
-  "src/hooks/useWorkoutReminders.ts",
+  // The workout reminder's words, which its hook schedules.
+  "src/lib/workoutReminderCopy.ts",
   "src/hooks/useMealReminders.ts",
   "src/lib/notifications.ts",
   // The test push Settings sends to check a device.
