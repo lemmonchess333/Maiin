@@ -33,6 +33,9 @@ export interface PostedExercise {
   /** The first set's reps (seconds for a timed hold) and load. */
   targetReps: number;
   targetWeightKg: number;
+  /** The superset it was done in (Mob1 call 2), as the workout records
+   *  it. Absent for an exercise done on its own. */
+  superset?: number;
 }
 
 export type ActivityPost = {

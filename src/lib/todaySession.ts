@@ -40,6 +40,7 @@ import {
   liftInProgress,
   resumableWorkout,
   routineInProgress,
+  emptyWorkoutInProgress,
   runInProgress,
   storedRunName,
   storedRunTemplate,
@@ -296,6 +297,8 @@ function placeInProgress(
     inFlight.routines ?? NO_ROUTINES
   );
   if (workout?.kind === "routine") elsewhere.push(routineInProgress(workout));
+  if (workout?.kind === "empty")
+    elsewhere.push(emptyWorkoutInProgress(workout));
   const resumable = workout?.kind === "programme" ? workout : null;
   if (resumable) {
     const day = programState?.workouts?.[resumable.dayIndex];

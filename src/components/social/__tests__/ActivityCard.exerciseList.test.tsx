@@ -131,6 +131,46 @@ const exerciseCountShown = () =>
     .find((el) => !el.classList.contains("sr-only"))?.previousElementSibling
     ?.textContent;
 
+describe("a superset on a lift card (Mob1 call 2)", () => {
+  it("tags the exercises done in it, and no others", () => {
+    const post = liftPost(
+      { uid: "author", displayName: "Test Author" },
+      {
+        title: "Push",
+        durationMinutes: 30,
+        exercises: [
+          {
+            ...done("Bench Press", "bench-press", "horizontal_push", 3, 8, 60),
+            superset: 1,
+          },
+          {
+            ...done("Cable Fly", "cable-fly", "horizontal_push", 3, 12, 20),
+            superset: 1,
+          },
+          done("Overhead Press", "overhead-press", "vertical_push", 3, 8, 35),
+        ],
+      },
+      { visibility: "public" }
+    );
+    renderCard(feedItem(post as unknown as Record<string, unknown>));
+    expect(
+      within(
+        screen.getByRole("button", { name: "Compare your Bench Press" })
+      ).getByText("Superset A")
+    ).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByRole("button", { name: "Compare your Cable Fly" })
+      ).getByText("Superset A")
+    ).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByRole("button", { name: "Compare your Overhead Press" })
+      ).queryByText(/^Superset/)
+    ).toBeNull();
+  });
+});
+
 describe("a lift card's exercise list", () => {
   it("draws three rows and one row that opens the post for the rest", () => {
     renderCard(feedItem(PUSH_DAY as unknown as Record<string, unknown>));

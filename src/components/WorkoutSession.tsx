@@ -39,6 +39,18 @@ import {
   MoreHorizontal,
   SkipForward,
 } from "lucide-react";
+import type { Exercise } from "@/lib/exercises";
+import { exerciseAddedToday } from "@/features/program/sessionAdd";
+import { generateInstanceId } from "@/features/program/programTypes";
+import { workoutSourceForScope } from "@/features/program/emptyWorkout";
+import {
+  leaveSuperset,
+  nextInSuperset,
+  supersetAt,
+  supersetWith,
+  supersetWithNext,
+} from "@/features/program/superset";
+
 import { Button } from "@/components/ui/Button";
 import {
   FIELD_EDGE,
@@ -65,7 +77,6 @@ import { startingSetRows } from "@/features/program/setStartValues";
 import { swappedForToday } from "@/features/program/sessionSwap";
 import { followedWeight } from "@/features/program/sessionSets";
 import { loadContextFrom } from "@/features/program/startingLoads";
-import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import KeepSwapSheet, {
   type SwapToKeep,
 } from "@/components/workout/KeepSwapSheet";
@@ -173,7 +184,18 @@ import {
   kitLoadToKg,
 } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
-// The exercise list for "Swap for today", loaded when it is opened.
+// An exercise's menu (swap, skip, superset), loaded when it is first
+// opened: the workout screen's chunk has no room to spare.
+const ExerciseMenuSheet = lazyRetry(
+  () => import("@/components/workout/ExerciseMenuSheet")
+);
+// The screen of a session with no exercises yet, which most never show.
+const EmptySessionScreen = lazyRetry(
+  () => import("@/components/workout/EmptySessionScreen")
+);
+// The exercise list for "Swap for today" and "Add exercise", loaded when
+// it is opened.
+
 const ExercisePicker = lazyRetry(
   () => import("@/components/program/ExercisePicker")
 );
@@ -185,7 +207,12 @@ interface WorkoutDay {
   completed: boolean;
 }
 
+/** An exercise's rows, by its slot, or its place when it has none. */
+const rowKey = (ex: { instanceId?: string }, index: number) =>
+  ex.instanceId ?? `#${index}`;
+
 /** "Set 2" → "set 2", for the middle of a sentence. */
+
 const lowerFirst = (text: string) =>
   text.charAt(0).toLowerCase() + text.slice(1);
 
@@ -396,9 +423,22 @@ export default function WorkoutSession({
   const [currentSetIndex, setCurrentSetIndex] = useState(
     resumeCursor?.setIndex ?? 0
   );
-  // Set once each row has its start (`startingSetRows`); a resumed draft's
-  // rows already have theirs.
-  const rowsStarted = useRef(!!initialDraft?.setLogs);
+  /* The rows still to start from what they did last time
+     (`startingSetRows`), by their exercise's slot: the session's own at
+     first (a resumed draft's rows already have theirs), and any exercise
+     added, or set out again by Start fresh, before last time is read.
+     Started when it is (`history`, below), from the session as it is
+     then. */
+  const rowsToStart = useRef(
+    new Set<string>(
+      initialDraft?.setLogs
+        ? []
+        : initialDay.exercises.map((ex, i) => rowKey(ex, i))
+    )
+  );
+  /* Exercises added before last time was read: their first weight was a
+     first guess, and follows what they were last lifted at once it is. */
+  const weightsToFollow = useRef(new Set<string>());
   const [setLogs, setSetLogs] = useState<SetLog[][]>(() => {
     if (initialDraft?.setLogs) return initialDraft.setLogs as SetLog[][];
     // Backlog #12: pre-fill a warm-up ramp on the first loaded exercise per
@@ -417,6 +457,8 @@ export default function WorkoutSession({
      question about today's swaps. */
   const [menuFor, setMenuFor] = useState<number | null>(null);
   const [swapFor, setSwapFor] = useState<number | null>(null);
+  /* "Add exercise" (Mob1 call 1): the picker, open to add to today. */
+  const [adding, setAdding] = useState(false);
   const [keepQuestion, setKeepQuestion] = useState<{
     open: boolean;
     swaps: SwapToKeep[];
@@ -426,6 +468,15 @@ export default function WorkoutSession({
   const lastSetsById = useRef(
     new Map<string, { weight: number; reps: number }[]>()
   );
+  /** Last time, once it has been read: each lift's sets in its own slot
+   *  (or its exercise's, `lastSetsBySlot`). Null until then. */
+  const [history, setHistory] = useState<{
+    lastOf: (
+      ex: ProgramExercise
+    ) => { weight: number; reps: number }[] | undefined;
+  } | null>(null);
+  /** Bumped when rows are queued to start once `history` is in hand. */
+  const [rowsQueued, setRowsQueued] = useState(0);
   // Earned complexity (experienceModel.ts): RPE is a genuinely useful tool
   // for someone who can calibrate it and noise-plus-jargon for someone who
   // cannot, so an advanced lifter opens the session with it on and everyone
@@ -479,8 +530,7 @@ export default function WorkoutSession({
   useEffect(() => {
     const container = tabsRef.current;
     const activeBtn = container?.children[currentExIndex] as
-      | HTMLElement
-      | undefined;
+      HTMLElement | undefined;
     /* No `behavior`: the default defers to the computed
        `scroll-behavior`, which Reduce Motion turns to `auto`. An
        explicit "smooth" would animate the rail regardless. */
@@ -517,7 +567,8 @@ export default function WorkoutSession({
 
   // Pre-fill weights/reps from most recent previous session + build PR map
   useEffect(() => {
-    if (!user?.uid || !day.exercises.length) return;
+    // An empty workout reads last time too: what it adds starts from there.
+    if (!user?.uid) return;
 
     const fetchPreviousWeights = async () => {
       // The 50 newest workouts, including one finished on this phone that
@@ -567,22 +618,21 @@ export default function WorkoutSession({
       );
 
       // Each row starts from what that set did last time (Lift4,
-      // `startingSetRows`), once per session: a resumed draft's rows, and
-      // anything typed since, hold what the person put there.
-      if (!rowsStarted.current) {
-        rowsStarted.current = true;
-        setSetLogs((prev) =>
-          prev.map((rows, i) => {
-            const ex = day.exercises[i];
-            if (!ex || rows.some((set) => set.completed)) return rows;
-            return startingSetRows(rows, ex, lastSets[i]);
-          })
-        );
-      }
+      // `startingSetRows`), once: the effect below starts the rows still
+      // waiting, from the session as it is by then.
+      setHistory({
+        lastOf: (ex) => {
+          const sets = lastOf(ex);
+          return sets && asRows(sets);
+        },
+      });
 
       // The best-lift map, as stored or rebuilt from history
       // (liftRecordsStore.ts). If it cannot be read, this session celebrates
-      // no bests and leaves the stored map alone.
+      // no bests and leaves the stored map alone. Read once: the list
+      // changing under the session (a swap, an added exercise) read it
+      // again, and the bests already set this session went with it.
+      if (loadedRecordsRef.current) return;
       try {
         const records = await loadLiftRecords(user.uid, recent);
         loadedRecordsRef.current = records;
@@ -599,6 +649,49 @@ export default function WorkoutSession({
     fetchPreviousWeights();
   }, [user?.uid, day.exercises, planLifts]);
 
+  /* The rows waiting to start, started once last time is read: from the
+     session as it is now, so an exercise added while the read was out
+     starts from its own last sets too, with the weight it was last lifted
+     at. A row with a set done, or a resumed draft's, holds what is
+     there. */
+  useEffect(() => {
+    if (!history || rowsToStart.current.size === 0) return;
+    const waiting = new Set(rowsToStart.current);
+    rowsToStart.current.clear();
+    const exercises = prescription.exercises;
+    const untouched = (i: number) =>
+      !(setLogs[i] ?? []).some((set) => set.completed);
+    const followed = exercises.map((ex, i) => {
+      const key = rowKey(ex, i);
+      if (!waiting.has(key) || !weightsToFollow.current.has(key)) return ex;
+      weightsToFollow.current.delete(key);
+      if (!untouched(i)) return ex;
+      const last = lastSetsById.current.get(ex.exerciseId);
+      const weight = last ? followedWeight(last) : null;
+      return weight && weight > 0 ? { ...ex, weight } : ex;
+    });
+    const rebuilt = buildInitialSetLogs(followed, liftUnit);
+    const byKey = new Map(followed.map((ex, i) => [rowKey(ex, i), ex]));
+    if (followed.some((ex, i) => ex !== exercises[i]))
+      setPrescription((current) => ({
+        ...current,
+        exercises: current.exercises.map(
+          (ex, i) => byKey.get(rowKey(ex, i)) ?? ex
+        ),
+      }));
+    setSetLogs((logs) =>
+      logs.map((rows, i) => {
+        const ex = followed[i];
+        if (!ex || !waiting.has(rowKey(ex, i))) return rows;
+        if (rows.some((set) => set.completed)) return rows;
+        const base: SetLog[] = ex !== exercises[i] ? rebuilt[i] : rows;
+        return startingSetRows(base, ex, history.lastOf(ex));
+      })
+    );
+    // The session as it is when last time arrives is all this reads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [history, rowsQueued]);
+
   // Save on meaningful edits. Read elapsed time at the save itself, so a
   // draft stays accurate even when the phone has suspended display ticks.
   useEffect(() => {
@@ -607,7 +700,14 @@ export default function WorkoutSession({
     );
     // Once a draft exists, Undo must also persist zero completed sets.
     // Keep the entered values, notes and session choices with that reversal.
-    if (!hasProgress && !hasRecoveryDraft.current) return;
+    // A session changed from how it was set out (an exercise added, a
+    // superset, a swap) is kept before any set is done: an empty workout
+    // with its exercises added is a workout to come back to.
+    const reshaped =
+      prescription.exercises.length !== initialDay.exercises.length ||
+      (prescription.supersets?.length ?? 0) > 0 ||
+      (prescription.swaps?.length ?? 0) > 0;
+    if (!hasProgress && !reshaped && !hasRecoveryDraft.current) return;
     if (completionPendingRef.current) return;
     const stored = saveDraft({
       dayIndex,
@@ -633,6 +733,7 @@ export default function WorkoutSession({
     day.dayName,
     saveDraft,
     prescription,
+    initialDay.exercises.length,
     originalStartedAt,
     sessionProgrammeContext,
     sessionStartedAt,
@@ -744,9 +845,7 @@ export default function WorkoutSession({
     void (async () => {
       try {
         const { doc, getDocFromServer } = await import("firebase/firestore");
-        const source = draftScope?.startsWith("routine:")
-          ? "routine"
-          : "programme";
+        const source = workoutSourceForScope(draftScope);
         const snapshot = await getDocFromServer(
           doc(
             db,
@@ -848,6 +947,12 @@ export default function WorkoutSession({
   if (safeExIndex !== currentExIndex) setCurrentExIndex(safeExIndex);
 
   const currentExercise = day.exercises[safeExIndex];
+  /* "Superset with Push-Ups" under the exercise's name, in one. */
+  const supersetLine = supersetWith(
+    day.exercises,
+    prescription.supersets,
+    safeExIndex
+  );
 
   // Plates belong to a barbell only: the per-side hint and the plate
   // calculator both read this, so a cable or dumbbell lift offers neither.
@@ -1197,6 +1302,32 @@ export default function WorkoutSession({
     );
     const isLastSet = isExerciseDone(updatedLogs[currentExIndex]);
     const next = nextIncompleteSet(updatedLogs, currentExIndex);
+    /* In a superset (Mob1 call 2) the next set is the next exercise's in
+       the group, A1 → B1 → A2 → B2, and the rest waits for the end of the
+       round: it runs after the group's last exercise, before its first
+       comes round again. A warm-up keeps to its exercise until its ramp
+       is done. Once the group has nothing left, the session moves on as
+       it does from any exercise. */
+    const members = supersetAt(
+      day.exercises,
+      prescription.supersets,
+      currentExIndex
+    );
+    const turn = members
+      ? nextInSuperset(
+          updatedLogs,
+          members,
+          currentExIndex,
+          set.type === "warmup"
+        )
+      : null;
+    const takeTurn = (to: NonNullable<typeof turn>) => {
+      setCurrentExIndex(to.exerciseIndex);
+      setCurrentSetIndex(to.setIndex);
+      if (!to.rest) stopRest();
+      else if (autoRest)
+        startRest(day.exercises[currentExIndex], set.type === "warmup");
+    };
 
     if (isLastSet) {
       // Backlog #2 — session-volume PR (three-axis PR, Green/B1): most
@@ -1243,7 +1374,9 @@ export default function WorkoutSession({
       // If nothing is eligible (an exercise logged as warm-ups only, or a lone
       // drop set) we skip entirely — there is no working-set evidence, and
       // inventing some would be worse than waiting for the next session.
-      if (!next) {
+      if (turn) {
+        takeTurn(turn);
+      } else if (!next) {
         completeSession();
       } else {
         setCurrentExIndex(next.exerciseIndex);
@@ -1251,6 +1384,8 @@ export default function WorkoutSession({
         if (autoRest)
           startRest(day.exercises[currentExIndex], set.type === "warmup");
       }
+    } else if (turn) {
+      takeTurn(turn);
     } else {
       // Move to next set, start rest timer (unless auto-start is off)
       setCurrentSetIndex(next?.setIndex ?? 0);
@@ -1258,6 +1393,18 @@ export default function WorkoutSession({
         startRest(day.exercises[currentExIndex], set.type === "warmup");
     }
   };
+
+  /* Supersets (Mob1 call 2), from an exercise's menu: with the exercise
+     after it, or out of its group again. */
+  const regroup = (index: number, withNext: boolean) =>
+    setPrescription((current) => ({
+      ...current,
+      supersets: (withNext ? supersetWithNext : leaveSuperset)(
+        current.exercises,
+        current.supersets,
+        index
+      ),
+    }));
 
   const refreshRecords = (logs: SetLog[][]) => {
     const next = sessionRecords(
@@ -1399,6 +1546,61 @@ export default function WorkoutSession({
     setLastCompleted(null);
     setCurrentExIndex(index);
     setCurrentSetIndex(0);
+  };
+
+  /**
+   * "Add exercise" (Mob1 call 1): the exercises picked join the end of the
+   * session, for today, with the numbers and first weights an added lift
+   * takes (`exerciseAddedToday`), each set starting from what it did last
+   * time. They are saved with the session and leave the plan as it is.
+   * The session moves on to the first of them.
+   */
+  const addExercises = (picked: readonly Exercise[]) => {
+    if (picked.length === 0) return;
+    const start = day.exercises.length;
+    const experience = toExperience(profile?.experience);
+    const loadContext = loadContextFrom(profile);
+    // Before last time is read, an added exercise starts from a first
+    // guess, and its rows wait to start (`rowsToStart`).
+    const known = history !== null;
+    const added = picked.map((exercise) => {
+      const last = known ? lastSetsById.current.get(exercise.id) : undefined;
+      return exerciseAddedToday(exercise.id, {
+        instanceId: generateInstanceId(),
+        goal: profile?.primaryGoal,
+        experience,
+        loadContext,
+        lastWeight: last ? followedWeight(last) : null,
+      });
+    });
+    // The warm-up ramp goes to the first loaded lift for each body part,
+    // so the rows are built as part of the whole session.
+    const rows = buildInitialSetLogs([...day.exercises, ...added], liftUnit)
+      .slice(start)
+      .map((built, k) =>
+        known
+          ? startingSetRows(
+              built,
+              added[k],
+              lastSetsById.current.get(added[k].exerciseId)
+            )
+          : built
+      );
+    if (!known)
+      added.forEach((ex, k) => {
+        const key = rowKey(ex, start + k);
+        rowsToStart.current.add(key);
+        weightsToFollow.current.add(key);
+      });
+    setPrescription((current) => ({
+      ...current,
+      exercises: [...current.exercises, ...added],
+    }));
+    setSetLogs((logs) => [...logs, ...rows]);
+    setLastCompleted(null);
+    setCurrentExIndex(start);
+    setCurrentSetIndex(0);
+    haptic("light");
   };
 
   /** Skipping keeps the sets done and sets the rest aside. */
@@ -1623,17 +1825,24 @@ export default function WorkoutSession({
 
   const handleStartFresh = () => {
     hasRecoveryDraft.current = false;
-    // A fresh start drops the draft's swaps and skips with its sets.
-    const planned = prescription.exercises.map((ex, i) =>
-      swapAt(i) ? (plannedAt(i) ?? ex) : ex
+    // A fresh start is the session as it was set out: the draft's swaps,
+    // skips, added exercises and supersets go with its sets and notes, so
+    // an empty workout starts empty again.
+    const fresh = sessionPrescription(
+      initialDay,
+      initialCompletionId,
+      progressionBaseline
     );
-    setPrescription((current) => ({
-      ...current,
-      exercises: planned,
-      swaps: [],
-    }));
+    setPrescription(fresh);
     setSkippedRows({});
-    setSetLogs(buildInitialSetLogs(planned, liftUnit));
+    setSetLogs(buildInitialSetLogs(fresh.exercises, liftUnit));
+    // Its rows start from last time, as a new session's do.
+    weightsToFollow.current.clear();
+    rowsToStart.current = new Set(
+      fresh.exercises.map((ex, i) => rowKey(ex, i))
+    );
+    setRowsQueued((n) => n + 1);
+
     setExerciseNotes({});
     setCurrentExIndex(0);
     setCurrentSetIndex(0);
@@ -1647,14 +1856,45 @@ export default function WorkoutSession({
     setShowResumePrompt(false);
   };
 
-  // A day with no exercises cannot be logged, and every render path below
-  // dereferences `currentExercise`. Clamping cannot save this case — there is
-  // no valid index into an empty list — so bail to the caller rather than
-  // throw the whole /program route into the error boundary. Placed AFTER every
-  // hook: this file's own header warns that gated early returns flipping
-  // between renders are the classic cause of React error #310.
+  /* The picker for "Add exercise", in add mode: as many as are ticked. */
+  const addPicker = adding && (
+    <Suspense fallback={null}>
+      <ExercisePicker
+        open
+        headerTitle="Add exercise"
+        onSelect={(picked) => addExercises([picked])}
+        onMultiSelect={addExercises}
+        onClose={() => setAdding(false)}
+      />
+    </Suspense>
+  );
+  const openAddPicker = () => {
+    haptic("light");
+    setAdding(true);
+  };
+
+  // A session with no exercises yet: an empty workout (Mob1 call 1), or a
+  // day with nothing in it. Every render path below dereferences
+  // `currentExercise`, so it has a screen of its own, whose one action is
+  // to add the first exercise. Placed AFTER every hook: this file's own
+  // header warns that gated early returns flipping between renders are the
+  // classic cause of React error #310.
   if (day.exercises.length === 0) {
-    return null;
+    return (
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 z-50 bg-background pt-[var(--safe-top)]" />
+        }
+      >
+        <EmptySessionScreen
+          title={dayLabel ?? liftDayLine(day.dayName)}
+          onClose={onClose}
+          onAdd={openAddPicker}
+        >
+          {addPicker}
+        </EmptySessionScreen>
+      </Suspense>
+    );
   }
 
   // Session complete screen
@@ -1992,6 +2232,11 @@ export default function WorkoutSession({
                 </div>
               )}
             </div>
+            {supersetLine && (
+              <p className="text-sm font-medium text-lifting-strong">
+                {supersetLine}
+              </p>
+            )}
             {skippedRows[safeExIndex] !== undefined && (
               <p className="text-sm text-muted-foreground">Skipped today</p>
             )}
@@ -2588,6 +2833,17 @@ export default function WorkoutSession({
             <ExerciseRowSummary exercise={upNext} thumbSize="sm" />
           </Card>
         )}
+
+        {/* Another exercise, for today only (Mob1 call 1): it joins the
+            end of the session and leaves the plan as it is. */}
+        <Button
+          variant="secondary"
+          fullWidth
+          leftIcon={<Plus className="size-4" aria-hidden="true" />}
+          onClick={openAddPicker}
+        >
+          Add exercise
+        </Button>
       </div>
 
       {/* Docked above the bar, not in the scroll: it takes its room from
@@ -2756,22 +3012,33 @@ export default function WorkoutSession({
       />
 
       {menuFor !== null && day.exercises[menuFor] && (
-        <ExerciseMenuSheet
-          open
-          onClose={() => setMenuFor(null)}
-          exerciseName={day.exercises[menuFor].name}
-          nothingDone={!(setLogs[menuFor] ?? []).some((set) => set.completed)}
-          swappedFor={swapAt(menuFor) ? plannedAt(menuFor)?.name : undefined}
-          skipped={skippedRows[menuFor] !== undefined}
-          onSwap={() => setSwapFor(menuFor)}
-          onSwapBack={() => {
-            const planned = plannedAt(menuFor);
-            if (planned) swapForToday(menuFor, planned.exerciseId);
-          }}
-          onSkip={() => skipExercise(menuFor)}
-          onUnskip={() => unskipExercise(menuFor)}
-        />
+        <Suspense fallback={null}>
+          <ExerciseMenuSheet
+            open
+            onClose={() => setMenuFor(null)}
+            exerciseName={day.exercises[menuFor].name}
+            nothingDone={!(setLogs[menuFor] ?? []).some((set) => set.completed)}
+            swappedFor={swapAt(menuFor) ? plannedAt(menuFor)?.name : undefined}
+            skipped={skippedRows[menuFor] !== undefined}
+            // An exercise added today stands in for nothing: there is no
+            // planned lift to swap it for.
+            onSwap={plannedAt(menuFor) ? () => setSwapFor(menuFor) : undefined}
+            onSwapBack={() => {
+              const planned = plannedAt(menuFor);
+              if (planned) swapForToday(menuFor, planned.exerciseId);
+            }}
+            onSkip={() => skipExercise(menuFor)}
+            session={{
+              exercises: day.exercises,
+              supersets: prescription.supersets,
+              index: menuFor,
+            }}
+            onSuperset={(withNext) => regroup(menuFor, withNext)}
+            onUnskip={() => unskipExercise(menuFor)}
+          />
+        </Suspense>
       )}
+
       {swapFor !== null && day.exercises[swapFor] && (
         <Suspense fallback={null}>
           <ExercisePicker
@@ -2787,6 +3054,7 @@ export default function WorkoutSession({
           />
         </Suspense>
       )}
+      {addPicker}
 
       <PlateCalculatorSheet
         open={showPlates}

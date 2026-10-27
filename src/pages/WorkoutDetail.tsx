@@ -27,8 +27,16 @@
  * snapshot resolves.
  */
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Share2, Users, Check, Dumbbell } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Bookmark,
+  Share2,
+  Users,
+  Check,
+  Dumbbell,
+} from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
@@ -48,6 +56,8 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import StatFigure from "@/components/ui/StatFigure";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import SetTypeChip from "@/components/workout/SetTypeChip";
+import SupersetTag from "@/components/workout/SupersetTag";
+
 import SessionLoadState from "@/components/session/SessionLoadState";
 import { useSessionDoc } from "@/hooks/useSessionDoc";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
@@ -55,6 +65,9 @@ import CircleShareSheet from "@/components/social/CircleShareSheet";
 import WorkoutFeedShareSheet from "@/components/workout/WorkoutFeedShareSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import CorrectWorkoutSheet from "@/components/workout/CorrectWorkoutSheet";
+import SaveRoutineSheet from "@/components/social/SaveRoutineSheet";
+import { workoutExercisesToRoutine } from "@/lib/savedRoutines";
+
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import type { LiftUnit } from "@/lib/liftLoad";
 import { formatKitLoad } from "@/features/program/loadSteps";
@@ -108,17 +121,25 @@ function ExerciseRecord({
   const timed = exercise.repUnit === "seconds";
   const liftUnit = useLiftUnit();
   return (
-    <Card padded={false} className="@container">
+    <Card padded={false} className="@container overflow-hidden">
       {/* The drawing gives way under 10em of card (double size): beside it
           the name had a column narrower than "Squat". A long one-word name
-          breaks rather than running out of the card. Wide-first. */}
-      <div className="flex items-center gap-3 p-3">
+          breaks rather than running out of the card. Wide-first. The row
+          opens the exercise's own history, as an exercise name does
+          wherever else it is listed. */}
+      <Link
+        to={`/history/exercise/${encodeURIComponent(exercise.exerciseName)}`}
+        className="flex items-center gap-3 p-3 transition-colors active:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      >
         <ExerciseThumb
           exerciseId={exercise.exerciseId}
           size="sm"
           className="@max-[10em]:hidden"
         />
         <div className="min-w-0 flex-1">
+          {exercise.superset !== undefined && (
+            <SupersetTag group={exercise.superset} className="mb-0.5" />
+          )}
           <h3 className="text-base font-semibold text-foreground text-balance break-words hyphens-auto">
             {exercise.exerciseName}
           </h3>
@@ -126,7 +147,11 @@ function ExerciseRecord({
             {sets.length} {sets.length === 1 ? "set" : "sets"}
           </p>
         </div>
-      </div>
+        <ChevronRight
+          aria-hidden="true"
+          className="size-4 shrink-0 text-muted-foreground"
+        />
+      </Link>
       {sets.length > 0 && (
         <ol className="border-t border-border/40">
           {sets.map((set, i) => {
@@ -197,6 +222,7 @@ function WorkoutDetailContent() {
   const [circleOpen, setCircleOpen] = useState(false);
   const [feedOpen, setFeedOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [routineOpen, setRoutineOpen] = useState(false);
   /** Set optimistically once a feed post lands so the button flips to its
    *  "shared" state without a refetch. It belongs to the loaded doc it was
    *  set against: a fresh read (a retry, a correction) supersedes it and the
@@ -253,6 +279,7 @@ function WorkoutDetailContent() {
   ];
 
   const title = workoutTitle(workout);
+  const routineExercises = workoutExercisesToRoutine(exercises);
 
   const dateObj = workout.createdAt?.toDate?.() ?? parseLocalDate(workout.date);
   const dateStr = dateObj.toLocaleDateString("en-GB", {
@@ -349,6 +376,19 @@ function WorkoutDetailContent() {
               Correct workout
             </Button>
           )}
+          {/* Keep this session to run again. A person who never posts had
+              no way to save their own workout as a routine: the only one
+              was a post's menu. */}
+          {user && routineExercises.length > 0 && (
+            <Button
+              fullWidth
+              variant="secondary"
+              onClick={() => setRoutineOpen(true)}
+              leftIcon={<Bookmark className="size-4 shrink-0" />}
+            >
+              Save as routine
+            </Button>
+          )}
           {sharedActivityId ? (
             // Already posted — the completion flow's composer or an earlier
             // visit here. Re-posting would create a second activity doc for
@@ -404,6 +444,18 @@ function WorkoutDetailContent() {
             setEditOpen(false);
             retry();
           }}
+        />
+      )}
+      {user && routineOpen && (
+        <SaveRoutineSheet
+          open
+          onClose={() => setRoutineOpen(false)}
+          defaultName={title}
+          {...(sharedActivityId ? { sourceActivityId: sharedActivityId } : {})}
+          sourceAuthorId={user.uid}
+          sourceAuthorName={profile?.displayName || "Athlete"}
+          sourceWorkoutName={title}
+          exercises={routineExercises}
         />
       )}
       <ShareCardSheet

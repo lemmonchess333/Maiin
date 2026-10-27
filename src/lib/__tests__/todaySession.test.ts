@@ -18,6 +18,10 @@ import {
   routineDraftIdentity,
   type RoutineLayout,
 } from "@/features/program/routineSession";
+import {
+  EMPTY_WORKOUT_DAY_INDEX,
+  emptyWorkoutDraftIdentity,
+} from "@/features/program/emptyWorkout";
 
 /**
  * Today's session on Home, decided without the page. Every date here is a
@@ -1205,5 +1209,69 @@ describe("todaySession — a routine's workout under way", () => {
       resumeTarget: "/program?day=0&resume=1",
     });
     expect(newerDay.inProgressElsewhere).toEqual([]);
+  });
+});
+
+/* An empty workout under way (Mob1 call 1): one at a time, its draft named
+   by its page (`emptyWorkout.ts`), offered back on a strip of its own. */
+describe("todaySession — an empty workout under way", () => {
+  const liftDay = profileWith({ 3: "lift" });
+  const plan = programStateWith({ workouts: [PUSH, PULL, LEGS] });
+  const emptyDraft = (extra: Partial<WorkoutDraft> = {}): WorkoutDraft => ({
+    dayIndex: EMPTY_WORKOUT_DAY_INDEX,
+    dayName: "Workout",
+    // An exercise added since it began: the draft holds it, not its name.
+    setLogs: [
+      [
+        { reps: 12, weight: 8, completed: true, type: "working" },
+        { reps: 12, weight: 8, completed: false, type: "working" },
+      ],
+    ],
+    exerciseNotes: {},
+    elapsedSeconds: 300,
+    currentExIndex: 0,
+    savedAt: 2_000,
+    identity: emptyWorkoutDraftIdentity("s1"),
+    completionId: "c3",
+    completionCommandId: "c3",
+    ...extra,
+  });
+  const offered = (
+    drafts: WorkoutDraft[],
+    extra: Partial<TodaySessionInput> = {}
+  ) =>
+    todaySession(
+      input({
+        profile: liftDay,
+        programState: plan,
+        inFlight: { drafts, run: null, routines: new Map() },
+        ...extra,
+      })
+    );
+
+  it("gives it a strip of its own whose Resume opens its page", () => {
+    const session = offered([emptyDraft()]);
+    expect(session.inProgressElsewhere).toEqual([
+      {
+        sport: "lift",
+        name: "Workout",
+        sets: 1,
+        elapsedSeconds: 300,
+        resumeTarget: "/empty-workout?session=s1&resume=1",
+      },
+    ]);
+    // Today's planned day is untouched: its card still offers Start.
+    expect(session.lift).toMatchObject({ index: 0, name: "Push" });
+    expect(session.lift?.inProgress).toBeUndefined();
+  });
+
+  it("is offered to someone with no programme, and not once it is saved", () => {
+    expect(
+      offered([emptyDraft()], { profile: profileWith({}), programState: null })
+        .inProgressElsewhere
+    ).toEqual([expect.objectContaining({ name: "Workout" })]);
+    expect(
+      offered([emptyDraft({ completionPending: true })]).inProgressElsewhere
+    ).toEqual([]);
   });
 });

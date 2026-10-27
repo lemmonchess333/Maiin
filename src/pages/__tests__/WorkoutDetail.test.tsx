@@ -18,7 +18,15 @@
  *     one workout in the feed twice.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  waitFor,
+  act,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import {
   MemoryRouter,
   Routes,
@@ -38,6 +46,7 @@ vi.mock("@/lib/auth", () => ({
     user: { uid: "u1" },
     profile: { displayName: "Alex", uid: "u1" },
   }),
+  useUid: () => "u1",
 }));
 // The share-card sheet pulls in html-to-image + the full renderer; the page's
 // contract with it is "opens with this workout's numbers", which the feed
@@ -56,6 +65,8 @@ import {
   resetFirestore,
   failNextFirestore,
   unfiredFailures,
+  allPaths,
+  readDoc,
 } from "@/test/firestoreHarness";
 
 const SAVED = {
@@ -252,5 +263,105 @@ describe("WorkoutDetail", () => {
         screen.queryByRole("button", { name: /share to feed/i })
       ).toBeNull();
     });
+  });
+
+  it("saves the session's own work as a routine, never posted", async () => {
+    seedFirestore({ "users/u1/workouts/w1": SAVED });
+    renderAt("w1");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save as routine" })
+    );
+    // Named after the session, as the post's save names it.
+    expect(screen.getByLabelText("Name")).toHaveValue("Push");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(
+        allPaths().filter((path) => path.startsWith("users/u1/savedRoutines/"))
+      ).toHaveLength(1)
+    );
+    const [path] = allPaths().filter((p) =>
+      p.startsWith("users/u1/savedRoutines/")
+    );
+    const routine = readDoc(path);
+    expect(routine).toMatchObject({
+      name: "Push",
+      sourceAuthorId: "u1",
+      sourceAuthorName: "Alex",
+    });
+    // Never posted: no post to point back to.
+    expect(routine).not.toHaveProperty("sourceActivityId");
+    // The work done, at the lifter's own loads; the warm-up is not work.
+    expect(routine?.exercises).toEqual([
+      expect.objectContaining({
+        name: "Barbell Bench Press",
+        exerciseId: "bench-press",
+        setCount: 2,
+        targetReps: 8,
+        targetWeightKg: 60,
+      }),
+    ]);
+  });
+
+  it("offers no routine for a session with no set done", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": {
+        ...SAVED,
+        exercises: [{ ...SAVED.exercises[0], sets: [] }],
+      },
+    });
+    renderAt("w1");
+    expect(await screen.findByText("Barbell Bench Press")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Correct workout" })
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Save as routine" })
+    ).toBeNull();
+  });
+
+  it("shows the exercises done in a superset, and which one", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": {
+        ...SAVED,
+        exercises: [
+          { ...SAVED.exercises[0], superset: 1 },
+          {
+            exerciseId: "cable-fly",
+            exerciseName: "Cable Fly",
+            category: "push",
+            caloriesBurned: 0,
+            superset: 1,
+            sets: [{ setNumber: 1, reps: 12, weightKg: 20 }],
+          },
+          {
+            exerciseId: "overhead-press",
+            exerciseName: "Overhead Press",
+            category: "push",
+            caloriesBurned: 0,
+            sets: [{ setNumber: 1, reps: 8, weightKg: 35 }],
+          },
+        ],
+      },
+    });
+    renderAt("w1");
+    const card = async (name: RegExp) =>
+      within(await screen.findByRole("link", { name }));
+    expect(
+      (await card(/Barbell Bench Press/)).getByText("Superset A")
+    ).toBeTruthy();
+    expect((await card(/Cable Fly/)).getByText("Superset A")).toBeTruthy();
+    expect((await card(/Overhead Press/)).queryByText(/^Superset/)).toBeNull();
+  });
+
+  it("each exercise opens its own history", async () => {
+    seedFirestore({ "users/u1/workouts/w1": SAVED });
+    renderAt("w1");
+    const link = await screen.findByRole("link", {
+      name: /Barbell Bench Press/,
+    });
+    expect(link).toHaveAttribute(
+      "href",
+      "/history/exercise/Barbell%20Bench%20Press"
+    );
   });
 });

@@ -17,7 +17,7 @@ import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
-import { Search, X, Plus, Check } from "lucide-react";
+import { Search, X, Plus, Check, ArrowLeftRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { haptic } from "@/lib/haptic";
@@ -40,9 +40,9 @@ interface Props {
   existingExerciseIds?: string[];
   onRemoveExercise?: (exerciseId: string) => void;
   /** One exercise, for a swap or a replace, named by its action ("Swap for
-   *  today", "Replace"): choosing another clears the first, the bar says
-   *  the action rather than adding, and the detail sheet's button does it.
-   *  Without it the picker adds, as many as are ticked. */
+   *  today", "Replace"): a row's circle does the action at once, and so
+   *  does the detail sheet's button. Without it the picker adds, as many
+   *  as are ticked. */
   pickAction?: string;
   /** The exercise a Replace or a swap stands in for (Lift8 (4)): the picker
    *  opens on its muscle group, not all of them, and marks it "Current"
@@ -126,13 +126,21 @@ export default function ExercisePicker({
     return [...selectedIds].filter((id) => !preExistingIds.has(id)).length;
   }, [selectedIds, preExistingIds]);
 
+  /* A swap or a replace picks one exercise, and the circle picks it: no
+     bar to confirm it in. A swap can be undone from the exercise's menu
+     ("Back to …"), and Finish asks before a swap reaches the plan, so a
+     third check on the way in only cost a tap on every swap. */
+  const commitPick = (exercise: Exercise) => {
+    if (exercise.id === currentExerciseId) return;
+    haptic("light");
+    onSelect(exercise);
+    setDetail(null);
+    onClose();
+  };
+
   const toggleSelection = (id: string) => {
     if (id === currentExerciseId) return;
     haptic("light");
-    if (pickAction) {
-      setSelectedIds((prev) => (prev.has(id) ? new Set() : new Set([id])));
-      return;
-    }
     if (preExistingIds.has(id)) {
       if (selectedIds.has(id)) {
         onRemoveExercise?.(id);
@@ -355,6 +363,8 @@ export default function ExercisePicker({
                           exercise={exercise}
                           isSelected={selectedIds.has(exercise.id)}
                           isCurrent={exercise.id === currentExerciseId}
+                          pickAction={pickAction}
+                          onPick={commitPick}
                           onToggle={toggleSelection}
                           onOpen={setDetail}
                         />
@@ -375,6 +385,8 @@ export default function ExercisePicker({
                     exercise={exercise}
                     isSelected={selectedIds.has(exercise.id)}
                     isCurrent={exercise.id === currentExerciseId}
+                    pickAction={pickAction}
+                    onPick={commitPick}
                     onToggle={toggleSelection}
                     onOpen={setDetail}
                   />
@@ -390,9 +402,10 @@ export default function ExercisePicker({
               )}
             </div>
 
-            {/* Batch selection bar */}
+            {/* Batch selection bar: adding only. A swap or a replace is
+                done by its row's circle. */}
             <AnimatePresence>
-              {newlySelectedCount > 0 && (
+              {!pickAction && newlySelectedCount > 0 && (
                 <motion.div
                   initial={{ y: "100%" }}
                   animate={{ y: 0 }}
@@ -405,13 +418,9 @@ export default function ExercisePicker({
                     fullWidth
                     onClick={handleAddSelected}
                   >
-                    {pickAction ?? (
-                      <>
-                        {newlySelectedCount} exercise
-                        {newlySelectedCount !== 1 ? "s" : ""} selected — Add to
-                        workout
-                      </>
-                    )}
+                    {newlySelectedCount} exercise
+                    {newlySelectedCount !== 1 ? "s" : ""} selected — Add to
+                    workout
                   </Button>
                 </motion.div>
               )}
@@ -463,10 +472,7 @@ export default function ExercisePicker({
                         toggleSelection(detail.id);
                         return;
                       }
-                      haptic("light");
-                      onSelect(detail);
-                      setDetail(null);
-                      onClose();
+                      commitPick(detail);
                     }}
                   >
                     {detail.id === currentExerciseId
@@ -508,11 +514,14 @@ export default function ExercisePicker({
 /** One picker row: the exercise's picture (`ExerciseThumb`, as on Train's
  *  list, so the drawing where there is one and the category's muscles
  *  where there is not), name and meta, and a lifting-tinted selection
- *  state. Tapping the picture or the name opens the exercise's form. */
+ *  state. Tapping the picture or the name opens the exercise's form. With
+ *  a `pickAction` the circle does that action rather than ticking. */
 function ExerciseRow({
   exercise,
   isSelected,
   isCurrent = false,
+  pickAction,
+  onPick,
   onToggle,
   onOpen,
 }: {
@@ -520,6 +529,8 @@ function ExerciseRow({
   isSelected: boolean;
   /** The exercise being replaced: shown, never offered. */
   isCurrent?: boolean;
+  pickAction?: string;
+  onPick: (exercise: Exercise) => void;
   onToggle: (id: string) => void;
   onOpen: (exercise: Exercise) => void;
 }) {
@@ -556,6 +567,17 @@ function ExerciseRow({
         <span className="w-16 shrink-0 text-center text-caption font-semibold text-muted-foreground">
           Current
         </span>
+      ) : pickAction ? (
+        <button
+          type="button"
+          aria-label={`${pickAction}: ${exercise.name}`}
+          onClick={() => onPick(exercise)}
+          className="size-11 shrink-0 flex items-center justify-center rounded-full active:scale-[0.97] transition-transform"
+        >
+          <span className="size-8 rounded-full border-[1.5px] border-border flex items-center justify-center">
+            <ArrowLeftRight className="size-4 text-muted-foreground" />
+          </span>
+        </button>
       ) : (
         <button
           type="button"

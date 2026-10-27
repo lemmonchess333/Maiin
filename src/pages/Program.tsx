@@ -11,6 +11,7 @@ import {
   resumableLift,
   resumableWorkout,
   routineInProgress,
+  emptyWorkoutInProgress,
   runInProgress,
   storedRunName,
   storedRunTemplate,
@@ -27,7 +28,15 @@ import { racePaceWorkFor } from "@/lib/racePace";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { workoutCompletionDayIdentity } from "@/lib/workoutCompletion";
 import { liftCompletionContext } from "@/lib/completionPlanContext";
-import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+  Suspense,
+} from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import type { ReactNode } from "react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useBackDismiss } from "@/lib/backDismiss";
@@ -51,7 +60,15 @@ import ProgramOfflineBanner from "@/components/program/ProgramOfflineBanner";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import WorkoutSession from "@/components/WorkoutSession";
-import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
+// The Lift tab's ways into a workout that is not the plan's day, each
+// loaded on its own: the saved routines read their list after the page
+// has drawn anyway, and Train's own chunk has no room to spare.
+const EmptyWorkoutEntry = lazyRetry(
+  () => import("@/components/program/EmptyWorkoutEntry")
+);
+const SavedRoutinesSection = lazyRetry(
+  () => import("@/components/program/SavedRoutinesSection")
+);
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import {
@@ -932,7 +949,9 @@ function ProgramInner() {
       )
     : workoutInFlight?.kind === "routine"
       ? routineInProgress(workoutInFlight)
-      : null;
+      : workoutInFlight?.kind === "empty"
+        ? emptyWorkoutInProgress(workoutInFlight)
+        : null;
   const liftStripOnCard =
     resumable !== null && !isViewingHistory && resumable.dayIndex === idx;
   const runStrip = inFlight.run
@@ -1076,11 +1095,7 @@ function ProgramInner() {
     currentWeek: programState?.runPlan?.currentWeek,
     totalWeeks: programState?.runPlan?.totalWeeks,
     distance: resolvedRunPlan.raceGoal?.distance as
-      | "5k"
-      | "10k"
-      | "half"
-      | "marathon"
-      | undefined,
+      "5k" | "10k" | "half" | "marathon" | undefined,
   });
   const liftAdvice = pickLiftAdvice({
     deload:
@@ -1980,7 +1995,13 @@ function ProgramInner() {
           away from the fields that fix it. Expanded it is a plan-quality
           readout, and the lift editor is where the days it rates are
           edited. */}
-      {activeTab === "lift" && <SavedRoutinesSection />}
+      {/* An empty workout (Mob1 call 1): a lift with no plan day. */}
+      {activeTab === "lift" && (
+        <Suspense fallback={null}>
+          <EmptyWorkoutEntry />
+          <SavedRoutinesSection />
+        </Suspense>
+      )}
 
       {/* ROUTINE-EXCHANGE-01 — curated blueprint shelf. Read-only
           intents; saving creates a private routine copy, never a

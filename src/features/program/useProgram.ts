@@ -1341,6 +1341,7 @@ export function useProgram() {
         ran,
         setLogs: sessionData.setLogs,
         exerciseNotes: sessionData.exerciseNotes,
+        supersets: sessionData.prescription?.supersets,
         durationMinutes: sessionData.durationMinutes,
         bodyweightKg: profile?.weightKg ?? 0,
         title: day.dayName,

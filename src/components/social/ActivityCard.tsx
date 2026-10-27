@@ -30,6 +30,7 @@ import { formatLoad, liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { movementCategoryLabel } from "../../lib/exerciseMovementCategory";
 import CommentSheet from "./CommentSheet";
 import SaveRoutineSheet from "./SaveRoutineSheet";
+import SupersetTag from "@/components/workout/SupersetTag";
 import ExerciseCompareSheet from "./ExerciseCompareSheet";
 import ReportModal from "./ReportModal";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
@@ -671,6 +672,9 @@ function ActivityCard({
                     <span className="min-w-[min(6em,100%)] flex-1 truncate text-sm font-medium text-foreground">
                       {ex.name}
                     </span>
+                    {ex.superset !== undefined && (
+                      <SupersetTag group={ex.superset} />
+                    )}
                     <span className={summaryClass}>{displaySummary}</span>
                   </div>
                 );
@@ -693,6 +697,9 @@ function ActivityCard({
                   <span className="min-w-[min(6em,100%)] flex-1 truncate text-sm font-medium text-foreground">
                     {ex.name}
                   </span>
+                  {ex.superset !== undefined && (
+                    <SupersetTag group={ex.superset} />
+                  )}
                   <span className={summaryClass}>{displaySummary}</span>
                 </button>
               );

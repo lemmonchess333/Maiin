@@ -44,10 +44,15 @@ import {
   projectWorkoutSets,
   type LoggedSet,
 } from "@/features/program/workoutSetRecord";
+import {
+  supersetNumbers,
+  type SessionSuperset,
+} from "@/features/program/superset";
 
 /** What a lift writer hands the workout screen. */
 export interface LiftCompletionReceipt {
-  /** `programme-<completionId>` or `routine-<completionId>`. */
+  /** `programme-<completionId>`, `routine-<completionId>` or, for an
+   *  empty workout, `free-<completionId>`. */
   workoutId: string;
   /** Posts the workout, with or without asking (`sessionPost`). */
   share: SessionShareAction;
@@ -60,7 +65,7 @@ export interface LiftCompletionReceipt {
 /** A finished lift's workout id. Deterministic, so a retried Finish
  *  writes the same workout rather than a second one. */
 export function liftWorkoutId(
-  source: "programme" | "routine",
+  source: "programme" | "routine" | "free",
   completionId: string
 ): string {
   return `${source}-${completionId}`;
@@ -82,20 +87,22 @@ export function liftSessionDay(startedAt: number | undefined): string {
 /**
  * The exercises a session ran, as its saved workout records them: the sets
  * done (not warm-ups, which never reach a completion), the prescription
- * each was done against, the planned set count, and any note.
+ * each was done against, the planned set count, any note, and the
+ * superset it was done in (Mob1 call 2).
  */
 export function liftWorkoutExercises(
   ran: readonly ProgramExercise[],
   setLogs: readonly (readonly LoggedSet[] | undefined)[] | undefined,
-  notes?: Readonly<Record<number, string>>
+  notes?: Readonly<Record<number, string>>,
+  supersets?: readonly SessionSuperset[]
 ): WorkoutExercise[] {
-  return ran.map((ex, index) => {
+  // D2: the planned pair on each set is the PRESCRIPTION, which
+  // `applyProgression` scores the sets against and overwrites a moment
+  // later. A day marked done without a live session has no logs; its
+  // sets are taken as the last attempt, the best guess there is.
+  const done = ran.map((ex, index) => {
     const logs = setLogs?.[index];
-    // D2: the planned pair on each set is the PRESCRIPTION, which
-    // `applyProgression` scores the sets against and overwrites a moment
-    // later. A day marked done without a live session has no logs; its
-    // sets are taken as the last attempt, the best guess there is.
-    const sets = projectWorkoutSets(
+    return projectWorkoutSets(
       logs,
       logs
         ? { sets: ex.sets, reps: ex.reps, weightKg: ex.weight }
@@ -105,6 +112,17 @@ export function liftWorkoutExercises(
             weightKg: ex.lastAttemptedWeight || ex.weight,
           }
     );
+  });
+  // A superset is what was done in it: an exercise skipped or not started
+  // is in none, and a partner left alone is not tagged.
+  const groups = supersetNumbers(
+    ran,
+    supersets,
+    done.map((sets) => sets.length > 0)
+  );
+  return ran.map((ex, index) => {
+    const sets = done[index];
+
     // Trimmed, and left out when empty: an empty string reads as "there
     // is a note" to every reader that checks for one.
     const note = notes?.[index]?.trim();
@@ -120,6 +138,7 @@ export function liftWorkoutExercises(
       // D2: how many sets were prescribed, beside `sets.length`, how many
       // were done. `sets` stays done-only: every reader assumes that.
       plannedSetCount: ex.sets,
+      ...(groups[index] !== undefined ? { superset: groups[index] } : {}),
       caloriesBurned: 0,
     };
   });
@@ -167,8 +186,10 @@ export function liftTotals(
 export interface FinishedLift {
   uid: string;
   author: { displayName?: string | null; photoURL?: string | null };
-  /** Which writer: the workout's id prefix and its `source`. */
-  source: "programme" | "routine";
+  /** Which writer: the workout's id prefix and its `source`. An empty
+   *  workout (`EmptyWorkout.tsx`) is `free`, and moves no plan. */
+
+  source: "programme" | "routine" | "free";
   /** Stable across a session's retries: a retried Finish writes the same
    *  workout. */
   completionId: string;
@@ -178,6 +199,8 @@ export interface FinishedLift {
   ran: readonly ProgramExercise[];
   setLogs: readonly (readonly LoggedSet[] | undefined)[] | undefined;
   exerciseNotes?: Readonly<Record<number, string>>;
+  /** The session's supersets, by its exercises' slots (Mob1 call 2). */
+  supersets?: readonly SessionSuperset[];
   /** Minutes on the session's clock; 0 when it had none. */
   durationMinutes: number;
   bodyweightKg: number;
@@ -217,7 +240,8 @@ export async function completeLift(
   const exercises = liftWorkoutExercises(
     finished.ran,
     finished.setLogs,
-    finished.exerciseNotes
+    finished.exerciseNotes,
+    finished.supersets
   );
   // Without a bodyweight the burn is 0. The workout is saved anyway.
   if (!(finished.bodyweightKg > 0))

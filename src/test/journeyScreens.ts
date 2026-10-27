@@ -82,6 +82,9 @@ export const WORKOUT = {
   fullSession: /^Full session/,
   close: "Close workout",
   markSet: "Mark set complete",
+  /** The session's own Add exercise, and its picker's title
+   *  (`WorkoutSessionAddExercise.test.tsx`). */
+  addExercise: "Add exercise",
   save: "Save workout",
   done: "Done",
 } as const;
@@ -154,6 +157,9 @@ export const TRAIN = {
   viewRun: "View run",
   /** Today's planned run starts from its card, straight into the run. */
   startRun: "Start run",
+  /** The Lift tab's way into a workout with no plan day
+   *  (`EmptyWorkoutEntry.test.tsx`). */
+  emptyWorkout: "Empty workout",
 } as const;
 
 /** A run's name on Train's run week, from its template: the function

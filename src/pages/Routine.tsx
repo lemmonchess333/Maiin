@@ -149,6 +149,7 @@ export default function Routine() {
         ran: sessionData.prescription?.exercises ?? synthDay.exercises,
         setLogs: sessionData.setLogs,
         exerciseNotes: sessionData.exerciseNotes,
+        supersets: sessionData.prescription?.supersets,
         durationMinutes: sessionData.durationMinutes,
         bodyweightKg: profile?.weightKg ?? 0,
         // The post names the workout the way the user thinks of it.

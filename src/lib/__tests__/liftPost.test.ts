@@ -115,6 +115,33 @@ describe("liftPost", () => {
   });
 });
 
+describe("a superset on a lift post (Mob1 call 2)", () => {
+  it("is posted with each grouped exercise, and read back for the card", () => {
+    const fly = exercise("Cable Fly", [set(12, 20), set(12, 20)], {
+      exerciseId: "cable-fly",
+      superset: 1,
+    });
+    const posted = postedExercises([{ ...BENCH, superset: 1 }, fly, PLANK]);
+    expect(posted.map((row) => row.superset)).toEqual([1, 1, undefined]);
+    expect(posted[2]).not.toHaveProperty("superset");
+    expect(liftPostRows(posted).map((row) => row.superset)).toEqual([
+      1,
+      1,
+      undefined,
+    ]);
+  });
+
+  it("reads nothing into a post with no superset, or a field that is no group", () => {
+    expect(liftPostRows(postedExercises([BENCH]))[0]).not.toHaveProperty(
+      "superset"
+    );
+    const [odd] = liftPostRows([
+      { ...postedExercises([BENCH])[0], superset: "A" },
+    ]);
+    expect(odd).not.toHaveProperty("superset");
+  });
+});
+
 describe("liftPostPreview", () => {
   it("shows the exercises done, the weight moved and the minutes", () => {
     expect(liftPostPreview(LIFT)).toEqual({

@@ -37,7 +37,9 @@ interface Props {
   /** Default name shown in the input — usually the source workout's
    *  activityTitle / workoutName. User can edit before saving. */
   defaultName: string;
-  sourceActivityId: string;
+  /** The post it is saved from. Absent when saved from the person's own
+   *  workout (`/workout/:id`), which may never have been posted. */
+  sourceActivityId?: string;
   sourceAuthorId: string;
   sourceAuthorName: string;
   sourceWorkoutName?: string;
@@ -48,7 +50,8 @@ const NAME_MAX = 60;
 
 /**
  * "Save as routine" bottom sheet. Opened from the workout ActivityCard
- * action row. Captures the user's chosen name (defaults to the source
+ * action row, and from a saved workout's own page (`/workout/:id`), so a
+ * person who never posts can still keep a session to run again. Captures the user's chosen name (defaults to the source
  * workout's name) and persists a snapshot to users/{uid}/savedRoutines.
  *
  * The exercise list is shown read-only — this is a save-as-snapshot,
@@ -97,7 +100,7 @@ export default function SaveRoutineSheet({
     try {
       const routineId = await saveRoutine(uid, {
         name: trimmed,
-        sourceActivityId,
+        ...(sourceActivityId ? { sourceActivityId } : {}),
         sourceAuthorId,
         sourceAuthorName,
         ...(sourceWorkoutName ? { sourceWorkoutName } : {}),
@@ -144,7 +147,11 @@ export default function SaveRoutineSheet({
       open={open}
       onOpenChange={handleOpenChange}
       title="Save as routine"
-      description={`Snapshot of ${sourceAuthorName}'s workout. You can run it later from the Train tab.`}
+      description={
+        external
+          ? `Snapshot of ${sourceAuthorName}'s workout. You can run it later from the Train tab.`
+          : "A copy of this workout. You can run it again from the Train tab."
+      }
     >
       <div className="px-5 pb-5 pt-3 space-y-4">
         {/* Name input */}
