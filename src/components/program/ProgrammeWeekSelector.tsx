@@ -79,6 +79,12 @@ export default function ProgrammeWeekSelector({
      one control, and green is kept for status that is not a sport. The
      check takes the foreground, which reads on the tint in both themes. */
   const DONE_FILL = `hsl(var(--${sport === "run" ? "running" : "lifting"}) / 0.3)`;
+  /* The selected day's fill sits under a white number, so it takes the
+     sport's `-fill` step, as the filled buttons do: white on the bare
+     identity is 3.87:1 for purple and 3.58:1 for coral, under the 4.5:1
+     a 14px number needs. The ring and the halo keep the identity. */
+  const SELECTED_FILL =
+    sport === "run" ? "hsl(var(--running-fill))" : "hsl(var(--lifting-fill))";
 
   /* Under 21em of row (a 320px phone) the row gives up its side inset and
      half of each gap, and a run's name sets tighter, so "Easy 30"
@@ -141,7 +147,7 @@ export default function ProgrammeWeekSelector({
             );
             labelColor = "hsl(var(--muted-foreground))";
           } else if (isToday && isSelected) {
-            fill = SPORT;
+            fill = SELECTED_FILL;
             bWidth = 0;
             bColor = "transparent";
             glow = `0 0 0 4px ${SPORT}1A`;
@@ -166,7 +172,7 @@ export default function ProgrammeWeekSelector({
             );
             labelColor = SPORT_TEXT;
           } else if (isSelected) {
-            fill = SPORT;
+            fill = SELECTED_FILL;
             bWidth = 0;
             bColor = "transparent";
             content = (
@@ -176,16 +182,16 @@ export default function ProgrammeWeekSelector({
             );
             labelColor = SPORT_TEXT;
           } else {
-            // Upcoming + rest share the calm outline; rest fades a touch more
-            // so a run-scope empty day reads as "nothing here" not "to do".
+            // An upcoming day has the calm outline; a run-scope rest day has
+            // none, so it reads as "nothing here" rather than "to do", as a
+            // day with nothing planned does on Home's week strip. Its number
+            // keeps the full muted grey: faded to 55% it measured 2.1:1 on
+            // the light page and 3.0:1 on the dark one.
             fill = "transparent";
-            bWidth = 2;
-            bColor = "hsl(var(--border))";
+            bWidth = isRest ? 0 : 2;
+            bColor = isRest ? "transparent" : "hsl(var(--border))";
             content = (
-              <span
-                className="text-sm font-semibold font-mono tabular-nums text-muted-foreground"
-                style={isRest ? { opacity: 0.55 } : undefined}
-              >
+              <span className="text-sm font-semibold font-mono tabular-nums text-muted-foreground">
                 {cell.center}
               </span>
             );

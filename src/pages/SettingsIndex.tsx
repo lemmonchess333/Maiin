@@ -85,7 +85,7 @@ const GROUPS: SectionGroup[] = [
         label: "Nutrition",
         description: "Calorie target, goal weight",
         icon: Apple,
-        tint: "text-nutrition",
+        tint: "text-nutrition-strong",
         migrated: true,
       },
       {

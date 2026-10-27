@@ -255,14 +255,19 @@ function ActivityCard({
   };
 
   const createdAtObj = feedItem.createdAt as
-    | { toDate?: () => Date }
-    | undefined;
+    { toDate?: () => Date } | undefined;
   const timeAgo = createdAtObj?.toDate ? getTimeAgo(createdAtObj.toDate()) : "";
   // DS1b: these stay inline — they're passed as `fallbackBg`/`fallbackColor`
   // string PROPS to <Avatar/>, not applied as classes here, so there's no
   // className form to migrate to.
+  /* The tint is the identity; the initial on it takes the AA text step.
+     The bare identity measured 3.10:1 (coral) and 3.35:1 (purple) on its
+     tint over the light card, 4.32:1 and 4.01:1 over the dark one, under
+     the 4.5:1 a 16px letter needs. */
   const avatarBg = isRun ? `${THEME.running}20` : `${THEME.lifting}20`;
-  const avatarColor = isRun ? THEME.running : THEME.lifting;
+  const avatarColor = isRun
+    ? "hsl(var(--running-strong))"
+    : "hsl(var(--lifting-strong))";
   const chips = isRun ? RUN_CHIPS : LIFT_CHIPS;
 
   /* Every shape of lift post the feed holds, read one way: a post made
@@ -879,7 +884,7 @@ function ActivityCard({
               }`}
             >
               <Flame
-                className={`size-5 ${liked ? "fill-current opacity-100" : "opacity-50"}`}
+                className={`size-5 ${liked ? "fill-current" : ""}`}
                 style={{
                   color: liked
                     ? THEME.amberLight
