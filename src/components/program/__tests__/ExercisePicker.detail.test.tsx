@@ -72,10 +72,14 @@ describe("ExercisePicker row: see it vs add it", () => {
     expect(screen.queryByText(/exercise selected/)).toBeNull();
   });
 
-  it("shows each exercise's drawing, as Train's list does", () => {
+  it("shows reviewed drawings and a muscle tile when artwork is withheld", () => {
     mount();
-    const row = screen.getByRole("button", { name: "Bench Press details" });
-    expect(row.querySelector('[data-thumb="drawing"]')).not.toBeNull();
+    const reviewed = screen.getByRole("button", { name: "Dips details" });
+    expect(reviewed.querySelector('[data-thumb="drawing"]')).not.toBeNull();
+    const withheld = screen.getByRole("button", {
+      name: "Bench Press details",
+    });
+    expect(withheld.querySelector('[data-thumb="muscles"]')).not.toBeNull();
   });
 
   it("the sheet's action toggles the same selection the batch bar reads", () => {

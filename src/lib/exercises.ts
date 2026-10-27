@@ -623,14 +623,14 @@ export const EXERCISES: Exercise[] = [
     category: "Back",
     muscleGroup: "Lats",
     mechanic: "isolation",
-    secondaryMuscles: ["Teres Major", "Core"],
+    secondaryMuscles: ["Teres Major", "Triceps", "Core"],
     equipment: "Cable Machine",
     caloriesPerMinute: 5.5,
     instructions: [
-      "Stand facing a high pulley, grip the bar with straight arms, hinge slightly forward.",
-      "Lock your elbows into a soft, fixed bend — don't change it on the set.",
-      "Pull the bar down in an arc to your thighs, feeling the lats squeeze.",
-      "Return slowly to a full overhead stretch without losing tension.",
+      "Stand facing two high pulleys and hold one handle in each hand at shoulder height.",
+      "Brace your torso and keep a soft, fixed bend in both elbows.",
+      "Sweep the handles down in an arc toward your thighs, feeling the lats squeeze.",
+      "Return the handles slowly to shoulder height without losing tension.",
     ],
   },
   {
@@ -896,7 +896,7 @@ export const EXERCISES: Exercise[] = [
     equipment: "Dumbbells",
     caloriesPerMinute: 5,
     instructions: [
-      "Stand with light dumbbells hanging in front of your thighs.",
+      "Stand with light dumbbells hanging beside your thighs.",
       "Upright-row to chest height with elbows leading.",
       "From there, rotate your shoulders so the dumbbells point up.",
       "Press overhead, then reverse each segment back to the start.",

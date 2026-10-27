@@ -76,6 +76,8 @@ export type PropState =
       left: Pt;
       right: Pt;
       plateR: number;
+      /** Optional half-length for a full bar with hands set well inboard. */
+      halfSpan?: number;
       layer?: "front" | "behind";
     }
   /** A dumbbell in each hand, end-on at the solved grips. */
@@ -181,13 +183,20 @@ export function profileBarbell(
  * sleeve. Solved from the two grips, so grip width IS bar width and the
  * bar cannot drift off the hands.
  */
-export function frontalBarbell(left: Pt, right: Pt, plateR: number): string {
+export function frontalBarbell(
+  left: Pt,
+  right: Pt,
+  plateR: number,
+  halfSpan?: number
+): string {
   const r = plateR;
-  // Sleeve runs outboard of each grip; the plate sits at its midpoint so
-  // the disc reads as threaded ON the bar, not stuck to the end of it.
+  // The default sleeve runs outboard of each grip. A wider declared span
+  // keeps the plates out near the ends when the hands use a close grip.
   const sleeve = r * 1.15;
-  const lx = left[0] - sleeve;
-  const rx = right[0] + sleeve;
+  const mid = (left[0] + right[0]) / 2;
+  const half = Math.max(halfSpan ?? 0, (right[0] - left[0]) / 2 + sleeve);
+  const lx = mid - half;
+  const rx = mid + half;
   const y = (left[1] + right[1]) / 2;
   const plate = (cx: number) =>
     `<ellipse cx="${n(cx)}" cy="${n(y)}" rx="${n(r * 0.34)}" ry="${n(r)}" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="1"/>` +
@@ -195,8 +204,8 @@ export function frontalBarbell(left: Pt, right: Pt, plateR: number): string {
   return (
     `<line x1="${n(lx)}" y1="${n(y)}" x2="${n(rx)}" y2="${n(y)}" stroke="${GEAR}" stroke-width="2.8" stroke-linecap="round"/>` +
     // Collars inboard of each plate, against the knurling.
-    `<rect x="${n(left[0] - sleeve * 0.45)}" y="${n(y - 2.4)}" width="3" height="4.8" rx="1.1" fill="${GEAR_DARK}"/>` +
-    `<rect x="${n(right[0] + sleeve * 0.45 - 3)}" y="${n(y - 2.4)}" width="3" height="4.8" rx="1.1" fill="${GEAR_DARK}"/>` +
+    `<rect x="${n(halfSpan === undefined ? left[0] - sleeve * 0.45 : lx + r * 0.85)}" y="${n(y - 2.4)}" width="3" height="4.8" rx="1.1" fill="${GEAR_DARK}"/>` +
+    `<rect x="${n(halfSpan === undefined ? right[0] + sleeve * 0.45 - 3 : rx - r * 0.85 - 3)}" y="${n(y - 2.4)}" width="3" height="4.8" rx="1.1" fill="${GEAR_DARK}"/>` +
     plate(lx + r * 0.34) +
     plate(rx - r * 0.34)
   );
@@ -441,7 +450,12 @@ export function renderProp(state: PropState): PropLayers {
           front: profileBarbell(state.hand, state.plateR, state.sleeveDir ?? 1),
         };
       }
-      const svg = frontalBarbell(state.left, state.right, state.plateR);
+      const svg = frontalBarbell(
+        state.left,
+        state.right,
+        state.plateR,
+        state.halfSpan
+      );
       return state.layer === "behind"
         ? { behind: svg, front: "" }
         : { behind: "", front: svg };

@@ -1,9 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import ExerciseRowSummary from "../ExerciseRowSummary";
 import { LiftUnitContext } from "@/hooks/useLiftUnit";
 import ExerciseThumb from "../ExerciseThumb";
-import * as formArtCutouts from "@/lib/formArtCutouts";
 
 function exercise(over: Record<string, unknown> = {}) {
   return {
@@ -20,29 +19,21 @@ function exercise(over: Record<string, unknown> = {}) {
 
 describe("ExerciseThumb — each exercise's picture", () => {
   it("shows the cut-out drawing when the exercise has released art", () => {
-    const { container } = render(<ExerciseThumb exerciseId="bench-press" />);
+    const { container } = render(<ExerciseThumb exerciseId="squat" />);
     const tile = container.firstElementChild as HTMLElement;
     expect(tile.dataset.thumb).toBe("drawing");
     expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
-      /form-art\/bench-press\.webp$/
+      /form-art\/squat\.webp$/
     );
   });
 
-  it("shows the muscles its category works when it has no drawing", () => {
-    // Exercise the missing-art branch even after this drawing is released.
-    const missingArt = vi
-      .spyOn(formArtCutouts, "getFormArtCutout")
-      .mockReturnValue(null);
-    try {
-      const { container } = render(<ExerciseThumb exerciseId="pull-ups" />);
-      const tile = container.firstElementChild as HTMLElement;
-      expect(tile.dataset.thumb).toBe("muscles");
-      expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
-        /^data:image\/svg\+xml,/
-      );
-    } finally {
-      missingArt.mockRestore();
-    }
+  it("shows muscles when an exercise's drawing is withheld", () => {
+    const { container } = render(<ExerciseThumb exerciseId="bench-press" />);
+    const tile = container.firstElementChild as HTMLElement;
+    expect(tile.dataset.thumb).toBe("muscles");
+    expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
+      /^data:image\/svg\+xml,/
+    );
   });
 
   it.each(["Back Squat", "back-squat", "Barbell Back Squat"])(
@@ -60,12 +51,12 @@ describe("ExerciseThumb — each exercise's picture", () => {
     }
   );
 
-  it("keeps a squat variant on its own drawing", () => {
+  it("does not show a withheld squat variant's drawing", () => {
     const { container } = render(<ExerciseThumb exerciseId="Front Squat" />);
     const tile = container.firstElementChild as HTMLElement;
-    expect(tile.dataset.thumb).toBe("drawing");
+    expect(tile.dataset.thumb).toBe("muscles");
     expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
-      /form-art\/front-squat\.webp$/
+      /^data:image\/svg\+xml,/
     );
   });
 

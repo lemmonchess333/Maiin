@@ -82,7 +82,7 @@ export default function Review() {
         ...beat,
         image: `docs/exercise-art/pilots/db-curl/${draftFiles[i]}`,
       }))
-    : (batchDraft?.beats ?? getFormBeats(id)!);
+    : (batchDraft?.beats ?? getFormBeats(id) ?? []);
   return (
     <div className={dark ? "dark" : ""}>
       <main className="min-h-screen bg-background text-foreground p-4">

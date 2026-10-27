@@ -429,6 +429,7 @@ export default function ExercisePicker({
               if (!o) setDetail(null);
             }}
             title={detail?.name ?? null}
+            maxHeight="max-h-[95dvh]"
             // Above the picker (9998/9999): at the sheet's own z-50 it
             // opened behind it, invisible, with the page made inert.
             overlayClassName="z-[10000]"

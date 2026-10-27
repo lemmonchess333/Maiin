@@ -1093,7 +1093,7 @@ export const RELEASED_FORM_PLACARDS = {
     ["Shoulders"],
     ["Rotator Cuff", "Traps"],
     [
-      [0, "Set", "Hold light dumbbells in front of thighs."],
+      [0, "Set", "Hold light dumbbells beside your thighs."],
       [
         0.3333333333333333,
         "Row",

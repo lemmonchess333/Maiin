@@ -87,14 +87,14 @@ describe("shrunkFormFrame", () => {
 });
 
 describe("the box a frame is fitted to", () => {
-  it("is the one the form guide draws a frame in, at 3x", () => {
+  it("is the maximum square stage the form guide draws a frame in, at 3x", () => {
     const component = readFileSync(
       fileURLToPath(
         new URL("../../src/components/ExerciseFormFrames.tsx", import.meta.url)
       ),
       "utf8"
     );
-    const box = `h-[${FORM_FRAME_BOX_POINTS}px] max-w-[${FORM_FRAME_BOX_POINTS}px]`;
+    const box = `aspect-square w-full max-w-[${FORM_FRAME_BOX_POINTS}px]`;
     expect(component).toContain(box);
     expect(FORM_FRAME_MAX_SIDE).toBe(FORM_FRAME_BOX_POINTS * 3);
   });

@@ -1015,7 +1015,9 @@ describe("choices with drawings", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Lifting" }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(artOf(/Full gym/).img).toMatch(/chest-press-machine\.webp$/);
-    expect(artOf(/Home gym/).img).toMatch(/db-bench\.webp$/);
+    // The approved incline press still pictures dumbbells and a bench
+    // while the flat bench illustration is withheld.
+    expect(artOf(/Home gym/).img).toMatch(/incline-db-press\.webp$/);
     expect(artOf(/Minimal/).img).toMatch(/bodyweight-squat\.webp$/);
     for (const [name, solid] of [
       [/New to lifting/, 1],

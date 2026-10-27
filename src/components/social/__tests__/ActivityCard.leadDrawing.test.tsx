@@ -72,9 +72,7 @@ describe("a lift post's hero", () => {
       ])
     );
     const drawing = card.querySelector("img[data-lead-drawing]");
-    expect(drawing?.getAttribute("src")).toMatch(
-      /form-art\/bench-press\.webp$/
-    );
+    expect(drawing?.getAttribute("src")).toMatch(/form-art\/squat\.webp$/);
     // In place of the muscle figure, not beside it.
     expect(
       screen.queryByRole("img", { name: "Muscles trained this session" })
@@ -105,8 +103,8 @@ describe("a lift post's hero", () => {
       liftPost(
         [
           {
-            name: "Bench Press",
-            exerciseId: "bench-press",
+            name: "Barbell Squat",
+            exerciseId: "squat",
             summary: "3×8×60 kg",
           },
         ],

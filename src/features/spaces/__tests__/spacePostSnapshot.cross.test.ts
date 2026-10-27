@@ -64,8 +64,8 @@ const WORKOUT = {
     durationMinutes: 50,
     exercises: [
       {
-        exerciseId: "bench-press",
-        exerciseName: "Bench Press",
+        exerciseId: "squat",
+        exerciseName: "Barbell Squat",
         sets: [{ setNumber: 1, reps: 5, weightKg: 80 }],
       },
     ],

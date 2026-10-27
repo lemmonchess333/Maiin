@@ -29,6 +29,22 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 describe("six-frame form guide", () => {
+  it("keeps one camera for every pose while stepping", () => {
+    const view = render(
+      <ExerciseFormFrames
+        name="Squat"
+        beats={beats}
+        framing={{ scale: 1.5, x: 0.02, y: -0.03 }}
+      />
+    );
+    const camera = "translate(2%, -3%) scale(1.5)";
+    for (let frame = 1; frame <= 6; frame += 1) {
+      expect(screen.getByRole("img")).toHaveStyle({ transform: camera });
+      if (frame < 6)
+        fireEvent.click(screen.getByRole("button", { name: "Next frame" }));
+    }
+    expect(view.container.querySelector(".aspect-square")).toBeInTheDocument();
+  });
   it("waits for current and adjacent images before advancing, with only two mounted", () => {
     const view = render(<ExerciseFormFrames name="Squat" beats={beats} />);
     expect(view.container.querySelectorAll("img")).toHaveLength(2);
