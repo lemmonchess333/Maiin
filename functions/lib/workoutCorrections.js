@@ -80,6 +80,8 @@ async function reconcileWorkoutMetrics(db, uid, workoutId) {
             ? `${ex.sets.length}×${ex.sets[0].reps} s`
             : `${ex.sets.length}×${ex.sets[0].reps}×${ex.sets[0].weightKg} kg`,
         ...(ex.exerciseId ? { exerciseId: ex.exerciseId } : {}),
+        // The superset it was done in, as the app's post rows carry it.
+        ...(typeof ex.superset === "number" ? { superset: ex.superset } : {}),
       })),
     });
   });
