@@ -377,6 +377,53 @@ describe("Start fresh", () => {
   });
 });
 
+describe("keeping a session that has grown", () => {
+  it("keeps an empty workout's added exercise before any set is done", async () => {
+    openSession([]);
+    await screen.findByText("No exercises yet");
+    expect(h.save).not.toHaveBeenCalled();
+    await addLateralRaise();
+    await vi.waitFor(() => expect(h.save).toHaveBeenCalled());
+    const kept = h.save.mock.calls.at(-1)![0] as {
+      prescription: { exercises: { exerciseId: string }[] };
+      setLogs: { completed: boolean }[][];
+    };
+    expect(kept.prescription.exercises.map((ex) => ex.exerciseId)).toEqual([
+      "lateral-raise",
+    ]);
+    expect(kept.setLogs.flat().some((set) => set.completed)).toBe(false);
+  });
+
+  it("keeps a superset made before any set is done", async () => {
+    openSession([
+      lift({
+        exerciseId: "bench-press",
+        name: "Bench Press",
+        instanceId: "bench-1",
+      }),
+      lift({
+        exerciseId: "cable-fly",
+        name: "Cable Fly",
+        instanceId: "fly-1",
+      }),
+    ]);
+    expect(h.save).not.toHaveBeenCalled();
+    menu("Bench Press");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Superset with Cable Fly" })
+    );
+    await vi.waitFor(() =>
+      expect(h.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prescription: expect.objectContaining({
+            supersets: [{ ids: ["bench-1", "fly-1"] }],
+          }),
+        })
+      )
+    );
+  });
+});
+
 describe("an exercise added before last time is read", () => {
   it("starts from the weight it was last lifted at once last time arrives", async () => {
     h.user = { uid: "u1" };

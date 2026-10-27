@@ -696,7 +696,14 @@ export default function WorkoutSession({
     );
     // Once a draft exists, Undo must also persist zero completed sets.
     // Keep the entered values, notes and session choices with that reversal.
-    if (!hasProgress && !hasRecoveryDraft.current) return;
+    // A session changed from how it was set out (an exercise added, a
+    // superset, a swap) is kept before any set is done: an empty workout
+    // with its exercises added is a workout to come back to.
+    const reshaped =
+      prescription.exercises.length !== initialDay.exercises.length ||
+      (prescription.supersets?.length ?? 0) > 0 ||
+      (prescription.swaps?.length ?? 0) > 0;
+    if (!hasProgress && !reshaped && !hasRecoveryDraft.current) return;
     if (completionPendingRef.current) return;
     const stored = saveDraft({
       dayIndex,
@@ -722,6 +729,7 @@ export default function WorkoutSession({
     day.dayName,
     saveDraft,
     prescription,
+    initialDay.exercises.length,
     originalStartedAt,
     sessionProgrammeContext,
     sessionStartedAt,
