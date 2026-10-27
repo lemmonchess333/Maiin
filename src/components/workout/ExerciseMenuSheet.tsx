@@ -12,6 +12,11 @@
  * with the workout and never reaches the plan.
  */
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
+import {
+  canSupersetWithNext,
+  supersetAt,
+  type SessionSuperset,
+} from "@/features/program/superset";
 
 interface ExerciseMenuSheetProps {
   open: boolean;
@@ -28,13 +33,16 @@ interface ExerciseMenuSheetProps {
   onSwapBack: () => void;
   onSkip: () => void;
   onUnskip: () => void;
-  /** The next exercise's name, when this one can be put in a superset
-   *  with it (Mob1 call 2). */
-  supersetNextName?: string;
-  onSupersetNext?: () => void;
-  /** This exercise is in a superset, which it can leave. */
-  inSuperset?: boolean;
-  onLeaveSuperset?: () => void;
+  /** The session and this exercise's place in it, for its supersets
+   *  (Mob1 call 2): with the exercise after it, or out of one. */
+  session?: {
+    exercises: readonly { instanceId?: string; name: string }[];
+    supersets?: readonly SessionSuperset[];
+    index: number;
+  };
+  /** Puts this exercise in a superset with the next one (true), or takes
+   *  it out of its superset (false). */
+  onSuperset?: (withNext: boolean) => void;
 }
 
 export default function ExerciseMenuSheet({
@@ -48,11 +56,17 @@ export default function ExerciseMenuSheet({
   onSwapBack,
   onSkip,
   onUnskip,
-  supersetNextName,
-  onSupersetNext,
-  inSuperset = false,
-  onLeaveSuperset,
+  session,
+  onSuperset,
 }: ExerciseMenuSheetProps) {
+  const supersetNextName =
+    session &&
+    canSupersetWithNext(session.exercises, session.supersets, session.index)
+      ? session.exercises[session.index + 1]?.name
+      : undefined;
+  const inSuperset =
+    !!session &&
+    supersetAt(session.exercises, session.supersets, session.index) !== null;
   // The sheet closes itself once a choice resolves (`ChoiceSheet`). Each
   // label says it is for today, so no choice carries a second line.
   const choice = (id: string, label: string, run: () => void): Choice => ({
@@ -73,18 +87,21 @@ export default function ExerciseMenuSheet({
                 : []),
             ]
           : []),
-        ...(supersetNextName && onSupersetNext
+        ...(supersetNextName && onSuperset
           ? [
-              choice(
-                "superset",
-                `Superset with ${supersetNextName}`,
-                onSupersetNext
+              choice("superset", `Superset with ${supersetNextName}`, () =>
+                onSuperset(true)
               ),
             ]
           : []),
-        ...(inSuperset && onLeaveSuperset
-          ? [choice("unsuperset", "Remove from superset", onLeaveSuperset)]
+        ...(inSuperset && onSuperset
+          ? [
+              choice("unsuperset", "Remove from superset", () =>
+                onSuperset(false)
+              ),
+            ]
           : []),
+
         choice("skip", "Skip today", onSkip),
       ];
 

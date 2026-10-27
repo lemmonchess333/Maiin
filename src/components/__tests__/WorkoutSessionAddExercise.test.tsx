@@ -168,8 +168,11 @@ function openSession(exercises?: ProgramExercise[]) {
 }
 
 const heading = () => screen.getByRole("heading", { level: 2 }).textContent;
-const menu = (name: string) =>
+/** Opens an exercise's menu, which loads on its first opening. */
+const menu = async (name: string) => {
   fireEvent.click(screen.getByRole("button", { name: `More for ${name}` }));
+  await screen.findByRole("dialog");
+};
 
 /** Adds a lateral raise through the session's own Add exercise. */
 async function addLateralRaise() {
@@ -275,7 +278,7 @@ describe("Add exercise", () => {
   it("offers no swap for an added exercise, which stands in for nothing", async () => {
     openSession();
     await addLateralRaise();
-    menu("Lateral Raise");
+    await menu("Lateral Raise");
     expect(
       screen.queryByRole("button", { name: /^Swap for today/ })
     ).toBeNull();
@@ -408,7 +411,7 @@ describe("keeping a session that has grown", () => {
       }),
     ]);
     expect(h.save).not.toHaveBeenCalled();
-    menu("Bench Press");
+    await menu("Bench Press");
     fireEvent.click(
       screen.getByRole("button", { name: "Superset with Cable Fly" })
     );

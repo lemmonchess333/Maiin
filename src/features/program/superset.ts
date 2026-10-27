@@ -43,6 +43,19 @@ export function supersetAt(
   return places.length >= 2 ? places : null;
 }
 
+/** What the workout screen says under an exercise in a superset, "Superset
+ *  with Push-Ups" (or "with Dips and Push-Ups"), or null for one in none. */
+export function supersetWith(
+  exercises: readonly (Slotted & { name: string })[],
+  supersets: readonly SessionSuperset[] | undefined,
+  index: number
+): string | null {
+  const group = supersetAt(exercises, supersets, index);
+  if (!group) return null;
+  const others = group.filter((i) => i !== index).map((i) => exercises[i].name);
+  return `Superset with ${others.join(" and ")}`;
+}
+
 /** The groups as runs of neighbours in the session, two or more each:
  *  anything else is no superset. */
 function tidy(

@@ -44,10 +44,10 @@ import { exerciseAddedToday } from "@/features/program/sessionAdd";
 import { generateInstanceId } from "@/features/program/programTypes";
 import { workoutSourceForScope } from "@/features/program/emptyWorkout";
 import {
-  canSupersetWithNext,
   leaveSuperset,
   nextInSuperset,
   supersetAt,
+  supersetWith,
   supersetWithNext,
 } from "@/features/program/superset";
 
@@ -77,7 +77,6 @@ import { startingSetRows } from "@/features/program/setStartValues";
 import { swappedForToday } from "@/features/program/sessionSwap";
 import { followedWeight } from "@/features/program/sessionSets";
 import { loadContextFrom } from "@/features/program/startingLoads";
-import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import KeepSwapSheet, {
   type SwapToKeep,
 } from "@/components/workout/KeepSwapSheet";
@@ -185,6 +184,11 @@ import {
   kitLoadToKg,
 } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
+// An exercise's menu (swap, skip, superset), loaded when it is first
+// opened: the workout screen's chunk has no room to spare.
+const ExerciseMenuSheet = lazyRetry(
+  () => import("@/components/workout/ExerciseMenuSheet")
+);
 // The screen of a session with no exercises yet, which most never show.
 const EmptySessionScreen = lazyRetry(
   () => import("@/components/workout/EmptySessionScreen")
@@ -943,6 +947,12 @@ export default function WorkoutSession({
   if (safeExIndex !== currentExIndex) setCurrentExIndex(safeExIndex);
 
   const currentExercise = day.exercises[safeExIndex];
+  /* "Superset with Push-Ups" under the exercise's name, in one. */
+  const supersetLine = supersetWith(
+    day.exercises,
+    prescription.supersets,
+    safeExIndex
+  );
 
   // Plates belong to a barbell only: the per-side hint and the plate
   // calculator both read this, so a cable or dumbbell lift offers neither.
@@ -1386,15 +1396,14 @@ export default function WorkoutSession({
 
   /* Supersets (Mob1 call 2), from an exercise's menu: with the exercise
      after it, or out of its group again. */
-  const supersetNext = (index: number) =>
+  const regroup = (index: number, withNext: boolean) =>
     setPrescription((current) => ({
       ...current,
-      supersets: supersetWithNext(current.exercises, current.supersets, index),
-    }));
-  const leaveItsSuperset = (index: number) =>
-    setPrescription((current) => ({
-      ...current,
-      supersets: leaveSuperset(current.exercises, current.supersets, index),
+      supersets: (withNext ? supersetWithNext : leaveSuperset)(
+        current.exercises,
+        current.supersets,
+        index
+      ),
     }));
 
   const refreshRecords = (logs: SetLog[][]) => {
@@ -2223,23 +2232,11 @@ export default function WorkoutSession({
                 </div>
               )}
             </div>
-            {(() => {
-              const group = supersetAt(
-                day.exercises,
-                prescription.supersets,
-                safeExIndex
-              );
-              if (!group) return null;
-              const others = group
-                .filter((i) => i !== safeExIndex)
-                .map((i) => day.exercises[i]?.name)
-                .filter(Boolean);
-              return (
-                <p className="text-sm font-medium text-lifting-strong">
-                  Superset with {others.join(" and ")}
-                </p>
-              );
-            })()}
+            {supersetLine && (
+              <p className="text-sm font-medium text-lifting-strong">
+                {supersetLine}
+              </p>
+            )}
             {skippedRows[safeExIndex] !== undefined && (
               <p className="text-sm text-muted-foreground">Skipped today</p>
             )}
@@ -3015,34 +3012,33 @@ export default function WorkoutSession({
       />
 
       {menuFor !== null && day.exercises[menuFor] && (
-        <ExerciseMenuSheet
-          open
-          onClose={() => setMenuFor(null)}
-          exerciseName={day.exercises[menuFor].name}
-          nothingDone={!(setLogs[menuFor] ?? []).some((set) => set.completed)}
-          swappedFor={swapAt(menuFor) ? plannedAt(menuFor)?.name : undefined}
-          skipped={skippedRows[menuFor] !== undefined}
-          // An exercise added today stands in for nothing: there is no
-          // planned lift to swap it for.
-          onSwap={plannedAt(menuFor) ? () => setSwapFor(menuFor) : undefined}
-          onSwapBack={() => {
-            const planned = plannedAt(menuFor);
-            if (planned) swapForToday(menuFor, planned.exerciseId);
-          }}
-          onSkip={() => skipExercise(menuFor)}
-          supersetNextName={
-            canSupersetWithNext(day.exercises, prescription.supersets, menuFor)
-              ? day.exercises[menuFor + 1]?.name
-              : undefined
-          }
-          onSupersetNext={() => supersetNext(menuFor)}
-          inSuperset={
-            supersetAt(day.exercises, prescription.supersets, menuFor) !== null
-          }
-          onLeaveSuperset={() => leaveItsSuperset(menuFor)}
-          onUnskip={() => unskipExercise(menuFor)}
-        />
+        <Suspense fallback={null}>
+          <ExerciseMenuSheet
+            open
+            onClose={() => setMenuFor(null)}
+            exerciseName={day.exercises[menuFor].name}
+            nothingDone={!(setLogs[menuFor] ?? []).some((set) => set.completed)}
+            swappedFor={swapAt(menuFor) ? plannedAt(menuFor)?.name : undefined}
+            skipped={skippedRows[menuFor] !== undefined}
+            // An exercise added today stands in for nothing: there is no
+            // planned lift to swap it for.
+            onSwap={plannedAt(menuFor) ? () => setSwapFor(menuFor) : undefined}
+            onSwapBack={() => {
+              const planned = plannedAt(menuFor);
+              if (planned) swapForToday(menuFor, planned.exerciseId);
+            }}
+            onSkip={() => skipExercise(menuFor)}
+            session={{
+              exercises: day.exercises,
+              supersets: prescription.supersets,
+              index: menuFor,
+            }}
+            onSuperset={(withNext) => regroup(menuFor, withNext)}
+            onUnskip={() => unskipExercise(menuFor)}
+          />
+        </Suspense>
       )}
+
       {swapFor !== null && day.exercises[swapFor] && (
         <Suspense fallback={null}>
           <ExercisePicker

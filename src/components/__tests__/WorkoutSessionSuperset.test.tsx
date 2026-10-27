@@ -148,8 +148,11 @@ function openSession(exercises?: ProgramExercise[]) {
 }
 
 const heading = () => screen.getByRole("heading", { level: 2 }).textContent;
-const menu = (name: string) =>
+/** Opens an exercise's menu, which loads on its first opening. */
+const menu = async (name: string) => {
   fireEvent.click(screen.getByRole("button", { name: `More for ${name}` }));
+  await screen.findByRole("dialog");
+};
 
 /** Adds a lateral raise through the session's own Add exercise. */
 async function addLateralRaise() {
@@ -221,7 +224,7 @@ const counter = () =>
 describe("Supersets", () => {
   it("goes A1 → B1 → A2 → B2, resting after the round's last exercise", async () => {
     const complete = openSession(benchAndPushUps());
-    menu("Bench Press");
+    await menu("Bench Press");
     await choose("Superset with Push-Ups");
     expect(screen.getByText("Superset with Push-Ups")).toBeInTheDocument();
 
@@ -253,7 +256,7 @@ describe("Supersets", () => {
     // At 60 kg the bench has a warm-up ramp; the push-ups have none.
     const [bench, pushUps] = benchAndPushUps();
     openSession([{ ...bench, weight: 60 }, pushUps]);
-    menu("Bench Press");
+    await menu("Bench Press");
     await choose("Superset with Push-Ups");
     expect(counter()).toMatch(/^Warm-up 1 of/);
     let warmUps = 0;
@@ -275,16 +278,16 @@ describe("Supersets", () => {
     openSession(benchAndPushUps());
     await addLateralRaise();
     fireEvent.click(screen.getByRole("button", { name: "Push-Ups" }));
-    menu("Push-Ups");
+    await menu("Push-Ups");
     await choose("Superset with Lateral Raise");
     expect(screen.getByText("Superset with Lateral Raise")).toBeInTheDocument();
   });
 
   it("comes apart from the same menu, back to straight sets", async () => {
     openSession(benchAndPushUps());
-    menu("Bench Press");
+    await menu("Bench Press");
     await choose("Superset with Push-Ups");
-    menu("Bench Press");
+    await menu("Bench Press");
     expect(
       screen.queryByRole("button", { name: "Superset with Push-Ups" })
     ).toBeNull();

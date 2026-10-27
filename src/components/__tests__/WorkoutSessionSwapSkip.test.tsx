@@ -140,8 +140,11 @@ function openSession() {
 }
 
 const heading = () => screen.getByRole("heading", { level: 2 }).textContent;
-const menu = (name: string) =>
+/** Opens an exercise's menu, which loads on its first opening. */
+const menu = async (name: string) => {
   fireEvent.click(screen.getByRole("button", { name: `More for ${name}` }));
+  await screen.findByRole("dialog");
+};
 /** Picks a choice in the open sheet and waits for the sheet to close. */
 const choose = async (label: RegExp) => {
   fireEvent.click(screen.getByRole("button", { name: label }));
@@ -187,7 +190,7 @@ afterEach(() => {
 describe("Skip", () => {
   it("leaves an exercise out of today's session and moves on", async () => {
     const complete = openSession();
-    menu("Bench Press");
+    await menu("Bench Press");
     await choose(/^Skip/);
     expect(heading()).toBe("Cable Fly");
     expect(
@@ -207,13 +210,13 @@ describe("Skip", () => {
 
   it("brings the sets back with Don't skip", async () => {
     openSession();
-    menu("Bench Press");
+    await menu("Bench Press");
     await choose(/^Skip/);
     fireEvent.click(
       screen.getByRole("button", { name: "Bench Press, skipped" })
     );
     expect(screen.getByText("Skipped today")).toBeInTheDocument();
-    menu("Bench Press");
+    await menu("Bench Press");
     await choose(/^Don't skip/);
     expect(screen.queryByText("Skipped today")).toBeNull();
     expect(
@@ -224,7 +227,7 @@ describe("Skip", () => {
 
 describe("Swap for today", () => {
   async function swapBench() {
-    menu("Bench Press");
+    await menu("Bench Press");
     fireEvent.click(screen.getByRole("button", { name: /^Swap for today/ }));
     const pick = await screen.findByRole("button", {
       name: "Pick Dumbbell Bench Press",
@@ -289,17 +292,17 @@ describe("Swap for today", () => {
   it("goes back to the planned exercise from the same menu", async () => {
     openSession();
     await swapBench();
-    menu("Dumbbell Bench Press");
+    await menu("Dumbbell Bench Press");
     await choose(/^Back to Bench Press/);
     expect(heading()).toBe("Bench Press");
   });
 
-  it("is offered only before a set of the exercise is done", () => {
+  it("is offered only before a set of the exercise is done", async () => {
     openSession();
     fireEvent.click(
       screen.getAllByRole("button", { name: "Mark set complete" })[0]
     );
-    menu("Bench Press");
+    await menu("Bench Press");
     expect(
       screen.queryByRole("button", { name: /^Swap for today/ })
     ).toBeNull();
