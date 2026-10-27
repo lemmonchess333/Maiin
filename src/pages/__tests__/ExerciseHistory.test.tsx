@@ -209,3 +209,39 @@ describe("ExerciseHistory — empty states (shared hexagon EmptyState)", () => {
     expect(screen.getByText("BW × 10")).toBeInTheDocument();
   });
 });
+
+describe("ExerciseHistory — a session leads back to its workout", () => {
+  it("each recent session opens the saved workout it was part of", () => {
+    const bench = (id: string, weightKg: number) => ({
+      id,
+      date: RECENT_SESSION_DATE,
+      exercises: [
+        {
+          exerciseId: "bench-press",
+          exerciseName: "Bench Press",
+          category: "push",
+          sets: [{ setNumber: 1, reps: 8, weightKg }],
+          caloriesBurned: 0,
+        },
+      ],
+      totalCalories: 0,
+      durationMinutes: 40,
+      notes: "",
+    });
+    // Two sessions on one day: each row is its own workout, not the day's.
+    workoutsMock.value = {
+      loading: false,
+      workouts: [bench("w-morning", 60), bench("w-evening", 62.5)],
+    } as any;
+    renderAt("Bench Press");
+    const hrefs = screen
+      .getAllByRole("link")
+      .map((link) => link.getAttribute("href"))
+      .filter((href) => href?.startsWith("/workout/"));
+    expect(hrefs.sort()).toEqual(["/workout/w-evening", "/workout/w-morning"]);
+    expect(screen.getByRole("link", { name: /60 kg × 8/ })).toHaveAttribute(
+      "href",
+      "/workout/w-morning"
+    );
+  });
+});

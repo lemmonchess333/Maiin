@@ -253,4 +253,16 @@ describe("WorkoutDetail", () => {
       ).toBeNull();
     });
   });
+
+  it("each exercise opens its own history", async () => {
+    seedFirestore({ "users/u1/workouts/w1": SAVED });
+    renderAt("w1");
+    const link = await screen.findByRole("link", {
+      name: /Barbell Bench Press/,
+    });
+    expect(link).toHaveAttribute(
+      "href",
+      "/history/exercise/Barbell%20Bench%20Press"
+    );
+  });
 });

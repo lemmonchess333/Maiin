@@ -1,9 +1,15 @@
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useMemo, useState, Suspense, useCallback } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Trophy,
+  Search,
+  Dumbbell,
+} from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { epley1RMExact } from "@/lib/analytics";
@@ -49,6 +55,8 @@ const RANGE_ORDER = ["1M", "3M", "6M", "1Y", "All"] as const;
 type Metric = "1RM" | "Max Weight" | "Volume";
 
 interface SessionSummary {
+  /** The saved workout this session is part of: its row opens it. */
+  workoutId: string;
   date: string;
   sets: { reps: number; weightKg: number }[];
   // Derived metrics per session.
@@ -157,6 +165,7 @@ export default function ExerciseHistory() {
         totalReps += s.reps;
       }
       out.push({
+        workoutId: w.id,
         date: w.date,
         sets,
         topSet: top,
@@ -602,11 +611,15 @@ export default function ExerciseHistory() {
                   const delta = prevDeltas.get(s.date);
                   const isPR = prDates.has(s.date);
                   return (
-                    /* At larger text the top set drops under the
-                       session's text rather than squeezing it. */
-                    <div
-                      key={s.date}
-                      className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3"
+                    /* Each row opens the workout it was part of, so the
+                       history leads back to the whole session. At larger
+                       text the top set drops under the session's text
+                       rather than squeezing it. */
+                    <Link
+                      key={s.workoutId}
+                      to={`/workout/${encodeURIComponent(s.workoutId)}`}
+                      onClick={() => haptic("light")}
+                      className="flex min-h-[44px] flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 transition-colors active:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                     >
                       <div className="min-w-[min(100%,8em)] flex-1">
                         <div className="flex items-center gap-1.5">
@@ -663,7 +676,11 @@ export default function ExerciseHistory() {
                           </p>
                         )}
                       </div>
-                    </div>
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="size-4 shrink-0 text-muted-foreground"
+                      />
+                    </Link>
                   );
                 })}
             </div>

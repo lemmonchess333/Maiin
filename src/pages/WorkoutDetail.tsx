@@ -27,8 +27,15 @@
  * snapshot resolves.
  */
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Share2, Users, Check, Dumbbell } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Share2,
+  Users,
+  Check,
+  Dumbbell,
+} from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
@@ -108,11 +115,16 @@ function ExerciseRecord({
   const timed = exercise.repUnit === "seconds";
   const liftUnit = useLiftUnit();
   return (
-    <Card padded={false} className="@container">
+    <Card padded={false} className="@container overflow-hidden">
       {/* The drawing gives way under 10em of card (double size): beside it
           the name had a column narrower than "Squat". A long one-word name
-          breaks rather than running out of the card. Wide-first. */}
-      <div className="flex items-center gap-3 p-3">
+          breaks rather than running out of the card. Wide-first. The row
+          opens the exercise's own history, as an exercise name does
+          wherever else it is listed. */}
+      <Link
+        to={`/history/exercise/${encodeURIComponent(exercise.exerciseName)}`}
+        className="flex items-center gap-3 p-3 transition-colors active:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      >
         <ExerciseThumb
           exerciseId={exercise.exerciseId}
           size="sm"
@@ -126,7 +138,11 @@ function ExerciseRecord({
             {sets.length} {sets.length === 1 ? "set" : "sets"}
           </p>
         </div>
-      </div>
+        <ChevronRight
+          aria-hidden="true"
+          className="size-4 shrink-0 text-muted-foreground"
+        />
+      </Link>
       {sets.length > 0 && (
         <ol className="border-t border-border/40">
           {sets.map((set, i) => {
