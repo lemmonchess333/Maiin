@@ -57,7 +57,6 @@ export const CARD_FRAMES: Readonly<Record<string, number>> = {
   "landmine-press": 3,
   "landmine-squat": 3,
   "lateral-raise": 3,
-  "man-maker": 4,
   "meadows-row": 3,
   "mountain-climbers": 4,
   "muscle-ups": 4,
