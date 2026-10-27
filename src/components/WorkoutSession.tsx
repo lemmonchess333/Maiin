@@ -38,9 +38,7 @@ import {
   Plus,
   MoreHorizontal,
   SkipForward,
-  Dumbbell,
 } from "lucide-react";
-import { EmptyState } from "@/components/ui/EmptyState";
 import type { Exercise } from "@/lib/exercises";
 import { exerciseAddedToday } from "@/features/program/sessionAdd";
 import { generateInstanceId } from "@/features/program/programTypes";
@@ -187,8 +185,13 @@ import {
   kitLoadToKg,
 } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
+// The screen of a session with no exercises yet, which most never show.
+const EmptySessionScreen = lazyRetry(
+  () => import("@/components/workout/EmptySessionScreen")
+);
 // The exercise list for "Swap for today" and "Add exercise", loaded when
 // it is opened.
+
 const ExercisePicker = lazyRetry(
   () => import("@/components/program/ExercisePicker")
 );
@@ -1771,41 +1774,19 @@ export default function WorkoutSession({
   // classic cause of React error #310.
   if (day.exercises.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)] safe-area-pb">
-        <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/50">
-          <p
-            role="heading"
-            aria-level={1}
-            className="min-w-0 truncate text-base font-bold text-foreground"
-          >
-            {dayLabel ?? liftDayLine(day.dayName)}
-          </p>
-          <IconButton
-            variant="ghost"
-            aria-label="Close workout"
-            onClick={onClose}
-            icon={<X className="size-5 text-muted-foreground" />}
-          />
-        </div>
-        <div className="flex-1 overflow-y-auto px-4">
-          <EmptyState
-            icon={Dumbbell}
-            headline="No exercises yet"
-            sub="Add the first one, and its sets are ready to log."
-          />
-        </div>
-        <div className="px-4 py-3 border-t border-border/50 bg-background">
-          <Button
-            size="lg"
-            fullWidth
-            onClick={openAddPicker}
-            leftIcon={<Plus className="size-4" aria-hidden="true" />}
-          >
-            Add exercise
-          </Button>
-        </div>
-        {addPicker}
-      </div>
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 z-50 bg-background pt-[var(--safe-top)]" />
+        }
+      >
+        <EmptySessionScreen
+          title={dayLabel ?? liftDayLine(day.dayName)}
+          onClose={onClose}
+          onAdd={openAddPicker}
+        >
+          {addPicker}
+        </EmptySessionScreen>
+      </Suspense>
     );
   }
 

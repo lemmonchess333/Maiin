@@ -265,7 +265,7 @@ describe("Add exercise", () => {
 
   it("a session with no exercises opens on Add exercise and grows from there", async () => {
     const complete = openSession([]);
-    expect(screen.getByText("No exercises yet")).toBeInTheDocument();
+    expect(await screen.findByText("No exercises yet")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: WORKOUT.markSet })).toBeNull();
     await addLateralRaise();
     expect(heading()).toBe("Lateral Raise");
