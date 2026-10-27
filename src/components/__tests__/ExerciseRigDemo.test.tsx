@@ -113,6 +113,9 @@ describe("ExerciseRigDemo", () => {
     // Both extremes render (t=0 and t=1).
     expect(container.querySelector('[data-t="0"]')).not.toBeNull();
     expect(container.querySelector('[data-t="1"]')).not.toBeNull();
+    for (const svg of container.querySelectorAll("svg[data-t]")) {
+      expect(svg.parentElement).toHaveClass("[&>svg]:h-auto", "[&>svg]:w-full");
+    }
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.queryByText(/set|lower under control/i)).toBeNull();
     expect(rafQueue.length).toBe(0);
@@ -283,10 +286,36 @@ describe("ExerciseRigDemo", () => {
     const { container } = await render(
       <ExerciseRigDemo exerciseId="treadmill" name="Treadmill" />
     );
+    expect(
+      screen.getByRole("img", {
+        name: "Treadmill demonstration · two cycle positions",
+      })
+    ).toBeInTheDocument();
     const frames = [...container.querySelectorAll("[data-t]")].map((n) =>
       n.getAttribute("data-t")
     );
     expect(frames).toEqual(["0", "0.5"]);
+    reduceRef.current = false;
+  });
+
+  it("shows Burpees' squat and defining jump as readable reduced-motion stills", async () => {
+    reduceRef.current = true;
+    demoRef.current = { concentricTo: 1, cycle: true, cycleMs: 3600 };
+    const { container } = await render(
+      <ExerciseRigDemo exerciseId="burpees" name="Burpees" />
+    );
+    expect(
+      screen.getByRole("img", {
+        name: "Burpees demonstration · squat and jump positions",
+      })
+    ).toBeInTheDocument();
+    const frames = [...container.querySelectorAll("[data-t]")].map((node) =>
+      node.getAttribute("data-t")
+    );
+    expect(frames).toEqual(["0", "0.84"]);
+    expect(screen.getByText("Squat")).toBeInTheDocument();
+    expect(screen.getByText("Jump")).toBeInTheDocument();
+    expect(container.querySelectorAll("svg")).toHaveLength(2);
     reduceRef.current = false;
   });
 
