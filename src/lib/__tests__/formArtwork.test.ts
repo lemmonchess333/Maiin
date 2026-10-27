@@ -50,8 +50,10 @@ describe("the artwork registry", () => {
         status: "approved",
         width: release.width,
         height: release.height,
-        frames: formFramePaths(id),
-        reference: `form-frames/${id}/${release.reference}.webp`,
+        frames: release.frames ?? formFramePaths(id),
+        reference: (release.frames ?? formFramePaths(id))[
+          release.reference - 1
+        ],
         reviewFile: `docs/exercise-art/releases/${release.folder}/${id}.json`,
       });
     }

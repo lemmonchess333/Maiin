@@ -7,6 +7,7 @@ import {
   screen,
 } from "@testing-library/react";
 import ExerciseFormFrames from "../ExerciseFormFrames";
+import { FORM_ART_COMPOSITES } from "@/lib/formArtComposites";
 const reduced = vi.hoisted(() => ({ value: false }));
 vi.mock("@/hooks/useReducedMotion", () => ({
   useReducedMotion: () => reduced.value,
@@ -39,7 +40,9 @@ describe("six-frame form guide", () => {
     );
     const camera = "translate(2%, -3%) scale(1.5)";
     for (let frame = 1; frame <= 6; frame += 1) {
-      expect(screen.getByRole("img")).toHaveStyle({ transform: camera });
+      expect(screen.getByRole("img").parentElement?.parentElement).toHaveStyle({
+        transform: camera,
+      });
       if (frame < 6)
         fireEvent.click(screen.getByRole("button", { name: "Next frame" }));
     }
@@ -53,6 +56,77 @@ describe("six-frame form guide", () => {
     load(view.container);
     act(() => vi.advanceTimersByTime(1200));
     expect(screen.getByRole("img")).toHaveAttribute("alt", "Squat, Position 2");
+  });
+  it("holds the Man Maker press until its planted-shoe layer loads", () => {
+    const view = render(
+      <ExerciseFormFrames
+        name="Man Maker"
+        beats={beats}
+        initialIndex={4}
+        autoPlay={false}
+        composite={FORM_ART_COMPOSITES["man-maker"]}
+      />
+    );
+    const images = view.container.querySelectorAll("img");
+    expect(images).toHaveLength(2);
+    expect(images[0]).toHaveAttribute("src", "/form-frames/test/5.webp");
+    expect(images[1]).toHaveAttribute("src", "/form-frames/test/4.webp");
+    expect(images[1].style.clipPath).toContain("85.86956521739131%");
+    fireEvent.load(images[0]);
+    expect(screen.getByRole("status")).toHaveTextContent("Loading frame");
+    fireEvent.load(images[1]);
+    expect(screen.queryByText("Loading frame…")).not.toBeInTheDocument();
+    expect(images[0].parentElement?.parentElement).toHaveStyle({
+      visibility: "visible",
+    });
+  });
+  it("retries a failed Man Maker shoe layer with the press frame", () => {
+    const view = render(
+      <ExerciseFormFrames
+        name="Man Maker"
+        beats={beats}
+        initialIndex={4}
+        autoPlay={false}
+        composite={FORM_ART_COMPOSITES["man-maker"]}
+      />
+    );
+    const first = view.container.querySelectorAll("img");
+    fireEvent.load(first[0]);
+    fireEvent.error(first[1]);
+    expect(screen.getByText("Frame could not load.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry images" }));
+    const retried = view.container.querySelectorAll("img");
+    expect(retried[0]).not.toBe(first[0]);
+    retried.forEach((image) => fireEvent.load(image));
+    expect(screen.queryByText("Frame could not load.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Loading frame…")).not.toBeInTheDocument();
+  });
+  it("keeps both grounded dumbbell ends fixed in the Man Maker return", () => {
+    const view = render(
+      <ExerciseFormFrames
+        name="Man Maker"
+        beats={beats}
+        initialIndex={5}
+        autoPlay={false}
+        composite={FORM_ART_COMPOSITES["man-maker"]}
+      />
+    );
+    const images = view.container.querySelectorAll("img");
+    expect(images).toHaveLength(3);
+    expect(images[1]).toHaveAttribute("src", "/form-frames/test/1.webp");
+    expect(images[2]).toHaveAttribute("src", "/form-frames/test/1.webp");
+    expect(images[1].style.clipPath).not.toBe(images[2].style.clipPath);
+    // The small dumbbell-end rectangles must crop the portrait artwork,
+    // not the letterboxed square stage around it.
+    expect(images[0].parentElement).toHaveStyle({
+      width: `${(700 / 920) * 100}%`,
+    });
+    expect(images[1].style.clipPath).toContain(`${(40 / 700) * 100}%`);
+    expect(images[2].style.clipPath).toContain(`${(165 / 700) * 100}%`);
+    images.forEach((image) => fireEvent.load(image));
+    expect(images[0].parentElement?.parentElement).toHaveStyle({
+      visibility: "visible",
+    });
   });
   it("plays all six in order and loops to the first without reversing", () => {
     const onStep = vi.fn();

@@ -13,6 +13,8 @@ export interface ApprovedFormArtRelease {
   height: number;
   /** Which of the six frames is the reference, 1 to 6. */
   reference: number;
+  /** Exact delivered paths when a new release preserves older frame bytes. */
+  frames?: readonly string[];
 }
 
 export const APPROVED_FORM_ART_RELEASES: Record<
@@ -622,11 +624,19 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     reference: 3,
   },
   "man-maker": {
-    folder: "2026-10-04",
-    version: "anatomy-v3-2026-10-04",
+    folder: "2026-10-27",
+    version: "anatomy-v4-2026-10-27-fixed-camera-composite-v1",
     width: 700,
     height: 920,
-    reference: 5,
+    reference: 4,
+    frames: [
+      "form-frames/man-maker/1.webp",
+      "form-frames/man-maker/2.webp",
+      "form-frames/man-maker/3.webp",
+      "form-frames/man-maker/2026-10-27/4.webp",
+      "form-frames/man-maker/2026-10-27/5.webp",
+      "form-frames/man-maker/2026-10-27/6.webp",
+    ],
   },
   "meadows-row": {
     folder: "2026-09-24",
