@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, Suspense } from "react";
 import { Toggle } from "@/components/ui/Toggle";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -20,12 +20,8 @@ import WeekPreview from "@/components/onboarding/WeekPreview";
 import FirstLiftPreview from "@/components/onboarding/FirstLiftPreview";
 import InjuryChangesList from "@/components/onboarding/InjuryChangesList";
 import DailyTarget from "@/components/onboarding/DailyTarget";
-import SetupReminderRow from "@/components/onboarding/SetupReminderRow";
-import {
-  nextLiftName,
-  reminderPreview,
-  SETUP_REMINDER_TIME,
-} from "@/lib/workoutReminderCopy";
+import { SETUP_REMINDER_TIME } from "@/lib/workoutReminderCopy";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { injuryChanges } from "@/features/program/injuryChanges";
 import {
   equipmentLabel,
@@ -83,6 +79,12 @@ import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import NewAccountMethodNote from "@/components/onboarding/NewAccountMethodNote";
 import { startingDisplayName } from "@/lib/onboardingName";
 import { signInMethodOf } from "@/lib/signInMethod";
+
+/* The review's reminder row is its own chunk, fetched once setup has
+   drawn, so the questions before it do not carry it. */
+const loadSetupReminderRow = () =>
+  import("@/components/onboarding/SetupReminderRow");
+const SetupReminderRow = lazyRetry(loadSetupReminderRow);
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
@@ -409,6 +411,9 @@ export default function Onboarding() {
     if (user && !saving && !onboardingCompletedRef.current)
       saveOnboardingDraft(user.uid, answers);
   }, [user, saving, answers]);
+  useEffect(() => {
+    void loadSetupReminderRow().catch(() => {});
+  }, []);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -1829,20 +1834,18 @@ export default function Onboarding() {
                 )}
 
               {validBody && <DailyTarget {...dailyTarget} />}
-              <SetupReminderRow
-                on={reminderOn}
-                time={reminderTime}
-                preview={reminderPreview(
-                  reminderTime,
-                  plan.weekSchedule,
-                  hasLifting ? nextLiftName(plan.programState) : null,
-                  new Date()
-                )}
-                onChange={(next) => {
-                  if (next.on !== undefined) setReminderOn(next.on);
-                  if (next.time !== undefined) setReminderTime(next.time);
-                }}
-              />
+              <Suspense fallback={null}>
+                <SetupReminderRow
+                  on={reminderOn}
+                  time={reminderTime}
+                  schedule={plan.weekSchedule}
+                  programme={hasLifting ? plan.programState : null}
+                  onChange={(next) => {
+                    if (next.on !== undefined) setReminderOn(next.on);
+                    if (next.time !== undefined) setReminderTime(next.time);
+                  }}
+                />
+              </Suspense>
               <details className="rounded-2xl bg-card card-shadow px-4">
                 <summary className="min-h-11 py-3 cursor-pointer text-base font-semibold">
                   Your answers

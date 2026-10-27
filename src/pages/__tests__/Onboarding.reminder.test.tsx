@@ -74,12 +74,15 @@ const draft: OnboardingDraft = {
   displayName: "Test athlete",
 };
 
-const open = () =>
+/** Setup at the review, once its reminder row (its own chunk) is in. */
+const open = async () => {
   render(
     <MemoryRouter>
       <Onboarding />
     </MemoryRouter>
   );
+  await screen.findByRole("region", { name: "Training-day reminder" });
+};
 const row = () => screen.getByRole("region", { name: "Training-day reminder" });
 const reminderSwitch = () =>
   screen.getByRole("switch", { name: SETUP_REMINDER_LABEL });
@@ -108,8 +111,8 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("setup's reminder row", () => {
-  it("previews the first lift by name, at 07:30", () => {
-    open();
+  it("previews the first lift by name, at 07:30", async () => {
+    await open();
     const firstLift = within(
       screen.getByRole("region", { name: "First lift preview" })
     ).getByRole("heading").textContent!;
@@ -125,7 +128,7 @@ describe("setup's reminder row", () => {
   });
 
   it("left off, asks nothing and writes no reminder", async () => {
-    open();
+    await open();
     await startMyPlan();
     await waitFor(() => expect(h.refresh).toHaveBeenCalledTimes(1));
     // Anchor: the public profile seed after it has been written.
@@ -135,7 +138,7 @@ describe("setup's reminder row", () => {
   });
 
   it("turned on, asks for permission then, and saves the reminder at its time", async () => {
-    open();
+    await open();
     expect(h.request).not.toHaveBeenCalled();
     fireEvent.click(reminderSwitch());
     await waitFor(() =>
@@ -167,7 +170,7 @@ describe("setup's reminder row", () => {
 
   it("stays off and says where to allow it when the phone refuses", async () => {
     h.request.mockResolvedValue(false);
-    open();
+    await open();
     fireEvent.click(reminderSwitch());
     expect(
       await within(row()).findByText(/^Notifications are off for Tropos/)

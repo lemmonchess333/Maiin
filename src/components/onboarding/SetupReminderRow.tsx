@@ -4,6 +4,8 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import { Toggle } from "@/components/ui/Toggle";
 import { requestNotificationPermission } from "@/lib/notifications";
 import { isNativePlatform } from "@/lib/platform";
+import { nextLiftName, reminderPreview } from "@/lib/workoutReminderCopy";
+import type { ProgramState } from "@/features/program/programTypes";
 
 /** The row's accessible name, and the words beside its switch. */
 export const SETUP_REMINDER_LABEL = "Remind me on training days";
@@ -22,15 +24,25 @@ const TIME = /^\d{2}:\d{2}$/;
 export default function SetupReminderRow({
   on,
   time,
-  preview,
+  schedule,
+  programme,
   onChange,
 }: {
   on: boolean;
   time: string;
-  /** The first reminder, or null when it would never go off. */
-  preview: string | null;
+  /** The plan's week, which says which days are lift and run days. */
+  schedule: ReadonlyArray<{ day: number; type: string }>;
+  /** The plan's lifts, or null for a plan with none. */
+  programme: Pick<ProgramState, "workouts" | "nextWorkoutOverride"> | null;
   onChange: (next: { on?: boolean; time?: string }) => void;
 }) {
+  // The first reminder, or null when it would never go off.
+  const preview = reminderPreview(
+    time,
+    schedule,
+    nextLiftName(programme),
+    new Date()
+  );
   const [refused, setRefused] = useState(false);
   const [asking, setAsking] = useState(false);
   const toggle = async () => {

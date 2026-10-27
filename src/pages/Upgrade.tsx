@@ -87,7 +87,7 @@ import RenewalDisclosure from "@/components/paywall/RenewalDisclosure";
 import ProPreview from "@/components/paywall/ProPreview";
 import ProDemoVideo from "@/components/paywall/ProDemoVideo";
 import ProIncludes from "@/components/paywall/ProIncludes";
-import { FREE_KEEPS } from "@/lib/proFeatures";
+import { FREE_KEEPS } from "@/components/paywall/proIncludesCopy";
 import { framesForFeature } from "@/components/paywall/previewFrames";
 
 type Beat = "offer" | "plans";

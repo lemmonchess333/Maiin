@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PRO_INCLUDES } from "@/lib/proFeatures";
+import { PRO_INCLUDES } from "./proIncludesCopy";
 
 /** The checked list of what Pro includes (`PRO_INCLUDES`), shared by the
  *  offer and a Pro member's card on the Pro page. */
