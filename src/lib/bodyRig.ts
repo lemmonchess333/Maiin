@@ -591,6 +591,10 @@ export interface BodyDemo {
   cycle?: true;
   /** Period of one cycle in ms (default `CYCLE_MS_DEFAULT`). */
   cycleMs?: number;
+  /** Opt a continuous cycle into uniform progress. By default the renderer
+   *  eases progress at the loop seam, as it has for existing demos. A pedal
+   *  stroke or steady arm cycle can use `linear` to avoid a visible pause. */
+  cycleTiming?: "linear";
   /** Movements whose envelope exceeds the body's column (e.g. a lateral
    *  raise at full span) declare a wider canvas. */
   viewBox?: string;
@@ -650,6 +654,16 @@ export interface BodyDemo {
 
 const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+/** Map player progress to a pose. Keep existing cycle timing until a demo
+ *  explicitly opts into constant speed after movement-specific review. */
+export function bodyDemoProgress(
+  demo: Pick<BodyDemo, "cycle" | "cycleTiming">,
+  t: number
+): number {
+  return demo.cycle && demo.cycleTiming === "linear"
+    ? clamp01(t)
+    : easeInOutSine(t);
+}
 /** Smoothstep — used to stagger joints inside one rep without velocity
  *  kinks at the hand-over points. */
 const smooth = (v: number) => {
@@ -9910,7 +9924,7 @@ export function renderBodyDemo(
   const demo = resolveDemoForReview(exerciseId);
   if (!demo) return "";
   if (demo.view === "side") return renderSideDemo(demo, t, effort);
-  const e = easeInOutSine(t);
+  const e = bodyDemoProgress(demo, t);
   const pose = demo.pose(e);
   // The side view returned above — narrow the view for the closures.
   const view = demo.view === "posterior" ? "posterior" : "anterior";
@@ -10113,7 +10127,7 @@ export function renderBodyDemo(
  * so rotations never open cracks and the seams read exactly like the
  * front/back facet gaps on the dark stage. */
 function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
-  const e = easeInOutSine(t);
+  const e = bodyDemoProgress(demo, t);
   const pose = demo.pose(e);
   const tintOpacity = (level: "primary" | "secondary") =>
     level === "primary" ? 0.72 + 0.28 * effort : 0.66 + 0.24 * effort;

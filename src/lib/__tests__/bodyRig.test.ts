@@ -5,6 +5,7 @@ import {
   applyToPoint,
   BACK_RACK,
   BODY_DEMOS,
+  bodyDemoProgress,
   CALF_BALL,
   CALF_BLOCK_TOP,
   DIP_GRIP,
@@ -19,6 +20,33 @@ import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { EXERCISES } from "../exercises";
 import { isFormArtQuarantined } from "../formArtQuarantine";
 import { FAR_ARM_SHIFT, SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
+
+describe("body demo cycle timing", () => {
+  it("keeps existing easing unless a cycle explicitly requests linear progress", () => {
+    const quarter = bodyDemoProgress({}, 0.25);
+    expect(quarter).toBeCloseTo(0.1464466, 6);
+    expect(bodyDemoProgress({ cycle: true }, 0.25)).toBe(quarter);
+    expect(bodyDemoProgress({ cycleTiming: "linear" }, 0.25)).toBe(quarter);
+    expect(bodyDemoProgress({ cycle: true, cycleTiming: "linear" }, 0.25)).toBe(0.25);
+    expect(bodyDemoProgress({ cycle: true, cycleTiming: "linear" }, -1)).toBe(0);
+    expect(bodyDemoProgress({ cycle: true, cycleTiming: "linear" }, 2)).toBe(1);
+  });
+
+  it("uses the opted-in timing in the rendered side-view cycle", () => {
+    const demo = BODY_DEMOS.elliptical;
+    const easedAtQuarter = renderBodyDemo("elliptical", 0.25);
+    const easedAtThird = renderBodyDemo("elliptical", 1 / 3);
+    const prior = demo.cycleTiming;
+    try {
+      demo.cycleTiming = "linear";
+      expect(renderBodyDemo("elliptical", 0.25)).toBe(easedAtThird);
+      expect(renderBodyDemo("elliptical", 0.25)).not.toBe(easedAtQuarter);
+    } finally {
+      if (prior === undefined) delete demo.cycleTiming;
+      else demo.cycleTiming = prior;
+    }
+  });
+});
 
 describe("machine fallback contacts", () => {
   it("keeps both elliptical shoes on moving pedals and its hand on the lever", () => {
