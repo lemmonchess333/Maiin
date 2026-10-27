@@ -13,8 +13,7 @@
 import type { RunConfig } from "@/components/run/runConfigDefaults";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { RacePaceWork } from "@/lib/racePace";
-import { runTypeTitle } from "@/lib/runLabels";
-import { runSessionName } from "@/lib/runSessionAbout";
+import { runSessionName, runTypeTitle } from "@/lib/runLabels";
 import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
 
 /** The longest name a run is saved under. The rules allow a post's title
