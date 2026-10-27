@@ -174,6 +174,10 @@ export interface OnboardingDraft {
   goalWeightText?: string;
   /** Unsigned weekly pace; the target weight supplies its direction. */
   paceKgPerWeek?: 0.25 | 0.5 | 0.75;
+  /** The review's optional training-day reminder (Mob1 call 3): on only
+   *  once the phone allowed notifications, and its "HH:mm". */
+  reminderOn?: boolean;
+  reminderTime?: string;
 }
 
 interface DraftEnvelope {
@@ -255,7 +259,12 @@ export function isValidDraft(
     (d.recentRaceSeconds === undefined ||
       typeof d.recentRaceSeconds === "string") &&
     (d.goalWeightText === undefined || typeof d.goalWeightText === "string") &&
-    (d.paceKgPerWeek === undefined || oneOf([0.25, 0.5, 0.75], d.paceKgPerWeek))
+    (d.paceKgPerWeek === undefined ||
+      oneOf([0.25, 0.5, 0.75], d.paceKgPerWeek)) &&
+    (d.reminderOn === undefined || typeof d.reminderOn === "boolean") &&
+    (d.reminderTime === undefined ||
+      (typeof d.reminderTime === "string" &&
+        /^\d{2}:\d{2}$/.test(d.reminderTime)))
   );
 }
 

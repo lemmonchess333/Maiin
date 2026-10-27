@@ -2,6 +2,7 @@ import { createContext, use, useMemo, type ReactNode } from "react";
 import { useReminderActivity } from "@/hooks/useReminderActivity";
 import { useMealRemindersInternal } from "@/hooks/useMealReminders";
 import { useWorkoutRemindersInternal } from "@/hooks/useWorkoutReminders";
+import { useNextLiftName } from "@/hooks/useNextLiftName";
 import { useStreakReminderInternal } from "@/hooks/useStreakReminder";
 import { useTrialReminderInternal } from "@/hooks/useTrialReminder";
 import { useTrialPriceReport } from "@/hooks/useTrialPriceReport";
@@ -44,7 +45,9 @@ const RemindersContext = createContext<RemindersValue | null>(null);
 export function RemindersProvider({ children }: { children: ReactNode }) {
   const { activity, pushOwns, refreshKey } = useReminderActivity();
   const meal = useMealRemindersInternal(activity);
-  const workout = useWorkoutRemindersInternal(activity);
+  // A lift day's reminder names the programme's next workout.
+  const liftName = useNextLiftName();
+  const workout = useWorkoutRemindersInternal(activity, liftName);
   const streak = useStreakReminderInternal(pushOwns, refreshKey);
   // One-shot, no prefs, no consumer: it only needs to run once per session.
   useTrialReminderInternal();

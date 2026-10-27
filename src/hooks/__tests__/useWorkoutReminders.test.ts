@@ -195,6 +195,49 @@ describe("which days get reminded", () => {
   });
 });
 
+describe("what each day's reminder says (Mob1 call 3)", () => {
+  it("a lift day names the programme's next workout; a run day says run", async () => {
+    seedFirestore({ [PATH]: ON });
+    const { result } = renderHook(() =>
+      useWorkoutRemindersInternal(undefined, "Upper A")
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(scheduledIds()).toHaveLength(5));
+
+    for (const lift of [ID(1), ID(3), ID(5)]) {
+      expect(scheduledAt(lift)?.title, `id ${lift}`).toBe("Upper A today");
+    }
+    for (const run of [ID(2), ID(6)]) {
+      expect(scheduledAt(run)?.title, `id ${run}`).toBe("Time to run");
+    }
+  });
+
+  it("names the new next workout once one is logged", async () => {
+    seedFirestore({ [PATH]: ON });
+    let name = "Upper A";
+    const { result, rerender } = renderHook(() =>
+      useWorkoutRemindersInternal(undefined, name)
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() =>
+      expect(scheduledAt(ID(5))?.title).toBe("Upper A today")
+    );
+    name = "Lower A";
+    rerender();
+    await waitFor(() =>
+      expect(scheduledAt(ID(5))?.title).toBe("Lower A today")
+    );
+  });
+
+  it("keeps the plain reminder while the next workout is not known", async () => {
+    seedFirestore({ [PATH]: ON });
+    const { result } = renderHook(() => useWorkoutRemindersInternal());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(scheduledIds()).toHaveLength(5));
+    expect(scheduledAt(ID(1))?.title).toBe("Time to train");
+  });
+});
+
 describe("weekly repeat", () => {
   it("marks every entry as repeating WEEKLY", async () => {
     // The pre-PR-M regression: without this each reminder fires once and

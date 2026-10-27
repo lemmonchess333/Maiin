@@ -17,6 +17,7 @@ import {
 import { toast } from "@/lib/toast";
 import type { MealReminders } from "@/hooks/useMealReminders";
 import type { WorkoutReminders } from "@/hooks/useWorkoutReminders";
+import { WORKOUT_REMINDER_IDS } from "@/lib/workoutReminderCopy";
 import type { StreakReminderPrefs } from "@/hooks/useStreakReminder";
 import { useUid } from "@/lib/auth";
 import { usePushSettings } from "@/hooks/usePushSettings";
@@ -236,11 +237,15 @@ export default function NotificationsSection({
       string[]
     > = {
       meal: ["meal", "breakfast", "lunch", "dinner", "eat"],
-      workout: ["workout", "training", "lift", "session"],
+      workout: [], // found by its ids below
       streak: ["streak", "log"],
     };
     const needles = titleNeedles[kind];
     const candidates = pending.filter((p) => {
+      // A workout reminder's title names its session ("Upper A today"),
+      // so it is known by its weekday ids instead.
+      if (kind === "workout")
+        return (WORKOUT_REMINDER_IDS as readonly number[]).includes(p.id);
       const text = (p.title || "").toLowerCase();
       return needles.some((n) => text.includes(n));
     });

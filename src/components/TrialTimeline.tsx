@@ -1,4 +1,4 @@
-import { Unlock, Crown } from "lucide-react";
+import { Unlock, CalendarX, Crown } from "lucide-react";
 import { TRIAL_DAYS, type ProPlan } from "@/lib/proPlans";
 
 /**
@@ -8,12 +8,14 @@ import { TRIAL_DAYS, type ProPlan } from "@/lib/proPlans";
  *
  * Copy is deliberately HONEST about today's mechanics. This ladder
  * describes the BILLED checkout trial (`hasUsedTrial` — Stripe
- * `trialing`, or the App Store intro offer), whose end the client cannot
- * see, so no reminder is promised for it. The reminder that does exist
- * (`useTrialReminder`) is for the app-granted onboarding trial, a
- * different thing with nothing to bill. Add a "Day 5 — we'll remind you"
- * step here only when a server-side reminder keyed on the billed trial's
- * end ships — here and nowhere else.
+ * `trialing`, or the App Store intro offer). The App Store needs a trial
+ * cancelled at least 24 hours before it ends, so the last day to cancel
+ * is the day before the subscription starts, at the time of day the
+ * trial began (Sub1). Sub1 also plans a "Day 4 — we'll email you a
+ * reminder" step: it goes in here, and only once a live reminder has
+ * reached a Hide My Email address in production. The reminder that
+ * `useTrialReminder` sends is for the app-granted onboarding trial, a
+ * different thing with nothing to bill.
  *
  * The last step names what is then charged, for the plan the person has
  * selected (App Store Guideline 3.1.2: the billed amount stated where the
@@ -32,9 +34,14 @@ export default function TrialTimeline({ plan }: Props) {
       what: "Full Pro access. Every feature, no payment due.",
     },
     {
+      icon: CalendarX,
+      when: `Day ${TRIAL_DAYS - 1}`,
+      what: "Last day to cancel, by the time of day you started the trial.",
+    },
+    {
       icon: Crown,
       when: `Day ${TRIAL_DAYS}`,
-      what: `Your subscription starts at ${plan.price} ${plan.periodPhrase} unless you've cancelled. You can cancel any time before then.`,
+      what: `Your subscription starts at ${plan.price} ${plan.periodPhrase} unless you've cancelled.`,
     },
   ];
 

@@ -1585,6 +1585,11 @@ function useStreaksInternal() {
     savableStreak,
     longestStreak,
     totalActiveDays,
+    /** The days the streak counts as active (a workout, a valid run or a
+     *  meal with items), over the window it reads. */
+    activeDates: activeDateSet,
+    /** The days grace covered inside the current streak, newest first. */
+    bridgedDates,
     hasLoggedToday,
     forgivenYesterday,
     backfillRescueStreak,

@@ -365,6 +365,24 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
     );
   });
 
+  it("the timeline says the last day to cancel is the day before the trial ends", () => {
+    // The App Store needs a trial cancelled at least 24 hours before it
+    // ends, so "any time before then" was untrue on iPhone (Sub1).
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    renderModal({ onClose: () => {} });
+    const steps = within(
+      screen.getByRole("list", { name: "How your free trial works" })
+    )
+      .getAllByRole("listitem")
+      .map((li) => li.textContent);
+    expect(steps).toEqual([
+      expect.stringMatching(/^Today — /),
+      "Day 6 — Last day to cancel, by the time of day you started the trial.",
+      expect.stringMatching(/^Day 7 — Your subscription starts at /),
+    ]);
+    expect(steps.join(" ")).not.toMatch(/any time before then/);
+  });
+
   it("offers the price, not the trial, to an Apple ID the App Store says has had it", () => {
     authProfileMock.mockReturnValue({ hasUsedTrial: false });
     storeTrialMock.mockReturnValue({
