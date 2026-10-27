@@ -45,6 +45,14 @@ import type { Exercise } from "@/lib/exercises";
 import { exerciseAddedToday } from "@/features/program/sessionAdd";
 import { generateInstanceId } from "@/features/program/programTypes";
 import { workoutSourceForScope } from "@/features/program/emptyWorkout";
+import {
+  canSupersetWithNext,
+  leaveSuperset,
+  nextInSuperset,
+  supersetAt,
+  supersetWithNext,
+} from "@/features/program/superset";
+
 import { Button } from "@/components/ui/Button";
 import {
   FIELD_EDGE,
@@ -1207,6 +1215,26 @@ export default function WorkoutSession({
     );
     const isLastSet = isExerciseDone(updatedLogs[currentExIndex]);
     const next = nextIncompleteSet(updatedLogs, currentExIndex);
+    /* In a superset (Mob1 call 2) the next set is the next exercise's in
+       the group, A1 → B1 → A2 → B2, and the rest waits for the end of the
+       round: it runs after the group's last exercise, before its first
+       comes round again. Once the group has nothing left, the session
+       moves on as it does from any exercise. */
+    const members = supersetAt(
+      day.exercises,
+      prescription.supersets,
+      currentExIndex
+    );
+    const turn = members
+      ? nextInSuperset(updatedLogs, members, currentExIndex)
+      : null;
+    const takeTurn = (to: NonNullable<typeof turn>) => {
+      setCurrentExIndex(to.exerciseIndex);
+      setCurrentSetIndex(to.setIndex);
+      if (!to.rest) stopRest();
+      else if (autoRest)
+        startRest(day.exercises[currentExIndex], set.type === "warmup");
+    };
 
     if (isLastSet) {
       // Backlog #2 — session-volume PR (three-axis PR, Green/B1): most
@@ -1253,7 +1281,9 @@ export default function WorkoutSession({
       // If nothing is eligible (an exercise logged as warm-ups only, or a lone
       // drop set) we skip entirely — there is no working-set evidence, and
       // inventing some would be worse than waiting for the next session.
-      if (!next) {
+      if (turn) {
+        takeTurn(turn);
+      } else if (!next) {
         completeSession();
       } else {
         setCurrentExIndex(next.exerciseIndex);
@@ -1261,6 +1291,8 @@ export default function WorkoutSession({
         if (autoRest)
           startRest(day.exercises[currentExIndex], set.type === "warmup");
       }
+    } else if (turn) {
+      takeTurn(turn);
     } else {
       // Move to next set, start rest timer (unless auto-start is off)
       setCurrentSetIndex(next?.setIndex ?? 0);
@@ -1268,6 +1300,19 @@ export default function WorkoutSession({
         startRest(day.exercises[currentExIndex], set.type === "warmup");
     }
   };
+
+  /* Supersets (Mob1 call 2), from an exercise's menu: with the exercise
+     after it, or out of its group again. */
+  const supersetNext = (index: number) =>
+    setPrescription((current) => ({
+      ...current,
+      supersets: supersetWithNext(current.exercises, current.supersets, index),
+    }));
+  const leaveItsSuperset = (index: number) =>
+    setPrescription((current) => ({
+      ...current,
+      supersets: leaveSuperset(current.exercises, current.supersets, index),
+    }));
 
   const refreshRecords = (logs: SetLog[][]) => {
     const next = sessionRecords(
@@ -2099,6 +2144,23 @@ export default function WorkoutSession({
                 </div>
               )}
             </div>
+            {(() => {
+              const group = supersetAt(
+                day.exercises,
+                prescription.supersets,
+                safeExIndex
+              );
+              if (!group) return null;
+              const others = group
+                .filter((i) => i !== safeExIndex)
+                .map((i) => day.exercises[i]?.name)
+                .filter(Boolean);
+              return (
+                <p className="text-sm font-medium text-lifting-strong">
+                  Superset with {others.join(" and ")}
+                </p>
+              );
+            })()}
             {skippedRows[safeExIndex] !== undefined && (
               <p className="text-sm text-muted-foreground">Skipped today</p>
             )}
@@ -2889,6 +2951,16 @@ export default function WorkoutSession({
             if (planned) swapForToday(menuFor, planned.exerciseId);
           }}
           onSkip={() => skipExercise(menuFor)}
+          supersetNextName={
+            canSupersetWithNext(day.exercises, prescription.supersets, menuFor)
+              ? day.exercises[menuFor + 1]?.name
+              : undefined
+          }
+          onSupersetNext={() => supersetNext(menuFor)}
+          inSuperset={
+            supersetAt(day.exercises, prescription.supersets, menuFor) !== null
+          }
+          onLeaveSuperset={() => leaveItsSuperset(menuFor)}
           onUnskip={() => unskipExercise(menuFor)}
         />
       )}

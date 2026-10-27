@@ -6,6 +6,10 @@
  * Swapping is offered while none of the exercise's sets is done, since done
  * sets belong to the exercise they were done as. Skipping keeps the sets
  * done so far, and "Don't skip" brings the rest back.
+ *
+ * It also puts the exercise in a superset with the one after it, or takes
+ * it out of one (Mob1 call 2). A superset is the session's too: it is saved
+ * with the workout and never reaches the plan.
  */
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
 
@@ -24,6 +28,13 @@ interface ExerciseMenuSheetProps {
   onSwapBack: () => void;
   onSkip: () => void;
   onUnskip: () => void;
+  /** The next exercise's name, when this one can be put in a superset
+   *  with it (Mob1 call 2). */
+  supersetNextName?: string;
+  onSupersetNext?: () => void;
+  /** This exercise is in a superset, which it can leave. */
+  inSuperset?: boolean;
+  onLeaveSuperset?: () => void;
 }
 
 export default function ExerciseMenuSheet({
@@ -37,6 +48,10 @@ export default function ExerciseMenuSheet({
   onSwapBack,
   onSkip,
   onUnskip,
+  supersetNextName,
+  onSupersetNext,
+  inSuperset = false,
+  onLeaveSuperset,
 }: ExerciseMenuSheetProps) {
   // The sheet closes itself once a choice resolves (`ChoiceSheet`). Each
   // label says it is for today, so no choice carries a second line.
@@ -57,6 +72,18 @@ export default function ExerciseMenuSheet({
                 ? [choice("swap-back", `Back to ${swappedFor}`, onSwapBack)]
                 : []),
             ]
+          : []),
+        ...(supersetNextName && onSupersetNext
+          ? [
+              choice(
+                "superset",
+                `Superset with ${supersetNextName}`,
+                onSupersetNext
+              ),
+            ]
+          : []),
+        ...(inSuperset && onLeaveSuperset
+          ? [choice("unsuperset", "Remove from superset", onLeaveSuperset)]
           : []),
         choice("skip", "Skip today", onSkip),
       ];
