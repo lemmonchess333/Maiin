@@ -15,6 +15,7 @@ vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }));
 import { useSessionDoc } from "../useSessionDoc";
+import { queueWorkoutCompletion } from "@/lib/offlineQueue";
 import {
   resetFirestore,
   seedFirestore,
@@ -119,6 +120,35 @@ describe("useSessionDoc", () => {
     expect(result.current.data).toBeNull();
 
     await waitFor(() => expect(result.current.data?.distance).toBe(10000));
+  });
+
+  it("shows a workout finished offline, still waiting in this phone's queue", async () => {
+    // Exercise history links each session to its workout, and a workout
+    // finished offline is in the list before it reaches the server.
+    const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    localStorage.clear();
+    try {
+      void queueWorkoutCompletion({} as never, "u1", "programme-c1", {
+        date: "2026-10-20",
+        exercises: [],
+        notes: "Push",
+      });
+      const { result } = renderHook(() =>
+        useSessionDoc<{ id: string; notes?: string }>(
+          "u1",
+          "workouts",
+          "programme-c1"
+        )
+      );
+      await waitFor(() => expect(result.current.status).toBe("ready"));
+      expect(result.current.data).toMatchObject({
+        id: "programme-c1",
+        notes: "Push",
+      });
+    } finally {
+      online.mockRestore();
+      localStorage.clear();
+    }
   });
 
   it("calls a malformed URL MISSING without reading", async () => {
