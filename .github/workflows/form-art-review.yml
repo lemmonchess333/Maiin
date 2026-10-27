@@ -8,6 +8,7 @@ on:
       - "src/components/ExerciseFormFrames.tsx"
       - "e2e/fixtures/form-art.tsx"
       - "e2e/form-art-review.pw.ts"
+      - "e2e/form-art-release.pw.ts"
       - "playwright.form-art.config.ts"
       - "scripts/export-form-art-review.py"
       - ".github/workflows/form-art-review.yml"

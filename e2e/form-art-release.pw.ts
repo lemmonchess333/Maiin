@@ -47,6 +47,10 @@ for (const { id, dimensions, cardWidth } of [
         theme === "dark" ? /\bdark\b/ : /^(?!.*\bdark\b)/
       );
       const image = guide.locator('img[aria-hidden="false"]');
+      // Capture the clipped artwork stage. A framed image can be transformed
+      // beyond that clip, and Chromium's element screenshot may then include
+      // unrelated page pixels (such as the theme button) in its bounding box.
+      const stage = guide.locator(".aspect-square");
       let firstPixels: Buffer | undefined;
       for (const [index, beat] of beats.entries()) {
         await expect(image).toHaveAttribute("src", `/${beat.image}`);
@@ -76,7 +80,7 @@ for (const { id, dimensions, cardWidth } of [
         // The player uses decoding="async": load completion alone does not
         // guarantee that the browser has decoded the pixels for its next paint.
         await image.evaluate((node) => (node as HTMLImageElement).decode());
-        const displayed = await image.screenshot({
+        const displayed = await stage.screenshot({
           path: info.outputPath(`${theme}-pixels-${index + 1}.png`),
         });
         if (index === 0) firstPixels = displayed;
