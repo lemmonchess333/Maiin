@@ -18,6 +18,10 @@ interface Props {
  * food was eaten, the search result's, the barcode result's and the edit
  * sheet's, so the same food is measured the same way however it arrived.
  * The parent owns the text and reads it with `parseAmount`.
+ *
+ * The steps, the gaps and the field's width are px, as iOS keeps a
+ * stepper's controls one size whatever the text size: in rem, at large
+ * text the row outgrew a 320 px sheet. The figure and the unit still grow.
  */
 export default function PortionAmountField({
   unit,
@@ -28,16 +32,16 @@ export default function PortionAmountField({
   const id = useId();
   const grams = unit === "grams";
   return (
-    <div className="flex items-center justify-center gap-4">
+    <div className="flex items-center justify-center gap-[16px]">
       <IconButton
         variant="secondary"
         aria-label={grams ? "Decrease grams" : "Decrease servings"}
-        icon={<Minus className="size-4" aria-hidden="true" />}
+        icon={<Minus className="size-[16px]" aria-hidden="true" />}
         onClick={() => onChange(stepAmount(value, unit, -1))}
         disabled={disabled}
-        className="rounded-full"
+        className="size-[44px] shrink-0 rounded-full"
       />
-      <div className="text-center">
+      <div className="min-w-0 text-center">
         <label htmlFor={id} className="sr-only">
           {grams ? "Grams" : "Servings"}
         </label>
@@ -48,7 +52,7 @@ export default function PortionAmountField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className="w-20 min-h-11 rounded-lg bg-muted text-center text-2xl font-bold font-figure tabular-nums text-foreground disabled:opacity-60"
+          className="w-[96px] min-h-[44px] rounded-lg bg-muted text-center text-2xl font-bold font-figure tabular-nums text-foreground disabled:opacity-60"
         />
         <p className="text-xs text-muted-foreground">
           {grams ? "grams" : "servings"}
@@ -57,10 +61,10 @@ export default function PortionAmountField({
       <IconButton
         variant="secondary"
         aria-label={grams ? "Increase grams" : "Increase servings"}
-        icon={<Plus className="size-4" aria-hidden="true" />}
+        icon={<Plus className="size-[16px]" aria-hidden="true" />}
         onClick={() => onChange(stepAmount(value, unit, 1))}
         disabled={disabled}
-        className="rounded-full"
+        className="size-[44px] shrink-0 rounded-full"
       />
     </div>
   );
