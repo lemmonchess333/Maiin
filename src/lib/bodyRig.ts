@@ -9518,6 +9518,13 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       const lever = (side: "near" | "far", pivot: Pt, grip: Pt) =>
         `<line data-elliptical-handle="${side}" x1="${pivot[0]}" y1="${pivot[1]}" x2="${grip[0].toFixed(2)}" y2="${grip[1].toFixed(2)}" stroke="${side === "far" ? GEAR_FAR : GEAR_DARK}" stroke-width="${side === "far" ? 3.4 : 4.4}" stroke-linecap="round"/>` +
         `<rect x="${(grip[0] - 2.5).toFixed(2)}" y="${(grip[1] - 8).toFixed(2)}" width="5" height="16" rx="2.5" fill="${side === "far" ? GEAR_FAR : GEAR}"/>`;
+      const ankleCap = (side: "L" | "R") => {
+        const ankle = applyToPoint(
+          SIDE_ANCHORS.ankle,
+          pose[`shank${side}`] ?? []
+        );
+        return `<circle cx="${ankle[0].toFixed(2)}" cy="${ankle[1].toFixed(2)}" r="3.2" fill="${side === "R" ? BODY_FAR : BODY}"/>`;
+      };
       return (
         `<g data-elliptical-fixed="true">` +
         `<rect x="0" y="198" width="137" height="5" rx="2.5" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
@@ -9536,7 +9543,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         lever("far", ELLIPTICAL_FAR_PIVOT, far) +
         lever("near", ELLIPTICAL_NEAR_PIVOT, near) +
         `<circle cx="${ELLIPTICAL_FAR_PIVOT[0]}" cy="${ELLIPTICAL_FAR_PIVOT[1]}" r="2.6" fill="${GEAR_FAR}"/>` +
-        `<circle cx="${ELLIPTICAL_NEAR_PIVOT[0]}" cy="${ELLIPTICAL_NEAR_PIVOT[1]}" r="2.6" fill="${GEAR}"/>`
+        `<circle cx="${ELLIPTICAL_NEAR_PIVOT[0]}" cy="${ELLIPTICAL_NEAR_PIVOT[1]}" r="2.6" fill="${GEAR}"/>` +
+        ankleCap("R") +
+        ankleCap("L")
       );
     },
   },
