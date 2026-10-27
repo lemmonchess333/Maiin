@@ -107,6 +107,10 @@ Their approved frame bytes remain unchanged.
 | Stationary Bike, Spin Bike and Assault Bike | Added moving crank arms and pedal platforms beneath both shoes; the assault fan turns with the stroke. |
 | Seated Cable Row and Hip Abduction Machine | Replaced vertical drive/return captions with cues that match the actual pull and outward press. |
 
+Reduced-motion views now show a readable squat and jump for Burpees. All
+two-pose views size their SVGs to their available width, so the drawings stay
+inside their panels on narrow phones.
+
 Geometry tests now check the rendered grip, foot/platform contacts, full-cycle
 seams and movement-specific key positions. Phone-size sequences were inspected
 in dark and light themes. The release review records remain the source of truth
