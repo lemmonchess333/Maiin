@@ -10,6 +10,20 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The streak's days, from the flame (Mob1 call 4, 2026-10-27)
+
+Home's flame opens a sheet: the month's logged days filled in purple,
+covered days ringed, "Yesterday's rest day is covered" after one, and See
+your badges. Each day carries words for a screen reader ("Monday 26
+October, covered"). The unit suites read those words and the large-text
+spec measures the sheet at 2× on 320 px; only a phone shows VoiceOver
+reading it.
+
+- [ ] **VoiceOver reads the month.** On an iPhone with VoiceOver on, tap
+      the flame and swipe through the days. Passing: each day is read once
+      as its date and logged, covered or nothing logged, today says
+      today, and a day still to come is its date alone.
+
 ## A reminder asked in setup, naming the next lift (Mob1 call 3, 2026-10-27)
 
 Setup's review has an optional "Remind me on training days" row, 07:30 by

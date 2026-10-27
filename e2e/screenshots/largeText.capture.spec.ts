@@ -13,8 +13,8 @@
  * section of it, Train's exercise menu, a workout, a run before, during
  * and after, the exercise, run and workout detail pages, the Weekly
  * review, sign-up, setup and the Pro page. The sheets: the weight log,
- * Social's notifications and a run's share sheet, with Food's two
- * above.
+ * the streak's days, Social's notifications and a run's share sheet,
+ * with Food's two above.
  *
  * And the surfaces the notification tray, a return and a session left
  * open lead to: one shared session and one Space post on their own pages,
@@ -192,6 +192,18 @@ test.describe("large text", () => {
       await page.goto("");
       await ready(page, nav);
       await measure(page, "home", width, found);
+
+      // The streak's days (Mob1 call 4): the seeded meals make a streak,
+      // so the flame opens its sheet.
+      await page
+        .getByRole("button", { name: /-day streak, show the days$/ })
+        .click();
+      await page
+        .getByRole("dialog", { name: /-day streak$/ })
+        .waitFor({ state: "visible", timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "home-streak-sheet", width, found);
+      await page.keyboard.press("Escape");
 
       await page.goto("program");
       await ready(page, page.getByRole("heading", { name: "Train" }));

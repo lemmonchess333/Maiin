@@ -124,6 +124,8 @@ const GuideWalk = lazyRetry(() => import("@/components/guide/GuideWalk"));
    Home fetches it once it has drawn (below) and the tap does not wait. */
 const loadWeightLogSheet = () => import("@/components/home/WeightLogSheet");
 const WeightLogSheet = lazyRetry(loadWeightLogSheet);
+const loadStreakSheet = () => import("@/features/streaks/StreakSheet");
+const StreakSheet = lazyRetry(loadStreakSheet);
 const BadgeEarnedModal = lazyRetry(() =>
   import("@/features/streaks/BadgeEarnedModal").then((m) => ({
     default: m.BadgeEarnedModal,
@@ -245,10 +247,17 @@ export default function Home() {
   const prevStreakRef = useRef<number>(0);
   const [streakBounce, setStreakBounce] = useState(false);
   const [showWeightSheet, setShowWeightSheet] = useState(false);
-  // After Home's first paint, not in it: the weight tile's tap opens
-  // a sheet that is already here. A failed fetch is the lazy()'s to retry.
+  // The flame's sheet: mounted on the first tap and kept, so it closes
+  // with its own motion rather than vanishing.
+  const [streakSheet, setStreakSheet] = useState<"unopened" | boolean>(
+    "unopened"
+  );
+  // After Home's first paint, not in it: the weight tile's and the
+  // flame's taps open a sheet that is already here. A failed fetch is
+  // the lazy()'s to retry.
   useEffect(() => {
     void loadWeightLogSheet().catch(() => {});
+    void loadStreakSheet().catch(() => {});
   }, []);
   const [showProModal, setShowProModal] = useState(false);
   // HealthKit steps (native iOS only; web resolves to status "unavailable"
@@ -903,25 +912,14 @@ export default function Home() {
       title="Today"
       actions={
         <>
-          {/* Streak pill is tappable — deep-links into History → Badges
-                so the user can see what streak-tier they're chasing next
-                (e.g. "4 more days to Week Warrior"). The pill is a real
-                achievement with reward context behind it; leaving it as
-                an inert ornament threw away the motivation loop. The
-                History page restores its last tab on mount, so we also
-                persist the target in sessionStorage to force the Badges
-                tab even if the user last looked at Lifting / Performance. */}
+          {/* The flame opens the streak's days (Mob1 call 4): a month of
+              logged and covered days, and the way to the badges. */}
           {streak > 0 ? (
-            <Link
-              to="/history"
-              onClick={() => {
-                try {
-                  sessionStorage.setItem("history-tab", "milestones");
-                } catch {
-                  /* private mode — fine, user lands on the default tab */
-                }
-              }}
-              aria-label={`View milestones — ${streak}-day streak`}
+            <button
+              type="button"
+              onClick={() => setStreakSheet(true)}
+              aria-haspopup="dialog"
+              aria-label={`${streak}-day streak, show the days`}
               className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               <StreakFlame
@@ -929,7 +927,7 @@ export default function Home() {
                 bounce={streakBounce}
                 display={<motion.span>{streakDisplay}</motion.span>}
               />
-            </Link>
+            </button>
           ) : (
             <StreakFlame
               streak={streak}
@@ -1314,6 +1312,15 @@ export default function Home() {
             invitation: Train's Run tab carries the same card where run
             plans live, and this copy only worked on days 8 to 14. */}
       </div>
+
+      {streakSheet !== "unopened" && (
+        <Suspense fallback={null}>
+          <StreakSheet
+            open={streakSheet}
+            onOpenChange={(open) => setStreakSheet(open)}
+          />
+        </Suspense>
+      )}
 
       {/* Weight Log Bottom Sheet */}
       <AnimatePresence>

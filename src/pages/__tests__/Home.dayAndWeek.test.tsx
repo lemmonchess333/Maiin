@@ -20,11 +20,13 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
+  streak: 0,
   profile: null as any,
   programState: null as any,
   workouts: [] as Array<{ id: string; date: string }>,
@@ -161,8 +163,11 @@ vi.mock("@/hooks/useClaimMapForProgram", () => ({
   }),
 }));
 vi.mock("@/features/streaks/useStreaks", () => ({
+  STREAK_WINDOW_DAYS: 90,
   useStreaks: () => ({
-    currentStreak: 0,
+    currentStreak: h.streak,
+    activeDates: new Set<string>(),
+    bridgedDates: [],
     newBadge: null,
     dismissNewBadge: vi.fn(),
   }),
@@ -372,6 +377,7 @@ const SUNDAY = new Date(2026, 8, 27, 12, 0, 0);
 const WEDNESDAY = new Date(2026, 8, 30, 12, 0, 0);
 
 beforeEach(() => {
+  h.streak = 0;
   h.profile = profileWith({});
   h.programState = programStateWith();
   h.workouts = [];
@@ -680,5 +686,23 @@ describe("Home — a new account's first days", () => {
     renderHome();
     expect(column("Lifts")).toBe("Lifts: 0 of 1");
     expect(column("Food logged")).toBe("Food logged: 0 of 5 days");
+  });
+});
+
+describe("Home — the streak flame (Mob1 call 4)", () => {
+  it("opens the streak's days, with the badges a tap away", async () => {
+    pinClock(WEDNESDAY);
+    h.streak = 4;
+    renderHome();
+    fireEvent.click(
+      screen.getByRole("button", { name: "4-day streak, show the days" })
+    );
+    const sheet = await screen.findByRole("dialog", { name: "4-day streak" });
+    expect(
+      within(sheet).getByRole("list", { name: "September 2026" })
+    ).toBeInTheDocument();
+    expect(
+      within(sheet).getByRole("link", { name: "See your badges" })
+    ).toHaveAttribute("href", "/history?tab=badges");
   });
 });
