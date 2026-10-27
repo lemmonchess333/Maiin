@@ -1,7 +1,9 @@
 /**
- * ExercisePicker for a swap or a replace (`pickAction`): one exercise, and
- * the bar says the action. Without it, "Swap for today" read "1 exercise
- * selected — Add to workout", and ticking two swapped twice.
+ * ExercisePicker for a swap or a replace (`pickAction`): one exercise,
+ * picked by its row's circle, which does the action at once. Without it,
+ * "Swap for today" read "1 exercise selected — Add to workout", and
+ * ticking two swapped twice; then a bar repeated the action, a fourth tap
+ * on every swap. The row's body still opens the exercise.
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
@@ -37,33 +39,27 @@ function mount() {
 }
 
 describe("ExercisePicker with one exercise to pick", () => {
-  it("keeps one choice, and the bar says the action", () => {
+  it("the row's circle does the swap at once, with no bar to confirm it", () => {
     const { onSelect, onClose } = mount();
-    const dips = screen.getByRole("checkbox", { name: "Dips" });
-    const pushUps = screen.getByRole("checkbox", { name: "Push-Ups" });
-    fireEvent.click(dips);
-    fireEvent.click(pushUps);
-    expect(dips).toHaveAttribute("aria-checked", "false");
-    expect(pushUps).toHaveAttribute("aria-checked", "true");
-    expect(screen.queryByText(/exercises? selected/)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Swap for today" }));
+    // Nothing to tick: the circle is the action, named for it.
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Swap for today: Push-Ups" })
+    );
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect.mock.calls[0][0]).toMatchObject({ name: "Push-Ups" });
-    expect(onClose).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(/exercises? selected/)).toBeNull();
   });
 
-  it("a second tap on the choice clears it", async () => {
-    mount();
-    const dips = screen.getByRole("checkbox", { name: "Dips" });
-    fireEvent.click(dips);
-    fireEvent.click(dips);
-    expect(dips).toHaveAttribute("aria-checked", "false");
-    // The bar slides away rather than vanishing.
-    await vi.waitFor(() =>
-      expect(
-        screen.queryByRole("button", { name: "Swap for today" })
-      ).toBeNull()
+  it("the row's body opens the exercise and swaps nothing", async () => {
+    const { onSelect, onClose } = mount();
+    fireEvent.click(screen.getByRole("button", { name: "Dips details" }));
+    expect(await screen.findByTestId("form-content")).toHaveTextContent(
+      "Form for Dips"
     );
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("the detail sheet's button does the action", async () => {
@@ -100,16 +96,19 @@ describe("ExercisePicker replacing an exercise (Lift8 (4))", () => {
     replaceBench();
     expect(screen.getByText(/^Chest · \d+ exercises$/)).toBeInTheDocument();
     expect(
-      screen.queryByRole("checkbox", { name: "Barbell Squat" })
+      screen.queryByRole("button", { name: "Replace: Barbell Squat" })
     ).toBeNull();
     expect(
-      screen.getByRole("checkbox", { name: "Incline Bench Press" })
+      screen.getByRole("button", { name: "Replace: Incline Bench Press" })
     ).toBeInTheDocument();
   });
 
   it("marks the exercise being replaced, and never offers it", () => {
     const { onSelect } = replaceBench();
-    expect(screen.queryByRole("checkbox", { name: "Bench Press" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Replace: Bench Press" })
+    ).toBeNull();
+
     expect(screen.getByText("Current")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Bench Press details" })
