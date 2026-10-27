@@ -81,6 +81,7 @@ import { keepFoodDraft, keptFoodDraft } from "@/lib/foodDraft";
 import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
+import { entryPortion, rescaleMealPortion } from "@/lib/mealPortion";
 import CopyMealsSheet from "@/components/food/CopyMealsSheet";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
@@ -1238,11 +1239,13 @@ export default function Food() {
       totalCarbs?: number;
       totalFat?: number;
     } | null;
+    targetPortion: number | null;
   }) => {
     if (!uid || !editingGroup) return;
     const { meals: groupMeals, foodName } = editingGroup;
     const currentCount = groupMeals.length;
-    const { targetCount, targetMeal, targetName, targetMacros } = changes;
+    const { targetCount, targetMeal, targetName, targetMacros, targetPortion } =
+      changes;
 
     // F5a: slot + rename + macro changes ALL fan out to one editMeal
     // per doc in the group. Combine them into a SINGLE editMeal call
@@ -1251,11 +1254,15 @@ export default function Food() {
     // totals (per-serving values were already computed in the sheet
     // — passing them through to editMeal sets each doc's total to the
     // per-serving figure, which makes the group total = N × value).
-    if (targetMeal || targetName || targetMacros) {
+    // A new portion (one entry only) rescales the entry's items and totals
+    // from what it holds, and writes the multiplier into the items'
+    // portions the way every scaled log does. Typed figures still win.
+    if (targetMeal || targetName || targetMacros || targetPortion) {
       try {
         await Promise.all(
           groupMeals.map((m) =>
             editMeal(m.id, {
+              ...(targetPortion ? rescaleMealPortion(m, targetPortion) : {}),
               ...(targetMeal ? { meal: targetMeal } : {}),
               ...(targetName ? { foodName: targetName } : {}),
               ...(targetMacros ?? {}),
@@ -1283,7 +1290,7 @@ export default function Food() {
         toast.success(`Moved ${foodName} to ${MEAL_LABELS[targetMeal]}`, {
           id: `food-slot-${foodName}`,
         });
-      } else if (targetMacros) {
+      } else if (targetMacros || targetPortion) {
         toast.success(`Updated ${foodName}`, {
           id: `food-macros-${editingGroup.id}`,
         });
@@ -2385,6 +2392,12 @@ export default function Food() {
               );
               return allSame ? first : null;
             })(),
+            /* A row of one entry is corrected by amount; a row of
+               repeats keeps the stepper that repeats or removes them. */
+            currentPortion:
+              editingGroup.meals.length === 1
+                ? entryPortion(editingGroup.meals[0])
+                : null,
           }}
           onCancel={() => setEditingGroup(null)}
           onSave={applyServingsChange}

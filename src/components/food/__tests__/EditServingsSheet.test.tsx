@@ -119,6 +119,7 @@ describe("EditServingsSheet", function () {
       targetMeal: null,
       targetName: null,
       targetMacros: null,
+      targetPortion: null,
     });
   });
 
@@ -267,6 +268,7 @@ describe("EditServingsSheet", function () {
       targetMeal: "snacks",
       targetName: null,
       targetMacros: null,
+      targetPortion: null,
     });
   });
 
@@ -289,6 +291,7 @@ describe("EditServingsSheet", function () {
       targetMeal: "dinner",
       targetName: null,
       targetMacros: null,
+      targetPortion: null,
     });
   });
 
@@ -314,6 +317,7 @@ describe("EditServingsSheet", function () {
       targetMeal: null,
       targetName: null,
       targetMacros: null,
+      targetPortion: null,
     });
   });
 
@@ -340,6 +344,7 @@ describe("EditServingsSheet", function () {
       targetMeal: null,
       targetName: "Boiled eggs",
       targetMacros: null,
+      targetPortion: null,
     });
   });
 
@@ -380,6 +385,7 @@ describe("EditServingsSheet", function () {
       targetMeal: "snacks",
       targetName: "Greek yoghurt",
       targetMacros: null,
+      targetPortion: null,
     });
   });
 
@@ -435,6 +441,7 @@ describe("EditServingsSheet", function () {
         totalProtein: 8,
         // carbs + fat omitted — unchanged
       },
+      targetPortion: null,
     });
   });
 
@@ -547,6 +554,7 @@ describe("EditServingsSheet", function () {
       targetMeal: null,
       targetName: null,
       targetMacros: { totalCalories: 90 },
+      targetPortion: null,
     });
   });
 
@@ -570,6 +578,7 @@ describe("EditServingsSheet", function () {
       targetMeal: null,
       targetName: null,
       targetMacros: null,
+      targetPortion: null,
     });
   });
   /* Calories lead. A food the local parser does not know is logged at
@@ -608,6 +617,7 @@ describe("EditServingsSheet", function () {
       targetMeal: null,
       targetName: null,
       targetMacros: { totalCalories: 300 },
+      targetPortion: null,
     });
   });
 
@@ -658,6 +668,7 @@ describe("EditServingsSheet", function () {
       targetMeal: "dinner",
       targetName: null,
       targetMacros: null,
+      targetPortion: null,
     });
   });
 
@@ -679,6 +690,7 @@ describe("EditServingsSheet", function () {
       targetMeal: "dinner",
       targetName: null,
       targetMacros: null,
+      targetPortion: null,
     });
   });
 
@@ -726,5 +738,112 @@ describe("EditServingsSheet", function () {
     expect(body.contains(screen.getByRole("button", { name: /delete/i }))).toBe(
       true
     );
+  });
+});
+
+/* A row of one entry takes a typed amount. The stepper took whole
+   servings from 1 up, each a repeated entry, so 150 g of a 200 g log
+   meant typing four new figures. */
+describe("EditServingsSheet — fixing one entry's portion", function () {
+  function renderEntry(
+    portion: { multiplier: number; baseGrams: number | null },
+    onSave = vi.fn()
+  ) {
+    render(
+      <EditServingsSheet
+        source={{
+          foodName: "Chicken and rice",
+          currentCount: 1,
+          currentTotalCalories: 600,
+          currentTotalProtein: 40,
+          currentTotalCarbs: 60,
+          currentTotalFat: 20,
+          currentMeal: "lunch",
+          currentPortion: portion,
+        }}
+        onCancel={vi.fn()}
+        onSave={onSave}
+      />
+    );
+    return onSave;
+  }
+
+  it("takes grams for an entry logged by weight, starting at what was logged", function () {
+    renderEntry({ multiplier: 1, baseGrams: 200 });
+    expect(screen.getByLabelText("Grams")).toHaveValue("200");
+    expect(screen.queryByLabelText(/\d+ servings?$/)).toBeNull();
+  });
+
+  it("rescales every figure as the amount is typed", function () {
+    renderEntry({ multiplier: 1, baseGrams: 200 });
+    fireEvent.change(screen.getByLabelText("Grams"), {
+      target: { value: "150" },
+    });
+    expect(screen.getByLabelText("Calories")).toHaveValue(450);
+    expect(screen.getByLabelText("Protein")).toHaveValue(30);
+    expect(screen.getByLabelText("Carbs")).toHaveValue(45);
+    expect(screen.getByLabelText("Fat")).toHaveValue(15);
+    expect(
+      screen.getByText(new RegExp(`~ 450 ${CALORIE_UNIT}`))
+    ).toBeInTheDocument();
+  });
+
+  it("saves the amount as a multiplier on the one entry", function () {
+    const onSave = renderEntry({ multiplier: 1, baseGrams: 200 });
+    fireEvent.change(screen.getByLabelText("Grams"), {
+      target: { value: "150" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({
+      targetCount: 1,
+      targetMeal: null,
+      targetName: null,
+      targetMacros: null,
+      targetPortion: 0.75,
+    });
+  });
+
+  it("takes a fraction of a serving for an entry not logged by weight", function () {
+    const onSave = renderEntry({ multiplier: 1.5, baseGrams: null });
+    expect(screen.getByLabelText("Servings")).toHaveValue("1.5");
+    fireEvent.change(screen.getByLabelText("Servings"), {
+      target: { value: "0.5" },
+    });
+    // 600 kcal at 1.5 servings is 200 at 0.5.
+    expect(screen.getByLabelText("Calories")).toHaveValue(200);
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ targetCount: 1, targetPortion: 0.5 })
+    );
+  });
+
+  it("keeps a typed figure as an override at the new amount", function () {
+    const onSave = renderEntry({ multiplier: 1, baseGrams: 200 });
+    fireEvent.change(screen.getByLabelText("Grams"), {
+      target: { value: "100" },
+    });
+    fireEvent.change(screen.getByLabelText("Calories"), {
+      target: { value: "320" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetPortion: 0.5,
+        targetMacros: { totalCalories: 320 },
+      })
+    );
+  });
+
+  it("holds Save while the amount is blank, and saves nothing for the same amount", function () {
+    renderEntry({ multiplier: 1, baseGrams: 200 });
+    const save = screen.getByRole("button", { name: "Save" });
+    fireEvent.change(screen.getByLabelText("Grams"), {
+      target: { value: "" },
+    });
+    expect(save).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Grams"), {
+      target: { value: "200" },
+    });
+    expect(save).toBeDisabled();
   });
 });

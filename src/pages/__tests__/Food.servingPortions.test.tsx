@@ -131,7 +131,9 @@ afterEach(() => {
 });
 
 describe("serving preview and saved portion", () => {
-  it("adds the selected 300 kcal portion without averaging it with a 100 kcal portion", async () => {
+  it("scales the selected 300 kcal entry in place without averaging it with a 100 kcal one", async () => {
+    // One entry takes a typed amount, saved on the entry itself rather
+    // than as a repeated entry.
     api.meals = [meal("small", 100), meal("large", 300)];
     render(
       <MemoryRouter>
@@ -139,18 +141,66 @@ describe("serving preview and saved portion", () => {
       </MemoryRouter>
     );
     openPortion(300);
-    fireEvent.click(screen.getByLabelText("Increase servings"));
+    fireEvent.change(screen.getByLabelText("Servings"), {
+      target: { value: "2" },
+    });
     expect(screen.getByText(/~ 600 kcal/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    await waitFor(() => expect(api.createMealEntry).toHaveBeenCalledOnce());
-    const saved = api.createMealEntry.mock.calls[0][1];
-    expect(saved.totalCalories + 300).toBe(600);
-    expect(saved).toMatchObject({
-      foodName: "Oats",
-      totalCalories: 300,
-      meal: "breakfast",
+    await waitFor(() => expect(api.editMeal).toHaveBeenCalledOnce());
+    const [id, changes] = api.editMeal.mock.calls[0];
+    expect(id).toBe("large");
+    expect(changes).toMatchObject({ totalCalories: 600, totalProtein: 20 });
+    expect(api.createMealEntry).not.toHaveBeenCalled();
+  });
+
+  it("fixes 200 g logged to the 150 g eaten, from the entry's own figures", async () => {
+    api.meals = [
+      {
+        ...meal("rice", 260),
+        foodName: "Rice",
+        items: [
+          {
+            name: "Rice",
+            portionSize: "200g",
+            calories: 260,
+            protein: 10,
+            carbs: 20,
+            fat: 5,
+          },
+        ],
+      },
+    ];
+    render(
+      <MemoryRouter>
+        <Food />
+      </MemoryRouter>
+    );
+    fireEvent.keyDown(screen.getByRole("button", { name: "Edit Rice" }), {
+      key: "Enter",
     });
-    expect(api.editMeal).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Grams"), {
+      target: { value: "150" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(api.editMeal).toHaveBeenCalledOnce());
+    const [, changes] = api.editMeal.mock.calls[0];
+    expect(changes.items).toEqual([
+      {
+        name: "Rice",
+        portionSize: "0.75x 200g",
+        calories: 195,
+        protein: 7.5,
+        carbs: 15,
+        fat: 3.8,
+      },
+    ]);
+    expect(changes).toMatchObject({
+      totalCalories: 195,
+      totalProtein: 7.5,
+      totalCarbs: 15,
+      totalFat: 3.8,
+    });
+    expect(api.createMealEntry).not.toHaveBeenCalled();
   });
 
   it("removes one selected portion and keeps the separate smaller portion", async () => {

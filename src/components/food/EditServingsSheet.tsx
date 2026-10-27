@@ -17,6 +17,8 @@ import {
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { withSign } from "@/utils/formatters";
 import { FOOD_NAME_MAX } from "@/lib/mealEntry";
+import PortionAmountField from "@/components/nutrition/PortionAmountField";
+import { parseAmount, tidyAmount, type EntryPortion } from "@/lib/mealPortion";
 
 interface ServingSource {
   /** Display name shown at the top of the sheet. */
@@ -42,6 +44,12 @@ interface ServingSource {
    *  and the picker renders un-selected. Editing snaps the whole
    *  group to whichever pill the user taps. */
   currentMeal: MealKey | null;
+  /** The portion of a row that is one logged entry (`entryPortion`).
+   *  Its amount is then typed, in grams when the entry is measured by
+   *  weight, and saved as a multiplier on the entry. Absent for a row of
+   *  repeated entries, which keeps the whole-serving stepper: each step
+   *  there repeats or removes one of them. */
+  currentPortion?: EntryPortion | null;
 }
 
 /** F5a: per-serving macro overrides. All fields optional — only the
@@ -71,6 +79,11 @@ export interface EditServingsChanges {
    *  Each value is per-serving, so the parent applies it to each doc
    *  in the group via editMeal. */
   targetMacros: MacroOverrides | null;
+  /** The entry's new multiplier (servings of what it was first logged
+   *  at), or null when the typed amount is unchanged. Only a sheet with a
+   *  `currentPortion` sets it. The parent rescales the entry from it;
+   *  `targetMacros`, when present, are the figures at the new amount. */
+  targetPortion: number | null;
 }
 
 interface EditServingsSheetProps {
@@ -101,6 +114,12 @@ const MACRO_ERROR_ID = "edit-meal-macro-error";
  * preview + delta chip as the user steps, and requires an explicit
  * Save tap so steps don't fire writes on every tick.
  *
+ * A row of ONE entry has no stepper. It takes a typed amount instead
+ * (PortionAmountField, the search and barcode sheets' control), in
+ * grams when the entry was logged by weight, and every figure follows
+ * it from the entry's own: the stepper could only repeat the entry, so
+ * 150 g of a 200 g log meant retyping four numbers.
+ *
  * Extracted from `Food.tsx` where it was ~80 lines of inline JSX.
  * Self-contained: owns the `target` state so the parent only needs
  * to manage "is the sheet open for which group" via the `source`
@@ -123,6 +142,19 @@ function EditServingsSheet({
   // new `source` object identity (which happens often via Firestore
   // listeners) and stomp the user's stepper input mid-edit.
   const [target, setTarget] = useState<number>(source?.currentCount ?? 1);
+  /* The typed amount of a one-entry row, as text so a half-typed "1."
+     stays put. In grams, it is the multiplier times the grams the entry
+     was first logged at: 0.75x 200g opens as 150. */
+  const portion = source?.currentPortion ?? null;
+  const amountUnit = portion?.baseGrams ? "grams" : "servings";
+  const startAmount = portion
+    ? tidyAmount(
+        portion.baseGrams
+          ? Math.round(portion.multiplier * portion.baseGrams * 10) / 10
+          : portion.multiplier
+      )
+    : "";
+  const [amountText, setAmountText] = useState<string>(startAmount);
   // F5a: meal-slot edit. Null tracks "user hasn't picked a different
   // slot yet"; the Save button only flags the change when the picked
   // slot differs from the source's currentMeal. Lets the parent
@@ -148,39 +180,83 @@ function EditServingsSheet({
     pro: number;
     car: number;
     fat: number;
+    exactCal: number;
+    exactPro: number;
+    exactCar: number;
+    exactFat: number;
   } => {
-    if (!source) return { cal: 0, pro: 0, car: 0, fat: 0 };
+    if (!source)
+      return {
+        cal: 0,
+        pro: 0,
+        car: 0,
+        fat: 0,
+        exactCal: 0,
+        exactPro: 0,
+        exactCar: 0,
+        exactFat: 0,
+      };
     const div = Math.max(1, source.currentCount);
+    const exact = {
+      exactCal: source.currentTotalCalories / div,
+      exactPro: source.currentTotalProtein / div,
+      exactCar: source.currentTotalCarbs / div,
+      exactFat: source.currentTotalFat / div,
+    };
     return {
-      cal: Math.round(source.currentTotalCalories / div),
-      pro: Math.round(source.currentTotalProtein / div),
-      car: Math.round(source.currentTotalCarbs / div),
-      fat: Math.round(source.currentTotalFat / div),
+      cal: Math.round(exact.exactCal),
+      pro: Math.round(exact.exactPro),
+      car: Math.round(exact.exactCar),
+      fat: Math.round(exact.exactFat),
+      ...exact,
     };
   })();
   /* A zero starts as an empty field. A field that holds the digit puts
      the caret on one side of it or the other, so typing 300 into it gives
      3000 or 0300. Blank is "unchanged" to parseMacro below, so each
      field's placeholder is its starting value: a cleared field shows the
-     number Save keeps, and an untouched zero still saves nothing. */
+     number Save keeps, and an untouched zero still saves nothing.
+     Null is a field nobody has typed in: it shows the entry's figure at
+     the typed amount, so changing the amount moves it. */
   const fieldText = (n: number) => (n === 0 ? "" : String(n));
-  const [pickedCal, setPickedCal] = useState<string>(
-    fieldText(initialPerServing.cal)
-  );
-  const [pickedPro, setPickedPro] = useState<string>(
-    fieldText(initialPerServing.pro)
-  );
-  const [pickedCar, setPickedCar] = useState<string>(
-    fieldText(initialPerServing.car)
-  );
-  const [pickedFat, setPickedFat] = useState<string>(
-    fieldText(initialPerServing.fat)
-  );
+  const [pickedCal, setPickedCal] = useState<string | null>(null);
+  const [pickedPro, setPickedPro] = useState<string | null>(null);
+  const [pickedCar, setPickedCar] = useState<string | null>(null);
+  const [pickedFat, setPickedFat] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   if (!source) return null;
 
   const { foodName, currentCount, currentTotalCalories, currentMeal } = source;
+
+  /* The typed amount as a multiplier, and how far it moves the entry's
+     figures. Null while the field is blank or unreadable, which holds
+     Save; the figures then stay at the logged amount. */
+  const typedAmount = portion ? parseAmount(amountText) : null;
+  const nextMultiplier =
+    portion && typedAmount !== null
+      ? portion.baseGrams
+        ? typedAmount / portion.baseGrams
+        : typedAmount
+      : null;
+  const amountInvalid = portion !== null && nextMultiplier === null;
+  const portionChanged =
+    portion !== null &&
+    nextMultiplier !== null &&
+    typedAmount !== parseAmount(startAmount);
+  const ratio =
+    portionChanged && nextMultiplier !== null && portion
+      ? nextMultiplier / portion.multiplier
+      : 1;
+  /* Each field's figure before anyone types in it. */
+  const startPerServing = {
+    cal: Math.round(initialPerServing.exactCal * ratio),
+    pro: Math.round(initialPerServing.exactPro * ratio),
+    car: Math.round(initialPerServing.exactCar * ratio),
+    fat: Math.round(initialPerServing.exactFat * ratio),
+  };
+  const shownText = (picked: string | null, start: number) =>
+    picked ?? fieldText(start);
   const countDelta = target - currentCount;
   const mealChanged = pickedMeal !== null && pickedMeal !== currentMeal;
   const trimmedName = pickedName.trim();
@@ -194,9 +270,7 @@ function EditServingsSheet({
      dimension", so Save stayed enabled on the serving change and wrote
      that while dropping the number the user had typed. */
   type MacroInput =
-    | { kind: "blank" }
-    | { kind: "invalid" }
-    | { kind: "value"; value: number };
+    { kind: "blank" } | { kind: "invalid" } | { kind: "value"; value: number };
   const parseMacro = (raw: string): MacroInput => {
     const trimmed = raw.trim();
     if (trimmed === "") return { kind: "blank" };
@@ -205,10 +279,10 @@ function EditServingsSheet({
     return { kind: "value", value: Math.round(n) };
   };
   const parsedMacros = {
-    cal: parseMacro(pickedCal),
-    pro: parseMacro(pickedPro),
-    car: parseMacro(pickedCar),
-    fat: parseMacro(pickedFat),
+    cal: parseMacro(pickedCal ?? ""),
+    pro: parseMacro(pickedPro ?? ""),
+    car: parseMacro(pickedCar ?? ""),
+    fat: parseMacro(pickedFat ?? ""),
   };
   const invalidMacroIds = new Set(
     (
@@ -239,7 +313,7 @@ function EditServingsSheet({
      SAVED total by the saved count, so typing 300 over a saved 200 left it
      showing 200 x servings while Save wrote 300. */
   const editedCal =
-    picked.cal !== null && picked.cal !== initialPerServing.cal
+    picked.cal !== null && picked.cal !== startPerServing.cal
       ? picked.cal
       : null;
 
@@ -249,28 +323,33 @@ function EditServingsSheet({
      servings, not 3 x 79 = 237 — so reusing the rounded figure here would
      shift the preview of a sheet nobody has touched. */
   const perServingCal =
-    editedCal ?? (currentCount > 0 ? currentTotalCalories / currentCount : 0);
+    editedCal ??
+    (currentCount > 0 ? (currentTotalCalories / currentCount) * ratio : 0);
   const previewCal = Math.round(perServingCal * target);
   const macroOverrides: MacroOverrides = {};
   if (editedCal !== null) {
     macroOverrides.totalCalories = editedCal;
   }
-  if (picked.pro !== null && picked.pro !== initialPerServing.pro) {
+  if (picked.pro !== null && picked.pro !== startPerServing.pro) {
     macroOverrides.totalProtein = picked.pro;
   }
-  if (picked.car !== null && picked.car !== initialPerServing.car) {
+  if (picked.car !== null && picked.car !== startPerServing.car) {
     macroOverrides.totalCarbs = picked.car;
   }
-  if (picked.fat !== null && picked.fat !== initialPerServing.fat) {
+  if (picked.fat !== null && picked.fat !== startPerServing.fat) {
     macroOverrides.totalFat = picked.fat;
   }
   const macrosChanged = Object.keys(macroOverrides).length > 0;
 
   const unchanged =
-    countDelta === 0 && !mealChanged && !nameChanged && !macrosChanged;
+    countDelta === 0 &&
+    !mealChanged &&
+    !nameChanged &&
+    !macrosChanged &&
+    !portionChanged;
 
   const handleSave = async () => {
-    if (unchanged || hasInvalidMacro || saving) return;
+    if (unchanged || hasInvalidMacro || amountInvalid || saving) return;
     setSaving(true);
     try {
       await onSave({
@@ -278,6 +357,7 @@ function EditServingsSheet({
         targetMeal: mealChanged ? pickedMeal : null,
         targetName: nameChanged ? trimmedName : null,
         targetMacros: macrosChanged ? macroOverrides : null,
+        targetPortion: portionChanged ? nextMultiplier : null,
       });
     } finally {
       setSaving(false);
@@ -297,7 +377,7 @@ function EditServingsSheet({
     id: "edit-meal-cal" | "edit-meal-pro" | "edit-meal-car" | "edit-meal-fat";
     value: string;
     start: number;
-    setter: (v: string) => void;
+    setter: (v: string | null) => void;
     ariaLabel: string;
     sizeClass: string;
   }) => {
@@ -378,9 +458,13 @@ function EditServingsSheet({
               "disabled:opacity-60"
             )}
           />
-          <p className="text-xs text-muted-foreground">
-            {currentCount} {currentCount === 1 ? "serving" : "servings"} logged
-          </p>
+          {/* A one-entry row says its amount in the field below. */}
+          {!portion && (
+            <p className="text-xs text-muted-foreground">
+              {currentCount} {currentCount === 1 ? "serving" : "servings"}{" "}
+              logged
+            </p>
+          )}
         </div>
 
         {/* F5a meal-slot picker — the same solid SegmentedControl as the
@@ -425,14 +509,18 @@ function EditServingsSheet({
             Every field has a border at rest, so it reads as something
             to type in. */}
         <div className="space-y-2">
-          <SectionLabel className="text-center">Per serving</SectionLabel>
+          {/* A one-entry row's figures are the entry's at the typed
+              amount, not one serving's. */}
+          <SectionLabel className="text-center">
+            {portion ? "At this amount" : "Per serving"}
+          </SectionLabel>
           <div className="relative">
             {numberField({
               id: "edit-meal-cal",
-              value: pickedCal,
-              start: initialPerServing.cal,
+              value: shownText(pickedCal, startPerServing.cal),
+              start: startPerServing.cal,
               setter: setPickedCal,
-              ariaLabel: "Per-serving calories",
+              ariaLabel: portion ? "Calories" : "Per-serving calories",
               sizeClass: "px-14 py-2 text-2xl font-bold",
             })}
             <span
@@ -448,22 +536,22 @@ function EditServingsSheet({
                 {
                   id: "edit-meal-pro",
                   label: "Protein",
-                  value: pickedPro,
-                  start: initialPerServing.pro,
+                  value: shownText(pickedPro, startPerServing.pro),
+                  start: startPerServing.pro,
                   setter: setPickedPro,
                 },
                 {
                   id: "edit-meal-car",
                   label: "Carbs",
-                  value: pickedCar,
-                  start: initialPerServing.car,
+                  value: shownText(pickedCar, startPerServing.car),
+                  start: startPerServing.car,
                   setter: setPickedCar,
                 },
                 {
                   id: "edit-meal-fat",
                   label: "Fat",
-                  value: pickedFat,
-                  start: initialPerServing.fat,
+                  value: shownText(pickedFat, startPerServing.fat),
+                  start: startPerServing.fat,
                   setter: setPickedFat,
                 },
               ] as const
@@ -480,7 +568,9 @@ function EditServingsSheet({
                     value,
                     start,
                     setter,
-                    ariaLabel: `Per-serving ${label.toLowerCase()}`,
+                    ariaLabel: portion
+                      ? label
+                      : `Per-serving ${label.toLowerCase()}`,
                     sizeClass: "px-6 py-2.5 text-base font-semibold",
                   })}
                   <span
@@ -500,43 +590,55 @@ function EditServingsSheet({
             at larger text the row outgrew the sheet, the buttons squeezed
             to ovals and the count's "serving" ran out of its box. The
             count itself still grows, and never shrinks below its words. */}
-        <div className="flex items-center justify-center gap-[16px]">
-          <button
-            type="button"
-            onClick={() => {
-              haptic("light");
-              setTarget((n) => Math.max(1, n - 1));
-            }}
-            disabled={target <= 1 || saving}
-            aria-label="Decrease servings"
-            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
-          >
-            −
-          </button>
-          <div className="text-center min-w-[80px] shrink-0" aria-live="polite">
-            <p
-              className="text-4xl font-figure tabular-nums font-extrabold text-foreground"
-              aria-label={`${target} ${target === 1 ? "serving" : "servings"}`}
-            >
-              {target}
-            </p>
-            <SectionLabel className="mt-0.5">
-              {target === 1 ? "serving" : "servings"}
-            </SectionLabel>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              haptic("light");
-              setTarget((n) => n + 1);
-            }}
+        {portion ? (
+          <PortionAmountField
+            unit={amountUnit}
+            value={amountText}
+            onChange={setAmountText}
             disabled={saving}
-            aria-label="Increase servings"
-            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
-          >
-            +
-          </button>
-        </div>
+          />
+        ) : (
+          <div className="flex items-center justify-center gap-[16px]">
+            <button
+              type="button"
+              onClick={() => {
+                haptic("light");
+                setTarget((n) => Math.max(1, n - 1));
+              }}
+              disabled={target <= 1 || saving}
+              aria-label="Decrease servings"
+              className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
+            >
+              −
+            </button>
+            <div
+              className="text-center min-w-[80px] shrink-0"
+              aria-live="polite"
+            >
+              <p
+                className="text-4xl font-figure tabular-nums font-extrabold text-foreground"
+                aria-label={`${target} ${target === 1 ? "serving" : "servings"}`}
+              >
+                {target}
+              </p>
+              <SectionLabel className="mt-0.5">
+                {target === 1 ? "serving" : "servings"}
+              </SectionLabel>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                haptic("light");
+                setTarget((n) => n + 1);
+              }}
+              disabled={saving}
+              aria-label="Increase servings"
+              className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
+            >
+              +
+            </button>
+          </div>
+        )}
 
         {/* Calorie preview + delta chip */}
         <div className="text-center text-xs text-muted-foreground">
@@ -618,7 +720,7 @@ function EditServingsSheet({
             size="lg"
             className="flex-1"
             onClick={handleSave}
-            disabled={unchanged || hasInvalidMacro || saving}
+            disabled={unchanged || hasInvalidMacro || amountInvalid || saving}
           >
             {saving ? "Saving…" : "Save"}
           </Button>
