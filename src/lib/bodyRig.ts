@@ -2135,12 +2135,15 @@ function boxJumpPose(e: number): Partial<Record<GroupName, Op[]>> {
  * (assault bike, elliptical) that push and pull against the pedals. */
 const CRANK: Pt = [66, 178];
 const CRANK_R = 15;
+// The lowest shoe and its pedal still need room above the machine base.
+const BIKE_FLOOR = MACHINE_FLOOR + 6;
 const BIKE_HIP: Pt = [36, 106];
 const BIKE_BARS: Pt = [104, 104];
 const SPIN_HIP: Pt = [34, 104];
 const SPIN_BARS: Pt = [106, 112];
 const ASSAULT_HIP: Pt = [36, 106];
 const ASSAULT_HANDLE_PIVOT: Pt = [100, 178];
+const ASSAULT_FAN_CENTER: Pt = [124, 138];
 const ELLIPTICAL_HIP: Pt = [42, 92];
 // The lowest level shoe must clear the machine base, with the knee still soft.
 const ELLIPTICAL_CRANK: Pt = [60, 176];
@@ -2170,8 +2173,6 @@ interface PedalOpts {
   hands: Pt;
   /** A second moving grip for machines with opposing handles. */
   farHands?: Pt;
-  /** A standing elliptical keeps each shoe level on its platform. */
-  levelFeet?: boolean;
 }
 function pedalChain(
   phi: number,
@@ -2192,16 +2193,12 @@ function pedalChain(
     { kind: "rotate", deg: -o.lean * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
     ...torso,
   ];
-  const near = plantedLeg(
-    o.hip,
-    pedalAt(phi, o.crank, o.rx, o.ry),
-    KNEE_FORWARD
-  );
-  const far = plantedLeg(
-    o.hip,
-    pedalAt(phi + 0.5, o.crank, o.rx, o.ry),
-    KNEE_FORWARD
-  );
+  const nearAnkle = pedalAt(phi, o.crank, o.rx, o.ry);
+  const farAnkle = pedalAt(phi + 0.5, o.crank, o.rx, o.ry);
+  const near = plantedLeg(o.hip, nearAnkle, KNEE_FORWARD);
+  const far = plantedLeg(o.hip, farAnkle, KNEE_FORWARD);
+  // The ankle follows the crank while each pedal pivots under a level shoe.
+  // Letting the shoe inherit shank rotation made the sole leave its platform.
   const nearArm = armToWorld(torso, o.hands, ELBOW_LOW);
   const farArm = armToWorld(torso, o.farHands ?? o.hands, ELBOW_LOW);
   const levelFoot = (shank: Op[]): Op[] => {
@@ -2220,11 +2217,10 @@ function pedalChain(
     pelvis: body,
     thighL: near.thigh,
     shankL: near.shank,
+    footL: levelFoot(near.shank),
     thighR: far.thigh,
     shankR: far.shank,
-    ...(o.levelFeet
-      ? { footL: levelFoot(near.shank), footR: levelFoot(far.shank) }
-      : {}),
+    footR: levelFoot(far.shank),
     upperArmL: nearArm.upper,
     foreArmL: nearArm.fore,
     handL: nearArm.fore,
@@ -2233,26 +2229,55 @@ function pedalChain(
     handR: farArm.fore,
   };
 }
-/** A bike's frame: the crank wheel, a down tube to the saddle, the seat
- *  post + saddle under the hip, the head tube to the bars. */
+/** A bike's fixed frame plus opposing crank arms and level pedals. The
+ *  shoes and platforms share `pedalAt`, so both stay connected all cycle. */
 function bikeScene(
+  phi: number,
   hip: Pt,
   bars: Pt,
   crank: Pt,
   r: number,
   wheel = true
 ): string {
+  const pedal = (phase: number, side: "near" | "far") => {
+    const [x, y] = pedalAt(phase, crank, r, r);
+    const far = side === "far";
+    return (
+      `<line data-bike-crank="${side}" x1="${crank[0]}" y1="${crank[1]}" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" stroke="${far ? GEAR_FAR : GEAR}" stroke-width="${far ? 2.4 : 3.2}" stroke-linecap="round"/>` +
+      `<rect data-bike-pedal="${side}" x="${(x - 10).toFixed(2)}" y="${(y + 9).toFixed(2)}" width="32" height="3" rx="1.5" fill="${far ? GEAR_FAR : GEAR}" stroke="${GEAR_EDGE}" stroke-width="0.6"/>`
+    );
+  };
   return (
     (wheel
       ? `<circle cx="${crank[0]}" cy="${crank[1]}" r="${r + 5}" fill="none" stroke="${GEAR_DARK}" stroke-width="3"/>`
       : "") +
-    `<circle cx="${crank[0]}" cy="${crank[1]}" r="3" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
     `<line x1="${crank[0]}" y1="${crank[1]}" x2="${hip[0] + 2}" y2="${hip[1] + 8}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
     `<rect x="${hip[0] - 12}" y="${hip[1] + 6}" width="26" height="6" rx="3" fill="${GEAR}"/>` +
     `<line x1="${crank[0]}" y1="${crank[1]}" x2="${bars[0] - 2}" y2="${bars[1] + 4}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
     `<line x1="${bars[0] - 12}" y1="${bars[1] + 2}" x2="${bars[0] + 6}" y2="${bars[1] + 2}" stroke="${GEAR}" stroke-width="3.2" stroke-linecap="round"/>` +
-    `<line x1="${crank[0]}" y1="${crank[1] + r + 5}" x2="${crank[0]}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
-    `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="150" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+    `<line x1="${crank[0]}" y1="${crank[1] + r + 5}" x2="${crank[0]}" y2="${BIKE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+    pedal(phi + 0.5, "far") +
+    pedal(phi, "near") +
+    `<circle cx="${crank[0]}" cy="${crank[1]}" r="3" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+    `<line x1="-12" y1="${BIKE_FLOOR + 1}" x2="150" y2="${BIKE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+  );
+}
+/** Five restrained blades make the assault machine's front wheel read as a
+ *  fan. It turns once per pedal cycle and returns to the exact first SVG. */
+function assaultFan(phi: number): string {
+  const [cx, cy] = ASSAULT_FAN_CENTER;
+  const blade = (index: number) => {
+    const a = (index * 2 * Math.PI) / 5;
+    const point = (radius: number, offset: number) =>
+      `${(cx + radius * Math.cos(a + offset)).toFixed(2)},${(cy + radius * Math.sin(a + offset)).toFixed(2)}`;
+    return `<polygon points="${point(4, 0)} ${point(20, 0.05)} ${point(17, 0.56)}" fill="${GEAR_FAR}" stroke="${GEAR_EDGE}" stroke-width="0.6"/>`;
+  };
+  return (
+    `<circle cx="${cx}" cy="${cy}" r="24" fill="none" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+    `<g transform="rotate(${((phi % 1) * 360).toFixed(2)} ${cx} ${cy})">` +
+    Array.from({ length: 5 }, (_, index) => blade(index)).join("") +
+    `<circle cx="${cx}" cy="${cy}" r="4" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="1"/>` +
+    `</g>`
   );
 }
 /** A moving handle: a lever about a low pivot whose grip swings
@@ -9384,9 +9409,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * (pinned), never a locked knee. */
     view: "side",
     cycle: true,
+    cycleTiming: "linear",
     cycleMs: 1400,
-    viewBox: "-12 -6 160 218",
-    groundY: 204,
+    viewBox: "-12 -6 160 226",
+    groundY: BIKE_FLOOR,
     shadowCx: 60,
     shadowRx: 50,
     concentricTo: 1,
@@ -9404,7 +9430,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         ry: CRANK_R,
         hands: BIKE_BARS,
       }),
-    scene: () => bikeScene(BIKE_HIP, BIKE_BARS, CRANK, CRANK_R),
+    scene: (e) => bikeScene(e, BIKE_HIP, BIKE_BARS, CRANK, CRANK_R),
   },
 
   "spin-bike": {
@@ -9414,9 +9440,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * one drawn. */
     view: "side",
     cycle: true,
+    cycleTiming: "linear",
     cycleMs: 1000,
-    viewBox: "-12 -6 160 218",
-    groundY: 204,
+    viewBox: "-12 -6 160 226",
+    groundY: BIKE_FLOOR,
     shadowCx: 60,
     shadowRx: 50,
     concentricTo: 1,
@@ -9430,7 +9457,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         ry: CRANK_R,
         hands: SPIN_BARS,
       }),
-    scene: () => bikeScene(SPIN_HIP, SPIN_BARS, CRANK, CRANK_R),
+    scene: (e) => bikeScene(e, SPIN_HIP, SPIN_BARS, CRANK, CRANK_R),
   },
 
   "assault-bike": {
@@ -9441,9 +9468,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * handle travels, the hand stays on it). */
     view: "side",
     cycle: true,
+    cycleTiming: "linear",
     cycleMs: 1200,
-    viewBox: "-12 -6 160 218",
-    groundY: 204,
+    viewBox: "-12 -6 166 226",
+    groundY: BIKE_FLOOR,
     shadowCx: 60,
     shadowRx: 50,
     concentricTo: 1,
@@ -9465,9 +9493,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     scene: (e) => {
       const h = swingHandle(e, ASSAULT_HANDLE_PIVOT, 84, 0.28, 0);
       return (
-        bikeScene(ASSAULT_HIP, [h[0] - 40, h[1] + 30], CRANK, CRANK_R, false) +
-        // The fan, and the handle lever from its pivot to the grip.
-        `<circle cx="${ASSAULT_HANDLE_PIVOT[0] + 24}" cy="${ASSAULT_HANDLE_PIVOT[1] - 40}" r="24" fill="none" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+        bikeScene(e, ASSAULT_HIP, [h[0] - 40, h[1] + 30], CRANK, CRANK_R, false) +
+        // A fixed strut supports the spinning fan; the handle lever swings
+        // separately from its low pivot to keep the athlete's grip connected.
+        `<line x1="${ASSAULT_HANDLE_PIVOT[0]}" y1="${ASSAULT_HANDLE_PIVOT[1]}" x2="${ASSAULT_FAN_CENTER[0]}" y2="${ASSAULT_FAN_CENTER[1]}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+        assaultFan(e) +
         `<line x1="${ASSAULT_HANDLE_PIVOT[0]}" y1="${ASSAULT_HANDLE_PIVOT[1]}" x2="${h[0].toFixed(1)}" y2="${h[1].toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="3.4" stroke-linecap="round"/>` +
         `<circle cx="${ASSAULT_HANDLE_PIVOT[0]}" cy="${ASSAULT_HANDLE_PIVOT[1]}" r="3.2" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>`
       );
@@ -9507,7 +9537,6 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         // The profile renderer applies this depth shift AFTER the pose.
         // Aim the far wrist before it so its visible fist meets the grip.
         farHands: [far[0] - FAR_ARM_SHIFT[0], far[1] - FAR_ARM_SHIFT[1]],
-        levelFeet: true,
       });
     },
     scene: (e, pose) => {

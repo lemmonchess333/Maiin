@@ -86,6 +86,89 @@ describe("body demo cycle shadows", () => {
   });
 });
 
+describe("bike pedal contact", () => {
+  const sole = SIDE_PIECES.find((piece) => piece.group === "footL")!.outline
+    .filter(([, y]) => y >= 202.4);
+
+  it.each(["bike", "spin-bike", "assault-bike"])(
+    "%s turns both pedals at a steady cadence through an exact loop",
+    (id) => {
+      const frames = Array.from({ length: 9 }, (_, index) =>
+        renderBodyDemo(id, index / 8, 0.85)
+      );
+      const axles = frames.map((svg) => {
+        const arm = svg.match(
+          /<line data-bike-crank="near" x1="66" y1="178" x2="([\d.]+)" y2="([\d.]+)"/
+        );
+        expect(arm).not.toBeNull();
+        return [Number(arm![1]), Number(arm![2])] as const;
+      });
+      const steps = axles.slice(1).map(([x, y], index) =>
+        Math.hypot(x - axles[index][0], y - axles[index][1])
+      );
+      expect(Math.max(...steps) - Math.min(...steps)).toBeLessThan(0.05);
+      expect(frames[8]).toBe(frames[0]);
+    }
+  );
+
+  it("turns the Assault Bike's five fan blades with the pedals", () => {
+    const start = renderBodyDemo("assault-bike", 0);
+    const quarter = renderBodyDemo("assault-bike", 0.25);
+    expect(start).toContain('<g transform="rotate(0.00 124 138)">');
+    expect(quarter).toContain('<g transform="rotate(90.00 124 138)">');
+    const fan = start.match(/<g transform="rotate\(0\.00 124 138\)">([\s\S]*?)<\/g>/);
+    expect(fan?.[1].match(/<polygon points=/g)).toHaveLength(5);
+  });
+
+  it.each(["bike", "spin-bike", "assault-bike"])(
+    "%s keeps both level shoes on visible opposing pedals above the base",
+    (id) => {
+      const demo = BODY_DEMOS[id];
+      for (const t of [0, 1 / 6, 1 / 3, 0.5, 2 / 3, 5 / 6, 1]) {
+        const phase = bodyDemoProgress(demo, t);
+        const pose = demo.pose(phase);
+        const scene = demo.scene?.(phase, pose) ?? "";
+        const axles: [number, number][] = [];
+        for (const [label, side] of [["near", "L"], ["far", "R"]] as const) {
+          const ankle = applyToPoint(SIDE_ANCHORS.ankle, pose[`shank${side}`] ?? []);
+          const shoeAnkle = applyToPoint(SIDE_ANCHORS.ankle, pose[`foot${side}`] ?? []);
+          expect(Math.hypot(ankle[0] - shoeAnkle[0], ankle[1] - shoeAnkle[1]),
+            `${id} ${label} ankle @${t}`).toBeLessThan(0.1);
+          const edge = sole.map((point) => applyToPoint(point, pose[`foot${side}`] ?? []));
+          expect(Math.max(...edge.map((point) => point[1])) -
+            Math.min(...edge.map((point) => point[1])),
+          `${id} ${label} level sole @${t}`).toBeLessThan(1);
+          const pad = scene.match(new RegExp(
+            `<rect data-bike-pedal="${label}" x="([\\d.]+)" y="([\\d.]+)" width="32" height="3"`
+          ));
+          expect(pad, `${id} ${label} visible pedal @${t}`).not.toBeNull();
+          const padX = Number(pad![1]);
+          const padY = Number(pad![2]);
+          expect(Math.min(...edge.map((point) => point[0])) - padX,
+            `${id} ${label} heel on pad @${t}`).toBeGreaterThan(0);
+          expect(padX + 32 - Math.max(...edge.map((point) => point[0])),
+            `${id} ${label} toe on pad @${t}`).toBeGreaterThan(0);
+          expect(Math.max(...edge.map((point) => point[1])) - padY,
+            `${id} ${label} sole meets pad @${t}`).toBeGreaterThan(0);
+          expect(Math.max(...edge.map((point) => point[1])) - padY,
+            `${id} ${label} no floating sole @${t}`).toBeLessThan(2);
+          expect(210 - (padY + 3),
+            `${id} ${label} pedal clears base @${t}`).toBeGreaterThan(4);
+          const arm = scene.match(new RegExp(
+            `<line data-bike-crank="${label}" x1="66" y1="178" x2="([\\d.]+)" y2="([\\d.]+)"`
+          ));
+          expect(arm, `${id} ${label} crank arm @${t}`).not.toBeNull();
+          expect(Number(arm![1]), `${id} ${label} axle x @${t}`).toBeCloseTo(ankle[0], 1);
+          expect(Number(arm![2]), `${id} ${label} axle y @${t}`).toBeCloseTo(ankle[1], 1);
+          axles.push([ankle[0], ankle[1]]);
+        }
+        expect(axles[0][0] + axles[1][0], `${id} opposing x @${t}`).toBeCloseTo(132, 2);
+        expect(axles[0][1] + axles[1][1], `${id} opposing y @${t}`).toBeCloseTo(356, 2);
+      }
+    }
+  );
+});
+
 describe("machine fallback contacts", () => {
   it("keeps hack squat shoes and machine fixed while its loaded carriage travels on the rails", () => {
     const demo = BODY_DEMOS["hack-squat"];
