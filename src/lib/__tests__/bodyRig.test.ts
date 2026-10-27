@@ -215,6 +215,81 @@ describe("vendored body model", () => {
 });
 
 describe("renderBodyDemo", () => {
+  it("keeps Swimming's two shins continuous and its overhead frame clear", () => {
+    const demo = BODY_DEMOS.swimming;
+    const [left, top, width, height] = demo.viewBox!.split(" ").map(Number);
+    const inside = (point: [number, number], polygon: [number, number][]) => {
+      let contained = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const [ax, ay] = polygon[i];
+        const [bx, by] = polygon[j];
+        if (
+          (ay > point[1]) !== (by > point[1]) &&
+          point[0] < ((bx - ax) * (point[1] - ay)) / (by - ay) + ax
+        ) {
+          contained = !contained;
+        }
+      }
+      return contained;
+    };
+    const points = (svg: string): [number, number][][] =>
+      [...svg.matchAll(/<polygon points="([^"]+)"/g)].map((match) =>
+        match[1]
+          .split(" ")
+          .map((pair) => pair.split(",").map(Number) as [number, number])
+      );
+    // These positions lie between the vendored calf facets: without a
+    // backing shape each split calf looks like two separate lower legs.
+    const calfGaps = [
+      {
+        side: "left",
+        local: [29.6, 190] as [number, number],
+        group: "shankL" as const,
+      },
+      {
+        side: "right",
+        local: [71.1, 190] as [number, number],
+        group: "shankR" as const,
+      },
+    ];
+    for (const { side, local } of calfGaps) {
+      expect(
+        POSTERIOR.filter(
+          (poly) => poly.side === side && poly.muscle === "calves"
+        ).some((poly) => inside(local, poly.points as [number, number][]))
+      ).toBe(false);
+    }
+
+    for (let frame = 0; frame <= 240; frame++) {
+      const t = frame / 240;
+      const pose = demo.pose(t);
+      const backing = points(demo.scene!(t, pose));
+      expect(backing, `shank backings at ${t}`).toHaveLength(2);
+      for (const [index, { local, group }] of calfGaps.entries()) {
+        const gap = applyToPoint(local, pose[group] ?? []);
+        expect(
+          inside(gap, backing[index]),
+          `covered ${group} calf gap at ${t}`
+        ).toBe(true);
+        expect(
+          inside(gap, backing[1 - index]),
+          `distinct ${group} calf at ${t}`
+        ).toBe(false);
+      }
+
+      for (const polygon of points(renderBodyDemo("swimming", t))) {
+        for (const [x, y] of polygon) {
+          expect(x, `left edge at ${t}`).toBeGreaterThanOrEqual(left + 8);
+          expect(x, `right edge at ${t}`).toBeLessThanOrEqual(left + width - 8);
+          expect(y, `top edge at ${t}`).toBeGreaterThanOrEqual(top + 8);
+          expect(y, `bottom edge at ${t}`).toBeLessThanOrEqual(top + height - 8);
+        }
+      }
+    }
+    expect(renderBodyDemo("swimming", 0)).not.toContain("<ellipse ");
+    expect(renderBodyDemo("lateral-raise", 0)).toContain("<ellipse ");
+  });
+
   it("keeps the full bench-press plate inside the frame at lockout", () => {
     const [left, top, width, height] = getBodyDemo("bench-press")!
       .viewBox!.split(" ")

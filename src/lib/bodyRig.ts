@@ -2321,11 +2321,15 @@ function swimPose(phi: number): Partial<Record<GroupName, Op[]>> {
     ...body,
     { kind: "translate", dx: 0, dy: -8 },
   ];
+  // The posterior atlas's split calf facets are wide in an overhead pose;
+  // narrow them around each knee so the flutter reads as two shins.
   const shankL: Op[] = [
+    { kind: "scaleAxis", k: 0.72, deg: 90, pivot: [31, 160] },
     { kind: "rotate", deg: -kick * 0.6, pivot: [30, 160] },
     ...thighL,
   ];
   const shankR: Op[] = [
+    { kind: "scaleAxis", k: 0.72, deg: 90, pivot: [69, 160] },
     { kind: "rotate", deg: kick * 0.6, pivot: [70, 160] },
     ...thighR,
   ];
@@ -2344,6 +2348,24 @@ function swimPose(phi: number): Partial<Record<GroupName, Op[]>> {
     foreArmR: right.fore,
     handR: right.fore,
   };
+}
+/** The posterior atlas splits each calf into several disjoint muscle
+ * polygons. In the overhead swim view those gaps read as extra lower
+ * legs at phone size. A separate tapered hull follows each shank's own
+ * pose underneath its facets, restoring one silhouette per leg. */
+function swimShankBacking(pose: Partial<Record<GroupName, Op[]>>): string {
+  return (["L", "R"] as const)
+    .map((side) => {
+      const group = `shank${side}` as const;
+      const points = POSTERIOR.filter(
+        (poly) => groupOf("posterior", poly) === group
+      ).flatMap((poly) => applyOps(poly.points, pose[group] ?? []));
+      const hull = convexHull(points);
+      return `<polygon points="${hull
+        .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
+        .join(" ")}" fill="${BODY}"/>`;
+    })
+    .join("");
 }
 
 /* ── Keyed chains (batch 17): the man-maker and the Turkish get-up ──
@@ -9493,7 +9515,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     cycle: true,
     cycleTiming: "linear",
     cycleMs: 1800,
-    viewBox: "-80 0 260 200",
+    viewBox: "-79 -8 265 216",
     groundY: 204,
     shadowRx: 0,
     concentricTo: 1,
@@ -9504,6 +9526,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       gluteal: "secondary",
     },
     pose: swimPose,
+    scene: (_e, pose) => swimShankBacking(pose),
   },
 
   "zottman-curl": {
@@ -10188,7 +10211,10 @@ export function renderBodyDemo(
   const depth = demo.concentricTo === 0 ? e : 1 - e;
   const shadowRx = 26 + 6 * depth;
   const groundY = demo.groundY ?? (demo.view === "anterior" ? 199 : 222);
-  const shadow = `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
+  const shadow =
+    demo.shadowRx === 0
+      ? ""
+      : `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
 
   // Free scene furniture (pads, a rope anchor) behind the body — the
   // front/back views gained this with the batch-11 frontal-plane demos.
