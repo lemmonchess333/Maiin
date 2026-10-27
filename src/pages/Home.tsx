@@ -630,10 +630,7 @@ export default function Home() {
         realignResultMessage({
           timing: result.timing,
           distance: profile.raceGoal.distance as
-            | "5k"
-            | "10k"
-            | "half"
-            | "marathon",
+            "5k" | "10k" | "half" | "marathon",
           totalWeeks: result.totalWeeks,
         })
       );
@@ -953,7 +950,7 @@ export default function Home() {
               photoURL={profile.photoURL}
               displayName={profile.displayName || user?.displayName}
               size="md"
-              fallbackBg="hsl(var(--lifting) / 0.2)"
+              fallbackBg="hsl(var(--lifting) / 0.12)"
               fallbackColor="hsl(var(--lifting-strong))"
             />
           </Link>

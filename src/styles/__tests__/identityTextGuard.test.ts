@@ -137,7 +137,11 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-10-01: 4 → 6. The Settings pass: the Nutrition row's icon on the
   // Settings list and the Nutrition phase row's on the Programme page,
   // both ICONS; their words are foreground.
-  nutrition: 6,
+  // 6 → 2 with the light-mode pass: the orange identity is 2.6 to 2.8:1
+  // on white, under the 3:1 a graphic needs, so the Settings row's and
+  // the Go deeper tile's icons, and the food consistency card's two,
+  // take `text-nutrition-strong`.
+  nutrition: 2,
   destructive: 0,
   success: 0,
   warning: 0,
@@ -225,7 +229,9 @@ const EXPECTED_INLINE_USES = {
   // took `text-nutrition-strong`.
   // 15 → 14: Home's first-meal eyebrow, 12px on the orange tint, took
   // `text-nutrition-strong` with the card's Log taking the fill step.
-  "THEME.semantic.nutrition": 14,
+  // 14 → 11 with the light-mode pass: Analytics' food empty state and
+  // day count, and Home's first-meal icon, took `text-nutrition-strong`.
+  "THEME.semantic.nutrition": 11,
 } as const;
 
 type InlineToken = keyof typeof EXPECTED_INLINE_USES;

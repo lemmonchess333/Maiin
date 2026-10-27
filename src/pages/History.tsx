@@ -1594,10 +1594,7 @@ export default function History() {
                   <>
                     <SectionEmptyCTA
                       icon={
-                        <UtensilsCrossed
-                          className="size-5 shrink-0"
-                          style={{ color: THEME.semantic.nutrition }}
-                        />
+                        <UtensilsCrossed className="size-5 shrink-0 text-nutrition-strong" />
                       }
                       text="Log meals to see your nutrition trends here"
                       to="/food"
@@ -1846,10 +1843,7 @@ export default function History() {
                         </p>
                       </Card>
                       <Card size="compact" className="text-center">
-                        <UtensilsCrossed
-                          className="size-4 mx-auto mb-1.5"
-                          style={{ color: THEME.semantic.nutrition }}
-                        />
+                        <UtensilsCrossed className="size-4 mx-auto mb-1.5 text-nutrition-strong" />
                         <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                           {lifetimeTotals.daysLogged.toLocaleString()}{" "}
                           <span className="text-xs font-medium">

@@ -39,10 +39,7 @@ export default function FirstMealCard({
           className="size-10 rounded-lg flex items-center justify-center"
           style={{ backgroundColor: THEME.semantic.nutrition + "18" }}
         >
-          <UtensilsCrossed
-            className="size-5"
-            style={{ color: THEME.semantic.nutrition }}
-          />
+          <UtensilsCrossed className="size-5 text-nutrition-strong" />
         </div>
         <div className="flex-1 min-w-0">
           {/* The -strong step: the identity orange is a fill, and as 12px

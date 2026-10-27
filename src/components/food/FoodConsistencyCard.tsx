@@ -187,7 +187,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
         >
           <div className="flex @max-[12em]:hidden size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
             <UtensilsCrossed
-              className="size-4 text-nutrition"
+              className="size-4 text-nutrition-strong"
               aria-hidden="true"
             />
           </div>
@@ -233,7 +233,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
       <div className="flex items-center gap-3">
         <div className="flex @max-[12em]:hidden size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
           <UtensilsCrossed
-            className="size-4 text-nutrition"
+            className="size-4 text-nutrition-strong"
             aria-hidden="true"
           />
         </div>

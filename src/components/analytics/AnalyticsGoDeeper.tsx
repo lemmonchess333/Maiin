@@ -42,7 +42,7 @@ const ANALYTICS_PAGES: Record<
     title: "Food",
     detail: "Calories, macros, balance",
     icon: Apple,
-    tint: "text-nutrition",
+    tint: "text-nutrition-strong",
   },
 };
 
