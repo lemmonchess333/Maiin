@@ -5,7 +5,9 @@
  * Put 1.png … 6.png (or WebP equivalents) in each draft directory. Optional
  * `fixed-zones.json` may contain {"zones":[{"name":"bench leg", "x":10,
  * "y":20,"width":30,"height":40}]} in native pixel coordinates. A zone
- * should contain fixed equipment only; the report compares it with frame 1.
+ * should contain fixed equipment only; the report compares it with frame 1
+ * and prints its bright-pixel bounds. Crop edges and shadows can move the
+ * bounds, so use actual equipment landmarks for a release review record.
  * This is a screening report. Anatomy, motion and contact require visual review.
  */
 import { createHash } from "node:crypto";
@@ -127,6 +129,33 @@ function compare(a: RawFrame, b: RawFrame, zone?: FixedZone) {
   return { meanDifference: +(sum / samples).toFixed(2), changedPercent: +((100 * changed) / samples).toFixed(2) };
 }
 
+function brightBounds(frame: RawFrame, zone: FixedZone) {
+  let minX = zone.x + zone.width;
+  let minY = zone.y + zone.height;
+  let maxX = -1;
+  let maxY = -1;
+  for (let y = zone.y; y < zone.y + zone.height; y++) {
+    for (let x = zone.x; x < zone.x + zone.width; x++) {
+      const p = (y * frame.width + x) * frame.channels;
+      if (Math.max(frame.data[p], frame.data[p + 1], frame.data[p + 2]) < FOREGROUND_MIN)
+        continue;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+  if (maxX < 0) return null;
+  return {
+    left: minX,
+    top: minY,
+    right: maxX,
+    bottom: maxY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1,
+  };
+}
+
 function fixedZones(dir: string, width: number, height: number): FixedZone[] {
   const path = join(dir, "fixed-zones.json");
   if (!existsSync(path)) return [];
@@ -202,6 +231,14 @@ async function inspectExercise(id: string) {
     for (const zone of fixedZones(dir, frames[0].width, frames[0].height)) {
       const stats = frames.map((frame, i) => frame && i > 0 ? `${i + 1}:${compare(frames[0]!, frame, zone).changedPercent}%` : null).filter(Boolean);
       console.log(`  fixed zone ${zone.name}: changed samples vs 1 — ${stats.join(" ")}`);
+      const bounds = frames.map((frame, i) => {
+        if (!frame) return `${i + 1}:missing`;
+        const box = brightBounds(frame, zone);
+        return box
+          ? `${i + 1}:(${box.left},${box.top})–(${box.right},${box.bottom}) ${box.width}×${box.height}`
+          : `${i + 1}:empty`;
+      });
+      console.log(`  fixed zone ${zone.name}: bright bounds — ${bounds.join("; ")}`);
     }
   }
   if (problems.length) console.log(`  findings: ${problems.join("; ")}`);
