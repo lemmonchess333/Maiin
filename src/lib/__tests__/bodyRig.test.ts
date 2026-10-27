@@ -34,10 +34,11 @@ describe("body demo cycle timing", () => {
 
   it("uses the opted-in timing in the rendered side-view cycle", () => {
     const demo = BODY_DEMOS.elliptical;
-    const easedAtQuarter = renderBodyDemo("elliptical", 0.25);
-    const easedAtThird = renderBodyDemo("elliptical", 1 / 3);
     const prior = demo.cycleTiming;
     try {
+      delete demo.cycleTiming;
+      const easedAtQuarter = renderBodyDemo("elliptical", 0.25);
+      const easedAtThird = renderBodyDemo("elliptical", 1 / 3);
       demo.cycleTiming = "linear";
       expect(renderBodyDemo("elliptical", 0.25)).toBe(easedAtThird);
       expect(renderBodyDemo("elliptical", 0.25)).not.toBe(easedAtQuarter);

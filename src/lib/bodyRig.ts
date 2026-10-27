@@ -9351,6 +9351,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * machine makes — and the hands on levers that swing with it. */
     view: "side",
     cycle: true,
+    cycleTiming: "linear",
     cycleMs: 1500,
     viewBox: "-8 -14 150 226",
     groundY: 204,
