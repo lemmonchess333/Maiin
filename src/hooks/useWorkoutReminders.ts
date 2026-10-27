@@ -12,6 +12,12 @@ import {
 } from "@/lib/notifications";
 import { logger } from "@/lib/logger";
 import { captureError } from "@/lib/errorReporting";
+import {
+  isReminderDay,
+  nextWeekdayOccurrence,
+  WORKOUT_REMINDER_IDS,
+  workoutReminderCopy,
+} from "@/lib/workoutReminderCopy";
 
 export interface WorkoutReminders {
   enabled: boolean;
@@ -24,68 +30,28 @@ export const DEFAULT_WORKOUT_REMINDERS: WorkoutReminders = {
 };
 
 /**
- * One stable ID per weekday so the workout reminder can fire weekly
- * on each non-rest day independently. Sunday = 2001, Saturday = 2007.
- * Pre-PR-M this was a single ID scheduled once for the next workout
- * day, which fired exactly once and then silently stopped (no
- * repeat semantics on a `schedule.at` payload). The per-weekday
- * fanout lets each day re-arm weekly via `repeatEvery: 'week'` so
- * the user keeps getting reminders on the days they care about.
+ * One stable id per weekday (`WORKOUT_REMINDER_IDS`) so the reminder fires
+ * weekly on each non-rest day independently. Pre-PR-M this was a single
+ * id scheduled once for the next workout day, which fired exactly once
+ * and then silently stopped (no repeat semantics on a `schedule.at`
+ * payload). The per-weekday fanout lets each day re-arm weekly via
+ * `repeatEvery: 'week'`.
  */
-const WORKOUT_NOTIFICATION_IDS = [
-  2001, 2002, 2003, 2004, 2005, 2006, 2007,
-] as const;
-
-/**
- * Next future Date landing on `weekday` (0=Sunday … 6=Saturday) at the
- * given HH:MM. Used to anchor a weekly-repeating notification so the
- * OS re-arms it on the same weekday going forward. If the weekday is
- * today and the time is still ahead, returns today; otherwise the
- * next matching weekday.
- */
-function computeNextWeekdayOccurrence(
-  timeHHMM: string,
-  weekday: number
-): Date | null {
-  const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
-  if (!match) return null;
-  const hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
-  if (hours > 23 || minutes > 59) return null;
-  const now = new Date();
-  const target = new Date();
-  target.setHours(hours, minutes, 0, 0);
-  // Advance to the next instance of `weekday`.
-  const todayWeekday = target.getDay();
-  let daysAhead = (weekday - todayWeekday + 7) % 7;
-  if (daysAhead === 0 && target.getTime() <= now.getTime()) {
-    daysAhead = 7;
-  }
-  target.setDate(target.getDate() + daysAhead);
-  return target;
-}
-
-/**
- * Mirrors the original fire-time check: a day counts as a workout day
- * unless weekSchedule is a 7-entry array with an explicit 'rest' entry
- * for that day-of-week.
- */
-function isWorkoutDay(
-  dayOfWeek: number,
-  schedule: ReadonlyArray<{ day: number; type: string }> | undefined
-): boolean {
-  if (!schedule || schedule.length !== 7) return true;
-  const todaySchedule = schedule.find((s) => s.day === dayOfWeek);
-  if (!todaySchedule) return false;
-  return todaySchedule.type !== "rest";
-}
+const WORKOUT_NOTIFICATION_IDS = WORKOUT_REMINDER_IDS;
 
 /**
  * Heavy-lifting internal hook — run once per authenticated session by
  * <RemindersProvider>. Public callers use `useWorkoutReminders` from
  * RemindersProvider.tsx which reads this hook's output from context.
+ *
+ * `liftName` is the programme's next workout as Home names it
+ * (`useNextLiftName`): a lift day's reminder says it ("Upper A today"),
+ * and a new name runs the pass again (`workoutReminderCopy`).
  */
-export function useWorkoutRemindersInternal(activity?: ReminderActivity) {
+export function useWorkoutRemindersInternal(
+  activity?: ReminderActivity,
+  liftName?: string | null
+) {
   const { user, profile } = useAuth();
   const [reminders, setReminders] = useState<WorkoutReminders>(
     DEFAULT_WORKOUT_REMINDERS
@@ -187,8 +153,7 @@ export function useWorkoutRemindersInternal(activity?: ReminderActivity) {
         return;
 
       const schedule = profile?.weekSchedule as
-        | ReadonlyArray<{ day: number; type: string }>
-        | undefined;
+        ReadonlyArray<{ day: number; type: string }> | undefined;
 
       // Schedule one weekly-repeating notification per workout day.
       // Day index follows the existing `weekSchedule` convention
@@ -202,16 +167,15 @@ export function useWorkoutRemindersInternal(activity?: ReminderActivity) {
         // flight — nothing can — but the next pass's cancel-all clears
         // that one, which is exactly why the chain has to exist.
         if (cancelled) return;
-        if (!isWorkoutDay(day, schedule)) continue;
-        const at = computeNextWeekdayOccurrence(reminders.time, day);
+        if (!isReminderDay(day, schedule)) continue;
+        const at = nextWeekdayOccurrence(reminders.time, day);
         if (!at) continue;
         // The completed day no longer needs a reminder. Preserve the next week's slot.
         if (activity?.workout && localDateString(at) === activity.dateKey)
           at.setDate(at.getDate() + 7);
         await scheduleNotification({
           id: WORKOUT_NOTIFICATION_IDS[day],
-          title: "Time to train",
-          body: "Your session is ready when you are.",
+          ...workoutReminderCopy(day, schedule, liftName),
           scheduleAt: at,
           // Weekly repeat anchored on this weekday — the OS re-arms
           // it for the same weekday + time every week, so the user
@@ -231,7 +195,7 @@ export function useWorkoutRemindersInternal(activity?: ReminderActivity) {
     return () => {
       cancelled = true;
     };
-  }, [reminders, profile, loading, activity]);
+  }, [reminders, profile, loading, activity, liftName]);
 
   // Permission request is a stable module-level function — no wrapper needed.
   return {
