@@ -12,6 +12,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 import { formatCalories } from "@/utils/formatNutrition";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { pluraliseUnit } from "@/lib/mealPortion";
 
 export interface FoodRowGroup {
   /** Stable id for the row — we key/open-state against this. */
@@ -85,36 +86,6 @@ interface FoodRowProps {
 const OPEN_OFFSET = -96;
 const OPEN_THRESHOLD = -52;
 const FULL_SWIPE_THRESHOLD = -200;
-
-/** Units that never take a plural: "120 g", not "120 gs". */
-const UNPLURALISED_UNITS = new Set([
-  "g",
-  "kg",
-  "mg",
-  "ml",
-  "l",
-  "oz",
-  "lb",
-  "lbs",
-  "tbsp",
-  "tsp",
-  "kcal",
-  "cal",
-  "fl",
-]);
-
-/** The plural of a unit's first word, leaving what follows it alone:
- *  "bar (60 g)" becomes "bars (60 g)", not "bar (60 g)s". */
-function pluraliseUnit(unit: string): string {
-  const match = unit.match(/^([A-Za-zÀ-ÿ]+)(.*)$/);
-  if (!match) return unit;
-  const [, word, rest] = match;
-  const lower = word.toLowerCase();
-  if (UNPLURALISED_UNITS.has(lower) || /s$/i.test(word)) return unit;
-  if (/(x|z|ch|sh)$/i.test(word)) return `${word}es${rest}`;
-  if (/[^aeiou]y$/i.test(word)) return `${word.slice(0, -1)}ies${rest}`;
-  return `${word}s${rest}`;
-}
 
 /**
  * Quantity label formatter (change #5).

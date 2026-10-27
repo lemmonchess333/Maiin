@@ -11,6 +11,7 @@ import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import type { Meal } from "@/hooks/useMeals";
 import { useFoodPhotoUrls } from "@/hooks/useFoodPhotoUrls";
 import { formatTimeOfDay } from "@/utils/formatters";
+import { mealPortionCaption } from "@/lib/mealPortion";
 import {
   CALORIE_UNIT,
   formatCalories,
@@ -258,6 +259,7 @@ export default function FoodTimeline({
                     .filter(Boolean)
                     .join(", ")
                 : undefined;
+            const portionCaption = mealPortionCaption(group.meals[0]);
             const rowGroup: FoodRowGroup = {
               id: group.id,
               foodName: group.foodName,
@@ -281,6 +283,18 @@ export default function FoodTimeline({
                 thumbnailColumn={dayHasPhotos}
                 subLabel={
                   <>
+                    {/* The portion leads ("1.5 servings · Lunch · 13:17"):
+                        a wrong serving is spotted from the diary or not
+                        at all. Grouped rows share one portion, so the
+                        first meal's is every meal's. */}
+                    {portionCaption && (
+                      <>
+                        <span className="font-mono tabular-nums">
+                          {portionCaption}
+                        </span>
+                        {" · "}
+                      </>
+                    )}
                     {MEAL_LABELS[group.slot]}
                     {group.latestMs > 0 && (
                       <>
