@@ -1426,8 +1426,8 @@ export const RELEASED_FORM_PLACARDS = {
     ["Chest", "Quadriceps"],
     ["Abs", "Front deltoids"],
     [
-      [0, "Squat", "Land softly in a squat; reach both hands toward the floor."],
-      [0.25, "Plank", "Plant both palms, then jump feet back into a straight plank."],
+      [0, "Squat", "Land softly; squat and reach toward floor."],
+      [0.25, "Plank", "Plant palms; jump feet into straight plank."],
       [0.5, "Lower", "Bend elbows; lower chest to the floor."],
       [0.25, "Press", "Press back up without sagging your hips."],
       [0, "Tuck", "Jump feet toward hands; prepare to rise."],
@@ -1573,7 +1573,7 @@ export const RELEASED_FORM_PLACARDS = {
       [0.45, "Catch", "Extend hips; catch bar on front delts."],
       [1, "Press to lockout", "Brace; press overhead without a knee dip."],
       [0.45, "Lower to rack", "Lower onto front shoulders; stay upright."],
-      [0.25, "Lower to thigh", "Guide the bar to high thigh; hinge to reset on the floor."],
+      [0.25, "Lower to thigh", "Lower to high thigh; hinge to floor."],
     ]
   ),
   "diamond-push-ups": placard(

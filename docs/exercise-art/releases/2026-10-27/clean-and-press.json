@@ -5,12 +5,12 @@
   "height": 1024,
   "decision": "approved",
   "reviewer": "Codex native and 393×852 production-player review; QA-accepted pose-matched plate and sole exceptions",
-  "reviewedAt": "2026-10-27T19:07:21.832Z",
+  "reviewedAt": "2026-10-27T19:26:34.758Z",
   "reference": {
     "path": "form-frames/clean-and-press/2026-10-27/1.webp",
     "sha256": "3c8f74e4e64f3758faeed32fe539fdb2afcf27166a6fc038712843a25e08e093"
   },
-  "cueSha256": "935128d6c3ffd19956f2235325eb1ec138cea5d52b10d2c345c63137a6542546",
+  "cueSha256": "4d9229bdec1f8690409c0e23432b79c1e2350406b398cd8e6df39a671e05bd96",
   "checks": {
     "identity": {
       "passed": true,

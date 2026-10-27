@@ -5,12 +5,12 @@
   "height": 1254,
   "decision": "approved",
   "reviewer": "Codex native and 393×852 production-player review",
-  "reviewedAt": "2026-10-27T18:55:40.796Z",
+  "reviewedAt": "2026-10-27T19:26:34.758Z",
   "reference": {
     "path": "form-frames/burpees/2026-10-27/1.webp",
     "sha256": "9e04d3c60cb6367400ffb88e1e08d1a05406bf5b409aa9bea65b8ff30b64cb58"
   },
-  "cueSha256": "d6f8df05fe84a4bfccd6f283d77a67a47d505ea1bc1c678cb533cd6311317bc7",
+  "cueSha256": "56b49b3971e5ade8e21929b50c1c875aad9c7630d30d31ac66efb35800d5af40",
   "checks": {
     "identity": {
       "passed": true,
