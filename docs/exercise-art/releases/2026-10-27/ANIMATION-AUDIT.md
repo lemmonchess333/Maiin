@@ -86,3 +86,28 @@ affected by this change was updated and passes 7/7. The first Node 22 CI run
 also found eleven assertions that expected artwork now intentionally withheld
 at runtime. Those expectations were revised, and the Home gym onboarding tile
 now uses another approved bench illustration.
+
+## Form and motion quality pass
+
+After the first release, the 12 procedural replacements, 22 reframed sets and
+the eight screenshot examples were checked again at phone size. The approved
+illustrations for Cuban Press, Barbell Upright Row, Front Raise, Reverse Pec
+Deck, Straight Arm Pulldown and Rack Pull retained coherent grips and equipment;
+Man Maker's six-pose release also retained planted shoes and grounded weights.
+Their approved frame bytes remain unchanged.
+
+| Guide | Improvement |
+| --- | --- |
+| Close Grip Bench Press | Widened the hands from roughly one-third to just inside shoulder width; wrists now remain close to the tucked elbows. |
+| Inverted Row | Moved the fixed shaft through the rendered fist, removing the visible air gap at both ends of the pull. |
+| Elliptical | Kept each shoe level on its moving pedal, cleared the low pedal from the base and closed the ankle seam. |
+| Hack Squat | Angled the fixed footplate and planted both shoes on it; the carriage and knee path remain on their rails. |
+| Swimming | Widened the recovery arm path and brought the legs closer together with a visible alternating flutter. |
+| Burpees | Replaced the reversed replay with a forward squat–plank–push-up–squat–jump–landing cycle. |
+| Stationary Bike, Spin Bike and Assault Bike | Added moving crank arms and pedal platforms beneath both shoes; the assault fan turns with the stroke. |
+| Seated Cable Row and Hip Abduction Machine | Replaced vertical drive/return captions with cues that match the actual pull and outward press. |
+
+Geometry tests now check the rendered grip, foot/platform contacts, full-cycle
+seams and movement-specific key positions. Phone-size sequences were inspected
+in dark and light themes. The release review records remain the source of truth
+for the unchanged approved still artwork.
