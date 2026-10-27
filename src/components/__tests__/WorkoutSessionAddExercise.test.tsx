@@ -5,12 +5,25 @@
  * progression baseline the plan is moved against is the plan's alone.
  * A session that starts with no exercises opens on Add exercise.
  */
-import { resetFirestore } from "@/test/firestoreHarness";
+import {
+  deferReads,
+  releaseAllReads,
+  resetFirestore,
+  resumeReads,
+  seedFirestore,
+} from "@/test/firestoreHarness";
 vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
 vi.mock("@/components/workout/SessionShareRow", () => ({
   default: () => null,
 }));
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
+import { localDateString } from "@/lib/dateHelpers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { ComponentProps } from "react";
@@ -361,5 +374,48 @@ describe("Start fresh", () => {
     fireEvent.click(screen.getByRole("button", { name: "Start fresh" }));
     expect(await screen.findByText("No exercises yet")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: WORKOUT.markSet })).toBeNull();
+  });
+});
+
+describe("an exercise added before last time is read", () => {
+  it("starts from the weight it was last lifted at once last time arrives", async () => {
+    h.user = { uid: "u1" };
+    seedFirestore({
+      "users/u1/workouts/old": {
+        date: localDateString(new Date(Date.now() - 7 * 86_400_000)),
+        completionId: "old",
+        notes: "Push",
+        totalCalories: 0,
+        durationMinutes: 40,
+        exercises: [
+          {
+            exerciseId: "lateral-raise",
+            exerciseName: "Lateral Raise",
+            category: "vertical_push",
+            caloriesBurned: 0,
+            sets: [1, 2, 3].map((setNumber) => ({
+              setNumber,
+              reps: 14,
+              weightKg: 9,
+              type: "working",
+            })),
+          },
+        ],
+      },
+    });
+    // The read of last time is still out when the raise is added.
+    deferReads();
+    openSession();
+    await addLateralRaise();
+    const firstSet = () =>
+      screen.getByRole("spinbutton", { name: "Set 1 weight" });
+    expect(firstSet()).not.toHaveValue(9);
+    resumeReads();
+    await act(async () => {
+      releaseAllReads();
+    });
+    await vi.waitFor(() => expect(firstSet()).toHaveValue(9));
+    // The exercise follows it too, as one added after the read does.
+    expect(screen.getByText(/^Target: .*@ 9 kg$/)).toBeInTheDocument();
   });
 });

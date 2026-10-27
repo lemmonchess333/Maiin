@@ -203,7 +203,12 @@ interface WorkoutDay {
   completed: boolean;
 }
 
+/** An exercise's rows, by its slot, or its place when it has none. */
+const rowKey = (ex: { instanceId?: string }, index: number) =>
+  ex.instanceId ?? `#${index}`;
+
 /** "Set 2" → "set 2", for the middle of a sentence. */
+
 const lowerFirst = (text: string) =>
   text.charAt(0).toLowerCase() + text.slice(1);
 
@@ -414,9 +419,22 @@ export default function WorkoutSession({
   const [currentSetIndex, setCurrentSetIndex] = useState(
     resumeCursor?.setIndex ?? 0
   );
-  // Set once each row has its start (`startingSetRows`); a resumed draft's
-  // rows already have theirs.
-  const rowsStarted = useRef(!!initialDraft?.setLogs);
+  /* The rows still to start from what they did last time
+     (`startingSetRows`), by their exercise's slot: the session's own at
+     first (a resumed draft's rows already have theirs), and any exercise
+     added, or set out again by Start fresh, before last time is read.
+     Started when it is (`history`, below), from the session as it is
+     then. */
+  const rowsToStart = useRef(
+    new Set<string>(
+      initialDraft?.setLogs
+        ? []
+        : initialDay.exercises.map((ex, i) => rowKey(ex, i))
+    )
+  );
+  /* Exercises added before last time was read: their first weight was a
+     first guess, and follows what they were last lifted at once it is. */
+  const weightsToFollow = useRef(new Set<string>());
   const [setLogs, setSetLogs] = useState<SetLog[][]>(() => {
     if (initialDraft?.setLogs) return initialDraft.setLogs as SetLog[][];
     // Backlog #12: pre-fill a warm-up ramp on the first loaded exercise per
@@ -446,6 +464,15 @@ export default function WorkoutSession({
   const lastSetsById = useRef(
     new Map<string, { weight: number; reps: number }[]>()
   );
+  /** Last time, once it has been read: each lift's sets in its own slot
+   *  (or its exercise's, `lastSetsBySlot`). Null until then. */
+  const [history, setHistory] = useState<{
+    lastOf: (
+      ex: ProgramExercise
+    ) => { weight: number; reps: number }[] | undefined;
+  } | null>(null);
+  /** Bumped when rows are queued to start once `history` is in hand. */
+  const [rowsQueued, setRowsQueued] = useState(0);
   // Earned complexity (experienceModel.ts): RPE is a genuinely useful tool
   // for someone who can calibrate it and noise-plus-jargon for someone who
   // cannot, so an advanced lifter opens the session with it on and everyone
@@ -587,18 +614,14 @@ export default function WorkoutSession({
       );
 
       // Each row starts from what that set did last time (Lift4,
-      // `startingSetRows`), once per session: a resumed draft's rows, and
-      // anything typed since, hold what the person put there.
-      if (!rowsStarted.current) {
-        rowsStarted.current = true;
-        setSetLogs((prev) =>
-          prev.map((rows, i) => {
-            const ex = day.exercises[i];
-            if (!ex || rows.some((set) => set.completed)) return rows;
-            return startingSetRows(rows, ex, lastSets[i]);
-          })
-        );
-      }
+      // `startingSetRows`), once: the effect below starts the rows still
+      // waiting, from the session as it is by then.
+      setHistory({
+        lastOf: (ex) => {
+          const sets = lastOf(ex);
+          return sets && asRows(sets);
+        },
+      });
 
       // The best-lift map, as stored or rebuilt from history
       // (liftRecordsStore.ts). If it cannot be read, this session celebrates
@@ -621,6 +644,49 @@ export default function WorkoutSession({
 
     fetchPreviousWeights();
   }, [user?.uid, day.exercises, planLifts]);
+
+  /* The rows waiting to start, started once last time is read: from the
+     session as it is now, so an exercise added while the read was out
+     starts from its own last sets too, with the weight it was last lifted
+     at. A row with a set done, or a resumed draft's, holds what is
+     there. */
+  useEffect(() => {
+    if (!history || rowsToStart.current.size === 0) return;
+    const waiting = new Set(rowsToStart.current);
+    rowsToStart.current.clear();
+    const exercises = prescription.exercises;
+    const untouched = (i: number) =>
+      !(setLogs[i] ?? []).some((set) => set.completed);
+    const followed = exercises.map((ex, i) => {
+      const key = rowKey(ex, i);
+      if (!waiting.has(key) || !weightsToFollow.current.has(key)) return ex;
+      weightsToFollow.current.delete(key);
+      if (!untouched(i)) return ex;
+      const last = lastSetsById.current.get(ex.exerciseId);
+      const weight = last ? followedWeight(last) : null;
+      return weight && weight > 0 ? { ...ex, weight } : ex;
+    });
+    const rebuilt = buildInitialSetLogs(followed, liftUnit);
+    const byKey = new Map(followed.map((ex, i) => [rowKey(ex, i), ex]));
+    if (followed.some((ex, i) => ex !== exercises[i]))
+      setPrescription((current) => ({
+        ...current,
+        exercises: current.exercises.map(
+          (ex, i) => byKey.get(rowKey(ex, i)) ?? ex
+        ),
+      }));
+    setSetLogs((logs) =>
+      logs.map((rows, i) => {
+        const ex = followed[i];
+        if (!ex || !waiting.has(rowKey(ex, i))) return rows;
+        if (rows.some((set) => set.completed)) return rows;
+        const base: SetLog[] = ex !== exercises[i] ? rebuilt[i] : rows;
+        return startingSetRows(base, ex, history.lastOf(ex));
+      })
+    );
+    // The session as it is when last time arrives is all this reads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [history, rowsQueued]);
 
   // Save on meaningful edits. Read elapsed time at the save itself, so a
   // draft stays accurate even when the phone has suspended display ticks.
@@ -1477,8 +1543,11 @@ export default function WorkoutSession({
     const start = day.exercises.length;
     const experience = toExperience(profile?.experience);
     const loadContext = loadContextFrom(profile);
+    // Before last time is read, an added exercise starts from a first
+    // guess, and its rows wait to start (`rowsToStart`).
+    const known = history !== null;
     const added = picked.map((exercise) => {
-      const last = lastSetsById.current.get(exercise.id);
+      const last = known ? lastSetsById.current.get(exercise.id) : undefined;
       return exerciseAddedToday(exercise.id, {
         instanceId: generateInstanceId(),
         goal: profile?.primaryGoal,
@@ -1492,12 +1561,20 @@ export default function WorkoutSession({
     const rows = buildInitialSetLogs([...day.exercises, ...added], liftUnit)
       .slice(start)
       .map((built, k) =>
-        startingSetRows(
-          built,
-          added[k],
-          lastSetsById.current.get(added[k].exerciseId)
-        )
+        known
+          ? startingSetRows(
+              built,
+              added[k],
+              lastSetsById.current.get(added[k].exerciseId)
+            )
+          : built
       );
+    if (!known)
+      added.forEach((ex, k) => {
+        const key = rowKey(ex, start + k);
+        rowsToStart.current.add(key);
+        weightsToFollow.current.add(key);
+      });
     setPrescription((current) => ({
       ...current,
       exercises: [...current.exercises, ...added],
@@ -1742,6 +1819,12 @@ export default function WorkoutSession({
     setPrescription(fresh);
     setSkippedRows({});
     setSetLogs(buildInitialSetLogs(fresh.exercises, liftUnit));
+    // Its rows start from last time, as a new session's do.
+    weightsToFollow.current.clear();
+    rowsToStart.current = new Set(
+      fresh.exercises.map((ex, i) => rowKey(ex, i))
+    );
+    setRowsQueued((n) => n + 1);
 
     setExerciseNotes({});
     setCurrentExIndex(0);
