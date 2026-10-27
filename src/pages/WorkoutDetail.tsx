@@ -31,6 +31,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
+  Bookmark,
   Share2,
   Users,
   Check,
@@ -62,6 +63,9 @@ import CircleShareSheet from "@/components/social/CircleShareSheet";
 import WorkoutFeedShareSheet from "@/components/workout/WorkoutFeedShareSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import CorrectWorkoutSheet from "@/components/workout/CorrectWorkoutSheet";
+import SaveRoutineSheet from "@/components/social/SaveRoutineSheet";
+import { workoutExercisesToRoutine } from "@/lib/savedRoutines";
+
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import type { LiftUnit } from "@/lib/liftLoad";
 import { formatKitLoad } from "@/features/program/loadSteps";
@@ -213,6 +217,7 @@ function WorkoutDetailContent() {
   const [circleOpen, setCircleOpen] = useState(false);
   const [feedOpen, setFeedOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [routineOpen, setRoutineOpen] = useState(false);
   /** Set optimistically once a feed post lands so the button flips to its
    *  "shared" state without a refetch. It belongs to the loaded doc it was
    *  set against: a fresh read (a retry, a correction) supersedes it and the
@@ -269,6 +274,7 @@ function WorkoutDetailContent() {
   ];
 
   const title = workoutTitle(workout);
+  const routineExercises = workoutExercisesToRoutine(exercises);
 
   const dateObj = workout.createdAt?.toDate?.() ?? parseLocalDate(workout.date);
   const dateStr = dateObj.toLocaleDateString("en-GB", {
@@ -365,6 +371,19 @@ function WorkoutDetailContent() {
               Correct workout
             </Button>
           )}
+          {/* Keep this session to run again. A person who never posts had
+              no way to save their own workout as a routine: the only one
+              was a post's menu. */}
+          {user && routineExercises.length > 0 && (
+            <Button
+              fullWidth
+              variant="secondary"
+              onClick={() => setRoutineOpen(true)}
+              leftIcon={<Bookmark className="size-4 shrink-0" />}
+            >
+              Save as routine
+            </Button>
+          )}
           {sharedActivityId ? (
             // Already posted — the completion flow's composer or an earlier
             // visit here. Re-posting would create a second activity doc for
@@ -420,6 +439,18 @@ function WorkoutDetailContent() {
             setEditOpen(false);
             retry();
           }}
+        />
+      )}
+      {user && routineOpen && (
+        <SaveRoutineSheet
+          open
+          onClose={() => setRoutineOpen(false)}
+          defaultName={title}
+          {...(sharedActivityId ? { sourceActivityId: sharedActivityId } : {})}
+          sourceAuthorId={user.uid}
+          sourceAuthorName={profile?.displayName || "Athlete"}
+          sourceWorkoutName={title}
+          exercises={routineExercises}
         />
       )}
       <ShareCardSheet
