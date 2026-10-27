@@ -17,17 +17,22 @@ import type { ComponentProps } from "react";
 import type { LiftCompletionReceipt } from "@/lib/liftCompletion";
 
 const h = vi.hoisted(() => ({
-  load: vi.fn(() => null),
+  load: vi.fn((): unknown => null),
   save: vi.fn(),
   clear: vi.fn(),
+  user: null as { uid: string } | null,
 }));
 vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ user: null, profile: null }),
+  useAuth: () => ({ user: h.user, profile: null }),
   useUidForStorageKey: () => "test",
 }));
 vi.mock("@/lib/firebase", () => ({
   db: {},
-  auth: { currentUser: null },
+  auth: {
+    get currentUser() {
+      return h.user;
+    },
+  },
 }));
 vi.mock("firebase/firestore");
 vi.mock("@/features/streaks/useStreaks", () => ({
@@ -189,7 +194,10 @@ function completeAll() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.load.mockReturnValue(null);
+  h.user = null;
   h.save.mockReturnValue(true);
+
   resetFirestore();
   vi.stubGlobal(
     "ResizeObserver",
@@ -276,5 +284,82 @@ describe("Add exercise", () => {
     expect(data.prescription!.exercises).toHaveLength(1);
     expect(data.prescription!.progressionBaseline).toEqual([]);
     expect(data.setLogs).toHaveLength(1);
+  });
+});
+
+describe("Start fresh", () => {
+  const BENCH = lift({
+    exerciseId: "bench-press",
+    name: "Bench Press",
+    instanceId: "bench-1",
+  });
+  const FLY = lift({
+    exerciseId: "cable-fly",
+    name: "Cable Fly",
+    instanceId: "fly-1",
+  });
+  const RAISE = lift({
+    exerciseId: "lateral-raise",
+    name: "Lateral Raise",
+    instanceId: "today-1",
+  });
+  const row = (completed: boolean) => ({
+    reps: 8,
+    weight: 15,
+    completed,
+    type: "working" as const,
+  });
+  /** A kept session that grew: a raise added today, in a superset with
+   *  the fly, a set of each done and a note on the raise. */
+  const grownDraft = (planned: ProgramExercise[]) => ({
+    dayIndex: 0,
+    dayName: "Push",
+    setLogs: [...planned, RAISE].map(() => [row(true), row(false)]),
+    exerciseNotes: { [planned.length]: "Seat at 4" },
+    elapsedSeconds: 600,
+    currentExIndex: planned.length,
+    savedAt: Date.now(),
+    identity: "test",
+    completionId: "test",
+    completionCommandId: "test",
+    prescription: {
+      dayName: "Push",
+      exercises: [...planned, RAISE],
+      progressionBaseline: planned,
+      supersets: planned.length
+        ? [{ ids: [planned[planned.length - 1].instanceId!, "today-1"] }]
+        : [],
+    },
+  });
+
+  it("starts the day as it was set out: no added exercise, no superset, no sets or notes", async () => {
+    h.load.mockReturnValue(grownDraft([BENCH, FLY]));
+    const complete = openSession([BENCH, FLY]);
+    fireEvent.click(screen.getByRole("button", { name: "Start fresh" }));
+    expect(screen.queryByRole("button", { name: /^Lateral Raise/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Cable Fly" }));
+    expect(screen.queryByText(/^Superset with/)).toBeNull();
+    expect(screen.getByRole("textbox", { name: "Exercise notes" })).toHaveValue(
+      ""
+    );
+    completeAll();
+    fireEvent.click(await screen.findByRole("button", { name: WORKOUT.save }));
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const data = complete.mock.calls[0][1];
+    expect(data.prescription!.exercises.map((ex) => ex.instanceId)).toEqual([
+      "bench-1",
+      "fly-1",
+    ]);
+    expect(data.prescription!.supersets ?? []).toEqual([]);
+    expect(data.setLogs).toHaveLength(2);
+    expect(data.exerciseNotes).toEqual({});
+  });
+
+  it("an empty workout starts empty again", async () => {
+    h.load.mockReturnValue(grownDraft([]));
+    openSession([]);
+    fireEvent.click(screen.getByRole("button", { name: "Start fresh" }));
+    expect(await screen.findByText("No exercises yet")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: WORKOUT.markSet })).toBeNull();
   });
 });

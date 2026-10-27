@@ -1731,17 +1731,18 @@ export default function WorkoutSession({
 
   const handleStartFresh = () => {
     hasRecoveryDraft.current = false;
-    // A fresh start drops the draft's swaps and skips with its sets.
-    const planned = prescription.exercises.map((ex, i) =>
-      swapAt(i) ? (plannedAt(i) ?? ex) : ex
+    // A fresh start is the session as it was set out: the draft's swaps,
+    // skips, added exercises and supersets go with its sets and notes, so
+    // an empty workout starts empty again.
+    const fresh = sessionPrescription(
+      initialDay,
+      initialCompletionId,
+      progressionBaseline
     );
-    setPrescription((current) => ({
-      ...current,
-      exercises: planned,
-      swaps: [],
-    }));
+    setPrescription(fresh);
     setSkippedRows({});
-    setSetLogs(buildInitialSetLogs(planned, liftUnit));
+    setSetLogs(buildInitialSetLogs(fresh.exercises, liftUnit));
+
     setExerciseNotes({});
     setCurrentExIndex(0);
     setCurrentSetIndex(0);
