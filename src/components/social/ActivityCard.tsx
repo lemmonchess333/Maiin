@@ -94,6 +94,9 @@ interface ActivityCardProps {
   /** Draw every exercise on the post, as its own page does. A card in a
    *  list draws the first three and links the rest to that page. */
   allExercises?: boolean;
+  /** Open the post from the card's title, numbers and hero. Off on the
+   *  post's own page, where they would lead back to it. */
+  linkToPost?: boolean;
 }
 
 function ActivityCard({
@@ -102,6 +105,7 @@ function ActivityCard({
   followAuthor,
   openComments = false,
   allExercises = false,
+  linkToPost = true,
 }: ActivityCardProps) {
   const { user, profile } = useAuth();
   /* The VIEWER's unit, not the poster's — a feed reads in the units of
@@ -320,6 +324,43 @@ function ActivityCard({
   const showVolumeOverlay = showLiftHero && (activity?.totalVolume ?? 0) > 0;
   const showPrChip = showLiftHero && (prCount ?? 0) > 0;
 
+  /* The card opens its post from its title, its numbers and its hero, as
+     a card does in Strava and Hevy. Each is its own link, so the props,
+     comment and menu buttons, the author and a compare row stay targets
+     of their own with nothing interactive inside a link. One of them
+     takes a stop in the tab order, the one that names the post; the
+     others are there for a finger. */
+  const postHref = `/activity/${encodeURIComponent(feedItem.activityId)}`;
+  /* What the lift's numbers link holds: a link with nothing in it would
+     be an empty stop for a screen reader. */
+  const hasLiftStats =
+    muscleLabels.length > 0 ||
+    (!showVolumeOverlay && (activity?.totalVolume ?? 0) > 0) ||
+    exerciseCount > 0 ||
+    (!showPrChip && (prCount ?? 0) > 0) ||
+    (!isHybrid && (activity?.duration ?? 0) > 0);
+  const hasCaption =
+    typeof activity?.caption === "string" && activity.caption.trim().length > 0;
+  const hasPostText = !!activityTitle || !!feedItem.summary || hasCaption;
+  const toPost = (
+    content: ReactNode,
+    {
+      focusable,
+      className = "block",
+    }: { focusable: boolean; className?: string }
+  ) =>
+    linkToPost ? (
+      <Link
+        to={postHref}
+        className={className}
+        tabIndex={focusable ? undefined : -1}
+      >
+        {content}
+      </Link>
+    ) : (
+      content
+    );
+
   const renderRouteHero = (heightClass: string) => (
     <div
       className={`relative ${heightClass} border-b border-border/50`}
@@ -483,15 +524,14 @@ function ActivityCard({
           via ShareComposerSheet. Sits between the title and the
           stats so it reads as the author's voice on the activity,
           separate from the auto-generated stat blocks below. */}
-      {typeof activity?.caption === "string" &&
-        activity.caption.trim().length > 0 && (
-          <p
-            dir="auto"
-            className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap break-words mb-3"
-          >
-            {activity.caption}
-          </p>
-        )}
+      {hasCaption && (
+        <p
+          dir="auto"
+          className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap break-words mb-3"
+        >
+          {activity?.caption as string}
+        </p>
+      )}
     </>
   );
 
@@ -662,7 +702,7 @@ function ActivityCard({
                 reach over the compare row above it. */}
             {moreExercises > 0 && (
               <Link
-                to={`/activity/${encodeURIComponent(feedItem.activityId)}`}
+                to={postHref}
                 className="flex min-h-[44px] w-full items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <span>
@@ -686,7 +726,20 @@ function ActivityCard({
             one the title already says is left out (`muscleLabels`).
             Static facts, so one quiet line rather than chips — pills on
             this surface mean a state (the PR badge), not a fact. */}
-        <MetaLine size="xs" items={muscleLabels} />
+        {hasLiftStats &&
+          toPost(
+            <div className="space-y-2">
+              <MetaLine size="xs" items={muscleLabels} />
+              {renderLiftStats()}
+            </div>,
+            { focusable: isHybrid ? false : !hasPostText }
+          )}
+      </div>
+    );
+
+  const renderLiftStats = () =>
+    activity && (
+      <>
         {/* Workout volume/duration/PR count. Cells already printed on
             the lift's hero panel (volume numeral, PR chip) drop out
             here — same no-double-printing rule as the run card's km. */}
@@ -741,7 +794,7 @@ function ActivityCard({
             </div>
           )}
         </div>
-      </div>
+      </>
     );
 
   return (
@@ -753,7 +806,8 @@ function ActivityCard({
       {/* Hybrid card: map on top (shorter), then divider, then workout content */}
       {isHybrid ? (
         <>
-          {routePreview && renderRouteHero("h-[120px]")}
+          {routePreview &&
+            toPost(renderRouteHero("h-[120px]"), { focusable: false })}
           <div className="p-4 pb-0">
             {renderAuthorRow(
               `${THEME.brand}20`,
@@ -762,8 +816,13 @@ function ActivityCard({
                 {timeAgo}
               </p>
             )}
-            {renderPostText()}
-            {renderRunStats()}
+            {toPost(
+              <>
+                {renderPostText()}
+                {renderRunStats()}
+              </>,
+              { focusable: true }
+            )}
             <div className="border-b border-border/30 mb-3" />
             <div className="mb-3">{renderWorkoutContent()}</div>
           </div>
@@ -773,9 +832,11 @@ function ActivityCard({
           {/* Standard run card: route scene on top; standard lift
               card: the lead lift's drawing on top, or the muscle figure
               where no lift on the post has one. */}
-          {isRun && routePreview && renderRouteHero("h-36")}
-          {leadArt && renderDrawingHero(leadArt)}
-          {showMuscleHero && renderMuscleHero()}
+          {isRun &&
+            routePreview &&
+            toPost(renderRouteHero("h-36"), { focusable: false })}
+          {leadArt && toPost(renderDrawingHero(leadArt), { focusable: false })}
+          {showMuscleHero && toPost(renderMuscleHero(), { focusable: false })}
 
           <div className="p-4">
             {renderAuthorRow(
@@ -793,11 +854,25 @@ function ActivityCard({
               </div>
             )}
 
-            {renderPostText()}
-
-            {/* Run stats — km lives on the hero overlay when the route
-                scene rendered */}
-            {isRun && renderRunStats()}
+            {/* A run's title and numbers are one link; a lift's title is
+                one, its numbers another below the exercise rows, which
+                can be buttons of their own. A title alone still clears
+                the 44px floor. Run stats: km lives on the hero overlay
+                when the route scene rendered. */}
+            {isRun
+              ? (hasPostText || !!activity) &&
+                toPost(
+                  <>
+                    {renderPostText()}
+                    {renderRunStats()}
+                  </>,
+                  { focusable: true }
+                )
+              : hasPostText &&
+                toPost(renderPostText(), {
+                  focusable: true,
+                  className: "flex min-h-11 flex-col justify-center",
+                })}
 
             {/* Workout content */}
             {!isRun && activity && (

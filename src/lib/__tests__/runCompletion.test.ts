@@ -31,12 +31,14 @@ import {
   completeRun,
   runDocument,
   runPost,
-  runPostName,
   runPostPreview,
   runPostRoute,
   type FinishedRun,
 } from "../runCompletion";
 import { pendingDocumentWrites } from "../offlineQueue";
+import { runPostName } from "../runName";
+import type { RacePaceWork } from "../racePace";
+import { freeformPlanMetadata, type RunPlanMetadata } from "../runPlanMetadata";
 
 /* Started at 23:50 the night before last, finished after midnight. */
 const START = new Date(Date.now() - 2 * 86_400_000);
@@ -241,18 +243,100 @@ describe("the run's post", () => {
     expect(clipped.routePreview[0].lat).toBeGreaterThan(51.5);
   });
 
-  it("is named for the kind of run", () => {
-    expect(runPostName({ runConfig: null })).toBe("Run");
+  describe("a run's name, from what it was", () => {
+    const config = (
+      activityType: string,
+      plan: Partial<RunPlanMetadata> = {}
+    ): FinishedRun["runConfig"] =>
+      ({
+        activityType,
+        planMetadata: { ...freeformPlanMetadata("structured"), ...plan },
+      }) as FinishedRun["runConfig"];
+    const at = (hour: number, minute = 0) => {
+      const d = new Date(START);
+      d.setHours(hour, minute, 0, 0);
+      return d.getTime();
+    };
+    const name = (
+      runConfig: FinishedRun["runConfig"],
+      startedAt = at(7, 30),
+      options: Parameters<typeof runPostName>[1] = {}
+    ) => runPostName({ runConfig, startedAt, points: [] }, options);
+
+    it("takes the planned session's name", () => {
+      expect(name(config("tempo", { actualTemplateId: "tempo_20" }))).toBe(
+        "20 Min Tempo"
+      );
+      expect(
+        name(config("easy", { plannedTemplateId: "easy_30", offPlan: false }))
+      ).toBe("Easy 30");
+    });
+
+    it("names a long run in the runner's unit, and a race-pace finish", () => {
+      const long = config("long", { actualTemplateId: "long_8k" });
+      expect(name(long, at(7), { unit: "mi" })).toBe("Long 5.0 mi");
+      expect(
+        name(long, at(7), {
+          unit: "km",
+          racePace: { kind: "finish" } as RacePaceWork,
+        })
+      ).toBe("Long 8K with race pace");
+    });
+
+    it("leaves the plan's name to a run that was something else", () => {
+      // Planned a tempo, ran free: the run is named for itself.
+      expect(
+        name(
+          config("freerun", { plannedTemplateId: "tempo_20", offPlan: true }),
+          at(18)
+        )
+      ).toBe("Evening run");
+      // A session launched as one type and changed to another.
+      expect(name(config("easy", { actualTemplateId: "tempo_20" }))).toBe(
+        "Easy run"
+      );
+    });
+
+    it("else takes the run type's name", () => {
+      expect(name(config("easy"))).toBe("Easy run");
+      expect(name(config("long"))).toBe("Long run");
+      expect(name(config("intervals"))).toBe("Intervals");
+      expect(name(config("guided"))).toBe("Guided run");
+    });
+
+    it("else says when in the day it was run", () => {
+      expect(name(config("freerun"), at(6, 10))).toBe("Morning run");
+      expect(name(config("freerun"), at(11, 59))).toBe("Morning run");
+      expect(name(config("freerun"), at(12))).toBe("Afternoon run");
+      expect(name(config("freerun"), at(17))).toBe("Evening run");
+      expect(name(config("freerun"), at(21))).toBe("Night run");
+      expect(name(config("freerun"), at(3, 30))).toBe("Night run");
+      expect(name(null, at(14))).toBe("Afternoon run");
+      // A run on the treadmill with no session of its own, too.
+      expect(name(config("manual"), at(8))).toBe("Morning run");
+    });
+
+    it("names a run by when it started, not when it was saved", () => {
+      // The fixture starts at 23:50 and is saved after midnight.
+      expect(runPostName(run())).toBe("Night run");
+    });
+  });
+
+  it("saves and posts the runner's own name, else the one it was given", () => {
+    const route = { routePreview: [], note: "" };
+    const named = run({ name: "  Bridges loop " });
+    expect(runDocument(named, FINISH).name).toBe("Bridges loop");
+    expect(runPostPreview(named, route, "km").title).toBe("Bridges loop");
     expect(
-      runPostName({
-        runConfig: { activityType: "intervals" } as FinishedRun["runConfig"],
-      })
-    ).toBe("Interval Run");
+      runPost({ uid: "runner" }, named, route, { visibility: "followers" })
+    ).toMatchObject({ runName: "Bridges loop", activityTitle: "Bridges loop" });
+    // Cleared, it falls back rather than posting an empty title.
+    const cleared = run({ name: "   " });
+    expect(runDocument(cleared, FINISH).name).toBe("Night run");
     expect(
-      runPostName({
-        runConfig: { activityType: "guided" } as FinishedRun["runConfig"],
-      })
-    ).toBe("Guided Run");
+      runPost({ uid: "runner" }, cleared, route, { visibility: "followers" })
+        .runName
+    ).toBe("Night run");
   });
 
   it("previews the distance in the runner's unit", () => {
@@ -266,7 +350,7 @@ describe("the run's post", () => {
     const route = runPostRoute(trace(600), { withheld: false, showEnds: true });
     expect(runPostPreview(run(), route, "km")).toEqual({
       type: "run",
-      title: "Run",
+      title: "Night run",
       routePreview: route.routePreview,
       routePrivacyNote: route.note,
       meta: ["6.60 km", "30:30", expect.stringMatching(/^420 /)],
@@ -282,8 +366,8 @@ describe("the run's post", () => {
       type: "run",
       visibility: "followers",
       caption: "Out and back",
-      runName: "Run",
-      activityTitle: "Run",
+      runName: "Night run",
+      activityTitle: "Night run",
       distance: 6600,
       duration: 1830,
       avgPace: 277,
@@ -375,7 +459,7 @@ describe("completeRun", () => {
     await done.share!.post();
     expect(h.compose).toHaveBeenCalledWith(
       "runner",
-      expect.objectContaining({ type: "run", title: "Run" })
+      expect.objectContaining({ type: "run", title: "Night run" })
     );
     expect(
       completeRun({

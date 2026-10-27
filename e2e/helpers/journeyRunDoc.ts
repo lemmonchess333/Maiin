@@ -24,6 +24,7 @@ import type {
   ProgramState,
   ScheduledRunDay,
 } from "../../src/features/program/programTypes";
+import { runNameOf } from "../../src/lib/runName";
 
 /** A planned run, done as planned. */
 export interface JourneyRun {
@@ -71,6 +72,8 @@ export function journeyRunFields(input: JourneyRun) {
   const runConfig = journeyRunConfig(input);
   const plan = runConfig.planMetadata;
   return {
+    // The planned session's name, as the finish screen fills it in.
+    name: runNameOf({ runConfig, points: [] }, input.finishedAt),
     distance: input.distance,
     duration: input.duration,
     avgPace: input.duration / (input.distance / 1000),

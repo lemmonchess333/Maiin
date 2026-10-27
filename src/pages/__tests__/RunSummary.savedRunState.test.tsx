@@ -443,6 +443,30 @@ describe("RunSummary — Save", () => {
     ).toBeInTheDocument();
   });
 
+  it("pins Save run to the bottom of the screen, where Done takes its place", async () => {
+    renderUnsaved();
+    const save = await screen.findByRole("button", { name: RUN.save });
+    const footer = save.closest("[data-testid='summary-footer']");
+    // The one action in reach: pinned, alone, and after the notes it saves.
+    expect(footer).not.toBeNull();
+    expect(within(footer as HTMLElement).getAllByRole("button")).toEqual([
+      save,
+    ]);
+    expect(screen.getAllByRole("button", { name: RUN.save })).toHaveLength(1);
+    expect(
+      screen.getByLabelText("Run notes").compareDocumentPosition(save) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    fireEvent.click(save);
+    const done = await screen.findByRole("button", { name: RUN.done });
+    const pinned = done.closest("[data-testid='summary-footer']");
+    expect(pinned).not.toBeNull();
+    expect(within(pinned as HTMLElement).getAllByRole("button")).toEqual([
+      done,
+    ]);
+    expect(screen.queryByRole("button", { name: RUN.save })).toBeNull();
+  });
+
   it("retains the distance draft until durable acceptance, including a refused queue write", async () => {
     const now = Date.now();
     expect(
@@ -470,9 +494,9 @@ describe("RunSummary — Save", () => {
       });
     try {
       fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
-      expect(
-        await screen.findByRole("button", { name: "Retry" })
-      ).toBeInTheDocument();
+      const retry = await screen.findByRole("button", { name: "Retry" });
+      // The failure answers where Save run was, not somewhere up the page.
+      expect(retry.closest("[data-testid='summary-footer']")).not.toBeNull();
       expect(queued()).toHaveLength(0);
       expect(readStoredRun("runner")?.manualDistanceDraft?.raw).toBe("3.10");
       refused.mockRestore();
@@ -505,6 +529,80 @@ describe("RunSummary — Save", () => {
     expect(
       screen.getByText("Saved on this phone · waiting to sync")
     ).toBeInTheDocument();
+  });
+});
+
+describe("RunSummary — the run's name", () => {
+  /** Today's planned 20-minute tempo, run as planned and not yet saved. */
+  function renderPlannedTempo() {
+    const { savedRun: _receipt, ...run } = savedRun();
+    const state = {
+      ...run,
+      runConfig: {
+        ...DEFAULT_CONFIG,
+        activityType: "tempo",
+        planMetadata: {
+          ...run.runConfig.planMetadata,
+          plannedTemplateId: "tempo_20",
+          plannedTemplateType: "tempo",
+          actualTemplateId: "tempo_20",
+          matchedPlanExact: true,
+          matchedPlanType: true,
+          offPlan: false,
+        },
+      },
+    };
+    return render(
+      <MemoryRouter initialEntries={[{ pathname: "/run-summary", state }]}>
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+  const queued = () => pendingDocumentWrites("runner", "users/runner/runs");
+
+  let online: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  });
+  afterEach(() => online.mockRestore());
+
+  it("offers the planned session's name, in a field, before saving", async () => {
+    renderPlannedTempo();
+    const field = await screen.findByRole("textbox", { name: "Run name" });
+    expect(field).toHaveValue("20 Min Tempo");
+  });
+
+  it("saves the name typed in its place, and shows it once saved", async () => {
+    renderPlannedTempo();
+    fireEvent.change(await screen.findByRole("textbox", { name: "Run name" }), {
+      target: { value: "  Bridges loop " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: RUN.save }));
+    await screen.findByRole("button", { name: RUN.done });
+    expect(queued()[0].data).toMatchObject({ name: "Bridges loop" });
+    // The post has gone out under it, so the name is no longer a field.
+    expect(screen.queryByRole("textbox", { name: "Run name" })).toBeNull();
+    expect(screen.getByText("Bridges loop")).toBeInTheDocument();
+  });
+
+  it("saves the name it was given when the field is left empty", async () => {
+    renderPlannedTempo();
+    const field = await screen.findByRole("textbox", { name: "Run name" });
+    fireEvent.change(field, { target: { value: "   " } });
+    fireEvent.blur(field);
+    // Left empty, the field gives the name back rather than saving none.
+    expect(field).toHaveValue("20 Min Tempo");
+    fireEvent.click(screen.getByRole("button", { name: RUN.save }));
+    await screen.findByRole("button", { name: RUN.done });
+    expect(queued()[0].data).toMatchObject({ name: "20 Min Tempo" });
+  });
+
+  it("caps a name at a line's length", async () => {
+    renderPlannedTempo();
+    const field = await screen.findByRole("textbox", { name: "Run name" });
+    expect(field).toHaveAttribute("maxLength", "80");
   });
 });
 

@@ -24,14 +24,17 @@ vi.mock("@/components/social/ActivityCard", () => ({
     feedItem,
     openComments,
     allExercises,
+    linkToPost = true,
   }: {
     feedItem: { summary: string; liked?: boolean };
     openComments?: boolean;
     allExercises?: boolean;
+    linkToPost?: boolean;
   }) => (
     <article data-testid="post">
       {feedItem.summary} · liked {String(!!feedItem.liked)} · comments{" "}
-      {String(!!openComments)} · every exercise {String(!!allExercises)}
+      {String(!!openComments)} · every exercise {String(!!allExercises)} · links
+      to itself {String(linkToPost)}
     </article>
   ),
 }));
@@ -91,6 +94,14 @@ describe("the post a notice opens", () => {
     renderAt("/activity/a1");
     expect(await screen.findByTestId("post")).toHaveTextContent(
       "every exercise true"
+    );
+  });
+
+  it("draws the card without links back to the page it is on", async () => {
+    seedFirestore({ "activities/a1": POST });
+    renderAt("/activity/a1");
+    expect(await screen.findByTestId("post")).toHaveTextContent(
+      "links to itself false"
     );
   });
 

@@ -14,16 +14,30 @@
  * (and every stray brush) gets the safe path. A completed hold ends the run
  * directly and swallows its trailing click. See spec `spec-run-fast-launch.md`
  * §12.
+ *
+ * The paused screen's Stop is the same control at the large size, with its
+ * own label and glyph: a hold there ends the run too, and a tap still opens
+ * the dialog.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Flag } from "lucide-react";
-import { RunControlButton } from "@/components/ui/RunControlButton";
+import {
+  RunControlButton,
+  type RunControlSize,
+} from "@/components/ui/RunControlButton";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 
 const HOLD_MS = 1500;
-const RING_R = 24;
-const RING_C = 2 * Math.PI * RING_R;
+/* The ring sits 4px inside the button's edge, at either size. */
+const BUTTON_PX: Record<RunControlSize, number> = { sm: 56, lg: 76 };
+const RING_INSET = 4;
 
 interface HoldToFinishButtonProps {
   /** Completed hold → end the run directly (the same action the confirm
@@ -34,13 +48,27 @@ interface HoldToFinishButtonProps {
   onRequestConfirm: () => void;
   /** Hold duration in ms; overridable for tests. */
   holdMs?: number;
+  /** The caption under the button. Its word is in `ariaLabel` too. */
+  label?: string;
+  /** Names the gesture and contains `label` (WCAG 2.5.3). */
+  ariaLabel?: string;
+  size?: RunControlSize;
+  /** The glyph inside the ring; the coral flag by default. */
+  icon?: ReactNode;
 }
 
 export default function HoldToFinishButton({
   onFinish,
   onRequestConfirm,
   holdMs = HOLD_MS,
+  label = "Finish",
+  ariaLabel = "Hold to finish run",
+  size = "sm",
+  icon,
 }: HoldToFinishButtonProps) {
+  const box = BUTTON_PX[size];
+  const ringR = box / 2 - RING_INSET;
+  const ringC = 2 * Math.PI * ringR;
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number | null>(null);
   const completedRef = useRef(false);
@@ -122,9 +150,9 @@ export default function HoldToFinishButton({
          hold. The accessible name CONTAINS the label (WCAG 2.5.3 Label in
          Name), so a voice-control user saying "tap finish" reaches it, and
          it names the gesture for a screen-reader user. */
-      aria-label="Hold to finish run"
-      label="Finish"
-      size="sm"
+      aria-label={ariaLabel}
+      label={label}
+      size={size}
       variant="neutral"
       className="relative touch-none"
       onClick={handleClick}
@@ -136,26 +164,26 @@ export default function HoldToFinishButton({
         <>
           <svg
             className="absolute inset-0"
-            width="56"
-            height="56"
-            viewBox="0 0 56 56"
+            width={box}
+            height={box}
+            viewBox={`0 0 ${box} ${box}`}
             aria-hidden="true"
           >
             <circle
-              cx="28"
-              cy="28"
-              r={RING_R}
+              cx={box / 2}
+              cy={box / 2}
+              r={ringR}
               fill="none"
               stroke={THEME.running}
               strokeWidth="4"
               strokeLinecap="round"
-              strokeDasharray={RING_C}
-              strokeDashoffset={RING_C * (1 - progress)}
-              transform="rotate(-90 28 28)"
+              strokeDasharray={ringC}
+              strokeDashoffset={ringC * (1 - progress)}
+              transform={`rotate(-90 ${box / 2} ${box / 2})`}
               opacity={progress > 0 ? 1 : 0}
             />
           </svg>
-          <Flag className="size-5" style={{ color: THEME.running }} />
+          {icon ?? <Flag className="size-5" style={{ color: THEME.running }} />}
         </>
       }
     />

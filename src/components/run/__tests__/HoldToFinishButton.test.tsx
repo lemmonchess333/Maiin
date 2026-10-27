@@ -118,3 +118,23 @@ describe("Label in Name (WCAG 2.5.3)", () => {
     expect(accessible.toLowerCase()).toContain(visible.toLowerCase());
   });
 });
+
+describe("the paused screen's Stop, at the large size", () => {
+  it("takes its own words and draws the ring inside the larger button", () => {
+    render(
+      <HoldToFinishButton
+        onFinish={vi.fn()}
+        onRequestConfirm={vi.fn()}
+        label="Stop"
+        ariaLabel="Hold to stop run"
+        size="lg"
+      />
+    );
+    const btn = screen.getByRole("button", { name: "Hold to stop run" });
+    expect(screen.getByText("Stop")).toBeInTheDocument();
+    expect(btn.className).toContain("size-[76px]");
+    const ring = btn.querySelector("svg");
+    expect(ring?.getAttribute("width")).toBe("76");
+    expect(ring?.querySelector("circle")?.getAttribute("r")).toBe("34");
+  });
+});

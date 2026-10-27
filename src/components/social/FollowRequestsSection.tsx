@@ -2,9 +2,9 @@ import { Link } from "react-router-dom";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
+import FollowRequestAnswer from "@/components/social/FollowRequestAnswer";
 import { useFollowRequests } from "@/hooks/useFollowRequests";
 import { getTimeAgo } from "@/lib/timeAgo";
-import { haptic } from "@/lib/haptic";
 
 /**
  * Follow requests, at the top of People (Polish2: an account approves each
@@ -64,27 +64,11 @@ export default function FollowRequestsSection({ active }: { active: boolean }) {
                 )}
               </div>
             </Link>
-            <div className="flex gap-2">
-              <Button
-                aria-label={`Accept ${r.displayName}`}
-                onClick={() => {
-                  haptic("medium");
-                  void accept(r.uid);
-                }}
-              >
-                Accept
-              </Button>
-              <Button
-                variant="ghost"
-                aria-label={`Decline ${r.displayName}`}
-                onClick={() => {
-                  haptic("light");
-                  void decline(r.uid);
-                }}
-              >
-                Decline
-              </Button>
-            </div>
+            <FollowRequestAnswer
+              name={r.displayName}
+              onAccept={() => void accept(r.uid)}
+              onDecline={() => void decline(r.uid)}
+            />
           </li>
         ))}
       </ul>

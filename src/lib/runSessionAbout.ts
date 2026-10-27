@@ -12,9 +12,7 @@
  * A session's physiology name, where coaches use one, is its own last line
  * (`alsoCalled`, Run21 (2)), so the other lines never need it.
  */
-import type { DistanceUnit } from "./distanceUnits";
 import type { RacePaceWork } from "./racePace";
-import { runTemplateName } from "./runLabels";
 import {
   isRunWalkTemplateId,
   RUN_WALK_TEMPLATE_IDS,
@@ -134,26 +132,10 @@ const ZONE_2 = "Zone 2, or aerobic running.";
 /** Medium-long and longer easy runs: an hour or more (RUN-EV-11's rungs). */
 const LONGER_EASY_MINUTES = 60;
 
-/**
- * A planned run's name (Run21 (2)): the template's, and a run with work at
- * the goal race pace says so. A long run that finishes at it is "Long 18K
- * with race pace", running-evidence Appendix B's "Long run with race pace";
- * a tempo run at it is "20 Min Tempo at race pace". The race pace is
- * `racePaceWorkFor`'s, the launch's own gate.
- */
-export function runSessionName(
-  template: Pick<RunTemplate, "name"> | null | undefined,
-  racePace: RacePaceWork | null | undefined,
-  /** The reader's unit: a long run is named in it (`runTemplateName`). */
-  unit: DistanceUnit,
-  fallback = "Run"
-): string {
-  if (!template) return fallback;
-  const name = runTemplateName(template.name, unit);
-  if (racePace?.kind === "finish") return `${name} with race pace`;
-  if (racePace?.kind === "tempo") return `${name} at race pace`;
-  return name;
-}
+/* A planned run's name (Run21 (2)) lives with the other run labels, so
+   the finish screen can name a run without this module; re-exported for
+   the surfaces that read both. */
+export { runSessionName } from "./runLabels";
 
 export function runSessionAbout(
   template: Pick<RunTemplate, "id" | "type" | "estimatedDuration" | "config">,

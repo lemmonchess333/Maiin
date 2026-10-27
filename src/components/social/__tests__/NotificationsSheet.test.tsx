@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import NotificationsSheet from "../NotificationsSheet";
 import type { NotificationItem } from "@/hooks/useNotifications";
@@ -14,6 +14,28 @@ vi.mock("react-router-dom", async () => {
 });
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+
+/* The requests still waiting, as People's section reads them. The tray
+   answers through the same hook, so its callables and its failure path
+   are the section's. */
+const requests = vi.hoisted(() => ({
+  enabled: [] as boolean[],
+  waiting: [] as { uid: string; displayName: string; requestedAt: null }[],
+  accept: vi.fn(async (_uid: string) => true),
+  decline: vi.fn(async (_uid: string) => true),
+}));
+vi.mock("@/hooks/useFollowRequests", () => ({
+  useFollowRequests: (enabled: boolean) => {
+    requests.enabled.push(enabled);
+    return {
+      requests: requests.waiting,
+      status: "ready",
+      reload: vi.fn(),
+      accept: requests.accept,
+      decline: requests.decline,
+    };
+  },
+}));
 
 function item(
   overrides: Partial<NotificationItem> & { id: string }
@@ -299,5 +321,94 @@ describe("NotificationsSheet — space-post engagement rows (SOC-P2g)", () => {
     ]);
     fireEvent.click(screen.getByText("Props!"));
     expect(navigateMock).toHaveBeenCalledWith("/user/u-actor");
+  });
+});
+
+describe("NotificationsSheet — answering a follow request from its row", () => {
+  const ask = () =>
+    item({
+      id: "r",
+      type: "follow_request",
+      fromUserId: "u-robin",
+      message: undefined,
+      fromName: "Robin",
+    });
+
+  beforeEach(() => {
+    navigateMock.mockClear();
+    requests.enabled.length = 0;
+    requests.waiting = [
+      { uid: "u-robin", displayName: "Robin", requestedAt: null },
+    ];
+    requests.accept.mockReset().mockResolvedValue(true);
+    requests.decline.mockReset().mockResolvedValue(true);
+  });
+
+  it("offers Accept and Decline beside a request still waiting", () => {
+    renderSheet([ask()]);
+    const accept = screen.getByRole("button", { name: "Accept Robin" });
+    const decline = screen.getByRole("button", { name: "Decline Robin" });
+    // Beside the row, not inside it: no control holds another.
+    const body = screen
+      .getByText("Robin asked to follow you")
+      .closest("button") as HTMLElement;
+    expect(within(body).queryByRole("button")).toBeNull();
+    expect(body.contains(accept)).toBe(false);
+    expect(body.contains(decline)).toBe(false);
+  });
+
+  it("still opens the asker's profile from the row itself", () => {
+    renderSheet([ask()]);
+    fireEvent.click(screen.getByText("Robin asked to follow you"));
+    expect(navigateMock).toHaveBeenCalledWith("/user/u-robin");
+  });
+
+  it("accepts through People's own handler, and says it is done", async () => {
+    renderSheet([ask()]);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Accept Robin" }));
+    });
+    expect(requests.accept).toHaveBeenCalledWith("u-robin");
+    expect(navigateMock).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Accept Robin" })).toBeNull();
+    expect(screen.getByText("Accepted")).toBeInTheDocument();
+  });
+
+  it("declines through the same handler, with no follow", async () => {
+    renderSheet([ask()]);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Decline Robin" }));
+    });
+    expect(requests.decline).toHaveBeenCalledWith("u-robin");
+    expect(requests.accept).not.toHaveBeenCalled();
+    expect(screen.getByText("Declined")).toBeInTheDocument();
+  });
+
+  it("keeps both answers when one fails, as the hook puts the request back", async () => {
+    requests.accept.mockResolvedValue(false);
+    renderSheet([ask()]);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Accept Robin" }));
+    });
+    expect(screen.queryByText("Accepted")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Accept Robin" })
+    ).toBeInTheDocument();
+  });
+
+  it("offers nothing on a request answered elsewhere", () => {
+    requests.waiting = [];
+    renderSheet([ask()]);
+    // POSITIVE anchor: the row is drawn.
+    expect(screen.getByText("Robin asked to follow you")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Accept Robin" })).toBeNull();
+  });
+
+  it("reads the requests only while a request row is open", () => {
+    renderSheet([item({ id: "k", message: "Alex gave you props" })]);
+    expect(requests.enabled.every((on) => on === false)).toBe(true);
+    expect(requests.enabled.length).toBeGreaterThan(0);
+    renderSheet([ask()]);
+    expect(requests.enabled.at(-1)).toBe(true);
   });
 });

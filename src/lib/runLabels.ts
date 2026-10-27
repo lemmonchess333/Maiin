@@ -11,6 +11,8 @@ import {
   METRES_PER_MILE,
 } from "./distanceUnits";
 import { isTreadmillRun, type RunSource } from "./runGuards";
+import type { RacePaceWork } from "./racePace";
+import type { RunTemplate } from "./workoutTemplates";
 
 /**
  * Pure label helpers for run display surfaces.
@@ -222,6 +224,27 @@ export function runTemplateName(text: string, unit: DistanceUnit): string {
     (_long, km: string) =>
       `Long ${distanceValue(Number(km) * 1000, unit)} ${distanceUnitLabel(unit)}`
   );
+}
+
+/**
+ * A planned run's name (Run21 (2)): the template's, and a run with work at
+ * the goal race pace says so. A long run that finishes at it is "Long 18K
+ * with race pace", running-evidence Appendix B's "Long run with race pace";
+ * a tempo run at it is "20 Min Tempo at race pace". The race pace is
+ * `racePaceWorkFor`'s, the launch's own gate.
+ */
+export function runSessionName(
+  template: Pick<RunTemplate, "name"> | null | undefined,
+  racePace: RacePaceWork | null | undefined,
+  /** The reader's unit: a long run is named in it (`runTemplateName`). */
+  unit: DistanceUnit,
+  fallback = "Run"
+): string {
+  if (!template) return fallback;
+  const name = runTemplateName(template.name, unit);
+  if (racePace?.kind === "finish") return `${name} with race pace`;
+  if (racePace?.kind === "tempo") return `${name} at race pace`;
+  return name;
 }
 
 /**

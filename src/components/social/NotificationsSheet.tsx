@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Heart,
@@ -22,6 +23,8 @@ import type {
   NotificationType,
 } from "@/hooks/useNotifications";
 import { notificationTarget } from "@/lib/notificationTarget";
+import { useFollowRequests } from "@/hooks/useFollowRequests";
+import FollowRequestAnswer from "@/components/social/FollowRequestAnswer";
 
 /**
  * The in-app notification tray (kudos / comment / follow / milestone).
@@ -32,6 +35,10 @@ import { notificationTarget } from "@/lib/notificationTarget";
  * Tapping a row opens what it is about (`notificationTarget`): props and
  * a comment open the post, a session's or a Space's, and the rest the
  * profile of whoever acted.
+ *
+ * A follow request still waiting is answered on its row, with People's
+ * Accept and Decline (`useFollowRequests`, read only while the tray is open
+ * with a request in it). The row itself still opens the asker's profile.
  */
 
 const TYPE_ICON: Record<
@@ -111,6 +118,25 @@ export default function NotificationsSheet({
   onRetry?: () => void;
 }) {
   const navigate = useNavigate();
+  const followRequests = useFollowRequests(
+    open && items.some((n) => n.type === "follow_request")
+  );
+  const waiting = new Set(followRequests.requests.map((r) => r.uid));
+  /* What was said on a row here, so it reads as done. A failed answer
+     says so in a toast and leaves the request waiting, buttons and all. */
+  const [answered, setAnswered] = useState<
+    Record<string, "Accepted" | "Declined">
+  >({});
+  const answer = async (uid: string, accept: boolean) => {
+    const done = accept
+      ? await followRequests.accept(uid)
+      : await followRequests.decline(uid);
+    if (done)
+      setAnswered((was) => ({
+        ...was,
+        [uid]: accept ? "Accepted" : "Declined",
+      }));
+  };
 
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange} title="Notifications">
@@ -143,8 +169,12 @@ export default function NotificationsSheet({
           <ul className="divide-y divide-border/40">
             {items.map((n) => {
               const { Icon, color } = TYPE_ICON[n.type];
+              const asker = n.type === "follow_request" ? n.fromUserId : "";
+              const said = asker ? answered[asker] : undefined;
               return (
-                <li key={n.id}>
+                /* The answers sit beside the row's button, never in it;
+                   at large text they wrap under it. */
+                <li key={n.id} className="flex flex-wrap items-center gap-x-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -157,7 +187,7 @@ export default function NotificationsSheet({
                         navigate(target.to);
                       }
                     }}
-                    className="w-full flex items-center gap-3 py-3 text-left min-h-[44px] active:scale-[0.99] transition-transform"
+                    className="flex min-h-[44px] min-w-[min(12em,100%)] flex-1 items-center gap-3 py-3 text-left active:scale-[0.99] transition-transform"
                   >
                     <div
                       className="size-9 rounded-full flex items-center justify-center shrink-0"
@@ -176,6 +206,22 @@ export default function NotificationsSheet({
                       )}
                     </div>
                   </button>
+                  {said ? (
+                    <p className="ml-auto py-2 text-sm text-muted-foreground">
+                      {said}
+                    </p>
+                  ) : (
+                    asker &&
+                    waiting.has(asker) && (
+                      <div className="ml-auto py-2">
+                        <FollowRequestAnswer
+                          name={n.fromName || "Someone"}
+                          onAccept={() => void answer(asker, true)}
+                          onDecline={() => void answer(asker, false)}
+                        />
+                      </div>
+                    )
+                  )}
                 </li>
               );
             })}

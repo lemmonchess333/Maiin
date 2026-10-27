@@ -24,6 +24,7 @@ import type { RouteQuality } from "@/lib/routeQuality";
 import type { RunConfig } from "@/components/run/RunSetupModal";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { distanceLabel2 } from "@/lib/runLabels";
+import { runNameOf } from "@/lib/runName";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /** A finished run, as the finish screen holds it. */
@@ -60,6 +61,9 @@ export interface FinishedRun {
   /** The quickest 1K, 5K and 10K in the full trace, as the finish screen
    *  lists them (`detectBestEfforts`). */
   bestEfforts: { distance: number; time: number; label: string }[];
+  /** The name the runner gave it on the finish screen. Empty or absent,
+   *  the run takes `runPostName`'s (`runName.ts`). */
+  name?: string;
 }
 
 /** Privacy cuts change the route, not when the run started. Older callers
@@ -77,6 +81,8 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
   const plan = run.runConfig?.planMetadata ?? freeformPlanMetadata("freeform");
   const startedAt = startOf(run, now);
   return {
+    // The name it is posted under, kept with the run.
+    name: runNameOf(run, now),
     distance: run.distance,
     duration: run.elapsed,
     avgPace: run.avgPaceSeconds,
@@ -172,16 +178,6 @@ export function runPostRoute(
   };
 }
 
-/** The run's name on its post. */
-export function runPostName(run: Pick<FinishedRun, "runConfig">): string {
-  const type = run.runConfig?.activityType;
-  return type === "intervals"
-    ? "Interval Run"
-    : type === "guided"
-      ? "Guided Run"
-      : "Run";
-}
-
 /** What the share sheet shows before a run is posted, in the runner's
  *  unit: it said kilometres to a runner who reads miles. */
 export function runPostPreview(
@@ -193,7 +189,7 @@ export function runPostPreview(
   const secs = Math.round(run.elapsed % 60);
   return {
     type: "run",
-    title: runPostName(run),
+    title: runNameOf(run),
     routePreview: route.routePreview,
     routePrivacyNote: route.note,
     meta: [
@@ -215,7 +211,7 @@ export function runPost(
   route: RunPostRoute,
   decision: Pick<ShareDecision, "visibility"> & { caption?: string }
 ): ActivityPost {
-  const name = runPostName(run);
+  const name = runNameOf(run);
   const caption = decision.caption?.trim();
   return {
     authorId: author.uid,
