@@ -113,6 +113,9 @@ describe("ExerciseRigDemo", () => {
     // Both extremes render (t=0 and t=1).
     expect(container.querySelector('[data-t="0"]')).not.toBeNull();
     expect(container.querySelector('[data-t="1"]')).not.toBeNull();
+    for (const svg of container.querySelectorAll("svg[data-t]")) {
+      expect(svg.parentElement).toHaveClass("[&>svg]:h-auto", "[&>svg]:w-full");
+    }
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.queryByText(/set|lower under control/i)).toBeNull();
     expect(rafQueue.length).toBe(0);
@@ -199,6 +202,41 @@ describe("ExerciseRigDemo", () => {
     expect(screen.queryByText("Lower under control")).toBeNull();
   });
 
+  it.each([
+    [
+      "seated-row",
+      "Seated Cable Row",
+      "Pull handle to lower ribs",
+      "Reach forward under control",
+    ],
+    [
+      "hip-abduction-machine",
+      "Hip Abduction Machine",
+      "Press knees apart",
+      "Bring knees together slowly",
+    ],
+  ])("%s names its actual drive and return directions", async (id, name, drive, eccentric) => {
+    reduceRef.current = false;
+    demoRef.current = { concentricTo: 1, startsAt: "stretch" };
+    await render(<ExerciseRigDemo exerciseId={id} name={name} />);
+    step(40);
+    step(900);
+    expect(screen.getByText(drive)).toBeInTheDocument();
+    step(2400);
+    expect(screen.getByText(eccentric)).toBeInTheDocument();
+    expect(screen.queryByText("Drive up")).toBeNull();
+    expect(screen.queryByText("Lower under control")).toBeNull();
+  });
+
+  it("cues the burpee's plank brace and soft landing in its forward cycle", async () => {
+    reduceRef.current = false;
+    demoRef.current = { concentricTo: 1, cycle: true, cycleMs: 3600 };
+    await render(<ExerciseRigDemo exerciseId="burpees" name="Burpees" />);
+    step(40);
+    step(900);
+    expect(screen.getByText("Brace in plank, land softly")).toBeInTheDocument();
+  });
+
   it("reduced motion shows the START frame first", async () => {
     // The two-up is start → finish, so a deadlift reads floor-then-
     // standing rather than the reverse.
@@ -248,10 +286,36 @@ describe("ExerciseRigDemo", () => {
     const { container } = await render(
       <ExerciseRigDemo exerciseId="treadmill" name="Treadmill" />
     );
+    expect(
+      screen.getByRole("img", {
+        name: "Treadmill demonstration · two cycle positions",
+      })
+    ).toBeInTheDocument();
     const frames = [...container.querySelectorAll("[data-t]")].map((n) =>
       n.getAttribute("data-t")
     );
     expect(frames).toEqual(["0", "0.5"]);
+    reduceRef.current = false;
+  });
+
+  it("shows Burpees' squat and defining jump as readable reduced-motion stills", async () => {
+    reduceRef.current = true;
+    demoRef.current = { concentricTo: 1, cycle: true, cycleMs: 3600 };
+    const { container } = await render(
+      <ExerciseRigDemo exerciseId="burpees" name="Burpees" />
+    );
+    expect(
+      screen.getByRole("img", {
+        name: "Burpees demonstration · squat and jump positions",
+      })
+    ).toBeInTheDocument();
+    const frames = [...container.querySelectorAll("[data-t]")].map((node) =>
+      node.getAttribute("data-t")
+    );
+    expect(frames).toEqual(["0", "0.84"]);
+    expect(screen.getByText("Squat")).toBeInTheDocument();
+    expect(screen.getByText("Jump")).toBeInTheDocument();
+    expect(container.querySelectorAll("svg")).toHaveLength(2);
     reduceRef.current = false;
   });
 

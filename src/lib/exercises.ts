@@ -1473,7 +1473,7 @@ export const EXERCISES: Exercise[] = [
       "Set your back flat against the pad, shoulders under the pads, feet mid-platform.",
       "Rotate the hooks off and brace your core.",
       "Lower until your thighs are parallel to the platform, knees tracking over toes.",
-      "Press back up through your heels without locking out hard.",
+      "Drive through your whole foot with heels down, without locking out hard.",
     ],
     tip: "Heels lifting off the plate at depth. Set your feet high enough on the platform that you can sit deep with flat feet.",
     commonMistakes: [
