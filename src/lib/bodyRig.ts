@@ -2241,51 +2241,92 @@ function swingHandle(
   return [pivot[0] + len * Math.cos(a), pivot[1] + len * Math.sin(a)];
 }
 
-/* Swimming — freestyle, side-on at the surface. The body lies prone
- * (head-right) just under a water line; each arm turns a full circle
- * about the shoulder (the recovery over the water, the pull under it),
- * the far arm half a stroke behind; the legs flutter about the hips. */
-const WATER_Y = 118;
+/* Swimming — a fixed overhead view of front crawl. A side camera hid the
+ * far arm behind the near one. The actual posterior anatomy art, rotated
+ * prone, keeps both shoulder paths visible. Each hand follows the same
+ * closed stroke path half a cycle apart, mirrored across the body; the
+ * measured two-bone arm solves the elbow at each position. */
+const SWIM_HAND_PATH: readonly Pt[] = [
+  [-58, 0], // hand finishes beside the hip
+  [-38, -24], // elbow exits first into recovery
+  [28, -30], // recover outside the head, moving forward
+  [66, -2], // fingertips enter beyond the head
+  [51, 8], // catch beyond the head, elbow high
+  [-15, 26], // pull close underneath the torso
+];
+function swimHandOffset(phi: number): Pt {
+  const u = ((((phi % 1) + 1) % 1) * SWIM_HAND_PATH.length);
+  const i = Math.floor(u);
+  const t = u - i;
+  const at = (n: number) =>
+    SWIM_HAND_PATH[(n + SWIM_HAND_PATH.length) % SWIM_HAND_PATH.length];
+  const p0 = at(i - 1);
+  const p1 = at(i);
+  const p2 = at(i + 1);
+  const p3 = at(i + 2);
+  const catmull = (axis: 0 | 1) =>
+    0.5 *
+    (2 * p1[axis] +
+      (-p0[axis] + p2[axis]) * t +
+      (2 * p0[axis] - 5 * p1[axis] + 4 * p2[axis] - p3[axis]) * t * t +
+      (-p0[axis] + 3 * p1[axis] - 3 * p2[axis] + p3[axis]) * t * t * t);
+  return [catmull(0), catmull(1)];
+}
 function swimPose(phi: number): Partial<Record<GroupName, Op[]>> {
-  const G: Op = { kind: "rotate", deg: 90, pivot: [44, 100] };
-  const hipG = applyToPoint(SIDE_ANCHORS.hip, [G]);
-  const T0: Op = { kind: "translate", dx: 0, dy: WATER_Y + 8 - hipG[1] };
-  const body: Op[] = [G, T0];
-  // Arms: a full turn about the shoulder. In the prone body's own frame
-  // the arm hangs "down" toward the feet (−x on screen); a positive
-  // rotation carries the hand back, over the top and forward again.
-  // Positive: from hanging back along the body, over the top (the
-  // recovery, above the water), forward to the entry, then down and
-  // back under it (the pull). The pin holds the hand above the line at
-  // a quarter turn and below it at three quarters.
-  const nearDeg = 360 * phi;
-  const farDeg = 360 * phi + 180;
-  const upperL: Op[] = [
-    { kind: "rotate", deg: nearDeg, pivot: SIDE_ANCHORS.shoulder },
-    ...body,
-  ];
-  const upperR: Op[] = [
-    { kind: "rotate", deg: farDeg, pivot: SIDE_ANCHORS.shoulder },
-    ...body,
-  ];
-  // A soft elbow through the pull, straighter on the recovery.
-  const bendL: Op = { kind: "rotate", deg: -16, pivot: SIDE_ANCHORS.elbow };
-  // Flutter kick: small alternating hip swings, the knee soft.
-  const kick = 10 * Math.sin(4 * Math.PI * phi);
+  const body: Op[] = [{ kind: "rotate", deg: 90, pivot: [50, 100] }];
+  const undoBody = invertOps(body);
+  const arm = (phase: number, side: "L" | "R") => {
+    const rest =
+      side === "L"
+        ? { S: POST.shoulderL, E: POST.elbowL, H: POST.handL }
+        : { S: POST.shoulderR, E: POST.elbowR, H: POST.handR };
+    const shoulder = applyToPoint(rest.S, body);
+    const [dx, y] = swimHandOffset(phase);
+    const dy = side === "L" ? y : -y;
+    const upperLength = Math.hypot(rest.E[0] - rest.S[0], rest.E[1] - rest.S[1]);
+    const foreLength = Math.hypot(rest.H[0] - rest.E[0], rest.H[1] - rest.E[1]);
+    const reach = Math.hypot(dx, dy);
+    const reachScale = Math.min(1, ((upperLength + foreLength) * 0.999) / reach);
+    const hand: Pt = [
+      shoulder[0] + dx * reachScale,
+      shoulder[1] + dy * reachScale,
+    ];
+    const elbow = solveElbow(
+      shoulder,
+      hand,
+      upperLength,
+      foreLength,
+      side === "L" ? 1 : -1
+    );
+    const aimed = aimArm(
+      rest,
+      applyToPoint(elbow, undoBody),
+      applyToPoint(hand, undoBody),
+      0
+    );
+    return { upper: [...aimed.upper, ...body], fore: [...aimed.fore, ...body] };
+  };
+  const left = arm(phi, "L");
+  const right = arm(phi + 0.5, "R");
+  // Two small alternating kicks per full stroke; the hips and trunk stay
+  // level, so this does not read as a side-to-side swimming snake.
+  const kick = 2.5 * Math.sin(4 * Math.PI * phi);
   const thighL: Op[] = [
-    { kind: "rotate", deg: kick, pivot: SIDE_ANCHORS.hip },
+    { kind: "rotate", deg: kick, pivot: [34, 100] },
     ...body,
+    { kind: "translate", dx: 0, dy: 8 },
   ];
   const thighR: Op[] = [
-    { kind: "rotate", deg: -kick, pivot: SIDE_ANCHORS.hip },
+    { kind: "rotate", deg: -kick, pivot: [66, 100] },
     ...body,
+    { kind: "translate", dx: 0, dy: -8 },
   ];
   const shankL: Op[] = [
-    { kind: "rotate", deg: kick * 0.6, pivot: SIDE_ANCHORS.knee },
+    { kind: "rotate", deg: -kick * 0.6, pivot: [30, 160] },
     ...thighL,
   ];
   const shankR: Op[] = [
-    { kind: "rotate", deg: -kick * 0.6, pivot: SIDE_ANCHORS.knee },
+    { kind: "rotate", deg: kick * 0.6, pivot: [70, 160] },
     ...thighR,
   ];
   return {
@@ -2296,12 +2337,12 @@ function swimPose(phi: number): Partial<Record<GroupName, Op[]>> {
     shankL,
     thighR,
     shankR,
-    upperArmL: upperL,
-    foreArmL: [bendL, ...upperL],
-    handL: [bendL, ...upperL],
-    upperArmR: upperR,
-    foreArmR: [bendL, ...upperR],
-    handR: [bendL, ...upperR],
+    upperArmL: left.upper,
+    foreArmL: left.fore,
+    handL: left.fore,
+    upperArmR: right.upper,
+    foreArmR: right.fore,
+    handR: right.fore,
   };
 }
 
@@ -9445,29 +9486,23 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   },
 
   swimming: {
-    /* "Focus on a streamlined body position — hips at the surface.
-     * Breathe on a consistent rhythm for the stroke." Freestyle,
-     * side-on: the body prone just under the water line with the hips
-     * at the surface (pinned), each arm turning a full stroke about the
-     * shoulder — recovery over the water, pull under it — the far arm
-     * half a stroke behind, a flutter kick. */
-    view: "side",
+    /* Freestyle viewed from above so both alternating arms remain visible.
+     * The body line stays fixed while the mirrored arms catch, pull and
+     * recover half a cycle apart, with a small flutter kick. */
+    view: "posterior",
     cycle: true,
     cycleMs: 1800,
-    viewBox: "-80 10 260 190",
+    viewBox: "-80 0 260 200",
     groundY: 204,
-    shadowCx: 40,
     shadowRx: 0,
     concentricTo: 1,
     tint: {
       "upper-back": "primary",
-      chest: "secondary",
-      "front-deltoids": "secondary",
+      "back-deltoids": "secondary",
+      triceps: "secondary",
       gluteal: "secondary",
     },
     pose: swimPose,
-    scene: () =>
-      `<line x1="-70" y1="${WATER_Y}" x2="130" y2="${WATER_Y}" stroke="${GEAR}" stroke-width="1.4" stroke-dasharray="6 4"/>`,
   },
 
   "zottman-curl": {

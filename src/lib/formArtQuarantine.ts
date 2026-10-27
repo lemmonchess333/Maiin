@@ -19,6 +19,7 @@ export const FORM_ART_QUARANTINE_IDS = new Set([
   "inverted-row",
   "seated-row",
   "smith-bench-press",
+  "swimming",
 ]);
 
 export const isFormArtQuarantined = (id: string): boolean =>

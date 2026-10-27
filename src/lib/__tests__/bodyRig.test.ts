@@ -4244,30 +4244,76 @@ describe("renderBodyDemo", () => {
         "elliptical: handles swing"
       ).toBeGreaterThan(20);
     }
-    // Swimming: hips at the surface, body streamlined (horizontal); the
-    // near arm recovers ABOVE the water at ¼ and pulls BELOW it at ¾.
+    // Swimming: the fixed overhead camera shows both alternating arms.
+    // One arm reaches ahead while the other finishes its pull, then they
+    // exchange positions without moving the head or hips between frames.
     {
       const id = "swimming";
-      const WATER = 118;
+      expect(BODY_DEMOS[id].view).toBe("posterior");
       const p0 = at(id, 0);
-      const hip = pt(SIDE_ANCHORS.hip, p0.pelvis);
-      const S = pt(SIDE_ANCHORS.shoulder, p0.torso);
+      const hip = pt([50, 100], p0.pelvis);
+      const head = pt([50, 0], p0.head);
       expect(
-        Math.abs(hip[1] - WATER),
-        "swim: hips at the surface"
-      ).toBeLessThan(10);
-      expect(
-        Math.abs(lineDeg(hip, S)),
-        "swim: streamlined, horizontal"
-      ).toBeLessThan(6);
-      expect(
-        pt(SIDE_ANCHORS.hand, at(id, 0.25).handL)[1],
-        "swim: recovery over the water"
-      ).toBeLessThan(WATER - 20);
-      expect(
-        pt(SIDE_ANCHORS.hand, at(id, 0.75).handL)[1],
-        "swim: the pull under it"
-      ).toBeGreaterThan(WATER + 30);
+        head[0] - hip[0],
+        "swim: head and hips form a horizontal body line"
+      ).toBeGreaterThan(90);
+      expect(Math.abs(head[1] - hip[1])).toBeLessThan(1);
+      const shoulders = {
+        L: [23, 46] as const,
+        R: [77, 46] as const,
+      };
+      const hands = {
+        L: [3.4, 108.5] as const,
+        R: [96.6, 108.9] as const,
+      };
+      const hand = (side: "L" | "R", t: number) =>
+        pt(hands[side], at(id, t)[`hand${side}`]);
+      const shoulder = (side: "L" | "R") =>
+        pt(shoulders[side], p0.torso);
+      expect(hand("L", 0)[0] - shoulder("L")[0]).toBeLessThan(-45);
+      expect(hand("R", 0)[0] - shoulder("R")[0]).toBeGreaterThan(50);
+      expect(hand("L", 0.5)[0] - shoulder("L")[0]).toBeGreaterThan(50);
+      expect(hand("R", 0.5)[0] - shoulder("R")[0]).toBeLessThan(-45);
+      expect(hand("L", 0.25)[1]).toBeLessThan(shoulder("L")[1] - 25);
+      expect(hand("R", 0.75)[1]).toBeGreaterThan(shoulder("R")[1] + 25);
+      for (const side of ["L", "R"] as const) {
+        const start = hand(side, 0);
+        const loop = hand(side, 1);
+        expect(Math.hypot(start[0] - loop[0], start[1] - loop[1])).toBeLessThan(0.01);
+        for (let i = 0; i < 6; i++) {
+          const a = hand(side, i / 6);
+          const b = hand(side, (i + 1) / 6);
+          expect(Math.hypot(a[0] - b[0], a[1] - b[1])).toBeGreaterThan(16);
+        }
+      }
+      const elbows = {
+        L: [17, 78] as const,
+        R: [83, 78] as const,
+      };
+      for (let i = 0; i < 120; i++) {
+        const a = at(id, i / 120);
+        const b = at(id, (i + 1) / 120);
+        for (const side of ["L", "R"] as const) {
+          const h = pt(hands[side], a[`hand${side}`]);
+          const nextHand = pt(hands[side], b[`hand${side}`]);
+          const elbow = pt(elbows[side], a[`foreArm${side}`]);
+          const nextElbow = pt(elbows[side], b[`foreArm${side}`]);
+          expect(
+            Math.hypot(h[0] - nextHand[0], h[1] - nextHand[1]),
+            `swim: ${side} hand motion @${i}`
+          ).toBeLessThan(5);
+          expect(
+            Math.hypot(elbow[0] - nextElbow[0], elbow[1] - nextElbow[1]),
+            `swim: ${side} elbow motion @${i}`
+          ).toBeLessThan(6);
+          if (h[0] > head[0] - 10) {
+            expect(
+              side === "L" ? h[1] < head[1] - 10 : h[1] > head[1] + 10,
+              `swim: ${side} hand clears the head @${i}`
+            ).toBe(true);
+          }
+        }
+      }
     }
     // Zottman: the strict curl's pinned elbows, both movers lit.
     {
