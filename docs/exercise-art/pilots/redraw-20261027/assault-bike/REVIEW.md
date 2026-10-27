@@ -21,3 +21,8 @@ The pedal and handle cycles disagree in every attempted illustrated sequence.
 Do not fill out six frames by repeating these images. The procedural fallback
 now uses two opposite-phase handles linked to the pedal cycle; a better
 pose-controllable drawing method is still needed for an illustrated release.
+
+Follow-up pose test: `3-opposite-pose-trial.png` used explicit opposing grip
+coordinates, fixed lower pivots, and reversed pedal placement. The generated
+figure still has the near arm bent at the rear handle and far arm extended to
+the front handle. It remains an unusable duplicate of frame one.

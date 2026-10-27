@@ -1,0 +1,194 @@
+{
+  "exerciseId": "smith-bench-press",
+  "version": "anatomy-v4-2026-10-27-flat-smith-bench-v1",
+  "width": 1254,
+  "height": 1254,
+  "decision": "approved",
+  "reviewer": "Codex native and 393×852 production-player review",
+  "reviewedAt": "2026-10-27T18:57:57.149Z",
+  "reference": {
+    "path": "form-frames/smith-bench-press/2026-10-27/1.webp",
+    "sha256": "d70c1068452fe57250b3c9878924b7888498071e44c1e96642d277d456e4d9a6"
+  },
+  "cueSha256": "75575508b018416ce939c0cc9e53dd5a51e3b55fd81a4725df0d45ba8c8428bf",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six 1254×1254 frames show one white anatomical athlete on a single level bench beneath a complete two-rail Smith machine, with a paired-plate guided bar and white trainers."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "A single fixed side camera retains the full rack, level bench, shoes and bar in every frame; the source foreground union x135–1105,y73–1139 clears every canvas border."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Head, back and hips remain supported; feet stay planted. Both arms flex and extend with hands wrapped around one guided bar, without crossing or detachment."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "The two vertical rails, overhead beam, level pad and frame feet keep construction and scene position. Left rail cap top-left changes at most one px, right rail cap top-right at most one px; bench span is 599–600 px and right base foot span 253–254 px."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both bar carriages remain attached to their fixed rails, both hands remain on the shaft, head/back/hips stay on the flat pad and both shoes hold their floor positions."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Top, middle and bottom show a roughly even descent along the rails. At bottom the bar underside meets the highlighted mid-chest near x690–710 without a visible black gap, then reverses along the same guide path."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "The chest keeps the strongest violet highlight; triceps and front deltoids remain supporting accents attached to the same anatomy in every pose."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set, lower, mid-chest touch, hold, press and finish cues align with the top→mid→bottom→bottom→mid→top guided press on a flat bench."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six lossless frames and 6→1 were stepped in the actual ExerciseFormFrames phone player. Frames 4=3, 5=2 and 6=1 are byte-identical reverse pairs, so the return loop does not jump."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual light ExerciseFormFrames player at 393×852: all six decoded frames and 6→1 reviewed, complete rack/athlete and captions visible, no horizontal overflow or browser errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual dark ExerciseFormFrames player at 393×852: all six decoded frames and 6→1 reviewed, complete rack/athlete and captions visible, no horizontal overflow or browser errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/smith-bench-press/2026-10-27/1.webp",
+      "sha256": "d70c1068452fe57250b3c9878924b7888498071e44c1e96642d277d456e4d9a6",
+      "anchors": {
+        "leftRailCapBoundsTopLeft": {
+          "x": 377,
+          "y": 74
+        },
+        "rightRailCapBoundsTopRight": {
+          "x": 1044,
+          "y": 94
+        }
+      },
+      "invariantDimensions": {
+        "benchFrontVisibleHorizontalSpan": 600,
+        "rightMachineBaseFootHorizontalSpan": 254
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/smith-bench-press/flat-contact-v2/1.png",
+        "sha256": "dc98e2bb70e5854b64288450decec052e22e400b4c2e1be479025ab73c15bef0"
+      }
+    },
+    {
+      "path": "form-frames/smith-bench-press/2026-10-27/2.webp",
+      "sha256": "b932bf9ec33a49fae7670b41adcb6596c0c36bf8edbd2f45892ae9790963127d",
+      "anchors": {
+        "leftRailCapBoundsTopLeft": {
+          "x": 377,
+          "y": 73
+        },
+        "rightRailCapBoundsTopRight": {
+          "x": 1045,
+          "y": 93
+        }
+      },
+      "invariantDimensions": {
+        "benchFrontVisibleHorizontalSpan": 599,
+        "rightMachineBaseFootHorizontalSpan": 253
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/smith-bench-press/flat-contact-v2/2.png",
+        "sha256": "dd690e196e8d3a65dd4a33c18bb1b20cee9f4b97a4cb25b2982ce441cb576698"
+      }
+    },
+    {
+      "path": "form-frames/smith-bench-press/2026-10-27/3.webp",
+      "sha256": "f46eac7d663cd864ae6f64d8fc8ef3a2955662f0d4cf0da3769bf5cb6d227f89",
+      "anchors": {
+        "leftRailCapBoundsTopLeft": {
+          "x": 377,
+          "y": 73
+        },
+        "rightRailCapBoundsTopRight": {
+          "x": 1045,
+          "y": 93
+        }
+      },
+      "invariantDimensions": {
+        "benchFrontVisibleHorizontalSpan": 599,
+        "rightMachineBaseFootHorizontalSpan": 254
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/smith-bench-press/flat-contact-v2/3.png",
+        "sha256": "3bf07359685fbd9ab77925f877495208497ce78a85a53f0a2fff450145603905"
+      }
+    },
+    {
+      "path": "form-frames/smith-bench-press/2026-10-27/4.webp",
+      "sha256": "f46eac7d663cd864ae6f64d8fc8ef3a2955662f0d4cf0da3769bf5cb6d227f89",
+      "anchors": {
+        "leftRailCapBoundsTopLeft": {
+          "x": 377,
+          "y": 73
+        },
+        "rightRailCapBoundsTopRight": {
+          "x": 1045,
+          "y": 93
+        }
+      },
+      "invariantDimensions": {
+        "benchFrontVisibleHorizontalSpan": 599,
+        "rightMachineBaseFootHorizontalSpan": 254
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/smith-bench-press/flat-contact-v2/4.png",
+        "sha256": "3bf07359685fbd9ab77925f877495208497ce78a85a53f0a2fff450145603905"
+      }
+    },
+    {
+      "path": "form-frames/smith-bench-press/2026-10-27/5.webp",
+      "sha256": "b932bf9ec33a49fae7670b41adcb6596c0c36bf8edbd2f45892ae9790963127d",
+      "anchors": {
+        "leftRailCapBoundsTopLeft": {
+          "x": 377,
+          "y": 73
+        },
+        "rightRailCapBoundsTopRight": {
+          "x": 1045,
+          "y": 93
+        }
+      },
+      "invariantDimensions": {
+        "benchFrontVisibleHorizontalSpan": 599,
+        "rightMachineBaseFootHorizontalSpan": 253
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/smith-bench-press/flat-contact-v2/5.png",
+        "sha256": "dd690e196e8d3a65dd4a33c18bb1b20cee9f4b97a4cb25b2982ce441cb576698"
+      }
+    },
+    {
+      "path": "form-frames/smith-bench-press/2026-10-27/6.webp",
+      "sha256": "d70c1068452fe57250b3c9878924b7888498071e44c1e96642d277d456e4d9a6",
+      "anchors": {
+        "leftRailCapBoundsTopLeft": {
+          "x": 377,
+          "y": 74
+        },
+        "rightRailCapBoundsTopRight": {
+          "x": 1044,
+          "y": 94
+        }
+      },
+      "invariantDimensions": {
+        "benchFrontVisibleHorizontalSpan": 600,
+        "rightMachineBaseFootHorizontalSpan": 254
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/smith-bench-press/flat-contact-v2/6.png",
+        "sha256": "dc98e2bb70e5854b64288450decec052e22e400b4c2e1be479025ab73c15bef0"
+      }
+    }
+  ]
+}

@@ -1,0 +1,271 @@
+{
+  "exerciseId": "burpees",
+  "version": "anatomy-v4-2026-10-27-burpee-side-jump-v1",
+  "width": 1254,
+  "height": 1254,
+  "decision": "approved",
+  "reviewer": "Codex native and 393×852 production-player review",
+  "reviewedAt": "2026-10-27T18:55:40.796Z",
+  "reference": {
+    "path": "form-frames/burpees/2026-10-27/1.webp",
+    "sha256": "9e04d3c60cb6367400ffb88e1e08d1a05406bf5b409aa9bea65b8ff30b64cb58"
+  },
+  "cueSha256": "d6f8df05fe84a4bfccd6f283d77a67a47d505ea1bc1c678cb533cd6311317bc7",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six 1254×1254 frames keep one faceless white anatomical athlete in white trainers, side-facing throughout. Violet chest and quadriceps remain the principal highlighted muscle groups."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "One right-facing side camera and one square canvas keep body scale and floor reference coherent across squat, plank, push-up and airborne jump. All six sources have clear borders and no cropped anatomy."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Arms and legs remain traceable through the six poses: knees flex for landing and tuck, elbows flex at push-up bottom, and the jump lifts both bent legs with arms overhead. No limb detaches or changes side."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bodyweight burpee with no equipment. The white shoes retain their identity and the same floor reference across ground and jump frames."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Frame 1 and 5 left shoe contact bottoms share y1065 and right shoes y1055; their bottom x spans differ by at most one native pixel. In frames 2–4, near palm bottom stays y1110 with x769–865 and far palm bottom y1086 with x987–1098. Frame 6 shoes end at y1008, at least 47 px above grounded shoe rows."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "The sequence lands in a crouch, plants palms and jumps feet back, lowers the chest, presses to plank, tucks feet forward, and jumps upward. The airborne pose returns to the crouch as a soft landing; the shoulders, hips and shoes stay aligned to one side view."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Chest and quadriceps use the strongest violet, with abdominal and front-shoulder support. Muscle fields remain attached to the same body regions in squat, plank, push-up and jump."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "The first cue now says to land softly and reach hands toward the floor, matching frame 1 where palms are not planted. Frame 2 says to plant palms before jumping feet back. Lower, press, tuck and jump captions match frames 3–6."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six candidate frames and 6→1 were stepped in the actual ExerciseFormFrames player at 393×852. Frame 4 exactly repeats plank frame 2; the right-facing airborne jump lands into the same-side squat without a camera flip or scale snap."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual light ExerciseFormFrames player at 393×852: all six decoded frames and 6→1 reviewed, full subject and captions visible, no horizontal overflow or browser errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual dark ExerciseFormFrames player at 393×852: all six decoded frames and 6→1 reviewed, full subject and captions visible, no horizontal overflow or browser errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/burpees/2026-10-27/1.webp",
+      "sha256": "9e04d3c60cb6367400ffb88e1e08d1a05406bf5b409aa9bea65b8ff30b64cb58",
+      "anchors": {
+        "leftShoeBottomLeft": {
+          "x": 410,
+          "y": 1065
+        },
+        "leftShoeBottomRight": {
+          "x": 513,
+          "y": 1065
+        },
+        "rightShoeBottomLeft": {
+          "x": 572,
+          "y": 1055
+        },
+        "rightShoeBottomRight": {
+          "x": 668,
+          "y": 1055
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeBottomWidth": 104,
+        "shoeContactSpan": 259
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/burpees/retry-side-jump/1.png",
+        "sha256": "d90c4ccd0e14b02425f7fb07fc87e88fc5e85cd67891c714018070550219491f"
+      }
+    },
+    {
+      "path": "form-frames/burpees/2026-10-27/2.webp",
+      "sha256": "d46698078c128dd5c6084641203398d04e193645c1e702f66c5cc914fa079aef",
+      "anchors": {
+        "nearPalmBottomLeft": {
+          "x": 769,
+          "y": 1110
+        },
+        "nearPalmBottomRight": {
+          "x": 865,
+          "y": 1110
+        },
+        "farPalmBottomLeft": {
+          "x": 987,
+          "y": 1086
+        },
+        "farPalmBottomRight": {
+          "x": 1098,
+          "y": 1086
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmBottomWidth": 97,
+        "farPalmBottomWidth": 112
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/burpees/retry-side-jump/2.png",
+        "sha256": "b7b804d36f1ab2c4d21a96b2ffb5097f98686f58c7812c59d4329ea10eb16a6f"
+      }
+    },
+    {
+      "path": "form-frames/burpees/2026-10-27/3.webp",
+      "sha256": "904e0c0b5e5e11da40b15e39c96dd234abc3e9b0e9cf5509dd5b6a2acaa3dd2a",
+      "anchors": {
+        "nearPalmBottomLeft": {
+          "x": 769,
+          "y": 1110
+        },
+        "nearPalmBottomRight": {
+          "x": 865,
+          "y": 1110
+        },
+        "farPalmBottomLeft": {
+          "x": 987,
+          "y": 1086
+        },
+        "farPalmBottomRight": {
+          "x": 1098,
+          "y": 1086
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmBottomWidth": 97,
+        "farPalmBottomWidth": 112
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/burpees/retry-side-jump/3.png",
+        "sha256": "0d25ec38b47bd040b17785355118220d2e52fc52a653946f6759b4cb48757042"
+      }
+    },
+    {
+      "path": "form-frames/burpees/2026-10-27/4.webp",
+      "sha256": "d46698078c128dd5c6084641203398d04e193645c1e702f66c5cc914fa079aef",
+      "anchors": {
+        "nearPalmBottomLeft": {
+          "x": 769,
+          "y": 1110
+        },
+        "nearPalmBottomRight": {
+          "x": 865,
+          "y": 1110
+        },
+        "farPalmBottomLeft": {
+          "x": 987,
+          "y": 1086
+        },
+        "farPalmBottomRight": {
+          "x": 1098,
+          "y": 1086
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmBottomWidth": 97,
+        "farPalmBottomWidth": 112
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/burpees/retry-side-jump/4.png",
+        "sha256": "b7b804d36f1ab2c4d21a96b2ffb5097f98686f58c7812c59d4329ea10eb16a6f"
+      }
+    },
+    {
+      "path": "form-frames/burpees/2026-10-27/5.webp",
+      "sha256": "9f46604bd3352c0a03acb649e48741cac009d66b33675f1b74d161ff1d34366b",
+      "anchors": {
+        "leftShoeBottomLeft": {
+          "x": 410,
+          "y": 1065
+        },
+        "leftShoeBottomRight": {
+          "x": 512,
+          "y": 1065
+        },
+        "rightShoeBottomLeft": {
+          "x": 572,
+          "y": 1055
+        },
+        "rightShoeBottomRight": {
+          "x": 667,
+          "y": 1055
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeBottomWidth": 103,
+        "shoeContactSpan": 258
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/burpees/retry-side-jump/5.png",
+        "sha256": "0c9948681e884b20ed9fd72763c5660d113bdf57ee86238a5a7c04561b2e148a"
+      }
+    },
+    {
+      "path": "form-frames/burpees/2026-10-27/6.webp",
+      "sha256": "041393e89455352a6700d11b8f59afe25c5372ec36c6e0882dfc5501bb1bd1f0",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/burpees/retry-side-jump/6.png",
+        "sha256": "0f197886686dc082be032ec70218136c35e18727642cb6523782a146f9ba00bb"
+      }
+    }
+  ],
+  "contactPhases": [
+    {
+      "name": "Squat landing and tuck shoe contact",
+      "frames": [
+        1,
+        5
+      ],
+      "referenceFrame": 1,
+      "anchorNames": [
+        "leftShoeBottomLeft",
+        "leftShoeBottomRight",
+        "rightShoeBottomLeft",
+        "rightShoeBottomRight"
+      ],
+      "dimensionNames": [
+        "leftShoeBottomWidth",
+        "shoeContactSpan"
+      ],
+      "evidence": "Both shoes remain on the same floor rows across the landing and tuck: left y1065, right y1055. Bottom spans differ by at most 1 native px."
+    },
+    {
+      "name": "Plank and push-up palm contact",
+      "frames": [
+        2,
+        3,
+        4
+      ],
+      "referenceFrame": 2,
+      "anchorNames": [
+        "nearPalmBottomLeft",
+        "nearPalmBottomRight",
+        "farPalmBottomLeft",
+        "farPalmBottomRight"
+      ],
+      "dimensionNames": [
+        "nearPalmBottomWidth",
+        "farPalmBottomWidth"
+      ],
+      "evidence": "Both palms remain planted during plank, push-up bottom and press: near y1110 x769–865; far y1086 x987–1098."
+    }
+  ],
+  "airborneFrames": [
+    {
+      "frame": 6,
+      "takeoffFrame": 5,
+      "landingFrame": 1,
+      "evidence": "Both shoes clear the established floor by at least 47 native px; the athlete returns to a same-side crouch on frame 1."
+    }
+  ]
+}

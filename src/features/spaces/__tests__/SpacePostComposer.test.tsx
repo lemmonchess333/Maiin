@@ -228,7 +228,7 @@ describe("SpacePostComposer — attachLatest", () => {
     expect(screen.queryByText("10.0 km run")).toBeNull();
   });
 
-  it("omits a lead drawing when the workout's only artwork is withheld", async () => {
+  it("includes the lead drawing when the workout's artwork is released", async () => {
     renderComposer({ sessions: [WORKOUT], attachLatest: true });
     fireEvent.change(screen.getByLabelText("Post body"), {
       target: { value: "Bench day." },
@@ -244,7 +244,7 @@ describe("SpacePostComposer — attachLatest", () => {
     )!;
     const activity = (readDoc(path) as { activity: Record<string, unknown> }).activity;
     expect(activity.type).toBe("workout");
-    expect(activity).not.toHaveProperty("leadExerciseId");
+    expect(activity.leadExerciseId).toBe("bench-press");
   });
 
   it("attaches nothing when opened as a plain post", () => {

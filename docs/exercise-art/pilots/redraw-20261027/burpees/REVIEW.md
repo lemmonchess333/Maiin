@@ -1,4 +1,4 @@
-# Burpees redraw draft
+# Burpees redraw and side-jump review
 
 Six full-resolution 1254 × 1254 PNGs show squat with palms planted, high
 plank, push-up bottom, high plank, squat, and airborne jump. The art was
@@ -17,18 +17,21 @@ The active sequence now shows soft landing, plank, push-up bottom, plank,
 crouch with planted palms, and airborne jump. Frame 1's shoe soles match
 frame 5's exact image-row baselines (left y=1065, right y=1055). The crouch
 palms remain near their plank positions while the feet kick back. Both shoes
-are visibly airborne in frame 6 above the same floor baseline. The jumping
-athlete has bent knees to preserve the same physical head/body scale while
-remaining fully inside the fixed square camera. The phone-size
-contact sheet is
-`/tmp/burpees-draft-sheet.png`.
+are visibly airborne in frame 6 above the same floor baseline. The first
+generated jump turned toward the camera, so it was replaced with a jump in
+the same right-facing three-quarter view as the crouch and plank. That
+replacement is `retry-side-jump/6.png`; `retry-side-jump/1.png` through
+`5.png` are exact copies of the previously checked poses. The replacement
+has two arms, two legs, no clipped edge, and white shoes ending at y=1008,
+at least 47 px above the grounded shoe baseline. Its 240 px contact sheet
+is `/tmp/burpees-retry-side-sheet.png`.
 
-**Not release-approved:** frame 1 has hands off the floor for landing, while
-its existing placard cue says to plant palms at that moment; if this sequence
-is approved, that cue needs to describe landing and reaching toward the floor.
-The 1→2 step also covers both planting the palms and kicking the feet back.
-The jump's bent knees should be reviewed for the intended burpee variation.
-These need a final motion and cue review before runtime quarantine is removed.
+Frame 1 is a soft squat landing with hands reaching toward the floor, not
+already planted. The release cue should read “Land softly in a squat; reach
+both hands toward the floor.” Frame 2 then needs “Plant both palms, then
+jump feet back into a straight plank.” This matches the visible order and
+retains the six-frame loop. All six candidate frames and the 6→1 loop passed
+393×852 phone player review in dark and light themes on 2026-10-27.
 
 ## Contact check at source resolution
 
@@ -43,6 +46,7 @@ canvas, with the bottom eight rows used to locate each contact span.
 | 2 / 3 / 4 | near palm | 1110 / 1110 / 1110 | 769–865 throughout |
 | 2 / 3 / 4 | far palm | 1086 / 1086 / 1086 | 987–1098 throughout |
 
-Frame 4 is byte-identical to the straight-plank frame 2. Frame 6's shoes
-end at row 1000, at least 52 px above the grounded shoe rows. The phone-size
-5→6→1 loop review is `/tmp/burpees-loop-390.png`.
+Frame 4 is byte-identical to the straight-plank frame 2. The released side
+jump's shoes end at row 1008. The older front-facing jump ended at row 1000
+and is retained only as the draft source in this folder. The earlier
+5→6→1 loop comparison is `/tmp/burpees-loop-390.png`.

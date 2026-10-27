@@ -62,6 +62,116 @@ describe("artwork release evidence", () => {
     expect(errors.some((error) => error.includes("heel.y"))).toBe(true);
     expect(errors.some((error) => error.includes("plateDiameter"))).toBe(true);
   });
+  it("checks the documented two-pixel Inverted Row rack-foot exception only on its named anchors", () => {
+    const rowExpected = { ...expected, exerciseId: "inverted-row" };
+    const review = {
+      ...passing(),
+      exerciseId: "inverted-row",
+      fixedAnchorExceptions: [
+        {
+          anchor: "frontRackFootBottomRight",
+          axis: "y",
+          maxDriftPx: 2,
+          evidence: "Owner reviewed the two native-pixel rack-foot displacement.",
+        },
+        {
+          anchor: "rearRackFootBottomLeft",
+          axis: "y",
+          maxDriftPx: 2,
+          evidence: "Owner reviewed the two native-pixel rack-foot displacement.",
+        },
+      ],
+      frames: passing().frames.map((frame) => ({
+        ...frame,
+        anchors: {
+          ...frame.anchors,
+          frontRackFootBottomRight: { x: 300, y: 900 },
+          rearRackFootBottomLeft: { x: 480, y: 740 },
+        },
+      })),
+    };
+    review.frames[2].anchors.frontRackFootBottomRight.y += 2;
+    review.frames[2].anchors.rearRackFootBottomLeft.y += 2;
+    expect(validateArtworkReview(review, rowExpected)).toEqual([]);
+
+    review.frames[2].anchors.frontRackFootBottomRight.y += 1;
+    expect(validateArtworkReview(review, rowExpected)).toContain(
+      "Frame 3: fixed anchor frontRackFootBottomRight.y drift."
+    );
+    review.frames[2].anchors.frontRackFootBottomRight.y -= 1;
+    expect(
+      validateArtworkReview(
+        { ...review, fixedAnchorExceptions: [] },
+        rowExpected
+      )
+    ).toContain("Frame 3: fixed anchor frontRackFootBottomRight.y drift.");
+    expect(
+      validateArtworkReview(
+        { ...review, exerciseId: "squat" },
+        expected
+      )
+    ).toContain(
+      "Unapproved fixed anchor exception: frontRackFootBottomRight.y."
+    );
+  });
+  it("checks Clean and Press plate size by matched pose and sole spans across the cycle", () => {
+    const pressExpected = { ...expected, exerciseId: "clean-and-press" };
+    const plateHeights = [[179, 153], [176, 155], [183, 160], [179, 159], [183, 160], [181, 157]];
+    const review = {
+      ...passing(),
+      exerciseId: "clean-and-press",
+      frames: passing().frames.map((frame, index) => ({
+        ...frame,
+        invariantDimensions: {
+          ...frame.invariantDimensions,
+          nearSoleWidth: index === 5 ? 97 : 98,
+          farSoleWidth: index === 5 ? 113 : 115,
+          leftPlateHeight: plateHeights[index][0],
+          rightPlateHeight: plateHeights[index][1],
+        },
+      })),
+      contactPhases: [
+        {
+          name: "Planted shoes",
+          frames: [1, 2, 3, 4, 5, 6],
+          referenceFrame: 1,
+          anchorNames: ["heel", "toe"],
+          dimensionNames: ["nearSoleWidth", "farSoleWidth"],
+          evidence: "Both soles remain on the floor.",
+        },
+        {
+          name: "Matched rack and return plates",
+          frames: [3, 5, 6],
+          referenceFrame: 3,
+          anchorNames: ["heel", "toe"],
+          dimensionNames: ["leftPlateHeight", "rightPlateHeight"],
+          evidence: "Compare the new return plate to the rack pose.",
+        },
+      ],
+      airborneFrames: [],
+      invariantDimensionExceptions: [
+        { dimension: "nearSoleWidth", unit: "pixels", limit: 2, evidence: "Measured source span." },
+        { dimension: "farSoleWidth", unit: "pixels", limit: 2, evidence: "Measured source span." },
+        { dimension: "leftPlateHeight", unit: "percent", limit: 2, evidence: "Compared with matched rack pose." },
+        { dimension: "rightPlateHeight", unit: "percent", limit: 2, evidence: "Compared with matched rack pose." },
+      ],
+    };
+    expect(validateArtworkReview(review, pressExpected)).toEqual([]);
+    expect(
+      validateArtworkReview(
+        { ...review, invariantDimensionExceptions: [] },
+        pressExpected
+      )
+    ).toContain("Frame 6: invariant rightPlateHeight drift.");
+    review.frames[5].invariantDimensions.rightPlateHeight = 156;
+    expect(validateArtworkReview(review, pressExpected)).toContain(
+      "Frame 6: invariant rightPlateHeight drift."
+    );
+    review.frames[5].invariantDimensions.rightPlateHeight = 157;
+    expect(validateArtworkReview({ ...review, exerciseId: "squat" }, expected)).toContain(
+      "Unapproved invariant dimension exception: rightPlateHeight."
+    );
+  });
   it("requires every visual check, including both mobile themes", () => {
     for (const key of ART_REVIEW_CHECKS) {
       const review = passing();

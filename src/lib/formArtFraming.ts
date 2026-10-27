@@ -18,6 +18,8 @@ export const FORM_ART_FRAMING: Readonly<Record<string, FormArtFraming>> = {
   "bench-dips": { scale: 1.21, x: -0.0272, y: 0.0016 },
   "barbell-upright-row": { scale: 1.4993, x: 0.0005, y: 0.0215 },
   "chest-press-machine": { scale: 1.4691, x: 0.0516, y: 0.0187 },
+  "clean-and-press": { scale: 1.4, x: 0, y: -0.025 },
+  "close-grip-bench": { scale: 1.13, x: -0.02, y: 0 },
   "concentration-curl": { scale: 1.1086, x: -0.0018, y: 0.0451 },
   "db-flyes": { scale: 1.2776, x: 0.0025, y: -0.0112 },
   "db-bench": { scale: 1.5, x: -0.0215, y: 0.0146 },

@@ -1,0 +1,274 @@
+{
+  "exerciseId": "clean-and-press",
+  "version": "anatomy-v4-2026-10-27-clean-strict-press-high-thigh-v1",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and 393×852 production-player review; QA-accepted pose-matched plate and sole exceptions",
+  "reviewedAt": "2026-10-27T19:07:21.832Z",
+  "reference": {
+    "path": "form-frames/clean-and-press/2026-10-27/1.webp",
+    "sha256": "3c8f74e4e64f3758faeed32fe539fdb2afcf27166a6fc038712843a25e08e093"
+  },
+  "cueSha256": "935128d6c3ffd19956f2235325eb1ec138cea5d52b10d2c345c63137a6542546",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six native 1536×1024 frames keep the same faceless white anatomical athlete, two white trainers, one barbell with one plate at each end, and violet glute/hamstring/front-deltoid fields."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "One fixed side three-quarter source camera keeps the athlete, shoes, both plates and overhead lockout inside the canvas. The same 1.4×, x=0, y=-0.025 player camera was checked for all six poses in dark and light at 393×852 without crop or reframe."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "The athlete hinges with a flat back, rises into the front rack, then presses overhead with straight legs and extended elbows. Both arms and legs remain attached and on the same side across the pull, rack, press and return."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One continuous barbell and two plates remain in the hands through floor, high-thigh, rack and overhead positions. Original frames 1–5 retain their delivered WebP bytes. The new frame 6 return plate heights are measured against pose-matched rack frames 3/5: left 183→181 px (1.09%), right 160→157 px (1.875%); earlier lift poses already have perspective-dependent plate sizes and are not claimed within 2% globally."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Near and far sole contact bottoms remain exactly y906 and y896 in all six native sources. Near contact span is 98 px in frames 1–5 and 97 px in frame 6; far span is 115→113 px. Contact midpoints move at most 0.5 px horizontally, and the sole baseline gap remains 10 px. The measured 2 px maximum span exception is below 0.7 delivered pixel."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "The bar travels from floor to high thigh and front rack, then rises from the shoulders by a strict press with no knee dip. It lowers to rack, then high thigh and returns to the floor through a hinge on the 6→1 loop; both hands and shoes remain connected."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Glutes, hamstrings and front deltoids carry the strongest violet highlighting; quads, triceps and braced core are supporting regions. Muscle colors remain on the same anatomy through the six phases."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Revised cues now align exactly: setup at floor, initial pull at knee/high thigh, catch at front rack, press to overhead lockout without a knee dip, lower to rack, then lower to high thigh before the floor reset. Catalogue instructions likewise describe a strict press."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six dated frames and the 6→1 return were stepped in the actual ExerciseFormFrames player at 393×852. Frame 5 exactly repeats the front rack pose 3; the new high-thigh frame 6 bridges the rack and floor while retaining the same camera and floor contacts."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual light ExerciseFormFrames player at 393×852: all six decoded frames and 6→1 reviewed with corrected captions, full overhead plates and shoes visible, no horizontal overflow or browser errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual dark ExerciseFormFrames player at 393×852: all six decoded frames and 6→1 reviewed with corrected captions, full overhead plates and shoes visible, no horizontal overflow or browser errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/clean-and-press/2026-10-27/1.webp",
+      "sha256": "3c8f74e4e64f3758faeed32fe539fdb2afcf27166a6fc038712843a25e08e093",
+      "anchors": {
+        "nearSoleContactMidpoint": {
+          "x": 718,
+          "y": 906
+        },
+        "farSoleContactMidpoint": {
+          "x": 851.5,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 98,
+        "farSoleWidth": 115,
+        "leftPlateHeight": 179,
+        "rightPlateHeight": 153
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/clean-and-press/retry-high-thigh/1.webp",
+        "sha256": "3c8f74e4e64f3758faeed32fe539fdb2afcf27166a6fc038712843a25e08e093"
+      }
+    },
+    {
+      "path": "form-frames/clean-and-press/2026-10-27/2.webp",
+      "sha256": "e22880fedd9d2c7f14cbb638c0c46d117c32a46209a35849b4442ab0fc670ec4",
+      "anchors": {
+        "nearSoleContactMidpoint": {
+          "x": 718,
+          "y": 906
+        },
+        "farSoleContactMidpoint": {
+          "x": 851.5,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 98,
+        "farSoleWidth": 115,
+        "leftPlateHeight": 176,
+        "rightPlateHeight": 155
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/clean-and-press/retry-high-thigh/2.webp",
+        "sha256": "e22880fedd9d2c7f14cbb638c0c46d117c32a46209a35849b4442ab0fc670ec4"
+      }
+    },
+    {
+      "path": "form-frames/clean-and-press/2026-10-27/3.webp",
+      "sha256": "8e837f8272d273276fec6058c8016701858987ab7c2887369154090fb2af7de4",
+      "anchors": {
+        "nearSoleContactMidpoint": {
+          "x": 718,
+          "y": 906
+        },
+        "farSoleContactMidpoint": {
+          "x": 851.5,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 98,
+        "farSoleWidth": 115,
+        "leftPlateHeight": 183,
+        "rightPlateHeight": 160
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/clean-and-press/retry-high-thigh/3.webp",
+        "sha256": "8e837f8272d273276fec6058c8016701858987ab7c2887369154090fb2af7de4"
+      }
+    },
+    {
+      "path": "form-frames/clean-and-press/2026-10-27/4.webp",
+      "sha256": "ca7c24baa1f44a7471c5a07d53be20efeba2054f0e4fcb55f8fb82e0838116de",
+      "anchors": {
+        "nearSoleContactMidpoint": {
+          "x": 718,
+          "y": 906
+        },
+        "farSoleContactMidpoint": {
+          "x": 851.5,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 98,
+        "farSoleWidth": 115,
+        "leftPlateHeight": 179,
+        "rightPlateHeight": 159
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/clean-and-press/retry-high-thigh/4.webp",
+        "sha256": "ca7c24baa1f44a7471c5a07d53be20efeba2054f0e4fcb55f8fb82e0838116de"
+      }
+    },
+    {
+      "path": "form-frames/clean-and-press/2026-10-27/5.webp",
+      "sha256": "8e837f8272d273276fec6058c8016701858987ab7c2887369154090fb2af7de4",
+      "anchors": {
+        "nearSoleContactMidpoint": {
+          "x": 718,
+          "y": 906
+        },
+        "farSoleContactMidpoint": {
+          "x": 851.5,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 98,
+        "farSoleWidth": 115,
+        "leftPlateHeight": 183,
+        "rightPlateHeight": 160
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/clean-and-press/retry-high-thigh/5.webp",
+        "sha256": "8e837f8272d273276fec6058c8016701858987ab7c2887369154090fb2af7de4"
+      }
+    },
+    {
+      "path": "form-frames/clean-and-press/2026-10-27/6.webp",
+      "sha256": "589f242f700680a8221b134e8b30493a1ea3e6d40c11877288ce819f6955f105",
+      "anchors": {
+        "nearSoleContactMidpoint": {
+          "x": 718.5,
+          "y": 906
+        },
+        "farSoleContactMidpoint": {
+          "x": 851,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 113,
+        "leftPlateHeight": 181,
+        "rightPlateHeight": 157
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/clean-and-press/retry-high-thigh/6.png",
+        "sha256": "5cf244bd4882d02fe524d4af35b26bfa1ccf46d74bfac9651a9289ff50288305"
+      }
+    }
+  ],
+  "invariantDimensionExceptions": [
+    {
+      "dimension": "nearSoleWidth",
+      "unit": "pixels",
+      "limit": 2,
+      "evidence": "Bright near-sole last-eight-row contact span narrows only 98→97 px in new frame 6; reference is frames 1–5."
+    },
+    {
+      "dimension": "farSoleWidth",
+      "unit": "pixels",
+      "limit": 2,
+      "evidence": "Bright far-sole last-eight-row contact span narrows only 115→113 px in new frame 6; reference is frames 1–5."
+    },
+    {
+      "dimension": "leftPlateHeight",
+      "unit": "percent",
+      "limit": 2,
+      "evidence": "At RGB max≥20 in the left plate ROI, new frame 6 is 181 px versus 183 px in pose-matched rack frames 3/5, a 1.09% difference."
+    },
+    {
+      "dimension": "rightPlateHeight",
+      "unit": "percent",
+      "limit": 2,
+      "evidence": "At RGB max≥20 in the right plate ROI, new frame 6 is 157 px versus 160 px in pose-matched rack frames 3/5, a 1.875% difference."
+    }
+  ],
+  "contactPhases": [
+    {
+      "name": "Planted shoes through clean, press and return",
+      "frames": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "referenceFrame": 1,
+      "anchorNames": [
+        "nearSoleContactMidpoint",
+        "farSoleContactMidpoint"
+      ],
+      "dimensionNames": [
+        "nearSoleWidth",
+        "farSoleWidth"
+      ],
+      "evidence": "All six frames have the same floor baseline: near sole bottom y906 and far sole bottom y896, with contact centres shifting at most 0.5 native px."
+    },
+    {
+      "name": "Pose-matched rack and high-thigh return plate check",
+      "frames": [
+        3,
+        5,
+        6
+      ],
+      "referenceFrame": 3,
+      "anchorNames": [
+        "nearSoleContactMidpoint",
+        "farSoleContactMidpoint"
+      ],
+      "dimensionNames": [
+        "leftPlateHeight",
+        "rightPlateHeight"
+      ],
+      "evidence": "Frames 3 and 5 are the same rack pose and frame 6 is the new lowering pose; compare only these three plate sizes. Earlier source poses vary with the lift and are not a fixed-size reference."
+    }
+  ],
+  "airborneFrames": []
+}

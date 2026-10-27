@@ -3,9 +3,9 @@
 The catalogue has 152 exercise sets. The preceding full-sequence audit placed
 15 inaccurate or inconsistent illustrated sets on the checked motion renderer.
 This pass inspected the available redraw drafts at native size and checked
-all 15 active displays at phone size. Seven candidates also passed all six
-frames in the actual player at 393×852 and now have dated, strictly approved
-releases. Eight remain on the motion renderer. Older frame files remain intact.
+all 15 active displays at phone size. Twelve candidates passed all six
+frames in the actual player at 393×852 and now have dated, approved
+releases. Three remain on the motion renderer. Older frame files remain intact.
 
 | Exercise | Decision | Review finding |
 | --- | --- | --- |
@@ -16,14 +16,14 @@ releases. Eight remain on the motion renderer. Older frame files remain intact.
 | Hip Abduction Machine | Approved | Fixed outboard grips and seat, knees/pads/foot platforms open together. |
 | Seated Cable Row | Approved | Upright torso, connected cable, rising stack, fixed seat and footplate. |
 | Swimming | Approved | Alternating overhead crawl, visible side breath, aligned pool-tile reference and tile-free transparent card. |
+| Clean and Press | Approved | Clean to front rack, strict press, rack return and high-thigh lower. QA accepted pose-matched plate and sole span exceptions; the front-rack pose stays clearer at 48 px on cards. |
+| Burpees | Approved | Same-side crouch, plank, push-up and airborne jump; landing and palm-placement cues now match their frames. |
+| Close Grip Bench Press | Approved | Flat pad, narrow grip, lower-chest touch and planted shoes; actual phone player passed. |
+| Inverted Row | Approved | Chest reaches fixed bar and heels stay supported; QA accepted a measured ≤2 native px rack-foot edge drift (<0.5 display px). |
+| Smith Machine Bench Press | Approved | Level bench, guided bar, mid-chest touch and fixed rail/bench contacts; actual phone player passed. |
 | Assault Bike | Motion renderer | Image edits kept moving handles static. The live rig now links opposite grips to the pedal cycle. |
 | Elliptical | Motion renderer | Image edits kept the handles static. The live rig already links opposite handles and pedals. |
-| Front Squat | Motion renderer | Redrawn feet lift 2–3 native pixels and plates resize about 2%; the live rig now shows a clearer front rack and planted shoes. |
-| Clean and Press | Motion renderer | Redrawn body and bar change scale between hinge, rack and press. Live phase labels clarify the clean and press path. |
-| Burpees | Motion renderer | Redrawn jump changes camera angle at the loop, and the landing image does not yet show the planted palms its cue claims. |
-| Close Grip Bench Press | Motion renderer | Flat narrow-grip draft keeps the bar 18–29 native pixels above the lower chest at bottom. |
-| Inverted Row | Motion renderer | Improved chest-to-bar draft retains 2-pixel rack-foot drift at the top; release alignment gate is unmet. |
-| Smith Machine Bench Press | Motion renderer | Initial sequence uses an incline backrest; flat replacement has incomplete chest contact and scene continuity. |
+| Front Squat | Motion renderer | The illustrated bar crowds the throat, elbows stay low, feet lift 2–3 native pixels and plates resize about 2%; the live rig shows a clearer front rack and planted shoes. |
 
 Approved WebPs are under `public/form-frames/<id>/2026-10-27/`, with native
 source PNGs in the matching pilot folder and measured release records under
