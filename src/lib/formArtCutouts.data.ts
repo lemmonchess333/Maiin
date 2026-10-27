@@ -879,13 +879,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "man-maker": {
     src: "form-art/man-maker.webp",
-    width: 181,
+    width: 273,
     height: 480,
     keyed: true,
-    source: "form-frames/man-maker/5.webp",
+    source: "form-frames/man-maker/2026-10-27/4.webp",
     sourceSha256:
-      "3687c5ce5f0be552655dc3b05c8436fb55a23bf5afe7b82bb350ae98070d9c4d",
-    sha256: "4dbd9de9be413a45d8a7b2dcfa80df530cf8c937eafe0da0be133d357cc2f0c8",
+      "0c2130a174e0ba15180b46173c277e8d66064a9c8794c4531caad9ebd0c4c84b",
+    sha256: "241cf719a43e93621509b4802b5bf7420f209f969c05e1e79ee499ee14454e24",
   },
   "meadows-row": {
     src: "form-art/meadows-row.webp",

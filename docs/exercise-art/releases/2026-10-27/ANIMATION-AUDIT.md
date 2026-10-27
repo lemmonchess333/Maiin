@@ -53,18 +53,22 @@ Muscle Ups keeps its crossbar and both rack uprights in the same pixels across
 all six frames; a scaled contact sheet made the posts look absent. Those sets
 were retained rather than replaced with less accurate drawings.
 
-## Remaining artwork work
+## Follow-up repairs
 
-| Exercise | Observed issue | Reason the current art remains active |
+The four findings left open by the first review were addressed in a second
+phone-size, full-loop pass. The original releases remain available for audit.
+
+| Exercise | Correction | Contact and camera check |
 | --- | --- | --- |
-| Man Maker | Camera changes between floor, squat and press phases. | Redraw attempts lost dumbbell separation or skipped part of the move. |
-| Elliptical | Six frames repeat two similar poses. | The current machine reads more clearly than the tested fallback at phone size. |
-| Hack Squat | Frames 2–5 repeat a near-identical hold. | The tested moving fallback distorted the torso/track; it was reverted. |
-| Swimming | Alternating arm phase is unclear in the side view. | Redraw attempts crossed the arm through the head or changed equipment/anatomy. |
+| Man Maker | New dated frames for the squat, overhead press and return to floor; the first three floor phases remain from the prior release. | One side camera and two distinct dumbbells. The displayed press shares both planted shoes with the squat; the returning grounded bell ends use the reviewed floor frame. Release metadata and the runtime composition are checked together. |
+| Elliptical | Continuous six-pose motion guide with separate moving handles, pedals and a rigid machine frame. | Both hands follow their own lever grips; both soles stay supported. The machine stays fixed and the cycle has steady timing. |
+| Hack Squat | Six-phase motion guide with rigid rails, moving loaded carriage and a fixed footplate. | Shoes stay planted, hands hold the shoulder handles and the full figure remains in one camera at every phase. |
+| Swimming | Overhead motion guide with alternating reach and pull, plus a close two-leg flutter. | Hands clear the head; the 120-sample stroke loop closes smoothly and fits one fixed camera. |
 
-No substitute above has been shipped as a correction without passing visual
-review. These four sets need coherent full-sequence native artwork, with one
-camera and stable anatomy/equipment, before replacing the current release.
+The older Elliptical, Hack Squat and Swimming six-frame sets are withheld at
+runtime while their reviewed motion guides play. Man Maker uses a new versioned
+release; its previous approved images and hashes remain unchanged. The
+replacement guides were also reviewed at phone size in dark and light themes.
 
 ## Verification
 

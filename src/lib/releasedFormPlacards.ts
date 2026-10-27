@@ -1,3 +1,5 @@
+import { FORM_ARTWORK } from "./formArtwork";
+
 /** Exact cues for released artwork. See docs/exercise-art/releases. */
 const placard = (
   id: string,
@@ -13,7 +15,7 @@ const placard = (
     t,
     label,
     cue,
-    image: `form-frames/${id}/${i + 1}.webp`,
+    image: FORM_ARTWORK[id]?.frames[i] ?? `form-frames/${id}/${i + 1}.webp`,
   })),
   key: { primary, secondary, secondaryFill: "solid" as const },
 });

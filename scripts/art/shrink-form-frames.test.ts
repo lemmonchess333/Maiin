@@ -136,4 +136,16 @@ describe("shrinkFormFrames", () => {
       bytesAfter: 0,
     });
   });
+
+  it("re-saves frames inside a dated release folder", async () => {
+    const root = mkdtempSync(join(tmpdir(), "form-frames-dated-"));
+    const out = join(root, "form-frames");
+    const dated = join(out, "man-maker", "2026-10-27");
+    mkdirSync(dated, { recursive: true });
+    const original = await frame(true);
+    writeFileSync(join(dated, "4.webp"), original);
+    const result = await shrinkFormFrames(out);
+    expect(result).toMatchObject({ files: 1, shrunk: 1 });
+    expect(isLosslessWebp(readFileSync(join(dated, "4.webp")))).toBe(false);
+  });
 });

@@ -591,9 +591,16 @@ export interface BodyDemo {
   cycle?: true;
   /** Period of one cycle in ms (default `CYCLE_MS_DEFAULT`). */
   cycleMs?: number;
+  /** Opt a continuous cycle into uniform progress. By default the renderer
+   *  eases progress at the loop seam, as it has for existing demos. A pedal
+   *  stroke or steady arm cycle can use `linear` to avoid a visible pause. */
+  cycleTiming?: "linear";
   /** Movements whose envelope exceeds the body's column (e.g. a lateral
    *  raise at full span) declare a wider canvas. */
   viewBox?: string;
+  /** Mirror a side-view machine and figure around x=50. The hack squat's
+   *  footplate is to the left of its incline rails. */
+  mirrorX?: true;
   /** Group transforms as a function of eased progress e ∈ [0,1]. */
   pose: (e: number) => Partial<Record<GroupName, Op[]>>;
   /** STRUCTURAL equipment only (no held weights — the figure has no
@@ -646,10 +653,27 @@ export interface BodyDemo {
   shadowCx?: number;
   /** Shadow radius override (a lying body casts a long shadow). */
   shadowRx?: number;
+  /** Cycle-specific shadow contact. Defaults to steady for stationary
+   *  cycles; animated height changes can opt into a periodic curve. */
+  cycleShadowDepth?: (e: number) => number;
 }
 
 const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+/** Map player progress to a pose. Keep existing cycle timing until a demo
+ *  explicitly opts into constant speed after movement-specific review. */
+export function bodyDemoProgress(
+  demo: Pick<BodyDemo, "cycle" | "cycleTiming">,
+  t: number
+): number {
+  return demo.cycle && demo.cycleTiming === "linear"
+    ? clamp01(t)
+    : easeInOutSine(t);
+}
+function bodyDemoShadowDepth(demo: BodyDemo, e: number): number {
+  if (demo.cycle) return demo.cycleShadowDepth?.(e) ?? 0.5;
+  return demo.concentricTo === 0 ? e : 1 - e;
+}
 /** Smoothstep — used to stagger joints inside one rep without velocity
  *  kinks at the hand-over points. */
 const smooth = (v: number) => {
@@ -2111,7 +2135,16 @@ const ASSAULT_HIP: Pt = [36, 106];
 const ASSAULT_HANDLE_PIVOT: Pt = [100, 178];
 const ELLIPTICAL_HIP: Pt = [42, 92];
 const ELLIPTICAL_CRANK: Pt = [60, 180];
-const ELLIPTICAL_HANDLE_PIVOT: Pt = [92, 168];
+const ELLIPTICAL_NEAR_PIVOT: Pt = [86, 168];
+const ELLIPTICAL_FAR_PIVOT: Pt = [91, 168];
+/** The pedal and the same-side handle travel in opposite directions.
+ * The far side is half a turn out of phase, like a walking gait. */
+function ellipticalGrips(phi: number): { near: Pt; far: Pt } {
+  return {
+    near: swingHandle(phi, ELLIPTICAL_NEAR_PIVOT, 94, 0.12, Math.PI),
+    far: swingHandle(phi, ELLIPTICAL_FAR_PIVOT, 94, 0.12, 0),
+  };
+}
 /** Pedal position at phase φ on a circle (ry = rx) or a flat ellipse;
  *  φ = 0 is the pedal at its FRONT, turning down and back — the drive. */
 function pedalAt(phi: number, c: Pt, rx: number, ry: number): Pt {
@@ -2126,6 +2159,8 @@ interface PedalOpts {
   ry: number;
   /** Fixed bars, or a moving handle (its world point at this phase). */
   hands: Pt;
+  /** A second moving grip for machines with opposing handles. */
+  farHands?: Pt;
 }
 function pedalChain(
   phi: number,
@@ -2156,7 +2191,8 @@ function pedalChain(
     pedalAt(phi + 0.5, o.crank, o.rx, o.ry),
     KNEE_FORWARD
   );
-  const arm = armToWorld(torso, o.hands, ELBOW_LOW);
+  const nearArm = armToWorld(torso, o.hands, ELBOW_LOW);
+  const farArm = armToWorld(torso, o.farHands ?? o.hands, ELBOW_LOW);
   return {
     head,
     torso,
@@ -2165,12 +2201,12 @@ function pedalChain(
     shankL: near.shank,
     thighR: far.thigh,
     shankR: far.shank,
-    upperArmL: arm.upper,
-    foreArmL: arm.fore,
-    handL: arm.fore,
-    upperArmR: arm.upper,
-    foreArmR: arm.fore,
-    handR: arm.fore,
+    upperArmL: nearArm.upper,
+    foreArmL: nearArm.fore,
+    handL: nearArm.fore,
+    upperArmR: farArm.upper,
+    foreArmR: farArm.fore,
+    handR: farArm.fore,
   };
 }
 /** A bike's frame: the crank wheel, a down tube to the saddle, the seat
@@ -2212,51 +2248,96 @@ function swingHandle(
   return [pivot[0] + len * Math.cos(a), pivot[1] + len * Math.sin(a)];
 }
 
-/* Swimming — freestyle, side-on at the surface. The body lies prone
- * (head-right) just under a water line; each arm turns a full circle
- * about the shoulder (the recovery over the water, the pull under it),
- * the far arm half a stroke behind; the legs flutter about the hips. */
-const WATER_Y = 118;
+/* Swimming — a fixed overhead view of front crawl. A side camera hid the
+ * far arm behind the near one. The actual posterior anatomy art, rotated
+ * prone, keeps both shoulder paths visible. Each hand follows the same
+ * closed stroke path half a cycle apart, mirrored across the body; the
+ * measured two-bone arm solves the elbow at each position. */
+const SWIM_HAND_PATH: readonly Pt[] = [
+  [-58, 0], // hand finishes beside the hip
+  [-38, -24], // elbow exits first into recovery
+  [28, -30], // recover outside the head, moving forward
+  [66, -2], // fingertips enter beyond the head
+  [51, 8], // catch beyond the head, elbow high
+  [-15, 26], // pull close underneath the torso
+];
+function swimHandOffset(phi: number): Pt {
+  const u = ((((phi % 1) + 1) % 1) * SWIM_HAND_PATH.length);
+  const i = Math.floor(u);
+  const t = u - i;
+  const at = (n: number) =>
+    SWIM_HAND_PATH[(n + SWIM_HAND_PATH.length) % SWIM_HAND_PATH.length];
+  const p0 = at(i - 1);
+  const p1 = at(i);
+  const p2 = at(i + 1);
+  const p3 = at(i + 2);
+  const catmull = (axis: 0 | 1) =>
+    0.5 *
+    (2 * p1[axis] +
+      (-p0[axis] + p2[axis]) * t +
+      (2 * p0[axis] - 5 * p1[axis] + 4 * p2[axis] - p3[axis]) * t * t +
+      (-p0[axis] + 3 * p1[axis] - 3 * p2[axis] + p3[axis]) * t * t * t);
+  return [catmull(0), catmull(1)];
+}
 function swimPose(phi: number): Partial<Record<GroupName, Op[]>> {
-  const G: Op = { kind: "rotate", deg: 90, pivot: [44, 100] };
-  const hipG = applyToPoint(SIDE_ANCHORS.hip, [G]);
-  const T0: Op = { kind: "translate", dx: 0, dy: WATER_Y + 8 - hipG[1] };
-  const body: Op[] = [G, T0];
-  // Arms: a full turn about the shoulder. In the prone body's own frame
-  // the arm hangs "down" toward the feet (−x on screen); a positive
-  // rotation carries the hand back, over the top and forward again.
-  // Positive: from hanging back along the body, over the top (the
-  // recovery, above the water), forward to the entry, then down and
-  // back under it (the pull). The pin holds the hand above the line at
-  // a quarter turn and below it at three quarters.
-  const nearDeg = 360 * phi;
-  const farDeg = 360 * phi + 180;
-  const upperL: Op[] = [
-    { kind: "rotate", deg: nearDeg, pivot: SIDE_ANCHORS.shoulder },
-    ...body,
-  ];
-  const upperR: Op[] = [
-    { kind: "rotate", deg: farDeg, pivot: SIDE_ANCHORS.shoulder },
-    ...body,
-  ];
-  // A soft elbow through the pull, straighter on the recovery.
-  const bendL: Op = { kind: "rotate", deg: -16, pivot: SIDE_ANCHORS.elbow };
-  // Flutter kick: small alternating hip swings, the knee soft.
-  const kick = 10 * Math.sin(4 * Math.PI * phi);
+  const body: Op[] = [{ kind: "rotate", deg: 90, pivot: [50, 100] }];
+  const undoBody = invertOps(body);
+  const arm = (phase: number, side: "L" | "R") => {
+    const rest =
+      side === "L"
+        ? { S: POST.shoulderL, E: POST.elbowL, H: POST.handL }
+        : { S: POST.shoulderR, E: POST.elbowR, H: POST.handR };
+    const shoulder = applyToPoint(rest.S, body);
+    const [dx, y] = swimHandOffset(phase);
+    const dy = side === "L" ? y : -y;
+    const upperLength = Math.hypot(rest.E[0] - rest.S[0], rest.E[1] - rest.S[1]);
+    const foreLength = Math.hypot(rest.H[0] - rest.E[0], rest.H[1] - rest.E[1]);
+    const reach = Math.hypot(dx, dy);
+    const reachScale = Math.min(1, ((upperLength + foreLength) * 0.999) / reach);
+    const hand: Pt = [
+      shoulder[0] + dx * reachScale,
+      shoulder[1] + dy * reachScale,
+    ];
+    const elbow = solveElbow(
+      shoulder,
+      hand,
+      upperLength,
+      foreLength,
+      side === "L" ? 1 : -1
+    );
+    const aimed = aimArm(
+      rest,
+      applyToPoint(elbow, undoBody),
+      applyToPoint(hand, undoBody),
+      0
+    );
+    return { upper: [...aimed.upper, ...body], fore: [...aimed.fore, ...body] };
+  };
+  const left = arm(phi, "L");
+  const right = arm(phi + 0.5, "R");
+  // Two small alternating kicks per full stroke; the hips and trunk stay
+  // level, so this does not read as a side-to-side swimming snake.
+  const kick = 2.5 * Math.sin(4 * Math.PI * phi);
   const thighL: Op[] = [
-    { kind: "rotate", deg: kick, pivot: SIDE_ANCHORS.hip },
+    { kind: "rotate", deg: kick, pivot: [34, 100] },
     ...body,
+    { kind: "translate", dx: 0, dy: 8 },
   ];
   const thighR: Op[] = [
-    { kind: "rotate", deg: -kick, pivot: SIDE_ANCHORS.hip },
+    { kind: "rotate", deg: -kick, pivot: [66, 100] },
     ...body,
+    { kind: "translate", dx: 0, dy: -8 },
   ];
+  // The posterior atlas's split calf facets are wide in an overhead pose;
+  // narrow them around each knee so the flutter reads as two shins.
   const shankL: Op[] = [
-    { kind: "rotate", deg: kick * 0.6, pivot: SIDE_ANCHORS.knee },
+    { kind: "scaleAxis", k: 0.72, deg: 90, pivot: [31, 160] },
+    { kind: "rotate", deg: -kick * 0.6, pivot: [30, 160] },
     ...thighL,
   ];
   const shankR: Op[] = [
-    { kind: "rotate", deg: -kick * 0.6, pivot: SIDE_ANCHORS.knee },
+    { kind: "scaleAxis", k: 0.72, deg: 90, pivot: [69, 160] },
+    { kind: "rotate", deg: kick * 0.6, pivot: [70, 160] },
     ...thighR,
   ];
   return {
@@ -2267,13 +2348,31 @@ function swimPose(phi: number): Partial<Record<GroupName, Op[]>> {
     shankL,
     thighR,
     shankR,
-    upperArmL: upperL,
-    foreArmL: [bendL, ...upperL],
-    handL: [bendL, ...upperL],
-    upperArmR: upperR,
-    foreArmR: [bendL, ...upperR],
-    handR: [bendL, ...upperR],
+    upperArmL: left.upper,
+    foreArmL: left.fore,
+    handL: left.fore,
+    upperArmR: right.upper,
+    foreArmR: right.fore,
+    handR: right.fore,
   };
+}
+/** The posterior atlas splits each calf into several disjoint muscle
+ * polygons. In the overhead swim view those gaps read as extra lower
+ * legs at phone size. A separate tapered hull follows each shank's own
+ * pose underneath its facets, restoring one silhouette per leg. */
+function swimShankBacking(pose: Partial<Record<GroupName, Op[]>>): string {
+  return (["L", "R"] as const)
+    .map((side) => {
+      const group = `shank${side}` as const;
+      const points = POSTERIOR.filter(
+        (poly) => groupOf("posterior", poly) === group
+      ).flatMap((poly) => applyOps(poly.points, pose[group] ?? []));
+      const hull = convexHull(points);
+      return `<polygon points="${hull
+        .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
+        .join(" ")}" fill="${BODY}"/>`;
+    })
+    .join("");
 }
 
 /* ── Keyed chains (batch 17): the man-maker and the Turkish get-up ──
@@ -5219,7 +5318,8 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * hip travels the pad line and the leg is planted-foot IK from it
      * to the fixed ankle, knee forward. */
     view: "side",
-    viewBox: "-22 -16 180 228",
+    mirrorX: true,
+    viewBox: "-38 8 198 220",
     groundY: 204,
     shadowCx: 60,
     shadowRx: 40,
@@ -5227,6 +5327,16 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     tint: { quadriceps: "primary", gluteal: "secondary" },
     pose: (e) => {
       const c = hackSquatChain(e);
+      // The ankle is the IK endpoint, but the shoe needs its own fixed
+      // transform. Inheriting the shank rotation made it rock and slide
+      // across a platform that is fixed for the whole rep.
+      const foot: Op[] = [
+        {
+          kind: "translate",
+          dx: HACK_ANKLE[0] - SIDE_ANCHORS.ankle[0],
+          dy: HACK_ANKLE[1] - SIDE_ANCHORS.ankle[1],
+        },
+      ];
       // Hands up on the shoulder-pad handles.
       const upper: Op[] = [
         { kind: "rotate", deg: -110, pivot: SIDE_ANCHORS.shoulder },
@@ -5244,6 +5354,8 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         thighR: c.leg.thigh,
         shankL: c.leg.shank,
         shankR: c.leg.shank,
+        footL: foot,
+        footR: foot,
         upperArmL: upper,
         foreArmL: fore,
         handL: fore,
@@ -5252,27 +5364,31 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         handR: fore,
       };
     },
-    scene: (e, pose) => {
-      // Back pad along the hip path (fixed in the world), the platform
-      // under the fixed feet, shoulder pads riding the body, the floor.
-      const top = HACK_HIP[0];
-      const bot = HACK_HIP[1];
-      const dx = bot[0] - top[0];
-      const dy = bot[1] - top[1];
-      const len = Math.hypot(dx, dy);
-      const ux = dx / len;
-      const uy = dy / len;
-      const padA: Pt = [top[0] - ux * 70 - 12, top[1] - uy * 70];
-      const padB: Pt = [bot[0] + ux * 16 - 12, bot[1] + uy * 16];
-      const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.torso ?? []);
-      const a = HACK_ANKLE;
-      void e;
+    scene: (_e, pose) => {
+      // The two rails, upright, and footplate never move. The carriage,
+      // shoulder pads, and plate all follow the shoulder/hip path, which
+      // is parallel to both rails. Mirroring the whole side view puts the
+      // fixed footplate on the left, matching the real machine.
+      const shoulder = applyToPoint(SIDE_ANCHORS.shoulder, pose.torso ?? []);
+      const hip = applyToPoint(SIDE_ANCHORS.hip, pose.pelvis ?? []);
+      const hand = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      const plate: Pt = [hip[0] - 36, hip[1] - 20];
       return (
-        `<line x1="${padA[0].toFixed(1)}" y1="${padA[1].toFixed(1)}" x2="${padB[0].toFixed(1)}" y2="${padB[1].toFixed(1)}" stroke="${GEAR}" stroke-width="8" stroke-linecap="round"/>` +
-        `<line x1="${padB[0].toFixed(1)}" y1="${padB[1].toFixed(1)}" x2="${padB[0].toFixed(1)}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
-        `<line x1="${(a[0] - 26).toFixed(1)}" y1="${(a[1] + 8).toFixed(1)}" x2="${(a[0] + 30).toFixed(1)}" y2="${(a[1] + 8).toFixed(1)}" stroke="${GEAR}" stroke-width="6" stroke-linecap="round"/>` +
-        `<rect x="${(S[0] - 6).toFixed(1)}" y="${(S[1] - 12).toFixed(1)}" width="14" height="8" rx="3" fill="${GEAR}"/>` +
-        `<line x1="-26" y1="${MACHINE_FLOOR + 1}" x2="150" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+        `<line x1="-47" y1="211" x2="128" y2="211" stroke="${GEAR_DARK}" stroke-width="5" stroke-linecap="round"/>` +
+        `<line x1="-35" y1="31" x2="-35" y2="211" stroke="${GEAR_DARK}" stroke-width="5"/>` +
+        `<line x1="-35" y1="31" x2="102" y2="207" stroke="${GEAR_DARK}" stroke-width="6" stroke-linecap="round"/>` +
+        `<line x1="-23" y1="31" x2="114" y2="207" stroke="${GEAR}" stroke-width="5" stroke-linecap="round"/>` +
+        `<line x1="-35" y1="31" x2="-23" y2="31" stroke="${GEAR_EDGE}" stroke-width="4"/>` +
+        `<line x1="59" y1="203" x2="116" y2="203" stroke="${GEAR}" stroke-width="6" stroke-linecap="round"/>` +
+        `<line x1="104" y1="203" x2="104" y2="211" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<line x1="${(shoulder[0] - 12).toFixed(1)}" y1="${(shoulder[1] - 12).toFixed(1)}" x2="${(hip[0] - 12).toFixed(1)}" y2="${(hip[1] + 8).toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="10" stroke-linecap="round"/>` +
+        `<line x1="${(shoulder[0] - 8).toFixed(1)}" y1="${(shoulder[1] - 12).toFixed(1)}" x2="${(hip[0] - 8).toFixed(1)}" y2="${(hip[1] + 8).toFixed(1)}" stroke="${GEAR}" stroke-width="4" stroke-linecap="round"/>` +
+        `<rect x="${(shoulder[0] - 10).toFixed(1)}" y="${(shoulder[1] - 16).toFixed(1)}" width="21" height="8" rx="3" fill="${GEAR}"/>` +
+        `<line x1="${(shoulder[0] - 4).toFixed(1)}" y1="${(shoulder[1] - 12).toFixed(1)}" x2="${hand[0].toFixed(1)}" y2="${hand[1].toFixed(1)}" stroke="${GEAR}" stroke-width="3" stroke-linecap="round"/>` +
+        `<circle cx="${hand[0].toFixed(1)}" cy="${hand[1].toFixed(1)}" r="2.8" fill="${GEAR}"/>` +
+        `<line x1="${(hip[0] - 12).toFixed(1)}" y1="${plate[1].toFixed(1)}" x2="${plate[0].toFixed(1)}" y2="${plate[1].toFixed(1)}" stroke="${GEAR}" stroke-width="4"/>` +
+        `<circle cx="${plate[0].toFixed(1)}" cy="${plate[1].toFixed(1)}" r="14" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="1.4"/>` +
+        `<circle cx="${plate[0].toFixed(1)}" cy="${plate[1].toFixed(1)}" r="4" fill="${GEAR}"/>`
       );
     },
   },
@@ -9208,6 +9324,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     groundY: 204,
     shadowCx: 70,
     shadowRx: 50,
+    // The ground shadow recedes through flight and while the athlete is
+    // on the box, then returns as the step-down reaches the floor.
+    cycleShadowDepth: (e) => (1 + Math.cos(2 * Math.PI * e)) / 2,
     concentricTo: 1,
     tint: { quadriceps: "primary", gluteal: "primary", calves: "secondary" },
     pose: boxJumpPose,
@@ -9325,8 +9444,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * machine makes — and the hands on levers that swing with it. */
     view: "side",
     cycle: true,
+    cycleTiming: "linear",
     cycleMs: 1500,
-    viewBox: "-12 -6 160 218",
+    viewBox: "-8 -14 150 226",
     groundY: 204,
     shadowCx: 60,
     shadowRx: 50,
@@ -9337,18 +9457,22 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       "front-deltoids": "secondary",
       "upper-back": "secondary",
     },
-    pose: (e) =>
-      pedalChain(e, {
+    pose: (e) => {
+      const { near, far } = ellipticalGrips(e);
+      return pedalChain(e, {
         hip: ELLIPTICAL_HIP,
         lean: 4,
         crank: ELLIPTICAL_CRANK,
         rx: 20,
         ry: 6,
-        hands: swingHandle(e, ELLIPTICAL_HANDLE_PIVOT, 96, 0.15, Math.PI),
-      }),
+        hands: near,
+        // The profile renderer applies this depth shift AFTER the pose.
+        // Aim the far wrist before it so its visible fist meets the grip.
+        farHands: [far[0] - FAR_ARM_SHIFT[0], far[1] - FAR_ARM_SHIFT[1]],
+      });
+    },
     scene: (e, pose) => {
-      const h = swingHandle(e, ELLIPTICAL_HANDLE_PIVOT, 96, 0.15, Math.PI);
-      const c = ELLIPTICAL_CRANK;
+      const { near, far } = ellipticalGrips(e);
       const pedal = (side: "L" | "R") => {
         const ankle = applyToPoint(
           SIDE_ANCHORS.ankle,
@@ -9359,49 +9483,60 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
             .flatMap((piece) => piece.outline)
             .map((point) => applyToPoint(point, pose[`shank${side}`] ?? [])[1])
         );
-        const x = ankle[0] - 10;
+        const x = ankle[0] - 12;
         const y = sole + 1;
+        const isFar = side === "R";
         return (
-          `<line x1="${c[0]}" y1="${c[1]}" x2="${ankle[0].toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="2.4"/>` +
-          `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="30" height="3" rx="1" fill="${GEAR}"/>`
+          `<line x1="28" y1="180" x2="${x.toFixed(1)}" y2="${(y + 2).toFixed(1)}" stroke="${isFar ? GEAR_FAR : GEAR_DARK}" stroke-width="3.2" stroke-linecap="round"/>` +
+          `<rect data-elliptical-pedal="${isFar ? "far" : "near"}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="35" height="3" rx="1.5" fill="${isFar ? GEAR_FAR : GEAR}" stroke="${GEAR_EDGE}" stroke-width="0.5"/>`
         );
       };
+      const lever = (side: "near" | "far", pivot: Pt, grip: Pt) =>
+        `<line data-elliptical-handle="${side}" x1="${pivot[0]}" y1="${pivot[1]}" x2="${grip[0].toFixed(2)}" y2="${grip[1].toFixed(2)}" stroke="${side === "far" ? GEAR_FAR : GEAR_DARK}" stroke-width="${side === "far" ? 3.4 : 4.4}" stroke-linecap="round"/>` +
+        `<rect x="${(grip[0] - 2.5).toFixed(2)}" y="${(grip[1] - 8).toFixed(2)}" width="5" height="16" rx="2.5" fill="${side === "far" ? GEAR_FAR : GEAR}"/>`;
       return (
-        `<ellipse cx="${c[0]}" cy="${c[1]}" rx="22" ry="8" fill="none" stroke="${GEAR_DARK}" stroke-width="2.4"/>` +
+        `<g data-elliptical-fixed="true">` +
+        `<rect x="0" y="198" width="137" height="5" rx="2.5" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        `<rect x="4" y="201" width="17" height="4" rx="2" fill="${GEAR_FAR}"/>` +
+        `<rect x="116" y="201" width="17" height="4" rx="2" fill="${GEAR_FAR}"/>` +
+        `<circle cx="28" cy="179" r="17" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="1"/>` +
+        `<circle cx="28" cy="179" r="10" fill="${GEAR_FAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        `<circle cx="28" cy="179" r="3" fill="${GEAR}"/>` +
+        `<path d="M28 179 L61 198 L111 198 M88 168 L111 198 L132 198" fill="none" stroke="${GEAR}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>` +
+        `<path d="M108 198 L105 118" fill="none" stroke="${GEAR_DARK}" stroke-width="6" stroke-linecap="round"/>` +
+        `<path d="M97 124 L114 124 L118 109 L105 107 Z" fill="${GEAR_FAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        `<circle cx="${ELLIPTICAL_NEAR_PIVOT[0]}" cy="${ELLIPTICAL_NEAR_PIVOT[1]}" r="4" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        `</g>` +
         pedal("R") +
         pedal("L") +
-        `<line x1="${ELLIPTICAL_HANDLE_PIVOT[0]}" y1="${ELLIPTICAL_HANDLE_PIVOT[1]}" x2="${h[0].toFixed(1)}" y2="${h[1].toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="3.4" stroke-linecap="round"/>` +
-        `<circle cx="${ELLIPTICAL_HANDLE_PIVOT[0]}" cy="${ELLIPTICAL_HANDLE_PIVOT[1]}" r="3.2" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
-        `<line x1="${ELLIPTICAL_HANDLE_PIVOT[0] + 24}" y1="${ELLIPTICAL_HANDLE_PIVOT[1] + 6}" x2="${ELLIPTICAL_HANDLE_PIVOT[0] + 24}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
-        `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="150" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+        lever("far", ELLIPTICAL_FAR_PIVOT, far) +
+        lever("near", ELLIPTICAL_NEAR_PIVOT, near) +
+        `<circle cx="${ELLIPTICAL_FAR_PIVOT[0]}" cy="${ELLIPTICAL_FAR_PIVOT[1]}" r="2.6" fill="${GEAR_FAR}"/>` +
+        `<circle cx="${ELLIPTICAL_NEAR_PIVOT[0]}" cy="${ELLIPTICAL_NEAR_PIVOT[1]}" r="2.6" fill="${GEAR}"/>`
       );
     },
   },
 
   swimming: {
-    /* "Focus on a streamlined body position — hips at the surface.
-     * Breathe on a consistent rhythm for the stroke." Freestyle,
-     * side-on: the body prone just under the water line with the hips
-     * at the surface (pinned), each arm turning a full stroke about the
-     * shoulder — recovery over the water, pull under it — the far arm
-     * half a stroke behind, a flutter kick. */
-    view: "side",
+    /* Freestyle viewed from above so both alternating arms remain visible.
+     * The body line stays fixed while the mirrored arms catch, pull and
+     * recover half a cycle apart, with a small flutter kick. */
+    view: "posterior",
     cycle: true,
+    cycleTiming: "linear",
     cycleMs: 1800,
-    viewBox: "-80 10 260 190",
+    viewBox: "-79 -8 265 216",
     groundY: 204,
-    shadowCx: 40,
     shadowRx: 0,
     concentricTo: 1,
     tint: {
       "upper-back": "primary",
-      chest: "secondary",
-      "front-deltoids": "secondary",
+      "back-deltoids": "secondary",
+      triceps: "secondary",
       gluteal: "secondary",
     },
     pose: swimPose,
-    scene: () =>
-      `<line x1="-70" y1="${WATER_Y}" x2="130" y2="${WATER_Y}" stroke="${GEAR}" stroke-width="1.4" stroke-dasharray="6 4"/>`,
+    scene: (_e, pose) => swimShankBacking(pose),
   },
 
   "zottman-curl": {
@@ -9442,6 +9577,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     groundY: 204,
     shadowCx: 40,
     shadowRx: 60,
+    // Rows keep the body at plank height; the shadow only retreats as
+    // the clean brings the body upright, then returns into the plank.
+    cycleShadowDepth: (e) =>
+      1 - 0.75 * smooth((e - 0.54) / 0.18) * (1 - smooth((e - 0.9) / 0.1)),
     concentricTo: 1,
     tint: {
       chest: "primary",
@@ -9910,7 +10049,7 @@ export function renderBodyDemo(
   const demo = resolveDemoForReview(exerciseId);
   if (!demo) return "";
   if (demo.view === "side") return renderSideDemo(demo, t, effort);
-  const e = easeInOutSine(t);
+  const e = bodyDemoProgress(demo, t);
   const pose = demo.pose(e);
   // The side view returned above — narrow the view for the closures.
   const view = demo.view === "posterior" ? "posterior" : "anterior";
@@ -10080,13 +10219,15 @@ export function renderBodyDemo(
     })
     .join("");
 
-  // Ground shadow: breathes with how LOW the body sits — bigger/darker at
-  // the bottom of a squat, smaller/lighter at a press lockout or calf-
-  // raise top. Depth is e for descend-first lifts, 1−e for lift-first.
-  const depth = demo.concentricTo === 0 ? e : 1 - e;
+  // Ground shadow: reps breathe with the lift; cycles keep a periodic
+  // contact curve (or a steady shadow when the body stays in place).
+  const depth = bodyDemoShadowDepth(demo, e);
   const shadowRx = 26 + 6 * depth;
   const groundY = demo.groundY ?? (demo.view === "anterior" ? 199 : 222);
-  const shadow = `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
+  const shadow =
+    demo.shadowRx === 0
+      ? ""
+      : `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
 
   // Free scene furniture (pads, a rope anchor) behind the body — the
   // front/back views gained this with the batch-11 frontal-plane demos.
@@ -10113,7 +10254,7 @@ export function renderBodyDemo(
  * so rotations never open cracks and the seams read exactly like the
  * front/back facet gaps on the dark stage. */
 function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
-  const e = easeInOutSine(t);
+  const e = bodyDemoProgress(demo, t);
   const pose = demo.pose(e);
   const tintOpacity = (level: "primary" | "secondary") =>
     level === "primary" ? 0.72 + 0.28 * effort : 0.66 + 0.24 * effort;
@@ -10235,7 +10376,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
       .join("") +
     `</g>`;
 
-  const depth = demo.concentricTo === 0 ? e : 1 - e;
+  const depth = bodyDemoShadowDepth(demo, e);
   const shadow = `<ellipse cx="${demo.shadowCx ?? 50}" cy="${demo.groundY ?? 204}" rx="${((demo.shadowRx ?? 26) + 6 * depth).toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
   const scene = demo.scene?.(e, pose) ?? "";
 
@@ -10252,6 +10393,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? "-8 -14 116 224"}" role="img">` +
+    (demo.mirrorX ? `<g transform="translate(100 0) scale(-1 1)">` : "") +
     shadow +
     scene +
     prop.behind +
@@ -10259,6 +10401,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     jointCaps +
     body +
     prop.front +
+    (demo.mirrorX ? `</g>` : "") +
     `</svg>`
   );
 }
