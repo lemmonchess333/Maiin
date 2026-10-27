@@ -44,6 +44,10 @@ import {
   projectWorkoutSets,
   type LoggedSet,
 } from "@/features/program/workoutSetRecord";
+import {
+  supersetNumbers,
+  type SessionSuperset,
+} from "@/features/program/superset";
 
 /** What a lift writer hands the workout screen. */
 export interface LiftCompletionReceipt {
@@ -83,13 +87,16 @@ export function liftSessionDay(startedAt: number | undefined): string {
 /**
  * The exercises a session ran, as its saved workout records them: the sets
  * done (not warm-ups, which never reach a completion), the prescription
- * each was done against, the planned set count, and any note.
+ * each was done against, the planned set count, any note, and the
+ * superset it was done in (Mob1 call 2).
  */
 export function liftWorkoutExercises(
   ran: readonly ProgramExercise[],
   setLogs: readonly (readonly LoggedSet[] | undefined)[] | undefined,
-  notes?: Readonly<Record<number, string>>
+  notes?: Readonly<Record<number, string>>,
+  supersets?: readonly SessionSuperset[]
 ): WorkoutExercise[] {
+  const groups = supersetNumbers(ran, supersets);
   return ran.map((ex, index) => {
     const logs = setLogs?.[index];
     // D2: the planned pair on each set is the PRESCRIPTION, which
@@ -121,6 +128,7 @@ export function liftWorkoutExercises(
       // D2: how many sets were prescribed, beside `sets.length`, how many
       // were done. `sets` stays done-only: every reader assumes that.
       plannedSetCount: ex.sets,
+      ...(groups[index] !== undefined ? { superset: groups[index] } : {}),
       caloriesBurned: 0,
     };
   });
@@ -181,6 +189,8 @@ export interface FinishedLift {
   ran: readonly ProgramExercise[];
   setLogs: readonly (readonly LoggedSet[] | undefined)[] | undefined;
   exerciseNotes?: Readonly<Record<number, string>>;
+  /** The session's supersets, by its exercises' slots (Mob1 call 2). */
+  supersets?: readonly SessionSuperset[];
   /** Minutes on the session's clock; 0 when it had none. */
   durationMinutes: number;
   bodyweightKg: number;
@@ -220,7 +230,8 @@ export async function completeLift(
   const exercises = liftWorkoutExercises(
     finished.ran,
     finished.setLogs,
-    finished.exerciseNotes
+    finished.exerciseNotes,
+    finished.supersets
   );
   // Without a bodyweight the burn is 0. The workout is saved anyway.
   if (!(finished.bodyweightKg > 0))

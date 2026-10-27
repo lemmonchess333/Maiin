@@ -8,8 +8,11 @@
  * kept in the draft. Each group is an object, not a bare list, because the
  * prescription is stored with a programme completion and Firestore keeps
  * no array inside an array. A superset is the session's: it never reaches
- * the plan.
+ * the plan. The saved workout records each grouped exercise's group as a
+ * number (`superset`), an optional field older readers pass over, and the
+ * workout's page and its post show it ("Superset A").
  */
+
 import { isSetOutstanding } from "./sessionCursor";
 
 type CursorSet = { completed: boolean; type?: string };
@@ -137,4 +140,27 @@ export function nextInSuperset(
       return { exerciseIndex, setIndex, rest: at + step >= members.length };
   }
   return null;
+}
+
+/** Each exercise's superset as the saved workout records it: 1 for the
+ *  session's first group, 2 for its second, nothing for one in none. */
+export function supersetNumbers(
+  exercises: readonly Slotted[],
+  supersets: readonly SessionSuperset[] | undefined
+): (number | undefined)[] {
+  const groups = tidy(exercises, supersets ?? []);
+  const order: SessionSuperset[] = [];
+  return exercises.map((ex) => {
+    const group = ex.instanceId
+      ? groups.find((g) => g.ids.includes(ex.instanceId!))
+      : undefined;
+    if (!group) return undefined;
+    if (!order.includes(group)) order.push(group);
+    return order.indexOf(group) + 1;
+  });
+}
+
+/** "Superset A", "Superset B": a group's name where it is shown. */
+export function supersetLabel(group: number): string {
+  return `Superset ${String.fromCharCode(64 + group)}`;
 }

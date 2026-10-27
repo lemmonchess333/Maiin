@@ -64,6 +64,7 @@ export default function EmptyWorkout() {
         ran: sessionData.prescription?.exercises ?? [],
         setLogs: sessionData.setLogs,
         exerciseNotes: sessionData.exerciseNotes,
+        supersets: sessionData.prescription?.supersets,
         durationMinutes: sessionData.durationMinutes,
         bodyweightKg: profile?.weightKg ?? 0,
         title: EMPTY_WORKOUT_NAME,

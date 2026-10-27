@@ -139,6 +139,22 @@ describe("liftWorkoutExercises", () => {
     expect(curl).toMatchObject({ sets: [], plannedSetCount: 2 });
   });
 
+  it("records the superset each grouped exercise was done in, by its slot", () => {
+    const rows = liftWorkoutExercises(
+      [
+        { ...BENCH, instanceId: "bench-1" },
+        { ...CURL, instanceId: "curl-1" },
+        { ...PLANK, instanceId: "plank-1" },
+      ],
+      [[done(8, 60)], [done(12, 15)], [done(60, 20)]],
+      undefined,
+      [{ ids: ["bench-1", "curl-1"] }]
+    );
+    expect(rows.map((row) => row.superset)).toEqual([1, 1, undefined]);
+    // An exercise done on its own carries no field at all.
+    expect(rows[2]).not.toHaveProperty("superset");
+  });
+
   it("carries a timed hold's unit", () => {
     const [plank] = liftWorkoutExercises([PLANK], [[done(60, 20)]]);
     expect(plank.repUnit).toBe("seconds");

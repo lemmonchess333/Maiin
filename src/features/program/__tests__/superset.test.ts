@@ -9,6 +9,8 @@ import {
   leaveSuperset,
   nextInSuperset,
   supersetAt,
+  supersetLabel,
+  supersetNumbers,
   supersetWithNext,
 } from "../superset";
 
@@ -97,5 +99,22 @@ describe("the order a superset is logged in", () => {
       setIndex: 1,
       rest: true,
     });
+  });
+});
+
+describe("the saved workout's supersets", () => {
+  it("numbers each group in session order, and leaves the rest unmarked", () => {
+    const session = ex("a", "b", "c", "d", "e");
+    expect(
+      supersetNumbers(session, [{ ids: ["d", "e"] }, { ids: ["a", "b"] }])
+    ).toEqual([1, 1, undefined, 2, 2]);
+    expect(supersetNumbers(session, undefined)).toEqual(
+      Array(5).fill(undefined)
+    );
+  });
+
+  it("names a group by letter", () => {
+    expect(supersetLabel(1)).toBe("Superset A");
+    expect(supersetLabel(2)).toBe("Superset B");
   });
 });

@@ -57,6 +57,7 @@ export function postedExercises(
         setCount,
         targetReps,
         targetWeightKg,
+        ...(ex.superset !== undefined ? { superset: ex.superset } : {}),
       };
     });
 }
@@ -129,6 +130,8 @@ export interface LiftPostRow {
     targetReps: number;
     targetWeightKg: number;
   } | null;
+  /** The superset it was done in (Mob1 call 2), on posts that say. */
+  superset?: number;
 }
 
 const isNumber = (value: unknown): value is number =>
@@ -167,6 +170,10 @@ function readRow(
     return { name, summary, structured: null };
   }
   if (Math.round(structured.setCount) <= 0) return "not done";
+  const superset =
+    isNumber(ex.superset) && ex.superset >= 1
+      ? Math.round(ex.superset)
+      : undefined;
   // Which lift it is decides "BW" and seconds. Older posts carry no id,
   // and the catalogue names the lift.
   const exerciseId =
@@ -177,6 +184,7 @@ function readRow(
     name,
     summary: formatExerciseSummary({ ...structured, exerciseId }, unit),
     structured,
+    ...(superset !== undefined ? { superset } : {}),
   };
 }
 

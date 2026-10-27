@@ -56,6 +56,8 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import StatFigure from "@/components/ui/StatFigure";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import SetTypeChip from "@/components/workout/SetTypeChip";
+import SupersetTag from "@/components/workout/SupersetTag";
+
 import SessionLoadState from "@/components/session/SessionLoadState";
 import { useSessionDoc } from "@/hooks/useSessionDoc";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
@@ -135,6 +137,9 @@ function ExerciseRecord({
           className="@max-[10em]:hidden"
         />
         <div className="min-w-0 flex-1">
+          {exercise.superset !== undefined && (
+            <SupersetTag group={exercise.superset} className="mb-0.5" />
+          )}
           <h3 className="text-base font-semibold text-foreground text-balance break-words hyphens-auto">
             {exercise.exerciseName}
           </h3>

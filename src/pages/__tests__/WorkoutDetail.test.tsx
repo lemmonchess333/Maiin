@@ -25,6 +25,7 @@ import {
   waitFor,
   act,
   fireEvent,
+  within,
 } from "@testing-library/react";
 import {
   MemoryRouter,
@@ -316,6 +317,40 @@ describe("WorkoutDetail", () => {
     expect(
       screen.queryByRole("button", { name: "Save as routine" })
     ).toBeNull();
+  });
+
+  it("shows the exercises done in a superset, and which one", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": {
+        ...SAVED,
+        exercises: [
+          { ...SAVED.exercises[0], superset: 1 },
+          {
+            exerciseId: "cable-fly",
+            exerciseName: "Cable Fly",
+            category: "push",
+            caloriesBurned: 0,
+            superset: 1,
+            sets: [{ setNumber: 1, reps: 12, weightKg: 20 }],
+          },
+          {
+            exerciseId: "overhead-press",
+            exerciseName: "Overhead Press",
+            category: "push",
+            caloriesBurned: 0,
+            sets: [{ setNumber: 1, reps: 8, weightKg: 35 }],
+          },
+        ],
+      },
+    });
+    renderAt("w1");
+    const card = async (name: RegExp) =>
+      within(await screen.findByRole("link", { name }));
+    expect(
+      (await card(/Barbell Bench Press/)).getByText("Superset A")
+    ).toBeTruthy();
+    expect((await card(/Cable Fly/)).getByText("Superset A")).toBeTruthy();
+    expect((await card(/Overhead Press/)).queryByText(/^Superset/)).toBeNull();
   });
 
   it("each exercise opens its own history", async () => {
