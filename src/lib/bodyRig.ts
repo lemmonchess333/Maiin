@@ -2134,7 +2134,8 @@ const SPIN_BARS: Pt = [106, 112];
 const ASSAULT_HIP: Pt = [36, 106];
 const ASSAULT_HANDLE_PIVOT: Pt = [100, 178];
 const ELLIPTICAL_HIP: Pt = [42, 92];
-const ELLIPTICAL_CRANK: Pt = [60, 180];
+// The lowest level shoe must clear the machine base, with the knee still soft.
+const ELLIPTICAL_CRANK: Pt = [60, 176];
 const ELLIPTICAL_NEAR_PIVOT: Pt = [86, 168];
 const ELLIPTICAL_FAR_PIVOT: Pt = [91, 168];
 /** The pedal and the same-side handle travel in opposite directions.
@@ -2161,6 +2162,8 @@ interface PedalOpts {
   hands: Pt;
   /** A second moving grip for machines with opposing handles. */
   farHands?: Pt;
+  /** A standing elliptical keeps each shoe level on its platform. */
+  levelFeet?: boolean;
 }
 function pedalChain(
   phi: number,
@@ -2193,6 +2196,16 @@ function pedalChain(
   );
   const nearArm = armToWorld(torso, o.hands, ELBOW_LOW);
   const farArm = armToWorld(torso, o.farHands ?? o.hands, ELBOW_LOW);
+  const levelFoot = (shank: Op[]): Op[] => {
+    const ankle = applyToPoint(SIDE_ANCHORS.ankle, shank);
+    return [
+      {
+        kind: "translate",
+        dx: ankle[0] - SIDE_ANCHORS.ankle[0],
+        dy: ankle[1] - SIDE_ANCHORS.ankle[1],
+      },
+    ];
+  };
   return {
     head,
     torso,
@@ -2201,6 +2214,9 @@ function pedalChain(
     shankL: near.shank,
     thighR: far.thigh,
     shankR: far.shank,
+    ...(o.levelFeet
+      ? { footL: levelFoot(near.shank), footR: levelFoot(far.shank) }
+      : {}),
     upperArmL: nearArm.upper,
     foreArmL: nearArm.fore,
     handL: nearArm.fore,
@@ -9469,19 +9485,18 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         // The profile renderer applies this depth shift AFTER the pose.
         // Aim the far wrist before it so its visible fist meets the grip.
         farHands: [far[0] - FAR_ARM_SHIFT[0], far[1] - FAR_ARM_SHIFT[1]],
+        levelFeet: true,
       });
     },
     scene: (e, pose) => {
       const { near, far } = ellipticalGrips(e);
       const pedal = (side: "L" | "R") => {
-        const ankle = applyToPoint(
-          SIDE_ANCHORS.ankle,
-          pose[`shank${side}`] ?? []
-        );
+        const footOps = pose[`foot${side}`] ?? pose[`shank${side}`] ?? [];
+        const ankle = applyToPoint(SIDE_ANCHORS.ankle, footOps);
         const sole = Math.max(
           ...SIDE_PIECES.filter((piece) => piece.group === `foot${side}`)
             .flatMap((piece) => piece.outline)
-            .map((point) => applyToPoint(point, pose[`shank${side}`] ?? [])[1])
+            .map((point) => applyToPoint(point, footOps)[1])
         );
         const x = ankle[0] - 12;
         const y = sole + 1;

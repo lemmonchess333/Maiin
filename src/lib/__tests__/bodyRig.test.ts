@@ -198,11 +198,28 @@ describe("machine fallback contacts", () => {
       for (const [side, label] of [["R", "far"], ["L", "near"]] as const) {
         const shank = pose[`shank${side}`] ?? [];
         const ankle = applyToPoint(SIDE_ANCHORS.ankle, shank);
+        const foot = pose[`foot${side}`] ?? [];
+        expect(
+          foot.length,
+          `${label} independent level foot @${t}`
+        ).toBeGreaterThan(0);
+        const footAnkle = applyToPoint(SIDE_ANCHORS.ankle, foot);
+        expect(
+          Math.hypot(footAnkle[0] - ankle[0], footAnkle[1] - ankle[1])
+        ).toBeLessThan(0.01);
         ankles.push(`${ankle[0].toFixed(1)},${ankle[1].toFixed(1)}`);
+        const footOutline = SIDE_PIECES.find(
+          (part) => part.group === `foot${side}`
+        )!.outline;
+        const solePoints = footOutline
+          .filter((point) => point[1] >= 202.4)
+          .map((point) => applyToPoint(point, foot)[1]);
+        expect(
+          Math.max(...solePoints) - Math.min(...solePoints),
+          `elliptical ${label} shoe stays level @${t}`
+        ).toBeLessThan(0.7);
         const sole = Math.max(
-          ...SIDE_PIECES.filter((part) => part.group === `foot${side}`)
-            .flatMap((part) => part.outline)
-            .map((point) => applyToPoint(point, shank)[1])
+          ...footOutline.map((point) => applyToPoint(point, foot)[1])
         );
         const pedal = scene.match(
           new RegExp(`data-elliptical-pedal="${label}" x="([\\d.]+)" y="([\\d.]+)" width="35"`)
@@ -220,6 +237,22 @@ describe("machine fallback contacts", () => {
     expect(leverX.near[0]).toBeLessThan(leverX.near[3]);
     expect(leverX.far[0]).toBeGreaterThan(leverX.far[3]);
     expect(demo.scene!(0, demo.pose(0))).toBe(demo.scene!(1, demo.pose(1)));
+    for (const t of [0.25, 0.75]) {
+      const scene = demo.scene!(t, demo.pose(t));
+      for (const label of ["near", "far"]) {
+        const pedalY = Number(
+          scene.match(
+            new RegExp(
+              `data-elliptical-pedal="${label}" x="[\\d.]+" y="([\\d.]+)"`
+            )
+          )?.[1]
+        );
+        expect(
+          pedalY + 3,
+          `${label} pedal clears the base @${t}`
+        ).toBeLessThan(198);
+      }
+    }
   });
 
 });
@@ -4339,7 +4372,7 @@ describe("renderBodyDemo", () => {
       );
       for (const t of [0, 0.25, 0.5, 0.75]) {
         const a = pt(SIDE_ANCHORS.ankle, at(id, t).shankL);
-        const u = ((a[0] - 60) / 20) ** 2 + ((a[1] - 180) / 6) ** 2;
+        const u = ((a[0] - 60) / 20) ** 2 + ((a[1] - 176) / 6) ** 2;
         expect(
           Math.abs(u - 1),
           `elliptical: foot on the stride ellipse @${t}`
