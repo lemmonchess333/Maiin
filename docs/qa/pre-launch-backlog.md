@@ -10,6 +10,32 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## A reminder asked in setup, naming the next lift (Mob1 call 3, 2026-10-27)
+
+Setup's review has an optional "Remind me on training days" row, 07:30 by
+default, previewing the first reminder ("Upper A tomorrow at 07:30"). It
+asks for notification permission only when turned on, and writes
+`settings/workoutReminders` only then. A lift day's reminder now names the
+programme's next workout ("Upper A today"); a run day says "Time to run".
+The unit suites run the permission and the schedule against fakes; only a
+phone shows the system prompt and the notification itself. On the web the
+reminder is a timer in the open page, and the row says so.
+
+- [ ] **Turn it on in setup on an iPhone.** A new account, at the review:
+      the row is off and nothing has been asked. Turning it on brings up
+      the iOS notification prompt; Allow leaves it on with a time field.
+      Passing: after Start my plan, Settings → Notifications shows
+      Workouts on at the chosen time, and its Next line counts down to the
+      first training day.
+- [ ] **The reminder names the session.** With reminders on and the time
+      a minute or two ahead on a lift day, lock the phone. Passing: the
+      notification reads the next workout as Home's card names it
+      ("Upper A today"); after logging that workout and reopening the app,
+      the next lift day's reminder names the one after it.
+- [ ] **Refusing in setup leaves it off.** Don't Allow at the prompt.
+      Passing: the switch stays off with the note on where to allow
+      notifications, and Settings → Notifications shows Workouts off.
+
 ## Space post notices open the post (2026-10-25)
 
 Props and a comment on someone's Space post now open that post at
