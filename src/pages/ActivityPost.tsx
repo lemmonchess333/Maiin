@@ -149,6 +149,7 @@ function ActivityPostPage({
           feedItem={read.item}
           openComments={openComments}
           allExercises
+          linkToPost={false}
         />
       ) : (
         <ActivityCardSkeleton />
