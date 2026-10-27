@@ -9491,6 +9491,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * recover half a cycle apart, with a small flutter kick. */
     view: "posterior",
     cycle: true,
+    cycleTiming: "linear",
     cycleMs: 1800,
     viewBox: "-80 0 260 200",
     groundY: 204,
