@@ -38,6 +38,11 @@ import type { FeedItem } from "../../hooks/useSocialFeed";
 import { THEME } from "../../lib/theme";
 import Avatar from "../Avatar";
 import BlockAwareAvatar from "./BlockAwareAvatar";
+import {
+  propsLine,
+  readPropsGivers,
+  shownPropsGivers,
+} from "@/lib/propsGivers";
 import { haptic } from "../../lib/haptic";
 import {
   MessageCircle,
@@ -238,6 +243,12 @@ function ActivityCard({
   };
 
   const [kudosLoading, setKudosLoading] = useState(false);
+  const givers = shownPropsGivers(readPropsGivers(activity?.recentPropsBy), {
+    viewerUid: user?.uid ?? null,
+    viewerGave: liked,
+    blocked,
+  });
+  const givenBy = propsLine(givers, kudosCount);
 
   const handleShowKudosList = async () => {
     if (showKudosList) {
@@ -1022,6 +1033,34 @@ function ActivityCard({
             </button>
           )}
         </div>
+
+        {/* Who gave props (Mob2): their faces and names under the row,
+            nobody either side of a block with the reader, the reader as
+            "You" once they have. Opens the full list, as the count does. */}
+        {givenBy && (
+          <button
+            type="button"
+            onClick={handleShowKudosList}
+            aria-expanded={showKudosList}
+            className="mt-1 flex min-h-[44px] w-full items-center gap-2 text-left text-xs text-muted-foreground hover:text-foreground"
+          >
+            <span aria-hidden="true" className="flex shrink-0 -space-x-1.5">
+              {givers.map((g) => (
+                <BlockAwareAvatar
+                  key={g.uid}
+                  uid={g.uid}
+                  photoURL={g.photoURL}
+                  displayName={g.name === "You" ? profile?.displayName : g.name}
+                  size="xs"
+                  className="ring-2 ring-card"
+                />
+              ))}
+            </span>
+            <span dir="auto" className="min-w-0 break-words">
+              {givenBy}
+            </span>
+          </button>
+        )}
 
         {/* Kudos list popup */}
         {showKudosList && (

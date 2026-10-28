@@ -493,6 +493,22 @@ async function main() {
       .doc(giver)
       .set({ createdAt: hoursAgo(8 - i) });
   }
+  /* The three newest givers, as toggleKudos keeps them on the post, so
+     its card says who gave props ("Aisha Bello and 4 others"). */
+  const newestGivers = propsGivers
+    .map((name, i) => ({ uid: `rich-props-${i + 1}`, name }))
+    .reverse()
+    .slice(0, 3);
+  await db
+    .collection("activities")
+    .doc("rich-feed-push")
+    .set(
+      {
+        recentPropsBy: newestGivers,
+        recentPropsByUids: newestGivers.map((g) => g.uid),
+      },
+      { merge: true }
+    );
   await db
     .collection("comments")
     .doc("rich-feed-push")

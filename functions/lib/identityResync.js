@@ -33,6 +33,10 @@
  *   sentence names the sender first ("Alice gave you props"), so that
  *   carries the new name with `fromName`. An anonymous one stores no
  *   sender and is never found.
+ * - the posts that name them among the givers of their props
+ *   (`recentPropsBy`, socialCounters.toggleKudos), from the last
+ *   RECENT_DAYS days, newest first, at most SCAN_CAP (the activities
+ *   recentPropsByUids+createdAt index). Only their own entry changes.
  * Feed copies hold no name (feedIndex.js), so they are not touched.
  *
  * The rules each write keeps:
@@ -106,6 +110,8 @@ const KINDS = {
   participant: { name: "displayName", photo: "photoURL", noPhoto: "delete", owner: null },
   // A name and the sentence that starts with it; no photo (notificationPatch).
   notification: { name: "fromName", photo: null, noPhoto: null, owner: "fromUserId" },
+  // Their entry in another person's post's givers (propsGiverPatch).
+  propsGiver: { name: "name", photo: "photoURL", noPhoto: "delete", owner: null },
 };
 
 /** A Firestore Timestamp, a Date or a number, in milliseconds; NaN when none. */
@@ -166,9 +172,37 @@ function notificationPatch(data, name) {
   return patch;
 }
 
+/**
+ * A post's givers (`recentPropsBy`) hold each giver's name and photo in a
+ * list, so their entry is rewritten in place and the rest kept as they
+ * are. No entry for them, nothing to write.
+ */
+function propsGiverPatch(data, uid, wanted) {
+  const list = Array.isArray(data.recentPropsBy) ? data.recentPropsBy : [];
+  let changed = false;
+  const next = list.map((giver) => {
+    if (!giver || giver.uid !== uid) return giver;
+    const entry = { ...giver };
+    if (wanted.name !== undefined && entry.name !== wanted.name) {
+      entry.name = wanted.name;
+      changed = true;
+    }
+    if (wanted.photo === null && entry.photoURL !== undefined) {
+      delete entry.photoURL;
+      changed = true;
+    } else if (wanted.photo && entry.photoURL !== wanted.photo) {
+      entry.photoURL = wanted.photo;
+      changed = true;
+    }
+    return entry;
+  });
+  return changed ? { recentPropsBy: next } : null;
+}
+
 /** The update `data` (a copy of `kind`) needs to show `wanted`, or null. */
-function patchFor(data, kind, wanted, deleteField) {
+function patchFor(data, kind, wanted, deleteField, uid) {
   if (kind === "notification") return notificationPatch(data, wanted.name);
+  if (kind === "propsGiver") return propsGiverPatch(data, uid, wanted);
   const spec = KINDS[kind];
   const patch = {};
   if (wanted.name !== undefined && data[spec.name] !== wanted.name) {
@@ -217,6 +251,16 @@ async function findCopies({ firestore, uid, cutoff, names }) {
     .get();
   add("activity", activities.docs);
   if (activities.docs.length >= ACTIVITY_CAP) truncated.push("activity");
+
+  const propped = await firestore
+    .collection("activities")
+    .where("recentPropsByUids", "array-contains", uid)
+    .where("createdAt", ">=", new Date(cutoff))
+    .orderBy("createdAt", "desc")
+    .limit(SCAN_CAP)
+    .get();
+  add("propsGiver", propped.docs);
+  if (propped.docs.length >= SCAN_CAP) truncated.push("propsGiver");
 
   const byAuthor = (group) =>
     firestore.collectionGroup(group).where("authorId", "==", uid);
@@ -345,7 +389,7 @@ async function resyncAuthorIdentity({
         const owner = KINDS[kind].owner;
         if (owner && data[owner] !== uid) return;
         if (data.official === true) return;
-        const patch = patchFor(data, kind, wanted, deleteField);
+        const patch = patchFor(data, kind, wanted, deleteField, uid);
         if (!patch) return;
         tx.update(snap.ref, patch);
         counts[kind] = (counts[kind] || 0) + 1;
