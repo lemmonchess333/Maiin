@@ -2187,8 +2187,8 @@ export default function WorkoutSession({
             110 px of a phone from the sets for the whole session. They scroll away as the
             sets below are reached, and an exercise change brings them
             back. DS3: the exercise's drawing beside its name, where a bare
-            dumbbell icon sat. Under 16em of row (larger text on the phone)
-            the drawing gives its room to the name, which beside it pushed
+            dumbbell icon sat. Under 19em of row (a 320px phone, or larger
+            text on the phone), the drawing gives its room to the name, which beside it pushed
             the form guide's button off the screen, and the name's two
             buttons drop under it when beside it they would squeeze a word
             ("Bench" at 2x on a 320px phone) out of its box. Wide-first. */}
@@ -2197,11 +2197,11 @@ export default function WorkoutSession({
             <ExerciseThumb
               exerciseId={currentExercise.exerciseId}
               size="lg"
-              className="@max-[16em]:hidden"
+              className="@max-[19em]:hidden"
             />
           )}
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 @max-[16em]:flex-wrap">
+            <div className="flex items-center gap-1 @max-[19em]:flex-wrap">
               <h2 className="min-w-0 text-h3 font-bold leading-tight tracking-tight text-foreground text-balance">
                 {currentExercise?.name}
               </h2>
@@ -2210,7 +2210,6 @@ export default function WorkoutSession({
                   <IconButton
                     aria-label={`How to do ${currentExercise.name}`}
                     variant="ghost"
-                    size="sm"
                     icon={<Info className="size-5 text-muted-foreground" />}
                     onClick={() => {
                       haptic("light");
@@ -2220,7 +2219,6 @@ export default function WorkoutSession({
                   <IconButton
                     aria-label={`More for ${currentExercise.name}`}
                     variant="ghost"
-                    size="sm"
                     icon={
                       <MoreHorizontal className="size-5 text-muted-foreground" />
                     }

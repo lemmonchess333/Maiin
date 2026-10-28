@@ -3,7 +3,6 @@ import {
   useMemo,
   useRef,
   useEffect,
-  useEffectEvent,
   useCallback,
   Suspense,
 } from "react";
@@ -25,16 +24,33 @@ import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Button } from "@/components/ui/Button";
+import { toast } from "@/lib/toast";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 const ALL_CATEGORIES = ["All", ...EXERCISE_CATEGORIES] as const;
 const ExerciseFormContent = lazyRetry(
   () => import("@/components/ExerciseFormContent")
 );
 
+function initialCategoryFor(exerciseId?: string): string {
+  return (
+    (exerciseId &&
+      EXERCISE_CATEGORIES.find((category) =>
+        getExercisesByCategory(category).some(
+          (exercise) => exercise.id === exerciseId
+        )
+      )) ||
+    "All"
+  );
+}
+
 interface Props {
   open: boolean;
-  onSelect: (exercise: Exercise) => void;
-  onMultiSelect?: (exercises: Exercise[]) => void;
+  /** Return false after reporting a failed add; the picker keeps the draft. */
+  onSelect: (exercise: Exercise) => void | boolean | Promise<void | boolean>;
+  onMultiSelect?: (
+    exercises: Exercise[]
+  ) => void | boolean | Promise<void | boolean>;
   onClose: () => void;
   headerTitle?: string;
   existingExerciseIds?: string[];
@@ -63,41 +79,77 @@ export default function ExercisePicker({
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const motionSafe = useMotionSafe();
-  const [selectedCategory, setSelectedCategory] = useState<string>(
-    () =>
-      (currentExerciseId &&
-        EXERCISE_CATEGORIES.find((cat) =>
-          getExercisesByCategory(cat).some((e) => e.id === currentExerciseId)
-        )) ||
-      "All"
+  const [selectedCategory, setSelectedCategory] = useState<string>(() =>
+    initialCategoryFor(currentExerciseId)
   );
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(
-    () => new Set(existingExerciseIds ?? [])
-  );
+  // The plan owns exercises already in the workout. Keep only additions in
+  // local state so reopening this mounted picker for another day cannot show
+  // the previous day's checkmarks.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [removingIds, setRemovingIds] = useState<Set<string>>(() => new Set());
+  const [saving, setSaving] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const savingRef = useRef(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  /* Owner request 2026-09-02: a row should SHOW the exercise (its form
-   * demo, muscles, instructions), not only add it. The row body opens
-   * this sheet; only the trailing circle toggles selection. The sheet
-   * lives inside the picker so the selection survives looking. */
+  const [pendingProgressName, setPendingProgressName] = useState<string | null>(
+    null
+  );
+  /* The row body opens the form guide; its trailing circle selects an
+   * exercise. A new exercise's detail action commits it and any selections
+   * already made in the list. */
   const [detail, setDetail] = useState<Exercise | null>(null);
   const navigate = useNavigate();
   const searchRef = useRef<HTMLInputElement>(null);
+  const progressPromptRef = useRef<HTMLParagraphElement>(null);
+  const progressActionRef = useRef<HTMLButtonElement>(null);
+  const hadProgressPrompt = useRef(false);
+  const pickerRef = useFocusTrap<HTMLDivElement>(open);
+  const wasOpen = useRef(false);
 
   const preExistingIds = useMemo(
     () => new Set(existingExerciseIds ?? []),
     [existingExerciseIds]
   );
 
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      setSelectedIds(new Set());
+      setShowDiscardConfirm(false);
+      setPendingProgressName(null);
+      setDetail(null);
+      setSearchQuery("");
+      setSelectedCategory(initialCategoryFor(currentExerciseId));
+    }
+    wasOpen.current = open;
+  }, [open, currentExerciseId]);
+
+  useEffect(() => {
+    if (open) searchRef.current?.focus({ preventScroll: true });
+  }, [open]);
+
+  useEffect(() => {
+    if (pendingProgressName) {
+      progressPromptRef.current?.focus({ preventScroll: true });
+    } else if (hadProgressPrompt.current && detail) {
+      progressActionRef.current?.focus({ preventScroll: true });
+    }
+    hadProgressPrompt.current = pendingProgressName !== null;
+  }, [pendingProgressName, detail]);
+
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
   const filteredExercises = useMemo(() => {
     const getAll = () =>
       EXERCISE_CATEGORIES.flatMap((cat) => getExercisesByCategory(cat));
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      return getAll().filter((e) => e.name.toLowerCase().includes(q));
-    }
-    if (selectedCategory === "All") return getAll();
-    return getExercisesByCategory(selectedCategory);
-  }, [searchQuery, selectedCategory]);
+    const inCategory =
+      selectedCategory === "All"
+        ? getAll()
+        : getExercisesByCategory(selectedCategory);
+    if (!normalizedSearchQuery) return inCategory;
+    return inCategory.filter((e) =>
+      e.name.toLowerCase().includes(normalizedSearchQuery)
+    );
+  }, [normalizedSearchQuery, selectedCategory]);
 
   const allExercises = useMemo(() => {
     return EXERCISE_CATEGORIES.flatMap((cat) => getExercisesByCategory(cat));
@@ -125,33 +177,55 @@ export default function ExercisePicker({
   const newlySelectedCount = useMemo(() => {
     return [...selectedIds].filter((id) => !preExistingIds.has(id)).length;
   }, [selectedIds, preExistingIds]);
+  const batchCount =
+    saving && selectedIds.size > 0 ? pendingCount : newlySelectedCount;
+
+  const isSelected = (id: string) =>
+    preExistingIds.has(id) || selectedIds.has(id);
 
   /* A swap or a replace picks one exercise, and the circle picks it: no
      bar to confirm it in. A swap can be undone from the exercise's menu
      ("Back to …"), and Finish asks before a swap reaches the plan, so a
      third check on the way in only cost a tap on every swap. */
-  const commitPick = (exercise: Exercise) => {
-    if (exercise.id === currentExerciseId) return;
+  const commitPick = async (exercise: Exercise) => {
+    if (exercise.id === currentExerciseId || savingRef.current) return;
     haptic("light");
-    onSelect(exercise);
-    setDetail(null);
-    onClose();
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      if ((await onSelect(exercise)) === false) return;
+      setDetail(null);
+      onClose();
+    } catch {
+      toast.error("Could not change exercise. Try again.");
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  };
+
+  const removeExistingExercise = async (id: string) => {
+    if (!onRemoveExercise || removingIds.has(id)) return;
+    setRemovingIds((previous) => new Set(previous).add(id));
+    try {
+      await onRemoveExercise(id);
+    } catch {
+      toast.error("Could not remove exercise. Try again.");
+    } finally {
+      setRemovingIds((previous) => {
+        const next = new Set(previous);
+        next.delete(id);
+        return next;
+      });
+    }
   };
 
   const toggleSelection = (id: string) => {
     if (id === currentExerciseId) return;
     haptic("light");
     if (preExistingIds.has(id)) {
-      if (selectedIds.has(id)) {
-        onRemoveExercise?.(id);
-        setSelectedIds((prev) => {
-          const next = new Set(prev);
-          next.delete(id);
-          return next;
-        });
-      } else {
-        setSelectedIds((prev) => new Set(prev).add(id));
-      }
+      // Keep the checkmark until the plan reports a successful removal.
+      void removeExistingExercise(id);
     } else {
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -162,55 +236,97 @@ export default function ExercisePicker({
     }
   };
 
-  const handleAddSelected = () => {
+  const handleAddSelected = async (includeId?: string) => {
+    if (savingRef.current) return;
     const newlySelected = allExercises.filter(
-      (e) => selectedIds.has(e.id) && !preExistingIds.has(e.id)
+      (e) =>
+        (selectedIds.has(e.id) || e.id === includeId) &&
+        !preExistingIds.has(e.id)
     );
     if (newlySelected.length === 0) {
       onClose();
       return;
     }
-    if (onMultiSelect) {
-      onMultiSelect(newlySelected);
-    } else {
-      for (const ex of newlySelected) onSelect(ex);
+    savingRef.current = true;
+    setSaving(true);
+    setPendingCount(newlySelected.length);
+    setShowDiscardConfirm(false);
+    try {
+      if (onMultiSelect) {
+        if ((await onMultiSelect(newlySelected)) === false) {
+          return;
+        }
+      } else {
+        for (const exercise of newlySelected) {
+          if ((await onSelect(exercise)) === false) {
+            return;
+          }
+        }
+      }
+      setSelectedIds(new Set());
+      setDetail(null);
+      onClose();
+    } catch {
+      toast.error("Could not add exercises. Try again.");
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
-    setSelectedIds(new Set(preExistingIds));
-    onClose();
   };
 
   const handleClose = useCallback(() => {
+    // An in-flight add belongs to this opening. Keep it visible until the
+    // result arrives so an older completion cannot close a new picker session.
+    if (savingRef.current) return;
+    setPendingProgressName(null);
     if (newlySelectedCount >= 2) {
       setShowDiscardConfirm(true);
     } else {
-      setSelectedIds(new Set(preExistingIds));
+      setSelectedIds(new Set());
       onClose();
     }
-  }, [newlySelectedCount, preExistingIds, onClose]);
+  }, [newlySelectedCount, onClose]);
 
-  // Close on Escape key. handleClose wrapped in useEffectEvent so
-  // the listener stays subscribed across handleClose identity
-  // changes (which happen whenever the useCallback deps change).
-  // With an exercise's sheet open, Escape is the sheet's: it closes that
-  // and leaves the picker, and what is ticked in it, alone. Heard on the
-  // window's capture phase, before the sheet's own handler has closed it.
-  const escapeHandleClose = useEffectEvent(() => {
-    if (detail) return;
-    handleClose();
-  });
+  // With the detail sheet open, Escape belongs to that sheet. While its
+  // progress confirmation is shown, Escape cancels the confirmation and
+  // keeps the sheet open. Capture before Vaul's own Escape handler.
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") escapeHandleClose();
+      if (e.key !== "Escape") return;
+      if (pendingProgressName) {
+        e.preventDefault();
+        e.stopPropagation();
+        setPendingProgressName(null);
+        return;
+      }
+      if (!detail) handleClose();
     };
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [open]);
+  }, [open, pendingProgressName, detail, handleClose]);
 
   const confirmDiscard = () => {
+    if (savingRef.current) return;
+    const progressName = pendingProgressName;
     setShowDiscardConfirm(false);
-    setSelectedIds(new Set(preExistingIds));
+    setPendingProgressName(null);
+    setSelectedIds(new Set());
+    setDetail(null);
     onClose();
+    if (progressName) {
+      navigate(`/history/exercise/${encodeURIComponent(progressName)}`);
+    }
+  };
+
+  const viewProgress = (name: string) => {
+    if (newlySelectedCount > 0) {
+      setPendingProgressName(name);
+      return;
+    }
+    setDetail(null);
+    onClose();
+    navigate(`/history/exercise/${encodeURIComponent(name)}`);
   };
 
   const cancelSearch = () => {
@@ -235,6 +351,10 @@ export default function ExercisePicker({
 
           <motion.div
             key="picker-modal"
+            ref={pickerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={headerTitle}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -277,12 +397,16 @@ export default function ExercisePicker({
                     <div className="ml-auto flex items-center gap-2">
                       <Button
                         variant="ghost"
-                        onClick={() => setShowDiscardConfirm(false)}
+                        disabled={saving}
+                        onClick={() => {
+                          setShowDiscardConfirm(false);
+                        }}
                       >
                         Keep browsing
                       </Button>
                       <Button
                         variant="destructive-tinted"
+                        disabled={saving}
                         onClick={confirmDiscard}
                       >
                         Discard
@@ -301,7 +425,13 @@ export default function ExercisePicker({
                   ref={searchRef}
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    const nextQuery = e.target.value;
+                    if (nextQuery.trim() && !normalizedSearchQuery) {
+                      setSelectedCategory("All");
+                    }
+                    setSearchQuery(nextQuery);
+                  }}
                   placeholder="Search exercises..."
                   aria-label="Search exercises"
                   className="w-full pl-9 pr-4 h-11 text-sm text-foreground placeholder:text-muted-foreground bg-muted rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-primary/40"
@@ -309,17 +439,18 @@ export default function ExercisePicker({
               </div>
               <AnimatePresence>
                 {searchQuery && (
-                  <motion.button
+                  <motion.div
                     data-motion-driven
                     initial={motionSafe({ opacity: 0, width: 0 })}
                     animate={{ opacity: 1, width: "auto" }}
                     exit={motionSafe({ opacity: 0, width: 0 })}
                     transition={{ duration: 0.2 }}
-                    onClick={cancelSearch}
-                    className="text-sm font-medium shrink-0 overflow-hidden text-lifting-strong"
+                    className="shrink-0 overflow-hidden"
                   >
-                    Cancel
-                  </motion.button>
+                    <Button variant="ghost" onClick={cancelSearch}>
+                      Cancel
+                    </Button>
+                  </motion.div>
                 )}
               </AnimatePresence>
             </div>
@@ -335,8 +466,9 @@ export default function ExercisePicker({
                   type="button"
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
+                  aria-pressed={selectedCategory === cat}
                   className={cn(
-                    "h-10 px-4 rounded-full text-small whitespace-nowrap transition-colors shrink-0",
+                    "h-11 px-4 rounded-full text-small whitespace-nowrap transition-colors shrink-0",
                     selectedCategory === cat
                       ? "font-semibold text-white bg-primary-strong"
                       : "font-medium bg-muted text-muted-foreground"
@@ -351,7 +483,7 @@ export default function ExercisePicker({
                 tile per category, tokenized lifting-tint selection,
                 Recent section first when browsing All. */}
             <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-28">
-              {!searchQuery &&
+              {!normalizedSearchQuery &&
                 selectedCategory === "All" &&
                 recentExercises.length > 0 && (
                   <>
@@ -361,7 +493,13 @@ export default function ExercisePicker({
                         <ExerciseRow
                           key={`recent-${exercise.id}`}
                           exercise={exercise}
-                          isSelected={selectedIds.has(exercise.id)}
+                          isSelected={isSelected(exercise.id)}
+                          isRemoving={
+                            saving ||
+                            removingIds.has(exercise.id) ||
+                            (preExistingIds.has(exercise.id) &&
+                              !onRemoveExercise)
+                          }
                           isCurrent={exercise.id === currentExerciseId}
                           pickAction={pickAction}
                           onPick={commitPick}
@@ -374,7 +512,7 @@ export default function ExercisePicker({
                 )}
 
               <SectionLabel className="pt-1 pb-2">
-                {searchQuery
+                {normalizedSearchQuery
                   ? `Results · ${filteredExercises.length}`
                   : `${selectedCategory === "All" ? "All" : selectedCategory} · ${filteredExercises.length} exercises`}
               </SectionLabel>
@@ -383,7 +521,12 @@ export default function ExercisePicker({
                   <ExerciseRow
                     key={exercise.id}
                     exercise={exercise}
-                    isSelected={selectedIds.has(exercise.id)}
+                    isSelected={isSelected(exercise.id)}
+                    isRemoving={
+                      saving ||
+                      removingIds.has(exercise.id) ||
+                      (preExistingIds.has(exercise.id) && !onRemoveExercise)
+                    }
                     isCurrent={exercise.id === currentExerciseId}
                     pickAction={pickAction}
                     onPick={commitPick}
@@ -405,7 +548,7 @@ export default function ExercisePicker({
             {/* Batch selection bar: adding only. A swap or a replace is
                 done by its row's circle. */}
             <AnimatePresence>
-              {!pickAction && newlySelectedCount > 0 && (
+              {!pickAction && batchCount > 0 && (
                 <motion.div
                   initial={{ y: "100%" }}
                   animate={{ y: 0 }}
@@ -416,26 +559,29 @@ export default function ExercisePicker({
                   <Button
                     variant="primary"
                     fullWidth
-                    onClick={handleAddSelected}
+                    loading={saving}
+                    onClick={() => void handleAddSelected()}
                   >
-                    {newlySelectedCount} exercise
-                    {newlySelectedCount !== 1 ? "s" : ""} selected — Add to
-                    workout
+                    {batchCount} exercise
+                    {batchCount !== 1 ? "s" : ""} selected — Add to workout
                   </Button>
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
 
-          {/* Exercise detail — the same Form content the history page
-              shows, plus the add/remove action, without leaving the
-              picker. "View full progress" is the one exit: it closes the
-              picker (unsaved ticks are dropped deliberately — a route
-              change is an explicit leave). */}
+          {/* Exercise detail shares the Form content with the history page.
+              Adding here commits this exercise and any list selections;
+              "View full progress" exits the picker. */}
           <BottomSheet
             open={detail !== null}
             onOpenChange={(o) => {
-              if (!o) setDetail(null);
+              if (o || savingRef.current) return;
+              if (pendingProgressName) {
+                setPendingProgressName(null);
+              } else {
+                setDetail(null);
+              }
             }}
             title={detail?.name ?? null}
             maxHeight="max-h-[95dvh]"
@@ -455,51 +601,95 @@ export default function ExercisePicker({
                       </div>
                     }
                   >
-                    <ExerciseFormContent exerciseName={detail.name} active />
+                    <ExerciseFormContent
+                      exerciseName={detail.name}
+                      active
+                      compactGuide
+                    />
                   </Suspense>
                 </div>
                 <div className="border-t border-border/30 px-4 pt-3 pb-4">
-                  <Button
-                    variant={
-                      !pickAction && selectedIds.has(detail.id)
-                        ? "secondary"
-                        : "primary"
-                    }
-                    fullWidth
-                    disabled={detail.id === currentExerciseId}
-                    onClick={() => {
-                      if (!pickAction) {
-                        toggleSelection(detail.id);
-                        return;
-                      }
-                      commitPick(detail);
-                    }}
-                  >
-                    {detail.id === currentExerciseId
-                      ? "Current exercise"
-                      : pickAction
-                        ? pickAction
-                        : preExistingIds.has(detail.id)
-                          ? selectedIds.has(detail.id)
-                            ? "In this workout — tap to remove"
-                            : "Add back to workout"
-                          : selectedIds.has(detail.id)
-                            ? "Selected — tap to unselect"
-                            : "Add to workout"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    fullWidth
-                    className="mt-2"
-                    onClick={() => {
-                      const name = detail.name;
-                      setDetail(null);
-                      onClose();
-                      navigate(`/history/exercise/${encodeURIComponent(name)}`);
-                    }}
-                  >
-                    View full progress
-                  </Button>
+                  {pendingProgressName ? (
+                    <div className="rounded-xl bg-muted p-3">
+                      <p
+                        ref={progressPromptRef}
+                        tabIndex={-1}
+                        aria-live="polite"
+                        className="text-small text-foreground"
+                      >
+                        Discard {newlySelectedCount} selection
+                        {newlySelectedCount === 1 ? "" : "s"} and view{" "}
+                        {pendingProgressName} progress?
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            setPendingProgressName(null);
+                          }}
+                        >
+                          Keep browsing
+                        </Button>
+                        <Button
+                          variant="destructive-tinted"
+                          onClick={confirmDiscard}
+                        >
+                          Discard and view
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        variant={
+                          !pickAction && preExistingIds.has(detail.id)
+                            ? "secondary"
+                            : "primary"
+                        }
+                        fullWidth
+                        loading={saving}
+                        disabled={
+                          detail.id === currentExerciseId ||
+                          saving ||
+                          removingIds.has(detail.id) ||
+                          (preExistingIds.has(detail.id) && !onRemoveExercise)
+                        }
+                        onClick={() => {
+                          if (!pickAction) {
+                            if (preExistingIds.has(detail.id)) {
+                              toggleSelection(detail.id);
+                            } else {
+                              void handleAddSelected(detail.id);
+                            }
+                            return;
+                          }
+                          commitPick(detail);
+                        }}
+                      >
+                        {detail.id === currentExerciseId
+                          ? "Current exercise"
+                          : pickAction
+                            ? pickAction
+                            : preExistingIds.has(detail.id)
+                              ? "In this workout — tap to remove"
+                              : newlySelectedCount +
+                                    (selectedIds.has(detail.id) ? 0 : 1) >
+                                  1
+                                ? `Add ${newlySelectedCount + (selectedIds.has(detail.id) ? 0 : 1)} exercises to workout`
+                                : "Add to workout"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        fullWidth
+                        className="mt-2"
+                        disabled={saving}
+                        ref={progressActionRef}
+                        onClick={() => viewProgress(detail.name)}
+                      >
+                        View full progress
+                      </Button>
+                    </>
+                  )}
                 </div>
               </>
             )}
@@ -519,6 +709,7 @@ export default function ExercisePicker({
 function ExerciseRow({
   exercise,
   isSelected,
+  isRemoving = false,
   isCurrent = false,
   pickAction,
   onPick,
@@ -527,6 +718,7 @@ function ExerciseRow({
 }: {
   exercise: Exercise;
   isSelected: boolean;
+  isRemoving?: boolean;
   /** The exercise being replaced: shown, never offered. */
   isCurrent?: boolean;
   pickAction?: string;
@@ -585,6 +777,7 @@ function ExerciseRow({
           aria-checked={isSelected}
           aria-label={exercise.name}
           onClick={() => onToggle(exercise.id)}
+          disabled={isRemoving}
           className="size-11 shrink-0 flex items-center justify-center rounded-full active:scale-[0.97] transition-transform"
         >
           {isSelected ? (

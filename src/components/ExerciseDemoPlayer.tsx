@@ -14,6 +14,8 @@ interface ExerciseDemoPlayerProps {
   /** When false the loop is paused (drawer consumers set this on open
    *  state so a hidden player doesn't burn a timer). */
   active?: boolean;
+  /** Match the smaller teaching stage in the exercise picker sheet. */
+  compact?: boolean;
   /** Hold per frame in ms; the crossfade overlaps the hold. */
   intervalMs?: number;
   /** Demo1: provenance of `frames`. Only "vetted-sequence" (human-reviewed
@@ -62,6 +64,7 @@ export default function ExerciseDemoPlayer({
   frames,
   name,
   active = true,
+  compact = false,
   intervalMs = 700,
   mediaKind = "vetted-sequence",
   onUnavailable,
@@ -122,7 +125,12 @@ export default function ExerciseDemoPlayer({
   // Single frame → static image.
   if (usable.length === 1) {
     return (
-      <div className="mt-4 rounded-2xl overflow-hidden bg-muted">
+      <div
+        className={cn(
+          "mt-4 rounded-2xl overflow-hidden bg-muted",
+          compact && "mx-auto max-w-[260px]"
+        )}
+      >
         <img
           src={usable[0]}
           alt={`${name} demonstration`}
@@ -162,7 +170,10 @@ export default function ExerciseDemoPlayer({
   // Animated: stack every frame, crossfade to the active one. Auto-plays.
   return (
     <div
-      className="mt-4 relative rounded-2xl overflow-hidden bg-muted aspect-square"
+      className={cn(
+        "mt-4 relative rounded-2xl overflow-hidden bg-muted aspect-square",
+        compact && "mx-auto max-w-[260px]"
+      )}
       role="img"
       aria-label={`${name} demonstration`}
     >

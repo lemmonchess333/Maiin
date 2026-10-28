@@ -570,9 +570,9 @@ function ProgramInner() {
     exIndex: number,
     newEx: Exercise
   ) => {
-    if (!programState) return;
+    if (!programState) return false;
     const old = programState.workouts[dayIdx].exercises[exIndex];
-    if (!old?.instanceId) return;
+    if (!old?.instanceId) return false;
     // P6: through the boundary. The identity work the long comment here used
     // to describe — carry the role-level prescription, re-infer the category,
     // mint a new instance, reset a reps<->seconds transition — now lives in
@@ -581,12 +581,11 @@ function ProgramInner() {
     // The one thing that could NOT simply move is the load: the reducer has no
     // profile, so it used to hard-code 0. The calibrated weight is computed
     // client-side and sent as a bounded scalar; see the reducer's note.
-    await replaceExerciseInDay(dayIdx, old.instanceId, newEx.id);
-    setReplaceTarget(null);
+    return replaceExerciseInDay(dayIdx, old.instanceId, newEx.id);
   };
 
   const addExercisesToDay = async (dayIdx: number, exercises: Exercise[]) => {
-    if (!programState) return;
+    if (!programState) return false;
     // Don't hardcode movementCategory — normalizeExercise infers from
     // the exercise name via inferMovementCategory. Forcing
     // "horizontal_push" was tagging every added exercise (including
@@ -597,11 +596,10 @@ function ProgramInner() {
     // client-supplied exercise object, which is the boundary's security stance.
     // Equivalent because both sides start an added movement UNCALIBRATED at
     // 3x10x0; that is what separates this from `replaceExercise`.
-    await addExercisesToDayCmd(
+    return addExercisesToDayCmd(
       dayIdx,
       exercises.map((e) => e.id)
     );
-    setShowAddPicker(false);
   };
 
   const handleLongPressStart = (
