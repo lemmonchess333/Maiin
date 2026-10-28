@@ -291,6 +291,42 @@ function openRow(name: RegExp) {
   fireEvent.keyDown(screen.getByRole("button", { name }), { key: "Enter" });
 }
 
+describe("Food — copy an entry to another day", () => {
+  it("logs a row from a past day to today, in its own slot", async () => {
+    const yesterday = format(addDays(new Date(), -1), "yyyy-MM-dd");
+    api.meals = [{ ...meal("old", "Chicken & rice", 650), date: yesterday }];
+    render(
+      <MemoryRouter initialEntries={[`/food?date=${yesterday}`]}>
+        <Routes>
+          <Route path="/food" element={<Food />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    openRow(/^Edit Chicken & rice/);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy to another day" })
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Log to Today" })
+    );
+    await waitFor(() => expect(api.createMealEntry).toHaveBeenCalledOnce());
+    const [, entry] = api.createMealEntry.mock.calls[0];
+    expect(entry).toMatchObject({
+      date: localDateString(),
+      meal: "lunch",
+      foodName: "Chicken & rice",
+      totalCalories: 650,
+      confidence: "copy",
+    });
+    expect(api.notifyMealsLogged).toHaveBeenCalledWith(
+      "u1",
+      ["added"],
+      "Copied Chicken & rice to today",
+      { path: "copy" }
+    );
+  });
+});
+
 describe("Food — one food of an entry of several", () => {
   it("writes the edited foods, their sum and the name they make", async () => {
     api.meals = [dish()];

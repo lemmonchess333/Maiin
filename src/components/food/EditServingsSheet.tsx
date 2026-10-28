@@ -1,5 +1,5 @@
 import { memo, useState } from "react";
-import { RotateCcw, Trash2, X } from "lucide-react";
+import { CopyPlus, RotateCcw, Trash2, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
@@ -129,6 +129,9 @@ interface EditServingsSheetProps {
    *  hide + Undo toast) and closes the sheet; no confirm dialog here
    *  because that Undo window is the safety net. */
   onDelete?: () => void;
+  /** Opens the copy sheet for this row. When given, the sheet offers
+   *  "Copy to another day" above Delete. */
+  onCopy?: () => void;
   /** The entry's day WITHOUT this row's figures, for the line that says
    *  what the day comes to at the edited amount. */
   day?: DayBudget | null;
@@ -165,6 +168,7 @@ function EditServingsSheet({
   onCancel,
   onSave,
   onDelete,
+  onCopy,
   day = null,
 }: EditServingsSheetProps) {
   // The parent mounts this sheet conditionally and keys it on the
@@ -878,6 +882,24 @@ function EditServingsSheet({
             />
           )}
         </div>
+
+        {/* Log this row again on another day, from whichever day it is
+            on. The parent closes this sheet and opens the copy sheet; it
+            copies what is logged, not what is being edited here. */}
+        {onCopy && (
+          <Button
+            variant="nutrition-tinted"
+            fullWidth
+            leftIcon={<CopyPlus className="size-4" aria-hidden="true" />}
+            onClick={() => {
+              haptic("light");
+              onCopy();
+            }}
+            disabled={saving}
+          >
+            Copy to another day
+          </Button>
+        )}
 
         {/* Discoverable delete path — the tap-to-edit counterpart to the
             row's swipe-to-delete (kept). Low-emphasis destructive text at

@@ -50,6 +50,9 @@ import { modelNumber, parseModelNumber, safeNum } from "@/lib/foodParseHelpers";
 import { Pencil, RotateCcw, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
+const CopyEntrySheet = lazyRetry(
+  () => import("@/components/food/CopyEntrySheet")
+);
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
 import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -77,6 +80,7 @@ import FoodWeekStrip from "@/components/food/FoodWeekStrip";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { foodWeek, foodWeekStart } from "@/lib/foodWeek";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { keepFoodDraft, keptFoodDraft } from "@/lib/foodDraft";
 import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
@@ -1259,6 +1263,34 @@ export default function Food() {
     meals: Meal[];
   } | null>(null);
 
+  /* A row's entries on their way to another day (the edit sheet's Copy to
+     another day). */
+  const [copyingEntries, setCopyingEntries] = useState<Meal[] | null>(null);
+  const handleCopyEntry = async (
+    date: string,
+    selections: readonly MealCopySelection[]
+  ) => {
+    if (!uid) return { created: [], error: new Error("Sign in again.") };
+    const result = await copySelectedMeals(uid, date, selections);
+    if (result.created.length > 0) {
+      haptic(15);
+      const name = selections[0]?.source.foodName ?? "Meal";
+      const dayName =
+        date === todayStr
+          ? "today"
+          : formatShortWeekdayDayMonth(parseLocalDate(date));
+      notifyMealsLogged(
+        uid,
+        result.created.map((entry) => entry.id),
+        `Copied ${name} to ${dayName}`,
+        { path: "copy" }
+      );
+    }
+    if (result.error !== null)
+      logger.error("[copy-entry] Failed:", result.error);
+    return result;
+  };
+
   const applyServingsChange = async (changes: {
     targetCount: number;
     targetMeal: MealKey | null;
@@ -2290,6 +2322,17 @@ export default function Food() {
           onSave={handleCopySelectedFromYesterday}
         />
       )}
+      {copyingEntries && (
+        <Suspense fallback={null}>
+          <CopyEntrySheet
+            sources={copyingEntries}
+            todayKey={todayStr}
+            minDate={minDateStr}
+            onClose={() => setCopyingEntries(null)}
+            onSave={handleCopyEntry}
+          />
+        </Suspense>
+      )}
 
       {scanGrowFrom && (
         <ScanGrow
@@ -2538,6 +2581,10 @@ export default function Food() {
           }}
           onCancel={() => setEditingGroup(null)}
           onSave={applyServingsChange}
+          onCopy={() => {
+            setCopyingEntries(editingGroup.meals);
+            setEditingGroup(null);
+          }}
           /* The day without this row, which the sheet adds back at the
              edited amount. */
           day={{
