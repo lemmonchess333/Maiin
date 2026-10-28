@@ -147,3 +147,37 @@ describe("EmptyWorkout", () => {
     expect(finished.completion).toBeUndefined();
   });
 });
+
+describe("an empty workout's name (Mob2 call 11)", () => {
+  const finish = (dayName?: string) =>
+    h.session!.onCompleteDay(EMPTY_WORKOUT_DAY_INDEX, {
+      completionId: "c1",
+      completionCommandId: "c1",
+      durationMinutes: 20,
+      startedAt: 1_000,
+      setLogs: [],
+      prescription: {
+        ...(dayName !== undefined ? { dayName } : {}),
+        exercises: [],
+        progressionBaseline: [],
+      },
+    });
+
+  it("saves the workout, and its post, under the name it was given", async () => {
+    open();
+    await finish("Hotel gym");
+    expect(h.completeLift.mock.calls[0][0]).toMatchObject({
+      title: "Hotel gym",
+      notes: "Hotel gym",
+    });
+  });
+
+  it("is Workout when it was given none", async () => {
+    open();
+    await finish();
+    expect(h.completeLift.mock.calls[0][0]).toMatchObject({
+      title: "Workout",
+      notes: "Workout",
+    });
+  });
+});

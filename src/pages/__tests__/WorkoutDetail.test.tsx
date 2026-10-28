@@ -105,6 +105,22 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("WorkoutDetail", () => {
+  it("is dated by the day it started, not the day it was saved (Lift3)", async () => {
+    // A session started on the 1st and saved on the 3rd: past midnight,
+    // offline, or with its start said to be earlier (Mob2 call 12).
+    const { Timestamp } = await import("firebase/firestore");
+    seedFirestore({
+      "users/u1/workouts/w1": {
+        ...SAVED,
+        createdAt: Timestamp.fromDate(new Date(2026, 7, 3, 9, 0)),
+      },
+    });
+    renderAt("w1");
+    expect(
+      await screen.findByText("Saturday, 1 August 2026")
+    ).toBeInTheDocument();
+  });
+
   /* The headline is now per-state. This case used to assert "Workout not
      found" for BOTH, which is the conflation the split fixed: a failed
      read reported the user's session as possibly deleted, or the link as

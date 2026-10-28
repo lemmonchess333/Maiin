@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import type { Exercise } from "@/lib/exercises";
 import { exerciseAddedToday } from "@/features/program/sessionAdd";
+import { accountStartMs } from "@/lib/startDay";
 import {
   cursorAfterRemoval,
   isAddedToday,
@@ -410,6 +411,11 @@ export default function WorkoutSession({
     () => ({ ...initialDay, exercises: prescription.exercises }),
     [initialDay, prescription]
   );
+  /* The session's name as it is shown: an empty workout's as the lifter
+     named it on the finish screen (Mob2 call 11), else the day's. The
+     draft and the save still key on the day's stored name. */
+  const sessionName = prescription.dayName ?? day.dayName;
+  const source = workoutSourceForScope(draftScope);
   const [originalStartedAt, setOriginalStartedAt] = useState(
     () => initialDraft?.startedAt ?? Date.now()
   );
@@ -1427,19 +1433,33 @@ export default function WorkoutSession({
       ),
     }));
 
-  const refreshRecords = (logs: SetLog[][], exercises = day.exercises) => {
+  const refreshRecords = (
+    logs: SetLog[][],
+    exercises = day.exercises,
+    date = sessionDay
+  ) => {
     const next = sessionRecords(
       recordBaseline.current,
       volumeBaseline.current,
       sessionCounts,
       exercises,
       logs,
-      sessionDay
+      date
     );
     setPrMap(next.map);
     setPrResults(next.results);
     setFiredPRs(next.fired);
     setVolumeBest(next.volumeBest);
+  };
+
+  /** The finish screen's "Started" (Mob2 call 12): the session began
+   *  earlier than it was opened, for a lift recorded late. It is dated by
+   *  the stated start, as by any start (Lift3): the workout, the plan's
+   *  records of it, the run before it and this session's bests. The clock
+   *  stays the clock: the workout's length is still the time it ran. */
+  const changeStart = (at: number) => {
+    setOriginalStartedAt(at);
+    refreshRecords(setLogs, day.exercises, liftSessionDay(at));
   };
 
   /** Saves an edited set, or hands back the question to ask first when
@@ -1949,7 +1969,7 @@ export default function WorkoutSession({
         }
       >
         <EmptySessionScreen
-          title={dayLabel ?? liftDayLine(day.dayName)}
+          title={dayLabel ?? liftDayLine(sessionName)}
           onClose={onClose}
           onAdd={openAddPicker}
         >
@@ -1968,7 +1988,7 @@ export default function WorkoutSession({
         }
       >
         <SessionCompleteScreen
-          dayName={dayLabel ?? day.dayName}
+          dayName={dayLabel ?? sessionName}
           exercises={day.exercises}
           setLogs={setLogs}
           firedPRs={firedPRs}
@@ -1983,6 +2003,19 @@ export default function WorkoutSession({
           onFinish={() => void handleFinish()}
           onEdit={
             !completionPending ? () => setSessionComplete(false) : undefined
+          }
+          startedAt={originalStartedAt}
+          onChangeStart={!completionPending ? changeStart : undefined}
+          planWeek={source === "programme"}
+          accountStart={accountStartMs(
+            profile?.createdAt,
+            user?.metadata?.creationTime
+          )}
+          onRename={
+            source === "free" && !completionPending
+              ? (name) =>
+                  setPrescription((current) => ({ ...current, dayName: name }))
+              : undefined
           }
           onClose={onClose}
         />
@@ -2095,7 +2128,7 @@ export default function WorkoutSession({
             aria-level={1}
             className="truncate text-base font-bold text-foreground"
           >
-            {dayLabel ?? liftDayLine(day.dayName)}
+            {dayLabel ?? liftDayLine(sessionName)}
           </p>
           <WorkoutProgress
             key={sessionStartedAt}
