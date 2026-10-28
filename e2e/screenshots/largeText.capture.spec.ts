@@ -9,7 +9,7 @@
  * The screens: Home, Train, History's five pages (and its charts again
  * on a Monday), Food and its manual entry and edit sheets, Social's
  * Together tab (again with its other challenges opened) and its feed, a
- * Space, a profile, Settings and every
+ * Space, a profile and its followers and following, Settings and every
  * section of it, Train's exercise menu, a workout, a run before, during
  * and after, the exercise, run and workout detail pages, the Weekly
  * review, sign-up, setup and the Pro page. The sheets: the weight log,
@@ -508,6 +508,14 @@ test.describe("large text", () => {
       await page.waitForURL(/\/user\//);
       await ready(page, page.getByRole("heading", { level: 1 }));
       await measure(page, "profile", width, found);
+
+      // Its counts open the person's own followers and following.
+      for (const list of ["followers", "following"] as const) {
+        await page.goto(list);
+        await ready(page, page.getByRole("heading", { level: 1 }));
+        await page.waitForTimeout(1500);
+        await measure(page, list, width, found);
+      }
 
       expect(found).toEqual([]);
     });

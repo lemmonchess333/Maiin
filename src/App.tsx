@@ -190,6 +190,7 @@ const Social = lazyRetry(() => import("@/pages/Social"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
 const EmptyWorkout = lazyRetry(() => import("@/pages/EmptyWorkout"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
+const FollowList = lazyRetry(() => import("@/pages/FollowList"));
 const ExerciseHistory = lazyRetry(() => import("@/pages/ExerciseHistory"));
 // PR N (audit P2 #17): hidden operator-diagnostics route. Lazy-loaded
 // like every other page; not wired into any nav. Reachable only by
@@ -852,6 +853,22 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <UserProfile />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/followers"
+                          element={
+                            <RouteErrorBoundary>
+                              <FollowList kind="followers" />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/following"
+                          element={
+                            <RouteErrorBoundary>
+                              <FollowList kind="following" />
                             </RouteErrorBoundary>
                           }
                         />

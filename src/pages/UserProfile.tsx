@@ -267,6 +267,34 @@ function ProfileContent({
             </p>
           ) : followers === null || followingCount === null ? (
             <Skeleton className="mt-1.5 h-4 w-36 rounded" />
+          ) : isOwnProfile ? (
+            /* Your own counts open your lists (Mob2 call 7). Anyone
+               else's stay plain text: their lists are theirs. */
+            <p className="mt-1 flex flex-wrap items-center gap-x-1 text-small text-muted-foreground">
+              <Link
+                to="/followers"
+                className="inline-flex min-h-[44px] items-center hover:text-foreground"
+              >
+                <span>
+                  <span className="font-mono tabular-nums font-semibold text-foreground">
+                    {followers.toLocaleString()}
+                  </span>{" "}
+                  {plural(followers, "follower", "followers")}
+                </span>
+              </Link>
+              <span aria-hidden="true"> · </span>
+              <Link
+                to="/following"
+                className="inline-flex min-h-[44px] items-center hover:text-foreground"
+              >
+                <span>
+                  <span className="font-mono tabular-nums font-semibold text-foreground">
+                    {followingCount.toLocaleString()}
+                  </span>{" "}
+                  following
+                </span>
+              </Link>
+            </p>
           ) : (
             <p className="mt-1 text-small text-muted-foreground">
               <span className="font-mono tabular-nums font-semibold text-foreground">

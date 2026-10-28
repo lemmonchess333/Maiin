@@ -134,6 +134,7 @@ const ROOT = resolve(__dirname, "../../..");
 const FILTERING_SURFACES: Record<string, string> = {
   "src/pages/Social.tsx": "the feed, Explore, search and suggestions",
   "src/pages/Space.tsx": "a Space's posts",
+  "src/pages/FollowList.tsx": "your followers and following",
   "src/components/social/CommentSheet.tsx": "comments on a post",
   "src/features/spaces/SpaceCommentSheet.tsx": "comments on a Space post",
   "src/components/social/ActivityCard.tsx": "the props list",

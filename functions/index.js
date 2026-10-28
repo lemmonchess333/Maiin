@@ -38,6 +38,7 @@ const { activationSport } = require("./lib/firstWeekActivation");
 const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
 const runRename = require("./lib/runRename");
+const followRemoval = require("./lib/followRemoval");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
 const friendsBoard = require("./lib/friendsBoard");
 const restrictedIdentities = require("./lib/restrictedIdentities");
@@ -8666,6 +8667,41 @@ exports.setBoardSharing = functions
     }
     await friendsBoard.setBoardSharing(db, uid, share);
     return { share };
+  });
+
+/**
+ * removeFollower — Remove follower on your own followers list (Mob2 call
+ * 7): deletes both edges of one follow of the caller (lib/followRemoval).
+ * Not refused to a restricted account, which may always narrow who
+ * reaches it, as unfollowing and blocking may.
+ */
+exports.removeFollower = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    const followerUid = data && data.followerUid;
+    if (!isDocumentId(followerUid) || followerUid === uid) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "followerUid must be another account's id."
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    const limited = await isRateLimited(uid, "removeFollower", 30, 60_000);
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Try again in a minute."
+      );
+    }
+    const removed = await followRemoval.removeFollower(db, uid, followerUid);
+    return { removed };
   });
 
 // ══════════════════════════════════════════════

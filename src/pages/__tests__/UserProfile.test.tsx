@@ -559,6 +559,33 @@ describe("your own profile", () => {
     expect(screen.queryByRole("button", { name: "Follow" })).toBeNull();
   });
 
+  /* Mob2 call 7: your own counts open your lists; anyone else's are
+     plain text. */
+  it("links your own counts to your followers and following lists", async () => {
+    H.viewer = "alice";
+    H.followers = { alice: 2 };
+    seedFirestore({ "users/alice/public/profile": { displayName: "Alice" } });
+    renderAt("/user/alice");
+    expect(await countsLine()).toHaveTextContent("2 followers · 0 following");
+    expect(screen.getByRole("link", { name: "2 followers" })).toHaveAttribute(
+      "href",
+      "/followers"
+    );
+    expect(screen.getByRole("link", { name: "0 following" })).toHaveAttribute(
+      "href",
+      "/following"
+    );
+  });
+
+  it("keeps someone else's counts as plain text", async () => {
+    H.followers = { bob: 2 };
+    seedFirestore({ "users/bob/public/profile": { displayName: "Bob" } });
+    renderAt("/user/bob");
+    expect(await countsLine()).toHaveTextContent("2 followers · 0 following");
+    expect(screen.queryByRole("link", { name: /followers?$/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /following$/ })).toBeNull();
+  });
+
   it("asks for both kinds at once, which the owner may, and never private", () => {
     expect(profilePostVisibilities(true)).toEqual([["public", "followers"]]);
   });
