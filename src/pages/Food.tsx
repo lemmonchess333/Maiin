@@ -1,4 +1,3 @@
-import QuickMealPortionSheet from "@/components/food/QuickMealPortionSheet";
 import { saveQuickMeal } from "@/lib/quickMealEntry";
 import {
   useState,
@@ -50,11 +49,25 @@ import { modelNumber, parseModelNumber, safeNum } from "@/lib/foodParseHelpers";
 import { Pencil, RotateCcw, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
-const CopyEntrySheet = lazyRetry(
-  () => import("@/components/food/CopyEntrySheet")
-);
+/* The sheets a tap opens load with the tap, not with the page: Food's
+   chunk is the page's first paint. They are fetched once the page has
+   drawn (below), so the first tap does not wait on the network. */
+const loadCopyEntrySheet = () => import("@/components/food/CopyEntrySheet");
+const loadCopyMealsSheet = () => import("@/components/food/CopyMealsSheet");
+const loadQuickMealPortionSheet = () =>
+  import("@/components/food/QuickMealPortionSheet");
+const loadHeroDrillDownSheet = () =>
+  import("@/components/food/HeroDrillDownSheet");
+const loadServingSizeDrawer = () =>
+  import("@/components/nutrition/ServingSizeDrawer").then((m) => ({
+    default: m.ServingSizeDrawer,
+  }));
+const CopyEntrySheet = lazyRetry(loadCopyEntrySheet);
+const CopyMealsSheet = lazyRetry(loadCopyMealsSheet);
+const QuickMealPortionSheet = lazyRetry(loadQuickMealPortionSheet);
+const HeroDrillDownSheet = lazyRetry(loadHeroDrillDownSheet);
+const ServingSizeDrawer = lazyRetry(loadServingSizeDrawer);
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
-import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
@@ -73,7 +86,6 @@ import { useAiConsent } from "@/hooks/useAiConsent";
 import AiConsentSheet from "@/components/food/AiConsentSheet";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
-import HeroDrillDownSheet from "@/components/food/HeroDrillDownSheet";
 import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
 import FoodWeekStrip from "@/components/food/FoodWeekStrip";
@@ -92,7 +104,6 @@ import {
   nameFromItems,
   rescaleMealPortion,
 } from "@/lib/mealPortion";
-import CopyMealsSheet from "@/components/food/CopyMealsSheet";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
@@ -275,6 +286,21 @@ export default function Food() {
   // (calories + macros + activity-burn adjustment). Read-only — the
   // sheet is a drill-down for review, not an editing surface.
   const [heroSheetOpen, setHeroSheetOpen] = useState(false);
+  const [heroSheetUsed, setHeroSheetUsed] = useState(false);
+  /* Fetch the tap-opened sheets once the page is up (see their loaders). */
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      for (const load of [
+        loadHeroDrillDownSheet,
+        loadServingSizeDrawer,
+        loadQuickMealPortionSheet,
+        loadCopyMealsSheet,
+        loadCopyEntrySheet,
+      ])
+        void load().catch(() => {});
+    }, 1500);
+    return () => window.clearTimeout(id);
+  }, []);
 
   /* Food9 retention sweep. Meal photos live on the device now, so
      nothing server-side ages them out — this is what enforces the 90-day
@@ -2078,29 +2104,38 @@ export default function Food() {
             carbs: dailyTotals.carbs,
             fat: dailyTotals.fat,
           }}
-          onTapDrillDown={() => setHeroSheetOpen(true)}
+          onTapDrillDown={() => {
+            setHeroSheetUsed(true);
+            setHeroSheetOpen(true);
+          }}
         />
       </motion.div>
-      <HeroDrillDownSheet
-        open={heroSheetOpen}
-        onOpenChange={setHeroSheetOpen}
-        selectedDate={selectedDate}
-        isToday={isToday}
-        dailyTotals={{
-          calories: dailyTotals.calories,
-          protein: dailyTotals.protein,
-          carbs: dailyTotals.carbs,
-          fat: dailyTotals.fat,
-          fiber: dailyTotals.fiber,
-          sugar: dailyTotals.sugar,
-          sodium: dailyTotals.sodium,
-        }}
-        dailyTargets={dailyTargets}
-        onOpenWeek={() => {
-          setHeroSheetOpen(false);
-          navigate("/history?view=food");
-        }}
-      />
+      {/* Mounted from the first open on, so it closes with its animation
+          and its queued Pro sheet opens after it has gone. */}
+      {heroSheetUsed && (
+        <Suspense fallback={null}>
+          <HeroDrillDownSheet
+            open={heroSheetOpen}
+            onOpenChange={setHeroSheetOpen}
+            selectedDate={selectedDate}
+            isToday={isToday}
+            dailyTotals={{
+              calories: dailyTotals.calories,
+              protein: dailyTotals.protein,
+              carbs: dailyTotals.carbs,
+              fat: dailyTotals.fat,
+              fiber: dailyTotals.fiber,
+              sugar: dailyTotals.sugar,
+              sodium: dailyTotals.sodium,
+            }}
+            dailyTargets={dailyTargets}
+            onOpenWeek={() => {
+              setHeroSheetOpen(false);
+              navigate("/history?view=food");
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* FOOD-02: post-run refuel handoff. Renders ONLY when arriving via
           RunSummary's "Log recovery food" deep link (?context=post-run),
@@ -2313,14 +2348,16 @@ export default function Food() {
         </Card>
       )}
       {copyPreviewOpen && (
-        <CopyMealsSheet
-          key={`${uid}:${selectedDate}`}
-          sources={slotsToCopyFromYesterday.flatMap(
-            (slot) => yesterdaySegmented[slot] ?? []
-          )}
-          onClose={() => setCopyPreviewOpen(false)}
-          onSave={handleCopySelectedFromYesterday}
-        />
+        <Suspense fallback={null}>
+          <CopyMealsSheet
+            key={`${uid}:${selectedDate}`}
+            sources={slotsToCopyFromYesterday.flatMap(
+              (slot) => yesterdaySegmented[slot] ?? []
+            )}
+            onClose={() => setCopyPreviewOpen(false)}
+            onSave={handleCopySelectedFromYesterday}
+          />
+        </Suspense>
       )}
       {copyingEntries && (
         <Suspense fallback={null}>
@@ -2511,26 +2548,32 @@ export default function Food() {
           }}
         />
       </Suspense>
-      <ServingSizeDrawer
-        food={offDrawerFood}
-        open={offDrawerFood !== null}
-        onClose={() => setOffDrawerFood(null)}
-        onConfirm={handleOFFConfirm}
-        day={dayBudget}
-      />
+      {offDrawerFood && (
+        <Suspense fallback={null}>
+          <ServingSizeDrawer
+            food={offDrawerFood}
+            open
+            onClose={() => setOffDrawerFood(null)}
+            onConfirm={handleOFFConfirm}
+            day={dayBudget}
+          />
+        </Suspense>
+      )}
 
       {/* Mount the sheet only while a group is being edited and key it
           on the group id. Each open gets a fresh component instance so
           the stepper's local target state can't be stomped by a parent
           re-render rebuilding the `source` prop with a new identity. */}
       {portionMeal && (
-        <QuickMealPortionSheet
-          meal={portionMeal}
-          onClose={() => setPortionMeal(null)}
-          slot={usualSlot}
-          onLog={handleQuickMealAdd}
-          day={dayBudget}
-        />
+        <Suspense fallback={null}>
+          <QuickMealPortionSheet
+            meal={portionMeal}
+            onClose={() => setPortionMeal(null)}
+            slot={usualSlot}
+            onLog={handleQuickMealAdd}
+            day={dayBudget}
+          />
+        </Suspense>
       )}
       {editingGroup && (
         <EditServingsSheet
