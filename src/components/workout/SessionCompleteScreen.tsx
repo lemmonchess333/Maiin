@@ -309,17 +309,21 @@ export default function SessionCompleteScreen({
           ) : null}
         </motion.div>
 
-        {/* The result stays visible; only the exercise breakdown is optional. */}
-        <motion.div
-          className="grid grid-cols-3 divide-x divide-border"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <StatFigure size="lg" count={duration} unit={duration.unit} />
-          <StatFigure size="lg" count={work} unit={work.unit} />
-          <StatFigure size="lg" count={sets} unit={sets.unit} />
-        </motion.div>
+        {/* The result stays visible; only the exercise breakdown is optional.
+            One figure a row under 15em of screen (larger text), as on the
+            saved workout's page: a third of it no longer held "minutes". */}
+        <div className="@container">
+          <motion.div
+            className="grid grid-cols-3 divide-x divide-border @max-[15em]:grid-cols-1 @max-[15em]:gap-y-3 @max-[15em]:divide-x-0"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <StatFigure size="lg" count={duration} unit={duration.unit} />
+            <StatFigure size="lg" count={work} unit={work.unit} />
+            <StatFigure size="lg" count={sets} unit={sets.unit} />
+          </motion.div>
+        </div>
 
         {/* The session's best moment lands a beat after the screen, a
             little large and settling, and its trophy after it (Pol1). */}
@@ -412,7 +416,10 @@ export default function SessionCompleteScreen({
         )}
 
         {hasMuscleFigure(muscleCategories) && (
-          <Card className="flex items-center gap-4">
+          /* The drawing gives way under 14em of card (larger text, a
+             320 px phone), where beside it "Muscles worked" and a row's
+             sets had less room than a word. */
+          <Card className="@container flex items-center gap-4">
             {leadArt ? (
               <img
                 src={formArtCutoutUrl(leadArt.cutout)}
@@ -421,12 +428,12 @@ export default function SessionCompleteScreen({
                 draggable={false}
                 decoding="async"
                 data-lead-drawing={leadArt.exerciseName}
-                className="exercise-drawing h-32 w-28 shrink-0 object-contain"
+                className="exercise-drawing h-32 w-28 shrink-0 object-contain @max-[14em]:hidden"
               />
             ) : (
               <MiniMuscleFigure
                 categories={muscleCategories}
-                className="h-32 w-auto shrink-0"
+                className="h-32 w-auto shrink-0 @max-[14em]:hidden"
               />
             )}
             <div className="min-w-0 flex-1">
@@ -437,7 +444,7 @@ export default function SessionCompleteScreen({
                 {muscleRows.slice(0, 4).map(([category, sets]) => (
                   <li
                     key={category}
-                    className="flex items-baseline justify-between gap-3 text-sm"
+                    className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm"
                   >
                     <span className="truncate text-foreground">
                       {CATEGORY_DISPLAY[category] ??
@@ -635,8 +642,8 @@ export default function SessionCompleteScreen({
   );
 }
 
-/** A row of the review's details: what it is, its value, and the way to
- *  change it. The value wraps under the label rather than squeezing it
+/** A row of the review's details: what it is over its value, and the
+ *  way to change it, which goes under them rather than squeezing them
  *  when the two no longer fit (larger text). */
 function DetailRow({
   label,
@@ -661,16 +668,18 @@ function DetailRow({
       aria-label={`${label}: ${value}. ${action}`}
       className="flex min-h-[44px] w-full flex-wrap items-center gap-x-3 gap-y-1 px-[16px] py-[10px] text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-60"
     >
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span
-        className={cn(
-          "min-w-0 flex-1 break-words text-sm font-medium text-foreground",
-          numeric && "font-mono tabular-nums"
-        )}
-      >
-        {value}
+      <span className="block min-w-[min(100%,10em)] flex-1">
+        <span className="block text-xs text-muted-foreground">{label}</span>
+        <span
+          className={cn(
+            "block break-words text-sm font-medium text-foreground",
+            numeric && "font-mono tabular-nums"
+          )}
+        >
+          {value}
+        </span>
       </span>
-      <span className="ml-auto flex items-center gap-1 text-sm font-semibold text-lifting-strong">
+      <span className="ml-auto flex shrink-0 items-center gap-1 text-sm font-semibold text-lifting-strong">
         {action}
         <ChevronRight className="size-4 shrink-0" aria-hidden="true" />
       </span>
