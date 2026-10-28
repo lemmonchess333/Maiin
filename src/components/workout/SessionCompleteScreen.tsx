@@ -666,8 +666,8 @@ export default function SessionCompleteScreen({
   );
 }
 
-/** A row of the review's details: what it is, its value, and the way to
- *  change it. The value wraps under the label rather than squeezing it
+/** A row of the review's details: what it is over its value, and the
+ *  way to change it, which goes under them rather than squeezing them
  *  when the two no longer fit (larger text). */
 function DetailRow({
   label,
@@ -692,16 +692,18 @@ function DetailRow({
       aria-label={`${label}: ${value}. ${action}`}
       className="flex min-h-[44px] w-full flex-wrap items-center gap-x-3 gap-y-1 px-[16px] py-[10px] text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-60"
     >
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span
-        className={cn(
-          "min-w-0 flex-1 break-words text-sm font-medium text-foreground",
-          numeric && "font-mono tabular-nums"
-        )}
-      >
-        {value}
+      <span className="block min-w-[min(100%,10em)] flex-1">
+        <span className="block text-xs text-muted-foreground">{label}</span>
+        <span
+          className={cn(
+            "block break-words text-sm font-medium text-foreground",
+            numeric && "font-mono tabular-nums"
+          )}
+        >
+          {value}
+        </span>
       </span>
-      <span className="ml-auto flex items-center gap-1 text-sm font-semibold text-lifting-strong">
+      <span className="ml-auto flex shrink-0 items-center gap-1 text-sm font-semibold text-lifting-strong">
         {action}
         <ChevronRight className="size-4 shrink-0" aria-hidden="true" />
       </span>
