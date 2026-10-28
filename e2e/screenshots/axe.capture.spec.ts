@@ -438,13 +438,13 @@ test.describe("axe", () => {
     await page.getByText("Jordan Reyes").waitFor({ timeout: 20_000 });
     await check(page, "activity-post", found);
 
-    await page.goto("activity/rich-feed-push?comments=1");
-    await sheetReady(
+    // The session's comments are on its page, not in a sheet.
+    await open(
       page,
-      dialog.getByText("Strong session.", { exact: false })
+      "activity/rich-feed-push?comments=1",
+      page.getByText("Strong session.", { exact: false })
     );
-    await check(page, "sheet-activity-comments", found, sheet);
-    await close(page);
+    await check(page, "activity-post-comments", found);
 
     await open(
       page,

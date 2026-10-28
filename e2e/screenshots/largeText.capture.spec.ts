@@ -19,7 +19,7 @@
  *
  * And the surfaces the notification tray, a return and a session left
  * open lead to: one shared session and one Space post on their own pages,
- * each with its comments open and the Space post's not-available state; a
+ * each with its comments and the Space post's not-available state; a
  * runner's welcome back on Home; a Circle's invite code live and expired,
  * in both sheets that show it; and the In progress strip on Home and on
  * Train, for a programme workout and for a saved routine's; and an empty
@@ -681,9 +681,10 @@ test.describe("large text", () => {
     });
 
     /* The pages the notification tray opens: one shared session (seed:rich
-       gives Maya's push day five props and two comments) and one Space
-       post (her "6 weeks in!", with one comment), each again with its
-       comments open, and a post that is not there. */
+       gives Maya's push day five props and two comments), whose comments
+       are on the page, and one Space post (her "6 weeks in!", with one
+       comment), again with its comments open, and a post that is not
+       there. */
     test(`the one-post pages at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
       await page.setViewportSize({ width, height: 852 });
@@ -698,14 +699,13 @@ test.describe("large text", () => {
       await page.getByText("Jordan Reyes").waitFor({ timeout: 20_000 });
       await measure(page, "activity-post", width, found);
 
+      // The session's comments are on its page, with the field in focus.
       await page.goto("activity/rich-feed-push?comments=1");
-      await dialog
+      await page
         .getByText("Strong session.", { exact: false })
         .waitFor({ timeout: 20_000 });
       await page.waitForTimeout(800);
       await measure(page, "activity-post-comments", width, found);
-      await page.keyboard.press("Escape");
-      await expect(page.getByRole("dialog")).toHaveCount(0);
 
       await page.goto("space/womens-running/post/seed-maya");
       await ready(page, page.getByRole("link", { name: "Women's Running" }));

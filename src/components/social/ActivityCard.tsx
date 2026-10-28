@@ -74,15 +74,13 @@ import {
 } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { elevationLabel } from "@/lib/runLabels";
+import { commentQuickChips } from "@/lib/commentChips";
 
 const formatDur = formatClock;
-
-const RUN_CHIPS = ["Nice run", "Great pace", "Keep it up"];
 
 /* Written out whole, so Tailwind sees every class it has to build. */
 const RUN_STAT_COLUMNS =
   "grid-cols-[repeat(3,minmax(max-content,1fr))] @max-[17.5em]:grid-cols-[repeat(2,minmax(max-content,1fr))] @max-[14.5em]:grid-cols-[minmax(max-content,1fr)]";
-const LIFT_CHIPS = ["Great lift", "Solid session", "Strong work"];
 
 /** The exercise rows a card in a list draws; the post's own page draws
  *  them all. */
@@ -103,6 +101,13 @@ interface ActivityCardProps {
   /** Open the post from the card's title, numbers and hero. Off on the
    *  post's own page, where they would lead back to it. */
   linkToPost?: boolean;
+  /** The comment button's own action, where the comments are on the page
+   *  rather than in the card's sheet (the post's own page). The card then
+   *  has no sheet. */
+  onComment?: () => void;
+  /** Comments added or deleted outside the card, which its count adds,
+   *  as it adds those from its own sheet. */
+  commentDelta?: number;
 }
 
 function ActivityCard({
@@ -112,6 +117,8 @@ function ActivityCard({
   openComments = false,
   allExercises = false,
   linkToPost = true,
+  onComment,
+  commentDelta: outsideDelta = 0,
 }: ActivityCardProps) {
   const { user, profile } = useAuth();
   /* The VIEWER's unit, not the poster's — a feed reads in the units of
@@ -160,7 +167,7 @@ function ActivityCard({
   const activity = feedItem.activity;
   const commentTotal = Math.max(
     0,
-    (activity?.commentCount ?? 0) + commentDelta
+    (activity?.commentCount ?? 0) + commentDelta + outsideDelta
   );
   const showFollow =
     !!followAuthor && !!feedItem.authorId && feedItem.authorId !== user?.uid;
@@ -284,7 +291,7 @@ function ActivityCard({
   const avatarColor = isRun
     ? "hsl(var(--running-strong))"
     : "hsl(var(--lifting-strong))";
-  const chips = isRun ? RUN_CHIPS : LIFT_CHIPS;
+  const chips = commentQuickChips(feedItem.type);
 
   /* Every shape of lift post the feed holds, read one way: a post made
      from a saved workout once wrote rows with no summary, and drawing them
@@ -1001,8 +1008,10 @@ function ActivityCard({
           </div>
           <button
             type="button"
-            onClick={() => setShowCommentSheet(true)}
-            aria-label="View comments"
+            onClick={() =>
+              onComment ? onComment() : setShowCommentSheet(true)
+            }
+            aria-label={onComment ? "Add a comment" : "View comments"}
             className="flex items-center gap-1.5 p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
           >
             <MessageCircle className="size-5" />
@@ -1100,16 +1109,18 @@ function ActivityCard({
         )}
       </div>
 
-      {/* Comment bottom sheet */}
-      <CommentSheet
-        activityId={feedItem.activityId}
-        activityAuthorId={activity?.authorId as string | undefined}
-        open={showCommentSheet}
-        onOpenChange={setShowCommentSheet}
-        commentCount={commentTotal}
-        quickChips={chips}
-        onCountChange={(delta) => setCommentDelta((d) => d + delta)}
-      />
+      {/* Comment bottom sheet, unless the comments are on the page. */}
+      {!onComment && (
+        <CommentSheet
+          activityId={feedItem.activityId}
+          activityAuthorId={activity?.authorId as string | undefined}
+          open={showCommentSheet}
+          onOpenChange={setShowCommentSheet}
+          commentCount={commentTotal}
+          quickChips={chips}
+          onCountChange={(delta) => setCommentDelta((d) => d + delta)}
+        />
+      )}
 
       {/* Save-as-routine sheet — only mounts when the gate above
           said the activity is eligible AND the user has tapped the
