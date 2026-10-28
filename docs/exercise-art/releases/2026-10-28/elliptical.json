@@ -1,0 +1,242 @@
+{
+  "exerciseId": "elliptical",
+  "version": "anatomy-v4-2026-10-28-posed-elliptical-v1",
+  "width": 1080,
+  "height": 1080,
+  "decision": "approved",
+  "reviewer": "Codex native, geometry, and 393×852 player review",
+  "reviewedAt": "2026-10-28T00:42:50.381Z",
+  "reference": {
+    "path": "form-frames/elliptical/2026-10-28/1.webp",
+    "sha256": "9e380345a8bd14c8e7f1bc3b837be36308cbc6dd6bcfe371d59e157c9fab2ab6"
+  },
+  "cueSha256": "9a4e62a03ee605f313dbec50cc713d4fd6b892c55e79a406d468a288afb3aa33",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six 1080px frames preserve one faceless anatomical athlete in fitted gray shorts and white trainers on the same graphite elliptical. Violet thigh, glute, and shoulder highlights stay attached to the moving rider."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "One fixed orthographic camera and 1080×1080 canvas. Projected console (825.08,394.31), flywheel (246.46,769.27), and base endpoints remain exactly fixed across all six frames."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Full-size and 360px reviews of both extreme stride poses show an upright trunk, articulated knees and elbows, continuous shins and wrists, fitted shorts and trainers, and no detached or cropped anatomy."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "The flywheel, console, chassis, and 19 fixed machine objects have zero transform drift. Only the paired pedals, drive links, and moving handles animate. Fixed base-center span is 783.82px and console height above front stabilizer is 560.13px in every frame."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands visibly wrap their own moving vertical grips and both shoes remain on separate moving pads. Evaluated skin-to-grip surface gaps are 0–0.1mm over twelve hand checks; rendered shoe-to-pad heights are 1.9–6.4mm, within one phone pixel."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Pedal and handle targets share a phase; near and far sides are half a cycle apart. Both drive links remain 0.600m; mathematical soles stay 1mm above pads. Six distinct phases close at phase 1 with at most 6×10⁻¹⁷m position error and under 10⁻⁴m/cycle velocity seam error."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Quadriceps and glute regions remain violet through the stride; small shoulder and upper-back accents remain secondary. Highlights follow the body and do not jump onto the chassis."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six captions follow the forward glide, rear drive, middle stride, rear glide, forward return, and transition shown in the six poses. Feet stay flat on pads, both hands stay on moving grips, and the torso stays upright."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six image hashes are unique. At 360px, adjacent RGB RMS spans 24.699–39.896; frame 6→1 is 27.932, within that range. The opposite side remains a half-cycle apart through the return."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "The candidate six-frame player decoded and looped at 393×852 in light theme, with no horizontal overflow or browser page/console error; the full phone and six-stage sheet were reviewed."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "The candidate six-frame player decoded and looped at 393×852 in dark theme, with no horizontal overflow or browser page/console error; the full phone and six-stage sheet were reviewed."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/elliptical/2026-10-28/1.webp",
+      "sha256": "9e380345a8bd14c8e7f1bc3b837be36308cbc6dd6bcfe371d59e157c9fab2ab6",
+      "anchors": {
+        "console": {
+          "x": 825.08,
+          "y": 394.31
+        },
+        "flywheel": {
+          "x": 246.46,
+          "y": 769.27
+        },
+        "rearBase": {
+          "x": 67.55,
+          "y": 880.24
+        },
+        "frontBase": {
+          "x": 847.85,
+          "y": 954.44
+        }
+      },
+      "invariantDimensions": {
+        "rearToFrontStabilizerCenterSpan": 783.82,
+        "consoleCenterHeightAboveFrontStabilizerCenter": 560.13
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/elliptical/1.png",
+        "sha256": "68ef429fced5b79fe2fbff6d672761681a11a025e34a7873a57f5c4a20531f2c"
+      }
+    },
+    {
+      "path": "form-frames/elliptical/2026-10-28/2.webp",
+      "sha256": "bf7b2e246098c605a00d399050d972eee13319455ff5c368801bfb06fcc2462e",
+      "anchors": {
+        "console": {
+          "x": 825.08,
+          "y": 394.31
+        },
+        "flywheel": {
+          "x": 246.46,
+          "y": 769.27
+        },
+        "rearBase": {
+          "x": 67.55,
+          "y": 880.24
+        },
+        "frontBase": {
+          "x": 847.85,
+          "y": 954.44
+        }
+      },
+      "invariantDimensions": {
+        "rearToFrontStabilizerCenterSpan": 783.82,
+        "consoleCenterHeightAboveFrontStabilizerCenter": 560.13
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/elliptical/2.png",
+        "sha256": "4cea531d644d4dcc5dd39f25035ba8361a314705161f7d3b0209040bbf4237c1"
+      }
+    },
+    {
+      "path": "form-frames/elliptical/2026-10-28/3.webp",
+      "sha256": "484880fe71820fbf604f3b741412688c3a39065a4648c2e983139822983fa52b",
+      "anchors": {
+        "console": {
+          "x": 825.08,
+          "y": 394.31
+        },
+        "flywheel": {
+          "x": 246.46,
+          "y": 769.27
+        },
+        "rearBase": {
+          "x": 67.55,
+          "y": 880.24
+        },
+        "frontBase": {
+          "x": 847.85,
+          "y": 954.44
+        }
+      },
+      "invariantDimensions": {
+        "rearToFrontStabilizerCenterSpan": 783.82,
+        "consoleCenterHeightAboveFrontStabilizerCenter": 560.13
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/elliptical/3.png",
+        "sha256": "b7d86a4bc38d0adc9ef684d9c90b16ed6021a18324e387ef2cdc79f005f25ae5"
+      }
+    },
+    {
+      "path": "form-frames/elliptical/2026-10-28/4.webp",
+      "sha256": "d614ee076f2042399637038ed264ad06acf1aa9125167e0109f86a29c0a81cce",
+      "anchors": {
+        "console": {
+          "x": 825.08,
+          "y": 394.31
+        },
+        "flywheel": {
+          "x": 246.46,
+          "y": 769.27
+        },
+        "rearBase": {
+          "x": 67.55,
+          "y": 880.24
+        },
+        "frontBase": {
+          "x": 847.85,
+          "y": 954.44
+        }
+      },
+      "invariantDimensions": {
+        "rearToFrontStabilizerCenterSpan": 783.82,
+        "consoleCenterHeightAboveFrontStabilizerCenter": 560.13
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/elliptical/4.png",
+        "sha256": "80bde29e7332f931367cb5e63aa9fe2c088730e3778b2bb8fac734958684163b"
+      }
+    },
+    {
+      "path": "form-frames/elliptical/2026-10-28/5.webp",
+      "sha256": "d4b2da47615b5ddfe08b3989232ec29e7c7ef3d3ad032d5e893f10072cd03451",
+      "anchors": {
+        "console": {
+          "x": 825.08,
+          "y": 394.31
+        },
+        "flywheel": {
+          "x": 246.46,
+          "y": 769.27
+        },
+        "rearBase": {
+          "x": 67.55,
+          "y": 880.24
+        },
+        "frontBase": {
+          "x": 847.85,
+          "y": 954.44
+        }
+      },
+      "invariantDimensions": {
+        "rearToFrontStabilizerCenterSpan": 783.82,
+        "consoleCenterHeightAboveFrontStabilizerCenter": 560.13
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/elliptical/5.png",
+        "sha256": "457153cb7ce70ab933998c1aa0d5d4d9475f5264edb323aff06f40a24f8534a0"
+      }
+    },
+    {
+      "path": "form-frames/elliptical/2026-10-28/6.webp",
+      "sha256": "934ac72440df0c5f6f4bbb0864938025d96ec194203167115fa5a9038a20a775",
+      "anchors": {
+        "console": {
+          "x": 825.08,
+          "y": 394.31
+        },
+        "flywheel": {
+          "x": 246.46,
+          "y": 769.27
+        },
+        "rearBase": {
+          "x": 67.55,
+          "y": 880.24
+        },
+        "frontBase": {
+          "x": 847.85,
+          "y": 954.44
+        }
+      },
+      "invariantDimensions": {
+        "rearToFrontStabilizerCenterSpan": 783.82,
+        "consoleCenterHeightAboveFrontStabilizerCenter": 560.13
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/elliptical/6.png",
+        "sha256": "15b88c698ab4fbb3b282e709b06567f3ee03b4e7c4db560a2cff31fdca281e2d"
+      }
+    }
+  ]
+}

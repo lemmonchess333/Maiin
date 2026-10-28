@@ -72,7 +72,7 @@ describe("ExercisePicker row: see it vs add it", () => {
     expect(screen.queryByText(/exercise selected/)).toBeNull();
   });
 
-  it("shows reviewed drawings and a muscle tile when artwork is withheld", () => {
+  it("shows reviewed drawings, including the completed Front Squat", () => {
     mount();
     const reviewed = screen.getByRole("button", { name: "Dips details" });
     expect(reviewed.querySelector('[data-thumb="drawing"]')).not.toBeNull();
@@ -90,10 +90,10 @@ describe("ExercisePicker row: see it vs add it", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Search exercises" }), {
       target: { value: "Front Squat" },
     });
-    const withheld = screen.getByRole("button", {
+    const frontSquat = screen.getByRole("button", {
       name: "Front Squat details",
     });
-    expect(withheld.querySelector('[data-thumb="muscles"]')).not.toBeNull();
+    expect(frontSquat.querySelector('[data-thumb="drawing"]')).not.toBeNull();
   });
 
   it("the sheet's action toggles the same selection the batch bar reads", () => {

@@ -1,0 +1,70 @@
+{
+  "phases": [
+    0,
+    0.28,
+    0.65,
+    1,
+    0.65,
+    0.28
+  ],
+  "projected_bar_length_px": {
+    "min": 754.0302850217622,
+    "max": 754.030367407706,
+    "drift": 0.0000823859437559804
+  },
+  "left_plate_height_px": {
+    "min": 153.939,
+    "max": 153.94,
+    "drift": 0.0010000000000047748
+  },
+  "right_plate_height_px": {
+    "min": 153.93899999999996,
+    "max": 153.94000000000003,
+    "drift": 0.0010000000000616183
+  },
+  "left_plate_width_px": {
+    "min": 104.65199999999999,
+    "max": 104.65200000000002,
+    "drift": 2.842170943040401e-14
+  },
+  "right_plate_width_px": {
+    "min": 104.65300000000002,
+    "max": 104.65300000000002,
+    "drift": 0
+  },
+  "left_shoe_bbox_max_coordinate_drift_px": 0.03700000000003456,
+  "right_shoe_bbox_max_coordinate_drift_px": 0.03599999999994452,
+  "sole_z_min_m": {
+    "min": 0.0059,
+    "max": 0.0059,
+    "drift": 0
+  },
+  "bottom_hip_minus_knee_m": -0.021199999999999997,
+  "bar_y_m": [
+    -0.18,
+    -0.1548,
+    -0.1215,
+    -0.09,
+    -0.1215,
+    -0.1548
+  ],
+  "shoe_longitudinal_support_m": {
+    "left": [
+      -0.263,
+      -0.003
+    ],
+    "right": [
+      -0.259,
+      0.001
+    ]
+  },
+  "fixed_shelf_mask_sha256": "1e291dcce3185136fba47d385abd773ce43b7e9b3cf140300b6d496d62528a53",
+  "frames": {
+    "1": "9a50ee4d019e5c80cfb2a6b62aedc37ba725de54489fcdafa60239d01aa70bac",
+    "2": "8d55139927469996722725183aabaa8aae4e6cc075646f91025c9420ba475158",
+    "3": "731c1b8d6b8eeb6cb9ef5f115a33c71cd4d922a709372ef5c13bd1a3d512099b",
+    "4": "f2d765d947e193dd16635b20d1a5e0bb4c87fa546537d5ea21452add9da721c2",
+    "5": "731c1b8d6b8eeb6cb9ef5f115a33c71cd4d922a709372ef5c13bd1a3d512099b",
+    "6": "8d55139927469996722725183aabaa8aae4e6cc075646f91025c9420ba475158"
+  }
+}
