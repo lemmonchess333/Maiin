@@ -662,4 +662,92 @@ describe("useFoodFavourites", () => {
       expect(faveDeletes()[0].path.split("/").pop()).toBe("oats");
     });
   });
+
+  /* My pantry's edit. A food is filed under its name, so a new name moves
+     it; a corrected figure leaves it where it is, whatever its id. */
+  describe("updateFavourite", () => {
+    const edit = {
+      servingSize: "1 cup",
+      calories: 150,
+      protein: 8,
+      carbs: 12,
+      fat: 7,
+    };
+
+    it("corrects a food's figures in place, keeping its count", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      act(() =>
+        pumpSnapshot([
+          makeDoc({ id: "audit-latte", name: "Latte", useCount: 4 }),
+        ])
+      );
+      await waitFor(() => expect(result.current.favourites).toHaveLength(1));
+      let outcome = "";
+      await act(async () => {
+        outcome = await result.current.updateFavourite(
+          result.current.favourites[0],
+          { name: "Latte", ...edit }
+        );
+      });
+      expect(outcome).toBe("saved");
+      expect(faveDeletes()).toHaveLength(0);
+      const stored = readDoc(`${FAVES}/audit-latte`) as Record<string, unknown>;
+      expect(stored).toMatchObject({
+        name: "Latte",
+        servingSize: "1 cup",
+        calories: 150,
+        useCount: 4,
+      });
+    });
+
+    it("moves a renamed food to its new name, carrying its history", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      act(() =>
+        pumpSnapshot([
+          makeDoc({
+            id: "latte",
+            name: "Latte",
+            useCount: 4,
+            timeOfDay: "morning",
+          }),
+        ])
+      );
+      await waitFor(() => expect(result.current.favourites).toHaveLength(1));
+      await act(async () => {
+        await result.current.updateFavourite(result.current.favourites[0], {
+          name: "Oat latte",
+          ...edit,
+        });
+      });
+      expect(readDoc(`${FAVES}/latte`)).toBeUndefined();
+      expect(readDoc(`${FAVES}/oat_latte`)).toMatchObject({
+        name: "Oat latte",
+        calories: 150,
+        useCount: 4,
+        timeOfDay: "morning",
+      });
+    });
+
+    it("refuses a name another saved food has", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      act(() =>
+        pumpSnapshot([
+          makeDoc({ id: "latte", name: "Latte" }),
+          makeDoc({ id: "mocha", name: "Mocha" }),
+        ])
+      );
+      await waitFor(() => expect(result.current.favourites).toHaveLength(2));
+      const latte = result.current.favourites.find((f) => f.id === "latte")!;
+      let outcome = "";
+      await act(async () => {
+        outcome = await result.current.updateFavourite(latte, {
+          name: "mocha",
+          ...edit,
+        });
+      });
+      expect(outcome).toBe("taken");
+      expect(faveSets()).toHaveLength(0);
+      expect(faveDeletes()).toHaveLength(0);
+    });
+  });
 });
