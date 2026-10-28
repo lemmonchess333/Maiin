@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { OFF_CREDIT } from "@/lib/offNutrition";
 import { parseAmount } from "@/lib/mealPortion";
 import PortionAmountField from "./PortionAmountField";
+import PortionLeftLine from "./PortionLeftLine";
+import type { DayBudget } from "@/lib/portionLeft";
 
 interface Props {
   food: {
@@ -26,6 +28,9 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onConfirm: (servings: number) => void;
+  /** The day the food would be logged to, for the line that says what is
+   *  left after it. */
+  day?: DayBudget | null;
 }
 
 // Sprint 3 follow-up sweep: vaul boilerplate replaced with shared
@@ -39,7 +44,13 @@ interface Props {
 /* Per-100g foods are measured in GRAMS, everything else in servings, with
    the typed field PortionAmountField draws (see AMOUNT_STEP for why). */
 
-export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
+export function ServingSizeDrawer({
+  food,
+  open,
+  onClose,
+  onConfirm,
+  day = null,
+}: Props) {
   const perHundred = food?.unitConfidence === "low";
   /* ONE piece of state, held as the string the user types. Deriving the
      servings from it (rather than mirroring two values) is what stops the
@@ -172,6 +183,14 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             </p>
           </div>
         </div>
+        <PortionLeftLine
+          className="mt-2 text-center"
+          day={day}
+          portion={{
+            calories: food.calories * previewServings,
+            protein: food.protein * previewServings,
+          }}
+        />
 
         {/* Quantity — typeable, with the unit named beside it. */}
         <div className="pt-4">

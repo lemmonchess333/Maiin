@@ -10,6 +10,7 @@ import EditServingsSheet, {
 } from "../EditServingsSheet";
 import type { MealKey } from "../mealConstants";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { setCalorieRingMode } from "@/hooks/useCalorieRingMode";
 
 afterEach(cleanup);
 
@@ -845,5 +846,42 @@ describe("EditServingsSheet — fixing one entry's portion", function () {
       target: { value: "200" },
     });
     expect(save).toBeDisabled();
+  });
+
+  /* Mob2 finding 6: the day without this entry, plus the entry at the
+     amount being typed. */
+  it("says what is left of the day at the edited amount", function () {
+    setCalorieRingMode("left");
+    render(
+      <EditServingsSheet
+        source={{
+          foodName: "Chicken and rice",
+          currentCount: 1,
+          currentTotalCalories: 600,
+          currentTotalProtein: 40,
+          currentTotalCarbs: 60,
+          currentTotalFat: 20,
+          currentMeal: "lunch",
+          currentPortion: { multiplier: 1, baseGrams: 200 },
+        }}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        day={{
+          calories: 900,
+          protein: 50,
+          calorieTarget: 2000,
+          proteinTarget: 150,
+        }}
+      />
+    );
+    expect(
+      screen.getByText("500 kcal and 60g protein left after this")
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Grams"), {
+      target: { value: "100" },
+    });
+    expect(
+      screen.getByText("800 kcal and 80g protein left after this")
+    ).toBeInTheDocument();
   });
 });

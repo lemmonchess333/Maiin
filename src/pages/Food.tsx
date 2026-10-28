@@ -106,6 +106,7 @@ import {
 } from "@/components/food/mealConstants";
 import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
 import { sumMealTotals } from "@/lib/mealTotals";
+import type { DayBudget } from "@/lib/portionLeft";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import { sweepFoodPhotosOnce } from "@/lib/foodPhotoStore";
 import Card from "@/components/ui/Card";
@@ -580,6 +581,14 @@ export default function Food() {
     () => sumMealTotals(visibleTodaysMeals),
     [visibleTodaysMeals]
   );
+  /* The day as the portion sheets count against it: what is logged and
+     the targets, for their "left after this" line. */
+  const dayBudget: DayBudget = {
+    calories: dailyTotals.calories,
+    protein: dailyTotals.protein,
+    calorieTarget: dailyTargets.finalTarget,
+    proteinTarget: dailyTargets.protein,
+  };
 
   /* The day the account began, as Home's strip and Analytics read it, so
      the week strip draws no ring before it (Food10 (3)). */
@@ -2284,6 +2293,7 @@ export default function Food() {
                bonus calories) via useEffectiveTargets, so the
                threshold scales with the user's planned day. */
             effectiveDailyTarget={dailyTargets.finalTarget}
+            day={dayBudget}
             /* No photo scans on this tier: the scanner opens on Barcode,
                which is free, and its photo tabs carry the Pro offer. The
                offer closes the scanner before opening the Pro sheet, the
@@ -2438,6 +2448,7 @@ export default function Food() {
         open={offDrawerFood !== null}
         onClose={() => setOffDrawerFood(null)}
         onConfirm={handleOFFConfirm}
+        day={dayBudget}
       />
 
       {/* Mount the sheet only while a group is being edited and key it
@@ -2450,6 +2461,7 @@ export default function Food() {
           onClose={() => setPortionMeal(null)}
           slot={usualSlot}
           onLog={handleQuickMealAdd}
+          day={dayBudget}
         />
       )}
       {editingGroup && (
@@ -2495,6 +2507,23 @@ export default function Food() {
           }}
           onCancel={() => setEditingGroup(null)}
           onSave={applyServingsChange}
+          /* The day without this row, which the sheet adds back at the
+             edited amount. */
+          day={{
+            ...dayBudget,
+            calories:
+              dayBudget.calories -
+              editingGroup.meals.reduce(
+                (s, m) => s + safeNum(m.totalCalories),
+                0
+              ),
+            protein:
+              dayBudget.protein -
+              editingGroup.meals.reduce(
+                (s, m) => s + safeNum(m.totalProtein),
+                0
+              ),
+          }}
           onDelete={() => {
             // Reuse the same optimistic-hide + Undo-toast path the
             // swipe uses, then close the sheet. Capture ids before the

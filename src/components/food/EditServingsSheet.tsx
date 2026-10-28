@@ -19,6 +19,8 @@ import { withSign } from "@/utils/formatters";
 import { FOOD_NAME_MAX } from "@/lib/mealEntry";
 import PortionAmountField from "@/components/nutrition/PortionAmountField";
 import { parseAmount, tidyAmount, type EntryPortion } from "@/lib/mealPortion";
+import PortionLeftLine from "@/components/nutrition/PortionLeftLine";
+import type { DayBudget } from "@/lib/portionLeft";
 
 interface ServingSource {
   /** Display name shown at the top of the sheet. */
@@ -101,6 +103,9 @@ interface EditServingsSheetProps {
    *  hide + Undo toast) and closes the sheet; no confirm dialog here
    *  because that Undo window is the safety net. */
   onDelete?: () => void;
+  /** The entry's day WITHOUT this row's figures, for the line that says
+   *  what the day comes to at the edited amount. */
+  day?: DayBudget | null;
 }
 
 /* One id: the input points `aria-describedby` at the line the sheet
@@ -134,6 +139,7 @@ function EditServingsSheet({
   onCancel,
   onSave,
   onDelete,
+  day = null,
 }: EditServingsSheetProps) {
   // The parent mounts this sheet conditionally and keys it on the
   // group id, so each open is a fresh instance — useState's initial
@@ -326,6 +332,14 @@ function EditServingsSheet({
     editedCal ??
     (currentCount > 0 ? (currentTotalCalories / currentCount) * ratio : 0);
   const previewCal = Math.round(perServingCal * target);
+  /* Protein the same way, for the line that says what is left. */
+  const perServingPro =
+    picked.pro !== null && picked.pro !== startPerServing.pro
+      ? picked.pro
+      : currentCount > 0
+        ? (source.currentTotalProtein / currentCount) * ratio
+        : 0;
+  const previewPro = perServingPro * target;
   const macroOverrides: MacroOverrides = {};
   if (editedCal !== null) {
     macroOverrides.totalCalories = editedCal;
@@ -679,6 +693,13 @@ function EditServingsSheet({
                 <span className="ml-2 text-lifting-strong">macros updated</span>
               )}
             </span>
+          )}
+          {!hasInvalidMacro && (
+            <PortionLeftLine
+              className="mt-1"
+              day={day}
+              portion={{ calories: previewCal, protein: previewPro }}
+            />
           )}
         </div>
 

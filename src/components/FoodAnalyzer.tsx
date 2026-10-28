@@ -31,6 +31,8 @@ import FoodCameraModal, {
 } from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import PortionAmountField from "./nutrition/PortionAmountField";
+import PortionLeftLine from "./nutrition/PortionLeftLine";
+import type { DayBudget } from "@/lib/portionLeft";
 import { parseAmount, type AmountUnit } from "@/lib/mealPortion";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Spinner } from "@/components/ui/Spinner";
@@ -93,6 +95,9 @@ interface Props {
    *  scanner: the way back from the product form, so the person can
    *  change their mind without scanning again. */
   notFoundBarcode?: string | null;
+  /** The day the result would be logged to, for the line under its
+   *  totals that says what is left after it. */
+  day?: DayBudget | null;
 }
 
 type MealResult = {
@@ -232,6 +237,7 @@ export default function FoodAnalyzer({
   onDescribeProduct,
   onTypeProductDetails,
   notFoundBarcode = null,
+  day = null,
 }: Props) {
   const uid = useUid();
   const { addFavourite, favourites } = useFoodFavourites();
@@ -1231,6 +1237,13 @@ export default function FoodAnalyzer({
                   totalProtein={displayTotals.protein}
                   totalCarbs={displayTotals.carbs}
                   totalFat={displayTotals.fat}
+                />
+                <PortionLeftLine
+                  day={day}
+                  portion={{
+                    calories: displayTotals.calories,
+                    protein: displayTotals.protein,
+                  }}
                 />
               </div>
 

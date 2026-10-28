@@ -295,6 +295,10 @@ surface specifically.
   ingredient is independently editable with its own quantity + unit.
 - **Plate/Day toggle** on the result: this meal alone vs its contribution to the
   day. Tropos shows only the meal.
+  STATUS 2026-10-28 (Mob2 call 1): every portion sheet, the scan result's
+  included, carries one line under the meal's figures saying what the day
+  comes to with it ("1,240 kcal and 62g protein left after this"). Text,
+  not a toggle.
 - **Capture guidance names the privacy risk**: "Avoid including photos of other
   people" / "Only upload content you have permission to use", alongside the
   framing/steadiness tips, in a first-use modal.
