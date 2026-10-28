@@ -379,6 +379,7 @@ export default function WorkoutSession({
   // Captured once on mount — stable across renders via the stable hook callbacks.
   const initialDraft = useMemo(() => loadDraft(), [loadDraft]);
   const hasRecoveryDraft = useRef(initialDraft !== null);
+  const hasEnteredValues = useRef(false);
   // One completion id per session (packet 15). Resumed from the draft when
   // present so a retry/resume targets the SAME workout doc; persisted into
   // every draft save below. Never regenerated per Finish click.
@@ -703,6 +704,7 @@ export default function WorkoutSession({
     );
     // Once a draft exists, Undo must also persist zero completed sets.
     // Keep the entered values, notes and session choices with that reversal.
+    // Entered values and notes count before the first completed set too.
     // A session changed from how it was set out (an exercise added, a
     // superset, a swap) is kept before any set is done: an empty workout
     // with its exercises added is a workout to come back to.
@@ -710,7 +712,13 @@ export default function WorkoutSession({
       prescription.exercises.length !== initialDay.exercises.length ||
       (prescription.supersets?.length ?? 0) > 0 ||
       (prescription.swaps?.length ?? 0) > 0;
-    if (!hasProgress && !reshaped && !hasRecoveryDraft.current) return;
+    if (
+      !hasProgress &&
+      !reshaped &&
+      !hasRecoveryDraft.current &&
+      !hasEnteredValues.current
+    )
+      return;
     if (completionPendingRef.current) return;
     const stored = saveDraft({
       dayIndex,
@@ -1079,6 +1087,7 @@ export default function WorkoutSession({
     const set = setLogs[exIdx]?.[setIdx];
     if (!set || set.type === type) return;
     if (set.completed && (completionPendingRef.current || saved)) return;
+    hasEnteredValues.current = true;
     const next = setLogs.map((sets, ei) =>
       sets.map((entry, si) =>
         ei === exIdx && si === setIdx ? { ...entry, type } : entry
@@ -1094,6 +1103,7 @@ export default function WorkoutSession({
   };
 
   const updateSetRPE = (exIdx: number, setIdx: number, rpe: number) => {
+    hasEnteredValues.current = true;
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       updated[exIdx][setIdx].rpe = rpe;
@@ -1102,6 +1112,7 @@ export default function WorkoutSession({
   };
 
   const addSet = (exIdx: number) => {
+    hasEnteredValues.current = true;
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       const lastSet = updated[exIdx][updated[exIdx].length - 1];
@@ -1140,6 +1151,7 @@ export default function WorkoutSession({
   };
 
   const removeSet = (exIdx: number, setIdx: number) => {
+    hasEnteredValues.current = true;
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       updated[exIdx].splice(setIdx, 1);
@@ -1157,6 +1169,7 @@ export default function WorkoutSession({
     // History may still be loading when someone starts typing. From this
     // edit onward the exercise belongs to them, just as a completed set
     // does; a late history read must not replace the numbers they entered.
+    hasEnteredValues.current = true;
     const exercise = day.exercises[exIdx];
     if (exercise) {
       const key = rowKey(exercise, exIdx);
@@ -1840,6 +1853,7 @@ export default function WorkoutSession({
 
   const handleStartFresh = () => {
     hasRecoveryDraft.current = false;
+    hasEnteredValues.current = false;
     // A fresh start is the session as it was set out: the draft's swaps,
     // skips, added exercises and supersets go with its sets and notes, so
     // an empty workout starts empty again.
@@ -2336,6 +2350,7 @@ export default function WorkoutSession({
               <Button
                 variant="ghost"
                 onClick={() => {
+                  hasEnteredValues.current = true;
                   setExerciseNotes((prev) => ({
                     ...prev,
                     [currentExIndex]: previousNotes[currentExIndex].text,
@@ -2723,12 +2738,13 @@ export default function WorkoutSession({
           placeholder="Add a note for next time"
           aria-label="Exercise notes"
           value={exerciseNotes[currentExIndex] || ""}
-          onChange={(e) =>
+          onChange={(e) => {
+            hasEnteredValues.current = true;
             setExerciseNotes((prev) => ({
               ...prev,
               [currentExIndex]: e.target.value,
-            }))
-          }
+            }));
+          }}
           className="ds-input min-h-11 w-full text-sm"
         />
 

@@ -1,8 +1,10 @@
 # Home training and progress comparison
 
+Home additions were declined because the screen already feels full. The follow-up targets [Train and exercise progress](./train-progress-2026-10-28.md).
+
 Home already puts the planned session below the week strip, with its name, exercise count, estimated time and **Start workout** button. Keep that order. The iOS screens from [Centr](https://mobbin.com/screens/e7523bd0-c371-441a-9971-c8abf5f81578) and [Runna](https://mobbin.com/screens/20751c4f-c638-4561-8220-00beafe536e7) also put the day's training near the top.
 
-## Recommended next changes
+## Initial recommendations
 
 1. **Show today's saved workout beside training.** Home currently requires opening a calendar day to reveal saved workout links. Runna's iOS Today screen puts the saved activity and its results directly below the completed session. My opinion is to show one compact saved-workout link below Tropos's training card, with its name and duration; the calendar can retain the full day's list.
    Reference: [Runna](https://mobbin.com/screens/20751c4f-c638-4561-8220-00beafe536e7).
