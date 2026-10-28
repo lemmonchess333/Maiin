@@ -1994,6 +1994,10 @@ export default function Food() {
           sodium: dailyTotals.sodium,
         }}
         dailyTargets={dailyTargets}
+        onOpenWeek={() => {
+          setHeroSheetOpen(false);
+          navigate("/history?view=food");
+        }}
       />
 
       {/* FOOD-02: post-run refuel handoff. Renders ONLY when arriving via
