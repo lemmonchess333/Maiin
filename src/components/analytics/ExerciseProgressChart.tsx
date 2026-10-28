@@ -24,6 +24,16 @@ export interface ExerciseProgressPoint {
 interface Props {
   data: ExerciseProgressPoint[];
   accent: string;
+  metricLabel: string;
+  unit: string;
+}
+
+function formatValue(value: number, unit: string, spoken = false) {
+  const number = value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  if (unit === "s") {
+    return spoken ? `${number} second${value === 1 ? "" : "s"}` : `${number}s`;
+  }
+  return `${number} ${unit === "reps" && value === 1 ? "rep" : unit}`;
 }
 
 // Custom dot factory: larger filled marker for PR sessions, small dot
@@ -60,7 +70,12 @@ function dotRenderer(accent: string) {
   };
 }
 
-export default function ExerciseProgressChart({ data, accent }: Props) {
+export default function ExerciseProgressChart({
+  data,
+  accent,
+  metricLabel,
+  unit,
+}: Props) {
   /* One formatter for every date axis in the app. This copy was
      CORRECT — the "T12:00:00" suffix forced a local parse to match the
      local `getDate()` — but two of its four siblings were not, and four
@@ -88,8 +103,8 @@ export default function ExerciseProgressChart({ data, accent }: Props) {
   const lastDate = formatDayMonth(
     new Date(data[data.length - 1].date + "T12:00:00")
   );
-  const latestValue = Math.round(data[data.length - 1].value).toLocaleString();
-  const ariaLabel = `Progression chart, ${data.length} session${data.length === 1 ? "" : "s"} from ${firstDate} to ${lastDate}. Latest value: ${latestValue}. ${prCount} personal record${prCount === 1 ? "" : "s"}.`;
+  const latestValue = formatValue(data[data.length - 1].value, unit, true);
+  const ariaLabel = `Progression chart, ${metricLabel}. ${data.length} session${data.length === 1 ? "" : "s"} from ${firstDate} to ${lastDate}. Latest value: ${latestValue}. ${prCount} personal record${prCount === 1 ? "" : "s"}.`;
 
   return (
     <div className="h-44" role="img" aria-label={ariaLabel}>
@@ -144,8 +159,11 @@ export default function ExerciseProgressChart({ data, accent }: Props) {
                   <div style={{ fontWeight: 600, marginBottom: 4 }}>
                     {label}
                   </div>
-                  <div style={{ color: accent }}>
-                    {Math.round(point.value).toLocaleString()}
+                  <div
+                    className="font-mono tabular-nums"
+                    style={{ color: accent }}
+                  >
+                    {formatValue(point.value, unit)}
                     {point.isPR && (
                       <span
                         style={{

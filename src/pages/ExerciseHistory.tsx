@@ -140,8 +140,10 @@ export default function ExerciseHistory() {
   const allSessions: SessionSummary[] = useMemo(() => {
     const out: SessionSummary[] = [];
     for (const w of workouts) {
-      const ex = w.exercises?.find((e) => e.exerciseName === decodedName);
-      if (!ex || !ex.sets || ex.sets.length === 0) continue;
+      const entries = w.exercises?.filter(
+        (e) => e.exerciseName === decodedName
+      );
+      if (!entries?.length) continue;
       // Coerce at the boundary, not at each of the four uses below. A
       // legacy set with a missing `weightKg` or `reps` otherwise poisons
       // ALL of them at once: `volume` becomes NaN, and because NaN wins
@@ -149,7 +151,8 @@ export default function ExerciseHistory() {
       // running max stay NaN for the rest of the session too. Same
       // failure History fixed by routing tonnage through
       // `workoutTonnageKg`'s guarded multiply.
-      const sets = ex.sets
+      const sets = entries
+        .flatMap((entry) => entry.sets ?? [])
         .filter((s) => s.type !== "warmup")
         .map((s) => ({
           reps: s.reps || 0,
@@ -195,22 +198,56 @@ export default function ExerciseHistory() {
   // most recent date that achieved exactly that rep count.
   const repRangePRs = useMemo(() => bestSetsByReps(allSessions), [allSessions]);
 
-  // Walk sessions chronologically tracking running best. Flag each session
-  // whose top-set e1rm beats the previous running best — these get a
-  // filled-star marker on the chart. Without this, the line is just a
-  // trend with no "you made history here" signal.
+  // Bodyweight charts use Reps / Volume; timed charts always use Seconds.
+  // Keep a valid selection when navigating between exercise types.
+  const metricOptions: Metric[] = isTimed
+    ? ["1RM"]
+    : isBodyweight
+      ? ["1RM", "Volume"]
+      : ["1RM", "Max Weight", "Volume"];
+  const displayMetric = isTimed
+    ? "1RM"
+    : isBodyweight && metric === "Max Weight"
+      ? "1RM"
+      : metric;
+  const metricLabel = isTimed
+    ? "Longest hold"
+    : isBodyweight && displayMetric === "1RM"
+      ? "Total reps"
+      : displayMetric === "1RM"
+        ? "Estimated one-rep max"
+        : displayMetric === "Max Weight"
+          ? "Max weight"
+          : "Volume";
+  const chartUnit = isTimed
+    ? "s"
+    : isBodyweight && displayMetric !== "Volume"
+      ? "reps"
+      : unitLabel;
+
+  // Compare the selected metric against every earlier session, including
+  // sessions outside the visible range. Compare stored values before unit
+  // conversion or display rounding; a tie is not a new record.
   const prSessions = useMemo(() => {
     const prs = new Set<string>();
     let runningBest = 0;
     for (const s of allSessions) {
-      const score = isTimed ? (s.topSet?.reps ?? 0) : s.e1rm;
+      const score = isTimed
+        ? (s.topSet?.reps ?? 0)
+        : displayMetric === "Volume"
+          ? s.volume
+          : isBodyweight
+            ? s.totalReps
+            : displayMetric === "Max Weight"
+              ? s.maxWeight
+              : s.e1rm;
       if (score > runningBest) {
         runningBest = score;
         prs.add(s.workoutId);
       }
     }
     return prs;
-  }, [allSessions, isTimed]);
+  }, [allSessions, displayMetric, isBodyweight, isTimed]);
 
   // A whole top set keeps weight and reps together. Session IDs keep two
   // workouts on one day from sharing a comparison or a PR marker.
@@ -289,18 +326,6 @@ export default function ExerciseHistory() {
     liftUnit,
     exercise?.id,
   ]);
-
-  // For BW exercises the toggle simplifies to Reps / Volume — no
-  // weight-based option makes sense when the weight is implicit. The
-  // "1RM" member is the internal key for that first slot; what a reader
-  // sees is resolved at the pill, beside the value it labels.
-  const metricOptions: Metric[] = isTimed
-    ? ["1RM"]
-    : isBodyweight
-      ? ["1RM", "Volume"]
-      : ["1RM", "Max Weight", "Volume"];
-  const displayMetric =
-    (isBodyweight || isTimed) && metric === "Max Weight" ? "1RM" : metric;
 
   const goBack = useCallback(() => {
     haptic("light");
@@ -415,7 +440,7 @@ export default function ExerciseHistory() {
                   ? "Longest hold"
                   : isBodyweight
                     ? "Max reps"
-                    : "Best 1RM"}
+                    : "Best est. 1RM"}
               </SectionLabel>
               <p className="text-lg font-extrabold font-figure tabular-nums text-foreground mt-1">
                 {isTimed
@@ -548,44 +573,26 @@ export default function ExerciseHistory() {
                   10.5em of card (double size) its options stack full width:
                   in a row they were wider than the screen. Wide-first. */}
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <SectionLabel>Progression</SectionLabel>
-                <div className="flex gap-1 bg-muted rounded-full p-0.5 @max-[10.5em]:w-full @max-[10.5em]:flex-col @max-[10.5em]:rounded-2xl">
-                  {metricOptions.map((m) => (
-                    <button
-                      type="button"
-                      key={m}
-                      onClick={() => {
-                        haptic("light");
-                        setMetric(m);
-                      }}
-                      className={`min-h-11 px-2 py-1 rounded-full text-micro font-semibold transition-colors ${
-                        displayMetric === m
-                          ? "bg-card text-foreground"
-                          : "text-muted-foreground"
-                      }`}
-                      style={
-                        displayMetric === m
-                          ? { boxShadow: "var(--ds-shadow-card)" }
-                          : undefined
-                      }
-                    >
-                      {/* The label names what the chart plots. For a
-                          bodyweight exercise the "1RM" option charts
-                          `s.totalReps` — a one-rep max is meaningless
-                          when there is no external load — so the pill
-                          said 1RM above a line of rep counts, with the
-                          header stat beside it already reading "Max
-                          reps". The comment on `metricOptions` says
-                          "Reps" too; only the pill did not. Same shape
-                          as the `isTimed` branch that is already here. */}
-                      {isTimed
-                        ? "Seconds"
-                        : isBodyweight && m === "1RM"
-                          ? "Reps"
-                          : m}
-                    </button>
-                  ))}
-                </div>
+                <SectionLabel>Progression ({chartUnit})</SectionLabel>
+                <SegmentedControl
+                  ariaLabel="Progression metric"
+                  value={displayMetric}
+                  onChange={(value) => {
+                    haptic("light");
+                    setMetric(value);
+                  }}
+                  options={metricOptions.map((m) => ({
+                    value: m,
+                    label: isTimed
+                      ? "Seconds"
+                      : isBodyweight && m === "1RM"
+                        ? "Reps"
+                        : m === "1RM"
+                          ? "Est. 1RM"
+                          : m,
+                  }))}
+                  className="p-0.5 rounded-full [&_button]:flex-none [&_button]:min-w-[44px] [&_button]:rounded-full [&_button]:px-2 [&_button]:text-micro @max-[10.5em]:w-full @max-[10.5em]:flex-col @max-[10.5em]:rounded-2xl"
+                />
               </div>
               <Suspense
                 fallback={
@@ -595,6 +602,8 @@ export default function ExerciseHistory() {
                 <ExerciseProgressChart
                   data={chartData}
                   accent={THEME.lifting}
+                  metricLabel={metricLabel}
+                  unit={chartUnit}
                 />
               </Suspense>
             </div>
