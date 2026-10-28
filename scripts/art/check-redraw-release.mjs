@@ -1,22 +1,32 @@
 /** Browser-smoke a released versioned form-art set in the production player.
  * Start Vite with HOSTING_TARGET=firebase and run with one or more exercise IDs.
  *   node scripts/art/check-redraw-release.mjs db-bench hack-squat
- *   node scripts/art/check-redraw-release.mjs --date=2026-10-28 front-squat
+ *   node scripts/art/check-redraw-release.mjs --date=2026-10-28 --port=4177 front-squat
  */
 import { chromium } from "playwright";
 
 const args = process.argv.slice(2);
 const dateOption = args.find((arg) => arg.startsWith("--date="));
 const date = dateOption?.slice("--date=".length) ?? "2026-10-27";
-const ids = args.filter((arg) => arg !== dateOption);
+const portOption = args.find((arg) => arg.startsWith("--port="));
+const port = portOption?.slice("--port=".length) ?? "4177";
+const ids = args.filter((arg) => arg !== dateOption && arg !== portOption);
 if (
   !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+  !/^\d{1,5}$/.test(port) ||
+  Number(port) < 1 ||
+  Number(port) > 65535 ||
   !ids.length ||
   ids.some((id) => !/^[a-z0-9-]+$/.test(id))
 ) {
-  throw new Error("Usage: check-redraw-release.mjs [--date=YYYY-MM-DD] <exercise-id> [...]");
+  throw new Error("Usage: check-redraw-release.mjs [--date=YYYY-MM-DD] [--port=PORT] <exercise-id> [...]");
 }
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  ...(process.env.CHROMIUM_PATH
+    ? { executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox"] }
+    : {}),
+});
 try {
   for (const id of ids) {
     for (const theme of ["dark", "light"]) {
@@ -26,7 +36,7 @@ try {
       page.on("console", (message) => {
         if (message.type() === "error") errors.push(message.text());
       });
-      await page.goto("http://127.0.0.1:4177/e2e/fixtures/form-art.html");
+      await page.goto(`http://127.0.0.1:${port}/e2e/fixtures/form-art.html`);
       await page.getByRole("combobox", { name: "Exercise" }).selectOption(id);
       if (theme === "light") await page.getByRole("button", { name: "Light theme" }).click();
       const guide = page.getByRole("region", { name: `${id} form guide` });

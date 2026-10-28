@@ -1,0 +1,359 @@
+{
+  "summary": {
+    "max_hand_gap_m": 0.05147852482159577,
+    "max_finger_hook_surface_gap_m": 0.012047160881642767,
+    "max_pedal_target_gap_m": 0.0,
+    "max_shoe_to_pedal_vertical_gap_m": 0.006621897220611572,
+    "min_shoe_pedal_y_overlap_m": 0.142806738615036,
+    "max_fixed_anchor_drift_px": 0.0,
+    "max_seated_hip_drift_m": 0.0,
+    "fan_apparent_degrees": [
+      0.0,
+      10.0,
+      20.0,
+      30.0,
+      40.0,
+      50.0,
+      0.0
+    ],
+    "source_blend": "/tmp/assault-bike-final/assault-final.blend"
+  },
+  "frames": [
+    {
+      "frame": 1,
+      "fan_apparent_degrees": 0.0,
+      "hands": {
+        "near": {
+          "grip_px": [
+            422.281,
+            375.67
+          ],
+          "hook_px": [
+            432.8,
+            383.767
+          ],
+          "wrist_to_grip_m": 0.051478,
+          "hook_to_rubber_surface_m": 0.002061
+        },
+        "far": {
+          "grip_px": [
+            521.832,
+            328.858
+          ],
+          "hook_px": [
+            510.698,
+            332.248
+          ],
+          "wrist_to_grip_m": 0.051479,
+          "hook_to_rubber_surface_m": 0.003665
+        }
+      },
+      "pedals": {
+        "near": {
+          "center_px": [
+            520.402,
+            745.406
+          ],
+          "shoe_to_pedal_vertical_m": -0.006593,
+          "shoe_pedal_y_overlap_m": 0.142807
+        },
+        "far": {
+          "center_px": [
+            623.429,
+            698.527
+          ],
+          "shoe_to_pedal_vertical_m": -0.006596,
+          "shoe_pedal_y_overlap_m": 0.147059
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "fan_apparent_degrees": 10.0,
+      "hands": {
+        "near": {
+          "grip_px": [
+            453.254,
+            371.154
+          ],
+          "hook_px": [
+            457.683,
+            380.455
+          ],
+          "wrist_to_grip_m": 0.033634,
+          "hook_to_rubber_surface_m": 0.005975
+        },
+        "far": {
+          "grip_px": [
+            490.858,
+            325.529
+          ],
+          "hook_px": [
+            484.916,
+            329.897
+          ],
+          "wrist_to_grip_m": 0.033634,
+          "hook_to_rubber_surface_m": 0.012047
+        }
+      },
+      "pedals": {
+        "near": {
+          "center_px": [
+            552.357,
+            799.472
+          ],
+          "shoe_to_pedal_vertical_m": -0.006586,
+          "shoe_pedal_y_overlap_m": 0.14281
+        },
+        "far": {
+          "center_px": [
+            591.474,
+            644.461
+          ],
+          "shoe_to_pedal_vertical_m": -0.006585,
+          "shoe_pedal_y_overlap_m": 0.147057
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "fan_apparent_degrees": 20.0,
+      "hands": {
+        "near": {
+          "grip_px": [
+            515.651,
+            369.957
+          ],
+          "hook_px": [
+            508.047,
+            380.044
+          ],
+          "wrist_to_grip_m": 0.033634,
+          "hook_to_rubber_surface_m": 0.000605
+        },
+        "far": {
+          "grip_px": [
+            428.462,
+            326.726
+          ],
+          "hook_px": [
+            434.081,
+            331.799
+          ],
+          "wrist_to_grip_m": 0.033634,
+          "hook_to_rubber_surface_m": 0.007579
+        }
+      },
+      "pedals": {
+        "near": {
+          "center_px": [
+            616.267,
+            798.246
+          ],
+          "shoe_to_pedal_vertical_m": -0.006588,
+          "shoe_pedal_y_overlap_m": 0.142815
+        },
+        "far": {
+          "center_px": [
+            527.564,
+            645.687
+          ],
+          "shoe_to_pedal_vertical_m": -0.006622,
+          "shoe_pedal_y_overlap_m": 0.14705
+        }
+      }
+    },
+    {
+      "frame": 4,
+      "fan_apparent_degrees": 30.0,
+      "hands": {
+        "near": {
+          "grip_px": [
+            546.624,
+            373.286
+          ],
+          "hook_px": [
+            533.555,
+            382.879
+          ],
+          "wrist_to_grip_m": 0.051478,
+          "hook_to_rubber_surface_m": 0.008352
+        },
+        "far": {
+          "grip_px": [
+            397.489,
+            331.242
+          ],
+          "hook_px": [
+            409.286,
+            336.677
+          ],
+          "wrist_to_grip_m": 0.051478,
+          "hook_to_rubber_surface_m": 0.004623
+        }
+      },
+      "pedals": {
+        "near": {
+          "center_px": [
+            648.222,
+            742.955
+          ],
+          "shoe_to_pedal_vertical_m": -0.006596,
+          "shoe_pedal_y_overlap_m": 0.142823
+        },
+        "far": {
+          "center_px": [
+            495.609,
+            700.978
+          ],
+          "shoe_to_pedal_vertical_m": -0.006594,
+          "shoe_pedal_y_overlap_m": 0.147042
+        }
+      }
+    },
+    {
+      "frame": 5,
+      "fan_apparent_degrees": 40.0,
+      "hands": {
+        "near": {
+          "grip_px": [
+            515.651,
+            369.957
+          ],
+          "hook_px": [
+            508.047,
+            380.044
+          ],
+          "wrist_to_grip_m": 0.033634,
+          "hook_to_rubber_surface_m": 0.000605
+        },
+        "far": {
+          "grip_px": [
+            428.462,
+            326.726
+          ],
+          "hook_px": [
+            434.081,
+            331.799
+          ],
+          "wrist_to_grip_m": 0.033634,
+          "hook_to_rubber_surface_m": 0.007579
+        }
+      },
+      "pedals": {
+        "near": {
+          "center_px": [
+            616.267,
+            688.889
+          ],
+          "shoe_to_pedal_vertical_m": -0.006585,
+          "shoe_pedal_y_overlap_m": 0.142821
+        },
+        "far": {
+          "center_px": [
+            527.564,
+            755.044
+          ],
+          "shoe_to_pedal_vertical_m": -0.006586,
+          "shoe_pedal_y_overlap_m": 0.147046
+        }
+      }
+    },
+    {
+      "frame": 6,
+      "fan_apparent_degrees": 50.0,
+      "hands": {
+        "near": {
+          "grip_px": [
+            453.254,
+            371.154
+          ],
+          "hook_px": [
+            457.683,
+            380.455
+          ],
+          "wrist_to_grip_m": 0.033634,
+          "hook_to_rubber_surface_m": 0.005975
+        },
+        "far": {
+          "grip_px": [
+            490.858,
+            325.529
+          ],
+          "hook_px": [
+            484.916,
+            329.897
+          ],
+          "wrist_to_grip_m": 0.033634,
+          "hook_to_rubber_surface_m": 0.012047
+        }
+      },
+      "pedals": {
+        "near": {
+          "center_px": [
+            552.357,
+            690.115
+          ],
+          "shoe_to_pedal_vertical_m": -0.006622,
+          "shoe_pedal_y_overlap_m": 0.142814
+        },
+        "far": {
+          "center_px": [
+            591.474,
+            753.818
+          ],
+          "shoe_to_pedal_vertical_m": -0.006588,
+          "shoe_pedal_y_overlap_m": 0.14705
+        }
+      }
+    },
+    {
+      "frame": 7,
+      "fan_apparent_degrees": 0.0,
+      "hands": {
+        "near": {
+          "grip_px": [
+            422.281,
+            375.67
+          ],
+          "hook_px": [
+            432.8,
+            383.767
+          ],
+          "wrist_to_grip_m": 0.051478,
+          "hook_to_rubber_surface_m": 0.002061
+        },
+        "far": {
+          "grip_px": [
+            521.832,
+            328.858
+          ],
+          "hook_px": [
+            510.698,
+            332.248
+          ],
+          "wrist_to_grip_m": 0.051479,
+          "hook_to_rubber_surface_m": 0.003665
+        }
+      },
+      "pedals": {
+        "near": {
+          "center_px": [
+            520.402,
+            745.406
+          ],
+          "shoe_to_pedal_vertical_m": -0.006593,
+          "shoe_pedal_y_overlap_m": 0.142807
+        },
+        "far": {
+          "center_px": [
+            623.429,
+            698.527
+          ],
+          "shoe_to_pedal_vertical_m": -0.006596,
+          "shoe_pedal_y_overlap_m": 0.147059
+        }
+      }
+    }
+  ]
+}

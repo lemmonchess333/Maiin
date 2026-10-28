@@ -19,6 +19,7 @@ import { PLACARD_CUE_WORDS } from "../exerciseTempo";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { EXERCISES } from "../exercises";
 import { isFormArtQuarantined } from "../formArtQuarantine";
+import { getFormPlayback } from "../formGuides";
 import { FAR_ARM_SHIFT, SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
 
 describe("body demo cycle timing", () => {
@@ -5720,6 +5721,17 @@ describe("form beats — the caption is a claim about the frame", () => {
           expect(beats[3].cue).toContain("from your ankles");
           expect(beats[0].cue).toContain("hands free");
         }
+        continue;
+      }
+      if (id === "elliptical" || id === "assault-bike") {
+        // The moving handles and pedals complete one continuous cycle;
+        // reversing the last still would teach the wrong stroke.
+        expect(new Set(beats.map((beat) => beat.t)).size).toBe(6);
+        for (let i = 0; i < beats.length; i++) {
+          const next = beats[(i + 1) % beats.length].t;
+          expect((next - beats[i].t + 1) % 1).toBeCloseTo(1 / 6);
+        }
+        expect(getFormPlayback(id)).toBe("cycle");
         continue;
       }
       if (id === "walking-dumbbell-lunges") {

@@ -1400,7 +1400,7 @@ export const EXERCISES: Exercise[] = [
     equipment: "Barbell",
     caloriesPerMinute: 9,
     instructions: [
-      "Rack the bar on your front delts with elbows pointing forward and high.",
+      "Rest the bar on your front delts. Cross your forearms above it and lightly secure it near the opposite shoulders, keeping elbows high.",
       "Feet shoulder-width, toes slightly out, core braced hard.",
       "Squat down with an upright torso until thighs are at or below parallel.",
       "Drive up through your whole foot, keeping elbows high all the way.",
