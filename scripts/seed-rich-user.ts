@@ -230,6 +230,25 @@ async function main() {
     });
   }
 
+  // ── One saved food, so My pantry (Settings → Nutrition) has a row to
+  //    open. Logged once: under Quick add's graduation count of two, so
+  //    the Food page's lists are as they were. ──
+  await base
+    .collection("foodFavourites")
+    .doc("flat_white")
+    .set({
+      name: "Flat white",
+      calories: 120,
+      protein: 7,
+      carbs: 10,
+      fat: 6,
+      servingSize: "1 cup",
+      lastUsed: Timestamp.fromDate(day(1)),
+      useCount: 1,
+      timeOfDay: "morning",
+      source: "manual",
+    });
+
   // ── Performance: 6 weekly rollup docs scored through the REAL engine
   //    (computePerformanceIndex), so the Home Performance hero card lights
   //    up with a truthful PI, load band, and week-over-week delta — not a
