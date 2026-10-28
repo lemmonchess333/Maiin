@@ -251,3 +251,70 @@ describe("Food — the Quick add list's More row", () => {
     expect(screen.queryByRole("button", { name: "More" })).toBeNull();
   });
 });
+
+function dish(): Meal {
+  return {
+    ...meal("dish", "Chicken, Rice, Oil", 645),
+    items: [
+      {
+        name: "Chicken",
+        portionSize: "200g",
+        calories: 330,
+        protein: 62,
+        carbs: 0,
+        fat: 7,
+      },
+      {
+        name: "Rice",
+        portionSize: "150g",
+        calories: 195,
+        protein: 4,
+        carbs: 42,
+        fat: 0,
+      },
+      {
+        name: "Oil",
+        portionSize: "1 tbsp",
+        calories: 120,
+        protein: 0,
+        carbs: 0,
+        fat: 14,
+      },
+    ],
+    totalProtein: 66,
+    totalCarbs: 42,
+    totalFat: 21,
+  };
+}
+
+function openRow(name: RegExp) {
+  fireEvent.keyDown(screen.getByRole("button", { name }), { key: "Enter" });
+}
+
+describe("Food — one food of an entry of several", () => {
+  it("writes the edited foods, their sum and the name they make", async () => {
+    api.meals = [dish()];
+    renderFood();
+    openRow(/^Edit Chicken, Rice, Oil/);
+    fireEvent.change(screen.getByLabelText("Grams of Chicken"), {
+      target: { value: "150" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Remove Oil" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(api.editMeal).toHaveBeenCalledOnce());
+    const [id, changes] = api.editMeal.mock.calls[0];
+    expect(id).toBe("dish");
+    expect(changes.items.map((i: { name: string }) => i.name)).toEqual([
+      "Chicken",
+      "Rice",
+    ]);
+    expect(changes).toMatchObject({
+      foodName: "Chicken, Rice",
+      totalCalories: 442.5,
+      totalProtein: 50.5,
+      totalCarbs: 42,
+      totalFat: 5.3,
+    });
+    expect(api.createMealEntry).not.toHaveBeenCalled();
+  });
+});

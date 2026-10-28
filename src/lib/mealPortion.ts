@@ -13,6 +13,7 @@
  */
 import type { Meal, MealItem } from "@/hooks/useMeals";
 import { round1 } from "@/lib/foodParseHelpers";
+import { buildFoodNameFromItems } from "@/lib/foodNameBuilder";
 
 /** A multiplier written at the front of a portion: "1.5x ", "2 × ". */
 const MULTIPLIER_PREFIX = /^(\d+(?:[.,]\d+)?|[.,]\d+)\s*[x×]\s+(.+)$/i;
@@ -204,6 +205,123 @@ export function entryPortion(meal: Pick<Meal, "items">): EntryPortion {
     multiplier: shared,
     baseGrams: readings.length === 1 ? gramsOf(first.base) : null,
   };
+}
+
+/** Where one item's portion stands: its multiplier against what it was
+ *  logged at, and the grams in one of those when it is a weight. */
+export function itemPortion(item: Pick<MealItem, "portionSize">): {
+  multiplier: number;
+  baseGrams: number | null;
+} {
+  const { multiplier, base } = readPortion(item.portionSize);
+  return { multiplier, baseGrams: gramsOf(base) };
+}
+
+/** The fields a person sets by changing an item's amount, locked against
+ *  a later automatic refinement (F1d: per-item locks, each field on its
+ *  own). */
+export const ITEM_AMOUNT_FIELDS = [
+  "portionSize",
+  "calories",
+  "protein",
+  "carbs",
+  "fat",
+] as const;
+
+/** One item at `nextMultiplier` servings of what it was logged at, its
+ *  figures scaled with it and kept to one place, as `rescaleMealPortion`
+ *  keeps them. The fields that moved are added to its locks. */
+export function rescaleItem(item: MealItem, nextMultiplier: number): MealItem {
+  if (!Number.isFinite(nextMultiplier) || nextMultiplier <= 0) {
+    throw new Error("Enter an amount greater than 0.");
+  }
+  const { multiplier, base } = readPortion(item.portionSize);
+  if (nextMultiplier === multiplier) return item;
+  const ratio = nextMultiplier / multiplier;
+  const scale = (n: unknown) => round1(finite(n) * ratio);
+  return {
+    ...item,
+    portionSize: writePortion(nextMultiplier, base),
+    calories: scale(item.calories),
+    protein: scale(item.protein),
+    carbs: scale(item.carbs),
+    fat: scale(item.fat),
+    ...(item.fiber !== undefined ? { fiber: scale(item.fiber) } : {}),
+    ...(item.sugar !== undefined ? { sugar: scale(item.sugar) } : {}),
+    ...(item.sodium !== undefined ? { sodium: scale(item.sodium) } : {}),
+    userEditedFields: Array.from(
+      new Set([...(item.userEditedFields ?? []), ...ITEM_AMOUNT_FIELDS])
+    ),
+  };
+}
+
+/**
+ * A multi-item entry rebuilt from its edited items: the items that are
+ * left, and totals that are their sum (F1d: the totals of an entry of
+ * several foods come from its foods). Fibre, sugar and sodium are summed
+ * where every item carries them; where the items do not, the entry's own
+ * total moves with its calories, the only figure both sides have.
+ */
+export function mealFromItems(
+  meal: Pick<
+    Meal,
+    "items" | "totalCalories" | "totalFiber" | "totalSugar" | "totalSodium"
+  >,
+  items: MealItem[]
+): RescaledPortion {
+  if (items.length === 0) {
+    throw new Error("Keep at least one item, or delete the entry.");
+  }
+  const sum = (pick: (item: MealItem) => unknown) =>
+    round1(items.reduce((s, item) => s + finite(pick(item)), 0));
+  const totalCalories = sum((item) => item.calories);
+  const before = (meal.items ?? []).reduce(
+    (s, item) => s + finite(item.calories),
+    0
+  );
+  const calorieShare = before > 0 ? totalCalories / before : 1;
+  const micro = (
+    key: "fiber" | "sugar" | "sodium",
+    total: number | undefined
+  ): number | undefined => {
+    if (items.every((item) => item[key] !== undefined))
+      return sum((item) => item[key]);
+    return total === undefined ? undefined : round1(total * calorieShare);
+  };
+  const totalFiber = micro("fiber", meal.totalFiber);
+  const totalSugar = micro("sugar", meal.totalSugar);
+  const totalSodium = micro("sodium", meal.totalSodium);
+  return {
+    items,
+    totalCalories,
+    totalProtein: sum((item) => item.protein),
+    totalCarbs: sum((item) => item.carbs),
+    totalFat: sum((item) => item.fat),
+    ...(totalFiber !== undefined ? { totalFiber } : {}),
+    ...(totalSugar !== undefined ? { totalSugar } : {}),
+    ...(totalSodium !== undefined ? { totalSodium } : {}),
+  };
+}
+
+/**
+ * The entry's name once items are removed, when the name was made from
+ * its items: the typed meal's "Chicken, Rice, Oil" and the scan's
+ * "Chicken, Rice +1" both name what is in it, so taking the oil out
+ * takes it out of the name. A name of the person's own, or the scan's
+ * product name, stays. Null when nothing changes.
+ */
+export function nameFromItems(
+  meal: Pick<Meal, "foodName" | "items">,
+  next: readonly MealItem[]
+): string | null {
+  const before = meal.items ?? [];
+  const joined = (list: readonly MealItem[]) =>
+    list.map((item) => item.name).join(", ");
+  let renamed: string | null = null;
+  if (meal.foodName === joined(before)) renamed = joined(next);
+  else if (meal.foodName === buildFoodNameFromItems(before, meal.foodName))
+    renamed = buildFoodNameFromItems(next, meal.foodName);
+  return renamed && renamed !== meal.foodName ? renamed : null;
 }
 
 export interface RescaledPortion {

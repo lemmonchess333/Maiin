@@ -37,7 +37,7 @@ const ManualFoodLogger = lazyRetry(() =>
     default: m.ManualFoodLogger,
   }))
 );
-import { useMeals, type Meal } from "@/hooks/useMeals";
+import { useMeals, type Meal, type MealItem } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { Timestamp } from "firebase/firestore";
 import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
@@ -82,7 +82,12 @@ import { keepFoodDraft, keptFoodDraft } from "@/lib/foodDraft";
 import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
-import { entryPortion, rescaleMealPortion } from "@/lib/mealPortion";
+import {
+  entryPortion,
+  mealFromItems,
+  nameFromItems,
+  rescaleMealPortion,
+} from "@/lib/mealPortion";
 import CopyMealsSheet from "@/components/food/CopyMealsSheet";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
@@ -1265,12 +1270,19 @@ export default function Food() {
       totalFat?: number;
     } | null;
     targetPortion: number | null;
+    targetItems: MealItem[] | null;
   }) => {
     if (!uid || !editingGroup) return;
     const { meals: groupMeals, foodName } = editingGroup;
     const currentCount = groupMeals.length;
-    const { targetCount, targetMeal, targetName, targetMacros, targetPortion } =
-      changes;
+    const {
+      targetCount,
+      targetMeal,
+      targetName,
+      targetMacros,
+      targetPortion,
+      targetItems,
+    } = changes;
 
     // F5a: slot + rename + macro changes ALL fan out to one editMeal
     // per doc in the group. Combine them into a SINGLE editMeal call
@@ -1282,17 +1294,30 @@ export default function Food() {
     // A new portion (one entry only) rescales the entry's items and totals
     // from what it holds, and writes the multiplier into the items'
     // portions the way every scaled log does. Typed figures still win.
-    if (targetMeal || targetName || targetMacros || targetPortion) {
+    // Edited items (an entry of several foods) replace the entry's items,
+    // its totals become their sum, and a name made from the items follows
+    // the ones that are left; a name typed in the sheet still wins.
+    if (
+      targetMeal ||
+      targetName ||
+      targetMacros ||
+      targetPortion ||
+      targetItems
+    ) {
       try {
         await Promise.all(
-          groupMeals.map((m) =>
-            editMeal(m.id, {
+          groupMeals.map((m) => {
+            const itemName =
+              !targetName && targetItems ? nameFromItems(m, targetItems) : null;
+            return editMeal(m.id, {
               ...(targetPortion ? rescaleMealPortion(m, targetPortion) : {}),
+              ...(targetItems ? mealFromItems(m, targetItems) : {}),
               ...(targetMeal ? { meal: targetMeal } : {}),
               ...(targetName ? { foodName: targetName } : {}),
+              ...(itemName ? { foodName: itemName } : {}),
               ...(targetMacros ?? {}),
-            })
-          )
+            });
+          })
         );
       } catch (err) {
         logger.error("[Food] meal edit failed", err);
@@ -1315,7 +1340,7 @@ export default function Food() {
         toast.success(`Moved ${foodName} to ${MEAL_LABELS[targetMeal]}`, {
           id: `food-slot-${foodName}`,
         });
-      } else if (targetMacros || targetPortion) {
+      } else if (targetMacros || targetPortion || targetItems) {
         toast.success(`Updated ${foodName}`, {
           id: `food-macros-${editingGroup.id}`,
         });
@@ -2503,6 +2528,12 @@ export default function Food() {
             currentPortion:
               editingGroup.meals.length === 1
                 ? entryPortion(editingGroup.meals[0])
+                : null,
+            /* One entry of several foods is corrected food by food. */
+            currentItems:
+              editingGroup.meals.length === 1 &&
+              (editingGroup.meals[0].items?.length ?? 0) > 1
+                ? editingGroup.meals[0].items
                 : null,
           }}
           onCancel={() => setEditingGroup(null)}
