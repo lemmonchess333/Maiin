@@ -26,7 +26,8 @@
  * 50 and would 404 on an older session or on a cold deep-link before the
  * snapshot resolves.
  */
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { trainingHistoryReturnTo } from "@/lib/trainingHistory";
 import {
@@ -65,7 +66,6 @@ import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
 import WorkoutFeedShareSheet from "@/components/workout/WorkoutFeedShareSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
-import CorrectWorkoutSheet from "@/components/workout/CorrectWorkoutSheet";
 import SaveRoutineSheet from "@/components/social/SaveRoutineSheet";
 import { workoutExercisesToRoutine } from "@/lib/savedRoutines";
 
@@ -77,6 +77,12 @@ import {
   workoutTitle,
   type Workout,
 } from "@/hooks/useWorkouts";
+
+/* Correcting a workout, with its rules for what a correction may change,
+   loads when it is opened: most visits to this page only read it. */
+const CorrectWorkoutSheet = lazyRetry(
+  () => import("@/components/workout/CorrectWorkoutSheet")
+);
 
 /** Working sets only. Warm-ups are logged on the same list but are not the
  *  session's work, and counting them inflates every set total on the page —
@@ -115,8 +121,11 @@ function setResult(
  *  as it did there (setLabels). */
 function ExerciseRecord({
   exercise,
+  bests,
 }: {
   exercise: Workout["exercises"][number];
+  /** Its sets that were new bests, by their place in the list below. */
+  bests?: ReadonlySet<number>;
 }) {
   const sets = workingSets(exercise);
   const timed = exercise.repUnit === "seconds";
@@ -178,8 +187,18 @@ function ExerciseRecord({
                   {result.shown}
                 </span>
                 <span className="sr-only">
-                  {`${setName(sets, i)}${kind}: ${result.spoken}`}
+                  {`${setName(sets, i)}${kind}: ${result.spoken}${bests?.has(i) ? ", a new best" : ""}`}
                 </span>
+                {/* Gold means a new best and nothing else (DS3), marked
+                    as the workout screen's tick marks it. */}
+                {bests?.has(i) && (
+                  <span
+                    aria-hidden="true"
+                    className="ml-auto text-caption font-semibold text-achievement-strong"
+                  >
+                    PR
+                  </span>
+                )}
               </li>
             );
           })}
@@ -230,6 +249,28 @@ function WorkoutDetailContent() {
    *  set against: a fresh read (a retry, a correction) supersedes it and the
    *  doc's own `sharedActivityId` shows again, so no effect has to re-seed
    *  it. */
+  /* The sets that were new bests, worked out from the history before
+     this workout (`workoutBests`), loaded on their own after the page.
+     Kept against the doc they were worked out for. */
+  const [bests, setBests] = useState<{
+    doc: Workout & { id: string };
+    sets: Map<number, Set<number>>;
+  } | null>(null);
+  const uid = user?.uid;
+  useEffect(() => {
+    if (!uid || !workout) return;
+    let live = true;
+    import("@/lib/workoutBests")
+      .then(({ loadWorkoutBests }) => loadWorkoutBests(uid, workout))
+      .then((sets) => {
+        if (live) setBests({ doc: workout, sets });
+      })
+      // Unread, no set is marked: the sets themselves are all still there.
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [uid, workout]);
   const [sharedOverride, setSharedOverride] = useState<{
     doc: Workout & { id: string };
     id: string;
@@ -362,7 +403,11 @@ function WorkoutDetailContent() {
             />
           ) : (
             exercises.map((ex, i) => (
-              <ExerciseRecord key={`${ex.exerciseId}-${i}`} exercise={ex} />
+              <ExerciseRecord
+                key={`${ex.exerciseId}-${i}`}
+                exercise={ex}
+                bests={bests?.doc === workout ? bests.sets.get(i) : undefined}
+              />
             ))
           )}
         </section>
@@ -440,16 +485,18 @@ function WorkoutDetailContent() {
       </div>
 
       {user && editOpen && (
-        <CorrectWorkoutSheet
-          uid={user.uid}
-          workout={workout}
-          unit={liftUnit}
-          onClose={() => setEditOpen(false)}
-          onSaved={() => {
-            setEditOpen(false);
-            retry();
-          }}
-        />
+        <Suspense fallback={null}>
+          <CorrectWorkoutSheet
+            uid={user.uid}
+            workout={workout}
+            unit={liftUnit}
+            onClose={() => setEditOpen(false)}
+            onSaved={() => {
+              setEditOpen(false);
+              retry();
+            }}
+          />
+        </Suspense>
       )}
       {user && routineOpen && (
         <SaveRoutineSheet
