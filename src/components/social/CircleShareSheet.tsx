@@ -151,7 +151,7 @@ export default function CircleShareSheet({
               onClick={() => {
                 haptic("light");
                 onOpenChange(false);
-                navigate("/social");
+                navigate("/social?tab=together");
               }}
             >
               Open Together

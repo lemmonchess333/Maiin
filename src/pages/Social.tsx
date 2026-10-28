@@ -59,18 +59,33 @@ export default function Social() {
   // deep-link directly to a tab and means browser back/forward
   // navigates between tabs naturally. URL writes are {replace:true}
   // so each tab tap doesn't accumulate browser history entries.
-  // Default 'feed' is the URL-clean state (`?tab=` is stripped when
-  // on feed). The Soc5c smart-default below may rewrite the URL to
-  // 'find' for genuine new users (zero follows).
+  // With no `?tab=`, the visit's own default below decides.
   const [searchParams, setSearchParams] = useSearchParams();
-  /* Legacy param compatibility (explicit contract): ?tab=crews (the
-     old Community tab — Spaces/Challenges/Circles now live on
-     Together) and ?tab=find (the old People tab — now the search
-     overlay, opened by the effect below) both keep resolving. Any
-     other/missing value lands on Together, the URL-clean default
-     (`?tab=` stripped). ?tab=feed remains the explicit Feed link. */
+  /* An explicit ?tab= always wins: ?tab=feed and ?tab=together, and the
+     legacy ?tab=crews (the old Community tab — Spaces/Challenges/Circles
+     now live on Together) and ?tab=find (the old People tab — now the
+     search overlay, opened by the effect below), which land on Together.
+     With none, a visit opens on Feed once the viewer follows anyone and
+     on Together until then (Mob2 call 6: Soc12 gave every account a
+     feed with posts in it; Strava and Hevy open on the feed), and stays
+     there: a follow made during the visit doesn't move them. A count
+     that cannot be read opens on Together. Until the count is known
+     neither tab shows, so the page never opens on one and jumps. */
   const tabFromUrl = searchParams.get("tab");
-  const tab: SocialTab = tabFromUrl === "feed" ? "feed" : "together";
+  const [openedTab, setOpenedTab] = useState<SocialTab | null>(null);
+  if (openedTab === null && (followingCount !== null || followingCountFailed)) {
+    setOpenedTab((followingCount ?? 0) > 0 ? "feed" : "together");
+  }
+  // Starting a Circle from a plan card (`?circleCreate=`) is Together's.
+  const tab: SocialTab | null =
+    tabFromUrl === "feed"
+      ? "feed"
+      : tabFromUrl === "together" ||
+          tabFromUrl === "crews" ||
+          tabFromUrl === "find" ||
+          searchParams.has("circleCreate")
+        ? "together"
+        : openedTab;
 
   /* People overlay — a full-screen search surface, not a tab. State-
      driven like NotificationsSheet; the legacy ?tab=find deep link
@@ -85,7 +100,7 @@ export default function Social() {
     setSearchParams(
       (params) => {
         const updated = new URLSearchParams(params);
-        updated.delete("tab");
+        updated.set("tab", "together");
         return updated;
       },
       { replace: true }
@@ -101,8 +116,7 @@ export default function Social() {
       setSearchParams(
         (params) => {
           const updated = new URLSearchParams(params);
-          if (next === "together") updated.delete("tab");
-          else updated.set("tab", next);
+          updated.set("tab", next);
           return updated;
         },
         { replace: true }

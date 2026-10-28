@@ -474,7 +474,7 @@ test.describe("large text", () => {
       const found: string[] = [];
       const nav = page.getByRole("navigation").first();
 
-      await page.goto("social");
+      await page.goto("social?tab=together");
       await ready(page, nav);
       await settleCommunity(page);
       await measure(page, "social-together", width, found);
