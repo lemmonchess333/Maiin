@@ -220,6 +220,29 @@ describe("Food — the Quick add list's More row", () => {
     expect(screen.queryByRole("button", { name: "More" })).toBeNull();
   });
 
+  it("ends with a labelled Quick add row that opens the form", () => {
+    api.meals = eightRecentFoods();
+    renderFood();
+    fireEvent.focus(screen.getByLabelText("What did you eat"));
+    expect(screen.queryByTestId("manual-logger")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /^Quick add\b/ }));
+    expect(screen.getByTestId("manual-logger")).toBeInTheDocument();
+  });
+
+  it("does not offer a nameless Quick add entry back as a food", () => {
+    api.meals = [
+      ...eightRecentFoods().filter((m) => m.foodName === "Food 1"),
+      ...[1, 2, 3, 4].map((n) => ({
+        ...meal(`q${n}`, "Quick add", 400),
+        date: format(addDays(new Date(), -n), "yyyy-MM-dd"),
+      })),
+    ];
+    renderFood();
+    fireEvent.focus(screen.getByLabelText("What did you eat"));
+    expect(quickAddNames()).toEqual(["Food 1"]);
+    expect(screen.queryByText("400 kcal")).toBeNull();
+  });
+
   it("offers no More when five is everything", () => {
     api.meals = eightRecentFoods().filter((m) => /Food [1-5]/.test(m.foodName));
     renderFood();

@@ -109,13 +109,18 @@ interface FoodComposerCardProps {
  * it, then the suggestions dropdown and the conditional quota caption /
  * Pro hint.
  *
- * It was one sentence in three places — "Adding to Snacks…" in
- * the field, the meal 50px below under an ADD TO caption, and an
- * "Enter manually" ghost button floating alone beneath that. Owner
- * call from the Food options page (5a): pills head the field, the
- * pencil IS the manual-entry button it already looked like, and the
- * caption, the X and the orphan button go. The pills keep their solid
+ * The meal sat in three places — "Adding to Snacks…" in the field, the
+ * meal 50px below under an ADD TO caption, and an "Enter manually" ghost
+ * button alone beneath that. Owner call from the Food options page (5a):
+ * pills head the field, the pencil is the manual-entry button, and the
+ * caption, the X and the lone button go. The pills keep their solid
  * nutrition emphasis — the food surface's one colour, a recorded keep.
+ *
+ * The pencil alone turned out to be too quiet a way in: in the renders it
+ * read as decoration. Mob2 (call 4) names it again, as a "Quick add" row
+ * at the foot of the focused box's Quick add list, where the form takes
+ * calories with no name. The pencil stays as the shortcut beside the
+ * text.
  *
  * Extracted from src/pages/Food.tsx — the page previously inlined
  * ~170 lines of composer markup that wove together five distinct
@@ -221,10 +226,10 @@ function FoodComposerCard({
             it can never stretch the button. */}
         <div className="flex gap-2" data-guide-anchor="food-composer">
           <div className="relative min-w-0 flex-1">
-            {/* The pencil is the manual-entry control — a 44px button
-                leading the field, where it had been a decorative glyph
-                beside a ghost "Enter manually" button two rows down. The
-                dropdown's no-results row still offers the same path. */}
+            {/* The pencil is a manual-entry shortcut — a 44px button
+                leading the field. The named way to the same form is the
+                Quick add row in the focused box's list (Mob2, call 4);
+                the dropdown's no-results row offers it as Log manually. */}
             <button
               type="button"
               onClick={() => {

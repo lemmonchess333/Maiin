@@ -3,6 +3,7 @@ import type { Meal } from "@/hooks/useMeals";
 import type { MealKey } from "@/components/food/mealConstants";
 import type { QuickAddItem } from "@/lib/quickAddOrder";
 import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
+import { isQuickAddName } from "@/lib/quickAddName";
 import {
   addLocalDays,
   localDateString,
@@ -56,7 +57,7 @@ export function usualMeal(
     )
       continue;
     slotDays.add(meal.date);
-    if (!meal.foodName.trim()) continue;
+    if (!meal.foodName.trim() || isQuickAddName(meal.foodName)) continue;
     const key = meal.foodName.toLowerCase().trim();
     const group = groups.get(key);
     if (!group) groups.set(key, { days: new Set([meal.date]), latest: meal });

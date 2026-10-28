@@ -11,6 +11,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { QUICK_ADD_NAME, isQuickAddName } from "@/lib/quickAddName";
 
 interface FoodEntry {
   name: string;
@@ -110,7 +111,10 @@ export function ManualFoodLogger({
          addFavourite's internal error handling) and the meal doc
          is already written, so a favourites-write failure should
          not bubble back to the user as a save error. */
-      if (!barcode || addToPantry) {
+      /* A product goes in when its switch is on. An entry with no name of
+         its own is a number rather than a food, and stays out. */
+      const intoPantry = barcode ? addToPantry : !isQuickAddName(entry.name);
+      if (intoPantry) {
         void addFavourite({
           name: entry.name,
           calories: entry.calories,
@@ -146,11 +150,17 @@ export function ManualFoodLogger({
     }
   };
 
+  /* A product needs its name: the pantry files it under its code and the
+     next scan shows it. Anything else can go without one and is saved as
+     "Quick add" (the calories are what was asked for). */
+  const nameRequired = !!barcode;
+  const entryName = () => name.trim() || QUICK_ADD_NAME;
+
   const handleSave = async () => {
-    if (!uid || !name.trim()) return;
+    if (!uid || (nameRequired && !name.trim())) return;
 
     const entry: FoodEntry = {
-      name: name.trim(),
+      name: entryName(),
       calories: numOrZero(calories),
       protein: numOrZero(protein),
       carbs: numOrZero(carbs),
@@ -176,7 +186,7 @@ export function ManualFoodLogger({
   const handleConfirmOverride = async () => {
     setWarnTitle(null);
     const entry: FoodEntry = {
-      name: name.trim(),
+      name: entryName(),
       calories: numOrZero(calories),
       protein: numOrZero(protein),
       carbs: numOrZero(carbs),
@@ -190,16 +200,16 @@ export function ManualFoodLogger({
       <BottomSheet
         open={open}
         onOpenChange={(o) => !o && onClose()}
-        title={barcode ? "Add this product" : "Log a meal"}
+        title={barcode ? "Add this product" : QUICK_ADD_NAME}
         maxHeight="max-h-[85dvh]"
       >
         <div className="min-h-0 overflow-y-auto px-4 py-4">
-          {/* Meal name input */}
+          {/* Meal name input, optional outside a product's form */}
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={barcode ? "Product name" : "Meal name"}
+            placeholder={barcode ? "Product name" : "Name (optional)"}
             aria-label={barcode ? "Product name" : "Meal name"}
             className="ds-input px-3 py-3 text-base"
           />
@@ -281,7 +291,7 @@ export function ManualFoodLogger({
             fullWidth
             size="lg"
             onClick={handleSave}
-            disabled={saving || !name.trim()}
+            disabled={saving || (nameRequired && !name.trim())}
             loading={saving}
           >
             {saving ? "Saving…" : "Log meal"}

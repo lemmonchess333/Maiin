@@ -62,6 +62,7 @@ import {
   type QuickAddItem,
 } from "@/lib/quickAddOrder";
 import { isGenericAiFoodName } from "@/lib/aiFoodIdentification";
+import { isQuickAddName } from "@/lib/quickAddName";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
@@ -1545,7 +1546,8 @@ export default function Food() {
     for (const meal of meals) {
       if (!meal.date || meal.date < cutoff) continue;
       const key = meal.foodName.toLowerCase().trim();
-      if (!key) continue;
+      // A nameless Quick add entry is a number, not a food to repeat.
+      if (!key || isQuickAddName(key)) continue;
       const existing = byFood.get(key);
       if (existing) {
         existing.count += 1;

@@ -6,7 +6,7 @@ import {
 } from "react";
 import { motion } from "framer-motion";
 import IconButton from "@/components/ui/IconButton";
-import { ChevronDown, ChevronRight, Star, Pencil } from "lucide-react";
+import { ChevronDown, ChevronRight, PenLine, Star, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -357,6 +357,32 @@ function FoodSuggestionsDropdown({
               />
             </button>
           )}
+          {/* Quick add by number: calories and macros, no name needed. It
+              is named here because the composer's pencil, the only other
+              way to the same form outside a search with no matches, read
+              as decoration (Mob2). MacroFactor, MyFitnessPal, Lifesum and
+              Life Reset all label it. */}
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              haptic();
+              onLogManually();
+            }}
+            disabled={quickAdd.adding !== null}
+            className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center gap-3 disabled:opacity-60"
+          >
+            <PenLine
+              aria-hidden="true"
+              className="size-4 shrink-0 text-nutrition-strong"
+            />
+            <span className="min-w-0 flex-1 break-words text-sm font-medium text-foreground">
+              Quick add{" "}
+              <span className="block text-micro font-normal text-muted-foreground">
+                Calories and macros, no name needed
+              </span>
+            </span>
+          </button>
         </div>
       )}
       {pantryResults.length > 0 && (
