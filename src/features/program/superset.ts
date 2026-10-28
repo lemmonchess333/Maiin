@@ -125,6 +125,24 @@ export function leaveSuperset(
   );
 }
 
+/** The session's supersets once the exercise at `index` is removed from
+ *  it (Mob2 call 11): its group loses it, and shrinks or, left with one
+ *  exercise, goes. The two either side of it are neighbours now, so a
+ *  group that ran through it stays whole. */
+export function supersetsWithout(
+  exercises: readonly Slotted[],
+  supersets: readonly SessionSuperset[] | undefined,
+  index: number
+): SessionSuperset[] {
+  const id = exercises[index]?.instanceId;
+  return tidy(
+    exercises.filter((_, i) => i !== index),
+    (supersets ?? []).map((g) => ({
+      ids: g.ids.filter((other) => other !== id),
+    }))
+  );
+}
+
 /** The first set an exercise still needs, or -1. */
 function outstanding(sets: readonly CursorSet[] | undefined): number {
   if (!sets) return -1;

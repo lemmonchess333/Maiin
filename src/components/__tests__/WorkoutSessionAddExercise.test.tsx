@@ -503,3 +503,230 @@ describe("an exercise added before last time is read", () => {
     expect(screen.getByText(/^Target: .*@ 9 kg$/)).toBeInTheDocument();
   });
 });
+
+describe("Remove from workout (Mob2 call 11)", () => {
+  /** The draft the session kept last. */
+  const kept = () =>
+    h.save.mock.calls.at(-1)![0] as {
+      prescription: {
+        exercises: { exerciseId: string; instanceId?: string }[];
+        supersets?: { ids: string[] }[];
+      };
+      setLogs: { completed: boolean }[][];
+      exerciseNotes: Record<number, string>;
+    };
+  const note = (text: string) =>
+    fireEvent.change(screen.getByRole("textbox", { name: "Exercise notes" }), {
+      target: { value: text },
+    });
+  const choose = async (name: string) => {
+    fireEvent.click(screen.getByRole("button", { name }));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  };
+  /** The menu of the exercise of that name, gone to on the strip first
+   *  (its last, for two of one name). */
+  const menuOf = async (name: string) => {
+    fireEvent.click(screen.getAllByRole("button", { name }).at(-1)!);
+    await menu(name);
+  };
+  const remove = async (name: string) => {
+    await menuOf(name);
+    await choose("Remove from workout");
+  };
+
+  it("is offered for an exercise added today, never for a planned one", async () => {
+    openSession();
+    await menu("Bench Press");
+    expect(
+      screen.queryByRole("button", { name: "Remove from workout" })
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Skip today" })
+    ).toBeInTheDocument();
+    cleanup();
+    openSession();
+    await addLateralRaise();
+    await menu("Lateral Raise");
+    expect(
+      screen.getByRole("button", { name: "Remove from workout" })
+    ).toBeInTheDocument();
+  });
+
+  it("takes it out of the session, and what came after it moves up with its note", async () => {
+    const complete = openSession();
+    await addLateralRaise();
+    note("First raise");
+    await addLateralRaise();
+    note("Seat at 4");
+    // The first raise, in the third place.
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Lateral Raise" })[0]
+    );
+    expect(screen.getByRole("textbox", { name: "Exercise notes" })).toHaveValue(
+      "First raise"
+    );
+    await menu("Lateral Raise");
+    await choose("Remove from workout");
+    expect(
+      screen.getAllByRole("button", { name: "Lateral Raise" })
+    ).toHaveLength(1);
+    // The cursor is on the raise that took its place, with its own note.
+    expect(heading()).toBe("Lateral Raise");
+    expect(screen.getByRole("textbox", { name: "Exercise notes" })).toHaveValue(
+      "Seat at 4"
+    );
+    await vi.waitFor(() =>
+      expect(kept().prescription.exercises).toHaveLength(3)
+    );
+    expect(kept().setLogs).toHaveLength(3);
+    expect(kept().exerciseNotes).toEqual({ 2: "Seat at 4" });
+
+    completeAll();
+    fireEvent.click(await screen.findByRole("button", { name: WORKOUT.save }));
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const data = complete.mock.calls[0][1];
+    expect(data.prescription!.exercises.map((ex) => ex.exerciseId)).toEqual([
+      "bench-press",
+      "cable-fly",
+      "lateral-raise",
+    ]);
+    expect(data.setLogs).toHaveLength(3);
+    expect(data.exerciseNotes).toEqual({ 2: "Seat at 4" });
+    // The plan's own baseline is untouched.
+    expect(
+      data.prescription!.progressionBaseline.map((ex) => ex.instanceId)
+    ).toEqual(["bench-1", "fly-1"]);
+  });
+
+  it("dissolves a superset of two, and leaves a larger one the rest of its group", async () => {
+    openSession();
+    await addLateralRaise();
+    await menuOf("Cable Fly");
+    await choose("Superset with Lateral Raise");
+    await remove("Lateral Raise");
+    fireEvent.click(screen.getByRole("button", { name: "Cable Fly" }));
+    expect(screen.queryByText(/^Superset with/)).toBeNull();
+    await vi.waitFor(() =>
+      expect(kept().prescription.supersets ?? []).toEqual([])
+    );
+
+    await addLateralRaise();
+    await menuOf("Bench Press");
+    await choose("Superset with Cable Fly");
+    await menuOf("Cable Fly");
+    await choose("Superset with Lateral Raise");
+    await remove("Lateral Raise");
+    fireEvent.click(screen.getByRole("button", { name: "Cable Fly" }));
+    expect(screen.getByText("Superset with Bench Press")).toBeInTheDocument();
+    await vi.waitFor(() =>
+      expect(kept().prescription.supersets).toEqual([
+        { ids: ["bench-1", "fly-1"] },
+      ])
+    );
+  });
+
+  it("asks first when sets are done on it, and Keep it keeps them", async () => {
+    const complete = openSession();
+    await addLateralRaise();
+    // Its warm-up, then its first working set.
+    for (let guard = 0; guard < 6; guard++) {
+      if (screen.queryByRole("button", { name: "Edit completed set 1" })) break;
+      for (const field of screen.getAllByRole("spinbutton", {
+        name: /weight$/,
+      }) as HTMLInputElement[])
+        if (!field.value && !field.disabled)
+          fireEvent.change(field, { target: { value: "8" } });
+      fireEvent.click(
+        screen.getAllByRole("button", { name: WORKOUT.markSet })[0]
+      );
+      await act(async () => {});
+    }
+    expect(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    ).toBeInTheDocument();
+
+    await menu("Lateral Raise");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove from workout" })
+    );
+    const ask = await screen.findByRole("alertdialog", {
+      name: "Remove Lateral Raise?",
+    });
+    expect(ask).toHaveTextContent("The set you've done on it won't be saved.");
+    await choose("Keep it");
+    expect(heading()).toBe("Lateral Raise");
+
+    await menu("Lateral Raise");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove from workout" })
+    );
+    await screen.findByRole("alertdialog", { name: "Remove Lateral Raise?" });
+    await choose("Remove");
+    expect(screen.queryByRole("button", { name: "Lateral Raise" })).toBeNull();
+
+    completeAll();
+    fireEvent.click(await screen.findByRole("button", { name: WORKOUT.save }));
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(
+      complete.mock.calls[0][1].prescription!.exercises.map(
+        (ex) => ex.exerciseId
+      )
+    ).toEqual(["bench-press", "cable-fly"]);
+  });
+});
+
+describe("a removal keeps the bests of the exercises after it", () => {
+  it("a new best on a later exercise still marks its set", async () => {
+    h.user = { uid: "u1" };
+    seedFirestore({
+      "users/u1/stats/prMap": {
+        map: {
+          "Lateral Raise": {
+            "1rm": null,
+            "3rm": null,
+            "5rm": null,
+            "8rm": null,
+            "10rm": { weight: 5, reps: 12, date: "2026-01-05" },
+          },
+        },
+        sessionCounts: { "Lateral Raise": 5 },
+        volumeBest: {},
+        revision: 1,
+      },
+    });
+    openSession();
+    await addLateralRaise();
+    await addLateralRaise();
+    // The second raise's first working set, past its best.
+    for (let guard = 0; guard < 6; guard++) {
+      if (screen.queryByRole("button", { name: "Edit completed set 1" })) break;
+      const [weight] = screen
+        .getAllByRole("spinbutton", { name: /weight$/ })
+        .filter((field) => !(field as HTMLInputElement).disabled);
+      fireEvent.change(weight, { target: { value: "6" } });
+      const [reps] = screen
+        .getAllByRole("spinbutton", { name: /reps$/ })
+        .filter((field) => !(field as HTMLInputElement).disabled);
+      fireEvent.change(reps, { target: { value: "12" } });
+      fireEvent.click(
+        screen.getAllByRole("button", { name: WORKOUT.markSet })[0]
+      );
+      await act(async () => {});
+    }
+    expect(screen.getByText("PR")).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Lateral Raise" })[0]
+    );
+    await menu("Lateral Raise");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove from workout" })
+    );
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(
+      screen.getAllByRole("button", { name: "Lateral Raise" })
+    ).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Lateral Raise" }));
+    expect(screen.getByText("PR")).toBeInTheDocument();
+  });
+});

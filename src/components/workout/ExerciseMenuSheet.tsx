@@ -10,6 +10,9 @@
  * It also puts the exercise in a superset with the one after it, or takes
  * it out of one (Mob1 call 2). A superset is the session's too: it is saved
  * with the workout and never reaches the plan.
+ *
+ * An exercise added today can be removed from the workout (Mob2 call 11);
+ * a planned one keeps Skip.
  */
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
 import {
@@ -43,6 +46,8 @@ interface ExerciseMenuSheetProps {
   /** Puts this exercise in a superset with the next one (true), or takes
    *  it out of its superset (false). */
   onSuperset?: (withNext: boolean) => void;
+  /** Present for an exercise added today: takes it out of the workout. */
+  onRemove?: () => void;
 }
 
 export default function ExerciseMenuSheet({
@@ -58,6 +63,7 @@ export default function ExerciseMenuSheet({
   onUnskip,
   session,
   onSuperset,
+  onRemove,
 }: ExerciseMenuSheetProps) {
   const supersetNextName =
     session &&
@@ -103,6 +109,9 @@ export default function ExerciseMenuSheet({
           : []),
 
         choice("skip", "Skip today", onSkip),
+        ...(onRemove
+          ? [choice("remove", "Remove from workout", onRemove)]
+          : []),
       ];
 
   return (
