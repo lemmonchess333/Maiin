@@ -7,7 +7,7 @@ import {
   keysWithPrefix,
   remove,
 } from "@/lib/localStore";
-import { clampMl, resolveConsumedMl } from "@/lib/waterUnits";
+import { clampMl, resolveConsumedMl, resolveTargetMl } from "@/lib/waterUnits";
 
 export interface WaterAction {
   id: string;
@@ -15,6 +15,10 @@ export interface WaterAction {
   delta: number;
   targetMl: number;
   undoOf?: string;
+  /** Set on a drink logged to a day other than today's (the Food diary's
+   *  past days): the day's stored target stays, and `targetMl` is only
+   *  written when the day has none. */
+  keepTarget?: boolean;
   queuedAt: number;
   /** Set only on a SETTLED record: the moment the transaction returned.
    *  The bridge's age cap is measured from this, never from `queuedAt`.
@@ -184,6 +188,22 @@ export function applyWaterAction(
   };
   return { ml: next, receipts: nextReceipts };
 }
+/** The target a day's document keeps. Today's follows the current target;
+ *  an earlier day's keeps the one it was counted against (the badges read
+ *  it, `nutritionBadgeDays`), and takes the current one only if it has
+ *  none. */
+export function storedTargetFor(
+  data: { targetMl?: unknown; targetGlasses?: unknown },
+  action: Pick<WaterAction, "targetMl" | "keepTarget">
+): number {
+  if (
+    action.keepTarget &&
+    (data.targetMl != null || data.targetGlasses != null)
+  )
+    return resolveTargetMl(data);
+  return action.targetMl;
+}
+
 export function queueWater(uid: string, action: WaterAction): boolean {
   if (auth.currentUser?.uid !== uid) return false;
   // Separate keys prevent one tab overwriting another tab's accepted taps.
@@ -227,7 +247,7 @@ export function flushWater(uid: string): Promise<void> {
             {
               ml: next.ml,
               waterReceipts: next.receipts,
-              targetMl: action.targetMl,
+              targetMl: storedTargetFor(data, action),
               updatedAt: Timestamp.now(),
             },
             { merge: true }

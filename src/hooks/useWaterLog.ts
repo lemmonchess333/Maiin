@@ -31,10 +31,21 @@ export interface WaterLog {
   targetMl: number;
   updatedAt: Timestamp;
 }
-export function useWaterLog() {
+/**
+ * A day's water: its total, its drinks and the controls that change them.
+ *
+ * Without `date` it is today's, and follows the clock past midnight (Home's
+ * card). With one it is that day's, past days included (the Food diary's
+ * row for the day on screen): a drink logged to it lands in that day's
+ * `waterLog/{date}` document, the same document and the same receipts a
+ * drink logged on the day writes, so a phone, a second tab or the Watch
+ * (W1a, writing its own day directly) all add to one total.
+ */
+export function useWaterLog(date?: string) {
   const { user, profile } = useAuth();
   const uid = user?.uid ?? null;
-  const [today, setToday] = useState(localDateString);
+  const [clockDay, setToday] = useState(localDateString);
+  const day = date ?? clockDay;
   const [snapshot, setSnapshot] = useState<{
     key: string;
     ml: number;
@@ -72,11 +83,11 @@ export function useWaterLog() {
       document.removeEventListener("visibilitychange", update);
     };
   }, []);
-  const key = `${uid}/${today}`;
+  const key = `${uid}/${day}`;
   useEffect(() => {
     if (!uid) return;
     return onSnapshot(
-      doc(db, "users", uid, "waterLog", today),
+      doc(db, "users", uid, "waterLog", day),
       (snap) => {
         const data = snap.data() ?? {};
         const receipts = data.waterReceipts ?? {};
@@ -84,7 +95,7 @@ export function useWaterLog() {
            so retire it here rather than on a timer. */
         retireSettled(uid, receipts);
         setSnapshot({
-          key: `${uid}/${today}`,
+          key: `${uid}/${day}`,
           ml: resolveConsumedMl(data),
           receipts,
         });
@@ -92,7 +103,7 @@ export function useWaterLog() {
       },
       () => setReadError(true)
     );
-  }, [uid, today, readVersion]);
+  }, [uid, day, readVersion]);
   const pending = uid ? pendingWater(uid) : [];
   /* Committed-but-unconfirmed actions ride alongside the pending ones,
      in queuedAt order so an undo still lands behind its drink. Once the
@@ -102,7 +113,7 @@ export function useWaterLog() {
     (a, b) => a.queuedAt - b.queuedAt
   );
   let state = snapshot?.key === key ? snapshot : { ml: 0, receipts: {} };
-  for (const action of overlay.filter((a) => a.date === today)) {
+  for (const action of overlay.filter((a) => a.date === day)) {
     try {
       state = {
         ...state,
@@ -116,11 +127,18 @@ export function useWaterLog() {
     (delta: number) => {
       if (!uid || !Number.isFinite(delta)) return false;
       if (delta === 0) return true;
+      /* Today's water goes to the clock's date at the tap, so a tap just
+         past midnight lands on the new day. A named day's goes to that
+         day, and keeps the target that day already has: today's target is
+         not the one an earlier day was counted against. */
+      const clock = localDateString();
+      const logDate = date ?? clock;
       const action = {
         id: crypto.randomUUID(),
-        date: localDateString(),
+        date: logDate,
         delta: Math.round(delta),
         targetMl: target,
+        ...(logDate !== clock ? { keepTarget: true } : {}),
         queuedAt: Date.now(),
       };
       if (!queueWater(uid, action)) {
@@ -140,7 +158,7 @@ export function useWaterLog() {
       if (delta > 0) rememberWaterSize(uid, Math.round(delta));
       return true;
     },
-    [uid, target]
+    [uid, target, date]
   );
   /* Taking a drink back, by the drink rather than by an amount.
      `applyWaterAction` has always implemented this — it marks the named
@@ -152,19 +170,20 @@ export function useWaterLog() {
   const removeDrink = useCallback(
     (receiptId: string) => {
       if (!uid || !receiptId) return false;
-      // The drink's own day: the list shows `today`'s drinks, and just
-      // past midnight, before `today` moves on, the clock's date names a
+      // The drink's own day: the list shows `day`'s drinks, and just past
+      // midnight, before today's `day` moves on, the clock's date names a
       // document that holds no receipt for it.
       return queueWater(uid, {
         id: crypto.randomUUID(),
-        date: today,
+        date: day,
         delta: 0,
         targetMl: target,
+        ...(day !== localDateString() ? { keepTarget: true } : {}),
         undoOf: receiptId,
         queuedAt: Date.now(),
       });
     },
-    [uid, target, today]
+    [uid, target, day]
   );
   const preferenceKey = uid ? scopedKey("tropos-water-serving", uid) : "";
   const storedServing = uid

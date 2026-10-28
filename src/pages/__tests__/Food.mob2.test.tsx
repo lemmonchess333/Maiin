@@ -17,6 +17,7 @@ import type { Meal } from "@/hooks/useMeals";
 const api = vi.hoisted(() => ({
   meals: [] as Meal[],
   favourites: [] as Array<Record<string, unknown>>,
+  waterDates: [] as Array<string | undefined>,
   createMealEntry: vi.fn(),
   notifyMealsLogged: vi.fn(),
   saveLog: vi.fn(),
@@ -84,6 +85,20 @@ vi.mock("@/hooks/useScanUsage", () => ({
     loading: false,
     limit: 10,
   }),
+}));
+vi.mock("@/hooks/useWaterLog", () => ({
+  useWaterLog: (date?: string) => {
+    api.waterDates.push(date);
+    return {
+      ml: 750,
+      loading: false,
+      logWater: vi.fn(() => true),
+      drinks: [],
+      removeDrink: vi.fn(),
+      syncStatus: "",
+      retry: vi.fn(),
+    };
+  },
 }));
 vi.mock("@/hooks/useFoodPhotoUrls", () => ({ useFoodPhotoUrls: () => ({}) }));
 vi.mock("@/lib/foodPhotoStore", () => ({ sweepFoodPhotosOnce: vi.fn() }));
@@ -290,6 +305,26 @@ function dish(): Meal {
 function openRow(name: RegExp) {
   fireEvent.keyDown(screen.getByRole("button", { name }), { key: "Enter" });
 }
+
+describe("Food — water for the day on screen", () => {
+  it("draws the water row under the diary for the day shown, past days too", async () => {
+    const yesterday = format(addDays(new Date(), -1), "yyyy-MM-dd");
+    api.waterDates = [];
+    render(
+      <MemoryRouter initialEntries={[`/food?date=${yesterday}`]}>
+        <Routes>
+          <Route path="/food" element={<Food />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    // The row loads with the diary, after the meals.
+    expect(
+      await screen.findByRole("heading", { name: "Water" })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/ml logged/)).toHaveTextContent("750 ml logged");
+    expect(api.waterDates.at(-1)).toBe(yesterday);
+  });
+});
 
 describe("Food — copy an entry to another day", () => {
   it("logs a row from a past day to today, in its own slot", async () => {

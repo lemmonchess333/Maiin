@@ -68,6 +68,11 @@ const QuickMealPortionSheet = lazyRetry(loadQuickMealPortionSheet);
 const HeroDrillDownSheet = lazyRetry(loadHeroDrillDownSheet);
 const ServingSizeDrawer = lazyRetry(loadServingSizeDrawer);
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
+/* The water row reads the water hook, which Home's glass reads too.
+   Loaded on its own, the hook goes into a chunk of its own rather than
+   into the one Home and Food share for the calorie ring. It loads as the
+   diary first draws, under the meals. */
+const FoodWaterRow = lazyRetry(() => import("@/components/food/FoodWaterRow"));
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
@@ -2476,6 +2481,15 @@ export default function Food() {
           onDelete={handleDeleteMeal}
           onEdit={setEditingGroup}
         />
+
+        {/* Water for the day on screen, past days included (Mob2, call
+            2). Isolated: a failed water read costs this row, not the
+            diary above it. */}
+        <SectionErrorBoundary sectionName="food-water">
+          <Suspense fallback={null}>
+            <FoodWaterRow date={selectedDate} />
+          </Suspense>
+        </SectionErrorBoundary>
 
         {/* NUTR-CONSISTENCY-01 — weekly logging focus. Private
             commitment + derived progress; the only social affordance
