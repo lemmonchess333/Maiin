@@ -16,4 +16,4 @@ The required `npm run verify` gate passed: lint, art checks, dependency checks, 
 
 The lazy workout chunk is 69,931 bytes, compared with the previous verified build's rounded 69.57 kB. Its older budget was 66,265 bytes; only this chunk's baseline was updated.
 
-A separate layout issue remains in the muscles card at doubled text: the baseline and final screens both report horizontal overflow, and the final trace locates it in the set count beside the fixed-width drawing. The new footer actions remain in bounds at each checked size.
+The muscles card's doubled-text overflow was fixed in the [accessibility follow-up](./workout-accessibility-2026-10-28.md). Its original trace located the set count beside the fixed-width drawing. The saved footer actions remained in bounds throughout.

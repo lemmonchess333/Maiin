@@ -390,43 +390,47 @@ export default function SessionCompleteScreen({
         )}
 
         {hasMuscleFigure(muscleCategories) && (
-          <Card className="flex items-center gap-4">
-            {leadArt ? (
-              <img
-                src={formArtCutoutUrl(leadArt.cutout)}
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-                decoding="async"
-                data-lead-drawing={leadArt.exerciseName}
-                className="exercise-drawing h-32 w-28 shrink-0 object-contain"
-              />
-            ) : (
-              <MiniMuscleFigure
-                categories={muscleCategories}
-                className="h-32 w-auto shrink-0"
-              />
-            )}
-            <div className="min-w-0 flex-1">
-              <SectionHeading size="compact" as="h3">
-                Muscles worked
-              </SectionHeading>
-              <ul className="mt-2 space-y-1">
-                {muscleRows.slice(0, 4).map(([category, sets]) => (
-                  <li
-                    key={category}
-                    className="flex items-baseline justify-between gap-3 text-sm"
-                  >
-                    <span className="truncate text-foreground">
-                      {CATEGORY_DISPLAY[category] ??
-                        movementCategoryLabel(category)}
-                    </span>
-                    <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
-                      {sets} {sets === 1 ? "set" : "sets"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+          <Card className="@container">
+            {/* At larger text sizes, keep the drawing above the list so
+                it cannot squeeze the muscle names or set counts out. */}
+            <div className="flex items-center gap-4 @max-[16em]:flex-col @max-[16em]:items-stretch">
+              {leadArt ? (
+                <img
+                  src={formArtCutoutUrl(leadArt.cutout)}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  decoding="async"
+                  data-lead-drawing={leadArt.exerciseName}
+                  className="exercise-drawing h-32 w-28 shrink-0 self-center object-contain"
+                />
+              ) : (
+                <MiniMuscleFigure
+                  categories={muscleCategories}
+                  className="h-32 w-auto shrink-0 self-center"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <SectionHeading size="compact" as="h3">
+                  Muscles worked
+                </SectionHeading>
+                <ul className="mt-2 space-y-1">
+                  {muscleRows.slice(0, 4).map(([category, sets]) => (
+                    <li
+                      key={category}
+                      className="flex items-baseline justify-between gap-3 text-sm"
+                    >
+                      <span className="min-w-0 break-words text-foreground">
+                        {CATEGORY_DISPLAY[category] ??
+                          movementCategoryLabel(category)}
+                      </span>
+                      <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+                        {sets} {sets === 1 ? "set" : "sets"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </Card>
         )}
