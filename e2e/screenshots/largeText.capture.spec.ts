@@ -21,7 +21,8 @@
  * each with its comments open and the Space post's not-available state; a
  * runner's welcome back on Home; a Circle's invite code live and expired,
  * in both sheets that show it; and the In progress strip on Home and on
- * Train, for a programme workout and for a saved routine's.
+ * Train, for a programme workout and for a saved routine's; and an empty
+ * workout's review, with the sheets that say when it started and name it.
  *
  * Each screen is opened at 393px and at 320px (Display Zoom on an SE or
  * a mini), with the root font at 135% (the largest standard size) and
@@ -810,6 +811,66 @@ test.describe("large text", () => {
       await page.goto("program");
       await ready(page, strip(/^Push day in progress$/));
       await measure(page, "train-in-progress-routine", width, found);
+
+      expect(found).toEqual([]);
+    });
+
+    /* An empty workout's review (Mob2 calls 11 and 12): its Name and
+       Started rows, and the sheet each opens. Push-ups, so the set needs
+       no weight, and Finish after the first working set. */
+    test(`an empty workout's review at ${width}px`, async ({ page }) => {
+      test.setTimeout(240_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+
+      await page.goto("empty-workout");
+      const add = page.getByRole("button", {
+        name: "Add exercise",
+        exact: true,
+      });
+      await ready(page, add);
+      await add.click();
+      await page
+        .getByRole("textbox", { name: "Search exercises" })
+        .fill("Push-Ups");
+      await page
+        .getByRole("checkbox", { name: "Push-Ups", exact: true })
+        .first()
+        .click();
+      await page.getByRole("button", { name: /Add to workout$/ }).click();
+      for (let i = 0; i < 4; i++) {
+        const next = page.getByRole("button", { name: /^Complete / }).first();
+        await next.waitFor({ timeout: 20_000 });
+        const name = (await next.textContent())?.replace(/\s+/g, " ").trim();
+        await next.click();
+        await page.waitForTimeout(500);
+        if (name === "Complete set 1") break;
+      }
+      await page
+        .getByRole("button", { name: "Finish workout", exact: true })
+        .first()
+        .click();
+      const started = page.getByRole("button", { name: /^Started: / });
+      await started.waitFor({ timeout: 20_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "workout-review", width, found);
+
+      await started.click();
+      await page
+        .getByRole("dialog", { name: "When you started" })
+        .waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "start-time-sheet", width, found);
+      await page.getByRole("button", { name: "Cancel", exact: true }).click();
+      await page.waitForTimeout(600);
+
+      await page.getByRole("button", { name: /^Name: / }).click();
+      await page
+        .getByRole("dialog", { name: "Name this workout" })
+        .waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "rename-sheet", width, found);
 
       expect(found).toEqual([]);
     });

@@ -1,4 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import StartTimeSheet from "@/components/workout/StartTimeSheet";
+import RenameWorkoutSheet from "@/components/workout/RenameWorkoutSheet";
+import { startLabel } from "@/features/program/sessionStart";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import WeekPulseCard from "@/components/WeekPulseCard";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import CompletionExtras from "@/components/workout/CompletionExtras";
@@ -15,7 +19,7 @@ import { CATEGORY_DISPLAY } from "@/components/analytics/muscleGroupTaxonomy";
 import { movementCategoryLabel } from "@/lib/exerciseMovementCategory";
 import { liftDayLine } from "@/lib/liftDayLabel";
 import { durationFigure, setsFigure, workFigure } from "@/lib/liftFigures";
-import { ChevronDown, Trophy } from "lucide-react";
+import { ChevronDown, ChevronRight, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -58,6 +62,18 @@ interface SessionCompleteScreenProps {
   onEdit?: () => void;
   onClose: () => void;
   onViewWorkout?: () => void;
+  /** When the session started, in ms (Lift3 dates the workout by it). */
+  startedAt?: number;
+  /** Says it started earlier, for a lift recorded late (Mob2 call 12).
+   *  Absent once the save is under way. */
+  onChangeStart?: (startedAt: number) => void;
+  /** A programme day: its start stays in the plan's week. */
+  planWeek?: boolean;
+  /** When the account began, in ms: no start is said to be earlier. */
+  accountStart?: number | null;
+  /** Names an empty workout (Mob2 call 11). Absent for every other
+   *  session, and once the save is under way. */
+  onRename?: (name: string) => void;
 }
 
 export default function SessionCompleteScreen({
@@ -77,7 +93,15 @@ export default function SessionCompleteScreen({
   onEdit,
   onClose,
   onViewWorkout,
+  startedAt,
+  onChangeStart,
+  planWeek = false,
+  accountStart = null,
+  onRename,
 }: SessionCompleteScreenProps) {
+  const today = useLocalDateKey();
+  /* The detail being changed: when it started, or its name. */
+  const [changing, setChanging] = useState<"start" | "name" | null>(null);
   const liftUnit = useLiftUnit();
   const heading =
     saveStatus === "queued"
@@ -443,7 +467,54 @@ export default function SessionCompleteScreen({
           </Card>
         )}
 
-        {/* Before saving, the decision comes before the session's detail. */}
+        {/* Before saving, the decision comes before the session's detail.
+            First what the save says about the session that can still be
+            changed: when it started, and an empty workout's name. */}
+        {!saved && (onChangeStart || onRename) && (
+          <Card padded={false} className="divide-y divide-border">
+            {onRename && (
+              <DetailRow
+                label="Name"
+                value={dayLabel}
+                action="Rename"
+                disabled={completing}
+                onClick={() => setChanging("name")}
+              />
+            )}
+            {onChangeStart && startedAt !== undefined && (
+              <DetailRow
+                label="Started"
+                value={startLabel(startedAt, today)}
+                action="Change"
+                numeric
+                disabled={completing}
+                onClick={() => setChanging("start")}
+              />
+            )}
+          </Card>
+        )}
+        {changing === "start" && onChangeStart && startedAt !== undefined && (
+          <StartTimeSheet
+            startedAt={startedAt}
+            accountStart={accountStart}
+            planWeek={planWeek}
+            onSave={(at) => {
+              onChangeStart(at);
+              setChanging(null);
+            }}
+            onClose={() => setChanging(null)}
+          />
+        )}
+        {changing === "name" && onRename && (
+          <RenameWorkoutSheet
+            name={dayName}
+            onSave={(name) => {
+              onRename(name);
+              setChanging(null);
+            }}
+            onClose={() => setChanging(null)}
+          />
+        )}
         {!saved && (
           <div className="space-y-2">
             <p
@@ -592,5 +663,48 @@ export default function SessionCompleteScreen({
         )}
       </div>
     </motion.div>
+  );
+}
+
+/** A row of the review's details: what it is, its value, and the way to
+ *  change it. The value wraps under the label rather than squeezing it
+ *  when the two no longer fit (larger text). */
+function DetailRow({
+  label,
+  value,
+  action,
+  numeric = false,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  action: string;
+  numeric?: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={`${label}: ${value}. ${action}`}
+      className="flex min-h-[44px] w-full flex-wrap items-center gap-x-3 gap-y-1 px-[16px] py-[10px] text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-60"
+    >
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span
+        className={cn(
+          "min-w-0 flex-1 break-words text-sm font-medium text-foreground",
+          numeric && "font-mono tabular-nums"
+        )}
+      >
+        {value}
+      </span>
+      <span className="ml-auto flex items-center gap-1 text-sm font-semibold text-lifting-strong">
+        {action}
+        <ChevronRight className="size-4 shrink-0" aria-hidden="true" />
+      </span>
+    </button>
   );
 }

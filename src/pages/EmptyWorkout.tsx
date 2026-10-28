@@ -11,8 +11,8 @@ import {
   EMPTY_WORKOUT_SESSION_PARAM,
   emptyWorkoutDraftScope,
   isEmptyWorkoutSessionId,
-  EMPTY_WORKOUT_NAME,
   emptyWorkoutDay,
+  emptyWorkoutName,
 } from "@/features/program/emptyWorkout";
 import { RESUME_PARAM } from "@/lib/resumeParam";
 import { createWorkoutCompletionId } from "@/hooks/useWorkoutDraft";
@@ -62,6 +62,8 @@ export default function EmptyWorkout() {
       // draft as if the workout were saved.
       if (!user || auth.currentUser?.uid !== user.uid)
         throw new Error("Sign in again to save your workout.");
+      // The name it was given on the finish screen, or "Workout".
+      const name = emptyWorkoutName(sessionData.prescription?.dayName);
       const { committed: _noPlan, ...receipt } = await completeLift({
         uid: user.uid,
         author: {
@@ -78,8 +80,8 @@ export default function EmptyWorkout() {
         supersets: sessionData.prescription?.supersets,
         durationMinutes: sessionData.durationMinutes,
         bodyweightKg: profile?.weightKg ?? 0,
-        title: EMPTY_WORKOUT_NAME,
-        notes: EMPTY_WORKOUT_NAME,
+        title: name,
+        notes: name,
       });
       return receipt;
     },

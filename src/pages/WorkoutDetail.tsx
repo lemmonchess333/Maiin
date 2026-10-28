@@ -283,7 +283,11 @@ function WorkoutDetailContent() {
   const title = workoutTitle(workout);
   const routineExercises = workoutExercisesToRoutine(exercises);
 
-  const dateObj = workout.createdAt?.toDate?.() ?? parseLocalDate(workout.date);
+  /* The day it started (Lift3), the day every count holds it on. The
+     save's own time is no date for it: a session that ran past midnight,
+     one saved later offline, or one whose start was said to be earlier on
+     the finish screen (Mob2 call 12) is saved on a later day. */
+  const dateObj = parseLocalDate(workout.date);
   const dateStr = dateObj.toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",

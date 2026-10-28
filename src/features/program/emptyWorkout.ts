@@ -36,8 +36,30 @@ const SCOPE_PREFIX = "empty:";
 /** Empty workouts' drafts have no epoch: each session is its own. */
 export const EMPTY_WORKOUT_DRAFT_EPOCH = 0;
 
-/** Its name, on the session and on the saved workout. */
+/** Its name, on the session and on the saved workout, until the lifter
+ *  gives it one on the finish screen (Mob2 call 11). */
 export const EMPTY_WORKOUT_NAME = "Workout";
+
+/** The longest name it takes, a saved routine's longest. */
+export const EMPTY_WORKOUT_NAME_MAX = 60;
+
+/**
+ * A name typed for an empty workout, as the workout is saved with it:
+ * trimmed, its spaces single, and no longer than the longest name. The
+ * saved workout's title is its notes line up to the first " — ", the
+ * separator a programme's notes put after the day's name, so a dash
+ * typed that way is kept as an en dash, which no reader splits at.
+ * Nothing typed is "Workout".
+ */
+export function emptyWorkoutName(typed: string | null | undefined): string {
+  const name = (typed ?? "")
+    .replace(/\s+/g, " ")
+    .replace(/ — /g, " – ")
+    .trim()
+    .slice(0, EMPTY_WORKOUT_NAME_MAX)
+    .trim();
+  return name || EMPTY_WORKOUT_NAME;
+}
 
 /** A session id an address can carry and a draft's identity can hold:
  *  letters, digits and dashes, as a minted id has. */
