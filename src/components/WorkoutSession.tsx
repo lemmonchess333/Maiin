@@ -41,6 +41,12 @@ import {
 } from "lucide-react";
 import type { Exercise } from "@/lib/exercises";
 import { exerciseAddedToday } from "@/features/program/sessionAdd";
+import {
+  cursorAfterRemoval,
+  isAddedToday,
+  removedFromSession,
+  withoutPlace,
+} from "@/features/program/sessionRemove";
 import { generateInstanceId } from "@/features/program/programTypes";
 import { workoutSourceForScope } from "@/features/program/emptyWorkout";
 import {
@@ -463,6 +469,17 @@ export default function WorkoutSession({
   const [swapFor, setSwapFor] = useState<number | null>(null);
   /* "Add exercise" (Mob1 call 1): the picker, open to add to today. */
   const [adding, setAdding] = useState(false);
+  /* An added exercise with sets done, whose removal is being asked
+     about (Mob2 call 11). Kept as the question closes, so its words hold
+     while it animates out. */
+  const [removing, setRemoving] = useState<{
+    index: number;
+    name: string;
+    sets: number;
+    open: boolean;
+  } | null>(null);
+  const closeRemoving = () =>
+    setRemoving((asked) => asked && { ...asked, open: false });
   const [keepQuestion, setKeepQuestion] = useState<{
     open: boolean;
     swaps: SwapToKeep[];
@@ -1410,12 +1427,12 @@ export default function WorkoutSession({
       ),
     }));
 
-  const refreshRecords = (logs: SetLog[][]) => {
+  const refreshRecords = (logs: SetLog[][], exercises = day.exercises) => {
     const next = sessionRecords(
       recordBaseline.current,
       volumeBaseline.current,
       sessionCounts,
-      day.exercises,
+      exercises,
       logs,
       sessionDay
     );
@@ -1605,6 +1622,39 @@ export default function WorkoutSession({
     setCurrentExIndex(start);
     setCurrentSetIndex(0);
     haptic("light");
+  };
+
+  /**
+   * "Remove from workout" (Mob2 call 11): an exercise added today goes,
+   * with its rows. Everything the session holds by place moves up one
+   * after it (`sessionRemove.ts`), and its bests are worked out again
+   * without its sets.
+   */
+  const doneSetsOf = (index: number) =>
+    countedSets(setLogs[index] ?? []).filter((set) => set.completed).length;
+  const removeExercise = (index: number) => {
+    closeRemoving();
+    if (!isAddedToday(index, initialDay.exercises.length)) return;
+    const key = rowKey(day.exercises[index] ?? {}, index);
+    rowsToStart.current.delete(key);
+    weightsToFollow.current.delete(key);
+    const exercises = day.exercises.filter((_, i) => i !== index);
+    const logs = setLogs.filter((_, i) => i !== index);
+    setPrescription((current) => removedFromSession(current, index));
+    setSetLogs(logs);
+    setSkippedRows((rows) => withoutPlace(rows, index));
+    setExerciseNotes((notes) => withoutPlace(notes, index));
+    setPreviousNotes((notes) => withoutPlace(notes, index));
+    setPreviousSets((sets) => withoutPlace(sets, index));
+    refreshRecords(logs, exercises);
+    setNewBest(null);
+    setLastCompleted(null);
+    const cursor = cursorAfterRemoval(logs, index, {
+      exerciseIndex: currentExIndex,
+      setIndex: currentSetIndex,
+    });
+    setCurrentExIndex(cursor.exerciseIndex);
+    setCurrentSetIndex(cursor.setIndex);
   };
 
   /** Skipping keeps the sets done and sets the rest aside. */
@@ -3027,6 +3077,21 @@ export default function WorkoutSession({
         }}
       />
 
+      <ConfirmDialog
+        open={removing?.open ?? false}
+        destructive
+        title={`Remove ${removing?.name ?? ""}?`}
+        description={
+          removing?.sets === 1
+            ? "The set you've done on it won't be saved."
+            : `The ${removing?.sets ?? 0} sets you've done on it won't be saved.`
+        }
+        confirmLabel="Remove"
+        cancelLabel="Keep it"
+        onCancel={closeRemoving}
+        onConfirm={() => removing && removeExercise(removing.index)}
+      />
+
       {menuFor !== null && day.exercises[menuFor] && (
         <Suspense fallback={null}>
           <ExerciseMenuSheet
@@ -3051,6 +3116,23 @@ export default function WorkoutSession({
             }}
             onSuperset={(withNext) => regroup(menuFor, withNext)}
             onUnskip={() => unskipExercise(menuFor)}
+            onRemove={
+              isAddedToday(menuFor, initialDay.exercises.length)
+                ? () => {
+                    // Its done sets go with it, so that is asked first,
+                    // once the menu has gone.
+                    const sets = doneSetsOf(menuFor);
+                    if (sets === 0) removeExercise(menuFor);
+                    else
+                      setRemoving({
+                        index: menuFor,
+                        name: day.exercises[menuFor].name,
+                        sets,
+                        open: true,
+                      });
+                  }
+                : undefined
+            }
           />
         </Suspense>
       )}
