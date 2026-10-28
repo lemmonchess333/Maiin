@@ -1,5 +1,6 @@
 import { Check, ChevronRight, X } from "lucide-react";
 import Card from "@/components/ui/Card";
+import MetaLine from "@/components/ui/MetaLine";
 import IconButton from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -77,10 +78,16 @@ export default function FirstWeekCard({
           >
             Your first week
           </h2>
-          <p className="text-xs text-muted-foreground">
-            Day <span className="font-mono tabular-nums">{week.day}</span> of{" "}
-            <span className="font-mono tabular-nums">{FIRST_WEEK_DAYS}</span>
-          </p>
+          {/* Where the week is, and how much of it is done: the ticks
+              below say which, this says how many (Mob2 call 1). Two facts
+              on one line, each kept whole (DESIGN_GUIDE §4). */}
+          <MetaLine
+            size="xs"
+            items={[
+              `Day ${week.day} of ${FIRST_WEEK_DAYS}`,
+              `${week.items.filter((item) => item.done).length} of ${week.items.length} done`,
+            ]}
+          />
         </div>
         <IconButton
           aria-label="Hide your first week"
