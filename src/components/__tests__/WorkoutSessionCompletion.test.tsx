@@ -1964,6 +1964,63 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     expect(region).toHaveTextContent(/^$/);
   });
 
+  it("shows the rest in the page's title, and keeps counting it with the app away", async () => {
+    /* The tab and the app switcher show the page's title, so a rest can
+       be read from outside the app (lifting finding 7). The title keeps
+       its own clock: the screen stops repainting while hidden. */
+    document.title = "Tropos";
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    await act(async () => {});
+    expect(document.title).toBe("1:30 rest");
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(30_000);
+    });
+    expect(document.title).toBe("1:00 rest");
+    hidden.mockReturnValue(false);
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    hidden.mockRestore();
+    fireEvent.click(screen.getByRole("button", { name: "End rest" }));
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("group", { name: "Rest timer" })).toBeNull()
+    );
+    expect(document.title).toBe("Tropos");
+  });
+
+  it("does not sound a rest that ended while the app was away", async () => {
+    /* It said so on the lock screen, or in the title: coming back to the
+       app does not chime it a second time. */
+    const { haptic } = await import("@/lib/haptic");
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    await act(async () => {});
+    const region = screen.getByText("Rest, 1:30").closest('[role="status"]');
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    vi.setSystemTime(Date.now() + 95_000);
+    hidden.mockReturnValue(false);
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    hidden.mockRestore();
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByRole("group", { name: "Rest timer" })).toHaveTextContent(
+      "0:00"
+    );
+    expect(region).toHaveTextContent(/^Rest over$/);
+    expect(haptic).not.toHaveBeenCalledWith([200, 100, 200]);
+  });
+
   it("re-arms the completion alert when an expired rest is extended", async () => {
     /* Extending an already-finished rest starts a fresh countdown. The
        chime flag stayed set from the first expiry, so the second one passed

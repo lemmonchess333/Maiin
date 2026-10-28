@@ -10,6 +10,7 @@ import {
   cancelRestEndNotification,
 } from "@/lib/restTimerNotification";
 import { formatClock } from "@/utils/formatters";
+import { showRestOutside } from "@/lib/restOutside";
 import CompactRestTimer from "./CompactRestTimer";
 
 function playChime() {
@@ -84,6 +85,13 @@ export default function WorkoutRestTimer({
           void scheduleRestEndNotification(delay, exerciseName);
       } else {
         void cancelRestEndNotification();
+        // A rest that ended while the app was away has said so already,
+        // on the lock screen or in the tab's title: coming back to it
+        // does not sound it again.
+        if (!chimeFired.current && elapsedSecondsSince(startedAt) >= target) {
+          chimeFired.current = true;
+          announce("Rest over");
+        }
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
@@ -92,6 +100,12 @@ export default function WorkoutRestTimer({
       void cancelRestEndNotification();
     };
   }, [startedAt, target, exerciseName]);
+
+  // The rest outside the app: the tab's title, and the lock screen.
+  useEffect(
+    () => showRestOutside({ startedAt, target, exerciseName }),
+    [startedAt, target, exerciseName]
+  );
 
   useEffect(() => {
     if (seconds >= target && !chimeFired.current) {

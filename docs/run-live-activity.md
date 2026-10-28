@@ -9,6 +9,12 @@ below needs a Mac + Xcode; until it exists the seam's `startActivity`
 rejects and every call is a swallowed no-op — web and un-provisioned
 native builds are unaffected.
 
+The same extension also shows a lift's rest (`src/lib/restLiveActivity.ts`):
+a dark card with a purple dumbbell, "Rest", the system's own countdown to
+the rest's end and "Next:" with the exercise, and in the Dynamic Island the
+dumbbell and the countdown. It needs nothing more than the steps below; its
+device check is in `docs/qa/pre-launch-backlog.md`.
+
 ## What ships on the lock screen
 
 While an outdoor GPS run records: a dark card (surface `#1A1A1F`) with a
