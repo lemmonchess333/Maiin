@@ -871,8 +871,11 @@ describe("workout save acknowledgement", () => {
   });
 });
 
-async function finishAndSave(complete = writer()) {
-  openSession(complete);
+async function finishAndSave(
+  complete = writer(),
+  extra: Partial<ComponentProps<typeof WorkoutSession>> = {}
+) {
+  openSession(complete, vi.fn(), {}, extra);
   for (let i = 0; i < 3; i++) {
     fireEvent.click(
       screen.getAllByRole("button", { name: "Mark set complete" })[0]
@@ -891,6 +894,40 @@ it("hands the finish screen the share the save came back with", async () => {
   const saved = receipt();
   await finishAndSave(vi.fn<CompleteDay>(async () => saved));
   await vi.waitFor(() => expect(shareRow.action).toBe(saved.share));
+});
+
+it("opens the exact saved workout only once its save receipt arrives", async () => {
+  let resolve!: (saved: LiftCompletionReceipt) => void;
+  const pending = new Promise<LiftCompletionReceipt>((done) => {
+    resolve = done;
+  });
+  const viewWorkout = vi.fn();
+  await finishAndSave(
+    vi.fn<CompleteDay>(() => pending),
+    {
+      onViewWorkout: viewWorkout,
+    }
+  );
+  expect(screen.queryByRole("button", { name: "View workout" })).toBeNull();
+  await act(async () => {
+    resolve({ ...receipt(), workoutId: "routine-saved-record" });
+  });
+  fireEvent.click(await screen.findByRole("button", { name: "View workout" }));
+  expect(viewWorkout).toHaveBeenCalledExactlyOnceWith("routine-saved-record");
+});
+
+it("can open a locally queued workout and removes the action if sync fails", async () => {
+  let settle!: (outcome: "synced" | "failed") => void;
+  const pending = new Promise<"synced" | "failed">((done) => {
+    settle = done;
+  });
+  const viewWorkout = vi.fn();
+  await finishAndSave(writer(pending), { onViewWorkout: viewWorkout });
+  fireEvent.click(await screen.findByRole("button", { name: "View workout" }));
+  expect(viewWorkout).toHaveBeenCalledExactlyOnceWith("programme-test");
+  await act(async () => settle("failed"));
+  expect(screen.queryByRole("button", { name: "View workout" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Retry sync" })).toBeEnabled();
 });
 
 it("keeps the recovery draft while queued, then clears it only when synced", async () => {
@@ -1064,10 +1101,17 @@ it("recognises a server-acknowledged completion after reopening instead of writi
     },
   });
   const complete = vi.fn();
-  await act(async () => openSession(complete));
+  const viewWorkout = vi.fn();
+  await act(async () =>
+    openSession(complete, vi.fn(), {}, { onViewWorkout: viewWorkout })
+  );
   await vi.waitFor(() => expect(screen.getByText("Saved")).toBeVisible());
   expect(complete).not.toHaveBeenCalled();
   expect(h.clear).toHaveBeenCalledWith("landed-original");
+  fireEvent.click(screen.getByRole("button", { name: "View workout" }));
+  expect(viewWorkout).toHaveBeenCalledExactlyOnceWith(
+    "programme-landed-original"
+  );
 });
 
 describe("completed-set corrections", () => {

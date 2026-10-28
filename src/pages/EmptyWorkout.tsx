@@ -95,6 +95,9 @@ export default function EmptyWorkout() {
       draftEpoch={EMPTY_WORKOUT_DRAFT_EPOCH}
       onCompleteDay={handleComplete}
       onClose={() => navigate("/program")}
+      onViewWorkout={(id) =>
+        navigate(`/workout/${encodeURIComponent(id)}`, { replace: true })
+      }
       resumeDraft={resumeOnOpen}
     />
   );

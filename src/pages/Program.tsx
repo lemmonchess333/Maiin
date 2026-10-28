@@ -2261,6 +2261,10 @@ function ProgramInner() {
               }}
               onCompleteDay={completeWithViewToast}
               onClose={closeSession}
+              onViewWorkout={(id) => {
+                closeSession();
+                navigate(`/workout/${encodeURIComponent(id)}`);
+              }}
               resumeDraft={resumeOnOpen}
             />
           );

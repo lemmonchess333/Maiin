@@ -1,5 +1,7 @@
 # Exercise journey review, 28 October 2026
 
+Follow-up: [live form guide and saved workout actions](./live-workout-2026-10-28.md).
+
 [Before and after, dark](./exercise-journey-2026-10-28/board-dark.html) · [Before and after, light](./exercise-journey-2026-10-28/board-light.html)
 
 | Step | What the comparison showed | Tropos response |

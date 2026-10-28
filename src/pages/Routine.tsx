@@ -222,6 +222,9 @@ export default function Routine() {
       draftEpoch={ROUTINE_DRAFT_EPOCH}
       onCompleteDay={handleCompleteRoutine}
       onClose={() => navigate("/program")}
+      onViewWorkout={(id) =>
+        navigate(`/workout/${encodeURIComponent(id)}`, { replace: true })
+      }
       resumeDraft={resumeOnOpen}
     />
   );

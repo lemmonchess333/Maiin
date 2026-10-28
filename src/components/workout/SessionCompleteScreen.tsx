@@ -56,6 +56,7 @@ interface SessionCompleteScreenProps {
   onFinish: () => void;
   onEdit?: () => void;
   onClose: () => void;
+  onViewWorkout?: () => void;
 }
 
 export default function SessionCompleteScreen({
@@ -73,6 +74,7 @@ export default function SessionCompleteScreen({
   onFinish,
   onEdit,
   onClose,
+  onViewWorkout,
 }: SessionCompleteScreenProps) {
   const liftUnit = useLiftUnit();
   const heading =
@@ -542,6 +544,16 @@ export default function SessionCompleteScreen({
             with the save's state under it. */}
         {saved && (
           <div className="sticky bottom-0 z-10 -mx-5 mt-auto border-t border-border/50 bg-background px-5 pt-3 pb-[calc(1rem+var(--safe-bottom))]">
+            {onViewWorkout && (
+              <Button
+                fullWidth
+                variant="secondary"
+                className="mb-2"
+                onClick={onViewWorkout}
+              >
+                View workout
+              </Button>
+            )}
             <Button
               ref={doneRef}
               fullWidth

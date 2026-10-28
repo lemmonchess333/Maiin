@@ -317,6 +317,8 @@ interface Props {
     sessionData: CompletedSessionData
   ) => Promise<LiftCompletionReceipt>;
   onClose: () => void;
+  /** Open the exact saved record returned by the completion writer. */
+  onViewWorkout?: (workoutId: string) => void;
   /** The account has never finished a workout: the guide's first-set hint
    *  may point at the first row (FV1). Train knows this; a saved routine
    *  doesn't pass it. */
@@ -344,6 +346,7 @@ export default function WorkoutSession({
   programmeContext,
   onCompleteDay,
   onClose,
+  onViewWorkout,
   firstWorkout = false,
   hardRunBefore,
   resumeDraft = false,
@@ -824,6 +827,7 @@ export default function WorkoutSession({
   const [askingJump, setAskingJump] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedWorkoutId, setSavedWorkoutId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<
     "queued" | "synced" | "needs-attention" | undefined
   >(initialDraft?.completionPending ? "needs-attention" : undefined);
@@ -863,6 +867,7 @@ export default function WorkoutSession({
         )
           return;
         clearDraft(initialDraft.completionId);
+        setSavedWorkoutId(snapshot.id);
         setSaved(true);
         setSaveStatus("synced");
       } catch {
@@ -1149,6 +1154,15 @@ export default function WorkoutSession({
     field: "reps" | "weight",
     value: number
   ) => {
+    // History may still be loading when someone starts typing. From this
+    // edit onward the exercise belongs to them, just as a completed set
+    // does; a late history read must not replace the numbers they entered.
+    const exercise = day.exercises[exIdx];
+    if (exercise) {
+      const key = rowKey(exercise, exIdx);
+      rowsToStart.current.delete(key);
+      weightsToFollow.current.delete(key);
+    }
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       updated[exIdx][setIdx][field] = value;
@@ -1726,6 +1740,7 @@ export default function WorkoutSession({
       // A callback from an outgoing account must never recreate its draft
       // after sign-out, mark the next user's session saved, or award a badge.
       if (completionUid && auth.currentUser?.uid !== completionUid) return;
+      setSavedWorkoutId(receipt.workoutId);
       const queuedReceipt =
         receipt.syncStatus === "queued" ? receipt.sync : null;
       const acknowledge = () => {
@@ -1919,6 +1934,11 @@ export default function WorkoutSession({
             !completionPending ? () => setSessionComplete(false) : undefined
           }
           onClose={onClose}
+          onViewWorkout={
+            savedWorkoutId && onViewWorkout
+              ? () => onViewWorkout(savedWorkoutId)
+              : undefined
+          }
         />
         <KeepSwapSheet
           open={keepQuestion.open}
@@ -3069,6 +3089,7 @@ export default function WorkoutSession({
           exerciseName={currentExercise.name}
           open={showFormGuide}
           onOpenChange={setShowFormGuide}
+          compactGuide
         />
       )}
     </div>
