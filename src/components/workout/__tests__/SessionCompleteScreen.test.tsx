@@ -188,6 +188,22 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
     expect(screen.getByText("60 s")).toBeInTheDocument();
   });
 
+  it("compares timed sets by duration when their loads differ", () => {
+    renderScreen(
+      [
+        [
+          { reps: 30, weight: 20, completed: true, type: "working" },
+          { reps: 60, weight: 0, completed: true, type: "working" },
+          { reps: 90, weight: 0, completed: true, type: "warmup" },
+          { reps: 120, weight: 0, completed: false, type: "working" },
+        ],
+      ],
+      [{ ...exercise("Plank", 3), repUnit: "seconds" }]
+    );
+    expect(screen.getByText("60 s")).toBeInTheDocument();
+    expect(screen.queryByText("20 kg × 30 s")).toBeNull();
+  });
+
   it("keeps the loaded best set based on weight times reps", () => {
     renderScreen(
       [

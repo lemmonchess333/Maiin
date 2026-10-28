@@ -1048,6 +1048,47 @@ it("shows the previous note with its date, and reuses it only on request", async
   ).not.toBeInTheDocument();
 });
 
+it.each([0, 20_000])(
+  "keeps a sub-minute live clock positive when saving after %i ms",
+  async (elapsedMs) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 28, 12));
+    const complete = openSession(writer(), vi.fn(), { sets: 1 });
+    vi.setSystemTime(Date.now() + elapsedMs);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save workout" })
+    );
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    expect(complete.mock.calls[0][1]?.durationMinutes).toBeCloseTo(
+      Math.max(1, elapsedMs / 1000) / 60
+    );
+  }
+);
+
+it("keeps a sub-minute completion clock when retrying after reopening", async () => {
+  h.load.mockReturnValueOnce({
+    dayIndex: 0,
+    dayName: "Test lift",
+    identity: "test",
+    completionId: "short-original",
+    completionCommandId: "short-original",
+    completionPending: true,
+    startedAt: Date.now() - 20_000,
+    elapsedSeconds: 20,
+    currentExIndex: 0,
+    exerciseNotes: {},
+    setLogs: [[{ reps: 8, weight: 0, completed: true, type: "working" }]],
+  } as never);
+  const complete = writer();
+  openSession(complete, vi.fn(), { sets: 1 });
+  fireEvent.click(screen.getByRole("button", { name: "Retry sync" }));
+  await vi.waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+  expect(complete.mock.calls[0][1]?.durationMinutes).toBeCloseTo(1 / 3);
+});
+
 it("reopens an unsynced completion with its original date and retry identity", async () => {
   const startedAt = new Date("2026-09-06T12:00:00").getTime();
   h.load.mockReturnValueOnce({
@@ -2327,7 +2368,7 @@ describe("a loaded lift needs a weight to be ticked", () => {
 });
 
 describe("the RPE row", () => {
-  it("is one row of nine named chips, with no label in front", () => {
+  it("offers all nine effort ratings as one optional selection", () => {
     openSession(writer(), vi.fn(), {
       exerciseId: "bench-press",
       name: "Bench Press",
@@ -2335,10 +2376,8 @@ describe("the RPE row", () => {
       sets: 1,
     });
     fireEvent.click(screen.getByRole("button", { name: "Show RPE" }));
-    const row = screen.getByRole("group", { name: "RPE for set 1" });
-    expect(row).toHaveClass("grid", "grid-cols-9");
-    expect(screen.queryByText("RPE:")).toBeNull();
-    const chips = within(row).getAllByRole("button");
+    const row = screen.getByRole("radiogroup", { name: "RPE for set 1" });
+    const chips = within(row).getAllByRole("radio");
     expect(chips.map((chip) => chip.textContent)).toEqual([
       "6",
       "6.5",
@@ -2350,9 +2389,71 @@ describe("the RPE row", () => {
       "9.5",
       "10",
     ]);
-    for (const chip of chips) expect(chip).toHaveClass("min-h-11");
+    expect(
+      chips.every((chip) => chip.getAttribute("aria-checked") === "false")
+    ).toBe(true);
     fireEvent.click(chips[4]);
-    expect(chips[4]).toHaveAttribute("aria-pressed", "true");
+    expect(chips[4]).toHaveAttribute("aria-checked", "true");
+    expect(
+      chips.filter((chip) => chip.getAttribute("aria-checked") === "true")
+    ).toHaveLength(1);
+  });
+
+  it("supports keyboard selection and clearing an accidental effort before saving", async () => {
+    const log = openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 60,
+      sets: 1,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Show RPE" }));
+    const row = screen.getByRole("radiogroup", { name: "RPE for set 1" });
+    const first = within(row).getByRole("radio", { name: "6" });
+    first.focus();
+    fireEvent.keyDown(first, { key: "End" });
+    expect(within(row).getByRole("radio", { name: "10" })).toHaveFocus();
+    expect(within(row).getByRole("radio", { name: "10" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Clear RPE for set 1" })
+    );
+    expect(first).toHaveFocus();
+    expect(
+      within(row)
+        .getAllByRole("radio")
+        .every((chip) => chip.getAttribute("aria-checked") === "false")
+    ).toBe(true);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" }).at(-1)!
+    );
+    await screen.findByRole("button", { name: "Save workout" });
+    fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
+    await vi.waitFor(() => expect(log).toHaveBeenCalledTimes(1));
+    expect(log.mock.calls[0][1]?.setLogs?.[0][0]).not.toHaveProperty("rpe");
+  });
+
+  it("saves a half-point effort chosen with the keyboard", async () => {
+    const log = openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 60,
+      sets: 1,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Show RPE" }));
+    const row = screen.getByRole("radiogroup", { name: "RPE for set 1" });
+    const first = within(row).getByRole("radio", { name: "6" });
+    first.focus();
+    fireEvent.keyDown(first, { key: "ArrowRight" });
+    expect(within(row).getByRole("radio", { name: "6.5" })).toHaveFocus();
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" }).at(-1)!
+    );
+    await screen.findByRole("button", { name: "Save workout" });
+    fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
+    await vi.waitFor(() => expect(log).toHaveBeenCalledTimes(1));
+    expect(log.mock.calls[0][1]?.setLogs?.[0][0].rpe).toBe(6.5);
   });
 });
 

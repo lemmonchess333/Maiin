@@ -21,7 +21,7 @@ import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
-import { formatLoad } from "@/lib/liftLoad";
+import { formatKitLoad } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { SessionShareAction } from "@/lib/sessionPost";
@@ -219,10 +219,11 @@ export default function SessionCompleteScreen({
       const bestSet =
         workingSets.length > 0
           ? workingSets.reduce((best, s) => {
-              // Unweighted sets all have zero tonnage. Compare their
-              // reps (or hold duration), keeping loaded-set ranking intact.
+              // Holds compare duration even when their loads differ.
+              // Unweighted rep sets compare reps; loaded rep sets use work.
               const improves =
-                s.weight === 0 && best.weight === 0
+                ex.repUnit === "seconds" ||
+                (s.weight === 0 && best.weight === 0)
                   ? s.reps > best.reps
                   : s.weight * s.reps > best.weight * best.reps;
               return improves ? s : best;
@@ -230,6 +231,7 @@ export default function SessionCompleteScreen({
           : null;
       return {
         name: ex.name,
+        exerciseId: ex.exerciseId,
         repUnit: ex.repUnit,
         setsCompleted: workingSets.length,
         totalSets: ex.sets,
@@ -288,16 +290,18 @@ export default function SessionCompleteScreen({
         </motion.div>
 
         {/* The result stays visible; only the exercise breakdown is optional. */}
-        <motion.div
-          className="grid grid-cols-3 divide-x divide-border"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <StatFigure size="lg" count={duration} unit={duration.unit} />
-          <StatFigure size="lg" count={work} unit={work.unit} />
-          <StatFigure size="lg" count={sets} unit={sets.unit} />
-        </motion.div>
+        <div className="@container">
+          <motion.div
+            className="grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <StatFigure size="lg" count={duration} unit={duration.unit} />
+            <StatFigure size="lg" count={work} unit={work.unit} />
+            <StatFigure size="lg" count={sets} unit={sets.unit} />
+          </motion.div>
+        </div>
 
         {/* The session's best moment lands a beat after the screen, a
             little large and settling, and its trophy after it (Pol1). */}
@@ -332,15 +336,17 @@ export default function SessionCompleteScreen({
                       {name}
                     </p>
                     <p className="text-lg font-extrabold font-figure tabular-nums text-achievement-strong">
-                      {formatLoad(result.weight, liftUnit)} × {result.reps}
+                      {formatKitLoad(result.weight, liftUnit, exerciseId)} ×{" "}
+                      {result.reps}
                     </p>
                     {result.bestBeforeSession && (
                       <p className="text-xs text-muted-foreground">
                         Was{" "}
                         <span className="font-mono tabular-nums">
-                          {formatLoad(
+                          {formatKitLoad(
                             result.bestBeforeSession.weight,
-                            liftUnit
+                            liftUnit,
+                            exerciseId
                           )}{" "}
                           × {result.bestBeforeSession.reps}
                         </span>
@@ -377,12 +383,12 @@ export default function SessionCompleteScreen({
 
         {firsts.length > 0 && (
           <Card size="compact" tone="muted" className="space-y-1">
-            {firsts.map(({ key, name, result }) => (
+            {firsts.map(({ key, name, exerciseId, result }) => (
               <p key={key} className="text-sm text-muted-foreground">
                 <span className="font-semibold text-foreground">{name}</span>
                 {" · "}
                 <InlineNumerals>
-                  {setPRDescription(result, liftUnit)}
+                  {setPRDescription(result, liftUnit, exerciseId)}
                 </InlineNumerals>
               </p>
             ))}
@@ -527,7 +533,7 @@ export default function SessionCompleteScreen({
                   <div className="text-right shrink-0 ml-3">
                     <p className="text-sm font-mono tabular-nums font-semibold text-lifting-strong">
                       {ex.bestWeight > 0
-                        ? `${formatLoad(ex.bestWeight, liftUnit)} × ${ex.bestReps}${ex.repUnit === "seconds" ? " s" : ""}`
+                        ? `${formatKitLoad(ex.bestWeight, liftUnit, ex.exerciseId)} × ${ex.bestReps}${ex.repUnit === "seconds" ? " s" : ""}`
                         : `${ex.bestReps} ${ex.repUnit === "seconds" ? "s" : "reps"}`}
                     </p>
                     <p

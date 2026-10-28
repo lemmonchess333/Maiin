@@ -9,6 +9,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { SetPR } from "@/lib/prTracking";
+import { LiftUnitContext } from "@/hooks/useLiftUnit";
 
 const motionPref = vi.hoisted(() => ({ reduce: true }));
 vi.mock("@/hooks/useReducedMotion", () => ({
@@ -70,6 +71,68 @@ const benchBest = {
   previousBest: { weight: 77.5, reps: 8, date: "2026-09-20" },
   bestBeforeSession: { weight: 77.5, reps: 8, date: "2026-09-20" },
 } as unknown as SetPR;
+
+it("uses the kettlebell's displayed pounds for the best, its comparison and session detail", () => {
+  const bell = {
+    ...bench,
+    exerciseId: "kettlebell-swing",
+    name: "Kettlebell Swing",
+  };
+  const best = {
+    ...benchBest,
+    weight: 16,
+    reps: 20,
+    previousBest: { weight: 12, reps: 20, date: "2026-09-20" },
+    bestBeforeSession: { weight: 12, reps: 20, date: "2026-09-20" },
+  };
+  render(
+    <LiftUnitContext value="lbs">
+      <SessionCompleteScreen
+        {...screenProps({
+          exercises: [bell],
+          setLogs: [
+            [{ reps: 20, weight: 16, completed: true, type: "working" }],
+          ],
+          prResults: new Map([["Kettlebell Swing:10rm", best]]),
+        })}
+      />
+    </LiftUnitContext>
+  );
+  expect(screen.getAllByText("35 lb × 20")).toHaveLength(2);
+  expect(screen.getByText(/Was/)).toHaveTextContent("Was 26 lb × 20");
+  expect(screen.queryByText(/35\.3 lb/)).toBeNull();
+});
+
+it("uses the same kettlebell unit in a first-logged record", () => {
+  const bell = {
+    ...bench,
+    exerciseId: "kettlebell-swing",
+    name: "Kettlebell Swing",
+  };
+  const first: SetPR = {
+    kind: "bucket-first",
+    bucket: "10rm",
+    weight: 16,
+    reps: 20,
+    previousBest: null,
+  };
+  render(
+    <LiftUnitContext value="lbs">
+      <SessionCompleteScreen
+        {...screenProps({
+          exercises: [bell],
+          setLogs: [
+            [{ reps: 20, weight: 16, completed: true, type: "working" }],
+          ],
+          prResults: new Map([["Kettlebell Swing:10rm", first]]),
+        })}
+      />
+    </LiftUnitContext>
+  );
+  expect(screen.getByText(/First logged at/)).toHaveTextContent(
+    "First logged at 35 lb × 20."
+  );
+});
 
 function screenProps(
   props: Partial<Parameters<typeof SessionCompleteScreen>[0]> = {}

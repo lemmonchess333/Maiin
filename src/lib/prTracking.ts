@@ -8,7 +8,8 @@
  */
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { epley1RMExact } from "@/lib/analytics";
-import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
+import type { LiftUnit } from "@/lib/liftLoad";
+import { formatKitLoad } from "@/features/program/loadSteps";
 
 export type RepBucket = "1rm" | "3rm" | "5rm" | "8rm" | "10rm";
 
@@ -266,9 +267,13 @@ export function checkSetPR(
 }
 
 /** The sentence under a new best, its loads in the lifter's unit. */
-export function setPRDescription(result: SetPR, unit: LiftUnit): string {
+export function setPRDescription(
+  result: SetPR,
+  unit: LiftUnit,
+  exerciseId?: string
+): string {
   const previous = result.previousBest;
-  const load = (kg: number) => formatLoad(kg, unit);
+  const load = (kg: number) => formatKitLoad(kg, unit, exerciseId);
   if (result.kind === "best" && previous) {
     return `${load(result.weight)} × ${result.reps} is a new best (was ${load(previous.weight)} × ${previous.reps}).`;
   }
