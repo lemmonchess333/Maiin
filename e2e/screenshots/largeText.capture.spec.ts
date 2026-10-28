@@ -13,7 +13,8 @@
  * section of it, Train's exercise menu, a workout, a run before, during
  * and after, the exercise, run and workout detail pages, the Weekly
  * review, sign-up, setup and the Pro page. The sheets: the weight log,
- * the streak's days, Social's notifications and a run's share sheet,
+ * the streak's days, Social's notifications and a run's share and
+ * rename sheets,
  * with Food's two above.
  *
  * And the surfaces the notification tray, a return and a session left
@@ -546,6 +547,14 @@ test.describe("large text", () => {
       await dialog.waitFor({ timeout: 10_000 });
       await page.waitForTimeout(1500);
       await measure(page, "share-sheet", width, found);
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+
+      // The same run's rename sheet.
+      await page.getByRole("button", { name: "Rename run" }).click();
+      await dialog.waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "rename-run-sheet", width, found);
 
       expect(found).toEqual([]);
     });

@@ -37,6 +37,7 @@ const { activationSport } = require("./lib/firstWeekActivation");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
 const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
+const runRename = require("./lib/runRename");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
 const friendsBoard = require("./lib/friendsBoard");
 const restrictedIdentities = require("./lib/restrictedIdentities");
@@ -5474,7 +5475,7 @@ exports.onRunUpdated = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("users/{uid}/runs/{runId}")
   .onUpdate(async (change, context) => {
-    const { uid } = context.params;
+    const { uid, runId } = context.params;
     // Reconciles from the current source documents, so a retry is safe.
     if (pastRetryWindow(context)) return null;
     if (
@@ -5497,6 +5498,14 @@ exports.onRunUpdated = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // A renamed run's post takes the new name (lib/runRename), read from
+    // the current documents, so a retry writes it once.
+    if (
+      runRename.runNameMayHaveChanged(change.before.data(), change.after.data())
+    )
+      await runRename.syncSharedRunName(db, uid, runId, {
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
     return null;
   });
 
