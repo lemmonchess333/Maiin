@@ -40,6 +40,28 @@ longer replacing itself; only a phone shows the card.
       time with the app asleep, "Next:" and the exercise under it; +15 s
       in the app moves the countdown on; End rest takes the card away.
 
+## A photo and a few words (Mob2 call 3, 2026-10-28)
+
+A photo's result has "Add a detail": a line of up to 200 characters sent
+with the same photo to `analyzeFood` for a second read. The server takes
+it as `detail` (`functions/lib/foodPhotoDetail.js`): tidied, refused past
+200 characters or when it is not text, and passed to the model as its own
+part after the image, with a fixed instruction saying it is data. A
+request without one is the request it was. The unit suites drive the
+handler's refusal and the request's shape; only the deployed function and
+a real scan show the model using it.
+
+- [ ] **Functions deployed.** The deployed `analyzeFood` source contains
+      `foodPhotoDetail.readFoodDetail` and `withFoodDetail`, read back from
+      the Deploy production run that ships it.
+- [ ] **A detail changes the estimate.** On a Pro account, scan a plate,
+      open Add a detail, type "cooked in two tablespoons of butter" and
+      tap Try again with this. Passing: the result comes back with more
+      fat and calories than the first, the photo still shows, Log saves
+      the new figures, and the scan counter in Settings went up by one
+      for the second read. With the network off, the first result stays
+      and the toast says so.
+
 ## The streak's days, from the flame (Mob1 call 4, 2026-10-27)
 
 Home's flame opens a sheet: the month's logged days filled in purple,

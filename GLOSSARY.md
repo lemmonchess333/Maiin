@@ -284,6 +284,9 @@ surface specifically.
   Theirs is the better shape: the description resolves exactly what a photo
   cannot — cut of meat, cooking fat, plate diameter — and it is the natural
   content of a "Type it instead" recovery that keeps the photo.
+  STATUS 2026-10-28 (Mob2 call 3): a photo's result now has "Add a detail",
+  up to 200 characters sent with the same photo to `analyzeFood` for a
+  second read. One photo, not three; the photo still stays on the phone.
 - **The wait shows real work.** Skeleton rows stream per-ingredient status
   ("Searching for 'Pastry Dough'", then Sugar, then Salt) as each database
   lookup lands. Tropos narrates four invented stages on a 1300ms timer over a

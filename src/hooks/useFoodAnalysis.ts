@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { filterIdentifiableAiItems } from "@/lib/aiFoodIdentification";
 import { auth } from "@/lib/firebase";
 import { logger } from "@/lib/logger";
 import { functionEndpoint } from "@/lib/functionEndpoint";
@@ -75,13 +76,27 @@ export function useFoodAnalysis() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FoodAnalysis | null>(null);
+  /** Bumped by `reset`, so a second read outlived by its result is dropped. */
+  const session = useRef(0);
 
+  /**
+   * `detail` is a few words typed on the photo's result, sent with the
+   * same photo (functions/lib/foodPhotoDetail.js). `keepResult` leaves the
+   * result on screen and the hook's result and error alone while the photo
+   * is read again: a second read is a refinement, not a fresh scan, so the
+   * sheet showing the first answer does not close under the person. The
+   * caller is `refine`, which puts a better answer on screen.
+   */
   const analyzeFood = async (
-    imageBase64: string
+    imageBase64: string,
+    options: { detail?: string | null; keepResult?: boolean } = {}
   ): Promise<FoodAnalysisOutcome> => {
+    const { detail = null, keepResult = false } = options;
     setLoading(true);
-    setError(null);
-    setResult(null);
+    if (!keepResult) {
+      setError(null);
+      setResult(null);
+    }
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
@@ -98,7 +113,9 @@ export function useFoodAnalysis() {
           "Content-Type": "application/json",
           Authorization: "Bearer " + token,
         },
-        body: JSON.stringify({ imageBase64 }),
+        body: JSON.stringify(
+          detail ? { imageBase64, detail } : { imageBase64 }
+        ),
         signal: controller.signal,
       });
 
@@ -129,7 +146,7 @@ export function useFoodAnalysis() {
         throw new Error("The scan came back garbled. Try again.");
       }
 
-      setResult(data);
+      if (!keepResult) setResult(data);
       return { data, errorMessage: null };
     } catch (err) {
       const message =
@@ -140,7 +157,7 @@ export function useFoodAnalysis() {
             : err instanceof Error
               ? err.message
               : "Couldn't analyse this photo. Try again.";
-      setError(message);
+      if (!keepResult) setError(message);
       return { data: null, errorMessage: message };
     } finally {
       clearTimeout(timeout);
@@ -190,9 +207,45 @@ export function useFoodAnalysis() {
   };
 
   const reset = () => {
+    session.current += 1;
     setResult(null);
     setError(null);
   };
 
-  return { analyzeFood, analyzeFoodText, loading, error, result, reset };
+  /**
+   * A second read of the same photo with a detail (Mob2, call 3). The
+   * first answer stays on screen while it runs. An answer that names a
+   * food replaces it (`adopted`); anything else leaves it, and the caller
+   * says so. A reset while it runs (the result closed or retaken) drops
+   * the answer, so a late one cannot reopen a closed result.
+   */
+  const refine = async (
+    imageBase64: string,
+    detail: string
+  ): Promise<FoodAnalysisOutcome & { adopted: boolean }> => {
+    const started = session.current;
+    const outcome = await analyzeFood(imageBase64, {
+      detail,
+      keepResult: true,
+    });
+    const adopted =
+      started === session.current &&
+      !!outcome.data &&
+      filterIdentifiableAiItems(outcome.data.items ?? []).length > 0;
+    if (adopted && outcome.data) {
+      setError(null);
+      setResult(outcome.data);
+    }
+    return { ...outcome, adopted };
+  };
+
+  return {
+    analyzeFood,
+    analyzeFoodText,
+    loading,
+    error,
+    result,
+    reset,
+    refine,
+  };
 }

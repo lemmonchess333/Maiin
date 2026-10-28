@@ -259,3 +259,90 @@ describe("useFoodAnalysis — the outcome contract", () => {
     expect(result.current.loading).toBe(false);
   });
 });
+
+describe("useFoodAnalysis — a second read with a detail (Mob2, call 3)", () => {
+  const sentBody = () =>
+    JSON.parse(
+      (vi.mocked(fetch).mock.calls.at(-1)?.[1] as RequestInit).body as string
+    );
+
+  it("sends the detail with the photo, and nothing extra without one", async () => {
+    stubFetch(async () => reply(200, GOOD));
+    const { result } = renderHook(() => useFoodAnalysis());
+    await act(async () => {
+      await result.current.analyzeFood("QUJD");
+    });
+    expect(sentBody()).toEqual({ imageBase64: "QUJD" });
+    await act(async () => {
+      await result.current.analyzeFood("QUJD", { detail: "cooked in butter" });
+    });
+    expect(sentBody()).toEqual({
+      imageBase64: "QUJD",
+      detail: "cooked in butter",
+    });
+  });
+
+  it("refine keeps the first answer on screen, and replaces it only with a food", async () => {
+    stubFetch(async () => reply(200, GOOD));
+    const { result } = renderHook(() => useFoodAnalysis());
+    await act(async () => {
+      await result.current.analyzeFood("QUJD");
+    });
+
+    // A failed second read: the first answer stays, with no error over it.
+    stubFetch(async () => reply(500, {}));
+    let outcome!: Awaited<ReturnType<typeof result.current.refine>>;
+    await act(async () => {
+      outcome = await result.current.refine("QUJD", "and butter");
+    });
+    expect(outcome.adopted).toBe(false);
+    expect(result.current.result?.foodName).toBe("Chicken and rice");
+    expect(result.current.error).toBeNull();
+
+    // An answer with no food in it: also left out.
+    stubFetch(async () =>
+      reply(200, { ...GOOD, foodName: "No food detected", items: [] })
+    );
+    await act(async () => {
+      outcome = await result.current.refine("QUJD", "and butter");
+    });
+    expect(outcome.adopted).toBe(false);
+    expect(result.current.result?.foodName).toBe("Chicken and rice");
+
+    // A better answer replaces it.
+    const better = { ...GOOD, foodName: "Chicken, rice and butter" };
+    stubFetch(async () => reply(200, better));
+    await act(async () => {
+      outcome = await result.current.refine("QUJD", "and butter");
+    });
+    expect(outcome.adopted).toBe(true);
+    expect(result.current.result?.foodName).toBe("Chicken, rice and butter");
+  });
+
+  it("refine drops an answer that arrives after the result was closed", async () => {
+    stubFetch(async () => reply(200, GOOD));
+    const { result } = renderHook(() => useFoodAnalysis());
+    await act(async () => {
+      await result.current.analyzeFood("QUJD");
+    });
+    let release!: () => void;
+    const late = new Promise((resolve) => {
+      release = () => resolve(reply(200, { ...GOOD, foodName: "Late" }));
+    });
+    stubFetch(() => late);
+    let outcome!: Awaited<ReturnType<typeof result.current.refine>>;
+    let pending!: Promise<void>;
+    act(() => {
+      pending = result.current.refine("QUJD", "late").then((o) => {
+        outcome = o;
+      });
+    });
+    act(() => result.current.reset());
+    await act(async () => {
+      release();
+      await pending;
+    });
+    expect(outcome.adopted).toBe(false);
+    expect(result.current.result).toBeNull();
+  });
+});

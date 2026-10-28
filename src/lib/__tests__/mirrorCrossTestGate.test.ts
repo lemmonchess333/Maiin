@@ -114,6 +114,10 @@ function functionsJsFiles(): string[] {
 
 // Mirror file → its cross-test (relative to repo root). Each must exist.
 const PINNED: Record<string, string> = {
+  // The photo detail's cap: the field stops where analyzeFood starts
+  // refusing.
+  "functions/lib/foodPhotoDetail.js":
+    "src/lib/__tests__/foodPhotoDetail.cross.test.ts",
   "functions/lib/workoutSetRecord.js":
     "src/features/program/__tests__/workoutSetRecord.cross.test.ts",
   // Optimistic-concurrency merge for the programme command boundary. The
