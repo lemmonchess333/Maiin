@@ -77,9 +77,8 @@ import { startingSetRows } from "@/features/program/setStartValues";
 import { swappedForToday } from "@/features/program/sessionSwap";
 import { followedWeight } from "@/features/program/sessionSets";
 import { loadContextFrom } from "@/features/program/startingLoads";
-import KeepSwapSheet, {
-  type SwapToKeep,
-} from "@/components/workout/KeepSwapSheet";
+import type { SwapToKeep } from "@/components/workout/KeepSwapSheet";
+import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import {
   buildInitialSetLogs,
   toCompletionSetLogs,
@@ -94,10 +93,6 @@ import {
   warmupRestSecondsFor,
 } from "@/features/program/restTime";
 import { useStreaks } from "@/features/streaks/useStreaks";
-import {
-  exercisesForLiftBadges,
-  liftWeightMilestoneBadges,
-} from "@/features/streaks/liftWeightMilestones";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
 import {
@@ -124,7 +119,6 @@ import {
 } from "@/lib/liftRecordsStore";
 import { effortCueFor, rpeReserveWords } from "@/features/program/effortCue";
 import Tooltip from "@/components/ui/Tooltip";
-import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import {
   needsLoad,
   validateSet,
@@ -157,7 +151,6 @@ import {
 } from "@/hooks/useWorkoutDraft";
 import { logger } from "@/lib/logger";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
-import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import WorkoutProgress from "@/components/workout/WorkoutProgress";
 import WorkoutRestTimer from "@/components/workout/WorkoutRestTimer";
 import SetCheck from "@/components/workout/SetCheck";
@@ -199,6 +192,17 @@ const EmptySessionScreen = lazyRetry(
 const ExercisePicker = lazyRetry(
   () => import("@/components/program/ExercisePicker")
 );
+// The finish screen, and Finish's question about today's swaps, load
+// beside the workout screen rather than in it. Both are fetched as soon as
+// this module is, before any session opens, so they are here at Finish,
+// offline too.
+const loadCompleteScreen = () =>
+  import("@/components/workout/SessionCompleteScreen");
+const loadKeepSwapSheet = () => import("@/components/workout/KeepSwapSheet");
+void loadCompleteScreen().catch(() => {});
+void loadKeepSwapSheet().catch(() => {});
+const SessionCompleteScreen = lazyRetry(loadCompleteScreen);
+const KeepSwapSheet = lazyRetry(loadKeepSwapSheet);
 
 interface WorkoutDay {
   dayName: string;
@@ -1738,11 +1742,19 @@ export default function WorkoutSession({
         // cracks now rather than after onWorkoutCreated's round-trip —
         // which was long enough for the owner to have left the screen. The
         // server still awards it; the transaction behind awardEventBadges
-        // makes the second arrival a no-op whichever side that is.
-        const lifts = liftWeightMilestoneBadges(
-          exercisesForLiftBadges(day.exercises, completionLogs)
+        // makes the second arrival a no-op whichever side that is. The
+        // rule loads on its own, after the save: nothing waits for it.
+        const exercises = day.exercises;
+        void import("@/features/streaks/liftWeightMilestones").then(
+          ({ exercisesForLiftBadges, liftWeightMilestoneBadges }) => {
+            if (completionUid && auth.currentUser?.uid !== completionUid)
+              return;
+            const lifts = liftWeightMilestoneBadges(
+              exercisesForLiftBadges(exercises, completionLogs)
+            );
+            if (lifts.length > 0) awardEventBadges(lifts);
+          }
         );
-        if (lifts.length > 0) awardEventBadges(lifts);
       };
       if (queuedReceipt) {
         setSaved(true);
@@ -1900,7 +1912,11 @@ export default function WorkoutSession({
   // Session complete screen
   if (sessionComplete) {
     return (
-      <>
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 z-50 bg-background pt-[var(--safe-top)]" />
+        }
+      >
         <SessionCompleteScreen
           dayName={dayLabel ?? day.dayName}
           exercises={day.exercises}
@@ -1928,7 +1944,7 @@ export default function WorkoutSession({
             setKeepQuestion((question) => ({ ...question, open: false }))
           }
         />
-      </>
+      </Suspense>
     );
   }
 
