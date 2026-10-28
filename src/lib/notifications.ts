@@ -25,7 +25,17 @@ export interface NotificationPayload {
    * reminder hook to schedule one notification per non-rest weekday.
    */
   repeatEvery?: "day" | "week";
+  /**
+   * The app path a tap on it opens ("/review"). Carried as the native
+   * notification's `extra`, and on the web by the notification's click;
+   * `listenForNotificationRoutes` hands it to the router, which opens
+   * only the paths `localNotificationRoute` allows.
+   */
+  route?: string;
 }
+
+/** The window event a web notification's click sends its route on. */
+const ROUTE_EVENT = "tropos:notification-route";
 
 const isNative = Capacitor.isNativePlatform();
 const webTimers = new Map<number, ReturnType<typeof setTimeout>>();
@@ -33,8 +43,7 @@ const webTimers = new Map<number, ReturnType<typeof setTimeout>>();
 /** The plugin's schedule shapes this module sends. Weekday is iOS's
  *  calendar weekday, 1 = Sunday (`Date.getDay() + 1`). */
 export type NativeSchedule =
-  | { at: Date }
-  | { on: { hour: number; minute: number; weekday?: number } };
+  { at: Date } | { on: { hour: number; minute: number; weekday?: number } };
 
 /** The first time after `now` that falls on `at`'s hour and minute (and, for
  *  a weekly reminder, its weekday). */
@@ -158,10 +167,7 @@ export async function hasNotificationPermission(): Promise<boolean> {
 }
 
 export type NotificationPermissionState =
-  | "granted"
-  | "denied"
-  | "default"
-  | "unsupported";
+  "granted" | "denied" | "default" | "unsupported";
 
 /**
  * Fine-grained permission state — lets callers distinguish "denied" (user
@@ -211,6 +217,7 @@ export async function scheduleNotification(
             title: payload.title,
             body: payload.body,
             schedule,
+            ...(payload.route ? { extra: { route: payload.route } } : {}),
           },
         ],
       });
@@ -221,17 +228,30 @@ export async function scheduleNotification(
       const previous = webTimers.get(payload.id);
       if (previous !== undefined) clearTimeout(previous);
       webTimers.delete(payload.id);
+      const show = () => {
+        const shown = new Notification(payload.title, { body: payload.body });
+        if (payload.route) {
+          const route = payload.route;
+          shown.onclick = () => {
+            window.focus();
+            window.dispatchEvent(
+              new CustomEvent(ROUTE_EVENT, { detail: route })
+            );
+            shown.close();
+          };
+        }
+      };
       if (payload.scheduleAt) {
         const delay = payload.scheduleAt.getTime() - Date.now();
         if (delay <= 0) {
-          new Notification(payload.title, { body: payload.body });
+          show();
         } else {
           // Web fallback: setTimeout only fires if the app stays open.
           // Accepted limitation — web is not the primary delivery target.
           const timer = setTimeout(() => {
             webTimers.delete(payload.id);
             try {
-              new Notification(payload.title, { body: payload.body });
+              show();
             } catch (err) {
               logger.error("web notification fire failed", err);
             }
@@ -239,7 +259,7 @@ export async function scheduleNotification(
           webTimers.set(payload.id, timer);
         }
       } else {
-        new Notification(payload.title, { body: payload.body });
+        show();
       }
       return true;
     }
@@ -249,6 +269,40 @@ export async function scheduleNotification(
     logger.error("scheduleNotification failed", err);
     return false;
   }
+}
+
+/**
+ * Calls `onRoute` with the route of each local notification tapped: a
+ * native one's `extra.route`, a web one's click. Resolves to the way to
+ * stop listening.
+ */
+export async function listenForNotificationRoutes(
+  onRoute: (route: string) => void
+): Promise<() => void> {
+  const onWeb = (event: Event) => {
+    const route = (event as CustomEvent<unknown>).detail;
+    if (typeof route === "string") onRoute(route);
+  };
+  window.addEventListener(ROUTE_EVENT, onWeb);
+  let native: { remove: () => Promise<void> } | null = null;
+  if (isNative) {
+    try {
+      native = await LocalNotifications.addListener(
+        "localNotificationActionPerformed",
+        (action) => {
+          const route = (action.notification.extra as { route?: unknown })
+            ?.route;
+          if (typeof route === "string") onRoute(route);
+        }
+      );
+    } catch (err) {
+      logger.error("listenForNotificationRoutes failed", err);
+    }
+  }
+  return () => {
+    window.removeEventListener(ROUTE_EVENT, onWeb);
+    void native?.remove().catch(() => {});
+  };
 }
 
 /**
@@ -339,7 +393,8 @@ export async function getPendingNotifications(): Promise<
  * Uses a stable ID per category so successive test taps replace rather
  * than queue (no spam if the user impatiently double-taps).
  */
-export type TestNotificationKind = "meal" | "workout" | "streak" | "generic";
+export type TestNotificationKind =
+  "meal" | "workout" | "streak" | "review" | "generic";
 
 const TEST_NOTIFICATION_IDS: Record<TestNotificationKind, number> = {
   // High IDs to avoid collision with the real reminders (which use
@@ -348,6 +403,7 @@ const TEST_NOTIFICATION_IDS: Record<TestNotificationKind, number> = {
   meal: 9991,
   workout: 9992,
   streak: 9993,
+  review: 9994,
 };
 
 const TEST_NOTIFICATION_COPY: Record<
@@ -370,7 +426,16 @@ const TEST_NOTIFICATION_COPY: Record<
     title: "Streak reminder test",
     body: "This is what your streak reminders look like.",
   },
+  review: {
+    title: "Your week, reviewed",
+    body: "This is what Monday's review notification looks like. Tap it to open the review.",
+  },
 };
+
+/** Where a test notification's tap goes: the review's opens the review,
+ *  as the real one does. */
+const TEST_NOTIFICATION_ROUTES: Partial<Record<TestNotificationKind, string>> =
+  { review: "/review" };
 
 export async function sendTestNotification(
   kind: TestNotificationKind = "generic"
@@ -381,5 +446,8 @@ export async function sendTestNotification(
     title: copy.title,
     body: copy.body,
     scheduleAt: new Date(Date.now() + 3000),
+    ...(TEST_NOTIFICATION_ROUTES[kind]
+      ? { route: TEST_NOTIFICATION_ROUTES[kind] }
+      : {}),
   });
 }

@@ -59,3 +59,8 @@ export async function sendTestNotification(): Promise<boolean> {
     body: "Test",
   });
 }
+
+/** No taps reach a test: nothing to listen to. */
+export async function listenForNotificationRoutes(): Promise<() => void> {
+  return () => {};
+}

@@ -62,6 +62,28 @@ a real scan show the model using it.
       for the second read. With the network off, the first result stays
       and the toast says so.
 
+## The Monday review notification (Mob2 call 10, 2026-10-28)
+
+A local notification at 09:00 on Monday, "Your week, reviewed", scheduled
+only when a review will be waiting and has not been read, and opening
+`/review` when tapped. Its switch is Settings → Notifications → Weekly
+review, on unless turned off; it reaches only someone who has allowed
+notifications. When the web's push and its Weekly recap switch are both
+on, the server's Monday recap push says it instead. The unit suites run
+the rules, the schedule and the switch against fakes; only a phone shows
+the notification and its tap.
+
+- [ ] **It comes on Monday and opens the review.** On an iPhone with
+      notifications allowed and a session logged last week, open the app
+      on Sunday evening and leave it. Passing: at 09:00 on Monday the
+      notification reads "Your week, reviewed"; tapping it with the app
+      closed opens the app on the review, not Home.
+- [ ] **A read review is not announced.** Open the review on Monday
+      before 09:00, then close the app. Passing: no notification at 09:00.
+- [ ] **The test opens the review too.** Settings → Notifications →
+      Weekly review → Send test. Passing: the test notification arrives in
+      a few seconds, and tapping it opens the review.
+
 ## The GPS warms on the run setup screen (Mob2, 2026-10-28)
 
 While the run setup screen (the tile picker or a planned run's launch

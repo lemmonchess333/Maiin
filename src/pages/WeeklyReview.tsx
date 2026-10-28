@@ -10,8 +10,10 @@ import {
   formatWeekRange,
   type WeekBest,
   type WeeklyReview as Review,
+  type WeekAheadPlan,
 } from "@/lib/weeklyReviewViewModel";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
+import { retireReviewReminder } from "@/hooks/useReviewReminder";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth, withSign } from "@/utils/formatters";
 import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
@@ -388,25 +390,58 @@ function BestMoment({
 }
 
 function WeekAhead({
-  review,
+  plan,
   trainingWhy,
   uid,
   weekKey,
   onDone,
 }: {
-  review: Review;
+  plan: WeekAheadPlan;
   trainingWhy: string | undefined;
   uid: string | null;
   weekKey: string;
   onDone: () => void;
 }) {
-  const { lifts, runs, phaseNote } = review.weekAhead;
   return (
     <div className="flex flex-1 flex-col">
       <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
         The week ahead
       </h2>
-      <div className="mt-6 space-y-6">
+      <WeekAheadBody
+        plan={plan}
+        trainingWhy={trainingWhy}
+        uid={uid}
+        weekKey={weekKey}
+        className="mt-6"
+      />
+      <div className="mt-auto pt-8">
+        <Button fullWidth onClick={onDone}>
+          Done
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** The week ahead's plan, why the person trains and the momentum
+ *  check-in: the recap's last card, and the page before a first review. */
+function WeekAheadBody({
+  plan,
+  trainingWhy,
+  uid,
+  weekKey,
+  className,
+}: {
+  plan: WeekAheadPlan;
+  trainingWhy: string | undefined;
+  uid: string | null;
+  weekKey: string;
+  className?: string;
+}) {
+  const { lifts, runs, phaseNote } = plan;
+  return (
+    <>
+      <div className={cn("space-y-6", className)}>
         {/* The plan's week in the figures "Your week" counts the last one
             in, so the card says it at the recap's size rather than as a
             line over an empty page. */}
@@ -452,12 +487,7 @@ function WeekAhead({
         {/* CHECKIN-01 — disappears for the week once answered or dismissed. */}
         {uid && <MomentumCheckinCard uid={uid} weekKey={weekKey} />}
       </div>
-      <div className="mt-auto pt-8">
-        <Button fullWidth onClick={onDone}>
-          Done
-        </Button>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -470,7 +500,8 @@ function WeekAhead({
 export default function WeeklyReview() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { loading, review, weekKey, failed, retry } = useWeeklyReview();
+  const { loading, review, weekAhead, weekKey, failed, retry } =
+    useWeeklyReview();
   const [shareOpen, setShareOpen] = useState(false);
 
   // D16 — the personal "why", resurfaced. Empty/whitespace = no why set.
@@ -484,6 +515,8 @@ export default function WeeklyReview() {
     if (loading || failed || viewedRef.current) return;
     viewedRef.current = true;
     dismiss();
+    // Monday's notification for this week has nothing left to say.
+    if (review) void retireReviewReminder(weekKey).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once: `dismiss` takes a new identity per render and must not re-fire
   }, [loading, failed]);
 
@@ -553,6 +586,19 @@ export default function WeeklyReview() {
               Your first review appears after your first week with a logged
               workout, run, meal or weigh-in.
             </p>
+            {/* Until then the page shows the plan for the week under way,
+                not a sentence on an empty page. */}
+            {weekAhead && (
+              <div className="mt-8 space-y-3">
+                <SectionHeading size="compact">The week ahead</SectionHeading>
+                <WeekAheadBody
+                  plan={weekAhead}
+                  trainingWhy={trainingWhy}
+                  uid={user?.uid ?? null}
+                  weekKey={weekKey}
+                />
+              </div>
+            )}
             <div className="mt-auto pt-8">
               <Button fullWidth onClick={close}>
                 Done
@@ -570,7 +616,7 @@ export default function WeeklyReview() {
       label: "The week ahead",
       render: () => (
         <WeekAhead
-          review={review}
+          plan={review.weekAhead}
           trainingWhy={trainingWhy}
           uid={user?.uid ?? null}
           weekKey={weekKey}

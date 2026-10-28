@@ -16,6 +16,7 @@ import type { UserProfile } from "@/lib/auth";
 
 let mockProfile: Partial<UserProfile> | null = null;
 let mockReview: unknown = null;
+let mockWeekAhead: unknown = null;
 let mockLoading = false;
 let mockFailed = false;
 const mockRetry = vi.fn();
@@ -30,6 +31,7 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
   useWeeklyReview: () => ({
     loading: mockLoading,
     review: mockReview,
+    weekAhead: mockWeekAhead,
     weekKey: "2026-W27",
     failed: mockFailed,
     retry: mockRetry,
@@ -117,6 +119,7 @@ afterEach(() => {
   cleanup();
   mockProfile = null;
   mockReview = null;
+  mockWeekAhead = null;
   mockLoading = false;
   mockFailed = false;
   mockRetry.mockClear();
@@ -272,6 +275,29 @@ describe("WeeklyReview — the recap as cards", () => {
     mockReview = null;
     renderRecap();
     expect(slides()).toEqual(["Your first review, 1 of 1"]);
+  });
+
+  /* Mob2 call 10 (Rev1 STATUS): before a first review exists the card
+     shows the week ahead under its sentence, not a sentence alone. */
+  it("before any review, shows the week ahead under its sentence", () => {
+    mockReview = null;
+    mockWeekAhead = { lifts: 3, runs: 2, phaseNote: null };
+    renderRecap();
+    expect(slides()).toEqual(["Your first review, 1 of 1"]);
+    expect(
+      screen.getByRole("heading", { name: "The week ahead" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("lifts planned")).toBeInTheDocument();
+    expect(screen.getByText("runs planned")).toBeInTheDocument();
+  });
+
+  it("before any review, a free plan's week ahead says it counts what is logged", () => {
+    mockReview = null;
+    mockWeekAhead = { lifts: null, runs: null, phaseNote: null };
+    renderRecap();
+    expect(
+      screen.getByText("Train when it suits you — log it and it counts.")
+    ).toBeInTheDocument();
   });
 
   describe("moving between cards", () => {

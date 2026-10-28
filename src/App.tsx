@@ -18,6 +18,7 @@ import { logger } from "@/lib/logger";
 import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
+import { useLocalNotificationNavigation } from "@/hooks/useLocalNotificationNavigation";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
@@ -411,6 +412,8 @@ function AppRoutes() {
   // Packet 17 — non-prompting FCM token refresh on sign-in + foreground.
   usePushTokenRefresh();
   useNativePushNavigation(uid, !loading && !!user);
+  // A tapped local notification (the Monday review) opens its page.
+  useLocalNotificationNavigation(!loading && !!user);
   // Signed in: fetch the shell's chunks side by side, while the profile
   // loads, instead of one after another as each layer renders. A device
   // that has signed in before started them at module load already; this
