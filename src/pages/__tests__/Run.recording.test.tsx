@@ -48,6 +48,7 @@ const h = vi.hoisted(() => ({
     permissionState: "granted" as PermissionState,
   },
   gpsCalls: [] as string[],
+  preWarms: 0,
   pauseSince: [] as (number | undefined)[],
   timer: { isRunning: false, elapsed: 600 },
   unit: "mi" as "km" | "mi",
@@ -62,7 +63,9 @@ const h = vi.hoisted(() => ({
 /* Stable across renders, as the real hook's useCallbacks are: the page's
    hold effect lists them as dependencies. */
 const gpsControls = {
-  preWarm: () => {},
+  preWarm: () => {
+    h.preWarms += 1;
+  },
   start: () => h.gpsCalls.push("start"),
   stop: () => h.gpsCalls.push("stop"),
   pause: (since?: number) => {
@@ -144,11 +147,14 @@ vi.mock("@/components/run/RunTilePicker", () => ({
   default: ({
     onPickType,
     onMoreOptions,
+    gpsSignal,
   }: {
     onPickType: (type: string) => void;
     onMoreOptions: () => void;
+    gpsSignal?: import("react").ReactNode;
   }) => (
     <>
+      {gpsSignal}
       <button onClick={() => onPickType("easy")}>Easy run</button>
       <button onClick={onMoreOptions}>More options</button>
     </>
@@ -313,6 +319,7 @@ beforeEach(() => {
   h.gps.error = null;
   h.gps.permissionState = "granted";
   h.gpsCalls.length = 0;
+  h.preWarms = 0;
   h.pauseSince.length = 0;
   h.timer.isRunning = false;
   h.timer.elapsed = 600;
@@ -672,6 +679,41 @@ describe("a structured run's real player", () => {
     } finally {
       errors.mockRestore();
     }
+  });
+});
+
+/* Mob2 finding 7: the setup screen warms the GPS and shows the signal
+   before Start, once location is allowed, and never asks for it. */
+describe("the setup screen warms the GPS", () => {
+  it("shows the signal and warms while location is allowed", () => {
+    render(tree());
+    expect(screen.getByRole("status")).toHaveTextContent("GPS ready");
+    expect(h.preWarms).toBe(1);
+    act(() => vi.advanceTimersByTime(15_000));
+    expect(h.preWarms).toBe(2);
+    // Warming is not the run: nothing is recording.
+    expect(h.gpsCalls).toEqual([]);
+  });
+
+  it("shows nothing and asks nothing while location is undecided", () => {
+    h.gps.permissionState = "prompt";
+    render(tree());
+    // POSITIVE anchor: the setup screen is the one showing.
+    expect(screen.getByRole("button", { name: "Easy run" })).toBeVisible();
+    expect(screen.queryByText("GPS ready")).toBeNull();
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(h.preWarms).toBe(0);
+  });
+
+  it("stops warming once the run starts", async () => {
+    render(tree());
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
+    });
+    const warmedBefore = h.preWarms;
+    act(() => vi.advanceTimersByTime(45_000));
+    // The start's own preWarm is the run's; the setup screen's stops.
+    expect(h.preWarms - warmedBefore).toBe(0);
   });
 });
 

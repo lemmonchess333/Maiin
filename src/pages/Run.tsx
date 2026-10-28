@@ -95,6 +95,7 @@ import { RunControlButton } from "@/components/ui/RunControlButton";
 import BackToStartChip from "../components/run/BackToStartChip";
 import RouteFollowChip from "../components/run/RouteFollowChip";
 import GpsSignalChip from "../components/run/GpsSignalChip";
+import { useGpsWarmup } from "@/hooks/useGpsWarmup";
 import GhostDeltaChip from "../components/run/GhostDeltaChip";
 import RouteSetupSection from "../components/run/RouteSetupSection";
 import type { SavedRouteSource } from "../lib/savedRoutes";
@@ -397,6 +398,23 @@ export default function Run() {
     () =>
       searchParams.get(START_ON_ARRIVAL_PARAM) === "1" ? "deciding" : "done"
   );
+  /* The GPS warms while the setup screen is open, and the screen shows
+     the signal, so Start usually finds a fix waiting (useGpsWarmup).
+     Never before location is allowed: a warm-up must not be the ask. */
+  const showSetupSignal = useGpsWarmup({
+    active: phase === "waiting" && arrival === "done",
+    permissionState: gps.permissionState,
+    preWarm: gps.preWarm,
+  });
+  const setupSignal = showSetupSignal ? (
+    <GpsSignalChip
+      accuracy={gps.gpsAccuracy}
+      isTracking
+      pointCount={gps.gpsAccuracy === null ? 0 : 1}
+      signalQuality={gps.signalQuality}
+      onPage
+    />
+  ) : null;
   // `startedAtRef` mirrors the timer's original-start epoch for the
   // active run so the periodic write effect can persist it without
   // racing with React state. Set on handleStart and on Resume.
@@ -2078,6 +2096,7 @@ export default function Run() {
               }
               onCustomize={() => setForceModal(true)}
               onBack={leaveSetup}
+              gpsSignal={setupSignal}
             />
           ) : forceModal || targetRoute != null ? (
             <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
@@ -2159,6 +2178,7 @@ export default function Run() {
               }
               onMoreOptions={() => setForceModal(true)}
               onBack={leaveSetup}
+              gpsSignal={setupSignal}
             />
           )}
         </>

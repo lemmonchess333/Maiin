@@ -22,6 +22,7 @@ import {
   Route,
   SlidersHorizontal,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
 import ShoeSelector from "./ShoeSelector";
@@ -55,6 +56,9 @@ interface RunTilePickerProps {
    *  grid — a visible choice through the SAME onPickType gesture path, never
    *  an auto-start. Null/omitted → picker renders exactly as before. */
   repeatType?: ActivityType | null;
+  /** The GPS signal, warmed while this screen is open, at the header's
+   *  end. */
+  gpsSignal?: ReactNode;
 }
 
 export default function RunTilePicker({
@@ -65,10 +69,11 @@ export default function RunTilePicker({
   onMoreOptions,
   onBack,
   repeatType = null,
+  gpsSignal,
 }: RunTilePickerProps) {
   const unit = useDistanceUnit();
-  const tiles = DIRECT_LAUNCH_TYPES.map(
-    (type) => ACTIVITY_TYPES.find((a) => a.type === type)!
+  const tiles = DIRECT_LAUNCH_TYPES.map((type) =>
+    ACTIVITY_TYPES.find((a) => a.type === type)!
   );
   const repeatOpt = repeatType
     ? ACTIVITY_TYPES.find((a) => a.type === repeatType)
@@ -79,7 +84,9 @@ export default function RunTilePicker({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground px-4">
-      <header className="flex items-center h-14 shrink-0">
+      {/* At large text the signal drops under the heading rather than
+          pushing it off the screen. */}
+      <header className="flex flex-wrap items-center gap-x-2 min-h-14 py-1.5 shrink-0">
         <IconButton
           aria-label="Back"
           variant="ghost"
@@ -87,6 +94,7 @@ export default function RunTilePicker({
           onClick={onBack}
         />
         <h1 className="ml-1 text-lg font-bold">Start a run</h1>
+        {gpsSignal && <div className="ml-auto">{gpsSignal}</div>}
       </header>
 
       {/* From the top, under the heading: centred, the tiles left a blank

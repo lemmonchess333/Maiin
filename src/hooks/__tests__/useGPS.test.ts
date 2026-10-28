@@ -23,8 +23,7 @@ import {
 const h = vi.hoisted(() => ({
   watchOnFix: null as PositionCallback | null,
   getCurrentImpl: null as
-    | ((onFix: PositionCallback, onErr: PositionErrorCallback) => void)
-    | null,
+    ((onFix: PositionCallback, onErr: PositionErrorCallback) => void) | null,
 }));
 
 vi.mock("../../lib/locationSource", () => ({
@@ -189,6 +188,46 @@ describe("useGPS — watchPosition watchdog (iOS Safari/PWA fallback)", () => {
     act(() => result.current.start());
     expect(result.current.permissionState).toBe("denied");
     expect(result.current.error).toBe("denied");
+  });
+});
+
+/* The run setup screen warms the GPS with preWarm and shows its signal
+   (useGpsWarmup). A warm fix moves the signal, never the trace; a refusal
+   is recorded, so the screen stops showing a signal it cannot get. */
+describe("useGPS — preWarm", () => {
+  beforeEach(() => {
+    h.watchOnFix = null;
+    h.getCurrentImpl = null;
+    Object.defineProperty(navigator, "geolocation", {
+      value: {},
+      configurable: true,
+    });
+  });
+
+  it("shows a warm fix's signal and adds nothing to the trace", () => {
+    h.getCurrentImpl = (onFix) => onFix(geoPos(51.5, -0.12, 6));
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.preWarm());
+    expect(result.current.gpsAccuracy).toBe(6);
+    expect(result.current.signalQuality).toBe("strong");
+    expect(result.current.points).toEqual([]);
+  });
+
+  it("records a refusal as denied", () => {
+    h.getCurrentImpl = (_onFix, onErr) =>
+      onErr({ code: 1, message: "denied" } as GeolocationPositionError);
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.preWarm());
+    expect(result.current.permissionState).toBe("denied");
+  });
+
+  it("leaves the permission alone when a warm fix only timed out", () => {
+    h.getCurrentImpl = (_onFix, onErr) =>
+      onErr({ code: 3, message: "timeout" } as GeolocationPositionError);
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.preWarm());
+    expect(result.current.permissionState).not.toBe("denied");
+    expect(result.current.error).toBeNull();
   });
 });
 

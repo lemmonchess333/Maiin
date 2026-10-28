@@ -62,6 +62,27 @@ a real scan show the model using it.
       for the second read. With the network off, the first result stays
       and the toast says so.
 
+## The GPS warms on the run setup screen (Mob2, 2026-10-28)
+
+While the run setup screen (the tile picker or a planned run's launch
+card) is open, the app asks for a one-shot fix at once and every 15
+seconds, and shows the signal in the header: "Finding GPS", then "GPS
+ready" or "Weak GPS". It never asks for location: on the web it waits for
+location to be allowed already, and in the app the one-shot asks the
+plugin with permission requests off. The unit suites drive the timing and
+the gates against fakes; only a phone shows the fix time and the battery.
+
+- [ ] **Start finds a fix waiting.** On an iPhone outdoors, open Run, wait
+      for "GPS ready", then tap a tile. Passing: the acquiring rings show
+      for under a couple of seconds, or not at all, before the countdown.
+- [ ] **Setup asks nothing.** On a new install with location not yet
+      decided, open Run. Passing: no location prompt and no signal shown
+      until a tile is tapped; the prompt comes with the tap.
+- [ ] **Battery and the background.** Leave the setup screen open for ten
+      minutes, then lock the phone for ten. Passing: battery use in
+      Settings → Battery is in line with a screen left on, and no location
+      arrow shows while the phone is locked on the setup screen.
+
 ## The streak's days, from the flame (Mob1 call 4, 2026-10-27)
 
 Home's flame opens a sheet: the month's logged days filled in purple,
