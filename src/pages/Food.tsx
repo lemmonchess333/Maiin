@@ -109,6 +109,11 @@ import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import { sweepFoodPhotosOnce } from "@/lib/foodPhotoStore";
 import Card from "@/components/ui/Card";
 
+/** Quick add rows shown when the box is focused, and how many its More
+ *  row opens to. */
+const QUICK_ADD_SHOWN = 5;
+const QUICK_ADD_MORE = 15;
+
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
   { name: "Protein Shake", cal: 250, pro: 30, carb: 20, fat: 5 },
@@ -1475,7 +1480,8 @@ export default function Food() {
   //      see suggestions.
   //
   // Dedupe is by normalized food name across all three sources.
-  // Capped at 5 to keep the row scannable.
+  // Five show at first, to keep the list scannable; its More row opens
+  // up to fifteen in the same order, so the first five never move.
   const quickMealCandidates = useMemo(() => {
     /* Build the live key→item map first. Cap is enforced AFTER
        cache application via orderQuickAddItems (was previously
@@ -1639,9 +1645,21 @@ export default function Food() {
       )
     );
   }
-  const quickMeals = useMemo(
-    () => orderQuickAddItems(cachedQuickOrder ?? [], quickMealCandidates, 5),
+  /* The ranked list runs to fifteen. `orderQuickAddItems` fills in rank
+     order and stops at its cap, so the first five of fifteen are exactly
+     the five a cap of five gives. */
+  const quickMealsRanked = useMemo(
+    () =>
+      orderQuickAddItems(
+        cachedQuickOrder ?? [],
+        quickMealCandidates,
+        QUICK_ADD_MORE
+      ),
     [cachedQuickOrder, quickMealCandidates]
+  );
+  const quickMeals = useMemo(
+    () => quickMealsRanked.slice(0, QUICK_ADD_SHOWN),
+    [quickMealsRanked]
   );
 
   const hasStrongQuickAddSuggestions = useMemo(() => {
@@ -1661,6 +1679,10 @@ export default function Food() {
   }, [favourites.length, meals, quickMeals.length, todayStr]);
 
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
+  /* The day the Quick add list's More row was opened on. Another day
+     opens on five again. */
+  const [moreRecentsDate, setMoreRecentsDate] = useState<string | null>(null);
+  const moreRecentsOpen = moreRecentsDate === selectedDate;
   // Synchronous latch closing the same-frame double-tap window that the
   // `quickAdding` state guard alone can't (iOS ghost-click → duplicate meal).
   const quickAddGuard = useInFlightGuard();
@@ -1852,9 +1874,21 @@ export default function Food() {
      `inputRef`, and comparing the section during render reads as a ref
      access to the React Compiler. */
   const showQuickAdd = inputFocused && !nlInput.trim() && quickMeals.length > 0;
+  /* More opens the rest of the ranked list. Examples are never more than
+     the six seeded meals, so a new account is not offered More. */
+  const canShowMoreRecents =
+    hasStrongQuickAddSuggestions &&
+    !moreRecentsOpen &&
+    quickMealsRanked.length > quickMeals.length;
   const quickAddSection: QuickAddSection | null = showQuickAdd
     ? {
-        items: quickMeals,
+        items:
+          moreRecentsOpen && hasStrongQuickAddSuggestions
+            ? quickMealsRanked
+            : quickMeals,
+        onShowMore: canShowMoreRecents
+          ? () => setMoreRecentsDate(selectedDate)
+          : undefined,
         asExamples: !hasStrongQuickAddSuggestions,
         adding: quickAdding,
         onAdd: handleQuickMealAdd,

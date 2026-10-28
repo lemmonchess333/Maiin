@@ -6,7 +6,7 @@ import {
 } from "react";
 import { motion } from "framer-motion";
 import IconButton from "@/components/ui/IconButton";
-import { ChevronRight, Star, Pencil } from "lucide-react";
+import { ChevronDown, ChevronRight, Star, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -122,6 +122,10 @@ export interface QuickAddSection {
   adding: string | null;
   onAdd: (item: QuickAddItem) => void;
   onEditPortion?: (item: QuickAddItem) => void;
+  /** Opens the rest of the ranked list (up to fifteen). Present only
+   *  while there is more to show; the rows already shown keep their
+   *  places. */
+  onShowMore?: () => void;
   /** Long-press remove for favourite-backed rows — preserved from the
    *  chip strip. Only rows with a `favouriteId` arm the gesture. */
   onRemove?: (favouriteId: string, name: string) => void;
@@ -332,6 +336,27 @@ function FoodSuggestionsDropdown({
               )}
             </div>
           ))}
+          {/* More foods you eat, ranked as the five above are. Typing a
+              few letters still reaches the whole pantry; this is for the
+              sixth to fifteenth, which had no way in without typing. */}
+          {quickAdd.onShowMore && (
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                haptic();
+                quickAdd.onShowMore?.();
+              }}
+              disabled={quickAdd.adding !== null}
+              className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center gap-1 border-b border-border/30 text-sm font-medium text-foreground disabled:opacity-60"
+            >
+              More
+              <ChevronDown
+                aria-hidden="true"
+                className="size-3.5 text-muted-foreground"
+              />
+            </button>
+          )}
         </div>
       )}
       {pantryResults.length > 0 && (

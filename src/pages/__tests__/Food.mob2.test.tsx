@@ -11,6 +11,7 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { addDays, format } from "date-fns";
 import type { Meal } from "@/hooks/useMeals";
 
 const api = vi.hoisted(() => ({
@@ -170,5 +171,60 @@ describe("Food — the breakdown's way to the week", () => {
     await waitFor(() =>
       expect(screen.getByTestId("where").textContent).toBe("/history?view=food")
     );
+  });
+});
+
+/** Eight foods over the last fortnight, the first logged most often. */
+function eightRecentFoods(): Meal[] {
+  const out: Meal[] = [];
+  for (let food = 1; food <= 8; food++) {
+    for (let n = 0; n < 10 - food; n++) {
+      out.push({
+        ...meal(`f${food}-${n}`, `Food ${food}`, 100 + food),
+        date: format(addDays(new Date(), -(n + 1)), "yyyy-MM-dd"),
+      });
+    }
+  }
+  return out;
+}
+
+function quickAddNames(): string[] {
+  return screen
+    .getAllByRole("button", { name: /^Food \d/ })
+    .map((b) => b.textContent?.match(/^Food \d/)?.[0] ?? "");
+}
+
+describe("Food — the Quick add list's More row", () => {
+  it("shows five, then More opens the rest in the same order", () => {
+    api.meals = eightRecentFoods();
+    renderFood();
+    fireEvent.focus(screen.getByLabelText("What did you eat"));
+    expect(quickAddNames()).toEqual([
+      "Food 1",
+      "Food 2",
+      "Food 3",
+      "Food 4",
+      "Food 5",
+    ]);
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    expect(quickAddNames()).toEqual([
+      "Food 1",
+      "Food 2",
+      "Food 3",
+      "Food 4",
+      "Food 5",
+      "Food 6",
+      "Food 7",
+      "Food 8",
+    ]);
+    expect(screen.queryByRole("button", { name: "More" })).toBeNull();
+  });
+
+  it("offers no More when five is everything", () => {
+    api.meals = eightRecentFoods().filter((m) => /Food [1-5]/.test(m.foodName));
+    renderFood();
+    fireEvent.focus(screen.getByLabelText("What did you eat"));
+    expect(quickAddNames()).toHaveLength(5);
+    expect(screen.queryByRole("button", { name: "More" })).toBeNull();
   });
 });
