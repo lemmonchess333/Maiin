@@ -53,10 +53,10 @@ function ItemRow({ item }: { item: FirstWeekItem }) {
  * Home's card for a new account's first seven days (firstWeek.ts): what
  * to do first, ticked as it happens, and when the first recap comes.
  *
- * An item still to do opens its step (FV1): the first workout or run is
- * pointed out on its card, the first meal opens Food with the composer
- * pointed out, and the weigh-ins open the weigh-in sheet. A ticked item is
- * plain text. Without `onOpen` every row is plain, as the card was in FW1.
+ * A version 2 training row goes to the matching session's safe Start,
+ * Resume, or plan detail destination. Legacy rows retain their original
+ * guide and Food destinations. A ticked item is plain text. Without
+ * `onOpen` every row is plain, as the card was in FW1.
  */
 export default function FirstWeekCard({
   week,

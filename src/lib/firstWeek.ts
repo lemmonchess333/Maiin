@@ -1,4 +1,5 @@
 import { addLocalDays, localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import type { Workout } from "@/lib/savedWorkouts";
 
 /**
  * A new account's first seven days, as Home's "Your first week" card
@@ -29,7 +30,7 @@ export interface FirstWeekItem {
 }
 
 export interface FirstWeekInput {
-  /** The day the account began ("yyyy-MM-dd"), or null when not known. */
+  /** The first-week anchor ("yyyy-MM-dd"), or null when not known. */
   startKey: string | null;
   todayKey: string;
   /** The plan has lifts. */
@@ -42,6 +43,10 @@ export interface FirstWeekInput {
   /** Days with a logged weight. */
   weighInCount: number;
   dismissed: boolean;
+  /** The version 2 plan-to-session journey has training tasks only. */
+  trainingOnly?: boolean;
+  /** A resumable session goes above another training task. */
+  priorityTask?: "workout" | "run" | null;
 }
 
 export interface FirstWeek {
@@ -68,6 +73,28 @@ export function accountDay(startKey: string, todayKey: string): number {
   return daysBetween(startKey, todayKey) + 1;
 }
 
+/** A session counts only after a performed set or timed exercise was saved.
+ * This mirrors the server-side activation outcome; an empty workout document
+ * must never tick a first-week task. */
+export function isFirstWeekWorkoutEligible(
+  workout: Pick<Workout, "exercises">
+): boolean {
+  return (
+    Array.isArray(workout?.exercises) &&
+    workout.exercises.some(
+      (exercise) =>
+        (Array.isArray(exercise?.sets) &&
+          exercise.sets.some((set) => {
+            const reps = Number(set?.reps);
+            return Number.isFinite(reps) && reps > 0;
+          })) ||
+        (exercise?.repUnit === "seconds" &&
+          Number.isFinite(Number(exercise.durationMinutes)) &&
+          Number(exercise.durationMinutes) > 0)
+    )
+  );
+}
+
 /**
  * The card's content, or null when it should not show: before the start
  * day is known, after the seventh day, once dismissed, or once every item
@@ -91,20 +118,33 @@ export function firstWeek(input: FirstWeekInput): FirstWeek | null {
       label: "Go for your first run",
       done: input.runCount > 0,
     });
-  items.push({
-    key: "meal",
-    label: "Log your first meal",
-    done: input.mealCount > 0,
-  });
-  const weighIns = Math.min(input.weighInCount, FIRST_WEEK_WEIGH_INS);
-  items.push({
-    key: "weigh-in",
-    label: "Weigh in on three mornings",
-    hint: "Three start your trend line",
-    done: weighIns >= FIRST_WEEK_WEIGH_INS,
-    progress: `${weighIns} of ${FIRST_WEEK_WEIGH_INS}`,
-  });
-  if (items.every((i) => i.done)) return null;
+  if (input.trainingOnly) {
+    // Incomplete work leads. On a both-sport day the established lift-then-run
+    // order stays unless one of the two sessions is resumable.
+    items.sort((a, b) => {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      if (a.key === input.priorityTask) return -1;
+      if (b.key === input.priorityTask) return 1;
+      return 0;
+    });
+  } else {
+    items.push({
+      key: "meal",
+      label: "Log your first meal",
+      done: input.mealCount > 0,
+    });
+    const weighIns = Math.min(input.weighInCount, FIRST_WEEK_WEIGH_INS);
+    items.push({
+      key: "weigh-in",
+      label: "Weigh in on three mornings",
+      hint: "Three start your trend line",
+      done: weighIns >= FIRST_WEEK_WEIGH_INS,
+      progress: `${weighIns} of ${FIRST_WEEK_WEIGH_INS}`,
+    });
+  }
+  if (items.length === 0 || items.every((i) => i.done)) return null;
+
+  if (input.trainingOnly) return { day, items, recapKey: null };
 
   // The recap covers the calendar week the account began in, and comes
   // the Monday after it, once that week has something in it.

@@ -72,7 +72,7 @@ function LocationProbe() {
     <output aria-label="Current route">
       {location.pathname}
       {location.search}
-      {/* The offer page is handed where "Continue with Free" goes. */}
+      {/* The legacy offer is handed where "Continue with Free" goes. */}
       {(location.state as { next?: string } | null)?.next
         ? ` → ${(location.state as { next: string }).next}`
         : ""}
@@ -81,7 +81,7 @@ function LocationProbe() {
 }
 const open = () =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={["/onboarding"]}>
       <Onboarding />
       <LocationProbe />
     </MemoryRouter>
@@ -89,7 +89,9 @@ const open = () =>
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
-  complete.mockResolvedValue({ data: {} });
+  complete.mockResolvedValue({
+    data: { success: true, activationJourneyVersion: 2 },
+  });
 });
 // A spy left on `buildOnboardingPlan` would be the real builder the next
 // test's own spy calls through, so that spy would call itself.
@@ -145,11 +147,13 @@ describe("onboarding chapters and commit", () => {
           resolve = done;
         })
     );
-    const commit = screen.getByRole("button", { name: "Start my plan" });
+    const commit = screen.getByRole("button", { name: "Go to Today" });
     fireEvent.click(commit);
     fireEvent.click(commit);
     expect(complete).toHaveBeenCalledTimes(1);
     const payload = complete.mock.calls[0][0];
+    expect(payload.activationJourneyVersion).toBe(2);
+    expect(payload.profileData).not.toHaveProperty("activationJourneyVersion");
     expect(payload.programState).toBe(preview.programState);
     expect(payload.weekSchedule).toBe(preview.weekSchedule);
     expect(payload.profileData.weeklyRunDaysTarget).toBe(0);
@@ -164,7 +168,7 @@ describe("onboarding chapters and commit", () => {
       startWeight: 81.5,
       currentPhase: "base",
     });
-    resolve({ data: {} });
+    resolve({ data: { success: true, activationJourneyVersion: 2 } });
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     // The public profile seed leaves the photo alone: sign-up wrote the
     // Google or Apple photo there, and a null erased it.
@@ -178,17 +182,29 @@ describe("onboarding chapters and commit", () => {
     expect(options).toEqual({ merge: true });
     expect(loadOnboardingDraft("setup-test", 7)).toBeNull();
     await waitFor(() =>
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
+    );
+    builder.mockRestore();
+  });
+  it("keeps the established offer when the server did not accept version 2", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    complete.mockResolvedValue({
+      data: { success: true, activationJourneyVersion: null },
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
+    await waitFor(() =>
       expect(screen.getByLabelText("Current route")).toHaveTextContent(
         /^\/upgrade\?from=onboarding → \/$/
       )
     );
-    builder.mockRestore();
+    expect(complete.mock.calls[0][0].activationJourneyVersion).toBe(2);
   });
   it("shows a recoverable error and retains the intended answers after a failed commit", async () => {
     saveOnboardingDraft("setup-test", draft);
     complete.mockRejectedValue({ code: "functions/permission-denied" });
     open();
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "We couldn’t save your plan"
     );
@@ -200,7 +216,7 @@ describe("onboarding chapters and commit", () => {
     saveOnboardingDraft("setup-test", draft);
     complete.mockRejectedValue({ code: "functions/invalid-argument" });
     open();
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("one of your answers wasn’t accepted");
     expect(alert).not.toHaveTextContent("connection");
@@ -210,7 +226,7 @@ describe("onboarding chapters and commit", () => {
     saveOnboardingDraft("setup-test", { ...draft, displayName: "shit head" });
     open();
     expect(screen.getByText(OBJECTIONABLE_NAME_MESSAGE)).toBeInTheDocument();
-    const start = screen.getByRole("button", { name: "Start my plan" });
+    const start = screen.getByRole("button", { name: "Go to Today" });
     expect(start).toBeDisabled();
     fireEvent.click(start);
     expect(complete).not.toHaveBeenCalled();
@@ -222,7 +238,7 @@ describe("onboarding chapters and commit", () => {
       message: OBJECTIONABLE_NAME_MESSAGE,
     });
     open();
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent(OBJECTIONABLE_NAME_MESSAGE);
     expect(alert).not.toHaveTextContent("connection");
@@ -234,9 +250,7 @@ describe("onboarding chapters and commit", () => {
       raceTargetDate: "2020-01-01",
     });
     open();
-    expect(
-      screen.getByRole("button", { name: "Start my plan" })
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Go to Today" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
     expect(screen.getByLabelText(/Race target date/)).toHaveAttribute(
       "aria-invalid",
@@ -412,7 +426,7 @@ describe("activity-relevant setup", () => {
       within(openWeek).getByRole("button", { name: "Mon: open day" })
     );
     expect(openWeek).toHaveTextContent("Mon · Run when it suits you.");
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     const payload = complete.mock.calls[0][0];
     expect(payload.programState.workouts).toEqual([]);
@@ -427,9 +441,7 @@ describe("activity-relevant setup", () => {
       athleteType: "Runner",
     });
     await waitFor(() =>
-      expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        /^\/upgrade\?from=onboarding → \/$/
-      )
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
     );
   });
   it("restores the selected lift rhythm when changing activity from review, including reload", () => {
@@ -461,13 +473,11 @@ describe("activity-relevant setup", () => {
     expect(
       screen.getByRole("region", { name: "First run preview" })
     ).toHaveTextContent("Free running");
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     expect(complete.mock.calls[0][0].programState.workouts).toHaveLength(3);
     await waitFor(() =>
-      expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        /^\/upgrade\?from=onboarding → \/$/
-      )
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
     );
   });
 });
@@ -616,7 +626,7 @@ describe("answers the user has not given", () => {
     // back through it — so "got past that step" counts as answered.
     saveOnboardingDraft("setup-test", { ...draft, step: 7 });
     open();
-    expect(screen.getByRole("button", { name: "Start my plan" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Go to Today" })).toBeEnabled();
   });
 });
 
@@ -916,7 +926,7 @@ describe("a recent race at setup", () => {
     });
     fireEvent.click(back());
     expect(screen.getByText(/recent 10K in 48:00/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     expect(complete).toHaveBeenCalledTimes(1);
     expect(complete.mock.calls[0][0].profileData.runFitness).toEqual({
       benchmark: { distanceM: 10000, timeS: 2880 },
@@ -976,7 +986,7 @@ describe("a recent race at setup", () => {
     ).toHaveAttribute("aria-pressed", "true");
     expect(recentRace()).toBeNull();
     fireEvent.click(back());
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     expect(complete).toHaveBeenCalledTimes(1);
     const { profileData } = complete.mock.calls[0][0];
     expect(profileData.runFrequency).toBe("new");
@@ -1045,7 +1055,7 @@ describe("setup, by the names the journeys use", () => {
   const next = () =>
     fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
 
-  it("reaches Start my plan, with every answer the journeys give on its screen", () => {
+  it("reaches Go to Today, with every answer the journeys give on its screen", () => {
     open();
     for (const aim of SETUP_OPTIONS.aims)
       expect(button(aim)).toBeInTheDocument();
@@ -1149,7 +1159,7 @@ describe("goal weight and weekly pace", () => {
     editGoal();
     fireEvent.click(screen.getByRole("radio", { name: "0.25 kg" }));
     fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     await waitFor(() => expect(complete).toHaveBeenCalledOnce());
     const payload = complete.mock.calls[0][0].profileData;
     expect(payload.goalWeightKg).toBe(70);
@@ -1164,7 +1174,7 @@ describe("goal weight and weekly pace", () => {
     ).toBeInTheDocument();
     cleanup();
     open();
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     await waitFor(() => expect(complete).toHaveBeenCalledOnce());
     const payload = complete.mock.calls[0][0].profileData;
     expect(payload.goalWeightKg).toBe(70);
@@ -1175,7 +1185,7 @@ describe("goal weight and weekly pace", () => {
     const units = screen.getByRole("radiogroup", { name: "Weight unit" });
     fireEvent.click(within(units).getByRole("radio", { name: "lb" }));
     fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     await waitFor(() => expect(complete).toHaveBeenCalledOnce());
     const payload = complete.mock.calls[0][0].profileData;
     expect(payload.goalWeightKg).toBeCloseTo(70, 1);
@@ -1196,7 +1206,7 @@ describe("goal weight and weekly pace", () => {
       Number((screen.getByLabelText(/Goal weight/) as HTMLInputElement).value)
     ).toBeCloseTo(70, 1);
     fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     await waitFor(() => expect(complete).toHaveBeenCalledOnce());
     expect(complete.mock.calls[0][0].profileData.goalWeightKg).toBeCloseTo(
       70,

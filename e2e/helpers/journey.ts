@@ -321,13 +321,14 @@ async function next(page: Page) {
 }
 
 /**
- * Setup's screens, as a person answers them, then Start my plan (answered by
- * the real `completeOnboarding`) and the offer's Continue with Free. Leaves
- * the page on Home.
+ * Setup's screens, as a person answers them, then Go to Today (answered by
+ * the real `completeOnboarding`). Leaves the page on Home. A legacy-client
+ * test can expect the existing offer before Home instead.
  */
 export async function setUpPlan(
   page: Page,
-  answers: SetupAnswers
+  answers: SetupAnswers,
+  { legacyClient = false }: { legacyClient?: boolean } = {}
 ): Promise<void> {
   await button(page, new RegExp(`^${answers.aim}`)).click();
   await next(page);
@@ -419,15 +420,24 @@ export async function setUpPlan(
   await next(page);
 
   await button(page, SETUP.start).click();
-  await expect(page.getByRole("heading", { name: OFFER.ready })).toBeVisible({
-    timeout: 30_000,
-  });
-  await button(page, OFFER.free).click();
+  if (legacyClient) {
+    await expect(
+      page.getByRole("heading", { name: OFFER.ready }),
+      "a client without the version 2 marker keeps the existing offer"
+    ).toBeVisible({ timeout: 30_000 });
+    await button(page, OFFER.free).click();
+  }
   await expect(
     page.getByRole("heading", { name: HOME.heading, level: 1 })
   ).toBeVisible({
-    timeout: 20_000,
+    timeout: 30_000,
   });
+  await expect(page).toHaveURL(/\/Maiin\/$/);
+  if (!legacyClient)
+    await expect(
+      page.getByRole("dialog"),
+      "version 2 setup does not open an automatic Home tour"
+    ).toHaveCount(0);
 }
 
 /** The programme as stored. */

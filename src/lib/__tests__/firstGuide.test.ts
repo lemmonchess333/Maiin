@@ -4,6 +4,7 @@ import {
   FOOD_STOP_BODY,
   GUIDE_HINTS,
   guideAllowed,
+  guideHintsUnlocked,
   guideRequest,
   hintDue,
   hintSeenKey,
@@ -329,6 +330,34 @@ describe("walkOffered", () => {
     expect(walkOffered({ startKey: null, todayKey: start, seen: false })).toBe(
       false
     );
+  });
+
+  it("does not auto-open for a version 2 account", () => {
+    expect(
+      walkOffered({
+        startKey: start,
+        todayKey: start,
+        seen: false,
+        activationJourneyV2: true,
+      })
+    ).toBe(false);
+  });
+});
+
+describe("guideHintsUnlocked", () => {
+  it("keeps legacy hints behind the Home walk", () => {
+    expect(
+      guideHintsUnlocked({ activationJourneyV2: false, walkSeen: false })
+    ).toBe(false);
+    expect(
+      guideHintsUnlocked({ activationJourneyV2: false, walkSeen: true })
+    ).toBe(true);
+  });
+
+  it("unlocks version 2 point-of-use hints without a Home walk", () => {
+    expect(
+      guideHintsUnlocked({ activationJourneyV2: true, walkSeen: false })
+    ).toBe(true);
   });
 });
 

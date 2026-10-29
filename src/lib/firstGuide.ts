@@ -7,6 +7,8 @@ import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { FIRST_WEEK_DAYS, accountDay } from "@/lib/firstWeek";
 import { isAutomated } from "@/lib/launchSplash";
 import { readString } from "@/lib/localStore";
+import { parseLocalDate } from "@/lib/dateHelpers";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 
 /**
  * The first-visit guide (FV1): the words, and who is offered what.
@@ -36,12 +38,7 @@ export interface GuideStop {
 
 /** The first card in Home's session stack, as `StackedCTACards` draws it. */
 export type TodayCard =
-  | "lift"
-  | "first-workout"
-  | "run"
-  | "free-run"
-  | "first-meal"
-  | "rest";
+  "lift" | "first-workout" | "run" | "free-run" | "first-meal" | "rest";
 
 /**
  * What the stack's first card is today. Null when there is no card the
@@ -121,7 +118,7 @@ export type TodayAbout =
       first: string;
     }
   | { kind: "run"; name: string; dose: string | null }
-  | { kind: "rest"; next: string };
+  | { kind: "rest"; next: string; when?: string };
 
 function liftAbout(
   workout: WorkoutDay,
@@ -166,7 +163,17 @@ export function todayAbout(session: TodaySession): TodayAbout | null {
         : null;
     case "rest":
       return session.rest?.kind === "rest" && session.rest.tomorrow
-        ? { kind: "rest", next: session.rest.tomorrow.label }
+        ? {
+            kind: "rest",
+            next: session.rest.tomorrow.label,
+            ...(session.rest.tomorrow.dateKey
+              ? {
+                  when: formatShortWeekdayDayMonth(
+                    parseLocalDate(session.rest.tomorrow.dateKey)
+                  ),
+                }
+              : {}),
+          }
         : null;
     default:
       return null;
@@ -197,7 +204,9 @@ function todayWords(
   if (about?.kind === "rest" && card === "rest") {
     return {
       ...words,
-      body: `Your next session, ${about.next}, shows here tomorrow, with Start to begin it.`,
+      body: about.when
+        ? `Your next session, ${about.next}, is on ${about.when}. Open your plan to review it.`
+        : `Your next session, ${about.next}, shows here tomorrow, with Start to begin it.`,
     };
   }
   return words;
@@ -297,10 +306,21 @@ export function walkOffered(input: {
   startKey: string | null;
   todayKey: string;
   seen: boolean;
+  activationJourneyV2?: boolean;
 }): boolean {
+  if (input.activationJourneyV2) return false;
   if (input.seen || !input.startKey) return false;
   const day = accountDay(input.startKey, input.todayKey);
   return day >= 1 && day <= FIRST_WEEK_DAYS;
+}
+
+/** Version 2 teaches at the point of use without making the Home walk a
+ *  prerequisite. Legacy accounts still need to have met that walk. */
+export function guideHintsUnlocked(input: {
+  activationJourneyV2: boolean;
+  walkSeen: boolean;
+}): boolean {
+  return input.activationJourneyV2 || input.walkSeen;
 }
 
 /**

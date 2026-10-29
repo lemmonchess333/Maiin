@@ -132,6 +132,8 @@ const PINNED: Record<string, string> = {
     "src/lib/__tests__/runModeResolution.cross.test.ts",
   "functions/lib/runEligibility.js":
     "src/lib/__tests__/runEligibility.cross.test.ts",
+  "functions/lib/firstWeekActivation.js":
+    "src/lib/__tests__/firstWeekActivation.cross.test.ts",
   // Moderation predicate. BOTH copies run — the client for composer feedback,
   // the server as the trust boundary a curl request cannot bypass — so per
   // this file's own rule that is a cross-test, not an exemption.

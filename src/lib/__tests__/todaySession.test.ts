@@ -509,6 +509,38 @@ describe("todaySession — what a rest day offers", () => {
     );
   });
 
+  it("keeps a version 2 race-plan rest day and names the next run without starting one", () => {
+    const raceProfile = profileWith(
+      { 5: "run" },
+      {
+        athleteType: "Runner",
+        runMode: "race_prep",
+        activationJourneyVersion: 2,
+      }
+    );
+    const plan = programStateWith({ runDays: [runDay(FRIDAY)] });
+    const session = todaySession(
+      newAccount({ profile: raceProfile, programState: plan })
+    );
+    expect(session.rest).toEqual({
+      kind: "rest",
+      tomorrow: {
+        label: "Easy 30",
+        target: `/program?tab=run&rday=${FRIDAY}`,
+        dateKey: FRIDAY,
+      },
+    });
+    expect(session.run).toBeNull();
+    expect(
+      todaySession(
+        newAccount({
+          profile: { ...raceProfile, activationJourneyVersion: undefined },
+          programState: plan,
+        })
+      ).rest
+    ).toEqual({ kind: "first-meal" });
+  });
+
   it("otherwise a rest day, with nothing tomorrow when tomorrow rests too", () => {
     expect(todaySession(input()).rest).toEqual({
       kind: "rest",

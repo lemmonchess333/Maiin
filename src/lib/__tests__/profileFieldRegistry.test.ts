@@ -40,6 +40,9 @@ function rulesAllowList(): string[] {
 const { PROFILE_ALLOWED_FIELDS } = require(
   resolve(repoRoot, "functions/profileSanitizer.js")
 ) as { PROFILE_ALLOWED_FIELDS: string[] };
+const { SERVER_MANAGED_PROFILE_FIELDS } = require(
+  resolve(repoRoot, "functions/profileSanitizer.js")
+) as { SERVER_MANAGED_PROFILE_FIELDS: string[] };
 
 const asSet = (a: readonly string[]) => new Set(a);
 const sorted = (a: readonly string[]) => [...a].sort();
@@ -217,5 +220,15 @@ describe("profile field registry — UserProfile type parity", () => {
       (e) => e.serverOnly && (e.sanitized || e.serverGuarded)
     ).map((e) => e.field);
     expect(confused).toEqual([]);
+  });
+
+  it("the activation journey marker is server-owned on every profile write path", () => {
+    const marker = PROFILE_FIELD_REGISTRY.find(
+      (entry) => entry.field === "activationJourneyVersion"
+    );
+    expect(marker?.serverOnly).toBe(true);
+    expect(SERVER_MANAGED_PROFILE_FIELDS).toContain("activationJourneyVersion");
+    expect(PROFILE_ALLOWED_FIELDS).not.toContain("activationJourneyVersion");
+    expect(rulesAllowList()).not.toContain("activationJourneyVersion");
   });
 });

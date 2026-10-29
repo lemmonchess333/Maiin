@@ -17,6 +17,7 @@ import { nextLiftAfter, resolveHomeLift } from "@/lib/homeLift";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
 import type { RestContext } from "@/features/program/restTime";
 import { getActivationFraming } from "@/lib/activationFraming";
+import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { runDoseLine } from "@/lib/runDose";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
@@ -82,6 +83,9 @@ export interface TodaySessionInput {
   claimMap: Map<string, ClaimState>;
   /** The saved lift sessions: each one's id and day. */
   workouts: readonly { id: string; date: string }[];
+  /** Valid saved workouts for version 2 first-action framing. If omitted,
+   *  legacy framing continues to count every workout document. */
+  validWorkoutCount?: number;
   /** When the account began, or null until the server has written it. */
   createdAtMs: number | null;
   /** The moment `today` was read: a new account's window ends against it. */
@@ -142,11 +146,13 @@ export interface TodayRun {
   inProgress?: SessionInProgress | null;
 }
 
-/** Tomorrow's session, as the rest-day card names it. */
+/** Next session, as the rest-day card names it. `dateKey` appears only when
+ *  a version 2 race plan looks beyond tomorrow. */
 export interface TomorrowSession {
   label: string;
   /** Where it opens in Train. */
   target: string;
+  dateKey?: string;
 }
 
 export type RestDayOffer =
@@ -220,7 +226,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
     createdAtMs: input.createdAtMs,
     nowMs: input.nowMs,
     todayType: type,
-    workoutCount: workouts.length,
+    workoutCount: input.validWorkoutCount ?? workouts.length,
     // While the runs are counted, read as having some, so the run card
     // never flashes "Your first run" before the count lands.
     runCount: input.lifetimeRuns ?? 1,
@@ -369,27 +375,52 @@ function restDayOffer(
   ) {
     return { kind: "free-run" };
   }
-  // A new person has no workout to frame on a rest day, so the card asks
-  // for their first meal instead (#972).
-  if (day.firstMeal) return { kind: "first-meal" };
+  // A race plan's rest day must stay rest. It cannot lead with a food
+  // prompt or offer an unscheduled run to satisfy activation.
+  const version2RaceRest =
+    isActivationJourneyV2(profile) && profile?.runMode === "race_prep";
+  if (day.firstMeal && !version2RaceRest) return { kind: "first-meal" };
   return {
     kind: "rest",
-    tomorrow: tomorrowSession(input, day.currentWeekKey, day.homeLift),
+    tomorrow: nextRestSession(
+      input,
+      day.currentWeekKey,
+      day.homeLift,
+      version2RaceRest ? 7 : 1
+    ),
   };
 }
 
-/**
- * Tomorrow's session, named on the rest-day card, or null when tomorrow is
- * a rest day too. Resolved with TODAY's week key, so a legacy run day
- * cannot borrow this week's status for next week.
- */
-function tomorrowSession(
+/** Legacy cards inspect tomorrow. A version 2 race rest day can name the
+ *  next planned session through the coming week without starting it. */
+function nextRestSession(
   input: TodaySessionInput,
   currentWeekKey: string,
-  homeLift: ResolvedLift
+  homeLift: ResolvedLift,
+  maxDaysAhead: number
+): TomorrowSession | null {
+  for (let daysAhead = 1; daysAhead <= maxDaysAhead; daysAhead += 1) {
+    const session = sessionDaysAhead(
+      input,
+      currentWeekKey,
+      homeLift,
+      daysAhead
+    );
+    if (session) return session;
+  }
+  return null;
+}
+
+/** Resolved with TODAY's week key, so a legacy run day cannot borrow
+ *  this week's status for next week. */
+function sessionDaysAhead(
+  input: TodaySessionInput,
+  currentWeekKey: string,
+  homeLift: ResolvedLift,
+  daysAhead: number
 ): TomorrowSession | null {
   const { today, profile, programState, claimMap } = input;
-  const date = addLocalDays(parseLocalDate(today), 1);
+  const date = addLocalDays(parseLocalDate(today), daysAhead);
   const dateKey = localDateString(date);
   const next = resolveTrainingDayForDate({
     dateKey,
@@ -442,7 +473,7 @@ function tomorrowSession(
     liftName && typeof tomorrowLift?.index === "number"
       ? `/program?day=${tomorrowLift.index}`
       : `/program?tab=run&rday=${dateKey}`;
-  return { label, target };
+  return daysAhead === 1 ? { label, target } : { label, target, dateKey };
 }
 
 /** A planned run's dose at the person's confirmed easy pace (Run21 (5)). */

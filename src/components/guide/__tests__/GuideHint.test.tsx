@@ -17,8 +17,15 @@ import {
   hintSeenKey,
 } from "@/lib/firstGuide";
 
-const track = vi.hoisted(() => vi.fn());
+const { track, auth } = vi.hoisted(() => ({
+  track: vi.fn(),
+  auth: { profile: null as { activationJourneyVersion?: number } | null },
+}));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track }));
+vi.mock("@/lib/auth", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth")>()),
+  useAuth: () => ({ profile: auth.profile }),
+}));
 
 const UID = "hint-user";
 const asAccount = ({ children }: { children: ReactNode }) => (
@@ -70,6 +77,7 @@ async function settle() {
 beforeEach(() => {
   localStorage.clear();
   track.mockClear();
+  auth.profile = null;
 });
 
 afterEach(() => {
@@ -99,6 +107,15 @@ describe("GuideHint", () => {
     await settle();
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(track).not.toHaveBeenCalled();
+  });
+
+  it("shows the point-of-use hint for version 2 without an automatic Home walk", async () => {
+    auth.profile = { activationJourneyVersion: 2 };
+    anchor();
+    renderHint();
+    expect(
+      await screen.findByRole("dialog", { name: "Your first set" })
+    ).toBeInTheDocument();
   });
 
   it("waits for the page to say its moment has come", async () => {

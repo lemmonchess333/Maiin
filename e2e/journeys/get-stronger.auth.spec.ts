@@ -14,6 +14,7 @@ import {
   deleteAccount,
   moveDay,
   nextWeekday,
+  openTab,
   openJourney,
   pageErrors,
   plusDays,
@@ -29,6 +30,7 @@ import {
   savedWorkout,
 } from "../helpers/journeyLift";
 import { resetNodeClock } from "../helpers/nodeClock";
+import { emulatorAdmin } from "../helpers/realCallables";
 import { nextUpIndex } from "../../src/features/program/nextUpCursor";
 import type { ProgramState } from "../../src/features/program/programTypes";
 
@@ -63,6 +65,16 @@ test("Get stronger: sixteen weeks of a three-day plan", async ({ page }) => {
       sex: "Male",
       age: "25–34",
     });
+    const savedProfile = (
+      await emulatorAdmin().db.doc(`users/${account.uid}`).get()
+    ).data();
+    expect(savedProfile?.activationJourneyVersion).toBe(2);
+    await expect(
+      page.getByRole("heading", { name: "Your first week" })
+    ).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("Finish your first workout")).toBeVisible();
+    await expect(page.getByText("Go for your first run")).toHaveCount(0);
+    await expect(page.getByText("Log your first meal")).toHaveCount(0);
 
     /** The squat on each Monday, and whether that week was a lighter one. */
     const weeks: { load: number; sets: number; lighter: boolean }[] = [];
@@ -89,7 +101,18 @@ test("Get stronger: sixteen weeks of a three-day plan", async ({ page }) => {
         const dayIndex = nextUpIndex(state);
         const planned = state.workouts[dayIndex];
         await expectTrainShowsSession(page, planned);
-        await finishLiftViaUi(page, account!);
+        await finishLiftViaUi(
+          page,
+          account!,
+          week === 1 ? { startFromHome: true, interruptOnce: true } : {}
+        );
+        if (week === 1) {
+          await openTab(page, "Home");
+          await expect(
+            page.getByRole("heading", { name: "Your first week" }),
+            "a saved first workout completes the only lifter task"
+          ).toHaveCount(0);
+        }
         const saved = await savedWorkout(account!, monday);
         for (const exercise of planned.exercises) {
           const working = saved.exercises
