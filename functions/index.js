@@ -767,7 +767,19 @@ exports.completeOnboarding = functions
         profileData: rawProfileData,
         programState,
         weekSchedule: rawWeekSchedule,
+        activationJourneyVersion,
       } = data;
+      // The cohort is chosen by this callable, never by a profile write.
+      // Omitted means an older client and keeps the legacy journey.
+      if (
+        activationJourneyVersion !== undefined &&
+        activationJourneyVersion !== 2
+      ) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Unsupported activation journey version."
+        );
+      }
       if (
         !rawProfileData ||
         typeof rawProfileData !== "object" ||
@@ -879,12 +891,6 @@ exports.completeOnboarding = functions
       profileData.uid = uid;
       profileData.subscriptionTier = "free";
       profileData.onboardingComplete = true;
-      // The day setup finished, which a new runner's first weeks count from
-      // (`profileNewRunnerUntil`). Setup's own plan counts from that day, so
-      // a plan made later has to as well: `createdAt` is sign-up, and setup
-      // can finish weeks after it. Server time, and not client-writable.
-      profileData.onboardingCompletedAt =
-        admin.firestore.FieldValue.serverTimestamp();
 
       const db = admin.firestore();
 
@@ -895,28 +901,20 @@ exports.completeOnboarding = functions
       // Pro trial on the offer page — the App Store introductory offer or
       // Stripe `trial_period_days`, with a payment method captured up
       // front — and it converts unless they cancel. New accounts start on
-      // the free tier and the offer page is the first screen after
-      // onboarding. A client-sent `trialExpiresAt` is stripped either way
+      // the free tier. A client-sent `trialExpiresAt` is stripped either way
       // (firestore.rules pins it null on create). Profiles that still
       // carry an expiry from the earlier onboarding grant keep their Pro
       // until it lapses (`computeEffectiveTier`) and are refused a second
       // trial at checkout (`checkoutTrial.js`).
       const userRef = db.collection("users").doc(uid);
-      const existing = await userRef.get();
       delete profileData.trialExpiresAt;
-      if (existing.exists) {
-        // Don't overwrite protected fields on update
-        delete profileData.createdAt;
-      } else if (!profileData.createdAt) {
-        profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
-      }
 
-      // P0-4: atomic batch write so profile + programState land
+      // P0-4: atomic write so profile + programState land
       // together. Pre-P0-4 wrote them sequentially; if the second
       // write failed, the user was left with a hydrated profile but no
       // programState — onboarding completed flag set, but Programme
-      // tab crashed on its first render. A batch commits both or
-      // neither, matching the contract the spec expects.
+      // tab crashed on its first render. A transaction commits both or
+      // neither and protects the first-commit cohort marker from retries.
       const programRef = userRef.collection("programState").doc("current");
       // The public profile carries the name every other person sees. The
       // app writes it too (Onboarding.tsx), best-effort, and a copy that
@@ -924,66 +922,10 @@ exports.completeOnboarding = functions
       // it lands with the profile. Merged, so sign-up's photo and the
       // streak mirror stay, and the name only when one was sent.
       const publicRef = userRef.collection("public").doc("profile");
-      const publicSnap = await publicRef.get();
       const publicName =
         typeof profileData.displayName === "string" && profileData.displayName
           ? profileData.displayName
           : null;
-      const storedRaceGoal = existing.exists
-        ? existing.data().raceGoal
-        : undefined;
-      const raceGoalAfter =
-        profileData.raceGoal !== undefined
-          ? profileData.raceGoal
-          : storedRaceGoal;
-      if (existing.exists && existing.data().subscriptionTier !== undefined) {
-        delete profileData.subscriptionTier;
-      }
-      const batch = db.batch();
-      if (existing.exists) {
-        batch.set(
-          userRef,
-          profileData.raceGoal !== undefined
-            ? {
-                ...profileData,
-                raceGoal: wholeRaceGoal(
-                  profileData.raceGoal,
-                  storedRaceGoal,
-                  admin.firestore.FieldValue.delete()
-                ),
-              }
-            : profileData,
-          { merge: true }
-        );
-      } else {
-        batch.set(userRef, profileData);
-      }
-      batch.set(
-        publicRef,
-        {
-          uid,
-          ...(publicSnap.exists &&
-            raceIdentityIsStale(
-              publicSnap.data().trainingForSpaceId,
-              raceGoalAfter
-            ) && { trainingForSpaceId: null }),
-          ...(publicName && {
-            displayName: publicName,
-            // searchUsers matches on this; the app's onboarding copy left
-            // it out, so a new account was not found by name.
-            displayNameLower: publicName.toLowerCase(),
-          }),
-          ...(typeof profileData.athleteType === "string" && {
-            athleteType: profileData.athleteType,
-          }),
-          ...(!publicSnap.exists && {
-            currentStreak: 0,
-            longestStreak: 0,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          }),
-        },
-        { merge: true }
-      );
       // Allow-list the programState doc before persisting. validatePlanPayload
       // gates SHAPE (and only for v7 payloads); this strips arbitrary
       // top-level fields a client could inject into its own programState doc.
@@ -1003,10 +945,94 @@ exports.completeOnboarding = functions
           "programState is too large."
         );
       }
-      batch.set(programRef, onbProgram.value);
-      await batch.commit();
+      const acceptedVersion = await db.runTransaction(async (transaction) => {
+        const existing = await transaction.get(userRef);
+        const publicSnap = await transaction.get(publicRef);
+        const existingData = existing.exists ? existing.data() : {};
+        const nextProfileData = { ...profileData };
 
-      return { success: true };
+        // The timestamp and cohort describe the first successful setup
+        // commit. A retry, even from a newer client, must not move the
+        // activation window or enroll an existing account.
+        const alreadyCompleted = existingData.onboardingComplete === true;
+        if (!alreadyCompleted) {
+          nextProfileData.onboardingCompletedAt =
+            admin.firestore.FieldValue.serverTimestamp();
+          if (activationJourneyVersion === 2) {
+            nextProfileData.activationJourneyVersion = 2;
+          }
+        }
+        if (existing.exists) {
+          delete nextProfileData.createdAt;
+          if (existingData.subscriptionTier !== undefined) {
+            delete nextProfileData.subscriptionTier;
+          }
+        } else {
+          nextProfileData.createdAt =
+            admin.firestore.FieldValue.serverTimestamp();
+        }
+
+        const storedRaceGoal = existingData.raceGoal;
+        const raceGoalAfter =
+          nextProfileData.raceGoal !== undefined
+            ? nextProfileData.raceGoal
+            : storedRaceGoal;
+        if (existing.exists) {
+          transaction.set(
+            userRef,
+            nextProfileData.raceGoal !== undefined
+              ? {
+                  ...nextProfileData,
+                  raceGoal: wholeRaceGoal(
+                    nextProfileData.raceGoal,
+                    storedRaceGoal,
+                    admin.firestore.FieldValue.delete()
+                  ),
+                }
+              : nextProfileData,
+            { merge: true }
+          );
+        } else {
+          transaction.set(userRef, nextProfileData);
+        }
+        transaction.set(
+          publicRef,
+          {
+            uid,
+            ...(publicSnap.exists &&
+              raceIdentityIsStale(
+                publicSnap.data().trainingForSpaceId,
+                raceGoalAfter
+              ) && { trainingForSpaceId: null }),
+            ...(publicName && {
+              displayName: publicName,
+              // searchUsers matches on this; the app's onboarding copy left
+              // it out, so a new account was not found by name.
+              displayNameLower: publicName.toLowerCase(),
+            }),
+            ...(typeof nextProfileData.athleteType === "string" && {
+              athleteType: nextProfileData.athleteType,
+            }),
+            ...(!publicSnap.exists && {
+              currentStreak: 0,
+              longestStreak: 0,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            }),
+          },
+          { merge: true }
+        );
+        transaction.set(programRef, onbProgram.value);
+
+        return alreadyCompleted
+          ? existingData.activationJourneyVersion === 2
+            ? 2
+            : null
+          : activationJourneyVersion === 2
+            ? 2
+            : null;
+      });
+
+      return { success: true, activationJourneyVersion: acceptedVersion };
     } catch (err) {
       // Re-throw HttpsError as-is (validation errors, etc.)
       if (err instanceof functions.https.HttpsError) {

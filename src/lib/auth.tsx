@@ -166,6 +166,11 @@ export interface UserProfileCore {
    * set up before it was kept.
    */
   onboardingCompletedAt?: Timestamp | FieldValue;
+  /**
+   * Server-stamped at the first successful version 2 onboarding commit.
+   * Absent on existing accounts and clients using the legacy journey.
+   */
+  activationJourneyVersion?: 2;
 }
 
 /** Physical attributes and fitness metrics */

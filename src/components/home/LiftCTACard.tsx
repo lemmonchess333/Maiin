@@ -129,7 +129,10 @@ export default function LiftCTACard({
         type="button"
         onClick={function () {
           haptic();
-          trackHomeEvent("home_card_tapped", { card: "today_workout" });
+          trackHomeEvent("home_card_tapped", {
+            card: "today_workout",
+            action: "details",
+          });
           navigate(dayTarget);
         }}
         aria-label={`Open ${dayLabel ?? liftDayLine(nextWorkout.dayName)} in Train`}
@@ -187,7 +190,10 @@ export default function LiftCTACard({
             session={inProgress}
             onCard
             onResume={function () {
-              trackHomeEvent("home_card_tapped", { card: "today_workout" });
+              trackHomeEvent("home_card_tapped", {
+                card: "today_workout",
+                action: "resume",
+              });
               navigate(inProgress.resumeTarget);
             }}
           />
@@ -198,7 +204,10 @@ export default function LiftCTACard({
             className="pointer-events-auto w-full"
             onClick={function () {
               haptic();
-              trackHomeEvent("home_card_tapped", { card: "today_workout" });
+              trackHomeEvent("home_card_tapped", {
+                card: "today_workout",
+                action: "start",
+              });
               navigate(startTarget);
             }}
           >

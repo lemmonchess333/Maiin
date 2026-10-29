@@ -7,14 +7,14 @@ import { settleImages } from "../helpers/settleImages";
 import { GUIDE_UNDER_AUTOMATION_KEY } from "../../src/lib/firstGuide";
 
 /**
- * The first-visit guide (FV1), on a brand-new account from sign-up: setup,
- * the offer's "Continue with Free" landing on Home, the three-stop walk,
- * a first-week row opening its step, and the hints on Food, Train, the
- * first set of the first workout and the run screen before a first run.
+ * The optional guide and first-use hints, on a version 2 account from
+ * sign-up: setup lands on Today with no automatic walk, Food's hint works
+ * before a walk is played, Settings replays the walk, and the Train,
+ * first-set and first-run hints still work at their point of use.
  *
  * The guide never shows under automation, so no other spec meets it; this
  * one turns it on with its localStorage switch before the app loads. The
- * capture rig has no Functions emulator, so "Start my plan" is routed into
+ * capture rig has no Functions emulator, so "Go to Today" is routed into
  * the real `completeOnboarding` handler with a verified emulator token,
  * as run-coaching.capture.spec.ts does for its callable: the account and
  * its plan are written by the code that writes them in production.
@@ -95,7 +95,7 @@ async function mainButton(page: Page, name: "Next" | "Done") {
   return button;
 }
 
-test("a new account meets the guide: the walk, a first-week row and the hints", async ({
+test("a new account can start training before replaying the guide", async ({
   page,
 }) => {
   test.skip(!emulatorActive, "emulator-only accounts");
@@ -139,20 +139,54 @@ test("a new account meets the guide: the walk, a first-week row and the hints", 
     .fill("178");
   await page.getByRole("radio", { name: /^25/ }).click();
   await next();
-  await page
-    .getByRole("button", { name: "Start my plan", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Go to Today", exact: true }).click();
 
-  // The offer, then Home: Continue with Free lands there now (FV1).
+  // The saved plan opens Today with the training task ready and no tour or
+  // offer in the way. Food remains available in the tab bar.
   await expect(
-    page.getByRole("heading", { name: /your plan is ready/i })
+    page.getByRole("heading", { name: "Today", level: 1 })
   ).toBeVisible({ timeout: 30_000 });
+  await expect(page).toHaveURL(/\/Maiin\/$/);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Your first week" })
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText("Finish your first workout")).toBeVisible();
+  await expect(page.getByText("Log your first meal")).toHaveCount(0);
+  await expect(page.getByText("Weigh in on three mornings")).toHaveCount(0);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth
+    )
+  ).toBe(true);
+  await shoot(page, "first-home");
+
+  // A contextual hint appears even though the automatic walk did not run.
   await page
-    .getByRole("button", { name: "Continue with Free", exact: true })
+    .getByRole("navigation", { name: /main navigation/i })
+    .getByRole("link", { name: "Food" })
     .click();
+  await expect(guideTitle(page, "Logging food")).toBeVisible({
+    timeout: 10_000,
+  });
+  const hint = await page.locator("[data-guide-hint]").boundingBox();
+  const tabBar = await page
+    .getByRole("navigation", { name: /main navigation/i })
+    .boundingBox();
+  expect(hint!.y + hint!.height).toBeLessThanOrEqual(tabBar!.y);
+  const proLine = page.getByText("Photo logging is part of Pro");
+  await expect(proLine).toHaveCount(0);
+  await shoot(page, "hint-food");
+  await page.getByRole("button", { name: "Got it", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(proLine).toBeVisible();
+
+  // Settings keeps the optional walk available for later replay.
+  await page.goto("settings/support-legal");
+  await page.getByRole("link", { name: /Show me around/ }).click();
   await expect(page).toHaveURL(/\/Maiin\/$/);
 
-  // The walk: today's session, the first week, food.
+  // The replay still teaches today's session, the first week, and food.
   await expect(page.getByRole("dialog")).toContainText(
     /Today’s workout|Your first workout/,
     { timeout: 20_000 }
@@ -169,30 +203,6 @@ test("a new account meets the guide: the walk, a first-week row and the hints", 
   await shoot(page, "walk-food");
   await (await mainButton(page, "Done")).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-
-  // A first-week row opens its step: Food, with the composer pointed out.
-  await page
-    .getByRole("button", { name: /Log your first meal/ })
-    .click({ timeout: 10_000 });
-  await expect(page).toHaveURL(/\/food$/);
-  await expect(guideTitle(page, "Logging food")).toBeVisible({
-    timeout: 10_000,
-  });
-  // The composer sits low on the page, and the hint turns above it rather
-  // than lie across the tab bar.
-  const hint = await page.locator("[data-guide-hint]").boundingBox();
-  const tabBar = await page
-    .getByRole("navigation", { name: /main navigation/i })
-    .boundingBox();
-  expect(hint!.y + hint!.height).toBeLessThanOrEqual(tabBar!.y);
-  // One thing at a time (FV2): a free account's Pro line under the box
-  // waits until the hint has been closed.
-  const proLine = page.getByText("Photo logging is part of Pro");
-  await expect(proLine).toHaveCount(0);
-  await shoot(page, "hint-food");
-  await page.getByRole("button", { name: "Got it", exact: true }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(proLine).toBeVisible();
 
   // Train's first visit: the order of the workouts.
   await page

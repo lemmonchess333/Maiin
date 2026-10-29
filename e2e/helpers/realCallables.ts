@@ -4,7 +4,7 @@
  * The emulator rig serves Auth and Firestore, not Functions. A callable the
  * page sends goes to `127.0.0.1:5001` and fails as transport, and the app
  * carries on: a programme command waits in the outbox and nothing is saved.
- * A spec that taps Save, Skip or Start my plan has to answer the call.
+ * A spec that taps Save, Skip or Go to Today has to answer the call.
  *
  * Each route here verifies the caller's ID token with the Admin SDK and runs
  * the handler `functions/index.js` exports, as `run(data, { auth })`, so the
@@ -26,9 +26,7 @@ const require = createRequire(import.meta.url);
 
 /** The callables the plan's screens send. */
 export type PlanCallable =
-  | "completeOnboarding"
-  | "configurePlan"
-  | "applyProgramCommand";
+  "completeOnboarding" | "configurePlan" | "applyProgramCommand";
 
 export const PLAN_CALLABLES: readonly PlanCallable[] = [
   "completeOnboarding",

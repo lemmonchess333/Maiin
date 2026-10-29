@@ -40,7 +40,7 @@ export const SETUP = {
   height: "Height (cm)",
   sex: "Sex for calorie calculation",
   age: "Age range",
-  start: "Start my plan",
+  start: "Go to Today",
 } as const;
 
 /** The answers on setup's screens that the journeys give, by question.
@@ -141,7 +141,7 @@ export const STRIP = {
   runDone: "completed run",
 } as const;
 
-/** Home, where setup's offer lands (`Home`'s page title). */
+/** Home, where a saved version 2 plan lands (`Home`'s page title). */
 export const HOME = {
   heading: "Today",
 } as const;

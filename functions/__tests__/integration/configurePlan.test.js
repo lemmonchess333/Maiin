@@ -537,7 +537,7 @@ suite("completeOnboarding — emulator integration", () => {
     // Spec gate: completeOnboarding must commit profile +
     // programState together. We assert both documents exist
     // after a single successful call, with the fields we sent
-    // visible. The CF uses a Firestore batch internally; an
+    // visible. The CF uses a Firestore transaction internally; an
     // uncommitted second write would leave programState absent.
     const result = await completeOnboarding.run(
       {
@@ -555,7 +555,7 @@ suite("completeOnboarding — emulator integration", () => {
       },
       { auth: { uid: TEST_UID } }
     );
-    expect(result).toMatchObject({ success: true });
+    expect(result).toEqual({ success: true, activationJourneyVersion: null });
 
     // Profile doc — should exist with ownership-forced fields.
     const userDoc = await getDocSettled(db.collection("users").doc(TEST_UID));
@@ -707,6 +707,123 @@ suite("completeOnboarding — emulator integration", () => {
     expect(
       Math.abs(userData.onboardingCompletedAt.toMillis() - before)
     ).toBeLessThan(60_000);
+  });
+
+  it("stamps version 2 only from the top-level request on the first commit", async () => {
+    const userRef = db.collection("users").doc(TEST_UID);
+    const signedUp = admin.firestore.Timestamp.fromMillis(
+      Date.now() - 14 * 24 * 60 * 60 * 1000
+    );
+    await userRef.set({
+      uid: TEST_UID,
+      onboardingComplete: false,
+      createdAt: signedUp,
+    });
+    const before = Date.now();
+    const result = await completeOnboarding.run(
+      {
+        activationJourneyVersion: 2,
+        profileData: {
+          ...validProfileUpdates(),
+          weightKg: 72,
+          heightCm: 180,
+          age: 28,
+          sex: "male",
+          activityLevel: "active",
+          // Neither server-owned field can be injected through profileData.
+          activationJourneyVersion: 1,
+          onboardingCompletedAt: signedUp,
+        },
+        programState: validProgramState(),
+        weekSchedule: validWeekSchedule(),
+      },
+      { auth: { uid: TEST_UID } }
+    );
+    expect(result).toEqual({ success: true, activationJourneyVersion: 2 });
+    const saved = (await getDocSettled(userRef)).data();
+    expect(saved.createdAt.toMillis()).toBe(signedUp.toMillis());
+    expect(saved.activationJourneyVersion).toBe(2);
+    expect(saved.onboardingCompletedAt).toBeInstanceOf(
+      admin.firestore.Timestamp
+    );
+    expect(
+      Math.abs(saved.onboardingCompletedAt.toMillis() - before)
+    ).toBeLessThan(60_000);
+  });
+
+  it("preserves the first timestamp and version across newer and older client retries", async () => {
+    const userRef = db.collection("users").doc(TEST_UID);
+    const request = (version) => ({
+      ...(version === undefined ? {} : { activationJourneyVersion: version }),
+      profileData: {
+        ...validProfileUpdates(),
+        weightKg: 72,
+        heightCm: 180,
+        age: 28,
+        sex: "male",
+        activityLevel: "active",
+      },
+      programState: validProgramState(),
+      weekSchedule: validWeekSchedule(),
+    });
+    const actor = { auth: { uid: TEST_UID } };
+
+    // New first: an older retry cannot erase the v2 marker or move its clock.
+    expect(await completeOnboarding.run(request(2), actor)).toEqual({
+      success: true,
+      activationJourneyVersion: 2,
+    });
+    const first = (await getDocSettled(userRef)).data();
+    expect(await completeOnboarding.run(request(), actor)).toEqual({
+      success: true,
+      activationJourneyVersion: 2,
+    });
+    const afterRetry = (await getDocSettled(userRef)).data();
+    expect(afterRetry.onboardingCompletedAt.toMillis()).toBe(
+      first.onboardingCompletedAt.toMillis()
+    );
+    expect(afterRetry.activationJourneyVersion).toBe(2);
+
+    // Existing completed legacy users cannot be enrolled by a newer retry.
+    await clearTestUserState();
+    expect(await completeOnboarding.run(request(), actor)).toEqual({
+      success: true,
+      activationJourneyVersion: null,
+    });
+    const legacy = (await getDocSettled(userRef)).data();
+    expect(await completeOnboarding.run(request(2), actor)).toEqual({
+      success: true,
+      activationJourneyVersion: null,
+    });
+    const legacyAfterRetry = (await getDocSettled(userRef)).data();
+    expect(legacyAfterRetry.onboardingCompletedAt.toMillis()).toBe(
+      legacy.onboardingCompletedAt.toMillis()
+    );
+    expect(legacyAfterRetry.activationJourneyVersion).toBeUndefined();
+  });
+
+  it("rejects unsupported journey versions before writing a profile", async () => {
+    await expect(
+      completeOnboarding.run(
+        {
+          activationJourneyVersion: 1,
+          profileData: {
+            ...validProfileUpdates(),
+            weightKg: 72,
+            heightCm: 180,
+            age: 28,
+            sex: "male",
+            activityLevel: "active",
+          },
+          programState: validProgramState(),
+          weekSchedule: validWeekSchedule(),
+        },
+        { auth: { uid: TEST_UID } }
+      )
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+    expect((await db.collection("users").doc(TEST_UID).get()).exists).toBe(
+      false
+    );
   });
 
   it("rejects a tombstoned account with account-deleted and recreates NOTHING", async () => {

@@ -21,7 +21,7 @@ export type HomeEvent =
   | "weight_sheet_open"
   | "weight_log_saved";
 
-/** Cards the Home2 lock identifies as primary glanceable tiles. */
+/** Home tiles and first-week actions that can be selected. */
 export type HomeCard =
   | "performance"
   | "water"
@@ -29,18 +29,17 @@ export type HomeCard =
   | "weight"
   | "today_workout"
   | "today_run"
+  | "first_week_workout"
+  | "first_week_run"
   | "first_meal"
   | "rest_tomorrow"
+  | "rest_upcoming"
   | "trial_status"
   | "trajectory";
 
 /** Lazy-loaded sections whose first paint is worth instrumenting. */
 export type HomeSection =
-  | "hero"
-  | "stacked_cta"
-  | "today_energy"
-  | "hybrid_balance"
-  | "insights";
+  "hero" | "stacked_cta" | "today_energy" | "hybrid_balance" | "insights";
 
 export interface HomeEventMetadata {
   /** home_initial_render_ms: rounded ms from mount to first
@@ -49,6 +48,8 @@ export interface HomeEventMetadata {
   durationMs?: number;
   /** home_card_tapped: which metric tile was tapped. */
   card?: HomeCard;
+  /** home_card_tapped: whether a session card started, resumed or opened details. */
+  action?: "start" | "resume" | "details";
   /** home_section_viewed: which lazy-loaded section first crossed
    *  the viewport (or finished hydrating). */
   section?: HomeSection;

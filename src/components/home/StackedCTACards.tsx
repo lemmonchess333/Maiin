@@ -64,6 +64,7 @@ export default function StackedCTACards({
             onResume={() => {
               trackHomeEvent("home_card_tapped", {
                 card: strip.sport === "run" ? "today_run" : "today_workout",
+                action: "resume",
               });
               navigate(strip.resumeTarget);
             }}
@@ -99,7 +100,10 @@ export default function StackedCTACards({
                 variant="secondary"
                 onClick={() => {
                   haptic();
-                  trackHomeEvent("home_card_tapped", { card: "today_workout" });
+                  trackHomeEvent("home_card_tapped", {
+                    card: "today_workout",
+                    action: "details",
+                  });
                   navigate("/program");
                 }}
               >

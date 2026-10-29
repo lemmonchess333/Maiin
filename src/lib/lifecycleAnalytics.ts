@@ -58,6 +58,8 @@ export type LifecycleEvent =
   | "workout_completed"
   | "run_completed"
   | "food_logged"
+  | "first_week_card_viewed"
+  | "first_week_task_selected"
   | "trial_started"
   | "subscription_started"
   // Companion batch B0 — the training loop, as distinct from the
@@ -125,6 +127,12 @@ export interface LifecycleEventMetadata {
   durationMs?: number;
   /** session_started: which discipline. */
   kind?: "lift" | "run";
+  /** First-week card: onboarding training selection, never a free-text goal. */
+  sport?: "runner" | "lifter" | "hybrid";
+  /** first_week_task_selected: training task selected. */
+  task?: "workout" | "run";
+  /** First-week card: local calendar day 1 through 7. */
+  firstWeekDay?: number;
   /**
    * session_started (runs only): the run did not match its planned slot.
    * Read straight from `computePlanMetadata`, which already decides this.

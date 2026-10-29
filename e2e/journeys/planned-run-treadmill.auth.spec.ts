@@ -78,12 +78,28 @@ test("a planned run, done on a treadmill, is the planned run", async ({
       sex: "Female",
       age: "25–34",
     });
+    const savedProfile = (
+      await emulatorAdmin().db.doc(`users/${account.uid}`).get()
+    ).data();
+    expect(savedProfile?.activationJourneyVersion).toBe(2);
+    await expect(
+      page.getByRole("heading", { name: "Your first week" })
+    ).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("Go for your first run")).toBeVisible();
+    await expect(page.getByText("Finish your first workout")).toHaveCount(0);
+    await expect(page.getByText("Log your first meal")).toHaveCount(0);
     // The plan's first run. Setup's default week (Run20 (2)) need not hold
     // one on the day the plan is made, so the journey moves to its day.
     const planned = (await programme(account.uid)).runDays
       ?.filter((run) => run.date !== undefined && run.date >= start)
       .sort((a, b) => a.date!.localeCompare(b.date!))[0];
     expect(planned, "the plan has a run this week").toBeTruthy();
+    if (planned!.date !== start) {
+      await expect(
+        page.getByRole("button", { name: RUN.homeStart, exact: true }),
+        "a race rest day does not launch an unscheduled run"
+      ).toHaveCount(0);
+    }
     await moveDay(page, planned!.date!);
     const session = RUN_TEMPLATES.find(
       (template) =>
@@ -157,6 +173,10 @@ test("a planned run, done on a treadmill, is the planned run", async ({
     // Home reads the week from its listeners, which the emulators can take
     // seconds to fill once earlier journeys have loaded them.
     await openTab(page, TABS.home);
+    await expect(
+      page.getByRole("heading", { name: "Your first week" }),
+      "a saved first run completes the only runner task"
+    ).toHaveCount(0);
     await expect(
       page.getByRole("button", {
         name: new RegExp(`^${stripDay(planned!.date!)}, ${STRIP.runDone}`),

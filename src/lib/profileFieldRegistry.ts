@@ -77,6 +77,7 @@ export interface ProfileFieldEntry {
 }
 
 export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
+  { field: "activationJourneyVersion", sanitized: false, serverOnly: true },
   { field: "activityLevel", sanitized: true },
   { field: "adaptiveCapState", sanitized: true },
   { field: "adjustCaloriesForTraining", sanitized: true },

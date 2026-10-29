@@ -26,12 +26,17 @@ import { groupText } from "@/test/localeGrouping";
 const h = vi.hoisted(() => ({
   profile: null as any,
   programState: null as any,
+  workoutsFailed: false,
+  workoutsLoading: false,
+  mealsLoading: false,
+  homeDataLoading: false,
   steps: { status: "unavailable", primingShown: true, ready: true } as {
     status: string;
     primingShown: boolean;
     ready: boolean;
   },
   track: vi.fn(),
+  homeTrack: vi.fn(),
 }));
 
 vi.mock("firebase/firestore");
@@ -92,7 +97,8 @@ vi.mock("@/hooks/useWorkouts", () => ({
   useWorkouts: () => ({
     workouts: [],
     getWorkoutsForDate: () => [],
-    loading: false,
+    loading: h.workoutsLoading,
+    failed: h.workoutsFailed,
   }),
 }));
 vi.mock("@/hooks/useMeals", () => {
@@ -106,7 +112,7 @@ vi.mock("@/hooks/useMeals", () => {
   return {
     useMeals: () => ({
       meals: [],
-      loading: false,
+      loading: h.mealsLoading,
       error: null,
       getDailyTotals,
     }),
@@ -121,7 +127,7 @@ vi.mock("@/hooks/useHomeData", () => ({
     weightAnnouncement: "",
     weighInCount: 0,
     postWorkoutNudge: null,
-    loading: false,
+    loading: h.homeDataLoading,
   }),
 }));
 vi.mock("@/hooks/useLifetimeRunStats", () => ({
@@ -203,7 +209,7 @@ vi.mock("@/hooks/usePerformance", () => ({
   }),
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
-vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
+vi.mock("@/lib/homeAnalytics", () => ({ track: h.homeTrack }));
 
 vi.mock("@/components/home/WeightLogSheet", () => ({
   default: () => <div>Weigh-in sheet</div>,
@@ -317,7 +323,7 @@ function LocationProbe() {
   const location = useLocation();
   return (
     <output data-testid="location">
-      {location.pathname}
+      {location.pathname + location.search}
       {location.state ? ` ${JSON.stringify(location.state)}` : ""}
     </output>
   );
@@ -358,6 +364,11 @@ async function press(name: "Next" | "Done" | "Skip" | "Got it") {
 beforeEach(() => {
   localStorage.clear();
   h.track.mockClear();
+  h.homeTrack.mockClear();
+  h.workoutsFailed = false;
+  h.workoutsLoading = false;
+  h.mealsLoading = false;
+  h.homeDataLoading = false;
   h.steps = { status: "unavailable", primingShown: true, ready: true };
   window.scrollBy = vi.fn();
   accountFrom(0);
@@ -543,5 +554,131 @@ describe("the first-week card's rows open their step", () => {
       stop: "today",
       stepIndex: 0,
     });
+  });
+});
+
+describe("the version 2 first-week journey", () => {
+  beforeEach(() => {
+    // Signup can precede the plan by days. The card counts from the server's
+    // plan-completion stamp, while the legacy tour stays off this route.
+    accountFrom(5);
+    h.profile.activationJourneyVersion = 2;
+    const completedAtMs = Date.now() - 1000;
+    h.profile.onboardingCompletedAt = { toMillis: () => completedAtMs };
+  });
+
+  it("records one card view per Home visit and a training row selection", async () => {
+    const view = renderHome();
+    await waitFor(() =>
+      expect(
+        h.track.mock.calls.filter(
+          ([event]) => event === "first_week_card_viewed"
+        )
+      ).toHaveLength(1)
+    );
+    expect(h.track).toHaveBeenCalledWith("first_week_card_viewed", {
+      sport: "lifter",
+      firstWeekDay: 1,
+    });
+    expect(
+      screen.queryByRole("button", { name: /Log your first meal/ })
+    ).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    view.rerender(homeAt());
+    expect(
+      h.track.mock.calls.filter(([event]) => event === "first_week_card_viewed")
+    ).toHaveLength(1);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Finish your first workout/ })
+    );
+    expect(h.track).toHaveBeenCalledWith("first_week_task_selected", {
+      sport: "lifter",
+      task: "workout",
+      firstWeekDay: 1,
+    });
+    expect(h.homeTrack).toHaveBeenCalledWith("home_card_tapped", {
+      card: "first_week_workout",
+      action: "start",
+    });
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      "/program?day=0&start=1"
+    );
+
+    cleanup();
+    renderHome();
+    await waitFor(() =>
+      expect(
+        h.track.mock.calls.filter(
+          ([event]) => event === "first_week_card_viewed"
+        )
+      ).toHaveLength(2)
+    );
+  });
+
+  it("shows the training task while meal and weight data are still loading", () => {
+    h.mealsLoading = true;
+    h.homeDataLoading = true;
+    renderHome();
+    expect(
+      screen.getByRole("button", { name: /Finish your first workout/ })
+    ).toBeInTheDocument();
+  });
+
+  it("defers native steps priming until after the first Home visit", () => {
+    h.steps = { status: "unprompted", primingShown: false, ready: true };
+    renderHome();
+    expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
+    cleanup();
+    renderHome();
+    expect(screen.getByTestId("steps-prompt")).toHaveTextContent("open");
+  });
+
+  it("shows repair without a checklist or fabricated Start when the plan is missing", () => {
+    h.programState = null;
+    renderHome();
+    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Your first week" })
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Start workout" })).toBeNull();
+  });
+
+  it("shows missing-plan repair for a runner while unrelated workouts load", () => {
+    h.profile.athleteType = "Runner";
+    h.profile.runMode = "freeform";
+    h.programState = null;
+    h.workoutsLoading = true;
+    renderHome();
+    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
+  });
+
+  it("waits rather than showing a false incomplete task when workout evidence failed", () => {
+    h.workoutsFailed = true;
+    renderHome();
+    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Your first week" })
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Start workout" })).toBeNull();
+  });
+
+  it("does not offer a generic run while a race plan's run days need building", () => {
+    h.profile.athleteType = "Runner";
+    h.profile.runMode = "race_prep";
+    h.profile.raceGoal = { distance: "half", targetDate: "2099-01-01" };
+    h.profile.weekSchedule = [0, 1, 2, 3, 4, 5, 6].map((day) => ({
+      day,
+      type: "run",
+    }));
+    h.programState.runDays = [];
+    renderHome();
+    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Your first week" })
+    ).toBeNull();
   });
 });
