@@ -119,6 +119,7 @@ import {
   periodSummaryFigures,
   runRecordRows,
 } from "@/lib/historyFigures";
+import { trainingHistorySearch } from "@/lib/trainingHistory";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import {
   computeMuscleRecovery,
@@ -582,6 +583,13 @@ export default function History() {
     [rangeDays, profile?.createdAt]
   );
   const { startKey, joinedInRange } = range;
+  const historyReturnTo = `/history${searchParams.size ? `?${searchParams}` : ""}`;
+  const periodHistoryHref = `/history/sessions${trainingHistorySearch({
+    from: range.sinceKey,
+    to: range.todayKey,
+    sport: "all",
+    search: "",
+  })}`;
   const unit = useDistanceUnit();
   const liftUnit = useLiftUnit();
   /**
@@ -1032,7 +1040,15 @@ export default function History() {
     <PageShell
       {...pullBindProps}
       title="Analytics"
-      actions={<Link to="/history/sessions" state={{ returnTo: `/history${searchParams.size ? `?${searchParams}` : ""}` }} className={buttonClasses({ variant: "ghost" })}>History</Link>}
+      actions={
+        <Link
+          to={periodHistoryHref}
+          state={{ returnTo: historyReturnTo }}
+          className={buttonClasses({ variant: "ghost" })}
+        >
+          History
+        </Link>
+      }
       /* Hist4: sustained-offline notice (30s threshold). Additive to the
          global Layout banner — surfaces only after the disconnect has
          lasted 30s and clarifies that Analytics reads from the Firestore
@@ -1261,6 +1277,10 @@ export default function History() {
                       figures={summaryFigures}
                       bins={periodSummary.bins}
                       granularity={periodSummary.granularity}
+                      sessionsLink={{
+                        to: periodHistoryHref,
+                        returnTo: historyReturnTo,
+                      }}
                       /* The user's own weekly targets. `daysPerWeek` is what
                          onboarding asked for and, capped at 6, is never
                          reshaped by the engine's 7-day cap — so requested
