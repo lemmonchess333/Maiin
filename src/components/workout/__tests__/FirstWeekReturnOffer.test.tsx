@@ -14,7 +14,7 @@ const h = vi.hoisted(() => ({
   currentUid: "u1",
   version: 2 as number | undefined,
   today: "2026-10-29",
-  startMs: Date.UTC(2026, 9, 29, 12),
+  startMs: new Date(2026, 9, 29, 12).getTime(),
   native: false,
   pushSupported: true,
   configured: false,
@@ -116,7 +116,7 @@ beforeEach(() => {
   h.currentUid = "u1";
   h.version = 2;
   h.today = "2026-10-29";
-  h.startMs = Date.UTC(2026, 9, 29, 12);
+  h.startMs = new Date(2026, 9, 29, 12).getTime();
   h.native = false;
   h.pushSupported = true;
   h.configured = false;
