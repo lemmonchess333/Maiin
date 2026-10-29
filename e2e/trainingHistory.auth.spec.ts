@@ -34,16 +34,24 @@ test("browses lifts and runs, filters an older period and restores the expanded 
   const captureDir = process.env.HISTORY_CAPTURE_DIR;
   if (captureDir) await mkdir(captureDir, { recursive: true });
   async function capture(name: string) {
-    if (!captureDir) return;
-    await mkdir(captureDir, { recursive: true });
     await page.evaluate(async () => {
       await document.fonts.ready;
     });
     await settleImages(page);
-    await page.screenshot({
-      path: `${captureDir}/${name}.png`,
-      animations: "disabled",
-    });
+    // Resizing and changing the root text size need a painted frame even
+    // when optional screenshots aren't requested by the CI runner.
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        )
+    );
+    if (captureDir) {
+      await page.screenshot({
+        path: `${captureDir}/${name}.png`,
+        animations: "disabled",
+      });
+    }
     const layout = await page.evaluate(() => {
       const input = document.querySelector<HTMLInputElement>("#history-search");
       const icon = input?.parentElement?.querySelector(":scope > svg");
