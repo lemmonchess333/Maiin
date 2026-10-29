@@ -40,7 +40,7 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import type { ReactNode } from "react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useBackDismiss } from "@/lib/backDismiss";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { usePageSearchParams } from "@/hooks/usePageSearchParams";
 import { focusLabel } from "@/features/program/trainingBlock";
 import {
@@ -59,6 +59,7 @@ import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import ProgramOfflineBanner from "@/components/program/ProgramOfflineBanner";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 import WorkoutSession from "@/components/WorkoutSession";
 // The Lift tab's ways into a workout that is not the plan's day, each
 // loaded on its own: the saved routines read their list after the page
@@ -570,9 +571,9 @@ function ProgramInner() {
     exIndex: number,
     newEx: Exercise
   ) => {
-    if (!programState) return;
+    if (!programState) return false;
     const old = programState.workouts[dayIdx].exercises[exIndex];
-    if (!old?.instanceId) return;
+    if (!old?.instanceId) return false;
     // P6: through the boundary. The identity work the long comment here used
     // to describe — carry the role-level prescription, re-infer the category,
     // mint a new instance, reset a reps<->seconds transition — now lives in
@@ -581,12 +582,11 @@ function ProgramInner() {
     // The one thing that could NOT simply move is the load: the reducer has no
     // profile, so it used to hard-code 0. The calibrated weight is computed
     // client-side and sent as a bounded scalar; see the reducer's note.
-    await replaceExerciseInDay(dayIdx, old.instanceId, newEx.id);
-    setReplaceTarget(null);
+    return replaceExerciseInDay(dayIdx, old.instanceId, newEx.id);
   };
 
   const addExercisesToDay = async (dayIdx: number, exercises: Exercise[]) => {
-    if (!programState) return;
+    if (!programState) return false;
     // Don't hardcode movementCategory — normalizeExercise infers from
     // the exercise name via inferMovementCategory. Forcing
     // "horizontal_push" was tagging every added exercise (including
@@ -597,11 +597,10 @@ function ProgramInner() {
     // client-supplied exercise object, which is the boundary's security stance.
     // Equivalent because both sides start an added movement UNCALIBRATED at
     // 3x10x0; that is what separates this from `replaceExercise`.
-    await addExercisesToDayCmd(
+    return addExercisesToDayCmd(
       dayIdx,
       exercises.map((e) => e.id)
     );
-    setShowAddPicker(false);
   };
 
   const handleLongPressStart = (
@@ -1197,6 +1196,18 @@ function ProgramInner() {
       /* Overflow, plus a "Done" exit only while reordering. */
       actions={
         <>
+          <Link
+            to="/program/plan"
+            state={{
+              returnTo: `/program?${new URLSearchParams({
+                ...Object.fromEntries(searchParams),
+                tab: activeTab,
+              })}`,
+            }}
+            className={buttonClasses({ variant: "ghost" })}
+          >
+            Your plan
+          </Link>
           {activeTab === "lift" &&
             (programState?.workouts?.length ?? 0) > 0 &&
             reorderMode && (
@@ -2263,6 +2274,10 @@ function ProgramInner() {
               }}
               onCompleteDay={completeWithViewToast}
               onClose={closeSession}
+              onViewWorkout={(id) => {
+                closeSession();
+                navigate(`/workout/${encodeURIComponent(id)}`);
+              }}
               resumeDraft={resumeOnOpen}
             />
           );

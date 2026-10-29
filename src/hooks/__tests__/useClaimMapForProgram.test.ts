@@ -45,6 +45,8 @@ import {
   resetFirestore,
   readLog,
   flushSnapshots,
+  failNextFirestore,
+  setSnapshotMetadata,
 } from "@/test/firestoreHarness";
 
 const mockUser: { uid: string } | null = { uid: "u1" };
@@ -91,6 +93,57 @@ function seedRuns(docs: Array<{ id: string; data: Record<string, unknown> }>) {
 /** How many times the hook subscribed to the runs collection. */
 const runSubscriptions = () =>
   readLog().filter((r) => r.op === "onSnapshot" && r.path === RUNS).length;
+
+describe("completion evidence for plan editing", () => {
+  beforeEach(() => {
+    resetFirestore();
+    currentUser = mockUser;
+    mockProgramState = null;
+  });
+
+  it("does not treat an empty cached claim map as complete evidence", async () => {
+    setSnapshotMetadata(RUNS, { fromCache: true });
+    const { result } = renderHook(() => useClaimMap("2026-10-28"));
+    expect(result.current.evidenceReady).toBe(false);
+    await flushSnapshots();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.claimMap.size).toBe(0);
+    expect(result.current.evidenceReady).toBe(false);
+    setSnapshotMetadata(RUNS, { fromCache: false });
+    await flushSnapshots();
+    expect(result.current.evidenceReady).toBe(true);
+  });
+
+  it("exposes a failed completion read and recovers through refresh", async () => {
+    failNextFirestore("onSnapshot", { path: RUNS, code: "unavailable" });
+    const { result } = renderHook(() => useClaimMap("2026-10-28"));
+    await flushSnapshots();
+    expect(result.current.failed).toBe(true);
+    expect(result.current.evidenceReady).toBe(false);
+    act(() => result.current.refresh());
+    await flushSnapshots();
+    expect(result.current.failed).toBe(false);
+    expect(result.current.evidenceReady).toBe(true);
+  });
+
+  it("rechecks completion when a saved distance is corrected without changing its id or time", async () => {
+    mockProgramState = {
+      runDays: [{ id: "rd-corrected", templateId: "long_15k", type: "long", date: "2026-10-28", dayIndex: 3 }],
+      manualCompletions: {},
+    };
+    const record = {
+      date: "2026-10-28", distance: 5000, avgPace: 360,
+      completedAt: Timestamp.fromDate(new Date("2026-10-28T12:00:00Z")),
+    };
+    seedRuns([{ id: "corrected", data: record }]);
+    const { result } = renderHook(() => useClaimMap("2026-10-28"));
+    await flushSnapshots();
+    expect(result.current.claimMap.get("rd-corrected")?.claimedSavedRunId).toBeUndefined();
+    act(() => seedRuns([{ id: "corrected", data: { ...record, distance: 12000 } }]));
+    await flushSnapshots();
+    expect(result.current.claimMap.get("rd-corrected")?.claimedSavedRunId).toBe("corrected");
+  });
+});
 
 describe("useClaimMap", () => {
   beforeEach(() => {

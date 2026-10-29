@@ -157,7 +157,7 @@ export default function CorrectWorkoutSheet({
             type="number"
             min="0"
             max="1440"
-            step="1"
+            step="any"
             value={minutes}
             disabled={saving}
             onChange={(event) => setMinutes(event.target.value)}

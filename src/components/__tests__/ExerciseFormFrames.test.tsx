@@ -30,6 +30,18 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 describe("six-frame form guide", () => {
+  it("shows the current movement cue in the compact picker guide", () => {
+    const view = render(
+      <ExerciseFormFrames name="Squat" beats={beats} compact />
+    );
+    expect(screen.getByText("Cue 1")).toBeInTheDocument();
+    expect(
+      view.container.querySelector(".max-w-\\[min\\(260px\\,34dvh\\)\\]")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Next frame" }));
+    expect(screen.getByText("Cue 2")).toBeInTheDocument();
+    expect(screen.queryByText("Cue 1")).not.toBeInTheDocument();
+  });
   it("keeps one camera for every pose while stepping", () => {
     const view = render(
       <ExerciseFormFrames

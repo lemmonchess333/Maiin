@@ -68,6 +68,43 @@ import { logger } from "@/lib/logger";
 import { readJson, remove, writeJson } from "@/lib/localStore";
 
 const OUTBOX_KEY = "tropos.program.commandOutbox";
+const outboxListeners = new Set<() => void>();
+let outboxVersion = 0;
+
+function notifyOutbox(): void {
+  outboxVersion += 1;
+  for (const listener of outboxListeners) listener();
+}
+
+function onStorage(event: StorageEvent): void {
+  if (event.key === OUTBOX_KEY || event.key === null) notifyOutbox();
+}
+
+/** Live queue updates, including changes from another browser tab. */
+export function subscribeCommandOutbox(listener: () => void): () => void {
+  if (outboxListeners.size === 0 && typeof window !== "undefined")
+    window.addEventListener("storage", onStorage);
+  outboxListeners.add(listener);
+  return () => {
+    outboxListeners.delete(listener);
+    if (outboxListeners.size === 0 && typeof window !== "undefined")
+      window.removeEventListener("storage", onStorage);
+  };
+}
+
+export const commandOutboxVersion = () => outboxVersion;
+
+export interface CommandSettlement {
+  commandId: string;
+  kind: string;
+  result: "applied" | "declined";
+}
+const latestSettlements = new Map<string, CommandSettlement>();
+
+/** The latest replay result belongs only to the account that sent it. */
+export function lastCommandSettlement(uid: string): CommandSettlement | null {
+  return latestSettlements.get(uid) ?? null;
+}
 
 /**
  * Most commands to hold. A user offline for a long session generates a handful;
@@ -135,11 +172,15 @@ function read(): OutboxEntry[] {
 function write(entries: OutboxEntry[]): void {
   let working = entries;
   for (;;) {
-    if (writeJson(OUTBOX_KEY, working)) return;
+    if (writeJson(OUTBOX_KEY, working)) {
+      notifyOutbox();
+      return;
+    }
     if (working.length === 0) {
       // Nothing fits even when empty — drop the key so a corrupt giant value
       // cannot wedge every future write.
       remove(OUTBOX_KEY);
+      notifyOutbox();
       return;
     }
     logger.error(
@@ -215,6 +256,11 @@ export async function flushCommandOutbox(
   for (const entry of mine) {
     try {
       await send(entry.command);
+      latestSettlements.set(uid, {
+        commandId: entry.command.commandId,
+        kind: entry.command.kind,
+        result: "applied",
+      });
       cleared += 1;
       done.add(entry.command.commandId);
     } catch (err) {
@@ -230,6 +276,11 @@ export async function flushCommandOutbox(
         `[commandOutbox] dropping ${entry.command.kind} — server rejected it`,
         err
       );
+      latestSettlements.set(uid, {
+        commandId: entry.command.commandId,
+        kind: entry.command.kind,
+        result: "declined",
+      });
       cleared += 1;
       done.add(entry.command.commandId);
     }
@@ -249,4 +300,6 @@ export async function flushCommandOutbox(
 /** Test seam — clears every uid's entries. */
 export function __resetCommandOutboxForTests(): void {
   remove(OUTBOX_KEY);
+  latestSettlements.clear();
+  notifyOutbox();
 }

@@ -10,11 +10,17 @@ vi.mock("@/components/ExerciseFormContent", () => ({
   default: ({
     exerciseName,
     active,
+    compactGuide,
   }: {
     exerciseName: string;
     active: boolean;
+    compactGuide: boolean;
   }) => (
-    <div data-testid="form-content" data-active={String(active)}>
+    <div
+      data-testid="form-content"
+      data-active={String(active)}
+      data-compact={String(compactGuide)}
+    >
       {exerciseName} guide
     </div>
   ),
@@ -53,6 +59,21 @@ describe("ExerciseFormSheet", () => {
     );
     const guide = await screen.findByTestId("form-content");
     expect(guide.closest(".overflow-y-auto")).not.toBeNull();
+  });
+
+  it("uses the compact guide when opened from a live workout", async () => {
+    render(
+      <ExerciseFormSheet
+        exerciseName="Lateral Raise"
+        open
+        compactGuide
+        onOpenChange={() => {}}
+      />
+    );
+    expect(await screen.findByTestId("form-content")).toHaveAttribute(
+      "data-compact",
+      "true"
+    );
   });
 
   it("sits above the workout screen with its backdrop", () => {

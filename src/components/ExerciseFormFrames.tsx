@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+import { cn } from "@/lib/utils";
 import type { FormBeat } from "@/lib/formGuides";
 import type { FormArtFraming } from "@/lib/formArtFraming";
 import type { FormArtComposite } from "@/lib/formArtComposites";
@@ -13,6 +14,7 @@ interface Props {
   framing?: FormArtFraming;
   composite?: FormArtComposite;
   active?: boolean;
+  compact?: boolean;
   initialIndex?: number;
   autoPlay?: boolean;
   loop?: boolean;
@@ -29,6 +31,7 @@ export default function ExerciseFormFrames({
   framing,
   composite,
   active = true,
+  compact = false,
   initialIndex = 0,
   autoPlay = true,
   loop = true,
@@ -106,7 +109,12 @@ export default function ExerciseFormFrames({
       data-demo-still={reducedMotion ? "placard" : undefined}
     >
       <div className="bg-stage rounded-2xl p-3">
-        <div className="relative mx-auto aspect-square w-full max-w-[360px] overflow-hidden">
+        <div
+          className={cn(
+            "relative mx-auto aspect-square w-full max-w-[360px] overflow-hidden",
+            compact && "max-w-[min(260px,34dvh)]"
+          )}
+        >
           {mounted.map((i) => {
             const overlays =
               composite?.layers.filter((layer) => layer.targetIndex === i) ??
@@ -201,11 +209,22 @@ export default function ExerciseFormFrames({
         </div>
         <p
           aria-live={running ? "off" : "polite"}
-          className="mt-2 text-center text-micro text-stage-muted"
+          className={cn(
+            "mt-2 text-center text-stage-muted",
+            compact ? "text-small" : "text-micro"
+          )}
         >
           {beats[index].label}{" "}
           <span className="font-mono tabular-nums">{index + 1}/6</span>
         </p>
+        {compact && (
+          <p
+            aria-live={running ? "off" : "polite"}
+            className="mt-1 min-h-10 text-center text-small leading-relaxed text-stage-foreground"
+          >
+            {beats[index].cue}
+          </p>
+        )}
       </div>
       <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
         <IconButton

@@ -52,6 +52,7 @@ import {
 } from "@/features/program/superset";
 
 import { Button } from "@/components/ui/Button";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
   FIELD_EDGE,
   SECONDARY_ON_CARD_EDGE,
@@ -317,6 +318,8 @@ interface Props {
     sessionData: CompletedSessionData
   ) => Promise<LiftCompletionReceipt>;
   onClose: () => void;
+  /** Open the exact saved record returned by the completion writer. */
+  onViewWorkout?: (workoutId: string) => void;
   /** The account has never finished a workout: the guide's first-set hint
    *  may point at the first row (FV1). Train knows this; a saved routine
    *  doesn't pass it. */
@@ -344,6 +347,7 @@ export default function WorkoutSession({
   programmeContext,
   onCompleteDay,
   onClose,
+  onViewWorkout,
   firstWorkout = false,
   hardRunBefore,
   resumeDraft = false,
@@ -376,6 +380,7 @@ export default function WorkoutSession({
   // Captured once on mount — stable across renders via the stable hook callbacks.
   const initialDraft = useMemo(() => loadDraft(), [loadDraft]);
   const hasRecoveryDraft = useRef(initialDraft !== null);
+  const hasEnteredValues = useRef(false);
   // One completion id per session (packet 15). Resumed from the draft when
   // present so a retry/resume targets the SAME workout doc; persisted into
   // every draft save below. Never regenerated per Finish click.
@@ -700,6 +705,7 @@ export default function WorkoutSession({
     );
     // Once a draft exists, Undo must also persist zero completed sets.
     // Keep the entered values, notes and session choices with that reversal.
+    // Entered values and notes count before the first completed set too.
     // A session changed from how it was set out (an exercise added, a
     // superset, a swap) is kept before any set is done: an empty workout
     // with its exercises added is a workout to come back to.
@@ -707,7 +713,13 @@ export default function WorkoutSession({
       prescription.exercises.length !== initialDay.exercises.length ||
       (prescription.supersets?.length ?? 0) > 0 ||
       (prescription.swaps?.length ?? 0) > 0;
-    if (!hasProgress && !reshaped && !hasRecoveryDraft.current) return;
+    if (
+      !hasProgress &&
+      !reshaped &&
+      !hasRecoveryDraft.current &&
+      !hasEnteredValues.current
+    )
+      return;
     if (completionPendingRef.current) return;
     const stored = saveDraft({
       dayIndex,
@@ -824,6 +836,7 @@ export default function WorkoutSession({
   const [askingJump, setAskingJump] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedWorkoutId, setSavedWorkoutId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<
     "queued" | "synced" | "needs-attention" | undefined
   >(initialDraft?.completionPending ? "needs-attention" : undefined);
@@ -832,7 +845,7 @@ export default function WorkoutSession({
   >();
   const [sessionDurationMinutes, setSessionDurationMinutes] = useState(
     initialDraft?.completionPending
-      ? Math.round(initialDraft.elapsedSeconds / 60)
+      ? Math.max(1, initialDraft.elapsedSeconds) / 60
       : 0
   );
   useEffect(() => {
@@ -863,6 +876,7 @@ export default function WorkoutSession({
         )
           return;
         clearDraft(initialDraft.completionId);
+        setSavedWorkoutId(snapshot.id);
         setSaved(true);
         setSaveStatus("synced");
       } catch {
@@ -890,7 +904,9 @@ export default function WorkoutSession({
     // puts on screen from here on is inside the window.
     beginCompletionWindow();
     setSessionDurationMinutes(
-      Math.round((Date.now() - sessionStartedAt) / 60000)
+      // A measured short session must stay positive: the writer reserves
+      // zero for sessions without a clock and estimates their duration.
+      Math.max(1, (Date.now() - sessionStartedAt) / 1000) / 60
     );
     setSessionComplete(true);
   }, [sessionStartedAt]);
@@ -1074,6 +1090,7 @@ export default function WorkoutSession({
     const set = setLogs[exIdx]?.[setIdx];
     if (!set || set.type === type) return;
     if (set.completed && (completionPendingRef.current || saved)) return;
+    hasEnteredValues.current = true;
     const next = setLogs.map((sets, ei) =>
       sets.map((entry, si) =>
         ei === exIdx && si === setIdx ? { ...entry, type } : entry
@@ -1088,15 +1105,22 @@ export default function WorkoutSession({
     }
   };
 
-  const updateSetRPE = (exIdx: number, setIdx: number, rpe: number) => {
+  const updateSetRPE = (
+    exIdx: number,
+    setIdx: number,
+    rpe: number | undefined
+  ) => {
+    hasEnteredValues.current = true;
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
-      updated[exIdx][setIdx].rpe = rpe;
+      if (rpe === undefined) delete updated[exIdx][setIdx].rpe;
+      else updated[exIdx][setIdx].rpe = rpe;
       return updated;
     });
   };
 
   const addSet = (exIdx: number) => {
+    hasEnteredValues.current = true;
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       const lastSet = updated[exIdx][updated[exIdx].length - 1];
@@ -1135,6 +1159,7 @@ export default function WorkoutSession({
   };
 
   const removeSet = (exIdx: number, setIdx: number) => {
+    hasEnteredValues.current = true;
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       updated[exIdx].splice(setIdx, 1);
@@ -1149,6 +1174,16 @@ export default function WorkoutSession({
     field: "reps" | "weight",
     value: number
   ) => {
+    // History may still be loading when someone starts typing. From this
+    // edit onward the exercise belongs to them, just as a completed set
+    // does; a late history read must not replace the numbers they entered.
+    hasEnteredValues.current = true;
+    const exercise = day.exercises[exIdx];
+    if (exercise) {
+      const key = rowKey(exercise, exIdx);
+      rowsToStart.current.delete(key);
+      weightsToFollow.current.delete(key);
+    }
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       updated[exIdx][setIdx][field] = value;
@@ -1726,6 +1761,7 @@ export default function WorkoutSession({
       // A callback from an outgoing account must never recreate its draft
       // after sign-out, mark the next user's session saved, or award a badge.
       if (completionUid && auth.currentUser?.uid !== completionUid) return;
+      setSavedWorkoutId(receipt.workoutId);
       const queuedReceipt =
         receipt.syncStatus === "queued" ? receipt.sync : null;
       const acknowledge = () => {
@@ -1825,6 +1861,7 @@ export default function WorkoutSession({
 
   const handleStartFresh = () => {
     hasRecoveryDraft.current = false;
+    hasEnteredValues.current = false;
     // A fresh start is the session as it was set out: the draft's swaps,
     // skips, added exercises and supersets go with its sets and notes, so
     // an empty workout starts empty again.
@@ -1919,6 +1956,11 @@ export default function WorkoutSession({
             !completionPending ? () => setSessionComplete(false) : undefined
           }
           onClose={onClose}
+          onViewWorkout={
+            savedWorkoutId && onViewWorkout
+              ? () => onViewWorkout(savedWorkoutId)
+              : undefined
+          }
         />
         <KeepSwapSheet
           open={keepQuestion.open}
@@ -2187,8 +2229,8 @@ export default function WorkoutSession({
             110 px of a phone from the sets for the whole session. They scroll away as the
             sets below are reached, and an exercise change brings them
             back. DS3: the exercise's drawing beside its name, where a bare
-            dumbbell icon sat. Under 16em of row (larger text on the phone)
-            the drawing gives its room to the name, which beside it pushed
+            dumbbell icon sat. Under 19em of row (a 320px phone, or larger
+            text on the phone), the drawing gives its room to the name, which beside it pushed
             the form guide's button off the screen, and the name's two
             buttons drop under it when beside it they would squeeze a word
             ("Bench" at 2x on a 320px phone) out of its box. Wide-first. */}
@@ -2197,11 +2239,11 @@ export default function WorkoutSession({
             <ExerciseThumb
               exerciseId={currentExercise.exerciseId}
               size="lg"
-              className="@max-[16em]:hidden"
+              className="@max-[19em]:hidden"
             />
           )}
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 @max-[16em]:flex-wrap">
+            <div className="flex items-center gap-1 @max-[19em]:flex-wrap">
               <h2 className="min-w-0 text-h3 font-bold leading-tight tracking-tight text-foreground text-balance">
                 {currentExercise?.name}
               </h2>
@@ -2210,7 +2252,6 @@ export default function WorkoutSession({
                   <IconButton
                     aria-label={`How to do ${currentExercise.name}`}
                     variant="ghost"
-                    size="sm"
                     icon={<Info className="size-5 text-muted-foreground" />}
                     onClick={() => {
                       haptic("light");
@@ -2220,7 +2261,6 @@ export default function WorkoutSession({
                   <IconButton
                     aria-label={`More for ${currentExercise.name}`}
                     variant="ghost"
-                    size="sm"
                     icon={
                       <MoreHorizontal className="size-5 text-muted-foreground" />
                     }
@@ -2318,6 +2358,7 @@ export default function WorkoutSession({
               <Button
                 variant="ghost"
                 onClick={() => {
+                  hasEnteredValues.current = true;
                   setExerciseNotes((prev) => ({
                     ...prev,
                     [currentExIndex]: previousNotes[currentExIndex].text,
@@ -2600,40 +2641,58 @@ export default function WorkoutSession({
                       {/* Pick effort before completion so it reaches the
                           progression call made when the final set is logged. */}
                       {showRPE && !set.completed && set.type !== "warmup" && (
-                        /* One row of nine, never wrapping: a label in
-                           front of the chips pushed "10" onto a line of
-                           its own. The group carries the name. */
+                        /* Ratings keep full touch targets and wrap as text
+                           grows. Revealing them records no effort until
+                           the lifter chooses one. */
                         <div
-                          role="group"
-                          aria-label={`RPE for ${lowerFirst(name)}`}
-                          className="grid grid-cols-9 gap-1 border-t border-border/30 bg-muted/30 px-3 py-1.5"
+                          data-rpe-row
+                          className="space-y-1 border-t border-border/30 bg-muted/30 px-3 py-1.5"
                         >
-                          {RPE_OPTIONS.map((rpe) => (
-                            <button
-                              type="button"
-                              key={rpe}
-                              aria-pressed={set.rpe === rpe}
-                              onClick={() => {
-                                haptic(10);
-                                updateSetRPE(currentExIndex, setIdx, rpe);
-                              }}
-                              className={cn(
-                                "min-h-11 min-w-0 rounded text-xs font-mono tabular-nums transition-colors",
-                                set.rpe === rpe
-                                  ? "bg-primary-strong text-primary-foreground"
-                                  : "bg-muted text-muted-foreground hover:text-foreground"
-                              )}
-                            >
-                              {rpe}
-                            </button>
-                          ))}
+                          <SegmentedControl
+                            ariaLabel={`RPE for ${lowerFirst(name)}`}
+                            value={set.rpe ?? null}
+                            layout="wrap"
+                            tone="lifting"
+                            options={RPE_OPTIONS.map((rpe) => ({
+                              value: rpe,
+                              label: rpe,
+                            }))}
+                            onChange={(rpe) => {
+                              haptic(10);
+                              updateSetRPE(currentExIndex, setIdx, rpe);
+                            }}
+                            className="grid grid-cols-5 gap-1 @max-[14rem]:grid-cols-3 [&_button]:min-w-[44px] [&_button]:px-1 [&_button]:text-xs [&_button]:font-mono [&_button]:tabular-nums"
+                          />
                           {typeof set.rpe === "number" && (
-                            <span className="col-span-9 pl-1 pt-0.5 text-xs text-muted-foreground">
-                              <span className="font-mono tabular-nums">
-                                {set.rpe}
+                            <div className="flex flex-wrap items-center justify-between gap-x-2">
+                              <span className="pl-1 text-xs text-muted-foreground">
+                                <span className="font-mono tabular-nums">
+                                  {set.rpe}
+                                </span>{" "}
+                                · {rpeReserveWords(set.rpe)}
                               </span>{" "}
-                              · {rpeReserveWords(set.rpe)}
-                            </span>
+                              <Button
+                                variant="ghost"
+                                className="px-2 text-xs text-muted-foreground"
+                                aria-label={`Clear RPE for ${lowerFirst(name)}`}
+                                onClick={(event) => {
+                                  haptic(10);
+                                  event.currentTarget
+                                    .closest("[data-rpe-row]")
+                                    ?.querySelector<HTMLButtonElement>(
+                                      '[role="radio"]'
+                                    )
+                                    ?.focus();
+                                  updateSetRPE(
+                                    currentExIndex,
+                                    setIdx,
+                                    undefined
+                                  );
+                                }}
+                              >
+                                Clear
+                              </Button>
+                            </div>
                           )}
                         </div>
                       )}
@@ -2705,12 +2764,13 @@ export default function WorkoutSession({
           placeholder="Add a note for next time"
           aria-label="Exercise notes"
           value={exerciseNotes[currentExIndex] || ""}
-          onChange={(e) =>
+          onChange={(e) => {
+            hasEnteredValues.current = true;
             setExerciseNotes((prev) => ({
               ...prev,
               [currentExIndex]: e.target.value,
-            }))
-          }
+            }));
+          }}
           className="ds-input min-h-11 w-full text-sm"
         />
 
@@ -3071,6 +3131,7 @@ export default function WorkoutSession({
           exerciseName={currentExercise.name}
           open={showFormGuide}
           onOpenChange={setShowFormGuide}
+          compactGuide
         />
       )}
     </div>

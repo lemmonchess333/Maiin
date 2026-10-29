@@ -428,6 +428,40 @@ describe("keeping a session that has grown", () => {
 });
 
 describe("an exercise added before last time is read", () => {
+  it("keeps typed weight and reps when history arrives after editing starts", async () => {
+    h.user = { uid: "u1" };
+    seedFirestore({
+      "users/u1/workouts/old": {
+        date: localDateString(new Date(Date.now() - 7 * 86_400_000)),
+        completionId: "old",
+        notes: "Push",
+        totalCalories: 0,
+        durationMinutes: 40,
+        exercises: [
+          {
+            exerciseId: "lateral-raise",
+            exerciseName: "Lateral Raise",
+            category: "vertical_push",
+            caloriesBurned: 0,
+            sets: [{ setNumber: 1, reps: 14, weightKg: 9, type: "working" }],
+          },
+        ],
+      },
+    });
+    deferReads();
+    openSession([]);
+    await screen.findByText("No exercises yet");
+    await addLateralRaise();
+    const weight = screen.getByRole("spinbutton", { name: "Set 1 weight" });
+    const reps = screen.getByRole("spinbutton", { name: "Set 1 reps" });
+    fireEvent.change(weight, { target: { value: "7" } });
+    fireEvent.change(reps, { target: { value: "11" } });
+    resumeReads();
+    await act(async () => releaseAllReads());
+    expect(weight).toHaveValue(7);
+    expect(reps).toHaveValue(11);
+  });
+
   it("starts from the weight it was last lifted at once last time arrives", async () => {
     h.user = { uid: "u1" };
     seedFirestore({

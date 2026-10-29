@@ -6,7 +6,7 @@
  * on every swap. The row's body still opens the exercise.
  */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
@@ -39,7 +39,7 @@ function mount() {
 }
 
 describe("ExercisePicker with one exercise to pick", () => {
-  it("the row's circle does the swap at once, with no bar to confirm it", () => {
+  it("the row's circle does the swap at once, with no bar to confirm it", async () => {
     const { onSelect, onClose } = mount();
     // Nothing to tick: the circle is the action, named for it.
     expect(screen.queryByRole("checkbox")).toBeNull();
@@ -48,7 +48,7 @@ describe("ExercisePicker with one exercise to pick", () => {
     );
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect.mock.calls[0][0]).toMatchObject({ name: "Push-Ups" });
-    expect(onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
     expect(screen.queryByText(/exercises? selected/)).toBeNull();
   });
 
@@ -70,7 +70,7 @@ describe("ExercisePicker with one exercise to pick", () => {
     fireEvent.click(screen.getByRole("button", { name: "Swap for today" }));
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect.mock.calls[0][0]).toMatchObject({ name: "Dips" });
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 });
 
@@ -117,5 +117,35 @@ describe("ExercisePicker replacing an exercise (Lift8 (4))", () => {
     expect(current).toBeDisabled();
     fireEvent.click(current);
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("keeps the picker open after a rejected replacement and allows retry", async () => {
+    const onSelect = vi
+      .fn()
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+    const onClose = vi.fn();
+    render(
+      <MemoryRouter>
+        <ExercisePicker
+          open
+          onSelect={onSelect}
+          onClose={onClose}
+          headerTitle="Replace Bench Press"
+          pickAction="Replace"
+          currentExerciseId="bench-press"
+        />
+      </MemoryRouter>
+    );
+    const replacement = screen.getByRole("button", {
+      name: "Replace: Incline Bench Press",
+    });
+    fireEvent.click(replacement);
+    await waitFor(() => expect(replacement).not.toBeDisabled());
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(replacement);
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(onSelect).toHaveBeenCalledTimes(2);
   });
 });

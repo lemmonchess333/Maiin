@@ -13,7 +13,8 @@ import {
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { epley1RMExact } from "@/lib/analytics";
-import { formatDayMonth, withSign } from "@/utils/formatters";
+import { formatDayMonth } from "@/utils/formatters";
+import { createdAtMs } from "@/lib/activityFeedItem";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { liftUnitLabel, liftVolumeIn, wholeLoadIn } from "@/lib/liftLoad";
 import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
@@ -58,6 +59,7 @@ interface SessionSummary {
   /** The saved workout this session is part of: its row opens it. */
   workoutId: string;
   date: string;
+  loggedAtMs: number;
   sets: { reps: number; weightKg: number }[];
   // Derived metrics per session.
   topSet: { reps: number; weightKg: number } | null;
@@ -138,8 +140,10 @@ export default function ExerciseHistory() {
   const allSessions: SessionSummary[] = useMemo(() => {
     const out: SessionSummary[] = [];
     for (const w of workouts) {
-      const ex = w.exercises?.find((e) => e.exerciseName === decodedName);
-      if (!ex || !ex.sets || ex.sets.length === 0) continue;
+      const entries = w.exercises?.filter(
+        (e) => e.exerciseName === decodedName
+      );
+      if (!entries?.length) continue;
       // Coerce at the boundary, not at each of the four uses below. A
       // legacy set with a missing `weightKg` or `reps` otherwise poisons
       // ALL of them at once: `volume` becomes NaN, and because NaN wins
@@ -147,10 +151,14 @@ export default function ExerciseHistory() {
       // running max stay NaN for the rest of the session too. Same
       // failure History fixed by routing tonnage through
       // `workoutTonnageKg`'s guarded multiply.
-      const sets = ex.sets.map((s) => ({
-        reps: s.reps || 0,
-        weightKg: s.weightKg || 0,
-      }));
+      const sets = entries
+        .flatMap((entry) => entry.sets ?? [])
+        .filter((s) => s.type !== "warmup")
+        .map((s) => ({
+          reps: s.reps || 0,
+          weightKg: s.weightKg || 0,
+        }));
+      if (sets.length === 0) continue;
       const top = isTimed
         ? sets.reduce((best, set) => (set.reps > best.reps ? set : best))
         : topSetOf(sets);
@@ -167,6 +175,7 @@ export default function ExerciseHistory() {
       out.push({
         workoutId: w.id,
         date: w.date,
+        loggedAtMs: createdAtMs(w.createdAt),
         sets,
         topSet: top,
         e1rm,
@@ -176,7 +185,9 @@ export default function ExerciseHistory() {
       });
     }
     // Ascending by date so chart + "previous session" lookups run forward.
-    out.sort((a, b) => a.date.localeCompare(b.date));
+    out.sort(
+      (a, b) => a.date.localeCompare(b.date) || a.loggedAtMs - b.loggedAtMs
+    );
     return out;
   }, [workouts, decodedName, isTimed]);
 
@@ -187,38 +198,68 @@ export default function ExerciseHistory() {
   // most recent date that achieved exactly that rep count.
   const repRangePRs = useMemo(() => bestSetsByReps(allSessions), [allSessions]);
 
-  // Walk sessions chronologically tracking running best. Flag each session
-  // whose top-set e1rm beats the previous running best — these get a
-  // filled-star marker on the chart. Without this, the line is just a
-  // trend with no "you made history here" signal.
-  const prDates = useMemo(() => {
+  // Bodyweight charts use Reps / Volume; timed charts always use Seconds.
+  // Keep a valid selection when navigating between exercise types.
+  const metricOptions: Metric[] = isTimed
+    ? ["1RM"]
+    : isBodyweight
+      ? ["1RM", "Volume"]
+      : ["1RM", "Max Weight", "Volume"];
+  const displayMetric = isTimed
+    ? "1RM"
+    : isBodyweight && metric === "Max Weight"
+      ? "1RM"
+      : metric;
+  const metricLabel = isTimed
+    ? "Longest hold"
+    : isBodyweight && displayMetric === "1RM"
+      ? "Total reps"
+      : displayMetric === "1RM"
+        ? "Estimated one-rep max"
+        : displayMetric === "Max Weight"
+          ? "Max weight"
+          : "Volume";
+  const chartUnit = isTimed
+    ? "s"
+    : isBodyweight && displayMetric !== "Volume"
+      ? "reps"
+      : unitLabel;
+
+  // Compare the selected metric against every earlier session, including
+  // sessions outside the visible range. Compare stored values before unit
+  // conversion or display rounding; a tie is not a new record.
+  const prSessions = useMemo(() => {
     const prs = new Set<string>();
     let runningBest = 0;
     for (const s of allSessions) {
-      const score = isTimed ? (s.topSet?.reps ?? 0) : s.e1rm;
+      const score = isTimed
+        ? (s.topSet?.reps ?? 0)
+        : displayMetric === "Volume"
+          ? s.volume
+          : isBodyweight
+            ? s.totalReps
+            : displayMetric === "Max Weight"
+              ? s.maxWeight
+              : s.e1rm;
       if (score > runningBest) {
         runningBest = score;
-        prs.add(s.date);
+        prs.add(s.workoutId);
       }
     }
     return prs;
-  }, [allSessions, isTimed]);
+  }, [allSessions, displayMetric, isBodyweight, isTimed]);
 
-  // Previous-session delta: each session gets "+5 kg from last" etc.
-  // Keyed by date → delta kg (top-set weight). Null when no previous
-  // session exists.
-  const prevDeltas = useMemo(() => {
-    const map = new Map<string, number | null>();
-    let prevWeight: number | null = null;
+  // A whole top set keeps weight and reps together. Session IDs keep two
+  // workouts on one day from sharing a comparison or a PR marker.
+  const previousSets = useMemo(() => {
+    const map = new Map<string, SessionSummary["topSet"]>();
+    let previous: SessionSummary["topSet"] = null;
     for (const s of allSessions) {
-      const topValue = isTimed
-        ? (s.topSet?.reps ?? 0)
-        : (s.topSet?.weightKg ?? 0);
-      map.set(s.date, prevWeight == null ? null : topValue - prevWeight);
-      prevWeight = topValue;
+      map.set(s.workoutId, previous);
+      previous = s.topSet;
     }
     return map;
-  }, [allSessions, isTimed]);
+  }, [allSessions]);
 
   // Filter by time range. "All" passes everything through.
   const filteredSessions = useMemo(() => {
@@ -274,29 +315,17 @@ export default function ExerciseHistory() {
       } else {
         value = liftVolumeIn(s.volume, liftUnit);
       }
-      return { date: s.date, value, isPR: prDates.has(s.date) };
+      return { date: s.date, value, isPR: prSessions.has(s.workoutId) };
     });
   }, [
     filteredSessions,
     metric,
     isBodyweight,
     isTimed,
-    prDates,
+    prSessions,
     liftUnit,
     exercise?.id,
   ]);
-
-  // For BW exercises the toggle simplifies to Reps / Volume — no
-  // weight-based option makes sense when the weight is implicit. The
-  // "1RM" member is the internal key for that first slot; what a reader
-  // sees is resolved at the pill, beside the value it labels.
-  const metricOptions: Metric[] = isTimed
-    ? ["1RM"]
-    : isBodyweight
-      ? ["1RM", "Volume"]
-      : ["1RM", "Max Weight", "Volume"];
-  const displayMetric =
-    (isBodyweight || isTimed) && metric === "Max Weight" ? "1RM" : metric;
 
   const goBack = useCallback(() => {
     haptic("light");
@@ -411,7 +440,7 @@ export default function ExerciseHistory() {
                   ? "Longest hold"
                   : isBodyweight
                     ? "Max reps"
-                    : "Best 1RM"}
+                    : "Best est. 1RM"}
               </SectionLabel>
               <p className="text-lg font-extrabold font-figure tabular-nums text-foreground mt-1">
                 {isTimed
@@ -544,44 +573,26 @@ export default function ExerciseHistory() {
                   10.5em of card (double size) its options stack full width:
                   in a row they were wider than the screen. Wide-first. */}
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <SectionLabel>Progression</SectionLabel>
-                <div className="flex gap-1 bg-muted rounded-full p-0.5 @max-[10.5em]:w-full @max-[10.5em]:flex-col @max-[10.5em]:rounded-2xl">
-                  {metricOptions.map((m) => (
-                    <button
-                      type="button"
-                      key={m}
-                      onClick={() => {
-                        haptic("light");
-                        setMetric(m);
-                      }}
-                      className={`px-2 py-1 rounded-full text-micro font-semibold transition-colors ${
-                        displayMetric === m
-                          ? "bg-card text-foreground"
-                          : "text-muted-foreground"
-                      }`}
-                      style={
-                        displayMetric === m
-                          ? { boxShadow: "var(--ds-shadow-card)" }
-                          : undefined
-                      }
-                    >
-                      {/* The label names what the chart plots. For a
-                          bodyweight exercise the "1RM" option charts
-                          `s.totalReps` — a one-rep max is meaningless
-                          when there is no external load — so the pill
-                          said 1RM above a line of rep counts, with the
-                          header stat beside it already reading "Max
-                          reps". The comment on `metricOptions` says
-                          "Reps" too; only the pill did not. Same shape
-                          as the `isTimed` branch that is already here. */}
-                      {isTimed
-                        ? "Seconds"
-                        : isBodyweight && m === "1RM"
-                          ? "Reps"
-                          : m}
-                    </button>
-                  ))}
-                </div>
+                <SectionLabel>Progression ({chartUnit})</SectionLabel>
+                <SegmentedControl
+                  ariaLabel="Progression metric"
+                  value={displayMetric}
+                  onChange={(value) => {
+                    haptic("light");
+                    setMetric(value);
+                  }}
+                  options={metricOptions.map((m) => ({
+                    value: m,
+                    label: isTimed
+                      ? "Seconds"
+                      : isBodyweight && m === "1RM"
+                        ? "Reps"
+                        : m === "1RM"
+                          ? "Est. 1RM"
+                          : m,
+                  }))}
+                  className="p-0.5 rounded-full [&_button]:flex-none [&_button]:min-w-[44px] [&_button]:rounded-full [&_button]:px-2 [&_button]:text-micro @max-[10.5em]:w-full @max-[10.5em]:flex-col @max-[10.5em]:rounded-2xl"
+                />
               </div>
               <Suspense
                 fallback={
@@ -591,6 +602,8 @@ export default function ExerciseHistory() {
                 <ExerciseProgressChart
                   data={chartData}
                   accent={THEME.lifting}
+                  metricLabel={metricLabel}
+                  unit={chartUnit}
                 />
               </Suspense>
             </div>
@@ -608,8 +621,8 @@ export default function ExerciseHistory() {
                 .reverse()
                 .slice(0, 20)
                 .map((s) => {
-                  const delta = prevDeltas.get(s.date);
-                  const isPR = prDates.has(s.date);
+                  const previous = previousSets.get(s.workoutId);
+                  const isPR = prSessions.has(s.workoutId);
                   return (
                     /* Each row opens the workout it was part of, so the
                        history leads back to the whole session. At larger
@@ -644,7 +657,7 @@ export default function ExerciseHistory() {
                               : `${Math.round(liftVolumeIn(s.volume, liftUnit))} ${unitLabel} volume`}
                         </p>
                       </div>
-                      <div className="ml-auto text-right flex-shrink-0">
+                      <div className="ml-auto max-w-full text-right flex-shrink-0">
                         <p className="text-sm font-bold font-mono tabular-nums text-foreground">
                           {s.topSet
                             ? isTimed
@@ -652,27 +665,12 @@ export default function ExerciseHistory() {
                               : `${s.topSet.weightKg === 0 ? "BW" : formatKitLoad(s.topSet.weightKg, liftUnit, exercise?.id)} × ${s.topSet.reps}`
                             : "—"}
                         </p>
-                        {delta != null && delta !== 0 && (
-                          <p
-                            className="text-micro font-medium mt-0.5"
-                            style={{
-                              color:
-                                delta > 0
-                                  ? "hsl(var(--success-strong))"
-                                  : "hsl(var(--muted-foreground))",
-                            }}
-                          >
-                            {withSign(
-                              delta,
-                              String(
-                                Math.abs(
-                                  isTimed
-                                    ? delta
-                                    : kitLoadIn(delta, liftUnit, exercise?.id)
-                                )
-                              )
-                            )}{" "}
-                            {isTimed ? "s" : unitLabel} from last
+                        {previous && (
+                          <p className="text-xs font-medium font-mono tabular-nums text-muted-foreground mt-0.5">
+                            Last:{" "}
+                            {isTimed
+                              ? `${previous.reps}s`
+                              : `${previous.weightKg === 0 ? "BW" : formatKitLoad(previous.weightKg, liftUnit, exercise?.id)} × ${previous.reps}`}
                           </p>
                         )}
                       </div>

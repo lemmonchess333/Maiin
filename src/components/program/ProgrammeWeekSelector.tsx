@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Check, Ban } from "lucide-react";
 import { haptic } from "@/lib/haptic";
@@ -64,6 +65,26 @@ export default function ProgrammeWeekSelector({
   onSelect: (key: string) => void;
   ariaLabel?: string;
 }) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const revealSelection = () => {
+      const selected = row.querySelector<HTMLElement>('[aria-selected="true"]');
+      if (!selected) return;
+      const bounds = row.getBoundingClientRect();
+      const tab = selected.getBoundingClientRect();
+      if (tab.left < bounds.left || tab.right > bounds.right)
+        row.scrollLeft +=
+          tab.left - bounds.left - (row.clientWidth - tab.width) / 2;
+    };
+    revealSelection();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(revealSelection);
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [selectedKey, cells.length]);
+
   if (cells.length === 0) return null;
   // Sport colour drives the today/selected circle — purple for lifting,
   // coral for running — so the selector reads as belonging to its tab.
@@ -92,9 +113,10 @@ export default function ProgrammeWeekSelector({
   return (
     <div className="@container">
       <div
+        ref={rowRef}
         role="tablist"
         aria-label={ariaLabel ?? `${sport === "run" ? "Run" : "Lift"} week`}
-        className="flex px-1 pt-1 pb-2 gap-1 @max-[21em]:px-0 @max-[21em]:gap-0.5"
+        className="flex overflow-x-auto px-1 pt-1 pb-2 gap-1 @max-[21em]:px-0 @max-[21em]:gap-0.5"
       >
         {cells.map((cell) => {
           const isSelected = cell.key === selectedKey;
@@ -201,7 +223,7 @@ export default function ProgrammeWeekSelector({
           return (
             <div
               key={cell.key}
-              className="flex flex-col items-center flex-1 min-w-0"
+              className="flex flex-col items-center flex-1 min-w-11"
             >
               {cell.topLabel !== undefined && (
                 <span className="text-caption text-muted-foreground mb-0.5">
@@ -212,6 +234,7 @@ export default function ProgrammeWeekSelector({
                 type="button"
                 role="tab"
                 aria-selected={isSelected}
+                tabIndex={isSelected ? 0 : -1}
                 aria-label={
                   `${cell.bottomLabel || cell.center}` +
                   (isCompleted
@@ -226,8 +249,28 @@ export default function ProgrammeWeekSelector({
                   haptic("light");
                   onSelect(cell.key);
                 }}
-                className="flex items-center justify-center min-w-[44px] min-h-[44px]"
-                style={{ width: 52, height: 52 }}
+                onKeyDown={(event) => {
+                  const index = cells.indexOf(cell);
+                  const next =
+                    event.key === "ArrowRight"
+                      ? (index + 1) % cells.length
+                      : event.key === "ArrowLeft"
+                        ? (index - 1 + cells.length) % cells.length
+                        : event.key === "Home"
+                          ? 0
+                          : event.key === "End"
+                            ? cells.length - 1
+                            : null;
+                  if (next === null) return;
+                  event.preventDefault();
+                  rowRef.current
+                    ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                    .item(next)
+                    ?.focus({ preventScroll: true });
+                  onSelect(cells[next].key);
+                }}
+                className="flex w-full items-center justify-center min-w-[44px] min-h-[44px]"
+                style={{ height: 52 }}
               >
                 {/* Colour/border props live in `style`, not `animate`
                   (audit batch 4): Motion cannot tween "transparent" ↔

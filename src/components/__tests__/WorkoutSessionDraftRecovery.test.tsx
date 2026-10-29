@@ -527,6 +527,47 @@ it("counter-control: Undo persists correctly while a different completed set rem
   expect(screen.getByRole("spinbutton", { name: "Set 2 reps" })).toBeEnabled();
 });
 
+it("keeps entered values before completing the first set", async () => {
+  const session = await open();
+  fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 weight" }), {
+    target: { value: "12.5" },
+  });
+  fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 reps" }), {
+    target: { value: "6" },
+  });
+  await waitFor(() => expect(draft()?.setLogs[0][0].weight).toBe(12.5));
+  expect(draft().setLogs[0][0]).toMatchObject({ reps: 6, completed: false });
+  session.unmount();
+  await open({ resumeDraft: true });
+  expect(screen.getByRole("spinbutton", { name: "Set 1 weight" })).toHaveValue(
+    12.5
+  );
+  expect(screen.getByRole("spinbutton", { name: "Set 1 reps" })).toHaveValue(6);
+  expect(screen.queryByRole("dialog", { name: "Resume workout?" })).toBeNull();
+});
+
+it("keeps a note entered before completing any set", async () => {
+  const session = await open();
+  fireEvent.change(screen.getByRole("textbox", { name: "Exercise notes" }), {
+    target: { value: "Rack pin 4" },
+  });
+  await waitFor(() => expect(draft()?.exerciseNotes[0]).toBe("Rack pin 4"));
+  session.unmount();
+  await open({ resumeDraft: true });
+  expect(screen.getByRole("textbox", { name: "Exercise notes" })).toHaveValue(
+    "Rack pin 4"
+  );
+});
+
+it("keeps an added set before completing any set", async () => {
+  const session = await open();
+  fireEvent.click(screen.getByRole("button", { name: "Add set" }));
+  await waitFor(() => expect(draft()?.setLogs[0]).toHaveLength(4));
+  session.unmount();
+  await open({ resumeDraft: true });
+  expect(screen.getByRole("spinbutton", { name: "Set 4 reps" })).toHaveValue(8);
+});
+
 it("keeps entered values after undoing the last completion, and Start fresh still retires that draft", async () => {
   const session = await open();
   fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
@@ -569,7 +610,7 @@ it("keeps entered values after undoing the last completion, and Start fresh stil
   fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 reps" }), {
     target: { value: "7" },
   });
-  expect(draft()).toBeNull();
+  await waitFor(() => expect(draft()?.setLogs[0][0].reps).toBe(7));
 });
 
 /* A routine's workout under way. Home's and Train's strip offers it from

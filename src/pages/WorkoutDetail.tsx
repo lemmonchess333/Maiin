@@ -122,8 +122,8 @@ function ExerciseRecord({
   const liftUnit = useLiftUnit();
   return (
     <Card padded={false} className="@container overflow-hidden">
-      {/* The drawing gives way under 10em of card (double size): beside it
-          the name had a column narrower than "Squat". A long one-word name
+      {/* At larger text sizes the drawing gives way to the exercise name.
+          A long one-word name
           breaks rather than running out of the card. Wide-first. The row
           opens the exercise's own history, as an exercise name does
           wherever else it is listed. */}
@@ -134,7 +134,7 @@ function ExerciseRecord({
         <ExerciseThumb
           exerciseId={exercise.exerciseId}
           size="sm"
-          className="@max-[10em]:hidden"
+          className="@max-[12rem]:hidden"
         />
         <div className="min-w-0 flex-1">
           {exercise.superset !== undefined && (
@@ -312,7 +312,7 @@ function WorkoutDetailContent() {
               nothing to make it grow, the title column shrank to a letter
               a line beside the button. */}
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-            <div className="min-w-[min(100%,8em)] flex-1">
+            <div className="min-w-[min(100%,8rem)] flex-1">
               <p className="text-sm font-bold text-lifting-strong">Lift</p>
               <h1 className="mt-1 text-h1 font-extrabold leading-tight text-foreground text-balance break-words hyphens-auto">
                 {title}
@@ -330,11 +330,10 @@ function WorkoutDetailContent() {
           <p className="mt-2 text-sm text-muted-foreground">{dateStr}</p>
         </div>
 
-        {/* One figure per row under 15em of page (larger text, from 1.35x
-            on a 393px phone): a third of it no longer held "minutes", or a
-            heavy session's "12,480". Wide-first. */}
+        {/* As on the finish screen, stack the figures when a row cannot
+            hold their values and units at the current text size. */}
         <div className="@container">
-          <div className="grid grid-cols-3 divide-x divide-border @max-[15em]:grid-cols-1 @max-[15em]:gap-y-3 @max-[15em]:divide-x-0">
+          <div className="grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0">
             {figures.map((figure) => (
               <StatFigure
                 key={figure.unit}
