@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import {
   historyDatePresets,
+  previousHistoryWindow,
   validHistoryDate,
   type HistoryDates,
 } from "@/lib/trainingHistory";
@@ -55,6 +56,16 @@ export default function HistoryDateSheet({
             );
           })}
         </fieldset>
+        <Button
+          variant="secondary"
+          fullWidth
+          className="min-h-[48px]"
+          leftIcon={<ArrowLeft className="size-4" aria-hidden="true" />}
+          disabled={invalid}
+          onClick={() => setDraft(previousHistoryWindow(draft))}
+        >
+          Previous 30 days
+        </Button>
         <fieldset className="space-y-3">
           <legend className="text-sm font-bold mb-3">Custom dates</legend>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-3">

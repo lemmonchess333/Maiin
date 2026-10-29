@@ -223,7 +223,11 @@ export default function TrainingPlan() {
     <PageShell
       title="Your plan"
       actions={
-        <Link to="/history/sessions" state={{ returnTo: `${location.pathname}${location.search}` }} className={buttonClasses({ variant: "ghost" })}>
+        <Link
+          to="/history/sessions"
+          state={{ returnTo: `${location.pathname}${location.search}` }}
+          className={buttonClasses({ variant: "ghost" })}
+        >
           History
         </Link>
       }
@@ -313,10 +317,13 @@ export default function TrainingPlan() {
             />
           ) : model.nextLift && !runStrip && !pendingFinish && !oldWeek ? (
             <SessionCommandCard
+              compact
               eyebrow="Next lift"
               title={model.nextLift.dayName}
-              description="Follows your rotation, whenever you train."
-              meta={[`${model.nextLift.exercises.length} exercises`]}
+              meta={[
+                `${model.nextLift.exercises.length} exercises`,
+                "Follows your rotation",
+              ]}
               sport="lift"
               primaryActionLabel={
                 readiness === "ready"
@@ -387,8 +394,8 @@ export default function TrainingPlan() {
                   >
                     <div className="w-11 shrink-0 text-center">
                       <p className="text-xs text-muted-foreground">
-                          {parseLocalDate(day.dateKey).toLocaleDateString(
-                            "en-GB",
+                        {parseLocalDate(day.dateKey).toLocaleDateString(
+                          "en-GB",
                           { weekday: "short" }
                         )}
                       </p>

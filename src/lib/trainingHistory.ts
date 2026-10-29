@@ -58,6 +58,15 @@ export function historyDatePresets(
   ];
 }
 
+/** Move to the 30 calendar days immediately before the visible period. */
+export function previousHistoryWindow(dates: HistoryDates): HistoryDates {
+  const firstDay = parseLocalDate(dates.from);
+  return {
+    from: localDateString(addLocalDays(firstDay, -30)),
+    to: localDateString(addLocalDays(firstDay, -1)),
+  };
+}
+
 export function trainingHistoryFilters(
   params: URLSearchParams,
   today: string

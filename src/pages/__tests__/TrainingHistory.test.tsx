@@ -258,4 +258,36 @@ describe("Training history", () => {
     expect(screen.getByText("Easy run")).toBeInTheDocument();
     expect(screen.queryByText("Full body B")).not.toBeInTheDocument();
   });
+
+  it("moves backward by 30 days at a time while keeping the run filter", async () => {
+    seedFirestore({
+      "users/history-owner/runs/september": savedRunDoc("2026-09-15", {
+        activityType: "long",
+      }),
+    });
+    const router = open("?sport=runs");
+    await screen.findByText("1 run");
+    fireEvent.click(screen.getByRole("button", { name: "Last 30 days" }));
+    fireEvent.click(screen.getByRole("button", { name: "Previous 30 days" }));
+    expect(screen.getByLabelText("From")).toHaveValue("2026-08-31");
+    expect(screen.getByLabelText("To")).toHaveValue("2026-09-29");
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Apply dates" }))
+    );
+    await screen.findByText("Long run");
+    expect(router.state.location.search).toBe(
+      "?from=2026-08-31&to=2026-09-29&sport=runs"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /31 Aug 2026/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Previous 30 days" }));
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Apply dates" }))
+    );
+    await screen.findByText("Easy run");
+    expect(router.state.location.search).toBe(
+      "?from=2026-08-01&to=2026-08-30&sport=runs"
+    );
+    expect(screen.queryByText("Long run")).not.toBeInTheDocument();
+  });
 });
