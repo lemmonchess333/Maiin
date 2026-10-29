@@ -21,6 +21,9 @@ import type { ScheduledRunDay } from "../programTypes";
  * server parses UTC — so every day of the week is walked, not just one.
  */
 const require = createRequire(import.meta.url);
+const { localDateInZone } = require("../../../../functions/lib/programCommands") as {
+  localDateInZone: (instant: number, timezone: string) => string;
+};
 const cf = require("../../../../functions/lib/runReschedule") as {
   HARD_RUN_TYPES: readonly string[];
   computeRunMove: (
@@ -93,11 +96,23 @@ describe("run move — client vs functions mirror", () => {
     expect(cf.runMoveCompletionEvidence(days, [saved])).toBe(runMoveCompletionEvidence(days, [saved]));
   });
 
-  it("legacy dates and template fallbacks normalise identically", () => {
-    const data = { completedAt: { seconds: Date.parse("2026-03-04T12:00:00Z") / 1000 }, plannedTemplateId: "tempo_20", distance: -1, duration: 1800, avgPace: NaN, savedAnyway: true };
+  it.each([
+    "2026-03-04T00:30:00Z",
+    "2026-03-04T12:00:00Z",
+    "2026-03-04T23:30:00Z",
+  ])("legacy dates and template fallbacks normalise identically at %s", completedAt => {
+    const data = { completedAt: { seconds: Date.parse(completedAt) / 1000 }, plannedTemplateId: "tempo_20", distance: -1, duration: 1800, avgPace: NaN, savedAnyway: true };
     const client = parseSavedRun("legacy", data)!;
-    const server = cf.runMoveSavedEvidenceRow("legacy", data, ms => new Date(ms).toISOString().slice(0, 10));
-    expect(cf.runMoveCompletionEvidence([run()], [server] as never)).toBe(runMoveCompletionEvidence([run()], [client]));
+    // The transaction formats legacy timestamps in the profile's IANA zone.
+    // Model a profile in this device's zone, including midnight/DST offsets.
+    const timezone = new Intl.DateTimeFormat("en-GB").resolvedOptions().timeZone;
+    const server = cf.runMoveSavedEvidenceRow("legacy", data, ms => localDateInZone(ms, timezone));
+    expect(server).toMatchObject({ day: client.day, templateId: "tempo_20", distance: 0, duration: 1800, avgPace: 0, savedAnyway: true });
+    // Keep the record inside the window so two filtered-out rows cannot pass.
+    const days = [run({ date: client.day, dayIndex: client.completedAt.getDay() })];
+    const evidence = runMoveCompletionEvidence(days, [client]);
+    expect(evidence).not.toBe(runMoveCompletionEvidence(days, []));
+    expect(cf.runMoveCompletionEvidence(days, [server] as never)).toBe(evidence);
   });
   it("HARD_RUN_TYPES agrees as a set", () => {
     expect(new Set(cf.HARD_RUN_TYPES)).toEqual(new Set(HARD_RUN_TYPES));
