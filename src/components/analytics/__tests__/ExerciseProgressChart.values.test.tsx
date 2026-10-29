@@ -35,9 +35,10 @@ describe("exercise chart values", () => {
         unit="kg"
       />
     );
-    expect(screen.getByText("82.5 kg")).toBeVisible();
-    expect(screen.getByRole("img")).toHaveAccessibleName(
-      /Max weight.*Latest value: 82\.5 kg/
+    const load = new Intl.NumberFormat().format(82.5);
+    expect(screen.getByText(`${load} kg`)).toBeVisible();
+    expect(screen.getByRole("img", { name: /Max weight/ })).toHaveAccessibleName(
+      expect.stringContaining(`Latest value: ${load} kg.`)
     );
   });
 
@@ -51,7 +52,11 @@ describe("exercise chart values", () => {
         unit="lb"
       />
     );
-    expect(screen.getByText("181.9 lb")).toBeVisible();
+    const load = new Intl.NumberFormat().format(181.9);
+    expect(screen.getByText(`${load} lb`)).toBeVisible();
+    expect(screen.getByRole("img", { name: /Max weight/ })).toHaveAccessibleName(
+      expect.stringContaining(`Latest value: ${load} lb.`)
+    );
   });
 
   it("keeps hold duration distinct from weight", () => {

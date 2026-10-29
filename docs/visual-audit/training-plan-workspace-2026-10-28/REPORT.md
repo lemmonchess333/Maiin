@@ -33,6 +33,7 @@ The captures use a temporary local-emulator account and a controlled week beginn
 - WebKit is not installed in this environment. Safari and physical-device behavior were not verified; no browser was installed for this check. Full browser zoom, offline replay and cross-device active sessions are outside this browser journey.
 - Final `npm run verify` exited **0** on 29 October 2026: lint, verifier tests, form art/drafts, dependency cycles, production build, bundle-size checks and unit tests all passed. The unit suite passed **1,335 files / 15,578 tests**, with 13 files / 484 tests skipped by the suite configuration. Final unit duration: 511.14 seconds.
 - PR verification subsequently caught a UTC-only callback in the legacy-run cross-test. The fixture now uses the production IANA timezone formatter, checks the normalized row directly and keeps that row inside the evidence window. All **16 cross-tests passed in each of UTC, Pacific/Auckland, Pacific/Kiritimati and Pacific/Midway**, including timestamps around midnight. The production formatter already handled these dates correctly.
+- French and German PR runs also caught two English-decimal assumptions in the exercise-chart tests from the earlier UX commits. The chart correctly uses the viewer's numeric locale. The tests now check the locale's fractional value and unit, including both accessible weight summaries. All **three chart tests passed in default, French and German locales**.
 
 ## Release notes
 
