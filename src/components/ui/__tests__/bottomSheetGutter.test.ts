@@ -55,7 +55,9 @@ const callers = tsxFiles(srcRoot).flatMap((file) => {
 
 /** Horizontal padding, or a reason not to need it. */
 function hasGutter(cls: string): boolean {
-  if (/\bp[xl]?-\d/.test(cls)) return true;
+  // Fixed pixel gutters keep their width under Dynamic Type, as Layout
+  // and the design guide require. They are padding just like px-4.
+  if (/\bp[xl]?-(?:\d|\[\d+(?:\.\d+)?(?:px|rem)\])/.test(cls)) return true;
   // A centred single element (a spinner, an empty state) fills no width,
   // so a gutter is meaningless — TrainingBlockCard's loading branch.
   if (/\bjustify-center\b/.test(cls)) return true;
@@ -74,12 +76,22 @@ describe("BottomSheet callers pad their own body", () => {
       "px-4 pb-6",
       "p-4",
       "pl-5",
+      "px-[16px]",
+      "p-[12px]",
+      "pl-[1rem]",
       "flex justify-center",
       "-mx-4",
     ]) {
       expect(hasGutter(cls), cls).toBe(true);
     }
-    for (const cls of ["", "py-4", "flex flex-col gap-3", "pt-4 pb-6"]) {
+    for (const cls of [
+      "",
+      "py-4",
+      "py-[16px]",
+      "px-[oops]",
+      "flex flex-col gap-3",
+      "pt-4 pb-6",
+    ]) {
       expect(hasGutter(cls), cls).toBe(false);
     }
   });

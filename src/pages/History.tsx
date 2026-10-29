@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useRef, useCallback, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import { pageItemVariant } from "@/components/ui/pageMotion";
@@ -24,6 +24,7 @@ import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 import EmptyState from "@/components/ui/EmptyState";
 import PeriodSummaryCard, {
   type SummaryFigure,
@@ -1031,6 +1032,7 @@ export default function History() {
     <PageShell
       {...pullBindProps}
       title="Analytics"
+      actions={<Link to="/history/sessions" state={{ returnTo: `/history${searchParams.size ? `?${searchParams}` : ""}` }} className={buttonClasses({ variant: "ghost" })}>History</Link>}
       /* Hist4: sustained-offline notice (30s threshold). Additive to the
          global Layout banner — surfaces only after the disconnect has
          lasted 30s and clarifies that Analytics reads from the Firestore

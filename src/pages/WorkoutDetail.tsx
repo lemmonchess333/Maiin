@@ -27,7 +27,8 @@
  * snapshot resolves.
  */
 import { useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
+import { trainingHistoryReturnTo } from "@/lib/trainingHistory";
 import {
   ChevronLeft,
   ChevronRight,
@@ -210,6 +211,7 @@ export default function WorkoutDetail() {
 function WorkoutDetailContent() {
   const { workoutId } = useParams<{ workoutId: string }>();
   const navigate = useNavigate();
+  const historyReturnTo = trainingHistoryReturnTo(useLocation().state);
   const { user, profile } = useAuth();
   const liftUnit = useLiftUnit();
 
@@ -253,7 +255,7 @@ function WorkoutDetailContent() {
         failedHeadline="Couldn't load this workout"
         failedSub="Check your connection and try again. Nothing has been changed."
         onRetry={retry}
-        backHref="/history"
+        backHref={historyReturnTo ?? "/history"}
         backLabel="History"
       />
     );

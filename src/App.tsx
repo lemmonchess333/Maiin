@@ -127,6 +127,7 @@ const WeeklyReviewPage = lazyRetry(() => import("@/pages/WeeklyReview"));
 const Home = lazyRetry(loadHome);
 const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
+const TrainingHistory = lazyRetry(() => import("@/pages/TrainingHistory"));
 const SettingsIndex = lazyRetry(() => import("@/pages/SettingsIndex"));
 const SettingsProfile = lazyRetry(
   () => import("@/pages/settings/SettingsProfile")
@@ -639,6 +640,14 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <History />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/history/sessions"
+                          element={
+                            <RouteErrorBoundary>
+                              <TrainingHistory />
                             </RouteErrorBoundary>
                           }
                         />

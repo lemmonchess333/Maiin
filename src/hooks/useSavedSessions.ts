@@ -52,6 +52,8 @@ export interface SavedSessionsResult<T> {
   /** The last read threw and there is nothing to show: "we couldn't load
    *  these", which is otherwise the same empty list as "there are none". */
   failed: boolean;
+  /** The current read failed, including when older same-account rows remain. */
+  readFailed: boolean;
   /** Server-confirmed and complete: coaching may treat the window as the
    *  whole evidence, which a cached, partial or failed read is not. */
   evidenceReady: boolean;
@@ -182,6 +184,7 @@ export function useSavedSessions<T, W>(
       active && !answered && !hasQueuedCreate(account, source.collection),
     answered,
     failed: failed && items.length === 0,
+    readFailed: answered && failed,
     evidenceReady:
       answered &&
       !failed &&

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { trainingHistoryReturnTo } from "@/lib/trainingHistory";
 import {
   Info,
   AlertTriangle,
@@ -89,6 +90,7 @@ export default function RunDetail() {
   const unit = useDistanceUnit();
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
+  const historyReturnTo = trainingHistoryReturnTo(useLocation().state);
   const { user, profile } = useAuth();
   // The basemap follows the theme on screen, not the profile field.
   const darkTheme = useIsDarkTheme();
@@ -193,7 +195,7 @@ export default function RunDetail() {
         failedHeadline="Couldn't load this run"
         failedSub="Check your connection and try again. Nothing has been changed."
         onRetry={retryRun}
-        backHref="/history"
+        backHref={historyReturnTo ?? "/history"}
         backLabel="History"
       />
     );
