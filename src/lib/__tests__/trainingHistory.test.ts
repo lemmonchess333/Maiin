@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   historyDatePresets,
+  previousHistoryWindow,
   trainingHistoryFilters,
   trainingHistoryReturnTo,
   trainingHistorySearch,
@@ -57,6 +58,22 @@ describe("training history date and URL state", () => {
     expect(historyDatePresets("2026-03-30")[0].dates).toEqual({
       from: "2026-03-30",
       to: "2026-03-30",
+    });
+  });
+
+  it("walks backward in adjacent 30-day local periods", () => {
+    const current = filters();
+    const previous = previousHistoryWindow(current);
+    expect(previous).toEqual({ from: "2026-08-31", to: "2026-09-29" });
+    expect(previousHistoryWindow(previous)).toEqual({
+      from: "2026-08-01",
+      to: "2026-08-30",
+    });
+    expect(
+      previousHistoryWindow({ from: "2026-03-30", to: "2026-04-02" })
+    ).toEqual({
+      from: "2026-02-28",
+      to: "2026-03-29",
     });
   });
 
