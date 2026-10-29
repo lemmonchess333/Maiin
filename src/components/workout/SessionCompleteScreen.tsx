@@ -48,6 +48,7 @@ interface SessionCompleteScreenProps {
   sessionVariant?: "express45" | "express30" | "easier_today" | "time_budget";
   completing: boolean;
   saved?: boolean;
+  activationJourneyV2?: boolean;
   saveStatus?: "queued" | "synced" | "needs-attention";
   planContext?: { next: string };
   /** The saved session's feed post. The finish screen asks once, posts
@@ -68,6 +69,7 @@ export default function SessionCompleteScreen({
   sessionVariant,
   completing,
   saved = false,
+  activationJourneyV2 = false,
   saveStatus,
   planContext,
   share,
@@ -497,7 +499,14 @@ export default function SessionCompleteScreen({
           </p>
         )}
         {saved && <WeekPulseCard />}
-        {saved && <CompletionExtras share={share} badge={false} />}
+        {saved && (
+          <CompletionExtras
+            share={share}
+            badge={false}
+            kind="lift"
+            activationJourneyV2={activationJourneyV2}
+          />
+        )}
         <details className="group space-y-4">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 [&::-webkit-details-marker]:hidden">
             Session details

@@ -45,6 +45,7 @@ import { isNativePlatform } from "@/lib/platform";
 import {
   isNativePushAvailable,
   nativePushPermission,
+  nativePushPermissionState,
   getNativePushToken,
   deleteNativePushToken,
 } from "./nativePush";
@@ -151,6 +152,24 @@ export async function requestRemotePushPermission(): Promise<boolean> {
   } catch (error) {
     logger.warn("[push] notification permission request failed", error);
     return false;
+  }
+}
+
+/** Read permission after a failed request so callers can tell a denial from
+ * a transient request error without opening another system prompt. */
+export async function getRemotePushPermissionState(): Promise<
+  "granted" | "denied" | "default" | "unsupported"
+> {
+  if (!isRemotePushOffered()) return "unsupported";
+  try {
+    if (isNativePlatform()) return await nativePushPermissionState();
+    if (typeof Notification === "undefined") return "unsupported";
+    if (Notification.permission === "granted") return "granted";
+    if (Notification.permission === "denied") return "denied";
+    return "default";
+  } catch (error) {
+    logger.warn("[push] notification permission check failed", error);
+    return "unsupported";
   }
 }
 

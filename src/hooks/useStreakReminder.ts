@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, runTransaction } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import {
@@ -57,7 +57,7 @@ export interface StreakReminderPrefs {
 }
 
 const DEFAULT_PREFS: StreakReminderPrefs = {
-  enabled: true,
+  enabled: false,
   time: "20:00",
   primingShown: false,
   firstWeekNudgeDateKey: null,
@@ -225,10 +225,13 @@ export function useStreakReminderInternal(
     async (updates: Partial<StreakReminderPrefs>) => {
       if (!uid) return;
       const next = { ...prefs, ...updates };
-      setPrefs(next);
       const ref = doc(db, "users", uid, "settings", "streakReminder");
       try {
-        await setDocGuarded(ref, next);
+        // Patch the changed fields so a pending first-week marker does not
+        // overwrite a reminder switch changed on another device.
+        await setDocGuarded(ref, updates, { merge: true });
+        if (auth.currentUser?.uid !== uid) return;
+        setPrefs(next);
       } catch (err) {
         logger.error("[StreakReminder] save failed", err);
         captureError(
@@ -236,6 +239,7 @@ export function useStreakReminderInternal(
           "network",
           { surface: "streakReminder.save" }
         );
+        throw err;
       }
     },
     [uid, prefs]
@@ -258,7 +262,7 @@ export function useStreakReminderInternal(
   // removed in FV2, having never opened.
 
   useEffect(() => {
-    if (loading || streaksLoading) return;
+    if (!uid || loading || streaksLoading) return;
 
     let cancelled = false;
 
@@ -304,6 +308,7 @@ export function useStreakReminderInternal(
       cancelled = true;
     };
   }, [
+    uid,
     pushOwns,
     refreshKey,
     loading,
@@ -330,7 +335,7 @@ export function useStreakReminderInternal(
   // and a later log day (still below the `>= 2` floor) may retry.
 
   useEffect(() => {
-    if (loading || streaksLoading) return;
+    if (!uid || loading || streaksLoading) return;
     let cancelled = false;
     const reconcile = async () => {
       if (cancelled) return;
@@ -358,16 +363,47 @@ export function useStreakReminderInternal(
         body: "A quick log today keeps it going.",
         scheduleAt: fireAt,
       });
-      if (cancelled || !scheduled) return;
-      await updatePrefs({
-        firstWeekNudgeDateKey: format(fireAt, "yyyy-MM-dd"),
-      });
+      if (!scheduled) return;
+      if (cancelled) {
+        await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
+        return;
+      }
+      const fireKey = format(fireAt, "yyyy-MM-dd");
+      try {
+        // Push and local use one account-wide once-ever marker. Claim it
+        // after arming the device, and cancel if another device or the push
+        // sender already claimed it. A transaction also keeps two local
+        // devices from each arming a first-week nudge.
+        const sharedRef = doc(db, "users", uid, "settings", "pushState");
+        const claimed = await runTransaction(db, async (transaction) => {
+          const shared = await transaction.get(sharedRef);
+          if (shared.data()?.firstWeekNudgeDateKey) return false;
+          transaction.set(
+            sharedRef,
+            { firstWeekNudgeDateKey: fireKey },
+            { merge: true }
+          );
+          return true;
+        });
+        if (!claimed || cancelled) {
+          await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
+          return;
+        }
+        await updatePrefs({
+          firstWeekNudgeDateKey: fireKey,
+        });
+      } catch {
+        // A failed claim or local marker write cannot leave an unmarked
+        // notification armed for a later pass to duplicate.
+        await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
+      }
     };
     firstWeekChain.current = firstWeekChain.current.then(reconcile, reconcile);
     return () => {
       cancelled = true;
     };
   }, [
+    uid,
     loading,
     streaksLoading,
     pushOwns,

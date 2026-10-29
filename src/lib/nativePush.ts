@@ -24,6 +24,17 @@ export async function nativePushPermission(request = false): Promise<boolean> {
   return result.receive === "granted";
 }
 
+/** Inspect the native push permission without opening the system prompt. */
+export async function nativePushPermissionState(): Promise<
+  "granted" | "denied" | "default"
+> {
+  if (!isNativePushAvailable()) return "default";
+  const result = await (await messaging()).checkPermissions();
+  if (result.receive === "granted") return "granted";
+  if (result.receive === "denied") return "denied";
+  return "default";
+}
+
 /** Firebase's FCM token, never the APNs device token. */
 export async function getNativePushToken(): Promise<string> {
   const plugin = await messaging();

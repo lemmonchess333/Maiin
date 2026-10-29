@@ -168,7 +168,7 @@ beforeEach(() => {
 });
 
 describe("SessionCompleteScreen — saved (Pol1)", () => {
-  it("shows the session's badge under its new bests, ahead of everything else", () => {
+  it("shows the session's badge under its new bests, ahead of everything else", async () => {
     render(<SessionCompleteScreen {...screenProps({ saved: true })} />);
     const badge = screen.getByTestId("session-badge");
     const bests = screen.getByRole("heading", { name: /New bests/ });
@@ -181,7 +181,7 @@ describe("SessionCompleteScreen — saved (Pol1)", () => {
     expect(
       follows(
         badge,
-        screen.getByRole("switch", {
+        await screen.findByRole("switch", {
           name: "Evening reminder if you haven't logged",
         })
       )
