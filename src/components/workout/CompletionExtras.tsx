@@ -1,9 +1,10 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import SessionBadge from "@/components/workout/SessionBadge";
 import SessionShareRow from "@/components/workout/SessionShareRow";
 import type { SessionShareAction } from "@/lib/sessionPost";
 
-const CompletionReminderChoice = lazy(
+const CompletionReminderChoice = lazyRetry(
   () => import("@/components/workout/CompletionReminderChoice")
 );
 
