@@ -44,13 +44,44 @@ test("browses lifts and runs, filters an older period and restores the expanded 
       path: `${captureDir}/${name}.png`,
       animations: "disabled",
     });
-    const layout = await page.evaluate(() => ({
-      width: innerWidth,
-      scrollWidth: document.documentElement.scrollWidth,
-      overflow: document.documentElement.scrollWidth > innerWidth + 1,
-    }));
+    const layout = await page.evaluate(() => {
+      const input = document.querySelector<HTMLInputElement>("#history-search");
+      const icon = input?.parentElement?.querySelector(":scope > svg");
+      const clear = input?.parentElement?.querySelector("button");
+      const style = input ? getComputedStyle(input) : null;
+      const rect = input?.getBoundingClientRect();
+      return {
+        width: innerWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        overflow: document.documentElement.scrollWidth > innerWidth + 1,
+        searchIconGap:
+          rect && style && icon
+            ? rect.left +
+              parseFloat(style.borderLeftWidth) +
+              parseFloat(style.paddingLeft) -
+              icon.getBoundingClientRect().right
+            : null,
+        searchClearGap:
+          rect && style && clear
+            ? clear.getBoundingClientRect().left -
+              (rect.right -
+                parseFloat(style.borderRightWidth) -
+                parseFloat(style.paddingRight))
+            : null,
+      };
+    });
     metrics[name] = layout;
     expect(layout.overflow, name).toBe(false);
+    if (layout.searchIconGap !== null)
+      expect(
+        layout.searchIconGap,
+        `${name}: search text clears its icon`
+      ).toBeGreaterThanOrEqual(8);
+    if (layout.searchClearGap !== null)
+      expect(
+        layout.searchClearGap,
+        `${name}: search text clears the clear button`
+      ).toBeGreaterThanOrEqual(0);
   }
   const timestamp = (day: string) =>
     Timestamp.fromDate(new Date(`${day}T12:00:00Z`));
@@ -185,6 +216,11 @@ test("browses lifts and runs, filters an older period and restores the expanded 
             { scale, theme }
           );
           await capture(`history-${width}-${scale}x-${theme}`);
+          await page.getByRole("searchbox").fill("body");
+          await capture(`search-${width}-${scale}x-${theme}`);
+          await page
+            .getByRole("button", { name: "Clear search", exact: true })
+            .click();
           await page
             .getByRole("button", { name: "Last 30 days", exact: true })
             .click();

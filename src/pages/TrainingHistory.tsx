@@ -200,7 +200,7 @@ export default function TrainingHistory() {
           <input
             id="history-search"
             type="search"
-            className="ds-input w-full min-h-[48px] pl-[44px] pr-[48px] [&::-webkit-search-cancel-button]:hidden"
+            className="ds-input w-full min-h-[48px] pl-[calc(24px+1.25rem)] pr-[calc(4px+2.75rem)] [&::-webkit-search-cancel-button]:hidden"
             placeholder="Search in this period"
             maxLength={120}
             value={filters.search}
