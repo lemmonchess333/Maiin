@@ -222,6 +222,11 @@ export default function TrainingPlan() {
   return (
     <PageShell
       title="Your plan"
+      actions={
+        <Link to="/history/sessions" state={{ returnTo: `${location.pathname}${location.search}` }} className={buttonClasses({ variant: "ghost" })}>
+          History
+        </Link>
+      }
       eyebrow={
         <Link
           to={backTo}

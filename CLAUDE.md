@@ -89,6 +89,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Home.tsx`                             | `/`                                | Main dashboard — WeekStrip, hero cards, energy, insights                       |
 | `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here)     |
 | `History.tsx`                          | `/history`                         | Analytics: an overview, with Lifting / Running / Body / Food pages (`?view=`)  |
+| `TrainingHistory.tsx`                  | `/history/sessions`                | Saved lifts and runs, with period, sport and name filters                     |
 | `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                           |
 | `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                           |
 | `TrainingPlan.tsx`                     | `/program/plan`                    | Combined training week, rotation-based next lift and reviewed one-off run moves  |
