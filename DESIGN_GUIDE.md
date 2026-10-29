@@ -870,6 +870,20 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
 
 ### 14e. Training plan primitives
 
+**Your plan workspace (owner-authorised, 2026-10-29).** Train's neutral
+"Your plan" header action opens `/program/plan`. It shows the current local
+Monday-to-Sunday agenda with actual dated activity and planned lift day-types,
+plus the separate rotation-based next lift or a real Resume action near the
+top. Future named lifts are never pinned to calendar dates (ADR-0002). The
+original Lift/Run execution tabs each keep their one selector; the workspace
+adds no third tab or second date navigator. "Move a run" opens a two-step
+sheet over the agenda: source/destination, then review and any spacing-warning
+acknowledgement. It changes one dated run only. "Usual weekly layout" opens
+the existing recurring editor. Unknown/failed activity reads must not claim an
+empty/rest week; queued changes must distinguish waiting, applied and refused
+outcomes. The implementation specification is
+`docs/product/training-plan-workspace/SPEC.md`.
+
 The Programme Run section is a **hybrid training cockpit**, not a settings
 list. It is built from named, reusable training-plan primitives. These are
 NOT considered decorative one-off patterns — they are components, reused

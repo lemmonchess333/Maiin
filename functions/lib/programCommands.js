@@ -64,7 +64,7 @@ const { isRaceTemplateId } = require("./raceTemplateIds");
 // pinned to the client copy by a cross-test.
 const { resolveRecoveryExit } = require("./runModeResolution");
 // One-off run move (RUN-RESCHEDULE-01), pinned by a parity cross-test.
-const { computeRunMove } = require("./runReschedule");
+const { computeRunMove, dateForDay, runMoveSourceSignature } = require("./runReschedule");
 // Goal-prescription engine (pinned by a parity cross-test). The transform a
 // training block applies at start and un-applies at release.
 const {
@@ -814,7 +814,7 @@ const KIND_VALIDATORS = {
       command,
       "moveRunDay",
       ["kind", "commandId", "runDayId", "targetDayIndex"],
-      []
+      ["expected"]
     );
     out.runDayId = assertString(command.runDayId, "runDayId", MAX_ID_LEN);
     out.targetDayIndex = assertBoundedInt(
@@ -823,6 +823,18 @@ const KIND_VALIDATORS = {
       0,
       6
     );
+    if (command.expected !== undefined) {
+      assertKeys(command.expected, "expected", ["sourceSignature", "todayKey", "completionEvidence"], []);
+      const todayKey = assertString(command.expected.todayKey, "expected.todayKey", 10, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(todayKey) || !Number.isFinite(Date.parse(todayKey)) || new Date(todayKey).toISOString().slice(0, 10) !== todayKey) {
+        invalidCommand("expected.todayKey must be a calendar date.");
+      }
+      out.expected = {
+        sourceSignature: assertString(command.expected.sourceSignature, "expected.sourceSignature", MAX_SIGNATURE_LEN),
+        todayKey,
+        completionEvidence: assertString(command.expected.completionEvidence, "expected.completionEvidence", 64000),
+      };
+    }
   },
 
   overrideRunDay(command, out) {
@@ -1582,7 +1594,7 @@ function releaseTrainingBlock(state, profile, command) {
   };
 }
 
-function moveRunDay(state, profile, command) {
+function moveRunDay(state, profile, command, now) {
   const idx = findRunDayIndex(state, command.runDayId);
   if (idx === -1) {
     failedPrecondition("That scheduled run is no longer available.");
@@ -1594,8 +1606,12 @@ function moveRunDay(state, profile, command) {
   if (isRaceRunDay(target)) {
     failedPrecondition("A race can't be moved — its date is the event.");
   }
-  if (!isScheduledRunEditable(getScheduledRunStatus(target))) {
+  if (!isScheduledRunEditable(getScheduledRunStatus(target)) || target.completed === true || state.manualCompletions?.[command.runDayId]) {
     failedPrecondition("That run can no longer be moved.");
+  }
+  const today = localDateInZone(now, profile.timezone);
+  if (command.expected && (command.expected.sourceSignature !== runMoveSourceSignature(target) || command.expected.todayKey !== today)) {
+    failedPrecondition("Your plan changed. Review the latest week.");
   }
   if (target.dayIndex === command.targetDayIndex) {
     return state; // no-op: already there
@@ -1607,6 +1623,15 @@ function moveRunDay(state, profile, command) {
   );
   if (!patch) {
     failedPrecondition("That day isn't part of this run's week.");
+  }
+  if (patch.date < today) {
+    failedPrecondition("That date has passed. Review the latest week.");
+  }
+  const weekDates = new Set(Array.from({ length: 7 }, (_, day) => dateForDay(target.weekKey, day)));
+  const raceDate = state.runDays.filter(rd => rd && isRaceRunDay(rd) && weekDates.has(rd.date))
+    .map(rd => rd.date).sort()[0];
+  if (raceDate && patch.date > raceDate) {
+    failedPrecondition("A run can't be moved after this week's race.");
   }
   // Occupancy is a date claim. Carried rows from another week can share a
   // weekday without occupying the requested destination.
@@ -2396,7 +2421,7 @@ function applyProgramCommand({ state, profile, command, now }) {
       next = overrideRunDay(current, validated);
       break;
     case "moveRunDay":
-      next = moveRunDay(current, profile || {}, validated);
+      next = moveRunDay(current, profile || {}, validated, now);
       break;
     case "startTrainingBlock":
       next = startTrainingBlock(current, profile || {}, validated, now);
@@ -2435,6 +2460,7 @@ module.exports = {
   transitionStatus,
   getScheduledRunStatus,
   isScheduledRunEditable,
+  localDateInZone,
   isProgramCommandError,
   ProgramCommandError,
   PROGRAM_COMMAND_RECEIPT_RETENTION_MS,

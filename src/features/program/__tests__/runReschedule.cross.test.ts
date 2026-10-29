@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
-import { computeRunMove, runOriginDate } from "@/lib/runReschedule";
+import { computeRunMove, runOriginDate, runMoveSourceSignature, runMoveCompletionEvidence } from "@/lib/runReschedule";
+import { parseSavedRun } from "@/lib/savedRuns";
 import { HARD_RUN_TYPES } from "../programTypes";
 import type { ScheduledRunDay } from "../programTypes";
 
@@ -29,6 +30,9 @@ const cf = require("../../../../functions/lib/runReschedule") as {
   ) => Record<string, unknown> | null;
   runOriginDate: (source: unknown) => string;
   dateForDay: (weekKey: string, dayIndex: number) => string | null;
+  runMoveSourceSignature: typeof runMoveSourceSignature;
+  runMoveCompletionEvidence: typeof runMoveCompletionEvidence;
+  runMoveSavedEvidenceRow: (id: string, data: Record<string, unknown>, localDateForInstant: (ms: number) => string) => unknown;
 };
 
 /* Mon 2026-03-02 — the week anchor since RunWk2. The server reads the
@@ -62,6 +66,39 @@ const SCHEDULE = [
 ];
 
 describe("run move — client vs functions mirror", () => {
+  it("reviewed source signatures agree, and prescription/date changes invalidate them", () => {
+    for (const source of [run(), run({ status: undefined }), run({ userOverride: "easy_30", timeLimit: { minutes: 20, originalTemplateId: "tempo_30" } })]) {
+      expect(cf.runMoveSourceSignature(source)).toBe(runMoveSourceSignature(source));
+    }
+    expect(runMoveSourceSignature(run({ userOverride: "easy_30" }))).not.toBe(runMoveSourceSignature(run()));
+    expect(runMoveSourceSignature(run({ date: "2026-03-04" }))).not.toBe(runMoveSourceSignature(run()));
+  });
+
+  it("review evidence agrees with the real saved-run parser and catches corrections as well as additions", () => {
+    const data = { date: "2026-03-03", completedAt: new Date("2026-03-03T12:00:00Z"), distance: 5000, duration: 1800, avgPace: 360,
+      actualTemplateId: "easy_30", plannedTemplateId: "tempo_20", activityType: "freerun", isInvalid: false };
+    const client = parseSavedRun("saved-1", data)!;
+    const server = cf.runMoveSavedEvidenceRow("saved-1", data, ms => new Date(ms).toISOString().slice(0, 10));
+    const expected = runMoveCompletionEvidence([run()], [client]);
+    expect(cf.runMoveCompletionEvidence([run()], [server] as never)).toBe(expected);
+    expect(runMoveCompletionEvidence([run()], [{ ...client, distance: 8000 }])).not.toBe(expected);
+    expect(runMoveCompletionEvidence([run()], [])).not.toBe(expected);
+    expect(runMoveCompletionEvidence([run({ userOverride: "easy_30" })], [client])).not.toBe(expected);
+  });
+
+  it("captures evidence for earlier slots too, since an earlier claim can free a source-date run", () => {
+    const days = [run({ id: "earlier", date: "2026-03-02", dayIndex: 1 }), run()];
+    const saved = parseSavedRun("earlier-save", { date: "2026-03-02", completedAt: new Date("2026-03-02T12:00:00Z"), distance: 5000, duration: 1800 })!;
+    expect(runMoveCompletionEvidence(days, [saved])).not.toBe(runMoveCompletionEvidence(days, []));
+    expect(cf.runMoveCompletionEvidence(days, [saved])).toBe(runMoveCompletionEvidence(days, [saved]));
+  });
+
+  it("legacy dates and template fallbacks normalise identically", () => {
+    const data = { completedAt: { seconds: Date.parse("2026-03-04T12:00:00Z") / 1000 }, plannedTemplateId: "tempo_20", distance: -1, duration: 1800, avgPace: NaN, savedAnyway: true };
+    const client = parseSavedRun("legacy", data)!;
+    const server = cf.runMoveSavedEvidenceRow("legacy", data, ms => new Date(ms).toISOString().slice(0, 10));
+    expect(cf.runMoveCompletionEvidence([run()], [server] as never)).toBe(runMoveCompletionEvidence([run()], [client]));
+  });
   it("HARD_RUN_TYPES agrees as a set", () => {
     expect(new Set(cf.HARD_RUN_TYPES)).toEqual(new Set(HARD_RUN_TYPES));
   });

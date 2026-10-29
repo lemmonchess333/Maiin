@@ -1,0 +1,75 @@
+{
+  "errors": [],
+  "source": "Implemented app; real exported callable handlers and local Auth/Firestore emulators",
+  "today": "2026-11-04",
+  "agendaText": "Train\n\nYour plan\n\nLift week 1 · Build muscle\n\nNext lift\n\nFull Body — Deadlift Focus\n\nFollows your rotation, whenever you train.\n\n6 exercises\n\nStart Full Body — Deadlift Focus\n2 Nov – 8 Nov\nMove a run\n\n3 lift days · 2 planned runs · 2 rest days\n\nMon\n\n2\n\nFull Body\nCompleted · 42 min\n\nTue\n\n3\n\nEasy 30\nCompleted · 5.0 km\n\nWed\n\n4\n\nToday\n\nLift day\nPlanned · follows your rotation\n\nThu\n\n5\n\n20 Min Tempo\nPlanned · 30 min\n\nFri\n\n6\n\nLift day\nPlanned · follows your rotation\n\nSat\n\n7\n\nRest day\n\nNo activity planned\n\nSun\n\n8\n\nRest day\n\nNo activity planned\n\nLift days show your usual pattern. Your next lift follows the rotation.\n\nUsual weekly layout\nProgramme settings",
+  "workspace-phone-dark": {
+    "width": 393,
+    "scrollWidth": 393,
+    "overflow": false
+  },
+  "workspace-phone-light": {
+    "width": 393,
+    "scrollWidth": 393,
+    "overflow": false
+  },
+  "workspace-small-dark": {
+    "width": 320,
+    "scrollWidth": 320,
+    "overflow": false
+  },
+  "workspace-small-light": {
+    "width": 320,
+    "scrollWidth": 320,
+    "overflow": false
+  },
+  "workspace-large-text-dark": {
+    "width": 393,
+    "scrollWidth": 393,
+    "overflow": false
+  },
+  "workspace-large-text-light": {
+    "width": 393,
+    "scrollWidth": 393,
+    "overflow": false
+  },
+  "move-picker-dark": {
+    "width": 393,
+    "scrollWidth": 393,
+    "overflow": false
+  },
+  "move-warning-dark": {
+    "width": 393,
+    "scrollWidth": 393,
+    "overflow": false
+  },
+  "move-discard-dark": {
+    "width": 393,
+    "scrollWidth": 393,
+    "overflow": false
+  },
+  "nativeBackRetainedDraft": 2,
+  "move-review-dark": {
+    "width": 393,
+    "scrollWidth": 393,
+    "overflow": false
+  },
+  "move-review-light": {
+    "width": 393,
+    "scrollWidth": 393,
+    "overflow": false
+  },
+  "workspace-after-move-light": {
+    "width": 393,
+    "scrollWidth": 393,
+    "overflow": false
+  },
+  "persistedMove": {
+    "runId": "tempo",
+    "from": "2026-11-05",
+    "to": "2026-11-07",
+    "templateId": "tempo_20",
+    "usualWeekUnchanged": true,
+    "liftOrderUnchanged": true
+  }
+}

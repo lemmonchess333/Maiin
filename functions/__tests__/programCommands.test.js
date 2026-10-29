@@ -1324,6 +1324,48 @@ describe("moveRunDay (RUN-RESCHEDULE-01)", () => {
       targetDayIndex: 7,
     });
   });
+
+  it("accepts a bounded review precondition and rejects unknown or malformed evidence fields", () => {
+    const expected = { sourceSignature: "source", todayKey: "2026-03-03", completionEvidence: "[]" };
+    expect(assertClientProgramCommand({ ...move(6), expected }).expected).toEqual(expected);
+    expectRejected({ ...move(6), expected: { ...expected, snapshot: {} } });
+    expectRejected({ ...move(6), expected: { ...expected, todayKey: "2026-02-31" } });
+    expectRejected({ ...move(6), expected: { ...expected, completionEvidence: "x".repeat(64001) } });
+  });
+
+  it("refuses a manually completed or legacy-completed slot even when stored status is planned", () => {
+    const manuallyDone = weekState();
+    manuallyDone.manualCompletions = { "run-1": { completedAt: NOW } };
+    expectHttps(() => apply(move(1), manuallyDone), "failed-precondition");
+    expectHttps(() => apply(move(1), weekState({ completed: true })), "failed-precondition");
+  });
+
+  it("rejects past destinations using the server's saved timezone, including old commands replayed later", () => {
+    const state = weekState();
+    const command = move(1);
+    // Monday is already over at this instant in Tokyo, while still Monday in UTC.
+    expectHttps(() => applyProgramCommand({ state, profile: { timezone: "Asia/Tokyo" }, command,
+      now: Date.parse("2026-03-02T20:00:00Z") }), "failed-precondition");
+    expect(() => applyProgramCommand({ state, profile: { timezone: "UTC" }, command,
+      now: Date.parse("2026-03-02T20:00:00Z") })).not.toThrow();
+  });
+
+  it("rejects a destination after this week's race", () => {
+    const state = weekState();
+    state.runDays.push({ id: "race", weekKey: "2026-03-01", date: "2026-03-06", dayIndex: 5, type: "race", templateId: "10k_race", status: "planned" });
+    expectHttps(() => apply(move(6), state), "failed-precondition");
+  });
+
+  it("rejects a changed prescription or review day against the live source", () => {
+    const { runMoveSourceSignature } = require("../lib/runReschedule");
+    const state = weekState();
+    const expected = { sourceSignature: runMoveSourceSignature(state.runDays[0]), todayKey: "2026-03-02", completionEvidence: "[]" };
+    const command = { ...move(6), expected };
+    const execute = (nextState, now = Date.parse("2026-03-02T12:00:00Z")) => applyProgramCommand({ state: nextState, profile: { timezone: "UTC" }, command, now });
+    expect(execute(state).state.runDays[0].date).toBe("2026-03-07");
+    expectHttps(() => execute(weekState({ userOverride: "easy_30" })), "failed-precondition");
+    expectHttps(() => execute(state, Date.parse("2026-03-03T00:00:00Z")), "failed-precondition");
+  });
 });
 
 describe("skipRecoveryEarly (P6 — the atomicity fix)", () => {

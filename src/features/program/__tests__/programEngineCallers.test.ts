@@ -26,6 +26,7 @@ const ENGINE_OWNERS = [
   "src/pages/Program.tsx",
   "src/pages/Run.tsx",
   "src/pages/RunSummary.tsx",
+  "src/pages/TrainingPlan.tsx",
   "src/pages/settings/SettingsLiftPlan.tsx",
   "src/pages/settings/SettingsRunPlan.tsx",
   "src/pages/settings/SettingsTraining.tsx",

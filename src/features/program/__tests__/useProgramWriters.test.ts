@@ -38,6 +38,7 @@ import { CURRENT_PROGRAM_SCHEMA_VERSION } from "../programTypes";
 import { sameStoredValue } from "../stateTransition";
 import type { ProgramState, ScheduledRunDay } from "../programTypes";
 import type { RealignOutcome } from "../programOutcome";
+import { runMoveSourceSignature, runMoveCompletionEvidence } from "@/lib/runReschedule";
 
 // ─── Firebase mocks ──────────────────────────────────────────────────
 
@@ -3358,6 +3359,37 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
     );
     expect(setDocCalls().length).toBe(0);
     expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);
+  });
+
+  it("sends the reviewed precondition without a client-authored run patch", async () => {
+    await run([plannedToday({ dayIndex: 1, date: localWeekKey() })], async api => {
+      const days = api.programState.runDays;
+      const expected = { sourceSignature: runMoveSourceSignature(days[0]), todayKey: localDateString(new Date()), completionEvidence: runMoveCompletionEvidence(days, []) };
+      await api.moveRunDay("runday_move_1", 0, expected);
+      expect(sentCommands.find(c => c.kind === "moveRunDay")).toMatchObject({ runDayId: "runday_move_1", targetDayIndex: 0, expected });
+    });
+    expect(setDocCalls().length).toBe(0);
+  });
+
+  it("rejects a stale reviewed source before sending any command", async () => {
+    await run([plannedToday()], api => api.moveRunDay("runday_move_1", target, {
+      sourceSignature: "old prescription", todayKey: localDateString(new Date()), completionEvidence: "[]",
+    }));
+    expect(sentCommands.filter(c => c.kind === "moveRunDay")).toEqual([]);
+  });
+
+  it("reads active-run storage at invocation, not a stale sheet snapshot", async () => {
+    const storage = await import("@/lib/runResumeStorage");
+    const active = vi.spyOn(storage, "readStoredRunSummary").mockReturnValue({
+      config: { planMetadata: { scheduledRunId: "runday_move_1" } },
+    } as never);
+    try {
+      await run([plannedToday()], api => api.moveRunDay("runday_move_1", target));
+      expect(active).toHaveBeenCalledWith("test-user-1");
+      expect(sentCommands.filter(c => c.kind === "moveRunDay")).toEqual([]);
+    } finally {
+      active.mockRestore();
+    }
   });
 });
 

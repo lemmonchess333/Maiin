@@ -40,7 +40,7 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import type { ReactNode } from "react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useBackDismiss } from "@/lib/backDismiss";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { usePageSearchParams } from "@/hooks/usePageSearchParams";
 import { focusLabel } from "@/features/program/trainingBlock";
 import {
@@ -59,6 +59,7 @@ import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import ProgramOfflineBanner from "@/components/program/ProgramOfflineBanner";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 import WorkoutSession from "@/components/WorkoutSession";
 // The Lift tab's ways into a workout that is not the plan's day, each
 // loaded on its own: the saved routines read their list after the page
@@ -1195,6 +1196,18 @@ function ProgramInner() {
       /* Overflow, plus a "Done" exit only while reordering. */
       actions={
         <>
+          <Link
+            to="/program/plan"
+            state={{
+              returnTo: `/program?${new URLSearchParams({
+                ...Object.fromEntries(searchParams),
+                tab: activeTab,
+              })}`,
+            }}
+            className={buttonClasses({ variant: "ghost" })}
+          >
+            Your plan
+          </Link>
           {activeTab === "lift" &&
             (programState?.workouts?.length ?? 0) > 0 &&
             reorderMode && (

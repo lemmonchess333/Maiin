@@ -57,12 +57,7 @@ export { workoutTonnageKg } from "@/lib/savedWorkouts";
  * the kind of duplication that drifts silently — one surface would start
  * showing the full note while the other showed the prefix, for one workout.
  */
-export function workoutTitle(workout: { notes?: string }): string {
-  // `notes` is typed required on `Workout`, but legacy docs and the projected
-  // shapes callers pass (Home's day card) can omit it — hence optional here
-  // rather than `Pick<Workout, "notes">`, which would reject them.
-  return workout.notes?.split(" — ")[0]?.trim() || "Workout";
-}
+export { workoutTitle } from "@/lib/workoutLabels";
 
 /**
  * Read coverage for the workouts subscription.

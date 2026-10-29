@@ -74,6 +74,7 @@ import { fetchRecentLayoff } from "./fetchRecentLayoff";
 import type { LayoffClass } from "./layoffDetection";
 import { profileNewRunnerUntil } from "./newRunner";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
+import { readStoredRunSummary } from "@/lib/runResumeStorage";
 import {
   migrateProgramState,
   backfillWeekScheduleIfMissing,
@@ -184,7 +185,7 @@ import {
   isScheduledRunEditable,
 } from "@/lib/scheduledRunStatus";
 import { isScheduledRaceRunDay } from "@/lib/workoutTemplates";
-import { canRescheduleRun, computeRunMove } from "@/lib/runReschedule";
+import { canRescheduleRun, computeRunMove, resolveRunMoveOptions, runMoveSourceSignature, type RunMovePrecondition } from "@/lib/runReschedule";
 import { toast } from "@/lib/toast";
 import { generateInstanceId, normalizeExercise } from "./programTypes";
 import { enqueueCommand, isTransportFailure } from "./commandOutbox";
@@ -1870,7 +1871,8 @@ export function useProgram() {
   const moveRunDay = useCallback(
     async (
       idOrDayIndex: string | number,
-      targetDayIndex: number
+      targetDayIndex: number,
+      expected?: RunMovePrecondition
     ): Promise<ProgramOutcome> => {
       if (!programState?.runDays || !user) return FAILED;
       const target = programState.runDays.find((rd) =>
@@ -1884,13 +1886,30 @@ export function useProgram() {
         );
         return declineStale("Couldn't move that run.");
       }
-      if (!canRescheduleRun(target)) {
+      // Read local storage at invocation time: a sheet can stay open while
+      // another tab starts a run after its in-flight snapshot was rendered.
+      const active = readStoredRunSummary(user.uid);
+      const activeId = active?.config.planMetadata?.scheduledRunId;
+      if (active && (!activeId || activeId === target.id)) {
+        return declineStale("Finish or discard the active run before moving it.");
+      }
+      if (!canRescheduleRun(target) || programState.manualCompletions?.[target.id ?? ""]) {
         logger.warn(
           `[moveRunDay] runDay ${target.id ?? target.dayIndex} is not reschedulable (race or non-planned); skipping`
         );
         return declineStale("Couldn't move that run.");
       }
+      if (expected && (expected.sourceSignature !== runMoveSourceSignature(target) || expected.todayKey !== localDateString(new Date()))) {
+        return declineStale("Your plan changed. Review the latest week.");
+      }
       if (targetDayIndex === target.dayIndex) return APPLIED; // same day
+      // Review callers get the exact same destination rules as the picker.
+      // Legacy callers already pass through that picker, and keep their
+      // existing signature/payload while the server enforces every date.
+      if (expected && !resolveRunMoveOptions({ source: target, runDays: programState.runDays, weekSchedule: profile?.weekSchedule ?? [], todayKey: expected.todayKey })
+        .some(option => option.dayIndex === targetDayIndex && option.available)) {
+        return declineStale("That day is no longer available. Review the latest week.");
+      }
       // Integrity guard: never double-book a day (the UI already blocks
       // occupied days, but two runs sharing a dayIndex corrupts the week).
       if (
@@ -1933,6 +1952,7 @@ export function useProgram() {
           commandId: generateInstanceId(),
           runDayId: targetId,
           targetDayIndex,
+          ...(expected ? { expected } : {}),
         },
         (state) => ({
           ...state,
@@ -3414,6 +3434,8 @@ export function useProgram() {
     programState,
     prescription,
     loading,
+    /** Refresh canonical state after a queued command is replayed. */
+    refreshProgram: refetchProgramState,
     /** Whether the plan can be acted on. `loading` turns false on the
      *  cached copy, which is right to show but can be behind the server, so
      *  a write built on it may be refused. "ready" once the server's copy
