@@ -591,7 +591,7 @@ export default function ExerciseHistory() {
                           ? "Est. 1RM"
                           : m,
                   }))}
-                  className="p-0.5 rounded-full [&_button]:flex-none [&_button]:min-w-[44px] [&_button]:rounded-full [&_button]:px-2 [&_button]:text-micro @max-[10.5em]:w-full @max-[10.5em]:flex-col @max-[10.5em]:rounded-2xl"
+                  className="p-0.5 rounded-full [&_button]:flex-none [&_button]:min-w-[44px] [&_button]:rounded-full [&_button]:px-2 [&_button]:text-micro @max-[12em]:w-full @max-[12em]:flex-col @max-[12em]:rounded-2xl"
                 />
               </div>
               <Suspense
