@@ -3,11 +3,9 @@
  *
  * A small, optional decision moment at the end of the private Weekly
  * Review: how did the week's plan feel, and what's the one realistic
- * focus for next week. It turns the review from a read-only recap into
- * a next action — WITHOUT ever auto-changing programme volume, calorie
- * targets or bodyweight goals from a single answer (a plan should not
- * swing on one difficult week; every response maps to a NAVIGATION,
- * never a mutation).
+ * focus for next week. The training answer leads into the plan workspace,
+ * where changes require a separate preview and confirmation. A single
+ * answer never changes programme volume, calorie targets or bodyweight.
  *
  * Storage: `users/{uid}/checkins/{weekKey}` — owner-only (rules),
  * keyed by the reviewed week (Monday-anchored key from
@@ -104,19 +102,18 @@ export interface NextAction {
 }
 
 /**
- * The single contextual next action for a feel response. `a_bit_much`
- * steers to the programme (settings / Express Sessions live there)
- * rather than auto-cutting volume; `too_light` steers to progression
- * review rather than auto-increasing anything.
+ * The single contextual next action for a feel response. A plan that felt
+ * heavy or light opens the guided plan choices; good fit opens the agenda.
+ * These are routes only. The check-in itself never writes a plan change.
  */
 export function nextActionForFeel(feel: PlanFeel): NextAction {
   switch (feel) {
     case "a_bit_much":
-      return { label: "Review programme options", to: "/program" };
+      return { label: "Make this week fit", to: "/program/plan?reset=1" };
     case "too_light":
-      return { label: "Review progression", to: "/program" };
+      return { label: "Review this week's plan", to: "/program/plan?reset=1" };
     case "good_fit":
-      return { label: "See next week's plan", to: "/program" };
+      return { label: "See this week's plan", to: "/program/plan" };
   }
 }
 
