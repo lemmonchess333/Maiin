@@ -48,8 +48,8 @@ export interface HomeEventMetadata {
   durationMs?: number;
   /** home_card_tapped: which metric tile was tapped. */
   card?: HomeCard;
-  /** home_card_tapped: whether a session card started, resumed or opened details. */
-  action?: "start" | "resume" | "details";
+  /** home_card_tapped: whether a session card started, resumed, reached review or opened details. */
+  action?: "start" | "resume" | "review" | "details";
   /** home_section_viewed: which lazy-loaded section first crossed
    *  the viewport (or finished hydrating). */
   section?: HomeSection;

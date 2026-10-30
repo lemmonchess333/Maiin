@@ -43,23 +43,27 @@ describe("native push release checks", () => {
   });
 
   it("reads actual signed entitlements after archive and again after export", () => {
-    const archive = step("Verify archived app push signing");
+    const archive = step("Verify archived iPhone and Watch signing");
     expect(archive).toContain("python3 scripts/verify_ios_push.py");
+    expect(archive).toContain("python3 scripts/verify_ios_watch.py");
     expect(archive).toContain(
       '--app "$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app"'
     );
-    const exported = step("Verify exported app push signing");
+    const exported = step("Verify exported iPhone and Watch signing");
     expect(exported).toContain('ditto -x -k "$IPA" "$VERIFY_DIR"');
     expect(exported).toContain(
       'python3 scripts/verify_ios_push.py --app "${APPS[0]}" --bundle-id "$BUNDLE_ID"'
+    );
+    expect(exported).toContain(
+      'python3 scripts/verify_ios_watch.py --app "${APPS[0]}"'
     );
     expect(exported).toContain('"${#IPAS[@]}" -ne 1');
     expect(exported).toContain('"${#APPS[@]}" -ne 1');
     const positions = [
       "Archive",
-      "Verify archived app push signing",
+      "Verify archived iPhone and Watch signing",
       "Export .ipa",
-      "Verify exported app push signing",
+      "Verify exported iPhone and Watch signing",
       "Upload to TestFlight",
     ].map((name) => workflow.indexOf(`- name: ${name}`));
     expect(positions).toEqual(
@@ -68,7 +72,7 @@ describe("native push release checks", () => {
   });
 
   it("uploads exactly the IPA that passed verification", () => {
-    expect(step("Verify exported app push signing")).toContain(
+    expect(step("Verify exported iPhone and Watch signing")).toContain(
       'echo "VERIFIED_IPA=$IPA" >> "$GITHUB_ENV"'
     );
     expect(step("Upload to TestFlight")).toContain(

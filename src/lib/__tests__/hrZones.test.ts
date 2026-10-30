@@ -7,6 +7,7 @@ import {
   targetZoneForRun,
   zoneShortLabel,
   ZONE_NAMES,
+  summarizeHeartRate,
 } from "../hrZones";
 
 describe("zoneShortLabel", () => {
@@ -157,5 +158,78 @@ describe("zoneDistribution — post-run breakdown", () => {
     const dist = zoneDistribution([150, 160], 0);
     expect(dist.every((d) => d.samples === 0 && d.pct === 0)).toBe(true);
     expect(dist).toHaveLength(5);
+  });
+});
+
+describe("summarizeHeartRate — elapsed time rather than sample counts", () => {
+  const watch = (bpm: number, at: number, id?: string) => ({
+    bpm,
+    at,
+    id,
+    source: "apple-watch" as const,
+  });
+
+  it("weights readings by time, caps missing gaps, and excludes paused time", () => {
+    const result = summarizeHeartRate(
+      [
+        watch(120, 0, "a"),
+        watch(140, 5_000, "b"),
+        watch(140, 5_000, "b"), // retransmission
+        watch(180, 50_000, "c"), // first 30 seconds of the gap are missing
+        watch(160, 110_000, "d"), // reading during a pause
+      ],
+      [
+        { startMs: 0, endMs: 60_000 },
+        { startMs: 120_000, endMs: 180_000 },
+      ],
+      200
+    );
+    expect(result).toMatchObject({
+      averageBpm: 150,
+      maxBpm: 180,
+      coveredSeconds: 30,
+      movingSeconds: 120,
+      coverage: 0.25,
+      zoneSeconds: [0, 5, 15, 0, 10],
+      belowZoneSeconds: 0,
+    });
+  });
+
+  it("uses the phone timer as a coverage denominator after process recovery", () => {
+    const result = summarizeHeartRate(
+      [watch(130, 1_000)],
+      [{ startMs: 0, endMs: 16_000 }],
+      200,
+      60
+    );
+    expect(result?.coveredSeconds).toBe(15);
+    expect(result?.movingSeconds).toBe(60);
+    expect(result?.coverage).toBe(0.25);
+    expect(result?.zoneSeconds).toEqual([0, 15, 0, 0, 0]);
+  });
+
+  it("declines a summary without valid in-run coverage", () => {
+    expect(
+      summarizeHeartRate(
+        [watch(130, 20_000)],
+        [{ startMs: 0, endMs: 10_000 }],
+        200
+      )
+    ).toBeNull();
+  });
+
+  it("retains average and highest bpm when maximum heart rate is unknown", () => {
+    const result = summarizeHeartRate(
+      [watch(130, 0), watch(140, 5_000)],
+      [{ startMs: 0, endMs: 10_000 }],
+      0
+    );
+    expect(result).toMatchObject({
+      averageBpm: 135,
+      maxBpm: 140,
+      coverage: 1,
+      maxHr: 0,
+      zoneSeconds: [0, 0, 0, 0, 0],
+    });
   });
 });

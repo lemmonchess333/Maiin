@@ -64,7 +64,7 @@ export default function StackedCTACards({
             onResume={() => {
               trackHomeEvent("home_card_tapped", {
                 card: strip.sport === "run" ? "today_run" : "today_workout",
-                action: "resume",
+                action: strip.reviewPending ? "review" : "resume",
               });
               navigate(strip.resumeTarget);
             }}

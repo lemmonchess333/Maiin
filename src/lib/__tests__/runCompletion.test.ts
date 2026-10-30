@@ -100,6 +100,36 @@ describe("runDocument", () => {
     expect(saved.date).toBe(localDateString(FINISH));
   });
 
+  it("keeps the recording day and end when review is saved later in another time zone", () => {
+    const start = Date.UTC(2026, 6, 21, 6, 50);
+    const end = start + 35 * 60_000;
+    const saved = runDocument(
+      run({
+        points: [],
+        identity: {
+          uid: "runner",
+          sessionId: "run-origin",
+          runId: "run-origin",
+          scheduledRunId: null,
+          startedAt: start,
+          startLocalDate: "2026-07-20",
+          originTimeZone: "America/Los_Angeles",
+        },
+        recordingStartedAt: start + 2 * 60_000,
+        finishedAt: end,
+      }),
+      new Date(Date.UTC(2026, 6, 23, 12))
+    );
+    expect(saved.date).toBe("2026-07-20");
+    expect(saved.startedAt.toMillis()).toBe(start);
+    expect(saved.recordingStartedAt?.toMillis()).toBe(start + 2 * 60_000);
+    expect(saved.recordingEndedAt?.toMillis()).toBe(end);
+    expect(saved.duration).toBe(1830);
+    expect(saved.completedAt.toMillis()).toBe(Date.UTC(2026, 6, 23, 12));
+    expect(saved.originTimeZone).toBe("America/Los_Angeles");
+    expect(saved.sessionId).toBe("run-origin");
+  });
+
   it.each(["clipped", "fully private"])(
     "keeps the original start day when the saved route is %s",
     (route) => {
@@ -397,6 +427,42 @@ describe("completeRun", () => {
     expect(queued).toHaveLength(1);
     expect(queued[0].id).toBe(done.runId);
     expect(queued[0].data).toMatchObject({ distance: 6600 });
+  });
+
+  it("uses the run document ID allocated at Start, even before the first save", () => {
+    const identity = {
+      uid: "runner",
+      sessionId: "start-id",
+      runId: "start-id",
+      scheduledRunId: null,
+      startedAt: START.getTime(),
+      startLocalDate: localDateString(START),
+      originTimeZone: "UTC",
+    };
+    const done = completeRun({
+      uid: "runner",
+      author: {},
+      runId: null,
+      alreadySaved: false,
+      run: run({ identity }),
+      route,
+      unit: "km",
+    });
+    expect(done.runId).toBe("start-id");
+    expect(pendingDocumentWrites("runner", "users/runner/runs")).toMatchObject([
+      { id: "start-id" },
+    ]);
+    expect(() =>
+      completeRun({
+        uid: "other",
+        author: {},
+        runId: null,
+        alreadySaved: false,
+        run: run({ identity }),
+        route,
+        unit: "km",
+      })
+    ).toThrow(/identity/);
   });
 
   it("writes the run once it is online", async () => {

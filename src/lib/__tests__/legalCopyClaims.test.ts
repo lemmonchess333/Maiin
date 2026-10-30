@@ -58,6 +58,7 @@ const PRIVACY_PROSE = PRIVACY.replace(/\s+/g, " ");
 const TERMS_PROSE = TERMS.replace(/\s+/g, " ");
 const STORE = read("../foodPhotoStore.ts");
 const HEALTH_KIT = read("../healthKit.ts");
+const IOS_INFO = read("../../../ios/App/App/Info.plist");
 const STEPS_HOOK = read("../../hooks/useSteps.ts");
 const ANALYTICS_REDACTION = read("../analyticsRedaction.ts");
 const SHARE_DEFAULTS_ROW = read(
@@ -240,21 +241,31 @@ describe("the AI question and the policy say the same things", () => {
   });
 });
 
-describe("Apple Health is read-only, and its count is never kept", () => {
-  it("the policy says so", () => {
-    expect(PRIVACY_PROSE).toMatch(/Tropos never writes to Apple Health/);
+describe("Apple Health permissions and storage match the policy", () => {
+  it("discloses the separate steps, run heart rate and workout export choices", () => {
     expect(PRIVACY_PROSE).toMatch(
-      /The step count is never stored and never sent anywhere/
+      /The step count is not stored or sent to Tropos/
     );
+    expect(PRIVACY_PROSE).toMatch(
+      /If you use Apple Watch runs, Tropos reads heart rate/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /Raw heart rate samples are held on your device/
+    );
+    expect(PRIVACY_PROSE).toMatch(/If you separately turn on workout export/);
+    expect(PRIVACY_PROSE).toMatch(/without a GPS route/);
+    expect(IOS_INFO).toMatch(/heart rate during Apple Watch runs if enabled/);
+    expect(IOS_INFO).toMatch(/workouts when you turn on export/);
+    expect(IOS_INFO).not.toMatch(/never writes to Health/);
   });
 
-  it("the one HealthKit module asks to read steps and nothing else", () => {
-    // capacitor-health also offers WRITE_WORKOUTS. Asking for it would make
-    // "never writes" false the day it shipped.
+  it("the existing steps bridge still asks only for steps", () => {
+    // Run heart rate and workout export use the native Watch bridge. They
+    // must not broaden the steps tile's request for Health permissions.
     const asked = HEALTH_KIT.match(/permissions:\s*\[([^\]]*)\]/g);
     expect(asked).toEqual(['permissions: ["READ_STEPS"]']);
     expect(HEALTH_KIT).not.toMatch(/WRITE_/);
-    // ...and no other module reaches the plugin around it.
+    // No other module should reach for capacitor-health around this seam.
     const others = sourceFiles("src").filter(
       (f) =>
         !f.endsWith("lib/healthKit.ts") &&

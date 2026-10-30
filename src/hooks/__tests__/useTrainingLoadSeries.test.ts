@@ -9,9 +9,9 @@
  *     42-day fitness EWMA needs context before the window edge or the curve
  *     fake-ramps from zero. A test that seeded only in-window data would
  *     pass while the warmup contract silently broke.
- *   - Runs and workouts carry their date DIFFERENTLY — runs a `completedAt`
- *     Timestamp, workouts a local "YYYY-MM-DD" string — so the two queries
- *     are not interchangeable and the fake has to honour both.
+ *   - Runs and workouts carry their date DIFFERENTLY — modern runs have a
+ *     local `date` key and legacy runs use `completedAt`; workouts have a
+ *     local "YYYY-MM-DD" string. The run reader needs both queries.
  *   - A workout saved without a duration falls back to 3 minutes per logged
  *     set, so an untimed session still contributes load rather than
  *     silently counting as rest.
@@ -233,6 +233,7 @@ describe("useTrainingLoadSeries — account ownership", () => {
     rerender();
     await waitFor(() =>
       expect([...pendingReads()].sort()).toEqual([
+        "users/u2/runs",
         "users/u2/runs",
         "users/u2/workouts",
       ])

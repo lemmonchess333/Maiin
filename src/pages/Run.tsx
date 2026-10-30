@@ -18,6 +18,8 @@ import {
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "../lib/auth";
+import { auth } from "../lib/firebase";
+import { allocateRunId } from "@/lib/runCompletion";
 import { warmPrivacyZones } from "../hooks/usePrivacyZones";
 import { useGPS } from "../hooks/useGPS";
 import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
@@ -65,7 +67,12 @@ import {
   clearStoredRun,
   RUN_RESUME_SCHEMA_VERSION,
   type StoredRun,
+  type StoredRunFinish,
 } from "../lib/runResumeStorage";
+import {
+  createRunSessionIdentity,
+  type RunSessionIdentity,
+} from "@/lib/runSessionIdentity";
 import type { ManualDistanceDraft } from "@/lib/manualDistanceDraft";
 import { useAudioCues } from "../hooks/useAudioCues";
 import { useSessionPlayer } from "../hooks/useSessionPlayer";
@@ -93,6 +100,28 @@ import RouteSetupSection from "../components/run/RouteSetupSection";
 import type { SavedRouteSource } from "../lib/savedRoutes";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useHeartRate } from "../hooks/useHeartRate";
+import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
+import { isWatchRunLocallyDisabled } from "@/lib/connectedTrainingPrefs";
+import {
+  beginMoving,
+  pauseMoving,
+  finishMoving,
+  clearHeartRateSession,
+} from "@/lib/heartRateSession";
+import {
+  acknowledgeWatchRunCommand,
+  clearWatchRunSession,
+  getWatchRunStatus,
+  publishWatchRunSnapshot,
+  subscribeWatchRunCommands,
+  validateWatchRunCommand,
+  WatchRunCommandLedger,
+  type WatchRunCommand,
+  type WatchRunCommandAck,
+  type WatchRunPhase,
+} from "@/lib/watchRunBridge";
+import { clearWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
+import { CONNECTED_TRAINING_RELEASED } from "@/lib/connectedTrainingRelease";
 import { THEME } from "../lib/theme";
 import { gpsSignalBars } from "../lib/gpsSignal";
 import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
@@ -168,6 +197,17 @@ function sessionSegmentsFor(
     : null;
 }
 
+function discardStoredSession(
+  uid: string,
+  identity: RunSessionIdentity | null | undefined
+) {
+  clearStoredRun(uid);
+  if (identity) {
+    clearHeartRateSession(uid, identity.sessionId);
+    void clearWatchRunSession(identity.sessionId);
+  }
+}
+
 /* haptic moved to the shared `../lib/haptic` implementation in
    W1f, which routes through the Capacitor Haptics plugin on the
    native iOS/Android shell. The old `navigator.vibrate`-only
@@ -201,11 +241,8 @@ export default function Run() {
   const timer = useRunTimer();
   const gps = useGPS(timer.elapsed);
   const wakeLock = useWakeLock();
-  // Live HR (bpm + zone) for the run sheet. No source streams yet
-  // (heartRateSource.ts is inert until the HealthKit plugin lands), so this
-  // resolves to bpm:null today and the HR readout stays hidden.
-  const hr = useHeartRate({ live: true });
   const { user, profile } = useAuth();
+  const { prefs: connectedPrefs } = useConnectedTrainingPrefs();
   // The account's privacy zones, from the server, before the run starts
   // (usually at home, with a signal). A run is saved only with its zones
   // cut out, and at a finish with no signal the finish screen can't ask
@@ -364,6 +401,46 @@ export default function Run() {
   // active run so the periodic write effect can persist it without
   // racing with React state. Set on handleStart and on Resume.
   const startedAtRef = useRef<number | null>(null);
+  // The first timer tick may be much later than Start while GPS acquires.
+  // Keep its wall time separately for an accurate Apple Health workout.
+  const recordingStartedAtRef = useRef<number | null>(null);
+  const identityRef = useRef<RunSessionIdentity | null>(null);
+  const finishedRef = useRef(false);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const watchRevisionRef = useRef(0);
+  const watchConnectedRef = useRef(false);
+  const watchLastStatusCheckRef = useRef(0);
+  const watchPhaseRef = useRef<WatchRunPhase>("running");
+  const watchCommandLedgerRef = useRef(new WatchRunCommandLedger());
+  const watchEligible =
+    CONNECTED_TRAINING_RELEASED &&
+    connectedPrefs.useWatchForRuns &&
+    !isWatchRunLocallyDisabled(user?.uid ?? "") &&
+    !snapshotWriteFailed &&
+    !!runConfig &&
+    isOutdoorGpsRun(runConfig);
+  const hr = useHeartRate({
+    live: true,
+    enabled: watchEligible,
+    sessionId: activeSessionId,
+    uid: user?.uid,
+  });
+  const watchEligibleRef = useRef(false);
+  useEffect(() => {
+    if (!watchEligible && watchEligibleRef.current && activeSessionId)
+      void clearWatchRunSession(activeSessionId);
+    watchEligibleRef.current = watchEligible;
+  }, [watchEligible, activeSessionId]);
+  useEffect(() => {
+    const identity = identityRef.current;
+    if (!identity || identity.uid === (user?.uid ?? profile?.uid)) return;
+    if (timer.isRunning) timer.pause();
+    gps.stop();
+    wakeLock.release();
+    identityRef.current = null;
+    setActiveSessionId(null);
+    navigate("/", { replace: true });
+  }, [user?.uid, profile?.uid, timer, gps, wakeLock, navigate]);
   // Suppresses the GPS-loss banner for a short window after a Resume
   // (the cold-start GPS chip won't have a fresh fix yet, and the
   // banner would flash false-positive at "10s ago" or so). Set to
@@ -651,6 +728,10 @@ export default function Run() {
     const uid = profile?.uid;
     if (!uid) return;
     const stored = readStoredRun(uid);
+    if (stored?.phase === "finished") {
+      navigate("/run-summary", { replace: true });
+      return;
+    }
     // The stored run lives in localStorage, outside React; this reads it
     // once the uid is known.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
@@ -660,7 +741,7 @@ export default function Run() {
     // /run opened", not a reactive view of localStorage — so phase is
     // intentionally excluded from the deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.uid]);
+  }, [profile?.uid, navigate]);
 
   // 100ms threshold for the skeleton — programme reads usually return
   // from cache faster than this, so the skeleton only shows on cold
@@ -733,9 +814,12 @@ export default function Run() {
   }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
 
   const handleStart = async (config: RunConfig) => {
+    const uid = user?.uid ?? profile?.uid;
+    if (!uid || (user && auth.currentUser?.uid !== uid)) return;
     replaceManualDistanceDraft(null);
     audioCues.prime();
     await wakeLock.request();
+    if (user && auth.currentUser?.uid !== uid) return;
     // Phase B1: finalise plan metadata against the user's actual
     // activityType (chooser may have diverged from the prefill).
     // RunSetupModal carries the prefill snapshot on config.planMetadata;
@@ -755,7 +839,41 @@ export default function Run() {
     // Phase B3: capture the original-start epoch so the periodic
     // write effect persists it in every snapshot. Resume re-uses
     // the stored value (see handleResumeFromPrompt below).
-    startedAtRef.current = Date.now();
+    const startedAt = Date.now();
+    const runId = allocateRunId(uid);
+    const identity = createRunSessionIdentity(
+      uid,
+      runId,
+      finalConfig,
+      startedAt
+    );
+    clearWatchRunSyncStatus(uid);
+    identityRef.current = identity;
+    finishedRef.current = false;
+    startedAtRef.current = startedAt;
+    recordingStartedAtRef.current = null;
+    setActiveSessionId(identity.sessionId);
+    watchRevisionRef.current = 0;
+    watchConnectedRef.current = false;
+    watchLastStatusCheckRef.current = 0;
+    watchPhaseRef.current = "running";
+    watchCommandLedgerRef.current.clear();
+    // Persist the identity before GPS acquisition or the countdown. A crash
+    // during preparation can safely resume as a paused, zero-second run.
+    setSnapshotWriteFailed(
+      !writeStoredRun(uid, {
+        v: RUN_RESUME_SCHEMA_VERSION,
+        config: finalConfig,
+        identity,
+        watchRevision: 0,
+        startedAt,
+        accumulatedSeconds: 0,
+        isRunning: false,
+        points: [],
+        lastWriteAt: startedAt,
+        phase: "paused",
+      })
+    );
     // B0: runs ARE date-pinned (ADR-0002), so `offPlan` is meaningful here
     // and is already decided by computePlanMetadata — read, not re-derived.
     trackLifecycleEvent("session_started", {
@@ -764,6 +882,7 @@ export default function Run() {
     });
     if (requiresManualDistance(finalConfig)) {
       dispatch({ type: "START_MANUAL" });
+      recordingStartedAtRef.current = Date.now();
       timer.start();
       haptic("heavy");
       return;
@@ -862,50 +981,72 @@ export default function Run() {
   // phase is waiting/acquiring/countdown/finished). The write itself
   // is best-effort — writeStoredRun returns false on quota / private
   // mode but never throws.
-  const writeSnapshot = useCallback(() => {
-    if (!runConfig) return;
-    if (phase !== "active" && phase !== "paused") return;
-    if (startedAtRef.current === null) return;
-    const uid = profile?.uid;
-    if (!uid) return;
-    const snapshot: StoredRun = {
-      v: RUN_RESUME_SCHEMA_VERSION,
-      config: runConfig,
-      startedAt: startedAtRef.current,
-      accumulatedSeconds: timer.getAccumulatedSeconds(),
-      isRunning: timer.isRunning,
-      points: gps.getPoints(),
-      lastWriteAt: Date.now(),
-      phase: phase === "paused" ? "paused" : "active",
-      ...(player.checkpoint ? { playerCheckpoint: player.checkpoint } : {}),
-      ...(requiresManualDistance(runConfig) && manualDistanceDraftRef.current
-        ? { manualDistanceDraft: manualDistanceDraftRef.current }
-        : {}),
-    };
-    const saved = writeStoredRun(uid, snapshot);
-    // A boolean state bails out on repeated failures/successes. Updating a
-    // timestamp here would itself re-render and schedule another write.
-    setSnapshotWriteFailed(!saved);
-  }, [runConfig, phase, timer, gps, profile?.uid, player.checkpoint]);
+  const writeSnapshot = useCallback(
+    (
+      phaseOverride?: "active" | "paused",
+      timerOverride?: { accumulatedSeconds: number; isRunning: boolean }
+    ) => {
+      if (finishedRef.current) return false;
+      if (!runConfig) return false;
+      if (phase !== "active" && phase !== "paused") return false;
+      if (startedAtRef.current === null) return false;
+      const uid = profile?.uid;
+      if (!uid) return false;
+      const snapshot: StoredRun = {
+        v: RUN_RESUME_SCHEMA_VERSION,
+        config: runConfig,
+        ...(identityRef.current ? { identity: identityRef.current } : {}),
+        watchRevision: watchRevisionRef.current,
+        startedAt: startedAtRef.current,
+        ...(recordingStartedAtRef.current !== null
+          ? { recordingStartedAt: recordingStartedAtRef.current }
+          : {}),
+        accumulatedSeconds:
+          timerOverride?.accumulatedSeconds ?? timer.getAccumulatedSeconds(),
+        isRunning: timerOverride?.isRunning ?? timer.isRunning,
+        points: gps.getPoints(),
+        lastWriteAt: Date.now(),
+        phase: phaseOverride ?? (phase === "paused" ? "paused" : "active"),
+        ...(player.checkpoint ? { playerCheckpoint: player.checkpoint } : {}),
+        ...(requiresManualDistance(runConfig) && manualDistanceDraftRef.current
+          ? { manualDistanceDraft: manualDistanceDraftRef.current }
+          : {}),
+      };
+      const saved = writeStoredRun(uid, snapshot);
+      // A boolean state bails out on repeated failures/successes. Updating a
+      // timestamp here would itself re-render and schedule another write.
+      setSnapshotWriteFailed(!saved);
+      return saved;
+    },
+    [runConfig, phase, timer, gps, profile?.uid, player.checkpoint]
+  );
 
-  const keepFinishedRun = () => {
+  const keepFinishedRun = (finish: StoredRunFinish) => {
     const uid = profile?.uid;
-    if (!uid || !runConfig || startedAtRef.current === null) return;
-    if (phase !== "active" && phase !== "paused") return;
-    writeStoredRun(uid, {
+    if (!uid || !runConfig || startedAtRef.current === null) return false;
+    if (phase !== "active" && phase !== "paused") return false;
+    const saved = writeStoredRun(uid, {
       v: RUN_RESUME_SCHEMA_VERSION,
       config: runConfig,
+      ...(identityRef.current ? { identity: identityRef.current } : {}),
+      watchRevision: watchRevisionRef.current,
       startedAt: startedAtRef.current,
+      ...(recordingStartedAtRef.current !== null
+        ? { recordingStartedAt: recordingStartedAtRef.current }
+        : {}),
       accumulatedSeconds: timer.getAccumulatedSeconds(),
       isRunning: false,
       points: gps.getPoints(),
       lastWriteAt: Date.now(),
-      phase: "paused",
+      phase: "finished",
+      finish,
       ...(player.checkpoint ? { playerCheckpoint: player.checkpoint } : {}),
       ...(requiresManualDistance(runConfig) && manualDistanceDraftRef.current
         ? { manualDistanceDraft: manualDistanceDraftRef.current }
         : {}),
     });
+    setSnapshotWriteFailed(!saved);
+    return saved;
   };
 
   const handleManualDistanceDraftChange = useCallback(
@@ -953,6 +1094,8 @@ export default function Run() {
   //   - Discard: clear storage, dismiss → navigate home.
   const handleResumeFromPrompt = useCallback(async () => {
     if (!resumePrompt) return;
+    const uid = profile?.uid;
+    if (!uid || (user && auth.currentUser?.uid !== uid)) return;
     audioCues.prime();
     await wakeLock.request();
     replaceManualDistanceDraft(
@@ -1007,6 +1150,26 @@ export default function Run() {
       setRunConfig(resumePrompt.config);
     }
     startedAtRef.current = resumePrompt.startedAt;
+    recordingStartedAtRef.current = resumePrompt.recordingStartedAt ?? null;
+    const identity =
+      resumePrompt.identity ??
+      createRunSessionIdentity(
+        uid,
+        allocateRunId(uid),
+        resumePrompt.config,
+        resumePrompt.startedAt
+      );
+    identityRef.current = identity;
+    finishedRef.current = false;
+    setActiveSessionId(identity.sessionId);
+    watchRevisionRef.current = resumePrompt.watchRevision ?? 0;
+    watchConnectedRef.current = false;
+    watchLastStatusCheckRef.current = 0;
+    watchPhaseRef.current =
+      resumePrompt.phase === "paused" || !resumePrompt.isRunning
+        ? "paused"
+        : "running";
+    watchCommandLedgerRef.current.clear();
     // Auto-pause snapshots kept the active screen phase with a stopped
     // timer. Restore them as explicitly paused so GPS cannot run alone.
     const restoredPhase =
@@ -1057,21 +1220,28 @@ export default function Run() {
     audioCues,
     wakeLock,
     replaceManualDistanceDraft,
+    profile?.uid,
+    user,
   ]);
 
   const profileUid = profile?.uid;
   const handleStartNewFromPrompt = useCallback(() => {
-    if (profileUid) clearStoredRun(profileUid);
+    if (profileUid) discardStoredSession(profileUid, resumePrompt?.identity);
     replaceManualDistanceDraft(null);
     setResumePrompt(null);
-  }, [profileUid, replaceManualDistanceDraft]);
+  }, [profileUid, replaceManualDistanceDraft, resumePrompt?.identity]);
 
   const handleDiscardFromPrompt = useCallback(() => {
-    if (profileUid) clearStoredRun(profileUid);
+    if (profileUid) discardStoredSession(profileUid, resumePrompt?.identity);
     replaceManualDistanceDraft(null);
     setResumePrompt(null);
     navigate("/");
-  }, [navigate, profileUid, replaceManualDistanceDraft]);
+  }, [
+    navigate,
+    profileUid,
+    replaceManualDistanceDraft,
+    resumePrompt?.identity,
+  ]);
 
   /* Resume on Home's or Train's In progress strip (`?resume=1`) carries on
      with the stored run as soon as it is read, rather than asking again
@@ -1143,6 +1313,7 @@ export default function Run() {
   // never reach the active phase.
   const onCountdownGo = useEffectEvent(() => {
     dispatch({ type: "COUNTDOWN_DONE" });
+    recordingStartedAtRef.current ??= Date.now();
     timer.start();
     audioCues.speak("Go!");
     haptic("heavy");
@@ -1327,6 +1498,93 @@ export default function Run() {
     phase === "paused" ||
     (phase === "active" && autoPaused);
   const clockRunning = phase === "active" && !autoPaused;
+  const heartClockRef = useRef<{
+    uid: string;
+    sessionId: string;
+    running: boolean;
+  } | null>(null);
+  useEffect(() => {
+    const previous = heartClockRef.current;
+    if (!watchEligible || !activeSessionId || !user?.uid) {
+      if (previous?.running)
+        pauseMoving(previous.uid, previous.sessionId, Date.now());
+      heartClockRef.current = null;
+      return;
+    }
+    if (
+      previous?.uid === user.uid &&
+      previous.sessionId === activeSessionId &&
+      previous.running === clockRunning
+    )
+      return;
+    if (previous?.running)
+      pauseMoving(previous.uid, previous.sessionId, Date.now());
+    if (clockRunning) beginMoving(user.uid, activeSessionId, Date.now());
+    heartClockRef.current = {
+      uid: user.uid,
+      sessionId: activeSessionId,
+      running: clockRunning,
+    };
+  }, [watchEligible, activeSessionId, user?.uid, clockRunning]);
+  const watchPhase: WatchRunPhase | null =
+    phase === "active"
+      ? autoPaused
+        ? "paused"
+        : "running"
+      : phase === "paused"
+        ? "paused"
+        : null;
+  useEffect(() => {
+    const identity = identityRef.current;
+    if (
+      !watchEligible ||
+      !identity ||
+      identity.sessionId !== activeSessionId ||
+      identity.uid !== user?.uid ||
+      !watchPhase
+    )
+      return;
+    if (watchPhaseRef.current !== watchPhase) {
+      watchPhaseRef.current = watchPhase;
+      watchRevisionRef.current += 1;
+      writeSnapshot(watchPhase === "paused" ? "paused" : "active");
+    }
+    void publishWatchRunSnapshot({
+      sessionId: identity.sessionId,
+      revision: watchRevisionRef.current,
+      phase: watchPhase,
+      elapsedSeconds: timer.elapsed,
+      distanceMeters: gps.distance,
+      paceSecondsPerKm: rollingPaceSeconds(gps.points, 30),
+      recordedAtMs: Date.now(),
+    }).then(async (accepted) => {
+      if (!accepted || watchConnectedRef.current) return;
+      const now = Date.now();
+      if (now - watchLastStatusCheckRef.current < 10_000) return;
+      watchLastStatusCheckRef.current = now;
+      const status = await getWatchRunStatus();
+      if (
+        identityRef.current?.sessionId === identity.sessionId &&
+        status.available &&
+        status.paired &&
+        status.installed &&
+        status.reachable &&
+        status.enabled &&
+        (!status.activeSessionId ||
+          status.activeSessionId === identity.sessionId)
+      )
+        watchConnectedRef.current = true;
+    });
+  }, [
+    watchEligible,
+    activeSessionId,
+    user?.uid,
+    watchPhase,
+    timer.elapsed,
+    gps.distance,
+    gps.points,
+    writeSnapshot,
+  ]);
   const { pause: holdTrace, resume: releaseTrace } = gps;
   useEffect(() => {
     if (clockHeld) holdTrace();
@@ -1372,31 +1630,12 @@ export default function Run() {
     if (seg.type === "hard" || seg.type === "recovery") haptic("medium");
   }, [player.state.index, player, sessionSegments, audioCues, cueSeed]);
 
-  const finishRun = (distanceOverride?: number) => {
-    // The summary holds the run in memory until it is saved. Should the
-    // phone drop the page first, Home offers the run back from the stored
-    // copy, so it is kept as it finished: stopped, and resumed paused, not
-    // running on from wherever the phone is by then.
-    keepFinishedRun();
-    timer.pause();
-    gps.stop();
-    wakeLock.release();
-    dispatch({ type: "FINISH" });
+  const finishRun = (distanceOverride?: number, requireDurable = false) => {
+    // Persist the finished review before navigating. A relaunch can reopen
+    // RunSummary with its original run ID and stopped clock.
+    const finishedAt = Date.now();
     const finalDistance = distanceOverride ?? gps.distance;
     const points = requiresManualDistance(runConfig) ? [] : gps.getPoints();
-
-    // An outdoor run that never got a usable GPS lock records ≤1 point (the
-    // provisional start) and no route/distance. Say so plainly at finish
-    // rather than silently saving a blank 0 km run.
-    if (
-      distanceOverride === undefined &&
-      isOutdoorGpsRun(runConfig) &&
-      points.length < 2
-    ) {
-      toast(
-        "GPS never locked on — your time is saved, but there's no route or distance for this one."
-      );
-    }
 
     // PR H (audit P1 #9): compute route-quality metrics at finish.
     // Only meaningful for outdoor GPS runs — treadmill / manual
@@ -1417,34 +1656,90 @@ export default function Run() {
         })
       : null;
 
+    const finish: StoredRunFinish = {
+      finishedAt,
+      watchCompanionUsed: watchConnectedRef.current,
+      distance: finalDistance,
+      elapsed: timer.elapsed,
+      splits: calculateSplits(points, SPLIT_LAP_IS_METRIC),
+      elevationGain: totalElevationGain(points),
+      intervalData:
+        runConfig?.activityType === "intervals"
+          ? runConfig.intervals
+          : undefined,
+      routeQuality,
+      workPortion:
+        resumedRef.current || requiresManualDistance(runConfig)
+          ? null
+          : player.workPortion(timer.elapsed, gps.distance),
+    };
+    const previousRevision = watchRevisionRef.current;
+    if (watchEligible && identityRef.current) watchRevisionRef.current += 1;
+    const persisted = keepFinishedRun(finish);
+    if (requireDurable && !persisted) {
+      watchRevisionRef.current = previousRevision;
+      return false;
+    }
+    // A queued periodic or visibility write from the previous render must
+    // never replace the persisted finished review with an active snapshot.
+    finishedRef.current = true;
+    // An outdoor run that never got a usable GPS lock records ≤1 point.
+    if (
+      distanceOverride === undefined &&
+      isOutdoorGpsRun(runConfig) &&
+      points.length < 2
+    ) {
+      toast(
+        "GPS never locked on — your time is saved, but there's no route or distance for this one."
+      );
+    }
+    if (watchEligible && identityRef.current && user?.uid)
+      finishMoving(user.uid, identityRef.current.sessionId, finishedAt);
+    timer.pause();
+    gps.stop();
+    wakeLock.release();
+    dispatch({ type: "FINISH" });
+    if (watchEligible && identityRef.current) {
+      watchPhaseRef.current = "review";
+      void publishWatchRunSnapshot({
+        sessionId: identityRef.current.sessionId,
+        revision: watchRevisionRef.current,
+        phase: "review",
+        elapsedSeconds: finish.elapsed,
+        distanceMeters: finish.distance,
+        paceSecondsPerKm: rollingPaceSeconds(points, 30),
+        recordedAtMs: finishedAt,
+      });
+    }
+
     navigate("/run-summary", {
       state: {
+        identity: identityRef.current,
+        recordingStartedAt: recordingStartedAtRef.current,
+        finishedAt,
+        watchRevision: watchRevisionRef.current,
+        watchCompanionUsed: finish.watchCompanionUsed,
         points,
-        distance: finalDistance,
-        elapsed: timer.elapsed,
+        distance: finish.distance,
+        elapsed: finish.elapsed,
         /* The stored record stays metric like every other saved quantity —
            an imperial reader's mile laps are recomputed from the trace at
            display (splitsForDisplay), so flipping the preference never
            rewrites a run. */
-        splits: calculateSplits(points, SPLIT_LAP_IS_METRIC),
-        elevationGain: totalElevationGain(points),
+        splits: finish.splits,
+        elevationGain: finish.elevationGain,
         runConfig,
-        intervalData:
-          runConfig?.activityType === "intervals"
-            ? runConfig.intervals
-            : undefined,
-        routeQuality,
+        intervalData: finish.intervalData,
+        routeQuality: finish.routeQuality,
         // What the session's work segments covered, which the summary
         // judges the session by. On the distance the player was ticked
         // with, the run's own, not a hand-entered total; none after a
         // unverifiable resume (`resumedRef`) or when only the final whole-run distance
         // is known. Manual step completion is not a measured work distance.
-        workPortion:
-          resumedRef.current || requiresManualDistance(runConfig)
-            ? null
-            : player.workPortion(timer.elapsed, gps.distance),
+        workPortion: finish.workPortion,
       },
     });
+    return true;
   };
 
   const handlePause = () => {
@@ -1462,6 +1757,7 @@ export default function Run() {
   const handleResume = () => {
     haptic("medium");
     if (isOutdoorGpsRun(runConfig)) gps.start();
+    recordingStartedAtRef.current ??= Date.now();
     timer.resume();
     /* Resuming by hand ends an auto-pause too. Left set, the timer would
        run under an "Auto-paused" banner with the trace still held, until
@@ -1470,6 +1766,99 @@ export default function Run() {
     setAutoPaused(false);
     dispatch({ type: "RESUME" });
   };
+
+  const applyWatchCommand = useEffectEvent((command: WatchRunCommand) => {
+    const previous = watchCommandLedgerRef.current.get(command);
+    if (previous) {
+      void acknowledgeWatchRunCommand(previous);
+      return;
+    }
+    const identity = identityRef.current;
+    const context =
+      watchEligible && identity && (phase === "active" || phase === "paused")
+        ? {
+            uid: identity.uid,
+            sessionId: identity.sessionId,
+            revision: watchRevisionRef.current,
+            phase: watchPhaseRef.current,
+          }
+        : null;
+    const reason = validateWatchRunCommand(
+      command,
+      context,
+      auth.currentUser?.uid ?? null
+    );
+    let accepted = false;
+    if (!reason && identity) {
+      watchConnectedRef.current = true;
+      if (command.action === "end") {
+        accepted = finishRun(undefined, true);
+      } else {
+        const wasPaused = command.action === "resume";
+        const accumulatedSeconds = timer.getAccumulatedSeconds();
+        if (wasPaused) handleResume();
+        else handlePause();
+        const oldRevision = watchRevisionRef.current;
+        const nextPhase: WatchRunPhase = wasPaused ? "running" : "paused";
+        watchRevisionRef.current = oldRevision + 1;
+        watchPhaseRef.current = nextPhase;
+        accepted = writeSnapshot(wasPaused ? "active" : "paused", {
+          accumulatedSeconds,
+          isRunning: wasPaused,
+        });
+        if (!accepted) {
+          // No durable phone state means no accepted Watch command. Put the
+          // running state back before reporting the failed control.
+          if (wasPaused) {
+            timer.pause();
+            if (isOutdoorGpsRun(runConfig)) gps.stop();
+            dispatch({ type: "PAUSE" });
+          } else {
+            if (isOutdoorGpsRun(runConfig)) gps.start();
+            timer.resume();
+            dispatch({ type: "RESUME" });
+          }
+          watchRevisionRef.current = oldRevision;
+          watchPhaseRef.current = wasPaused ? "paused" : "running";
+        } else {
+          void publishWatchRunSnapshot({
+            sessionId: identity.sessionId,
+            revision: watchRevisionRef.current,
+            phase: nextPhase,
+            elapsedSeconds: timer.elapsed,
+            distanceMeters: gps.distance,
+            paceSecondsPerKm: rollingPaceSeconds(gps.points, 30),
+            recordedAtMs: Date.now(),
+          });
+        }
+      }
+    }
+    const ack: WatchRunCommandAck = {
+      sessionId: command.sessionId,
+      commandId: command.commandId,
+      revision: watchRevisionRef.current,
+      phase: watchPhaseRef.current,
+      accepted,
+      ...(!accepted ? { reason: reason ?? "command-failed" } : {}),
+    };
+    watchCommandLedgerRef.current.remember(ack);
+    void acknowledgeWatchRunCommand(ack);
+  });
+  useEffect(() => {
+    if (!watchEligible || !activeSessionId) return;
+    let disposed = false;
+    let unsubscribe: (() => void) | null = null;
+    void subscribeWatchRunCommands((command) =>
+      applyWatchCommand(command)
+    ).then((stop) => {
+      if (disposed) stop();
+      else unsubscribe = stop;
+    });
+    return () => {
+      disposed = true;
+      unsubscribe?.();
+    };
+  }, [watchEligible, activeSessionId]);
 
   const handleSwitchToManual = useCallback(() => {
     /* GPS failed, or the user waited 15s+ for a lock that never came. Rather than
@@ -1503,6 +1892,7 @@ export default function Run() {
         : prev
     );
     dispatch({ type: "MANUAL_FALLBACK" });
+    recordingStartedAtRef.current ??= Date.now();
     timer.start();
     haptic("heavy");
   }, [gps, timer, sessionSegments, replaceManualDistanceDraft]);
@@ -1517,6 +1907,7 @@ export default function Run() {
     replaceManualDistanceDraft(null);
     setRunConfig((prev) => (prev ? { ...prev, place: "treadmill" } : prev));
     dispatch({ type: "MANUAL_FALLBACK" });
+    recordingStartedAtRef.current ??= Date.now();
     timer.start();
     haptic("heavy");
   }, [gps, timer, replaceManualDistanceDraft]);
@@ -2001,7 +2392,8 @@ export default function Run() {
                 // A draft reset can render before navigation unmounts Run.
                 // Retire the writer before clearing the discarded checkpoint.
                 startedAtRef.current = null;
-                if (profile?.uid) clearStoredRun(profile.uid);
+                if (profile?.uid)
+                  discardStoredSession(profile.uid, identityRef.current);
                 replaceManualDistanceDraft(null);
                 navigate("/");
               }}
@@ -2219,7 +2611,8 @@ export default function Run() {
                   // Phase B3: clear the persisted snapshot so a
                   // discarded sub-threshold run doesn't reappear in
                   // the chooser on next /run open.
-                  if (profile?.uid) clearStoredRun(profile.uid);
+                  if (profile?.uid)
+                    discardStoredSession(profile.uid, identityRef.current);
                   navigate("/");
                 } else {
                   setShowDiscardConfirm(true);
@@ -2285,7 +2678,8 @@ export default function Run() {
           wakeLock.release();
           // Phase B3: clear so the discarded run doesn't get
           // resurrected by the chooser on next mount.
-          if (profile?.uid) clearStoredRun(profile.uid);
+          if (profile?.uid)
+            discardStoredSession(profile.uid, identityRef.current);
           navigate("/");
         }}
         onCancel={() => setShowDiscardConfirm(false)}

@@ -26,14 +26,26 @@ import type { DistanceUnit } from "@/lib/distanceUnits";
 import { distanceLabel2 } from "@/lib/runLabels";
 import { runNameOf } from "@/lib/runName";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
+import type { HeartRateSummary } from "@/lib/hrZones";
 
 /** A finished run, as the finish screen holds it. */
 export interface FinishedRun {
+  /** Stable phone-owned identity, allocated before recording. */
+  identity?: RunSessionIdentity;
   /** The trace, after privacy zones are cut out of it. */
   points: GPSPoint[];
   /** Original first-fix epoch, before privacy zones remove any points.
    *  Absent for older callers and runs with no recorded trace. */
   startedAt?: number;
+  /** Actual first timer start, after GPS acquisition/countdown. Apple Health
+   *  uses this with the active `elapsed` duration; the run's original day
+   *  remains pinned to `identity.startedAt`. */
+  recordingStartedAt?: number;
+  /** Actual recording end, independent of when Save is tapped. */
+  finishedAt?: number;
+  /** Watch-derived summary; raw samples never enter the run document. */
+  heartRate?: HeartRateSummary | null;
   /** Metres: the distance edited on the finish screen, else as tracked. */
   distance: number;
   /** Seconds. */
@@ -79,7 +91,16 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
   // plan metadata: they are saved as freeform, so the block is always
   // well formed.
   const plan = run.runConfig?.planMetadata ?? freeformPlanMetadata("freeform");
-  const startedAt = startOf(run, now);
+  const startedAt = run.identity
+    ? new Date(run.identity.startedAt)
+    : startOf(run, now);
+  const recordingStartedAt =
+    typeof run.recordingStartedAt === "number" &&
+    Number.isFinite(run.recordingStartedAt) &&
+    run.recordingStartedAt > 0 &&
+    (run.finishedAt === undefined || run.recordingStartedAt <= run.finishedAt)
+      ? run.recordingStartedAt
+      : null;
   return {
     // The name it is posted under, kept with the run.
     name: runNameOf(run, now),
@@ -94,11 +115,24 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
     // its finish screen named none.
     bestEfforts: run.isInvalid ? [] : run.bestEfforts,
     startedAt: Timestamp.fromDate(startedAt),
+    ...(recordingStartedAt !== null
+      ? { recordingStartedAt: Timestamp.fromMillis(recordingStartedAt) }
+      : {}),
     completedAt: Timestamp.fromDate(now),
+    ...(run.finishedAt !== undefined
+      ? { recordingEndedAt: Timestamp.fromMillis(run.finishedAt) }
+      : {}),
+    ...(run.identity
+      ? {
+          sessionId: run.identity.sessionId,
+          originTimeZone: run.identity.originTimeZone,
+        }
+      : {}),
+    ...(run.heartRate ? { heartRate: run.heartRate } : {}),
     // Lift3: a run belongs to the local day it started, not the day Save
     // was tapped, so a run begun before midnight counts on the day it
     // began. The server's sweeps and the recovery path query by it.
-    date: localDateString(startedAt),
+    date: run.identity?.startLocalDate ?? localDateString(startedAt),
     notes: run.notes.trim(),
     // RUN-03 and A6: null, not absent, when skipped or not judged, so
     // the field's shape does not split.
@@ -242,6 +276,11 @@ export interface RunCompletion {
   share?: SessionShareAction;
 }
 
+/** Mint a canonical run ID at Start, before recording or review. */
+export function allocateRunId(uid: string): string {
+  return doc(collection(db, "users", uid, "runs")).id;
+}
+
 /**
  * Saves a finished run through the durable queue and builds its post.
  *
@@ -273,7 +312,13 @@ export function completeRun({
   unit: DistanceUnit;
   now?: Date;
 }): RunCompletion {
-  const id = runId ?? doc(collection(db, "users", uid, "runs")).id;
+  if (
+    run.identity &&
+    (run.identity.uid !== uid ||
+      (runId !== null && runId !== run.identity.runId))
+  )
+    throw new Error("Run identity does not match the signed-in account.");
+  const id = run.identity?.runId ?? runId ?? allocateRunId(uid);
   if (!alreadySaved)
     queueDurableWrite(uid, `users/${uid}/runs`, id, runDocument(run, now));
   if (navigator.onLine) void flushQueue(db, uid).catch(() => {});

@@ -45,8 +45,33 @@ const H = vi.hoisted(() => ({
     await wait();
     return true;
   }),
+  native: false,
+  watchSync: vi.fn(async (_uid: string | null) => {}),
+  watchClear: vi.fn(async () => {}),
+  clearHeartRateSessionsForUser: vi.fn(),
+  clearWatchRunSyncStatus: vi.fn(),
+  stopHealthExportReconciler: vi.fn(),
+  startHealthExportReconciler: vi.fn(() => H.stopHealthExportReconciler),
+  stopWatchRunSyncReconciler: vi.fn(),
+  startWatchRunSyncReconciler: vi.fn(() => H.stopWatchRunSyncReconciler),
 }));
 const mockAuth = H.mockAuth;
+
+vi.mock("../platform", () => ({ isNativePlatform: () => H.native }));
+vi.mock("../watchRunBridge", () => ({
+  syncWatchRunAccount: H.watchSync,
+  clearWatchRunAccountState: H.watchClear,
+}));
+vi.mock("../healthWorkoutExport", () => ({
+  startHealthExportReconciler: H.startHealthExportReconciler,
+}));
+vi.mock("../watchRunSyncStatus", () => ({
+  startWatchRunSyncReconciler: H.startWatchRunSyncReconciler,
+  clearWatchRunSyncStatus: H.clearWatchRunSyncStatus,
+}));
+vi.mock("../heartRateSession", () => ({
+  clearHeartRateSessionsForUser: H.clearHeartRateSessionsForUser,
+}));
 
 vi.mock("../firebase", () => ({
   auth: H.mockAuth,
@@ -172,6 +197,15 @@ async function emit(uid: string | null) {
 }
 
 beforeEach(() => {
+  H.native = false;
+  H.watchSync.mockReset().mockResolvedValue(undefined);
+  H.watchClear.mockClear();
+  H.clearHeartRateSessionsForUser.mockClear();
+  H.clearWatchRunSyncStatus.mockClear();
+  H.stopHealthExportReconciler.mockClear();
+  H.startHealthExportReconciler.mockClear();
+  H.stopWatchRunSyncReconciler.mockClear();
+  H.startWatchRunSyncReconciler.mockClear();
   resetFirestore();
   mockAuth.currentUser = null;
   H.authCb = null;
@@ -194,6 +228,39 @@ afterEach(() => {
 });
 
 describe("AuthProvider — account switch isolation", () => {
+  it("clears native Watch state before exposing a new account", async () => {
+    H.native = true;
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    await waitFor(() =>
+      expect(H.startHealthExportReconciler).toHaveBeenCalledWith("A")
+    );
+    await waitFor(() =>
+      expect(H.startWatchRunSyncReconciler).toHaveBeenCalledWith("A")
+    );
+
+    let finishClear!: () => void;
+    const clearB = new Promise<void>((resolve) => (finishClear = resolve));
+    H.watchSync.mockImplementation(async (uid) => {
+      if (uid === "B") await clearB;
+    });
+    await emit("B");
+    expect(H.watchSync).toHaveBeenCalledWith("B");
+    expect(state()).toMatchObject({ u: "null", p: "null", loading: "true" });
+    await act(async () => finishClear());
+    await waitFor(() => expect(state().u).toBe("B"));
+    await waitFor(() =>
+      expect(H.startHealthExportReconciler).toHaveBeenCalledWith("B")
+    );
+    await waitFor(() =>
+      expect(H.startWatchRunSyncReconciler).toHaveBeenCalledWith("B")
+    );
+    expect(H.stopHealthExportReconciler).toHaveBeenCalled();
+    expect(H.stopWatchRunSyncReconciler).toHaveBeenCalled();
+    expect(H.clearHeartRateSessionsForUser).toHaveBeenCalledWith("A");
+    expect(H.clearWatchRunSyncStatus).toHaveBeenCalledWith("A");
+  });
+
   it("B wins when A's read resolves LAST", async () => {
     deferReads();
     await emit("A");

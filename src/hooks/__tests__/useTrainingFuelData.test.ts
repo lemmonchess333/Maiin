@@ -20,7 +20,7 @@ const PROGRAM = "users/u1/programState/current";
 const subscriptions = () =>
   readLog().filter((read) => read.op === "onSnapshot");
 
-it("shares three subscriptions and live corrections until the last consumer leaves", async () => {
+it("shares its subscriptions and live corrections until the last consumer leaves", async () => {
   seedFirestore({
     [WORKOUT]: { date: TODAY, totalCalories: 250 },
     [PROGRAM]: { weekNumber: 2 },
@@ -31,6 +31,7 @@ it("shares three subscriptions and live corrections until the last consumer leav
   expect(subscriptions().map((read) => read.path)).toEqual([
     PROGRAM,
     "users/u1/workouts",
+    "users/u1/runs",
     "users/u1/runs",
   ]);
   expect(first.result.current).toBe(second.result.current);
@@ -49,13 +50,13 @@ it("shares three subscriptions and live corrections until the last consumer leav
   await flushSnapshots();
   expect(second.result.current.workouts[0].totalCalories).toBe(300);
   expect(second.result.current.program?.weekNumber).toBe(3);
-  expect(subscriptions()).toHaveLength(3);
+  expect(subscriptions()).toHaveLength(4);
   second.unmount();
 
   seedFirestore({ [WORKOUT]: { date: TODAY, totalCalories: 175 } });
   const reopened = renderHook(() => useTrainingFuelData("u1", TODAY));
   await flushSnapshots();
-  expect(subscriptions()).toHaveLength(6);
+  expect(subscriptions()).toHaveLength(8);
   expect(reopened.result.current.workouts[0].totalCalories).toBe(175);
   expect(writeLog()).toEqual([]);
 });
@@ -76,7 +77,7 @@ it("clears account data on sign-out and refreshes the rolling window on a new da
   expect(view.result.current.workouts).toEqual([]);
   expect(view.result.current.program).toBeNull();
   expect(view.result.current.workoutsLoaded).toBe(false);
-  expect(subscriptions()).toHaveLength(3);
+  expect(subscriptions()).toHaveLength(4);
 
   view.rerender({ uid: "u2", today: TODAY });
   await flushSnapshots();
@@ -90,7 +91,7 @@ it("clears account data on sign-out and refreshes the rolling window on a new da
   expect(view.result.current.workouts).toEqual([
     { date: TODAY, totalCalories: 250 },
   ]);
-  expect(subscriptions()).toHaveLength(9);
+  expect(subscriptions()).toHaveLength(12);
 });
 
 it("keeps the bounded history and excludes invalid runs from the shared burn data", async () => {

@@ -28,8 +28,8 @@
  *
  * Schema is versioned (`v: 2`); a bump invalidates every existing
  * entry on the next read (v1 was the single-blob layout), so a format
- * change ships without a migration script. The 6-hour cutoff discards
- * a run abandoned and reopened days later.
+ * change ships without a migration script. The 6-hour cutoff discards an
+ * abandoned active run; a finished review remains recoverable for seven days.
  *
  * Write path is best-effort: every storage op goes through `localStore`,
  * which never throws, so a quota-exceeded or private-mode environment
@@ -39,7 +39,12 @@
  * Absent storage (SSR / Node tests) simply reads as "nothing stored".
  */
 
-import type { GPSPoint } from "./gps";
+import type { GPSPoint, Split } from "./gps";
+import type { RouteQuality } from "./routeQuality";
+import {
+  parseRunSessionIdentity,
+  type RunSessionIdentity,
+} from "./runSessionIdentity";
 import { readString, remove, writeJson } from "@/lib/localStore";
 import {
   parseSessionPlayerCheckpoint,
@@ -98,6 +103,21 @@ export function runResumeChunkKey(uid: string, i: number): string {
  *  finishers do not pause for 6h) while keeping ancient sessions out
  *  of the prompt rotation. */
 export const RUN_RESUME_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+/** A finished run can wait for review after the app is relaunched. */
+export const RUN_FINISHED_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Small finish data kept beside the chunked trace until review or discard. */
+export interface StoredRunFinish {
+  finishedAt: number;
+  watchCompanionUsed?: boolean;
+  distance: number;
+  elapsed: number;
+  splits: Split[];
+  elevationGain: number;
+  intervalData?: RunConfig["intervals"];
+  routeQuality: RouteQuality | null;
+  workPortion: { seconds: number; meters: number } | null;
+}
 
 export interface StoredRun {
   /** Schema version. Hard gate — mismatch → discard on read. */
@@ -105,8 +125,15 @@ export interface StoredRun {
   /** Snapshot of the run config at start, including Phase B1
    *  planMetadata so the resumed run keeps its plan adherence. */
   config: RunConfig;
+  /** Present for new runs; older in-flight snapshots can resume without it. */
+  identity?: RunSessionIdentity;
+  /** Watch command revision retained through app death. */
+  watchRevision?: number;
   /** ms epoch when the run originally started. */
   startedAt: number;
+  /** First timer start, after GPS acquisition/countdown. Omitted while the
+   *  run is still preparing or on snapshots made before this field existed. */
+  recordingStartedAt?: number;
   /** Cumulative elapsed seconds at last write — what
    *  `useRunTimer.accumulatedRef` held. Combined with `isRunning`
    *  and `lastWriteAt` on rehydrate. */
@@ -120,10 +147,11 @@ export interface StoredRun {
   points: GPSPoint[];
   /** ms epoch of the most recent write. Drives the 6h cutoff. */
   lastWriteAt: number;
-  /** Run phase at write time. Only the two active states persist;
-   *  `waiting` runs aren't worth recovering and `finished` runs
-   *  belong in RunSummary, not Resume. */
-  phase: "active" | "paused";
+  /** Run phase at write time. A finished snapshot carries the review data;
+   *  `/run` routes it to RunSummary instead of restarting its timer. */
+  phase: "active" | "paused" | "finished";
+  /** Present exactly when Finish has produced a recoverable review. */
+  finish?: StoredRunFinish;
   /** Undefined on legacy snapshots; null means optional coaching was invalid. */
   playerCheckpoint?: SessionPlayerCheckpoint | null;
   /** Optional raw manual/treadmill input, in the unit the runner typed. */
@@ -135,11 +163,15 @@ export interface StoredRun {
 interface StoredMeta {
   v: typeof RUN_RESUME_SCHEMA_VERSION;
   config: RunConfig;
+  identity?: unknown;
+  watchRevision?: unknown;
   startedAt: number;
+  recordingStartedAt?: number;
   accumulatedSeconds: number;
   isRunning: boolean;
   lastWriteAt: number;
-  phase: "active" | "paused";
+  phase: "active" | "paused" | "finished";
+  finish?: unknown;
   pointCount: number;
   chunkCount: number;
   playerCheckpoint?: unknown;
@@ -190,6 +222,10 @@ export function writeStoredRun(uid: string, snapshot: StoredRun): boolean {
   const sameRun =
     prior !== null &&
     prior.startedAt === snapshot.startedAt &&
+    (prior.identity === undefined && snapshot.identity === undefined
+      ? true
+      : parseRunSessionIdentity(prior.identity, uid)?.sessionId ===
+        snapshot.identity?.sessionId) &&
     newCount >= prior.pointCount;
 
   if (!sameRun && prior) {
@@ -218,11 +254,19 @@ export function writeStoredRun(uid: string, snapshot: StoredRun): boolean {
   const meta: StoredMeta = {
     v: RUN_RESUME_SCHEMA_VERSION,
     config: snapshot.config,
+    ...(snapshot.identity ? { identity: snapshot.identity } : {}),
+    ...(snapshot.watchRevision !== undefined
+      ? { watchRevision: snapshot.watchRevision }
+      : {}),
     startedAt: snapshot.startedAt,
+    ...(snapshot.recordingStartedAt !== undefined
+      ? { recordingStartedAt: snapshot.recordingStartedAt }
+      : {}),
     accumulatedSeconds: snapshot.accumulatedSeconds,
     isRunning: snapshot.isRunning,
     lastWriteAt: snapshot.lastWriteAt,
     phase: snapshot.phase,
+    ...(snapshot.finish ? { finish: snapshot.finish } : {}),
     pointCount: newCount,
     chunkCount: newChunks,
     ...(snapshot.playerCheckpoint !== undefined
@@ -278,7 +322,24 @@ export function readStoredRun(
     clearStoredRun(uid);
     return null;
   }
-  if (now - parsed.lastWriteAt > RUN_RESUME_MAX_AGE_MS) {
+  const maxAge =
+    parsed.phase === "finished"
+      ? RUN_FINISHED_MAX_AGE_MS
+      : RUN_RESUME_MAX_AGE_MS;
+  if (now - parsed.lastWriteAt > maxAge) {
+    clearStoredRun(uid);
+    return null;
+  }
+  const identity =
+    parsed.identity === undefined
+      ? null
+      : parseRunSessionIdentity(parsed.identity, uid);
+  if (parsed.identity !== undefined && !identity) {
+    clearStoredRun(uid);
+    return null;
+  }
+  const finish = parseStoredRunFinish(parsed.finish);
+  if (parsed.phase === "finished" && !finish) {
     clearStoredRun(uid);
     return null;
   }
@@ -332,12 +393,20 @@ export function readStoredRun(
   return {
     v: parsed.v,
     config: parsed.config,
+    ...(identity ? { identity } : {}),
+    ...(typeof parsed.watchRevision === "number"
+      ? { watchRevision: parsed.watchRevision }
+      : {}),
     startedAt: parsed.startedAt,
+    ...(parsed.recordingStartedAt !== undefined
+      ? { recordingStartedAt: parsed.recordingStartedAt }
+      : {}),
     accumulatedSeconds: parsed.accumulatedSeconds,
     isRunning: parsed.isRunning,
     points,
     lastWriteAt: parsed.lastWriteAt,
     phase: parsed.phase,
+    ...(finish ? { finish } : {}),
     ...(parsed.playerCheckpoint !== undefined
       ? {
           playerCheckpoint: parseSessionPlayerCheckpoint(
@@ -367,18 +436,35 @@ export function readStoredRunSummary(
   if (!uid) return null;
   const meta = readMetaRaw(uid);
   if (!meta || meta.v !== RUN_RESUME_SCHEMA_VERSION) return null;
-  if (now - meta.lastWriteAt > RUN_RESUME_MAX_AGE_MS) return null;
+  const maxAge =
+    meta.phase === "finished" ? RUN_FINISHED_MAX_AGE_MS : RUN_RESUME_MAX_AGE_MS;
+  if (now - meta.lastWriteAt > maxAge) return null;
+  const identity =
+    meta.identity === undefined
+      ? null
+      : parseRunSessionIdentity(meta.identity, uid);
+  if (meta.identity !== undefined && !identity) return null;
+  const finish = parseStoredRunFinish(meta.finish);
+  if (meta.phase === "finished" && !finish) return null;
   const manualDistanceDraft = parseManualDistanceDraft(
     meta.manualDistanceDraft
   );
   return {
     v: meta.v,
     config: meta.config,
+    ...(identity ? { identity } : {}),
+    ...(typeof meta.watchRevision === "number"
+      ? { watchRevision: meta.watchRevision }
+      : {}),
     startedAt: meta.startedAt,
+    ...(meta.recordingStartedAt !== undefined
+      ? { recordingStartedAt: meta.recordingStartedAt }
+      : {}),
     accumulatedSeconds: meta.accumulatedSeconds,
     isRunning: meta.isRunning,
     lastWriteAt: meta.lastWriteAt,
     phase: meta.phase,
+    ...(finish ? { finish } : {}),
     ...(manualDistanceDraft ? { manualDistanceDraft } : {}),
   };
 }
@@ -429,12 +515,38 @@ function isValidMeta(value: unknown): value is StoredMeta {
   const r = value as Record<string, unknown>;
   if (typeof r.v !== "number") return false;
   if (typeof r.startedAt !== "number") return false;
+  if (
+    r.recordingStartedAt !== undefined &&
+    (!Number.isFinite(r.recordingStartedAt) ||
+      (r.recordingStartedAt as number) <= 0)
+  )
+    return false;
   if (typeof r.accumulatedSeconds !== "number") return false;
   if (typeof r.isRunning !== "boolean") return false;
   if (typeof r.lastWriteAt !== "number") return false;
   if (typeof r.pointCount !== "number") return false;
   if (typeof r.chunkCount !== "number") return false;
-  if (r.phase !== "active" && r.phase !== "paused") return false;
+  if (
+    r.watchRevision !== undefined &&
+    (!Number.isSafeInteger(r.watchRevision) || (r.watchRevision as number) < 0)
+  )
+    return false;
+  if (r.phase !== "active" && r.phase !== "paused" && r.phase !== "finished")
+    return false;
   if (!r.config || typeof r.config !== "object") return false;
   return true;
+}
+
+function parseStoredRunFinish(value: unknown): StoredRunFinish | null {
+  if (!value || typeof value !== "object") return null;
+  const finish = value as Record<string, unknown>;
+  if (
+    !Number.isFinite(finish.finishedAt) ||
+    !Number.isFinite(finish.distance) ||
+    !Number.isFinite(finish.elapsed) ||
+    !Array.isArray(finish.splits) ||
+    !Number.isFinite(finish.elevationGain)
+  )
+    return null;
+  return value as StoredRunFinish;
 }
