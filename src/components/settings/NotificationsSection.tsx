@@ -258,8 +258,10 @@ export default function NotificationsSection({
     return sorted[0];
   };
 
+  const streakReminderOn =
+    streakReminder.enabled && streakReminder.primingShown;
   const anyReminderOn =
-    mealReminders.enabled || workoutReminders.enabled || streakReminder.enabled;
+    mealReminders.enabled || workoutReminders.enabled || streakReminderOn;
 
   return (
     <AccordionSection
@@ -446,32 +448,41 @@ export default function NotificationsSection({
           </div>
           <Toggle
             className="ml-auto"
-            checked={streakReminder.enabled}
+            checked={streakReminderOn}
             label="Toggle streak reminder"
             onChange={async () => {
               haptic("light");
-              const next = !streakReminder.enabled;
-              trackSettingsEvent("settings_toggle_changed", {
-                toggle: "streak_reminder",
-                value: next,
-              });
-              if (next && permission === "default") {
-                /* Route via lib/notifications.requestNotificationPermission
-                   so iOS Capacitor triggers a native LocalNotifications
-                   prompt rather than the WebView Notification API
-                   (which doesn't surface an iOS system prompt). */
-                await requestNotificationPermission();
-                refreshPermission();
+              const next = !streakReminderOn;
+              try {
+                if (next) {
+                  /* The native LocalNotifications permission is distinct
+                     from remote push. Never show an enabled switch after a
+                     denied system request. */
+                  const granted = await requestNotificationPermission();
+                  refreshPermission();
+                  if (!granted) {
+                    toast.error(
+                      "Allow notifications in your device settings to turn this on."
+                    );
+                    return;
+                  }
+                }
+                await updateStreakReminder({
+                  enabled: next,
+                  primingShown: true,
+                });
+                trackSettingsEvent("settings_toggle_changed", {
+                  toggle: "streak_reminder",
+                  value: next,
+                });
+              } catch {
+                toast.error("Couldn't save reminder settings. Try again.");
               }
-              // Toggling via Settings also counts as the user having
-              // decided about priming — otherwise a user who opts in via
-              // Settings would still see the modal later.
-              await updateStreakReminder({ enabled: next, primingShown: true });
             }}
           />
         </div>
 
-        {streakReminder.enabled && (
+        {streakReminderOn && (
           <ReminderDiagnostics
             next={nextForCategory("streak")}
             formatNextFire={formatNextFire}
@@ -479,14 +490,20 @@ export default function NotificationsSection({
           />
         )}
 
-        {streakReminder.enabled && (
+        {streakReminderOn && (
           <div className={ROW}>
             <span className="text-sm text-foreground">Reminder time</span>
             <input
               type="time"
               aria-label="Streak reminder time"
               value={streakReminder.time}
-              onChange={(e) => updateStreakReminder({ time: e.target.value })}
+              onChange={(e) => {
+                void updateStreakReminder({ time: e.target.value }).catch(
+                  () => {
+                    toast.error("Couldn't save reminder time. Try again.");
+                  }
+                );
+              }}
               className="ds-input ml-auto w-auto min-w-0 max-w-full text-sm"
             />
           </div>

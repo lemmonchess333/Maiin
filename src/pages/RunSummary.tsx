@@ -1905,7 +1905,13 @@ export default function RunSummary() {
                   </p>
                 );
               })()}
-            {saved && <CompletionExtras share={shareAction} />}
+            {saved && (
+              <CompletionExtras
+                share={shareAction}
+                kind="run"
+                activationJourneyV2={profile?.activationJourneyVersion === 2}
+              />
+            )}
 
             {/* The save action the post-save fields never had. It appears
                 only once they differ from what was written, so a user who

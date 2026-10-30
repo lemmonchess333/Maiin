@@ -1948,6 +1948,7 @@ export default function WorkoutSession({
           sessionVariant={sessionVariant}
           completing={completing}
           saved={saved}
+          activationJourneyV2={profile?.activationJourneyVersion === 2}
           saveStatus={saveStatus}
           planContext={planContext}
           share={shareAction}

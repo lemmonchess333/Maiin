@@ -60,6 +60,8 @@ export type LifecycleEvent =
   | "food_logged"
   | "first_week_card_viewed"
   | "first_week_task_selected"
+  | "first_week_reminder_offered"
+  | "first_week_reminder_choice"
   | "trial_started"
   | "subscription_started"
   // Companion batch B0 — the training loop, as distinct from the
@@ -133,6 +135,9 @@ export interface LifecycleEventMetadata {
   task?: "workout" | "run";
   /** First-week card: local calendar day 1 through 7. */
   firstWeekDay?: number;
+  /** Saved-session reminder offer: delivery path and explicit answer. */
+  reminderChannel?: "push" | "local";
+  reminderOutcome?: "enabled" | "later" | "denied" | "setup_failed";
   /**
    * session_started (runs only): the run did not match its planned slot.
    * Read straight from `computePlanMetadata`, which already decides this.

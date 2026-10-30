@@ -57,6 +57,7 @@ import {
   deferReads,
   pendingReads,
   releaseRead,
+  failNextFirestore,
 } from "@/test/firestoreHarness";
 
 const U1 = "users/u1/settings/push";
@@ -128,6 +129,22 @@ describe("usePushSettings — uid safety", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.consent.enabled).toBe(true);
     expect(result.current.consent.challenges).toBe(false);
+    expect(result.current.configured).toBe(true);
+    expect(result.current.failed).toBe(false);
+  });
+
+  it("distinguishes an untouched account from an unreadable consent", async () => {
+    resetFirestore();
+    const empty = renderHook(() => usePushSettings());
+    await waitFor(() => expect(empty.result.current.loading).toBe(false));
+    expect(empty.result.current.configured).toBe(false);
+    expect(empty.result.current.failed).toBe(false);
+    empty.unmount();
+
+    failNextFirestore("getDoc", { path: U1, code: "unavailable" });
+    const failed = renderHook(() => usePushSettings());
+    await waitFor(() => expect(failed.result.current.failed).toBe(true));
+    expect(failed.result.current.configured).toBe(false);
   });
 
   it("patches only the chosen switch and confirms the write before enabling it", async () => {
