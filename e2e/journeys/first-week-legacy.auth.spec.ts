@@ -21,7 +21,7 @@ test("an old client still sees the offer and original first-week tasks", async (
   try {
     await openJourney(page, nextWeekday(1));
     // `openJourney` registered the real callable route. This route runs
-    // first and removes the one field an older app would not send, then
+    // first and removes the fields an older app would not send, then
     // forwards the request to that same handler.
     await page.route(
       "**/demo-tropos/us-central1/completeOnboarding",
@@ -34,6 +34,7 @@ test("an old client still sees the offer and original first-week tasks", async (
           data: Record<string, unknown>;
         };
         delete body.data.activationJourneyVersion;
+        delete body.data.onboardingPlatform;
         await route.fallback({ postData: JSON.stringify(body) });
       }
     );
