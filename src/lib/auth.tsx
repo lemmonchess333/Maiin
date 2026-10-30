@@ -171,6 +171,15 @@ export interface UserProfileCore {
    * Absent on existing accounts and clients using the legacy journey.
    */
   activationJourneyVersion?: 2;
+  /** First completed setup's platform, stamped by the server for v2. */
+  onboardingPlatform?: "ios" | "web" | "android";
+  /** Training type at the first completed setup, before later plan edits. */
+  onboardingSport?: "runner" | "lifter" | "hybrid" | "other";
+  /** First provider-verified trial and payment times. Server-owned. */
+  activationBillingFirsts?: {
+    trial?: { atMs: number; source: "ios_iap" | "stripe" };
+    paid?: { atMs: number; source: "ios_iap" | "stripe" };
+  };
 }
 
 /** Physical attributes and fitness metrics */

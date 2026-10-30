@@ -153,6 +153,7 @@ describe("onboarding chapters and commit", () => {
     expect(complete).toHaveBeenCalledTimes(1);
     const payload = complete.mock.calls[0][0];
     expect(payload.activationJourneyVersion).toBe(2);
+    expect(payload.onboardingPlatform).toBe("web");
     expect(payload.profileData).not.toHaveProperty("activationJourneyVersion");
     expect(payload.programState).toBe(preview.programState);
     expect(payload.weekSchedule).toBe(preview.weekSchedule);

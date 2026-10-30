@@ -77,6 +77,7 @@ export interface ProfileFieldEntry {
 }
 
 export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
+  { field: "activationBillingFirsts", sanitized: false, serverOnly: true },
   { field: "activationJourneyVersion", sanitized: false, serverOnly: true },
   { field: "activityLevel", sanitized: true },
   { field: "adaptiveCapState", sanitized: true },
@@ -171,6 +172,8 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // Stamped by `completeOnboarding` alone: the day setup finished, which a
   // new runner's first weeks count from.
   { field: "onboardingCompletedAt", sanitized: false, serverOnly: true },
+  { field: "onboardingPlatform", sanitized: false, serverOnly: true },
+  { field: "onboardingSport", sanitized: false, serverOnly: true },
   { field: "photoURL", sanitized: true },
   { field: "preferredDistanceUnit", sanitized: true },
   { field: "preferredHeightUnit", sanitized: true },

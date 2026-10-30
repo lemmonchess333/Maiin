@@ -84,6 +84,8 @@ describe("readEntitlement", () => {
       sandbox: false,
       syncedAtMs: NOW,
       trial: null,
+      purchaseAtMs: NOW - DAY,
+      periodType: "normal",
     });
   });
 

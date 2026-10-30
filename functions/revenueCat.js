@@ -18,6 +18,7 @@ const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const rateLimiter = require("./rateLimiter");
 const entitlement = require("./lib/revenueCatEntitlement");
 const { readReportedPrice } = require("./lib/trialReminder");
+const activationBilling = require("./lib/activationBilling");
 
 // Secret Manager bindings (docs/iap/revenuecat-setup.md, Part C). A deploy
 // that binds an unprovisioned secret fails, so both must exist before this
@@ -115,6 +116,14 @@ async function syncUser({
       sandboxAllowed,
       reportedPrice,
     });
+    const observation = activationBilling.revenueCatObservation(snapshot, plan);
+    const firsts = activationBilling.nextBillingFirsts(
+      userData.activationBillingFirsts,
+      observation
+    );
+    if (firsts) {
+      plan.write = { ...plan.write, activationBillingFirsts: firsts };
+    }
     if (plan.write) {
       txn.set(
         userRef,

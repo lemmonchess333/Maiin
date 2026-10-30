@@ -31,6 +31,8 @@ if (!admin.apps.length) {
 // functions.
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
+const activationBilling = require("./lib/activationBilling");
+const { activationSport } = require("./lib/firstWeekActivation");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
 const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
@@ -768,6 +770,7 @@ exports.completeOnboarding = functions
         programState,
         weekSchedule: rawWeekSchedule,
         activationJourneyVersion,
+        onboardingPlatform,
       } = data;
       // The cohort is chosen by this callable, never by a profile write.
       // Omitted means an older client and keeps the legacy journey.
@@ -778,6 +781,16 @@ exports.completeOnboarding = functions
         throw new functions.https.HttpsError(
           "invalid-argument",
           "Unsupported activation journey version."
+        );
+      }
+      if (
+        onboardingPlatform !== undefined &&
+        (activationJourneyVersion !== 2 ||
+          !activationBilling.validOnboardingPlatform(onboardingPlatform))
+      ) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Unsupported onboarding platform."
         );
       }
       if (
@@ -958,8 +971,14 @@ exports.completeOnboarding = functions
         if (!alreadyCompleted) {
           nextProfileData.onboardingCompletedAt =
             admin.firestore.FieldValue.serverTimestamp();
+          nextProfileData.onboardingSport = activationSport(
+            nextProfileData.athleteType
+          );
           if (activationJourneyVersion === 2) {
             nextProfileData.activationJourneyVersion = 2;
+            if (onboardingPlatform) {
+              nextProfileData.onboardingPlatform = onboardingPlatform;
+            }
           }
         }
         if (existing.exists) {
@@ -2175,6 +2194,20 @@ exports._isAllowedStripeReturnUrl = _isAllowedStripeReturnUrl;
 // STRIPE WEBHOOK — subscription lifecycle events
 // ══════════════════════════════════════════════
 
+async function recordActivationBillingFirst(db, uid, observation) {
+  if (!observation) return;
+  const userRef = db.collection("users").doc(uid);
+  await db.runTransaction(async (txn) => {
+    const snap = await txn.get(userRef);
+    if (!snap.exists) return;
+    const firsts = activationBilling.nextBillingFirsts(
+      snap.data().activationBillingFirsts,
+      observation
+    );
+    if (firsts) txn.update(userRef, { activationBillingFirsts: firsts });
+  });
+}
+
 exports.stripeWebhook = functions
   // ⛔ NEVER add `enforceAppCheck: true` here. This is an EXTERNAL webhook —
   // Stripe's servers call it and cannot send a Firebase App Check token, so
@@ -2354,6 +2387,26 @@ exports.stripeWebhook = functions
             .collection("users")
             .doc(firebaseUid)
             .set(update, { merge: true });
+          if (!completedDecision.conflict) {
+            if (
+              event.livemode === true &&
+              session.mode === "subscription" &&
+              session.subscription &&
+              session.payment_status === "no_payment_required" &&
+              session.metadata?.activationTrial === "true"
+            ) {
+              await recordActivationBillingFirst(dbRef, firebaseUid, {
+                kind: "trial",
+                source: "stripe",
+                atMs: event.created * 1000,
+              });
+            }
+            await recordActivationBillingFirst(
+              dbRef,
+              firebaseUid,
+              activationBilling.stripePaidObservation(event)
+            );
+          }
           console.log(`stripeWebhook: activated pro for ${firebaseUid}`);
           break;
         }
@@ -2462,10 +2515,61 @@ exports.stripeWebhook = functions
             },
             { merge: true }
           );
+          if (
+            event.livemode === true &&
+            !updateDecision.conflict &&
+            tier === "pro"
+          ) {
+            await recordActivationBillingFirst(
+              dbRef,
+              userDoc.id,
+              activationBilling.stripeTrialObservation(subscription)
+            );
+          }
 
           console.log(
             `stripeWebhook: updated ${userDoc.id} to ${tier} (status: ${status})`
           );
+          break;
+        }
+
+        case "invoice.paid": {
+          const invoice = event.data.object;
+          const paid = activationBilling.stripePaidObservation(event);
+          if (!paid || !invoice.customer) break;
+          const usersSnap = await dbRef
+            .collection("users")
+            .where("stripeCustomerId", "==", invoice.customer)
+            .limit(1)
+            .get();
+          if (usersSnap.empty) break;
+          const userDoc = usersSnap.docs[0];
+          if (
+            !(await accountDeletionLocks.shouldSystemWriteProceed(
+              dbRef,
+              userDoc.id,
+              "stripeWebhook:invoice.paid"
+            ))
+          ) {
+            await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
+              provider: "stripe",
+              externalTxnId: invoice.id || null,
+              providerEventId: event.id,
+              eventType: "invoice.paid",
+              uid: userDoc.id,
+            });
+            break;
+          }
+          const invoiceSubscription =
+            invoice.subscription ||
+            invoice.parent?.subscription_details?.subscription;
+          if (
+            userDoc.data().subscriptionSource !== "stripe" ||
+            !invoiceSubscription ||
+            invoiceSubscription !== userDoc.data().stripeSubscriptionId
+          )
+            break;
+          await recordActivationBillingFirst(dbRef, userDoc.id, paid);
           break;
         }
 
