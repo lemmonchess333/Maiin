@@ -50,6 +50,7 @@ function checkoutCompleted(id) {
     id,
     object: "event",
     type: "checkout.session.completed",
+    livemode: true,
     created: 1_790_000_000,
     data: {
       object: {
@@ -104,6 +105,93 @@ afterEach(() => {
 });
 
 describe("stripeWebhook — the stripeEvents dedup record", () => {
+  it("records a completed trial and the later first real charge, but not a free invoice", async () => {
+    const db = useMemoryFirestore({ "users/u1": { subscriptionTier: "free" } });
+    const trial = checkoutCompleted("evt_trial");
+    trial.data.object.mode = "subscription";
+    trial.data.object.payment_status = "no_payment_required";
+    trial.data.object.metadata.activationTrial = "true";
+    expect((await deliver(trial)).statusCode).toBe(200);
+    expect(db.data.get("users/u1").activationBillingFirsts).toEqual({
+      trial: { atMs: trial.created * 1000, source: "stripe" },
+    });
+
+    const freeInvoice = {
+      id: "evt_free_invoice",
+      object: "event",
+      type: "invoice.paid",
+      livemode: true,
+      created: trial.created + 1,
+      data: {
+        object: {
+          id: "in_free",
+          customer: "cus_1",
+          subscription: "sub_1",
+          amount_paid: 0,
+        },
+      },
+    };
+    expect((await deliver(freeInvoice)).statusCode).toBe(200);
+    expect(db.data.get("users/u1").activationBillingFirsts.paid).toBeUndefined();
+
+    const paidInvoice = {
+      ...freeInvoice,
+      id: "evt_paid_invoice",
+      created: trial.created + 7 * 86_400,
+      data: { object: { ...freeInvoice.data.object, id: "in_paid", amount_paid: 3499 } },
+    };
+    expect((await deliver(paidInvoice)).statusCode).toBe(200);
+    expect(db.data.get("users/u1").activationBillingFirsts).toEqual({
+      trial: { atMs: trial.created * 1000, source: "stripe" },
+      paid: { atMs: paidInvoice.created * 1000, source: "stripe" },
+    });
+    expect((await deliver(paidInvoice)).body).toMatchObject({ duplicate: true });
+  });
+
+  it("does not count a charge from another subscription", async () => {
+    const db = useMemoryFirestore({
+      "users/u1": {
+        subscriptionTier: "pro",
+        subscriptionSource: "stripe",
+        stripeCustomerId: "cus_1",
+        stripeSubscriptionId: "sub_1",
+      },
+    });
+    const invoice = {
+      id: "evt_other_invoice",
+      object: "event",
+      type: "invoice.paid",
+      livemode: true,
+      created: 1_790_000_100,
+      data: { object: { id: "in_other", customer: "cus_1", subscription: "sub_other", amount_paid: 3499 } },
+    };
+    expect((await deliver(invoice)).statusCode).toBe(200);
+    expect(db.data.get("users/u1").activationBillingFirsts).toBeUndefined();
+  });
+
+  it("does not count a lifetime Checkout payment as a subscription start", async () => {
+    const db = useMemoryFirestore({ "users/u1": { subscriptionTier: "free" } });
+    const lifetime = checkoutCompleted("evt_lifetime");
+    lifetime.data.object.mode = "payment";
+    lifetime.data.object.subscription = null;
+    lifetime.data.object.payment_status = "paid";
+    lifetime.data.object.amount_total = 9999;
+    lifetime.data.object.metadata.planKind = "lifetime";
+    expect((await deliver(lifetime)).statusCode).toBe(200);
+    expect(db.data.get("users/u1").activationBillingFirsts).toBeUndefined();
+  });
+
+  it("does not count a signed Stripe test-mode trial", async () => {
+    const db = useMemoryFirestore({ "users/u1": { subscriptionTier: "free" } });
+    const trial = checkoutCompleted("evt_test_trial");
+    trial.livemode = false;
+    trial.data.object.mode = "subscription";
+    trial.data.object.payment_status = "no_payment_required";
+    trial.data.object.metadata.activationTrial = "true";
+    expect((await deliver(trial)).statusCode).toBe(200);
+    expect(db.data.get("users/u1").activationBillingFirsts).toBeUndefined();
+  });
+
   it("claims the event, processes it, and records both claimedAt and processedAt", async () => {
     const db = useMemoryFirestore({ "users/u1": { subscriptionTier: "free" } });
 

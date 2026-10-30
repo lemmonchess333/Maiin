@@ -80,6 +80,7 @@ import NewAccountMethodNote from "@/components/onboarding/NewAccountMethodNote";
 import { startingDisplayName } from "@/lib/onboardingName";
 import { signInMethodOf } from "@/lib/signInMethod";
 import { ACTIVATION_JOURNEY_V2_ENABLED } from "@/lib/activationJourney";
+import { Capacitor } from "@capacitor/core";
 
 /* The review's reminder row is its own chunk, fetched once setup has
    drawn, so the questions before it do not carry it. */
@@ -802,7 +803,10 @@ export default function Onboarding() {
           programState,
           weekSchedule: plan.weekSchedule,
           ...(ACTIVATION_JOURNEY_V2_ENABLED
-            ? { activationJourneyVersion: 2 }
+            ? {
+                activationJourneyVersion: 2,
+                onboardingPlatform: Capacitor.getPlatform(),
+              }
             : {}),
         });
       let commitResult;

@@ -1,6 +1,6 @@
 # First-week activation: from plan to first saved session
 
-**Status:** Implemented in the working tree, 2026-10-29. Pending review and release. Deploy the callable before a client that requests version 2.
+**Status:** Merged in #2998, with the first-week return and guided reset follow-ups in #2999 and #3000. Deploy the callable before a client that requests version 2.
 
 **Bundle budget:** Home's checked-in chunk limit moves from 95,863 to 103,988 bytes. The increase comes from the direct first-week actions, first-visit gates, and safe plan repair states. The new imports were already in Home's eager dependency graph; splitting the arrival card would add a fetch before its primary action. The total bundle remains within the existing size ratchet.
 
@@ -83,7 +83,7 @@ The first run may still need its one-time explanation or device permission after
 
 ## Measurement
 
-The read-only cohort report is `functions/scripts/report-first-week-activation.js`. Run it with `--project=ID --since=YYYY-MM-DD --until=YYYY-MM-DD`; `until` is exclusive and must be at least 168 hours in the past. It reports aggregate saved-activity outcomes using Firestore document creation times. It does not currently report verified trial or paid starts by onboarding cohort: purchase event history has no immutable account-linked start record, and the current profile only carries mutable subscription state. Onboarding platform is not persisted reliably either. Add a privacy-reviewed authoritative source for those dimensions before using the report to claim activation or revenue improvement by cohort or platform.
+The read-only cohort report is `functions/scripts/report-first-week-activation.js`. Run it with `--project=ID --since=YYYY-MM-DD --until=YYYY-MM-DD`; `until` is exclusive and must be at least 14 days in the past. It reports aggregate saved activity using Firestore document creation times, first provider-verified trial starts within 7 days, and first paid subscription periods within 14 days. Stripe confirms a positive charge; RevenueCat confirms a normal subscription period without exposing the charge amount. The server keeps only the first observation of each billing kind on the account profile; it stores no receipt, transaction ID or price there. Version 2 setup stamps the client-reported platform once on first completion. See [activation-outcomes.md](activation-outcomes.md) for deployment order, coverage limits and privacy review. Compare only cohorts that were fully instrumented after deployment; older cohorts can undercount billing and have no reliable setup platform.
 
 **Cohort:** distinct accounts whose server-side onboarding commit stamped `activationJourneyVersion: 2`. Segment by runner, lifter and hybrid. A plan-save attempt that fails is outside the denominator.
 

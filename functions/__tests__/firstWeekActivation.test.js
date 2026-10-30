@@ -8,7 +8,13 @@ const {
   activityWithinWindow,
   activationSport,
 } = require("../lib/firstWeekActivation.js");
-const { parseArgs } = require("../scripts/report-first-week-activation.js");
+const {
+  parseArgs,
+  addRow,
+  presentRow,
+  verifiedStartWithinWindow,
+  PAID_WINDOW_MS,
+} = require("../scripts/report-first-week-activation.js");
 
 const start = Date.UTC(2026, 9, 1);
 
@@ -34,7 +40,7 @@ describe("server-time first-week activation report", () => {
         "--since=2026-10-01",
         "--until=2099-01-01",
       ])
-    ).toThrow(/168 hours/);
+    ).toThrow(/14 days/);
   });
 
   it("uses Firestore createTime at the inclusive 168-hour boundary", () => {
@@ -100,5 +106,55 @@ describe("server-time first-week activation report", () => {
     expect(
       ["Runner", "Lifter", "Hybrid", "Other"].map(activationSport)
     ).toEqual(["runner", "lifter", "hybrid", "other"]);
+  });
+
+  it("counts provider-verified starts separately from saved activity, within each follow-up window", () => {
+    const row = {
+      onboarded: 0,
+      firstValidActivity: 0,
+      firstValidWorkout: 0,
+      firstValidRun: 0,
+      verifiedTrialStarts: 0,
+      verifiedPaidStarts: 0,
+      activityAndTrial: 0,
+      activityAndPaid: 0,
+      activityLagHours: [],
+    };
+    const first = {
+      workoutAtMs: start + 60_000,
+      runAtMs: null,
+      activityAtMs: start + 60_000,
+    };
+    const billing = {
+      trial: { atMs: start + 5_000, source: "ios_iap" },
+      paid: { atMs: start + 7 * 86_400_000, source: "ios_iap" },
+    };
+    addRow(row, first, start, billing);
+    expect(presentRow(row)).toMatchObject({
+      onboarded: 1,
+      firstValidActivity: 1,
+      verifiedTrialStarts: 1,
+      verifiedPaidStarts: 1,
+      activityAndTrial: 1,
+      activityAndPaid: 1,
+    });
+    expect(verifiedStartWithinWindow(billing, "paid", start, PAID_WINDOW_MS))
+      .toBe(true);
+    expect(
+      verifiedStartWithinWindow(
+        { paid: { atMs: start - 1, source: "stripe" } },
+        "paid",
+        start,
+        PAID_WINDOW_MS
+      )
+    ).toBe(false);
+    expect(
+      verifiedStartWithinWindow(
+        { paid: { atMs: start + 1, source: "client" } },
+        "paid",
+        start,
+        PAID_WINDOW_MS
+      )
+    ).toBe(false);
   });
 });
