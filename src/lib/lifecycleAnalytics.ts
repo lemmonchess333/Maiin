@@ -73,6 +73,9 @@ export type LifecycleEvent =
   | "return_surface_shown"
   | "return_choice"
   | "checkin_answered"
+  | "week_reset_viewed"
+  | "week_reset_choice"
+  | "week_reset_completed"
   /** The first-visit guide (FV1): a walk began, showed a stop, was
    *  finished from its last stop or skipped; a hint was shown. */
   | "guide_started"
@@ -165,6 +168,9 @@ export interface LifecycleEventMetadata {
   clarity?: number;
   /** checkin_answered: 1-5, "was logging easy this week?". */
   ease?: number;
+  /** Guided review-to-plan handoff; the choice is never an automatic edit. */
+  weekResetAction?: "run_move" | "usual_layout" | "keep_plan";
+  weekResetOutcome?: "applied" | "queued";
   /**
    * guide_*: which walk. Not `guide`: the redaction drops any key that
    * contains "uid", and "guide" does.

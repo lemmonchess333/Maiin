@@ -12,7 +12,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
@@ -92,7 +92,7 @@ describe("MomentumCheckinCard", () => {
     // Read-back replaces the questions with the contextual action.
     expect(await screen.findByText(/Checked in — A bit much/)).toBeVisible();
     expect(
-      screen.getByRole("button", { name: "Review programme options" })
+      screen.getByRole("button", { name: "Make this week fit" })
     ).toBeInTheDocument();
     expect(screen.queryByText("Save check-in")).toBeNull();
   });
@@ -119,8 +119,40 @@ describe("MomentumCheckinCard", () => {
     expect(await screen.findByText(/Checked in — Too light/)).toBeVisible();
     expect(screen.queryByText(/How did this week's plan feel\?/)).toBeNull();
     expect(
-      screen.getByRole("button", { name: "Review progression" })
+      screen.getByRole("button", { name: "Review this week's plan" })
     ).toBeInTheDocument();
+  });
+
+  it("opens the guided plan and keeps Review as the back destination", async () => {
+    seedCheckin({
+      weekKey: "2026-07-06",
+      feel: "a_bit_much",
+      focus: "runs",
+      createdAt: 1,
+    });
+    function Destination() {
+      const location = useLocation();
+      return (
+        <p>{`${location.search}|${(location.state as { returnTo?: string; resetFeel?: string } | null)?.returnTo}|${(location.state as { resetFeel?: string } | null)?.resetFeel}`}</p>
+      );
+    }
+    render(
+      <MemoryRouter initialEntries={["/review"]}>
+        <Routes>
+          <Route
+            path="/review"
+            element={<MomentumCheckinCard uid="u1" weekKey="2026-07-06" />}
+          />
+          <Route path="/program/plan" element={<Destination />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Make this week fit" })
+    );
+    expect(
+      await screen.findByText("?reset=1|/review|a_bit_much")
+    ).toBeVisible();
   });
 
   it("a dismissed week renders nothing", async () => {

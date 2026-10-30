@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -23,6 +29,9 @@ import SessionCommandCard from "@/components/program/SessionCommandCard";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import InProgressStrip from "@/components/session/InProgressStrip";
 import MoveRunSheet from "@/components/program/plan/MoveRunSheet";
+import WeekResetCard, {
+  type WeekResetOutcome,
+} from "@/components/program/plan/WeekResetCard";
 import { useAuth } from "@/lib/auth";
 import { useProgram } from "@/features/program/useProgram";
 import { useSavedSessions } from "@/hooks/useSavedSessions";
@@ -63,9 +72,12 @@ import {
   lastCommandSettlement,
 } from "@/features/program/commandOutbox";
 import { buttonClasses } from "@/components/ui/buttonClasses";
+import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
+import type { PlanFeel } from "@/lib/momentumCheckin";
 
 function returnPath(value: unknown): string {
-  return typeof value === "string" && /^\/program(?:[?#]|$)/.test(value)
+  return typeof value === "string" &&
+    (/^\/program(?:[?#]|$)/.test(value) || value === "/review")
     ? value
     : "/program";
 }
@@ -74,9 +86,16 @@ export default function TrainingPlan() {
   const { profile, user, updateProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const resetMode = new URLSearchParams(location.search).get("reset") === "1";
   const backTo = returnPath(
     (location.state as { returnTo?: unknown } | null)?.returnTo
   );
+  const enteredFeel = (location.state as { resetFeel?: unknown } | null)
+    ?.resetFeel;
+  const resetFeel: PlanFeel | undefined =
+    enteredFeel === "a_bit_much" || enteredFeel === "too_light"
+      ? enteredFeel
+      : undefined;
   const {
     programState,
     loading,
@@ -111,6 +130,17 @@ export default function TrainingPlan() {
   );
   const [move, setMove] = useState<{ id?: string } | null>(null);
   const [layout, setLayout] = useState(false);
+  const [resetResult, setResetResult] = useState<
+    (WeekResetOutcome & { uid: string }) | null
+  >(null);
+  const resetViewed = useRef<string | null>(null);
+  useEffect(() => {
+    if (!resetMode || !user?.uid || loading) return;
+    const key = `${user.uid}:${location.key}`;
+    if (resetViewed.current === key) return;
+    resetViewed.current = key;
+    trackLifecycle("week_reset_viewed");
+  }, [resetMode, user?.uid, loading, location.key]);
   const [notice, setNotice] = useState<{
     text: string;
     queued: boolean;
@@ -184,6 +214,9 @@ export default function TrainingPlan() {
     claims.evidenceReady &&
     !oldWeek &&
     readiness === "ready";
+  const canResetLayout = canEdit && !sessionBusy && !!profile;
+  const visibleResetResult =
+    resetResult?.uid === user?.uid ? resetResult : null;
   const activeRunId = inFlight.run?.config.planMetadata?.scheduledRunId;
   const eligibleRuns = model.days
     .flatMap((day) => day.activities)
@@ -199,6 +232,7 @@ export default function TrainingPlan() {
   function assertLayoutIdle() {
     if (
       readiness !== "ready" ||
+      (resetMode && !canResetLayout) ||
       sessionBusy ||
       isLiftSessionOpen() ||
       (!!user?.uid && hasPendingProgrammeCompletion(user.uid))
@@ -215,6 +249,18 @@ export default function TrainingPlan() {
         queued: outcome.status === "queued",
         uid: user?.uid ?? "",
       });
+      if (resetMode && user?.uid) {
+        setResetResult({
+          kind: "run",
+          status: outcome.status,
+          text,
+          uid: user.uid,
+        });
+        trackLifecycle("week_reset_completed", {
+          weekResetAction: "run_move",
+          weekResetOutcome: outcome.status,
+        });
+      }
     }
   }
 
@@ -237,7 +283,7 @@ export default function TrainingPlan() {
           className="inline-flex min-h-[44px] items-center gap-1 -ml-2 px-2"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
-          Train
+          {backTo === "/review" ? "Review" : "Train"}
         </Link>
       }
       subtitle={
@@ -350,6 +396,53 @@ export default function TrainingPlan() {
                   refreshWorkouts();
                 },
               }}
+            />
+          )}
+          {resetMode && (
+            <WeekResetCard
+              feel={resetFeel}
+              range={`${formatDayMonth(parseLocalDate(firstDate))} – ${formatDayMonth(parseLocalDate(lastDate))}`}
+              liftDays={model.summary.liftDays}
+              plannedRuns={model.summary.plannedRuns}
+              canMoveRun={canEdit && eligibleRuns.length > 0}
+              canEditLayout={canResetLayout}
+              moveReason={
+                !canEdit
+                  ? "Wait for the latest plan and saved sessions before moving a run."
+                  : "No uncompleted scheduled run can move this week."
+              }
+              layoutReason={
+                sessionBusy
+                  ? "Finish or resolve your current session first."
+                  : "Wait for the latest plan and saved sessions before editing."
+              }
+              outcome={visibleResetResult}
+              onMoveRun={() => {
+                trackLifecycle("week_reset_choice", {
+                  weekResetAction: "run_move",
+                });
+                setMove({});
+              }}
+              onEditLayout={() => {
+                trackLifecycle("week_reset_choice", {
+                  weekResetAction: "usual_layout",
+                });
+                setLayout(true);
+              }}
+              onGoToday={() => {
+                if (!visibleResetResult) {
+                  trackLifecycle("week_reset_choice", {
+                    weekResetAction: "keep_plan",
+                  });
+                }
+                navigate("/");
+              }}
+              onReviewWeek={() =>
+                navigate("/program/plan", {
+                  replace: true,
+                  state: location.state,
+                })
+              }
             />
           )}
           <section className="space-y-2" aria-label="This week's plan">
@@ -518,7 +611,11 @@ export default function TrainingPlan() {
               variant="ghost"
               fullWidth
               className="justify-between"
-              disabled={sessionBusy || readiness !== "ready"}
+              disabled={
+                sessionBusy ||
+                readiness !== "ready" ||
+                (resetMode && !canResetLayout)
+              }
               leftIcon={<RotateCcw className="size-4" />}
               rightIcon={<ChevronRight className="size-4" />}
               onClick={() => setLayout(true)}
@@ -572,8 +669,22 @@ export default function TrainingPlan() {
       {layout && (
         <ScheduleLayoutSheet
           open
+          guided={resetMode}
           profile={profile}
           onClose={() => setLayout(false)}
+          onSaved={() => {
+            if (!resetMode || !user?.uid) return;
+            setResetResult({
+              kind: "layout",
+              status: "applied",
+              text: "Your usual weekly layout is saved. Your completed sessions stay in your history.",
+              uid: user.uid,
+            });
+            trackLifecycle("week_reset_completed", {
+              weekResetAction: "usual_layout",
+              weekResetOutcome: "applied",
+            });
+          }}
           updateProfile={async (data, options) => {
             assertLayoutIdle();
             return updateProfile(data, options);
