@@ -187,10 +187,8 @@ test.describe("new person's feed screenshots", () => {
     test.setTimeout(180_000);
     await freshAccountOnFeed(page, "newfeed3");
     await page
-      .getByRole("button", { name: /feed source/i })
-      .click({ timeout: 10_000 });
-    await page
-      .getByRole("radio", { name: /following/i })
+      .getByRole("radiogroup", { name: "Feed source" })
+      .getByRole("radio", { name: /^Following/ })
       .click({ timeout: 10_000 });
     await expect(page.getByText("You don't follow anyone yet")).toBeVisible({
       timeout: 15_000,
