@@ -31,6 +31,7 @@ if (!admin.apps.length) {
 // functions.
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
+const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
 const activationBilling = require("./lib/activationBilling");
 const { activationSport } = require("./lib/firstWeekActivation");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
@@ -5588,6 +5589,15 @@ exports.onRunDeleted = functions
     ) {
       return null;
     }
+    const steps = triggerSteps(`onRunDeleted ${uid}/${runId}`);
+    await steps.run("health workout tombstone", () =>
+      healthWorkoutLedger.markDeletedRun(
+        db,
+        uid,
+        runId,
+        admin.firestore.FieldValue.serverTimestamp
+      )
+    );
     const sessionDays = challengeParticipation.affectedActivityDays(
       snap.data()
     );
@@ -5606,7 +5616,6 @@ exports.onRunDeleted = functions
     // of what happened; re-deriving that judgement from flags that may
     // since have been edited would be a second opinion where a fact is
     // available. Retried on failure, as onWorkoutDeleted says why.
-    const steps = triggerSteps(`onRunDeleted ${uid}/${runId}`);
     await steps.run("challenges", () =>
       activityReversal.reverseChallengeProgressForSource(db, uid, runId)
     );

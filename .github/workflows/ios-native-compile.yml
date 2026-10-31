@@ -1,0 +1,77 @@
+name: iOS native compile
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ios-native-compile-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  simulator-build:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896644e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # The project copies this file into the app bundle. A synthetic plist
+      # lets PRs compile the native targets without exposing Firebase secrets
+      # or implying the resulting simulator app is suitable for release.
+      - name: Place compile-only Firebase plist
+        run: |
+          cat > ios/App/App/GoogleService-Info.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>API_KEY</key><string>compile-only</string>
+            <key>GCM_SENDER_ID</key><string>123456789</string>
+            <key>GOOGLE_APP_ID</key><string>1:123456789:ios:compileonly</string>
+            <key>PROJECT_ID</key><string>compile-only</string>
+            <key>BUNDLE_ID</key><string>com.tropos.app</string>
+          </dict></plist>
+          PLIST
+          plutil -lint ios/App/App/GoogleService-Info.plist
+      - name: Build Capacitor bundle and sync native project
+        run: npm run build:ios
+      - name: Compile iPhone and embedded Watch for simulator
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcodebuild -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/tropos-ios-build" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Check both app bundles and the disabled release gate
+        run: |
+          python3 - "$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app" <<'PY'
+          import pathlib
+          import plistlib
+          import sys
+
+          app = pathlib.Path(sys.argv[1])
+          with (app / "Info.plist").open("rb") as file:
+              phone = plistlib.load(file)
+          watches = list((app / "Watch").glob("*.app"))
+          assert phone["CFBundleIdentifier"] == "com.tropos.app"
+          assert phone["TroposConnectedTrainingEnabled"] == "NO"
+          assert len(watches) == 1, f"Expected one embedded Watch app, got {watches}"
+          with (watches[0] / "Info.plist").open("rb") as file:
+              watch = plistlib.load(file)
+          assert watch["CFBundleIdentifier"] == "com.tropos.app.watchkitapp"
+          assert watch["WKCompanionAppBundleIdentifier"] == "com.tropos.app"
+          print("Compiled iPhone and embedded Watch app; release gate remains off.")
+          PY

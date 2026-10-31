@@ -32,7 +32,13 @@ import {
   useSyncExternalStore,
 } from "react";
 import { captureError } from "@/lib/errorReporting";
-import { doc, getDoc, getDocFromCache, onSnapshot } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  getDocFromCache,
+  getDocFromServer,
+  onSnapshot,
+} from "firebase/firestore";
 import {
   hasPendingProgrammeCompletion,
   queuedWritesVersion,
@@ -185,7 +191,13 @@ import {
   isScheduledRunEditable,
 } from "@/lib/scheduledRunStatus";
 import { isScheduledRaceRunDay } from "@/lib/workoutTemplates";
-import { canRescheduleRun, computeRunMove, resolveRunMoveOptions, runMoveSourceSignature, type RunMovePrecondition } from "@/lib/runReschedule";
+import {
+  canRescheduleRun,
+  computeRunMove,
+  resolveRunMoveOptions,
+  runMoveSourceSignature,
+  type RunMovePrecondition,
+} from "@/lib/runReschedule";
 import { toast } from "@/lib/toast";
 import { generateInstanceId, normalizeExercise } from "./programTypes";
 import { enqueueCommand, isTransportFailure } from "./commandOutbox";
@@ -810,24 +822,28 @@ export function useProgram() {
    * how many runs the server actually changed; every other caller ignores
    * the value and just wants the state refreshed.
    */
-  const refetchProgramState = useCallback(async (): Promise<
-    ProgramState | undefined
-  > => {
-    if (!user) return undefined;
-    const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return undefined;
-    // RAW, for the same reason the mirror is raw: `programState` must be
-    // byte-for-byte what the store holds, because it is the `base` every
-    // writer commits against. A normalising refetch adds `skipped: false`
-    // to a workout day the store does not carry, so the next write that
-    // changes `workouts` after ANY applied command finds base ≠ store and
-    // is refused. The loader is the one place that may
-    // normalise, because it commits what it normalised.
-    const raw = snap.data() as ProgramState;
-    setProgramState(raw);
-    return raw;
-  }, [user]);
+  const refetchProgramState = useCallback(
+    async (
+      source: "default" | "server" = "default"
+    ): Promise<ProgramState | undefined> => {
+      if (!user) return undefined;
+      const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+      const snap =
+        source === "server" ? await getDocFromServer(ref) : await getDoc(ref);
+      if (!snap.exists()) return undefined;
+      // RAW, for the same reason the mirror is raw: `programState` must be
+      // byte-for-byte what the store holds, because it is the `base` every
+      // writer commits against. A normalising refetch adds `skipped: false`
+      // to a workout day the store does not carry, so the next write that
+      // changes `workouts` after ANY applied command finds base ≠ store and
+      // is refused. The loader is the one place that may
+      // normalise, because it commits what it normalised.
+      const raw = snap.data() as ProgramState;
+      setProgramState(raw);
+      return raw;
+    },
+    [user]
+  );
 
   /**
    * Run a programme command through the server boundary, optimistically.
@@ -1891,24 +1907,44 @@ export function useProgram() {
       const active = readStoredRunSummary(user.uid);
       const activeId = active?.config.planMetadata?.scheduledRunId;
       if (active && (!activeId || activeId === target.id)) {
-        return declineStale("Finish or discard the active run before moving it.");
+        return declineStale(
+          "Finish or discard the active run before moving it."
+        );
       }
-      if (!canRescheduleRun(target) || programState.manualCompletions?.[target.id ?? ""]) {
+      if (
+        !canRescheduleRun(target) ||
+        programState.manualCompletions?.[target.id ?? ""]
+      ) {
         logger.warn(
           `[moveRunDay] runDay ${target.id ?? target.dayIndex} is not reschedulable (race or non-planned); skipping`
         );
         return declineStale("Couldn't move that run.");
       }
-      if (expected && (expected.sourceSignature !== runMoveSourceSignature(target) || expected.todayKey !== localDateString(new Date()))) {
+      if (
+        expected &&
+        (expected.sourceSignature !== runMoveSourceSignature(target) ||
+          expected.todayKey !== localDateString(new Date()))
+      ) {
         return declineStale("Your plan changed. Review the latest week.");
       }
       if (targetDayIndex === target.dayIndex) return APPLIED; // same day
       // Review callers get the exact same destination rules as the picker.
       // Legacy callers already pass through that picker, and keep their
       // existing signature/payload while the server enforces every date.
-      if (expected && !resolveRunMoveOptions({ source: target, runDays: programState.runDays, weekSchedule: profile?.weekSchedule ?? [], todayKey: expected.todayKey })
-        .some(option => option.dayIndex === targetDayIndex && option.available)) {
-        return declineStale("That day is no longer available. Review the latest week.");
+      if (
+        expected &&
+        !resolveRunMoveOptions({
+          source: target,
+          runDays: programState.runDays,
+          weekSchedule: profile?.weekSchedule ?? [],
+          todayKey: expected.todayKey,
+        }).some(
+          (option) => option.dayIndex === targetDayIndex && option.available
+        )
+      ) {
+        return declineStale(
+          "That day is no longer available. Review the latest week."
+        );
       }
       // Integrity guard: never double-book a day (the UI already blocks
       // occupied days, but two runs sharing a dayIndex corrupts the week).
@@ -3037,7 +3073,6 @@ export function useProgram() {
       swaps: ReadonlyArray<{ key: string | number; toTemplateId: string }>
     ): Promise<number | null> => {
       if (!user || !programState || swaps.length === 0) return null;
-      const before = programState.runDays ?? [];
       const command = {
         kind: "applyEaseWeek" as const,
         commandId: generateInstanceId(),
@@ -3049,12 +3084,20 @@ export function useProgram() {
       };
       try {
         await sendProgramCommand(command);
-        const next = await refetchProgramState();
-        const after = next?.runDays ?? before;
-        // A day counts as eased when its template now matches what we asked
-        // for AND it did not already. `runDayId` is the id when present and
-        // the dayIndex otherwise — the same key `applyDeloadRunSwaps` builds
-        // its map from, so the two sides agree on identity.
+        // A cached read can still show the old week immediately after the
+        // callable succeeds. The server stores the exact pre-ease days in
+        // easeSnapshot, so both sides of this count come from one committed
+        // document rather than a possibly stale client render.
+        const next = await refetchProgramState("server");
+        if (
+          !next?.easeSnapshot ||
+          next.easeSnapshot.weekNumber !== command.expectedWeekNumber
+        )
+          return null;
+        const after = next.runDays ?? [];
+        const before = next.easeSnapshot.runDays;
+        // `runDayId` is the id when present and dayIndex otherwise — the
+        // same key `applyDeloadRunSwaps` builds its map from.
         const byKey = new Map(
           after.map((rd) => [
             rd.id != null ? String(rd.id) : String(rd.dayIndex),

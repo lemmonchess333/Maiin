@@ -70,7 +70,10 @@ vi.mock("@/lib/platform", () => ({
   isNativePlatform: () => platform.native,
 }));
 const exports = vi.hoisted(() => ({
-  pending: [] as Array<{ runId: string; status: "pending" }>,
+  pending: [] as Array<{
+    runId: string;
+    status: "pending" | "pending-delete" | "blocked";
+  }>,
   reconcile: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/healthWorkoutExport", () => ({
@@ -291,6 +294,18 @@ describe("HealthSection", () => {
     render(<HealthSection />);
     const pending = await screen.findByText("1 Apple Health update pending");
     expect(pending).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(exports.reconcile).toHaveBeenCalledWith("u1"));
+  });
+
+  it("keeps native cleanup visible when new connected training is disabled", async () => {
+    release.enabled = false;
+    platform.native = true;
+    exports.pending = [{ runId: "r1", status: "pending-delete" }];
+    render(<HealthSection />);
+    expect(
+      await screen.findByText("1 Apple Health update pending")
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(exports.reconcile).toHaveBeenCalledWith("u1"));
   });

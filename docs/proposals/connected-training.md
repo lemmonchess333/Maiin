@@ -1,6 +1,6 @@
 # Connected training: Apple Watch runs and Apple Health
 
-**Status:** Implementation in progress, 30 October 2026. The Watch target, phone bridge, and Health export path are behind disabled release gates. A macOS build, signing, paired-device controls, and HealthKit reconciliation still need verification before release.
+**Status:** Implementation in progress, 31 October 2026. The Watch target, phone bridge, and Health export path are behind disabled release gates. Server receipts cover reinstall duplicate prevention and cross-device deletion cleanup in code. A macOS build, signing, paired-device controls, and HealthKit behavior still need verification before release.
 
 ## Decision
 
@@ -67,7 +67,7 @@ If this gate fails, do not ship a Watch control that appears to work while disco
 
 ### Current release gates
 
-The implementation is present on the `feat/connected-training-watch` branch, but `VITE_CONNECTED_TRAINING_ENABLED` defaults off and the native iOS Release target sets `WATCH_RUN_RELEASE_ENABLED=NO`. The settings controls and native transport therefore remain unavailable in a release build. Before enabling both gates, complete a macOS archive/signing run and the paired iPhone/Watch acceptance matrix, including locked-phone commands, heart-rate capture without an implicit Health workout, and a read-denied reinstall test for duplicate Health exports. Health export also needs a bounded server reconciliation path for a run deleted on another device; a local deletion intent only covers deletion initiated on the exporting iPhone. Keep workout export disabled until that path is verified.
+`VITE_CONNECTED_TRAINING_ENABLED` defaults off and the native iOS Release target sets `WATCH_RUN_RELEASE_ENABLED=NO`. The settings controls and native transport therefore remain unavailable in a release build. The Health export worker now reserves a server receipt before writing; the run deletion trigger leaves a tombstone that the exporting iPhone pages through for native cleanup. Before enabling both gates, pass the PR macOS simulator compile, complete a signed archive, and run the paired iPhone/Watch acceptance matrix, including locked-phone commands, heart-rate capture without an implicit Health workout, a read-denied reinstall attempt, and a run deleted on another device. Keep workout export disabled until those device paths are verified.
 
 ## Delivery sequence
 

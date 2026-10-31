@@ -46,7 +46,13 @@ import {
   queueHealthWorkoutExport,
   reconcilePendingHealthExports,
 } from "../healthWorkoutExport";
-import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
+import {
+  readDoc,
+  resetFirestore,
+  seedFirestore,
+} from "@/test/firestoreHarness";
+import { deleteDoc, doc } from "firebase/firestore";
+import { db } from "../firebase";
 
 function memoryStorage(denyWrite = false): Storage {
   const values = new Map<string, string>();
@@ -126,6 +132,13 @@ describe("Apple Health export reconciliation", () => {
     ]);
 
     seedRun("run-1");
+    writer.exportWorkout.mockImplementationOnce(async ({ revision }) => {
+      expect(readDoc("users/u1/healthWorkoutExports/run-1")).toMatchObject({
+        runId: "run-1",
+        state: "attempted",
+      });
+      return { status: "created", workoutId: "hk-1", revision };
+    });
     await reconcilePendingHealthExports("u1");
     expect(writer.exportWorkout).toHaveBeenCalledOnce();
     expect(writer.exportWorkout.mock.calls[0][0]).toMatchObject({
@@ -137,6 +150,116 @@ describe("Apple Health export reconciliation", () => {
       energyKcal: 80,
     });
     expect(pendingHealthWorkoutExports("u1")).toEqual([]);
+    expect(readDoc("users/u1/healthWorkoutExports/run-1")).toMatchObject({
+      state: "exported",
+      runId: "run-1",
+      workoutId: "hk-1",
+    });
+  });
+
+  it("does not duplicate a prior attempt after local data is lost and Health reads are opaque", async () => {
+    seedRun("run-1");
+    seedFirestore({
+      "users/u1/healthWorkoutExports/run-1": {
+        runId: "run-1",
+        state: "attempted",
+        revision: "old",
+      },
+    });
+    queueHealthWorkoutExport("u1", "run-1", true);
+    await reconcilePendingHealthExports("u1");
+    expect(writer.exportWorkout).not.toHaveBeenCalled();
+    expect(pendingHealthWorkoutExports("u1")).toEqual([
+      { runId: "run-1", status: "blocked" },
+    ]);
+
+    localStorage.clear(); // Reinstall: the device receipt is gone.
+    queueHealthWorkoutExport("u1", "run-1", true);
+    await reconcilePendingHealthExports("u1");
+    expect(writer.exportWorkout).not.toHaveBeenCalled();
+    expect(readDoc("users/u1/healthWorkoutExports/run-1")?.state).toBe(
+      "attempted"
+    );
+  });
+
+  it("picks up a remote run deletion and clears its receipt after verified Health cleanup", async () => {
+    seedRun("run-remote");
+    queueHealthWorkoutExport("u1", "run-remote", true);
+    await reconcilePendingHealthExports("u1");
+    expect(readDoc("users/u1/healthWorkoutExports/run-remote")?.state).toBe(
+      "exported"
+    );
+    localStorage.clear(); // The exporting phone may have been reinstalled.
+    await deleteDoc(doc(db, "users", "u1", "runs", "run-remote"));
+    seedFirestore({
+      "users/u1/healthWorkoutExports/run-remote": {
+        runId: "run-remote",
+        state: "pending-delete",
+      },
+    });
+    await reconcilePendingHealthExports("u1");
+    expect(writer.deleteWorkout).toHaveBeenCalledWith({ runId: "run-remote" });
+    expect(readDoc("users/u1/healthWorkoutExports/run-remote")).toBeUndefined();
+    expect(pendingHealthWorkoutExports("u1")).toEqual([]);
+  });
+
+  it("keeps a remote tombstone when an empty Health query cannot prove deletion", async () => {
+    seedFirestore({
+      "users/u1/healthWorkoutExports/run-remote": {
+        runId: "run-remote",
+        state: "pending-delete",
+      },
+    });
+    writer.deleteWorkout.mockResolvedValue({ status: "absent" });
+    await reconcilePendingHealthExports("u1");
+    expect(writer.deleteWorkout).toHaveBeenCalledWith({ runId: "run-remote" });
+    expect(readDoc("users/u1/healthWorkoutExports/run-remote")?.state).toBe(
+      "pending-delete"
+    );
+    expect(pendingHealthWorkoutExports("u1")).toEqual([
+      { runId: "run-remote", status: "pending-delete" },
+    ]);
+  });
+
+  it("acknowledges a verified native deletion even when local storage fails", async () => {
+    seedFirestore({
+      "users/u1/healthWorkoutExports/run-remote": {
+        runId: "run-remote",
+        state: "pending-delete",
+      },
+    });
+    writer.deleteWorkout.mockResolvedValue({ status: "absent" });
+    writer.deleteWorkout.mockImplementationOnce(async () => {
+      vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+        throw new Error("storage full");
+      });
+      return { status: "deleted" };
+    });
+    await reconcilePendingHealthExports("u1");
+    expect(writer.deleteWorkout).toHaveBeenCalledWith({ runId: "run-remote" });
+    expect(readDoc("users/u1/healthWorkoutExports/run-remote")).toBeUndefined();
+    vi.mocked(localStorage.setItem).mockRestore();
+    writer.deleteWorkout.mockResolvedValue({ status: "absent" });
+    await reconcilePendingHealthExports("u1");
+    expect(pendingHealthWorkoutExports("u1")).toEqual([]);
+  });
+
+  it("continues past a page of blocked remote deletions", async () => {
+    const tombstones: Record<string, Record<string, unknown>> = {};
+    for (let index = 0; index < 51; index += 1) {
+      const runId = `run-${String(index).padStart(2, "0")}`;
+      tombstones[`users/u1/healthWorkoutExports/${runId}`] = {
+        runId,
+        state: "pending-delete",
+      };
+    }
+    seedFirestore(tombstones);
+    writer.deleteWorkout.mockResolvedValue({ status: "absent" });
+    await reconcilePendingHealthExports("u1");
+    expect(writer.deleteWorkout).toHaveBeenCalledWith({ runId: "run-50" });
+    expect(readDoc("users/u1/healthWorkoutExports/run-50")?.state).toBe(
+      "pending-delete"
+    );
   });
 
   it("retires only an old orphan intent, keeping an offline queued Save", async () => {
@@ -239,6 +362,18 @@ describe("Apple Health export reconciliation", () => {
     expect(writer.exportWorkout.mock.calls[0][0].runId).toBe(
       "run-after-opt-in"
     );
+  });
+
+  it("rechecks consent in the receipt transaction after native lookup", async () => {
+    seedRun("run-revoked");
+    writer.getWorkoutExportStatus.mockImplementationOnce(async () => {
+      seedConsent(false);
+      return { status: "absent" };
+    });
+    queueHealthWorkoutExport("u1", "run-revoked", true);
+    await reconcilePendingHealthExports("u1");
+    expect(writer.exportWorkout).not.toHaveBeenCalled();
+    expect(readDoc("users/u1/healthWorkoutExports/run-revoked")).toBeUndefined();
   });
 
   it("matches a same-device offline opt-in without accepting a later off/on cycle", async () => {
