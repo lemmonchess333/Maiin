@@ -46,6 +46,7 @@ const H = vi.hoisted(() => ({
     return true;
   }),
   native: false,
+  released: false,
   watchSync: vi.fn(async (_uid: string | null) => {}),
   watchClear: vi.fn(async () => {}),
   clearHeartRateSessionsForUser: vi.fn(),
@@ -58,6 +59,11 @@ const H = vi.hoisted(() => ({
 const mockAuth = H.mockAuth;
 
 vi.mock("../platform", () => ({ isNativePlatform: () => H.native }));
+vi.mock("../connectedTrainingRelease", () => ({
+  get CONNECTED_TRAINING_RELEASED() {
+    return H.released;
+  },
+}));
 vi.mock("../watchRunBridge", () => ({
   syncWatchRunAccount: H.watchSync,
   clearWatchRunAccountState: H.watchClear,
@@ -176,7 +182,10 @@ function Probe() {
       data-u={user?.uid ?? "null"}
       data-p={profile?.uid ?? "null"}
       data-loading={String(loading)}
-    />
+      data-watch-failed={String(!!auth.watchAccountCleanup)}
+    >
+      <button onClick={() => auth.watchAccountCleanup?.retry()}>retry</button>
+    </div>
   );
 }
 const state = () => {
@@ -185,6 +194,7 @@ const state = () => {
     u: el.getAttribute("data-u"),
     p: el.getAttribute("data-p"),
     loading: el.getAttribute("data-loading"),
+    watchFailed: el.getAttribute("data-watch-failed"),
   };
 };
 
@@ -198,6 +208,7 @@ async function emit(uid: string | null) {
 
 beforeEach(() => {
   H.native = false;
+  H.released = false;
   H.watchSync.mockReset().mockResolvedValue(undefined);
   H.watchClear.mockClear();
   H.clearHeartRateSessionsForUser.mockClear();
@@ -259,6 +270,41 @@ describe("AuthProvider — account switch isolation", () => {
     expect(H.stopWatchRunSyncReconciler).toHaveBeenCalled();
     expect(H.clearHeartRateSessionsForUser).toHaveBeenCalledWith("A");
     expect(H.clearWatchRunSyncStatus).toHaveBeenCalledWith("A");
+  });
+
+  it("opens the account when the Watch is off the release and its cleanup fails", async () => {
+    // Native start-up already wipes Watch state when the release is off.
+    H.native = true;
+    H.watchSync.mockRejectedValue(new Error("plugin unavailable"));
+    await emit("A");
+    await waitFor(() => expect(state()).toMatchObject({ u: "A", p: "A" }));
+    expect(state().watchFailed).toBe("false");
+  });
+
+  it("retries a failed Watch cleanup on the release, then asks rather than hangs", async () => {
+    H.native = true;
+    H.released = true;
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+
+    H.watchSync.mockRejectedValue(new Error("native clear failed"));
+    await emit("B");
+    await waitFor(() => expect(state().watchFailed).toBe("true"), {
+      timeout: 5000,
+    });
+    // Retried before asking, and B is still held back.
+    expect(
+      H.watchSync.mock.calls.filter(([uid]) => uid === "B").length
+    ).toBeGreaterThan(1);
+    expect(state()).toMatchObject({ u: "null", p: "null", loading: "true" });
+
+    H.watchSync.mockResolvedValue(undefined);
+    await act(async () =>
+      screen.getByRole("button", { name: "retry" }).click()
+    );
+    await waitFor(() => expect(state()).toMatchObject({ u: "B", p: "B" }));
+    expect(state().watchFailed).toBe("false");
+    expect(H.clearHeartRateSessionsForUser).toHaveBeenCalledWith("A");
   });
 
   it("B wins when A's read resolves LAST", async () => {

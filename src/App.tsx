@@ -27,6 +27,7 @@ import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvi
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
+import { ErrorState } from "@/components/ui/ErrorState";
 import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
 import { captureError } from "@/lib/errorReporting";
@@ -399,7 +400,7 @@ class ErrorBoundary extends Component<
 ================================ */
 
 function AppRoutes() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, watchAccountCleanup } = useAuth();
   const uid = user?.uid ?? null;
   const deletion = useAccountDeletionStatus(user?.uid);
   /* Email accounts verify after the plan, not before it: onboarding opens
@@ -501,7 +502,17 @@ function AppRoutes() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Spinner size="lg" label="Loading Tropos" />
+        {watchAccountCleanup ? (
+          <div className="w-full max-w-sm px-4">
+            <ErrorState
+              title="Couldn't clear Watch runs"
+              description="Tropos clears the last account's Watch run from this iPhone before opening another, and that didn't finish."
+              retry={{ onClick: watchAccountCleanup.retry }}
+            />
+          </div>
+        ) : (
+          <Spinner size="lg" label="Loading Tropos" />
+        )}
       </div>
     );
   }
