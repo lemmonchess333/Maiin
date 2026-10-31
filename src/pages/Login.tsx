@@ -274,12 +274,12 @@ export default function Login() {
   if (view === "welcome") {
     return (
       <div className="ds-auth-shell">
-        <main className="w-full max-w-96 space-y-5">
+        <main className="@container w-full max-w-96 space-y-5">
           <div className="flex items-center gap-3">
             <img
               src={appIconUrl}
               alt=""
-              className="size-12 shrink-0 overflow-hidden rounded-2xl"
+              className="size-[48px] shrink-0 overflow-hidden rounded-2xl"
             />
             {/* The name as a wordmark beside the mark, one of the two
                 places DESIGN_GUIDE §4 sets text in capitals. */}
@@ -290,11 +290,12 @@ export default function Login() {
           {/* A licensed real photograph gives the hybrid promise one image:
               weights on a track. It replaces three miniature feature cards
               and stays decorative; the headline and body say what the app
-              does for readers who cannot see it. */}
+              does for readers who cannot see it. At large text sizes the
+              decorative photo yields to the words and controls. */}
           <img
             src={welcomePhotoUrl}
             alt=""
-            className="h-44 w-full rounded-2xl object-cover"
+            className="h-[176px] w-full rounded-2xl object-cover @max-[12em]:hidden"
             decoding="async"
           />
           <div className="space-y-2">
