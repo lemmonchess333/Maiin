@@ -47,7 +47,7 @@ function runs(step: string, outcome: string, status: string): boolean {
   );
 }
 
-describe("road routing is enabled in every production build", () => {
+describe("road routing stays disabled in every production build", () => {
   it.each([
     ["deploy-hosting.yml", "build:hosting"],
     ["deploy.yml", "build"],
@@ -57,7 +57,7 @@ describe("road routing is enabled in every production build", () => {
       new RegExp(`(?:^|\\n)\\s*run: npm run ${script}$`, "m").test(step)
     );
     expect(build).toHaveLength(1);
-    expect(build[0]).toMatch(/^ {10}VITE_ROUTE_PLANNING_ENABLED: "true"$/m);
+    expect(build[0]).toMatch(/^ {10}VITE_ROUTE_PLANNING_ENABLED: "false"$/m);
   });
 });
 

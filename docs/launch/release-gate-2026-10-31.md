@@ -1,0 +1,32 @@
+# First iOS release gate — 31 October 2026
+
+**Status: no-go for App Store submission.** The web app is serving at
+`troposfit.com`, but a successful web deploy and green browser tests do not
+prove that the signed iPhone app works. This record separates what has been
+verified from what still needs a TestFlight build and a phone.
+
+| Gate | Evidence on 31 October | Release decision |
+| --- | --- | --- |
+| Web and public legal pages | [Deploy production run 41219631876](https://github.com/lemmonchess333/Maiin/actions/runs/41219631876) built and deployed Hosting and Pages from `1fbaa85b`. The live `/`, `/terms`, `/privacy` and `/support` routes rendered in a mobile browser without signing in. | Pass for the web entry and public pages only. |
+| Native build | The [iOS native compile workflow](https://github.com/lemmonchess333/Maiin/actions/workflows/ios-native-compile.yml) has green runs, but `deploy-ios.yml` has **zero runs** in GitHub Actions. A compile is not a signed upload or an installed app. | Blocked until a TestFlight build is uploaded and installed. |
+| First-run and core journeys on a phone | The [TestFlight script](../qa/testflight-script.md) still has unverified sign-up, Apple and Google sign-in, food scanning, locked-phone running, safe areas, reporting/blocking and purchase steps. Browser emulator tests cover code paths, not these device behaviours. | Blocked until the first build passes the launch-blocker section on a real iPhone. |
+| Pro subscription | The iOS build workflow [deliberately omits](../../.github/workflows/deploy-ios.yml) `VITE_REVENUECAT_IOS_KEY`. [Issue #1097](https://github.com/lemmonchess333/Maiin/issues/1097) still records the App Store Connect and RevenueCat setup as open. Backend secrets and repository variables could not be read with the GitHub token used for this audit (HTTP 403). | Do not submit a purchase-enabled build until the exact products, offering, entitlement, server settings and sandbox purchase are verified. |
+| Road route provider | The [Mapbox Product Terms dated 20 October 2026](https://www.mapbox.com/legal/product-terms) prohibit storing Navigation API results (§2.10.1). Tropos previously saved returned Directions geometry. This release disables the client road controls and callable; point-to-point planning still works. | Block road-routing reactivation pending an explicit Mapbox agreement or a compatible provider. Audit routes saved by earlier builds. |
+| App Store record | [Issue #2542](https://github.com/lemmonchess333/Maiin/issues/2542) is open for listing copy, screenshots, privacy answers and review credentials. The [listing source](../app-store/listing.md) is a draft to enter in App Store Connect, not proof that the live listing matches it. | Blocked until App Store Connect is reviewed against the final build. |
+
+## Do this in order
+
+1. Complete the owner-only prerequisites for a first build in [Your launch steps](owner-steps-2026-10-14.md): Apple signing and APNs, the Firebase API-key restrictions, and the App Store app record. Confirm each in its console; repository docs are not proof of a live setting. Check whether a separate Mapbox agreement permits saved Directions results and review any routes saved by older builds.
+2. Run **Deploy iOS to TestFlight** from `main` and install that exact build. This first build can leave purchases off. The workflow checks signing and Firebase configuration before archiving. A web merge does not update the bundled iPhone app.
+3. Execute steps 8–21 of the [TestFlight script](../qa/testflight-script.md) on an iPhone with fresh and existing accounts. Record a pass or a reproducible defect for each. Complete email and moderation setup before testing those paths.
+4. Complete the RevenueCat and App Store product setup, add the client key to the iOS build workflow, upload a **second** TestFlight build and run the purchase section of the TestFlight script. Check the server entitlement with a sandbox account on the allow-list.
+5. Update the App Store Connect listing and privacy answers, create screenshots from the final device build, then run App Review's demo account through the same onboarding and purchase path. Submit only when these gates are green.
+
+## Limits of this check
+
+The GitHub token could read workflow history and code but was refused access to
+repository variables and secrets. It also cannot inspect Apple Developer,
+App Store Connect, RevenueCat or a physical phone. Those states are **unknown**
+until the owner checks them. A green Hosting deploy does not imply that
+functions or rules redeployed on the same commit: the asset-only 31 October
+run skipped those jobs as intended.

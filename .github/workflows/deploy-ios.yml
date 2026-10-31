@@ -284,9 +284,9 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
-          # Parity with the web deploy — the Pro-gated road-align layer is
-          # not a web-only feature.
-          VITE_ROUTE_PLANNING_ENABLED: "true"
+          # Published Mapbox terms prohibit saving Directions results.
+          # The manual route planner remains available.
+          VITE_ROUTE_PLANNING_ENABLED: "false"
           #
           # Absent on purpose, so nobody has to re-derive why:
           #

@@ -8679,6 +8679,20 @@ exports.setBoardSharing = functions
 exports.planRunningRoute = functions
   .runWith({ ...DEFAULT_HTTP_CAP, secrets: [MAPBOX_DIRECTIONS_TOKEN] })
   .https.onCall(async (data, context) => {
+    // The published Mapbox Product Terms (2026-10-20, §§1.9 and 2.10.1)
+    // prohibit storing Directions results. Our client saves the returned
+    // geometry as a planned route. Keep the callable closed even to older
+    // client builds until a replacement router or explicit licence is in
+    // place; hiding the buttons in new bundles is not a server boundary.
+    // This source-level hold also covers direct calls from older app builds.
+    // Re-enable only in a reviewed change with a licensed routing provider.
+    const roadRoutingReleased = false;
+    if (!roadRoutingReleased) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Road routing is unavailable."
+      );
+    }
     if (!context.auth) {
       throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }

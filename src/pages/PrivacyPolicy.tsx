@@ -521,17 +521,17 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">
-                  Route Planning (Mapbox):
+                  Route Planning (Mapbox, earlier builds):
                 </strong>{" "}
-                If you use the optional road-aware route planner, the map points
-                you tap (or, for a generated loop, your chosen start point plus
+                Road-aware planning is currently paused. In earlier builds, the map points
+                you tapped (or, for a generated loop, your chosen start point plus
                 a handful of nearby points we compute from it and your chosen
-                distance) are sent from our server to Mapbox&apos;s Directions
-                service to calculate a walking route. We send only those
+                distance) were sent from our server to Mapbox&apos;s Directions
+                service to calculate a walking route. We sent only those
                 coordinates — never your name, account details, saved routes, or
-                run history — and we do not store or log the coordinates you
-                submit. Planned routes are saved privately to your account only
-                when you choose Save &amp; follow.
+                run history — and did not separately log the request coordinates.
+                When you chose Save &amp; follow, the returned route geometry was
+                saved privately to your account.
               </li>
               <li>
                 <strong className="text-foreground">GitHub:</strong> the
