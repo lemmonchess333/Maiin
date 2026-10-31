@@ -274,7 +274,14 @@ async function stageRemoteDeletions(uid: string): Promise<void> {
         )
       )
         continue;
-      queueHealthWorkoutDeletion(uid, runId);
+      // Stage this page without requesting another pass immediately. That
+      // keeps one foreground/sync event to one bounded server page.
+      updateRecord(uid, runId, (prior) => ({
+        ...prior,
+        runId,
+        state: "pending-delete",
+        updatedAt: Date.now(),
+      }));
     }
   } catch {
     // A failed server page does not block already-staged local cleanup.

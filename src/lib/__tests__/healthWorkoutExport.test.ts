@@ -256,6 +256,8 @@ describe("Apple Health export reconciliation", () => {
     seedFirestore(tombstones);
     writer.deleteWorkout.mockResolvedValue({ status: "absent" });
     await reconcilePendingHealthExports("u1");
+    expect(writer.deleteWorkout).not.toHaveBeenCalledWith({ runId: "run-50" });
+    await reconcilePendingHealthExports("u1");
     expect(writer.deleteWorkout).toHaveBeenCalledWith({ runId: "run-50" });
     expect(readDoc("users/u1/healthWorkoutExports/run-50")?.state).toBe(
       "pending-delete"
