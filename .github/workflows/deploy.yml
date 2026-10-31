@@ -71,12 +71,10 @@ jobs:
           # FCM Web push public VAPID key (#963). Public by design (ships in the
           # client bundle); kept as a secret only to match the other VITE_ vars.
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
-          # Run11 road-aware route planning — enables the Pro-gated Mapbox
-          # road-align / loop layer in RoutePlannerSheet (routePlanningApi.ts
-          # gates on this). The `planRunningRoute` callable + its
-          # MAPBOX_DIRECTIONS_TOKEN secret are live in production (2026-07-18).
-          # Non-secret public flag; the road buttons only render for Pro users.
-          VITE_ROUTE_PLANNING_ENABLED: "true"
+          # Mapbox Directions results are saved as planned routes, which the
+          # published 2026-10-20 terms prohibit without separate permission.
+          # Keep road actions hidden until the provider/licence is resolved.
+          VITE_ROUTE_PLANNING_ENABLED: "false"
           # Admin allowlist for /admin/moderation. Absent from every deploy
           # until now, so the queue 403'd for everyone including the owner.
           # Public by design (client-side route gate); listPendingReports

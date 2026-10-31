@@ -5,8 +5,9 @@ What to enter in App Store Connect for Tropos (Apple ID 6762416918, bundle
 what has to be true before the first submission. Tracked by
 [issue 2542](https://github.com/lemmonchess333/Maiin/issues/2542).
 
-Every claim here was checked against the code on 2026-10-04, and the
-lifting units and form-guide lines again on 2026-10-17. When a feature,
+Every claim here was checked against the code on 2026-10-04, the lifting
+units and form-guide lines again on 2026-10-17, and the editorial photo
+licences on 2026-10-31. When a feature,
 an SDK or a flow of data changes, change the matching section in the same PR:
 the privacy answers in particular describe what the code does, and Apple
 holds the label, the privacy policy and the app to each other.
@@ -107,7 +108,7 @@ Tropos Pro
 • Typed meals read by AI, which handles more than the built-in food list.
 • A calorie target that adapts to what you log and how your weight moves.
 • Protein, carbs and fat that shift with each day's training.
-• Pace targets that move with your recent runs, and planned routes that follow the roads.
+• Pace targets that move with your recent runs.
 
 Pro is a monthly or yearly subscription, with a 7-day free trial for new subscribers. Payment is taken from your Apple Account when the trial ends, or when you subscribe if there is no trial. It renews automatically unless you cancel at least 24 hours before the end of the current period. Manage or cancel it in your Apple Account settings.
 
@@ -142,15 +143,13 @@ lifting,strength,training,plan,marathon,hybrid,5k,10k,half,macro,counter,food,lo
 
 | Field              | Entry                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Support URL        | `https://troposfit.com/support`. Until that domain serves the app, `https://adaptive-fitness-af8bb.firebaseapp.com/support` (the same page, public, `src/pages/Support.tsx`)                                                                                                                                                                                                                                               |
+| Support URL        | `https://troposfit.com/support` (public, verified in a mobile browser on 2026-10-31; `src/pages/Support.tsx`)                                                                                                                                                                                                                                               |
 | Marketing URL      | Optional. Leave it empty until troposfit.com has a home page of its own                                                                                                                                                                                                                                                                                                                                                    |
-| Privacy Policy URL | `https://troposfit.com/privacy`, or `https://adaptive-fitness-af8bb.firebaseapp.com/privacy` until then. The static copy for troposfit.com, `public/legal/privacy.html`, is generated from the same page (`npm run legal:sync`)                                                                                                                                                                                            |
+| Privacy Policy URL | `https://troposfit.com/privacy` (public, verified in a mobile browser on 2026-10-31). The static copy, `public/legal/privacy.html`, is generated from the same page (`npm run legal:sync`)                                                                                                                                                                                            |
 | Category           | Health & Fitness. No secondary category                                                                                                                                                                                                                                                                                                                                                                                    |
 | Copyright          | `2026 Myles Kennedy`, the owner named in the Terms (`src/pages/TermsOfService.tsx`)                                                                                                                                                                                                                                                                                                                                        |
-| Content rights     | "Yes, it contains third-party content": maps from OpenStreetMap through OpenFreeMap, weather from MET Norway, food data from Open Food Facts (each credited where it appears), road routes from Mapbox, photographs on Space and challenge cards (Unsplash License), and real race names in Spaces. Answer that you hold the rights once Mapbox's terms are settled (item 8 under [Before submitting](#before-submitting)) |
+| Content rights     | "Yes, it contains third-party content": maps from OpenStreetMap through OpenFreeMap, weather from MET Norway, food data from Open Food Facts (each credited where it appears), photographs on Space and challenge cards (Unsplash and Pexels Licenses; source records in `src/assets/editorial/`), and real race names in Spaces. Audit any routes saved by earlier builds before answering for the final app (item 8 under [Before submitting](#before-submitting)) |
 
-If the description's links go to the firebaseapp.com addresses for now,
-change both lines at the end of it to match.
 
 ### Age rating
 
@@ -269,7 +268,7 @@ Where to find things
 - Privacy Policy, Terms and support contact: Settings > Support & legal.
 
 Pro and In-App Purchase
-Tropos Pro is sold as monthly and yearly auto-renewable subscriptions through In-App Purchase, with a 7-day free trial for new subscribers. Pro adds meal logging from a photo, AI reading of typed meals, an adaptive calorie target, macros that follow the day's training, adaptive pace targets and road-following route planning. Everything else is free.
+Tropos Pro is sold as monthly and yearly auto-renewable subscriptions through In-App Purchase, with a 7-day free trial for new subscribers. Pro adds meal logging from a photo, AI reading of typed meals, an adaptive calorie target, macros that follow the day's training and adaptive pace targets. Everything else is free.
 
 AI food analysis
 When a Pro user scans a meal or a label, or types a meal, the photo or text is sent to Google's Gemini model on Vertex AI, which returns the foods and their macros. The app asks before the first one is sent. Photo results are shown for the user to check and edit before they are logged. Photos are not stored on our servers: the app keeps them on the phone for 90 days to show in the food diary. No account identifier is sent to Google. AI analysis can be switched off in Settings > Social & privacy.
@@ -374,15 +373,18 @@ These are yours; none of them can be done from the code.
    after the activation order in `docs/iap/revenuecat-setup.md`
    (agreements, banking and tax, both products with their trials,
    RevenueCat set up). Then a sandbox purchase on a phone.
-2. **The demo account's uid goes in `REVENUECAT_SANDBOX_UIDS`**, which
-   isn't set yet: a repository variable on GitHub, with your own uid,
-   then a Deploy production run (`docs/iap/revenuecat-setup.md` Part C).
-3. **troposfit.com must serve `/terms`, `/privacy` and `/support`** with
-   no sign-in, or the listing uses the firebaseapp.com addresses above
-   (`docs/public-legal-pages.md`).
-4. **The version must match the build.** The record in App Store Connect
-   is 1.0, and `deploy-ios.yml` stamps builds with `package.json`'s
-   version, 1.2.0. Rename the App Store version to 1.2.0, or set
+2. **The demo account's uid goes in `REVENUECAT_SANDBOX_UIDS`** as a
+   repository variable alongside your own uid, followed by a Deploy
+   production run (`docs/iap/revenuecat-setup.md` Part C). Verify the
+   deployed value in the console before the purchase test; repository
+   variable access was unavailable during the 2026-10-31 audit.
+3. **Public pages: checked 2026-10-31.** `/terms`, `/privacy` and `/support`
+   rendered at `troposfit.com` without sign-in in a mobile browser. Recheck
+   the listing links once they are entered in App Store Connect.
+4. **The version must match the build.** The last documented App Store
+   Connect record was 1.0, while `deploy-ios.yml` stamps builds with
+   `package.json`'s version, 1.2.0. Verify the current App Store version;
+   rename it to 1.2.0, or set
    `package.json` to 1.0.0 before the build you submit.
 5. **Screenshots, as the last pass**, 6.9-inch, once the app is
    finished and not before. The frames taken so far (App Screenshots
@@ -405,15 +407,16 @@ These are yours; none of them can be done from the code.
    resets and report alerts reach nobody but the Resend account's owner.
 7. **Reports reviewed within 24 hours.** The Terms and the review notes
    now promise it; the report email is how you find out.
-8. **Mapbox's terms.** The route planner shows Mapbox's road routes on
-   an OpenFreeMap map, and "Save & follow" keeps them. Mapbox's older
-   terms allowed Directions results only on a Mapbox map and never
-   stored; nothing reachable from here showed the current wording. Read
-   the Directions section of
-   [Mapbox's product terms](https://www.mapbox.com/legal/product-terms).
-   If either still holds, the planner needs an OpenStreetMap router, or
-   planned routes stop being saved. Until then, answer the content-rights
-   question with care.
+8. **Road routing is paused.** The
+   [Mapbox Product Terms dated 20 October 2026](https://www.mapbox.com/legal/product-terms)
+   prohibit storing Navigation API results in §2.10.1; §1.9 also prohibits
+   storing other service results by default. Earlier builds saved Directions
+   geometry as planned routes. The current release disables both the client
+   controls and the callable, while the manual point-to-point planner remains.
+   Check whether a separate Mapbox agreement explicitly permits the prior
+   use, and audit existing saved plans before answering App Store content
+   rights. Reintroduce road routing only with a provider/licence that permits
+   the intended map display and saved route geometry.
 9. **Other settings.** Keep Google Signals off and Analytics unlinked
    from Ads. The food scan and typed meals call `gemini-3.8-flash`
    (`functions/lib/foodModel.js`; Vertex retired `gemini-2.0-flash`, which

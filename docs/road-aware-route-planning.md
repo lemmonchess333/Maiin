@@ -1,5 +1,17 @@
 # Road-Aware Route Planning (Run11 — Mapbox)
 
+**Release hold, 31 October 2026:** The published
+[Mapbox Product Terms](https://www.mapbox.com/legal/product-terms) dated
+20 October prohibit storing Navigation API results (§2.10.1), and default
+restrictions prohibit storing other service results (§1.9). Tropos saves the
+Directions geometry when a member taps Save & follow. Production web and iOS
+builds now set `VITE_ROUTE_PLANNING_ENABLED=false`, and the callable refuses
+direct requests from older clients. Do not follow the rollout steps below
+until a separate agreement explicitly permits this use, or the router has
+been replaced with one whose terms permit displaying and saving its results.
+The manual point-to-point planner remains available. Audit plans saved by
+earlier builds as part of the launch review.
+
 Adopted 2026-07-17 from the operator rollout packet, amended for the
 Run11 lock's **Pro gate** (retained — see the plan-file STATUS line for
 the Mapbox-supersedes-ORS decision and its reason: ORS's free tier
