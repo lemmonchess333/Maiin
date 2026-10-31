@@ -27,6 +27,7 @@ import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvi
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
 import { captureError } from "@/lib/errorReporting";
@@ -120,9 +121,6 @@ const DailyNutritionSnapshot = lazyRetry(() =>
 
 const Layout = lazyRetry(loadLayout);
 const Login = lazyRetry(() => import("@/pages/Login"));
-const WatchAccountCleanupError = lazyRetry(
-  () => import("@/components/WatchAccountCleanupError")
-);
 const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
@@ -505,9 +503,21 @@ function AppRoutes() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         {watchAccountCleanup ? (
-          <Suspense fallback={<Spinner size="lg" label="Loading Tropos" />}>
-            <WatchAccountCleanupError onRetry={watchAccountCleanup.retry} />
-          </Suspense>
+          /* AuthProvider holds the next account back until the last one's
+             Watch run is cleared from this iPhone. Plain markup and the
+             entry's own Button, so the first chunk carries little of it. */
+          <div role="alert" className="max-w-sm space-y-3 px-4 text-center">
+            <p className="text-sm font-semibold">
+              Couldn&apos;t clear Watch runs
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Tropos clears the last account&apos;s Watch run from this iPhone
+              before opening another, and that didn&apos;t finish.
+            </p>
+            <Button variant="secondary" onClick={watchAccountCleanup.retry}>
+              Try again
+            </Button>
+          </div>
         ) : (
           <Spinner size="lg" label="Loading Tropos" />
         )}
