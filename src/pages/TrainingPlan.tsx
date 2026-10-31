@@ -661,6 +661,7 @@ export default function TrainingPlan() {
           )}
           weekSchedule={profile.weekSchedule ?? []}
           todayKey={todayKey}
+          unit={resolveDistanceUnit(profile.preferredDistanceUnit)}
           nextLiftName={model.nextLift?.dayName}
           initialRunId={move.id}
           blocked={!canEdit}

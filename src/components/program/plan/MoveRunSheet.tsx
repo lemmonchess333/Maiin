@@ -20,6 +20,8 @@ import type { ProgramOutcome } from "@/features/program/programOutcome";
 import type { SavedRun } from "@/lib/savedRuns";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { runTemplateName } from "@/lib/runLabels";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -29,6 +31,8 @@ interface Props {
   runDescriptions?: Record<string, string>;
   weekSchedule: ScheduleDay[];
   todayKey: string;
+  /** The runner's unit: a long run's name carries its distance. */
+  unit: DistanceUnit;
   nextLiftName?: string;
   initialRunId?: string;
   /** Completion evidence or a session can change while the sheet is open. */
@@ -59,11 +63,13 @@ function dateLabel(key: string): string {
   return formatShortWeekdayDayMonth(parseLocalDate(key));
 }
 
-function plannedRunName(run: ScheduledRunDay): string {
-  return (
-    RUN_TEMPLATES.find((t) => t.id === (run.userOverride || run.templateId))
-      ?.name ?? `${run.type.charAt(0).toUpperCase()}${run.type.slice(1)} run`
+function plannedRunName(run: ScheduledRunDay, unit: DistanceUnit): string {
+  const template = RUN_TEMPLATES.find(
+    (t) => t.id === (run.userOverride || run.templateId)
   );
+  return template
+    ? runTemplateName(template.name, unit)
+    : `${run.type.charAt(0).toUpperCase()}${run.type.slice(1)} run`;
 }
 
 /** One local draft. It unmounts on close, so a new opening reads fresh truth. */
@@ -74,6 +80,7 @@ export default function MoveRunSheet({
   runDescriptions,
   weekSchedule,
   todayKey,
+  unit,
   nextLiftName,
   initialRunId,
   blocked,
@@ -160,7 +167,7 @@ export default function MoveRunSheet({
       if (result.status === "applied" || result.status === "queued") {
         onResult(
           result,
-          `${plannedRunName(source)} moved to ${dateLabel(option.date)}`
+          `${plannedRunName(source, unit)} moved to ${dateLabel(option.date)}`
         );
         onClose();
       } else {
@@ -209,7 +216,9 @@ export default function MoveRunSheet({
                 Edit destination
               </Button>
               <h2 className="text-base font-bold">
-                {reviewSource ? plannedRunName(reviewSource) : "Planned run"}
+                {reviewSource
+                  ? plannedRunName(reviewSource, unit)
+                  : "Planned run"}
               </h2>
               {reviewSource?.id && runDescriptions?.[reviewSource.id] && (
                 <p className="text-sm text-muted-foreground">
@@ -268,7 +277,7 @@ export default function MoveRunSheet({
                 {runs.map((run) => (
                   <label
                     key={run.id}
-                    aria-label={`${plannedRunName(run)} on ${run.date ? dateLabel(run.date) : "unknown date"}`}
+                    aria-label={`${plannedRunName(run, unit)} on ${run.date ? dateLabel(run.date) : "unknown date"}`}
                     className="flex min-h-[44px] items-center gap-3 rounded-xl border border-border p-3 text-sm"
                   >
                     <input
@@ -293,7 +302,7 @@ export default function MoveRunSheet({
                     />
                     <span>
                       <span className="block font-semibold">
-                        {plannedRunName(run)}
+                        {plannedRunName(run, unit)}
                       </span>
                       <span className="block text-xs text-muted-foreground">
                         {run.date ? dateLabel(run.date) : "Date unavailable"}
