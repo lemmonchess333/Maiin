@@ -27,7 +27,6 @@ import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvi
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
-import { ErrorState } from "@/components/ui/ErrorState";
 import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
 import { captureError } from "@/lib/errorReporting";
@@ -121,6 +120,9 @@ const DailyNutritionSnapshot = lazyRetry(() =>
 
 const Layout = lazyRetry(loadLayout);
 const Login = lazyRetry(() => import("@/pages/Login"));
+const WatchAccountCleanupError = lazyRetry(
+  () => import("@/components/WatchAccountCleanupError")
+);
 const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
@@ -503,13 +505,9 @@ function AppRoutes() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         {watchAccountCleanup ? (
-          <div className="w-full max-w-sm px-4">
-            <ErrorState
-              title="Couldn't clear Watch runs"
-              description="Tropos clears the last account's Watch run from this iPhone before opening another, and that didn't finish."
-              retry={{ onClick: watchAccountCleanup.retry }}
-            />
-          </div>
+          <Suspense fallback={<Spinner size="lg" label="Loading Tropos" />}>
+            <WatchAccountCleanupError onRetry={watchAccountCleanup.retry} />
+          </Suspense>
         ) : (
           <Spinner size="lg" label="Loading Tropos" />
         )}
