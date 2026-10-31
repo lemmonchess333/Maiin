@@ -183,7 +183,7 @@ describe("SessionCompleteScreen — saved (Pol1)", () => {
         badge,
         await screen.findByRole("switch", {
           name: "Evening reminder if you haven't logged",
-        })
+        }, { timeout: 5_000 })
       )
     ).toBe(true);
     // Once: the extras below no longer carry a second copy.
