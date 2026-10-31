@@ -169,10 +169,12 @@ export interface UserProfileCore {
    */
   onboardingCompletedAt?: Timestamp | FieldValue;
   /**
-   * Server-stamped at the first successful version 2 onboarding commit.
-   * Absent on existing accounts and clients using the legacy journey.
+   * Server-stamped at the first successful onboarding commit from a client
+   * that offers version 2: 2, or 1 for the comparison group and while the
+   * server's switch is off (functions/lib/activationCohort.js). Absent on
+   * accounts made before v2 and on older clients.
    */
-  activationJourneyVersion?: 2;
+  activationJourneyVersion?: 1 | 2;
   /** First completed setup's platform, stamped by the server for v2. */
   onboardingPlatform?: "ios" | "web" | "android";
   /** Training type at the first completed setup, before later plan edits. */

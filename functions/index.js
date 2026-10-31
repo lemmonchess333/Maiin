@@ -32,6 +32,7 @@ if (!admin.apps.length) {
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
+const activationCohort = require("./lib/activationCohort");
 const activationBilling = require("./lib/activationBilling");
 const { activationSport } = require("./lib/firstWeekActivation");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
@@ -961,6 +962,13 @@ exports.completeOnboarding = functions
           "programState is too large."
         );
       }
+      // The server's cohort, not the client's (XB1 call 9): a comparison
+      // group and a switch that turns v2 off (lib/activationCohort.js).
+      const journey = await activationCohort.journeyFor(
+        db,
+        uid,
+        activationJourneyVersion
+      );
       const acceptedVersion = await db.runTransaction(async (transaction) => {
         const existing = await transaction.get(userRef);
         const publicSnap = await transaction.get(publicRef);
@@ -977,8 +985,8 @@ exports.completeOnboarding = functions
           nextProfileData.onboardingSport = activationSport(
             nextProfileData.athleteType
           );
-          if (activationJourneyVersion === 2) {
-            nextProfileData.activationJourneyVersion = 2;
+          if (journey !== null) {
+            nextProfileData.activationJourneyVersion = journey;
             if (onboardingPlatform) {
               nextProfileData.onboardingPlatform = onboardingPlatform;
             }
@@ -1046,12 +1054,11 @@ exports.completeOnboarding = functions
         transaction.set(programRef, onbProgram.value);
 
         return alreadyCompleted
-          ? existingData.activationJourneyVersion === 2
-            ? 2
+          ? existingData.activationJourneyVersion === 2 ||
+            existingData.activationJourneyVersion === 1
+            ? existingData.activationJourneyVersion
             : null
-          : activationJourneyVersion === 2
-            ? 2
-            : null;
+          : journey;
       });
 
       return { success: true, activationJourneyVersion: acceptedVersion };
