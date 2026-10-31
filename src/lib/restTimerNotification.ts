@@ -37,8 +37,10 @@ import {
 
 /** 3000-range = event-driven notifications (see MEAL_NOTIFICATION_IDS'
  *  allocation comment in useMealReminders). One stable id — a new rest
- *  replaces any stale scheduled entry rather than stacking. */
-export const REST_NOTIFICATION_ID = 3001;
+ *  replaces any stale scheduled entry rather than stacking. Its own: a
+ *  shared id cancels the other feature's notification
+ *  (localNotificationIds.test.ts). */
+export const REST_NOTIFICATION_ID = 3004;
 
 /**
  * How many seconds from now the rest-end notification should fire, or
