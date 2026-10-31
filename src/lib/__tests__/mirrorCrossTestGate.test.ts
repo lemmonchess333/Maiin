@@ -298,6 +298,10 @@ const PINNED: Record<string, string> = {
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.
 const NOT_EQUALITY_MIRROR: Record<string, string> = {
+  "functions/lib/healthWorkoutLedger.js":
+    "server deletion trigger only marks an existing receipt; the client module " +
+    "reserves exports, checks consent and reconciles native cleanup, so they " +
+    "have different inputs and outputs rather than shared decision logic",
   "functions/lib/dateUtils.js":
     "intentionally UTC (server) vs local (client) — an equality pin would be WRONG",
   "functions/lib/challengeDefs.js":
