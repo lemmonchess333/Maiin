@@ -7,7 +7,10 @@ import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { daysSinceStart, startDayKey } from "@/lib/startDay";
 import { FIRST_WEEK_DAYS } from "@/lib/firstWeek";
 import { usePushSettings } from "@/hooks/usePushSettings";
-import { useStreakReminder } from "@/hooks/RemindersProvider";
+import {
+  useStreakReminder,
+  useWorkoutReminders,
+} from "@/hooks/RemindersProvider";
 import { useFirstSessionReturnChoice } from "@/hooks/useFirstSessionReturnChoice";
 import {
   getRemotePushPermissionState,
@@ -58,6 +61,10 @@ export default function FirstWeekReturnOffer({
     updatePrefs,
     requestPermission,
   } = useStreakReminder();
+  // Setup's reminder row turns training-day reminders on: someone who said
+  // yes there has already answered this.
+  const { reminders: workoutReminders, loading: workoutRemindersLoading } =
+    useWorkoutReminders();
   const choice = useFirstSessionReturnChoice();
   const [support, setSupport] = useState<{
     uid: string | null;
@@ -101,6 +108,8 @@ export default function FirstWeekReturnOffer({
     !consent.enabled &&
     !localLoading &&
     !prefs.primingShown &&
+    !workoutRemindersLoading &&
+    !workoutReminders.enabled &&
     !choice.loading &&
     !choice.failed &&
     !choice.response;

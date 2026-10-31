@@ -22,6 +22,7 @@ const h = vi.hoisted(() => ({
   choiceFailed: false,
   choiceResponse: null as "accepted" | "later" | "denied" | null,
   primingShown: false,
+  workoutReminders: false,
   remotePermissionState: "granted" as "granted" | "denied" | "default",
   localPermissionState: "granted" as "granted" | "denied" | "default",
   support: vi.fn(async () => true),
@@ -64,6 +65,10 @@ vi.mock("@/hooks/usePushSettings", () => ({
   }),
 }));
 vi.mock("@/hooks/RemindersProvider", () => ({
+  useWorkoutReminders: () => ({
+    reminders: { enabled: h.workoutReminders, time: "07:30" },
+    loading: false,
+  }),
   useStreakReminder: () => ({
     prefs: { enabled: false, primingShown: h.primingShown },
     loading: false,
@@ -124,6 +129,7 @@ beforeEach(() => {
   h.choiceFailed = false;
   h.choiceResponse = null;
   h.primingShown = false;
+  h.workoutReminders = false;
   h.remotePermissionState = "granted";
   h.localPermissionState = "granted";
   h.support.mockImplementation(async () => h.pushSupported);
@@ -136,6 +142,20 @@ beforeEach(() => {
 });
 
 describe("first-week saved-session return offer", () => {
+  it("asks nothing when setup already turned training-day reminders on", async () => {
+    h.workoutReminders = true;
+    open("lift");
+    await waitFor(() => expect(h.support).toHaveBeenCalled());
+    await act(async () => {});
+    expect(
+      screen.queryByRole("button", { name: "Turn on reminders" })
+    ).not.toBeInTheDocument();
+    expect(h.track).not.toHaveBeenCalledWith(
+      "first_week_reminder_offered",
+      expect.anything()
+    );
+  });
+
   it("appears after a version 2 save without asking system permission on mount", async () => {
     open("run");
     expect(
