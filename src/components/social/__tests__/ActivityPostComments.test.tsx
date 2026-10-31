@@ -154,6 +154,18 @@ describe("ActivityPostComments", () => {
     expect(field).toHaveFocus();
   });
 
+  it("pins the field out to the page's edges in px, as Layout's gutter is", async () => {
+    renderComments();
+    await screen.findByText("Strong finish");
+    const pinned = screen
+      .getByRole("textbox", { name: "Add a comment" })
+      .closest(".sticky");
+    // In rem the margin grew with the text past the px gutter it undoes,
+    // and ran the chips' row and Send off a 393px screen at 135%.
+    expect(pinned?.className.split(" ")).toContain("-mx-[16px]");
+    expect(pinned?.className).not.toMatch(/(^|\s)-mx-4(\s|$)/);
+  });
+
   it("says so when there are none yet", async () => {
     H.comments = [];
     renderComments({ commentCount: 0 });

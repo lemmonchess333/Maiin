@@ -72,9 +72,12 @@ export default function ActivityPostComments({
           <ActivityCommentRows thread={thread} />
         </div>
       )}
-      {/* Pinned above the tab bar while the page scrolls under it. */}
+      {/* Pinned above the tab bar while the page scrolls under it, out to
+          the page's edges: the margin undoes Layout's gutter, which is in
+          px, so in px too. In rem it grew with the text and ran the field
+          and Send past the screen. */}
       <div
-        className="sticky z-20 -mx-4 bg-background/95 backdrop-blur"
+        className="sticky z-20 -mx-[16px] bg-background/95 backdrop-blur"
         style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
       >
         <CommentComposer
