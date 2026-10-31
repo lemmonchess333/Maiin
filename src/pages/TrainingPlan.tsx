@@ -40,7 +40,10 @@ import { goalLabel } from "@/features/program/programLabels";
 import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { useSessionsInFlight } from "@/hooks/useSessionsInFlight";
-import { buildTrainingPlanWorkspace } from "@/lib/trainingPlanWorkspace";
+import {
+  buildTrainingPlanWorkspace,
+  weekCountLabel,
+} from "@/lib/trainingPlanWorkspace";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth, formatWeekday } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
@@ -402,8 +405,8 @@ export default function TrainingPlan() {
             <WeekResetCard
               feel={resetFeel}
               range={`${formatDayMonth(parseLocalDate(firstDate))} – ${formatDayMonth(parseLocalDate(lastDate))}`}
-              liftDays={model.summary.liftDays}
-              plannedRuns={model.summary.plannedRuns}
+              liftDays={model.summary.lifts.planned ?? 0}
+              plannedRuns={model.summary.runs.planned ?? 0}
               canMoveRun={canEdit && eligibleRuns.length > 0}
               canEditLayout={canResetLayout}
               moveReason={
@@ -471,10 +474,10 @@ export default function TrainingPlan() {
             ) : (
               <MetaLine
                 items={[
-                  `${model.summary.liftDays} lift days`,
-                  `${model.summary.plannedRuns} planned runs`,
-                  `${model.summary.restDays} rest days`,
-                ]}
+                  weekCountLabel("Lifts", model.summary.lifts),
+                  weekCountLabel("Runs", model.summary.runs),
+                  `${model.summary.restDays} rest ${model.summary.restDays === 1 ? "day" : "days"}`,
+                ].filter((item): item is string => item !== null)}
               />
             )}
             <Card padded={false} size="compact" className="overflow-hidden">

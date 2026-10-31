@@ -107,6 +107,11 @@ export function formatDayMonthLong(d: Date): string {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
 }
 
+/** "Mon": the weekday alone, short ("Done Tue", a day column's head). */
+export function formatShortWeekday(d: Date): string {
+  return d.toLocaleDateString("en-GB", { weekday: "short" });
+}
+
 /** "Monday": the weekday alone, in full ("The next one starts Monday."). */
 export function formatWeekday(d: Date): string {
   return d.toLocaleDateString("en-GB", { weekday: "long" });
