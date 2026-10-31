@@ -36,7 +36,8 @@ export default function LiftCTACard({
   nextWorkout,
   navigate,
   muscleGroups,
-  dayIndex = null,
+  dayTarget,
+  startTarget,
   isStartable = true,
   status,
   eyebrowLabel,
@@ -53,10 +54,11 @@ export default function LiftCTACard({
   };
   navigate: (p: string) => void;
   muscleGroups?: string;
-  /** HOME-ACTION-01: index into programState.workouts for the exact
-   *  Programme day this card represents, so both actions open that day
-   *  (`?day=N`) instead of a bare `/program`. Null → bare `/program`. */
-  dayIndex?: number | null;
+  /** HOME-ACTION-01: where the exact Programme day this card represents
+   *  opens (`?day=N`), and where Start goes; `todaySession` decides both
+   *  (`liftTargets`), as it does for the first-week card. */
+  dayTarget: string;
+  startTarget: string;
   /** HOME-ACTION-01: false when the lift slot is already completed/skipped
    *  (terminal). The card names its status and offers no Start. */
   isStartable?: boolean;
@@ -72,10 +74,6 @@ export default function LiftCTACard({
   /** This workout is under way on this phone (`todaySession`). */
   inProgress?: SessionInProgress | null;
 }) {
-  const dayTarget =
-    typeof dayIndex === "number" ? `/program?day=${dayIndex}` : "/program";
-  const startTarget =
-    typeof dayIndex === "number" ? `${dayTarget}&start=1` : dayTarget;
   const state =
     status ??
     (nextWorkout.completed

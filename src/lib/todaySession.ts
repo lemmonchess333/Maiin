@@ -19,6 +19,7 @@ import type { RestContext } from "@/features/program/restTime";
 import { getActivationFraming } from "@/lib/activationFraming";
 import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { runDoseLine } from "@/lib/runDose";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { racePaceWorkFor, type RacePaceWork } from "@/lib/racePace";
@@ -107,12 +108,53 @@ export interface TodaySessionInput {
 
 const NO_ROUTINES: RoutinesInFlight = new Map();
 
+/**
+ * Where a programme day opens in Train (`?day=N`, or bare `/program` with
+ * no day), and where its Start goes: the same day with `start=1`, which
+ * Train starts the way its own Start does.
+ */
+export function liftTargets(index: number | null): {
+  dayTarget: string;
+  startTarget: string;
+} {
+  const dayTarget =
+    typeof index === "number" ? `/program?day=${index}` : "/program";
+  return {
+    dayTarget,
+    startTarget: typeof index === "number" ? `${dayTarget}&start=1` : dayTarget,
+  };
+}
+
+/**
+ * Where a run's Start goes: straight into the run, the planned one or, with
+ * none, a free run, with no second Start on the Run page (`startOnArrival`).
+ * The planned one is pinned by its id, and by its template for an older
+ * run day without one.
+ */
+export function runStartTarget(runDay: ScheduledRunDay | null): string {
+  const template = runDay
+    ? RUN_TEMPLATES.find(
+        (item) => item.id === (runDay.userOverride || runDay.templateId)
+      )
+    : null;
+  const params: string[] = [];
+  if (template) params.push(`template=${template.id}`);
+  if (runDay?.id)
+    params.push(`scheduledRunId=${encodeURIComponent(runDay.id)}`);
+  params.push(`${START_ON_ARRIVAL_PARAM}=1`);
+  return `/run?${params.join("&")}`;
+}
+
 export interface TodayLift {
   /** The workout the card offers, or null when the schedule names a lifting
    *  day the programme has no workout for. */
   workout: WorkoutDay | null;
   /** Its place in the programme, for `?day=N`. */
   index: number | null;
+  /** Where the day opens in Train, and where its Start goes
+   *  (`liftTargets`). Every Start for it reads these. */
+  dayTarget: string;
+  startTarget: string;
   /** Its name as Train names it in its week ("Pull B"), or null with no
    *  workout. Absent reads as the day's name without its week. */
   name?: string | null;
@@ -128,6 +170,9 @@ export interface TodayLift {
 export interface TodayRun {
   /** The planned run, or null on a run day with nothing written yet. */
   runDay: ScheduledRunDay | null;
+  /** Where its Start goes (`runStartTarget`). Every Start for it reads
+   *  this. */
+  startTarget: string;
   completed: boolean;
   /** A new person's first run. */
   isFirst: boolean;
@@ -162,6 +207,9 @@ export type RestDayOffer =
       kind: "first-workout";
       workout: WorkoutDay;
       index: number;
+      /** As a lifting day's (`liftTargets`). */
+      dayTarget: string;
+      startTarget: string;
       /** As Train names it in its week. Absent reads as the day's name
        *  without its week. */
       name?: string;
@@ -169,7 +217,12 @@ export type RestDayOffer =
       inProgress?: SessionInProgress | null;
     }
   /** Free running plans no days, so a free runner's rest day offers a run. */
-  | { kind: "free-run"; inProgress?: SessionInProgress | null }
+  | {
+      kind: "free-run";
+      /** A free run's Start (`runStartTarget`). */
+      startTarget: string;
+      inProgress?: SessionInProgress | null;
+    }
   /** A new person with no meal logged yet. */
   | { kind: "first-meal" }
   | { kind: "rest"; tomorrow: TomorrowSession | null };
@@ -244,6 +297,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
       ? {
           workout: homeLift.workout,
           index: homeLift.index,
+          ...liftTargets(homeLift.index),
           name: homeLift.workout
             ? weekDayName(programState, homeLift.index, homeLift.workout)
             : null,
@@ -255,6 +309,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
     run: running
       ? {
           runDay: resolved.run.runDay,
+          startTarget: runStartTarget(resolved.run.runDay),
           completed: resolved.run.isCompleted,
           isFirst: framing.firstRun,
           dose: runDose(resolved.run.runDay, profile),
@@ -366,6 +421,7 @@ function restDayOffer(
         kind: "first-workout",
         workout,
         index,
+        ...liftTargets(index),
         name: weekDayName(programState, index, workout),
       };
   }
@@ -373,7 +429,7 @@ function restDayOffer(
     profile?.runMode === "freeform" &&
     (profile.athleteType === "Runner" || profile.athleteType === "Hybrid")
   ) {
-    return { kind: "free-run" };
+    return { kind: "free-run", startTarget: runStartTarget(null) };
   }
   // A race plan's rest day must stay rest. It cannot lead with a food
   // prompt or offer an unscheduled run to satisfy activation.

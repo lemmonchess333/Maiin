@@ -8,6 +8,7 @@ import {
   runSessionExplainer,
 } from "@/lib/runSessionExplainer";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
+import { liftTargets, runStartTarget } from "@/lib/todaySession";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
@@ -17,6 +18,7 @@ describe("session purpose command surfaces", () => {
     const purpose = "Week 3 of 4 · progression follows your sets";
     const { container } = render(
       <LiftCTACard
+        {...liftTargets(null)}
         nextWorkout={{
           dayName: "Pull — Lat Focus",
           dayType: "pull",
@@ -57,6 +59,7 @@ describe("session purpose command surfaces", () => {
       <RunCTACard
         unit="km"
         todayRun={run}
+        startTarget={runStartTarget(run)}
         navigate={vi.fn()}
         // @ts-expect-error -- no rationale or plan week on Home (owner, 2026-09-09)
         purpose={purpose}
@@ -90,7 +93,12 @@ describe("session purpose command surfaces", () => {
        twice. */
     const navigate = vi.fn();
     const { container } = render(
-      <RunCTACard unit="km" todayRun={null} navigate={navigate} />
+      <RunCTACard
+        unit="km"
+        todayRun={null}
+        startTarget={runStartTarget(null)}
+        navigate={navigate}
+      />
     );
     expect(screen.getByText("Free run")).toBeInTheDocument();
     expect(container).not.toHaveTextContent(/week \d/i);
@@ -121,7 +129,7 @@ describe("Home session actions and metadata", () => {
           exercises: [{ name: "Bench" }, { name: "Row" }],
         }}
         muscleGroups="Chest · Back"
-        dayIndex={2}
+        {...liftTargets(2)}
         navigate={navigate}
       />
     );
@@ -138,6 +146,7 @@ describe("Home session actions and metadata", () => {
   it("prices the session only when every exercise carries its sets", () => {
     const { container, rerender } = render(
       <LiftCTACard
+        {...liftTargets(null)}
         nextWorkout={{
           dayName: "Upper body",
           dayType: "upper",
@@ -152,6 +161,7 @@ describe("Home session actions and metadata", () => {
     expect(container).toHaveTextContent(/2 exercises · about \d+ min/);
     rerender(
       <LiftCTACard
+        {...liftTargets(null)}
         nextWorkout={{
           dayName: "Upper body",
           dayType: "upper",
@@ -173,7 +183,7 @@ describe("Home session actions and metadata", () => {
           exercises: [],
         }}
         dayLabel="Pull B"
-        dayIndex={3}
+        {...liftTargets(3)}
         navigate={vi.fn()}
       />
     );
@@ -194,6 +204,7 @@ describe("Home session actions and metadata", () => {
   it("splits a day the person named into its category and title", () => {
     render(
       <LiftCTACard
+        {...liftTargets(null)}
         nextWorkout={{
           dayName: "Arms — Pump",
           dayType: "upper",
@@ -214,11 +225,23 @@ describe("Home session actions and metadata", () => {
       status: "planned",
     } as ScheduledRunDay;
     const { container, rerender } = render(
-      <RunCTACard unit="mi" todayRun={longRun} navigate={vi.fn()} />
+      <RunCTACard
+        unit="mi"
+        todayRun={longRun}
+        startTarget={runStartTarget(longRun)}
+        navigate={vi.fn()}
+      />
     );
     expect(container).toHaveTextContent("Long 3.7 mi");
     expect(container).not.toHaveTextContent("6K");
-    rerender(<RunCTACard unit="km" todayRun={longRun} navigate={vi.fn()} />);
+    rerender(
+      <RunCTACard
+        unit="km"
+        todayRun={longRun}
+        startTarget={runStartTarget(longRun)}
+        navigate={vi.fn()}
+      />
+    );
     expect(container).toHaveTextContent("Long 6K");
   });
 
@@ -235,6 +258,11 @@ describe("Home session actions and metadata", () => {
             status: "planned",
           } as ScheduledRunDay
         }
+        startTarget={runStartTarget({
+          id: "planned run",
+          templateId: "easy_30",
+          status: "planned",
+        } as ScheduledRunDay)}
         navigate={navigate}
         dose="30 min"
       />
@@ -259,6 +287,11 @@ describe("Home session actions and metadata", () => {
             status: "completed_exact",
           } as ScheduledRunDay
         }
+        startTarget={runStartTarget({
+          id: "done",
+          templateId: "easy_30",
+          status: "completed_exact",
+        } as ScheduledRunDay)}
         navigate={navigate}
       />
     );

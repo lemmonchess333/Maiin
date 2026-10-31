@@ -6,6 +6,7 @@ import type {
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { liftTargets, runStartTarget } from "@/lib/todaySession";
 
 const rest: TodaySession = {
   type: "rest",
@@ -27,6 +28,44 @@ const scheduledRun = {
 } as ScheduledRunDay;
 
 describe("firstWeekAction", () => {
+  it("goes where the session says each card's Start goes", () => {
+    // Targets only todaySession could have chosen: the first-week card
+    // must read them, not work them out again.
+    const session: TodaySession = {
+      ...rest,
+      type: "both",
+      rest: null,
+      lift: {
+        workout,
+        index: 2,
+        dayTarget: "/program?day=2&from=session",
+        startTarget: "/program?day=2&start=1&from=session",
+        isStartable: true,
+        status: "planned",
+        muscleGroups: "",
+      },
+      run: {
+        runDay: scheduledRun,
+        startTarget: "/run?scheduledRunId=from-session&start=1",
+        completed: false,
+        isFirst: true,
+        dose: null,
+      },
+    };
+    expect(firstWeekAction("workout", session).target).toBe(
+      "/program?day=2&start=1&from=session"
+    );
+    expect(firstWeekAction("run", session).target).toBe(
+      "/run?scheduledRunId=from-session&start=1"
+    );
+    expect(
+      firstWeekAction("run", {
+        ...rest,
+        rest: { kind: "free-run", startTarget: "/run?start=1&from=session" },
+      }).target
+    ).toBe("/run?start=1&from=session");
+  });
+
   it("starts today's workout or run using the same address as its card", () => {
     const both: TodaySession = {
       ...rest,
@@ -35,12 +74,14 @@ describe("firstWeekAction", () => {
       lift: {
         workout,
         index: 2,
+        ...liftTargets(2),
         isStartable: true,
         status: "planned",
         muscleGroups: "",
       },
       run: {
         runDay: scheduledRun,
+        startTarget: runStartTarget(scheduledRun),
         completed: false,
         isFirst: true,
         dose: null,
@@ -66,6 +107,7 @@ describe("firstWeekAction", () => {
       rest: null,
       run: {
         runDay: scheduledRun,
+        startTarget: runStartTarget(scheduledRun),
         completed: false,
         isFirst: true,
         dose: null,
@@ -82,12 +124,14 @@ describe("firstWeekAction", () => {
       lift: {
         workout,
         index: 0,
+        ...liftTargets(0),
         isStartable: true,
         status: "planned",
         muscleGroups: "",
       },
       run: {
         runDay: scheduledRun,
+        startTarget: runStartTarget(scheduledRun),
         completed: false,
         isFirst: true,
         dose: null,
@@ -116,12 +160,18 @@ describe("firstWeekAction", () => {
     });
     const freeRunner: TodaySession = {
       ...rest,
-      rest: { kind: "free-run" },
+      rest: { kind: "free-run", startTarget: runStartTarget(null) },
     };
     expect(firstWeekAction("run", freeRunner).target).toBe("/run?start=1");
     const firstLifter: TodaySession = {
       ...rest,
-      rest: { kind: "first-workout", workout, index: 0 },
+      rest: {
+        kind: "first-workout",
+        workout,
+        index: 0,
+        ...liftTargets(0),
+        ...liftTargets(0),
+      },
     };
     expect(firstWeekAction("workout", firstLifter).target).toBe(
       "/program?day=0&start=1"
@@ -135,6 +185,10 @@ describe("firstWeekAction", () => {
       rest: null,
       run: {
         runDay: { ...scheduledRun, status: "completed_exact" },
+        startTarget: runStartTarget({
+          ...scheduledRun,
+          status: "completed_exact",
+        }),
         completed: true,
         isFirst: false,
         dose: null,

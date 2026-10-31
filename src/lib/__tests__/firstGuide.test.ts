@@ -21,6 +21,7 @@ import type { TodaySession } from "../todaySession";
 import type { WorkoutDay } from "@/features/program/programTypes";
 import { cardSessionMinutes } from "@/features/program/expressSession";
 import { group } from "@/test/localeGrouping";
+import { liftTargets, runStartTarget } from "@/lib/todaySession";
 
 const workout = {
   name: "Full Body Circuit A",
@@ -34,6 +35,7 @@ const sessions: Record<TodayCard, TodaySession> = {
     lift: {
       workout,
       index: 0,
+      ...liftTargets(0),
       isStartable: true,
       status: "today" as never,
       muscleGroups: "Legs · Chest · Back",
@@ -45,7 +47,13 @@ const sessions: Record<TodayCard, TodaySession> = {
     type: "run",
     restContext: {},
     lift: null,
-    run: { runDay: null, completed: false, isFirst: true, dose: null },
+    run: {
+      runDay: null,
+      startTarget: runStartTarget(null),
+      completed: false,
+      isFirst: true,
+      dose: null,
+    },
     rest: null,
   },
   "first-workout": {
@@ -53,14 +61,20 @@ const sessions: Record<TodayCard, TodaySession> = {
     restContext: {},
     lift: null,
     run: null,
-    rest: { kind: "first-workout", workout, index: 0 },
+    rest: {
+      kind: "first-workout",
+      workout,
+      index: 0,
+      ...liftTargets(0),
+      ...liftTargets(0),
+    },
   },
   "free-run": {
     type: "rest",
     restContext: {},
     lift: null,
     run: null,
-    rest: { kind: "free-run" },
+    rest: { kind: "free-run", startTarget: runStartTarget(null) },
   },
   "first-meal": {
     type: "rest",
@@ -198,6 +212,7 @@ describe("today's stop names this person's session", () => {
         kind: "first-workout",
         workout: day,
         index: 0,
+        ...liftTargets(0),
         name: "Full Body A",
       },
     });
