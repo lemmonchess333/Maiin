@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import SessionBadge from "@/components/workout/SessionBadge";
 import SessionShareRow from "@/components/workout/SessionShareRow";
@@ -9,7 +9,9 @@ const CompletionReminderChoice = lazyRetry(
 );
 
 /** Actions on a persisted session. Never opens a dialog on mount: sharing
- *  asks inline, once, and after that posts without one (SessionShareRow). */
+ *  asks inline, once, and after that posts without one (SessionShareRow).
+ *  One question at a time: the reminder offer waits until the share
+ *  question, on the first finish, has been answered. */
 export default function CompletionExtras({
   share,
   badge = true,
@@ -23,6 +25,9 @@ export default function CompletionExtras({
   kind: "lift" | "run";
   activationJourneyV2: boolean;
 }) {
+  // Unknown until the share row has read the account's answer.
+  const [shareAsking, setShareAsking] = useState<boolean | null>(null);
+  const shareSettled = !share || shareAsking === false;
   return (
     <div className="space-y-4">
       {badge && <SessionBadge />}
@@ -31,14 +36,17 @@ export default function CompletionExtras({
         <SessionShareRow
           key={`${share.uid}:${share.source.kind}:${share.source.id}`}
           action={share}
+          onAskingChange={setShareAsking}
         />
       )}
-      <Suspense fallback={null}>
-        <CompletionReminderChoice
-          kind={kind}
-          activationJourneyV2={activationJourneyV2}
-        />
-      </Suspense>
+      {shareSettled && (
+        <Suspense fallback={null}>
+          <CompletionReminderChoice
+            kind={kind}
+            activationJourneyV2={activationJourneyV2}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

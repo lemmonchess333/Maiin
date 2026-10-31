@@ -626,11 +626,25 @@ describe("the version 2 first-week journey", () => {
     ).toBeInTheDocument();
   });
 
-  it("defers native steps priming until after the first Home visit", () => {
+  it("defers native steps priming until the app is opened after the first Home visit", () => {
     h.steps = { status: "unprompted", primingShown: false, ready: true };
     renderHome();
     expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
     cleanup();
+    // Back on Home from the first session's finish, in the same open: the
+    // finish has just asked about sharing and reminders.
+    renderHome();
+    expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
+    cleanup();
+    const visibility = (state: DocumentVisibilityState) => {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        get: () => state,
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    };
+    act(() => visibility("hidden"));
+    act(() => visibility("visible"));
     renderHome();
     expect(screen.getByTestId("steps-prompt")).toHaveTextContent("open");
   });

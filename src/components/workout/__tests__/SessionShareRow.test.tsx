@@ -161,6 +161,17 @@ describe("no saved answer: ask once", () => {
     expect(screen.queryByRole("heading", QUESTION)).toBeNull();
   });
 
+  it("says whether it is asking, so the finish screen asks one thing at a time", async () => {
+    const asking = vi.fn();
+    render(
+      <SessionShareRow action={action("workout")} onAskingChange={asking} />
+    );
+    await screen.findByRole("heading", QUESTION);
+    expect(asking).toHaveBeenLastCalledWith(true);
+    fireEvent.click(screen.getByRole("button", { name: "Don't share" }));
+    expect(asking).toHaveBeenLastCalledWith(false);
+  });
+
   it("the three answers are equal: same control, none filled", async () => {
     render(<SessionShareRow action={action("run")} />);
     await screen.findByRole("heading", QUESTION);
@@ -366,12 +377,10 @@ describe("the account's answer, read before acting on it", () => {
     saved({ workout: "followers" });
     const a = action(
       "workout",
-      vi.fn(
-        async (): Promise<ShareOutcome> => ({
-          status: "queued",
-          visibility: "followers",
-        })
-      )
+      vi.fn(async (): Promise<ShareOutcome> => ({
+        status: "queued",
+        visibility: "followers",
+      }))
     );
     render(<SessionShareRow action={a} />);
     await screen.findByText(
@@ -404,12 +413,10 @@ describe("Undo", () => {
     saved({ run: "followers" });
     const a = action(
       "run",
-      vi.fn(
-        async (): Promise<ShareOutcome> => ({
-          status: "queued",
-          visibility: "followers",
-        })
-      )
+      vi.fn(async (): Promise<ShareOutcome> => ({
+        status: "queued",
+        visibility: "followers",
+      }))
     );
     render(<SessionShareRow action={a} />);
     await screen.findByText(
@@ -424,12 +431,10 @@ describe("Undo", () => {
     saved({ run: "followers" });
     const a = action(
       "run",
-      vi.fn(
-        async (): Promise<ShareOutcome> => ({
-          status: "queued",
-          visibility: "followers",
-        })
-      )
+      vi.fn(async (): Promise<ShareOutcome> => ({
+        status: "queued",
+        visibility: "followers",
+      }))
     );
     render(<SessionShareRow action={a} />);
     await screen.findByText(

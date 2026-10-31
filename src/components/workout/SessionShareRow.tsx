@@ -125,8 +125,11 @@ function isOffline(): boolean {
 
 export default function SessionShareRow({
   action,
+  onAskingChange,
 }: {
   action: SessionShareAction;
+  /** Told whether the row is asking its question, once it knows. */
+  onAskingChange?: (asking: boolean) => void;
 }) {
   const { user, refreshProfile } = useAuth();
   const restriction = useRestrictedStatus(user?.uid);
@@ -148,14 +151,26 @@ export default function SessionShareRow({
       current = false;
     };
   }, [checked, refreshProfile]);
+  const restricted =
+    checked &&
+    !restriction.loading &&
+    restriction.isRestricted &&
+    !liveSessionPost(action);
+  useEffect(() => {
+    if (restricted) onAskingChange?.(false);
+  }, [restricted, onAskingChange]);
   if (!checked || restriction.loading) return null;
-  if (restriction.isRestricted && !liveSessionPost(action)) {
-    return <RestrictedNotice />;
-  }
-  return <ShareRow action={action} />;
+  if (restricted) return <RestrictedNotice />;
+  return <ShareRow action={action} onAskingChange={onAskingChange} />;
 }
 
-function ShareRow({ action }: { action: SessionShareAction }) {
+function ShareRow({
+  action,
+  onAskingChange,
+}: {
+  action: SessionShareAction;
+  onAskingChange?: (asking: boolean) => void;
+}) {
   const { user, profile, updateShareDefaults } = useAuth();
   const gate = useEmailVerificationGate(user);
   const headingId = useId();
@@ -168,6 +183,11 @@ function ShareRow({ action }: { action: SessionShareAction }) {
       ? initialState(action, saved, gate.needsVerification)
       : { kind: "held" }
   );
+
+  const asking = state.kind === "ask";
+  useEffect(() => {
+    onAskingChange?.(asking);
+  }, [asking, onAskingChange]);
 
   const postingVisibility = state.kind === "posting" ? state.visibility : null;
   useEffect(() => {
