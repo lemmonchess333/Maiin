@@ -123,7 +123,9 @@ test.describe("app screenshots", () => {
       ["food", "food"],
       ["history", "history"],
       ["program", "program"],
-      ["social", "social"],
+      // Together, by name: Social opens on the Feed for anyone who
+      // follows someone, as the seeded account does.
+      ["social?tab=together", "social"],
       // Explore feed with the seeded public activities — the ActivityCard
       // hero panels (route scene / muscle figure) live here. Deep-linked
       // via ?feed= because the sub-tab smart default lands on Following.
@@ -137,10 +139,10 @@ test.describe("app screenshots", () => {
       await page
         .getByRole("navigation", { name: /main navigation/i })
         .waitFor({ state: "visible", timeout: 20000 });
-      // SOCIAL-HOME-01: the plain /social route now lands on Together
-      // (Circles lead). Wait for the Together surface — the featured
-      // circle card / circles section, or the cold-start selector —
-      // before capturing so we don't shoot a perpetual-skeleton frame.
+      // Together (Circles lead). Wait for the Together surface — the
+      // featured circle card / circles section, or the cold-start
+      // selector — before capturing so we don't shoot a
+      // perpetual-skeleton frame.
       if (name === "social") {
         // Circles, Challenges and their boards past their skeletons: the
         // section label renders during loading, so it proves nothing.

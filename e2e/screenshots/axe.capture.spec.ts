@@ -263,10 +263,16 @@ test.describe("axe", () => {
     await open(page, "history?view=lifting", nav);
     await check(page, "history-lifting", found);
 
-    /* The Community section, then (in `settle`) its skeletons gone: which
-       Circles card it shows depends on what other specs on the shared
-       account have done, so the marker names none of them. */
-    await open(page, "social", page.getByRole("region", { name: "Community" }));
+    /* Together, asked for by name: Social opens on the Feed for anyone
+       who follows someone, as the seeded account does. The Community
+       section, then (in `settle`) its skeletons gone: which Circles card
+       it shows depends on what other specs on the shared account have
+       done, so the marker names none of them. */
+    await open(
+      page,
+      "social?tab=together",
+      page.getByRole("region", { name: "Community" })
+    );
     await check(page, "social", found);
 
     // The challenges behind "See N more", opened into their compact rows.
