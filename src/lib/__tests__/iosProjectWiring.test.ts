@@ -30,6 +30,7 @@ import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { appInfoPlistString, resolvedSetting } from "@/test/iosBuildSettings";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -194,18 +195,156 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     // .requestAuthorization, reached from Settings → Health and from the
     // Home steps priming sheet, which auto-opens. Without
     // NSHealthShareUsageDescription the OS terminates the app on that tap.
+    // The strings come from build settings (see the pilot test below), so
+    // both kinds of build are read as they resolve, not as typed.
     const usesHealthKit = "capacitor-health" in pkg.dependencies;
-    const share =
-      /<key>NSHealthShareUsageDescription<\/key>\s*<string>[^<]+<\/string>/.test(
-        infoPlist
-      );
-    const update =
-      /<key>NSHealthUpdateUsageDescription<\/key>\s*<string>[^<]+<\/string>/.test(
-        infoPlist
-      );
     expect(usesHealthKit).toBe(true);
-    expect(share).toBe(usesHealthKit);
-    expect(update).toBe(usesHealthKit);
+    for (const gate of ["NO", "YES"]) {
+      for (const key of [
+        "NSHealthShareUsageDescription",
+        "NSHealthUpdateUsageDescription",
+      ]) {
+        expect(
+          appInfoPlistString(key, gate).length,
+          `${key} with the gate ${gate}`
+        ).toBeGreaterThan(40);
+      }
+    }
+  });
+
+  it("asks Health for steps alone in a standard build, and for heart rate and workout export only in the pilot", () => {
+    // A standard build reads steps and nothing else, so its Health prompt
+    // says that. The pilot's expanded text names the Watch's heart rate and
+    // the workout export it adds. One switch, WATCH_RUN_RELEASE_ENABLED,
+    // picks the text, the Watch app and the native gate together.
+    for (const configuration of ["Debug", "Release"]) {
+      const standardShare = appInfoPlistString(
+        "NSHealthShareUsageDescription",
+        "NO",
+        configuration
+      );
+      const standardUpdate = appInfoPlistString(
+        "NSHealthUpdateUsageDescription",
+        "NO",
+        configuration
+      );
+      expect(standardShare).toBe(
+        "Tropos reads your step count from Health to show today's steps on Home."
+      );
+      expect(standardUpdate).toBe(
+        "Tropos does not add workouts or any other data to Health."
+      );
+      expect(
+        appInfoPlistString(
+          "NSHealthShareUsageDescription",
+          "YES",
+          configuration
+        )
+      ).toMatch(/heart rate during Apple Watch runs if enabled/);
+      expect(
+        appInfoPlistString(
+          "NSHealthUpdateUsageDescription",
+          "YES",
+          configuration
+        )
+      ).toMatch(/workouts when you turn on export/);
+    }
+    // The committed Release configuration is a standard build.
+    expect(appInfoPlistString("NSHealthShareUsageDescription", "NO")).toBe(
+      resolvedSetting("App", "Release", "TROPOS_HEALTH_SHARE_USAGE")
+    );
+    expect(infoPlist).toMatch(
+      /<key>NSHealthShareUsageDescription<\/key>\s*<string>\$\(TROPOS_HEALTH_SHARE_USAGE\)<\/string>/
+    );
+  });
+
+  it("embeds the Watch app in a pilot build and in no other", () => {
+    // The App target always builds TroposWatch (so a pull request compiles
+    // it) and copies it into App.app/Watch through one phase. Which builds
+    // the copy runs in is decided by the gate: the file is excluded unless
+    // WATCH_RUN_RELEASE_ENABLED is exactly YES, so a missing or misspelt
+    // value fails closed, to a build with no Watch app.
+    const embed = pbxproj.match(
+      new RegExp(
+        `(${OBJECT_ID.source}) /\\* Embed Watch Content \\*/ = \\{\\s*isa = PBXCopyFilesBuildPhase;[\\s\\S]*?dstPath = "([^"]+)";[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+      )
+    );
+    expect(embed).not.toBeNull();
+    expect(embed![2]).toBe("$(CONTENTS_FOLDER_PATH)/Watch");
+    expect(
+      [...embed![3].matchAll(/\/\* (.+?) in Embed Watch Content \*\//g)].map(
+        (m) => m[1]
+      )
+    ).toEqual(["TroposWatch.app"]);
+    const appTarget = pbxproj.match(
+      /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?productType/
+    )![0];
+    expect(appTarget).toContain(`${embed![1]} /* Embed Watch Content */`);
+    expect(appTarget).toMatch(
+      /dependencies = \(\s*[0-9A-F]{24} \/\* PBXTargetDependency \*\/,\s*\);/
+    );
+
+    const glob = (pattern: string) =>
+      new RegExp(
+        "^" +
+          pattern
+            .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+            .replace(/\*/g, "[^/]*")
+            .replace(/\?/g, "[^/]") +
+          "$"
+      );
+    const listed = (configuration: string, name: string, gate?: string) =>
+      resolvedSetting(
+        "App",
+        configuration,
+        name,
+        gate === undefined ? {} : { WATCH_RUN_RELEASE_ENABLED: gate }
+      )
+        .split(/\s+/)
+        .filter(Boolean)
+        .some((pattern) => glob(pattern).test("TroposWatch.app"));
+    // Xcode skips a file in any phase when a pattern in
+    // EXCLUDED_SOURCE_FILE_NAMES matches it and none in
+    // INCLUDED_SOURCE_FILE_NAMES does.
+    const embeds = (configuration: string, gate?: string) =>
+      !(
+        listed(configuration, "EXCLUDED_SOURCE_FILE_NAMES", gate) &&
+        !listed(configuration, "INCLUDED_SOURCE_FILE_NAMES", gate)
+      );
+    for (const configuration of ["Debug", "Release"]) {
+      expect(embeds(configuration, "YES"), `${configuration} pilot`).toBe(true);
+      expect(embeds(configuration, "NO"), `${configuration} standard`).toBe(
+        false
+      );
+      for (const odd of ["", "yes", "1", "TRUE"])
+        expect(embeds(configuration, odd), `gate "${odd}"`).toBe(false);
+    }
+    // As committed: Release is a standard build, Debug keeps the Watch for
+    // local work in Xcode.
+    expect(embeds("Release")).toBe(false);
+    expect(embeds("Debug")).toBe(true);
+  });
+
+  it("installs the Watch app only inside the iPhone app, never beside it in an archive", () => {
+    // Without SKIP_INSTALL an archive installs TroposWatch.app next to
+    // App.app in Products/Applications, and the export no longer sees one
+    // iOS app. Xcode's own Watch app template sets it.
+    const list = pbxproj.match(
+      /\/\* Build configuration list for PBXNativeTarget "TroposWatch" \*\/ = \{[\s\S]*?buildConfigurations = \(([\s\S]*?)\);/
+    );
+    const ids = [
+      ...list![1].matchAll(new RegExp(`(${OBJECT_ID.source}) /\\*`, "g")),
+    ].map((m) => m[1]);
+    expect(ids).toHaveLength(2);
+    for (const id of ids) {
+      const config = pbxproj.match(
+        new RegExp(`^\\s*${id} /\\*[^\\n]*\\*/ = \\{([\\s\\S]*?)^\\s*\\};`, "m")
+      );
+      expect(config?.[1]).toContain("SKIP_INSTALL = YES;");
+    }
+    expect(workflowStep("Verify archived iPhone and Watch signing")).toContain(
+      'if [ "$ARCHIVED_APPS" != "App.app" ]; then'
+    );
   });
 
   it("builds an iPhone-only app", () => {
@@ -321,12 +460,16 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
     const mode = workflowStep("Select connected training build mode");
     expect(mode).toMatch(/true\)\s*echo "web=true"[\s\S]*?echo "native=YES"/);
-    expect(mode).toMatch(/false\|""\)\s*echo "web=false"[\s\S]*?echo "native=NO"/);
+    expect(mode).toMatch(
+      /false\|""\)\s*echo "web=false"[\s\S]*?echo "native=NO"/
+    );
     expect(
       workflowStep("Build web bundle and sync into the iOS project")
-    ).toContain("VITE_CONNECTED_TRAINING_ENABLED: ${{ steps.training-mode.outputs.web }}");
+    ).toContain(
+      "VITE_CONNECTED_TRAINING_ENABLED: ${{ steps.training-mode.outputs.web }}"
+    );
     expect(workflowStep("Archive")).toContain(
-      'WATCH_RUN_RELEASE_ENABLED: ${{ steps.training-mode.outputs.native }}'
+      "WATCH_RUN_RELEASE_ENABLED: ${{ steps.training-mode.outputs.native }}"
     );
     expect(workflowStep("Archive")).toContain(
       'WATCH_RUN_RELEASE_ENABLED="$WATCH_RUN_RELEASE_ENABLED"'

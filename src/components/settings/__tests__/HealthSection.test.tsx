@@ -83,8 +83,17 @@ vi.mock("@/lib/healthWorkoutExport", () => ({
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { error: vi.fn() } }));
 vi.mock("@/components/AccordionSection", () => ({
-  default: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
+  default: ({
+    children,
+    subtitle,
+  }: {
+    children: React.ReactNode;
+    subtitle: string;
+  }) => (
+    <div>
+      <p>{subtitle}</p>
+      {children}
+    </div>
   ),
 }));
 
@@ -150,11 +159,15 @@ describe("HealthSection", () => {
   });
 
   it("shows unavailable Watch and export choices truthfully on web", async () => {
+    // The web preview of a build with the gate on keeps both rows visible.
     health.available = false;
     render(<HealthSection />);
     await screen.findByText(
       "Apple Watch runs are available in the Tropos iPhone app."
     );
+    expect(
+      screen.getByText("Steps, Watch runs, workout export")
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("switch", { name: "Use Watch for runs" })
     ).toBeDisabled();
@@ -163,7 +176,9 @@ describe("HealthSection", () => {
     ).toBeDisabled();
   });
 
-  it("keeps both controls unavailable until the release gate is enabled", async () => {
+  it("shows steps alone while the release gate is off, with no Watch or export rows", async () => {
+    // A standard build embeds no Watch app, so it offers no switch for one
+    // and no "not available in this version" to explain the switch.
     release.enabled = false;
     watch.status = {
       available: true,
@@ -172,17 +187,30 @@ describe("HealthSection", () => {
       reachable: true,
       enabled: false,
     };
+    steps.value = {
+      ...steps.value,
+      pending: false,
+      status: "connected",
+      steps: 4200,
+    };
     render(<HealthSection />);
-    await screen.findByText(
-      "Watch running is unavailable in this version of Tropos."
-    );
-    expect(
-      screen.getByRole("switch", { name: "Use Watch for runs" })
-    ).toBeDisabled();
-    expect(
-      screen.getByRole("switch", { name: "Save workouts to Apple Health" })
-    ).toBeDisabled();
+    expect(screen.getByText("Apple Health connected")).toBeInTheDocument();
+    expect(screen.getByText("Daily step count on Home")).toBeInTheDocument();
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.queryByText("Apple Watch runs")).toBeNull();
+    expect(screen.queryByText("Save workouts")).toBeNull();
+    expect(screen.queryByText(/in this version/)).toBeNull();
     expect(prefs.value.update).not.toHaveBeenCalled();
+  });
+
+  it("hides the failed-load notice for choices a standard build does not show", () => {
+    release.enabled = false;
+    prefs.value.failed = true;
+    render(<HealthSection />);
+    expect(screen.getByText("Steps")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Couldn't load your connected training choices.")
+    ).toBeNull();
   });
 
   it("enables a paired Watch only after the account choice is saved", async () => {
@@ -306,6 +334,7 @@ describe("HealthSection", () => {
     expect(
       await screen.findByText("1 Apple Health update pending")
     ).toBeInTheDocument();
+    expect(screen.queryByRole("switch")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(exports.reconcile).toHaveBeenCalledWith("u1"));
   });

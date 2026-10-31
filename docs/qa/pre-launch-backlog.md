@@ -34,6 +34,34 @@ permission and the token; only a phone shows the system prompt.
       then save a first workout. Passing: no reminder offer on the finish
       screen, and no steps question on Home until the app is next opened.
 
+## Standard and pilot iOS builds (XB1 calls 4 and 5, 2026-10-31)
+
+Affects: `ios/App/App.xcodeproj/project.pbxproj` (the Watch app is embedded
+only when `WATCH_RUN_RELEASE_ENABLED` is `YES`; the Health usage text follows
+the same setting), `ios/App/App/Info.plist`, `scripts/verify_ios_watch.py`,
+`ios-native-compile.yml`, `deploy-ios.yml` and Settings → Apple Health.
+The unit suites resolve both kinds of build from the project file and the
+verifier is tested offline; only a Mac, App Store Connect and a phone show
+the builds themselves.
+
+- [ ] **The pull request compile builds both kinds.** On the first pull
+      request after this, `iOS native compile` passes its two checks:
+      "Check the standard build carries no Watch app" and "Check the pilot
+      build embeds the Watch app". If the standard check finds
+      `App.app/Watch`, Xcode did not apply `EXCLUDED_SOURCE_FILE_NAMES` to
+      the embed phase; say so on the XB1 row before trying another way.
+- [ ] **A standard TestFlight build has no Watch app.** Run Deploy iOS to
+      TestFlight with the pilot box unchecked. Passing: the archive check
+      finds `App.app` alone, the verifier reports a standard build, and on
+      an iPhone paired with a Watch the Watch app's list offers no Tropos.
+      Settings → Apple Health shows Steps only, and the first steps prompt
+      reads "Tropos reads your step count from Health to show today's steps
+      on Home."
+- [ ] **A pilot build embeds it.** The same with the pilot box checked.
+      Passing: the Watch app installs from the iPhone's Watch app, Settings
+      → Apple Health shows Apple Watch runs and Save workouts, and the
+      Health prompts name Watch heart rate and workout export.
+
 ## A lift's rest outside the app (Mob2 call 1, 2026-10-28)
 
 While a rest runs, the page's title counts it down ("1:23 rest", then

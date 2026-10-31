@@ -103,8 +103,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # One explicit dispatch choice controls both halves of the gate. The
-      # committed Release project and the default dispatch keep it off.
+      # One explicit dispatch choice makes a build standard or a pilot. A
+      # standard build (the default, and the committed Release project)
+      # keeps both halves of the gate off, embeds no Watch app and asks
+      # Health for steps alone. The pilot turns the web gate on and passes
+      # WATCH_RUN_RELEASE_ENABLED=YES to this archive, which project.pbxproj
+      # turns into the native gate, the embedded Watch app and the expanded
+      # Health usage text.
       - name: Select connected training build mode
         id: training-mode
         env:
@@ -591,9 +596,16 @@ jobs:
             WATCH_RUN_RELEASE_ENABLED="$WATCH_RUN_RELEASE_ENABLED" \
             clean archive
 
+      # A Watch app or extension target without SKIP_INSTALL installs beside
+      # App.app in the archive, and the export then sees no single iOS app.
       - name: Verify archived iPhone and Watch signing
         run: |
           set -euo pipefail
+          ARCHIVED_APPS=$(ls "$RUNNER_TEMP/App.xcarchive/Products/Applications")
+          if [ "$ARCHIVED_APPS" != "App.app" ]; then
+            echo "::error::The archive should hold App.app alone, but holds: $ARCHIVED_APPS. Set SKIP_INSTALL = YES on every embedded target."
+            exit 1
+          fi
           python3 scripts/verify_ios_push.py \
             --app "$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app" \
             --bundle-id "$BUNDLE_ID"

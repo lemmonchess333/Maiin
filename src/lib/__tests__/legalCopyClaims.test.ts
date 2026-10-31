@@ -27,6 +27,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { AI_CONSENT_COPY } from "@/lib/aiConsent";
+import { appInfoPlistString } from "@/test/iosBuildSettings";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (rel: string) => readFileSync(resolve(here, rel), "utf8");
@@ -58,7 +59,6 @@ const PRIVACY_PROSE = PRIVACY.replace(/\s+/g, " ");
 const TERMS_PROSE = TERMS.replace(/\s+/g, " ");
 const STORE = read("../foodPhotoStore.ts");
 const HEALTH_KIT = read("../healthKit.ts");
-const IOS_INFO = read("../../../ios/App/App/Info.plist");
 const STEPS_HOOK = read("../../hooks/useSteps.ts");
 const ANALYTICS_REDACTION = read("../analyticsRedaction.ts");
 const SHARE_DEFAULTS_ROW = read(
@@ -254,9 +254,23 @@ describe("Apple Health permissions and storage match the policy", () => {
     );
     expect(PRIVACY_PROSE).toMatch(/If you separately turn on workout export/);
     expect(PRIVACY_PROSE).toMatch(/without a GPS route/);
-    expect(IOS_INFO).toMatch(/heart rate during Apple Watch runs if enabled/);
-    expect(IOS_INFO).toMatch(/workouts when you turn on export/);
-    expect(IOS_INFO).not.toMatch(/never writes to Health/);
+    // The pilot build, which carries Watch runs and workout export, says
+    // so where iOS asks; a standard build asks for steps alone.
+    const pilotShare = appInfoPlistString(
+      "NSHealthShareUsageDescription",
+      "YES"
+    );
+    const pilotUpdate = appInfoPlistString(
+      "NSHealthUpdateUsageDescription",
+      "YES"
+    );
+    expect(pilotShare).toMatch(/heart rate during Apple Watch runs if enabled/);
+    expect(pilotUpdate).toMatch(/workouts when you turn on export/);
+    const share = appInfoPlistString("NSHealthShareUsageDescription", "NO");
+    const update = appInfoPlistString("NSHealthUpdateUsageDescription", "NO");
+    expect(share).toMatch(/step count/);
+    expect(share).not.toMatch(/heart rate|workout/);
+    expect(update).toMatch(/does not add workouts/);
   });
 
   it("the existing steps bridge still asks only for steps", () => {

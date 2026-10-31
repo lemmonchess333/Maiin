@@ -42,7 +42,9 @@ const ROW =
   "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted";
 const LABEL = "min-w-[min(100%,8em)] flex-1";
 
-/** Apple Health choices remain independent: steps, Watch HR, and export. */
+/** Apple Health choices remain independent: steps, Watch HR, and export.
+ *  A build without connected training (every standard build) shows steps
+ *  alone, plus any Apple Health cleanup a pilot build left waiting. */
 export default function HealthSection({
   inline = false,
 }: {
@@ -146,23 +148,22 @@ export default function HealthSection({
     watch?.enabled &&
     !watchLocallyDisabled
   );
-  const watchStatusText = !CONNECTED_TRAINING_RELEASED
-    ? "Not available in this version"
-    : !watch
-      ? "Connecting"
-      : !watch.available
-        ? "Not available here"
-        : !watch.paired
-          ? "No paired Apple Watch"
-          : !watch.installed
-            ? "Watch app not installed"
-            : !watchEnabled
-              ? "Off"
-              : !watch.reachable
-                ? "Connection lost"
-                : watch.activeSessionId
-                  ? "Active run"
-                  : "Ready";
+  const watchStatusText = !watch
+    ? "Connecting"
+    : !watch.available
+      ? "Not available here"
+      : !watch.paired
+        ? "No paired Apple Watch"
+        : !watch.installed
+          ? "Watch app not installed"
+          : !watchEnabled
+            ? "Off"
+            : !watch.reachable
+              ? "Connection lost"
+              : watch.activeSessionId
+                ? "Active run"
+                : "Ready";
+  const showPendingExports = isNativePlatform() && pendingExports > 0;
 
   const handleWatchToggle = async () => {
     if (
@@ -289,7 +290,11 @@ export default function HealthSection({
       inline={inline}
       icon={<Footprints className="size-5 text-primary" />}
       title="Apple Health"
-      subtitle="Steps, Watch runs, workout export"
+      subtitle={
+        CONNECTED_TRAINING_RELEASED
+          ? "Steps, Watch runs, workout export"
+          : "Daily step count on Home"
+      }
     >
       <div className="space-y-3">
         <SectionHeading size="compact">Steps</SectionHeading>
@@ -357,154 +362,138 @@ export default function HealthSection({
         )}
       </div>
 
-      <div className="space-y-3">
-        <SectionHeading size="compact">Apple Watch runs</SectionHeading>
-        <div className={ROW}>
-          <div className={LABEL}>
-            <p className="text-sm text-foreground">Use Watch for runs</p>
-            <p className="text-xs text-muted-foreground">
-              The iPhone records your run. The Watch shows pace, distance and
-              heart rate, and can control a connected run.
-            </p>
-            <p className="text-xs font-medium text-foreground mt-1">
-              {watchStatusText}
-            </p>
+      {CONNECTED_TRAINING_RELEASED && (
+        <div className="space-y-3">
+          <SectionHeading size="compact">Apple Watch runs</SectionHeading>
+          <div className={ROW}>
+            <div className={LABEL}>
+              <p className="text-sm text-foreground">Use Watch for runs</p>
+              <p className="text-xs text-muted-foreground">
+                The iPhone records your run. The Watch shows pace, distance and
+                heart rate, and can control a connected run.
+              </p>
+              <p className="text-xs font-medium text-foreground mt-1">
+                {watchStatusText}
+              </p>
+            </div>
+            <Toggle
+              className="ml-auto"
+              checked={watchEnabled}
+              label="Use Watch for runs"
+              disabled={
+                loading ||
+                failed ||
+                !!busy ||
+                !uid ||
+                !watch ||
+                (!watchEnabled && !watchReady)
+              }
+              onChange={() => void handleWatchToggle()}
+            />
           </div>
-          <Toggle
-            className="ml-auto"
-            checked={watchEnabled}
-            label="Use Watch for runs"
-            disabled={
-              loading ||
-              failed ||
-              !!busy ||
-              !uid ||
-              !CONNECTED_TRAINING_RELEASED ||
-              !watch ||
-              (!watchEnabled && !watchReady)
-            }
-            onChange={() => void handleWatchToggle()}
-          />
-        </div>
-        {!CONNECTED_TRAINING_RELEASED && (
-          <p className="text-xs text-muted-foreground px-1">
-            Watch running is unavailable in this version of Tropos.
-          </p>
-        )}
-        {CONNECTED_TRAINING_RELEASED && watch && !watch.available && (
-          <p className="text-xs text-muted-foreground px-1">
-            {isNativePlatform()
-              ? "Apple Watch runs need a supported Tropos iPhone app and a paired Watch."
-              : "Apple Watch runs are available in the Tropos iPhone app."}
-          </p>
-        )}
-        {CONNECTED_TRAINING_RELEASED && watch?.available && !watch.paired && (
-          <p className="text-xs text-muted-foreground px-1">
-            Pair an Apple Watch with this iPhone, then return here.
-          </p>
-        )}
-        {CONNECTED_TRAINING_RELEASED &&
-          watch?.available &&
-          watch.paired &&
-          !watch.installed && (
+          {watch && !watch.available && (
+            <p className="text-xs text-muted-foreground px-1">
+              {isNativePlatform()
+                ? "Apple Watch runs need a supported Tropos iPhone app and a paired Watch."
+                : "Apple Watch runs are available in the Tropos iPhone app."}
+            </p>
+          )}
+          {watch?.available && !watch.paired && (
+            <p className="text-xs text-muted-foreground px-1">
+              Pair an Apple Watch with this iPhone, then return here.
+            </p>
+          )}
+          {watch?.available && watch.paired && !watch.installed && (
             <p className="text-xs text-muted-foreground px-1">
               Install Tropos on your Apple Watch using the Watch app on iPhone.
             </p>
           )}
-        {CONNECTED_TRAINING_RELEASED && watchEnabled && (
-          <p className="text-xs text-muted-foreground px-1">
-            No heart rate yet? Check Settings → Health → Data Access &amp;
-            Devices → Tropos. Apple does not disclose whether a heart rate read
-            was denied.
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-3">
-        <SectionHeading size="compact">Save workouts</SectionHeading>
-        <div className={ROW}>
-          <div className={LABEL}>
-            <p className="text-sm text-foreground">
-              Save workouts to Apple Health
+          {watchEnabled && (
+            <p className="text-xs text-muted-foreground px-1">
+              No heart rate yet? Check Settings → Health → Data Access &amp;
+              Devices → Tropos. Apple does not disclose whether a heart rate
+              read was denied.
             </p>
-            <p className="text-xs text-muted-foreground">
-              Add a completed Tropos run to Apple Health after it syncs. This
-              choice is separate from Watch heart rate.
-            </p>
-            {!CONNECTED_TRAINING_RELEASED && (
-              <p className="text-xs font-medium text-foreground mt-1">
-                Not available in this version
-              </p>
-            )}
-            {CONNECTED_TRAINING_RELEASED && writeAvailable === false && (
-              <p className="text-xs font-medium text-foreground mt-1">
-                Not available here
-              </p>
-            )}
-            {CONNECTED_TRAINING_RELEASED &&
-              writeAvailable === true &&
-              prefs.saveWorkoutsToHealth && (
-                <p className="text-xs font-medium text-foreground mt-1">
-                  {writeAuthorization === "authorized"
-                    ? "Ready to save synced runs"
-                    : "Apple Health access needs attention"}
-                </p>
-              )}
-          </div>
-          <Toggle
-            className="ml-auto"
-            checked={
-              CONNECTED_TRAINING_RELEASED &&
-              writeAvailable === true &&
-              prefs.saveWorkoutsToHealth &&
-              !!uid &&
-              !isWorkoutExportLocallyDisabled(uid)
-            }
-            label="Save workouts to Apple Health"
-            disabled={
-              !CONNECTED_TRAINING_RELEASED ||
-              loading ||
-              failed ||
-              !!busy ||
-              !writeAvailable
-            }
-            onChange={() => void handleExportToggle()}
-          />
-        </div>
-        {CONNECTED_TRAINING_RELEASED &&
-          writeAvailable === true &&
-          prefs.saveWorkoutsToHealth &&
-          writeAuthorization !== "authorized" &&
-          writeAuthorization !== null && (
-            <Banner
-              variant={writeAuthorization === "denied" ? "warning" : "neutral"}
-              title="Workout access needs attention"
-              description={
-                writeAuthorization === "denied"
-                  ? "Allow Tropos to add workouts in Settings → Health → Data Access & Devices → Tropos. Runs remain saved in Tropos."
-                  : "This iPhone has not confirmed permission to add workouts to Apple Health. Runs remain saved in Tropos."
-              }
-              action={
-                <Button
-                  variant="secondary"
-                  onClick={async () => {
-                    if (writeAuthorization === "notDetermined") {
-                      await requestWorkoutWritePermission();
-                      await refresh();
-                    } else {
-                      await openHealthSettings();
-                    }
-                  }}
-                >
-                  {writeAuthorization === "notDetermined"
-                    ? "Allow access"
-                    : "Open settings"}
-                </Button>
-              }
-            />
           )}
-        {isNativePlatform() &&
-          pendingExports > 0 && (
+        </div>
+      )}
+
+      {(CONNECTED_TRAINING_RELEASED || showPendingExports) && (
+        <div className="space-y-3">
+          {CONNECTED_TRAINING_RELEASED && (
+            <>
+              <SectionHeading size="compact">Save workouts</SectionHeading>
+              <div className={ROW}>
+                <div className={LABEL}>
+                  <p className="text-sm text-foreground">
+                    Save workouts to Apple Health
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Add a completed Tropos run to Apple Health after it syncs.
+                    This choice is separate from Watch heart rate.
+                  </p>
+                  {writeAvailable === false && (
+                    <p className="text-xs font-medium text-foreground mt-1">
+                      Not available here
+                    </p>
+                  )}
+                  {writeAvailable === true && prefs.saveWorkoutsToHealth && (
+                    <p className="text-xs font-medium text-foreground mt-1">
+                      {writeAuthorization === "authorized"
+                        ? "Ready to save synced runs"
+                        : "Apple Health access needs attention"}
+                    </p>
+                  )}
+                </div>
+                <Toggle
+                  className="ml-auto"
+                  checked={
+                    writeAvailable === true &&
+                    prefs.saveWorkoutsToHealth &&
+                    !!uid &&
+                    !isWorkoutExportLocallyDisabled(uid)
+                  }
+                  label="Save workouts to Apple Health"
+                  disabled={loading || failed || !!busy || !writeAvailable}
+                  onChange={() => void handleExportToggle()}
+                />
+              </div>
+              {writeAvailable === true &&
+                prefs.saveWorkoutsToHealth &&
+                writeAuthorization !== "authorized" &&
+                writeAuthorization !== null && (
+                  <Banner
+                    variant={
+                      writeAuthorization === "denied" ? "warning" : "neutral"
+                    }
+                    title="Workout access needs attention"
+                    description={
+                      writeAuthorization === "denied"
+                        ? "Allow Tropos to add workouts in Settings → Health → Data Access & Devices → Tropos. Runs remain saved in Tropos."
+                        : "This iPhone has not confirmed permission to add workouts to Apple Health. Runs remain saved in Tropos."
+                    }
+                    action={
+                      <Button
+                        variant="secondary"
+                        onClick={async () => {
+                          if (writeAuthorization === "notDetermined") {
+                            await requestWorkoutWritePermission();
+                            await refresh();
+                          } else {
+                            await openHealthSettings();
+                          }
+                        }}
+                      >
+                        {writeAuthorization === "notDetermined"
+                          ? "Allow access"
+                          : "Open settings"}
+                      </Button>
+                    }
+                  />
+                )}
+            </>
+          )}
+          {showPendingExports && (
             <div className="p-3 rounded-lg bg-muted space-y-2">
               <p className="text-sm font-medium text-foreground">
                 {pendingExports} Apple Health{" "}
@@ -531,9 +520,10 @@ export default function HealthSection({
               </div>
             </div>
           )}
-      </div>
+        </div>
+      )}
 
-      {failed && (
+      {CONNECTED_TRAINING_RELEASED && failed && (
         <div className="p-3 rounded-lg bg-muted space-y-2">
           <p className="text-sm text-foreground">
             Couldn't load your connected training choices.

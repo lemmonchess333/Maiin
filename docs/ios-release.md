@@ -22,10 +22,13 @@ open ios/App/App.xcodeproj   # SPM project — there is no .xcworkspace
 ```
 
 `npm run build:ios` uses the native asset root and copies the web bundle into
-the iOS project; only the Xcode step needs a Mac. Select the `App` scheme to
-archive the iPhone app with its embedded `TroposWatch` companion. The Watch
-app's bundle ID is `com.tropos.app.watchkitapp`; its minimum is watchOS 9.
-The ordinary iPhone run path remains available on iOS 15.4 without a Watch.
+the iOS project; only the Xcode step needs a Mac. Select the `App` scheme. A
+Release archive made this way is a standard build: it embeds no Watch app
+(see "Apple Watch release gate" below). Debug builds keep the gate on, so a
+build run from Xcode onto a phone carries the `TroposWatch` companion. The
+Watch app's bundle ID is `com.tropos.app.watchkitapp`; its minimum is
+watchOS 9. The ordinary iPhone run path remains available on iOS 15.4
+without a Watch.
 
 ### B. Automated (`deploy-ios.yml`) — push-button after one-time setup, no Mac needed
 
@@ -237,27 +240,53 @@ the comment on the build step, and the activation order in
 
 #### Apple Watch release gate
 
+One build setting, `WATCH_RUN_RELEASE_ENABLED`, decides what kind of build
+the project makes, and the committed Release configuration sets it to `NO`:
+
+|                                  | Standard build (`NO`, the default) | Connected training pilot (`YES`)               |
+| -------------------------------- | ---------------------------------- | ---------------------------------------------- |
+| `App.app/Watch`                  | absent: no Watch app               | `TroposWatch.app`, signed with its own profile |
+| `TroposConnectedTrainingEnabled` | `NO` in the iPhone app             | `YES` in the iPhone and Watch apps             |
+| Health usage text                | steps only                         | Watch heart rate and workout export            |
+| Settings → Apple Health          | steps (and any pending cleanup)    | steps, Watch runs, workout export              |
+
+The App target always builds `TroposWatch`, so every compile checks it, but
+its "Embed Watch Content" phase copies the Watch app only when the setting is
+exactly `YES`: `EXCLUDED_SOURCE_FILE_NAMES` names `TroposWatch.app`, and
+`INCLUDED_SOURCE_FILE_NAMES` names it back only through
+`TROPOS_WATCH_EMBED_YES`, so a missing or misspelt value fails closed to a
+build with no Watch app. The two Health usage strings in `Info.plist` read
+`$(TROPOS_HEALTH_SHARE_USAGE)` and `$(TROPOS_HEALTH_UPDATE_USAGE)`, which the
+same setting picks from a `_NO` and a `_YES` text in the App target's build
+settings. `iosProjectWiring.test.ts` resolves both kinds of build from the
+project file, and the web gate `VITE_CONNECTED_TRAINING_ENABLED` hides the
+Settings rows the same way. Because the Watch target is always built, a
+standard archive still signs it, so its App ID and profile are needed for
+every run.
+
 Pull requests run `.github/workflows/ios-native-compile.yml` on macOS. It
-compiles the Release iPhone and embedded Watch targets for Simulator with
-signing disabled and checks that both bundles are present while the native
-release flag is off. It uses a synthetic Firebase plist and does not install,
-sign, or exercise either app. A green compile is required before this gate is
-considered ready for the signed TestFlight and paired-device checks below.
+compiles a standard Release build for Simulator, then the pilot, with
+signing disabled, and runs `scripts/verify_ios_watch.py --unsigned` on each:
+the standard build must carry no Watch app, the gate off and the short Health
+text; the pilot one embedded Watch app, both gates on and the expanded text.
+It uses a synthetic Firebase plist and does not install, sign, or exercise
+either app. A green compile is required before this gate is considered ready
+for the signed TestFlight and paired-device checks below.
 
-The workflow verifies that the archive and exported IPA contain one
-separately signed Watch app with the expected bundle ID, iPhone companion ID,
-HealthKit entitlement and App Store profile. This is a packaging check. It
-does not prove live Watch-to-phone behavior.
+The TestFlight workflow runs the same checks on the archive and on the
+exported IPA, and for a pilot also checks that the Watch app is signed
+separately with the expected bundle ID, iPhone companion ID, HealthKit
+entitlement and App Store profile. It also fails an archive that holds
+anything beside `App.app` (every embedded target sets `SKIP_INSTALL = YES`).
+This is a packaging check. It does not prove live Watch-to-phone behavior.
 
-The committed Release project and the default TestFlight dispatch keep connected
-training disabled. A manual **connected training pilot** dispatch enables the
-Vite bundle and overrides `WATCH_RUN_RELEASE_ENABLED=YES` for that archive only.
-The signed archive and exported IPA are checked to ensure both the iPhone and
-Watch Info.plists carry the selected value. The workflow does not change the
-committed Release setting or the default web deploy. Use the pilot build for
-paired-device proof with internal TestFlight testers, then enable a regular
-release only after the matrix passes. A web deploy or an unsigned simulator
-build does not validate the TestFlight path.
+The default TestFlight dispatch makes a standard build. A manual **connected
+training pilot** dispatch enables the Vite bundle and overrides
+`WATCH_RUN_RELEASE_ENABLED=YES` for that archive only. The workflow does not
+change the committed Release setting or the default web deploy. Use the pilot
+build for paired-device proof with internal TestFlight testers, then enable a
+regular release only after the matrix passes. A web deploy or an unsigned
+simulator build does not validate the TestFlight path.
 
 Before expanding beyond the pilot, complete the real-device checks in
 [`docs/proposals/connected-training.md`](proposals/connected-training.md):
