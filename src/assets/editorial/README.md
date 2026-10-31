@@ -11,13 +11,25 @@ imagery (route scenes, muscle figures) by design. See `GLOSSARY.md` →
 "Editorial imagery" and `src/lib/editorialImages.ts` for the resolution
 logic.
 
-### Social editorial refresh — 2026-10-31
+### Real Social covers — 2026-10-31
 
-Eight generic challenge and Space covers now use generated, brand-free
-photography. Training Minutes and Strength Builder replace photos with visible
-Nike marks. Lifters, Runners and Women's Running show people training together;
-Fastest 5K, Mileage and Together keep the athlete readable at mobile card size.
-These are editorial scenes, not Tropos members or real events. All eight are
+Eight generic challenge and Space covers now use distinct, real Pexels
+photographs. The challenge images show a timed workout, a deadlift, a track
+run, a trail run and a group run. The Space images show gym friends, two women
+running together and a mixed running group. These are editorial examples,
+not Tropos members, endorsements or named events. All ship locally as
+1200 × 600 WebP files below 120 KB, with no retouching or recolouring.
+The source pages, photographers, licence, exact crops and hashes are in
+[`sources-2026-10-31-real-social-covers.json`](./sources-2026-10-31-real-social-covers.json).
+The generated-image record below remains for provenance of the replaced files.
+
+### Earlier Social editorial refresh — 2026-10-31
+
+Eight generic challenge and Space covers used generated, brand-free
+photography. Training Minutes and Strength Builder replaced photos with visible
+Nike marks. Lifters, Runners and Women's Running showed people training together;
+Fastest 5K, Mileage and Together kept the athlete readable at mobile card size.
+These were editorial scenes, not Tropos members or real events. All eight were
 1200 × 600 WebP files below 120 KB, checked in the challenge/Space crops and
 at 3× brightness for marks. Full prompts, source and output hashes, and encode
 settings are in
@@ -54,7 +66,7 @@ The featured monthly goal alternates between Active Days (January, March, May,
 July, September and November) and Training Minutes (February, April, June,
 August, October and December). Each category has a distinct photograph.
 Active Days shows a running group photographed by Yuval Zukerman. Training
-Minutes now uses the generated cover recorded in the 2026-10-31 manifest
+Minutes uses the real photograph recorded in the latest 2026-10-31 manifest
 above. The earlier licensed source, exact crop and hashes remain in
 [`sources-rotating-challenges-2026-10-18.json`](./sources-rotating-challenges-2026-10-18.json).
 
