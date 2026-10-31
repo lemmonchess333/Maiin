@@ -189,6 +189,8 @@ const PINNED: Record<string, string> = {
   // Feed schema: writer output, both client query constraints and the read
   // rule must agree or the Following feed is either refused or leaks legacy rows.
   "functions/lib/feedIndex.js": "src/lib/__tests__/feedIndex.cross.test.ts",
+  // A renamed run's name, cut for its post as the rename sheet cuts it.
+  "functions/lib/runRename.js": "src/lib/__tests__/runRename.cross.test.ts",
   "functions/lib/validatePlanPayload.js":
     "src/features/program/__tests__/validatePlanPayload.cross.test.ts",
   "functions/lib/challengeTiers.js":

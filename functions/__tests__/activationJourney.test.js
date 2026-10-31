@@ -9,11 +9,12 @@ const rateLimiter = require("../rateLimiter");
 const accountDeletionLocks = require("../lib/accountDeletionLocks");
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const { completeOnboarding } = require("../index");
+const activationCohort = require("../lib/activationCohort");
 
 const realIsRateLimited = rateLimiter.isRateLimited;
 const realActorLock = accountDeletionLocks.assertCallableActorNotDeleting;
-const actor = { auth: { uid: "activation-user" } };
-const path = "users/activation-user";
+const actor = { auth: { uid: "activation-user-v2" } };
+const path = "users/activation-user-v2";
 
 function request(version, platform) {
   return {
@@ -48,6 +49,7 @@ beforeEach(() => {
   });
   rateLimiter.isRateLimited = async () => false;
   accountDeletionLocks.assertCallableActorNotDeleting = async () => {};
+  activationCohort.resetCacheForTests();
 });
 
 afterEach(() => {
@@ -57,6 +59,26 @@ afterEach(() => {
 });
 
 describe("completeOnboarding activation journey", () => {
+  it("puts the comparison group and a switched-off journey on the legacy journey", async () => {
+    // A uid the hash puts in the comparison group.
+    const uid = Array.from({ length: 200 }, (_, i) => `cohort-${i}`).find(
+      (candidate) => activationCohort.inComparisonGroup(candidate)
+    );
+    expect(
+      await completeOnboarding.run(request(2, "ios"), { auth: { uid } })
+    ).toEqual({ success: true, activationJourneyVersion: 1 });
+    expect(db.data.get(`users/${uid}`).activationJourneyVersion).toBe(1);
+    expect(db.data.get(`users/${uid}`).onboardingPlatform).toBe("ios");
+
+    db.data.set("system/config", { activationJourneyV2Enabled: false });
+    activationCohort.resetCacheForTests();
+    expect(await completeOnboarding.run(request(2, "web"), actor)).toEqual({
+      success: true,
+      activationJourneyVersion: 1,
+    });
+    expect(db.data.get(path).activationJourneyVersion).toBe(1);
+  });
+
   it("accepts v2 once and keeps its original timestamp on a legacy retry", async () => {
     expect(await completeOnboarding.run(request(2, "ios"), actor)).toEqual({
       success: true,
@@ -107,8 +129,9 @@ describe("completeOnboarding activation journey", () => {
   });
 
   it("rejects an invalid platform and never upgrades a completed legacy account", async () => {
-    await expect(completeOnboarding.run(request(2, "tablet"), actor))
-      .rejects.toMatchObject({ code: "invalid-argument" });
+    await expect(
+      completeOnboarding.run(request(2, "tablet"), actor)
+    ).rejects.toMatchObject({ code: "invalid-argument" });
     expect(db.data.has(path)).toBe(false);
     await completeOnboarding.run(request(), actor);
     await completeOnboarding.run(request(2, "ios"), actor);

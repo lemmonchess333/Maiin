@@ -375,7 +375,9 @@ describe("Apple Health export reconciliation", () => {
     queueHealthWorkoutExport("u1", "run-revoked", true);
     await reconcilePendingHealthExports("u1");
     expect(writer.exportWorkout).not.toHaveBeenCalled();
-    expect(readDoc("users/u1/healthWorkoutExports/run-revoked")).toBeUndefined();
+    expect(
+      readDoc("users/u1/healthWorkoutExports/run-revoked")
+    ).toBeUndefined();
   });
 
   it("matches a same-device offline opt-in without accepting a later off/on cycle", async () => {
@@ -456,6 +458,13 @@ describe("Apple Health export reconciliation", () => {
     writer.deleteWorkout
       .mockRejectedValueOnce(new Error("revoked"))
       .mockRejectedValueOnce(new Error("revoked"));
+    // An exported run: its receipt was reserved before the export.
+    seedFirestore({
+      "users/u1/healthWorkoutExports/run-1": {
+        runId: "run-1",
+        state: "exported",
+      },
+    });
     queueHealthWorkoutDeletion("u1", "run-1");
     await reconcilePendingHealthExports("u1");
     expect(pendingHealthWorkoutExports("u1")).toEqual([

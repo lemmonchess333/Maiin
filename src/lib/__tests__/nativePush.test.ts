@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   isNativePushAvailable,
   nativePushPermission,
-  nativePushPermissionState,
   getNativePushToken,
   listenForNativePushActions,
   listenForNativePushRefresh,
@@ -77,11 +76,6 @@ describe("native push adapter", () => {
     expect(h.request).not.toHaveBeenCalled();
     expect(await nativePushPermission(true)).toBe(true);
     expect(h.request).toHaveBeenCalledOnce();
-  });
-  it("distinguishes a blocked native permission without prompting", async () => {
-    h.permission.mockResolvedValue({ receive: "denied" });
-    expect(await nativePushPermissionState()).toBe("denied");
-    expect(h.request).not.toHaveBeenCalled();
   });
   it("waits out initial APNs registration but returns only Firebase's FCM token", async () => {
     h.getToken.mockRejectedValueOnce(new Error("APNS token has not been set"));

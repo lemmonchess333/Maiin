@@ -164,12 +164,48 @@ describe("App Store Connect signing from the API key", () => {
     expect(result.profile.toString()).toBe("PROFILE");
   });
 
+  it("names each profile after the run's certificate, uniquely", () => {
+    expect(
+      asc.profileNames("7A1B", [
+        "com.tropos.app",
+        "com.tropos.app.watchkitapp",
+        "com.tropos.app.LiveActivities",
+        "com.other.LiveActivities",
+      ])
+    ).toEqual([
+      "Tropos CI 7A1B",
+      "Tropos CI 7A1B watchkitapp",
+      "Tropos CI 7A1B LiveActivities",
+      "Tropos CI 7A1B LiveActivities 3",
+    ]);
+  });
+
+  it("makes a profile for every signed target with the same certificate", async () => {
+    const api = fakeApi(account());
+    const result = await asc.prepareSigning({
+      request: api.request,
+      bundleIdentifiers: ["com.tropos.app", "com.tropos.app.watchkitapp", "com.tropos.app.widget"],
+      csr: "CSR",
+    });
+    const created = api.calls.filter((c) => c.method === "POST" && c.path === "/v1/profiles");
+    expect(created.map((c) => (c.body as { data: { relationships: { bundleId: { data: { id: string } } } } }).data.relationships.bundleId.data.id)).toEqual([
+      "B-APP",
+      "B-WATCH",
+      "B-WIDGET",
+    ]);
+    expect(Object.keys(result.profiles)).toEqual([
+      "com.tropos.app",
+      "com.tropos.app.watchkitapp",
+      "com.tropos.app.widget",
+    ]);
+  });
+
   it("makes separate iPhone and Watch profiles with the same certificate", async () => {
     const api = fakeApi(
       account({
         profiles: [
           { id: "P-OLD-APP", name: "Tropos CI 11AA22BB" },
-          { id: "P-OLD-WATCH", name: "Tropos CI 11AA22BB Watch 1" },
+          { id: "P-OLD-WATCH", name: "Tropos CI 11AA22BB watchkitapp" },
         ],
         certificates: [{ id: "C-OLD", serialNumber: "11AA22BB" }],
       })
@@ -327,17 +363,23 @@ describe("App Store Connect signing from the API key", () => {
 
 describe("deploy-ios.yml signs from the API key when no certificate is given", () => {
   it("makes the signing before the import step checks it, and only without the certificate secrets", () => {
-    const make = step("Make the signing certificate and profile from the API key");
+    const make = step("Make the signing certificate and profiles from the API key");
     expect(workflow.indexOf("- name: Make the signing certificate")).toBeLessThan(
-      workflow.indexOf("- name: Import signing certificate + provisioning profile")
+      workflow.indexOf("- name: Import signing certificate + provisioning profiles")
     );
     expect(make).toMatch(/if \[ -n "\$IOS_DIST_CERT_P12_BASE64" \]; then[\s\S]*?exit 0/);
     expect(make).toContain("node scripts/ios/asc-signing.mjs");
     // LibreSSL's own pkcs12 defaults are the ones macOS's `security` imports.
     expect(make).toMatch(/\/usr\/bin\/openssl pkcs12 -export/);
-    expect(step("Import signing certificate + provisioning profile")).toContain(
+    expect(step("Import signing certificate + provisioning profiles")).toContain(
       "$RUNNER_TEMP/api-signing/p12-password"
     );
+    // The script writes one profile per signed bundle; the step hands all
+    // of them to the import, whatever their number.
+    expect(make).toContain('cp "$OUT"/profiles/*.mobileprovision "$RUNNER_TEMP/profiles/"');
+    const script = readFileSync(join(root, "scripts/ios/asc-signing.mjs"), "utf8");
+    expect(script).toContain("env.SIGNED_BUNDLE_IDS");
+    expect(script).toContain('join(outDir, "profiles", `${identifier}.mobileprovision`)');
   });
 
   it("asks for the certificate secrets all together or not at all", () => {
@@ -350,15 +392,18 @@ describe("deploy-ios.yml signs from the API key when no certificate is given", (
     expect(preflight).toMatch(/\[ "\$own" -ne 4 \]/);
   });
 
-  it("maps both app IDs to their own profiles and verifies the embedded Watch app twice", () => {
+  it("signs every listed target and verifies the Watch packaging twice", () => {
     expect(workflow).toContain("WATCH_BUNDLE_ID: com.tropos.app.watchkitapp");
-    const imported = step("Import signing certificate + provisioning profile");
-    expect(imported).toContain("WATCH_PROFILE_UUID");
-    expect(imported).toContain("WATCH_FACTS");
-    expect(step("Sign the iPhone and Watch targets with App Store profiles")).toContain(
-      'os.environ["WATCH_BUNDLE_ID"]: os.environ["WATCH_PROFILE_UUID"]'
+    // The iPhone and Watch apps must be in the list the run signs, because
+    // the verifiers below look for both.
+    expect(step("List the targets to sign")).toContain(
+      '--require "$BUNDLE_ID" --require "$WATCH_BUNDLE_ID"'
     );
-    expect(step("Export .ipa")).toContain("<key>${WATCH_BUNDLE_ID}</key><string>${WATCH_PROFILE_UUID}</string>");
+    const imported = step("Import signing certificate + provisioning profiles");
+    // The owner's own secrets cover the iPhone and Watch apps; any other
+    // signed target is named, with the way out.
+    expect(imported).toContain('"$PROFILES/$WATCH_BUNDLE_ID.mobileprovision"');
+    expect(imported).toMatch(/your own signing secrets hold profiles for \$BUNDLE_ID and \$WATCH_BUNDLE_ID only/);
     for (const name of [
       "Verify archived iPhone and Watch signing",
       "Verify exported iPhone and Watch signing",
@@ -371,7 +416,7 @@ describe("deploy-ios.yml signs from the API key when no certificate is given", (
     for (const name of [
       "Check the signing secrets are set",
       "Place GoogleService-Info.plist",
-      "Make the signing certificate and profile from the API key",
+      "Make the signing certificate and profiles from the API key",
       "Upload to TestFlight",
     ]) {
       expect(step(name)).toMatch(/\*"-----BEGIN"\*\|\*"<\?xml"\*/);

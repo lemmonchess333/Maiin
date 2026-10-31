@@ -2,12 +2,13 @@
  * `/activity/:activityId` — the post a props or comment notice is about.
  *
  * Against the Firestore fake: a readable post is drawn with the viewer's
- * own props state, a comment notice opens its comments, and a post the
- * rules refuse (deleted, or no longer shared) opens the actor's profile
- * when the tray named them, and says the post is unavailable when not.
+ * own props state and its comments under it on the page, a comment notice
+ * puts the comment field in focus, and a post the rules refuse (deleted,
+ * or no longer shared) opens the actor's profile when the tray named them,
+ * and says the post is unavailable when not.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { act, render, screen, cleanup } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 
 vi.mock("firebase/firestore");
@@ -18,25 +19,59 @@ const blocks = vi.hoisted(() => ({ blocked: new Set<string>() }));
 vi.mock("@/hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({ ...blocks, ready: true }),
 }));
-// The card has its own suite; here it only says what it was given.
+// The card and the comments have their own suites; here each only says
+// what it was given.
+const thread = vi.hoisted(() => ({
+  countChange: null as ((delta: number) => void) | null,
+}));
 vi.mock("@/components/social/ActivityCard", () => ({
   default: ({
     feedItem,
     openComments,
     allExercises,
     linkToPost = true,
+    onComment,
+    commentDelta = 0,
   }: {
     feedItem: { summary: string; liked?: boolean };
     openComments?: boolean;
     allExercises?: boolean;
     linkToPost?: boolean;
+    onComment?: () => void;
+    commentDelta?: number;
   }) => (
     <article data-testid="post">
       {feedItem.summary} · liked {String(!!feedItem.liked)} · comments{" "}
       {String(!!openComments)} · every exercise {String(!!allExercises)} · links
-      to itself {String(linkToPost)}
+      to itself {String(linkToPost)} · comments added {commentDelta}
+      <button type="button" onClick={onComment}>
+        Comment
+      </button>
     </article>
   ),
+}));
+vi.mock("@/components/social/ActivityPostComments", () => ({
+  default: ({
+    activityId,
+    commentCount,
+    focusKey,
+    quickChips,
+    onCountChange,
+  }: {
+    activityId: string;
+    commentCount: number;
+    focusKey: number;
+    quickChips?: string[];
+    onCountChange: (delta: number) => void;
+  }) => {
+    thread.countChange = onCountChange;
+    return (
+      <section data-testid="comments">
+        {activityId} · {commentCount} comments · focus {focusKey} · chips{" "}
+        {quickChips?.join(", ")}
+      </section>
+    );
+  },
 }));
 
 import ActivityPost from "../ActivityPost";
@@ -105,12 +140,40 @@ describe("the post a notice opens", () => {
     );
   });
 
-  it("a comment notice opens the comments", async () => {
+  /* Mob2's Mobbin finding 9: the comments are on the page, under the
+     post, not in the card's sheet. */
+  it("shows the post's comments on the page, under it", async () => {
+    seedFirestore({ "activities/a1": { ...POST, commentCount: 2 } });
+    renderAt("/activity/a1");
+    expect(await screen.findByTestId("comments")).toHaveTextContent(
+      "a1 · 2 comments · focus 0 · chips Nice run, Great pace, Keep it up"
+    );
+    // The card opens no sheet of its own here.
+    expect(screen.getByTestId("post")).toHaveTextContent(
+      "liked false · comments false"
+    );
+  });
+
+  it("a comment notice puts the comment field in focus", async () => {
     seedFirestore({ "activities/a1": POST });
     renderAt("/activity/a1?comments=1");
-    expect(await screen.findByTestId("post")).toHaveTextContent(
-      "liked false · comments true"
-    );
+    expect(await screen.findByTestId("comments")).toHaveTextContent("focus 1");
+  });
+
+  it("the card's comment button goes to the field on the page", async () => {
+    seedFirestore({ "activities/a1": POST });
+    renderAt("/activity/a1");
+    (await screen.findByRole("button", { name: "Comment" })).click();
+    expect(await screen.findByTestId("comments")).toHaveTextContent("focus 1");
+  });
+
+  it("a comment added on the page moves both counts", async () => {
+    seedFirestore({ "activities/a1": { ...POST, commentCount: 2 } });
+    renderAt("/activity/a1");
+    await screen.findByTestId("comments");
+    act(() => thread.countChange?.(1));
+    expect(screen.getByTestId("comments")).toHaveTextContent("3 comments");
+    expect(screen.getByTestId("post")).toHaveTextContent("comments added 1");
   });
 
   it("a refused read opens the profile of whoever acted", async () => {

@@ -260,8 +260,9 @@ test.describe("feed activity card screenshots", () => {
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 25_000 });
-    // Social opens on Together; the feed lives under the Feed radio
-    // (SegmentedControl → role=radio, the standing gotcha).
+    // Social opens on Feed for someone who follows anyone (Mob2 call 6);
+    // the tap holds it there whichever it opened on (SegmentedControl →
+    // role=radio, the standing gotcha).
     await page.getByRole("radio", { name: /feed/i }).click({ timeout: 20_000 });
     // This account follows the author, but the fixture has no fan-out feed
     // docs. Explore reads the public activities directly.

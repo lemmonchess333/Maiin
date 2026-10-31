@@ -178,11 +178,11 @@ function ScheduleLayoutSheetBody({
       title={guided && reviewing ? "Review usual week" : "Edit weekly layout"}
       description={
         guided && reviewing
-          ? "Check the scope before changing your plan."
+          ? "This changes every week from now on."
           : "Tap any day to cycle through Rest, Lift, Run, Both."
       }
     >
-      <div className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-6 pt-4 space-y-5">
+      <div className="@container min-h-0 overflow-y-auto overscroll-contain px-5 pb-6 pt-4 space-y-5">
         {guided && reviewing ? (
           <>
             <Banner
@@ -192,7 +192,7 @@ function ScheduleLayoutSheetBody({
             {sourceChanged && (
               <Banner
                 variant="warning"
-                description="Your plan changed while this draft was open. Close and reopen the editor to review the latest week."
+                description="Your plan changed while this was open. Close it and try again."
               />
             )}
             {!preview ? (
@@ -286,8 +286,10 @@ function ScheduleLayoutSheetBody({
           </>
         ) : (
           <>
+            {/* One column under 11em of sheet (2x text on a phone), where a
+                third of the row was narrower than "Both". */}
             <div
-              className="grid grid-cols-3 gap-2"
+              className="grid grid-cols-3 gap-2 @max-[11em]:grid-cols-1"
               aria-label="Weekly layout summary"
             >
               {[
@@ -341,7 +343,7 @@ function ScheduleLayoutSheetBody({
             {guided && sourceChanged && (
               <Banner
                 variant="warning"
-                description="Your plan changed while this draft was open. Close and reopen the editor to review the latest week."
+                description="Your plan changed while this was open. Close it and try again."
               />
             )}
 

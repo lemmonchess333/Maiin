@@ -34,6 +34,7 @@ import {
   writesSettled,
 } from "./firestoreCacheClear";
 import { isNativePlatform } from "@/lib/platform";
+import { CONNECTED_TRAINING_RELEASED } from "./connectedTrainingRelease";
 import {
   getGoogleCredentialNative,
   getAppleSignInNative,
@@ -42,6 +43,7 @@ import { setErrorReportingUid } from "./errorReporting";
 import { readString, remove, writeString } from "@/lib/localStore";
 import type { FieldValue, Timestamp } from "firebase/firestore";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
+import { onAppResume } from "./appResume";
 import {
   invalidatePushTokenLifecycle,
   stopListeningForForegroundPush,
@@ -167,10 +169,12 @@ export interface UserProfileCore {
    */
   onboardingCompletedAt?: Timestamp | FieldValue;
   /**
-   * Server-stamped at the first successful version 2 onboarding commit.
-   * Absent on existing accounts and clients using the legacy journey.
+   * Server-stamped at the first successful onboarding commit from a client
+   * that offers version 2: 2, or 1 for the comparison group and while the
+   * server's switch is off (functions/lib/activationCohort.js). Absent on
+   * accounts made before v2 and on older clients.
    */
-  activationJourneyVersion?: 2;
+  activationJourneyVersion?: 1 | 2;
   /** First completed setup's platform, stamped by the server for v2. */
   onboardingPlatform?: "ios" | "web" | "android";
   /** Training type at the first completed setup, before later plan edits. */
@@ -884,6 +888,12 @@ interface AuthContextType {
    * Storage-aware service rather than through `updateProfile`).
    */
   refreshProfile: () => Promise<void>;
+  /**
+   * Set while a changed account waits on clearing the last account's Watch
+   * run from this iPhone, after retrying failed. The app stays on its
+   * loading screen until `retry` succeeds, and says why.
+   */
+  watchAccountCleanup: { retry: () => void } | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -1008,6 +1018,57 @@ async function outgoingWritesSettled(): Promise<boolean> {
   }
 }
 
+const WATCH_CLEANUP_ATTEMPTS = 3;
+const WATCH_CLEANUP_RETRY_MS = 400;
+
+/**
+ * Clears the outgoing account's Watch run, pending controls and heart rate
+ * before another account is shown. Off the release this is best effort:
+ * native start-up has already wiped that state, and a failure must not keep
+ * anyone out of the app. On it, a failure is retried and then thrown, and
+ * the caller holds the account back. Stops retrying once the account
+ * changes again, so a stale attempt can never bind the wrong account.
+ */
+async function clearOutgoingWatchAccount(
+  uid: string | null,
+  previousUid: string | null,
+  isCurrent: () => boolean
+): Promise<void> {
+  const attempt = async () => {
+    const { syncWatchRunAccount } = await import("./watchRunBridge");
+    await syncWatchRunAccount(uid);
+    if (previousUid && previousUid !== uid) {
+      const [{ clearHeartRateSessionsForUser }, { clearWatchRunSyncStatus }] =
+        await Promise.all([
+          import("./heartRateSession"),
+          import("./watchRunSyncStatus"),
+        ]);
+      clearHeartRateSessionsForUser(previousUid);
+      clearWatchRunSyncStatus(previousUid);
+    }
+  };
+  if (!CONNECTED_TRAINING_RELEASED) {
+    try {
+      await attempt();
+    } catch (error) {
+      logger.warn("[AuthProvider] Watch account cleanup skipped", error);
+    }
+    return;
+  }
+  for (let tries = 1; ; tries++) {
+    try {
+      await attempt();
+      return;
+    } catch (error) {
+      if (tries >= WATCH_CLEANUP_ATTEMPTS || !isCurrent()) throw error;
+    }
+    await new Promise((resolve) =>
+      setTimeout(resolve, WATCH_CLEANUP_RETRY_MS * tries)
+    );
+    if (!isCurrent()) throw new Error("Account changed");
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -1017,6 +1078,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      screen: Login drawn on the page being left would take input the
      reload then throws away. */
   const [leavingForReload, setLeavingForReload] = useState(false);
+  const [watchAccountCleanup, setWatchAccountCleanup] = useState<{
+    retry: () => void;
+  } | null>(null);
+  // The account whose Watch state this iPhone was last cleared for. Moves
+  // only when a cleanup finishes, so a failed one is tried again by the next
+  // callback for the same account, with the right outgoing account.
+  const watchAccountRef = useRef<string | null>(null);
   // Guards the once-per-session boot reconciliation writes (timezone capture +
   // email mirror) so they don't re-fire on every onAuthStateChanged emission —
   // it fires several times per sign-in (session restore, token refresh, popup),
@@ -1045,6 +1113,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       )
       .catch(() => {});
   }, [user, onboarded]);
+
+  // The device's zone, kept current each time the app comes back. The server
+  // reads the person's "today" from it (reminders, plan moves), and a phone
+  // changes zone with its owner without the app starting again.
+  const profileUid = profile?.uid ?? null;
+  const savedTimezone = profile?.timezone ?? null;
+  useEffect(() => {
+    if (!profileUid || user?.uid !== profileUid) return;
+    const uid = profileUid;
+    return onAppResume(() => {
+      const deviceTz = getDeviceTimezone();
+      if (!deviceTz || !shouldUpdateTimezone(savedTimezone, deviceTz)) return;
+      if (auth.currentUser?.uid !== uid) return;
+      setProfile((current) =>
+        current?.uid === uid ? { ...current, timezone: deviceTz } : current
+      );
+      void firestore()
+        .then(({ doc, db, updateDocGuarded }) =>
+          updateDocGuarded(doc(db, "users", uid), { timezone: deviceTz })
+        )
+        .catch((err) =>
+          logger.warn("[AuthProvider] timezone refresh failed", err)
+        );
+    });
+  }, [user?.uid, profileUid, savedTimezone]);
 
   // Dark mode sync — dark is the default, so a null profile (signed out /
   // still loading) and a profile without an explicit choice both resolve dark.
@@ -1099,29 +1192,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // before another account is exposed to the React tree. The bridge keeps
       // a same-UID preference across a normal app restart, but sign-out or an
       // externally driven account switch disables the prior account's Watch.
-      if (previousUid !== uid && isNativePlatform()) {
-        try {
-          const { syncWatchRunAccount } = await import("./watchRunBridge");
-          await syncWatchRunAccount(uid);
-          if (previousUid) {
-            const [
-              { clearHeartRateSessionsForUser },
-              { clearWatchRunSyncStatus },
-            ] = await Promise.all([
-              import("./heartRateSession"),
-              import("./watchRunSyncStatus"),
-            ]);
-            clearHeartRateSessionsForUser(previousUid);
-            clearWatchRunSyncStatus(previousUid);
+      setWatchAccountCleanup(null);
+      const watchOwner = watchAccountRef.current;
+      if (watchOwner !== uid && isNativePlatform()) {
+        for (;;) {
+          try {
+            await clearOutgoingWatchAccount(uid, watchOwner, isCurrent);
+            break;
+          } catch (error) {
+            // Off the release the cleanup is best effort and never throws.
+            if (!CONNECTED_TRAINING_RELEASED) break;
+            // A Watch holding the outgoing session cannot be exposed under a
+            // different signed-in account: keep the next account behind the
+            // loading gate, and let the person try again.
+            logger.error("[AuthProvider] Watch account cleanup failed", error);
+            if (!isCurrent()) return;
+            await new Promise<void>((retry) =>
+              setWatchAccountCleanup({ retry })
+            );
+            if (!isCurrent()) return;
+            setWatchAccountCleanup(null);
           }
-        } catch (error) {
-          // Keep the next account behind the loading gate if native cleanup
-          // failed. A Watch holding the outgoing session cannot be exposed
-          // under a different signed-in account.
-          logger.error("[AuthProvider] Watch account cleanup failed", error);
-          return;
         }
         if (!isCurrent()) return;
+        watchAccountRef.current = uid;
       }
       setUser(firebaseUser);
       // This device has had an account: the signed-out screen greets the
@@ -1859,6 +1953,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateProfile,
       updateShareDefaults,
       refreshProfile,
+      watchAccountCleanup,
     }),
     [
       user,
@@ -1871,6 +1966,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateProfile,
       updateShareDefaults,
       refreshProfile,
+      watchAccountCleanup,
     ]
   );
 

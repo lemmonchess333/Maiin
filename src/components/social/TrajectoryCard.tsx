@@ -79,8 +79,9 @@ export default function TrajectoryCard({
               sessions — showing "-2" before the user has logged anything
               for the new week reads as a failure-state in red. The
               "Start your week" zero-state nudge below is the calmer
-              prompt to action. */}
-          <div className="flex items-baseline gap-3 mb-3">
+              prompt to action. The row wraps, so at large text the chip
+              goes under the count rather than past the card. */}
+          <div className="flex flex-wrap items-baseline gap-3 mb-3">
             <span
               className="text-3xl font-figure tabular-nums font-extrabold"
               style={{ color: THEME.brand }}

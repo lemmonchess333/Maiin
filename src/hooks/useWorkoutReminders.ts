@@ -203,5 +203,7 @@ export function useWorkoutRemindersInternal(
     loading,
     updateReminders,
     requestPermission: requestNotificationPermission,
+    /** The programme's next workout, as the reminders name it. */
+    liftName: liftName ?? null,
   };
 }

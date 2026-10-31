@@ -40,9 +40,16 @@ import { goalLabel } from "@/features/program/programLabels";
 import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { useSessionsInFlight } from "@/hooks/useSessionsInFlight";
-import { buildTrainingPlanWorkspace } from "@/lib/trainingPlanWorkspace";
+import {
+  buildTrainingPlanWorkspace,
+  weekCountLabel,
+} from "@/lib/trainingPlanWorkspace";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
-import { formatDayMonth, formatWeekday } from "@/utils/formatters";
+import {
+  formatDayMonth,
+  formatShortWeekday,
+  formatWeekday,
+} from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { sessionDayContext } from "@/features/program/sessionDay";
 import {
@@ -271,7 +278,12 @@ export default function TrainingPlan() {
       actions={
         <Link
           to="/history/sessions"
-          state={{ returnTo: `${location.pathname}${location.search}` }}
+          state={{
+            returnTo: `${location.pathname}${location.search}`,
+            // The review or reset this page was opened for, so Back from
+            // history returns to it rather than to a fresh plan.
+            returnState: location.state,
+          }}
           className={buttonClasses({ variant: "ghost" })}
         >
           History
@@ -347,7 +359,7 @@ export default function TrainingPlan() {
           {oldWeek && (
             <Banner
               variant="neutral"
-              description="Your plan is waiting for the previous week to finish. Resolve the open session or pending save before moving this week's runs."
+              description="Finish your open workout first."
             />
           )}
           {runStrip && (
@@ -366,6 +378,13 @@ export default function TrainingPlan() {
               compact
               eyebrow="Next lift"
               title={model.nextLift.dayName}
+              // What follows wraps as a sentence: day names run long, and a
+              // meta item never breaks.
+              description={
+                model.thenLifts.length
+                  ? `Then ${model.thenLifts.join(" · ")}`
+                  : undefined
+              }
               meta={[
                 `${model.nextLift.exercises.length} exercises`,
                 "Follows your rotation",
@@ -402,8 +421,21 @@ export default function TrainingPlan() {
             <WeekResetCard
               feel={resetFeel}
               range={`${formatDayMonth(parseLocalDate(firstDate))} – ${formatDayMonth(parseLocalDate(lastDate))}`}
-              liftDays={model.summary.liftDays}
-              plannedRuns={model.summary.plannedRuns}
+              liftDays={model.summary.lifts.planned ?? 0}
+              plannedRuns={model.summary.runs.planned ?? 0}
+              runPlan={
+                profile?.runMode === "race_prep"
+                  ? "race"
+                  : programState.runDays?.length
+                    ? "plan"
+                    : "none"
+              }
+              expressTarget={
+                canEdit && !sessionBusy && model.nextLiftIndex !== null
+                  ? `/program?day=${model.nextLiftIndex}&express=1`
+                  : null
+              }
+              onOpen={navigate}
               canMoveRun={canEdit && eligibleRuns.length > 0}
               canEditLayout={canResetLayout}
               moveReason={
@@ -471,26 +503,34 @@ export default function TrainingPlan() {
             ) : (
               <MetaLine
                 items={[
-                  `${model.summary.liftDays} lift days`,
-                  `${model.summary.plannedRuns} planned runs`,
-                  `${model.summary.restDays} rest days`,
-                ]}
+                  weekCountLabel("Lifts", model.summary.lifts),
+                  weekCountLabel("Runs", model.summary.runs),
+                  `${model.summary.restDays} rest ${model.summary.restDays === 1 ? "day" : "days"}`,
+                ].filter((item): item is string => item !== null)}
               />
             )}
-            <Card padded={false} size="compact" className="overflow-hidden">
+            {/* Under 14em of card (large text on a phone) the day's date
+                goes above its sessions rather than beside them: beside, the
+                date column grows with the text and leaves a session's words
+                too little room to fit. */}
+            <Card
+              padded={false}
+              size="compact"
+              className="overflow-hidden @container"
+            >
               <ol className="divide-y divide-border">
                 {model.days.map((day) => (
                   <li
                     key={day.dateKey}
-                    className={cn("flex gap-3 p-3", day.isToday && "bg-muted")}
+                    className={cn(
+                      "flex gap-3 p-3 @max-[14em]:flex-col @max-[14em]:gap-1",
+                      day.isToday && "bg-muted"
+                    )}
                     aria-current={day.isToday ? "date" : undefined}
                   >
-                    <div className="w-11 shrink-0 text-center">
+                    <div className="w-11 shrink-0 text-center @max-[14em]:flex @max-[14em]:w-auto @max-[14em]:items-baseline @max-[14em]:gap-2 @max-[14em]:text-left">
                       <p className="text-xs text-muted-foreground">
-                        {parseLocalDate(day.dateKey).toLocaleDateString(
-                          "en-GB",
-                          { weekday: "short" }
-                        )}
+                        {formatShortWeekday(parseLocalDate(day.dateKey))}
                       </p>
                       <p className="text-base font-semibold font-mono tabular-nums">
                         {parseLocalDate(day.dateKey).getDate()}
@@ -583,6 +623,33 @@ export default function TrainingPlan() {
                                 ? "Your programme had not started"
                                 : "No activity planned"}
                           </p>
+                          {/* Today's rest day can still take a session:
+                              an empty workout or a free run. */}
+                          {day.isToday &&
+                            !day.beforeStart &&
+                            !evidencePending &&
+                            !evidenceFailed && (
+                              <p className="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
+                                Add activity:
+                                {(
+                                  [
+                                    ["/empty-workout", "Empty workout"],
+                                    ["/run", "Free run"],
+                                  ] as const
+                                ).map(([to, label]) => (
+                                  <Link
+                                    key={to}
+                                    to={to}
+                                    className={buttonClasses({
+                                      variant: "ghost",
+                                      size: "sm",
+                                    })}
+                                  >
+                                    {label}
+                                  </Link>
+                                ))}
+                              </p>
+                            )}
                         </div>
                       )}
                     </div>
@@ -658,6 +725,7 @@ export default function TrainingPlan() {
           )}
           weekSchedule={profile.weekSchedule ?? []}
           todayKey={todayKey}
+          unit={resolveDistanceUnit(profile.preferredDistanceUnit)}
           nextLiftName={model.nextLift?.dayName}
           initialRunId={move.id}
           blocked={!canEdit}

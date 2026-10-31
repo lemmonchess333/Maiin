@@ -411,6 +411,27 @@ describe("complete account erasure", () => {
     );
   });
 
+  it("takes a deleted account's name off the givers a post names, and its props off the count", async () => {
+    const ctx = setup({
+      "activities/other": {
+        authorId: "bob",
+        kudosCount: 2,
+        commentCount: 1,
+        recentPropsBy: [
+          { uid: "alice", name: "Alice", photoURL: "photo" },
+          { uid: "carol", name: "Carol" },
+        ],
+        recentPropsByUids: ["alice", "carol"],
+      },
+    });
+    await cleanupSocial({ ...ctx, checkpoint: async () => {} });
+    const post = ctx.firestore.data.get("activities/other");
+    expect(post.recentPropsBy).toEqual([{ uid: "carol", name: "Carol" }]);
+    expect(post.recentPropsByUids).toEqual(["carol"]);
+    expect(post.kudosCount).toBe(1);
+    expect(JSON.stringify(post)).not.toContain("Alice");
+  });
+
   it("resumes paged legacy edges after an interruption without decrementing twice", async () => {
     const ctx = setup();
     for (let n = 0; n < 310; n++)

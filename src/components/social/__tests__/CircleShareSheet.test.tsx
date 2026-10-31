@@ -124,7 +124,7 @@ describe("no circles", () => {
     ).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: /open together/i }));
-    expect(navigateMock).toHaveBeenCalledWith("/social");
+    expect(navigateMock).toHaveBeenCalledWith("/social?tab=together");
     expect(hook.publishEvent).not.toHaveBeenCalled();
   });
 });

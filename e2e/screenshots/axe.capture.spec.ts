@@ -263,10 +263,16 @@ test.describe("axe", () => {
     await open(page, "history?view=lifting", nav);
     await check(page, "history-lifting", found);
 
-    /* The Community section, then (in `settle`) its skeletons gone: which
-       Circles card it shows depends on what other specs on the shared
-       account have done, so the marker names none of them. */
-    await open(page, "social", page.getByRole("region", { name: "Community" }));
+    /* Together, asked for by name: Social opens on the Feed for anyone
+       who follows someone, as the seeded account does. The Community
+       section, then (in `settle`) its skeletons gone: which Circles card
+       it shows depends on what other specs on the shared account have
+       done, so the marker names none of them. */
+    await open(
+      page,
+      "social?tab=together",
+      page.getByRole("region", { name: "Community" })
+    );
     await check(page, "social", found);
 
     // The challenges behind "See N more", opened into their compact rows.
@@ -438,13 +444,13 @@ test.describe("axe", () => {
     await page.getByText("Jordan Reyes").waitFor({ timeout: 20_000 });
     await check(page, "activity-post", found);
 
-    await page.goto("activity/rich-feed-push?comments=1");
-    await sheetReady(
+    // The session's comments are on its page, not in a sheet.
+    await open(
       page,
-      dialog.getByText("Strong session.", { exact: false })
+      "activity/rich-feed-push?comments=1",
+      page.getByText("Strong session.", { exact: false })
     );
-    await check(page, "sheet-activity-comments", found, sheet);
-    await close(page);
+    await check(page, "activity-post-comments", found);
 
     await open(
       page,

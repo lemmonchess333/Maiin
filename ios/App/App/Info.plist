@@ -55,9 +55,9 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Tropos saves an image to your photo library only when you choose to save one, such as a share card, a progress photo comparison or a meal photo.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Tropos reads your step count for Home, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.</string>
+	<string>$(TROPOS_HEALTH_SHARE_USAGE)</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Tropos saves completed runs as Apple Health workouts when you turn on export, and may correct or remove workouts it previously added.</string>
+	<string>$(TROPOS_HEALTH_UPDATE_USAGE)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
     <key>FirebaseMessagingAutoInitEnabled</key>

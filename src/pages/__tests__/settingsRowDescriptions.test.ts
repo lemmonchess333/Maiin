@@ -38,8 +38,16 @@ function descriptions(): string[] {
     "utf8"
   );
   // Only the catalogue entries — `description:` appears once more as the
-  // interface field declaration, which carries no string literal.
-  return [...src.matchAll(/^\s*description: "([^"]*)",/gm)].map((m) => m[1]);
+  // interface field declaration, which carries no string literal. A row
+  // whose description follows a release gate (`GATE ? "…" : "…"`) is read
+  // as both of its strings, since either can be the one on screen.
+  return [
+    ...src.matchAll(
+      /^\s*description:\s*(?:"([^"]*)"|[A-Z_]+\s*\?\s*"([^"]*)"\s*:\s*"([^"]*)"),/gm
+    ),
+  ].flatMap((m) =>
+    [m[1], m[2], m[3]].filter((d): d is string => d !== undefined)
+  );
 }
 
 describe("Settings row descriptions", () => {
@@ -51,6 +59,9 @@ describe("Settings row descriptions", () => {
     const all = descriptions();
     expect(all.length).toBeGreaterThanOrEqual(12);
     expect(all).toContain("Export, recently deleted");
+    // Apple Health's description follows the connected training gate.
+    expect(all).toContain("Daily step count on Home");
+    expect(all).toContain("Steps, Watch runs, workouts");
   });
 
   it("every one fits on a single line", () => {

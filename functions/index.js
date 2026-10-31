@@ -32,11 +32,15 @@ if (!admin.apps.length) {
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
+const activationCohort = require("./lib/activationCohort");
+const weeklyRecap = require("./lib/weeklyRecap");
 const activationBilling = require("./lib/activationBilling");
 const { activationSport } = require("./lib/firstWeekActivation");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
 const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
+const runRename = require("./lib/runRename");
+const followRemoval = require("./lib/followRemoval");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
 const friendsBoard = require("./lib/friendsBoard");
 const restrictedIdentities = require("./lib/restrictedIdentities");
@@ -959,6 +963,13 @@ exports.completeOnboarding = functions
           "programState is too large."
         );
       }
+      // The server's cohort, not the client's (XB1 call 9): a comparison
+      // group and a switch that turns v2 off (lib/activationCohort.js).
+      const journey = await activationCohort.journeyFor(
+        db,
+        uid,
+        activationJourneyVersion
+      );
       const acceptedVersion = await db.runTransaction(async (transaction) => {
         const existing = await transaction.get(userRef);
         const publicSnap = await transaction.get(publicRef);
@@ -975,8 +986,8 @@ exports.completeOnboarding = functions
           nextProfileData.onboardingSport = activationSport(
             nextProfileData.athleteType
           );
-          if (activationJourneyVersion === 2) {
-            nextProfileData.activationJourneyVersion = 2;
+          if (journey !== null) {
+            nextProfileData.activationJourneyVersion = journey;
             if (onboardingPlatform) {
               nextProfileData.onboardingPlatform = onboardingPlatform;
             }
@@ -1044,12 +1055,11 @@ exports.completeOnboarding = functions
         transaction.set(programRef, onbProgram.value);
 
         return alreadyCompleted
-          ? existingData.activationJourneyVersion === 2
-            ? 2
+          ? existingData.activationJourneyVersion === 2 ||
+            existingData.activationJourneyVersion === 1
+            ? existingData.activationJourneyVersion
             : null
-          : activationJourneyVersion === 2
-            ? 2
-            : null;
+          : journey;
       });
 
       return { success: true, activationJourneyVersion: acceptedVersion };
@@ -2218,18 +2228,29 @@ exports._isAllowedStripeReturnUrl = _isAllowedStripeReturnUrl;
 // STRIPE WEBHOOK — subscription lifecycle events
 // ══════════════════════════════════════════════
 
+/** A measurement, never billing: a failure is logged and the delivery goes
+ *  on, rather than answering Stripe 500 for a subscription already saved. */
 async function recordActivationBillingFirst(db, uid, observation) {
   if (!observation) return;
   const userRef = db.collection("users").doc(uid);
-  await db.runTransaction(async (txn) => {
-    const snap = await txn.get(userRef);
-    if (!snap.exists) return;
-    const firsts = activationBilling.nextBillingFirsts(
-      snap.data().activationBillingFirsts,
-      observation
-    );
-    if (firsts) txn.update(userRef, { activationBillingFirsts: firsts });
-  });
+  try {
+    await db.runTransaction(async (txn) => {
+      const snap = await txn.get(userRef);
+      if (!snap.exists) return;
+      const firsts = activationBilling.nextBillingFirsts(
+        snap.data().activationBillingFirsts,
+        observation
+      );
+      if (firsts) txn.update(userRef, { activationBillingFirsts: firsts });
+    });
+  } catch (error) {
+    console.error("activationBilling.record_failed", {
+      uid,
+      kind: observation.kind,
+      source: observation.source,
+      message: error?.message,
+    });
+  }
 }
 
 exports.stripeWebhook = functions
@@ -3582,6 +3603,9 @@ async function maybeSendWeeklyRecap(uid, now, profile) {
       )
     : null;
   const behind = !!(status && status.fellBehind);
+  // The recap opens the review, so it goes only when one waits.
+  if (!behind && !(await weeklyRecap.reviewWaits(db, uid, range.weekEnd)))
+    return false;
 
   const registrations = await leaseClaimedPushRegistrations(uid);
   const tokens = registrations.map((r) => r.token);
@@ -5474,7 +5498,7 @@ exports.onRunUpdated = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("users/{uid}/runs/{runId}")
   .onUpdate(async (change, context) => {
-    const { uid } = context.params;
+    const { uid, runId } = context.params;
     // Reconciles from the current source documents, so a retry is safe.
     if (pastRetryWindow(context)) return null;
     if (
@@ -5497,6 +5521,14 @@ exports.onRunUpdated = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // A renamed run's post takes the new name (lib/runRename), read from
+    // the current documents, so a retry writes it once.
+    if (
+      runRename.runNameMayHaveChanged(change.before.data(), change.after.data())
+    )
+      await runRename.syncSharedRunName(db, uid, runId, {
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
     return null;
   });
 
@@ -8657,6 +8689,41 @@ exports.setBoardSharing = functions
     }
     await friendsBoard.setBoardSharing(db, uid, share);
     return { share };
+  });
+
+/**
+ * removeFollower — Remove follower on your own followers list (Mob2 call
+ * 7): deletes both edges of one follow of the caller (lib/followRemoval).
+ * Not refused to a restricted account, which may always narrow who
+ * reaches it, as unfollowing and blocking may.
+ */
+exports.removeFollower = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    const followerUid = data && data.followerUid;
+    if (!isDocumentId(followerUid) || followerUid === uid) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "followerUid must be another account's id."
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    const limited = await isRateLimited(uid, "removeFollower", 30, 60_000);
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Try again in a minute."
+      );
+    }
+    const removed = await followRemoval.removeFollower(db, uid, followerUid);
+    return { removed };
   });
 
 // ══════════════════════════════════════════════

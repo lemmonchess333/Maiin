@@ -81,6 +81,14 @@ describe("liftPost", () => {
     expect(plank.summary).toBe("2×60 s × 20 kg");
   });
 
+  it("reads a measured clock in whole minutes and whole seconds", () => {
+    const measured = { ...LIFT, durationMinutes: 47 + 19 / 60 };
+    expect(liftPostPreview(measured).meta).toContain("47 min");
+    expect(liftPost(AUTHOR, measured, { visibility: "public" }).duration).toBe(
+      47 * 60 + 19
+    );
+  });
+
   it("counts weight moved, which a timed hold has none of", () => {
     const post = liftPost(AUTHOR, LIFT, { visibility: "public" });
     expect(post.totalVolume).toBe(8 * 60 + 8 * 60 + 6 * 60);

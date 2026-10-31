@@ -379,6 +379,18 @@ async function reconcile(uid: string): Promise<void> {
         if (!isCurrentUser(uid) || serverRun.exists()) continue;
         const hasLedger = await markHealthWorkoutDeletion(uid, record.runId);
         if (!isCurrentUser(uid)) return;
+        if (
+          !hasLedger &&
+          !current.revision &&
+          !readWorkoutExportLocalConsent(uid)
+        ) {
+          // Every export reserves a server receipt first, this phone never
+          // exported the run, and it holds no opt-in: there is no workout in
+          // Health to remove. Asking HealthKit would fail without write
+          // access and leave a cleanup nothing can finish.
+          updateRecord(uid, record.runId, () => null);
+          continue;
+        }
         if (current.state !== "native-deleted") {
           const result = await plugin.deleteWorkout({ runId: record.runId });
           // HealthKit read permission is opaque. With a server receipt, an

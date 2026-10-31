@@ -268,6 +268,18 @@ describe("FeedView — visible source control", () => {
     );
   });
 
+  it("wraps its sources rather than cutting their names at large text", () => {
+    setup();
+    // The track's parts wrap onto a second row when the names can't
+    // share one (320px at 200% text); the plain fill cut them short.
+    expect(
+      screen.getByRole("radiogroup", { name: "Feed source" }).className
+    ).toContain("flex-wrap");
+    expect(
+      screen.getByRole("radio", { name: "Following" }).className
+    ).toContain("min-w-max");
+  });
+
   it("picking the other source drives the URL-writing callback", () => {
     const { selectFeedSubTab } = setup();
     fireEvent.click(screen.getByRole("radio", { name: /following/i }));

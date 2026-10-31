@@ -33,6 +33,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
+import { CONNECTED_TRAINING_RELEASED } from "@/lib/connectedTrainingRelease";
 import PageShell from "@/components/ui/PageShell";
 import { pageItemVariant } from "@/components/ui/pageMotion";
 import SettingsAvatar from "@/components/settings/SettingsAvatar";
@@ -132,7 +133,9 @@ const GROUPS: SectionGroup[] = [
       {
         slug: "health",
         label: "Apple Health",
-        description: "Steps, Watch runs, workouts",
+        description: CONNECTED_TRAINING_RELEASED
+          ? "Steps, Watch runs, workouts"
+          : "Daily step count on Home",
         icon: HeartPulse,
         migrated: true,
       },

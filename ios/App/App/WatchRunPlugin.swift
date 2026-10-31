@@ -71,6 +71,12 @@ final class WatchRunPlugin: CAPPlugin, CAPBridgedPlugin {
         if let pace = call.getDouble("paceSecondsPerKm"), pace.isFinite, pace >= 0 {
             snapshot["paceSecondsPerKm"] = pace
         }
+        // Written in the runner's unit on the phone, as the HUD writes them.
+        for key in ["distanceLabel", "paceLabel"] {
+            if let label = call.getString(key), !label.isEmpty, label.count <= 24 {
+                snapshot[key] = label
+            }
+        }
         if let saveStatus = call.getString("saveStatus") {
             guard phase == "review", ["queued", "synced"].contains(saveStatus) else {
                 call.reject("Invalid run save status")

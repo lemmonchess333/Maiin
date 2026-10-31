@@ -8,6 +8,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import RunCTACard from "../RunCTACard";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import { runStartTarget } from "@/lib/todaySession";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
@@ -34,7 +35,14 @@ function runner(container: HTMLElement) {
 describe("RunCTACard — the runner", () => {
   it("distinguishes Home Start from Resume in the activation path", () => {
     const navigate = vi.fn();
-    render(<RunCTACard unit="km" todayRun={null} navigate={navigate} />);
+    render(
+      <RunCTACard
+        unit="km"
+        todayRun={null}
+        startTarget={runStartTarget(null)}
+        navigate={navigate}
+      />
+    );
     fireEvent.click(screen.getByRole("button", { name: "Start run" }));
     expect(trackHomeEvent).toHaveBeenCalledWith("home_card_tapped", {
       card: "today_run",
@@ -46,6 +54,7 @@ describe("RunCTACard — the runner", () => {
       <RunCTACard
         unit="km"
         todayRun={null}
+        startTarget={runStartTarget(null)}
         navigate={navigate}
         inProgress={{
           sport: "run",
@@ -69,6 +78,7 @@ describe("RunCTACard — the runner", () => {
       <RunCTACard
         unit="km"
         todayRun={runDay("tempo_20", "tempo")}
+        startTarget={runStartTarget(runDay("tempo_20", "tempo"))}
         navigate={vi.fn()}
       />
     );
@@ -82,6 +92,7 @@ describe("RunCTACard — the runner", () => {
       <RunCTACard
         unit="km"
         todayRun={runDay("easy_30", "easy")}
+        startTarget={runStartTarget(runDay("easy_30", "easy"))}
         navigate={vi.fn()}
       />
     );
@@ -90,7 +101,12 @@ describe("RunCTACard — the runner", () => {
     );
     cleanup();
     const free = render(
-      <RunCTACard unit="km" todayRun={null} navigate={vi.fn()} />
+      <RunCTACard
+        unit="km"
+        todayRun={null}
+        startTarget={runStartTarget(null)}
+        navigate={vi.fn()}
+      />
     );
     expect(runner(free.container)?.getAttribute("src")).toMatch(
       /\/form-art\/run-easy\.webp$/
@@ -102,6 +118,7 @@ describe("RunCTACard — the runner", () => {
       <RunCTACard
         unit="km"
         todayRun={runDay("easy_30", "easy")}
+        startTarget={runStartTarget(runDay("easy_30", "easy"))}
         navigate={vi.fn()}
       />
     );

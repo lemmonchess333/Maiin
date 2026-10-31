@@ -11,6 +11,7 @@ import {
 import {
   createMemoryRouter,
   RouterProvider,
+  useLocation,
   useNavigate,
 } from "react-router-dom";
 
@@ -54,6 +55,12 @@ function open(query = "") {
   render(<RouterProvider router={router} />);
   return router;
 }
+function PlanProbe() {
+  const location = useLocation();
+  return (
+    <p data-testid="plan">{`${location.search} ${JSON.stringify(location.state)}`}</p>
+  );
+}
 function sessionLinks() {
   return within(
     screen.getByRole("region", { name: "Saved sessions" })
@@ -80,6 +87,119 @@ afterEach(() => {
 });
 
 describe("Training history", () => {
+  it("takes a returning account to its last session", async () => {
+    resetFirestore();
+    seedFirestore({
+      "users/history-owner/runs/older": savedRunDoc("2026-08-01"),
+    });
+    open();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Jump to your last session" })
+    );
+    await waitFor(() => expect(sessionLinks()).toHaveLength(1));
+    expect(sessionLinks()[0]).toHaveAttribute(
+      "href",
+      expect.stringContaining("/run/older")
+    );
+  });
+
+  it("marks a lift that set a new best", async () => {
+    resetFirestore();
+    const squat = (id: string, date: string, kg: number) => [
+      `users/history-owner/workouts/${id}`,
+      savedWorkoutDoc(date, {
+        notes: id,
+        exercises: [
+          {
+            exerciseId: "barbell-back-squat",
+            exerciseName: "Barbell Back Squat",
+            sets: [{ weightKg: kg, reps: 5, type: "working" }],
+          },
+        ],
+      }),
+    ];
+    seedFirestore(
+      Object.fromEntries([
+        squat("first", "2026-10-20", 60),
+        squat("second", "2026-10-22", 60),
+        squat("third", "2026-10-24", 60),
+        squat("heavier", "2026-10-26", 80),
+      ])
+    );
+    open("?sport=lifts");
+    await waitFor(() => expect(sessionLinks()).toHaveLength(4));
+    await waitFor(() =>
+      expect(
+        sessionLinks().filter((link) => link.textContent?.includes("PR"))
+      ).toHaveLength(1)
+    );
+    expect(
+      sessionLinks().find((link) => link.textContent?.includes("PR"))
+    ).toHaveAttribute("href", expect.stringContaining("heavier"));
+  });
+
+  it("reads thirty sessions at a time, and thirty more on Show more", async () => {
+    const read = vi.spyOn(savedSessions, "useSavedSessions");
+    seedFirestore(
+      Object.fromEntries(
+        Array.from({ length: 35 }, (_, i) => [
+          `users/history-owner/workouts/many-${i}`,
+          savedWorkoutDoc("2026-10-20"),
+        ])
+      )
+    );
+    open("?sport=lifts");
+    await waitFor(() => expect(sessionLinks()).toHaveLength(30));
+    expect(read).toHaveBeenCalledWith(
+      expect.anything(),
+      "history-owner",
+      expect.objectContaining({ cap: 30 })
+    );
+    expect(read).not.toHaveBeenCalledWith(
+      expect.anything(),
+      "history-owner",
+      expect.objectContaining({ cap: 60 })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show more sessions" }));
+    await waitFor(() => expect(sessionLinks()).toHaveLength(36));
+    expect(read).toHaveBeenCalledWith(
+      expect.anything(),
+      "history-owner",
+      expect.objectContaining({ cap: 60 })
+    );
+    expect(
+      screen.queryByRole("button", { name: "Show more sessions" })
+    ).toBeNull();
+  });
+
+  it("returns to the plan with the review it came from, not a fresh plan", async () => {
+    const planState = { returnTo: "/review", resetFeel: "a_bit_much" };
+    const router = createMemoryRouter(
+      [
+        { path: "/history/sessions", element: <TrainingHistory /> },
+        { path: "/program/plan", element: <PlanProbe /> },
+      ],
+      {
+        initialEntries: [
+          {
+            pathname: "/history/sessions",
+            state: {
+              returnTo: "/program/plan?reset=1",
+              returnState: planState,
+            },
+          },
+        ],
+      }
+    );
+    render(<RouterProvider router={router} />);
+    fireEvent.click(await screen.findByRole("link", { name: /Your plan/ }));
+    expect(await screen.findByTestId("plan")).toHaveTextContent(
+      `?reset=1 ${JSON.stringify(planState)}`
+    );
+    // Back did not stack a second plan on top of the first.
+    expect(router.state.historyAction).toBe("REPLACE");
+  });
+
   it("shows an unanswered retry as loading even if a previous query had failed", () => {
     vi.spyOn(savedSessions, "useSavedSessions").mockReturnValue({
       items: [],
@@ -140,12 +260,14 @@ describe("Training history", () => {
       )
     );
     open("?sport=lifts");
-    await screen.findByText("70 lifts");
+    // Thirty read at a time: the period's total is known once read.
+    await screen.findByText("30 lifts shown");
     expect(sessionLinks()).toHaveLength(30);
     fireEvent.click(screen.getByRole("button", { name: "Show more sessions" }));
-    expect(sessionLinks()).toHaveLength(60);
+    await waitFor(() => expect(sessionLinks()).toHaveLength(60));
     fireEvent.click(screen.getByRole("button", { name: "Show more sessions" }));
-    expect(sessionLinks()).toHaveLength(70);
+    await waitFor(() => expect(sessionLinks()).toHaveLength(70));
+    expect(screen.getByText("70 lifts")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Show more sessions" })
     ).not.toBeInTheDocument();

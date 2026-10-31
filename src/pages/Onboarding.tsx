@@ -791,7 +791,7 @@ export default function Onboarding() {
       // though the warm instance will handle the second call fine.
       const completeOnboarding = httpsCallable<
         unknown,
-        { success: boolean; activationJourneyVersion?: 2 | null }
+        { success: boolean; activationJourneyVersion?: 1 | 2 | null }
       >(functions, "completeOnboarding");
       // P0-5: payload now includes weekSchedule as an explicit
       // top-level field. validatePlanPayload reads either the

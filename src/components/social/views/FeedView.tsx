@@ -431,9 +431,12 @@ export default function FeedView({
         <section aria-label="Activity feed">
           <div className="!mt-3">
             {/* All three sources stay visible. The shared control supplies
-                the 44px touch floor and keyboard navigation. */}
+                the 44px touch floor and keyboard navigation. Its parts
+                wrap rather than cut a source's name at large text on a
+                narrow phone: the Feed is where Social opens. */}
             <SegmentedControl<FeedSubTab>
               ariaLabel="Feed source"
+              layout="fill-wrap"
               value={feedSubTab}
               onChange={(next) => {
                 // Record a deliberate selection even when it matches the

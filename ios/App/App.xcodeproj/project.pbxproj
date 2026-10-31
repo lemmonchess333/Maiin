@@ -329,6 +329,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
 				WATCH_RUN_RELEASE_ENABLED = YES;
 				SUPPORTED_PLATFORMS = "watchos watchsimulator";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
@@ -354,6 +355,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
 				WATCH_RUN_RELEASE_ENABLED = NO;
 				SUPPORTED_PLATFORMS = "watchos watchsimulator";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
@@ -480,6 +482,8 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				EXCLUDED_SOURCE_FILE_NAMES = TroposWatch.app;
+				INCLUDED_SOURCE_FILE_NAMES = "$(TROPOS_WATCH_EMBED_$(WATCH_RUN_RELEASE_ENABLED))";
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -494,6 +498,13 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				TROPOS_HEALTH_SHARE_USAGE = "$(TROPOS_HEALTH_SHARE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
+				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your step count from Health to show today's steps on Home.";
+				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your step count for Home, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
+				TROPOS_HEALTH_UPDATE_USAGE = "$(TROPOS_HEALTH_UPDATE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
+				TROPOS_HEALTH_UPDATE_USAGE_NO = "Tropos does not add workouts or any other data to Health.";
+				TROPOS_HEALTH_UPDATE_USAGE_YES = "Tropos saves completed runs as Apple Health workouts when you turn on export, and may correct or remove workouts it previously added.";
+				TROPOS_WATCH_EMBED_YES = TroposWatch.app;
 			};
 			name = Debug;
 		};
@@ -504,6 +515,8 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				EXCLUDED_SOURCE_FILE_NAMES = TroposWatch.app;
+				INCLUDED_SOURCE_FILE_NAMES = "$(TROPOS_WATCH_EMBED_$(WATCH_RUN_RELEASE_ENABLED))";
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -517,6 +530,13 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				TROPOS_HEALTH_SHARE_USAGE = "$(TROPOS_HEALTH_SHARE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
+				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your step count from Health to show today's steps on Home.";
+				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your step count for Home, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
+				TROPOS_HEALTH_UPDATE_USAGE = "$(TROPOS_HEALTH_UPDATE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
+				TROPOS_HEALTH_UPDATE_USAGE_NO = "Tropos does not add workouts or any other data to Health.";
+				TROPOS_HEALTH_UPDATE_USAGE_YES = "Tropos saves completed runs as Apple Health workouts when you turn on export, and may correct or remove workouts it previously added.";
+				TROPOS_WATCH_EMBED_YES = TroposWatch.app;
 			};
 			name = Release;
 		};

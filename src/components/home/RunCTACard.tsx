@@ -6,7 +6,6 @@ import { Play } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { unlockSpeech } from "@/lib/speechUnlock";
-import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { runPoseFor, runPoseUrl } from "@/lib/runPoses";
 import type { RacePaceWork } from "@/lib/racePace";
@@ -43,6 +42,7 @@ export default function RunCTACard({
   dose,
   unit,
   inProgress = null,
+  startTarget,
 }: {
   todayRun: ScheduledRunDay | null;
   /** A long run that finishes at race pace says so in its name
@@ -61,6 +61,8 @@ export default function RunCTACard({
   unit: DistanceUnit;
   /** A run is under way on this phone (`todaySession`). */
   inProgress?: SessionInProgress | null;
+  /** Where Start goes, as `todaySession` decided it (`runStartTarget`). */
+  startTarget: string;
 }) {
   const tmpl = todayRun
     ? RUN_TEMPLATES.find(function (t) {
@@ -71,17 +73,6 @@ export default function RunCTACard({
      is a free run, the name Train's Run tab gives the same choice. */
   const runLabel = runSessionName(tmpl, racePace, unit, "Free run");
   const pose = runPoseFor(tmpl?.type);
-  // P0-6: pass scheduledRunId so Run.tsx can pin the exact runDay
-  // being fulfilled. Falls back to ?template= alone for legacy
-  // runDays without v2 ids (no id field on the schedule object).
-  // Start goes straight into the run, the planned one or a free run, with
-  // no second Start on the Run page (`startOnArrival`).
-  const params: string[] = [];
-  if (tmpl) params.push("template=" + tmpl.id);
-  if (todayRun?.id)
-    params.push("scheduledRunId=" + encodeURIComponent(todayRun.id));
-  params.push(START_ON_ARRIVAL_PARAM + "=1");
-  const startTarget = "/run?" + params.join("&");
 
   // HOME-ACTION-01: a terminal/reconciliation run must not relaunch the run
   // flow, so it gets no Start. No todayRun (cold-start) is startable.

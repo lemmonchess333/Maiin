@@ -456,6 +456,9 @@ describe("todaySession — what a rest day offers", () => {
       kind: "first-workout",
       index: 0,
       name: "Push",
+      // Where its card and the first-week card both go.
+      dayTarget: "/program?day=0",
+      startTarget: "/program?day=0&start=1",
     });
   });
 
@@ -481,6 +484,7 @@ describe("todaySession — what a rest day offers", () => {
   it("a run to someone who runs freely", () => {
     expect(todaySession(input({ profile: freeRunner })).rest).toEqual({
       kind: "free-run",
+      startTarget: "/run?start=1",
     });
     // A free-running lifter is not offered one: they have no run day.
     expect(
@@ -498,6 +502,7 @@ describe("todaySession — what a rest day offers", () => {
   it("a free run before a new person's first meal", () => {
     expect(todaySession(newAccount({ profile: freeRunner })).rest).toEqual({
       kind: "free-run",
+      startTarget: "/run?start=1",
     });
   });
 

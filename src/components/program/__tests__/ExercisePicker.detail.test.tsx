@@ -89,6 +89,9 @@ describe("ExercisePicker row: see it vs add it", () => {
 
   it("shows reviewed drawings, including the completed Front Squat", () => {
     mount();
+    expect(
+      screen.getByRole("textbox", { name: "Search exercises" })
+    ).toHaveAttribute("placeholder", "Search exercises…");
     const reviewed = screen.getByRole("button", { name: "Dips details" });
     expect(reviewed.querySelector('[data-thumb="drawing"]')).not.toBeNull();
     const redrawn = screen.getByRole("button", {

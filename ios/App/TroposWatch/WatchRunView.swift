@@ -23,10 +23,10 @@ struct WatchRunView: View {
                     HStack(alignment: .firstTextBaseline) {
                         metric("TIME", value: duration(model.elapsedSeconds))
                         Spacer()
-                        metric("DISTANCE", value: String(format: "%.2f km", model.distanceMeters / 1000))
+                        metric("DISTANCE", value: model.distanceText)
                     }
                     HStack(alignment: .firstTextBaseline) {
-                        metric("PACE", value: pace(model.paceSecondsPerKm))
+                        metric("PACE", value: model.paceText)
                         Spacer()
                         metric("HEART", value: heartRate(at: timeline.date))
                     }
@@ -70,12 +70,6 @@ struct WatchRunView: View {
     private func duration(_ seconds: Double) -> String {
         let total = max(0, Int(seconds))
         return String(format: "%d:%02d", total / 60, total % 60)
-    }
-
-    private func pace(_ value: Double?) -> String {
-        guard let value = value, value.isFinite, value > 0 else { return "—" }
-        let seconds = Int(value.rounded())
-        return String(format: "%d:%02d /km", seconds / 60, seconds % 60)
     }
 
     private func heartRate(at date: Date) -> String {

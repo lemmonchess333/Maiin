@@ -65,6 +65,7 @@ function setup(overrides: Record<string, unknown> = {}) {
     savedRuns: [],
     weekSchedule: layout,
     todayKey: "2026-10-28",
+    unit: "km" as const,
     nextLiftName: "Lower A",
     blocked: false,
     onMove,
@@ -81,6 +82,18 @@ function chooseSaturday() {
 }
 
 describe("run move review", () => {
+  it("names a long run in the runner's unit", () => {
+    const long = {
+      ...run,
+      id: "long",
+      templateId: "long_12k",
+      type: "long",
+    } as ScheduledRunDay;
+    setup({ runs: [long], allRuns: [long], unit: "mi" });
+    expect(screen.getByText("Long 7.5 mi")).toBeInTheDocument();
+    expect(screen.queryByText(/12K/)).not.toBeInTheDocument();
+  });
+
   it("asks before a dirty editor closes through Browser Back, including after Review", () => {
     const view = setup();
     chooseSaturday();

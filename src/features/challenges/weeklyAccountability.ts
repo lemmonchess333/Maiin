@@ -53,7 +53,7 @@ export function getWeeklyAccountability(input: {
             ? `${myWeeklyCount} ${plural(myWeeklyCount)} this week.`
             : `${myWeeklyCount} of ${target} sessions this week.`,
       ctaLabel: "Join challenge",
-      ctaTo: "/social",
+      ctaTo: "/social?tab=together",
       goalMet: false,
     };
   }

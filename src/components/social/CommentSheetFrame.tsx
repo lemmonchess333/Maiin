@@ -6,7 +6,7 @@ import VerifyEmailNotice from "./VerifyEmailNotice";
 import RestrictedNotice from "./RestrictedNotice";
 import { COMMENT_MAX_CHARS } from "@/lib/commentLimit";
 
-interface CommentComposerProps {
+export interface CommentComposerProps {
   text: string;
   onTextChange: (text: string) => void;
   onSend: () => void;
@@ -68,32 +68,7 @@ export default function CommentSheetFrame({
       ) : (
         <>
           <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
-            {status === "loading" ? (
-              <div className="flex justify-center py-8">
-                <Spinner size="sm" variant="muted" label="Loading comments" />
-              </div>
-            ) : status === "failed" ? (
-              <div className="text-center py-8 space-y-2" role="alert">
-                <p className="text-sm font-medium text-foreground">
-                  Couldn't load comments
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Check your connection and try again.
-                </p>
-                <Button variant="secondary" onClick={onRetry}>
-                  Try again
-                </Button>
-              </div>
-            ) : status === "empty" ? (
-              <div className="text-center py-8 space-y-1.5">
-                <p className="text-sm font-medium text-foreground">
-                  No comments yet
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Be the first to leave a comment
-                </p>
-              </div>
-            ) : null}
+            <CommentListStatus status={status} onRetry={onRetry} />
             {children}
           </div>
           <CommentComposer {...composer} />
@@ -103,7 +78,51 @@ export default function CommentSheetFrame({
   );
 }
 
-function CommentComposer({
+/** A thread before it has a comment to show: loading, failed with Try
+ *  again, or empty. The sheet's and the post page's (ActivityPostComments). */
+export function CommentListStatus({
+  status,
+  onRetry,
+}: {
+  status: "loading" | "failed" | "empty" | null;
+  onRetry: () => void;
+}) {
+  if (status === "loading")
+    return (
+      <div className="flex justify-center py-8">
+        <Spinner size="sm" variant="muted" label="Loading comments" />
+      </div>
+    );
+  if (status === "failed")
+    return (
+      <div className="text-center py-8 space-y-2" role="alert">
+        <p className="text-sm font-medium text-foreground">
+          Couldn't load comments
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Check your connection and try again.
+        </p>
+        <Button variant="secondary" onClick={onRetry}>
+          Try again
+        </Button>
+      </div>
+    );
+  if (status === "empty")
+    return (
+      <div className="text-center py-8 space-y-1.5">
+        <p className="text-sm font-medium text-foreground">No comments yet</p>
+        <p className="text-xs text-muted-foreground">
+          Be the first to leave a comment
+        </p>
+      </div>
+    );
+  return null;
+}
+
+/** The field and Send under a post's comments: at the foot of the sheet,
+ *  and pinned above the tab bar on the post's own page
+ *  (ActivityPostComments). */
+export function CommentComposer({
   text,
   onTextChange,
   onSend,

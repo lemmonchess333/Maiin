@@ -13,11 +13,7 @@ import { logger } from "../lib/logger";
 import type { GPSPoint } from "../lib/gps";
 
 export type GPSSignalQuality =
-  | "searching"
-  | "weak"
-  | "fair"
-  | "good"
-  | "strong";
+  "searching" | "weak" | "fair" | "good" | "strong";
 
 interface GPSState {
   points: GPSPoint[];
@@ -162,7 +158,13 @@ export function useGPS(elapsedSeconds = 0) {
           signalQuality: getSignalQuality(pos.coords.accuracy),
         }));
       },
-      () => {} // silence errors — this is best-effort
+      // Best-effort, except that a refusal is worth knowing: the setup
+      // screen then stops showing a signal it cannot get, and the
+      // acquiring screen says how to turn location on.
+      (err) => {
+        if (err.code === 1)
+          setState((s) => ({ ...s, permissionState: "denied" }));
+      }
     );
   }, []);
 

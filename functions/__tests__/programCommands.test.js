@@ -1326,45 +1326,207 @@ describe("moveRunDay (RUN-RESCHEDULE-01)", () => {
   });
 
   it("accepts a bounded review precondition and rejects unknown or malformed evidence fields", () => {
-    const expected = { sourceSignature: "source", todayKey: "2026-03-03", completionEvidence: "[]" };
-    expect(assertClientProgramCommand({ ...move(6), expected }).expected).toEqual(expected);
+    const expected = {
+      sourceSignature: "source",
+      todayKey: "2026-03-03",
+      completionEvidence: "[]",
+    };
+    expect(
+      assertClientProgramCommand({ ...move(6), expected }).expected
+    ).toEqual(expected);
     expectRejected({ ...move(6), expected: { ...expected, snapshot: {} } });
-    expectRejected({ ...move(6), expected: { ...expected, todayKey: "2026-02-31" } });
-    expectRejected({ ...move(6), expected: { ...expected, completionEvidence: "x".repeat(64001) } });
+    expectRejected({
+      ...move(6),
+      expected: { ...expected, todayKey: "2026-02-31" },
+    });
+    expectRejected({
+      ...move(6),
+      expected: { ...expected, completionEvidence: "x".repeat(64001) },
+    });
   });
 
   it("refuses a manually completed or legacy-completed slot even when stored status is planned", () => {
     const manuallyDone = weekState();
     manuallyDone.manualCompletions = { "run-1": { completedAt: NOW } };
     expectHttps(() => apply(move(1), manuallyDone), "failed-precondition");
-    expectHttps(() => apply(move(1), weekState({ completed: true })), "failed-precondition");
+    expectHttps(
+      () => apply(move(1), weekState({ completed: true })),
+      "failed-precondition"
+    );
   });
 
   it("rejects past destinations using the server's saved timezone, including old commands replayed later", () => {
     const state = weekState();
     const command = move(1);
     // Monday is already over at this instant in Tokyo, while still Monday in UTC.
-    expectHttps(() => applyProgramCommand({ state, profile: { timezone: "Asia/Tokyo" }, command,
-      now: Date.parse("2026-03-02T20:00:00Z") }), "failed-precondition");
-    expect(() => applyProgramCommand({ state, profile: { timezone: "UTC" }, command,
-      now: Date.parse("2026-03-02T20:00:00Z") })).not.toThrow();
+    expectHttps(
+      () =>
+        applyProgramCommand({
+          state,
+          profile: { timezone: "Asia/Tokyo" },
+          command,
+          now: Date.parse("2026-03-02T20:00:00Z"),
+        }),
+      "failed-precondition"
+    );
+    expect(() =>
+      applyProgramCommand({
+        state,
+        profile: { timezone: "UTC" },
+        command,
+        now: Date.parse("2026-03-02T20:00:00Z"),
+      })
+    ).not.toThrow();
+  });
+
+  it("reads today in the device's own zone, whatever the profile saved", () => {
+    const state = weekState();
+    // Still Monday in Los Angeles; already Tuesday in Tokyo, the zone the
+    // profile saved before this person travelled.
+    const now = Date.parse("2026-03-02T20:00:00Z");
+    const profile = { timezone: "Asia/Tokyo" };
+    const command = { ...move(1), timeZone: "America/Los_Angeles" };
+    expect(
+      applyProgramCommand({ state, profile, command, now }).state.runDays[0]
+        .date
+    ).toBe("2026-03-02");
+    const { runMoveSourceSignature } = require("../lib/runReschedule");
+    const expected = {
+      sourceSignature: runMoveSourceSignature(state.runDays[0]),
+      todayKey: "2026-03-02",
+      completionEvidence: "[]",
+    };
+    expect(
+      applyProgramCommand({
+        state,
+        profile,
+        command: { ...command, expected },
+        now,
+      }).state.runDays[0].date
+    ).toBe("2026-03-02");
+  });
+
+  it("never refuses a move onto today for want of a saved zone", () => {
+    // 20:00 on Monday in Los Angeles is Tuesday in UTC. The older move
+    // sheet sends no zone, and the profile has none saved.
+    const now = Date.parse("2026-03-03T04:00:00Z");
+    expect(
+      applyProgramCommand({
+        state: weekState(),
+        profile: {},
+        command: move(1),
+        now,
+      }).state.runDays[0].date
+    ).toBe("2026-03-02");
+    // A date gone everywhere is still refused.
+    const late = Date.parse("2026-03-03T13:00:00Z");
+    expectHttps(
+      () =>
+        applyProgramCommand({
+          state: weekState(),
+          profile: {},
+          command: move(1),
+          now: late,
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("says the day changed, not that the plan did, when a review outlives its day", () => {
+    const { runMoveSourceSignature } = require("../lib/runReschedule");
+    const state = weekState();
+    const expected = {
+      sourceSignature: runMoveSourceSignature(state.runDays[0]),
+      todayKey: "2026-03-02",
+      completionEvidence: "[]",
+    };
+    const thrown = expectHttps(
+      () =>
+        applyProgramCommand({
+          state,
+          profile: {},
+          command: { ...move(6), timeZone: "UTC", expected },
+          now: Date.parse("2026-03-03T00:30:00Z"),
+        }),
+      "failed-precondition"
+    );
+    expect(thrown.message).toMatch(/day changed/i);
+    expect(thrown.message).not.toMatch(/plan changed/i);
+  });
+
+  it("allows an older review that sent no zone a day either side of the saved one", () => {
+    const { runMoveSourceSignature } = require("../lib/runReschedule");
+    const state = weekState();
+    const at = (todayKey) => ({
+      ...move(6),
+      expected: {
+        sourceSignature: runMoveSourceSignature(state.runDays[0]),
+        todayKey,
+        completionEvidence: "[]",
+      },
+    });
+    const now = Date.parse("2026-03-02T20:00:00Z");
+    const profile = { timezone: "Asia/Tokyo" };
+    expect(
+      applyProgramCommand({ state, profile, command: at("2026-03-02"), now })
+        .state.runDays[0].date
+    ).toBe("2026-03-07");
+    expectHttps(
+      () =>
+        applyProgramCommand({ state, profile, command: at("2026-03-01"), now }),
+      "failed-precondition"
+    );
+  });
+
+  it("accepts only a real IANA zone", () => {
+    expect(
+      assertClientProgramCommand({ ...move(6), timeZone: "Europe/London" })
+        .timeZone
+    ).toBe("Europe/London");
+    expectRejected({ ...move(6), timeZone: "Not/AZone" });
+    expectRejected({ ...move(6), timeZone: 60 });
+    expectRejected({ ...move(6), timeZone: "x".repeat(65) });
   });
 
   it("rejects a destination after this week's race", () => {
     const state = weekState();
-    state.runDays.push({ id: "race", weekKey: "2026-03-01", date: "2026-03-06", dayIndex: 5, type: "race", templateId: "10k_race", status: "planned" });
+    state.runDays.push({
+      id: "race",
+      weekKey: "2026-03-01",
+      date: "2026-03-06",
+      dayIndex: 5,
+      type: "race",
+      templateId: "10k_race",
+      status: "planned",
+    });
     expectHttps(() => apply(move(6), state), "failed-precondition");
   });
 
   it("rejects a changed prescription or review day against the live source", () => {
     const { runMoveSourceSignature } = require("../lib/runReschedule");
     const state = weekState();
-    const expected = { sourceSignature: runMoveSourceSignature(state.runDays[0]), todayKey: "2026-03-02", completionEvidence: "[]" };
-    const command = { ...move(6), expected };
-    const execute = (nextState, now = Date.parse("2026-03-02T12:00:00Z")) => applyProgramCommand({ state: nextState, profile: { timezone: "UTC" }, command, now });
+    const expected = {
+      sourceSignature: runMoveSourceSignature(state.runDays[0]),
+      todayKey: "2026-03-02",
+      completionEvidence: "[]",
+    };
+    const command = { ...move(6), timeZone: "UTC", expected };
+    const execute = (nextState, now = Date.parse("2026-03-02T12:00:00Z")) =>
+      applyProgramCommand({
+        state: nextState,
+        profile: { timezone: "UTC" },
+        command,
+        now,
+      });
     expect(execute(state).state.runDays[0].date).toBe("2026-03-07");
-    expectHttps(() => execute(weekState({ userOverride: "easy_30" })), "failed-precondition");
-    expectHttps(() => execute(state, Date.parse("2026-03-03T00:00:00Z")), "failed-precondition");
+    expectHttps(
+      () => execute(weekState({ userOverride: "easy_30" })),
+      "failed-precondition"
+    );
+    expectHttps(
+      () => execute(state, Date.parse("2026-03-03T00:00:00Z")),
+      "failed-precondition"
+    );
   });
 });
 

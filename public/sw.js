@@ -28,7 +28,7 @@ self.addEventListener("notificationclick", (event) => {
   // Only destinations used by our senders may navigate an app window.
   const route = requestedRoute === "/social" || requestedRoute === "/social?tab=together"
     ? "/social?tab=together"
-    : requestedRoute === "/program" ? "/program" : "/";
+    : requestedRoute === "/program" || requestedRoute === "/review" ? requestedRoute : "/";
   const target = new URL(BASE_PATH.replace(/\/$/, "") + route, self.location.origin).href;
   event.waitUntil(
     clients

@@ -10,6 +10,84 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## A v2 account's one first-week reminder ask (XB1 call 8, 2026-10-31)
+
+After a v2 account's first saved session in its first week, and once the
+share question is answered, the finish screen offers the training-day
+reminder by naming the next session ("Remind you before Pull B?", with
+when it would first go off) and Not now (`FirstWeekReturnOffer`). Remind
+me asks the phone for notification permission and turns on the reminder
+at setup's 07:30; a refusal says where to allow it. It asks nothing when
+setup's reminder row already turned it on, and a v2 account is no longer
+offered the streak-style evening nudge or push. The unit suite fakes the
+permission; only a phone shows the system prompt and the reminder.
+
+- [ ] **Allowed.** On a TestFlight build, make a new account (skip setup's
+      reminder row), save a first workout and answer the share question.
+      Passing: the offer names the next workout; Remind me shows the iOS
+      permission prompt once; after Allow, Settings → Notifications has
+      training-day reminders on at 07:30, the next training morning's
+      notification names that workout, and the offer does not come back.
+- [ ] **Denied.** As above, but tap Don't Allow. Passing: the card says
+      notifications are off and where to allow them, and reminders stay
+      off.
+- [ ] **Asked in setup.** Make a new account with setup's reminder row on,
+      then save a first workout. Passing: no reminder offer on the finish
+      screen, and no steps question on Home until the app is next opened.
+
+## Standard and pilot iOS builds (XB1 calls 4 and 5, 2026-10-31)
+
+Affects: `ios/App/App.xcodeproj/project.pbxproj` (the Watch app is embedded
+only when `WATCH_RUN_RELEASE_ENABLED` is `YES`; the Health usage text follows
+the same setting), `ios/App/App/Info.plist`, `scripts/verify_ios_watch.py`,
+`ios-native-compile.yml`, `deploy-ios.yml` and Settings → Apple Health.
+The unit suites resolve both kinds of build from the project file and the
+verifier is tested offline; only a Mac, App Store Connect and a phone show
+the builds themselves.
+
+- [ ] **The pull request compile builds both kinds.** On the first pull
+      request after this, `iOS native compile` passes its two checks:
+      "Check the standard build carries no Watch app" and "Check the pilot
+      build embeds the Watch app". If the standard check finds
+      `App.app/Watch`, Xcode did not apply `EXCLUDED_SOURCE_FILE_NAMES` to
+      the embed phase; say so on the XB1 row before trying another way.
+- [ ] **A standard TestFlight build has no Watch app.** Run Deploy iOS to
+      TestFlight with the pilot box unchecked. Passing: the archive check
+      finds `App.app` alone, the verifier reports a standard build, and on
+      an iPhone paired with a Watch the Watch app's list offers no Tropos.
+      Settings → Apple Health shows Steps only, and the first steps prompt
+      reads "Tropos reads your step count from Health to show today's steps
+      on Home."
+- [ ] **A pilot build embeds it.** The same with the pilot box checked.
+      Passing: the Watch app installs from the iPhone's Watch app, Settings
+      → Apple Health shows Apple Watch runs and Save workouts, and the
+      Health prompts name Watch heart rate and workout export.
+- [ ] **The pilot's group, set once.** In App Store Connect → TestFlight,
+      make an internal group for the pilot testers and set its id as the
+      repository variable `TESTFLIGHT_PILOT_GROUP_ID` (docs/ios-release.md,
+      "Pilot builds on TestFlight"). Turn off automatic distribution on the
+      other internal groups, and set `TESTFLIGHT_STANDARD_GROUP_ID` if
+      standard builds should reach a group on their own. Passing: a pilot
+      run's "Check the TestFlight tester group" step names the pilot group.
+- [ ] **A pilot is marked and reaches its group alone.** After a pilot run,
+      the build's "What to Test" in App Store Connect and in the TestFlight
+      app starts "Connected training pilot. Not for App Store release.",
+      followed by the dispatch's note, and the build is listed under the
+      pilot group and under no other group.
+- [ ] **A standard build's note.** A standard run with a What to Test note
+      shows that note in TestFlight, and with `TESTFLIGHT_STANDARD_GROUP_ID`
+      set the build appears in that group.
+- [ ] **Signing follows the project's targets.** On the first run, "List
+      the targets to sign" names `com.tropos.app` and
+      `com.tropos.app.watchkitapp`, the API key makes `Tropos CI <serial>`
+      and `Tropos CI <serial> watchkitapp`, and the export's map names only
+      the bundles the archive holds (no Watch profile in a standard build).
+      After the Live Activity widget is added (`docs/run-live-activity.md`),
+      the next run also signs `com.tropos.app.LiveActivities` with
+      `Tropos CI <serial> LiveActivities` and archives without a workflow
+      change, and the widget links `LiveActivitiesKit` through Swift
+      Package Manager.
+
 ## A lift's rest outside the app (Mob2 call 1, 2026-10-28)
 
 While a rest runs, the page's title counts it down ("1:23 rest", then
@@ -61,6 +139,49 @@ a real scan show the model using it.
       the new figures, and the scan counter in Settings went up by one
       for the second read. With the network off, the first result stays
       and the toast says so.
+
+## The Monday review notification (Mob2 call 10, 2026-10-28)
+
+A local notification at 09:00 on Monday, "Your week, reviewed", scheduled
+only when a review will be waiting and has not been read, and opening
+`/review` when tapped. Its switch is Settings → Notifications → Weekly
+review, on unless turned off; it reaches only someone who has allowed
+notifications. When the web's push and its Weekly recap switch are both
+on, the server's Monday recap push says it instead. The unit suites run
+the rules, the schedule and the switch against fakes; only a phone shows
+the notification and its tap.
+
+- [ ] **It comes on Monday and opens the review.** On an iPhone with
+      notifications allowed and a session logged last week, open the app
+      on Sunday evening and leave it. Passing: at 09:00 on Monday the
+      notification reads "Your week, reviewed"; tapping it with the app
+      closed opens the app on the review, not Home.
+- [ ] **A read review is not announced.** Open the review on Monday
+      before 09:00, then close the app. Passing: no notification at 09:00.
+- [ ] **The test opens the review too.** Settings → Notifications →
+      Weekly review → Send test. Passing: the test notification arrives in
+      a few seconds, and tapping it opens the review.
+
+## The GPS warms on the run setup screen (Mob2, 2026-10-28)
+
+While the run setup screen (the tile picker or a planned run's launch
+card) is open, the app asks for a one-shot fix at once and every 15
+seconds, and shows the signal in the header: "Finding GPS", then "GPS
+ready" or "Weak GPS". It never asks for location: on the web it waits for
+location to be allowed already, and in the app the one-shot asks the
+plugin with permission requests off. The unit suites drive the timing and
+the gates against fakes; only a phone shows the fix time and the battery.
+
+- [ ] **Start finds a fix waiting.** On an iPhone outdoors, open Run, wait
+      for "GPS ready", then tap a tile. Passing: the acquiring rings show
+      for under a couple of seconds, or not at all, before the countdown.
+- [ ] **Setup asks nothing.** On a new install with location not yet
+      decided, open Run. Passing: no location prompt and no signal shown
+      until a tile is tapped; the prompt comes with the tap.
+- [ ] **Battery and the background.** Leave the setup screen open for ten
+      minutes, then lock the phone for ten. Passing: battery use in
+      Settings → Battery is in line with a screen left on, and no location
+      arrow shows while the phone is locked on the setup screen.
 
 ## The streak's days, from the flame (Mob1 call 4, 2026-10-27)
 
@@ -480,8 +601,9 @@ need a device.
       a test push sent after signing back in arrives.
 - [ ] **A new account's first-meal prompt and first-week card.** On a new
       account, log one meal, then open Home the next day. Passing: the
-      first-meal prompt is gone and the first-week card shows the meal
-      done.
+      first-meal prompt is gone. On a legacy account the first-week card
+      shows the meal done; a v2 account's card has no meal row, only its
+      first workout and first run (`firstWeek.ts`, `trainingOnly`).
 
 ## Server cost rows (survey items 43 to 46, 2026-10-20)
 
@@ -2491,6 +2613,17 @@ Affects: `functions/index.js` `stripeWebhook` handler, `stripeEvents/{event.id}`
 
 - [x] _(Proven 2026-10-18: `functions/__tests__/stripeWebhookDedup.test.js` 'claims the event, processes it, and records both claimedAt and processedAt' and 'skips a second delivery of the same event id, writing nothing'. They drive the real handler with a payload signed by the Stripe SDK's test helper, on the in-memory Firestore. No real delivery will come while Stripe is dormant (#2866).)_ Post-deploy, on the next real Stripe webhook delivery, confirm the `stripeEvents/<event.id>` doc has a `claimedAt` field (new) AND a `processedAt` field (existing). Pre-fix only `processedAt` was set.
 - [x] _(Proven 2026-10-18: `functions/__tests__/stripeWebhookDedup.test.js` 'releases the claim when processing fails, so Stripe's retry is processed'. The user read fails after the claim and the handler answers 500. `stripeEvents/{id}` is set, then deleted, and the same id redelivered is processed.)_ If a webhook handler crashes mid-process (force via stripe-cli test event), confirm the `stripeEvents/<event.id>` doc is DELETED so Stripe's retry can re-attempt. Pre-fix the partial claim would persist and the retry would silently skip.
+- [ ] **The endpoint sends `invoice.paid`.** The activation report's first
+      paid period from Stripe is read from `invoice.paid` (and a paid
+      Checkout session), and a Stripe endpoint receives only the events it
+      is subscribed to. When Stripe is woken (#2866), in the Stripe
+      dashboard → Developers → Webhooks → the production endpoint, confirm
+      `invoice.paid` is among its events alongside
+      `checkout.session.completed` and the `customer.subscription.*`
+      events. Passing: a live renewal's event shows on the endpoint's log
+      with a 200, and that account's `activationBillingFirsts.paid` is set.
+      A measurement that fails to save is logged
+      (`activationBilling.record_failed`) and never answers Stripe 500.
 
 ## Blocking is now server-enforced (kudos + comments)
 

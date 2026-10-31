@@ -1,10 +1,8 @@
 import type { TodaySession } from "@/lib/todaySession";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
-import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 
 export type FirstWeekTrainingTask = "workout" | "run";
 
@@ -23,9 +21,10 @@ function destination(
   return { target, mode, unlockRunSpeech };
 }
 
-/** Use the same destination and guards as Home's session cards. In
- * particular, a race-plan rest day may open its plan but cannot launch an
- * unscheduled run just to finish the first-week task. */
+/** Use the same destination and guards as Home's session cards: the
+ * targets are the session's own (`todaySession`), which the cards read
+ * too. In particular, a race-plan rest day may open its plan but cannot
+ * launch an unscheduled run just to finish the first-week task. */
 export function firstWeekAction(
   task: FirstWeekTrainingTask,
   session: TodaySession
@@ -40,23 +39,18 @@ export function firstWeekAction(
   if (task === "workout") {
     const lift = session.lift;
     if (lift?.workout) {
-      const details =
-        typeof lift.index === "number"
-          ? `/program?day=${lift.index}`
-          : "/program";
       if (lift.status === "planned" && lift.isStartable) {
         if (lift.inProgress)
           return destination(lift.inProgress.resumeTarget, "resume");
         if (typeof lift.index === "number")
-          return destination(`${details}&start=1`, "start");
+          return destination(lift.startTarget, "start");
       }
-      return destination(details, "details");
+      return destination(lift.dayTarget, "details");
     }
     if (session.rest?.kind === "first-workout") {
-      const details = `/program?day=${session.rest.index}`;
       return session.rest.inProgress
         ? destination(session.rest.inProgress.resumeTarget, "resume")
-        : destination(`${details}&start=1`, "start");
+        : destination(session.rest.startTarget, "start");
     }
     return destination("/program?tab=lift", "details");
   }
@@ -70,24 +64,13 @@ export function firstWeekAction(
     if (startable) {
       if (run.inProgress)
         return destination(run.inProgress.resumeTarget, "resume", true);
-      const params: string[] = [];
-      const template = run.runDay
-        ? RUN_TEMPLATES.find(
-            (item) =>
-              item.id === (run.runDay?.userOverride || run.runDay?.templateId)
-          )
-        : null;
-      if (template) params.push(`template=${template.id}`);
-      if (run.runDay?.id)
-        params.push(`scheduledRunId=${encodeURIComponent(run.runDay.id)}`);
-      params.push(`${START_ON_ARRIVAL_PARAM}=1`);
-      return destination(`/run?${params.join("&")}`, "start", true);
+      return destination(run.startTarget, "start", true);
     }
   }
   if (session.rest?.kind === "free-run")
     return session.rest.inProgress
       ? destination(session.rest.inProgress.resumeTarget, "resume", true)
-      : destination("/run?start=1", "start", true);
+      : destination(session.rest.startTarget, "start", true);
   return destination("/program?tab=run", "details");
 }
 

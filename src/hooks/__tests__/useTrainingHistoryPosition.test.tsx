@@ -1,6 +1,21 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useTrainingHistoryPosition } from "../useTrainingHistoryPosition";
+import {
+  useTrainingHistoryPosition as usePagePosition,
+  useTrainingHistoryRestore,
+} from "../useTrainingHistoryPosition";
+
+function useTrainingHistoryPosition(
+  uid: string,
+  filters: string,
+  ready: boolean,
+  rowCount: number,
+  provisional: boolean
+) {
+  const position = usePagePosition(uid, filters);
+  useTrainingHistoryRestore(position, ready, rowCount, provisional);
+  return position;
+}
 
 const originalScrollY = Object.getOwnPropertyDescriptor(window, "scrollY");
 let scrollY = 0;

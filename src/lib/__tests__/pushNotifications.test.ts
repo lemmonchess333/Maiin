@@ -67,8 +67,6 @@ vi.mock("@/lib/nativePush", () => ({
   isNativePushAvailable: () => h.nativeAvailable,
   nativePushPermission: (request?: boolean) =>
     request ? h.requestNative() : Promise.resolve(h.nativeGranted),
-  nativePushPermissionState: async () =>
-    h.nativeGranted ? "granted" : "denied",
   getNativePushToken: () => h.nativeToken(),
   deleteNativePushToken: () => h.deleteNativeToken(),
 }));

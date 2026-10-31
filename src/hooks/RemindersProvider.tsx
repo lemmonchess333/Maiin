@@ -6,6 +6,7 @@ import { useNextLiftName } from "@/hooks/useNextLiftName";
 import { useStreakReminderInternal } from "@/hooks/useStreakReminder";
 import { useTrialReminderInternal } from "@/hooks/useTrialReminder";
 import { useTrialPriceReport } from "@/hooks/useTrialPriceReport";
+import { useReviewReminderInternal } from "@/hooks/useReviewReminder";
 
 /**
  * Reminders (meal / workout / streak) share three characteristics that
@@ -33,29 +34,40 @@ import { useTrialPriceReport } from "@/hooks/useTrialPriceReport";
 type MealValue = ReturnType<typeof useMealRemindersInternal>;
 type WorkoutValue = ReturnType<typeof useWorkoutRemindersInternal>;
 type StreakValue = ReturnType<typeof useStreakReminderInternal>;
+type ReviewValue = ReturnType<typeof useReviewReminderInternal>;
 
 interface RemindersValue {
   meal: MealValue;
   workout: WorkoutValue;
   streak: StreakValue;
+  review: ReviewValue;
 }
 
 const RemindersContext = createContext<RemindersValue | null>(null);
 
 export function RemindersProvider({ children }: { children: ReactNode }) {
-  const { activity, pushOwns, refreshKey } = useReminderActivity();
+  const { activity, pushOwns, recapPushOwns, refreshKey } =
+    useReminderActivity();
   const meal = useMealRemindersInternal(activity);
   // A lift day's reminder names the programme's next workout.
   const liftName = useNextLiftName();
   const workout = useWorkoutRemindersInternal(activity, liftName);
   const streak = useStreakReminderInternal(pushOwns, refreshKey);
+  // Monday's "Your week, reviewed", when a review will be waiting. A first
+  // log is what makes a new account's first review, so today's logging
+  // runs it again.
+  const review = useReviewReminderInternal(
+    recapPushOwns,
+    refreshKey,
+    `${activity.dateKey}:${activity.workout}:${activity.meals.length}`
+  );
   // One-shot, no prefs, no consumer: it only needs to run once per session.
   useTrialReminderInternal();
   // The trial reminder email's price, when the purchase's own sync missed it.
   useTrialPriceReport();
   const value = useMemo(
-    () => ({ meal, workout, streak }),
-    [meal, workout, streak]
+    () => ({ meal, workout, streak, review }),
+    [meal, workout, streak, review]
   );
   return (
     <RemindersContext.Provider value={value}>
@@ -87,4 +99,9 @@ export function useWorkoutReminders(): WorkoutValue {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useStreakReminder(): StreakValue {
   return useRemindersContext().streak;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function useReviewReminder(): ReviewValue {
+  return useRemindersContext().review;
 }

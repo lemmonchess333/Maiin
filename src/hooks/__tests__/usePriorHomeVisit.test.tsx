@@ -17,6 +17,32 @@ describe("usePriorHomeVisit", () => {
     expect(second.result.current.hadPriorVisit).toBe(true);
   });
 
+  it("holds the first visit's later asks until the app is opened again", () => {
+    const first = renderHook(() => usePriorHomeVisit("carol"));
+    expect(first.result.current.firstVisitThisOpen).toBe(false);
+    act(() => first.result.current.markVisited());
+    expect(first.result.current.firstVisitThisOpen).toBe(true);
+    first.unmount();
+
+    // Back on Home from the first session's finish, in the same open.
+    const back = renderHook(() => usePriorHomeVisit("carol"));
+    expect(back.result.current.hadPriorVisit).toBe(true);
+    expect(back.result.current.firstVisitThisOpen).toBe(true);
+
+    // The app goes to the background and is opened again.
+    const visibility = (state: DocumentVisibilityState) => {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        get: () => state,
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    };
+    act(() => visibility("hidden"));
+    expect(back.result.current.firstVisitThisOpen).toBe(true);
+    act(() => visibility("visible"));
+    expect(back.result.current.firstVisitThisOpen).toBe(false);
+  });
+
   it("keeps visits separate when the signed-in uid changes", () => {
     window.localStorage.setItem("tropos-home-visited:alice", "1");
     const { result, rerender } = renderHook(

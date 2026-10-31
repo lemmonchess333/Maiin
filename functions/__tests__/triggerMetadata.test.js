@@ -540,6 +540,12 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // Mob2 call 7: Remove follower, both edges of one follow of the caller.
+  removeFollower: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   onFollowRequestCreated: {
     kind: "event",
     maxInstances: 50,

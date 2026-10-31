@@ -59,38 +59,71 @@ export default function Social() {
   // deep-link directly to a tab and means browser back/forward
   // navigates between tabs naturally. URL writes are {replace:true}
   // so each tab tap doesn't accumulate browser history entries.
-  // Default 'feed' is the URL-clean state (`?tab=` is stripped when
-  // on feed). The Soc5c smart-default below may rewrite the URL to
-  // 'find' for genuine new users (zero follows).
+  // With no `?tab=`, the visit's own default below decides.
   const [searchParams, setSearchParams] = useSearchParams();
-  /* Legacy param compatibility (explicit contract): ?tab=crews (the
-     old Community tab — Spaces/Challenges/Circles now live on
-     Together) and ?tab=find (the old People tab — now the search
-     overlay, opened by the effect below) both keep resolving. Any
-     other/missing value lands on Together, the URL-clean default
-     (`?tab=` stripped). ?tab=feed remains the explicit Feed link. */
+  /* An explicit ?tab= always wins: ?tab=feed opens Feed, and any other
+     value lands on Together, ?tab=together and the legacy ?tab=crews (the
+     old Community tab — Spaces/Challenges/Circles now live on Together)
+     and ?tab=find (the old People tab — now the search overlay, opened by
+     the effect below) among them. With none, a visit opens on Feed once
+     the viewer follows anyone and on Together until then (Mob2 call 6:
+     Soc12 gave every account a feed with posts in it; Strava and Hevy
+     open on the feed), and stays there: a follow made during the visit
+     doesn't move them. A count that cannot be read opens on Together.
+     Until the count is known neither tab shows, so the page never opens
+     on one and jumps. */
   const tabFromUrl = searchParams.get("tab");
-  const tab: SocialTab = tabFromUrl === "feed" ? "feed" : "together";
+  /* Starting a Circle from a plan card (`?circleCreate=`) is Together's
+     for the whole visit: Together's Circles section strips the hand-off
+     from the URL as soon as it has read it. */
+  const [arrivedToStartCircle] = useState(() =>
+    searchParams.has("circleCreate")
+  );
+  /* Whether the viewer followed anyone when the count first came in
+     (false when it could not be read): the visit's tab and its feed's
+     source (below) both open from it. */
+  const [openedFollowing, setOpenedFollowing] = useState<boolean | null>(null);
+  if (
+    openedFollowing === null &&
+    (followingCount !== null || followingCountFailed)
+  ) {
+    setOpenedFollowing((followingCount ?? 0) > 0);
+  }
+  const tab: SocialTab | null =
+    tabFromUrl === "feed"
+      ? "feed"
+      : tabFromUrl || arrivedToStartCircle || openedFollowing === false
+        ? "together"
+        : openedFollowing
+          ? "feed"
+          : null;
 
   /* People overlay — a full-screen search surface, not a tab. State-
      driven like NotificationsSheet; the legacy ?tab=find deep link
      opens it once on arrival and normalises the URL to Together so
      back/refresh behave predictably. */
+  /* Every URL write here sets one param in place ({replace:true}). */
+  const setParam = useCallback(
+    (key: "tab" | "feed", value: string) => {
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          updated.set(key, value);
+          return updated;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
   const [peopleOpen, setPeopleOpen] = useState(false);
   const legacyFindHandledRef = useRef(false);
   useEffect(() => {
     if (tabFromUrl !== "find" || legacyFindHandledRef.current) return;
     legacyFindHandledRef.current = true;
     setPeopleOpen(true);
-    setSearchParams(
-      (params) => {
-        const updated = new URLSearchParams(params);
-        updated.delete("tab");
-        return updated;
-      },
-      { replace: true }
-    );
-  }, [tabFromUrl, setSearchParams]);
+    setParam("tab", "together");
+  }, [tabFromUrl, setParam]);
   const openPeople = useCallback(() => {
     setPeopleOpen(true);
     trackSocialEvent("social_tab_selected", { tab: "find" });
@@ -98,18 +131,10 @@ export default function Social() {
 
   const setTab = useCallback(
     (next: SocialTab) => {
-      setSearchParams(
-        (params) => {
-          const updated = new URLSearchParams(params);
-          if (next === "together") updated.delete("tab");
-          else updated.set("tab", next);
-          return updated;
-        },
-        { replace: true }
-      );
+      setParam("tab", next);
       trackSocialEvent("social_tab_selected", { tab: next });
     },
-    [setSearchParams]
+    [setParam]
   );
 
   // Explicit source selection always wins. Otherwise a visit opens on
@@ -119,28 +144,17 @@ export default function Social() {
   // on the first one emptied the screen under the tap. The next visit
   // opens on Following.
   const feedFromUrl = searchParams.get("feed");
-  const [openedOn, setOpenedOn] = useState<FeedSubTab | null>(null);
-  if (openedOn === null && followingCount !== null) {
-    setOpenedOn(followingCount > 0 ? "following" : "explore");
-  }
   const feedSubTab: FeedSubTab =
     feedFromUrl === "following" ||
     feedFromUrl === "explore" ||
     feedFromUrl === "communities"
       ? feedFromUrl
-      : (openedOn ?? "explore");
+      : openedFollowing
+        ? "following"
+        : "explore";
   const selectFeedSubTab = useCallback(
-    (next: FeedSubTab) => {
-      setSearchParams(
-        (params) => {
-          const updated = new URLSearchParams(params);
-          updated.set("feed", next);
-          return updated;
-        },
-        { replace: true }
-      );
-    },
-    [setSearchParams]
+    (next: FeedSubTab) => setParam("feed", next),
+    [setParam]
   );
 
   /* The old Soc5c smart default (send brand-new users to the People

@@ -1,4 +1,21 @@
+diff --git a/node_modules/capacitor-live-activities/Package.swift b/node_modules/capacitor-live-activities/Package.swift
+index 5942995..f40bd73 100644
+--- a/node_modules/capacitor-live-activities/Package.swift
++++ b/node_modules/capacitor-live-activities/Package.swift
+@@ -7,7 +7,10 @@ let package = Package(
+     products: [
+         .library(
+             name: "CapacitorLiveActivities",
+-            targets: ["LiveActivitiesPlugin"])
++            targets: ["LiveActivitiesPlugin"]),
++        .library(
++            name: "LiveActivitiesKit",
++            targets: ["LiveActivitiesKit"])
+     ],
+     dependencies: [
+         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0")
 diff --git a/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift b/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift
+index 8d2aad6..71075fc 100644
 --- a/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift
 +++ b/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift
 @@ -1,6 +1,7 @@

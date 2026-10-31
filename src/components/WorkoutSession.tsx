@@ -158,6 +158,7 @@ import {
   draftLayout,
 } from "@/hooks/useWorkoutDraft";
 import { logger } from "@/lib/logger";
+import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
 import WorkoutProgress from "@/components/workout/WorkoutProgress";
 import WorkoutRestTimer from "@/components/workout/WorkoutRestTimer";
@@ -2034,7 +2035,7 @@ export default function WorkoutSession({
           sessionVariant={sessionVariant}
           completing={completing}
           saved={saved}
-          activationJourneyV2={profile?.activationJourneyVersion === 2}
+          activationJourneyV2={isActivationJourneyV2(profile)}
           saveStatus={saveStatus}
           planContext={planContext}
           share={shareAction}

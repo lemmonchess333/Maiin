@@ -432,7 +432,7 @@ export default function ExercisePicker({
                     }
                     setSearchQuery(nextQuery);
                   }}
-                  placeholder="Search exercises..."
+                  placeholder="Search exercises…"
                   aria-label="Search exercises"
                   className="w-full pl-9 pr-4 h-11 text-sm text-foreground placeholder:text-muted-foreground bg-muted rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />

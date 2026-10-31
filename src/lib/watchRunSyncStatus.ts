@@ -15,6 +15,7 @@ import {
 import { CONNECTED_TRAINING_RELEASED } from "./connectedTrainingRelease";
 import { publishWatchRunSaveStatus } from "./watchRunBridge";
 import { readStoredRunSummary } from "./runResumeStorage";
+import type { DistanceUnit } from "./distanceUnits";
 
 const KEY = "tropos:watch-run-sync:v1";
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -32,6 +33,9 @@ export interface WatchRunSyncReceipt {
   paceSecondsPerKm?: number | null;
   recordedAtMs: number;
   saveStatus: "queued" | "synced";
+  /** The runner's unit, for the Watch's labels. Absent on a receipt
+   *  restored after a crash, which the Watch shows in its last unit. */
+  unit?: DistanceUnit;
 }
 
 function key(uid: string) {
@@ -89,6 +93,9 @@ function publish(receipt: WatchRunSyncReceipt): void {
         paceSecondsPerKm: receipt.paceSecondsPerKm,
         recordedAtMs: receipt.recordedAtMs,
         saveStatus: receipt.saveStatus,
+        ...(receipt.unit === "km" || receipt.unit === "mi"
+          ? { unit: receipt.unit }
+          : {}),
       });
     });
   publishChains.set(receipt.uid, next);

@@ -61,6 +61,11 @@ export function useHomeProgram() {
   } | null>(null);
   /** The account whose missing programme could not be built. */
   const [buildFailed, setBuildFailed] = useState<string | null>(null);
+  /** The account whose plan upkeep (a build, a rollover, a race week)
+   *  failed, as opposed to still being under way. */
+  const [maintenanceFailed, setMaintenanceFailed] = useState<string | null>(
+    null
+  );
   const api = useRef<{ uid: string; value: ProgramController } | null>(null);
   const pending = useRef<
     {
@@ -150,10 +155,17 @@ export function useHomeProgram() {
         );
         setSnapshot({ uid, ...read });
         if (read.needsMaintenance)
-          void prepare().catch((error) => {
-            logger.warn("Home programme maintenance pending", error);
-            if (!read.programState) setBuildFailed(uid);
-          });
+          void prepare().then(
+            () => {
+              if (active) setMaintenanceFailed(null);
+            },
+            (error) => {
+              logger.warn("Home programme maintenance pending", error);
+              if (!active) return;
+              setMaintenanceFailed(uid);
+              if (!read.programState) setBuildFailed(uid);
+            }
+          );
       },
       (error) => {
         if (active) {
@@ -212,6 +224,9 @@ export function useHomeProgram() {
         (!current.programState &&
           current.needsMaintenance &&
           buildFailed !== uid)),
+    /** The plan's upkeep failed. While it is under way this is false, and
+     *  a week it is still building reads as loading. */
+    maintenanceFailed: !!uid && maintenanceFailed === uid,
     recentLayoff:
       layoff && layoff.uid === uid ? layoff.value : ("none" as LayoffClass),
     controller: Controller ? <Controller key={uid} publish={publish} /> : null,

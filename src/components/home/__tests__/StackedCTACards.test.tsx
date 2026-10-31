@@ -70,6 +70,7 @@ import type {
   TodayRun,
   TodaySession,
 } from "@/lib/todaySession";
+import { liftTargets, runStartTarget } from "@/lib/todaySession";
 
 /* The cards draw what `todaySession` decided; which card a day gets, and
    in what order a rest day's offers win, is tested there
@@ -83,6 +84,7 @@ const PUSH = {
 const lift = (extra: Partial<TodayLift> = {}): TodayLift => ({
   workout: PUSH,
   index: null,
+  ...liftTargets(extra.index ?? null),
   isStartable: true,
   status: "planned",
   muscleGroups: "",
@@ -91,6 +93,7 @@ const lift = (extra: Partial<TodayLift> = {}): TodayLift => ({
 
 const run = (extra: Partial<TodayRun> = {}): TodayRun => ({
   runDay: null,
+  startTarget: runStartTarget(extra.runDay ?? null),
   completed: false,
   isFirst: false,
   dose: null,
@@ -564,7 +567,9 @@ describe("rest day — tomorrow's session", function () {
 
 describe("rest day — what else it can offer", function () {
   it("offers someone who runs freely a run instead of a rest day", function () {
-    renderCards(restDay({ kind: "free-run" }));
+    renderCards(
+      restDay({ kind: "free-run", startTarget: runStartTarget(null) })
+    );
     expect(screen.getByText("Run when it suits you")).toBeInTheDocument();
     expect(screen.queryByText(/Recover today/)).toBeNull();
   });
@@ -580,6 +585,7 @@ describe("rest day — what else it can offer", function () {
           exercises: [{ name: "Squat" }],
         } as any,
         index: 0,
+        ...liftTargets(0),
       }),
       navigate
     );
@@ -599,13 +605,17 @@ describe("the first-visit walk finds today's card", function () {
     kind: "first-workout",
     workout: PUSH,
     index: 0,
+    ...liftTargets(0),
   };
   const days: [string, TodaySession][] = [
     ["a lifting day", liftDay()],
     ["a run day", runDay()],
     ["a day with both", bothDay()],
     ["a new lifter's rest day", restDay(firstWorkout)],
-    ["a free runner's rest day", restDay({ kind: "free-run" })],
+    [
+      "a free runner's rest day",
+      restDay({ kind: "free-run", startTarget: runStartTarget(null) }),
+    ],
     ["a rest day", restDay()],
     ["a first-meal day", restDay({ kind: "first-meal" })],
   ];

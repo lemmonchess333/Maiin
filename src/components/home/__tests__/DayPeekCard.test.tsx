@@ -15,7 +15,7 @@
  * this-week's runDay status.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import type { UserProfile } from "@/lib/auth";
@@ -957,6 +957,20 @@ describe("DayPeekCard — lift row tap-through", () => {
     expect(
       screen.getAllByRole("button", { name: /open workout details/i })
     ).toHaveLength(2);
+  });
+
+  it("reads a measured clock in whole minutes, on one row and on several", () => {
+    const measured = (id: string) => ({
+      ...savedWorkout(id),
+      durationMinutes: 47 + 19 / 60,
+    });
+    renderWithWorkouts([measured("w-1")]);
+    expect(screen.getByText(/· 47 min/)).toBeInTheDocument();
+    expect(screen.queryByText(/47\.3/)).not.toBeInTheDocument();
+    cleanup();
+    renderWithWorkouts([measured("w-1"), measured("w-2")]);
+    expect(screen.getAllByText(/· 47 min/)).toHaveLength(2);
+    expect(screen.queryByText(/47\.3/)).not.toBeInTheDocument();
   });
 
   it("is NOT a button for a planned lift with nothing saved", () => {

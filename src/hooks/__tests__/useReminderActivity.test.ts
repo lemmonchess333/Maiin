@@ -1,6 +1,10 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook, waitFor, cleanup } from "@testing-library/react";
-import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
+import {
+  readDoc,
+  resetFirestore,
+  seedFirestore,
+} from "@/test/firestoreHarness";
 import { savedRunDoc, savedWorkoutDoc } from "@/test/sessionFixtures";
 import { useReminderActivity } from "../useReminderActivity";
 
@@ -58,6 +62,31 @@ describe("reminder activity source boundaries", () => {
     await waitFor(() => expect(result.current.activity.ready).toBe(true));
     expect(result.current.activity.meals).toEqual([]);
     expect(result.current.pushOwns).toBe(false);
+  });
+  /* The Monday review's local notification stands aside wherever the
+     server's recap push may reach (useReviewReminder). */
+  it.each([
+    ["push on with the recap left on", { enabled: true }, true],
+    [
+      "the first-week opt-in, recap off",
+      { enabled: true, recap: false },
+      false,
+    ],
+    ["push off", { enabled: false, recap: true }, false],
+  ] as const)(
+    "reads the server's Monday recap from %s",
+    async (_name, push, owns) => {
+      seedFirestore({ "users/u1/settings/push": push });
+      const { result } = renderHook(() => useReminderActivity());
+      await waitFor(() => expect(result.current.recapPushOwns).not.toBeNull());
+      expect(result.current.recapPushOwns).toBe(owns);
+    }
+  );
+  it("reads no recap push, and writes no push document, for an account with none", async () => {
+    const { result } = renderHook(() => useReminderActivity());
+    await waitFor(() => expect(result.current.recapPushOwns).not.toBeNull());
+    expect(result.current.recapPushOwns).toBe(false);
+    expect(readDoc("users/u1/settings/push")).toBeUndefined();
   });
   it("does not treat an invalid or zero-distance run as today's session", async () => {
     seedFirestore({

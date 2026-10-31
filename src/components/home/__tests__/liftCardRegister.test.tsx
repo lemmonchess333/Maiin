@@ -23,6 +23,7 @@ vi.mock("@/lib/homeAnalytics", () => ({ trackHomeEvent: vi.fn() }));
 
 import LiftCTACard from "@/components/home/LiftCTACard";
 import RunCTACard from "@/components/home/RunCTACard";
+import { liftTargets, runStartTarget } from "@/lib/todaySession";
 
 afterEach(cleanup);
 
@@ -38,7 +39,7 @@ function renderLift(over: Record<string, unknown> = {}) {
     <LiftCTACard
       nextWorkout={workout as never}
       navigate={vi.fn()}
-      dayIndex={2}
+      {...liftTargets(2)}
       isStartable
       {...over}
     />
@@ -78,6 +79,7 @@ describe("the run card keeps its date-pinned register", () => {
       <RunCTACard
         unit="km"
         todayRun={{ templateId: "easy_30" } as never}
+        startTarget={runStartTarget({ templateId: "easy_30" } as never)}
         navigate={vi.fn()}
       />
     );

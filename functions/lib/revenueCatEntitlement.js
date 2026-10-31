@@ -133,7 +133,7 @@ function readEntitlement(response) {
   }
   const entitlement = subscriber.entitlements && subscriber.entitlements[ENTITLEMENT_ID];
   if (!entitlement || typeof entitlement !== "object") {
-    return { present: false, active: false, expiresAtMs: null, productId: null, store: null, sandbox: false, syncedAtMs, trial: null, purchaseAtMs: null, periodType: null };
+    return { present: false, active: false, expiresAtMs: null, productId: null, store: null, sandbox: false, syncedAtMs, trial: null, purchaseAtMs: null, periodType: null, ownershipType: null };
   }
   if (!("expires_date" in entitlement)) {
     throw new RevenueCatResponseError("entitlement has no expires_date");
@@ -159,6 +159,12 @@ function readEntitlement(response) {
     periodType:
       typeof purchase?.period_type === "string"
         ? purchase.period_type.toLowerCase()
+        : null,
+    // "PURCHASED", or "FAMILY_SHARED" for a subscription someone else in
+    // the family paid for.
+    ownershipType:
+      typeof purchase?.ownership_type === "string"
+        ? purchase.ownership_type.toUpperCase()
         : null,
   };
 }

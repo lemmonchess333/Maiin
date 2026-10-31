@@ -175,6 +175,27 @@ describe("computeTomorrowOccurrence", () => {
     expect(result!.getTime()).toBeGreaterThan(Date.now());
   });
 
+  it("holds the time to 08:00–21:59, and gives a claimed date that day's time", () => {
+    const inDays = (days: number) => {
+      const day = new Date();
+      day.setDate(day.getDate() + days);
+      day.setHours(8, 0, 0, 0);
+      return day.getTime();
+    };
+    expect(computeTomorrowOccurrence("07:00")!.getTime()).toBe(inDays(1));
+    expect(computeTomorrowOccurrence("22:30")!.getTime()).toBe(inDays(2));
+    const claimed = computeTomorrowOccurrence("20:15", "2026-11-04")!;
+    expect([
+      claimed.getFullYear(),
+      claimed.getMonth(),
+      claimed.getDate(),
+    ]).toEqual([2026, 10, 4]);
+    expect([claimed.getHours(), claimed.getMinutes()]).toEqual([20, 15]);
+    expect(computeTomorrowOccurrence("23:00", "2026-11-04")!.getHours()).toBe(
+      8
+    );
+  });
+
   it("null on malformed input", () => {
     expect(computeTomorrowOccurrence("8pm")).toBeNull();
     expect(computeTomorrowOccurrence("25:00")).toBeNull();

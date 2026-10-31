@@ -160,6 +160,15 @@ final class WatchRunCoordinator: NSObject, WCSessionDelegate {
         let previousSeenHeartRateOrder = seenHeartRateOrder
         let previousRestoredBuckets = restoredHeartRateBuckets
         let previousTransportGeneration = transportGeneration
+        // The phone publishes every second while running. Only a new session,
+        // revision, phase or save status needs the state file rewritten; the
+        // figures in between are sent, not kept. The generation is clock-based,
+        // so one restored from an older file still moves forward.
+        let durable = previousSnapshot == nil ||
+            (previousSnapshot?["sessionId"] as? String) != incomingSessionId ||
+            (previousSnapshot?["revision"] as? Int) != (newSnapshot["revision"] as? Int) ||
+            (previousSnapshot?["phase"] as? String) != (newSnapshot["phase"] as? String) ||
+            (previousSnapshot?["saveStatus"] as? String) != (newSnapshot["saveStatus"] as? String)
         snapshot = newSnapshot
         advanceTransportGeneration()
         // Old commands can never act on a newly started session.
@@ -184,7 +193,7 @@ final class WatchRunCoordinator: NSObject, WCSessionDelegate {
             seenHeartRateOrder.removeAll()
             restoredHeartRateBuckets.removeAll()
         }
-        guard persist() else {
+        guard !durable || persist() else {
             snapshot = previousSnapshot
             retiredSessionIds = previousRetiredSessionIds
             commands = previousCommands
@@ -326,6 +335,7 @@ final class WatchRunCoordinator: NSObject, WCSessionDelegate {
             lock.lock()
             let currentId = snapshot?["sessionId"] as? String
             let currentRevision = snapshot?["revision"] as? Int
+            let currentPhase = snapshot?["phase"] as? String ?? "unknown"
             let nowMs = Date().timeIntervalSince1970 * 1000
             let previousCommands = commands
             commands.removeAll { ($0["expiresAtMs"] as? Double ?? 0) <= nowMs }
@@ -366,7 +376,7 @@ final class WatchRunCoordinator: NSObject, WCSessionDelegate {
                         "sessionId": sessionId,
                         "commandId": commandId,
                         "revision": currentRevision ?? -1,
-                        "phase": snapshot?["phase"] ?? "unknown",
+                        "phase": currentPhase,
                         "accepted": false,
                         "reason": "stale_or_unavailable"
                     ]])

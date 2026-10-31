@@ -79,7 +79,8 @@ export default function StackedCTACards({
             rest={session.restContext}
             navigate={navigate}
             muscleGroups={lift.muscleGroups}
-            dayIndex={lift.index}
+            dayTarget={lift.dayTarget}
+            startTarget={lift.startTarget}
             isStartable={lift.isStartable}
             status={lift.status}
             inProgress={lift.inProgress}
@@ -124,6 +125,7 @@ export default function StackedCTACards({
             dose={run.dose}
             unit={unit}
             inProgress={run.inProgress}
+            startTarget={run.startTarget}
           />
         </motion.div>
       )}
@@ -148,7 +150,8 @@ export default function StackedCTACards({
               dayLabel={rest.name}
               rest={session.restContext}
               navigate={navigate}
-              dayIndex={rest.index}
+              dayTarget={rest.dayTarget}
+              startTarget={rest.startTarget}
               eyebrowLabel="Your first workout"
               inProgress={rest.inProgress}
             />
@@ -159,6 +162,7 @@ export default function StackedCTACards({
               eyebrowLabel="Run when it suits you"
               unit={unit}
               inProgress={rest.inProgress}
+              startTarget={rest.startTarget}
             />
           ) : rest.kind === "first-meal" ? (
             <FirstMealCard navigate={navigate} />

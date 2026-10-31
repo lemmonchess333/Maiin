@@ -34,32 +34,42 @@ keeps counting through a pause.
 ## Operator steps (Mac + Xcode, once)
 
 Follow the plugin's setup (docs:
-https://github.com/ludufre/capacitor-live-activities — steps mirrored
-here against this repo's paths):
+https://github.com/ludufre/capacitor-live-activities), but not its Podfile
+step: this project has no CocoaPods. Capacitor 8 brings every plugin in
+through the local Swift package `ios/App/CapApp-SPM`, and the widget
+extension links the plugin's `LiveActivitiesKit` the same way. The plugin
+publishes `LiveActivitiesKit` only as a CocoaPods pod, so
+`patches/capacitor-live-activities+8.0.0.patch` also makes it a library
+product of the plugin's own Swift package; `npm install` applies it.
 
-1. `npx cap sync ios` (installs the plugin pod).
-2. Xcode → File → New → Target → **Widget Extension**. Product name
-   **`LiveActivities`** (exactly). **Uncheck** "Include Live Activity",
-   "Include Control", "Include Configuration App Intent". Don't
-   activate the scheme when prompted.
+1. `npm run build:ios` (builds the web bundle and runs `cap sync ios`,
+   which resolves the plugin through `CapApp-SPM`).
+2. Open `ios/App/App.xcodeproj` (there is no `.xcworkspace`). File → New →
+   Target → **Widget Extension**. Product name **`LiveActivities`**
+   (exactly). **Uncheck** "Include Live Activity", "Include Control",
+   "Include Configuration App Intent". Don't activate the scheme when
+   prompted.
 3. Right-click the new `LiveActivities` folder → **Convert to Group**.
-4. `ios/App/Podfile` — add (target name must match the extension target
-   Xcode created):
-
-   ```ruby
-   target 'LiveActivitiesExtension' do
-     pod 'LiveActivitiesKit', :path => '../../node_modules/capacitor-live-activities'
-   end
-   ```
-
-5. `ios/App/App/Info.plist` — add:
+4. Link `LiveActivitiesKit` to the extension through Swift Package Manager:
+   File → Add Package Dependencies… → **Add Local…** → choose
+   `node_modules/capacitor-live-activities` at the repository root, and add
+   its **LiveActivitiesKit** product to the `LiveActivitiesExtension` target
+   only (not to `App`, which already has it through `CapApp-SPM`). If the
+   product list does not offer `LiveActivitiesKit`, run `npm install` so the
+   patch is applied, then File → Packages → Reset Package Caches.
+5. In the extension target's build settings, set **Targeted Device Family**
+   to iPhone (`TARGETED_DEVICE_FAMILY = 1`; the template's `1,2` fails
+   `iosProjectWiring.test.ts`) and check **Skip Install** is Yes (the
+   template sets it; an archive refuses an extension installed beside the
+   app).
+6. `ios/App/App/Info.plist` — add:
 
    ```xml
    <key>NSSupportsLiveActivities</key>
    <true/>
    ```
 
-6. Replace `ios/App/LiveActivities/LiveActivitiesBundle.swift` with:
+7. Replace `ios/App/LiveActivities/LiveActivitiesBundle.swift` with:
 
    ```swift
    import WidgetKit
@@ -75,10 +85,26 @@ here against this repo's paths):
    }
    ```
 
-7. **App Groups** capability on BOTH the app target and the extension
-   target: `group.com.tropos.app.liveactivities`.
-8. `pod install` in `ios/App`, build to a device (Live Activities need
-   iOS 16.2+; Dynamic Island needs iPhone 14 Pro+).
+8. **App Groups** capability on BOTH the app target and the extension
+   target: `group.com.tropos.app.liveactivities`. Xcode writes the
+   extension's entitlements file and adds the group to
+   `App/App.entitlements`.
+9. Build to a device (Live Activities need iOS 16.2+; Dynamic Island needs
+   iPhone 14 Pro+). There is no `pod install` step.
+
+### TestFlight signing for the extension
+
+`deploy-ios.yml` reads the targets it signs from the project
+(`scripts/ios_signed_targets.py`), so the new extension is signed, checked
+and exported with no change to the workflow. Apple's side needs, once:
+
+- Apple Developer → Identifiers: register the extension's bundle ID (Xcode
+  names it `com.tropos.app.LiveActivities`) with **App Groups** on and the
+  group above assigned, and assign the same group to `com.tropos.app`.
+- Signing from the API key (the default) makes the extension's profile on
+  every run. With your own certificate secrets, which hold the iPhone and
+  Watch profiles only, the run stops naming the extension: delete those
+  secrets and let the run sign from the API key.
 
 ## Device-test checklist (fill in on the Mac/Xcode session)
 

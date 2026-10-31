@@ -22,10 +22,13 @@ open ios/App/App.xcodeproj   # SPM project — there is no .xcworkspace
 ```
 
 `npm run build:ios` uses the native asset root and copies the web bundle into
-the iOS project; only the Xcode step needs a Mac. Select the `App` scheme to
-archive the iPhone app with its embedded `TroposWatch` companion. The Watch
-app's bundle ID is `com.tropos.app.watchkitapp`; its minimum is watchOS 9.
-The ordinary iPhone run path remains available on iOS 15.4 without a Watch.
+the iOS project; only the Xcode step needs a Mac. Select the `App` scheme. A
+Release archive made this way is a standard build: it embeds no Watch app
+(see "Apple Watch release gate" below). Debug builds keep the gate on, so a
+build run from Xcode onto a phone carries the `TroposWatch` companion. The
+Watch app's bundle ID is `com.tropos.app.watchkitapp`; its minimum is
+watchOS 9. The ordinary iPhone run path remains available on iOS 15.4
+without a Watch.
 
 ### B. Automated (`deploy-ios.yml`) — push-button after one-time setup, no Mac needed
 
@@ -39,36 +42,46 @@ Nothing in this route needs a Mac: every value below comes from Apple's or
 Firebase's website.
 
 > ⚠️ The workflow has **never completed a run.** Treat the first run as a
-> bring-up. Before archiving it checks every secret, both profiles and the
+> bring-up. Before archiving it checks every secret, every profile and the
 > certificate, so a wrong file fails in the first minutes with a message
 > naming it.
 
 #### Signing: the API key, or your own certificate
 
-A TestFlight archive with a Watch companion needs one Apple Distribution
-certificate and separate App Store provisioning profiles for the iPhone and
-Watch apps. The workflow gets them one of two ways:
+A TestFlight archive needs one Apple Distribution certificate and an App
+Store provisioning profile for each app and extension target: today the
+iPhone app and the Watch app. The workflow reads that list from the project
+(`scripts/ios_signed_targets.py`, its first step), so a target added later,
+such as the Live Activity widget extension
+([run-live-activity.md](run-live-activity.md)), is signed, checked and
+exported with no change to the workflow. It gets the certificate and
+profiles one of two ways:
 
 - **From the API key (the default).** With none of the four
   `IOS_DIST_CERT_*` / iPhone and Watch provisioning profile secrets set, each
   run makes a private key on the runner, asks App Store Connect's API for one
-  distribution certificate and a separate profile for each app ID
+  distribution certificate and a separate profile for each signed bundle ID
   (`scripts/ios/asc-signing.mjs`), and signs with those. The key never leaves
   the runner. Each run makes a new certificate and revokes the previous
   run's certificate. Apple Developer → Certificates shows one Apple
-  Distribution certificate from these runs, and Profiles shows two profiles
-  named `Tropos CI <serial>` and `Tropos CI <serial> Watch 1`. Revoking an
+  Distribution certificate from these runs, and Profiles shows one profile
+  per target: `Tropos CI <serial>` for the iPhone app and
+  `Tropos CI <serial> watchkitapp` for the Watch app (the last part of each
+  other bundle ID). Revoking an
   old certificate does not affect builds already uploaded, which Apple
   signs itself. This needs the API key to have the **Admin** role.
 - **Your own certificate.** Set all four secrets, including the Watch profile,
   and the run signs with them instead: the openssl steps under "Your own
-  certificate" below. The API key then only uploads, which the **App
-  Manager** role allows.
+  certificate" below. The API key then only uploads and marks the build,
+  which the **App Manager** role allows. These secrets hold the iPhone and
+  Watch profiles only, so once the project signs another target the run
+  stops and names it: sign from the API key then.
 
-Either way the run checks the certificate and both profiles against the team,
-their bundle IDs and each target's entitlements before it archives. It
-requires production APNs in the iPhone profile, then verifies both signed
+Either way the run checks the certificate and every profile against the
+team, its bundle ID and its target's entitlements before it archives. It
+requires production APNs in the iPhone profile, then verifies the signed
 apps in the archive and exported IPA before uploading the verified artifact.
+The export's profile map is made from the bundles the archive holds.
 
 #### First: the App ID's capabilities
 
@@ -198,20 +211,24 @@ the comment on the build step, and the activation order in
 2. Make sure App Store Connect → Apps has an app for `com.tropos.app`. The
    upload has nowhere to go without one.
 3. Actions tab → **Deploy iOS to TestFlight** → Run workflow. Leave
-   **Enable connected training for a paired-device TestFlight pilot** unchecked
-   for an ordinary build. Check it only for a private pilot with a paired
-   iPhone and Watch ready for the acceptance matrix below.
-4. The run checks the secrets, makes the certificate and two profiles from
-   the API key unless you gave your own, then checks both profiles (team,
-   bundle ID, App Store type, expiry, target entitlements) and the
-   certificate (a valid Apple Distribution identity that both profiles name),
+   **Connected training pilot** unchecked for an ordinary build. Check it
+   only for a private pilot with a paired iPhone and Watch ready for the
+   acceptance matrix below, after setting `TESTFLIGHT_PILOT_GROUP_ID`
+   ("Pilot builds on TestFlight" below). Anything typed in **What to Test
+   note** becomes the build's "What to Test" in TestFlight.
+4. The run lists the targets to sign, checks the secrets, makes the
+   certificate and a profile per target from the API key unless you gave
+   your own, then checks every profile (team, bundle ID, App Store type,
+   expiry, target entitlements) and the certificate (a valid Apple
+   Distribution identity that every profile names),
    before archiving. Its error names the piece to fix: an API key without
    the Admin role, an App ID that is missing or lacks a capability, or an
    account already holding as many distribution certificates as Apple
    allows.
 5. Signing: the project as committed signs automatically, which cannot
-   work on a runner with no Apple account, so the workflow switches the
-   iPhone and Watch targets to manual signing with their imported profiles.
+   work on a runner with no Apple account, so the workflow switches every
+   signed target, in every configuration, to manual signing with its
+   imported profile.
    It does this in the project file, not on the `xcodebuild` command line, where a
    profile setting would reach every Swift package target and be refused.
    The scheme is `App` and the project is `ios/App/App.xcodeproj`. There is
@@ -237,27 +254,53 @@ the comment on the build step, and the activation order in
 
 #### Apple Watch release gate
 
+One build setting, `WATCH_RUN_RELEASE_ENABLED`, decides what kind of build
+the project makes, and the committed Release configuration sets it to `NO`:
+
+|                                  | Standard build (`NO`, the default) | Connected training pilot (`YES`)               |
+| -------------------------------- | ---------------------------------- | ---------------------------------------------- |
+| `App.app/Watch`                  | absent: no Watch app               | `TroposWatch.app`, signed with its own profile |
+| `TroposConnectedTrainingEnabled` | `NO` in the iPhone app             | `YES` in the iPhone and Watch apps             |
+| Health usage text                | steps only                         | Watch heart rate and workout export            |
+| Settings → Apple Health          | steps (and any pending cleanup)    | steps, Watch runs, workout export              |
+
+The App target always builds `TroposWatch`, so every compile checks it, but
+its "Embed Watch Content" phase copies the Watch app only when the setting is
+exactly `YES`: `EXCLUDED_SOURCE_FILE_NAMES` names `TroposWatch.app`, and
+`INCLUDED_SOURCE_FILE_NAMES` names it back only through
+`TROPOS_WATCH_EMBED_YES`, so a missing or misspelt value fails closed to a
+build with no Watch app. The two Health usage strings in `Info.plist` read
+`$(TROPOS_HEALTH_SHARE_USAGE)` and `$(TROPOS_HEALTH_UPDATE_USAGE)`, which the
+same setting picks from a `_NO` and a `_YES` text in the App target's build
+settings. `iosProjectWiring.test.ts` resolves both kinds of build from the
+project file, and the web gate `VITE_CONNECTED_TRAINING_ENABLED` hides the
+Settings rows the same way. Because the Watch target is always built, a
+standard archive still signs it, so its App ID and profile are needed for
+every run.
+
 Pull requests run `.github/workflows/ios-native-compile.yml` on macOS. It
-compiles the Release iPhone and embedded Watch targets for Simulator with
-signing disabled and checks that both bundles are present while the native
-release flag is off. It uses a synthetic Firebase plist and does not install,
-sign, or exercise either app. A green compile is required before this gate is
-considered ready for the signed TestFlight and paired-device checks below.
+compiles a standard Release build for Simulator, then the pilot, with
+signing disabled, and runs `scripts/verify_ios_watch.py --unsigned` on each:
+the standard build must carry no Watch app, the gate off and the short Health
+text; the pilot one embedded Watch app, both gates on and the expanded text.
+It uses a synthetic Firebase plist and does not install, sign, or exercise
+either app. A green compile is required before this gate is considered ready
+for the signed TestFlight and paired-device checks below.
 
-The workflow verifies that the archive and exported IPA contain one
-separately signed Watch app with the expected bundle ID, iPhone companion ID,
-HealthKit entitlement and App Store profile. This is a packaging check. It
-does not prove live Watch-to-phone behavior.
+The TestFlight workflow runs the same checks on the archive and on the
+exported IPA, and for a pilot also checks that the Watch app is signed
+separately with the expected bundle ID, iPhone companion ID, HealthKit
+entitlement and App Store profile. It also fails an archive that holds
+anything beside `App.app` (every embedded target sets `SKIP_INSTALL = YES`).
+This is a packaging check. It does not prove live Watch-to-phone behavior.
 
-The committed Release project and the default TestFlight dispatch keep connected
-training disabled. A manual **connected training pilot** dispatch enables the
-Vite bundle and overrides `WATCH_RUN_RELEASE_ENABLED=YES` for that archive only.
-The signed archive and exported IPA are checked to ensure both the iPhone and
-Watch Info.plists carry the selected value. The workflow does not change the
-committed Release setting or the default web deploy. Use the pilot build for
-paired-device proof with internal TestFlight testers, then enable a regular
-release only after the matrix passes. A web deploy or an unsigned simulator
-build does not validate the TestFlight path.
+The default TestFlight dispatch makes a standard build. A manual **connected
+training pilot** dispatch enables the Vite bundle and overrides
+`WATCH_RUN_RELEASE_ENABLED=YES` for that archive only. The workflow does not
+change the committed Release setting or the default web deploy. Use the pilot
+build for paired-device proof with internal TestFlight testers, then enable a
+regular release only after the matrix passes. A web deploy or an unsigned
+simulator build does not validate the TestFlight path.
 
 Before expanding beyond the pilot, complete the real-device checks in
 [`docs/proposals/connected-training.md`](proposals/connected-training.md):
@@ -274,11 +317,52 @@ This Linux checkout has no Xcode or paired Apple devices. The watchOS target,
 signing and live behavior remain unverified until the macOS workflow and this
 device gate complete.
 
+#### Pilot builds on TestFlight
+
+A pilot build is marked as one and kept away from release
+(`scripts/ios/testflight-build.mjs`, run by `deploy-ios.yml`):
+
+- **Marked.** Its TestFlight "What to Test" starts "Connected training pilot.
+  Not for App Store release.", followed by the dispatch's note. It is set as
+  soon as App Store Connect lists the build, before processing ends.
+- **Its own testers.** It goes to the internal group named by
+  `TESTFLIGHT_PILOT_GROUP_ID` and to no other. Before archiving, the run
+  stops if that group is missing or external (an external group needs Beta
+  App Review, and a pilot is never submitted), or if any other internal
+  group gets every build automatically, since that group would receive the
+  pilot too.
+- **Never submitted.** Every App Store Connect call made for a pilot passes
+  through a guard that refuses anything that would submit a build for App
+  Review or release it, and a test fails if any workflow calls App Review
+  another way. A pilot can be made only from Run workflow: a trigger added
+  later makes standard builds alone. Nothing in CI can stop a person
+  choosing the build by hand in App Store Connect, which is why the "What to
+  Test" line says it; check it before submitting a build there.
+
+A standard build carries the dispatch's note as its "What to Test", when
+there is one, and goes to `TESTFLIGHT_STANDARD_GROUP_ID` when that is set.
+With neither, the run does not wait for App Store Connect to process it.
+
+Repository variables (Settings → Secrets and variables → Actions →
+Variables; ids, not secrets):
+
+| Variable                       | What it is                                                       | Needed for                                                                                                                 |
+| ------------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `TESTFLIGHT_PILOT_GROUP_ID`    | the id of an **internal** TestFlight group for the pilot testers | every pilot run. App Store Connect → Apps → Tropos → TestFlight → the group: the id is the last part of the page's address |
+| `TESTFLIGHT_STANDARD_GROUP_ID` | optional: the id of the group standard builds go to              | standard builds to reach testers on their own once automatic distribution is off on the other internal groups              |
+
+Turning off automatic distribution on an internal group means each standard
+build is added to it by hand, or through `TESTFLIGHT_STANDARD_GROUP_ID`.
+The API key's App Manager role is enough for both; the Admin role, which
+signing from the key needs, includes it.
+
 #### Optional: auto-build on release
 
 Once verified, you can add a `push: { tags: ['v*'] }` trigger so cutting a
 version tag ships a TestFlight build. Keep it off `push: main` — every merge
-becoming a TestFlight build spams testers and burns build numbers.
+becoming a TestFlight build spams testers and burns build numbers. Such a
+trigger makes standard builds only: the mode step refuses a pilot from
+anything but Run workflow.
 
 ## Why not just auto-deploy native like the web?
 

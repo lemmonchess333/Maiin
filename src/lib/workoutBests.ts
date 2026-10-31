@@ -28,6 +28,10 @@ export function listedSets(
   return (exercise.sets ?? []).filter((set) => set.type !== "warmup");
 }
 
+/** The saved workouts up to a day, every one before it included. */
+const historyTo = (uid: string, until: string) =>
+  fetchSavedWorkouts(uid, { since: "1970-01-01", until });
+
 const savedAt = (workout: Pick<Workout, "createdAt">) =>
   workout.createdAt?.toMillis?.() ?? 0;
 
@@ -79,14 +83,24 @@ export function workoutBests(
   return bests;
 }
 
+/** Which of these saved workouts set a new best, from one read of the
+ *  history up to the newest of them (All sessions' PR marks). */
+export async function workoutsWithBests(
+  uid: string,
+  workouts: readonly Workout[]
+): Promise<Set<string>> {
+  const newest = workouts.reduce((day, w) => (w.date > day ? w.date : day), "");
+  if (!newest) return new Set();
+  const history = await historyTo(uid, newest);
+  return new Set(
+    workouts.filter((w) => workoutBests(w, history).size > 0).map((w) => w.id)
+  );
+}
+
 /** The new-best sets of a saved workout, from the history up to its day. */
 export async function loadWorkoutBests(
   uid: string,
   workout: Workout
 ): Promise<Map<number, Set<number>>> {
-  const history = await fetchSavedWorkouts(uid, {
-    since: "1970-01-01",
-    until: workout.date,
-  });
-  return workoutBests(workout, history);
+  return workoutBests(workout, await historyTo(uid, workout.date));
 }

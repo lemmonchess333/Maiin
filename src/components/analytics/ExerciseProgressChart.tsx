@@ -31,7 +31,7 @@ interface Props {
 function formatValue(value: number, unit: string, spoken = false) {
   const number = value.toLocaleString(undefined, { maximumFractionDigits: 2 });
   if (unit === "s") {
-    return spoken ? `${number} second${value === 1 ? "" : "s"}` : `${number}s`;
+    return spoken ? `${number} second${value === 1 ? "" : "s"}` : `${number} s`;
   }
   return `${number} ${unit === "reps" && value === 1 ? "rep" : unit}`;
 }

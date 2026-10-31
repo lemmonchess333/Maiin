@@ -15,9 +15,11 @@ import {
   useUid,
 } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { CONNECTED_TRAINING_RELEASED } from "@/lib/connectedTrainingRelease";
 import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
+import { useLocalNotificationNavigation } from "@/hooks/useLocalNotificationNavigation";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
@@ -26,6 +28,7 @@ import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvi
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
 import { captureError } from "@/lib/errorReporting";
@@ -190,6 +193,7 @@ const Social = lazyRetry(() => import("@/pages/Social"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
 const EmptyWorkout = lazyRetry(() => import("@/pages/EmptyWorkout"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
+const FollowList = lazyRetry(() => import("@/pages/FollowList"));
 const ExerciseHistory = lazyRetry(() => import("@/pages/ExerciseHistory"));
 // PR N (audit P2 #17): hidden operator-diagnostics route. Lazy-loaded
 // like every other page; not wired into any nav. Reachable only by
@@ -397,7 +401,7 @@ class ErrorBoundary extends Component<
 ================================ */
 
 function AppRoutes() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, watchAccountCleanup } = useAuth();
   const uid = user?.uid ?? null;
   const deletion = useAccountDeletionStatus(user?.uid);
   /* Email accounts verify after the plan, not before it: onboarding opens
@@ -410,6 +414,8 @@ function AppRoutes() {
   // Packet 17 — non-prompting FCM token refresh on sign-in + foreground.
   usePushTokenRefresh();
   useNativePushNavigation(uid, !loading && !!user);
+  // A tapped local notification (the Monday review) opens its page.
+  useLocalNotificationNavigation(!loading && !!user);
   // Signed in: fetch the shell's chunks side by side, while the profile
   // loads, instead of one after another as each layer renders. A device
   // that has signed in before started them at module load already; this
@@ -497,7 +503,25 @@ function AppRoutes() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Spinner size="lg" label="Loading Tropos" />
+        {CONNECTED_TRAINING_RELEASED && watchAccountCleanup ? (
+          /* AuthProvider holds the next account back until the last one's
+             Watch run is cleared from this iPhone. Only a build with the
+             Watch released can fail that, so only it carries this. */
+          <div role="alert" className="max-w-sm space-y-3 px-4 text-center">
+            <p className="text-sm font-semibold">
+              Couldn&apos;t clear Watch runs
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Tropos clears the last account&apos;s Watch run from this iPhone
+              before opening another, and that didn&apos;t finish.
+            </p>
+            <Button variant="secondary" onClick={watchAccountCleanup.retry}>
+              Try again
+            </Button>
+          </div>
+        ) : (
+          <Spinner size="lg" label="Loading Tropos" />
+        )}
       </div>
     );
   }
@@ -852,6 +876,22 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <UserProfile />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/followers"
+                          element={
+                            <RouteErrorBoundary>
+                              <FollowList kind="followers" />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/following"
+                          element={
+                            <RouteErrorBoundary>
+                              <FollowList kind="following" />
                             </RouteErrorBoundary>
                           }
                         />

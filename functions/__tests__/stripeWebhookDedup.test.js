@@ -132,20 +132,50 @@ describe("stripeWebhook — the stripeEvents dedup record", () => {
       },
     };
     expect((await deliver(freeInvoice)).statusCode).toBe(200);
-    expect(db.data.get("users/u1").activationBillingFirsts.paid).toBeUndefined();
+    expect(
+      db.data.get("users/u1").activationBillingFirsts.paid
+    ).toBeUndefined();
 
     const paidInvoice = {
       ...freeInvoice,
       id: "evt_paid_invoice",
       created: trial.created + 7 * 86_400,
-      data: { object: { ...freeInvoice.data.object, id: "in_paid", amount_paid: 3499 } },
+      data: {
+        object: {
+          ...freeInvoice.data.object,
+          id: "in_paid",
+          amount_paid: 3499,
+        },
+      },
     };
     expect((await deliver(paidInvoice)).statusCode).toBe(200);
     expect(db.data.get("users/u1").activationBillingFirsts).toEqual({
       trial: { atMs: trial.created * 1000, source: "stripe" },
       paid: { atMs: paidInvoice.created * 1000, source: "stripe" },
     });
-    expect((await deliver(paidInvoice)).body).toMatchObject({ duplicate: true });
+    expect((await deliver(paidInvoice)).body).toMatchObject({
+      duplicate: true,
+    });
+  });
+
+  it("never fails a delivery for a billing measurement that could not be saved", async () => {
+    const db = useMemoryFirestore({ "users/u1": { subscriptionTier: "free" } });
+    // The claim is the first transaction; the measurement the second.
+    const transaction = db.runTransaction;
+    let calls = 0;
+    db.runTransaction = async (fn) => {
+      calls += 1;
+      if (calls === 2) throw new Error("measurement write failed");
+      return transaction(fn);
+    };
+    const trial = checkoutCompleted("evt_trial_unmeasured");
+    trial.data.object.mode = "subscription";
+    trial.data.object.payment_status = "no_payment_required";
+    trial.data.object.metadata.activationTrial = "true";
+    expect((await deliver(trial)).statusCode).toBe(200);
+    expect(calls).toBeGreaterThanOrEqual(2);
+    expect(db.data.get("users/u1").subscriptionTier).toBe("pro");
+    expect(db.data.get("users/u1").activationBillingFirsts).toBeUndefined();
   });
 
   it("does not count a charge from another subscription", async () => {
@@ -163,7 +193,14 @@ describe("stripeWebhook — the stripeEvents dedup record", () => {
       type: "invoice.paid",
       livemode: true,
       created: 1_790_000_100,
-      data: { object: { id: "in_other", customer: "cus_1", subscription: "sub_other", amount_paid: 3499 } },
+      data: {
+        object: {
+          id: "in_other",
+          customer: "cus_1",
+          subscription: "sub_other",
+          amount_paid: 3499,
+        },
+      },
     };
     expect((await deliver(invoice)).statusCode).toBe(200);
     expect(db.data.get("users/u1").activationBillingFirsts).toBeUndefined();

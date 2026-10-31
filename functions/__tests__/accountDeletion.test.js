@@ -146,7 +146,12 @@ function makeStubs(opts = {}) {
         }
         if (name === "activities") {
           return {
-            where: (field, op, value) => activitiesQueryStub(field, op, value),
+            // The social sweep's scan of the posts that name this account
+            // among their givers is paged like its others; empty here.
+            where: (field, op, value) =>
+              field === "recentPropsByUids"
+                ? emptyQuery()
+                : activitiesQueryStub(field, op, value),
           };
         }
         if (name === "partnerBonds") {

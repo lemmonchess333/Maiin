@@ -1,7 +1,7 @@
 import { liftDayNameIn } from "@/lib/liftDayLabel";
 import RunAbout from "@/components/run/RunAbout";
 import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
-import { formatShortWeekdayDayMonth } from "@/utils/formatters";
+import { formatDuration, formatShortWeekdayDayMonth } from "@/utils/formatters";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
@@ -464,7 +464,7 @@ export default function DayPeekCard({
                         {(w.durationMinutes ?? 0) > 0 && (
                           <span className="text-muted-foreground font-mono tabular-nums">
                             {" · "}
-                            {w.durationMinutes} min
+                            {formatDuration((w.durationMinutes ?? 0) * 60)}
                           </span>
                         )}
                       </span>
@@ -506,7 +506,9 @@ export default function DayPeekCard({
                     {hasW && (totalMinutes > 0 || tonnage > 0) && (
                       <span className="text-muted-foreground font-mono tabular-nums">
                         {" · "}
-                        {totalMinutes > 0 ? `${totalMinutes} min` : ""}
+                        {totalMinutes > 0
+                          ? formatDuration(totalMinutes * 60)
+                          : ""}
                         {totalMinutes > 0 && tonnage > 0 ? " · " : ""}
                         {/* The whole figure, grouped, as the diary row
                             below writes its calories. One session's

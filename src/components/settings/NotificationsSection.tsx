@@ -19,6 +19,8 @@ import type { MealReminders } from "@/hooks/useMealReminders";
 import type { WorkoutReminders } from "@/hooks/useWorkoutReminders";
 import { WORKOUT_REMINDER_IDS } from "@/lib/workoutReminderCopy";
 import type { StreakReminderPrefs } from "@/hooks/useStreakReminder";
+import type { ReviewReminderPrefs } from "@/hooks/useReviewReminder";
+import { REVIEW_NOTIFICATION_ID } from "@/lib/reviewReminder";
 import { useUid } from "@/lib/auth";
 import { usePushSettings } from "@/hooks/usePushSettings";
 import { httpsCallable } from "firebase/functions";
@@ -49,6 +51,9 @@ interface NotificationsSectionProps {
   updateWorkoutReminders: (data: Partial<WorkoutReminders>) => Promise<void>;
   streakReminder: StreakReminderPrefs;
   updateStreakReminder: (data: Partial<StreakReminderPrefs>) => Promise<void>;
+  /** Monday's "Your week, reviewed" (useReviewReminder). */
+  reviewReminder?: ReviewReminderPrefs;
+  updateReviewReminder?: (data: Partial<ReviewReminderPrefs>) => Promise<void>;
   inline?: boolean;
 }
 
@@ -59,6 +64,8 @@ export default function NotificationsSection({
   updateWorkoutReminders,
   streakReminder,
   updateStreakReminder,
+  reviewReminder,
+  updateReviewReminder,
   inline = false,
 }: NotificationsSectionProps) {
   // Push (server-side FCM) consent — #969. Separate from the on-device
@@ -239,6 +246,7 @@ export default function NotificationsSection({
       meal: ["meal", "breakfast", "lunch", "dinner", "eat"],
       workout: [], // found by its ids below
       streak: ["streak", "log"],
+      review: [], // found by its id below
     };
     const needles = titleNeedles[kind];
     const candidates = pending.filter((p) => {
@@ -246,6 +254,7 @@ export default function NotificationsSection({
       // so it is known by its weekday ids instead.
       if (kind === "workout")
         return (WORKOUT_REMINDER_IDS as readonly number[]).includes(p.id);
+      if (kind === "review") return p.id === REVIEW_NOTIFICATION_ID;
       const text = (p.title || "").toLowerCase();
       return needles.some((n) => text.includes(n));
     });
@@ -262,13 +271,19 @@ export default function NotificationsSection({
     streakReminder.enabled && streakReminder.primingShown;
   const anyReminderOn =
     mealReminders.enabled || workoutReminders.enabled || streakReminderOn;
+  /* The review's notification is on by default for anyone who has allowed
+     notifications (Mob2 call 10), so its switch reads on only once they
+     have: a switch never shows on while nothing can arrive. It stays out
+     of the blocked banner, which is for reminders the person turned on. */
+  const reviewReminderOn =
+    !!reviewReminder?.enabled && permission === "granted";
 
   return (
     <AccordionSection
       inline={inline}
       icon={<Bell className="size-5 text-primary" />}
       title="Notifications"
-      subtitle="Meal, workout & streak reminders"
+      subtitle="Meal, workout, review and streak reminders"
     >
       {/* Permission-denied banner — only shown when the user has at least one
           reminder turned on AND the OS is blocking delivery. Silent failure
@@ -436,6 +451,57 @@ export default function NotificationsSection({
           </div>
         )}
       </div>
+
+      {/* The Monday review (Mob2 call 10): on unless turned off, and
+          only sent when a review is waiting. */}
+      {reviewReminder && updateReviewReminder && (
+        <div className="space-y-3">
+          <div className={ROW}>
+            <div className={LABEL}>
+              <p className="text-sm text-foreground">Weekly review</p>
+              <p className="text-xs text-muted-foreground">
+                Monday at 09:00, when last week&apos;s review is ready
+              </p>
+            </div>
+            <Toggle
+              className="ml-auto"
+              checked={reviewReminderOn}
+              label="Toggle weekly review notification"
+              onChange={async () => {
+                haptic("light");
+                const next = !reviewReminderOn;
+                try {
+                  if (next) {
+                    // As the streak's switch: never on after a refusal.
+                    const granted = await requestNotificationPermission();
+                    refreshPermission();
+                    if (!granted) {
+                      toast.error(
+                        "Allow notifications in your device settings to turn this on."
+                      );
+                      return;
+                    }
+                  }
+                  await updateReviewReminder({ enabled: next });
+                  trackSettingsEvent("settings_toggle_changed", {
+                    toggle: "review_reminder",
+                    value: next,
+                  });
+                } catch {
+                  toast.error("Couldn't save reminder settings. Try again.");
+                }
+              }}
+            />
+          </div>
+          {reviewReminderOn && (
+            <ReminderDiagnostics
+              next={nextForCategory("review")}
+              formatNextFire={formatNextFire}
+              onTest={() => handleTestNotification("review")}
+            />
+          )}
+        </div>
+      )}
 
       {/* Streak */}
       <div className="space-y-3">

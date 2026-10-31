@@ -48,6 +48,12 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
   "createdAt",
   "onboardingCompletedAt",
   "activationJourneyVersion",
+  // The activation report's facts: setup's platform and sport, stamped by
+  // completeOnboarding, and the first trial and paid period, written by
+  // the billing webhooks.
+  "onboardingPlatform",
+  "onboardingSport",
+  "activationBillingFirsts",
 ]);
 
 /**

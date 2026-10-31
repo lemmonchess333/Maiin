@@ -742,6 +742,22 @@ function ProgramInner() {
   // Home showed, which can differ from this page's rotation cursor
   // (ADR-0002: Home resolves a lift by weekday); starting a day off the
   // cursor is already supported, it is what the lighter-day swap does.
+  // The plan page's week reset opens a day's Express session (XB1 call 2).
+  const expressRequested = searchParams.get("express") === "1";
+  useEffect(() => {
+    if (!expressRequested || !programState) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("express");
+        return next;
+      },
+      { replace: true }
+    );
+    const day = urlDay === null ? null : programState.workouts[urlDay];
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a one-shot deep link, consumed above
+    if (day && !day.completed && !day.skipped) setExpressChooserDay(urlDay);
+  }, [expressRequested, programState, urlDay, setSearchParams]);
   const startRequested = searchParams.get("start") === "1";
   useEffect(() => {
     if (!startRequested || !programState) return;

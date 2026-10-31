@@ -5,7 +5,8 @@ import {
   parseLocalDate,
 } from "./dateHelpers";
 import { workoutTitle } from "./workoutLabels";
-import type { Workout } from "./savedWorkouts";
+import { workoutTonnageKg, type Workout } from "./savedWorkouts";
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "./liftLoad";
 import type { SavedRun } from "./savedRuns";
 import {
   distanceLabel,
@@ -108,35 +109,53 @@ export interface HistorySession {
   id: string;
   kind: "lift" | "run";
   day: string;
+  /** When the session was saved, in ms; 0 when an old record has no time. */
+  savedAtMs: number;
   title: string;
   summary: string[];
   href: string;
   notCounted: boolean;
 }
 
-/** Same-day ties use stable identity, never an invented session start time. */
+/** A day's sessions run newest first by when each was saved; a record with
+ * no saved time, and a tie, fall back to its stable identity. */
 export function trainingHistorySessions(
   workouts: readonly Workout[],
   runs: readonly SavedRun[],
   filters: TrainingHistoryFilters,
-  unit: DistanceUnit
+  unit: DistanceUnit,
+  liftUnit: LiftUnit = "kg"
 ): HistorySession[] {
   const sessions: HistorySession[] = [];
+  // What a search matches beyond the title: a lift's exercises, so "bench"
+  // finds the session it was done in.
+  const alsoMatches = new Map<string, string[]>();
   if (filters.sport !== "runs") {
     for (const workout of workouts) {
       const exercises = workout.exercises.length;
       const minutes = workout.durationMinutes;
+      const volume = workoutTonnageKg(workout);
+      alsoMatches.set(
+        `lift:${workout.id}`,
+        workout.exercises.map((exercise) => exercise.exerciseName ?? "")
+      );
       sessions.push({
         key: `lift:${workout.id}`,
         id: workout.id,
         kind: "lift",
         day: workout.date,
+        savedAtMs: workout.createdAt?.toMillis?.() ?? 0,
         title: workoutTitle(workout),
         summary: [
           ...(Number.isFinite(minutes) && minutes > 0
             ? [`${Math.max(1, Math.round(minutes))} min`]
             : []),
           `${exercises} ${exercises === 1 ? "exercise" : "exercises"}`,
+          ...(volume > 0
+            ? [
+                `${Math.round(liftVolumeIn(volume, liftUnit)).toLocaleString()} ${liftUnitLabel(liftUnit)}`,
+              ]
+            : []),
         ],
         href: `/workout/${encodeURIComponent(workout.id)}`,
         notCounted: false,
@@ -150,6 +169,8 @@ export function trainingHistorySessions(
         id: run.id,
         kind: "run",
         day: run.day,
+        // An invalid date's NaN reads as no time.
+        savedAtMs: run.completedAt?.getTime() || 0,
         title: runTitle(run),
         summary: [
           distanceLabel(run.distance, unit),
@@ -169,9 +190,17 @@ export function trainingHistorySessions(
       (session) =>
         session.day >= filters.from &&
         session.day <= filters.to &&
-        (!search || session.title.toLocaleLowerCase().includes(search))
+        (!search ||
+          [session.title, ...(alsoMatches.get(session.key) ?? [])].some(
+            (text) => text.toLocaleLowerCase().includes(search)
+          ))
     )
-    .sort((a, b) => b.day.localeCompare(a.day) || a.key.localeCompare(b.key));
+    .sort(
+      (a, b) =>
+        b.day.localeCompare(a.day) ||
+        b.savedAtMs - a.savedAtMs ||
+        a.key.localeCompare(b.key)
+    );
 }
 
 /** Only the history route is accepted from a saved detail's router state. */
