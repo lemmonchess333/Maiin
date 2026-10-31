@@ -265,26 +265,21 @@ test.describe("feed activity card screenshots", () => {
     await page.getByRole("radio", { name: /feed/i }).click({ timeout: 20_000 });
     // This account follows the author, but the fixture has no fan-out feed
     // docs. Explore reads the public activities directly.
-    await page
-      .getByRole("button", { name: /feed source/i })
-      .first()
-      .click({ timeout: 20_000 });
-    await page
-      .getByRole("radio", { name: /explore/i })
-      .click({ timeout: 15_000 });
-    // Closing the source sheet must not back-navigate over the chosen query.
-    // Reload also proves the source is retained in the URL, not only in memory.
-    await expect(
-      page.getByRole("dialog", { name: "Feed source", exact: true })
-    ).not.toBeVisible();
+    const sources = page.getByRole("radiogroup", { name: "Feed source" });
+    await sources.getByRole("radio", { name: /^Explore/ }).click({
+      timeout: 15_000,
+    });
+    // Reload proves the visible source choice is retained in the URL.
     await expect(page).toHaveURL(/feed=explore/);
     await expect(
-      page.getByRole("button", { name: "Feed source: Explore", exact: true })
-    ).toBeVisible();
+      sources.getByRole("radio", { name: /^Explore/ })
+    ).toHaveAttribute("aria-checked", "true");
     await page.reload();
     await expect(
-      page.getByRole("button", { name: "Feed source: Explore", exact: true })
-    ).toBeVisible();
+      page
+        .getByRole("radiogroup", { name: "Feed source" })
+        .getByRole("radio", { name: /^Explore/ })
+    ).toHaveAttribute("aria-checked", "true");
 
     /* Assert BEFORE shooting, so a regression films loudly rather than
        producing a quietly empty frame.
