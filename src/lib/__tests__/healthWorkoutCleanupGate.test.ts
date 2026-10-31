@@ -27,14 +27,27 @@ import {
   queueHealthWorkoutExport,
   reconcilePendingHealthExports,
 } from "../healthWorkoutExport";
-import { resetFirestore } from "@/test/firestoreHarness";
+import {
+  readDoc,
+  resetFirestore,
+  seedFirestore,
+} from "@/test/firestoreHarness";
 
+// The native writer as it answers without Health write access: it refuses
+// before looking anything up. A run the app exported reads as deleted.
+const exportedInHealth = new Set<string>();
 beforeEach(() => {
   resetFirestore();
   localStorage.clear();
   vi.clearAllMocks();
   auth.currentUser = { uid: "u1" };
-  writer.deleteWorkout.mockResolvedValue({ status: "deleted" });
+  exportedInHealth.clear();
+  writer.deleteWorkout.mockImplementation(async ({ runId }) => {
+    if (!exportedInHealth.has(runId))
+      throw new Error("Allow Tropos to save workouts in Apple Health.");
+    exportedInHealth.delete(runId);
+    return { status: "deleted" };
+  });
 });
 
 describe("Apple Health cleanup after the feature is disabled", () => {
@@ -42,12 +55,29 @@ describe("Apple Health cleanup after the feature is disabled", () => {
     expect(queueHealthWorkoutExport("u1", "new-run", true)).toBe(true);
     expect(pendingHealthWorkoutExports("u1")).toEqual([]);
 
+    exportedInHealth.add("old-exported-run");
+    seedFirestore({
+      "users/u1/healthWorkoutExports/old-exported-run": {
+        runId: "old-exported-run",
+        state: "exported",
+      },
+    });
     expect(queueHealthWorkoutDeletion("u1", "old-exported-run")).toBe(true);
     await reconcilePendingHealthExports("u1");
     expect(writer.deleteWorkout).toHaveBeenCalledWith({
       runId: "old-exported-run",
     });
     expect(writer.exportWorkout).not.toHaveBeenCalled();
+    expect(pendingHealthWorkoutExports("u1")).toEqual([]);
+    expect(
+      readDoc("users/u1/healthWorkoutExports/old-exported-run")
+    ).toBeUndefined();
+  });
+
+  it("drops the cleanup of a run nobody exported without asking Apple Health", async () => {
+    expect(queueHealthWorkoutDeletion("u1", "never-exported-run")).toBe(true);
+    await reconcilePendingHealthExports("u1");
+    expect(writer.deleteWorkout).not.toHaveBeenCalled();
     expect(pendingHealthWorkoutExports("u1")).toEqual([]);
   });
 });

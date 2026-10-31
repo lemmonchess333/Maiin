@@ -163,7 +163,15 @@ final class HealthWorkoutStore {
         }
         guard isAvailable else { finish(.failure(HealthWorkoutStoreError.unavailable)); return }
         guard store.authorizationStatus(for: workoutType) == .sharingAuthorized else {
-            finish(.failure(HealthWorkoutStoreError.permissionRequired)); return
+            // Every workout this app saves is remembered here. With no receipt
+            // and no write access there is nothing of ours to remove; the web
+            // layer still holds a run with a server receipt until "deleted".
+            if localMap()[runId] == nil {
+                finish(.success(["status": "absent"]))
+            } else {
+                finish(.failure(HealthWorkoutStoreError.permissionRequired))
+            }
+            return
         }
         lookup(runId: runId) { result in
             switch result {
