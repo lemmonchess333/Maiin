@@ -21,6 +21,7 @@ import { workoutTonnageKg, type WorkoutExercise } from "@/lib/savedWorkouts";
 import type { ActivityPreview, ShareDecision } from "@/lib/shareComposer";
 import type { ActivityPost, PostedExercise } from "@/lib/activityPost";
 import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
+import { formatDuration } from "@/utils/formatters";
 
 /** A saved lift, as its post describes it. */
 export interface LiftForPost {
@@ -84,7 +85,8 @@ export function liftPostPreview(
       tonnageKg > 0
         ? `${Math.round(liftVolumeIn(tonnageKg, unit)).toLocaleString()} ${liftUnitLabel(unit)} volume`
         : "",
-      lift.durationMinutes > 0 ? `${lift.durationMinutes} min` : "",
+      // Saved minutes carry the clock's seconds; the preview reads whole ones.
+      lift.durationMinutes > 0 ? formatDuration(lift.durationMinutes * 60) : "",
     ].filter(Boolean),
   };
 }
@@ -112,7 +114,7 @@ export function liftPost(
     activityTitle: lift.title,
     exerciseCount: done.length,
     totalVolume: tonnageKg,
-    duration: lift.durationMinutes * 60,
+    duration: Math.round(lift.durationMinutes * 60),
     muscleGroups: [...new Set(done.map((ex) => ex.category).filter(Boolean))],
     exercises: postedExercises(done),
   };

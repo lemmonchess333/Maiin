@@ -195,3 +195,41 @@ it("in lb, shows and asks in lb and saves kg; an untouched weight keeps its kg (
   expect(second.weightKg).toBeCloseTo(136.08, 2);
   expect(h.save.mock.calls[0][6]).toBe("lbs");
 });
+
+it("shows a measured clock in whole minutes and stays clean until something changes", async () => {
+  h.save.mockResolvedValue(undefined);
+  const onSaved = vi.fn();
+  const durationMinutes = 47 + 19 / 60;
+  render(
+    <CorrectWorkoutSheet
+      uid="u1"
+      workout={
+        {
+          id: "lift",
+          revision: 1,
+          durationMinutes,
+          exercises: [
+            {
+              exerciseId: "bench",
+              exerciseName: "Bench",
+              sets: [{ reps: 8, weightKg: 60 }],
+            },
+          ],
+        } as Workout
+      }
+      unit="kg"
+      onClose={vi.fn()}
+      onSaved={onSaved}
+    />
+  );
+  const field = screen.getByLabelText("Duration (minutes)");
+  expect(field).toHaveValue(47);
+  expect(field).toHaveAttribute("step", "1");
+  expect(
+    screen.getByRole("button", { name: "Save corrections" })
+  ).toBeDisabled();
+  fireEvent.change(field, { target: { value: "50" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save corrections" }));
+  await waitFor(() => expect(onSaved).toHaveBeenCalledOnce());
+  expect(h.save.mock.calls[0][5].durationMinutes).toBe(50);
+});
