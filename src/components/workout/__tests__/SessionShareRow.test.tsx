@@ -169,7 +169,8 @@ describe("no saved answer: ask once", () => {
     await screen.findByRole("heading", QUESTION);
     expect(asking).toHaveBeenLastCalledWith(true);
     fireEvent.click(screen.getByRole("button", { name: "Don't share" }));
-    expect(asking).toHaveBeenLastCalledWith(false);
+    // The callback is published by an effect after the answer changes.
+    await waitFor(() => expect(asking).toHaveBeenLastCalledWith(false));
   });
 
   it("the three answers are equal: same control, none filled", async () => {

@@ -248,36 +248,12 @@ export default function FoodHeroCard({
       ? buildGlanceLine(dailyTotals, dailyTargets, { targetsAreDefault })
       : null;
 
-  // Dark-aware surface via `bg-card` + `var(--ds-shadow-card)` — the token
-  // swaps to a deeper shadow under `.dark` (see tokens.css), so the same
-  // markup renders correctly in both themes.
+  // One quiet surface keeps the day's calories and macros together. The
+  // former two-colour wash and three raised macro cards made the diary's
+  // summary look like four competing dashboard widgets.
   return (
     <>
-      {/* ── CALORIE CARD — caption, ring, glance line ──────────────────── */}
-      <div className="relative overflow-hidden p-4 rounded-2xl bg-card card-shadow">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-85 dark:opacity-100"
-          style={{
-            background:
-              "radial-gradient(ellipse 85% 75% at 15% 20%, hsl(var(--nutrition) / 0.32) 0%, hsl(var(--nutrition) / 0.12) 45%, transparent 78%), radial-gradient(ellipse 85% 75% at 85% 80%, hsl(var(--primary) / 0.38) 0%, hsl(var(--primary) / 0.14) 45%, transparent 78%)",
-          }}
-        />
-        {/* A static wash gives the whole card depth without a photo or a
-            second focal point: the food surface's orange from the top-left
-            corner, the brand purple from the bottom-right, the ring at the
-            seam. Owner call from the hero-glow options (V2): the same two
-            colours, made to MEET. Before this each ellipse peaked under
-            20%, faded out by 65% of the card and was dimmed a further 30%
-            in light, so the two never reached each other and the middle
-            was flat card — it read as two corner smudges, not a gradient.
-            Now each spans ~85% of the card with a three-stop falloff, and
-            light runs at 85% rather than 70%. Static, token-derived, and
-            the ring and its readable centre stay above it. The ring is
-            orange as well now, and the purple half stays: the owner
-            compared an orange-only wash, a flat orange tint and a plain
-            card with this one and kept this (DS3's STATUS lines in the
-            plan file). */}
+      <Card className="relative overflow-hidden" data-food-summary>
         <div className="relative">
           {/* The ring and the card's three small controls. The controls sit
           in the ring's corners rather than in rows of their own above and
@@ -412,27 +388,12 @@ export default function FoodHeroCard({
             </p>
           )}
         </div>
-      </div>
-
-      {/* Macro tile row — three floating tiles. Each reads the SAME shared
-        `mode` as the calorie ring, and tapping any tile flips that one
-        shared mode (via toggleMode) so the ring + all three tiles stay in
-        lockstep. mt-4 = 16px gap to the calorie card above.
-
-        An explicit 3-column GRID rather than flex-1 children: flex-1
-        sizes from content, so the widest macro number could take space
-        from its neighbours and the three tiles stopped being the same
-        width exactly when the numbers got long. grid-cols-3 makes the
-        columns equal by construction, and `min-w-0` on each cell lets a
-        long number shrink inside its own tile instead of pushing the
-        row wider. gap-2 matches the compact-grid rule in the design
-        system and the Analytics period summary's figures. Under 10em
-        (double text on a 320px phone) they stack: three across, "101g"
-        ran into its neighbours. */}
-      {!beforeJoined && (
-        <div className="@container mt-4">
-          <div className="grid grid-cols-3 @max-[10em]:grid-cols-1 gap-2">
-            <Card size="compact" className="min-w-0 flex">
+        {/* The numbers share one card with the ring. Their icons and bars
+            retain the food colours, while a simple rule gives the
+            secondary detail its place without another elevation layer. */}
+        {!beforeJoined && (
+          <div className="@container mt-4 border-t border-border pt-4">
+            <div className="grid grid-cols-3 @max-[10em]:grid-cols-1 gap-3">
               <MacroColumn
                 macroKey="protein"
                 Icon={Beef}
@@ -447,9 +408,8 @@ export default function FoodHeroCard({
                 numberDurationSec={LOG_MOMENT_SEC}
                 barDurationSec={LOG_MOMENT_SEC}
                 drawIn={drawIn}
+                size="compact"
               />
-            </Card>
-            <Card size="compact" className="min-w-0 flex">
               <MacroColumn
                 macroKey="carbs"
                 Icon={Wheat}
@@ -462,9 +422,8 @@ export default function FoodHeroCard({
                 numberDurationSec={LOG_MOMENT_SEC}
                 barDurationSec={LOG_MOMENT_SEC}
                 drawIn={drawIn}
+                size="compact"
               />
-            </Card>
-            <Card size="compact" className="min-w-0 flex">
               <MacroColumn
                 macroKey="fat"
                 Icon={Avocado}
@@ -477,11 +436,12 @@ export default function FoodHeroCard({
                 numberDurationSec={LOG_MOMENT_SEC}
                 barDurationSec={LOG_MOMENT_SEC}
                 drawIn={drawIn}
+                size="compact"
               />
-            </Card>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </Card>
 
       {/* Wave3 G — the training-aware day annotation (the free→premium
         conversion hook: "Hard training day" / "Race week — carb load")
