@@ -53,7 +53,12 @@ describe("per-session Watch heart rate buffer", () => {
     appendHeartRateSample("u1", "run-1", beat);
     appendHeartRateSample("u1", "run-1", beat);
     pauseMoving("u1", "run-1", 10_000);
-    expect(localStorage.getItem(localStorage.key(0)!)).not.toContain("135");
+    expect(JSON.parse(localStorage.getItem(localStorage.key(0)!)!)).toEqual({
+      updatedAt: expect.any(Number),
+      activeSince: null,
+      lastObservedAt: null,
+      activeIntervals: [{ startMs: 0, endMs: 10_000 }],
+    });
     expect(getHeartRateSession("u1", "run-1")).toEqual({
       samples: [beat],
       activeIntervals: [{ startMs: 0, endMs: 10_000 }],
