@@ -97,6 +97,7 @@ import { maxHrFromAge, summarizeHeartRate } from "@/lib/hrZones";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
 import { clearWatchRunSession } from "@/lib/watchRunBridge";
 import { queueWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
+import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { announceRouteShare, shareGpx } from "@/lib/shareRoute";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
@@ -2095,7 +2096,7 @@ export default function RunSummary() {
               <CompletionExtras
                 share={shareAction}
                 kind="run"
-                activationJourneyV2={profile?.activationJourneyVersion === 2}
+                activationJourneyV2={isActivationJourneyV2(profile)}
               />
             )}
 
