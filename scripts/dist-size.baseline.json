@@ -257,6 +257,7 @@
     "SectionLabel": 333,
     "SegmentedControl": 2228,
     "Select": 910,
+    "SessionCompleteScreen": 18600,
     "sessionCompletion": 4122,
     "sessionDelete": 3585,
     "SessionLengthLabel": 4150,
@@ -384,8 +385,8 @@
     "weightTrend": 3503,
     "wifi-off": 461,
     "workoutBurn": 369,
-    "WorkoutDetail": 19126,
-    "WorkoutSession": 69931,
+    "WorkoutDetail": 14368,
+    "WorkoutSession": 65429,
     "workoutTemplates": 9982,
     "x": 155,
     "zap": 263

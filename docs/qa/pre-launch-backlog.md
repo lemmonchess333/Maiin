@@ -10,6 +10,36 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## A lift's rest outside the app (Mob2 call 1, 2026-10-28)
+
+While a rest runs, the page's title counts it down ("1:23 rest", then
+"Rest over") on its own clock, so a browser tab and the app switcher show
+it, and the title goes back when the rest ends (`src/lib/restOutside.ts`).
+A rest that ended while the app was away no longer chimes again on the way
+back. On the phone the rest has a Live Activity of its own
+(`src/lib/restLiveActivity.ts`): a card with the system's own countdown to
+the rest's end and the next exercise, and the Dynamic Island's dumbbell
+and countdown. **Its native half is not built**: it needs the same widget
+extension as the run's card (`docs/run-live-activity.md`, Mob2 call 13:
+when the owner has a Mac). Until then `startActivity` rejects and the app
+shows nothing there; the rest-end notification is separate and works
+already. The unit suites pin the title, the plugin calls and a rest made
+longer replacing itself; only a phone shows the card.
+
+- [ ] **The tab's title.** In the web app, tick a working set and switch
+      to another tab. Passing: the tab reads "1:29 rest" and counts down
+      while you are away, reads "Rest over" when it ends, and goes back to
+      "Tropos" after End rest or the next set.
+- [ ] **No second chime.** On an iPhone, tick a set, lock the phone and
+      wait past the rest. Passing: the rest-end notification arrives, and
+      unlocking back into the workout shows the finished ring without a
+      chime or a buzz.
+- [ ] **The lock screen, once the extension exists.** After the Xcode
+      steps in `docs/run-live-activity.md`, tick a set and lock the phone.
+      Passing: the card shows "Rest" and a countdown that reaches 0:00 on
+      time with the app asleep, "Next:" and the exercise under it; +15 s
+      in the app moves the countdown on; End rest takes the card away.
+
 ## The streak's days, from the flame (Mob1 call 4, 2026-10-27)
 
 Home's flame opens a sheet: the month's logged days filled in purple,

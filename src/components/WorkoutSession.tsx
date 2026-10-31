@@ -41,6 +41,13 @@ import {
 } from "lucide-react";
 import type { Exercise } from "@/lib/exercises";
 import { exerciseAddedToday } from "@/features/program/sessionAdd";
+import { accountStartMs } from "@/lib/startDay";
+import {
+  cursorAfterRemoval,
+  isAddedToday,
+  removedFromSession,
+  withoutPlace,
+} from "@/features/program/sessionRemove";
 import { generateInstanceId } from "@/features/program/programTypes";
 import { workoutSourceForScope } from "@/features/program/emptyWorkout";
 import {
@@ -78,9 +85,8 @@ import { startingSetRows } from "@/features/program/setStartValues";
 import { swappedForToday } from "@/features/program/sessionSwap";
 import { followedWeight } from "@/features/program/sessionSets";
 import { loadContextFrom } from "@/features/program/startingLoads";
-import KeepSwapSheet, {
-  type SwapToKeep,
-} from "@/components/workout/KeepSwapSheet";
+import type { SwapToKeep } from "@/components/workout/KeepSwapSheet";
+import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import {
   buildInitialSetLogs,
   toCompletionSetLogs,
@@ -95,10 +101,6 @@ import {
   warmupRestSecondsFor,
 } from "@/features/program/restTime";
 import { useStreaks } from "@/features/streaks/useStreaks";
-import {
-  exercisesForLiftBadges,
-  liftWeightMilestoneBadges,
-} from "@/features/streaks/liftWeightMilestones";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
 import {
@@ -125,7 +127,6 @@ import {
 } from "@/lib/liftRecordsStore";
 import { effortCueFor, rpeReserveWords } from "@/features/program/effortCue";
 import Tooltip from "@/components/ui/Tooltip";
-import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import {
   needsLoad,
   validateSet,
@@ -158,7 +159,6 @@ import {
 } from "@/hooks/useWorkoutDraft";
 import { logger } from "@/lib/logger";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
-import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import WorkoutProgress from "@/components/workout/WorkoutProgress";
 import WorkoutRestTimer from "@/components/workout/WorkoutRestTimer";
 import SetCheck from "@/components/workout/SetCheck";
@@ -200,6 +200,17 @@ const EmptySessionScreen = lazyRetry(
 const ExercisePicker = lazyRetry(
   () => import("@/components/program/ExercisePicker")
 );
+// The finish screen, and Finish's question about today's swaps, load
+// beside the workout screen rather than in it. Both are fetched as soon as
+// this module is, before any session opens, so they are here at Finish,
+// offline too.
+const loadCompleteScreen = () =>
+  import("@/components/workout/SessionCompleteScreen");
+const loadKeepSwapSheet = () => import("@/components/workout/KeepSwapSheet");
+void loadCompleteScreen().catch(() => {});
+void loadKeepSwapSheet().catch(() => {});
+const SessionCompleteScreen = lazyRetry(loadCompleteScreen);
+const KeepSwapSheet = lazyRetry(loadKeepSwapSheet);
 
 interface WorkoutDay {
   dayName: string;
@@ -405,6 +416,11 @@ export default function WorkoutSession({
     () => ({ ...initialDay, exercises: prescription.exercises }),
     [initialDay, prescription]
   );
+  /* The session's name as it is shown: an empty workout's as the lifter
+     named it on the finish screen (Mob2 call 11), else the day's. The
+     draft and the save still key on the day's stored name. */
+  const sessionName = prescription.dayName ?? day.dayName;
+  const source = workoutSourceForScope(draftScope);
   const [originalStartedAt, setOriginalStartedAt] = useState(
     () => initialDraft?.startedAt ?? Date.now()
   );
@@ -464,6 +480,17 @@ export default function WorkoutSession({
   const [swapFor, setSwapFor] = useState<number | null>(null);
   /* "Add exercise" (Mob1 call 1): the picker, open to add to today. */
   const [adding, setAdding] = useState(false);
+  /* An added exercise with sets done, whose removal is being asked
+     about (Mob2 call 11). Kept as the question closes, so its words hold
+     while it animates out. */
+  const [removing, setRemoving] = useState<{
+    index: number;
+    name: string;
+    sets: number;
+    open: boolean;
+  } | null>(null);
+  const closeRemoving = () =>
+    setRemoving((asked) => asked && { ...asked, open: false });
   const [keepQuestion, setKeepQuestion] = useState<{
     open: boolean;
     swaps: SwapToKeep[];
@@ -1441,19 +1468,33 @@ export default function WorkoutSession({
       ),
     }));
 
-  const refreshRecords = (logs: SetLog[][]) => {
+  const refreshRecords = (
+    logs: SetLog[][],
+    exercises = day.exercises,
+    date = sessionDay
+  ) => {
     const next = sessionRecords(
       recordBaseline.current,
       volumeBaseline.current,
       sessionCounts,
-      day.exercises,
+      exercises,
       logs,
-      sessionDay
+      date
     );
     setPrMap(next.map);
     setPrResults(next.results);
     setFiredPRs(next.fired);
     setVolumeBest(next.volumeBest);
+  };
+
+  /** The finish screen's "Started" (Mob2 call 12): the session began
+   *  earlier than it was opened, for a lift recorded late. It is dated by
+   *  the stated start, as by any start (Lift3): the workout, the plan's
+   *  records of it, the run before it and this session's bests. The clock
+   *  stays the clock: the workout's length is still the time it ran. */
+  const changeStart = (at: number) => {
+    setOriginalStartedAt(at);
+    refreshRecords(setLogs, day.exercises, liftSessionDay(at));
   };
 
   /** Saves an edited set, or hands back the question to ask first when
@@ -1638,6 +1679,39 @@ export default function WorkoutSession({
     haptic("light");
   };
 
+  /**
+   * "Remove from workout" (Mob2 call 11): an exercise added today goes,
+   * with its rows. Everything the session holds by place moves up one
+   * after it (`sessionRemove.ts`), and its bests are worked out again
+   * without its sets.
+   */
+  const doneSetsOf = (index: number) =>
+    countedSets(setLogs[index] ?? []).filter((set) => set.completed).length;
+  const removeExercise = (index: number) => {
+    closeRemoving();
+    if (!isAddedToday(index, initialDay.exercises.length)) return;
+    const key = rowKey(day.exercises[index] ?? {}, index);
+    rowsToStart.current.delete(key);
+    weightsToFollow.current.delete(key);
+    const exercises = day.exercises.filter((_, i) => i !== index);
+    const logs = setLogs.filter((_, i) => i !== index);
+    setPrescription((current) => removedFromSession(current, index));
+    setSetLogs(logs);
+    setSkippedRows((rows) => withoutPlace(rows, index));
+    setExerciseNotes((notes) => withoutPlace(notes, index));
+    setPreviousNotes((notes) => withoutPlace(notes, index));
+    setPreviousSets((sets) => withoutPlace(sets, index));
+    refreshRecords(logs, exercises);
+    setNewBest(null);
+    setLastCompleted(null);
+    const cursor = cursorAfterRemoval(logs, index, {
+      exerciseIndex: currentExIndex,
+      setIndex: currentSetIndex,
+    });
+    setCurrentExIndex(cursor.exerciseIndex);
+    setCurrentSetIndex(cursor.setIndex);
+  };
+
   /** Skipping keeps the sets done and sets the rest aside. */
   const skipExercise = (index: number) => {
     const next = setLogs.map((rows, i) =>
@@ -1774,11 +1848,19 @@ export default function WorkoutSession({
         // cracks now rather than after onWorkoutCreated's round-trip —
         // which was long enough for the owner to have left the screen. The
         // server still awards it; the transaction behind awardEventBadges
-        // makes the second arrival a no-op whichever side that is.
-        const lifts = liftWeightMilestoneBadges(
-          exercisesForLiftBadges(day.exercises, completionLogs)
+        // makes the second arrival a no-op whichever side that is. The
+        // rule loads on its own, after the save: nothing waits for it.
+        const exercises = day.exercises;
+        void import("@/features/streaks/liftWeightMilestones").then(
+          ({ exercisesForLiftBadges, liftWeightMilestoneBadges }) => {
+            if (completionUid && auth.currentUser?.uid !== completionUid)
+              return;
+            const lifts = liftWeightMilestoneBadges(
+              exercisesForLiftBadges(exercises, completionLogs)
+            );
+            if (lifts.length > 0) awardEventBadges(lifts);
+          }
         );
-        if (lifts.length > 0) awardEventBadges(lifts);
       };
       if (queuedReceipt) {
         setSaved(true);
@@ -1924,7 +2006,7 @@ export default function WorkoutSession({
         }
       >
         <EmptySessionScreen
-          title={dayLabel ?? liftDayLine(day.dayName)}
+          title={dayLabel ?? liftDayLine(sessionName)}
           onClose={onClose}
           onAdd={openAddPicker}
         >
@@ -1937,9 +2019,13 @@ export default function WorkoutSession({
   // Session complete screen
   if (sessionComplete) {
     return (
-      <>
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 z-50 bg-background pt-[var(--safe-top)]" />
+        }
+      >
         <SessionCompleteScreen
-          dayName={dayLabel ?? day.dayName}
+          dayName={dayLabel ?? sessionName}
           exercises={day.exercises}
           setLogs={setLogs}
           firedPRs={firedPRs}
@@ -1956,6 +2042,19 @@ export default function WorkoutSession({
           onEdit={
             !completionPending ? () => setSessionComplete(false) : undefined
           }
+          startedAt={originalStartedAt}
+          onChangeStart={!completionPending ? changeStart : undefined}
+          planWeek={source === "programme"}
+          accountStart={accountStartMs(
+            profile?.createdAt,
+            user?.metadata?.creationTime
+          )}
+          onRename={
+            source === "free" && !completionPending
+              ? (name) =>
+                  setPrescription((current) => ({ ...current, dayName: name }))
+              : undefined
+          }
           onClose={onClose}
           onViewWorkout={
             savedWorkoutId && onViewWorkout
@@ -1971,7 +2070,7 @@ export default function WorkoutSession({
             setKeepQuestion((question) => ({ ...question, open: false }))
           }
         />
-      </>
+      </Suspense>
     );
   }
 
@@ -2072,7 +2171,7 @@ export default function WorkoutSession({
             aria-level={1}
             className="truncate text-base font-bold text-foreground"
           >
-            {dayLabel ?? liftDayLine(day.dayName)}
+            {dayLabel ?? liftDayLine(sessionName)}
           </p>
           <WorkoutProgress
             key={sessionStartedAt}
@@ -3072,6 +3171,21 @@ export default function WorkoutSession({
         }}
       />
 
+      <ConfirmDialog
+        open={removing?.open ?? false}
+        destructive
+        title={`Remove ${removing?.name ?? ""}?`}
+        description={
+          removing?.sets === 1
+            ? "The set you've done on it won't be saved."
+            : `The ${removing?.sets ?? 0} sets you've done on it won't be saved.`
+        }
+        confirmLabel="Remove"
+        cancelLabel="Keep it"
+        onCancel={closeRemoving}
+        onConfirm={() => removing && removeExercise(removing.index)}
+      />
+
       {menuFor !== null && day.exercises[menuFor] && (
         <Suspense fallback={null}>
           <ExerciseMenuSheet
@@ -3096,6 +3210,23 @@ export default function WorkoutSession({
             }}
             onSuperset={(withNext) => regroup(menuFor, withNext)}
             onUnskip={() => unskipExercise(menuFor)}
+            onRemove={
+              isAddedToday(menuFor, initialDay.exercises.length)
+                ? () => {
+                    // Its done sets go with it, so that is asked first,
+                    // once the menu has gone.
+                    const sets = doneSetsOf(menuFor);
+                    if (sets === 0) removeExercise(menuFor);
+                    else
+                      setRemoving({
+                        index: menuFor,
+                        name: day.exercises[menuFor].name,
+                        sets,
+                        open: true,
+                      });
+                  }
+                : undefined
+            }
           />
         </Suspense>
       )}
