@@ -1445,6 +1445,8 @@ exports.applyProgramCommand = functions
 // Permission before food goes to AI — shared by analyzeFood and
 // analyzeFoodText. See lib/aiConsent.js.
 const aiConsent = require("./lib/aiConsent");
+// The optional detail typed on a photo's result (Mob2, call 3).
+const foodPhotoDetail = require("./lib/foodPhotoDetail");
 
 exports.analyzeFood = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -1557,6 +1559,16 @@ exports.analyzeFood = functions
           res.status(400).json({ error: "Image too large" });
           return;
         }
+        // An optional few words typed on the photo's result, sent with
+        // the same photo: checked here, before the quota, like the image.
+        // See lib/foodPhotoDetail.js for how it reaches the model.
+        const photoDetail = foodPhotoDetail.readFoodDetail(
+          (req.body || {}).detail
+        );
+        if ("error" in photoDetail) {
+          res.status(400).json({ error: photoDetail.error });
+          return;
+        }
 
         // F1b — daily AI scan quota with per-action counters.
         // Image-AI is Pro-only (free=0/day, pro=100/day).
@@ -1620,23 +1632,34 @@ exports.analyzeFood = functions
             Authorization: "Bearer " + accessToken.access_token,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            contents: [
+          body: JSON.stringify(
+            foodPhotoDetail.withFoodDetail(
               {
-                role: "user",
-                parts: [
-                  { text: prompt },
-                  { inlineData: { mimeType: "image/jpeg", data: imageBase64 } },
+                contents: [
+                  {
+                    role: "user",
+                    parts: [
+                      { text: prompt },
+                      {
+                        inlineData: {
+                          mimeType: "image/jpeg",
+                          data: imageBase64,
+                        },
+                      },
+                    ],
+                  },
                 ],
+                // The model and its settings: lib/foodModel.js. A busy
+                // multi-item plate costs ~60 output tokens per item, and
+                // the model's thinking counts against the same cap, so the
+                // cap has headroom: a response cut off mid-JSON fails the
+                // parse below and charges the user's rate-limit slot for a
+                // 500.
+                generationConfig: foodGenerationConfig(),
               },
-            ],
-            // The model and its settings: lib/foodModel.js. A busy
-            // multi-item plate costs ~60 output tokens per item, and the
-            // model's thinking counts against the same cap, so the cap
-            // has headroom: a response cut off mid-JSON fails the parse
-            // below and charges the user's rate-limit slot for a 500.
-            generationConfig: foodGenerationConfig(),
-          }),
+              photoDetail.detail
+            )
+          ),
         });
 
         const data = await response.json();

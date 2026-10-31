@@ -51,6 +51,7 @@ vi.mock("@/hooks/useMacroPalette", () => ({
 }));
 
 import { ServingSizeDrawer } from "../ServingSizeDrawer";
+import { setCalorieRingMode } from "@/hooks/useCalorieRingMode";
 
 const baseFood = {
   name: "Cornflakes",
@@ -220,5 +221,50 @@ describe("ServingSizeDrawer — the Open Food Facts credit", () => {
     expect(
       screen.getByText("Food data from Open Food Facts")
     ).toBeInTheDocument();
+  });
+});
+
+describe("ServingSizeDrawer — what is left after this portion", () => {
+  /* Mob2 finding 6: the sheet showed the food's own figures only. The
+     line follows the typed amount. */
+  it("says what the day comes to at the typed amount", () => {
+    setCalorieRingMode("left");
+    render(
+      <ServingSizeDrawer
+        food={{ ...baseFood, unitConfidence: "low" as const }}
+        open
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        day={{
+          calories: 1000,
+          protein: 40,
+          calorieTarget: 2000,
+          proteinTarget: 120,
+        }}
+      />
+    );
+    // 100 g: 372 kcal and 8 g protein.
+    expect(
+      screen.getByText("628 kcal and 72g protein left after this")
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Grams"), {
+      target: { value: "50" },
+    });
+    expect(
+      screen.getByText("814 kcal and 76g protein left after this")
+    ).toBeInTheDocument();
+  });
+
+  it("draws no line without a day to count against", () => {
+    render(
+      <ServingSizeDrawer
+        food={baseFood}
+        open
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+      />
+    );
+    expect(screen.getByText("Log food")).toBeInTheDocument();
+    expect(screen.queryByText(/after this/)).toBeNull();
   });
 });

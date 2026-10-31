@@ -1,4 +1,11 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -31,6 +38,8 @@ import FoodCameraModal, {
 } from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import PortionAmountField from "./nutrition/PortionAmountField";
+import PortionLeftLine from "./nutrition/PortionLeftLine";
+import type { DayBudget } from "@/lib/portionLeft";
 import { parseAmount, type AmountUnit } from "@/lib/mealPortion";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Spinner } from "@/components/ui/Spinner";
@@ -47,6 +56,10 @@ import { filterIdentifiableAiItems } from "@/lib/aiFoodIdentification";
 import { buildFoodNameFromItems } from "@/lib/foodNameBuilder";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import type { AiConsentGate } from "@/hooks/useAiConsent";
+import { lazyRetry } from "@/lib/lazyRetry";
+
+/* Opened on a photo's result only, so it loads then. */
+const PhotoDetailField = lazyRetry(() => import("./food/PhotoDetailField"));
 
 interface Props {
   date: string;
@@ -93,6 +106,9 @@ interface Props {
    *  scanner: the way back from the product form, so the person can
    *  change their mind without scanning again. */
   notFoundBarcode?: string | null;
+  /** The day the result would be logged to, for the line under its
+   *  totals that says what is left after it. */
+  day?: DayBudget | null;
 }
 
 type MealResult = {
@@ -232,6 +248,7 @@ export default function FoodAnalyzer({
   onDescribeProduct,
   onTypeProductDetails,
   notFoundBarcode = null,
+  day = null,
 }: Props) {
   const uid = useUid();
   const { addFavourite, favourites } = useFoodFavourites();
@@ -242,6 +259,7 @@ export default function FoodAnalyzer({
     error: aiError,
     result: aiResult,
     reset: resetAI,
+    refine: refineAI,
   } = useFoodAnalysis();
 
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -1232,6 +1250,13 @@ export default function FoodAnalyzer({
                   totalCarbs={displayTotals.carbs}
                   totalFat={displayTotals.fat}
                 />
+                <PortionLeftLine
+                  day={day}
+                  portion={{
+                    calories: displayTotals.calories,
+                    protein: displayTotals.protein,
+                  }}
+                />
               </div>
 
               {/* The amount, typed, with the same control as the search
@@ -1382,6 +1407,23 @@ export default function FoodAnalyzer({
               {allRemoved && (
                 <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground text-center">
                   All items removed. Restore one above, or retake the photo.
+                </div>
+              )}
+
+              {/* Add a detail (PhotoDetailField), on a photo's result
+                  only: a barcode result has no photo to send. Loaded with
+                  the result, not with the scanner. A reset clears the photo,
+                  which takes the line away, so a new scan starts it empty. */}
+              {!isBarcode && capturedBase64 && (
+                <div className="space-y-2 border-t border-border/40 pt-3">
+                  <Suspense fallback={null}>
+                    <PhotoDetailField
+                      photo={capturedBase64}
+                      aiConsent={aiConsent}
+                      refine={refineAI}
+                      disabled={saving || saved}
+                    />
+                  </Suspense>
                 </div>
               )}
             </div>

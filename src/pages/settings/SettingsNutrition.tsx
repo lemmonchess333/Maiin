@@ -21,9 +21,13 @@ import { useTrainingFuelData } from "@/hooks/useTrainingFuelData";
 import { resolveProgramGoalMirror } from "./resolveProgramGoalMirror";
 import SettingsSection from "@/components/settings/SettingsSection";
 import NutritionSection from "@/components/settings/NutritionSection";
+import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
+import { useNavigate } from "react-router-dom";
+import { Refrigerator } from "lucide-react";
 
 export default function SettingsNutrition() {
   const { user, profile, updateProfile } = useAuth();
+  const navigate = useNavigate();
   // `|| 70`, not `?? 70`: a legacy weightKg of 0 must read as the same
   // fallback every other consumer uses (phaseNutrition's `|| 70`), or the
   // pipeline splits — TDEE computes protein from 0 kg while the daily
@@ -141,6 +145,16 @@ export default function SettingsNutrition() {
         onRecalculate={() => updateProfile(payload)}
         program={program}
       />
+      {/* The saved foods Quick add offers, to correct or remove (F2d's
+          "Settings → My pantry"). */}
+      <SettingsGroup title="Your foods">
+        <SettingsRow
+          icon={Refrigerator}
+          label="My pantry"
+          description="Edit or remove the foods you've logged"
+          onClick={() => navigate("/settings/pantry")}
+        />
+      </SettingsGroup>
     </SettingsSection>
   );
 }

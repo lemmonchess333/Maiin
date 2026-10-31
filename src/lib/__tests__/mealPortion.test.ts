@@ -3,8 +3,12 @@ import type { Meal } from "@/hooks/useMeals";
 import {
   describePortion,
   entryPortion,
+  itemPortion,
+  mealFromItems,
   mealPortionCaption,
+  nameFromItems,
   readPortion,
+  rescaleItem,
   rescaleMealPortion,
   writePortion,
 } from "../mealPortion";
@@ -148,5 +152,57 @@ describe("entryPortion and rescaleMealPortion — fixing a logged portion", () =
 
   it("refuses an amount of zero", () => {
     expect(() => rescaleMealPortion(meal([item("100g")]), 0)).toThrow();
+  });
+});
+
+describe("one item of an entry of several (Mob2 finding 2)", () => {
+  const chicken = { ...item("200g", 330, 62), name: "Chicken" };
+  const rice = { ...item("150g", 195, 4), name: "Rice" };
+  const oil = { ...item("1 tbsp", 120, 0), name: "Oil", carbs: 0, fat: 14 };
+
+  it("rescales one item from its own amount and locks what moved", () => {
+    expect(itemPortion(chicken)).toEqual({ multiplier: 1, baseGrams: 200 });
+    const less = rescaleItem(chicken, 150 / 200);
+    expect(less).toMatchObject({
+      name: "Chicken",
+      portionSize: "0.75x 200g",
+      calories: 247.5,
+      protein: 46.5,
+    });
+    expect(describePortion(less.portionSize)).toBe("150g");
+    expect(less.userEditedFields).toEqual(
+      expect.arrayContaining(["portionSize", "calories", "protein"])
+    );
+    // The same amount is the same item, untouched.
+    expect(rescaleItem(chicken, 1)).toBe(chicken);
+  });
+
+  it("totals an entry from the items left in it", () => {
+    const dish = meal([chicken, rice, oil], { totalFiber: 6 });
+    const fixed = mealFromItems(dish, [rescaleItem(chicken, 0.75), rice]);
+    expect(fixed.items.map((i) => i.name)).toEqual(["Chicken", "Rice"]);
+    expect(fixed).toMatchObject({
+      totalCalories: 442.5,
+      totalProtein: 50.5,
+      totalCarbs: 35,
+      totalFat: 8.8,
+    });
+    // Fibre the items do not carry moves with the calories.
+    expect(fixed.totalFiber).toBe(Math.round(6 * (442.5 / 645) * 10) / 10);
+    expect(() => mealFromItems(dish, [])).toThrow();
+  });
+
+  it("renames an entry whose name was its items, and only then", () => {
+    const typed = meal([chicken, rice, oil], {
+      foodName: "Chicken, Rice, Oil",
+    });
+    expect(nameFromItems(typed, [chicken, rice])).toBe("Chicken, Rice");
+    const scanned = meal([chicken, rice, oil], {
+      foodName: "Chicken, Rice +1",
+    });
+    expect(nameFromItems(scanned, [chicken, rice])).toBe("Chicken, Rice");
+    const own = meal([chicken, rice, oil], { foodName: "Sunday roast" });
+    expect(nameFromItems(own, [chicken, rice])).toBeNull();
+    expect(nameFromItems(typed, [chicken, rice, oil])).toBeNull();
   });
 });

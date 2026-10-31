@@ -88,6 +88,7 @@ const SETTINGS_PAGES = [
   "run-plan",
   "workout-prefs",
   "nutrition",
+  "pantry",
   "data",
   "recently-deleted-meals",
   "health",
@@ -222,6 +223,38 @@ test.describe("large text", () => {
       await page.getByRole("button", { name: "Enter manually" }).click();
       await page.waitForTimeout(800);
       await measure(page, "food-manual-entry", width, found);
+      await page.keyboard.press("Escape");
+
+      // The focused box's Quick add list, its More row and its Quick add
+      // row (Mob2), opened to fifteen.
+      await page.waitForTimeout(600);
+      await page.getByLabel("What did you eat").focus();
+      const more = page.getByRole("button", { name: "More", exact: true });
+      if (await more.isVisible({ timeout: 3_000 }).catch(() => false))
+        await more.click();
+      await page
+        .getByRole("button", { name: /^Quick add Calories/ })
+        .waitFor({ state: "visible", timeout: 20_000 });
+      await measure(page, "food-quick-add", width, found);
+      await page.getByLabel("What did you eat").blur();
+
+      // A diary row's sheet, with the day's line and Copy to another day,
+      // and the copy sheet it opens.
+      await page.waitForTimeout(600);
+      await page
+        .getByRole("button", { name: /^Edit / })
+        .first()
+        .click();
+      const copy = page.getByRole("button", { name: "Copy to another day" });
+      await copy.waitFor({ state: "visible", timeout: 20_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "food-edit", width, found);
+      await copy.click();
+      await page
+        .getByRole("dialog", { name: "Copy to another day" })
+        .waitFor({ state: "visible", timeout: 20_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "food-copy-entry", width, found);
       await page.keyboard.press("Escape");
 
       await page.goto("settings");
@@ -421,6 +454,15 @@ test.describe("large text", () => {
         await ready(page, page.getByRole("heading", { level: 1 }).first());
         await measure(page, `settings-${section}`, width, found);
       }
+      // My pantry's food sheet, on the food seed:rich saves.
+      await page.goto("settings/pantry");
+      await page.getByRole("button", { name: /^Flat white/ }).click();
+      await page
+        .getByRole("dialog", { name: "Edit food" })
+        .waitFor({ state: "visible", timeout: 20_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "settings-pantry-food", width, found);
+      await page.keyboard.press("Escape");
       expect(found).toEqual([]);
     });
 

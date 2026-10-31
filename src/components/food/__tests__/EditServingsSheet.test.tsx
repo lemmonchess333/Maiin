@@ -10,6 +10,7 @@ import EditServingsSheet, {
 } from "../EditServingsSheet";
 import type { MealKey } from "../mealConstants";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { setCalorieRingMode } from "@/hooks/useCalorieRingMode";
 
 afterEach(cleanup);
 
@@ -120,6 +121,7 @@ describe("EditServingsSheet", function () {
       targetName: null,
       targetMacros: null,
       targetPortion: null,
+      targetItems: null,
     });
   });
 
@@ -269,6 +271,7 @@ describe("EditServingsSheet", function () {
       targetName: null,
       targetMacros: null,
       targetPortion: null,
+      targetItems: null,
     });
   });
 
@@ -292,6 +295,7 @@ describe("EditServingsSheet", function () {
       targetName: null,
       targetMacros: null,
       targetPortion: null,
+      targetItems: null,
     });
   });
 
@@ -318,6 +322,7 @@ describe("EditServingsSheet", function () {
       targetName: null,
       targetMacros: null,
       targetPortion: null,
+      targetItems: null,
     });
   });
 
@@ -345,6 +350,7 @@ describe("EditServingsSheet", function () {
       targetName: "Boiled eggs",
       targetMacros: null,
       targetPortion: null,
+      targetItems: null,
     });
   });
 
@@ -386,6 +392,7 @@ describe("EditServingsSheet", function () {
       targetName: "Greek yoghurt",
       targetMacros: null,
       targetPortion: null,
+      targetItems: null,
     });
   });
 
@@ -442,6 +449,7 @@ describe("EditServingsSheet", function () {
         // carbs + fat omitted — unchanged
       },
       targetPortion: null,
+      targetItems: null,
     });
   });
 
@@ -555,6 +563,7 @@ describe("EditServingsSheet", function () {
       targetName: null,
       targetMacros: { totalCalories: 90 },
       targetPortion: null,
+      targetItems: null,
     });
   });
 
@@ -579,6 +588,7 @@ describe("EditServingsSheet", function () {
       targetName: null,
       targetMacros: null,
       targetPortion: null,
+      targetItems: null,
     });
   });
   /* Calories lead. A food the local parser does not know is logged at
@@ -618,6 +628,7 @@ describe("EditServingsSheet", function () {
       targetName: null,
       targetMacros: { totalCalories: 300 },
       targetPortion: null,
+      targetItems: null,
     });
   });
 
@@ -669,6 +680,7 @@ describe("EditServingsSheet", function () {
       targetName: null,
       targetMacros: null,
       targetPortion: null,
+      targetItems: null,
     });
   });
 
@@ -691,6 +703,7 @@ describe("EditServingsSheet", function () {
       targetName: null,
       targetMacros: null,
       targetPortion: null,
+      targetItems: null,
     });
   });
 
@@ -800,6 +813,7 @@ describe("EditServingsSheet — fixing one entry's portion", function () {
       targetName: null,
       targetMacros: null,
       targetPortion: 0.75,
+      targetItems: null,
     });
   });
 
@@ -845,5 +859,147 @@ describe("EditServingsSheet — fixing one entry's portion", function () {
       target: { value: "200" },
     });
     expect(save).toBeDisabled();
+  });
+
+  /* Mob2 finding 6: the day without this entry, plus the entry at the
+     amount being typed. */
+  it("says what is left of the day at the edited amount", function () {
+    setCalorieRingMode("left");
+    render(
+      <EditServingsSheet
+        source={{
+          foodName: "Chicken and rice",
+          currentCount: 1,
+          currentTotalCalories: 600,
+          currentTotalProtein: 40,
+          currentTotalCarbs: 60,
+          currentTotalFat: 20,
+          currentMeal: "lunch",
+          currentPortion: { multiplier: 1, baseGrams: 200 },
+        }}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        day={{
+          calories: 900,
+          protein: 50,
+          calorieTarget: 2000,
+          proteinTarget: 150,
+        }}
+      />
+    );
+    expect(
+      screen.getByText("500 kcal and 60g protein left after this")
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Grams"), {
+      target: { value: "100" },
+    });
+    expect(
+      screen.getByText("800 kcal and 80g protein left after this")
+    ).toBeInTheDocument();
+  });
+});
+
+describe("EditServingsSheet — an entry of several foods", function () {
+  /* Mob2 finding 2: "200g chicken, 150g rice, 1 tbsp oil" logs as one
+     row; the chicken was 150 g and there was no oil. */
+  const items = [
+    {
+      name: "Chicken",
+      portionSize: "200g",
+      calories: 330,
+      protein: 62,
+      carbs: 0,
+      fat: 7,
+    },
+    {
+      name: "Rice",
+      portionSize: "150g",
+      calories: 195,
+      protein: 4,
+      carbs: 42,
+      fat: 0,
+    },
+    {
+      name: "Oil",
+      portionSize: "1 tbsp",
+      calories: 120,
+      protein: 0,
+      carbs: 0,
+      fat: 14,
+    },
+  ];
+  function renderDish(onSave = vi.fn()) {
+    render(
+      <EditServingsSheet
+        source={{
+          foodName: "Chicken, Rice, Oil",
+          currentCount: 1,
+          currentTotalCalories: 645,
+          currentTotalProtein: 66,
+          currentTotalCarbs: 42,
+          currentTotalFat: 21,
+          currentMeal: "dinner",
+          currentPortion: { multiplier: 1, baseGrams: null },
+          currentItems: items,
+        }}
+        onCancel={vi.fn()}
+        onSave={onSave}
+      />
+    );
+    return onSave;
+  }
+
+  it("lists each food with its own amount, and no entry-wide fields", function () {
+    renderDish();
+    expect(screen.getAllByTestId("edit-meal-item")).toHaveLength(3);
+    expect(screen.getByLabelText("Grams of Chicken")).toHaveValue("200");
+    expect(screen.getByLabelText("Grams of Rice")).toHaveValue("150");
+    expect(screen.getByLabelText("Servings of Oil")).toHaveValue("1");
+    expect(screen.queryByLabelText("Calories")).toBeNull();
+    expect(screen.queryByLabelText("Servings")).toBeNull();
+  });
+
+  it("saves the chicken at 150 g and the oil taken out, totalled from the items", function () {
+    const onSave = renderDish();
+    fireEvent.change(screen.getByLabelText("Grams of Chicken"), {
+      target: { value: "150" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Remove Oil" }));
+    // 247.5 + 195.
+    expect(screen.getByText(/~ 443 kcal/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    const changes = onSave.mock.calls[0][0] as EditServingsChanges;
+    expect(changes.targetItems?.map((i) => i.name)).toEqual([
+      "Chicken",
+      "Rice",
+    ]);
+    expect(changes.targetItems?.[0]).toMatchObject({
+      portionSize: "0.75x 200g",
+      calories: 247.5,
+    });
+    expect(changes.targetItems?.[1]).toBe(items[1]);
+    expect(changes.targetMacros).toBeNull();
+    expect(changes.targetPortion).toBeNull();
+  });
+
+  it("restores a removed food, and will not save an entry with none left", function () {
+    renderDish();
+    const save = screen.getByRole("button", { name: "Save" });
+    for (const name of ["Chicken", "Rice", "Oil"])
+      fireEvent.click(screen.getByRole("button", { name: `Remove ${name}` }));
+    expect(save).toBeDisabled();
+    expect(
+      screen.getByText("Restore an item, or delete the entry.")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Restore Rice" }));
+    expect(save).toBeEnabled();
+  });
+
+  it("holds Save while a food's amount is blank", function () {
+    renderDish();
+    fireEvent.change(screen.getByLabelText("Grams of Rice"), {
+      target: { value: "" },
+    });
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 });

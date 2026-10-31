@@ -104,10 +104,11 @@ test.describe("food delight", () => {
       await page.setViewportSize({ width: 393, height: 852 });
 
       await page.getByRole("button", { name: "Enter manually" }).click();
-      const sheet = page.getByRole("dialog", { name: "Log a meal" });
+      const sheet = page.getByRole("dialog", { name: "Quick add" });
       await expect(sheet).toBeVisible();
       const save = sheet.getByRole("button", { name: "Log meal", exact: true });
-      await expect(save).toBeDisabled();
+      // Quick add needs no name, so Log is ready before anything is typed.
+      await expect(save).toBeEnabled();
       await sheet
         .getByRole("textbox", { name: "Meal name" })
         .fill("Chicken & rice");

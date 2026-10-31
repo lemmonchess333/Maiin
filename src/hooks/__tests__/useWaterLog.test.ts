@@ -384,3 +384,57 @@ it("retry restores a failed live read", async () => {
   await waitFor(() => expect(result.current.ml).toBe(750));
   expect(result.current.syncStatus).toBe("");
 });
+
+/* The Food diary's water row (Mob2, call 2): water for the day on
+   screen, past days included, into that day's own document. */
+describe("a named day", () => {
+  const PAST = localDateString(
+    new Date(new Date().setDate(new Date().getDate() - 3))
+  );
+  const PAST_PATH = `users/u1/waterLog/${PAST}`;
+
+  it("reads and adds to that day, leaving today alone", async () => {
+    seedFirestore({
+      [PAST_PATH]: { ml: 500, targetMl: 2500 },
+      [PATH]: { ml: 1000, targetMl: 2000 },
+    });
+    const { result } = renderHook(() => useWaterLog(PAST));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.ml).toBe(500);
+
+    act(() => result.current.logWater(250));
+    expect(result.current.ml).toBe(750);
+    await act(async () => {
+      await flushWater("u1");
+    });
+    // That day's target stays the one it was counted against.
+    expect(readDoc(PAST_PATH)).toMatchObject({ ml: 750, targetMl: 2500 });
+    expect(readDoc(PATH)).toMatchObject({ ml: 1000 });
+  });
+
+  it("takes back a drink on that day", async () => {
+    const { result } = renderHook(() => useWaterLog(PAST));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.logWater(500));
+    await act(async () => {
+      await flushWater("u1");
+    });
+    const [drink] = result.current.drinks;
+    act(() => result.current.removeDrink(drink.id));
+    await act(async () => {
+      await flushWater("u1");
+    });
+    expect(readDoc(PAST_PATH)).toMatchObject({ ml: 0 });
+    expect(readDoc(PATH)).toBeUndefined();
+  });
+
+  it("gives a day with no water yet the current target", async () => {
+    const { result } = renderHook(() => useWaterLog(PAST));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.logWater(250));
+    await act(async () => {
+      await flushWater("u1");
+    });
+    expect(readDoc(PAST_PATH)).toMatchObject({ ml: 250, targetMl: 2000 });
+  });
+});

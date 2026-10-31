@@ -284,6 +284,9 @@ surface specifically.
   Theirs is the better shape: the description resolves exactly what a photo
   cannot — cut of meat, cooking fat, plate diameter — and it is the natural
   content of a "Type it instead" recovery that keeps the photo.
+  STATUS 2026-10-28 (Mob2 call 3): a photo's result now has "Add a detail",
+  up to 200 characters sent with the same photo to `analyzeFood` for a
+  second read. One photo, not three; the photo still stays on the phone.
 - **The wait shows real work.** Skeleton rows stream per-ingredient status
   ("Searching for 'Pastry Dough'", then Sugar, then Salt) as each database
   lookup lands. Tropos narrates four invented stages on a 1300ms timer over a
@@ -295,6 +298,10 @@ surface specifically.
   ingredient is independently editable with its own quantity + unit.
 - **Plate/Day toggle** on the result: this meal alone vs its contribution to the
   day. Tropos shows only the meal.
+  STATUS 2026-10-28 (Mob2 call 1): every portion sheet, the scan result's
+  included, carries one line under the meal's figures saying what the day
+  comes to with it ("1,240 kcal and 62g protein left after this"). Text,
+  not a toggle.
 - **Capture guidance names the privacy risk**: "Avoid including photos of other
   people" / "Only upload content you have permission to use", alongside the
   framing/steadiness tips, in a first-use modal.

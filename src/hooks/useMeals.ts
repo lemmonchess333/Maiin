@@ -50,6 +50,9 @@ export interface MealItem {
   fiber?: number;
   sugar?: number;
   sodium?: number;
+  /** F1d per-item locks: the fields of this item a person has set by
+   *  hand, which a later automatic refinement must leave alone. */
+  userEditedFields?: string[];
 }
 
 export interface Meal {

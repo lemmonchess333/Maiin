@@ -10,6 +10,10 @@ interface Props {
   value: string;
   onChange: (next: string) => void;
   disabled?: boolean;
+  /** The food the amount is of, when one sheet holds several of these
+   *  (the items of one entry): it goes into each control's name, so a
+   *  screen reader hears "Grams of Rice" rather than "Grams" three times. */
+  itemName?: string;
 }
 
 /**
@@ -28,14 +32,16 @@ export default function PortionAmountField({
   value,
   onChange,
   disabled = false,
+  itemName,
 }: Props) {
   const id = useId();
   const grams = unit === "grams";
+  const of = itemName ? ` of ${itemName}` : "";
   return (
     <div className="flex items-center justify-center gap-[16px]">
       <IconButton
         variant="secondary"
-        aria-label={grams ? "Decrease grams" : "Decrease servings"}
+        aria-label={`${grams ? "Decrease grams" : "Decrease servings"}${of}`}
         icon={<Minus className="size-[16px]" aria-hidden="true" />}
         onClick={() => onChange(stepAmount(value, unit, -1))}
         disabled={disabled}
@@ -44,6 +50,7 @@ export default function PortionAmountField({
       <div className="min-w-0 text-center">
         <label htmlFor={id} className="sr-only">
           {grams ? "Grams" : "Servings"}
+          {of}
         </label>
         <input
           id={id}
@@ -60,7 +67,7 @@ export default function PortionAmountField({
       </div>
       <IconButton
         variant="secondary"
-        aria-label={grams ? "Increase grams" : "Increase servings"}
+        aria-label={`${grams ? "Increase grams" : "Increase servings"}${of}`}
         icon={<Plus className="size-[16px]" aria-hidden="true" />}
         onClick={() => onChange(stepAmount(value, unit, 1))}
         disabled={disabled}

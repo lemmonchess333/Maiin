@@ -469,6 +469,80 @@ export function useFoodFavourites() {
     [uid]
   );
 
+  /** My pantry's edit: a saved food's name, serving and figures, as the
+   *  person corrects them. Its use count, time of day, source and barcode
+   *  are kept. A food is filed under its name (`makeKey`), so a new name
+   *  moves it to the new name's place, and a name another saved food
+   *  already has is refused rather than merged into it. */
+  const updateFavourite = useCallback(
+    async (
+      favourite: FoodFavourite,
+      changes: Pick<
+        FoodFavourite,
+        "name" | "servingSize" | "calories" | "protein" | "carbs" | "fat"
+      >
+    ): Promise<"saved" | "taken" | "failed"> => {
+      if (!uid) return "failed";
+      const name = changes.name.trim();
+      const key = makeKey(name);
+      if (!key) return "failed";
+      /* Moved only when the name itself changes: a food saved under an
+         older id scheme keeps its id while its figures are corrected. */
+      const renamed = key !== makeKey(favourite.name) && key !== favourite.id;
+      if (
+        renamed &&
+        favourites.some(
+          (f) =>
+            f.id !== favourite.id && (f.id === key || makeKey(f.name) === key)
+        )
+      )
+        return "taken";
+      const next = {
+        name,
+        servingSize: changes.servingSize.trim() || "1 serving",
+        calories: safeNum(changes.calories),
+        protein: safeNum(changes.protein),
+        carbs: safeNum(changes.carbs),
+        fat: safeNum(changes.fat),
+      };
+      try {
+        if (!renamed) {
+          await setDocGuarded(
+            doc(db, "users", uid, "foodFavourites", favourite.id),
+            next,
+            { merge: true }
+          );
+          return "saved";
+        }
+        /* The new place first, the old one after: a failure between the
+           two leaves the food under both names, never under neither. */
+        await setDocGuarded(
+          doc(db, "users", uid, "foodFavourites", key),
+          {
+            ...next,
+            fiber: favourite.fiber ?? null,
+            sugar: favourite.sugar ?? null,
+            sodium: favourite.sodium ?? null,
+            lastUsed: favourite.lastUsed,
+            useCount: favourite.useCount,
+            timeOfDay: favourite.timeOfDay,
+            source: favourite.source,
+            ...(favourite.barcode ? { barcode: favourite.barcode } : {}),
+          },
+          { merge: false }
+        );
+        await deleteDocGuarded(
+          doc(db, "users", uid, "foodFavourites", favourite.id)
+        );
+        return "saved";
+      } catch (err) {
+        logger.error("[useFoodFavourites] updateFavourite failed", err);
+        return "failed";
+      }
+    },
+    [uid, favourites]
+  );
+
   return {
     favourites,
     loading,
@@ -476,5 +550,6 @@ export function useFoodFavourites() {
     addFavourite,
     removeFavourite,
     restoreFavourite,
+    updateFavourite,
   };
 }

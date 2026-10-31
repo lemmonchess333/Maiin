@@ -10,17 +10,22 @@ import {
 import type { QuickAddItem } from "@/lib/quickAddOrder";
 import { scaleQuickMeal } from "@/lib/quickMealEntry";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import PortionLeftLine from "@/components/nutrition/PortionLeftLine";
+import type { DayBudget } from "@/lib/portionLeft";
 
 export default function QuickMealPortionSheet({
   meal,
   onClose,
   onLog,
   slot,
+  day = null,
 }: {
   meal: QuickAddItem;
   onClose: () => void;
   slot?: MealKey;
   onLog: (meal: QuickAddItem, slot?: MealKey) => Promise<boolean>;
+  /** The day the portion goes to, for the line under its figures. */
+  day?: DayBudget | null;
 }) {
   const [selectedSlot, setSelectedSlot] = useState<MealKey>(slot ?? "lunch");
   const [amount, setAmount] = useState("1");
@@ -67,9 +72,18 @@ export default function QuickMealPortionSheet({
           aria-invalid={!valid}
         />
         {valid ? (
-          <p className="text-sm font-mono tabular-nums">
-            {Math.round(meal.cal * number)} {CALORIE_UNIT}
-          </p>
+          <>
+            <p className="text-sm font-mono tabular-nums">
+              {Math.round(meal.cal * number)} {CALORIE_UNIT}
+            </p>
+            <PortionLeftLine
+              day={day}
+              portion={{
+                calories: meal.cal * number,
+                protein: meal.pro * number,
+              }}
+            />
+          </>
         ) : (
           <p role="alert" className="text-sm text-destructive-strong">
             Enter a portion greater than 0 and no more than 20.

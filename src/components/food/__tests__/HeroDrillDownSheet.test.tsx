@@ -367,3 +367,30 @@ describe("HeroDrillDownSheet — other nutrients keep each unit's treatment", ()
     expect(text).not.toMatch(/\dmg\b/);
   });
 });
+
+describe("HeroDrillDownSheet — the way to the week", () => {
+  /* The weekly reading (days on target, protein, the weekend) lives on
+     Analytics' Food page; this row is the way there from a day. */
+  it("offers This week and hands the tap to the page", () => {
+    const onOpenWeek = vi.fn();
+    render(
+      <HeroDrillDownSheet
+        open
+        onOpenChange={() => {}}
+        selectedDate="2026-07-13"
+        isToday
+        dailyTotals={totals}
+        dailyTargets={targets()}
+        onOpenWeek={onOpenWeek}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^This week/ }));
+    expect(onOpenWeek).toHaveBeenCalledTimes(1);
+  });
+
+  it("draws no row when the page gives it nowhere to go", () => {
+    render(<Harness dailyTargets={targets()} />);
+    expect(screen.getByText("Macros")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^This week/ })).toBeNull();
+  });
+});
