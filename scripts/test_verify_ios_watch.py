@@ -75,6 +75,57 @@ class WatchSigningTests(unittest.TestCase):
                 return result
             verifier.inspect_embedded_watch(iphone, self.bundle, self.companion, runner)
 
+    def test_archive_and_ipa_must_have_matching_phone_and_watch_release_gates(self):
+        with tempfile.TemporaryDirectory() as temp:
+            iphone = Path(temp) / "App.app"
+            watch = iphone / "Watch" / "TroposWatch.app"
+            watch.mkdir(parents=True)
+            phone_info = {"TroposConnectedTrainingEnabled": "NO"}
+            watch_info = {
+                **self.info,
+                "TroposConnectedTrainingEnabled": "NO",
+            }
+
+            def write_plists():
+                (iphone / "Info.plist").write_bytes(plistlib.dumps(phone_info))
+                (watch / "Info.plist").write_bytes(plistlib.dumps(watch_info))
+
+            def runner(args, **_kwargs):
+                result = Mock()
+                if args[:2] == ["codesign", "--display"]:
+                    result.stdout = plistlib.dumps(self.entitlements)
+                elif args[:2] == ["security", "cms"]:
+                    result.stdout = plistlib.dumps(self.profile)
+                else:
+                    result.stdout = b""
+                return result
+
+            for mode in ("NO", "YES"):
+                phone_info["TroposConnectedTrainingEnabled"] = mode
+                watch_info["TroposConnectedTrainingEnabled"] = mode
+                write_plists()
+                verifier.inspect_embedded_watch(
+                    iphone, self.bundle, self.companion, runner,
+                    expected_connected_training=mode,
+                )
+
+            watch_info["TroposConnectedTrainingEnabled"] = "NO"
+            write_plists()
+            with self.assertRaisesRegex(ValueError, "Watch connected training gate"):
+                verifier.inspect_embedded_watch(
+                    iphone, self.bundle, self.companion, runner,
+                    expected_connected_training="YES",
+                )
+
+            watch_info["TroposConnectedTrainingEnabled"] = "YES"
+            phone_info["TroposConnectedTrainingEnabled"] = "NO"
+            write_plists()
+            with self.assertRaisesRegex(ValueError, "iPhone connected training gate"):
+                verifier.inspect_embedded_watch(
+                    iphone, self.bundle, self.companion, runner,
+                    expected_connected_training="YES",
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

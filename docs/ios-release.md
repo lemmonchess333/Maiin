@@ -197,7 +197,10 @@ the comment on the build step, and the activation order in
    your own certificate).
 2. Make sure App Store Connect → Apps has an app for `com.tropos.app`. The
    upload has nowhere to go without one.
-3. Actions tab → **Deploy iOS to TestFlight** → Run workflow.
+3. Actions tab → **Deploy iOS to TestFlight** → Run workflow. Leave
+   **Enable connected training for a paired-device TestFlight pilot** unchecked
+   for an ordinary build. Check it only for a private pilot with a paired
+   iPhone and Watch ready for the acceptance matrix below.
 4. The run checks the secrets, makes the certificate and two profiles from
    the API key unless you gave your own, then checks both profiles (team,
    bundle ID, App Store type, expiry, target entitlements) and the
@@ -246,23 +249,26 @@ separately signed Watch app with the expected bundle ID, iPhone companion ID,
 HealthKit entitlement and App Store profile. This is a packaging check. It
 does not prove live Watch-to-phone behavior.
 
-The current TestFlight path packages the Watch target but keeps connected
-training disabled: the Vite bundle is built without
-`VITE_CONNECTED_TRAINING_ENABLED=true`, and the native App Release setting is
-`WATCH_RUN_RELEASE_ENABLED=NO`. `TroposConnectedTrainingEnabled` in the
-iPhone Info.plist passes that native setting to the bridge. The native bridge
-reports Watch runs unavailable in Release while the gate is off. Enable both
-flags only after the paired-device checks below pass; a web deploy or a debug
+The committed Release project and the default TestFlight dispatch keep connected
+training disabled. A manual **connected training pilot** dispatch enables the
+Vite bundle and overrides `WATCH_RUN_RELEASE_ENABLED=YES` for that archive only.
+The signed archive and exported IPA are checked to ensure both the iPhone and
+Watch Info.plists carry the selected value. The workflow does not change the
+committed Release setting or the default web deploy. Use the pilot build for
+paired-device proof with internal TestFlight testers, then enable a regular
+release only after the matrix passes. A web deploy or an unsigned simulator
 build does not validate the TestFlight path.
 
-Before inviting testers to use Watch runs, complete the real-device checks in
+Before expanding beyond the pilot, complete the real-device checks in
 [`docs/proposals/connected-training.md`](proposals/connected-training.md):
 start and control an outdoor run with the iPhone locked; interrupt the Watch
 connection and recover without replaying stale controls; finish on Watch and
 review on iPhone after an app restart; save once through the offline queue;
 and verify Apple Health shows no workout when export is off and exactly one
 when it is on. Test an account switch as well as revoked Health permissions.
-Record the iPhone/Watch models and OS versions used for the check.
+Start with export off. Turn it on only on a test account for the duplicate,
+reinstall and cross-device deletion checks. Record the iPhone/Watch models and
+OS versions used for the check.
 
 This Linux checkout has no Xcode or paired Apple devices. The watchOS target,
 signing and live behavior remain unverified until the macOS workflow and this

@@ -1,6 +1,6 @@
 # Connected training: Apple Watch runs and Apple Health
 
-**Status:** Implementation in progress, 31 October 2026. The Watch target, phone bridge, and Health export path are behind disabled release gates. Server receipts cover reinstall duplicate prevention and cross-device deletion cleanup in code. A macOS build, signing, paired-device controls, and HealthKit behavior still need verification before release.
+**Status:** Implementation in progress, 31 October 2026. The Watch target, phone bridge, and Health export path are behind disabled release gates. Server receipts cover reinstall duplicate prevention and cross-device deletion cleanup in code. The PR macOS simulator build passed; signing, paired-device controls, and HealthKit behavior still need verification before release.
 
 ## Decision
 
@@ -67,7 +67,7 @@ If this gate fails, do not ship a Watch control that appears to work while disco
 
 ### Current release gates
 
-`VITE_CONNECTED_TRAINING_ENABLED` defaults off and the native iOS Release target sets `WATCH_RUN_RELEASE_ENABLED=NO`. The settings controls and native transport therefore remain unavailable in a release build. The Health export worker now reserves a server receipt before writing; the run deletion trigger leaves a tombstone that the exporting iPhone pages through for native cleanup. Before enabling both gates, pass the PR macOS simulator compile, complete a signed archive, and run the paired iPhone/Watch acceptance matrix, including locked-phone commands, heart-rate capture without an implicit Health workout, a read-denied reinstall attempt, and a run deleted on another device. Keep workout export disabled until those device paths are verified.
+`VITE_CONNECTED_TRAINING_ENABLED` defaults off and the native iOS Release target sets `WATCH_RUN_RELEASE_ENABLED=NO`. The settings controls and native transport therefore remain unavailable in an ordinary release build. The Health export worker now reserves a server receipt before writing; the run deletion trigger leaves a tombstone that the exporting iPhone pages through for native cleanup. The PR macOS simulator compile passed. The manual TestFlight workflow can select a connected training pilot build that turns on both gates for that archive and verifies both signed app bundles. Use that private pilot for the paired iPhone/Watch acceptance matrix, including locked-phone commands, heart-rate capture without an implicit Health workout, a read-denied reinstall attempt, and a run deleted on another device. Start with workout export off; enable it only on a test account for the export, reinstall and deletion cases. Keep the ordinary release gate off until signing and device checks pass.
 
 ## Delivery sequence
 

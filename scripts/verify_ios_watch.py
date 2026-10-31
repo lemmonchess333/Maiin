@@ -31,7 +31,18 @@ def validate_signed_watch(entitlements, profile, info, bundle_id, companion_id):
         raise ValueError("The Watch provisioning profile does not allow HealthKit.")
 
 
-def inspect_embedded_watch(iphone_app, bundle_id, companion_id, runner=subprocess.run):
+def validate_connected_training_flags(iphone_info, watch_info, expected):
+    for name, info in (("iPhone", iphone_info), ("Watch", watch_info)):
+        if info.get("TroposConnectedTrainingEnabled") != expected:
+            raise ValueError(
+                f"The {name} connected training gate is not {expected} in the signed build."
+            )
+
+
+def inspect_embedded_watch(
+    iphone_app, bundle_id, companion_id, runner=subprocess.run,
+    expected_connected_training=None,
+):
     iphone_app = Path(iphone_app)
     apps = list((iphone_app / "Watch").glob("*.app"))
     if len(apps) != 1:
@@ -48,7 +59,12 @@ def inspect_embedded_watch(iphone_app, bundle_id, companion_id, runner=subproces
             raise ValueError()
     except (ValueError, plistlib.InvalidFileException):
         raise ValueError("The embedded Watch app has unreadable signing data.") from None
-    validate_signed_watch(entitlements, profile, read_plist(watch_app / "Info.plist"), bundle_id, companion_id)
+    watch_info = read_plist(watch_app / "Info.plist")
+    validate_signed_watch(entitlements, profile, watch_info, bundle_id, companion_id)
+    if expected_connected_training is not None:
+        validate_connected_training_flags(
+            read_plist(iphone_app / "Info.plist"), watch_info, expected_connected_training
+        )
 
 
 def main(argv=None):
@@ -56,10 +72,16 @@ def main(argv=None):
     parser.add_argument("--app", required=True, help="Signed iPhone .app in the archive or exported IPA")
     parser.add_argument("--bundle-id", default="com.tropos.app.watchkitapp")
     parser.add_argument("--companion-id", default="com.tropos.app")
+    parser.add_argument("--expected-connected-training", choices=("YES", "NO"))
     args = parser.parse_args(argv)
     try:
-        inspect_embedded_watch(args.app, args.bundle_id, args.companion_id)
+        inspect_embedded_watch(
+            args.app, args.bundle_id, args.companion_id,
+            expected_connected_training=args.expected_connected_training,
+        )
         print("Verified the embedded Watch app's bundle, HealthKit and App Store signing.")
+        if args.expected_connected_training is not None:
+            print("Verified matching iPhone and Watch connected training release gates.")
     except ValueError as error:
         raise SystemExit(f"::error::Watch signing verification failed: {error}") from None
 

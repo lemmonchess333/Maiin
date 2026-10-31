@@ -73,5 +73,6 @@ jobs:
               watch = plistlib.load(file)
           assert watch["CFBundleIdentifier"] == "com.tropos.app.watchkitapp"
           assert watch["WKCompanionAppBundleIdentifier"] == "com.tropos.app"
+          assert watch["TroposConnectedTrainingEnabled"] == "NO"
           print("Compiled iPhone and embedded Watch app; release gate remains off.")
           PY
