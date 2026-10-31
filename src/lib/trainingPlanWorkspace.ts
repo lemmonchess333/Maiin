@@ -56,6 +56,9 @@ export interface TrainingPlanWorkspace {
   days: WorkspaceDay[];
   nextLiftIndex: number | null;
   nextLift: WorkoutDay | null;
+  /** The two lifts after the next one, in rotation order ("Then Pull ·
+   *  Legs"): an order, not dates (ADR-0002). */
+  thenLifts: string[];
   /** The week's lifts and runs, done against planned, as Home's week and
    *  the weekly review count them (`trainingWeek`); and its rest days. */
   summary: { lifts: WeekCount; runs: WeekCount; restDays: number };
@@ -268,6 +271,14 @@ export function buildTrainingPlanWorkspace({
     days,
     nextLiftIndex: nextIndex >= 0 ? nextIndex : null,
     nextLift: nextIndex >= 0 ? programState!.workouts[nextIndex] : null,
+    thenLifts:
+      nextIndex >= 0
+        ? programState!.workouts
+            .slice(nextIndex + 1)
+            .filter((workout) => !workout.completed && !workout.skipped)
+            .slice(0, 2)
+            .map((workout) => workout.dayName)
+        : [],
     summary: {
       lifts: week.lifts,
       runs: { done: week.runs.done, planned: week.runs.planned },

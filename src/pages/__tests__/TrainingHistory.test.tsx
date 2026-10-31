@@ -87,6 +87,57 @@ afterEach(() => {
 });
 
 describe("Training history", () => {
+  it("takes a returning account to its last session", async () => {
+    resetFirestore();
+    seedFirestore({
+      "users/history-owner/runs/older": savedRunDoc("2026-08-01"),
+    });
+    open();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Jump to your last session" })
+    );
+    await waitFor(() => expect(sessionLinks()).toHaveLength(1));
+    expect(sessionLinks()[0]).toHaveAttribute(
+      "href",
+      expect.stringContaining("/run/older")
+    );
+  });
+
+  it("marks a lift that set a new best", async () => {
+    resetFirestore();
+    const squat = (id: string, date: string, kg: number) => [
+      `users/history-owner/workouts/${id}`,
+      savedWorkoutDoc(date, {
+        notes: id,
+        exercises: [
+          {
+            exerciseId: "barbell-back-squat",
+            exerciseName: "Barbell Back Squat",
+            sets: [{ weightKg: kg, reps: 5, type: "working" }],
+          },
+        ],
+      }),
+    ];
+    seedFirestore(
+      Object.fromEntries([
+        squat("first", "2026-10-20", 60),
+        squat("second", "2026-10-22", 60),
+        squat("third", "2026-10-24", 60),
+        squat("heavier", "2026-10-26", 80),
+      ])
+    );
+    open("?sport=lifts");
+    await waitFor(() => expect(sessionLinks()).toHaveLength(4));
+    await waitFor(() =>
+      expect(
+        sessionLinks().filter((link) => link.textContent?.includes("PR"))
+      ).toHaveLength(1)
+    );
+    expect(
+      sessionLinks().find((link) => link.textContent?.includes("PR"))
+    ).toHaveAttribute("href", expect.stringContaining("heavier"));
+  });
+
   it("reads thirty sessions at a time, and thirty more on Show more", async () => {
     const read = vi.spyOn(savedSessions, "useSavedSessions");
     seedFirestore(

@@ -205,7 +205,7 @@ test("browses lifts and runs, filters an older period and restores the expanded 
     ).toBeVisible();
     const selectedPeriodHref = `/Maiin/history/sessions?from=${plusDays(today, -89)}&to=${today}`;
     await expect(
-      page.getByRole("link", { name: "History", exact: true })
+      page.getByRole("link", { name: "All sessions", exact: true })
     ).toHaveAttribute("href", selectedPeriodHref);
     const viewPeriodSessions = page.getByRole("link", {
       name: "View sessions in this period",
@@ -249,7 +249,7 @@ test("browses lifts and runs, filters an older period and restores the expanded 
     await expect(page).toHaveURL(/\/history\?range=3M$/);
     await expect(page.getByRole("radio", { name: "3M" })).toBeChecked();
     await page.goto("history");
-    await page.getByRole("link", { name: "History", exact: true }).click();
+    await page.getByRole("link", { name: "All sessions", exact: true }).click();
     await expect(page.getByText("7 sessions", { exact: true })).toBeVisible();
     const list = page.getByRole("region", {
       name: "Saved sessions",

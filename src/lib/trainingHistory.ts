@@ -5,7 +5,8 @@ import {
   parseLocalDate,
 } from "./dateHelpers";
 import { workoutTitle } from "./workoutLabels";
-import type { Workout } from "./savedWorkouts";
+import { workoutTonnageKg, type Workout } from "./savedWorkouts";
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "./liftLoad";
 import type { SavedRun } from "./savedRuns";
 import {
   distanceLabel,
@@ -128,7 +129,8 @@ export function trainingHistorySessions(
   workouts: readonly Workout[],
   runs: readonly SavedRun[],
   filters: TrainingHistoryFilters,
-  unit: DistanceUnit
+  unit: DistanceUnit,
+  liftUnit: LiftUnit = "kg"
 ): HistorySession[] {
   const sessions: HistorySession[] = [];
   // What a search matches beyond the title: a lift's exercises, so "bench"
@@ -138,6 +140,7 @@ export function trainingHistorySessions(
     for (const workout of workouts) {
       const exercises = workout.exercises.length;
       const minutes = workout.durationMinutes;
+      const volume = workoutTonnageKg(workout);
       alsoMatches.set(
         `lift:${workout.id}`,
         workout.exercises.map((exercise) => exercise.exerciseName ?? "")
@@ -154,6 +157,11 @@ export function trainingHistorySessions(
             ? [`${Math.max(1, Math.round(minutes))} min`]
             : []),
           `${exercises} ${exercises === 1 ? "exercise" : "exercises"}`,
+          ...(volume > 0
+            ? [
+                `${Math.round(liftVolumeIn(volume, liftUnit)).toLocaleString()} ${liftUnitLabel(liftUnit)}`,
+              ]
+            : []),
         ],
         href: `/workout/${encodeURIComponent(workout.id)}`,
         notCounted: false,

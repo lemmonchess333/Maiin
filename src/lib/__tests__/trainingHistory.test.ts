@@ -210,6 +210,25 @@ describe("a saved-session chronology", () => {
     ).toEqual([]);
   });
 
+  it("gives a lift row its volume in the lifter's unit", () => {
+    const heavy = {
+      ...workout("heavy", "2026-10-28"),
+      exercises: [
+        {
+          exerciseName: "Squat",
+          sets: [
+            { weightKg: 100, reps: 5 },
+            { weightKg: 100, reps: 5 },
+          ],
+        },
+      ],
+    } as unknown as Workout;
+    const row = (unit: "kg" | "lbs") =>
+      trainingHistorySessions([heavy], [], filters(), "km", unit)[0].summary;
+    expect(row("kg")).toContain(`${(1000).toLocaleString()} kg`);
+    expect(row("lbs")).toContain(`${(2205).toLocaleString()} lb`);
+  });
+
   it("finds a lift by an exercise done in it, not only by its title", () => {
     const push = {
       ...workout("push", "2026-10-28"),

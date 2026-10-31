@@ -1046,7 +1046,7 @@ export default function History() {
           state={{ returnTo: historyReturnTo }}
           className={buttonClasses({ variant: "ghost" })}
         >
-          History
+          All sessions
         </Link>
       }
       /* Hist4: sustained-offline notice (30s threshold). Additive to the

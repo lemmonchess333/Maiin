@@ -49,7 +49,12 @@ import {
   type HistorySession,
   type TrainingHistoryFilters,
 } from "@/lib/trainingHistory";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { formatDayMonthYear, formatMonthYear } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -58,6 +63,7 @@ export default function TrainingHistory() {
   const { user } = useAuth();
   const today = useLocalDateKey();
   const unit = useDistanceUnit();
+  const liftUnit = useLiftUnit();
   const location = useLocation();
   const [params, setParams] = useSearchParams();
   const filters = useMemo(
@@ -105,9 +111,45 @@ export default function TrainingHistory() {
   const complete = sources.every((source) => source.evidenceReady);
   const provisional = !pending && !failed && !complete;
   const sessions = useMemo(
-    () => trainingHistorySessions(lifts.items, runs.items, filters, unit),
-    [lifts.items, runs.items, filters, unit]
+    () =>
+      trainingHistorySessions(lifts.items, runs.items, filters, unit, liftUnit),
+    [lifts.items, runs.items, filters, unit, liftUnit]
   );
+  // An empty period offers the last session: one newest read of each.
+  const empty = !pending && !failed && complete && sessions.length === 0;
+  const lastLift = useSavedSessions(
+    SAVED_WORKOUTS,
+    user?.uid,
+    empty && !filters.search ? { latest: 1 } : null
+  );
+  const lastRun = useSavedSessions(
+    SAVED_RUNS,
+    user?.uid,
+    empty && !filters.search ? { latest: 1 } : null
+  );
+  const lastDay = [lastLift.items[0]?.date, lastRun.items[0]?.day]
+    .filter((day): day is string => !!day && day < filters.from)
+    .sort()
+    .at(-1);
+  // The rows on screen that set a new best, worked out after the page.
+  const [bests, setBests] = useState<{ key: string; ids: Set<string> }>();
+  const shownLifts = lifts.items.filter((w) =>
+    sessions.slice(0, position.count).some((row) => row.key === `lift:${w.id}`)
+  );
+  const bestsKey = shownLifts.map((w) => w.id).join();
+  useEffect(() => {
+    if (!user?.uid || !bestsKey) return;
+    let live = true;
+    void import("@/lib/workoutBests")
+      .then(({ workoutsWithBests }) => workoutsWithBests(user.uid, shownLifts))
+      .then((ids) => live && setBests({ key: bestsKey, ids }))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+    // shownLifts is read through its key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, bestsKey]);
   useTrainingHistoryRestore(position, !pending, sessions.length, provisional);
   const visible = sessions.slice(0, position.count);
   // A source that filled its read may hold more of the period.
@@ -394,6 +436,13 @@ export default function TrainingHistory() {
                             </time>
                             <span className="text-base font-bold break-words [overflow-wrap:anywhere]">
                               {session.title}
+                              {bests?.key === bestsKey &&
+                                bests.ids.has(session.id) &&
+                                session.kind === "lift" && (
+                                  <span className="ml-2 text-caption font-semibold text-achievement-strong">
+                                    PR
+                                  </span>
+                                )}
                             </span>
                             <MetaLine size="xs" items={session.summary} />
                             {session.notCounted && (
@@ -452,7 +501,21 @@ export default function TrainingHistory() {
                     label: "Clear search",
                     onClick: () => change({ search: "" }),
                   }
-                : { label: "Change dates", onClick: () => setDatesOpen(true) }
+                : lastDay
+                  ? {
+                      label: "Jump to your last session",
+                      onClick: () =>
+                        change({
+                          from: localDateString(
+                            addLocalDays(parseLocalDate(lastDay), -29)
+                          ),
+                          to: lastDay,
+                        }),
+                    }
+                  : {
+                      label: "Change dates",
+                      onClick: () => setDatesOpen(true),
+                    }
             }
           />
         ) : null}

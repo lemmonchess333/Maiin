@@ -380,7 +380,9 @@ export default function TrainingPlan() {
               title={model.nextLift.dayName}
               meta={[
                 `${model.nextLift.exercises.length} exercises`,
-                "Follows your rotation",
+                model.thenLifts.length
+                  ? `Then ${model.thenLifts.join(" · ")}`
+                  : "Follows your rotation",
               ]}
               sport="lift"
               primaryActionLabel={
@@ -616,6 +618,34 @@ export default function TrainingPlan() {
                                 ? "Your programme had not started"
                                 : "No activity planned"}
                           </p>
+                          {/* Today's rest day can still take a session:
+                              an empty workout or a free run. */}
+                          {day.isToday &&
+                            !day.beforeStart &&
+                            !evidencePending &&
+                            !evidenceFailed && (
+                              <p className="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
+                                Add activity:
+                                <Link
+                                  to="/empty-workout"
+                                  className={buttonClasses({
+                                    variant: "ghost",
+                                    size: "sm",
+                                  })}
+                                >
+                                  Empty workout
+                                </Link>
+                                <Link
+                                  to="/run"
+                                  className={buttonClasses({
+                                    variant: "ghost",
+                                    size: "sm",
+                                  })}
+                                >
+                                  Free run
+                                </Link>
+                              </p>
+                            )}
                         </div>
                       )}
                     </div>

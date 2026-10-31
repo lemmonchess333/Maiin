@@ -79,6 +79,23 @@ export function workoutBests(
   return bests;
 }
 
+/** Which of these saved workouts set a new best, from one read of the
+ *  history up to the newest of them (All sessions' PR marks). */
+export async function workoutsWithBests(
+  uid: string,
+  workouts: readonly Workout[]
+): Promise<Set<string>> {
+  const newest = workouts.reduce((day, w) => (w.date > day ? w.date : day), "");
+  if (!newest) return new Set();
+  const history = await fetchSavedWorkouts(uid, {
+    since: "1970-01-01",
+    until: newest,
+  });
+  return new Set(
+    workouts.filter((w) => workoutBests(w, history).size > 0).map((w) => w.id)
+  );
+}
+
 /** The new-best sets of a saved workout, from the history up to its day. */
 export async function loadWorkoutBests(
   uid: string,

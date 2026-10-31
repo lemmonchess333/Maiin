@@ -4,6 +4,8 @@ import {
   buildTrainingPlanWorkspace,
   weekCountLabel,
 } from "../trainingPlanWorkspace";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { UserProfile } from "../auth";
 import type { Workout } from "../savedWorkouts";
 import type { SavedRun } from "../savedRuns";
@@ -141,6 +143,31 @@ describe("training plan workspace", () => {
     ]);
   });
 
+  it("names the lifts that follow the next one, in rotation order, with no dates", () => {
+    const result = build({
+      programState: programme({
+        workouts: [
+          lift("Upper A", true),
+          lift("Lower A"),
+          lift("Upper B"),
+          lift("Lower B"),
+        ],
+      }),
+    });
+    expect(result.nextLift?.dayName).toBe("Lower A");
+    expect(result.thenLifts).toEqual(["Upper B", "Lower B"]);
+    const last = build({
+      programState: programme({
+        workouts: [
+          lift("Upper A", true),
+          lift("Lower A", true),
+          lift("Upper B"),
+        ],
+      }),
+    });
+    expect(last.thenLifts).toEqual([]);
+  });
+
   it("honours Make this next without assigning that identity to a date", () => {
     const result = build({
       programState: programme({ nextWorkoutOverride: 2 }),
@@ -254,6 +281,16 @@ describe("training plan workspace", () => {
       for (const activity of day.activities)
         if (day.dateKey < "2026-10-30")
           expect(activity.meta).not.toMatch(/Planned/);
+  });
+
+  it("offers today's rest day an empty workout or a free run, and names what follows the next lift", () => {
+    const page = readFileSync(
+      join(__dirname, "../../pages/TrainingPlan.tsx"),
+      "utf8"
+    );
+    expect(page).toContain('to="/empty-workout"');
+    expect(page).toContain('to="/run"');
+    expect(page).toContain("Then ${model.thenLifts.join");
   });
 
   it("writes the week's counts done against planned", () => {
