@@ -8,11 +8,12 @@
  *
  * The screens: Home, Train, History's five pages (and its charts again
  * on a Monday), Food and its manual entry and edit sheets, Social's
- * Together tab (again with its other challenges opened) and its feed, a
- * Space, a profile and its followers and following, Settings and every
- * section of it, Train's exercise menu, a workout, a run before, during
- * and after, the exercise, run and workout detail pages, the Weekly
- * review, sign-up, setup and the Pro page. The sheets: the weight log,
+ * Together tab (again with its other challenges opened) and its feed
+ * on Following and on Explore, a Space, a profile and its followers and
+ * following, Settings and every section of it, Train's exercise menu, a
+ * workout, a run before, during and after, the exercise, run and workout
+ * detail pages, the Weekly review, sign-up, setup and the Pro page. The
+ * sheets: the weight log,
  * the streak's days, Social's notifications and a run's share and
  * rename sheets,
  * with Food's two above.
@@ -130,7 +131,8 @@ test.describe("large text", () => {
     page: Page,
     screen: string,
     width: number,
-    found: string[]
+    found: string[],
+    more?: (page: Page) => Promise<string[]>
   ) {
     for (const scale of SCALES) {
       await page.evaluate((s) => {
@@ -140,6 +142,7 @@ test.describe("large text", () => {
       const breaks = [
         ...(await layoutBreaks(page, "body *", "html", IGNORE)),
         ...(await brokenWords(page, IGNORE)),
+        ...(more ? await more(page) : []),
       ];
       // The page itself, which the per-element check cannot see when what
       // widens it is skipped (a chart's axis labels are aria-hidden).
@@ -182,6 +185,30 @@ test.describe("large text", () => {
       await page.waitForTimeout(400);
     }
     await page.waitForTimeout(600);
+  }
+
+  /* The Feed's sources, each name whole in its part. A part cut short
+     is clipped inside the switch, where no check above looks: nothing
+     leaves the screen. Explore's new-content dot made it reach past the
+     screen too, but only when it showed, which depends on which read
+     lands first. */
+  async function wholeSources(page: Page): Promise<string[]> {
+    return page
+      .getByRole("radiogroup", { name: "Feed source" })
+      .getByRole("radio")
+      .evaluateAll((radios) =>
+        radios.flatMap((radio) => {
+          const label = radio.firstElementChild;
+          const over = label
+            ? label.getBoundingClientRect().width - radio.clientWidth
+            : 0;
+          return over > 1
+            ? [
+                `cuts "${radio.textContent?.trim()}" by ${Math.round(over)}px in the feed's source switch`,
+              ]
+            : [];
+        })
+      );
   }
 
   for (const width of WIDTHS) {
@@ -488,9 +515,31 @@ test.describe("large text", () => {
         .waitFor({ state: "visible", timeout: 10_000 });
       await measure(page, "social-together-more", width, found);
 
+      /* The Feed on Following, where Social opens for anyone who follows
+         someone: its posts or its empty state, then the week card under
+         them past its spinner. */
+      await page.goto("social?tab=feed&feed=following");
+      await ready(
+        page,
+        page
+          .getByText("Nothing from people you follow yet")
+          .or(page.getByText("You don't follow anyone yet"))
+          .or(
+            page
+              .getByRole("button", { name: /^(Add a comment|View comments)$/ })
+              .first()
+          )
+      );
+      await expect(
+        page.locator(
+          'main [class*="animate-pulse"], main [aria-label="Loading trajectory"]'
+        )
+      ).toHaveCount(0, { timeout: 20_000 });
+      await measure(page, "social-feed-following", width, found, wholeSources);
+
       await page.goto("social?tab=feed&feed=explore");
       await ready(page, page.getByText("Maya Chen").first());
-      await measure(page, "social-feed", width, found);
+      await measure(page, "social-feed", width, found, wholeSources);
 
       // A Space the seeded user has joined, with posts in it.
       await page.goto("space/womens-running");

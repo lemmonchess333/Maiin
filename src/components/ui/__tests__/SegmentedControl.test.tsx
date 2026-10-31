@@ -308,6 +308,52 @@ describe("SegmentedControl", () => {
     );
   });
 
+  it("fill-wrap keeps the track, and no part gets narrower than its label", () => {
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={() => {}}
+        ariaLabel="Feed source"
+        layout="fill-wrap"
+      />
+    );
+    const track = screen
+      .getByRole("radiogroup", { name: "Feed source" })
+      .className.split(" ");
+    expect(track).toEqual(
+      expect.arrayContaining(["bg-muted", "rounded-xl", "flex-wrap"])
+    );
+    // Equal parts that wrap rather than cut: a zero-basis flex-1 held
+    // at its label's width, never the fill layout's truncation.
+    const part = screen.getByRole("radio", { name: "3" }).className.split(" ");
+    expect(part).toEqual(expect.arrayContaining(["flex-1", "min-w-max"]));
+    expect(part).not.toContain("truncate");
+    expect(part).not.toContain("min-w-0");
+    // Unselected parts stay transparent on the shared track.
+    expect(part).not.toContain("bg-muted");
+    expect(screen.getByRole("radio", { name: "4" }).className).toContain(
+      "bg-segment-selected"
+    );
+  });
+
+  it("the plain fill layout still truncates and never wraps", () => {
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={() => {}}
+        ariaLabel="Lift days"
+      />
+    );
+    expect(
+      screen.getByRole("radiogroup", { name: "Lift days" }).className
+    ).not.toContain("flex-wrap");
+    expect(screen.getByRole("radio", { name: "3" }).className).toContain(
+      "truncate"
+    );
+  });
+
   it("the solid emphasis keeps the filled nutrition pill", () => {
     render(
       <SegmentedControl

@@ -25,6 +25,10 @@
  * track leaves the -strong labels near 2:1 on it.
  * `layout="wrap"` drops the shared track and renders individual pills,
  * muted when unselected (a contiguous track can't wrap cleanly).
+ * `layout="fill-wrap"` keeps the track and its equal parts, but a part
+ * never gets narrower than its label: when the labels can no longer
+ * share the row (large text on a narrow phone), the parts wrap onto a
+ * second row instead of cutting the words.
  *
  * NOT for the tall multi-part "option card" pickers (plan selectors,
  * report categories) — those are a different control and are already
@@ -76,8 +80,10 @@ export interface SegmentedControlProps<T extends string | number> {
    *  there. Reach for `track` everywhere else; a second solid group on a
    *  neutral surface is the drift this primitive exists to stop. */
   emphasis?: "track" | "solid";
-  /** `fill` = equal-width row (default); `wrap` = auto-width pills. */
-  layout?: "fill" | "wrap";
+  /** `fill` = equal-width row (default); `wrap` = auto-width pills;
+   *  `fill-wrap` = the equal-width row, wrapping onto more rows rather
+   *  than cutting a label short. */
+  layout?: "fill" | "wrap" | "fill-wrap";
   /** Disable the whole group (e.g. a write in progress). */
   disabled?: boolean;
   className?: string;
@@ -175,7 +181,10 @@ function SegmentedControl<T extends string | number>({
           ? "flex-wrap items-center gap-2"
           : layout === "wrap"
             ? "flex-wrap gap-1.5"
-            : "gap-1 p-1 rounded-xl bg-muted",
+            : cn(
+                "gap-1 p-1 rounded-xl bg-muted",
+                layout === "fill-wrap" && "flex-wrap"
+              ),
         className
       )}
     >
@@ -204,7 +213,12 @@ function SegmentedControl<T extends string | number>({
                     // than pushing the row off the screen at larger text
                     // ("Analytics PRs Badges" on a 320px phone).
                     "flex-1 min-w-0 truncate"
-                  : "px-4",
+                  : layout === "fill-wrap"
+                    ? // Equal parts from a zero basis, none narrower than
+                      // its label: the row wraps where they can't share
+                      // it. The inset is px so it doesn't grow with text.
+                      "flex-1 min-w-max px-[8px]"
+                    : "px-4",
               emphasis === "solid"
                 ? selected
                   ? cn(
