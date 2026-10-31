@@ -61,6 +61,21 @@ the builds themselves.
       Passing: the Watch app installs from the iPhone's Watch app, Settings
       → Apple Health shows Apple Watch runs and Save workouts, and the
       Health prompts name Watch heart rate and workout export.
+- [ ] **The pilot's group, set once.** In App Store Connect → TestFlight,
+      make an internal group for the pilot testers and set its id as the
+      repository variable `TESTFLIGHT_PILOT_GROUP_ID` (docs/ios-release.md,
+      "Pilot builds on TestFlight"). Turn off automatic distribution on the
+      other internal groups, and set `TESTFLIGHT_STANDARD_GROUP_ID` if
+      standard builds should reach a group on their own. Passing: a pilot
+      run's "Check the TestFlight tester group" step names the pilot group.
+- [ ] **A pilot is marked and reaches its group alone.** After a pilot run,
+      the build's "What to Test" in App Store Connect and in the TestFlight
+      app starts "Connected training pilot. Not for App Store release.",
+      followed by the dispatch's note, and the build is listed under the
+      pilot group and under no other group.
+- [ ] **A standard build's note.** A standard run with a What to Test note
+      shows that note in TestFlight, and with `TESTFLIGHT_STANDARD_GROUP_ID`
+      set the build appears in that group.
 
 ## A lift's rest outside the app (Mob2 call 1, 2026-10-28)
 

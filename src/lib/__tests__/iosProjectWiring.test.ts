@@ -459,7 +459,9 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
       /connected_training_pilot:\s*description:[^\n]*\n\s*type: boolean\s*required: false\s*default: false/
     );
     const mode = workflowStep("Select connected training build mode");
-    expect(mode).toMatch(/true\)\s*echo "web=true"[\s\S]*?echo "native=YES"/);
+    expect(mode).toMatch(
+      /true\)\s*if \[ "\$EVENT_NAME" != workflow_dispatch \][\s\S]*?fi\s*echo "web=true"[\s\S]*?echo "native=YES"/
+    );
     expect(mode).toMatch(
       /false\|""\)\s*echo "web=false"[\s\S]*?echo "native=NO"/
     );

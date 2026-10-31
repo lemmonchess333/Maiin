@@ -52,11 +52,11 @@ on:
   workflow_dispatch:
     inputs:
       notes:
-        description: "Optional what-to-test note for this TestFlight build"
+        description: "Optional What to Test note for this TestFlight build (a pilot's starts with the pilot line)"
         required: false
         default: ""
       connected_training_pilot:
-        description: "Enable connected training for a paired-device TestFlight pilot"
+        description: "Connected training pilot: Watch app and Health export on, its own tester group, never for release"
         type: boolean
         required: false
         default: false
@@ -79,8 +79,10 @@ jobs:
     # accepts uploads from; the Archive step prints the version it used.
     runs-on: macos-26
     # The first archive resolves every Swift package from scratch, and the
-    # Firebase SDK alone is large.
-    timeout-minutes: 60
+    # Firebase SDK alone is large. After the upload, a build that has notes
+    # or a tester group waits up to 40 minutes for App Store Connect to
+    # finish processing it.
+    timeout-minutes: 110
     env:
       # ── App identity (match capacitor.config.ts appId) ──────────────
       # Non-secret only. SIGNING secrets stay scoped to the individual
@@ -109,22 +111,30 @@ jobs:
       # Health for steps alone. The pilot turns the web gate on and passes
       # WATCH_RUN_RELEASE_ENABLED=YES to this archive, which project.pbxproj
       # turns into the native gate, the embedded Watch app and the expanded
-      # Health usage text.
+      # Health usage text. A pilot is made only by hand, from this form: a
+      # trigger added later (a tag, a schedule) can make standard builds only.
       - name: Select connected training build mode
         id: training-mode
         env:
           CONNECTED_TRAINING_PILOT: ${{ inputs.connected_training_pilot }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           case "$CONNECTED_TRAINING_PILOT" in
             true)
+              if [ "$EVENT_NAME" != workflow_dispatch ]; then
+                echo "::error::A connected training pilot is made only from Run workflow, not from $EVENT_NAME."
+                exit 1
+              fi
               echo "web=true" >> "$GITHUB_OUTPUT"
               echo "native=YES" >> "$GITHUB_OUTPUT"
+              echo "kind=pilot" >> "$GITHUB_OUTPUT"
               echo "Connected training pilot selected for this TestFlight build."
               ;;
             false|"")
               echo "web=false" >> "$GITHUB_OUTPUT"
               echo "native=NO" >> "$GITHUB_OUTPUT"
+              echo "kind=standard" >> "$GITHUB_OUTPUT"
               echo "Standard TestFlight build; connected training remains off."
               ;;
             *) echo "::error::Unknown connected training build mode."; exit 1 ;;
@@ -196,6 +206,33 @@ jobs:
         with:
           node-version: 22
           cache: npm
+
+      # Where the build will go, checked before 20 minutes of archive: a
+      # pilot needs its own internal group, and no other internal group may
+      # receive every build automatically, or the pilot would reach it too.
+      # Runs only repository code with no packages, so it can go before npm ci.
+      - name: Check the TestFlight tester group
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          BUILD_KIND: ${{ steps.training-mode.outputs.kind }}
+          TESTFLIGHT_NOTES: ${{ inputs.notes }}
+          TESTFLIGHT_PILOT_GROUP_ID: ${{ vars.TESTFLIGHT_PILOT_GROUP_ID }}
+          TESTFLIGHT_STANDARD_GROUP_ID: ${{ vars.TESTFLIGHT_STANDARD_GROUP_ID }}
+        run: |
+          set -euo pipefail
+          # A file's secret may hold the file's text as pasted, or its base64.
+          write_secret_file() {
+            case "$1" in
+              *"-----BEGIN"*|*"<?xml"*|*"<plist"*) printf '%s\n' "$1" > "$2" ;;
+              *) printf '%s' "$1" | tr -d '[:space:]' | base64 --decode > "$2" ;;
+            esac
+          }
+          KEY="$RUNNER_TEMP/testflight-check.p8"
+          trap 'rm -f "$KEY"' EXIT
+          write_secret_file "$ASC_API_KEY_P8_BASE64" "$KEY"
+          ASC_API_KEY_PATH="$KEY" node scripts/ios/testflight-build.mjs check
 
       - name: Install deps
         run: npm ci
@@ -676,6 +713,7 @@ jobs:
           echo "VERIFIED_IPA=$IPA" >> "$GITHUB_ENV"
 
       - name: Upload to TestFlight
+        id: upload
         env:
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
           ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
@@ -698,12 +736,46 @@ jobs:
             --apiKey "$ASC_API_KEY_ID" \
             --apiIssuer "$ASC_API_ISSUER_ID"
 
+      # A pilot's "What to Test" says it is a pilot, and it goes to the pilot
+      # group alone; a standard build carries the dispatch's notes and goes
+      # to TESTFLIGHT_STANDARD_GROUP_ID when that is set. The notes reach the
+      # script through the environment, never pasted into the command. For a
+      # pilot every App Store Connect call passes through a guard that
+      # refuses submission for review or release (testflight-build.mjs).
+      - name: Mark the TestFlight build and send it to its group
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          BUILD_KIND: ${{ steps.training-mode.outputs.kind }}
+          TESTFLIGHT_NOTES: ${{ inputs.notes }}
+          TESTFLIGHT_PILOT_GROUP_ID: ${{ vars.TESTFLIGHT_PILOT_GROUP_ID }}
+          TESTFLIGHT_STANDARD_GROUP_ID: ${{ vars.TESTFLIGHT_STANDARD_GROUP_ID }}
+        run: |
+          set -euo pipefail
+          # A file's secret may hold the file's text as pasted, or its base64.
+          write_secret_file() {
+            case "$1" in
+              *"-----BEGIN"*|*"<?xml"*|*"<plist"*) printf '%s\n' "$1" > "$2" ;;
+              *) printf '%s' "$1" | tr -d '[:space:]' | base64 --decode > "$2" ;;
+            esac
+          }
+          KEY="$RUNNER_TEMP/testflight-distribute.p8"
+          trap 'rm -f "$KEY"' EXIT
+          write_secret_file "$ASC_API_KEY_P8_BASE64" "$KEY"
+          BUILD_NUMBER="$GITHUB_RUN_NUMBER" \
+            MARKETING_VERSION=$(node -p "require('./package.json').version") \
+            ASC_API_KEY_PATH="$KEY" \
+            node scripts/ios/testflight-build.mjs distribute
+
       # Crashlytics reads a native crash through the build's symbol files. A
       # local Xcode build uploads them from a run-script phase; this archive
       # is built on a runner, so they go up here, from the archive just sent
       # to TestFlight. After that upload, so a failure here turns the run red
-      # without keeping the build from testers.
+      # without keeping the build from testers, and whatever the step before
+      # did, so a slow App Store Connect does not cost the symbols.
       - name: Upload Crashlytics symbol files
+        if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
         run: |
           set -euo pipefail
           UPLOAD=$(find "$HOME/Library/Developer/Xcode/DerivedData" \

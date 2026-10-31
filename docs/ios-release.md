@@ -201,9 +201,11 @@ the comment on the build step, and the activation order in
 2. Make sure App Store Connect → Apps has an app for `com.tropos.app`. The
    upload has nowhere to go without one.
 3. Actions tab → **Deploy iOS to TestFlight** → Run workflow. Leave
-   **Enable connected training for a paired-device TestFlight pilot** unchecked
-   for an ordinary build. Check it only for a private pilot with a paired
-   iPhone and Watch ready for the acceptance matrix below.
+   **Connected training pilot** unchecked for an ordinary build. Check it
+   only for a private pilot with a paired iPhone and Watch ready for the
+   acceptance matrix below, after setting `TESTFLIGHT_PILOT_GROUP_ID`
+   ("Pilot builds on TestFlight" below). Anything typed in **What to Test
+   note** becomes the build's "What to Test" in TestFlight.
 4. The run checks the secrets, makes the certificate and two profiles from
    the API key unless you gave your own, then checks both profiles (team,
    bundle ID, App Store type, expiry, target entitlements) and the
@@ -303,11 +305,52 @@ This Linux checkout has no Xcode or paired Apple devices. The watchOS target,
 signing and live behavior remain unverified until the macOS workflow and this
 device gate complete.
 
+#### Pilot builds on TestFlight
+
+A pilot build is marked as one and kept away from release
+(`scripts/ios/testflight-build.mjs`, run by `deploy-ios.yml`):
+
+- **Marked.** Its TestFlight "What to Test" starts "Connected training pilot.
+  Not for App Store release.", followed by the dispatch's note. It is set as
+  soon as App Store Connect lists the build, before processing ends.
+- **Its own testers.** It goes to the internal group named by
+  `TESTFLIGHT_PILOT_GROUP_ID` and to no other. Before archiving, the run
+  stops if that group is missing or external (an external group needs Beta
+  App Review, and a pilot is never submitted), or if any other internal
+  group gets every build automatically, since that group would receive the
+  pilot too.
+- **Never submitted.** Every App Store Connect call made for a pilot passes
+  through a guard that refuses anything that would submit a build for App
+  Review or release it, and a test fails if any workflow calls App Review
+  another way. A pilot can be made only from Run workflow: a trigger added
+  later makes standard builds alone. Nothing in CI can stop a person
+  choosing the build by hand in App Store Connect, which is why the "What to
+  Test" line says it; check it before submitting a build there.
+
+A standard build carries the dispatch's note as its "What to Test", when
+there is one, and goes to `TESTFLIGHT_STANDARD_GROUP_ID` when that is set.
+With neither, the run does not wait for App Store Connect to process it.
+
+Repository variables (Settings → Secrets and variables → Actions →
+Variables; ids, not secrets):
+
+| Variable                       | What it is                                                       | Needed for                                                                                                                 |
+| ------------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `TESTFLIGHT_PILOT_GROUP_ID`    | the id of an **internal** TestFlight group for the pilot testers | every pilot run. App Store Connect → Apps → Tropos → TestFlight → the group: the id is the last part of the page's address |
+| `TESTFLIGHT_STANDARD_GROUP_ID` | optional: the id of the group standard builds go to              | standard builds to reach testers on their own once automatic distribution is off on the other internal groups              |
+
+Turning off automatic distribution on an internal group means each standard
+build is added to it by hand, or through `TESTFLIGHT_STANDARD_GROUP_ID`.
+The API key's App Manager role is enough for both; the Admin role, which
+signing from the key needs, includes it.
+
 #### Optional: auto-build on release
 
 Once verified, you can add a `push: { tags: ['v*'] }` trigger so cutting a
 version tag ships a TestFlight build. Keep it off `push: main` — every merge
-becoming a TestFlight build spams testers and burns build numbers.
+becoming a TestFlight build spams testers and burns build numbers. Such a
+trigger makes standard builds only: the mode step refuses a pilot from
+anything but Run workflow.
 
 ## Why not just auto-deploy native like the web?
 
