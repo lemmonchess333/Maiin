@@ -11,6 +11,19 @@ imagery (route scenes, muscle figures) by design. See `GLOSSARY.md` →
 "Editorial imagery" and `src/lib/editorialImages.ts` for the resolution
 logic.
 
+### Social editorial refresh — 2026-10-31
+
+Eight generic challenge and Space covers now use generated, brand-free
+photography. Training Minutes and Strength Builder replace photos with visible
+Nike marks. Lifters, Runners and Women's Running show people training together;
+Fastest 5K, Mileage and Together keep the athlete readable at mobile card size.
+These are editorial scenes, not Tropos members or real events. All eight are
+1200 × 600 WebP files below 120 KB, checked in the challenge/Space crops and
+at 3× brightness for marks. Full prompts, source and output hashes, and encode
+settings are in
+[`sources-2026-10-31-social-refresh.json`](./sources-2026-10-31-social-refresh.json).
+The older source records below remain as history of the covers they replaced.
+
 ### Marathon and seasonal refresh — 2026-10-17
 
 Eight new destination covers show Cape Town, Rome, Athens, Prague, Vienna,
@@ -21,9 +34,10 @@ The four seasonal covers now use generated generic editorial athletes, with
 clear spring greenery, summer coast, autumn foliage and winter gym light.
 These depict neither real Tropos members nor a named race. The built-in image
 generation tool produced each seasonal asset separately. Monthly Strength
-Builder now uses a real licensed barbell photograph by Ambitious Studio\* | Rick
-Barrett, replacing the generated plate-loading scene after its equipment geometry
-failed visual review. Full prompts for generated assets, source/output hashes,
+Builder used a real licensed barbell photograph by Ambitious Studio\* | Rick
+Barrett in that refresh, replacing the generated plate-loading scene after its
+equipment geometry failed visual review. The 2026-10-31 refresh replaced that
+cover again. Full prompts for generated assets, source/output hashes,
 crops and encoding settings are recorded in
 [`sources-marathons-challenges-2026-10-17.json`](./sources-marathons-challenges-2026-10-17.json).
 The superseded generated strength record is retained in `supersededImages`.
@@ -38,10 +52,10 @@ point. Existing unique challenge covers continue to resolve by challenge ID.
 
 The featured monthly goal alternates between Active Days (January, March, May,
 July, September and November) and Training Minutes (February, April, June,
-August, October and December). Each category has a distinct real licensed
-photograph. Active Days shows a running group photographed by Yuval Zukerman;
-Training Minutes shows a gym athlete checking his watch, photographed by Mina
-Rad. Source pages, licences, exact crops and hashes are recorded in
+August, October and December). Each category has a distinct photograph.
+Active Days shows a running group photographed by Yuval Zukerman. Training
+Minutes now uses the generated cover recorded in the 2026-10-31 manifest
+above. The earlier licensed source, exact crop and hashes remain in
 [`sources-rotating-challenges-2026-10-18.json`](./sources-rotating-challenges-2026-10-18.json).
 
 Add files with these exact stems (any of `.webp .avif .jpg .jpeg .png`;
@@ -101,13 +115,15 @@ would ship as dead weight in every build.
 ## Licensing and provenance
 
 Only add images you have rights to distribute in a shipped app. Two
-routes, and every file records which one it took in its commit message:
+routes, and every file records which one it took in a source manifest or its
+commit message:
 
 - **Licensed stock** — Unsplash/Pexels licences qualify; note the source
   URL. No watermarked, editorial-only, or scraped imagery.
-- **Generated** — via `scripts/art/gemini-image.py` (`GEMINI_API_KEY`
-  from the environment only). Note the model and keep the prompt in the
-  commit message. Use this where the subject is generic; do NOT use it
+- **Generated** — via the built-in image generation tool or
+  `scripts/art/gemini-image.py` (`GEMINI_API_KEY` from the environment only).
+  Note the model and keep the prompt in a source manifest or commit message.
+  Use this where the subject is generic; do NOT use it
   for a named real place — the race spaces are photographs of London,
   Newcastle, Edinburgh and the rest, and a generated stand-in would be
   a claim about a real city that isn't true.

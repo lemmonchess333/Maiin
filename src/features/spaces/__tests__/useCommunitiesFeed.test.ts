@@ -12,6 +12,8 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
+const authState = vi.hoisted(() => ({ uid: "me" }));
+vi.mock("@/lib/auth", () => ({ useUid: () => authState.uid }));
 
 import { Timestamp } from "firebase/firestore";
 import { useCommunitiesFeed } from "../useCommunitiesFeed";
@@ -43,7 +45,10 @@ const COACH_POST = {
   createdAt: hoursAgo(1),
 };
 
-beforeEach(() => resetFirestore());
+beforeEach(() => {
+  resetFirestore();
+  authState.uid = "me";
+});
 afterEach(cleanup);
 
 /** What the stream shows, as `space/post` keys in order. */
@@ -102,5 +107,43 @@ describe("useCommunitiesFeed", () => {
       await result.current.refresh();
     });
     expect(keys(result.current.items)).toEqual(["runners/p2", "runners/p1"]);
+  });
+
+  it("clears the visible cache and rereads when the account changes", async () => {
+    seedFirestore({
+      "spaces/runners/posts/p1": memberPost("Priya", "First 10K done.", 2),
+    });
+    const { result, rerender } = renderHook(() =>
+      useCommunitiesFeed(true, ["runners"])
+    );
+    await waitFor(() =>
+      expect(keys(result.current.items)).toEqual(["runners/p1"])
+    );
+    const staleRemove = result.current.remove;
+
+    seedFirestore({
+      "spaces/runners/posts/p2": memberPost("Sam", "Easy 5K.", 0),
+    });
+    authState.uid = "other";
+    rerender();
+    expect(result.current.items).toEqual([]);
+    await waitFor(() =>
+      expect(keys(result.current.items)).toEqual(["runners/p2", "runners/p1"])
+    );
+    act(() => staleRemove("runners", "p1"));
+    expect(keys(result.current.items)).toEqual(["runners/p2", "runners/p1"]);
+  });
+
+  it("removes only the selected Space's post when IDs happen to match", async () => {
+    seedFirestore({
+      "spaces/runners/posts/shared-id": memberPost("Priya", "Long run.", 2),
+      "spaces/lifters/posts/shared-id": memberPost("Jo", "Deadlift PR.", 1),
+    });
+    const { result } = renderHook(() =>
+      useCommunitiesFeed(true, ["runners", "lifters"])
+    );
+    await waitFor(() => expect(result.current.items).toHaveLength(2));
+    act(() => result.current.remove("runners", "shared-id"));
+    expect(keys(result.current.items)).toEqual(["lifters/shared-id"]);
   });
 });

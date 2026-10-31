@@ -1,8 +1,8 @@
 /**
  * Community Spaces directory carousel (Spc1 PR2) — the marquee of the
  * Community tab. Horizontally snap-scrolling photo cards, the Runna
- * Spaces pattern: each card is a full-bleed licensed photo (editorial
- * pipeline, `space-<id>` stems) with a sport-coded tint wash + scrim
+ * Spaces pattern: each card is a full-bleed editorial photo
+ * (`space-<id>` stems) with a sport-coded tint wash + scrim
  * and the space name overlaid. Until photos land the card renders the
  * designed fallback band (accent gradient + ghosted icon — the same
  * grammar as the challenge hero).

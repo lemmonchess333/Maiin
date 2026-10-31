@@ -1,4 +1,3 @@
-import SectionLabel from "@/components/ui/SectionLabel";
 import { useSocialFeed, type FeedItem } from "@/hooks/useSocialFeed";
 import {
   ShareCardSheet,
@@ -16,11 +15,13 @@ import {
   Suspense,
 } from "react";
 import type { MutableRefObject } from "react";
-import SpacePostCard from "@/features/spaces/SpacePostCard";
-import { useCommunitiesFeed } from "@/features/spaces/useCommunitiesFeed";
+import {
+  MAX_SPACES_IN_FEED,
+  useCommunitiesFeed,
+} from "@/features/spaces/useCommunitiesFeed";
 import { useSpacesDirectory } from "@/features/spaces/useSpacesDirectory";
 import { spaceDef } from "@/features/spaces/spaceDefs";
-import { Link } from "react-router-dom";
+import SpaceFeedPost from "./SpaceFeedPost";
 import ActivityCard from "@/components/social/ActivityCard";
 import PeopleToFollowRow from "@/components/social/PeopleToFollowRow";
 import { useSuggestedPeople } from "@/hooks/useSuggestedPeople";
@@ -37,16 +38,15 @@ import { lazyRetry } from "@/lib/lazyRetry";
 const FullLeaderboard = lazyRetry(
   () => import("@/components/social/FullLeaderboard")
 );
-import { Users, Globe, ChevronDown } from "lucide-react";
+import { Users, Globe } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
-import { BottomSheet } from "@/components/ui/BottomSheet";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import {
   getPersonalTrajectory,
   type PersonalTrajectory,
 } from "@/lib/personalTrajectory";
 import { shouldRenderFollowingList } from "@/lib/socialGates";
 import { THEME } from "@/lib/theme";
-import { cn } from "@/lib/utils";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
@@ -54,9 +54,7 @@ import type { FeedSubTab } from "./socialTabs";
 import { Button } from "@/components/ui/Button";
 import { liftPostExerciseCount } from "@/lib/liftPost";
 
-/** Each feed source by the name people see: the chip, its sheet and the
- *  chip's accessible name. The joined-Spaces source keeps its internal
- *  key, `communities`, which the URL carries. */
+/** The joined-Spaces source keeps its internal URL key, `communities`. */
 const FEED_SOURCE_NAMES: Record<FeedSubTab, string> = {
   following: "Following",
   communities: "Spaces",
@@ -154,9 +152,18 @@ export default function FeedView({
     [spaceEntries]
   );
   const communitiesFeed = useCommunitiesFeed(
-    active && feedSubTab === "communities",
+    active && feedSubTab === "communities" && blockedReady && spacesReady,
     joinedSpaceIds
   );
+  const visibleSpacePosts =
+    blockedReady && spacesReady
+      ? communitiesFeed.items.filter(
+          (item) =>
+            joinedSpaceIds.includes(item.spaceId) &&
+            (item.post.authorId === uid ||
+              !blockedUsers.has(item.post.authorId))
+        )
+      : [];
 
   const activeFeed = feedSubTab === "following" ? followingFeed : exploreFeed;
 
@@ -306,8 +313,6 @@ export default function FeedView({
     trajectory.thisWeek.sessions === 0;
 
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
-  // SOCIAL-HOME-01: the feed-source picker is a compact menu now.
-  const [sourceMenuOpen, setSourceMenuOpen] = useState(false);
   /* Overlay open/close flip the local state AND mirror it to the
      shell (chrome hide) inside the same event handler, so React
      batches both updates into a single render. */
@@ -425,23 +430,51 @@ export default function FeedView({
       {active && !showFullLeaderboard && (
         <section aria-label="Activity feed">
           <div className="!mt-3">
-            {/* Feed source — a compact menu (SOCIAL-HOME-01), not a
-                second stacked segmented track: one small chip names
-                the current source and opens a two-option sheet. The
-                Soc5b freshness dot rides on the chip when the OTHER
-                source has new content, and on each sheet option. */}
-            {/* Wraps: at 320 px and 2× text the source chip beside the
-                line left "Find people" no room. */}
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-              {/* While you follow fewer than three people, one line says
-                  how many, with the way to more. It replaced a whole
-                  card under the points card ("Following 1 of 3 — your
-                  feed fills as you follow more"). */}
-              {feedSubTab !== "communities" &&
+            {/* All three sources stay visible. The shared control supplies
+                the 44px touch floor and keyboard navigation. */}
+            <SegmentedControl<FeedSubTab>
+              ariaLabel="Feed source"
+              value={feedSubTab}
+              onChange={(next) => {
+                // Record a deliberate selection even when it matches the
+                // smart default, so a later count read cannot move it.
+                selectFeedSubTab(next);
+                if (next !== feedSubTab)
+                  trackSocialEvent("social_feed_subtab_changed", {
+                    subTab: next,
+                  });
+              }}
+              onReselect={selectFeedSubTab}
+              options={(
+                ["following", "communities", "explore"] as FeedSubTab[]
+              ).map((source) => ({
+                value: source,
+                label: (
+                  <span className="relative inline-flex items-center justify-center gap-1">
+                    {FEED_SOURCE_NAMES[source]}
+                    {source !== feedSubTab &&
+                      (source === "following"
+                        ? followingHasNew
+                        : source === "explore" && exploreHasNew) && (
+                        <>
+                          <span
+                            aria-hidden="true"
+                            className="size-1.5 rounded-full bg-primary"
+                          />
+                          <span className="sr-only">new content</span>
+                        </>
+                      )}
+                  </span>
+                ),
+              }))}
+            />
+
+            {/* A thin follow graph gets one line and a route to People. */}
+            {feedSubTab !== "communities" &&
               followingCount !== null &&
               followingCount > 0 &&
-              !followingFeedUnlocked ? (
-                <p className="min-w-0 text-small text-muted-foreground">
+              !followingFeedUnlocked && (
+                <p className="mt-1 text-small text-muted-foreground">
                   You follow{" "}
                   <span className="font-mono tabular-nums font-semibold text-foreground">
                     {followingCount}
@@ -451,106 +484,12 @@ export default function FeedView({
                   <button
                     type="button"
                     onClick={openPeople}
-                    className="inline-flex min-h-[44px] items-center font-semibold text-lifting-strong hover:text-lifting-strong/80 transition-colors"
+                    className="inline-flex min-h-11 items-center font-semibold text-lifting-strong hover:text-lifting-strong/80 transition-colors"
                   >
                     Find people
                   </button>
                 </p>
-              ) : (
-                <span aria-hidden="true" />
               )}
-              <button
-                type="button"
-                onClick={() => setSourceMenuOpen(true)}
-                className="relative inline-flex items-center gap-1 min-h-[44px] px-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition active:scale-[0.97]"
-                aria-label={`Feed source: ${FEED_SOURCE_NAMES[feedSubTab]}`}
-              >
-                {FEED_SOURCE_NAMES[feedSubTab]}
-                <ChevronDown className="size-4" aria-hidden="true" />
-                {(feedSubTab === "following"
-                  ? exploreHasNew
-                  : followingHasNew) && (
-                  <>
-                    <span
-                      aria-hidden="true"
-                      className="absolute top-2.5 right-0 size-1.5 rounded-full bg-primary"
-                    />
-                    <span className="sr-only"> new content elsewhere</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            <BottomSheet
-              open={sourceMenuOpen}
-              onOpenChange={setSourceMenuOpen}
-              title="Feed source"
-            >
-              <div
-                className="px-5 pb-6 pt-2 space-y-2"
-                role="radiogroup"
-                aria-label="Feed source"
-              >
-                {(["following", "communities", "explore"] as FeedSubTab[]).map(
-                  (st) => {
-                    const hasNew =
-                      st === "following"
-                        ? followingHasNew
-                        : st === "explore"
-                          ? exploreHasNew
-                          : false; // communities has no freshness pointer (v1)
-                    const text = FEED_SOURCE_NAMES[st];
-                    const sub =
-                      st === "following"
-                        ? "Activities from people you follow"
-                        : st === "communities"
-                          ? "Posts from Spaces you've joined"
-                          : "Public activity across Tropos";
-                    return (
-                      <button
-                        key={st}
-                        type="button"
-                        role="radio"
-                        aria-checked={feedSubTab === st}
-                        onClick={() => {
-                          setSourceMenuOpen(false);
-                          // The visible source may only be a smart default.
-                          // Record even the same choice so a later follow-count
-                          // snapshot cannot switch away from what was tapped.
-                          selectFeedSubTab(st);
-                          if (feedSubTab === st) return;
-                          trackSocialEvent("social_feed_subtab_changed", {
-                            subTab: st,
-                          });
-                        }}
-                        className={cn(
-                          "w-full min-h-[44px] p-3 rounded-xl text-left transition active:scale-[0.97]",
-                          feedSubTab === st
-                            ? "bg-primary/10 border border-primary/40"
-                            : "bg-muted border border-transparent"
-                        )}
-                      >
-                        <span className="relative inline-flex items-center text-sm font-semibold text-foreground">
-                          {text}
-                          {hasNew && (
-                            <>
-                              <span
-                                aria-hidden="true"
-                                className="absolute -top-0.5 -right-2 size-1.5 rounded-full bg-primary"
-                              />
-                              <span className="sr-only"> new content</span>
-                            </>
-                          )}
-                        </span>
-                        <span className="block text-xs text-muted-foreground">
-                          {sub}
-                        </span>
-                      </button>
-                    );
-                  }
-                )}
-              </div>
-            </BottomSheet>
 
             {/* Someone following nobody lands on Explore. One line says
                 what it is and how Following fills; the posts follow. */}
@@ -636,15 +575,26 @@ export default function FeedView({
                 />
               )}
 
-            {/* SOC-P3a — the communities stream: joined-space posts,
-                newest-first. Cards render read-only counts (engagement
-                lives on the space page — the eyebrow link above each
-                card); the eyebrow names the space so a mixed stream
-                stays legible. */}
+            {/* Joined-Space posts, newest first. Props and comments work
+                here as on the post page; each card links straight there. */}
             {feedSubTab === "communities" && (
               <div className="space-y-3 mt-4">
-                {communitiesFeed.loading &&
-                  communitiesFeed.items.length === 0 && (
+                {joinedSpaceIds.length > MAX_SPACES_IN_FEED && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/50 px-3.5 py-2">
+                    <p className="text-xs text-muted-foreground">
+                      Showing posts from {MAX_SPACES_IN_FEED} of your{" "}
+                      <span className="font-mono tabular-nums">
+                        {joinedSpaceIds.length}
+                      </span>{" "}
+                      Spaces.
+                    </p>
+                    <Button variant="ghost" onClick={openTogether}>
+                      Browse all
+                    </Button>
+                  </div>
+                )}
+                {(!blockedReady || !spacesReady || communitiesFeed.loading) &&
+                  visibleSpacePosts.length === 0 && (
                     <div
                       className="space-y-3"
                       aria-live="polite"
@@ -654,8 +604,10 @@ export default function FeedView({
                       <ActivityCardSkeleton stagger={1} />
                     </div>
                   )}
-                {!communitiesFeed.loading &&
-                  communitiesFeed.items.length === 0 && (
+                {blockedReady &&
+                  spacesReady &&
+                  !communitiesFeed.loading &&
+                  visibleSpacePosts.length === 0 && (
                     <HexEmptyState
                       icon={Users}
                       headline={
@@ -672,31 +624,28 @@ export default function FeedView({
                       action={{ label: "Browse spaces", onClick: openTogether }}
                     />
                   )}
-                {communitiesFeed.items.map((item) => {
+                {visibleSpacePosts.map((item) => {
                   const def = spaceDef(item.spaceId);
                   if (!def) return null;
                   return (
-                    <div key={`${item.spaceId}/${item.postId}`}>
-                      <Link
-                        to={`/space/${item.spaceId}`}
-                        className="inline-flex items-center min-h-[28px] mb-1"
-                      >
-                        <SectionLabel as="span">{def.name}</SectionLabel>
-                      </Link>
-                      <SpacePostCard
-                        spaceId={item.spaceId}
-                        postId={item.postId}
-                        post={item.post}
-                        accent={
-                          def.accent === "running"
-                            ? THEME.running
-                            : def.accent === "lifting"
-                              ? THEME.lifting
-                              : THEME.brand
-                        }
-                        onRemoved={() => communitiesFeed.remove(item.postId)}
-                      />
-                    </div>
+                    <SpaceFeedPost
+                      key={`${uid ?? "signed-out"}:${item.spaceId}/${item.postId}`}
+                      spaceId={item.spaceId}
+                      spaceName={def.name}
+                      postId={item.postId}
+                      post={item.post}
+                      accent={
+                        def.accent === "running"
+                          ? THEME.running
+                          : def.accent === "lifting"
+                            ? THEME.lifting
+                            : THEME.brand
+                      }
+                      uid={uid}
+                      onRemoved={() =>
+                        communitiesFeed.remove(item.spaceId, item.postId)
+                      }
+                    />
                   );
                 })}
               </div>

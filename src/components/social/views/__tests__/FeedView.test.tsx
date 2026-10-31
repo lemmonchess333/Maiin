@@ -1,18 +1,6 @@
-/**
- * FeedView (SOCIAL-HOME-01 Stage D) — the compact feed-source menu
- * replacing the stacked SegmentedControl, and the Explore empty state
- * routing to a meaningful action instead of dead-ending. Since the
- * 2026-10-01 Social pass: posts come first, the points card sits under
- * the third post, and someone following nobody sees Explore's posts.
- */
+/** Feed source navigation, joined-Space engagement, and empty states. */
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import {
-  render,
-  screen,
-  cleanup,
-  fireEvent,
-  within,
-} from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { MutableRefObject } from "react";
 import FeedView from "../FeedView";
@@ -38,6 +26,18 @@ const post = (id: string) => ({
   summary: "",
   createdAt: null,
 });
+const joinedSpacePost = (authorId = "member-1") => ({
+  spaceId: "runners",
+  postId: "post-1",
+  post: {
+    authorId,
+    authorName: "Priya S.",
+    body: "First 10K done this morning.",
+    likeCount: 0,
+    commentCount: 0,
+    createdAt: { toDate: () => new Date() },
+  },
+});
 
 vi.mock("@/hooks/useSocialFeed", () => ({
   useSocialFeed: () => ({
@@ -62,6 +62,7 @@ vi.mock("@/lib/auth", () => ({
 /* SOC-P3a — communities source: directory + feed hooks are mocked so
    the sub-tab's composition can be pinned without Firestore. */
 const mockCommunitiesFeed = vi.fn();
+const mockToggleSpaceLike = vi.fn(async () => {});
 /** Runners joined, Lifters not; a test may change it before rendering. */
 const JOINED_RUNNERS = [
   { def: { id: "runners" }, joined: true, memberCount: 3 },
@@ -76,11 +77,46 @@ vi.mock("@/features/spaces/useSpacesDirectory", () => ({
   }),
 }));
 vi.mock("@/features/spaces/useCommunitiesFeed", () => ({
+  MAX_SPACES_IN_FEED: 6,
   useCommunitiesFeed: () => mockCommunitiesFeed(),
 }));
+vi.mock("@/features/spaces/useSpacePostLikes", () => ({
+  useSpacePostLikes: () => ({
+    liked: new Set<string>(),
+    deltas: {},
+    toggle: mockToggleSpaceLike,
+  }),
+}));
 vi.mock("@/features/spaces/SpacePostCard", () => ({
-  default: ({ postId }: { postId: string }) => (
-    <div data-testid="space-post">{postId}</div>
+  default: ({
+    postId,
+    onToggleLike,
+    onOpenComments,
+    commentDelta,
+  }: {
+    postId: string;
+    onToggleLike?: () => void;
+    onOpenComments?: () => void;
+    commentDelta: number;
+  }) => (
+    <div data-testid="space-post" data-comment-delta={commentDelta}>
+      {postId}
+      {onToggleLike && <button onClick={onToggleLike}>Give props</button>}
+      {onOpenComments && <button onClick={onOpenComments}>Comments</button>}
+    </div>
+  ),
+}));
+vi.mock("@/features/spaces/SpaceCommentSheet", () => ({
+  default: ({
+    commentCount,
+    onCountChange,
+  }: {
+    commentCount: number;
+    onCountChange: (delta: number) => void;
+  }) => (
+    <div role="dialog" aria-label="Space comments" data-count={commentCount}>
+      <button onClick={() => onCountChange(1)}>Add comment</button>
+    </div>
   ),
 }));
 vi.mock("@/components/social/ActivityCard", () => ({
@@ -216,14 +252,16 @@ describe("FeedView — a failed Following feed", () => {
   });
 });
 
-describe("FeedView — compact source menu", () => {
-  it("names the current source on one chip and opens the two-option menu", () => {
+describe("FeedView — visible source control", () => {
+  it("shows all three sources in one accessible control", () => {
     setup();
-    const chip = screen.getByRole("button", { name: /feed source: explore/i });
-    fireEvent.click(chip);
     expect(
-      screen.getByRole("radio", { name: /following/i })
+      screen.getByRole("radiogroup", { name: "Feed source" })
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: "Following" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Spaces" })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /explore/i })).toHaveAttribute(
       "aria-checked",
       "true"
@@ -232,20 +270,22 @@ describe("FeedView — compact source menu", () => {
 
   it("picking the other source drives the URL-writing callback", () => {
     const { selectFeedSubTab } = setup();
-    fireEvent.click(
-      screen.getByRole("button", { name: /feed source: explore/i })
-    );
     fireEvent.click(screen.getByRole("radio", { name: /following/i }));
     expect(selectFeedSubTab).toHaveBeenCalledWith("following");
+  });
+
+  it("supports arrow-key source navigation", () => {
+    const { selectFeedSubTab } = setup();
+    fireEvent.keyDown(screen.getByRole("radio", { name: "Explore" }), {
+      key: "ArrowLeft",
+    });
+    expect(selectFeedSubTab).toHaveBeenCalledWith("communities");
   });
 
   it.each([null, 3])(
     "records an explicit choice of the current source with follow count %s",
     (followingCount) => {
       const { selectFeedSubTab } = setup({ followingCount });
-      fireEvent.click(
-        screen.getByRole("button", { name: /feed source: explore/i })
-      );
       fireEvent.click(screen.getByRole("radio", { name: /explore/i }));
       expect(selectFeedSubTab).toHaveBeenCalledWith("explore");
     }
@@ -472,37 +512,25 @@ describe("FeedView — following nobody (the retired solo-first stack)", () => {
 });
 
 describe("FeedView — the Spaces source (SOC-P3a)", () => {
-  it("the source sheet offers all three sources", () => {
+  it("keeps Spaces visible alongside Following and Explore", () => {
     setup();
-    fireEvent.click(
-      screen.getByRole("button", { name: /feed source: explore/i })
-    );
-    expect(screen.getByRole("radio", { name: /^Spaces/ })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Spaces" })).toBeInTheDocument();
     expect(
-      screen.getByRole("radio", { name: /following/i })
+      screen.getByRole("radio", { name: "Following" })
     ).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /explore/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Explore" })).toBeInTheDocument();
   });
 
   it("names the joined-Spaces source Spaces, as the rest of the app does", () => {
     setup({ feedSubTab: "communities" });
-    const chip = screen.getByRole("button", { name: "Feed source: Spaces" });
-    expect(chip).toHaveTextContent("Spaces");
-    fireEvent.click(chip);
-    const option = screen.getByRole("radio", { name: /^Spaces/ });
+    const option = screen.getByRole("radio", { name: "Spaces" });
     expect(option).toHaveAttribute("aria-checked", "true");
-    expect(
-      within(option).getByText("Posts from Spaces you've joined")
-    ).toBeInTheDocument();
     expect(screen.queryByText(/my communities/i)).toBeNull();
   });
 
   it("picking Spaces drives the URL-writing callback", () => {
     const { selectFeedSubTab } = setup();
-    fireEvent.click(
-      screen.getByRole("button", { name: /feed source: explore/i })
-    );
-    fireEvent.click(screen.getByRole("radio", { name: /^Spaces/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "Spaces" }));
     expect(selectFeedSubTab).toHaveBeenCalledWith("communities");
   });
 
@@ -510,32 +538,80 @@ describe("FeedView — the Spaces source (SOC-P3a)", () => {
     "renders joined-space posts with %i follows",
     (followingCount) => {
       mockCommunitiesFeed.mockReturnValue({
-        items: [
-          {
-            spaceId: "runners",
-            postId: "post-1",
-            post: {
-              authorId: "member-1",
-              authorName: "Priya S.",
-              body: "First 10K done this morning.",
-              likeCount: 0,
-              commentCount: 0,
-              createdAt: { toDate: () => new Date() },
-            },
-          },
-        ],
+        items: [joinedSpacePost()],
         loading: false,
         refresh: vi.fn(async () => {}),
         remove: vi.fn(),
       });
       setup({ feedSubTab: "communities", followingCount });
       expect(screen.getByTestId("space-post")).toHaveTextContent("post-1");
-      expect(screen.getByRole("link", { name: /runners/i })).toHaveAttribute(
+      expect(screen.getByRole("link", { name: "Runners" })).toHaveAttribute(
         "href",
         "/space/runners"
       );
+      expect(
+        screen.getByRole("link", { name: "Open post in Runners" })
+      ).toHaveAttribute("href", "/space/runners/post/post-1");
     }
   );
+
+  it("lets a reader give props and comment without leaving Feed", () => {
+    mockCommunitiesFeed.mockReturnValue({
+      items: [joinedSpacePost()],
+      loading: false,
+      refresh: vi.fn(async () => {}),
+      remove: vi.fn(),
+    });
+    setup({ feedSubTab: "communities" });
+    fireEvent.click(screen.getByRole("button", { name: "Give props" }));
+    expect(mockToggleSpaceLike).toHaveBeenCalledWith("post-1");
+
+    fireEvent.click(screen.getByRole("button", { name: "Comments" }));
+    const sheet = screen.getByRole("dialog", { name: "Space comments" });
+    expect(sheet).toHaveAttribute("data-count", "0");
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    expect(sheet).toHaveAttribute("data-count", "1");
+    expect(screen.getByTestId("space-post")).toHaveAttribute(
+      "data-comment-delta",
+      "1"
+    );
+  });
+
+  it("holds Space posts until blocks load, then hides blocked authors", () => {
+    mockCommunitiesFeed.mockReturnValue({
+      items: [joinedSpacePost()],
+      loading: false,
+      refresh: vi.fn(async () => {}),
+      remove: vi.fn(),
+    });
+    const { rerender } = setup({
+      feedSubTab: "communities",
+      blockedReady: false,
+    });
+    expect(screen.queryByTestId("space-post")).toBeNull();
+    expect(screen.queryByText("Your spaces are quiet right now")).toBeNull();
+    rerender({
+      feedSubTab: "communities",
+      blockedReady: true,
+      blockedUsers: new Set(["member-1"]),
+    });
+    expect(screen.queryByTestId("space-post")).toBeNull();
+  });
+
+  it("never renders a cached post from a Space this account has not joined", () => {
+    mockCommunitiesFeed.mockReturnValue({
+      items: [joinedSpacePost()],
+      loading: false,
+      refresh: vi.fn(async () => {}),
+      remove: vi.fn(),
+    });
+    directory.entries = [{ def: { id: "runners" }, joined: false }];
+    setup({ feedSubTab: "communities" });
+    expect(screen.queryByTestId("space-post")).toBeNull();
+    expect(
+      screen.getByText("Join a space to fill this feed")
+    ).toBeInTheDocument();
+  });
 
   it("empty stream shows the honest join prompt, never a blank column", () => {
     setup({ feedSubTab: "communities" });
@@ -554,6 +630,20 @@ describe("FeedView — the Spaces source (SOC-P3a)", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText(/your spaces are quiet right now/i)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Browse spaces" }));
+    expect(openTogether).toHaveBeenCalled();
+  });
+
+  it("discloses the bounded stream when someone joined more than six Spaces", () => {
+    directory.entries = Array.from({ length: 7 }, (_, i) => ({
+      def: { id: `space-${i}` },
+      joined: true,
+    }));
+    const { openTogether } = setup({ feedSubTab: "communities" });
+    const browseAll = screen.getByRole("button", { name: "Browse all" });
+    expect(browseAll.parentElement).toHaveTextContent(
+      /Showing posts from 6 of your 7 Spaces/
+    );
+    fireEvent.click(browseAll);
     expect(openTogether).toHaveBeenCalled();
   });
 
