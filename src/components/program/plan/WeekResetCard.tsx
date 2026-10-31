@@ -15,6 +15,11 @@ interface Props {
   range: string;
   liftDays: number;
   plannedRuns: number;
+  /** The person's run plan: a race plan (whose difficulty and volume Pgm6
+   *  sets), another plan, or none, which hides every run action. */
+  runPlan: "race" | "plan" | "none";
+  /** Where this week's Express session opens, or null with no lift ahead. */
+  expressTarget: string | null;
   canMoveRun: boolean;
   canEditLayout: boolean;
   moveReason?: string;
@@ -24,6 +29,7 @@ interface Props {
   onEditLayout: () => void;
   onGoToday: () => void;
   onReviewWeek: () => void;
+  onOpen: (path: string) => void;
 }
 
 /** The handoff from a private review to a real, user-confirmed plan choice. */
@@ -32,6 +38,8 @@ export default function WeekResetCard({
   range,
   liftDays,
   plannedRuns,
+  runPlan,
+  expressTarget,
   canMoveRun,
   canEditLayout,
   moveReason,
@@ -41,6 +49,7 @@ export default function WeekResetCard({
   onEditLayout,
   onGoToday,
   onReviewWeek,
+  onOpen,
 }: Props) {
   if (outcome) {
     return (
@@ -110,29 +119,46 @@ export default function WeekResetCard({
       </div>
       <MetaLine
         className="mt-3"
-        items={[`${liftDays} lift days`, `${plannedRuns} planned runs`]}
+        items={[
+          `${liftDays} lift days`,
+          ...(runPlan === "none" ? [] : [`${plannedRuns} planned runs`]),
+        ]}
       />
+      {/* The dose before the layout (XB1 call 2): a heavy week takes a
+          shorter lift or a lighter run plan, then a moved run; a light one
+          takes the race plan's difficulty and volume. The usual layout is
+          the last resort, a row of its own. */}
       <div className="mt-4 space-y-2">
-        <Button
-          fullWidth
-          variant="secondary"
-          disabled={!canMoveRun}
-          onClick={onMoveRun}
-          className="justify-between"
-          rightIcon={<ArrowRight className="size-4" />}
-        >
-          Move a run this week
-        </Button>
-        {!canMoveRun && moveReason && (
-          <p className="text-xs text-muted-foreground">{moveReason}</p>
+        {feel !== "too_light" && expressTarget && (
+          <Option onClick={() => onOpen(expressTarget)}>
+            Use this week&apos;s Express session
+          </Option>
+        )}
+        {feel === "a_bit_much" && runPlan !== "none" && (
+          <Option onClick={() => onOpen("/settings/run-plan")}>
+            Make the run plan lighter
+          </Option>
+        )}
+        {feel === "too_light" && runPlan === "race" && (
+          <Option onClick={() => onOpen("/settings/run-plan")}>
+            Make the run plan harder
+          </Option>
+        )}
+        {feel !== "too_light" && runPlan !== "none" && (
+          <>
+            <Option disabled={!canMoveRun} onClick={onMoveRun}>
+              Move a run this week
+            </Option>
+            {!canMoveRun && moveReason && (
+              <p className="text-xs text-muted-foreground">{moveReason}</p>
+            )}
+          </>
         )}
         <Button
           fullWidth
-          variant="secondary"
+          variant="ghost"
           disabled={!canEditLayout}
           onClick={onEditLayout}
-          className="justify-between"
-          rightIcon={<ArrowRight className="size-4" />}
         >
           Change usual weekly layout
         </Button>
@@ -140,14 +166,36 @@ export default function WeekResetCard({
           <p className="text-xs text-muted-foreground">{layoutReason}</p>
         )}
         <p className="text-xs text-muted-foreground">
-          A run move affects one date this week. Your usual layout repeats in
-          future weeks; changing the number of lift days may rebuild your
-          programme.
+          Your usual layout repeats in future weeks; changing the number of lift
+          days may rebuild your programme.
         </p>
         <Button fullWidth variant="ghost" onClick={onGoToday}>
           Keep this week
         </Button>
       </div>
     </Card>
+  );
+}
+
+function Option({
+  children,
+  disabled,
+  onClick,
+}: {
+  children: React.ReactNode;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      fullWidth
+      variant="secondary"
+      disabled={disabled}
+      onClick={onClick}
+      className="justify-between"
+      rightIcon={<ArrowRight className="size-4" />}
+    >
+      {children}
+    </Button>
   );
 }

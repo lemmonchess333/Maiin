@@ -416,6 +416,19 @@ export default function TrainingPlan() {
               range={`${formatDayMonth(parseLocalDate(firstDate))} – ${formatDayMonth(parseLocalDate(lastDate))}`}
               liftDays={model.summary.lifts.planned ?? 0}
               plannedRuns={model.summary.runs.planned ?? 0}
+              runPlan={
+                profile?.runMode === "race_prep"
+                  ? "race"
+                  : programState.runDays?.length
+                    ? "plan"
+                    : "none"
+              }
+              expressTarget={
+                canEdit && !sessionBusy && model.nextLiftIndex !== null
+                  ? `/program?day=${model.nextLiftIndex}&express=1`
+                  : null
+              }
+              onOpen={(path) => navigate(path)}
               canMoveRun={canEdit && eligibleRuns.length > 0}
               canEditLayout={canResetLayout}
               moveReason={
