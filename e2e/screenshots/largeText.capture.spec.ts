@@ -27,8 +27,10 @@
  * workout's review, with the sheets that say when it started and name it.
  *
  * And the training plan's week and all sessions: the plan page, its week
- * reset and the usual-week editor it opens, a race plan's week with the
- * sheet that moves a run, and Training history with its dates sheet.
+ * reset (as opened, and after a week that felt like a bit much) with the
+ * Express chooser and the usual-week editor it opens, a race plan's week
+ * with the sheet that moves a run, and Training history with its dates
+ * sheet and a period with nothing in it.
  *
  * Each screen is opened at 393px and at 320px (Display Zoom on an SE or
  * a mini), with the root font at 135% (the largest standard size) and
@@ -798,10 +800,12 @@ test.describe("large text", () => {
       expect(found).toEqual([]);
     });
 
-    /* The training plan and all sessions: the plan page, its week reset,
-       the usual-week editor the reset opens and its review, Training
-       history and its dates sheet; then seed:fellbehind's race plan, whose
-       week has runs to move, with the move sheet. */
+    /* The training plan and all sessions: the plan page (with Add
+       activity when today is a rest day), its week reset as opened and
+       after a heavy week, the Express chooser and the usual-week editor
+       the reset opens, Training history, its dates sheet and an empty
+       period; then seed:fellbehind's race plan, whose week has runs to
+       move, with the move sheet. */
     test(`the plan and all sessions at ${width}px`, async ({ page }) => {
       test.setTimeout(240_000);
       await page.setViewportSize({ width, height: 852 });
@@ -817,6 +821,16 @@ test.describe("large text", () => {
         .first()
         .waitFor({ timeout: 20_000 });
       await measure(page, "training-plan", width, found);
+      if (
+        !(await page
+          .getByText("Add activity:")
+          .isVisible()
+          .catch(() => false))
+      )
+        test.info().annotations.push({
+          type: "skipped-surface",
+          description: "plan-add-activity: today is not a rest day",
+        });
 
       await page.goto("program/plan?reset=1");
       const layout = page.getByRole("button", {
@@ -850,6 +864,44 @@ test.describe("large text", () => {
       await measure(page, "layout-review", width, found);
       await page.keyboard.press("Escape");
 
+      // The reset as the weekly review opens it after "a bit much": the
+      // dose comes first. The router reads the feel from history state.
+      await page.goto("program/plan?reset=1");
+      await layout.waitFor({ state: "visible", timeout: 60_000 });
+      await page.evaluate(() => {
+        const state = window.history.state as { idx?: number } | null;
+        const next = {
+          usr: { resetFeel: "a_bit_much" },
+          key: "large-text",
+          idx: (state?.idx ?? 0) + 1,
+        };
+        window.history.pushState(next, "", window.location.href);
+        window.dispatchEvent(new PopStateEvent("popstate", { state: next }));
+      });
+      await page
+        .getByText("You said last week felt like a bit much.")
+        .waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "week-reset-heavy", width, found);
+      const express = page.getByRole("button", {
+        name: "Use this week's Express session",
+      });
+      if (await express.isVisible().catch(() => false)) {
+        await express.click();
+        await page
+          .getByRole("dialog")
+          .getByText("How do you want to train today?")
+          .waitFor({ timeout: 20_000 });
+        await page.waitForTimeout(800);
+        await measure(page, "reset-express", width, found);
+        await page.keyboard.press("Escape");
+      } else {
+        test.info().annotations.push({
+          type: "skipped-surface",
+          description: "reset-express: no lift left this week",
+        });
+      }
+
       await page.goto("history/sessions");
       const dates = page.locator('button[aria-haspopup="dialog"]').first();
       await ready(page, dates);
@@ -864,6 +916,15 @@ test.describe("large text", () => {
       await page.waitForTimeout(800);
       await measure(page, "history-dates", width, found);
       await page.keyboard.press("Escape");
+
+      // A period with nothing in it offers the last session.
+      await page.goto("history/sessions?from=2099-01-01&to=2099-01-31");
+      const jump = page.getByRole("button", {
+        name: "Jump to your last session",
+      });
+      await jump.waitFor({ timeout: 20_000 });
+      await ready(page, jump);
+      await measure(page, "history-empty", width, found);
 
       expect(found).toEqual([]);
     });

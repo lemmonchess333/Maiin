@@ -378,11 +378,16 @@ export default function TrainingPlan() {
               compact
               eyebrow="Next lift"
               title={model.nextLift.dayName}
-              meta={[
-                `${model.nextLift.exercises.length} exercises`,
+              // What follows wraps as a sentence: day names run long, and a
+              // meta item never breaks.
+              description={
                 model.thenLifts.length
                   ? `Then ${model.thenLifts.join(" · ")}`
-                  : "Follows your rotation",
+                  : undefined
+              }
+              meta={[
+                `${model.nextLift.exercises.length} exercises`,
+                "Follows your rotation",
               ]}
               sport="lift"
               primaryActionLabel={
