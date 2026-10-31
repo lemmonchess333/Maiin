@@ -131,10 +131,17 @@ export function trainingHistorySessions(
   unit: DistanceUnit
 ): HistorySession[] {
   const sessions: HistorySession[] = [];
+  // What a search matches beyond the title: a lift's exercises, so "bench"
+  // finds the session it was done in.
+  const alsoMatches = new Map<string, string[]>();
   if (filters.sport !== "runs") {
     for (const workout of workouts) {
       const exercises = workout.exercises.length;
       const minutes = workout.durationMinutes;
+      alsoMatches.set(
+        `lift:${workout.id}`,
+        workout.exercises.map((exercise) => exercise.exerciseName ?? "")
+      );
       sessions.push({
         key: `lift:${workout.id}`,
         id: workout.id,
@@ -182,7 +189,10 @@ export function trainingHistorySessions(
       (session) =>
         session.day >= filters.from &&
         session.day <= filters.to &&
-        (!search || session.title.toLocaleLowerCase().includes(search))
+        (!search ||
+          [session.title, ...(alsoMatches.get(session.key) ?? [])].some(
+            (text) => text.toLocaleLowerCase().includes(search)
+          ))
     )
     .sort(
       (a, b) =>

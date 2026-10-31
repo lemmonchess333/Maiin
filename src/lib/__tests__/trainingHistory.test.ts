@@ -210,6 +210,27 @@ describe("a saved-session chronology", () => {
     ).toEqual([]);
   });
 
+  it("finds a lift by an exercise done in it, not only by its title", () => {
+    const push = {
+      ...workout("push", "2026-10-28"),
+      notes: "Push",
+      exercises: [
+        { exerciseName: "Bench Press", sets: [] },
+        { exerciseName: "Overhead Press", sets: [] },
+      ],
+    } as unknown as Workout;
+    const rows = (q: string) =>
+      trainingHistorySessions(
+        [push, workout("legs", "2026-10-27")],
+        [],
+        filters(`q=${q}`),
+        "km"
+      ).map((row) => row.id);
+    expect(rows("bench")).toEqual(["push"]);
+    expect(rows("PRESS")).toEqual(["push"]);
+    expect(rows("squat")).toEqual([]);
+  });
+
   it("never fabricates a pace for a zero-distance run or a duration for an old untimed lift", () => {
     const rows = trainingHistorySessions(
       [{ ...workout("old", TODAY), durationMinutes: undefined! }],
