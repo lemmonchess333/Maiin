@@ -148,6 +148,30 @@ describe("WatchRun bridge", () => {
     );
   });
 
+  it("writes the Watch's distance and pace in the runner's unit", async () => {
+    H.native = true;
+    expect(await setWatchRunEnabled(true)).toBe(true);
+    await publishWatchRunSnapshot({
+      sessionId: "run-A",
+      revision: 1,
+      phase: "running",
+      elapsedSeconds: 600,
+      distanceMeters: 1609.344 * 1.25,
+      paceSecondsPerKm: 300,
+      recordedAtMs: 1_000,
+      unit: "mi",
+    });
+    const sent = H.publishSnapshot.mock.lastCall?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(sent).toMatchObject({
+      distanceLabel: "1.25 mi",
+      paceLabel: "8:03 /mi",
+    });
+    expect(sent).not.toHaveProperty("unit");
+  });
+
   it("replays pending commands on subscribe and foreground without concurrent duplicates", async () => {
     H.native = true;
     H.pendingCommands = [command];

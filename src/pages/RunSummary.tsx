@@ -1226,6 +1226,7 @@ export default function RunSummary() {
           paceSecondsPerKm:
             elapsed > 0 && distance > 0 ? (elapsed / distance) * 1000 : null,
           recordedAtMs: state.finishedAt,
+          unit,
         });
         if (!queuedOnWatch) void clearWatchRunSession(state.identity.sessionId);
       } else if (state.identity) {

@@ -174,6 +174,7 @@ import {
   type DistanceUnit,
 } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useWatchSnapshotBeat } from "@/hooks/useWatchSnapshotBeat";
 import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
@@ -1552,29 +1553,16 @@ export default function Run() {
       : phase === "paused"
         ? "paused"
         : null;
-  useEffect(() => {
-    const identity = identityRef.current;
-    if (
-      !watchEligible ||
-      !identity ||
-      identity.sessionId !== activeSessionId ||
-      identity.uid !== user?.uid ||
-      !watchPhase
-    )
-      return;
-    if (watchPhaseRef.current !== watchPhase) {
-      watchPhaseRef.current = watchPhase;
-      watchRevisionRef.current += 1;
-      writeSnapshot(watchPhase === "paused" ? "paused" : "active");
-    }
+  const publishWatchBeat = (sessionId: string, phase: WatchRunPhase) => {
     void publishWatchRunSnapshot({
-      sessionId: identity.sessionId,
+      sessionId,
       revision: watchRevisionRef.current,
-      phase: watchPhase,
+      phase,
       elapsedSeconds: timer.elapsed,
       distanceMeters: gps.distance,
       paceSecondsPerKm: rollingPaceSeconds(gps.points, 30),
       recordedAtMs: Date.now(),
+      unit,
     }).then(async (accepted) => {
       if (!accepted || watchConnectedRef.current) return;
       const now = Date.now();
@@ -1582,27 +1570,42 @@ export default function Run() {
       watchLastStatusCheckRef.current = now;
       const status = await getWatchRunStatus();
       if (
-        identityRef.current?.sessionId === identity.sessionId &&
+        identityRef.current?.sessionId === sessionId &&
         status.available &&
         status.paired &&
         status.installed &&
         status.reachable &&
         status.enabled &&
-        (!status.activeSessionId ||
-          status.activeSessionId === identity.sessionId)
+        (!status.activeSessionId || status.activeSessionId === sessionId)
       )
         watchConnectedRef.current = true;
     });
-  }, [
-    watchEligible,
-    activeSessionId,
-    user?.uid,
-    watchPhase,
-    timer.elapsed,
-    gps.distance,
-    gps.points,
-    writeSnapshot,
-  ]);
+  };
+  // The Watch's snapshot goes out on a beat (useWatchSnapshotBeat): every
+  // second while running, every five while paused. Publishing from a render
+  // effect sent two or three a second, each one a native state-file write,
+  // and none at all while paused, which left the Watch's controls greyed.
+  useWatchSnapshotBeat(
+    watchEligible && user?.uid ? watchPhase : null,
+    activeSessionId ?? null,
+    () => {
+      const identity = identityRef.current;
+      if (
+        !watchEligible ||
+        !identity ||
+        identity.sessionId !== activeSessionId ||
+        identity.uid !== user?.uid ||
+        !watchPhase
+      )
+        return;
+      if (watchPhaseRef.current !== watchPhase) {
+        watchPhaseRef.current = watchPhase;
+        watchRevisionRef.current += 1;
+        writeSnapshot(watchPhase === "paused" ? "paused" : "active");
+      }
+      publishWatchBeat(identity.sessionId, watchPhase);
+    }
+  );
   const { pause: holdTrace, resume: releaseTrace } = gps;
   useEffect(() => {
     if (clockHeld) holdTrace();
@@ -1727,6 +1730,7 @@ export default function Run() {
         distanceMeters: finish.distance,
         paceSecondsPerKm: rollingPaceSeconds(points, 30),
         recordedAtMs: finishedAt,
+        unit,
       });
     }
 
@@ -1847,6 +1851,7 @@ export default function Run() {
             distanceMeters: gps.distance,
             paceSecondsPerKm: rollingPaceSeconds(gps.points, 30),
             recordedAtMs: Date.now(),
+            unit,
           });
         }
       }

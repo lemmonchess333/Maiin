@@ -11,6 +11,9 @@ final class WatchRunModel: NSObject, ObservableObject, WCSessionDelegate, HKWork
     @Published private(set) var elapsedSeconds = 0.0
     @Published private(set) var distanceMeters = 0.0
     @Published private(set) var paceSecondsPerKm: Double?
+    /// Written in the runner's unit on the phone ("1.25 mi", "8:03 /mi").
+    @Published private(set) var distanceLabel: String?
+    @Published private(set) var paceLabel: String?
     @Published private(set) var heartRateBpm: Int?
     @Published private(set) var lastHeartRate: Date?
     @Published private(set) var lastUpdate: Date?
@@ -27,6 +30,8 @@ final class WatchRunModel: NSObject, ObservableObject, WCSessionDelegate, HKWork
     private var highestTransportGeneration = UserDefaults.standard.double(forKey: "TroposWatchTransportGeneration")
     private var appliedGenerationThisLaunch = false
     private var expiryTimer: Timer?
+    /// The unit the phone last wrote, for a snapshot that came without labels.
+    private var usesMiles = false
     private let activeMaxAge: TimeInterval = 6 * 60 * 60
     private let reviewMaxAge: TimeInterval = 7 * 24 * 60 * 60
 
@@ -60,6 +65,20 @@ final class WatchRunModel: NSObject, ObservableObject, WCSessionDelegate, HKWork
         sessionId != nil && phase != "review" &&
             pendingAction == nil && phoneReachable &&
             lastUpdate.map { Date().timeIntervalSince($0) <= 15 } == true
+    }
+
+    var distanceText: String {
+        if let label = distanceLabel { return label }
+        return usesMiles
+            ? String(format: "%.2f mi", distanceMeters / 1609.344)
+            : String(format: "%.2f km", distanceMeters / 1000)
+    }
+
+    var paceText: String {
+        if let label = paceLabel { return label }
+        guard let value = paceSecondsPerKm, value.isFinite, value > 0 else { return "—" }
+        let seconds = Int((usesMiles ? value * 1.609344 : value).rounded())
+        return String(format: "%d:%02d %@", seconds / 60, seconds % 60, usesMiles ? "/mi" : "/km")
     }
 
     var isRunning: Bool { phase == "running" }
@@ -143,6 +162,8 @@ final class WatchRunModel: NSObject, ObservableObject, WCSessionDelegate, HKWork
         elapsedSeconds = 0
         distanceMeters = 0
         paceSecondsPerKm = nil
+        distanceLabel = nil
+        paceLabel = nil
         heartRateBpm = nil
         lastHeartRate = nil
         lastUpdate = nil
@@ -211,6 +232,13 @@ final class WatchRunModel: NSObject, ObservableObject, WCSessionDelegate, HKWork
             elapsedSeconds = value["elapsedSeconds"] as? Double ?? elapsedSeconds
             distanceMeters = value["distanceMeters"] as? Double ?? distanceMeters
             paceSecondsPerKm = value["paceSecondsPerKm"] as? Double
+            if let label = value["distanceLabel"] as? String, label.count <= 24 {
+                distanceLabel = label
+                usesMiles = label.hasSuffix(" mi")
+            } else {
+                distanceLabel = nil
+            }
+            paceLabel = (value["paceLabel"] as? String).flatMap { $0.count <= 24 ? $0 : nil }
             lastUpdate = recordedAt
             if saveStatus == "queued" {
                 message = "Saved on iPhone · syncing"
@@ -260,7 +288,7 @@ final class WatchRunModel: NSObject, ObservableObject, WCSessionDelegate, HKWork
     }
 
     private func beginHeartRate(_ heartRateType: HKQuantityType) {
-        guard sessionId != nil, phase != "review", workoutSession == nil else { return }
+        guard let owner = sessionId, phase != "review", workoutSession == nil else { return }
         let configuration = HKWorkoutConfiguration()
         configuration.activityType = .running
         configuration.locationType = .outdoor
@@ -276,8 +304,8 @@ final class WatchRunModel: NSObject, ObservableObject, WCSessionDelegate, HKWork
             let query = HKAnchoredObjectQuery(
                 type: heartRateType, predicate: predicate,
                 anchor: nil, limit: HKObjectQueryNoLimit
-            ) { [weak self] _, samples, _, _, _ in self?.consume(samples) }
-            query.updateHandler = { [weak self] _, samples, _, _, _ in self?.consume(samples) }
+            ) { [weak self] _, samples, _, _, _ in self?.consume(samples, sessionId: owner) }
+            query.updateHandler = { [weak self] _, samples, _, _, _ in self?.consume(samples, sessionId: owner) }
             heartRateQuery = query
             healthStore.execute(query)
         } catch {
@@ -285,11 +313,14 @@ final class WatchRunModel: NSObject, ObservableObject, WCSessionDelegate, HKWork
         }
     }
 
-    private func consume(_ samples: [HKSample]?) {
+    /// Runs on HealthKit's queue, so it reads only the session it was started
+    /// for, never the published state the main queue owns. A query for an
+    /// older session is stopped before a new one starts.
+    private func consume(_ samples: [HKSample]?, sessionId: String) {
         guard let samples = samples as? [HKQuantitySample] else { return }
         for sample in samples {
             let bpm = sample.quantity.doubleValue(for: .count().unitDivided(by: .minute()))
-            guard bpm.isFinite, (30...250).contains(bpm), let sessionId = sessionId else { continue }
+            guard bpm.isFinite, (30...250).contains(bpm) else { continue }
             let payload: [String: Any] = [
                 "kind": "heartRate",
                 "sample": [
@@ -300,6 +331,7 @@ final class WatchRunModel: NSObject, ObservableObject, WCSessionDelegate, HKWork
                 ]
             ]
             DispatchQueue.main.async { [weak self] in
+                guard self?.sessionId == sessionId else { return }
                 self?.heartRateBpm = Int(bpm.rounded())
                 self?.lastHeartRate = sample.startDate
             }

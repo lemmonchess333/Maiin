@@ -14,6 +14,8 @@ import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import { readString, remove, writeString } from "./localStore";
 import { isNativePlatform } from "./platform";
 import { CONNECTED_TRAINING_RELEASED } from "./connectedTrainingRelease";
+import { distanceUnitLabel, type DistanceUnit } from "./distanceUnits";
+import { distanceValue, paceLabel } from "./runLabels";
 
 export type WatchRunPhase = "running" | "paused" | "review";
 export type WatchRunAction = "pause" | "resume" | "end";
@@ -40,6 +42,29 @@ export interface WatchRunSnapshot {
   /** Set only after the iPhone summary has accepted a durable local save.
    * `synced` requires server confirmation of that exact canonical run. */
   saveStatus?: "queued" | "synced";
+  /** The runner's unit. The Watch is sent the distance and pace written in
+   * it, as the HUD and the Live Activity write them. */
+  unit?: DistanceUnit;
+}
+
+/** What crosses to native: the figures, and their labels in the runner's
+ * unit, so the Watch never writes kilometres to someone running miles. */
+type NativeWatchRunSnapshot = Omit<WatchRunSnapshot, "unit"> & {
+  distanceLabel?: string;
+  paceLabel?: string;
+};
+
+function nativeSnapshot({
+  unit,
+  ...snapshot
+}: WatchRunSnapshot): NativeWatchRunSnapshot {
+  if (!unit) return snapshot;
+  const pace = snapshot.paceSecondsPerKm;
+  return {
+    ...snapshot,
+    distanceLabel: `${distanceValue(snapshot.distanceMeters, unit, 2)} ${distanceUnitLabel(unit)}`,
+    paceLabel: pace && pace > 0 ? paceLabel(pace, unit) : "—",
+  };
 }
 
 export interface WatchRunCommand {
@@ -88,7 +113,7 @@ export interface WatchRunCommandContext {
 interface WatchRunPlugin {
   getStatus(): Promise<WatchRunStatus>;
   setEnabled(options: { enabled: boolean }): Promise<void>;
-  publishSnapshot(snapshot: WatchRunSnapshot): Promise<void>;
+  publishSnapshot(snapshot: NativeWatchRunSnapshot): Promise<void>;
   acknowledgeCommand(ack: WatchRunCommandAck): Promise<void>;
   getPendingCommands(): Promise<{ commands: WatchRunCommand[] }>;
   getPendingHeartRates(): Promise<{ samples: WatchHeartRateSample[] }>;
@@ -156,7 +181,7 @@ export async function publishWatchRunSnapshot(
   const native = releasedPlugin();
   if (!native) return false;
   try {
-    await native.publishSnapshot(snapshot);
+    await native.publishSnapshot(nativeSnapshot(snapshot));
     return true;
   } catch {
     return false;
