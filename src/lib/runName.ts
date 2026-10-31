@@ -15,10 +15,9 @@ import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { RacePaceWork } from "@/lib/racePace";
 import { runSessionName, runTypeTitle } from "@/lib/runLabels";
 import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
+import { RUN_NAME_MAX } from "@/lib/runNameLimit";
 
-/** The longest name a run is saved under. The rules allow a post's title
- *  200 characters; a name is a line on a card, not a note. */
-export const RUN_NAME_MAX = 80;
+export { RUN_NAME_MAX } from "@/lib/runNameLimit";
 
 /** What naming a run reads of it. */
 export interface NameableRun {

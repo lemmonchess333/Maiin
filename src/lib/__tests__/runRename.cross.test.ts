@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
-import { RUN_NAME_MAX } from "@/lib/runName";
+import { RUN_NAME_MAX } from "@/lib/runNameLimit";
 import { runRenameValue } from "@/lib/runRename";
 
 const require = createRequire(import.meta.url);

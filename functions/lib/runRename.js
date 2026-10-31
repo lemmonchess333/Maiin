@@ -20,7 +20,7 @@
  * renamed to after.
  */
 /** The longest name a run is saved under, as the app cuts it
- *  (`RUN_NAME_MAX`, src/lib/runName.ts; pinned equal by
+ *  (`RUN_NAME_MAX`, src/lib/runNameLimit.ts; pinned equal by
  *  src/lib/__tests__/runRename.cross.test.ts). */
 const RUN_NAME_MAX = 80;
 

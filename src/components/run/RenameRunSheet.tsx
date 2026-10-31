@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
-import { RUN_NAME_MAX } from "@/lib/runName";
+import { RUN_NAME_MAX } from "@/lib/runNameLimit";
 import { renameRun, runRenameValue } from "@/lib/runRename";
 
 interface Props {

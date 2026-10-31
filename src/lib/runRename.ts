@@ -15,7 +15,7 @@ import {
   pendingDocumentWrites,
   queueDurableWrite,
 } from "@/lib/offlineQueue";
-import { RUN_NAME_MAX } from "@/lib/runName";
+import { RUN_NAME_MAX } from "@/lib/runNameLimit";
 
 /** A typed name as a run is saved under it: trimmed and cut at
  *  `RUN_NAME_MAX`, or null when nothing is left. */
