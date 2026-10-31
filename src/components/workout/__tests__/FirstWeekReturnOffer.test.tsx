@@ -68,7 +68,6 @@ vi.mock("@/lib/pushNotifications", () => ({
   requestRemotePushPermission: h.pushAsked,
   registerDeviceToken: h.pushAsked,
   unregisterDeviceToken: h.pushAsked,
-  getRemotePushPermissionState: async () => "granted",
 }));
 vi.mock("@/hooks/useFirstSessionReturnChoice", () => ({
   useFirstSessionReturnChoice: () => ({

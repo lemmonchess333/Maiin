@@ -433,7 +433,7 @@ export default function TrainingHistory() {
                               {bests?.key === bestsKey &&
                                 bests.ids.has(session.id) &&
                                 session.kind === "lift" && (
-                                  <span className="ml-2 text-caption font-semibold text-achievement-strong">
+                                  <span className="ml-2 text-micro font-semibold text-achievement-strong">
                                     PR
                                   </span>
                                 )}
