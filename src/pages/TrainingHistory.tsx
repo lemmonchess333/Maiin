@@ -34,7 +34,10 @@ import { useAuth } from "@/lib/auth";
 import { useSavedSessions } from "@/hooks/useSavedSessions";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { useTrainingHistoryPosition } from "@/hooks/useTrainingHistoryPosition";
+import {
+  useTrainingHistoryPosition,
+  useTrainingHistoryRestore,
+} from "@/hooks/useTrainingHistoryPosition";
 import { SAVED_WORKOUTS } from "@/lib/savedWorkouts";
 import { SAVED_RUNS } from "@/lib/savedRuns";
 import { pendingDocumentWrites } from "@/lib/offlineQueue";
@@ -71,8 +74,16 @@ export default function TrainingHistory() {
       });
   }, [location.search, location.state, search, setParams]);
   const [datesOpen, setDatesOpen] = useState(false);
-  // Uncapped inclusive range queries: a page boundary never drops same-day sessions.
-  const sessionWindow = { since: filters.from, until: filters.to };
+  const position = useTrainingHistoryPosition(user?.uid, search);
+  // Thirty at a time (XB1 call 3): each source reads the period's newest as
+  // many sessions as are shown, and Show more reads thirty more, so a long
+  // period never streams every route. Equal dates keep their order across
+  // reads, so a page boundary never skips a same-day session.
+  const sessionWindow = {
+    since: filters.from,
+    until: filters.to,
+    cap: position.count,
+  };
   const lifts = useSavedSessions(
     SAVED_WORKOUTS,
     user?.uid,
@@ -97,14 +108,12 @@ export default function TrainingHistory() {
     () => trainingHistorySessions(lifts.items, runs.items, filters, unit),
     [lifts.items, runs.items, filters, unit]
   );
-  const position = useTrainingHistoryPosition(
-    user?.uid,
-    search,
-    !pending,
-    sessions.length,
-    provisional
-  );
+  useTrainingHistoryRestore(position, !pending, sessions.length, provisional);
   const visible = sessions.slice(0, position.count);
+  // A source that filled its read may hold more of the period.
+  const more =
+    position.count < sessions.length ||
+    sources.some((source) => source.items.length >= position.count);
   const groups = new Map<string, HistorySession[]>();
   for (const session of visible) {
     const month = session.day.slice(0, 7);
@@ -286,7 +295,7 @@ export default function TrainingHistory() {
               ? "Loading sessions…"
               : failed && sessions.length === 0
                 ? "History unavailable"
-                : `${sessions.length} ${noun}${sessions.length === 1 ? "" : "s"}${complete ? "" : " shown"}`}
+                : `${sessions.length} ${noun}${sessions.length === 1 ? "" : "s"}${complete && !more ? "" : " shown"}`}
           </p>
           <span className="text-xs text-muted-foreground">Newest first</span>
         </div>
@@ -413,7 +422,7 @@ export default function TrainingHistory() {
                 </Card>
               </section>
             ))}
-            {position.count < sessions.length && (
+            {more && (
               <Button fullWidth variant="ghost" onClick={position.showMore}>
                 Show more sessions
               </Button>

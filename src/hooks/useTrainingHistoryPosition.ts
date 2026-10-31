@@ -8,12 +8,12 @@ interface Position {
 // Position only, never session records. Account-scoped and bounded for long app sessions.
 const positions = new Map<string, Position>();
 
+/** How many rows the period shows (thirty at a time), and where the reader
+ *  was. The page reads that many sessions, so this comes before its reads;
+ *  `useTrainingHistoryRestore` scrolls back once they arrive. */
 export function useTrainingHistoryPosition(
   uid: string | null | undefined,
-  filters: string,
-  ready: boolean,
-  rowCount: number,
-  provisional: boolean
+  filters: string
 ) {
   const key = `${uid ?? ""}:${filters}`;
   const [pagination, setPagination] = useState(() => ({
@@ -29,6 +29,38 @@ export function useTrainingHistoryPosition(
     needsFinalRestore: boolean;
   } | null>(null);
 
+  function remember() {
+    if (!uid) return;
+    positions.delete(key);
+    positions.set(key, { y: window.scrollY, count });
+    if (positions.size > 40) positions.delete(positions.keys().next().value!);
+  }
+
+  function reset(nextFilters: string) {
+    positions.delete(`${uid ?? ""}:${nextFilters}`);
+    restored.current = null;
+    setPagination({
+      key: `${uid ?? ""}:${nextFilters}`,
+      count: HISTORY_PAGE_SIZE,
+    });
+  }
+
+  return {
+    key,
+    count,
+    restored,
+    remember,
+    reset,
+    showMore: () => setPagination({ key, count: count + HISTORY_PAGE_SIZE }),
+  };
+}
+
+export function useTrainingHistoryRestore(
+  { key, count, restored }: ReturnType<typeof useTrainingHistoryPosition>,
+  ready: boolean,
+  rowCount: number,
+  provisional: boolean
+) {
   useLayoutEffect(() => {
     if (
       restored.current?.key === key &&
@@ -50,28 +82,5 @@ export function useTrainingHistoryPosition(
         };
     });
     return () => cancelAnimationFrame(frame);
-  }, [key, ready, count, rowCount, provisional]);
-
-  function remember() {
-    if (!uid) return;
-    positions.delete(key);
-    positions.set(key, { y: window.scrollY, count });
-    if (positions.size > 40) positions.delete(positions.keys().next().value!);
-  }
-
-  function reset(nextFilters: string) {
-    positions.delete(`${uid ?? ""}:${nextFilters}`);
-    restored.current = null;
-    setPagination({
-      key: `${uid ?? ""}:${nextFilters}`,
-      count: HISTORY_PAGE_SIZE,
-    });
-  }
-
-  return {
-    count,
-    remember,
-    reset,
-    showMore: () => setPagination({ key, count: count + HISTORY_PAGE_SIZE }),
-  };
+  }, [key, ready, count, rowCount, provisional, restored]);
 }

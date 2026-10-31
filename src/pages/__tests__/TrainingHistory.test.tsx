@@ -87,6 +87,40 @@ afterEach(() => {
 });
 
 describe("Training history", () => {
+  it("reads thirty sessions at a time, and thirty more on Show more", async () => {
+    const read = vi.spyOn(savedSessions, "useSavedSessions");
+    seedFirestore(
+      Object.fromEntries(
+        Array.from({ length: 35 }, (_, i) => [
+          `users/history-owner/workouts/many-${i}`,
+          savedWorkoutDoc("2026-10-20"),
+        ])
+      )
+    );
+    open("?sport=lifts");
+    await waitFor(() => expect(sessionLinks()).toHaveLength(30));
+    expect(read).toHaveBeenCalledWith(
+      expect.anything(),
+      "history-owner",
+      expect.objectContaining({ cap: 30 })
+    );
+    expect(read).not.toHaveBeenCalledWith(
+      expect.anything(),
+      "history-owner",
+      expect.objectContaining({ cap: 60 })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show more sessions" }));
+    await waitFor(() => expect(sessionLinks()).toHaveLength(36));
+    expect(read).toHaveBeenCalledWith(
+      expect.anything(),
+      "history-owner",
+      expect.objectContaining({ cap: 60 })
+    );
+    expect(
+      screen.queryByRole("button", { name: "Show more sessions" })
+    ).toBeNull();
+  });
+
   it("returns to the plan with the review it came from, not a fresh plan", async () => {
     const planState = { returnTo: "/review", resetFeel: "a_bit_much" };
     const router = createMemoryRouter(
@@ -175,12 +209,14 @@ describe("Training history", () => {
       )
     );
     open("?sport=lifts");
-    await screen.findByText("70 lifts");
+    // Thirty read at a time: the period's total is known once read.
+    await screen.findByText("30 lifts shown");
     expect(sessionLinks()).toHaveLength(30);
     fireEvent.click(screen.getByRole("button", { name: "Show more sessions" }));
-    expect(sessionLinks()).toHaveLength(60);
+    await waitFor(() => expect(sessionLinks()).toHaveLength(60));
     fireEvent.click(screen.getByRole("button", { name: "Show more sessions" }));
-    expect(sessionLinks()).toHaveLength(70);
+    await waitFor(() => expect(sessionLinks()).toHaveLength(70));
+    expect(screen.getByText("70 lifts")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Show more sessions" })
     ).not.toBeInTheDocument();
