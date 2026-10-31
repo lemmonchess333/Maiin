@@ -64,6 +64,35 @@ describe("the server-assigned activation cohort", () => {
     ).toBe(1);
   });
 
+  it("takes the comparison share from config: 0 ends it, a malformed one keeps a tenth", async () => {
+    const comparison = Array.from({ length: 200 }, (_, i) => `uid-${i}`).find(
+      (uid) => cohort.inComparisonGroup(uid)
+    );
+    expect(
+      await cohort.journeyFor(
+        configDb({ activationComparisonPercent: 0 }),
+        comparison,
+        2
+      )
+    ).toBe(2);
+    for (const percent of [-1, 101, 12.5, "0", null]) {
+      cohort.resetCacheForTests();
+      expect(
+        await cohort.journeyFor(
+          configDb({ activationComparisonPercent: percent }),
+          comparison,
+          2
+        )
+      ).toBe(1);
+    }
+    cohort.resetCacheForTests();
+    const everyone = await cohort.journeyConfig(
+      configDb({ activationComparisonPercent: 100 })
+    );
+    expect(everyone.comparisonPercent).toBe(100);
+    expect(cohort.inComparisonGroup("uid-1", 100)).toBe(true);
+  });
+
   it("reads the switch at most once a minute", async () => {
     const db = configDb({ activationJourneyV2Enabled: false });
     await cohort.v2Enabled(db, 1_000);

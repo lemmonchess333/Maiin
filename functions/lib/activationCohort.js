@@ -10,6 +10,10 @@
  *   and unrelated to anything about the person.
  * - `system/config.activationJourneyV2Enabled`, set to the boolean false,
  *   puts every new account on the legacy journey without a release.
+ * - `system/config.activationComparisonPercent`, a whole number from 0 to
+ *   100, sets the comparison group's share; missing or malformed, it is
+ *   10. 0 ends the comparison without a release, and the end-to-end rig
+ *   sets 0 so its new accounts take the journey its specs walk.
  *
  * The switch lives in Firestore beside the deletion kill switch
  * (`deletionExecutorEnabled`), not in a functions env var: an env var
@@ -36,24 +40,37 @@ function cohortBucket(uid) {
   );
 }
 
-function inComparisonGroup(uid) {
-  return cohortBucket(uid) < COMPARISON_PERCENT;
+function inComparisonGroup(uid, percent = COMPARISON_PERCENT) {
+  return cohortBucket(uid) < percent;
 }
 
-async function v2Enabled(db, now = Date.now()) {
+/** The switch and the comparison share, read together with one cache. */
+async function journeyConfig(db, now = Date.now()) {
   if (cached && now - cached.at < CACHE_MS) return cached.value;
-  let value = true;
+  const value = { v2: true, comparisonPercent: COMPARISON_PERCENT };
   try {
     const snap = await db.doc("system/config").get();
-    const field = snap.exists ? snap.data().activationJourneyV2Enabled : undefined;
-    if (field === false) value = false;
+    const data = (snap.exists && snap.data()) || {};
+    const field = data.activationJourneyV2Enabled;
+    if (field === false) value.v2 = false;
     else if (field !== undefined && field !== true)
       console.warn("activationCohort.switch_malformed", { type: typeof field });
+    const percent = data.activationComparisonPercent;
+    if (Number.isInteger(percent) && percent >= 0 && percent <= 100)
+      value.comparisonPercent = percent;
+    else if (percent !== undefined)
+      console.warn("activationCohort.percent_malformed", {
+        type: typeof percent,
+      });
   } catch (error) {
     console.warn("activationCohort.switch_unread", { message: error?.message });
   }
   cached = { value, at: now };
   return value;
+}
+
+async function v2Enabled(db, now = Date.now()) {
+  return (await journeyConfig(db, now)).v2;
 }
 
 /**
@@ -63,8 +80,9 @@ async function v2Enabled(db, now = Date.now()) {
  */
 async function journeyFor(db, uid, requested) {
   if (requested !== 2) return null;
-  if (inComparisonGroup(uid)) return 1;
-  return (await v2Enabled(db)) ? 2 : 1;
+  const { v2, comparisonPercent } = await journeyConfig(db);
+  if (inComparisonGroup(uid, comparisonPercent)) return 1;
+  return v2 ? 2 : 1;
 }
 
 function resetCacheForTests() {
@@ -75,6 +93,7 @@ module.exports = {
   COMPARISON_PERCENT,
   cohortBucket,
   inComparisonGroup,
+  journeyConfig,
   v2Enabled,
   journeyFor,
   resetCacheForTests,
