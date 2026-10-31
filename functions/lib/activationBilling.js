@@ -50,6 +50,8 @@ function nextBillingFirsts(current, observation) {
  * the verified trial purchase; a paid start needs a normal subscription
  * period and purchase date. RevenueCat does not expose a charge amount in
  * this REST snapshot, so this is a paid-period observation, not a receipt.
+ * A subscription shared through Family Sharing was paid by someone else,
+ * so it starts nothing for this account.
  */
 function revenueCatObservation(snapshot, outcome) {
   if (
@@ -57,6 +59,7 @@ function revenueCatObservation(snapshot, outcome) {
     outcome.conflict ||
     !snapshot.active ||
     snapshot.sandbox ||
+    snapshot.ownershipType === "FAMILY_SHARED" ||
     (snapshot.store !== "app_store" && snapshot.store !== "mac_app_store")
   )
     return null;

@@ -38,6 +38,7 @@ function subscriberResponse({
   periodType = "normal",
   unsubscribedAt = null,
   purchaseMs = NOW - DAY,
+  ownershipType = "PURCHASED",
 } = {}) {
   return {
     request_date: iso(requestMs),
@@ -60,6 +61,7 @@ function subscriberResponse({
           store,
           is_sandbox: sandbox,
           period_type: periodType,
+          ownership_type: ownershipType,
           purchase_date: iso(purchaseMs),
           unsubscribe_detected_at:
             unsubscribedAt === null ? null : iso(unsubscribedAt),
@@ -86,7 +88,14 @@ describe("readEntitlement", () => {
       trial: null,
       purchaseAtMs: NOW - DAY,
       periodType: "normal",
+      ownershipType: "PURCHASED",
     });
+  });
+
+  it("says when a subscription is shared from someone else in the family", () => {
+    expect(snapshot({ ownershipType: "FAMILY_SHARED" }).ownershipType).toBe(
+      "FAMILY_SHARED"
+    );
   });
 
   it("marks a sandbox purchase and leaves what it is worth to planEntitlementWrite", () => {

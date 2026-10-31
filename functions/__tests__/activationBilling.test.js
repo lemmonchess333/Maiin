@@ -74,9 +74,12 @@ describe("provider-verified activation billing facts", () => {
       { store: "unknown" },
       { periodType: "intro" },
       { purchaseAtMs: AT + 1000 },
+      // Family Sharing: someone else in the family paid.
+      { ownershipType: "FAMILY_SHARED" },
     ])
-      expect(billing.revenueCatObservation({ ...base, ...patch }, granted))
-        .toBeNull();
+      expect(
+        billing.revenueCatObservation({ ...base, ...patch }, granted)
+      ).toBeNull();
     expect(
       billing.revenueCatObservation(base, { result: "granted", conflict: true })
     ).toBeNull();
@@ -145,7 +148,10 @@ describe("provider-verified activation billing facts", () => {
       })
     ).toBeNull();
     expect(
-      billing.stripeTrialObservation({ status: "trialing", trial_start: AT / 1000 })
+      billing.stripeTrialObservation({
+        status: "trialing",
+        trial_start: AT / 1000,
+      })
     ).toMatchObject({ kind: "trial", atMs: AT });
     expect(billing.stripeTrialObservation({ status: "active" })).toBeNull();
   });

@@ -2534,6 +2534,17 @@ Affects: `functions/index.js` `stripeWebhook` handler, `stripeEvents/{event.id}`
 
 - [x] _(Proven 2026-10-18: `functions/__tests__/stripeWebhookDedup.test.js` 'claims the event, processes it, and records both claimedAt and processedAt' and 'skips a second delivery of the same event id, writing nothing'. They drive the real handler with a payload signed by the Stripe SDK's test helper, on the in-memory Firestore. No real delivery will come while Stripe is dormant (#2866).)_ Post-deploy, on the next real Stripe webhook delivery, confirm the `stripeEvents/<event.id>` doc has a `claimedAt` field (new) AND a `processedAt` field (existing). Pre-fix only `processedAt` was set.
 - [x] _(Proven 2026-10-18: `functions/__tests__/stripeWebhookDedup.test.js` 'releases the claim when processing fails, so Stripe's retry is processed'. The user read fails after the claim and the handler answers 500. `stripeEvents/{id}` is set, then deleted, and the same id redelivered is processed.)_ If a webhook handler crashes mid-process (force via stripe-cli test event), confirm the `stripeEvents/<event.id>` doc is DELETED so Stripe's retry can re-attempt. Pre-fix the partial claim would persist and the retry would silently skip.
+- [ ] **The endpoint sends `invoice.paid`.** The activation report's first
+      paid period from Stripe is read from `invoice.paid` (and a paid
+      Checkout session), and a Stripe endpoint receives only the events it
+      is subscribed to. When Stripe is woken (#2866), in the Stripe
+      dashboard → Developers → Webhooks → the production endpoint, confirm
+      `invoice.paid` is among its events alongside
+      `checkout.session.completed` and the `customer.subscription.*`
+      events. Passing: a live renewal's event shows on the endpoint's log
+      with a 200, and that account's `activationBillingFirsts.paid` is set.
+      A measurement that fails to save is logged
+      (`activationBilling.record_failed`) and never answers Stripe 500.
 
 ## Blocking is now server-enforced (kudos + comments)
 

@@ -2220,18 +2220,29 @@ exports._isAllowedStripeReturnUrl = _isAllowedStripeReturnUrl;
 // STRIPE WEBHOOK — subscription lifecycle events
 // ══════════════════════════════════════════════
 
+/** A measurement, never billing: a failure is logged and the delivery goes
+ *  on, rather than answering Stripe 500 for a subscription already saved. */
 async function recordActivationBillingFirst(db, uid, observation) {
   if (!observation) return;
   const userRef = db.collection("users").doc(uid);
-  await db.runTransaction(async (txn) => {
-    const snap = await txn.get(userRef);
-    if (!snap.exists) return;
-    const firsts = activationBilling.nextBillingFirsts(
-      snap.data().activationBillingFirsts,
-      observation
-    );
-    if (firsts) txn.update(userRef, { activationBillingFirsts: firsts });
-  });
+  try {
+    await db.runTransaction(async (txn) => {
+      const snap = await txn.get(userRef);
+      if (!snap.exists) return;
+      const firsts = activationBilling.nextBillingFirsts(
+        snap.data().activationBillingFirsts,
+        observation
+      );
+      if (firsts) txn.update(userRef, { activationBillingFirsts: firsts });
+    });
+  } catch (error) {
+    console.error("activationBilling.record_failed", {
+      uid,
+      kind: observation.kind,
+      source: observation.source,
+      message: error?.message,
+    });
+  }
 }
 
 exports.stripeWebhook = functions
