@@ -196,10 +196,12 @@ These steps are what's left.
    steps.
 3. **Budget alert**: Google Cloud console → Billing → Budgets & alerts →
    create a budget (e.g. £50/month) that emails you.
-4. **Mapbox terms**: read the Directions section of
-   mapbox.com/legal/product-terms. If it still forbids showing routes on a
-   non-Mapbox map or saving them, tell Claude. The route planner would then
-   need a change.
+4. **Mapbox terms** (updated 31 October): the release now disables
+   road-following planning in the client and server because the published
+   terms prohibit storing Navigation API results and no separate agreement
+   permitting it has been confirmed. Point-to-point planning still works.
+   Keep road routing off until an explicit agreement or a compatible provider
+   is in place, and audit plans saved by older builds.
 5. **App Store Connect listing**: paste the text from
    `docs/app-store/listing.md`, including:
    - Support URL `https://troposfit.com/support` and the Privacy/Terms links

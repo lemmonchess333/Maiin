@@ -58,9 +58,11 @@ These need a person signed in to a console. Most unblock later steps.
    `docs/ios-release.md`, and do the one-time setup in
    `docs/ios-push-notifications.md`: Push Notifications on the `com.tropos.app`
    App ID (the build stops without it) and the APNs key in Firebase. Then
-   GitHub → Actions → Deploy iOS to TestFlight → Run workflow. It has never
-   run, and every phone step below needs its build. You should see the run go
-   green and the build appear in TestFlight. Run it a
+   GitHub → Actions → Deploy iOS to TestFlight → Run workflow. The first
+   dispatch on 31 October stopped before archiving because
+   `ASC_API_KEY_P8_BASE64` and `IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` were
+   missing; every phone step below still needs a successful build. You should
+   see the run go green and the build appear in TestFlight. Run it a
    second time: Apple Developer → Certificates should show one Apple
    Distribution certificate, not two.
 7. **No tracking warnings.** After the upload, App Store Connect's build page
