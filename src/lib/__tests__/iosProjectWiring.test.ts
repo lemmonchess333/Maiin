@@ -416,17 +416,36 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(workflow.match(/^\s*runs-on:\s*(\S+)/m)?.[1]).toBe("macos-26");
   });
 
-  it("signs the iPhone and Watch targets with their imported profiles, never from the xcodebuild command line", () => {
+  it("signs every app target with its imported profile, never from the xcodebuild command line", () => {
     // The committed project signs automatically. On a runner with no Apple
     // account that looks for a development profile that never exists, so
-    // the workflow switches both app targets to manual signing first. Each
-    // target has Debug and Release settings; package targets stay untouched.
+    // the workflow switches every app target, in every configuration, to
+    // manual signing first; package targets stay untouched. Which targets
+    // is read from the project (scripts/ios_signed_targets.py, tested in
+    // scripts/test_verify_ios_signed_targets.py), so a widget extension
+    // added later is signed without editing the workflow.
     expect(pbxproj.match(/CODE_SIGN_STYLE = Automatic;/g)?.length).toBe(4);
-    const sign = workflow.indexOf(
-      "name: Sign the iPhone and Watch targets with App Store profiles"
+    const list = workflowStep("List the targets to sign");
+    expect(list).toContain("python3 scripts/ios_signed_targets.py list");
+    expect(list).toContain(
+      'echo "SIGNED_BUNDLE_IDS=$SIGNED_BUNDLE_IDS" >> "$GITHUB_ENV"'
     );
-    expect(sign).toBeGreaterThan(-1);
-    expect(workflow.indexOf("name: Archive")).toBeGreaterThan(sign);
+    expect(
+      workflowStep("Sign every app target with its App Store profile")
+    ).toContain("python3 scripts/ios_signed_targets.py sign");
+    const at = (name: string) => workflow.indexOf(`- name: ${name}`);
+    expect(at("List the targets to sign")).toBeGreaterThan(-1);
+    expect(at("List the targets to sign")).toBeLessThan(
+      at("Make the signing certificate and profiles from the API key")
+    );
+    expect(
+      at("Sign every app target with its App Store profile")
+    ).toBeGreaterThan(at("Import signing certificate + provisioning profiles"));
+    expect(at("Archive")).toBeGreaterThan(
+      at("Sign every app target with its App Store profile")
+    );
+    // No step names a fixed pair of targets or a count of configurations.
+    expect(workflow).not.toMatch(/WATCH_PROFILE_UUID|count != 2/);
     // Passed to xcodebuild, a profile setting reaches every Swift package
     // target too, and xcodebuild refuses a profile on a package target.
     expect(workflowStep("Archive")).not.toMatch(
@@ -486,27 +505,44 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     }
   });
 
-  it("tells the manual export which profile signs each app", () => {
+  it("tells the manual export which profile signs each bundle in the archive", () => {
     // Without the mapping a manual export stops at "no profiles for
     // com.tropos.app", after the archive has already taken its 20 minutes.
+    // The map is made from the archive itself, so it covers whatever the
+    // build embeds and nothing it does not.
     const exportStep = workflowStep("Export .ipa");
-    expect(exportStep).toMatch(
-      /<key>signingStyle<\/key><string>manual<\/string>/
+    expect(exportStep).toContain(
+      "python3 scripts/ios_signed_targets.py export-options"
     );
-    expect(exportStep).toMatch(
-      /<key>provisioningProfiles<\/key>\s*<dict>\s*<key>\$\{BUNDLE_ID\}<\/key><string>\$\{PROFILE_UUID\}<\/string>/
+    expect(exportStep).toContain(
+      '"$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app"'
     );
-    expect(exportStep).toMatch(
-      /<key>\$\{WATCH_BUNDLE_ID\}<\/key><string>\$\{WATCH_PROFILE_UUID\}<\/string>/
+    expect(exportStep).toContain('"$RUNNER_TEMP/profile-uuids.json"');
+    const importStep = workflowStep(
+      "Import signing certificate + provisioning profiles"
     );
-    expect(
-      workflowStep("Import signing certificate + provisioning profile")
-    ).toMatch(/echo "PROFILE_UUID=\$PROFILE_UUID" >> "\$GITHUB_ENV"/);
-    expect(
-      workflowStep("Import signing certificate + provisioning profile")
-    ).toMatch(
-      /echo "WATCH_PROFILE_UUID=\$WATCH_PROFILE_UUID" >> "\$GITHUB_ENV"/
+    // Every signed target's profile is decoded, checked and installed.
+    expect(importStep).toMatch(/for bundle in \$SIGNED_BUNDLE_IDS; do/);
+    expect(importStep).toContain('"signed-targets.json"');
+    expect(importStep).toContain('"profile-uuids.json"');
+  });
+
+  it("lets the Live Activity widget link LiveActivitiesKit through Swift Package Manager", () => {
+    // The project has no CocoaPods: plugins arrive through CapApp-SPM. The
+    // plugin ships LiveActivitiesKit as a pod only, so the patch makes it a
+    // library product the widget extension can add, and the runbook says
+    // to add it that way rather than through a Podfile.
+    const manifest = read(
+      "node_modules/capacitor-live-activities/Package.swift"
     );
+    expect(manifest).toMatch(
+      /\.library\(\s*name: "LiveActivitiesKit",\s*targets: \["LiveActivitiesKit"\]\)/
+    );
+    expect(existsSync(resolve(repoRoot, "ios/App/Podfile"))).toBe(false);
+    const runbook = read("docs/run-live-activity.md");
+    expect(runbook).toMatch(/\*\*LiveActivitiesKit\*\* product/);
+    expect(runbook).not.toMatch(/^\s*(target '|pod ')/m);
+    expect(runbook).not.toMatch(/`pod install`(?! step)/);
   });
 
   it("declares the entitlement each native plugin needs, and only while it is used", () => {

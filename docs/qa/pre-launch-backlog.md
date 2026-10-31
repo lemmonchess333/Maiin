@@ -76,6 +76,16 @@ the builds themselves.
 - [ ] **A standard build's note.** A standard run with a What to Test note
       shows that note in TestFlight, and with `TESTFLIGHT_STANDARD_GROUP_ID`
       set the build appears in that group.
+- [ ] **Signing follows the project's targets.** On the first run, "List
+      the targets to sign" names `com.tropos.app` and
+      `com.tropos.app.watchkitapp`, the API key makes `Tropos CI <serial>`
+      and `Tropos CI <serial> watchkitapp`, and the export's map names only
+      the bundles the archive holds (no Watch profile in a standard build).
+      After the Live Activity widget is added (`docs/run-live-activity.md`),
+      the next run also signs `com.tropos.app.LiveActivities` with
+      `Tropos CI <serial> LiveActivities` and archives without a workflow
+      change, and the widget links `LiveActivitiesKit` through Swift
+      Package Manager.
 
 ## A lift's rest outside the app (Mob2 call 1, 2026-10-28)
 

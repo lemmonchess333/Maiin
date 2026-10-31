@@ -30,12 +30,17 @@ describe("native push release checks", () => {
   });
 
   it("checks the decoded profile's production APNs capability before the archive", () => {
-    const profile = step("Import signing certificate + provisioning profile");
+    const profile = step("Import signing certificate + provisioning profiles");
     expect(profile.indexOf("security cms -D")).toBeLessThan(
       profile.indexOf("python3 scripts/verify_ios_push.py")
     );
+    // Every signed target's profile is decoded; the iPhone app's is the one
+    // that must carry production APNs.
     expect(profile).toContain(
-      'python3 scripts/verify_ios_push.py --profile "$PROFILE_PLIST"'
+      'security cms -D -i "$PROFILES/$bundle.mobileprovision" > "$PROFILES/$bundle.plist"'
+    );
+    expect(profile).toContain(
+      'python3 scripts/verify_ios_push.py --profile "$PROFILES/$BUNDLE_ID.plist"'
     );
     expect(workflow.indexOf("name: Import signing certificate")).toBeLessThan(
       workflow.indexOf("name: Archive")

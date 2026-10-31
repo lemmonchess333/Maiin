@@ -2,29 +2,32 @@
 /**
  * Makes one TestFlight run's App Store signing from the App Store Connect
  * API key alone: an Apple Distribution certificate for a certificate
- * request made on the runner, and an App Store profile for the app that
- * names it. deploy-ios.yml runs this when the IOS_DIST_CERT_* secrets are
- * not set, so the owner, who has no Mac, provides an API key instead of
- * making a certificate and a profile by hand (docs/ios-release.md).
+ * request made on the runner, and an App Store profile naming it for each
+ * app and extension the project signs. deploy-ios.yml runs this when the
+ * IOS_DIST_CERT_* secrets are not set, so the owner, who has no Mac,
+ * provides an API key instead of making a certificate and profiles by hand
+ * (docs/ios-release.md).
  *
  * The certificate's private key never leaves the runner, so each run needs
  * a new certificate and the previous one is no use to anyone. Each run
- * names its profile after its certificate ("Tropos CI <serial>") and, before
- * making anything, deletes the profiles of earlier runs by that name and
- * revokes the certificates they name. So the account holds one certificate
+ * names its profiles after its certificate ("Tropos CI <serial>" for the
+ * first bundle ID, "Tropos CI <serial> <last part of the ID>" for the rest)
+ * and, before making anything, deletes the profiles of earlier runs by that
+ * name and revokes the certificates they name. So the account holds one certificate
  * from these runs at a time, and a certificate this did not make is never
  * touched. Revoking a distribution certificate does not affect builds
  * already uploaded: Apple signs what the App Store and TestFlight install.
  *
  *   node scripts/ios/asc-signing.mjs <request.csr> <out-dir>
  *
- * with ASC_API_KEY_ID, ASC_API_ISSUER_ID, ASC_API_KEY_PATH (the .p8),
- * BUNDLE_ID and optionally WATCH_BUNDLE_ID in the environment. Writes
- * <out-dir>/dist.cer (DER), <out-dir>/profile.mobileprovision and, when
- * WATCH_BUNDLE_ID is set, <out-dir>/watch-profile.mobileprovision.
+ * with ASC_API_KEY_ID, ASC_API_ISSUER_ID, ASC_API_KEY_PATH (the .p8) and
+ * SIGNED_BUNDLE_IDS, the space-separated bundle IDs the project signs
+ * (scripts/ios_signed_targets.py lists them), in the environment. Writes
+ * <out-dir>/dist.cer (DER) and <out-dir>/profiles/<bundle ID>.mobileprovision
+ * for each.
  */
 import { sign } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -97,9 +100,22 @@ async function listAll(request, path) {
   return items;
 }
 
+/** Each profile's name: the run's serial, then the last part of the
+ *  bundle ID for every ID after the first, kept unique. */
+export function profileNames(serial, identifiers) {
+  const names = [];
+  for (const [index, identifier] of identifiers.entries()) {
+    let name = `${PROFILE_PREFIX}${serial}`;
+    if (index > 0) name += ` ${identifier.split(".").pop()}`;
+    if (names.includes(name)) name += ` ${index}`;
+    names.push(name);
+  }
+  return names;
+}
+
 /**
  * Clears earlier runs' signing, then makes this run's. Returns the
- * certificate (DER) and the profile, both as Buffers.
+ * certificate (DER) and a profile per bundle ID, all as Buffers.
  */
 export async function prepareSigning({ request, bundleIdentifier, bundleIdentifiers, csr, log = () => {} }) {
   const identifiers = bundleIdentifiers ?? [bundleIdentifier];
@@ -155,6 +171,7 @@ export async function prepareSigning({ request, bundleIdentifier, bundleIdentifi
 
   const profiles = {};
   const createdProfileIds = [];
+  const names = profileNames(serial, identifiers);
   try {
     for (const [index, bundle] of bundles.entries()) {
       const identifier = identifiers[index];
@@ -163,7 +180,7 @@ export async function prepareSigning({ request, bundleIdentifier, bundleIdentifi
           data: {
             type: "profiles",
             attributes: {
-              name: `${PROFILE_PREFIX}${serial}${index ? ` Watch ${index}` : ""}`,
+              name: names[index],
               profileType: "IOS_APP_STORE",
             },
             relationships: {
@@ -181,8 +198,8 @@ export async function prepareSigning({ request, bundleIdentifier, bundleIdentifi
       log(`Made the App Store profile ${profile.attributes.name} for ${identifier}`);
     }
   } catch (error) {
-    // A partial iPhone + Watch profile pair must not leave signing that a
-    // later run cannot reconcile. Clean up the pair before the certificate.
+    // A partial set of profiles must not leave signing that a later run
+    // cannot reconcile. Clean up the ones made before the certificate.
     for (const id of createdProfileIds) {
       await request("DELETE", `/v1/profiles/${id}`).catch(() => {});
     }
@@ -223,18 +240,22 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       issuerId: env.ASC_API_ISSUER_ID.trim(),
       privateKey: readFileSync(env.ASC_API_KEY_PATH, "utf8"),
     });
+    const bundleIdentifiers = (env.SIGNED_BUNDLE_IDS ?? "").split(/\s+/).filter(Boolean);
+    if (!bundleIdentifiers.length) {
+      throw new Error("SIGNED_BUNDLE_IDS is empty: the workflow's \"List the targets to sign\" step sets it.");
+    }
     const result = await prepareSigning({
       request: connect({ token }),
-      bundleIdentifiers: [env.BUNDLE_ID, env.WATCH_BUNDLE_ID].filter(Boolean),
+      bundleIdentifiers,
       csr: readFileSync(csrPath, "utf8"),
       log: (line) => console.log(line),
     });
     writeFileSync(join(outDir, "dist.cer"), result.certificate);
-    writeFileSync(join(outDir, "profile.mobileprovision"), result.profile);
-    if (env.WATCH_BUNDLE_ID) {
+    mkdirSync(join(outDir, "profiles"), { recursive: true });
+    for (const identifier of bundleIdentifiers) {
       writeFileSync(
-        join(outDir, "watch-profile.mobileprovision"),
-        result.profiles[env.WATCH_BUNDLE_ID].profile
+        join(outDir, "profiles", `${identifier}.mobileprovision`),
+        result.profiles[identifier].profile
       );
     }
   } catch (error) {

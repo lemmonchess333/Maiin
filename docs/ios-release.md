@@ -42,36 +42,46 @@ Nothing in this route needs a Mac: every value below comes from Apple's or
 Firebase's website.
 
 > ⚠️ The workflow has **never completed a run.** Treat the first run as a
-> bring-up. Before archiving it checks every secret, both profiles and the
+> bring-up. Before archiving it checks every secret, every profile and the
 > certificate, so a wrong file fails in the first minutes with a message
 > naming it.
 
 #### Signing: the API key, or your own certificate
 
-A TestFlight archive with a Watch companion needs one Apple Distribution
-certificate and separate App Store provisioning profiles for the iPhone and
-Watch apps. The workflow gets them one of two ways:
+A TestFlight archive needs one Apple Distribution certificate and an App
+Store provisioning profile for each app and extension target: today the
+iPhone app and the Watch app. The workflow reads that list from the project
+(`scripts/ios_signed_targets.py`, its first step), so a target added later,
+such as the Live Activity widget extension
+([run-live-activity.md](run-live-activity.md)), is signed, checked and
+exported with no change to the workflow. It gets the certificate and
+profiles one of two ways:
 
 - **From the API key (the default).** With none of the four
   `IOS_DIST_CERT_*` / iPhone and Watch provisioning profile secrets set, each
   run makes a private key on the runner, asks App Store Connect's API for one
-  distribution certificate and a separate profile for each app ID
+  distribution certificate and a separate profile for each signed bundle ID
   (`scripts/ios/asc-signing.mjs`), and signs with those. The key never leaves
   the runner. Each run makes a new certificate and revokes the previous
   run's certificate. Apple Developer → Certificates shows one Apple
-  Distribution certificate from these runs, and Profiles shows two profiles
-  named `Tropos CI <serial>` and `Tropos CI <serial> Watch 1`. Revoking an
+  Distribution certificate from these runs, and Profiles shows one profile
+  per target: `Tropos CI <serial>` for the iPhone app and
+  `Tropos CI <serial> watchkitapp` for the Watch app (the last part of each
+  other bundle ID). Revoking an
   old certificate does not affect builds already uploaded, which Apple
   signs itself. This needs the API key to have the **Admin** role.
 - **Your own certificate.** Set all four secrets, including the Watch profile,
   and the run signs with them instead: the openssl steps under "Your own
-  certificate" below. The API key then only uploads, which the **App
-  Manager** role allows.
+  certificate" below. The API key then only uploads and marks the build,
+  which the **App Manager** role allows. These secrets hold the iPhone and
+  Watch profiles only, so once the project signs another target the run
+  stops and names it: sign from the API key then.
 
-Either way the run checks the certificate and both profiles against the team,
-their bundle IDs and each target's entitlements before it archives. It
-requires production APNs in the iPhone profile, then verifies both signed
+Either way the run checks the certificate and every profile against the
+team, its bundle ID and its target's entitlements before it archives. It
+requires production APNs in the iPhone profile, then verifies the signed
 apps in the archive and exported IPA before uploading the verified artifact.
+The export's profile map is made from the bundles the archive holds.
 
 #### First: the App ID's capabilities
 
@@ -206,17 +216,19 @@ the comment on the build step, and the activation order in
    acceptance matrix below, after setting `TESTFLIGHT_PILOT_GROUP_ID`
    ("Pilot builds on TestFlight" below). Anything typed in **What to Test
    note** becomes the build's "What to Test" in TestFlight.
-4. The run checks the secrets, makes the certificate and two profiles from
-   the API key unless you gave your own, then checks both profiles (team,
-   bundle ID, App Store type, expiry, target entitlements) and the
-   certificate (a valid Apple Distribution identity that both profiles name),
+4. The run lists the targets to sign, checks the secrets, makes the
+   certificate and a profile per target from the API key unless you gave
+   your own, then checks every profile (team, bundle ID, App Store type,
+   expiry, target entitlements) and the certificate (a valid Apple
+   Distribution identity that every profile names),
    before archiving. Its error names the piece to fix: an API key without
    the Admin role, an App ID that is missing or lacks a capability, or an
    account already holding as many distribution certificates as Apple
    allows.
 5. Signing: the project as committed signs automatically, which cannot
-   work on a runner with no Apple account, so the workflow switches the
-   iPhone and Watch targets to manual signing with their imported profiles.
+   work on a runner with no Apple account, so the workflow switches every
+   signed target, in every configuration, to manual signing with its
+   imported profile.
    It does this in the project file, not on the `xcodebuild` command line, where a
    profile setting would reach every Swift package target and be refused.
    The scheme is `App` and the project is `ios/App/App.xcodeproj`. There is
