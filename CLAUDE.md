@@ -84,55 +84,55 @@ Every `path=` in `src/App.tsx` is named here, and every file named here
 exists — pinned by `claudeMdFreshness.test.ts` in both directions
 (`/dev/*` is the one allowlisted family). Add the row with the route.
 
-| Page                                   | Route                              | Description                                                                    |
-| -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------ |
-| `Home.tsx`                             | `/`                                | Main dashboard — WeekStrip, hero cards, energy, insights                       |
-| `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here)     |
-| `History.tsx`                          | `/history`                         | Analytics: an overview, with Lifting / Running / Body / Food pages (`?view=`)  |
-| `TrainingHistory.tsx`                  | `/history/sessions`                | Saved lifts and runs, with period, sport and name filters                     |
-| `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                           |
-| `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                           |
-| `TrainingPlan.tsx`                     | `/program/plan`                    | Combined training week, rotation-based next lift and reviewed one-off run moves  |
-| `Routine.tsx`                          | `/routine/:routineId`              | Saved-routine workout runner (reuses `WorkoutSession`)                         |
-| `EmptyWorkout.tsx`                     | `/empty-workout`                   | A lift with no plan day, built with Add exercise (Mob1); saves, moves no plan  |
-| `WorkoutDetail.tsx`                    | `/workout/:workoutId`              | Saved lift session detail; the delete action lives here (ADR-0012)             |
-| `Run.tsx`                              | `/run`                             | Active GPS run tracking (full-screen, no nav)                                  |
-| `RunSummary.tsx`                       | `/run-summary`                     | Post-run stats & map review                                                    |
-| `RunDetail.tsx`                        | `/run/:runId`                      | Historical run detail view                                                     |
-| `WeeklyReview.tsx`                     | `/review`                          | Sunday recap — passive narration of the week (Rev1)                            |
-| `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                      |
-| `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                       |
-| `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)        |
-| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts           |
-| `FollowList.tsx`                       | `/followers`, `/following`         | Your own followers and following, from your profile's counts; Remove follower  |
-| `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows) |
-| `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                    |
-| `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here) |
-| `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile — photo, name, body metrics in the chosen units                        |
-| `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — email, password, sign-out, account deletion                          |
-| `settings/SettingsTraining.tsx`        | `/settings/training`               | Programme — the setup, where each part is set, reset (Pgm4)                    |
-| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Dedicated lift-plan editor                                                     |
-| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)          |
-| `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                            |
-| `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into My pantry             |
-| `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | My pantry — edit or remove the saved foods Quick add offers (F2d)              |
-| `settings/SettingsData.tsx`            | `/settings/data`                   | Your data — exports, and the way into recently deleted meals                   |
-| `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                  |
-| `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                        |
-| `settings/SettingsShoes.tsx`           | `/settings/shoes`                  | Running shoes                                                                  |
-| `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Reminders, push, and a switch per activity notification (S3)                   |
-| `settings/SettingsPrivacy.tsx`         | `/settings/privacy`                | Privacy — visibility, blocked users, privacy zones                             |
-| `settings/SettingsUnitsAppearance.tsx` | `/settings/units-appearance`       | Units and theme                                                                |
-| `settings/SettingsSubscription.tsx`    | `/settings/subscription`           | Subscription status and management                                             |
-| `settings/SettingsSupportLegal.tsx`    | `/settings/support-legal`          | Support, legal links, app version                                              |
-| `AdminModeration.tsx`                  | `/admin/moderation`                | Admin report queue — client gate `VITE_ADMIN_UIDS`, the callable re-checks     |
-| `Diagnostics.tsx`                      | `/diagnostics`                     | Operator diagnostics (push, SW update, App Check state) — hidden, unlinked     |
-| `dev/*.tsx`                            | `/dev/*`                           | Developer labs (brand bake-off, form-motion lab) — not product surfaces        |
-| `Onboarding.tsx`                       | `*` (fallback)                     | Multi-step setup flow (shown when onboarding incomplete)                       |
-| `Login.tsx`                            | `*` (fallback)                     | Welcome screen on first visit, then sign-up or sign-in (Email, Google, Apple)  |
-| `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                   |
-| `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                   |
-| `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out             |
+| Page                                   | Route                              | Description                                                                     |
+| -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------- |
+| `Home.tsx`                             | `/`                                | Main dashboard — WeekStrip, hero cards, energy, insights                        |
+| `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here)      |
+| `History.tsx`                          | `/history`                         | Analytics: an overview, with Lifting / Running / Body / Food pages (`?view=`)   |
+| `TrainingHistory.tsx`                  | `/history/sessions`                | Saved lifts and runs, with period, sport and name filters                       |
+| `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                            |
+| `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                            |
+| `TrainingPlan.tsx`                     | `/program/plan`                    | Combined training week, rotation-based next lift and reviewed one-off run moves |
+| `Routine.tsx`                          | `/routine/:routineId`              | Saved-routine workout runner (reuses `WorkoutSession`)                          |
+| `EmptyWorkout.tsx`                     | `/empty-workout`                   | A lift with no plan day, built with Add exercise (Mob1); saves, moves no plan   |
+| `WorkoutDetail.tsx`                    | `/workout/:workoutId`              | Saved lift session detail; the delete action lives here (ADR-0012)              |
+| `Run.tsx`                              | `/run`                             | Active GPS run tracking (full-screen, no nav)                                   |
+| `RunSummary.tsx`                       | `/run-summary`                     | Post-run stats & map review                                                     |
+| `RunDetail.tsx`                        | `/run/:runId`                      | Historical run detail view                                                      |
+| `WeeklyReview.tsx`                     | `/review`                          | Sunday recap — passive narration of the week (Rev1)                             |
+| `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                       |
+| `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                        |
+| `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)         |
+| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts            |
+| `FollowList.tsx`                       | `/followers`, `/following`         | Your own followers and following, from your profile's counts; Remove follower   |
+| `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows)  |
+| `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                     |
+| `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here)  |
+| `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile — photo, name, body metrics in the chosen units                         |
+| `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — email, password, sign-out, account deletion                           |
+| `settings/SettingsTraining.tsx`        | `/settings/training`               | Programme — the setup, where each part is set, reset (Pgm4)                     |
+| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Dedicated lift-plan editor                                                      |
+| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)           |
+| `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                             |
+| `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into My pantry              |
+| `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | My pantry — edit or remove the saved foods Quick add offers (F2d)               |
+| `settings/SettingsData.tsx`            | `/settings/data`                   | Your data — exports, and the way into recently deleted meals                    |
+| `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                   |
+| `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                         |
+| `settings/SettingsShoes.tsx`           | `/settings/shoes`                  | Running shoes                                                                   |
+| `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Reminders, push, and a switch per activity notification (S3)                    |
+| `settings/SettingsPrivacy.tsx`         | `/settings/privacy`                | Privacy — visibility, blocked users, privacy zones                              |
+| `settings/SettingsUnitsAppearance.tsx` | `/settings/units-appearance`       | Units and theme                                                                 |
+| `settings/SettingsSubscription.tsx`    | `/settings/subscription`           | Subscription status and management                                              |
+| `settings/SettingsSupportLegal.tsx`    | `/settings/support-legal`          | Support, legal links, app version                                               |
+| `AdminModeration.tsx`                  | `/admin/moderation`                | Admin report queue — client gate `VITE_ADMIN_UIDS`, the callable re-checks      |
+| `Diagnostics.tsx`                      | `/diagnostics`                     | Operator diagnostics (push, SW update, App Check state) — hidden, unlinked      |
+| `dev/*.tsx`                            | `/dev/*`                           | Developer labs (brand bake-off, form-motion lab) — not product surfaces         |
+| `Onboarding.tsx`                       | `*` (fallback)                     | Multi-step setup flow (shown when onboarding incomplete)                        |
+| `Login.tsx`                            | `*` (fallback)                     | Welcome screen on first visit, then sign-up or sign-in (Email, Google, Apple)   |
+| `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                    |
+| `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                    |
+| `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out              |
 
 ## Key Business Logic (src/lib/)
 
@@ -543,7 +543,8 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
 - **Pages:** src/pages/ — route-level, lazy-loaded
 - **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards
   (LiftCTACard / RunCTACard / RestDayCard — Start on the card, no pills) →
-  FirstWeekCard (a new account's first seven days) → NewBadgeRow (a
+  FirstWeekCard (a new account's first seven days; for a v2 account one
+  or two rows, the first workout and the first run) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by
   themselves) → VerifyEmailBanner (until the address is verified) →
   TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
@@ -554,17 +555,27 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   `claudeMdFreshness.test.ts` fails when a name here stops rendering or
   falls out of order; nothing notices a section missing from the line, so
   re-read it against `src/pages/Home.tsx` when you add one to Home.
-- **First-visit guide (FV1, owner 2026-10-04):** setup's "Continue with
-  Free" lands on Home, where a new account's first visit gets a
+- **First-visit guide (FV1, owner 2026-10-04; XB1 call 1, 2026-10-31):**
+  a new account on activation journey v2 (`isActivationJourneyV2`: the
+  `activationJourneyVersion: 2` that `completeOnboarding` stamps) goes
+  from setup straight to Home, with no Pro offer between, and its first
+  visit has no automatic walk. Home leads with today's session, and the
+  first-week card has one or two rows, "Finish your first workout" when
+  the plan has lifts and "Go for your first run" when the person runs
+  (`firstWeek.ts`, `trainingOnly`), each opening that session
+  (`firstWeekAction.ts`). `GuideHint` turns up once in each place it is
+  used (Train's order, the first set, Food's composer, the first run). A
+  legacy account keeps the earlier journey: setup's "Continue with Free"
+  lands on Home, where its first visit in its first seven days gets a
   three-stop walk (`GuideWalk`: today's session, the first-week card,
-  Food), once, in its first seven days, as the visit's one coordinator
-  surface. The Tropos mark is the guide (no character; the house voice
-  holds). Settings → Support & legal → Show me around replays it; a
-  first-week row opens its step; `GuideHint` turns up once in each place
-  after that (Train's order, the first set, Food's composer, the first
-  run). Rules and words are in `firstGuide.ts`. It never shows under
-  automation unless a capture spec sets `tropos-guide-under-automation`
-  to `on` in localStorage, so specs that don't ask for it never meet it.
+  Food) as the visit's one coordinator surface; its card also lists the
+  first meal and three weigh-ins, a row opens its step, and its hints
+  wait until the walk has been seen. Settings → Support & legal → Show me
+  around replays the walk for any account. The Tropos mark is the guide
+  (no character; the house voice holds). Rules and words are in
+  `firstGuide.ts`. It never shows under automation unless a capture spec
+  sets `tropos-guide-under-automation` to `on` in localStorage, so specs
+  that don't ask for it never meet it.
 - **Icons:** lucide-react (individual imports only), except the drawn set in `src/components/icons/` (the tab bar's icons, the avocado) and `ui/BrandMark.tsx`
 - **Toasts:** sonner
 - **Charts:** Recharts (bar charts, line charts in History)
