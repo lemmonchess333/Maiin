@@ -544,6 +544,89 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
   });
 });
 
+suite("firestore.rules — Apple Health workout receipts", () => {
+  let env: RulesTestEnvironment;
+  const runPath = ["users", OWNER_UID, "runs", "run-1"] as const;
+  const receiptPath = [
+    "users",
+    OWNER_UID,
+    "healthWorkoutExports",
+    "run-1",
+  ] as const;
+
+  beforeAll(async () => {
+    const [host, portStr] = (EMULATOR_HOST || "").split(":");
+    env = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      firestore: {
+        rules: readFileSync("firestore.rules", "utf8"),
+        host,
+        port: Number(portStr),
+      },
+    });
+  });
+  afterAll(async () => env?.cleanup());
+  beforeEach(async () => {
+    await env.clearFirestore();
+  });
+
+  it("allows a receipt for an existing run, then a deletion marker and acknowledgement", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), ...runPath), { duration: 60 });
+    });
+    const owner = env.authenticatedContext(OWNER_UID).firestore();
+    const receipt = doc(owner, ...receiptPath);
+    await assertSucceeds(
+      setDoc(receipt, {
+        runId: "run-1",
+        state: "attempted",
+        revision: "v1",
+        workoutId: null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertSucceeds(
+      setDoc(receipt, { state: "exported", workoutId: "hk-1" }, { merge: true })
+    );
+    await assertFails(
+      setDoc(receipt, { state: "pending-delete" }, { merge: true })
+    );
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await deleteDoc(doc(ctx.firestore(), ...runPath));
+    });
+    await assertSucceeds(
+      setDoc(receipt, { state: "pending-delete" }, { merge: true })
+    );
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(owner, "users", OWNER_UID, "healthWorkoutExports"),
+          where("state", "==", "pending-delete"),
+          limit(50)
+        )
+      )
+    );
+    await assertFails(setDoc(receipt, { state: "exported" }, { merge: true }));
+    await assertSucceeds(deleteDoc(receipt));
+    await assertFails(setDoc(receipt, { runId: "run-1", state: "attempted" }));
+  });
+
+  it("keeps another account and anonymous clients out of the receipt", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), ...receiptPath), {
+        runId: "run-1",
+        state: "pending-delete",
+      });
+    });
+    const other = env.authenticatedContext(OTHER_UID).firestore();
+    const anonymous = env.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(other, ...receiptPath)));
+    await assertFails(deleteDoc(doc(other, ...receiptPath)));
+    await assertFails(getDoc(doc(anonymous, ...receiptPath)));
+  });
+});
+
 /**
  * PR K (audit P1 #11): rules tests for /challenges.
  *

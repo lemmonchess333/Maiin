@@ -24,12 +24,20 @@ import {
 } from "./connectedTrainingPrefs";
 import { CONNECTED_TRAINING_RELEASED } from "./connectedTrainingRelease";
 import { readJson, readString, writeString } from "./localStore";
+import {
+  confirmHealthWorkoutDeletion,
+  confirmHealthWorkoutExport,
+  markHealthWorkoutDeletion,
+  readHealthWorkoutDeletionPage,
+  reserveHealthWorkoutExport,
+} from "./healthWorkoutLedger";
 
 const STORAGE_PREFIX = "tropos:health-workout-export:v1:";
 const MAX_RECORDS = 2_000;
 const ORPHAN_GRACE_MS = 5 * 60 * 1000;
 
-type ExportState = "pending" | "exported" | "pending-delete" | "blocked";
+type ExportState =
+  "pending" | "exported" | "pending-delete" | "native-deleted" | "blocked";
 interface ExportRecord {
   runId: string;
   state: ExportState;
@@ -53,16 +61,29 @@ function readRecords(uid: string): ExportRecord[] {
       record &&
       typeof record.runId === "string" &&
       record.runId.length > 0 &&
-      ["pending", "exported", "pending-delete", "blocked"].includes(
-        record.state
-      )
+      [
+        "pending",
+        "exported",
+        "pending-delete",
+        "native-deleted",
+        "blocked",
+      ].includes(record.state)
   );
 }
 
 function writeRecords(uid: string, records: ExportRecord[]): boolean {
   if (!uid) return false;
   try {
-    const encoded = JSON.stringify(records.slice(-MAX_RECORDS));
+    const retained = [...records];
+    while (retained.length > MAX_RECORDS) {
+      const oldestCompleted = retained.findIndex(
+        (record) => record.state === "exported"
+      );
+      // Never evict an unfinished write or deletion to make room for a new one.
+      if (oldestCompleted < 0) return false;
+      retained.splice(oldestCompleted, 1);
+    }
+    const encoded = JSON.stringify(retained);
     return (
       writeString(storageKey(uid), encoded) &&
       readString(storageKey(uid)) === encoded
@@ -106,7 +127,9 @@ export function queueHealthWorkoutExport(
   if (!Number.isFinite(preparedAtMs) || preparedAtMs <= 0) return false;
   const localConsent = readWorkoutExportLocalConsent(uid);
   const durable = updateRecord(uid, runId, (prior) => ({
-    ...(prior?.state === "pending-delete" || prior?.state === "exported"
+    ...(prior?.state === "pending-delete" ||
+    prior?.state === "native-deleted" ||
+    prior?.state === "exported"
       ? prior
       : {
           runId,
@@ -131,12 +154,16 @@ export function queueHealthWorkoutDeletion(
 ): boolean {
   if (!isNativePlatform()) return true;
   if (!isCurrentUser(uid) || !runId) return false;
-  const durable = updateRecord(uid, runId, (prior) => ({
-    ...prior,
-    runId,
-    state: "pending-delete",
-    updatedAt: Date.now(),
-  }));
+  const durable = updateRecord(uid, runId, (prior) =>
+    prior?.state === "native-deleted"
+      ? prior
+      : {
+          ...prior,
+          runId,
+          state: "pending-delete",
+          updatedAt: Date.now(),
+        }
+  );
   if (durable) void reconcilePendingHealthExports(uid);
   return durable;
 }
@@ -145,10 +172,19 @@ export function pendingHealthWorkoutExports(
   uid: string
 ): Array<{ runId: string; status: "pending" | "pending-delete" | "blocked" }> {
   return readRecords(uid)
-    .filter((record) => record.state !== "exported")
+    .filter(
+      (record) =>
+        record.state !== "exported" &&
+        (CONNECTED_TRAINING_RELEASED ||
+          record.state === "pending-delete" ||
+          record.state === "native-deleted")
+    )
     .map((record) => ({
       runId: record.runId,
-      status: record.state as "pending" | "pending-delete" | "blocked",
+      status:
+        record.state === "native-deleted"
+          ? ("pending-delete" as const)
+          : (record.state as "pending" | "pending-delete" | "blocked"),
     }));
 }
 
@@ -215,6 +251,42 @@ function workoutFromRun(data: Record<string, unknown>) {
 
 const inFlight = new Map<string, Promise<void>>();
 const rerunRequested = new Set<string>();
+const remoteDeleteCursor = new Map<string, string>();
+
+/** One bounded server page per pass; later foregrounds rotate through all
+ * tombstones even when a revoked Health grant blocks the first page. */
+async function stageRemoteDeletions(uid: string): Promise<void> {
+  try {
+    const page = await readHealthWorkoutDeletionPage(
+      uid,
+      remoteDeleteCursor.get(uid) ?? null
+    );
+    if (!isCurrentUser(uid)) return;
+    if (page.runIds.length < 50) remoteDeleteCursor.delete(uid);
+    else if (page.lastRunId) remoteDeleteCursor.set(uid, page.lastRunId);
+    for (const runId of page.runIds) {
+      if (
+        readRecords(uid).some(
+          (record) =>
+            record.runId === runId &&
+            (record.state === "pending-delete" ||
+              record.state === "native-deleted")
+        )
+      )
+        continue;
+      // Stage this page without requesting another pass immediately. That
+      // keeps one foreground/sync event to one bounded server page.
+      updateRecord(uid, runId, (prior) => ({
+        ...prior,
+        runId,
+        state: "pending-delete",
+        updatedAt: Date.now(),
+      }));
+    }
+  } catch {
+    // A failed server page does not block already-staged local cleanup.
+  }
+}
 
 /** Retry persisted intents after server sync, online, foreground or Settings. */
 export function reconcilePendingHealthExports(uid: string): Promise<void> {
@@ -243,9 +315,11 @@ export function reconcilePendingHealthExports(uid: string): Promise<void> {
 }
 
 async function reconcile(uid: string): Promise<void> {
+  await stageRemoteDeletions(uid);
   const records = readRecords(uid).filter(
     (record) =>
       record.state === "pending-delete" ||
+      record.state === "native-deleted" ||
       (CONNECTED_TRAINING_RELEASED && record.state !== "exported")
   );
   if (!records.length || !isCurrentUser(uid)) return;
@@ -292,7 +366,10 @@ async function reconcile(uid: string): Promise<void> {
       (item) => item.runId === record.runId
     );
     if (!current || current.state === "exported") continue;
-    if (current.state === "pending-delete") {
+    if (
+      current.state === "pending-delete" ||
+      current.state === "native-deleted"
+    ) {
       try {
         // A deleted or revoked Tropos run must disappear from Health, even if
         // the user has since turned off future workout exports.
@@ -300,12 +377,26 @@ async function reconcile(uid: string): Promise<void> {
           doc(db, "users", uid, "runs", record.runId)
         );
         if (!isCurrentUser(uid) || serverRun.exists()) continue;
+        const hasLedger = await markHealthWorkoutDeletion(uid, record.runId);
         if (!isCurrentUser(uid)) return;
-        await plugin.deleteWorkout({ runId: record.runId });
+        if (current.state !== "native-deleted") {
+          const result = await plugin.deleteWorkout({ runId: record.runId });
+          // HealthKit read permission is opaque. With a server receipt, an
+          // empty query after reinstall is not proof the sample is gone.
+          if (hasLedger && result.status !== "deleted")
+            throw new Error("Apple Health deletion cannot be verified");
+          if (hasLedger)
+            updateRecord(uid, record.runId, (prior) =>
+              prior?.state === "pending-delete"
+                ? { ...prior, state: "native-deleted", updatedAt: Date.now() }
+                : (prior ?? null)
+            );
+        }
+        if (hasLedger) await confirmHealthWorkoutDeletion(uid, record.runId);
         updateRecord(uid, record.runId, () => null);
       } catch {
         updateRecord(uid, record.runId, (prior) =>
-          prior?.state === "pending-delete"
+          prior?.state === "pending-delete" || prior?.state === "native-deleted"
             ? { ...prior, updatedAt: Date.now() }
             : (prior ?? null)
         );
@@ -370,12 +461,28 @@ async function reconcile(uid: string): Promise<void> {
       if (status.status === "unverified") {
         throw new Error("Apple Health workout identity cannot be verified");
       }
-      if (status.status === "absent" && current.purpose === "correction") {
-        // A correction after reinstall must not retro-export a run that was
-        // never exported in the first place.
+      const reservation = await reserveHealthWorkoutExport(uid, record.runId, {
+        revision: workout.revision,
+        purpose: current.purpose ?? "new",
+        preparedAtMs: current.preparedAtMs,
+        consentId: current.consentId,
+      });
+      if (
+        reservation.state === "missing" ||
+        reservation.state === "no-consent"
+      ) {
         updateRecord(uid, record.runId, () => null);
         continue;
       }
+      if (reservation.state === "pending-delete") {
+        queueHealthWorkoutDeletion(uid, record.runId);
+        continue;
+      }
+      if (status.status === "absent" && reservation.state !== "fresh")
+        throw new Error("Prior Apple Health export cannot be verified");
+      if (status.status === "absent" && current.purpose === "correction")
+        throw new Error("Prior Apple Health workout cannot be found");
+      let workoutId = status.workoutId;
       if (status.status !== "present" || status.revision !== workout.revision) {
         if (!isCurrentUser(uid) || isWorkoutExportLocallyDisabled(uid)) return;
         const exported = await plugin.exportWorkout({
@@ -384,8 +491,19 @@ async function reconcile(uid: string): Promise<void> {
         });
         if (exported.revision !== workout.revision)
           throw new Error("Apple Health did not confirm this run revision");
+        workoutId = exported.workoutId;
       }
-      if (!isCurrentUser(uid)) return;
+      if (!isCurrentUser(uid) || !workoutId) return;
+      const confirmed = await confirmHealthWorkoutExport(
+        uid,
+        record.runId,
+        workout.revision,
+        workoutId
+      );
+      if (confirmed === "pending-delete") {
+        queueHealthWorkoutDeletion(uid, record.runId);
+        continue;
+      }
       updateRecord(uid, record.runId, (prior) =>
         prior?.state === "pending-delete"
           ? prior
@@ -431,6 +549,7 @@ export function startHealthExportReconciler(uid: string): () => void {
   retry();
   return () => {
     disposed = true;
+    remoteDeleteCursor.delete(uid);
     unsubscribeSynced();
     window.removeEventListener("online", retry);
     removeAppListener?.();

@@ -76,7 +76,8 @@ export default function HealthSection({
     setWatch(watchStatus);
     setWriteAvailable(exportAvailable);
     setWriteAuthorization(authorization);
-    if (CONNECTED_TRAINING_RELEASED && uid && isNativePlatform()) {
+    // Cleanup remains visible if a later release disables new Watch exports.
+    if (uid && isNativePlatform()) {
       const { pendingHealthWorkoutExports } =
         await import("@/lib/healthWorkoutExport");
       if (currentUid.current !== uid) return;
@@ -502,8 +503,7 @@ export default function HealthSection({
               }
             />
           )}
-        {CONNECTED_TRAINING_RELEASED &&
-          isNativePlatform() &&
+        {isNativePlatform() &&
           pendingExports > 0 && (
             <div className="p-3 rounded-lg bg-muted space-y-2">
               <p className="text-sm font-medium text-foreground">

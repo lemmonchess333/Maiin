@@ -56,6 +56,7 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   "meals",
   "workouts",
   "runs",
+  "healthWorkoutExports",
   "bodyweightLogs",
   "waterLog",
   "progressPhotos",

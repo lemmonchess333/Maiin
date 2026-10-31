@@ -547,6 +547,29 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);
     }
+    // A receipt is reserved before touching HealthKit. The delete trigger
+    // marks it pending so the exporting iPhone can clean up a run removed on
+    // another device. The account-deletion sweep removes this collection.
+    match /users/{uid}/healthWorkoutExports/{doc} {
+      allow read: if isOwner(uid);
+      allow create: if isOwnerAndNotDeleting(uid)
+        && exists(/databases/$(database)/documents/users/$(uid)/runs/$(doc))
+        && request.resource.data.runId == doc
+        && request.resource.data.state == 'attempted';
+      allow update: if isOwnerAndNotDeleting(uid)
+        && request.resource.data.runId == doc
+        && resource.data.runId == doc
+        && (
+          (resource.data.state in ['attempted', 'exported']
+            && request.resource.data.state == 'exported'
+            && exists(/databases/$(database)/documents/users/$(uid)/runs/$(doc)))
+          || (request.resource.data.state == 'pending-delete'
+            && !exists(/databases/$(database)/documents/users/$(uid)/runs/$(doc)))
+        );
+      allow delete: if isOwnerAndNotDeleting(uid)
+        && resource.data.state == 'pending-delete'
+        && !exists(/databases/$(database)/documents/users/$(uid)/runs/$(doc));
+    }
     match /users/{uid}/weights/{doc} {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);

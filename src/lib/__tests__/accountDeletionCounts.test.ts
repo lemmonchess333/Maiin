@@ -47,7 +47,8 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 // foundation PR #1545 deferred).
 // Polish3 call 1 bumped to 59 — blockedByOwn and blockedByReverse, the
 // server-written copy of who has blocked each account.
-export const EXPECTED_INCLUDED_COUNT = 59;
+// Connected training adds the account-scoped Apple Health export ledger.
+export const EXPECTED_INCLUDED_COUNT = 60;
 // S4e STATUS 2026-10-20 bumped excluded to 12 — restrictedIdentities, a
 // deleted restricted account's hashed sign-in identities, retained.
 export const EXPECTED_EXCLUDED_COUNT = 12;

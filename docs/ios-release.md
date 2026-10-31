@@ -234,6 +234,13 @@ the comment on the build step, and the activation order in
 
 #### Apple Watch release gate
 
+Pull requests run `.github/workflows/ios-native-compile.yml` on macOS. It
+compiles the Release iPhone and embedded Watch targets for Simulator with
+signing disabled and checks that both bundles are present while the native
+release flag is off. It uses a synthetic Firebase plist and does not install,
+sign, or exercise either app. A green compile is required before this gate is
+considered ready for the signed TestFlight and paired-device checks below.
+
 The workflow verifies that the archive and exported IPA contain one
 separately signed Watch app with the expected bundle ID, iPhone companion ID,
 HealthKit entitlement and App Store profile. This is a packaging check. It

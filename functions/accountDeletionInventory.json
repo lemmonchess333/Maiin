@@ -106,6 +106,22 @@
       "testCoverageStatus": "planned"
     },
     {
+      "key": "userHealthWorkoutExports",
+      "domain": "A_private",
+      "type": "userSubcollection",
+      "path": "users/{uid}/healthWorkoutExports",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "healthFitness",
+      "recordPurpose": "private",
+      "strategy": "deleteSubcollection",
+      "lockNeeded": "direct-rules",
+      "hasNestedSubcollections": false,
+      "reason": "Apple Health export attempt and deletion receipts, keyed by canonical run ID",
+      "testCoverageKey": "smoke::userSubcollections::healthWorkoutExports",
+      "testCoverageStatus": "planned"
+    },
+    {
       "key": "userBodyweightLogs",
       "domain": "A_private",
       "type": "userSubcollection",

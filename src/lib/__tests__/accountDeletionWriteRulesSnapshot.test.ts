@@ -51,6 +51,7 @@ const PROTECTED_PATHS = [
   "match /users/{uid}/savedRoutes/{doc}",
   "match /users/{uid}/workouts/{doc}",
   "match /users/{uid}/runs/{doc}",
+  "match /users/{uid}/healthWorkoutExports/{doc}",
   "match /users/{uid}/weights/{doc}",
   "match /users/{uid}/settings/{doc}",
   "match /users/{uid}/foodFavourites/{doc}",
@@ -384,6 +385,7 @@ describe("Blocker E — path-count reconciliation", () => {
     // explicit-deny block, → 37.
     // Polish2 (2026-10-20) added /followRequests/{uid}/users/{requesterUid}
     // (create frozen via isWriteFrozen on both sides), → 38.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(38);
+    // Connected training adds an owner-writable, deletion-frozen receipt.
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(39);
   });
 });
