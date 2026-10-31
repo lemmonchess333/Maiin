@@ -326,7 +326,9 @@ test("browses lifts and runs, filters an older period and restores the expanded 
     await page
       .getByRole("button", { name: "Apply dates", exact: true })
       .click();
-    await expect(page.getByText("71 sessions", { exact: true })).toBeVisible();
+    // The period is read thirty at a time, so its count says "shown" until
+    // every session in it has been read.
+    await expect(page.getByText(/^\d+ sessions shown$/)).toBeVisible();
     await expect(list.getByRole("link")).toHaveCount(30);
     await page
       .getByRole("button", { name: "Show more sessions", exact: true })
@@ -357,6 +359,7 @@ test("browses lifts and runs, filters an older period and restores the expanded 
       .getByRole("button", { name: "Show more sessions", exact: true })
       .click();
     await expect(list.getByRole("link")).toHaveCount(71);
+    await expect(page.getByText("71 sessions", { exact: true })).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Show more sessions", exact: true })
     ).toHaveCount(0);
