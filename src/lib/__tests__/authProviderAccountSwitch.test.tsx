@@ -47,6 +47,8 @@ const H = vi.hoisted(() => ({
   }),
   native: false,
   released: false,
+  deviceTz: "UTC" as string | null,
+  realTzCheck: false,
   watchSync: vi.fn(async (_uid: string | null) => {}),
   watchClear: vi.fn(async () => {}),
   clearHeartRateSessionsForUser: vi.fn(),
@@ -151,8 +153,9 @@ vi.mock("@/lib/accountSecurity", () => ({
   sendInitialVerificationEmail: H.sendInitial,
 }));
 vi.mock("@/lib/captureTimezone", () => ({
-  getDeviceTimezone: () => "UTC",
-  shouldUpdateTimezone: () => false,
+  getDeviceTimezone: () => H.deviceTz,
+  shouldUpdateTimezone: (stored: string | null, device: string | null) =>
+    H.realTzCheck && device !== null && device !== stored,
 }));
 
 import { AuthProvider, useAuth } from "../auth";
@@ -209,6 +212,8 @@ async function emit(uid: string | null) {
 beforeEach(() => {
   H.native = false;
   H.released = false;
+  H.deviceTz = "UTC";
+  H.realTzCheck = false;
   H.watchSync.mockReset().mockResolvedValue(undefined);
   H.watchClear.mockClear();
   H.clearHeartRateSessionsForUser.mockClear();
@@ -305,6 +310,37 @@ describe("AuthProvider — account switch isolation", () => {
     await waitFor(() => expect(state()).toMatchObject({ u: "B", p: "B" }));
     expect(state().watchFailed).toBe("false");
     expect(H.clearHeartRateSessionsForUser).toHaveBeenCalledWith("A");
+  });
+
+  it("saves the device's new zone when the app comes back", async () => {
+    H.realTzCheck = true;
+    H.deviceTz = "Europe/London";
+    seedFirestore({ "users/A": { email: "A@x.z", timezone: "Europe/London" } });
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    const { updateDocGuarded } = await import("@/lib/firestoreWrite");
+    vi.mocked(updateDocGuarded).mockClear();
+
+    // The phone has flown to Tokyo with the app in the background.
+    H.deviceTz = "Asia/Tokyo";
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await waitFor(() =>
+      expect(vi.mocked(updateDocGuarded)).toHaveBeenCalledWith(
+        expect.anything(),
+        { timezone: "Asia/Tokyo" }
+      )
+    );
+    // Once: the profile now holds the new zone.
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(
+      vi
+        .mocked(updateDocGuarded)
+        .mock.calls.filter(([, data]) => "timezone" in (data as object))
+    ).toHaveLength(1);
   });
 
   it("B wins when A's read resolves LAST", async () => {

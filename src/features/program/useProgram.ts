@@ -182,6 +182,7 @@ export interface CompletedSessionData {
 import type { RaceTiming } from "./runPlanTiming";
 import { scheduleRecoveryWeekV2, type RunTuning } from "./runScheduler";
 import { localWeekKey, localDateString, addLocalDays } from "@/lib/dateHelpers";
+import { getDeviceTimezone } from "@/lib/captureTimezone";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { planDeloadWeek, type DeloadSwap } from "@/lib/planDeloadWeek";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
@@ -1922,10 +1923,15 @@ export function useProgram() {
       }
       if (
         expected &&
-        (expected.sourceSignature !== runMoveSourceSignature(target) ||
-          expected.todayKey !== localDateString(new Date()))
+        expected.sourceSignature !== runMoveSourceSignature(target)
       ) {
         return declineStale("Your plan changed. Review the latest week.");
+      }
+      if (expected && expected.todayKey !== localDateString(new Date())) {
+        return declineWithReason(
+          "Couldn't move that run.",
+          "The day changed while this was open. Review the latest week."
+        );
       }
       if (targetDayIndex === target.dayIndex) return APPLIED; // same day
       // Review callers get the exact same destination rules as the picker.
@@ -1982,12 +1988,16 @@ export function useProgram() {
         return declineStale("Couldn't move that run.");
       }
       const targetId = target.id;
+      // The server judges "today" in this zone: the profile's is saved once
+      // a session, and is stale for anyone who has travelled since.
+      const timeZone = getDeviceTimezone();
       return runProgramCommand(
         {
           kind: "moveRunDay",
           commandId: generateInstanceId(),
           runDayId: targetId,
           targetDayIndex,
+          ...(timeZone ? { timeZone } : {}),
           ...(expected ? { expected } : {}),
         },
         (state) => ({

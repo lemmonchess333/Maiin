@@ -814,7 +814,7 @@ const KIND_VALIDATORS = {
       command,
       "moveRunDay",
       ["kind", "commandId", "runDayId", "targetDayIndex"],
-      ["expected"]
+      ["expected", "timeZone"]
     );
     out.runDayId = assertString(command.runDayId, "runDayId", MAX_ID_LEN);
     out.targetDayIndex = assertBoundedInt(
@@ -823,6 +823,14 @@ const KIND_VALIDATORS = {
       0,
       6
     );
+    // The device's IANA zone when the move was asked for. The profile's is
+    // saved once a session, so it is stale for anyone who has travelled.
+    if (command.timeZone !== undefined) {
+      out.timeZone = assertString(command.timeZone, "timeZone", 64);
+      if (!isTimeZone(out.timeZone)) {
+        invalidCommand("timeZone must be an IANA time zone.");
+      }
+    }
     if (command.expected !== undefined) {
       assertKeys(command.expected, "expected", ["sourceSignature", "todayKey", "completionEvidence"], []);
       const todayKey = assertString(command.expected.todayKey, "expected.todayKey", 10, 10);
@@ -1609,10 +1617,10 @@ function moveRunDay(state, profile, command, now) {
   if (!isScheduledRunEditable(getScheduledRunStatus(target)) || target.completed === true || state.manualCompletions?.[command.runDayId]) {
     failedPrecondition("That run can no longer be moved.");
   }
-  const today = localDateInZone(now, profile.timezone);
-  if (command.expected && (command.expected.sourceSignature !== runMoveSourceSignature(target) || command.expected.todayKey !== today)) {
+  if (command.expected && command.expected.sourceSignature !== runMoveSourceSignature(target)) {
     failedPrecondition("Your plan changed. Review the latest week.");
   }
+  const today = runMoveToday(command, profile, now);
   if (target.dayIndex === command.targetDayIndex) {
     return state; // no-op: already there
   }
@@ -2166,6 +2174,44 @@ function replaceExercise(state, command, profile) {
       old.sets
     ),
   };
+}
+
+function isTimeZone(value) {
+  try {
+    new Intl.DateTimeFormat("en-CA", { timeZone: value });
+    return true;
+  } catch (_e) {
+    return false;
+  }
+}
+
+/**
+ * The day a run move is judged against: the person's today.
+ *
+ * Read in the zone the command carries, which is the device's. A command
+ * from an older app carries none: a review it sent may be a day either side
+ * of the saved zone's date, since that zone is saved once a session; and a
+ * plain move is judged in the saved zone, or, with none saved, against the
+ * earliest date anywhere, so a move onto the person's today is never
+ * refused for a zone this server lacks.
+ */
+function runMoveToday(command, profile, now) {
+  const savedZone =
+    profile && isTimeZone(profile.timezone) && profile.timezone
+      ? profile.timezone
+      : null;
+  if (command.expected) {
+    const reference = localDateInZone(now, command.timeZone || savedZone || "UTC");
+    const drift = Math.abs(
+      Date.parse(command.expected.todayKey) - Date.parse(reference)
+    ) / 86_400_000;
+    if (command.timeZone ? drift !== 0 : drift > 1) {
+      failedPrecondition("The day changed while this was open. Review the latest week.");
+    }
+    return command.expected.todayKey;
+  }
+  const zone = command.timeZone || savedZone;
+  return zone ? localDateInZone(now, zone) : localDateInZone(now, "Etc/GMT+12");
 }
 
 // Local calendar date for the saved workout, in the user's timezone. The

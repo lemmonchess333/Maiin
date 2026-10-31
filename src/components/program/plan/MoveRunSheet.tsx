@@ -166,7 +166,8 @@ export default function MoveRunSheet({
       } else {
         setError(
           result.status === "declined"
-            ? "Your plan changed. Keep this week and review the latest dates."
+            ? (result.reason ??
+                "Your plan changed. Keep this week and review the latest dates.")
             : "Couldn't move this run. Your change is still here. Try again."
         );
       }

@@ -43,6 +43,7 @@ import { setErrorReportingUid } from "./errorReporting";
 import { readString, remove, writeString } from "@/lib/localStore";
 import type { FieldValue, Timestamp } from "firebase/firestore";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
+import { onAppResume } from "./appResume";
 import {
   invalidatePushTokenLifecycle,
   stopListeningForForegroundPush,
@@ -1110,6 +1111,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       )
       .catch(() => {});
   }, [user, onboarded]);
+
+  // The device's zone, kept current each time the app comes back. The server
+  // reads the person's "today" from it (reminders, plan moves), and a phone
+  // changes zone with its owner without the app starting again.
+  const profileUid = profile?.uid ?? null;
+  const savedTimezone = profile?.timezone ?? null;
+  useEffect(() => {
+    if (!profileUid || user?.uid !== profileUid) return;
+    const uid = profileUid;
+    return onAppResume(() => {
+      const deviceTz = getDeviceTimezone();
+      if (!deviceTz || !shouldUpdateTimezone(savedTimezone, deviceTz)) return;
+      if (auth.currentUser?.uid !== uid) return;
+      setProfile((current) =>
+        current?.uid === uid ? { ...current, timezone: deviceTz } : current
+      );
+      void firestore()
+        .then(({ doc, db, updateDocGuarded }) =>
+          updateDocGuarded(doc(db, "users", uid), { timezone: deviceTz })
+        )
+        .catch((err) =>
+          logger.warn("[AuthProvider] timezone refresh failed", err)
+        );
+    });
+  }, [user?.uid, profileUid, savedTimezone]);
 
   // Dark mode sync — dark is the default, so a null profile (signed out /
   // still loading) and a profile without an explicit choice both resolve dark.
