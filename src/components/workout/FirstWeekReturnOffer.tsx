@@ -1,35 +1,30 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { daysSinceStart, startDayKey } from "@/lib/startDay";
 import { FIRST_WEEK_DAYS } from "@/lib/firstWeek";
-import { usePushSettings } from "@/hooks/usePushSettings";
-import {
-  useStreakReminder,
-  useWorkoutReminders,
-} from "@/hooks/RemindersProvider";
+import { useWorkoutReminders } from "@/hooks/RemindersProvider";
 import { useFirstSessionReturnChoice } from "@/hooks/useFirstSessionReturnChoice";
 import {
-  getRemotePushPermissionState,
-  isPushSupported,
-  registerDeviceToken,
-  requestRemotePushPermission,
-  unregisterDeviceToken,
-} from "@/lib/pushNotifications";
-import { getNotificationPermissionState } from "@/lib/notifications";
-import { isNativePlatform } from "@/lib/platform";
+  reminderPreview,
+  SETUP_REMINDER_TIME,
+} from "@/lib/workoutReminderCopy";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
-import { logger } from "@/lib/logger";
 import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 
-type Channel = "push" | "local" | "none" | "loading";
-
-/** An optional return prompt after a persisted lift or run, never on mount. */
+/**
+ * A v2 account's one reminder ask in its first week (XB1 call 8): the
+ * training-day reminder, offered on a saved session's finish screen by
+ * naming the next session ("Remind you before Pull B?") with the day and
+ * time it would go off, and Not now. Asked once, account-wide. Nothing is
+ * asked when setup's reminder row already turned it on. The streak-style
+ * evening nudge is not offered to a v2 account; Fitbod and Hevy remind on
+ * training days and name the workout.
+ */
 export default function FirstWeekReturnOffer({
   kind,
 }: {
@@ -42,262 +37,104 @@ export default function FirstWeekReturnOffer({
     startDayKey(profile?.onboardingCompletedAt),
     todayKey
   );
-  const inFirstWeek =
+  const reminders = useWorkoutReminders();
+  const choice = useFirstSessionReturnChoice();
+  const [busy, setBusy] = useState(false);
+  const [refusedUid, setRefusedUid] = useState<string | null>(null);
+  const viewed = useRef<string | null>(null);
+  // Setup's time: the person has not chosen one, and Settings changes it.
+  const time = SETUP_REMINDER_TIME;
+  // The first reminder it would send, or null when it would never go off.
+  const preview = reminderPreview(
+    time,
+    profile?.weekSchedule,
+    reminders.liftName
+  );
+  const ready =
+    !!uid &&
     isActivationJourneyV2(profile) &&
     day !== null &&
     day >= 1 &&
-    day <= FIRST_WEEK_DAYS;
-  const navigate = useNavigate();
-  const {
-    consent,
-    update,
-    loading: pushLoading,
-    configured,
-    failed: pushFailed,
-  } = usePushSettings();
-  const {
-    prefs,
-    loading: localLoading,
-    updatePrefs,
-    requestPermission,
-  } = useStreakReminder();
-  // Setup's reminder row turns training-day reminders on: someone who said
-  // yes there has already answered this.
-  const { reminders: workoutReminders, loading: workoutRemindersLoading } =
-    useWorkoutReminders();
-  const choice = useFirstSessionReturnChoice();
-  const [support, setSupport] = useState<{
-    uid: string | null;
-    channel: Channel;
-  }>({
-    uid: null,
-    channel: "loading",
-  });
-  const channel = support.uid === uid ? support.channel : "loading";
-  const [busy, setBusy] = useState(false);
-  const [deniedUid, setDeniedUid] = useState<string | null>(null);
-  const [error, setError] = useState<{ uid: string; message: string } | null>(
-    null
-  );
-  const errorMessage = error?.uid === uid ? error.message : null;
-  const viewedRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!inFirstWeek || !uid) return;
-    let cancelled = false;
-    void isPushSupported().then((supported) => {
-      if (cancelled) return;
-      setSupport({
-        uid,
-        channel: supported ? "push" : isNativePlatform() ? "local" : "none",
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [inFirstWeek, uid]);
-
-  const ready =
-    !!uid &&
-    inFirstWeek &&
-    channel !== "loading" &&
-    channel !== "none" &&
-    !pushLoading &&
-    !pushFailed &&
-    !configured &&
-    !consent.enabled &&
-    !localLoading &&
-    !prefs.primingShown &&
-    !workoutRemindersLoading &&
-    !workoutReminders.enabled &&
+    day <= FIRST_WEEK_DAYS &&
+    !reminders.loading &&
+    !reminders.reminders.enabled &&
+    !!preview &&
     !choice.loading &&
     !choice.failed &&
     !choice.response;
-  const deniedHere = !!uid && deniedUid === uid;
-  const visible = ready || deniedHere;
+  const refused = !!uid && refusedUid === uid;
 
   useEffect(() => {
-    if (!ready || !uid || day === null) return;
+    if (!ready || day === null) return;
     const key = `${uid}:${kind}:${todayKey}`;
-    if (viewedRef.current === key) return;
-    viewedRef.current = key;
+    if (viewed.current === key) return;
+    viewed.current = key;
     trackLifecycle("first_week_reminder_offered", {
       kind,
       firstWeekDay: day,
-      reminderChannel: channel === "push" ? "push" : "local",
+      reminderChannel: "local",
     });
-  }, [ready, uid, kind, todayKey, day, channel]);
+  }, [ready, uid, kind, todayKey, day]);
 
-  const trackChoice = (
-    outcome: "enabled" | "later" | "denied" | "setup_failed"
-  ) => {
-    if (day === null) return;
-    trackLifecycle("first_week_reminder_choice", {
-      kind,
-      firstWeekDay: day,
-      reminderChannel: channel === "push" ? "push" : "local",
-      reminderOutcome: outcome,
-    });
+  const answer = async (outcome: "enabled" | "later" | "denied") => {
+    if (day !== null)
+      trackLifecycle("first_week_reminder_choice", {
+        kind,
+        firstWeekDay: day,
+        reminderChannel: "local",
+        reminderOutcome: outcome,
+      });
+    await choice
+      .record(outcome === "enabled" ? "accepted" : outcome)
+      .catch(() => {});
   };
 
-  const handleDenied = async () => {
-    setDeniedUid(uid);
-    setError(null);
-    trackChoice("denied");
-    try {
-      await choice.record("denied");
-    } catch (cause) {
-      logger.warn("[return-reminder] denied answer save failed", cause);
-    }
-  };
-
-  const handleEnable = async () => {
-    if (!uid || busy || !ready) return;
-    const ownerUid = uid;
+  const enable = async () => {
+    if (busy || !ready) return;
     setBusy(true);
-    setError(null);
     try {
-      const permissionFailed = () => {
-        setError({
-          uid: ownerUid,
-          message: "Couldn't request notification permission. Try again.",
-        });
-        trackChoice("setup_failed");
-      };
-      if (channel === "push") {
-        if (!(await requestRemotePushPermission())) {
-          if ((await getRemotePushPermissionState()) === "denied") {
-            await handleDenied();
-          } else {
-            permissionFailed();
-          }
-          return;
-        }
-        if (auth.currentUser?.uid !== ownerUid) return;
-        const registration = await registerDeviceToken(ownerUid);
-        if (!registration.ok) {
-          if (registration.reason === "account-changed") return;
-          setError({
-            uid: ownerUid,
-            message: "Couldn't connect this device. Try again.",
-          });
-          trackChoice("setup_failed");
-          return;
-        }
-        if (auth.currentUser?.uid !== ownerUid) return;
-        try {
-          // This entry opts in to evening nudges only. Recap and badge
-          // notifications remain a separate choice in Settings.
-          if (
-            !(await update({
-              enabled: true,
-              streak: true,
-              recap: false,
-              badge: false,
-            }))
-          ) {
-            return;
-          }
-        } catch (cause) {
-          await unregisterDeviceToken(ownerUid).catch((releaseError) => {
-            logger.warn(
-              "[return-reminder] device release failed",
-              releaseError
-            );
-          });
-          throw cause;
-        }
-      } else if (channel === "local") {
-        if (!(await requestPermission())) {
-          if ((await getNotificationPermissionState()) === "denied") {
-            await handleDenied();
-          } else {
-            permissionFailed();
-          }
-          return;
-        }
-        if (auth.currentUser?.uid !== ownerUid) return;
-        await updatePrefs({ enabled: true, primingShown: true });
-        if (auth.currentUser?.uid !== ownerUid) return;
-      } else {
+      if (!(await reminders.requestPermission())) {
+        setRefusedUid(uid);
+        await answer("denied");
         return;
       }
-      trackChoice("enabled");
-      try {
-        await choice.record("accepted");
-      } catch (cause) {
-        // The confirmed consent still hides this offer on every device.
-        logger.warn("[return-reminder] accepted answer save failed", cause);
-      }
-      toast.success("Evening reminders are on.");
-    } catch (cause) {
-      logger.error("[return-reminder] setup failed", cause);
-      setError({
-        uid: ownerUid,
-        message: "Couldn't turn on reminders. Check your connection and retry.",
-      });
-      trackChoice("setup_failed");
+      await reminders.updateReminders({ enabled: true, time });
+      await answer("enabled");
+      toast.success("Training-day reminders are on");
+    } catch {
+      toast.error("Couldn't turn on reminders. Try again.");
     } finally {
       setBusy(false);
     }
   };
 
-  const handleLater = async () => {
-    if (!uid || busy || !ready) return;
-    setBusy(true);
-    setError(null);
-    try {
-      if (await choice.record("later")) trackChoice("later");
-    } catch (cause) {
-      logger.error("[return-reminder] later answer save failed", cause);
-      setError({ uid, message: "Couldn't save your choice. Try again." });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (!visible) return null;
-  if (deniedHere) {
+  if (refused)
     return (
       <Card size="compact" as="section" aria-label="Reminder permission">
-        <p className="text-base font-bold text-foreground">
-          Notifications are blocked
+        <p role="status" className="text-sm text-muted-foreground">
+          Notifications are off for Tropos. Allow them in your phone&apos;s
+          Settings, then turn reminders on in Settings → Notifications.
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Reminders are still off. You can enable them later in Settings.
-        </p>
-        <Button
-          variant="secondary"
-          className="mt-3"
-          onClick={() => navigate("/settings/notifications")}
-        >
-          Open notification settings
-        </Button>
       </Card>
     );
-  }
+  if (!ready) return null;
+  const next = reminders.liftName ?? "your next session";
   return (
-    <Card size="compact" as="section" aria-label="Evening reminders">
+    <Card size="compact" as="section" aria-label="Training-day reminder">
       <h3 className="text-base font-bold text-foreground">
-        Keep the next day going
+        Remind you before {next}?
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Get an evening nudge tomorrow if you haven&apos;t logged. Reminders can
-        continue as your streak grows. Change this in Settings.
+        <InlineNumerals>{preview}</InlineNumerals>, then on each training day.
       </p>
-      {errorMessage && (
-        <p role="alert" className="mt-2 text-sm text-destructive-strong">
-          {errorMessage}
-        </p>
-      )}
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button onClick={() => void handleEnable()} loading={busy}>
-          Turn on reminders
+        <Button onClick={() => void enable()} loading={busy}>
+          Remind me
         </Button>
         <Button
           variant="ghost"
           disabled={busy}
-          onClick={() => void handleLater()}
+          onClick={() => void answer("later")}
         >
           Not now
         </Button>

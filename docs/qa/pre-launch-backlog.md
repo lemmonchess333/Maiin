@@ -10,26 +10,27 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
-## The first-week reminder offer asks iOS for push (XB1 fix pack, 2026-10-31)
+## A v2 account's one first-week reminder ask (XB1 call 8, 2026-10-31)
 
 After a v2 account's first saved session in its first week, and once the
-share question is answered, the finish screen offers evening reminders
-(`FirstWeekReturnOffer`). With push supported, Turn on reminders asks iOS
-for notification permission, registers the device's token and saves push
-consent for the streak nudge only; a refusal shows "Notifications are
-blocked" with a way to Settings. It stays hidden when setup's reminder row
-already turned training-day reminders on. The unit suite fakes the
-permission and the token; only a phone shows the system prompt.
+share question is answered, the finish screen offers the training-day
+reminder by naming the next session ("Remind you before Pull B?", with
+when it would first go off) and Not now (`FirstWeekReturnOffer`). Remind
+me asks the phone for notification permission and turns on the reminder
+at setup's 07:30; a refusal says where to allow it. It asks nothing when
+setup's reminder row already turned it on, and a v2 account is no longer
+offered the streak-style evening nudge or push. The unit suite fakes the
+permission; only a phone shows the system prompt and the reminder.
 
 - [ ] **Allowed.** On a TestFlight build, make a new account (skip setup's
       reminder row), save a first workout and answer the share question.
-      Passing: the offer appears only then; Turn on reminders shows the iOS
+      Passing: the offer names the next workout; Remind me shows the iOS
       permission prompt once; after Allow, Settings → Notifications has
-      push on with the streak nudge only, and the offer does not come back
-      on the next finish.
+      training-day reminders on at 07:30, the next training morning's
+      notification names that workout, and the offer does not come back.
 - [ ] **Denied.** As above, but tap Don't Allow. Passing: the card says
-      notifications are blocked, Open notification settings opens
-      Settings → Notifications, and no token is registered.
+      notifications are off and where to allow them, and reminders stay
+      off.
 - [ ] **Asked in setup.** Make a new account with setup's reminder row on,
       then save a first workout. Passing: no reminder offer on the finish
       screen, and no steps question on Home until the app is next opened.
