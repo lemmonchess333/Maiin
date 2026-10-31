@@ -10,6 +10,7 @@ import {
 } from "../trainingHistory";
 import type { SavedRun } from "../savedRuns";
 import type { Workout } from "../savedWorkouts";
+import { Timestamp } from "firebase/firestore";
 
 const TODAY = "2026-10-29";
 const filters = (query = "") =>
@@ -145,6 +146,26 @@ describe("a saved-session chronology", () => {
     expect(rows[1].summary).toEqual(["5.0 km", "30:00", "6:00 /km"]);
   });
 
+  it("orders a day's sessions by when each was saved, newest first", () => {
+    const at = (time: string) => new Date(`2026-10-28T${time}:00`);
+    const lift = (id: string, time: string): Workout => ({
+      ...workout(id, "2026-10-28"),
+      createdAt: Timestamp.fromDate(at(time)),
+    });
+    const rows = trainingHistorySessions(
+      // Ids sort the other way round from the times.
+      [lift("a-morning", "07:30"), lift("z-noon", "12:15")],
+      [run("m-evening", "2026-10-28", { completedAt: at("18:45") })],
+      filters(),
+      "km"
+    );
+    expect(rows.map((row) => row.id)).toEqual([
+      "m-evening",
+      "z-noon",
+      "a-morning",
+    ]);
+  });
+
   it("keeps every same-day record and includes both period bounds", () => {
     const lifts = Array.from({ length: 70 }, (_, i) =>
       workout(`w${i}`, "2026-10-29")
@@ -196,8 +217,10 @@ describe("a saved-session chronology", () => {
       filters(),
       "km"
     );
-    expect(rows[0].summary).toEqual(["0 exercises"]);
-    expect(rows[1].summary).toHaveLength(2);
-    expect(rows[1].notCounted).toBe(true);
+    const lift = rows.find((row) => row.kind === "lift")!;
+    const zero = rows.find((row) => row.kind === "run")!;
+    expect(lift.summary).toEqual(["0 exercises"]);
+    expect(zero.summary).toHaveLength(2);
+    expect(zero.notCounted).toBe(true);
   });
 });

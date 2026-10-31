@@ -108,13 +108,22 @@ export interface HistorySession {
   id: string;
   kind: "lift" | "run";
   day: string;
+  /** When the session was saved, in ms; 0 when an old record has no time. */
+  savedAtMs: number;
   title: string;
   summary: string[];
   href: string;
   notCounted: boolean;
 }
 
-/** Same-day ties use stable identity, never an invented session start time. */
+function workoutSavedAtMs(workout: Workout): number {
+  const created = workout.createdAt as { toMillis?: () => number } | null;
+  const ms = typeof created?.toMillis === "function" ? created.toMillis() : 0;
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+/** A day's sessions run newest first by when each was saved; a record with
+ * no saved time, and a tie, fall back to its stable identity. */
 export function trainingHistorySessions(
   workouts: readonly Workout[],
   runs: readonly SavedRun[],
@@ -131,6 +140,7 @@ export function trainingHistorySessions(
         id: workout.id,
         kind: "lift",
         day: workout.date,
+        savedAtMs: workoutSavedAtMs(workout),
         title: workoutTitle(workout),
         summary: [
           ...(Number.isFinite(minutes) && minutes > 0
@@ -150,6 +160,9 @@ export function trainingHistorySessions(
         id: run.id,
         kind: "run",
         day: run.day,
+        savedAtMs: Number.isFinite(run.completedAt?.getTime())
+          ? run.completedAt.getTime()
+          : 0,
         title: runTitle(run),
         summary: [
           distanceLabel(run.distance, unit),
@@ -171,7 +184,12 @@ export function trainingHistorySessions(
         session.day <= filters.to &&
         (!search || session.title.toLocaleLowerCase().includes(search))
     )
-    .sort((a, b) => b.day.localeCompare(a.day) || a.key.localeCompare(b.key));
+    .sort(
+      (a, b) =>
+        b.day.localeCompare(a.day) ||
+        b.savedAtMs - a.savedAtMs ||
+        a.key.localeCompare(b.key)
+    );
 }
 
 /** Only the history route is accepted from a saved detail's router state. */
