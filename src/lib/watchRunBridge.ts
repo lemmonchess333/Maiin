@@ -63,7 +63,8 @@ function nativeSnapshot({
   return {
     ...snapshot,
     distanceLabel: `${distanceValue(snapshot.distanceMeters, unit, 2)} ${distanceUnitLabel(unit)}`,
-    paceLabel: pace && pace > 0 ? paceLabel(pace, unit) : "—",
+    // paceLabel writes its own no-value dash for a pace not yet known.
+    paceLabel: paceLabel(pace ?? 0, unit),
   };
 }
 
