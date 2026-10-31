@@ -145,7 +145,7 @@ export default function WeekResetCard({
           programme.
         </p>
         <Button fullWidth variant="ghost" onClick={onGoToday}>
-          Keep this week · Go to Today
+          Keep this week
         </Button>
       </div>
     </Card>

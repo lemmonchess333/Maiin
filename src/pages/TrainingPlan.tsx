@@ -355,7 +355,7 @@ export default function TrainingPlan() {
           {oldWeek && (
             <Banner
               variant="neutral"
-              description="Your plan is waiting for the previous week to finish. Resolve the open session or pending save before moving this week's runs."
+              description="Finish your open workout first."
             />
           )}
           {runStrip && (

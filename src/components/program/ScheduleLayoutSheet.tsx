@@ -178,7 +178,7 @@ function ScheduleLayoutSheetBody({
       title={guided && reviewing ? "Review usual week" : "Edit weekly layout"}
       description={
         guided && reviewing
-          ? "Check the scope before changing your plan."
+          ? "This changes every week from now on."
           : "Tap any day to cycle through Rest, Lift, Run, Both."
       }
     >
@@ -192,7 +192,7 @@ function ScheduleLayoutSheetBody({
             {sourceChanged && (
               <Banner
                 variant="warning"
-                description="Your plan changed while this draft was open. Close and reopen the editor to review the latest week."
+                description="Your plan changed while this was open. Close it and try again."
               />
             )}
             {!preview ? (
@@ -341,7 +341,7 @@ function ScheduleLayoutSheetBody({
             {guided && sourceChanged && (
               <Banner
                 variant="warning"
-                description="Your plan changed while this draft was open. Close and reopen the editor to review the latest week."
+                description="Your plan changed while this was open. Close it and try again."
               />
             )}
 

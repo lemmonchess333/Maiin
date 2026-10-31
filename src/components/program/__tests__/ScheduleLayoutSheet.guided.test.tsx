@@ -107,7 +107,12 @@ describe("guided usual-week change", () => {
       />
     );
     expect(
-      screen.getByText(/plan changed while this draft was open/i)
+      screen.getByText(
+        "Your plan changed while this was open. Close it and try again."
+      )
+    ).toBeVisible();
+    expect(
+      screen.getByText("This changes every week from now on.")
     ).toBeVisible();
     expect(
       screen.getByRole("button", { name: "Confirm usual week" })
