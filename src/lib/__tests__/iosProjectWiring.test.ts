@@ -295,7 +295,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
   });
 
-  it("keeps Watch runs disabled in the TestFlight bundle until paired-device proof", () => {
+  it("keeps the committed release gate off and ties both pilot gates to one manual choice", () => {
     expect(infoPlist).toMatch(
       /<key>TroposConnectedTrainingEnabled<\/key>\s*<string>\$\(WATCH_RUN_RELEASE_ENABLED\)<\/string>/
     );
@@ -316,9 +316,29 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
       "PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app;"
     );
     expect(appRelease?.[1]).toContain("WATCH_RUN_RELEASE_ENABLED = NO;");
+    expect(workflow).toMatch(
+      /connected_training_pilot:\s*description:[^\n]*\n\s*type: boolean\s*required: false\s*default: false/
+    );
+    const mode = workflowStep("Select connected training build mode");
+    expect(mode).toMatch(/true\)\s*echo "web=true"[\s\S]*?echo "native=YES"/);
+    expect(mode).toMatch(/false\|""\)\s*echo "web=false"[\s\S]*?echo "native=NO"/);
     expect(
       workflowStep("Build web bundle and sync into the iOS project")
-    ).not.toMatch(/VITE_CONNECTED_TRAINING_ENABLED:\s*["']?true/);
+    ).toContain("VITE_CONNECTED_TRAINING_ENABLED: ${{ steps.training-mode.outputs.web }}");
+    expect(workflowStep("Archive")).toContain(
+      'WATCH_RUN_RELEASE_ENABLED: ${{ steps.training-mode.outputs.native }}'
+    );
+    expect(workflowStep("Archive")).toContain(
+      'WATCH_RUN_RELEASE_ENABLED="$WATCH_RUN_RELEASE_ENABLED"'
+    );
+    for (const name of [
+      "Verify archived iPhone and Watch signing",
+      "Verify exported iPhone and Watch signing",
+    ]) {
+      expect(workflowStep(name)).toContain(
+        '--expected-connected-training "${{ steps.training-mode.outputs.native }}"'
+      );
+    }
   });
 
   it("tells the manual export which profile signs each app", () => {
