@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
+import type { MouseEvent } from "react";
+import { cameFromInApp } from "@/lib/backNavigation";
 import {
   ArrowLeft,
   CalendarDays,
@@ -117,12 +124,33 @@ export default function TrainingHistory() {
         )
       : []
   );
-  const returnTo = (location.state as { returnTo?: unknown } | null)?.returnTo;
+  const entered = location.state as {
+    returnTo?: unknown;
+    returnState?: unknown;
+  } | null;
+  const returnTo = entered?.returnTo;
   const backTo =
     typeof returnTo === "string" &&
     /^(?:\/program\/plan|\/history)(?:\?[^#]*)?$/.test(returnTo)
       ? returnTo
       : "/history";
+  // The screen this was opened from keeps its own state (the plan's review
+  // or reset): Back returns to that entry, or, opened directly, replaces
+  // this one with it, never stacking a fresh copy on top.
+  const navigate = useNavigate();
+  function back(event: MouseEvent) {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      !cameFromInApp()
+    )
+      return;
+    event.preventDefault();
+    navigate(-1);
+  }
 
   function change(next: Partial<TrainingHistoryFilters>) {
     const value = { ...filters, ...next };
@@ -160,6 +188,9 @@ export default function TrainingHistory() {
       eyebrow={
         <Link
           to={backTo}
+          state={entered?.returnState}
+          replace
+          onClick={back}
           className="inline-flex min-h-[44px] items-center gap-1 -ml-2 px-2"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />

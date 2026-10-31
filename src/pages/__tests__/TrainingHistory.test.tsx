@@ -11,6 +11,7 @@ import {
 import {
   createMemoryRouter,
   RouterProvider,
+  useLocation,
   useNavigate,
 } from "react-router-dom";
 
@@ -54,6 +55,12 @@ function open(query = "") {
   render(<RouterProvider router={router} />);
   return router;
 }
+function PlanProbe() {
+  const location = useLocation();
+  return (
+    <p data-testid="plan">{`${location.search} ${JSON.stringify(location.state)}`}</p>
+  );
+}
 function sessionLinks() {
   return within(
     screen.getByRole("region", { name: "Saved sessions" })
@@ -80,6 +87,34 @@ afterEach(() => {
 });
 
 describe("Training history", () => {
+  it("returns to the plan with the review it came from, not a fresh plan", async () => {
+    const planState = { returnTo: "/review", resetFeel: "a_bit_much" };
+    const router = createMemoryRouter(
+      [
+        { path: "/history/sessions", element: <TrainingHistory /> },
+        { path: "/program/plan", element: <PlanProbe /> },
+      ],
+      {
+        initialEntries: [
+          {
+            pathname: "/history/sessions",
+            state: {
+              returnTo: "/program/plan?reset=1",
+              returnState: planState,
+            },
+          },
+        ],
+      }
+    );
+    render(<RouterProvider router={router} />);
+    fireEvent.click(await screen.findByRole("link", { name: /Your plan/ }));
+    expect(await screen.findByTestId("plan")).toHaveTextContent(
+      `?reset=1 ${JSON.stringify(planState)}`
+    );
+    // Back did not stack a second plan on top of the first.
+    expect(router.state.historyAction).toBe("REPLACE");
+  });
+
   it("shows an unanswered retry as loading even if a previous query had failed", () => {
     vi.spyOn(savedSessions, "useSavedSessions").mockReturnValue({
       items: [],

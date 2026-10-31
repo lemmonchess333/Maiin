@@ -274,7 +274,12 @@ export default function TrainingPlan() {
       actions={
         <Link
           to="/history/sessions"
-          state={{ returnTo: `${location.pathname}${location.search}` }}
+          state={{
+            returnTo: `${location.pathname}${location.search}`,
+            // The review or reset this page was opened for, so Back from
+            // history returns to it rather than to a fresh plan.
+            returnState: location.state,
+          }}
           className={buttonClasses({ variant: "ghost" })}
         >
           History
