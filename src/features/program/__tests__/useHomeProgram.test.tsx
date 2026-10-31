@@ -88,6 +88,7 @@ function Harness() {
           : "Loading"}
       </p>
       <p data-testid="loading">{String(model.loading)}</p>
+      <p data-testid="maintenance-failed">{String(model.maintenanceFailed)}</p>
       <p data-testid="layoff">{model.recentLayoff}</p>
       <button
         onClick={() =>
@@ -240,6 +241,26 @@ describe("Home defers the programme controller", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false")
     );
   });
+  it("says when the plan's upkeep fails, and only then", async () => {
+    h.readiness = "pending";
+    emit({ ...(h.state as ProgramState), liftWeekKey: "2020-01-06" });
+    render(<Harness />);
+    await waitFor(() => expect(h.controllerMounts).toBe(1));
+    // Building: not a failure.
+    expect(screen.getByTestId("maintenance-failed")).toHaveTextContent("false");
+    act(() =>
+      h.publish!({
+        loading: false,
+        readiness: "failed",
+        programState: h.state,
+        skipRunDay: h.skip,
+      })
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("maintenance-failed")).toHaveTextContent("true")
+    );
+  });
+
   it("loads maintenance when a real stored week is stale", async () => {
     emit({ ...(h.state as ProgramState), liftWeekKey: "2020-01-06" });
     render(<Harness />);

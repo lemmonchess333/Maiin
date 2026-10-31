@@ -26,6 +26,7 @@ import { groupText } from "@/test/localeGrouping";
 const h = vi.hoisted(() => ({
   profile: null as any,
   programState: null as any,
+  maintenanceFailed: false,
   workoutsFailed: false,
   workoutsLoading: false,
   mealsLoading: false,
@@ -137,6 +138,7 @@ vi.mock("@/features/program/useHomeProgram", () => ({
   useHomeProgram: () => ({
     programState: h.programState,
     loading: false,
+    maintenanceFailed: h.maintenanceFailed,
     recentLayoff: "none",
     controller: null,
     overrideRunDay: vi.fn(),
@@ -366,6 +368,7 @@ beforeEach(() => {
   h.track.mockClear();
   h.homeTrack.mockClear();
   h.workoutsFailed = false;
+  h.maintenanceFailed = false;
   h.workoutsLoading = false;
   h.mealsLoading = false;
   h.homeDataLoading = false;
@@ -679,7 +682,7 @@ describe("the version 2 first-week journey", () => {
     expect(screen.queryByRole("button", { name: "Start workout" })).toBeNull();
   });
 
-  it("does not offer a generic run while a race plan's run days need building", () => {
+  function racePlanToBuild() {
     h.profile.athleteType = "Runner";
     h.profile.runMode = "race_prep";
     h.profile.raceGoal = { distance: "half", targetDate: "2099-01-01" };
@@ -688,11 +691,23 @@ describe("the version 2 first-week journey", () => {
       type: "run",
     }));
     h.programState.runDays = [];
+  }
+
+  it("waits, with no error, while a race plan's week is being built", () => {
+    racePlanToBuild();
     renderHome();
-    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.queryByText("Training isn't ready")).toBeNull();
     expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
     expect(
       screen.queryByRole("heading", { name: "Your first week" })
     ).toBeNull();
+  });
+
+  it("says training isn't ready only when building a race plan's week failed", () => {
+    racePlanToBuild();
+    h.maintenanceFailed = true;
+    renderHome();
+    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
   });
 });

@@ -187,6 +187,7 @@ export default function Home() {
   const {
     programState,
     loading: programLoading,
+    maintenanceFailed: programMaintenanceFailed,
     overrideRunDay,
     markManualComplete,
     skipRunDay,
@@ -835,12 +836,15 @@ export default function Home() {
   );
   const homeSettled = countsLoaded && !programLoading;
   const homeVisitSettled = firstWeekCountsLoaded;
+  // A race plan's week being built is loading, not an error: the engine
+  // builds it as Home opens. Only a build that failed says so.
+  const v2RaceWeekBuilding = v2RacePlanNeedsBuild && !programMaintenanceFailed;
   const v2TrainingUnavailable =
     activationJourneyV2 &&
     !programLoading &&
     (!programState ||
       (firstWeekLifts && !workoutsLoading && workoutsFailed) ||
-      v2RacePlanNeedsBuild);
+      (v2RacePlanNeedsBuild && programMaintenanceFailed));
   const showWeekStrip =
     !activationJourneyV2 ||
     (!programLoading &&
@@ -1245,6 +1249,7 @@ export default function Home() {
         }}
       >
         {programLoading ||
+        v2RaceWeekBuilding ||
         (activationJourneyV2 && firstWeekLifts && workoutsLoading) ? (
           <div className="h-48 rounded-2xl bg-muted motion-safe:animate-pulse" />
         ) : v2TrainingUnavailable ? (
