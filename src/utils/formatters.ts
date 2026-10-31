@@ -117,6 +117,11 @@ export function formatWeekday(d: Date): string {
   return d.toLocaleDateString("en-GB", { weekday: "long" });
 }
 
+/** "November 2026": a month and its year (a heading over a month's list). */
+export function formatMonthYear(d: Date): string {
+  return d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+}
+
 /** "November": the month alone, in full ("You're in for November."). */
 export function formatMonth(d: Date): string {
   return d.toLocaleDateString("en-GB", { month: "long" });

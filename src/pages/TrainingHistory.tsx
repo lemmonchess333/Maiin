@@ -47,7 +47,7 @@ import {
   type TrainingHistoryFilters,
 } from "@/lib/trainingHistory";
 import { parseLocalDate } from "@/lib/dateHelpers";
-import { formatDayMonthYear } from "@/utils/formatters";
+import { formatDayMonthYear, formatMonthYear } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 
@@ -319,17 +319,11 @@ export default function TrainingHistory() {
             {[...groups].map(([month, rows]) => (
               <section
                 key={month}
-                aria-label={parseLocalDate(`${month}-01`).toLocaleDateString(
-                  "en-GB",
-                  { month: "long", year: "numeric" }
-                )}
+                aria-label={formatMonthYear(parseLocalDate(`${month}-01`))}
                 className="space-y-2"
               >
                 <SectionHeading size="compact">
-                  {parseLocalDate(`${month}-01`).toLocaleDateString("en-GB", {
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {formatMonthYear(parseLocalDate(`${month}-01`))}
                 </SectionHeading>
                 <Card
                   padded={false}

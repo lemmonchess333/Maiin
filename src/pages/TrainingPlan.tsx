@@ -45,7 +45,11 @@ import {
   weekCountLabel,
 } from "@/lib/trainingPlanWorkspace";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
-import { formatDayMonth, formatWeekday } from "@/utils/formatters";
+import {
+  formatDayMonth,
+  formatShortWeekday,
+  formatWeekday,
+} from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { sessionDayContext } from "@/features/program/sessionDay";
 import {
@@ -495,10 +499,7 @@ export default function TrainingPlan() {
                   >
                     <div className="w-11 shrink-0 text-center">
                       <p className="text-xs text-muted-foreground">
-                        {parseLocalDate(day.dateKey).toLocaleDateString(
-                          "en-GB",
-                          { weekday: "short" }
-                        )}
+                        {formatShortWeekday(parseLocalDate(day.dateKey))}
                       </p>
                       <p className="text-base font-semibold font-mono tabular-nums">
                         {parseLocalDate(day.dateKey).getDate()}

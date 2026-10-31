@@ -37,7 +37,9 @@ describe("exercise chart values", () => {
     );
     const load = new Intl.NumberFormat().format(82.5);
     expect(screen.getByText(`${load} kg`)).toBeVisible();
-    expect(screen.getByRole("img", { name: /Max weight/ })).toHaveAccessibleName(
+    expect(
+      screen.getByRole("img", { name: /Max weight/ })
+    ).toHaveAccessibleName(
       expect.stringContaining(`Latest value: ${load} kg.`)
     );
   });
@@ -54,7 +56,9 @@ describe("exercise chart values", () => {
     );
     const load = new Intl.NumberFormat().format(181.9);
     expect(screen.getByText(`${load} lb`)).toBeVisible();
-    expect(screen.getByRole("img", { name: /Max weight/ })).toHaveAccessibleName(
+    expect(
+      screen.getByRole("img", { name: /Max weight/ })
+    ).toHaveAccessibleName(
       expect.stringContaining(`Latest value: ${load} lb.`)
     );
   });
@@ -69,7 +73,7 @@ describe("exercise chart values", () => {
         unit="s"
       />
     );
-    expect(screen.getByText("45s")).toBeVisible();
+    expect(screen.getByText("45 s")).toBeVisible();
     expect(screen.getByRole("img")).toHaveAccessibleName(
       /Longest hold.*Latest value: 45 seconds/
     );
