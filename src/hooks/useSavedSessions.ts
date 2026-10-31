@@ -11,6 +11,8 @@ import { subscribeQueuedWrites, queuedWritesVersion } from "@/lib/offlineQueue";
 import {
   hasQueuedCreate,
   hasQueuedWrites,
+  sessionQueries,
+  uniqueSessionDocs,
   type SavedSessionSource,
 } from "@/lib/savedSessions";
 
@@ -117,47 +119,65 @@ export function useSavedSessions<T, W>(
   useEffect(() => {
     if (account === null || window === null) return;
     let cancelled = false;
-    const unsubscribe = onSnapshot(
-      source.query(account, window),
-      { includeMetadataChanges: true },
-      (snap) => {
-        if (cancelled) return;
-        const items = source
-          .parseDocs(snap.docs)
-          .filter((item) => source.inWindow(item, window));
-        setLoaded({
-          items,
-          uid: account,
-          queryKey,
-          failed: false,
-          authoritative:
-            !snap.metadata?.fromCache && !snap.metadata?.hasPendingWrites,
-        });
-        onLoadedRef.current?.(items, account);
-      },
-      (error) => {
-        // A failed read must settle to a retryable state, not load forever.
-        // Settling to an empty list alone made failure look like "none", and
-        // History's auto-hide read that as "this user doesn't run" and
-        // removed the section; `failed` tells the two apart. Same-account
-        // rows already shown stay; another account's never do.
-        if (cancelled) return;
-        setLoaded((current) => ({
-          items: current.uid === account ? current.items : [],
-          uid: account,
-          queryKey,
-          failed: true,
-          authoritative: false,
-        }));
-        logger.error(
-          `[useSavedSessions] Failed to load ${source.collection}`,
-          error
-        );
-      }
+    const queries = sessionQueries(source, account, window);
+    const answers: Array<{
+      docs: { id: string; data: () => Record<string, unknown> }[];
+      authoritative: boolean;
+    } | null> = queries.map(() => null);
+    let readFailed = false;
+    const unsubscribes = queries.map((query, index) =>
+      onSnapshot(
+        query,
+        { includeMetadataChanges: true },
+        (snap) => {
+          if (cancelled || readFailed) return;
+          answers[index] = {
+            docs: snap.docs,
+            authoritative:
+              !snap.metadata?.fromCache && !snap.metadata?.hasPendingWrites,
+          };
+          // A partial answer cannot prove that a day has no run. Wait for
+          // both event-day and legacy completion-time reads before exposing
+          // the set to any completion or coaching writer.
+          if (answers.some((answer) => answer === null)) return;
+          const complete = answers as NonNullable<(typeof answers)[number]>[];
+          const items = source
+            .parseDocs(uniqueSessionDocs(complete.map((answer) => answer.docs)))
+            .filter((item) => source.inWindow(item, window));
+          setLoaded({
+            items,
+            uid: account,
+            queryKey,
+            failed: false,
+            authoritative: complete.every((answer) => answer.authoritative),
+          });
+          onLoadedRef.current?.(items, account);
+        },
+        (error) => {
+          // A failed read must settle to a retryable state, not load forever.
+          // Settling to an empty list alone made failure look like "none", and
+          // History's auto-hide read that as "this user doesn't run" and
+          // removed the section; `failed` tells the two apart. Same-account
+          // rows already shown stay; another account's never do.
+          if (cancelled) return;
+          readFailed = true;
+          setLoaded((current) => ({
+            items: current.uid === account ? current.items : [],
+            uid: account,
+            queryKey,
+            failed: true,
+            authoritative: false,
+          }));
+          logger.error(
+            `[useSavedSessions] Failed to load ${source.collection}`,
+            error
+          );
+        }
+      )
     );
     return () => {
       cancelled = true;
-      unsubscribe();
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
     };
     // `window` is keyed by `windowKey`; its identity changes every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps

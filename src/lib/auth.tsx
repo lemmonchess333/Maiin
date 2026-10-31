@@ -471,13 +471,11 @@ export interface UserProfileRunning {
    *  completeOnboarding alongside the plan. */
   raceLegTrim?: boolean;
   runningBaseline?:
-    | import("@/features/program/runningBaseline").RunningBaseline
-    | null;
+    import("@/features/program/runningBaseline").RunningBaseline | null;
   nonRaceGoal?: import("@/lib/nonRaceGoal").NonRaceGoal | null;
   liftTimeBudgetMinutes?: number | null;
   runTimeLimits?:
-    | import("@/features/program/runTimeLimits").RunTimeLimits
-    | null;
+    import("@/features/program/runTimeLimits").RunTimeLimits | null;
   // Run9 3a-ii: `null` is the explicit "no race" value so a freeform switch /
   // recovery exit can CLEAR a prior race (a merge write of `undefined` is
   // stripped and would leave the old goal stranded). Readers gate on
@@ -1057,6 +1055,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
     let stopSubscriptionUpdates = () => {};
+    let stopHealthExportReconciler = () => {};
+    let stopWatchRunSyncReconciler = () => {};
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!isMounted) return;
@@ -1068,6 +1068,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       stopSubscriptionUpdates();
       stopSubscriptionUpdates = () => {};
+      stopHealthExportReconciler();
+      stopHealthExportReconciler = () => {};
+      stopWatchRunSyncReconciler();
+      stopWatchRunSyncReconciler = () => {};
       const epoch = ++authEpochRef.current;
       const previousUid = activeUidRef.current;
 
@@ -1082,6 +1086,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (auth.currentUser?.uid ?? null) === uid;
 
       activeUidRef.current = uid;
+      // Never leave the prior account visible while native account data is
+      // being cleared. Same-UID token refresh keeps the rendered profile.
+      if (previousUid !== uid) {
+        invalidatePushTokenLifecycle();
+        setUser(null);
+        setProfile(null);
+        setLoading(true);
+      }
+      // The Watch bridge can retain an active run, pending controls and raw
+      // heart rate while the web view is suspended. Clear those native values
+      // before another account is exposed to the React tree. The bridge keeps
+      // a same-UID preference across a normal app restart, but sign-out or an
+      // externally driven account switch disables the prior account's Watch.
+      if (previousUid !== uid && isNativePlatform()) {
+        try {
+          const { syncWatchRunAccount } = await import("./watchRunBridge");
+          await syncWatchRunAccount(uid);
+          if (previousUid) {
+            const [
+              { clearHeartRateSessionsForUser },
+              { clearWatchRunSyncStatus },
+            ] = await Promise.all([
+              import("./heartRateSession"),
+              import("./watchRunSyncStatus"),
+            ]);
+            clearHeartRateSessionsForUser(previousUid);
+            clearWatchRunSyncStatus(previousUid);
+          }
+        } catch (error) {
+          // Keep the next account behind the loading gate if native cleanup
+          // failed. A Watch holding the outgoing session cannot be exposed
+          // under a different signed-in account.
+          logger.error("[AuthProvider] Watch account cleanup failed", error);
+          return;
+        }
+        if (!isCurrent()) return;
+      }
       setUser(firebaseUser);
       // This device has had an account: the signed-out screen greets the
       // person as returning, not as new (Login's welcome screen).
@@ -1091,16 +1132,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // on sign-out so orphaned errors don't leak to a stale UID.
       setErrorReportingUid(uid);
 
-      // Never expose the previous account while the next account hydrates.
-      // Same-uid token refresh keeps the rendered profile (avoids a flicker).
-      if (previousUid !== uid) {
-        // Packet 17 — abort any in-flight push registration captured under the
-        // old generation so it can't write under the new account. Safe after an
-        // externally-driven transition: local invalidation only; remote release
-        // still runs before app-controlled credential replacement (below).
-        invalidatePushTokenLifecycle();
-        setProfile(null);
-        setLoading(true);
+      // Export reconciliation belongs to one signed-in account at a time.
+      // The runner itself checks auth.currentUser before touching a queued
+      // workout, and this epoch guard prevents a late import from starting a
+      // previous account's runner after an account switch.
+      if (uid && isNativePlatform()) {
+        void import("./healthWorkoutExport")
+          .then((module) => {
+            if (isCurrent())
+              stopHealthExportReconciler =
+                module.startHealthExportReconciler(uid);
+          })
+          .catch((err) =>
+            logger.warn("[AuthProvider] Health export runner unavailable", err)
+          );
+        void import("./watchRunSyncStatus")
+          .then((module) => {
+            if (isCurrent())
+              stopWatchRunSyncReconciler =
+                module.startWatchRunSyncReconciler(uid);
+          })
+          .catch((err) =>
+            logger.warn("[AuthProvider] Watch sync runner unavailable", err)
+          );
       }
 
       if (firebaseUser) {
@@ -1248,6 +1302,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authEpochRef.current += 1;
       activeUidRef.current = null;
       stopSubscriptionUpdates();
+      stopHealthExportReconciler();
+      stopWatchRunSyncReconciler();
       unsubscribe();
     };
   }, []);
@@ -1265,6 +1321,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       stopListeningForForegroundPush();
       await waitForPendingPushRegistration(outgoingUid);
       await unregisterDeviceToken(outgoingUid);
+      if (isNativePlatform()) {
+        const { clearWatchRunAccountState } = await import("./watchRunBridge");
+        await clearWatchRunAccountState();
+      }
       clearStoredRun(outgoingUid);
       clearWorkoutDraft(outgoingUid);
       await cancelOutgoingAccountReminders();

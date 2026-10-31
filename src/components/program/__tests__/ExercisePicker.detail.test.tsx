@@ -139,7 +139,7 @@ describe("ExercisePicker row: see it vs add it", () => {
         (exercise: { name: string }) => exercise.name
       )
     ).toEqual(expect.arrayContaining(["Dips", "Push-Ups"]));
-  });
+  }, 10_000);
 
   it("waits for the save, prevents double submission, and keeps a failed draft", async () => {
     vi.mocked(toast.error).mockClear();

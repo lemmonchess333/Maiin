@@ -148,6 +148,7 @@ import {
   RUN_RESUME_SCHEMA_VERSION,
 } from "@/lib/runResumeStorage";
 import { DEFAULT_CONFIG } from "@/components/run/runConfigDefaults";
+import { localDateString } from "@/lib/dateHelpers";
 import {
   readsAt,
   releaseAllReads,
@@ -441,6 +442,58 @@ describe("RunSummary — Save", () => {
     expect(
       screen.getByText("Saved on this phone · waiting to sync")
     ).toBeInTheDocument();
+  });
+
+  it("recovers a finished review after reload and saves under the start-time ID", async () => {
+    const now = Date.now();
+    const startedAt = now - 1_500_000;
+    const finishedAt = now - 10_000;
+    const startLocalDate = localDateString(new Date(startedAt));
+    expect(
+      writeStoredRun("runner", {
+        v: RUN_RESUME_SCHEMA_VERSION,
+        config: { ...DEFAULT_CONFIG, activityType: "freerun" },
+        identity: {
+          uid: "runner",
+          sessionId: "recovered-run",
+          runId: "recovered-run",
+          scheduledRunId: null,
+          startedAt,
+          startLocalDate,
+          originTimeZone: "UTC",
+        },
+        startedAt,
+        accumulatedSeconds: 1500,
+        isRunning: false,
+        phase: "finished",
+        finish: {
+          finishedAt,
+          distance: 5000,
+          elapsed: 1500,
+          splits: [],
+          elevationGain: 0,
+          routeQuality: null,
+          workPortion: null,
+        },
+        points: [],
+        lastWriteAt: now,
+      })
+    ).toBe(true);
+    render(
+      <MemoryRouter initialEntries={["/run-summary"]}>
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(queued()).toHaveLength(1);
+    expect(queued()[0].id).toBe("recovered-run");
+    expect(queued()[0].data).toMatchObject({ date: startLocalDate });
+    expect(readStoredRun("runner")).toBeNull();
   });
 
   it("pins Save run to the bottom of the screen, where Done takes its place", async () => {

@@ -90,7 +90,7 @@ function seedRuns(docs: Array<{ id: string; data: Record<string, unknown> }>) {
   seedFirestore(tree);
 }
 
-/** How many times the hook subscribed to the runs collection. */
+/** Modern event-day and legacy completion-time subscriptions. */
 const runSubscriptions = () =>
   readLog().filter((r) => r.op === "onSnapshot" && r.path === RUNS).length;
 
@@ -128,20 +128,36 @@ describe("completion evidence for plan editing", () => {
 
   it("rechecks completion when a saved distance is corrected without changing its id or time", async () => {
     mockProgramState = {
-      runDays: [{ id: "rd-corrected", templateId: "long_15k", type: "long", date: "2026-10-28", dayIndex: 3 }],
+      runDays: [
+        {
+          id: "rd-corrected",
+          templateId: "long_15k",
+          type: "long",
+          date: "2026-10-28",
+          dayIndex: 3,
+        },
+      ],
       manualCompletions: {},
     };
     const record = {
-      date: "2026-10-28", distance: 5000, avgPace: 360,
+      date: "2026-10-28",
+      distance: 5000,
+      avgPace: 360,
       completedAt: Timestamp.fromDate(new Date("2026-10-28T12:00:00Z")),
     };
     seedRuns([{ id: "corrected", data: record }]);
     const { result } = renderHook(() => useClaimMap("2026-10-28"));
     await flushSnapshots();
-    expect(result.current.claimMap.get("rd-corrected")?.claimedSavedRunId).toBeUndefined();
-    act(() => seedRuns([{ id: "corrected", data: { ...record, distance: 12000 } }]));
+    expect(
+      result.current.claimMap.get("rd-corrected")?.claimedSavedRunId
+    ).toBeUndefined();
+    act(() =>
+      seedRuns([{ id: "corrected", data: { ...record, distance: 12000 } }])
+    );
     await flushSnapshots();
-    expect(result.current.claimMap.get("rd-corrected")?.claimedSavedRunId).toBe("corrected");
+    expect(result.current.claimMap.get("rd-corrected")?.claimedSavedRunId).toBe(
+      "corrected"
+    );
   });
 });
 
@@ -313,7 +329,7 @@ describe("useClaimMap", () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it("subscribes once and derives the claim map from snapshot + programState", async () => {
+  it("subscribes to both run windows and derives the claim map from snapshot + programState", async () => {
     mockProgramState = {
       runDays: [
         {
@@ -329,7 +345,7 @@ describe("useClaimMap", () => {
     };
 
     const { result } = renderHook(() => useClaimMap("2026-05-26"));
-    expect(runSubscriptions()).toBe(1);
+    expect(runSubscriptions()).toBe(2);
 
     await act(async () => {
       seedRuns([

@@ -113,9 +113,8 @@ export function claimWindowStart(
     if (typeof day.date === "string" && day.date.length === 10)
       if (day.date < since) since = day.date;
   }
-  // A day early: the window is read by completion time from local
-  // midnight, and a run recorded east of here completed before this
-  // zone's midnight of the day it belongs to.
+  // A day early for legacy completion-time reads: a run recorded east of
+  // here may complete before this zone's midnight of the day it belongs to.
   return localDateString(addLocalDays(parseLocalDate(since), -1));
 }
 
@@ -128,7 +127,7 @@ export function useClaimMapForProgram(
   dateAnchor?: string
 ): UseClaimMapResult {
   /* The account's saved runs, through the one reader (`useSavedRuns`):
-     ordered by `completedAt`, which every saved run carries, scoped to the
+     by event day plus legacy completion time, scoped to the
      signed-in account (another account's runs never claim this plan's
      slots, not even for the render before the new listener lands), and
      with runs saved on this phone but not yet synced, so an offline run
@@ -137,7 +136,8 @@ export function useClaimMapForProgram(
   const runDays = programState?.runDays ?? [];
   const since = claimWindowStart(today, runDays);
   const window = useMemo<RunWindow>(() => ({ since }), [since]);
-  const { runs, loading, failed, evidenceReady, refresh } = useSavedRuns(window);
+  const { runs, loading, failed, evidenceReady, refresh } =
+    useSavedRuns(window);
   /* Only runs that count fill a planned day or show as an extra
      (`claimableRuns`). */
   const savedRuns = useMemo(() => claimableRuns(runs), [runs]);
@@ -147,11 +147,7 @@ export function useClaimMapForProgram(
   // Stable-by-content fingerprint catches Firestore's new-array-ref
   // churn. Recompute the claim map only when the fingerprint
   // changes — not on every Firestore tick.
-  const fingerprint = computeFingerprint(
-    savedRuns,
-    manualCompletions,
-    today
-  );
+  const fingerprint = computeFingerprint(savedRuns, manualCompletions, today);
 
   // Memo deps include runDays array reference (its identity changes
   // when programState updates) + the fingerprint above. The

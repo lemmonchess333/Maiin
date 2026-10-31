@@ -132,7 +132,7 @@ const GROUPS: SectionGroup[] = [
       {
         slug: "health",
         label: "Apple Health",
-        description: "Daily step count on Home",
+        description: "Steps, Watch runs, workouts",
         icon: HeartPulse,
         migrated: true,
       },

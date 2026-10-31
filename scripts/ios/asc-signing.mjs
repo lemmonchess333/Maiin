@@ -18,9 +18,10 @@
  *
  *   node scripts/ios/asc-signing.mjs <request.csr> <out-dir>
  *
- * with ASC_API_KEY_ID, ASC_API_ISSUER_ID, ASC_API_KEY_PATH (the .p8) and
- * BUNDLE_ID in the environment. Writes <out-dir>/dist.cer (DER) and
- * <out-dir>/profile.mobileprovision.
+ * with ASC_API_KEY_ID, ASC_API_ISSUER_ID, ASC_API_KEY_PATH (the .p8),
+ * BUNDLE_ID and optionally WATCH_BUNDLE_ID in the environment. Writes
+ * <out-dir>/dist.cer (DER), <out-dir>/profile.mobileprovision and, when
+ * WATCH_BUNDLE_ID is set, <out-dir>/watch-profile.mobileprovision.
  */
 import { sign } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -100,21 +101,31 @@ async function listAll(request, path) {
  * Clears earlier runs' signing, then makes this run's. Returns the
  * certificate (DER) and the profile, both as Buffers.
  */
-export async function prepareSigning({ request, bundleIdentifier, csr, log = () => {} }) {
-  const bundles = await listAll(
-    request,
-    `/v1/bundleIds?filter[identifier]=${encodeURIComponent(bundleIdentifier)}&limit=200`
-  );
-  const bundle = bundles.find((b) => b.attributes?.identifier === bundleIdentifier);
-  if (!bundle) {
-    throw new Error(
-      `Apple has no App ID for ${bundleIdentifier}. Register it under Apple Developer → Identifiers, with its capabilities, then run this again.`
+export async function prepareSigning({ request, bundleIdentifier, bundleIdentifiers, csr, log = () => {} }) {
+  const identifiers = bundleIdentifiers ?? [bundleIdentifier];
+  if (!identifiers.length || identifiers.some((identifier) => !identifier)) {
+    throw new Error("At least one App ID is required for signing.");
+  }
+  const bundles = [];
+  for (const identifier of identifiers) {
+    const matches = await listAll(
+      request,
+      `/v1/bundleIds?filter[identifier]=${encodeURIComponent(identifier)}&limit=200`
     );
+    const bundle = matches.find((b) => b.attributes?.identifier === identifier);
+    if (!bundle) {
+      throw new Error(
+        `Apple has no App ID for ${identifier}. Register it under Apple Developer → Identifiers, with its capabilities, then run this again.`
+      );
+    }
+    bundles.push(bundle);
   }
 
-  const profiles = await listAll(request, "/v1/profiles?filter[profileType]=IOS_APP_STORE&limit=200");
-  const earlier = profiles.filter((p) => p.attributes?.name?.startsWith(PROFILE_PREFIX));
-  const serials = new Set(earlier.map((p) => p.attributes.name.slice(PROFILE_PREFIX.length).trim()));
+  const existingProfiles = await listAll(request, "/v1/profiles?filter[profileType]=IOS_APP_STORE&limit=200");
+  const earlier = existingProfiles.filter((p) => p.attributes?.name?.startsWith(PROFILE_PREFIX));
+  const serials = new Set(
+    earlier.map((p) => p.attributes.name.slice(PROFILE_PREFIX.length).trim().split(" ")[0])
+  );
   for (const profile of earlier) {
     await request("DELETE", `/v1/profiles/${profile.id}`);
     log(`Deleted the profile an earlier run made: ${profile.attributes.name}`);
@@ -142,32 +153,48 @@ export async function prepareSigning({ request, bundleIdentifier, csr, log = () 
   const serial = certificate.attributes.serialNumber;
   log(`Made an Apple Distribution certificate: ${serial}`);
 
-  let profile;
+  const profiles = {};
+  const createdProfileIds = [];
   try {
-    profile = (
-      await request("POST", "/v1/profiles", {
-        data: {
-          type: "profiles",
-          attributes: { name: `${PROFILE_PREFIX}${serial}`, profileType: "IOS_APP_STORE" },
-          relationships: {
-            bundleId: { data: { type: "bundleIds", id: bundle.id } },
-            certificates: { data: [{ type: "certificates", id: certificate.id }] },
+    for (const [index, bundle] of bundles.entries()) {
+      const identifier = identifiers[index];
+      const profile = (
+        await request("POST", "/v1/profiles", {
+          data: {
+            type: "profiles",
+            attributes: {
+              name: `${PROFILE_PREFIX}${serial}${index ? ` Watch ${index}` : ""}`,
+              profileType: "IOS_APP_STORE",
+            },
+            relationships: {
+              bundleId: { data: { type: "bundleIds", id: bundle.id } },
+              certificates: { data: [{ type: "certificates", id: certificate.id }] },
+            },
           },
-        },
-      })
-    ).data;
+        })
+      ).data;
+      createdProfileIds.push(profile.id);
+      profiles[identifier] = {
+        profile: Buffer.from(profile.attributes.profileContent, "base64"),
+        profileName: profile.attributes.name,
+      };
+      log(`Made the App Store profile ${profile.attributes.name} for ${identifier}`);
+    }
   } catch (error) {
-    // No profile names this certificate, so no later run would find it to
-    // revoke. Revoke it now; the failure that got here is the one to report.
+    // A partial iPhone + Watch profile pair must not leave signing that a
+    // later run cannot reconcile. Clean up the pair before the certificate.
+    for (const id of createdProfileIds) {
+      await request("DELETE", `/v1/profiles/${id}`).catch(() => {});
+    }
     await request("DELETE", `/v1/certificates/${certificate.id}`).catch(() => {});
     throw error;
   }
-  log(`Made the App Store profile ${profile.attributes.name} for ${bundleIdentifier}`);
 
   return {
     certificate: Buffer.from(certificate.attributes.certificateContent, "base64"),
-    profile: Buffer.from(profile.attributes.profileContent, "base64"),
-    profileName: profile.attributes.name,
+    profile: profiles[identifiers[0]].profile,
+    profileName: profiles[identifiers[0]].profileName,
+    profiles,
     serial,
   };
 }
@@ -198,12 +225,18 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     });
     const result = await prepareSigning({
       request: connect({ token }),
-      bundleIdentifier: env.BUNDLE_ID,
+      bundleIdentifiers: [env.BUNDLE_ID, env.WATCH_BUNDLE_ID].filter(Boolean),
       csr: readFileSync(csrPath, "utf8"),
       log: (line) => console.log(line),
     });
     writeFileSync(join(outDir, "dist.cer"), result.certificate);
     writeFileSync(join(outDir, "profile.mobileprovision"), result.profile);
+    if (env.WATCH_BUNDLE_ID) {
+      writeFileSync(
+        join(outDir, "watch-profile.mobileprovision"),
+        result.profiles[env.WATCH_BUNDLE_ID].profile
+      );
+    }
   } catch (error) {
     console.log(`::error::${explain(error)}`);
     process.exit(1);

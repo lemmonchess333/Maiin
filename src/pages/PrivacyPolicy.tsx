@@ -116,8 +116,10 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Apple Health (optional):
                 </strong>{" "}
-                if you connect it, today&apos;s step count, read to show on
-                Home. See section 8.
+                if you connect it, today&apos;s step count for Home. With Apple
+                Watch runs enabled, Tropos also reads heart rate during a run.
+                Saving a completed Tropos run as a workout in Apple Health is a
+                separate choice. See section 8.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -475,10 +477,10 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">Apple:</strong> Sign in with
-                Apple (if you use it), Apple Health (reads today&apos;s step
-                count, section 8), In-App Purchase (Pro bought in the app; Apple
-                handles the payment) and App Attest (which confirms that
-                requests come from the real app on your iPhone).
+                Apple (if you use it), Apple Health (optional steps, run heart
+                rate and workout export; section 8), In-App Purchase (Pro bought
+                in the app; Apple handles the payment) and App Attest (which
+                confirms that requests come from the real app on your iPhone).
               </li>
               <li>
                 <strong className="text-foreground">RevenueCat:</strong> manages
@@ -566,12 +568,20 @@ export default function PrivacyPolicy() {
             </p>
             <p>
               <strong className="text-foreground">Apple Health.</strong> If you
-              connect Apple Health, Tropos reads one thing from it: today&apos;s
-              step count, to show it on Home. Tropos never writes to Apple
-              Health. The step count is never stored and never sent anywhere,
-              and it is never used for advertising. Tropos keeps only whether
-              you connected Apple Health. You can remove its access at any time
-              in the Health app.
+              connect steps, Tropos reads today&apos;s step count to show it on
+              Home. The step count is not stored or sent to Tropos. If you use
+              Apple Watch runs, Tropos reads heart rate during that run to show
+              a live reading and calculate a run summary. Raw heart rate samples
+              are held on your device until you save or discard the run; a saved
+              run can include average and maximum heart rate and time in heart
+              rate zones. Those values are not used to change calorie targets or
+              sent to product analytics. If you separately turn on workout
+              export, Tropos writes a completed run to Apple Health after it is
+              saved to your account. The exported workout contains its time,
+              distance and estimated energy, without a GPS route. Tropos does
+              not import Apple Health workouts into your training plan. You can
+              change either choice in Tropos settings and remove Apple Health
+              access in the Health app.
             </p>
             <p>
               <strong className="text-foreground">Disclaimer:</strong> Tropos is

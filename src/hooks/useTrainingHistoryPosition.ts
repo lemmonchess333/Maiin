@@ -12,7 +12,8 @@ export function useTrainingHistoryPosition(
   uid: string | null | undefined,
   filters: string,
   ready: boolean,
-  rowCount: number
+  rowCount: number,
+  provisional: boolean
 ) {
   const key = `${uid ?? ""}:${filters}`;
   const [pagination, setPagination] = useState(() => ({
@@ -23,10 +24,17 @@ export function useTrainingHistoryPosition(
     pagination.key === key
       ? pagination.count
       : (positions.get(key)?.count ?? HISTORY_PAGE_SIZE);
-  const restored = useRef<string | null>(null);
+  const restored = useRef<{
+    key: string;
+    needsFinalRestore: boolean;
+  } | null>(null);
 
   useLayoutEffect(() => {
-    if (restored.current === key) return;
+    if (
+      restored.current?.key === key &&
+      (!restored.current.needsFinalRestore || provisional)
+    )
+      return;
     const position = positions.get(key);
     if (position && !ready) return;
     const frame = requestAnimationFrame(() => {
@@ -34,10 +42,15 @@ export function useTrainingHistoryPosition(
       // A cached answer can be shorter than the live period. Retry once
       // more rows arrive instead of accepting the browser's early clamp.
       if (Math.abs(window.scrollY - (position?.y ?? 0)) < 2)
-        restored.current = key;
+        restored.current = {
+          key,
+          // A provisional sync banner sits above the rows. When it leaves,
+          // restore once more so its height does not shift the return spot.
+          needsFinalRestore: Boolean(position && provisional),
+        };
     });
     return () => cancelAnimationFrame(frame);
-  }, [key, ready, count, rowCount]);
+  }, [key, ready, count, rowCount, provisional]);
 
   function remember() {
     if (!uid) return;

@@ -127,6 +127,15 @@ beforeEach(() => {
 });
 afterEach(() => cleanup());
 
+describe("RunDetail — recorded day", () => {
+  it("shows the original run day when saving happened later", () => {
+    h.run = savedRun({ date: "2026-09-20" });
+    renderDetail();
+    expect(screen.getByText(/20 September 2026/)).toBeInTheDocument();
+    expect(screen.queryByText(/3 October 2026/)).toBeNull();
+  });
+});
+
 describe("RunDetail — best efforts", () => {
   it("lists the efforts found in the kept track", () => {
     h.run = savedRun();

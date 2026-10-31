@@ -75,8 +75,9 @@ import {
   elevationUnitLabel,
 } from "@/lib/distanceUnits";
 import RunStatGrid from "@/components/run/RunStatGrid";
+import HeartRateSummaryCard from "@/components/run/HeartRateSummaryCard";
 import { useWeekPulse, type PendingRun } from "../hooks/useWeekPulse";
-import { completeRun, runPostRoute } from "@/lib/runCompletion";
+import { allocateRunId, completeRun, runPostRoute } from "@/lib/runCompletion";
 import {
   RUN_NAME_MAX,
   runNameOf,
@@ -85,7 +86,17 @@ import {
 } from "@/lib/runName";
 import { racePaceWorkFor } from "@/lib/racePace";
 import { isPaceEligible } from "../lib/runStatsEligibility";
-import { clearStoredRun } from "../lib/runResumeStorage";
+import { clearStoredRun, readStoredRun } from "../lib/runResumeStorage";
+import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
+import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
+import {
+  clearHeartRateSession,
+  getRecoveredHeartRateSession,
+} from "@/lib/heartRateSession";
+import { maxHrFromAge, summarizeHeartRate } from "@/lib/hrZones";
+import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
+import { clearWatchRunSession } from "@/lib/watchRunBridge";
+import { queueWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
 import { announceRouteShare, shareGpx } from "@/lib/shareRoute";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
@@ -355,6 +366,11 @@ function InvalidRunReview({
 }
 
 interface RunData {
+  identity?: RunSessionIdentity | null;
+  recordingStartedAt?: number | null;
+  finishedAt?: number;
+  watchRevision?: number;
+  watchCompanionUsed?: boolean;
   savedRun?: {
     uid: string;
     id: string;
@@ -379,9 +395,74 @@ interface RunData {
 }
 
 export default function RunSummary() {
-  const { state } = useLocation() as { state: RunData };
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const recoveryUid = user?.uid;
+  const {
+    prefs: connectedPrefs,
+    loading: connectedPrefsLoading,
+    failed: connectedPrefsFailed,
+  } = useConnectedTrainingPrefs();
+  const recoveredState = useMemo<RunData | null>(() => {
+    if (location.state || !recoveryUid) return null;
+    const stored = readStoredRun(recoveryUid);
+    if (stored?.phase !== "finished" || !stored.finish) return null;
+    return {
+      ...stored.finish,
+      identity: stored.identity ?? null,
+      recordingStartedAt: stored.recordingStartedAt ?? null,
+      watchRevision: stored.watchRevision,
+      points: stored.points,
+      runConfig: stored.config,
+    };
+  }, [location.state, recoveryUid]);
+  const routeState = location.state as RunData | null;
+  const state =
+    routeState?.identity && user?.uid && routeState.identity.uid !== user.uid
+      ? null
+      : (routeState ?? recoveredState);
+  const [heartRatePreview, setHeartRatePreview] =
+    useState<ReturnType<typeof summarizeHeartRate>>(null);
+  useEffect(() => {
+    if (
+      !user?.uid ||
+      !state?.identity ||
+      state.identity.uid !== user.uid ||
+      !state.watchCompanionUsed ||
+      !isOutdoorGpsRun(state.runConfig)
+    )
+      return;
+    let active = true;
+    void getRecoveredHeartRateSession(user.uid, state.identity.sessionId)
+      .then(({ samples, activeIntervals }) => {
+        if (!active) return;
+        const measuredMax = profile?.maxHeartRate ?? 0;
+        const maxHr =
+          measuredMax > 0 ? measuredMax : maxHrFromAge(profile?.age ?? 0);
+        const summary = summarizeHeartRate(
+          samples,
+          activeIntervals,
+          maxHr,
+          state.elapsed
+        );
+        if (summary) setHeartRatePreview(summary);
+      })
+      .catch((error) =>
+        logger.warn("[RunSummary] Watch heart rate unavailable", error)
+      );
+    return () => {
+      active = false;
+    };
+  }, [
+    user?.uid,
+    state?.identity,
+    state?.watchCompanionUsed,
+    state?.elapsed,
+    state?.runConfig,
+    profile?.maxHeartRate,
+    profile?.age,
+  ]);
   const unit = useDistanceUnit();
   // The basemap follows the theme on screen, not the profile field.
   const darkTheme = useIsDarkTheme();
@@ -417,7 +498,9 @@ export default function RunSummary() {
   const [savedRunId, setSavedRunId] = useState<string | null>(
     receipt?.id ?? null
   );
-  const runIdRef = useRef<string | null>(receipt?.id ?? null);
+  const runIdRef = useRef<string | null>(
+    receipt?.id ?? state?.identity?.runId ?? null
+  );
   const savingRef = useRef(false);
   useSyncExternalStore(
     subscribeQueuedWrites,
@@ -654,7 +737,7 @@ export default function RunSummary() {
     [state, privacyZones]
   );
   // Keep the run's clock independently of the coordinates privacy zones cut.
-  const startedAt = state?.points[0]?.timestamp;
+  const startedAt = state?.identity?.startedAt ?? state?.points[0]?.timestamp;
 
   /* This run as the screen's two week lines count it, saved or not yet.
      One read of the week (`useWeekPulse`, counted by `trainingWeek`) feeds
@@ -668,7 +751,9 @@ export default function RunSummary() {
     return {
       id: savedRunId,
       // A run with no trace (entered by hand) is today's.
-      date: startedAt ? localDateString(new Date(startedAt)) : null,
+      date:
+        state.identity?.startLocalDate ??
+        (startedAt ? localDateString(new Date(startedAt)) : null),
       distance: runDistance,
       duration: state.elapsed,
       isInvalid: type
@@ -686,7 +771,11 @@ export default function RunSummary() {
   // A redirect is an element, not a call made while rendering: React Router
   // warns on navigate() in render, and a re-render before the navigation
   // commits would fire it twice.
-  if (!state || (state.savedRun && state.savedRun.uid !== user?.uid)) {
+  if (
+    !state ||
+    (state.savedRun && state.savedRun.uid !== user?.uid) ||
+    (state.identity && state.identity.uid !== user?.uid)
+  ) {
     return <Navigate to="/" replace />;
   }
 
@@ -958,7 +1047,13 @@ export default function RunSummary() {
       // Phase B3: invalid-run shortcut also clears any persisted
       // snapshot so the discarded run can't be resurrected by the
       // chooser on next /run open.
-      if (user?.uid) clearStoredRun(user.uid);
+      if (user?.uid) {
+        clearStoredRun(user.uid);
+        if (state.identity) {
+          clearHeartRateSession(user.uid, state.identity.sessionId);
+          void clearWatchRunSession(state.identity.sessionId);
+        }
+      }
       navigate("/");
     } else {
       setShowDiscardConfirm(true);
@@ -1022,16 +1117,72 @@ export default function RunSummary() {
          saved but a later step failed resumes against that id rather than
          writing a second run, which onRunCreated would credit twice
          (challenges, lifetime totals, weekly distance). */
+      let heartRate: ReturnType<typeof summarizeHeartRate> = null;
+      if (state.identity && outdoorGps) {
+        try {
+          const captured = await getRecoveredHeartRateSession(
+            user.uid,
+            state.identity.sessionId
+          );
+          if (auth.currentUser?.uid !== user.uid) {
+            setSaveStatus("idle");
+            return;
+          }
+          const measuredMax = profile?.maxHeartRate ?? 0;
+          const maxHr =
+            measuredMax > 0 ? measuredMax : maxHrFromAge(profile?.age ?? 0);
+          heartRate = summarizeHeartRate(
+            captured.samples,
+            captured.activeIntervals,
+            maxHr,
+            elapsed
+          );
+          if (heartRate) setHeartRatePreview(heartRate);
+        } catch (error) {
+          logger.warn("[RunSave] Watch heart rate unavailable:", error);
+        }
+      }
+      // Stage optional export before the durable run write. A process kill
+      // between those writes must not lose the opt-in. The worker waits for
+      // this exact run on the server and checks current consent before it
+      // writes HealthKit, so an uncompleted Save cannot create a workout.
+      const saveRunId =
+        savedRunId ??
+        runIdRef.current ??
+        state.identity?.runId ??
+        allocateRunId(user.uid);
+      runIdRef.current = saveRunId;
+      const healthCandidate =
+        outdoorGps &&
+        !isInvalid &&
+        state.recordingStartedAt != null &&
+        state.finishedAt != null;
+      const healthIntentReady =
+        !healthCandidate ||
+        queueHealthWorkoutExport(
+          user.uid,
+          saveRunId,
+          connectedPrefs.saveWorkoutsToHealth,
+          {
+            provisional:
+              !connectedPrefs.saveWorkoutsToHealth &&
+              (connectedPrefsLoading || connectedPrefsFailed),
+          }
+        );
       const completion = completeRun({
         uid: user.uid,
         author: {
           displayName: profile?.displayName,
           photoURL: profile?.photoURL,
         },
-        runId: savedRunId ?? runIdRef.current,
+        runId: saveRunId,
         alreadySaved: savedRunId !== null,
         run: {
+          ...(state.identity ? { identity: state.identity } : {}),
           startedAt,
+          recordingStartedAt: state.recordingStartedAt ?? undefined,
+          finishedAt: state.finishedAt,
+          heartRate,
           points: savedPoints,
           distance,
           elapsed,
@@ -1060,6 +1211,30 @@ export default function RunSummary() {
         unit,
       });
       const savedId = completion.runId;
+      if (
+        state.identity &&
+        state.watchCompanionUsed &&
+        state.finishedAt !== undefined
+      ) {
+        const queuedOnWatch = queueWatchRunSyncStatus({
+          uid: user.uid,
+          runId: savedId,
+          sessionId: state.identity.sessionId,
+          revision: (state.watchRevision ?? 0) + 1,
+          elapsedSeconds: elapsed,
+          distanceMeters: distance,
+          paceSecondsPerKm:
+            elapsed > 0 && distance > 0 ? (elapsed / distance) * 1000 : null,
+          recordedAtMs: state.finishedAt,
+        });
+        if (!queuedOnWatch) void clearWatchRunSession(state.identity.sessionId);
+      } else if (state.identity) {
+        void clearWatchRunSession(state.identity.sessionId);
+      }
+      if (!healthIntentReady)
+        toast.warning(
+          "Run saved, but Apple Health export could not be prepared."
+        );
       runIdRef.current = savedId;
       setSavedRunId(savedId);
       // A reload of this browser-history entry must reopen the same saved run.
@@ -1120,7 +1295,12 @@ export default function RunSummary() {
 
       // The complete run is now durable in the retry queue. The active-run
       // snapshot can be cleared without losing the recovery copy.
-      if (user?.uid) clearStoredRun(user.uid);
+      if (user?.uid) {
+        clearStoredRun(user.uid);
+        if (state.identity) {
+          clearHeartRateSession(user.uid, state.identity.sessionId);
+        }
+      }
 
       // ── Phase B1: programme reconciliation ───────────────────────
       // Mark the scheduled run day complete IFF the saved run is a
@@ -1647,6 +1827,11 @@ export default function RunSummary() {
               ]}
             />
           </div>
+          {heartRatePreview && (
+            <div className="px-4 mb-4">
+              <HeartRateSummaryCard summary={heartRatePreview} />
+            </div>
+          )}
 
           {/* Grade-adjusted pace — one calm line, only when the climb was
               material (Run13 item 4, display-only). */}
@@ -2056,7 +2241,13 @@ export default function RunSummary() {
         destructive
         onConfirm={() => {
           setShowDiscardConfirm(false);
-          if (user?.uid) clearStoredRun(user.uid);
+          if (user?.uid) {
+            clearStoredRun(user.uid);
+            if (state.identity) {
+              clearHeartRateSession(user.uid, state.identity.sessionId);
+              void clearWatchRunSession(state.identity.sessionId);
+            }
+          }
           navigate("/");
         }}
         onCancel={() => setShowDiscardConfirm(false)}

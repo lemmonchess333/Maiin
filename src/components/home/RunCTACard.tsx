@@ -162,7 +162,7 @@ export default function RunCTACard({
             onResume={function () {
               trackHomeEvent("home_card_tapped", {
                 card: "today_run",
-                action: "resume",
+                action: inProgress.reviewPending ? "review" : "resume",
               });
               navigate(inProgress.resumeTarget);
             }}

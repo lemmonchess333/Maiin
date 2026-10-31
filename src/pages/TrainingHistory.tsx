@@ -85,6 +85,7 @@ export default function TrainingHistory() {
   const pending = sources.some((source) => !source.answered);
   const failed = sources.some((source) => source.readFailed);
   const complete = sources.every((source) => source.evidenceReady);
+  const provisional = !pending && !failed && !complete;
   const sessions = useMemo(
     () => trainingHistorySessions(lifts.items, runs.items, filters, unit),
     [lifts.items, runs.items, filters, unit]
@@ -93,7 +94,8 @@ export default function TrainingHistory() {
     user?.uid,
     search,
     !pending,
-    sessions.length
+    sessions.length,
+    provisional
   );
   const visible = sessions.slice(0, position.count);
   const groups = new Map<string, HistorySession[]>();
@@ -227,7 +229,7 @@ export default function TrainingHistory() {
           retry={{ onClick: retry }}
         />
       )}
-      {!pending && !failed && !complete && (
+      {provisional && (
         <Banner
           variant="neutral"
           description="Showing available sessions on this device. This period may be incomplete until history finishes syncing."
