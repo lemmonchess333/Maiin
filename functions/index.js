@@ -33,6 +33,7 @@ const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
 const activationCohort = require("./lib/activationCohort");
+const weeklyRecap = require("./lib/weeklyRecap");
 const activationBilling = require("./lib/activationBilling");
 const { activationSport } = require("./lib/firstWeekActivation");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
@@ -3602,6 +3603,9 @@ async function maybeSendWeeklyRecap(uid, now, profile) {
       )
     : null;
   const behind = !!(status && status.fellBehind);
+  // The recap opens the review, so it goes only when one waits.
+  if (!behind && !(await weeklyRecap.reviewWaits(db, uid, range.weekEnd)))
+    return false;
 
   const registrations = await leaseClaimedPushRegistrations(uid);
   const tokens = registrations.map((r) => r.token);
