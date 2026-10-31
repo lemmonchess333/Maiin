@@ -31,11 +31,10 @@ permissions:
 jobs:
   screenshots:
     runs-on: ubuntu-latest
-    # 30, not 15. The 15 was set when the capture was much smaller; by
-    # 2026-09-04 a full pass took ~14 minutes and adding ONE exercise to
-    # the form-demo list tipped it over. A timeout leaves only partial
-    # frames, so keep headroom for capture, diff and review artifacts.
-    timeout-minutes: 30
+    # The 31 October full run hit the old 30-minute limit during capture,
+    # leaving only a partial review artifact. Allow capture, diff and the
+    # baseline update to finish before treating a run as a visual baseline.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

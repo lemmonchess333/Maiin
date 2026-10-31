@@ -179,14 +179,8 @@ describe("FoodHeroCard — no day-type caption on the card", () => {
   });
 });
 
-describe("FoodHeroCard — the wash behind the ring", () => {
-  it("the two corner colours reach far enough to meet, in both themes", () => {
-    /* Two ellipses, the food surface's orange top-left and the brand
-       purple bottom-right, each spanning most of the card with a
-       three-stop falloff. Pinned on the recipe's shape rather than its
-       exact alphas: both hue tokens present, each with a mid stop and a
-       far edge (past 70% of the card), and the light theme no longer
-       dimmed to 70% — that dim is what made the last version invisible. */
+describe("FoodHeroCard — calm summary", () => {
+  it("groups calories and macros on one plain surface", () => {
     const { container } = render(
       <MemoryRouter>
         <FoodHeroCard
@@ -197,17 +191,10 @@ describe("FoodHeroCard — the wash behind the ring", () => {
         />
       </MemoryRouter>
     );
-    const wash = container.querySelector(
-      '[aria-hidden="true"].absolute.inset-0'
-    ) as HTMLElement;
-    expect(wash, "the wash layer").toBeTruthy();
-    const bg = wash.style.background;
-    expect(bg).toContain("--nutrition");
-    expect(bg).toContain("--primary");
-    expect(bg.match(/transparent (7[5-9]|8\d)%/g)?.length).toBe(2);
-    expect(bg.match(/radial-gradient/g)?.length).toBe(2);
-    expect(wash).toHaveClass("opacity-85", "dark:opacity-100");
-    expect(wash).not.toHaveClass("opacity-70");
+    const summary = container.querySelector("[data-food-summary]");
+    expect(summary).toHaveClass("bg-card");
+    expect(summary?.querySelectorAll("[data-macro]")).toHaveLength(3);
+    expect(summary?.querySelector("[style*='radial-gradient']")).toBeNull();
   });
 });
 
