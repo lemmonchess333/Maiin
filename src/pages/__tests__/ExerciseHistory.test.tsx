@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 
 // framer-motion → plain elements
@@ -239,9 +239,92 @@ describe("ExerciseHistory — a session leads back to its workout", () => {
       .map((link) => link.getAttribute("href"))
       .filter((href) => href?.startsWith("/workout/"));
     expect(hrefs.sort()).toEqual(["/workout/w-evening", "/workout/w-morning"]);
-    expect(screen.getByRole("link", { name: /60 kg × 8/ })).toHaveAttribute(
-      "href",
-      "/workout/w-morning"
-    );
+    const morning = screen
+      .getAllByRole("link")
+      .find((link) => link.getAttribute("href") === "/workout/w-morning");
+    expect(morning).toHaveTextContent("60 kg × 8");
   });
+});
+
+describe("ExerciseHistory — comparisons belong to the session", () => {
+  const session = (
+    id: string,
+    hour: number,
+    weightKg: number,
+    reps: number,
+    exerciseName = "Bench Press",
+    extra: Record<string, unknown> = {}
+  ) => ({
+    id,
+    date: RECENT_SESSION_DATE,
+    createdAt: new Date(
+      `${RECENT_SESSION_DATE}T${String(hour).padStart(2, "0")}:00:00`
+    ),
+    exercises: [{ exerciseName, sets: [{ weightKg, reps }], ...extra }],
+  });
+
+  function row(id: string) {
+    const link = screen
+      .getAllByRole("link")
+      .find((node) => node.getAttribute("href") === `/workout/${id}`);
+    if (!link) throw new Error(`Missing session ${id}`);
+    return link;
+  }
+
+  it("orders same-day sessions by their timestamp and keeps comparisons and PRs separate", () => {
+    workoutsMock.value = {
+      loading: false,
+      workouts: [
+        session("evening", 18, 60, 6),
+        session("first", 8, 60, 8),
+        session("morning", 10, 62.5, 8),
+      ],
+    } as any;
+    renderAt("Bench Press");
+    expect(row("evening")).toHaveTextContent("Last: 62.5 kg × 8");
+    expect(row("morning")).toHaveTextContent("Last: 60 kg × 8");
+    expect(row("first")).not.toHaveTextContent("Last:");
+    expect(within(row("evening")).queryByText("PR")).toBeNull();
+    expect(within(row("morning")).getByText("PR")).toBeVisible();
+  });
+
+  it("leaves warm-ups out of top sets, volume, set counts and comparison history", () => {
+    workoutsMock.value = {
+      loading: false,
+      workouts: [
+        session("working", 10, 60, 3, "Bench Press", {
+          sets: [
+            { weightKg: 55, reps: 15, type: "warmup" },
+            { weightKg: 60, reps: 3, type: "working" },
+          ],
+        }),
+        session("warmup-only", 8, 70, 10, "Bench Press", {
+          sets: [{ weightKg: 70, reps: 10, type: "warmup" }],
+        }),
+      ],
+    } as any;
+    renderAt("Bench Press");
+    expect(row("working")).toHaveTextContent("1 set · 180 kg volume");
+    expect(row("working")).toHaveTextContent("60 kg × 3");
+    expect(row("working")).not.toHaveTextContent("Last:");
+    expect(screen.queryByRole("link", { name: /70 kg × 10/ })).toBeNull();
+  });
+
+  it.each([
+    ["Push-Ups", undefined, "Last: BW × 6"],
+    ["Plank", "seconds", "Last: 6s"],
+  ])(
+    "shows the previous %s result in its own unit",
+    (name, repUnit, previous) => {
+      workoutsMock.value = {
+        loading: false,
+        workouts: [
+          session("earlier", 8, 0, 6, name, { repUnit }),
+          session("later", 10, 0, 10, name, { repUnit }),
+        ],
+      } as any;
+      renderAt(name);
+      expect(row("later")).toHaveTextContent(previous);
+    }
+  );
 });

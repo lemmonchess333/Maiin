@@ -16,6 +16,7 @@ import {
   runResumeChunkKey,
   LEGACY_RUN_RESUME_KEY,
   RUN_RESUME_MAX_AGE_MS,
+  RUN_FINISHED_MAX_AGE_MS,
   RUN_RESUME_SCHEMA_VERSION,
   type StoredRun,
 } from "../runResumeStorage";
@@ -178,6 +179,49 @@ describe("writeStoredRun + readStoredRun — round-trip", () => {
     const restored = readStoredRun(UID, now);
     expect(restored).not.toBeNull();
     expect(restored).toEqual(snap);
+  });
+
+  it("recovers a finished review and its start-time ID after a relaunch", () => {
+    const now = 100_000_000;
+    const active = makeSnapshot({
+      lastWriteAt: now,
+      points: makePoints(300),
+      identity: {
+        uid: UID,
+        sessionId: "run-start-id",
+        runId: "run-start-id",
+        scheduledRunId: "planned-1",
+        startedAt: 1_000_000,
+        startLocalDate: "1970-01-01",
+        originTimeZone: "UTC",
+      },
+    });
+    expect(writeStoredRun(UID, active)).toBe(true);
+    const finished = makeSnapshot({
+      ...active,
+      recordingStartedAt: active.startedAt + 35_000,
+      isRunning: false,
+      phase: "finished",
+      lastWriteAt: now + 1_000,
+      finish: {
+        finishedAt: now + 1_000,
+        distance: 4_000,
+        elapsed: 1_200,
+        splits: [],
+        elevationGain: 14,
+        routeQuality: null,
+        workPortion: null,
+      },
+    });
+    expect(writeStoredRun(UID, finished)).toBe(true);
+    const restored = readStoredRun(UID, now + 24 * 60 * 60 * 1000);
+    expect(restored?.identity?.runId).toBe("run-start-id");
+    expect(restored?.recordingStartedAt).toBe(active.startedAt + 35_000);
+    expect(restored?.finish).toEqual(finished.finish);
+    expect(restored?.points).toHaveLength(300);
+    expect(
+      readStoredRun(UID, now + RUN_FINISHED_MAX_AGE_MS + 1_001)
+    ).toBeNull();
   });
 
   it("preserves the GPS points buffer through the round-trip", () => {

@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
-import { computeRunMove, runOriginDate } from "@/lib/runReschedule";
+import {
+  computeRunMove,
+  runOriginDate,
+  runMoveSourceSignature,
+  runMoveCompletionEvidence,
+} from "@/lib/runReschedule";
+import { parseSavedRun } from "@/lib/savedRuns";
 import { HARD_RUN_TYPES } from "../programTypes";
 import type { ScheduledRunDay } from "../programTypes";
 
@@ -20,6 +26,10 @@ import type { ScheduledRunDay } from "../programTypes";
  * server parses UTC — so every day of the week is walked, not just one.
  */
 const require = createRequire(import.meta.url);
+const { localDateInZone } =
+  require("../../../../functions/lib/programCommands") as {
+    localDateInZone: (instant: number, timezone: string) => string;
+  };
 const cf = require("../../../../functions/lib/runReschedule") as {
   HARD_RUN_TYPES: readonly string[];
   computeRunMove: (
@@ -29,6 +39,13 @@ const cf = require("../../../../functions/lib/runReschedule") as {
   ) => Record<string, unknown> | null;
   runOriginDate: (source: unknown) => string;
   dateForDay: (weekKey: string, dayIndex: number) => string | null;
+  runMoveSourceSignature: typeof runMoveSourceSignature;
+  runMoveCompletionEvidence: typeof runMoveCompletionEvidence;
+  runMoveSavedEvidenceRow: (
+    id: string,
+    data: Record<string, unknown>,
+    localDateForInstant: (ms: number) => string
+  ) => unknown;
 };
 
 /* Mon 2026-03-02 — the week anchor since RunWk2. The server reads the
@@ -62,6 +79,117 @@ const SCHEDULE = [
 ];
 
 describe("run move — client vs functions mirror", () => {
+  it("reviewed source signatures agree, and prescription/date changes invalidate them", () => {
+    for (const source of [
+      run(),
+      run({ status: undefined }),
+      run({
+        userOverride: "easy_30",
+        timeLimit: { minutes: 20, originalTemplateId: "tempo_30" },
+      }),
+    ]) {
+      expect(cf.runMoveSourceSignature(source)).toBe(
+        runMoveSourceSignature(source)
+      );
+    }
+    expect(runMoveSourceSignature(run({ userOverride: "easy_30" }))).not.toBe(
+      runMoveSourceSignature(run())
+    );
+    expect(runMoveSourceSignature(run({ date: "2026-03-04" }))).not.toBe(
+      runMoveSourceSignature(run())
+    );
+  });
+
+  it("review evidence agrees with the real saved-run parser and catches corrections as well as additions", () => {
+    const data = {
+      date: "2026-03-03",
+      completedAt: new Date("2026-03-03T12:00:00Z"),
+      distance: 5000,
+      duration: 1800,
+      avgPace: 360,
+      actualTemplateId: "easy_30",
+      plannedTemplateId: "tempo_20",
+      activityType: "freerun",
+      isInvalid: false,
+    };
+    const client = parseSavedRun("saved-1", data)!;
+    const server = cf.runMoveSavedEvidenceRow("saved-1", data, (ms) =>
+      new Date(ms).toISOString().slice(0, 10)
+    );
+    const expected = runMoveCompletionEvidence([run()], [client]);
+    expect(cf.runMoveCompletionEvidence([run()], [server] as never)).toBe(
+      expected
+    );
+    expect(
+      runMoveCompletionEvidence([run()], [{ ...client, distance: 8000 }])
+    ).not.toBe(expected);
+    expect(runMoveCompletionEvidence([run()], [])).not.toBe(expected);
+    expect(
+      runMoveCompletionEvidence([run({ userOverride: "easy_30" })], [client])
+    ).not.toBe(expected);
+  });
+
+  it("captures evidence for earlier slots too, since an earlier claim can free a source-date run", () => {
+    const days = [
+      run({ id: "earlier", date: "2026-03-02", dayIndex: 1 }),
+      run(),
+    ];
+    const saved = parseSavedRun("earlier-save", {
+      date: "2026-03-02",
+      completedAt: new Date("2026-03-02T12:00:00Z"),
+      distance: 5000,
+      duration: 1800,
+    })!;
+    expect(runMoveCompletionEvidence(days, [saved])).not.toBe(
+      runMoveCompletionEvidence(days, [])
+    );
+    expect(cf.runMoveCompletionEvidence(days, [saved])).toBe(
+      runMoveCompletionEvidence(days, [saved])
+    );
+  });
+
+  it.each([
+    "2026-03-04T00:30:00Z",
+    "2026-03-04T12:00:00Z",
+    "2026-03-04T23:30:00Z",
+  ])(
+    "legacy dates and template fallbacks normalise identically at %s",
+    (completedAt) => {
+      const data = {
+        completedAt: { seconds: Date.parse(completedAt) / 1000 },
+        plannedTemplateId: "tempo_20",
+        distance: -1,
+        duration: 1800,
+        avgPace: NaN,
+        savedAnyway: true,
+      };
+      const client = parseSavedRun("legacy", data)!;
+      // The transaction formats legacy timestamps in the profile's IANA zone.
+      // Model a profile in this device's zone, including midnight/DST offsets.
+      const timezone = new Intl.DateTimeFormat("en-GB").resolvedOptions()
+        .timeZone;
+      const server = cf.runMoveSavedEvidenceRow("legacy", data, (ms) =>
+        localDateInZone(ms, timezone)
+      );
+      expect(server).toMatchObject({
+        day: client.day,
+        templateId: "tempo_20",
+        distance: 0,
+        duration: 1800,
+        avgPace: 0,
+        savedAnyway: true,
+      });
+      // Keep the record inside the window so two filtered-out rows cannot pass.
+      const days = [
+        run({ date: client.day, dayIndex: client.completedAt.getDay() }),
+      ];
+      const evidence = runMoveCompletionEvidence(days, [client]);
+      expect(evidence).not.toBe(runMoveCompletionEvidence(days, []));
+      expect(cf.runMoveCompletionEvidence(days, [server] as never)).toBe(
+        evidence
+      );
+    }
+  );
   it("HARD_RUN_TYPES agrees as a set", () => {
     expect(new Set(cf.HARD_RUN_TYPES)).toEqual(new Set(HARD_RUN_TYPES));
   });

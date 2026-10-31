@@ -4,9 +4,10 @@
  * the easy one for the rest.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import RunCTACard from "../RunCTACard";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
+import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
@@ -31,6 +32,38 @@ function runner(container: HTMLElement) {
 }
 
 describe("RunCTACard — the runner", () => {
+  it("distinguishes Home Start from Resume in the activation path", () => {
+    const navigate = vi.fn();
+    render(<RunCTACard unit="km" todayRun={null} navigate={navigate} />);
+    fireEvent.click(screen.getByRole("button", { name: "Start run" }));
+    expect(trackHomeEvent).toHaveBeenCalledWith("home_card_tapped", {
+      card: "today_run",
+      action: "start",
+    });
+    cleanup();
+    vi.mocked(trackHomeEvent).mockClear();
+    render(
+      <RunCTACard
+        unit="km"
+        todayRun={null}
+        navigate={navigate}
+        inProgress={{
+          sport: "run",
+          name: "Free run",
+          sets: null,
+          elapsedSeconds: 60,
+          resumeTarget: "/run?resume=1",
+        }}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Resume Free run" }));
+    expect(trackHomeEvent).toHaveBeenCalledWith("home_card_tapped", {
+      card: "today_run",
+      action: "resume",
+    });
+    expect(navigate).toHaveBeenLastCalledWith("/run?resume=1");
+  });
+
   it("draws the fast stride for a tempo run", () => {
     const { container } = render(
       <RunCTACard

@@ -46,6 +46,8 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
   "subscriptionTrial",
   "trialExpiresAt",
   "createdAt",
+  "onboardingCompletedAt",
+  "activationJourneyVersion",
 ]);
 
 /**

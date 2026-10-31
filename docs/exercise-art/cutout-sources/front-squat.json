@@ -1,0 +1,9 @@
+{
+  "reviewStatus": "reviewed",
+  "image": "front-squat.png",
+  "imageSha256": "1988276d308c8c9390817eea78595db84e34f5a66e613bf49a0a0d459b8f1b16",
+  "reference": "form-frames/front-squat/2026-10-28/4.webp",
+  "referenceSha256": "d33d66c7e811d1fcdc3c6d55468237d7eb428a9f94f0da3164460293a6962f89",
+  "method": "Native transparent Blender render from reviewed front-squat frame 4; the six full-stage frames and fixed camera remain unchanged. Alpha preserves the athlete, apparatus and fine edges without dark-background keying.",
+  "reviewEvidence": "docs/exercise-art/pilots/redraw-20261028/front-squat/4.png"
+}

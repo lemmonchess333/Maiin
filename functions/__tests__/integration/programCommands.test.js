@@ -23,6 +23,11 @@ const suite = EMULATOR_HOST ? describe : describe.skip;
 
 const UID = "uid-progcmd-int";
 const NOW = Date.parse("2026-07-13T12:00:00Z");
+const {
+  runMoveSourceSignature,
+  runMoveCompletionEvidence,
+  runMoveSavedEvidenceRow,
+} = require("../../lib/runReschedule");
 
 let db;
 
@@ -327,6 +332,149 @@ suite("runProgramCommandTransaction — apply + receipt", () => {
     expect(workout.data().source).toBe("programme");
     expect(workout.data().createdAt).toBeTruthy(); // Timestamp injected
     expect(workout.data().totalCalories).toBeGreaterThan(0);
+  });
+});
+
+suite("workspace run-move review — authoritative freshness", () => {
+  const RUN = {
+    id: "run-reviewed",
+    dayIndex: 2,
+    date: "2026-07-14",
+    weekKey: "2026-07-13",
+    templateId: "long_15k",
+    type: "long",
+    status: "planned",
+    completed: false,
+  };
+  const commandId = "cmd_reviewed_move_0001";
+  const saved = {
+    date: "2026-07-14",
+    completedAt: admin.firestore.Timestamp.fromMillis(NOW),
+    distance: 1000,
+    duration: 600,
+    avgPace: 600,
+    activityType: "freerun",
+  };
+  const row = runMoveSavedEvidenceRow("saved-example", saved, (ms) =>
+    new Date(ms).toISOString().slice(0, 10)
+  );
+  const command = (evidence = []) =>
+    validate({
+      kind: "moveRunDay",
+      commandId,
+      runDayId: RUN.id,
+      targetDayIndex: 6,
+      expected: {
+        sourceSignature: runMoveSourceSignature(RUN),
+        todayKey: "2026-07-13",
+        completionEvidence: runMoveCompletionEvidence([RUN], evidence),
+      },
+    });
+  const execute = (cmd, now = NOW) =>
+    runProgramCommandTransaction({
+      firestore: db,
+      uid: UID,
+      command: cmd,
+      now,
+    });
+
+  beforeEach(async () => {
+    await reset();
+    await programRef().update({ runDays: [RUN] });
+  });
+
+  it("moves the reviewed instance, writes its receipt and preserves unrelated state", async () => {
+    const before = (await programRef().get()).data();
+    await execute(command());
+    const after = (await programRef().get()).data();
+    expect(after.runDays[0]).toMatchObject({
+      id: RUN.id,
+      templateId: RUN.templateId,
+      date: "2026-07-18",
+      movedFromDate: "2026-07-14",
+    });
+    expect(after.workouts).toEqual(before.workouts);
+    expect(
+      (await db.collection("users").doc(UID).get()).data().weekSchedule
+    ).toBeUndefined();
+    expect(
+      (await programRef().collection("commandReceipts").doc(commandId).get())
+        .exists
+    ).toBe(true);
+  });
+
+  it("rejects a newly arrived saved activity without writing a receipt or moving the run", async () => {
+    const reviewed = command();
+    await db
+      .collection("users")
+      .doc(UID)
+      .collection("runs")
+      .doc("saved-example")
+      .set(saved);
+    await expect(execute(reviewed)).rejects.toThrow(/activities changed/i);
+    expect((await programRef().get()).data().runDays[0].date).toBe(RUN.date);
+    expect(
+      (await programRef().collection("commandReceipts").doc(commandId).get())
+        .exists
+    ).toBe(false);
+  });
+
+  it("allows unchanged reviewed unrelated activity, rather than permanently blocking that date", async () => {
+    // A 1km free run does not complete this planned 15km run. The server
+    // checks that the UI's claim evidence is still current, not a new claim engine.
+    await db
+      .collection("users")
+      .doc(UID)
+      .collection("runs")
+      .doc("saved-example")
+      .set(saved);
+    await execute(command([row]));
+    expect((await programRef().get()).data().runDays[0].date).toBe(
+      "2026-07-18"
+    );
+  });
+
+  it("rejects corrections and manual completions arriving after review", async () => {
+    const ref = db
+      .collection("users")
+      .doc(UID)
+      .collection("runs")
+      .doc("saved-example");
+    await ref.set(saved);
+    const reviewed = command([row]);
+    await ref.update({ distance: 12000 });
+    await expect(execute(reviewed)).rejects.toThrow(/activities changed/i);
+    await ref.delete();
+    await programRef().update({
+      manualCompletions: { [RUN.id]: { completedAt: NOW } },
+    });
+    await expect(execute(command())).rejects.toThrow(/no longer be moved/i);
+  });
+
+  it("rejects a stale prescription/date and a stale local review day", async () => {
+    await programRef().update({
+      runDays: [{ ...RUN, userOverride: "easy_30" }],
+    });
+    await expect(execute(command())).rejects.toThrow(/plan changed/i);
+    await programRef().update({ runDays: [RUN] });
+    await expect(execute(command(), NOW + 86400000)).rejects.toThrow(
+      /plan changed/i
+    );
+  });
+
+  it("an idempotent replay returns before evidence changes can reject an already-applied move", async () => {
+    const reviewed = command();
+    await execute(reviewed);
+    await db
+      .collection("users")
+      .doc(UID)
+      .collection("runs")
+      .doc("saved-example")
+      .set(saved);
+    expect((await execute(reviewed)).duplicate).toBe(true);
+    expect((await programRef().get()).data().runDays[0].date).toBe(
+      "2026-07-18"
+    );
   });
 });
 

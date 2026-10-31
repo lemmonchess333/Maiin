@@ -14,6 +14,7 @@ interface ExerciseRigDemoProps {
   exerciseId: string;
   name: string;
   active?: boolean;
+  compact?: boolean;
   tempo?: string;
   onStep?: (index: number) => void;
   stepRequest?: { index: number; serial: number };
@@ -31,6 +32,7 @@ export default function ExerciseRigDemo(props: ExerciseRigDemoProps) {
         framing={getFormArtFraming(props.exerciseId)}
         composite={FORM_ART_COMPOSITES[props.exerciseId]}
         active={props.active}
+        compact={props.compact}
         onStep={props.onStep}
         initialIndex={props.stepRequest?.index}
         autoPlay={!props.stepRequest}

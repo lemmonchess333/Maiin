@@ -58,6 +58,10 @@ export type LifecycleEvent =
   | "workout_completed"
   | "run_completed"
   | "food_logged"
+  | "first_week_card_viewed"
+  | "first_week_task_selected"
+  | "first_week_reminder_offered"
+  | "first_week_reminder_choice"
   | "trial_started"
   | "subscription_started"
   // Companion batch B0 — the training loop, as distinct from the
@@ -69,6 +73,9 @@ export type LifecycleEvent =
   | "return_surface_shown"
   | "return_choice"
   | "checkin_answered"
+  | "week_reset_viewed"
+  | "week_reset_choice"
+  | "week_reset_completed"
   /** The first-visit guide (FV1): a walk began, showed a stop, was
    *  finished from its last stop or skipped; a hint was shown. */
   | "guide_started"
@@ -125,6 +132,15 @@ export interface LifecycleEventMetadata {
   durationMs?: number;
   /** session_started: which discipline. */
   kind?: "lift" | "run";
+  /** First-week card: onboarding training selection, never a free-text goal. */
+  sport?: "runner" | "lifter" | "hybrid";
+  /** first_week_task_selected: training task selected. */
+  task?: "workout" | "run";
+  /** First-week card: local calendar day 1 through 7. */
+  firstWeekDay?: number;
+  /** Saved-session reminder offer: delivery path and explicit answer. */
+  reminderChannel?: "push" | "local";
+  reminderOutcome?: "enabled" | "later" | "denied" | "setup_failed";
   /**
    * session_started (runs only): the run did not match its planned slot.
    * Read straight from `computePlanMetadata`, which already decides this.
@@ -152,6 +168,9 @@ export interface LifecycleEventMetadata {
   clarity?: number;
   /** checkin_answered: 1-5, "was logging easy this week?". */
   ease?: number;
+  /** Guided review-to-plan handoff; the choice is never an automatic edit. */
+  weekResetAction?: "run_move" | "usual_layout" | "keep_plan";
+  weekResetOutcome?: "applied" | "queued";
   /**
    * guide_*: which walk. Not `guide`: the redaction drops any key that
    * contains "uid", and "guide" does.

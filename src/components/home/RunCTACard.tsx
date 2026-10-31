@@ -116,7 +116,10 @@ export default function RunCTACard({
         type="button"
         onClick={function () {
           haptic();
-          trackHomeEvent("home_card_tapped", { card: "today_run" });
+          trackHomeEvent("home_card_tapped", {
+            card: "today_run",
+            action: "details",
+          });
           navigate(dayTarget);
         }}
         aria-label={tmpl ? `Open ${runLabel} in Train` : "Open today in Train"}
@@ -157,7 +160,10 @@ export default function RunCTACard({
             session={inProgress}
             onCard
             onResume={function () {
-              trackHomeEvent("home_card_tapped", { card: "today_run" });
+              trackHomeEvent("home_card_tapped", {
+                card: "today_run",
+                action: inProgress.reviewPending ? "review" : "resume",
+              });
               navigate(inProgress.resumeTarget);
             }}
           />
@@ -171,7 +177,10 @@ export default function RunCTACard({
               // are unlocked here, inside the tap.
               unlockSpeech();
               haptic();
-              trackHomeEvent("home_card_tapped", { card: "today_run" });
+              trackHomeEvent("home_card_tapped", {
+                card: "today_run",
+                action: "start",
+              });
               navigate(startTarget);
             }}
           >

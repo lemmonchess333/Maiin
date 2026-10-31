@@ -241,7 +241,13 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => navigate(action.to)}
+          onClick={() =>
+            navigate(action.to, {
+              state: action.to.startsWith("/program/plan")
+                ? { returnTo: "/review", resetFeel: existing.feel }
+                : undefined,
+            })
+          }
         >
           {action.label}
         </Button>

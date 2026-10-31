@@ -1,65 +1,26 @@
-# Heart rate & HealthKit — groundwork and the native path
+# Heart rate and Apple Health workout export
 
-Heart rate is the #1 running table-stakes gap in the competitive analysis
-(`docs/competitive-analysis-running-2026.md`): Strava, NRC, Garmin and Coros all
-show live HR + zones during a run and a zone distribution after it. This doc
-records what shipped as **web-visible groundwork** and what the native step is.
+**Implementation status, 31 October 2026:** The phone-led Apple Watch run path and server Health workout receipts are implemented behind `VITE_CONNECTED_TRAINING_ENABLED=true` and a separate native iOS Release flag. Both are off by default until the macOS build and paired-device HealthKit checks pass. The product contract and acceptance matrix are in [the connected training proposal](proposals/connected-training.md).
 
-## What's shipped (web-visible, lock-safe)
+## Live heart rate
 
-- **`src/lib/hrZones.ts`** — the pure zone maths (no React/DOM/Firebase,
-  mirror-ready). Five-zone %HRmax model (Z1 Recovery 50–60 … Z5 Max 90–100),
-  age-predicted max via **Tanaka** (`208 − 0.7·age`, better-validated than
-  `220 − age`), single-reading bucketing, and a post-run zone distribution that
-  excludes below-Z1 samples from the denominator. Unit-tested.
-- **`profile.maxHeartRate`** — the single INPUT (a measured max always beats the
-  age estimate). Persisted through the full guarded chain: `auth.tsx`
-  interface + hydrate → `firestore.rules` `allowedUserFields()` →
-  `functions/profileSanitizer.js` (range 100–240, `null` clears) → `updateProfile`.
-- **`src/hooks/useHeartRate.ts`** — resolves the effective max HR
-  (measured → age estimate → unknown), exposes the zones, and (when a live
-  source exists) the current bpm + zone. `live` defaults to `false` so the
-  static preview costs nothing.
-- **`src/components/settings/HeartRateZonesSection.tsx`** — Settings preview of
-  the five bands + max-HR capture / "use estimate". This is the web-visible
-  surface; it works today without any native plugin.
-- **`src/lib/heartRateSource.ts`** — the **native-injection seam** (mirrors
-  `locationSource.ts`). The web source is a deliberate NO-OP that reports
-  `available === false` and never emits — browsers have no usable HR API inside
-  the iOS WKWebView. Consumers fall back to the static preview instead of
-  erroring.
+- The web app still shows the static five-zone preview from `profile.maxHeartRate` or the age estimate. Browsers do not stream heart rate in this app.
+- With Watch runs enabled, the native Watch app reads heart rate during an active phone run. `WatchRun.heartRateSample` carries a session ID, stable sample ID, sample time, and bpm. `heartRateSource.ts` accepts only samples for the current run; `useHeartRate` displays a reading only while it is fresh. No sample means no invented zero or permission verdict.
+- The native WatchRun coordinator persists a bounded raw sample backlog in Application Support with iOS file protection. `heartRateSession.ts` keeps only moving-interval timestamps in WebView local storage and merges the protected native backlog at review. Raw beats are cleared on save or discard and are never sent to Firestore or analytics.
+- `summarizeHeartRate` weights readings by time within moving intervals, caps each reading at 15 seconds, and excludes pauses and disconnected gaps. The saved summary records average and maximum bpm, coverage, source, the max-HR value used, and actual zone seconds when max HR is known. Average and maximum remain available when it is unknown. A zone chart must stay hidden below 50% moving-time coverage.
 
-## The native step (needs a Mac/Xcode build)
+## Apple Health write-back
 
-Live HR is genuinely native-only. The plan:
+Saving workouts to Apple Health is a separate, default-off choice. The iPhone's `WatchRun` plugin contains the native `HKWorkout` writer; the installed `capacitor-health` package remains the steps reader. The writer exports no GPS route.
 
-1. **Capacitor plugin for HealthKit live HR.** Not the installed
-   `capacitor-health`: it has no stream, and its heart rate comes only attached
-   to a finished workout (`queryWorkouts({ includeHeartRate: true })`), which a
-   Tropos run does not write, so it can show heart rate after a run another
-   app recorded and never during one. Either a community plugin or a
-   thin custom one that starts an `HKWorkoutSession` and an
-   `HKAnchoredObjectQuery` on the `heartRate` quantity type, forwarding samples
-   to JS. Request `HKObjectType.quantityType(.heartRate)` read auth at run start.
-2. **Implement `nativeHeartRateSource`** in `heartRateSource.ts` against that
-   plugin (`available: true`, `subscribe` → plugin listener, `stop()` →
-   end the query + workout session).
-3. **Flip the branch** in `getHeartRateSource()` to return it when
-   `isNativePlatform()`. That's a one-line change — the seam is the whole point.
-4. **Wire `Info.plist`** with `NSHealthShareUsageDescription` (and
-   `NSHealthUpdateUsageDescription` if we later write workouts back) and enable
-   the HealthKit capability in the Xcode project, then `cap sync ios`. Done for
-   steps: `Info.plist` carries both strings and `App.entitlements` the
-   HealthKit entitlement, so this step is only the new read type.
+`healthWorkoutExport.ts` stages a local intent before an eligible outdoor GPS run enters the phone's durable save queue. The intent alone cannot write a workout: the worker waits for that exact run on the server and checks current server consent. Each explicit opt-in has a consent ID; an intent captured while Settings is loading also requires server proof that opt-in preceded Save. The native writer uses the Tropos run ID and a stable payload revision, and it must verify an existing app-owned workout before reporting success. Deletions stay pending when HealthKit access is unavailable, including if a later build disables new exports. The Settings screen shows pending updates and a retry action. Third-party Health workouts do not grant Tropos plan, streak, challenge, or performance credit under [ADR-0007](adr/0007-healthkit-reconciliation.md).
 
-Consumers (run HUD, post-run breakdown) read through `useHeartRate({ live: true })`
-and `hrZones.ts` — they need no change when the native source lands; they simply
-start receiving non-null `bpm`/`zone`.
+Before the first native write, the worker reserves `users/{uid}/healthWorkoutExports/{runId}` in a Firestore transaction that rechecks the canonical run and consent. It confirms the Health workout ID and revision there after the native writer succeeds. An earlier receipt blocks a new write when a reinstalled iPhone cannot read whether the old Health workout exists. This fails closed: the update stays pending until HealthKit can identify the app-owned sample. The run deletion trigger changes an existing receipt to `pending-delete`; the exporting iPhone pages through those markers on foreground or sync, verifies deletion in HealthKit, and then clears the receipt. An empty HealthKit query after reinstall does not clear a server marker because read access may be opaque. Account deletion also sweeps the receipt collection.
 
-## Why no Web Bluetooth fallback
+The exported workout starts at the actual recording start, after GPS acquisition or countdown, and ends when recording stopped. Its duration uses the phone's active timer, excluding pauses. Both values must be present in the server-confirmed run; older documents without an actual recording start do not export by inference from the Start tap or save time. The payload revision and native fingerprint include active duration so a changed duration cannot be mistaken for an already current workout.
 
-Web Bluetooth GATT (the Heart Rate Service, `0x180D`) is unsupported in iOS
-WKWebView and off-by-default elsewhere, and the real users are on the native
-app. Wiring a flaky web path would be effort spent off the target platform; the
-honest answer is "live HR streams in the app", with the static zone preview
-available everywhere. See the parity rules in `CLAUDE.md`.
+The current run detail screen does not edit a saved run's workout time, distance, or energy. A future edit path must stage a durable correction intent before replacing an app-owned Health sample. `deleteLoggedSession` stages a durable Health deletion intent before deleting a run and retries native cleanup after the server confirms that deletion.
+
+## Release gate
+
+The default-off flag remains until the macOS simulator compile gate and a paired iPhone and Watch test prove heart-rate delivery and acknowledged controls with the phone locked, reliable review after process death, and one Health workout and activity-ring contribution when write-back is on. Test write-back off as well: a Watch heart-rate session must leave no saved Health workout. Exercise the reinstall case with an opaque HealthKit read grant and confirm that the server receipt prevents a duplicate. Delete an exported run on web or another device and confirm native cleanup on the exporting iPhone. The native target and embedded Watch app must pass signing and installation checks. See [iOS release checks](ios-release.md).

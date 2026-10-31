@@ -27,6 +27,9 @@ import {
   flushCommandOutbox,
   isTransportFailure,
   outboxLength,
+  subscribeCommandOutbox,
+  commandOutboxVersion,
+  lastCommandSettlement,
 } from "../commandOutbox";
 
 const cmd = (commandId: string, kind = "applyDeloadWeek") => ({
@@ -41,6 +44,48 @@ const callableError = (code: string) =>
 
 beforeEach(() => {
   __resetCommandOutboxForTests();
+});
+
+describe("live replay feedback", () => {
+  it("notifies after rejection is settled and the queue is drained, scoped to its account", async () => {
+    const seen: Array<{ count: number; result: string | undefined }> = [];
+    const stop = subscribeCommandOutbox(() =>
+      seen.push({
+        count: outboxLength("alice"),
+        result: lastCommandSettlement("alice")?.result,
+      })
+    );
+    enqueueCommand("alice", cmd("move-1", "moveRunDay"));
+    await flushCommandOutbox("alice", async () => {
+      throw callableError("functions/failed-precondition");
+    });
+    expect(seen.at(-1)).toEqual({ count: 0, result: "declined" });
+    expect(lastCommandSettlement("alice")).toEqual({
+      commandId: "move-1",
+      kind: "moveRunDay",
+      result: "declined",
+    });
+    expect(lastCommandSettlement("bob")).toBeNull();
+    stop();
+    const calls = seen.length;
+    enqueueCommand("alice", cmd("move-2", "moveRunDay"));
+    expect(seen.length).toBe(calls);
+  });
+
+  it("notifies another tab's storage change and records an applied replay", async () => {
+    const listener = vi.fn();
+    const stop = subscribeCommandOutbox(listener);
+    const before = commandOutboxVersion();
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: "tropos.program.commandOutbox" })
+    );
+    expect(commandOutboxVersion()).toBeGreaterThan(before);
+    expect(listener).toHaveBeenCalledOnce();
+    enqueueCommand("alice", cmd("move-3", "moveRunDay"));
+    await flushCommandOutbox("alice", async () => {});
+    expect(lastCommandSettlement("alice")?.result).toBe("applied");
+    stop();
+  });
 });
 
 describe("isTransportFailure — what may be retried", () => {

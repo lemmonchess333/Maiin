@@ -18,6 +18,7 @@ const accountDeletionLocks = require("../lib/accountDeletionLocks");
 const challengeParticipation = require("../lib/challengeParticipationProgress");
 const friendsBoard = require("../lib/friendsBoard");
 const activityReversal = require("../lib/activityReversal");
+const healthWorkoutLedger = require("../lib/healthWorkoutLedger");
 const { onWorkoutDeleted, onRunDeleted } = require("../index");
 
 const UID = "deleter";
@@ -55,6 +56,7 @@ beforeEach(() => {
     "reconcileParticipationChallenges"
   ).mockResolvedValue(undefined);
   vi.spyOn(friendsBoard, "refreshBoardWeek").mockResolvedValue(undefined);
+  vi.spyOn(healthWorkoutLedger, "markDeletedRun").mockResolvedValue(false);
   vi.spyOn(
     activityReversal,
     "reverseChallengeProgressForSource"
@@ -77,6 +79,9 @@ describe.each(CASES)("%s", (_name, trigger, params, data) => {
   it("resolves once both reversals land", async () => {
     await expect(deliver()).resolves.toBeNull();
     expect(reversed).toEqual(["challenges", "lifetime"]);
+    expect(healthWorkoutLedger.markDeletedRun).toHaveBeenCalledTimes(
+      _name === "onRunDeleted" ? 1 : 0
+    );
   });
 
   it("fails the event when the challenge reversal fails, after still reversing the lifetime total", async () => {

@@ -132,6 +132,8 @@ const PINNED: Record<string, string> = {
     "src/lib/__tests__/runModeResolution.cross.test.ts",
   "functions/lib/runEligibility.js":
     "src/lib/__tests__/runEligibility.cross.test.ts",
+  "functions/lib/firstWeekActivation.js":
+    "src/lib/__tests__/firstWeekActivation.cross.test.ts",
   // Moderation predicate. BOTH copies run — the client for composer feedback,
   // the server as the trust boundary a curl request cannot bypass — so per
   // this file's own rule that is a cross-test, not an exemption.
@@ -296,6 +298,10 @@ const PINNED: Record<string, string> = {
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.
 const NOT_EQUALITY_MIRROR: Record<string, string> = {
+  "functions/lib/healthWorkoutLedger.js":
+    "server deletion trigger only marks an existing receipt; the client module " +
+    "reserves exports, checks consent and reconciles native cleanup, so they " +
+    "have different inputs and outputs rather than shared decision logic",
   "functions/lib/dateUtils.js":
     "intentionally UTC (server) vs local (client) — an equality pin would be WRONG",
   "functions/lib/challengeDefs.js":

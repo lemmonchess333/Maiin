@@ -1,0 +1,646 @@
+{
+  "errors": [
+    "/127.0.0.1:5001/demo-tropos/us-central1/backfillMyActivityCategories due to access control checks.",
+    "/127.0.0.1:5001/demo-tropos/us-central1/recreditMyLiftVolume due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=WOLHAzv80fQYnQ6TB3zAYQ%3D%3D&AID=37&CI=0&TYPE=xmlhttp&zx=ubmskbmhauol&t=1 due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&SID=WOLHAzv80fQYnQ6TB3zAYQ%3D%3D&RID=39060&AID=37&zx=4nktd0h917yk&t=2 due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=WOLHAzv80fQYnQ6TB3zAYQ%3D%3D&AID=37&CI=0&TYPE=xmlhttp&zx=72wxb112tt6a&t=2 due to access control checks.",
+    "/127.0.0.1:5001/demo-tropos/us-central1/backfillMyActivityCategories due to access control checks.",
+    "/127.0.0.1:5001/demo-tropos/us-central1/recreditMyLiftVolume due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=TDjJ7PaLO5oqPB8CnDAFsQ%3D%3D&AID=5&CI=0&TYPE=xmlhttp&zx=mz5wr1fev84e&t=1 due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=NkN-cD7ttWcInnJE7yZ5cQ%3D%3D&AID=239&CI=0&TYPE=xmlhttp&zx=qt836getzd8j&t=1 due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=TDjJ7PaLO5oqPB8CnDAFsQ%3D%3D&AID=5&CI=0&TYPE=xmlhttp&zx=58smbkw9c9bp&t=2 due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=NkN-cD7ttWcInnJE7yZ5cQ%3D%3D&AID=239&CI=0&TYPE=xmlhttp&zx=wl3t0ut9vsfu&t=2 due to access control checks.",
+    "/127.0.0.1:5001/demo-tropos/us-central1/backfillMyActivityCategories due to access control checks.",
+    "/127.0.0.1:5001/demo-tropos/us-central1/recreditMyLiftVolume due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=B4KWZ5JKhdqLlLmXabVBFg%3D%3D&AID=242&CI=0&TYPE=xmlhttp&zx=8d92fe7jyoqe&t=1 due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=ukMLjf9LdEfXnVy2NeuP3w%3D%3D&AID=3&CI=0&TYPE=xmlhttp&zx=1dd42wwyj9qr&t=1 due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=B4KWZ5JKhdqLlLmXabVBFg%3D%3D&AID=242&CI=0&TYPE=xmlhttp&zx=uaua6cb7hjkf&t=2 due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=ukMLjf9LdEfXnVy2NeuP3w%3D%3D&AID=3&CI=0&TYPE=xmlhttp&zx=sc0j5t8si0o2&t=2 due to access control checks.",
+    "/127.0.0.1:5001/demo-tropos/us-central1/backfillMyActivityCategories due to access control checks.",
+    "/127.0.0.1:5001/demo-tropos/us-central1/recreditMyLiftVolume due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=4MRMO2jUTP6vaLWx5v5w7Q%3D%3D&AID=290&CI=0&TYPE=xmlhttp&zx=sfk1xv4zh76d&t=1 due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=IoOTPMJU5Ioy_zJ-DKZLUg%3D%3D&AID=3&CI=0&TYPE=xmlhttp&zx=i3ek853w8hab&t=1 due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=4MRMO2jUTP6vaLWx5v5w7Q%3D%3D&AID=290&CI=0&TYPE=xmlhttp&zx=r7v8fjtb8y2v&t=2 due to access control checks.",
+    "/127.0.0.1:8080/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=IoOTPMJU5Ioy_zJ-DKZLUg%3D%3D&AID=3&CI=0&TYPE=xmlhttp&zx=u2mns7ex0tpb&t=2 due to access control checks.",
+    "/127.0.0.1:5001/demo-tropos/us-central1/backfillMyActivityCategories due to access control checks.",
+    "/127.0.0.1:5001/demo-tropos/us-central1/recreditMyLiftVolume due to access control checks."
+  ],
+  "train": {
+    "phone-dark": {
+      "row": {
+        "x": 16,
+        "y": 235.0625,
+        "width": 361,
+        "height": 84,
+        "right": 377,
+        "bottom": 319.0625
+      },
+      "clientWidth": 361,
+      "scrollWidth": 361,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 20,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 75.5,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 79.5,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 135,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 139,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 194.5,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 198.5,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 254,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 258,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 313.5,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 317.5,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 373,
+          "bottom": 291.0625
+        }
+      ],
+      "overlaps": [-4, -4, -4, -4, -4]
+    },
+    "phone-light": {
+      "row": {
+        "x": 16,
+        "y": 235.0625,
+        "width": 361,
+        "height": 84,
+        "right": 377,
+        "bottom": 319.0625
+      },
+      "clientWidth": 361,
+      "scrollWidth": 361,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 20,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 75.5,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 79.5,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 135,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 139,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 194.5,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 198.5,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 254,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 258,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 313.5,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 317.5,
+          "y": 239.0625,
+          "width": 55.5,
+          "height": 52,
+          "right": 373,
+          "bottom": 291.0625
+        }
+      ],
+      "overlaps": [-4, -4, -4, -4, -4]
+    },
+    "small-dark": {
+      "row": {
+        "x": 16,
+        "y": 235.0625,
+        "width": 288,
+        "height": 84,
+        "right": 304,
+        "bottom": 319.0625
+      },
+      "clientWidth": 288,
+      "scrollWidth": 288,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 16,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 62.328125,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 64.328125,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 110.65625,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 112.65625,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 158.984375,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 160.984375,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 207.3125,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 209.3125,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 255.640625,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 257.640625,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 303.96875,
+          "bottom": 291.0625
+        }
+      ],
+      "overlaps": [-2, -2, -2, -2, -2]
+    },
+    "small-light": {
+      "row": {
+        "x": 16,
+        "y": 235.0625,
+        "width": 288,
+        "height": 84,
+        "right": 304,
+        "bottom": 319.0625
+      },
+      "clientWidth": 288,
+      "scrollWidth": 288,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 16,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 62.328125,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 64.328125,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 110.65625,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 112.65625,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 158.984375,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 160.984375,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 207.3125,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 209.3125,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 255.640625,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 257.640625,
+          "y": 239.0625,
+          "width": 46.328125,
+          "height": 52,
+          "right": 303.96875,
+          "bottom": 291.0625
+        }
+      ],
+      "overlaps": [-2, -2, -2, -2, -2]
+    },
+    "large-text-dark": {
+      "row": {
+        "x": 16,
+        "y": 447.5625,
+        "width": 361,
+        "height": 116,
+        "right": 377,
+        "bottom": 563.5625
+      },
+      "clientWidth": 361,
+      "scrollWidth": 548,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 16,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 104,
+          "bottom": 507.5625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 108,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 196,
+          "bottom": 507.5625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 200,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 288,
+          "bottom": 507.5625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 292,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 380,
+          "bottom": 507.5625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 384,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 472,
+          "bottom": 507.5625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 476,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 564,
+          "bottom": 507.5625
+        }
+      ],
+      "overlaps": [-4, -4, -4, -4, -4]
+    },
+    "large-text-light": {
+      "row": {
+        "x": 16,
+        "y": 447.5625,
+        "width": 361,
+        "height": 116,
+        "right": 377,
+        "bottom": 563.5625
+      },
+      "clientWidth": 361,
+      "scrollWidth": 548,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 16,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 104,
+          "bottom": 507.5625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 108,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 196,
+          "bottom": 507.5625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 200,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 288,
+          "bottom": 507.5625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 292,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 380,
+          "bottom": 507.5625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 384,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 472,
+          "bottom": 507.5625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": -1,
+          "x": 476,
+          "y": 455.5625,
+          "width": 88,
+          "height": 52,
+          "right": 564,
+          "bottom": 507.5625
+        }
+      ],
+      "overlaps": [-4, -4, -4, -4, -4]
+    }
+  },
+  "trainText": "Train\n\nPush / Pull / Legs ×2 · 6 days/week\n\nLift\nRun\nWeek 1 · General fitness\n1\nPush A\n2\nPull A\n3\nLegs A\n4\nPull B\n5\nPush B\n6\nLegs B\n\nUp next\n\nPush A\n\nStarts with Bench Press\n\n~30 min\n\nHow to do Bench Press\n\nStart workout\n\nWhy this session\n\nBench Press\n\n3 sets × 8 reps · 32.5 kg\n\nLast: 62.5 kg × 8\n\nOverhead Press\n\n3 sets × 8 reps · 20 kg\n\nLateral Raise\n\n2 sets × 10–15 reps · 5 kg\n\nAdd exercise\nShort on time?\nSkip session\n\nStart a training block\n\nPick what the next few weeks are for. Your programme follows.\n\nEmpty workout\nAdd exercises as you go. Your plan stays as it is.",
+  "progress": {
+    "phone-dark": {
+      "card": {
+        "x": 16,
+        "y": 486.1875,
+        "width": 361,
+        "height": 245.78125
+      },
+      "rows": [
+        {
+          "text": "28 Oct\n\nPR\n\n1 set · 600 kg volume\n\n60 kg × 10\n\nLast: 62.5 kg × 8",
+          "to": "/Maiin/workout/b-evening"
+        },
+        {
+          "text": "28 Oct\n\nPR\n\n1 set · 500 kg volume\n\n62.5 kg × 8\n\nLast: 60 kg × 8",
+          "to": "/Maiin/workout/z-morning"
+        },
+        {
+          "text": "27 Oct\n\nPR\n\n1 set · 480 kg volume\n\n60 kg × 8",
+          "to": "/Maiin/workout/a-previous"
+        }
+      ],
+      "pageOverflow": false
+    },
+    "phone-light": {
+      "card": {
+        "x": 16,
+        "y": 486.1875,
+        "width": 361,
+        "height": 245.78125
+      },
+      "rows": [
+        {
+          "text": "28 Oct\n\nPR\n\n1 set · 600 kg volume\n\n60 kg × 10\n\nLast: 62.5 kg × 8",
+          "to": "/Maiin/workout/b-evening"
+        },
+        {
+          "text": "28 Oct\n\nPR\n\n1 set · 500 kg volume\n\n62.5 kg × 8\n\nLast: 60 kg × 8",
+          "to": "/Maiin/workout/z-morning"
+        },
+        {
+          "text": "27 Oct\n\nPR\n\n1 set · 480 kg volume\n\n60 kg × 8",
+          "to": "/Maiin/workout/a-previous"
+        }
+      ],
+      "pageOverflow": false
+    },
+    "large-text-dark": {
+      "card": {
+        "x": 16,
+        "y": 1753.390625,
+        "width": 361,
+        "height": 704.5625
+      },
+      "rows": [
+        {
+          "text": "28 Oct\n\nPR\n\n1 set · 600 kg volume\n\n60 kg × 10\n\nLast: 62.5 kg × 8",
+          "to": "/Maiin/workout/b-evening"
+        },
+        {
+          "text": "28 Oct\n\nPR\n\n1 set · 500 kg volume\n\n62.5 kg × 8\n\nLast: 60 kg × 8",
+          "to": "/Maiin/workout/z-morning"
+        },
+        {
+          "text": "27 Oct\n\nPR\n\n1 set · 480 kg volume\n\n60 kg × 8",
+          "to": "/Maiin/workout/a-previous"
+        }
+      ],
+      "pageOverflow": false
+    },
+    "large-text-light": {
+      "card": {
+        "x": 16,
+        "y": -7.609375,
+        "width": 361,
+        "height": 704.5625
+      },
+      "rows": [
+        {
+          "text": "28 Oct\n\nPR\n\n1 set · 600 kg volume\n\n60 kg × 10\n\nLast: 62.5 kg × 8",
+          "to": "/Maiin/workout/b-evening"
+        },
+        {
+          "text": "28 Oct\n\nPR\n\n1 set · 500 kg volume\n\n62.5 kg × 8\n\nLast: 60 kg × 8",
+          "to": "/Maiin/workout/z-morning"
+        },
+        {
+          "text": "27 Oct\n\nPR\n\n1 set · 480 kg volume\n\n60 kg × 8",
+          "to": "/Maiin/workout/a-previous"
+        }
+      ],
+      "pageOverflow": false
+    }
+  },
+  "metricButtons": [
+    {
+      "name": "1RM",
+      "width": 289,
+      "height": 88
+    },
+    {
+      "name": "Max Weight",
+      "width": 289,
+      "height": 88
+    },
+    {
+      "name": "Volume",
+      "width": 289,
+      "height": 88
+    }
+  ],
+  "sessionRoute": "http://127.0.0.1:4182/Maiin/workout/b-evening",
+  "navigation": {
+    "selected": "Legs B",
+    "withinRow": true,
+    "scrollLeft": 215
+  },
+  "resume": {
+    "weight": "57.5",
+    "reps": "9",
+    "secondPrompt": 0
+  }
+}

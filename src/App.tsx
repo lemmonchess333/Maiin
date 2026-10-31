@@ -127,6 +127,7 @@ const WeeklyReviewPage = lazyRetry(() => import("@/pages/WeeklyReview"));
 const Home = lazyRetry(loadHome);
 const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
+const TrainingHistory = lazyRetry(() => import("@/pages/TrainingHistory"));
 const SettingsIndex = lazyRetry(() => import("@/pages/SettingsIndex"));
 const SettingsProfile = lazyRetry(
   () => import("@/pages/settings/SettingsProfile")
@@ -174,6 +175,7 @@ const SettingsRecentlyDeleted = lazyRetry(
 const SettingsData = lazyRetry(() => import("@/pages/settings/SettingsData"));
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
 const Program = lazyRetry(() => import("@/pages/Program"));
+const TrainingPlan = lazyRetry(() => import("@/pages/TrainingPlan"));
 const Run = lazyRetry(() => import("@/pages/Run"));
 const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
 const RunDetail = lazyRetry(() => import("@/pages/RunDetail"));
@@ -642,6 +644,14 @@ function SignedInRoutes({
                           }
                         />
                         <Route
+                          path="/history/sessions"
+                          element={
+                            <RouteErrorBoundary>
+                              <TrainingHistory />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
                           path="/history/exercise/:name"
                           element={
                             <RouteErrorBoundary>
@@ -807,6 +817,14 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <Program />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/program/plan"
+                          element={
+                            <RouteErrorBoundary>
+                              <TrainingPlan />
                             </RouteErrorBoundary>
                           }
                         />

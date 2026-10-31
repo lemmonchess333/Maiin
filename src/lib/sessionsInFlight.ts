@@ -52,6 +52,8 @@ export interface SessionInProgress {
   elapsedSeconds: number;
   /** Where Resume goes. */
   resumeTarget: string;
+  /** Recording ended on the phone, but review and Save have not happened. */
+  reviewPending?: boolean;
 }
 
 /** A programme workout that can be picked up where it was left. */
@@ -246,12 +248,14 @@ export function runInProgress(
   run: StoredRunSummary,
   name: string
 ): SessionInProgress {
+  const reviewPending = run.phase === "finished";
   return {
     sport: "run",
     name,
     sets: null,
     elapsedSeconds: run.accumulatedSeconds,
-    resumeTarget: `/run?${RESUME_PARAM}=1`,
+    resumeTarget: reviewPending ? "/run-summary" : `/run?${RESUME_PARAM}=1`,
+    ...(reviewPending ? { reviewPending: true } : {}),
   };
 }
 

@@ -724,17 +724,29 @@ describe("GPS acquisition recovery", () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
     expect(h.timerStart).not.toHaveBeenCalled();
+    expect(
+      readStoredRun("recording-test", Date.now())?.recordingStartedAt
+    ).toBeUndefined();
+    act(() => vi.advanceTimersByTime(10_000));
     h.gps.error = null;
-    h.gps.points = [point(0, T0)];
+    h.gps.points = [point(0, Date.now())];
     view.rerender(tree());
     for (let tick = 0; tick < 3; tick++) {
       act(() => vi.advanceTimersByTime(1000));
     }
     expect(h.timerStart).toHaveBeenCalledOnce();
+    expect(
+      readStoredRun("recording-test", Date.now())?.recordingStartedAt
+    ).toBe(T0 + 13_000);
     expect(screen.getByRole("button", { name: "Finish" })).toBeInTheDocument();
     expect(
       screen.queryByRole("textbox", { name: "Distance covered" })
     ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    const finish = JSON.parse(
+      screen.getByTestId("finish-payload").textContent ?? "null"
+    );
+    expect(finish.recordingStartedAt).toBe(T0 + 13_000);
   });
 });
 
@@ -1382,8 +1394,8 @@ describe("manual structured coaching through the real player", () => {
   });
 });
 
-/* Home's and Train's In progress strip offer a run left unsaved, and the
-   finish screen holds a run only in memory until it is saved. */
+/* Home's and Train's strip offers a run left unsaved. Finish persists the
+   review with the same run identity, so a restart does not resume recording. */
 describe("a run picked up from the In progress strip", () => {
   function openAt(url: string) {
     return render(
@@ -1419,15 +1431,21 @@ describe("a run picked up from the In progress strip", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps a finished run stopped, so recovering it never runs on", async () => {
+  it("keeps a finished run stopped with a recoverable review and run ID", async () => {
     await resumeFromSnapshot("active");
     expect(h.timer.isRunning).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Finish" }));
     expect(screen.getByTestId("finish-payload")).toBeInTheDocument();
     expect(readStoredRun("recording-test")).toMatchObject({
-      phase: "paused",
+      phase: "finished",
       isRunning: false,
       accumulatedSeconds: 600,
+      finish: { elapsed: 600, finishedAt: expect.any(Number) },
+      identity: {
+        uid: "recording-test",
+        runId: expect.any(String),
+        sessionId: expect.any(String),
+      },
     });
   });
 });

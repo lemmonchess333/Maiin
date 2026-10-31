@@ -70,6 +70,8 @@ interface SessionCommandCardProps {
   /** Drawn in the primary action's place: the day card carries the In
    *  progress strip there while its workout is under way. */
   action?: ReactNode;
+  /** Keep the command prominent while leaving more room for a surrounding agenda. */
+  compact?: boolean;
 }
 
 export default function SessionCommandCard({
@@ -87,6 +89,7 @@ export default function SessionCommandCard({
   onFigurePress,
   figureLabel,
   action,
+  compact = false,
 }: SessionCommandCardProps) {
   const isRun = sport === "run";
   const Icon = isRun ? Footprints : Dumbbell;
@@ -103,7 +106,12 @@ export default function SessionCommandCard({
         surfaceClass
       )}
     >
-      <div className="@container relative space-y-4 p-4">
+      <div
+        className={cn(
+          "@container relative",
+          compact ? "space-y-3 p-3" : "space-y-4 p-4"
+        )}
+      >
         {/* The picture gives its room to the title under 14em of card
             (larger text on the phone), where beside it "Lat focus" ran
             past the card. */}
@@ -164,7 +172,9 @@ export default function SessionCommandCard({
           ) : (
             <div
               className={cn(
-                "size-12 rounded-2xl flex @max-[14em]:hidden items-center justify-center shrink-0",
+                compact
+                  ? "size-10 rounded-xl flex @max-[14em]:hidden items-center justify-center shrink-0"
+                  : "size-12 rounded-2xl flex @max-[14em]:hidden items-center justify-center shrink-0",
                 tileClass
               )}
             >
@@ -189,7 +199,7 @@ export default function SessionCommandCard({
               variant={
                 primaryActionVariant ?? (sport === "run" ? "sport" : "primary")
               }
-              size="lg"
+              size={compact ? "md" : "lg"}
               fullWidth
               leftIcon={
                 primaryActionIcon ?? (

@@ -1,10 +1,9 @@
 /**
- * HealthKit bridge — daily step count for the Home Steps tile (the iOS half
- * of POST_LAUNCH.md "Steps tile → HealthKit / Health Connect wiring").
+ * HealthKit bridges: capacitor-health reads daily steps for Home, while the
+ * app's WatchRun plugin writes opted-in, server-confirmed run workouts.
  *
- * Web is NEVER routed here — steps are impossible in a browser, so every
- * function guards on `isNativePlatform()` and returns the unavailable / null
- * value on web. Mirrors `nativeAuth.ts` in shape: the plugin is loaded via
+ * Web never reads steps or writes workouts: every native call guards on
+ * `isNativePlatform()` and returns unavailable on web. The plugins load via
  * dynamic `import()` so its chunk never ships in the web bundle, and there
  * are no top-level side effects (lazy-init like `nativeLocationSource`'s
  * `getPlugin()`).
@@ -14,7 +13,7 @@
  * ship a JS entry that `registerPlugin`s the `Health` bridge, so we import it
  * — but lazily, inside `getPlugin()`.
  *
- * HealthKit read-permission quirk (the plugin's own docs confirm it): on iOS
+ * HealthKit STEP READ permission quirk (the plugin's own docs confirm it): on iOS
  * the OS NEVER tells an app whether the user granted or denied a READ scope —
  * `requestHealthPermissions` resolves identically either way, and a denied
  * read simply returns zero samples. So we never invent a "denied" signal the
@@ -24,6 +23,100 @@
  */
 import { isNativePlatform } from "./platform";
 import type { HealthPlugin } from "capacitor-health";
+import type { Plugin } from "@capacitor/core";
+import { CONNECTED_TRAINING_RELEASED } from "./connectedTrainingRelease";
+
+export interface NativeWorkoutExportPlugin extends Plugin {
+  isWorkoutWriteAvailable(): Promise<{ available: boolean }>;
+  requestWorkoutWritePermission(): Promise<{ granted: boolean }>;
+  getWorkoutWriteAuthorization(): Promise<{
+    status: "authorized" | "denied" | "notDetermined";
+  }>;
+  getWorkoutExportStatus(options: { runId: string }): Promise<{
+    status: "absent" | "present" | "unverified";
+    workoutId?: string;
+    revision?: string;
+  }>;
+  exportWorkout(options: {
+    runId: string;
+    revision: string;
+    startMs: number;
+    endMs: number;
+    /** Active phone timer seconds, excluding pauses and GPS wait. */
+    durationSeconds: number;
+    distanceMeters: number;
+    energyKcal?: number;
+  }): Promise<{
+    status: "created" | "present";
+    workoutId: string;
+    revision: string;
+  }>;
+  deleteWorkout(options: {
+    runId: string;
+  }): Promise<{ status: "deleted" | "absent" }>;
+}
+
+let workoutPluginPromise: Promise<NativeWorkoutExportPlugin> | null = null;
+/** The workout writer is the app's WatchRun plugin, not capacitor-health. */
+export async function getNativeWorkoutExportPlugin(): Promise<NativeWorkoutExportPlugin | null> {
+  if (!CONNECTED_TRAINING_RELEASED) return null;
+  return getNativeWorkoutCleanupPlugin();
+}
+
+/** Existing app-owned workouts still need deletion after a release rollback.
+ * Native `deleteWorkout` remains available when new Watch/export work is off. */
+export async function getNativeWorkoutCleanupPlugin(): Promise<NativeWorkoutExportPlugin | null> {
+  if (!isNativePlatform()) return null;
+  try {
+    workoutPluginPromise ??= import("@capacitor/core").then(
+      ({ registerPlugin }) =>
+        registerPlugin<NativeWorkoutExportPlugin>("WatchRun")
+    );
+    return await workoutPluginPromise;
+  } catch {
+    return null;
+  }
+}
+
+/** Actual native writer availability; web and older shells return false. */
+export async function isWorkoutWriteAvailable(): Promise<boolean> {
+  const plugin = await getNativeWorkoutExportPlugin();
+  if (!plugin) return false;
+  try {
+    return (await plugin.isWorkoutWriteAvailable()).available === true;
+  } catch {
+    return false;
+  }
+}
+
+/** HealthKit WRITE access has a readable grant state, unlike READ access. */
+export async function requestWorkoutWritePermission(): Promise<boolean> {
+  const plugin = await getNativeWorkoutExportPlugin();
+  if (!plugin) return false;
+  try {
+    return (await plugin.requestWorkoutWritePermission()).granted === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Readable workout WRITE status for Settings and a revoked-access recovery. */
+export async function getWorkoutWriteAuthorization(): Promise<
+  "authorized" | "denied" | "notDetermined" | "unavailable"
+> {
+  const plugin = await getNativeWorkoutExportPlugin();
+  if (!plugin) return "unavailable";
+  try {
+    const { status } = await plugin.getWorkoutWriteAuthorization();
+    return status === "authorized" ||
+      status === "denied" ||
+      status === "notDetermined"
+      ? status
+      : "unavailable";
+  } catch {
+    return "unavailable";
+  }
+}
 
 /** Lazily imported so this module has no side effects and the plugin chunk
  *  stays out of the web bundle (dynamic import → own chunk, native only). */

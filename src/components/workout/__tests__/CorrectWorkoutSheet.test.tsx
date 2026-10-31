@@ -21,6 +21,43 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 beforeEach(() => {
   h.save.mockReset();
 });
+
+it.each([1 / 3, 61.25])(
+  "keeps a %s-minute clock valid while correcting a set",
+  async (durationMinutes) => {
+    h.save.mockResolvedValue(undefined);
+    const onSaved = vi.fn();
+    render(
+      <CorrectWorkoutSheet
+        uid="u1"
+        workout={
+          {
+            id: "short-lift",
+            durationMinutes,
+            exercises: [
+              {
+                exerciseId: "push-ups",
+                exerciseName: "Push-Ups",
+                sets: [{ reps: 8, weightKg: 0 }],
+              },
+            ],
+          } as Workout
+        }
+        unit="kg"
+        onClose={vi.fn()}
+        onSaved={onSaved}
+      />
+    );
+    expect(screen.getByLabelText("Duration (minutes)")).toBeValid();
+    fireEvent.change(screen.getByLabelText("Set 1 reps"), {
+      target: { value: "9" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save corrections" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalledOnce());
+    expect(h.save.mock.calls[0][5].durationMinutes).toBe(durationMinutes);
+  }
+);
+
 it("retains corrections after failure, retries the same revision and accepts only one pending save", async () => {
   const onClose = vi.fn(),
     onSaved = vi.fn();

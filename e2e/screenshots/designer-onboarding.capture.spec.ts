@@ -145,9 +145,7 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
       }),
     });
   });
-  await page
-    .getByRole("button", { name: "Start my plan", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Go to Today", exact: true }).click();
   await expect(page.getByText(/We couldn’t save your plan/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Try again" })).toBeEnabled();
   expect(requests).toBe(1);

@@ -9,11 +9,11 @@
  * Food's burn or the training-load chart.
  *
  * This module is the one place that knows the stored shape:
- * - the field a query orders and windows by (`completedAt`, which every
- *   saved run carries);
+ * - day-window reads combine the stored `date` with the legacy
+ *   `completedAt` window, so a run synced late still appears on its run day;
  * - how the stored timestamp becomes a `Date`, and the old field forms;
- * - the day a run belongs to: Lift3, the day it STARTED (`date`, written
- *   from the first GPS point), falling back to the day it completed for
+ * - the day a run belongs to: Lift3, the day it STARTED (`date`),
+ *   falling back to the day it completed for
  *   runs saved before `date` existed;
  * - how runs accepted on this phone but not yet synced join the list.
  *
@@ -272,11 +272,10 @@ function dayStart(key: string): Date {
 }
 
 /**
- * The query for a window. Windows are by day but the stored field is the
- * completion time, so the query is a little wider than the window and
- * `inRunWindow` trims it: a run that belongs to `since` completed on or
- * after `since` began, and a run that belongs to `until` may complete after
- * midnight, so the upper bound reaches one day past it.
+ * Legacy completion-time query. Modern runs also need an event-day query:
+ * a run saved or synced days later may have `completedAt` outside a bounded
+ * history window. The companion query below supplies it; this one retains
+ * older documents without `date`.
  */
 export function savedRunsQuery(uid: string, window: RunWindow): Query {
   const runs = collection(db, "users", uid, "runs");
@@ -301,6 +300,25 @@ export function savedRunsQuery(uid: string, window: RunWindow): Query {
     orderBy("completedAt", "desc"),
     ...capped
   );
+}
+
+/** Read the event day as well as the legacy completion window. A saved run
+ *  has carried `date` for years, but older records may lack it. Neither
+ *  query alone can provide complete history across both document shapes. */
+export function savedRunsQueries(uid: string, window: RunWindow): Query[] {
+  const legacy = savedRunsQuery(uid, window);
+  if (!("since" in window)) return [legacy];
+  const runs = collection(db, "users", uid, "runs");
+  const capped = window.cap != null ? [limit(window.cap)] : [];
+  const upper = window.until == null ? [] : [where("date", "<=", window.until)];
+  const byDay = query(
+    runs,
+    where("date", ">=", window.since),
+    ...upper,
+    orderBy("date", "desc"),
+    ...capped
+  );
+  return [byDay, legacy];
 }
 
 /** Fields that, when a queued merge write touches none of them, leave the
@@ -382,6 +400,7 @@ export const SAVED_RUNS: SavedSessionSource<SavedRun, RunWindow> = {
   collection: "runs",
   windowKey: runWindowKey,
   query: savedRunsQuery,
+  queries: savedRunsQueries,
   parseDocs: parseSavedRunDocs,
   inWindow: inRunWindow,
   withQueued: withQueuedRuns,

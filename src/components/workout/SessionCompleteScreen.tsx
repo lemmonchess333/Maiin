@@ -25,7 +25,7 @@ import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
-import { formatLoad } from "@/lib/liftLoad";
+import { formatKitLoad } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { SessionShareAction } from "@/lib/sessionPost";
@@ -52,6 +52,7 @@ interface SessionCompleteScreenProps {
   sessionVariant?: "express45" | "express30" | "easier_today" | "time_budget";
   completing: boolean;
   saved?: boolean;
+  activationJourneyV2?: boolean;
   saveStatus?: "queued" | "synced" | "needs-attention";
   planContext?: { next: string };
   /** The saved session's feed post. The finish screen asks once, posts
@@ -72,6 +73,7 @@ interface SessionCompleteScreenProps {
   /** Names an empty workout (Mob2 call 11). Absent for every other
    *  session, and once the save is under way. */
   onRename?: (name: string) => void;
+  onViewWorkout?: () => void;
 }
 
 export default function SessionCompleteScreen({
@@ -83,6 +85,7 @@ export default function SessionCompleteScreen({
   sessionVariant,
   completing,
   saved = false,
+  activationJourneyV2 = false,
   saveStatus,
   planContext,
   share,
@@ -94,6 +97,7 @@ export default function SessionCompleteScreen({
   planWeek = false,
   accountStart = null,
   onRename,
+  onViewWorkout,
 }: SessionCompleteScreenProps) {
   const today = useLocalDateKey();
   /* The detail being changed: when it started, or its name. */
@@ -241,10 +245,11 @@ export default function SessionCompleteScreen({
       const bestSet =
         workingSets.length > 0
           ? workingSets.reduce((best, s) => {
-              // Unweighted sets all have zero tonnage. Compare their
-              // reps (or hold duration), keeping loaded-set ranking intact.
+              // Holds compare duration even when their loads differ.
+              // Unweighted rep sets compare reps; loaded rep sets use work.
               const improves =
-                s.weight === 0 && best.weight === 0
+                ex.repUnit === "seconds" ||
+                (s.weight === 0 && best.weight === 0)
                   ? s.reps > best.reps
                   : s.weight * s.reps > best.weight * best.reps;
               return improves ? s : best;
@@ -252,6 +257,7 @@ export default function SessionCompleteScreen({
           : null;
       return {
         name: ex.name,
+        exerciseId: ex.exerciseId,
         repUnit: ex.repUnit,
         setsCompleted: workingSets.length,
         totalSets: ex.sets,
@@ -309,12 +315,10 @@ export default function SessionCompleteScreen({
           ) : null}
         </motion.div>
 
-        {/* The result stays visible; only the exercise breakdown is optional.
-            One figure a row under 15em of screen (larger text), as on the
-            saved workout's page: a third of it no longer held "minutes". */}
+        {/* The result stays visible; only the exercise breakdown is optional. */}
         <div className="@container">
           <motion.div
-            className="grid grid-cols-3 divide-x divide-border @max-[15em]:grid-cols-1 @max-[15em]:gap-y-3 @max-[15em]:divide-x-0"
+            className="grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
@@ -358,15 +362,17 @@ export default function SessionCompleteScreen({
                       {name}
                     </p>
                     <p className="text-lg font-extrabold font-figure tabular-nums text-achievement-strong">
-                      {formatLoad(result.weight, liftUnit)} × {result.reps}
+                      {formatKitLoad(result.weight, liftUnit, exerciseId)} ×{" "}
+                      {result.reps}
                     </p>
                     {result.bestBeforeSession && (
                       <p className="text-xs text-muted-foreground">
                         Was{" "}
                         <span className="font-mono tabular-nums">
-                          {formatLoad(
+                          {formatKitLoad(
                             result.bestBeforeSession.weight,
-                            liftUnit
+                            liftUnit,
+                            exerciseId
                           )}{" "}
                           × {result.bestBeforeSession.reps}
                         </span>
@@ -403,12 +409,12 @@ export default function SessionCompleteScreen({
 
         {firsts.length > 0 && (
           <Card size="compact" tone="muted" className="space-y-1">
-            {firsts.map(({ key, name, result }) => (
+            {firsts.map(({ key, name, exerciseId, result }) => (
               <p key={key} className="text-sm text-muted-foreground">
                 <span className="font-semibold text-foreground">{name}</span>
                 {" · "}
                 <InlineNumerals>
-                  {setPRDescription(result, liftUnit)}
+                  {setPRDescription(result, liftUnit, exerciseId)}
                 </InlineNumerals>
               </p>
             ))}
@@ -416,46 +422,47 @@ export default function SessionCompleteScreen({
         )}
 
         {hasMuscleFigure(muscleCategories) && (
-          /* The drawing gives way under 14em of card (larger text, a
-             320 px phone), where beside it "Muscles worked" and a row's
-             sets had less room than a word. */
-          <Card className="@container flex items-center gap-4">
-            {leadArt ? (
-              <img
-                src={formArtCutoutUrl(leadArt.cutout)}
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-                decoding="async"
-                data-lead-drawing={leadArt.exerciseName}
-                className="exercise-drawing h-32 w-28 shrink-0 object-contain @max-[14em]:hidden"
-              />
-            ) : (
-              <MiniMuscleFigure
-                categories={muscleCategories}
-                className="h-32 w-auto shrink-0 @max-[14em]:hidden"
-              />
-            )}
-            <div className="min-w-0 flex-1">
-              <SectionHeading size="compact" as="h3">
-                Muscles worked
-              </SectionHeading>
-              <ul className="mt-2 space-y-1">
-                {muscleRows.slice(0, 4).map(([category, sets]) => (
-                  <li
-                    key={category}
-                    className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm"
-                  >
-                    <span className="truncate text-foreground">
-                      {CATEGORY_DISPLAY[category] ??
-                        movementCategoryLabel(category)}
-                    </span>
-                    <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
-                      {sets} {sets === 1 ? "set" : "sets"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+          <Card className="@container">
+            {/* At larger text sizes, keep the drawing above the list so
+                it cannot squeeze the muscle names or set counts out. */}
+            <div className="flex items-center gap-4 @max-[16em]:flex-col @max-[16em]:items-stretch">
+              {leadArt ? (
+                <img
+                  src={formArtCutoutUrl(leadArt.cutout)}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  decoding="async"
+                  data-lead-drawing={leadArt.exerciseName}
+                  className="exercise-drawing h-32 w-28 shrink-0 self-center object-contain"
+                />
+              ) : (
+                <MiniMuscleFigure
+                  categories={muscleCategories}
+                  className="h-32 w-auto shrink-0 self-center"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <SectionHeading size="compact" as="h3">
+                  Muscles worked
+                </SectionHeading>
+                <ul className="mt-2 space-y-1">
+                  {muscleRows.slice(0, 4).map(([category, sets]) => (
+                    <li
+                      key={category}
+                      className="flex items-baseline justify-between gap-3 text-sm"
+                    >
+                      <span className="min-w-0 break-words text-foreground">
+                        {CATEGORY_DISPLAY[category] ??
+                          movementCategoryLabel(category)}
+                      </span>
+                      <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+                        {sets} {sets === 1 ? "set" : "sets"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </Card>
         )}
@@ -563,7 +570,14 @@ export default function SessionCompleteScreen({
           </p>
         )}
         {saved && <WeekPulseCard />}
-        {saved && <CompletionExtras share={share} badge={false} />}
+        {saved && (
+          <CompletionExtras
+            share={share}
+            badge={false}
+            kind="lift"
+            activationJourneyV2={activationJourneyV2}
+          />
+        )}
         <details className="group space-y-4">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 [&::-webkit-details-marker]:hidden">
             Session details
@@ -599,7 +613,7 @@ export default function SessionCompleteScreen({
                   <div className="text-right shrink-0 ml-3">
                     <p className="text-sm font-mono tabular-nums font-semibold text-lifting-strong">
                       {ex.bestWeight > 0
-                        ? `${formatLoad(ex.bestWeight, liftUnit)} × ${ex.bestReps}${ex.repUnit === "seconds" ? " s" : ""}`
+                        ? `${formatKitLoad(ex.bestWeight, liftUnit, ex.exerciseId)} × ${ex.bestReps}${ex.repUnit === "seconds" ? " s" : ""}`
                         : `${ex.bestReps} ${ex.repUnit === "seconds" ? "s" : "reps"}`}
                     </p>
                     <p
@@ -620,6 +634,16 @@ export default function SessionCompleteScreen({
             with the save's state under it. */}
         {saved && (
           <div className="sticky bottom-0 z-10 -mx-5 mt-auto border-t border-border/50 bg-background px-5 pt-3 pb-[calc(1rem+var(--safe-bottom))]">
+            {onViewWorkout && (
+              <Button
+                fullWidth
+                variant="secondary"
+                className="mb-2"
+                onClick={onViewWorkout}
+              >
+                View workout
+              </Button>
+            )}
             <Button
               ref={doneRef}
               fullWidth

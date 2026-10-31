@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { trainingHistoryReturnTo } from "@/lib/trainingHistory";
 import {
   Info,
   AlertTriangle,
@@ -48,11 +49,14 @@ import {
   paceUnitLabel,
 } from "@/lib/distanceUnits";
 import RunStatGrid from "@/components/run/RunStatGrid";
+import HeartRateSummaryCard from "@/components/run/HeartRateSummaryCard";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import { elevationLabel, runTitle } from "@/lib/runLabels";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
+import { parseLocalDate } from "@/lib/dateHelpers";
+import { isRunDateKey } from "@/lib/runExecutionEvidence";
 
 /**
  * The finish screen's "How did it feel?" answer, as a saved run reads it
@@ -89,6 +93,7 @@ export default function RunDetail() {
   const unit = useDistanceUnit();
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
+  const historyReturnTo = trainingHistoryReturnTo(useLocation().state);
   const { user, profile } = useAuth();
   // The basemap follows the theme on screen, not the profile field.
   const darkTheme = useIsDarkTheme();
@@ -193,7 +198,7 @@ export default function RunDetail() {
         failedHeadline="Couldn't load this run"
         failedSub="Check your connection and try again. Nothing has been changed."
         onRetry={retryRun}
-        backHref="/history"
+        backHref={historyReturnTo ?? "/history"}
         backLabel="History"
       />
     );
@@ -254,7 +259,11 @@ export default function RunDetail() {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const date = run.completedAt?.toDate?.();
+  // A run synced later still belongs to the day it started. Legacy records
+  // without a valid date retain their completion-time fallback.
+  const date = isRunDateKey(run.date)
+    ? parseLocalDate(run.date)
+    : run.completedAt?.toDate?.();
   const dateStr =
     date?.toLocaleDateString("en-GB", {
       weekday: "long",
@@ -497,6 +506,8 @@ export default function RunDetail() {
             },
           ]}
         />
+
+        <HeartRateSummaryCard summary={run.heartRate} />
 
         {/* No splits: say why, once, where the split bars would be.
             Splits are per-kilometre (or per-mile) segments of the GPS

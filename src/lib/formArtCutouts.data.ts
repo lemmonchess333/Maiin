@@ -39,13 +39,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "assault-bike": {
     src: "form-art/assault-bike.webp",
-    width: 211,
-    height: 480,
-    keyed: true,
-    source: "form-frames/assault-bike/1.webp",
+    width: 480,
+    height: 422,
+    keyed: false,
+    source: "form-frames/assault-bike/2026-10-28/1.webp",
     sourceSha256:
-      "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e",
-    sha256: "9b0d9f0778801167407b29e2ac46496212f3a564be1a5c85c4d0213eafc2b321",
+      "c5bec20b1ade77eadb5b08620edc524d82f2d0eba00f08ab31d8b84a194d9ce0",
+    sha256: "81628c5c08879cabf148c834db5a160d60e6f3332e1e79aba43ca9777b189fda",
   },
   "barbell-curl": {
     src: "form-art/barbell-curl.webp",
@@ -539,13 +539,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   elliptical: {
     src: "form-art/elliptical.webp",
-    width: 469,
-    height: 480,
-    keyed: true,
-    source: "form-frames/elliptical/1.webp",
+    width: 480,
+    height: 411,
+    keyed: false,
+    source: "form-frames/elliptical/2026-10-28/4.webp",
     sourceSha256:
-      "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
-    sha256: "43021735200a89e72a718b3d5351790528109796abc709fe46175f892e081e5c",
+      "d614ee076f2042399637038ed264ad06acf1aa9125167e0109f86a29c0a81cce",
+    sha256: "76d73045e0f7c3789b5c6608c8e6945122743f608041f6a93478e1b9c6de6f9b",
   },
   "ez-bar-curl": {
     src: "form-art/ez-bar-curl.webp",
@@ -590,12 +590,12 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   "front-squat": {
     src: "form-art/front-squat.webp",
     width: 480,
-    height: 421,
-    keyed: true,
-    source: "form-frames/front-squat/3.webp",
+    height: 376,
+    keyed: false,
+    source: "form-frames/front-squat/2026-10-28/4.webp",
     sourceSha256:
-      "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
-    sha256: "5e29be2a03c8373f59d8db97bcaa4c666d83303850b0b80cc2c85412a5fbb0c9",
+      "d33d66c7e811d1fcdc3c6d55468237d7eb428a9f94f0da3164460293a6962f89",
+    sha256: "b8f262d1e6dbe4fa5ceeb32755a116327f52d7cc3343111abec7050367c6ee1b",
   },
   "glute-bridge": {
     src: "form-art/glute-bridge.webp",

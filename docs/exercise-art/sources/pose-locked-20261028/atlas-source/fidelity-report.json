@@ -1,0 +1,52 @@
+{
+  "resolution": [1024, 1024],
+  "build": "./build.sh 1024 <output-directory>",
+  "status": "ATLAS_VERIFY_OK",
+  "comparisons": {
+    "front_squat-modesty-contour-color-1024.png": {
+      "rebuiltSha256": "8eb3309b51a9114a55b4f3aa0d238fe3af419f848f66eef9547ad9e4976effd6",
+      "approvedSha256": "f4132316c74b789983996fe3c4c106ea66e227f6190303e5521ef3b36c241d26",
+      "byteIdentical": false,
+      "pixelMeanAbsoluteError": 7.152557373046875e-7,
+      "maxChannelError": 1,
+      "changedPixelCount": 3,
+      "totalPixels": 1048576
+    },
+    "front_squat-clean-normal-1024.png": {
+      "rebuiltSha256": "ea5fad64d2a10bc0bd706851c5f303f0f96e8f49c3b52e32c23c5dc66344613a",
+      "approvedSha256": "ea5fad64d2a10bc0bd706851c5f303f0f96e8f49c3b52e32c23c5dc66344613a",
+      "byteIdentical": true,
+      "pixelMeanAbsoluteError": 0.0,
+      "maxChannelError": 0,
+      "changedPixelCount": 0,
+      "totalPixels": 1048576
+    },
+    "assault_bike-modesty-contour-color-1024.png": {
+      "rebuiltSha256": "3aec05ee34238a24d3f84003c1a0b340da8a7b8210ab5a9a141bbc4b9197aff0",
+      "approvedSha256": "5b3896aeda6a9ce5ebbbc3d0b7e916e697c3fa1be8163a773d64248bacd382a3",
+      "byteIdentical": false,
+      "pixelMeanAbsoluteError": 0.0018641948699951172,
+      "maxChannelError": 8,
+      "changedPixelCount": 2490,
+      "totalPixels": 1048576
+    },
+    "elliptical-modesty-contour-color-1024.png": {
+      "rebuiltSha256": "fd8fe438422ea6cee923d1e624cb87e8124be488cd0d4fdbd27acc804872559c",
+      "approvedSha256": "a2245c90a69e5f45f57e10e96445837f32682a0954860823589de32b0aaf5752",
+      "byteIdentical": false,
+      "pixelMeanAbsoluteError": 0.0014653205871582031,
+      "maxChannelError": 5,
+      "changedPixelCount": 2376,
+      "totalPixels": 1048576
+    },
+    "anatomy-modesty-normal-1024.png": {
+      "rebuiltSha256": "21a2b93b283c49080c2835a174190e3cc8b253ebd577dff0ac35f8d0b275a971",
+      "approvedSha256": "21a2b93b283c49080c2835a174190e3cc8b253ebd577dff0ac35f8d0b275a971",
+      "byteIdentical": true,
+      "pixelMeanAbsoluteError": 0.0,
+      "maxChannelError": 0,
+      "changedPixelCount": 0,
+      "totalPixels": 1048576
+    }
+  }
+}

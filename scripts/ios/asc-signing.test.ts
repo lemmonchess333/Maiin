@@ -34,6 +34,7 @@ const bundleIds = {
     // A prefix match the API may return alongside the real one.
     { id: "B-WIDGET", attributes: { identifier: "com.tropos.app.widget" } },
     { id: "B-APP", attributes: { identifier: "com.tropos.app" } },
+    { id: "B-WATCH", attributes: { identifier: "com.tropos.app.watchkitapp" } },
   ],
 };
 
@@ -163,6 +164,43 @@ describe("App Store Connect signing from the API key", () => {
     expect(result.profile.toString()).toBe("PROFILE");
   });
 
+  it("makes separate iPhone and Watch profiles with the same certificate", async () => {
+    const api = fakeApi(
+      account({
+        profiles: [
+          { id: "P-OLD-APP", name: "Tropos CI 11AA22BB" },
+          { id: "P-OLD-WATCH", name: "Tropos CI 11AA22BB Watch 1" },
+        ],
+        certificates: [{ id: "C-OLD", serialNumber: "11AA22BB" }],
+      })
+    );
+    const result = await asc.prepareSigning({
+      request: api.request,
+      bundleIdentifiers: ["com.tropos.app", "com.tropos.app.watchkitapp"],
+      csr: "CSR",
+    });
+    expect(api.calls.filter((c) => c.method === "DELETE").map((c) => c.path)).toEqual([
+      "/v1/profiles/P-OLD-APP",
+      "/v1/profiles/P-OLD-WATCH",
+      "/v1/certificates/C-OLD",
+    ]);
+    const created = api.calls.filter((c) => c.method === "POST" && c.path === "/v1/profiles");
+    expect(created).toHaveLength(2);
+    expect(created[0].body).toMatchObject({
+      data: { relationships: {
+        bundleId: { data: { id: "B-APP" } },
+        certificates: { data: [{ id: "C-NEW" }] },
+      } },
+    });
+    expect(created[1].body).toMatchObject({
+      data: { relationships: {
+        bundleId: { data: { id: "B-WATCH" } },
+        certificates: { data: [{ id: "C-NEW" }] },
+      } },
+    });
+    expect(Object.keys(result.profiles)).toEqual(["com.tropos.app", "com.tropos.app.watchkitapp"]);
+  });
+
   it("leaves every certificate alone when no earlier run's profile is there", async () => {
     const api = fakeApi(
       account({ certificates: [{ id: "C-OWNER", serialNumber: "99FF88EE" }] })
@@ -179,12 +217,51 @@ describe("App Store Connect signing from the API key", () => {
     expect(api.calls.at(-1)).toMatchObject({ method: "DELETE", path: "/v1/certificates/C-NEW" });
   });
 
+  it("removes the new iPhone profile if the Watch profile fails", async () => {
+    const base = account();
+    let profilePosts = 0;
+    const api = fakeApi((call) => {
+      if (call.method === "POST" && call.path === "/v1/profiles" && ++profilePosts === 2) {
+        throw new asc.AppStoreConnectError(409, "Watch profile refused", "POST /v1/profiles");
+      }
+      return base(call);
+    });
+    await expect(
+      asc.prepareSigning({
+        request: api.request,
+        bundleIdentifiers: ["com.tropos.app", "com.tropos.app.watchkitapp"],
+        csr: "CSR",
+      })
+    ).rejects.toThrow("Watch profile refused");
+    expect(api.calls.filter((c) => c.method === "DELETE").map((c) => c.path)).toEqual([
+      "/v1/profiles/P-NEW",
+      "/v1/certificates/C-NEW",
+    ]);
+  });
+
   it("names the missing App ID instead of making a certificate for nothing", async () => {
     const api = fakeApi(account());
     await expect(
       asc.prepareSigning({ request: api.request, bundleIdentifier: "com.other.app", csr: "CSR" })
     ).rejects.toThrow(/no App ID for com\.other\.app.*Identifiers/);
     expect(api.calls.some((c) => c.method === "POST")).toBe(false);
+  });
+
+  it("checks the Watch App ID before revoking an earlier valid certificate", async () => {
+    const api = fakeApi(
+      account({
+        profiles: [{ id: "P-OLD", name: "Tropos CI 11AA22BB" }],
+        certificates: [{ id: "C-OLD", serialNumber: "11AA22BB" }],
+      })
+    );
+    await expect(
+      asc.prepareSigning({
+        request: api.request,
+        bundleIdentifiers: ["com.tropos.app", "com.tropos.app.missing-watch"],
+        csr: "CSR",
+      })
+    ).rejects.toThrow(/no App ID for com\.tropos\.app\.missing-watch/);
+    expect(api.calls.every((call) => call.method === "GET")).toBe(true);
   });
 
   it("follows the API's pages", async () => {
@@ -268,6 +345,25 @@ describe("deploy-ios.yml signs from the API key when no certificate is given", (
     expect(preflight).toMatch(/Only some of your own signing secrets are set/);
     for (const name of ["APPLE_TEAM_ID", "ASC_API_KEY_ID", "ASC_API_ISSUER_ID", "ASC_API_KEY_P8_BASE64"]) {
       expect(preflight).toMatch(new RegExp(`for name in [^;]*${name}`));
+    }
+    expect(preflight).toContain("IOS_WATCH_PROVISIONING_PROFILE_BASE64");
+    expect(preflight).toMatch(/\[ "\$own" -ne 4 \]/);
+  });
+
+  it("maps both app IDs to their own profiles and verifies the embedded Watch app twice", () => {
+    expect(workflow).toContain("WATCH_BUNDLE_ID: com.tropos.app.watchkitapp");
+    const imported = step("Import signing certificate + provisioning profile");
+    expect(imported).toContain("WATCH_PROFILE_UUID");
+    expect(imported).toContain("WATCH_FACTS");
+    expect(step("Sign the iPhone and Watch targets with App Store profiles")).toContain(
+      'os.environ["WATCH_BUNDLE_ID"]: os.environ["WATCH_PROFILE_UUID"]'
+    );
+    expect(step("Export .ipa")).toContain("<key>${WATCH_BUNDLE_ID}</key><string>${WATCH_PROFILE_UUID}</string>");
+    for (const name of [
+      "Verify archived iPhone and Watch signing",
+      "Verify exported iPhone and Watch signing",
+    ]) {
+      expect(step(name)).toContain("python3 scripts/verify_ios_watch.py");
     }
   });
 

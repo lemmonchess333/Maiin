@@ -10,6 +10,21 @@ const written = (figure: { to: number; format: (n: number) => string }) =>
   figure.format(figure.to);
 
 describe("lift figures", () => {
+  it.each([
+    { minutes: 0.2, value: "<1", unit: "minute" },
+    { minutes: 0.9, value: "1", unit: "minute" },
+    { minutes: 1.2, value: "1", unit: "minute" },
+    { minutes: 59.6, value: "1:00", unit: "hr:min" },
+    { minutes: 60.2, value: "1:00", unit: "hr:min" },
+  ])(
+    "keeps the displayed value and unit together for $minutes minutes",
+    ({ minutes, value, unit }) => {
+      const figure = durationFigure(minutes);
+      expect(written(figure)).toBe(value);
+      expect(figure.unit).toBe(unit);
+    }
+  );
+
   it("writes the time in minutes, and as a clock past the hour", () => {
     // Under half a minute rounds to 0: said as under a minute, not zero.
     expect(written(durationFigure(0))).toBe("<1");

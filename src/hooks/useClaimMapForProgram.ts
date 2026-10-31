@@ -45,27 +45,33 @@ import { claimableRuns, claimMapFor, type SavedRunDoc } from "@/lib/runClaims";
 import { useSavedRuns } from "./useSavedRuns";
 
 /**
- * Stable-by-content fingerprint per Q3 P37. Multiple cheap signals
- * to defeat Firestore's new-array-ref churn on metadata-only events:
- *   - length (catches additions / deletions)
- *   - Σ updatedAt seconds (catches content changes)
- *   - manual key count
- *   - today string
- * NOT JSON.stringify (O(S) serialise per render).
+ * Stable-by-content key for the bounded claim window. Include every claim
+ * input, so a distance/quality/date correction invalidates the map even when
+ * the saved record's id and creation time stay unchanged. Serialise only
+ * these small tuples, never route coordinates or whole saved documents.
  */
 function computeFingerprint(
   savedRuns: SavedRunLike[],
-  manualKeys: number,
+  manualCompletions: NonNullable<ProgramState["manualCompletions"]>,
   today: string
 ): string {
-  let sumUpdated = 0;
-  for (const sr of savedRuns) {
-    if (sr.createdAt && typeof sr.createdAt === "object") {
-      const c = sr.createdAt as { seconds?: number };
-      if (typeof c.seconds === "number") sumUpdated += c.seconds;
-    }
-  }
-  return `${savedRuns.length}|${sumUpdated}|${manualKeys}|${today}`;
+  return JSON.stringify([
+    today,
+    savedRuns.map((run) => [
+      run.id,
+      run.date,
+      run.distance,
+      run.avgPace,
+      run.templateId,
+      run.activityType,
+      run.createdAt instanceof Date
+        ? run.createdAt.getTime()
+        : typeof run.createdAt === "object"
+          ? run.createdAt?.seconds
+          : run.createdAt,
+    ]),
+    Object.entries(manualCompletions).sort(([a], [b]) => a.localeCompare(b)),
+  ]);
 }
 
 interface UseClaimMapResult {
@@ -80,6 +86,14 @@ interface UseClaimMapResult {
    *  watching midnight rollover key off this. */
   today: string;
   loading: boolean;
+  /** Whether the saved-run read failed, so an empty map cannot be
+   *  mistaken for proof that a scheduled run is uncompleted. */
+  failed: boolean;
+  /** All completion evidence has answered from the server. Writers that
+   *  depend on absence of a claim must wait for this. */
+  evidenceReady: boolean;
+  /** Retry the canonical saved-run subscription. */
+  refresh: () => void;
 }
 
 /**
@@ -99,9 +113,8 @@ export function claimWindowStart(
     if (typeof day.date === "string" && day.date.length === 10)
       if (day.date < since) since = day.date;
   }
-  // A day early: the window is read by completion time from local
-  // midnight, and a run recorded east of here completed before this
-  // zone's midnight of the day it belongs to.
+  // A day early for legacy completion-time reads: a run recorded east of
+  // here may complete before this zone's midnight of the day it belongs to.
   return localDateString(addLocalDays(parseLocalDate(since), -1));
 }
 
@@ -114,7 +127,7 @@ export function useClaimMapForProgram(
   dateAnchor?: string
 ): UseClaimMapResult {
   /* The account's saved runs, through the one reader (`useSavedRuns`):
-     ordered by `completedAt`, which every saved run carries, scoped to the
+     by event day plus legacy completion time, scoped to the
      signed-in account (another account's runs never claim this plan's
      slots, not even for the render before the new listener lands), and
      with runs saved on this phone but not yet synced, so an offline run
@@ -123,7 +136,8 @@ export function useClaimMapForProgram(
   const runDays = programState?.runDays ?? [];
   const since = claimWindowStart(today, runDays);
   const window = useMemo<RunWindow>(() => ({ since }), [since]);
-  const { runs, loading } = useSavedRuns(window);
+  const { runs, loading, failed, evidenceReady, refresh } =
+    useSavedRuns(window);
   /* Only runs that count fill a planned day or show as an extra
      (`claimableRuns`). */
   const savedRuns = useMemo(() => claimableRuns(runs), [runs]);
@@ -133,11 +147,7 @@ export function useClaimMapForProgram(
   // Stable-by-content fingerprint catches Firestore's new-array-ref
   // churn. Recompute the claim map only when the fingerprint
   // changes — not on every Firestore tick.
-  const fingerprint = computeFingerprint(
-    savedRuns,
-    Object.keys(manualCompletions).length,
-    today
-  );
+  const fingerprint = computeFingerprint(savedRuns, manualCompletions, today);
 
   // Memo deps include runDays array reference (its identity changes
   // when programState updates) + the fingerprint above. The
@@ -173,5 +183,14 @@ export function useClaimMapForProgram(
     [claimMap, savedRuns]
   );
 
-  return { claimMap, unclaimedByDate, runs, today, loading };
+  return {
+    claimMap,
+    unclaimedByDate,
+    runs,
+    today,
+    loading,
+    failed,
+    evidenceReady,
+    refresh,
+  };
 }

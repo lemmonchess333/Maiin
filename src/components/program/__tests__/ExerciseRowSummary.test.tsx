@@ -28,7 +28,9 @@ describe("ExerciseThumb — each exercise's picture", () => {
   });
 
   it("shows the released Close Grip Bench drawing", () => {
-    const { container } = render(<ExerciseThumb exerciseId="close-grip-bench" />);
+    const { container } = render(
+      <ExerciseThumb exerciseId="close-grip-bench" />
+    );
     const tile = container.firstElementChild as HTMLElement;
     expect(tile.dataset.thumb).toBe("drawing");
     expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
@@ -51,12 +53,12 @@ describe("ExerciseThumb — each exercise's picture", () => {
     }
   );
 
-  it("does not show a withheld squat variant's drawing", () => {
+  it("shows the released Front Squat drawing", () => {
     const { container } = render(<ExerciseThumb exerciseId="Front Squat" />);
     const tile = container.firstElementChild as HTMLElement;
-    expect(tile.dataset.thumb).toBe("muscles");
+    expect(tile.dataset.thumb).toBe("drawing");
     expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
-      /^data:image\/svg\+xml,/
+      /form-art\/front-squat\.webp$/
     );
   });
 

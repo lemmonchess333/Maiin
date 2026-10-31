@@ -200,6 +200,32 @@ describe("ExerciseFormContent — the instruction list", () => {
     expect(screen.queryByText("Catalogue step one.")).toBeNull();
   });
 
+  it("keeps the picker guide's full list behind a disclosure while showing preparation and advice", async () => {
+    beatsRef.current = BEATS;
+    setupRef.current = ["Set the handles before starting."];
+    render(<ExerciseFormContent exerciseName="Dips" compactGuide />);
+
+    expect(
+      await screen.findByText("Set the handles before starting.")
+    ).toHaveTextContent("Preparation:");
+    expect(screen.getByText("Watch the shoulders.")).toBeInTheDocument();
+    expect(screen.queryByText(BEATS[0].cue)).toBeNull();
+
+    const disclosure = screen.getByRole("button", { name: "All 3 steps" });
+    expect(disclosure).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("Instructions")).toBeNull();
+    fireEvent.click(disclosure);
+    expect(screen.getByRole("button", { name: "Hide steps" })).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+    for (const beat of BEATS) {
+      expect(screen.getByText(beat.cue)).toBeInTheDocument();
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Hide steps" }));
+    expect(screen.queryByText(BEATS[0].cue)).toBeNull();
+  });
+
   it("does not display authored preparation when the guide has no released beats", async () => {
     setupRef.current = ["Preparation for an unreleased guide."];
     render(<ExerciseFormContent exerciseName="Dips" />);

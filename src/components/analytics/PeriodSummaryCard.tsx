@@ -1,4 +1,6 @@
 import { useRef, useState, type KeyboardEvent } from "react";
+import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import Card from "@/components/ui/Card";
@@ -17,6 +19,7 @@ import {
 import { abbreviateK } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { binAxis } from "@/components/analytics/binAxis";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 
 /** What the bars can show: the three figures above them. */
 export type SummaryMetric = "sessions" | "volume" | "distance";
@@ -79,6 +82,7 @@ export default function PeriodSummaryCard({
   granularity,
   plannedThisWeek,
   distanceUnit,
+  sessionsLink,
 }: {
   title: string;
   /**
@@ -100,6 +104,8 @@ export default function PeriodSummaryCard({
   plannedThisWeek: number;
   /** The reader's distance unit, for the distance bars' description. */
   distanceUnit: DistanceUnit;
+  /** The saved-session list for this exact window, with a way back to Analytics. */
+  sessionsLink?: { to: string; returnTo: string };
 }) {
   const liftUnit = useLiftUnit();
   const [metric, setMetric] = useState<SummaryMetric>("sessions");
@@ -420,6 +426,19 @@ export default function PeriodSummaryCard({
             )}
           </div>
         </div>
+      )}
+      {sessionsLink && (
+        <Link
+          to={sessionsLink.to}
+          state={{ returnTo: sessionsLink.returnTo }}
+          className={buttonClasses({
+            variant: "ghost",
+            className: "w-full justify-between",
+          })}
+        >
+          View sessions in this period
+          <ChevronRight className="size-4" aria-hidden="true" />
+        </Link>
       )}
     </Card>
   );

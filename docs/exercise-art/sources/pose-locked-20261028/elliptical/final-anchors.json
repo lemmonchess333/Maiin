@@ -1,0 +1,187 @@
+{
+  "width": 1080,
+  "height": 1080,
+  "frames": [
+    {
+      "frame": 1,
+      "phase": 0.0,
+      "fixed": {
+        "console": [825.08, 394.31],
+        "flywheel": [246.46, 769.27],
+        "rearBase": [67.55, 880.24],
+        "frontBase": [847.85, 954.44]
+      },
+      "near": {
+        "pedal": [540.28, 852.96],
+        "shoeSoleTarget": [540.28, 842.06],
+        "grip": [620.56, 392.0],
+        "hookCenter": [601.9, 390.46],
+        "hookAxisDistanceMetres": 0.0604,
+        "wrist": [592.69, 389.35],
+        "ankle": [510.55, 808.73],
+        "handlePivot": [661.43, 718.45]
+      },
+      "far": {
+        "pedal": [505.5, 812.25],
+        "shoeSoleTarget": [505.5, 801.36],
+        "grip": [801.29, 371.79],
+        "hookCenter": [809.57, 363.31],
+        "hookAxisDistanceMetres": 0.0694,
+        "wrist": [773.42, 369.14],
+        "ankle": [475.77, 768.02],
+        "handlePivot": [775.28, 691.88]
+      }
+    },
+    {
+      "frame": 2,
+      "phase": 0.16666666666666666,
+      "fixed": {
+        "console": [825.08, 394.31],
+        "flywheel": [246.46, 769.27],
+        "rearBase": [67.55, 880.24],
+        "frontBase": [847.85, 954.44]
+      },
+      "near": {
+        "pedal": [492.25, 824.23],
+        "shoeSoleTarget": [492.25, 813.33],
+        "grip": [637.28, 386.04],
+        "hookCenter": [618.43, 381.31],
+        "hookAxisDistanceMetres": 0.06,
+        "wrist": [609.41, 383.39],
+        "ankle": [462.53, 780.0],
+        "handlePivot": [661.43, 718.45]
+      },
+      "far": {
+        "pedal": [544.57, 840.13],
+        "shoeSoleTarget": [544.57, 829.23],
+        "grip": [784.57, 377.75],
+        "hookCenter": [793.4, 370.17],
+        "hookAxisDistanceMetres": 0.0662,
+        "wrist": [756.7, 375.1],
+        "ankle": [515.24, 794.04],
+        "handlePivot": [775.28, 691.88]
+      }
+    },
+    {
+      "frame": 3,
+      "phase": 0.3333333333333333,
+      "fixed": {
+        "console": [825.08, 394.31],
+        "flywheel": [246.46, 769.27],
+        "rearBase": [67.55, 880.24],
+        "frontBase": [847.85, 954.44]
+      },
+      "near": {
+        "pedal": [417.94, 817.16],
+        "shoeSoleTarget": [417.94, 806.27],
+        "grip": [670.72, 389.22],
+        "hookCenter": [649.9, 384.99],
+        "hookAxisDistanceMetres": 0.0641,
+        "wrist": [642.86, 386.57],
+        "ankle": [388.21, 772.94],
+        "handlePivot": [661.43, 718.45]
+      },
+      "far": {
+        "pedal": [618.88, 847.2],
+        "shoeSoleTarget": [618.88, 836.3],
+        "grip": [751.13, 374.57],
+        "hookCenter": [760.49, 367.48],
+        "hookAxisDistanceMetres": 0.062,
+        "wrist": [723.26, 371.92],
+        "ankle": [589.16, 802.96],
+        "handlePivot": [775.28, 691.88]
+      }
+    },
+    {
+      "frame": 4,
+      "phase": 0.5,
+      "fixed": {
+        "console": [825.08, 394.31],
+        "flywheel": [246.46, 769.27],
+        "rearBase": [67.55, 880.24],
+        "frontBase": [847.85, 954.44]
+      },
+      "near": {
+        "pedal": [391.65, 838.82],
+        "shoeSoleTarget": [391.65, 827.93],
+        "grip": [687.44, 398.36],
+        "hookCenter": [664.24, 397.22],
+        "hookAxisDistanceMetres": 0.0694,
+        "wrist": [659.58, 395.71],
+        "ankle": [361.93, 794.59],
+        "handlePivot": [661.43, 718.45]
+      },
+      "far": {
+        "pedal": [654.13, 826.39],
+        "shoeSoleTarget": [654.13, 815.49],
+        "grip": [734.4, 365.43],
+        "hookCenter": [743.8, 357.34],
+        "hookAxisDistanceMetres": 0.0604,
+        "wrist": [706.54, 362.78],
+        "ankle": [624.4, 782.16],
+        "handlePivot": [775.28, 691.88]
+      }
+    },
+    {
+      "frame": 5,
+      "phase": 0.6666666666666666,
+      "fixed": {
+        "console": [825.08, 394.31],
+        "flywheel": [246.46, 769.27],
+        "rearBase": [67.55, 880.24],
+        "frontBase": [847.85, 954.44]
+      },
+      "near": {
+        "pedal": [430.72, 866.7],
+        "shoeSoleTarget": [430.72, 855.8],
+        "grip": [670.72, 404.32],
+        "hookCenter": [649.2, 403.82],
+        "hookAxisDistanceMetres": 0.0662,
+        "wrist": [642.86, 401.67],
+        "ankle": [401.76, 820.53],
+        "handlePivot": [661.43, 718.45]
+      },
+      "far": {
+        "pedal": [606.1, 797.66],
+        "shoeSoleTarget": [606.1, 786.76],
+        "grip": [751.13, 359.47],
+        "hookCenter": [760.02, 348.27],
+        "hookAxisDistanceMetres": 0.06,
+        "wrist": [723.26, 356.82],
+        "ankle": [576.37, 753.43],
+        "handlePivot": [775.28, 691.88]
+      }
+    },
+    {
+      "frame": 6,
+      "phase": 0.8333333333333334,
+      "fixed": {
+        "console": [825.08, 394.31],
+        "flywheel": [246.46, 769.27],
+        "rearBase": [67.55, 880.24],
+        "frontBase": [847.85, 954.44]
+      },
+      "near": {
+        "pedal": [505.04, 873.76],
+        "shoeSoleTarget": [505.04, 862.87],
+        "grip": [637.28, 401.14],
+        "hookCenter": [617.93, 400.75],
+        "hookAxisDistanceMetres": 0.062,
+        "wrist": [609.41, 398.49],
+        "ankle": [475.31, 829.53],
+        "handlePivot": [661.43, 718.45]
+      },
+      "far": {
+        "pedal": [531.78, 790.59],
+        "shoeSoleTarget": [531.78, 779.7],
+        "grip": [784.57, 362.65],
+        "hookCenter": [793.1, 351.57],
+        "hookAxisDistanceMetres": 0.0641,
+        "wrist": [756.7, 360.0],
+        "ankle": [502.05, 746.37],
+        "handlePivot": [775.28, 691.88]
+      }
+    }
+  ],
+  "loopToFrame": 1
+}

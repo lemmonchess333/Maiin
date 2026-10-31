@@ -18,10 +18,13 @@ export default function ExerciseFormSheet({
   exerciseName,
   open,
   onOpenChange,
+  compactGuide = false,
 }: {
   exerciseName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Live sessions keep the current cue beside the movement in one view. */
+  compactGuide?: boolean;
 }) {
   return (
     <BottomSheet
@@ -43,7 +46,11 @@ export default function ExerciseFormSheet({
             </div>
           }
         >
-          <ExerciseFormContent exerciseName={exerciseName} active={open} />
+          <ExerciseFormContent
+            exerciseName={exerciseName}
+            active={open}
+            compactGuide={compactGuide}
+          />
         </Suspense>
       </div>
     </BottomSheet>

@@ -1,0 +1,314 @@
+{
+  "kg": {
+    "saved": {
+      "legEffort": 8,
+      "legSets": 3,
+      "bellSets": 3,
+      "bellWeightKg": 16
+    },
+    "screens": {
+      "phone-dark": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">12,210</p><p class=\"mt-0.5 text-sm text-muted-foreground\">kg lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "16px",
+        "font": "16px",
+        "parentFont": "16px",
+        "container": "inline-size",
+        "columns": "109.656px 109.672px 109.656px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ]
+      },
+      "phone-light": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">12,210</p><p class=\"mt-0.5 text-sm text-muted-foreground\">kg lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "16px",
+        "font": "16px",
+        "parentFont": "16px",
+        "container": "inline-size",
+        "columns": "109.656px 109.672px 109.656px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ]
+      },
+      "small-dark": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">12,210</p><p class=\"mt-0.5 text-sm text-muted-foreground\">kg lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "16px",
+        "font": "16px",
+        "parentFont": "16px",
+        "container": "inline-size",
+        "columns": "256px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ]
+      },
+      "small-light": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">12,210</p><p class=\"mt-0.5 text-sm text-muted-foreground\">kg lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "16px",
+        "font": "16px",
+        "parentFont": "16px",
+        "container": "inline-size",
+        "columns": "256px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ]
+      },
+      "large-text-dark": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">12,210</p><p class=\"mt-0.5 text-sm text-muted-foreground\">kg lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "32px",
+        "font": "32px",
+        "parentFont": "32px",
+        "container": "inline-size",
+        "columns": "329px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ],
+        "title": {
+          "lines": 1,
+          "width": 329
+        }
+      },
+      "large-text-light": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">12,210</p><p class=\"mt-0.5 text-sm text-muted-foreground\">kg lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "32px",
+        "font": "32px",
+        "parentFont": "32px",
+        "container": "inline-size",
+        "columns": "329px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ],
+        "title": {
+          "lines": 1,
+          "width": 329
+        }
+      }
+    }
+  },
+  "lbs": {
+    "saved": {
+      "legEffort": 8,
+      "legSets": 3,
+      "bellSets": 3,
+      "bellWeightKg": 16
+    },
+    "screens": {
+      "phone-dark": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">26,920</p><p class=\"mt-0.5 text-sm text-muted-foreground\">lb lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "16px",
+        "font": "16px",
+        "parentFont": "16px",
+        "container": "inline-size",
+        "columns": "109.656px 109.672px 109.656px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ]
+      },
+      "phone-light": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">26,920</p><p class=\"mt-0.5 text-sm text-muted-foreground\">lb lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "16px",
+        "font": "16px",
+        "parentFont": "16px",
+        "container": "inline-size",
+        "columns": "109.656px 109.672px 109.656px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ]
+      },
+      "small-dark": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">26,920</p><p class=\"mt-0.5 text-sm text-muted-foreground\">lb lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "16px",
+        "font": "16px",
+        "parentFont": "16px",
+        "container": "inline-size",
+        "columns": "256px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ]
+      },
+      "small-light": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">26,920</p><p class=\"mt-0.5 text-sm text-muted-foreground\">lb lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "16px",
+        "font": "16px",
+        "parentFont": "16px",
+        "container": "inline-size",
+        "columns": "256px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ]
+      },
+      "large-text-dark": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">26,920</p><p class=\"mt-0.5 text-sm text-muted-foreground\">lb lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "32px",
+        "font": "32px",
+        "parentFont": "32px",
+        "container": "inline-size",
+        "columns": "329px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ],
+        "title": {
+          "lines": 1,
+          "width": 329
+        }
+      },
+      "large-text-light": {
+        "html": "<div class=\"grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0\"><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">18</p><p class=\"mt-0.5 text-sm text-muted-foreground\">minutes</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">26,920</p><p class=\"mt-0.5 text-sm text-muted-foreground\">lb lifted</p></div><div class=\"px-2 text-center\"><p class=\"font-extrabold font-figure tabular-nums text-foreground text-h3\">6</p><p class=\"mt-0.5 text-sm text-muted-foreground\">sets</p></div></div>",
+        "rootFont": "32px",
+        "font": "32px",
+        "parentFont": "32px",
+        "container": "inline-size",
+        "columns": "329px",
+        "overflow": false,
+        "figures": [
+          {
+            "text": "18\n\nminutes",
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "clipped": false
+          }
+        ],
+        "title": {
+          "lines": 1,
+          "width": 329
+        }
+      }
+    }
+  }
+}

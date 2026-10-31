@@ -35,13 +35,13 @@
 #   development profile that will never exist; the export options named no
 #   profile for the manual export; and the app declared none of the
 #   entitlements Sign in with Apple and HealthKit need, so both would have
-#   failed on the phone. Signing now switches the App target alone to the
-#   imported App Store profile, and the profile is checked against the
+#   failed on the phone. Signing now switches the app targets to their
+#   imported App Store profiles, and each profile is checked against the
 #   certificate, the team and the app's entitlements before the archive.
 #
-# Canonical pattern: import a distribution cert + provisioning profile into
+# Canonical pattern: import a distribution cert + both provisioning profiles into
 # an ephemeral keychain, archive with xcodebuild, export an .ipa, upload
-# with an App Store Connect API key. The cert and profile are the owner's
+# with an App Store Connect API key. The cert and profiles are the owner's
 # own when the IOS_DIST_CERT_* secrets are set; otherwise the run makes them
 # from the API key (scripts/ios/asc-signing.mjs), so the API key, the team ID
 # and the Firebase plist are all it needs. See docs/ios-release.md.
@@ -89,6 +89,8 @@ jobs:
       # by design (it ships inside the bundle); the scoping rule is about
       # the signing material, which is still nowhere near npm.
       BUNDLE_ID: com.tropos.app
+      WATCH_BUNDLE_ID: com.tropos.app.watchkitapp
+      WATCH_ENTITLEMENTS: ios/App/TroposWatch/TroposWatch.entitlements
       SCHEME: App
 
     steps:
@@ -103,6 +105,7 @@ jobs:
           IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
           IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_WATCH_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_WATCH_PROVISIONING_PROFILE_BASE64 }}
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
           ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
           ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
@@ -118,21 +121,21 @@ jobs:
             echo "::error::Missing repository secrets:$missing. docs/ios-release.md says how to make each one, without a Mac."
             exit 1
           fi
-          # Your own certificate and profile are optional: all three secrets,
-          # or none, and then the run makes its signing from the API key.
+          # Your own certificate and both profiles are optional: all four
+          # secrets, or none, and then the run makes signing from the API key.
           own=0
           for name in IOS_DIST_CERT_P12_BASE64 IOS_DIST_CERT_PASSWORD \
-            IOS_PROVISIONING_PROFILE_BASE64; do
+            IOS_PROVISIONING_PROFILE_BASE64 IOS_WATCH_PROVISIONING_PROFILE_BASE64; do
             if [ -n "${!name}" ]; then own=$((own + 1)); fi
           done
-          if [ "$own" -ne 0 ] && [ "$own" -ne 3 ]; then
-            echo "::error::Only some of your own signing secrets are set. Set all of IOS_DIST_CERT_P12_BASE64, IOS_DIST_CERT_PASSWORD and IOS_PROVISIONING_PROFILE_BASE64, or delete them and the run makes its signing from the API key."
+          if [ "$own" -ne 0 ] && [ "$own" -ne 4 ]; then
+            echo "::error::Only some of your own signing secrets are set. Set IOS_DIST_CERT_P12_BASE64, IOS_DIST_CERT_PASSWORD, IOS_PROVISIONING_PROFILE_BASE64 and IOS_WATCH_PROVISIONING_PROFILE_BASE64 together, or delete them all and the run makes signing from the API key."
             exit 1
           fi
-          if [ "$own" -eq 3 ]; then
-            echo "Signing with your own certificate and profile."
+          if [ "$own" -eq 4 ]; then
+            echo "Signing with your own certificate and iPhone/Watch profiles."
           else
-            echo "Signing from the API key: this run makes its own certificate and profile."
+            echo "Signing from the API key: this run makes its own certificate and iPhone/Watch profiles."
           fi
           # A file's secret may hold the file's text as pasted, or its base64.
           write_secret_file() {
@@ -289,7 +292,7 @@ jobs:
 
       # Without the owner's own certificate secrets, the run makes its
       # signing from the API key: a private key and certificate request made
-      # here, then an Apple Distribution certificate and an App Store profile
+      # here, then an Apple Distribution certificate and two App Store profiles
       # from App Store Connect's API (scripts/ios/asc-signing.mjs). The key
       # never leaves this runner, so every run makes a new certificate, and
       # the script revokes the one the run before made. The import step
@@ -331,28 +334,32 @@ jobs:
             -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1 \
             -passout "file:$OUT/p12-password"
           cp "$OUT/profile.mobileprovision" "$RUNNER_TEMP/profile.mobileprovision"
+          cp "$OUT/watch-profile.mobileprovision" "$RUNNER_TEMP/watch-profile.mobileprovision"
           rm -f "$OUT/dist.key" "$OUT/AuthKey.p8"
 
       # The owner has no Mac, so their own certificate comes from a CSR made
-      # with openssl and the profile from Apple's website, or the step above
-      # makes both (docs/ios-release.md). Either can be wrong in a way that
-      # only shows 20 minutes into the archive, so both are checked here
-      # first. The profile is checked against the team, the bundle id, the
-      # distribution type, its expiry and every entitlement the app declares.
-      # The certificate is checked against the profile it has to match.
+      # with openssl and both profiles from Apple's website, or the step
+      # above makes all three (docs/ios-release.md). They can be wrong in a
+      # way that only shows 20 minutes into the archive, so check them here.
+      # Each profile must match its team, bundle ID, distribution type,
+      # expiry and target entitlements. Both must name the certificate.
       - name: Import signing certificate + provisioning profile
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
           IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_WATCH_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_WATCH_PROVISIONING_PROFILE_BASE64 }}
         run: |
           set -euo pipefail
           KEYCHAIN="$RUNNER_TEMP/app-signing.keychain-db"
           CERT_PATH="$RUNNER_TEMP/dist-cert.p12"
           PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+          WATCH_PROFILE_PATH="$RUNNER_TEMP/watch-profile.mobileprovision"
           export PROFILE_PLIST="$RUNNER_TEMP/profile.plist"
+          export WATCH_PROFILE_PLIST="$RUNNER_TEMP/watch-profile.plist"
           export FACTS="$RUNNER_TEMP/profile-facts"
+          export WATCH_FACTS="$RUNNER_TEMP/watch-profile-facts"
           # The keychain lives for this job only, so its password is made
           # here rather than kept as a secret.
           KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
@@ -367,9 +374,14 @@ jobs:
             IOS_DIST_CERT_PASSWORD=$(printf '%s' "$IOS_DIST_CERT_PASSWORD" | tr -d '\r\n')
             printf '%s' "$IOS_DIST_CERT_P12_BASE64" | tr -d '[:space:]' | base64 --decode > "$CERT_PATH"
             printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | tr -d '[:space:]' | base64 --decode > "$PROFILE_PATH"
+            printf '%s' "$IOS_WATCH_PROVISIONING_PROFILE_BASE64" | tr -d '[:space:]' | base64 --decode > "$WATCH_PROFILE_PATH"
           fi
           if ! security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST"; then
             echo "::error::The provisioning profile does not decode. IOS_PROVISIONING_PROFILE_BASE64 should be the base64 of the .mobileprovision file."
+            exit 1
+          fi
+          if ! security cms -D -i "$WATCH_PROFILE_PATH" > "$WATCH_PROFILE_PLIST"; then
+            echo "::error::The Watch provisioning profile does not decode. IOS_WATCH_PROVISIONING_PROFILE_BASE64 should be the base64 of the Watch App Store .mobileprovision file."
             exit 1
           fi
 
@@ -380,42 +392,46 @@ jobs:
           python3 - <<'PY'
           import datetime, hashlib, os, plistlib, sys
 
-          with open(os.environ["PROFILE_PLIST"], "rb") as f:
-              profile = plistlib.load(f)
-          with open("ios/App/App/App.entitlements", "rb") as f:
-              wanted = plistlib.load(f)
-          team, bundle = os.environ["APPLE_TEAM_ID"], os.environ["BUNDLE_ID"]
-          have = profile.get("Entitlements", {})
+          specs = [
+              (os.environ["PROFILE_PLIST"], "ios/App/App/App.entitlements", os.environ["BUNDLE_ID"], os.environ["FACTS"]),
+              (os.environ["WATCH_PROFILE_PLIST"], os.environ["WATCH_ENTITLEMENTS"], os.environ["WATCH_BUNDLE_ID"], os.environ["WATCH_FACTS"]),
+          ]
+          team = os.environ["APPLE_TEAM_ID"]
           problems = []
-          app_id = have.get("application-identifier", "")
-          if not app_id.endswith("." + bundle):
-              problems.append(f"it is for {app_id}, not {bundle}")
-          if team not in profile.get("TeamIdentifier", []):
-              problems.append(f"it belongs to team {profile.get('TeamIdentifier')}, not APPLE_TEAM_ID {team}")
-          if "ProvisionedDevices" in profile or have.get("get-task-allow"):
-              problems.append("it is a development or ad hoc profile, and this needs an App Store Connect distribution profile")
-          now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-          if profile["ExpirationDate"] < now:
-              problems.append(f"it expired on {profile['ExpirationDate']:%Y-%m-%d}")
-          missing = sorted(key for key in wanted if key not in have)
-          if missing:
-              problems.append(
-                  "it lacks " + ", ".join(missing)
-                  + ". Turn the matching capabilities on for the App ID (Apple Developer → Identifiers),"
-                  + " then make the profile again; a run that signs from the API key makes a new one,"
-                  + " so for that just run this workflow again"
-              )
+          for profile_path, entitlements_path, bundle, facts_path in specs:
+              with open(profile_path, "rb") as f:
+                  profile = plistlib.load(f)
+              with open(entitlements_path, "rb") as f:
+                  wanted = plistlib.load(f)
+              have = profile.get("Entitlements", {})
+              app_id = have.get("application-identifier", "")
+              if not app_id.endswith("." + bundle):
+                  problems.append(f"{bundle}: profile is for {app_id}")
+              if team not in profile.get("TeamIdentifier", []):
+                  problems.append(f"{bundle}: profile belongs to team {profile.get('TeamIdentifier')}, not {team}")
+              if "ProvisionedDevices" in profile or have.get("get-task-allow"):
+                  problems.append(f"{bundle}: expected an App Store profile, not development or ad hoc")
+              now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+              if profile["ExpirationDate"] < now:
+                  problems.append(f"{bundle}: profile expired on {profile['ExpirationDate']:%Y-%m-%d}")
+              mismatched = sorted(key for key, value in wanted.items() if have.get(key) != value)
+              if mismatched:
+                  problems.append(
+                      f"{bundle}: profile lacks matching " + ", ".join(mismatched)
+                      + ". Turn on those App ID capabilities in Apple Developer → Identifiers and regenerate the profile"
+                  )
+              print(f"Profile for {bundle}: {profile['Name']} ({profile['UUID']}), expires {profile['ExpirationDate']:%Y-%m-%d}")
+              with open(facts_path, "w") as out:
+                  out.write(profile["UUID"] + "\n")
+                  for der in profile.get("DeveloperCertificates", []):
+                      out.write(hashlib.sha1(der).hexdigest().upper() + "\n")
           for problem in problems:
               print(f"::error::The provisioning profile is wrong: {problem}.")
           if problems:
               sys.exit(1)
-          print(f"Profile {profile['Name']} ({profile['UUID']}), expires {profile['ExpirationDate']:%Y-%m-%d}")
-          with open(os.environ["FACTS"], "w") as out:
-              out.write(profile["UUID"] + "\n")
-              for der in profile.get("DeveloperCertificates", []):
-                  out.write(hashlib.sha1(der).hexdigest().upper() + "\n")
           PY
           PROFILE_UUID=$(head -1 "$FACTS")
+          WATCH_PROFILE_UUID=$(head -1 "$WATCH_FACTS")
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
@@ -443,42 +459,61 @@ jobs:
             echo "::error::The provisioning profile was made for a different certificate. Edit the profile on Apple's site, tick the certificate in this .p12, download it again and update IOS_PROVISIONING_PROFILE_BASE64."
             exit 1
           fi
+          if ! tail -n +2 "$WATCH_FACTS" | grep -qx "$CERT_SHA1"; then
+            echo "::error::The Watch provisioning profile was made for a different certificate. Regenerate it with this distribution certificate and update IOS_WATCH_PROVISIONING_PROFILE_BASE64."
+            exit 1
+          fi
 
           # Xcode 16 moved where it reads profiles from, so install in both.
           for dir in "$HOME/Library/MobileDevice/Provisioning Profiles" \
             "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
             mkdir -p "$dir"
             cp "$PROFILE_PATH" "$dir/$PROFILE_UUID.mobileprovision"
+            cp "$WATCH_PROFILE_PATH" "$dir/$WATCH_PROFILE_UUID.mobileprovision"
           done
           echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
+          echo "WATCH_PROFILE_UUID=$WATCH_PROFILE_UUID" >> "$GITHUB_ENV"
 
-      # The project as committed signs automatically. On a runner with no
-      # Apple account that looks for a development profile that will never
-      # exist, and the archive fails. Switch the App target alone to the
-      # profile imported above. Passing PROVISIONING_PROFILE_SPECIFIER to
-      # xcodebuild instead would set it on every Swift package target too,
-      # and xcodebuild refuses a profile on a package target.
-      - name: Sign the App target with the App Store profile
+      # Switch only the iPhone and Watch app targets to their respective
+      # imported profiles. A command-line PROVISIONING_PROFILE_SPECIFIER
+      # would also reach Swift package targets, where Xcode rejects it.
+      - name: Sign the iPhone and Watch targets with App Store profiles
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import os, sys
+          import os, re, sys
 
           path = "ios/App/App.xcodeproj/project.pbxproj"
           with open(path) as f:
               src = f.read()
-          automatic = "CODE_SIGN_STYLE = Automatic;"
-          found = src.count(automatic)
-          if found != 2:
-              print(f"::error::Expected the App target's Debug and Release settings to sign automatically (two '{automatic}'), found {found}. The project's signing settings changed, so update this step.")
+          profiles = {
+              os.environ["BUNDLE_ID"]: os.environ["PROFILE_UUID"],
+              os.environ["WATCH_BUNDLE_ID"]: os.environ["WATCH_PROFILE_UUID"],
+          }
+          counts = {bundle: 0 for bundle in profiles}
+          block_pattern = re.compile(r"(?ms)^\t\t[A-F0-9]{24} /\* (?:Debug|Release) \*/ = \{.*?^\t\t\};")
+          def sign_block(match):
+              block = match.group(0)
+              found = re.search(r"PRODUCT_BUNDLE_IDENTIFIER = ([^;]+);", block)
+              bundle = found.group(1).strip('"') if found else None
+              if bundle not in profiles:
+                  return block
+              counts[bundle] += 1
+              if block.count("CODE_SIGN_STYLE = Automatic;") != 1:
+                  print(f"::error::{bundle} is not set to automatic signing once in this build configuration. Update the CI signing step for the new project wiring.")
+                  sys.exit(1)
+              manual = (
+                  "CODE_SIGN_STYLE = Manual;\n"
+                  '\t\t\t\tCODE_SIGN_IDENTITY = "Apple Distribution";\n'
+                  '\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "' + profiles[bundle] + '";'
+              )
+              return block.replace("CODE_SIGN_STYLE = Automatic;", manual)
+          src = block_pattern.sub(sign_block, src)
+          if any(count != 2 for count in counts.values()):
+              print(f"::error::Expected Debug and Release configurations for both iPhone and Watch targets, found {counts}.")
               sys.exit(1)
-          manual = (
-              "CODE_SIGN_STYLE = Manual;\n"
-              '\t\t\t\tCODE_SIGN_IDENTITY = "Apple Distribution";\n'
-              '\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "' + os.environ["PROFILE_UUID"] + '";'
-          )
           with open(path, "w") as f:
-              f.write(src.replace(automatic, manual))
+              f.write(src)
           PY
           grep -n -E 'CODE_SIGN_STYLE|CODE_SIGN_IDENTITY|PROVISIONING_PROFILE_SPECIFIER' \
             ios/App/App.xcodeproj/project.pbxproj
@@ -520,15 +555,18 @@ jobs:
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             clean archive
 
-      - name: Verify archived app push signing
+      - name: Verify archived iPhone and Watch signing
         run: |
           set -euo pipefail
           python3 scripts/verify_ios_push.py \
             --app "$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app" \
             --bundle-id "$BUNDLE_ID"
+          python3 scripts/verify_ios_watch.py \
+            --app "$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app" \
+            --bundle-id "$WATCH_BUNDLE_ID" --companion-id "$BUNDLE_ID"
 
-      # A manual export has to be told which profile signs which bundle id;
-      # without the mapping it stops at "no profiles for com.tropos.app".
+      # A manual export needs a profile for both app bundle IDs; without the
+      # mappings it stops at "no profiles for com.tropos.app" or the Watch ID.
       # The build number comes from the Archive step, so Xcode is told not
       # to manage it, which it would otherwise try to do by contacting App
       # Store Connect with credentials this step does not have.
@@ -550,6 +588,7 @@ jobs:
             <key>provisioningProfiles</key>
             <dict>
               <key>${BUNDLE_ID}</key><string>${PROFILE_UUID}</string>
+              <key>${WATCH_BUNDLE_ID}</key><string>${WATCH_PROFILE_UUID}</string>
             </dict>
             <key>manageAppVersionAndBuildNumber</key><false/>
             <key>uploadSymbols</key><true/>
@@ -565,7 +604,7 @@ jobs:
 
       # Export may re-sign the app, so inspect the uploaded artifact as well as
       # the archive. Upload uses this exact verified path, never another IPA.
-      - name: Verify exported app push signing
+      - name: Verify exported iPhone and Watch signing
         run: |
           set -euo pipefail
           IPAS=("$RUNNER_TEMP"/export/*.ipa)
@@ -582,6 +621,8 @@ jobs:
             exit 1
           fi
           python3 scripts/verify_ios_push.py --app "${APPS[0]}" --bundle-id "$BUNDLE_ID"
+          python3 scripts/verify_ios_watch.py --app "${APPS[0]}" \
+            --bundle-id "$WATCH_BUNDLE_ID" --companion-id "$BUNDLE_ID"
           echo "VERIFIED_IPA=$IPA" >> "$GITHUB_ENV"
 
       - name: Upload to TestFlight

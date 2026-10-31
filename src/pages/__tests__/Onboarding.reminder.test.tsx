@@ -87,7 +87,7 @@ const row = () => screen.getByRole("region", { name: "Training-day reminder" });
 const reminderSwitch = () =>
   screen.getByRole("switch", { name: SETUP_REMINDER_LABEL });
 const startMyPlan = async () => {
-  const start = screen.getByRole("button", { name: "Start my plan" });
+  const start = screen.getByRole("button", { name: "Go to Today" });
   await waitFor(() => expect(start).toBeEnabled());
   fireEvent.click(start);
 };

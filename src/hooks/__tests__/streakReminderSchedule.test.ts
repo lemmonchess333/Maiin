@@ -1,6 +1,11 @@
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
-import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+import {
+  seedFirestore,
+  resetFirestore,
+  failNextFirestore,
+  readDoc,
+} from "@/test/firestoreHarness";
 import {
   resetNotifications,
   scheduledAt,
@@ -8,10 +13,16 @@ import {
   settleNotifications,
 } from "@/test/notificationsHarness";
 import { useStreakReminderInternal } from "../useStreakReminder";
-import { STREAK_NOTIFICATION_ID } from "../streakNotificationId";
+import {
+  STREAK_NOTIFICATION_ID,
+  FIRST_WEEK_NOTIFICATION_ID,
+} from "../streakNotificationId";
 
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {} }));
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  auth: { currentUser: { uid: "u1" } },
+}));
 vi.mock("@/lib/auth", () => ({ useUid: () => "u1" }));
 vi.mock("@/lib/notifications");
 let streak = {
@@ -135,4 +146,96 @@ it("does not schedule tomorrow using today's stale streak", async () => {
     await settleNotifications();
   });
   expect(scheduledIds()).toEqual([]);
+});
+
+it("cancels a first-week notification when its once-ever marker cannot be saved", async () => {
+  streak = {
+    currentStreak: 1,
+    savableStreak: 1,
+    hasLoggedToday: true,
+    loading: false,
+  };
+  seedFirestore({
+    "users/u1/settings/streakReminder": {
+      enabled: true,
+      primingShown: true,
+      time: "20:00",
+    },
+  });
+  failNextFirestore("setDoc", {
+    path: "users/u1/settings/streakReminder",
+    code: "unavailable",
+  });
+  const { result } = renderHook(() => useStreakReminderInternal());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  await act(async () => {
+    await settleNotifications();
+  });
+  expect(scheduledAt(FIRST_WEEK_NOTIFICATION_ID)).toBeUndefined();
+  expect(
+    readDoc("users/u1/settings/streakReminder")?.firstWeekNudgeDateKey
+  ).toBeUndefined();
+  expect(readDoc("users/u1/settings/pushState")?.firstWeekNudgeDateKey).toBe(
+    "2026-09-07"
+  );
+});
+
+it("uses the shared push marker to prevent a second local first-week nudge", async () => {
+  streak = {
+    currentStreak: 1,
+    savableStreak: 1,
+    hasLoggedToday: true,
+    loading: false,
+  };
+  seedFirestore({
+    "users/u1/settings/pushState": { firstWeekNudgeDateKey: "2026-08-11" },
+  });
+  const { result } = renderHook(() => useStreakReminderInternal());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  await act(async () => {
+    await settleNotifications();
+  });
+  expect(scheduledAt(FIRST_WEEK_NOTIFICATION_ID)).toBeUndefined();
+  expect(readDoc("users/u1/settings/pushState")?.firstWeekNudgeDateKey).toBe(
+    "2026-08-11"
+  );
+});
+
+it("leaves no local nudge armed when the shared marker cannot be checked", async () => {
+  streak = {
+    currentStreak: 1,
+    savableStreak: 1,
+    hasLoggedToday: true,
+    loading: false,
+  };
+  failNextFirestore("getDoc", {
+    path: "users/u1/settings/pushState",
+    code: "unavailable",
+  });
+  const { result } = renderHook(() => useStreakReminderInternal());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  await act(async () => {
+    await settleNotifications();
+  });
+  expect(scheduledAt(FIRST_WEEK_NOTIFICATION_ID)).toBeUndefined();
+});
+
+it("claims one account-wide marker after the local nudge is armed", async () => {
+  streak = {
+    currentStreak: 1,
+    savableStreak: 1,
+    hasLoggedToday: true,
+    loading: false,
+  };
+  const { result } = renderHook(() => useStreakReminderInternal());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  await waitFor(() =>
+    expect(
+      readDoc("users/u1/settings/streakReminder")?.firstWeekNudgeDateKey
+    ).toBe("2026-09-07")
+  );
+  expect(scheduledAt(FIRST_WEEK_NOTIFICATION_ID)).toBeDefined();
+  expect(readDoc("users/u1/settings/pushState")?.firstWeekNudgeDateKey).toBe(
+    "2026-09-07"
+  );
 });

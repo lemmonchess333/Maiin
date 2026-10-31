@@ -19,6 +19,7 @@ import { PLACARD_CUE_WORDS } from "../exerciseTempo";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { EXERCISES } from "../exercises";
 import { isFormArtQuarantined } from "../formArtQuarantine";
+import { getFormPlayback } from "../formGuides";
 import { FAR_ARM_SHIFT, SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
 
 describe("body demo cycle timing", () => {
@@ -27,8 +28,12 @@ describe("body demo cycle timing", () => {
     expect(quarter).toBeCloseTo(0.1464466, 6);
     expect(bodyDemoProgress({ cycle: true }, 0.25)).toBe(quarter);
     expect(bodyDemoProgress({ cycleTiming: "linear" }, 0.25)).toBe(quarter);
-    expect(bodyDemoProgress({ cycle: true, cycleTiming: "linear" }, 0.25)).toBe(0.25);
-    expect(bodyDemoProgress({ cycle: true, cycleTiming: "linear" }, -1)).toBe(0);
+    expect(bodyDemoProgress({ cycle: true, cycleTiming: "linear" }, 0.25)).toBe(
+      0.25
+    );
+    expect(bodyDemoProgress({ cycle: true, cycleTiming: "linear" }, -1)).toBe(
+      0
+    );
     expect(bodyDemoProgress({ cycle: true, cycleTiming: "linear" }, 2)).toBe(1);
   });
 
@@ -51,7 +56,9 @@ describe("body demo cycle timing", () => {
 
 describe("body demo cycle shadows", () => {
   const shadowRadius = (id: string, t: number) => {
-    const match = renderBodyDemo(id, t, 0.85).match(/<ellipse[^>]*rx="([\d.]+)"/);
+    const match = renderBodyDemo(id, t, 0.85).match(
+      /<ellipse[^>]*rx="([\d.]+)"/
+    );
     expect(match, `${id} shadow at ${t}`).not.toBeNull();
     return Number(match![1]);
   };
@@ -87,8 +94,9 @@ describe("body demo cycle shadows", () => {
 });
 
 describe("bike pedal contact", () => {
-  const sole = SIDE_PIECES.find((piece) => piece.group === "footL")!.outline
-    .filter(([, y]) => y >= 202.4);
+  const sole = SIDE_PIECES.find(
+    (piece) => piece.group === "footL"
+  )!.outline.filter(([, y]) => y >= 202.4);
 
   it.each(["bike", "spin-bike", "assault-bike"])(
     "%s turns both pedals at a steady cadence through an exact loop",
@@ -103,9 +111,11 @@ describe("bike pedal contact", () => {
         expect(arm).not.toBeNull();
         return [Number(arm![1]), Number(arm![2])] as const;
       });
-      const steps = axles.slice(1).map(([x, y], index) =>
-        Math.hypot(x - axles[index][0], y - axles[index][1])
-      );
+      const steps = axles
+        .slice(1)
+        .map(([x, y], index) =>
+          Math.hypot(x - axles[index][0], y - axles[index][1])
+        );
       expect(Math.max(...steps) - Math.min(...steps)).toBeLessThan(0.05);
       expect(frames[8]).toBe(frames[0]);
     }
@@ -116,7 +126,9 @@ describe("bike pedal contact", () => {
     const quarter = renderBodyDemo("assault-bike", 0.25);
     expect(start).toContain('<g transform="rotate(0.00 124 138)">');
     expect(quarter).toContain('<g transform="rotate(90.00 124 138)">');
-    const fan = start.match(/<g transform="rotate\(0\.00 124 138\)">([\s\S]*?)<\/g>/);
+    const fan = start.match(
+      /<g transform="rotate\(0\.00 124 138\)">([\s\S]*?)<\/g>/
+    );
     expect(fan?.[1].match(/<polygon points=/g)).toHaveLength(5);
   });
 
@@ -130,13 +142,17 @@ describe("bike pedal contact", () => {
     for (const t of [0, 1 / 6, 1 / 3, 0.5, 2 / 3, 5 / 6, 1]) {
       const pose = demo.pose(t);
       const scene = demo.scene!(t, pose);
-      fixed.add(scene.match(/<line data-assault-fixed="true"[^>]*\/>/)?.[0] ?? "");
+      fixed.add(
+        scene.match(/<line data-assault-fixed="true"[^>]*\/>/)?.[0] ?? ""
+      );
       for (const [side, group, shift] of [
         ["near", "handL", [0, 0]],
         ["far", "handR", FAR_ARM_SHIFT],
       ] as const) {
         const lever = scene.match(
-          new RegExp(`data-assault-handle="${side}" x1="([\\d.]+)" y1="([\\d.]+)" x2="([\\d.]+)" y2="([\\d.]+)"`)
+          new RegExp(
+            `data-assault-handle="${side}" x1="([\\d.]+)" y1="([\\d.]+)" x2="([\\d.]+)" y2="([\\d.]+)"`
+          )
         );
         expect(lever, `${side} moving lever @${t}`).not.toBeNull();
         const wrist = applyToPoint(SIDE_ANCHORS.hand, pose[group] ?? []);
@@ -148,10 +164,15 @@ describe("bike pedal contact", () => {
           `${side} hand stays on its grip @${t}`
         ).toBeLessThan(0.12);
         const pedal = scene.match(
-          new RegExp(`data-bike-crank="${side}" x1="66" y1="178" x2="([\\d.]+)"`)
+          new RegExp(
+            `data-bike-crank="${side}" x1="66" y1="178" x2="([\\d.]+)"`
+          )
         );
         expect(pedal, `${side} pedal crank @${t}`).not.toBeNull();
-        samples[side].push({ grip: Number(lever![3]), pedal: Number(pedal![1]) });
+        samples[side].push({
+          grip: Number(lever![3]),
+          pedal: Number(pedal![1]),
+        });
       }
     }
     expect(fixed.size, "the fan support remains fixed").toBe(1);
@@ -161,10 +182,17 @@ describe("bike pedal contact", () => {
     for (const side of ["near", "far"] as const) {
       const handleTravel = samples[side][0].grip - samples[side][3].grip;
       const pedalTravel = samples[side][0].pedal - samples[side][3].pedal;
-      expect(Math.abs(handleTravel), `${side} handle travels`).toBeGreaterThan(24);
-      expect(handleTravel * pedalTravel, `${side} handle follows its pedal`).toBeGreaterThan(0);
+      expect(Math.abs(handleTravel), `${side} handle travels`).toBeGreaterThan(
+        24
+      );
+      expect(
+        handleTravel * pedalTravel,
+        `${side} handle follows its pedal`
+      ).toBeGreaterThan(0);
     }
-    expect(renderBodyDemo("assault-bike", 1)).toBe(renderBodyDemo("assault-bike", 0));
+    expect(renderBodyDemo("assault-bike", 1)).toBe(
+      renderBodyDemo("assault-bike", 0)
+    );
   });
 
   it.each(["bike", "spin-bike", "assault-bike"])(
@@ -176,41 +204,82 @@ describe("bike pedal contact", () => {
         const pose = demo.pose(phase);
         const scene = demo.scene?.(phase, pose) ?? "";
         const axles: [number, number][] = [];
-        for (const [label, side] of [["near", "L"], ["far", "R"]] as const) {
-          const ankle = applyToPoint(SIDE_ANCHORS.ankle, pose[`shank${side}`] ?? []);
-          const shoeAnkle = applyToPoint(SIDE_ANCHORS.ankle, pose[`foot${side}`] ?? []);
-          expect(Math.hypot(ankle[0] - shoeAnkle[0], ankle[1] - shoeAnkle[1]),
-            `${id} ${label} ankle @${t}`).toBeLessThan(0.1);
-          const edge = sole.map((point) => applyToPoint(point, pose[`foot${side}`] ?? []));
-          expect(Math.max(...edge.map((point) => point[1])) -
-            Math.min(...edge.map((point) => point[1])),
-          `${id} ${label} level sole @${t}`).toBeLessThan(1);
-          const pad = scene.match(new RegExp(
-            `<rect data-bike-pedal="${label}" x="([\\d.]+)" y="([\\d.]+)" width="32" height="3"`
-          ));
+        for (const [label, side] of [
+          ["near", "L"],
+          ["far", "R"],
+        ] as const) {
+          const ankle = applyToPoint(
+            SIDE_ANCHORS.ankle,
+            pose[`shank${side}`] ?? []
+          );
+          const shoeAnkle = applyToPoint(
+            SIDE_ANCHORS.ankle,
+            pose[`foot${side}`] ?? []
+          );
+          expect(
+            Math.hypot(ankle[0] - shoeAnkle[0], ankle[1] - shoeAnkle[1]),
+            `${id} ${label} ankle @${t}`
+          ).toBeLessThan(0.1);
+          const edge = sole.map((point) =>
+            applyToPoint(point, pose[`foot${side}`] ?? [])
+          );
+          expect(
+            Math.max(...edge.map((point) => point[1])) -
+              Math.min(...edge.map((point) => point[1])),
+            `${id} ${label} level sole @${t}`
+          ).toBeLessThan(1);
+          const pad = scene.match(
+            new RegExp(
+              `<rect data-bike-pedal="${label}" x="([\\d.]+)" y="([\\d.]+)" width="32" height="3"`
+            )
+          );
           expect(pad, `${id} ${label} visible pedal @${t}`).not.toBeNull();
           const padX = Number(pad![1]);
           const padY = Number(pad![2]);
-          expect(Math.min(...edge.map((point) => point[0])) - padX,
-            `${id} ${label} heel on pad @${t}`).toBeGreaterThan(0);
-          expect(padX + 32 - Math.max(...edge.map((point) => point[0])),
-            `${id} ${label} toe on pad @${t}`).toBeGreaterThan(0);
-          expect(Math.max(...edge.map((point) => point[1])) - padY,
-            `${id} ${label} sole meets pad @${t}`).toBeGreaterThan(0);
-          expect(Math.max(...edge.map((point) => point[1])) - padY,
-            `${id} ${label} no floating sole @${t}`).toBeLessThan(2);
-          expect(210 - (padY + 3),
-            `${id} ${label} pedal clears base @${t}`).toBeGreaterThan(4);
-          const arm = scene.match(new RegExp(
-            `<line data-bike-crank="${label}" x1="66" y1="178" x2="([\\d.]+)" y2="([\\d.]+)"`
-          ));
+          expect(
+            Math.min(...edge.map((point) => point[0])) - padX,
+            `${id} ${label} heel on pad @${t}`
+          ).toBeGreaterThan(0);
+          expect(
+            padX + 32 - Math.max(...edge.map((point) => point[0])),
+            `${id} ${label} toe on pad @${t}`
+          ).toBeGreaterThan(0);
+          expect(
+            Math.max(...edge.map((point) => point[1])) - padY,
+            `${id} ${label} sole meets pad @${t}`
+          ).toBeGreaterThan(0);
+          expect(
+            Math.max(...edge.map((point) => point[1])) - padY,
+            `${id} ${label} no floating sole @${t}`
+          ).toBeLessThan(2);
+          expect(
+            210 - (padY + 3),
+            `${id} ${label} pedal clears base @${t}`
+          ).toBeGreaterThan(4);
+          const arm = scene.match(
+            new RegExp(
+              `<line data-bike-crank="${label}" x1="66" y1="178" x2="([\\d.]+)" y2="([\\d.]+)"`
+            )
+          );
           expect(arm, `${id} ${label} crank arm @${t}`).not.toBeNull();
-          expect(Number(arm![1]), `${id} ${label} axle x @${t}`).toBeCloseTo(ankle[0], 1);
-          expect(Number(arm![2]), `${id} ${label} axle y @${t}`).toBeCloseTo(ankle[1], 1);
+          expect(Number(arm![1]), `${id} ${label} axle x @${t}`).toBeCloseTo(
+            ankle[0],
+            1
+          );
+          expect(Number(arm![2]), `${id} ${label} axle y @${t}`).toBeCloseTo(
+            ankle[1],
+            1
+          );
           axles.push([ankle[0], ankle[1]]);
         }
-        expect(axles[0][0] + axles[1][0], `${id} opposing x @${t}`).toBeCloseTo(132, 2);
-        expect(axles[0][1] + axles[1][1], `${id} opposing y @${t}`).toBeCloseTo(356, 2);
+        expect(axles[0][0] + axles[1][0], `${id} opposing x @${t}`).toBeCloseTo(
+          132,
+          2
+        );
+        expect(axles[0][1] + axles[1][1], `${id} opposing y @${t}`).toBeCloseTo(
+          356,
+          2
+        );
       }
     }
   );
@@ -230,13 +299,15 @@ describe("machine fallback contacts", () => {
       const shoeToe = applyToPoint([65, 203], pose.footL ?? []);
       const hip = applyToPoint(SIDE_ANCHORS.hip, pose.pelvis ?? []);
       const hand = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
-      const plate = scene.match(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="14"/);
-      const grip = scene.match(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="2\.8"/);
+      const plate = scene.match(
+        /<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="14"/
+      );
+      const grip = scene.match(
+        /<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="2\.8"/
+      );
       expect(plate, `loaded carriage @${t}`).not.toBeNull();
       expect(grip, `shoulder-pad handle @${t}`).not.toBeNull();
-      expect(scene).toContain(
-        `<line x1="-35" y1="31" x2="102" y2="207"`
-      );
+      expect(scene).toContain(`<line x1="-35" y1="31" x2="102" y2="207"`);
       expect(scene).toContain(`M88 206 L118 176 L123 181 L93 211 Z`);
       // The two sole ends sit on the top edge of the 45-degree footplate.
       expect(shoeHeel[0] + shoeHeel[1]).toBeCloseTo(294, 0);
@@ -299,10 +370,16 @@ describe("machine fallback contacts", () => {
       });
       const xs = points.map(([x]) => x);
       const ys = points.map(([, y]) => y);
-      expect(Math.min(...xs), `left margin @${frame}`).toBeGreaterThan(left + 8);
-      expect(Math.max(...xs), `right margin @${frame}`).toBeLessThan(left + width - 8);
+      expect(Math.min(...xs), `left margin @${frame}`).toBeGreaterThan(
+        left + 8
+      );
+      expect(Math.max(...xs), `right margin @${frame}`).toBeLessThan(
+        left + width - 8
+      );
       expect(Math.min(...ys), `top margin @${frame}`).toBeGreaterThan(top + 8);
-      expect(Math.max(...ys), `bottom margin @${frame}`).toBeLessThan(top + height - 8);
+      expect(Math.max(...ys), `bottom margin @${frame}`).toBeLessThan(
+        top + height - 8
+      );
     }
   });
 
@@ -314,13 +391,17 @@ describe("machine fallback contacts", () => {
     for (const t of [0, 1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6]) {
       const pose = demo.pose(t);
       const scene = demo.scene!(t, pose);
-      fixed.push(scene.match(/<g data-elliptical-fixed="true">.*?<\/g>/)?.[0] ?? "");
+      fixed.push(
+        scene.match(/<g data-elliptical-fixed="true">.*?<\/g>/)?.[0] ?? ""
+      );
       for (const [side, group, shift] of [
         ["near", "handL", [0, 0]],
         ["far", "handR", FAR_ARM_SHIFT],
       ] as const) {
         const lever = scene.match(
-          new RegExp(`data-elliptical-handle="${side}" x1="([\\d.]+)" y1="([\\d.]+)" x2="([\\d.]+)" y2="([\\d.]+)"`)
+          new RegExp(
+            `data-elliptical-handle="${side}" x1="([\\d.]+)" y1="([\\d.]+)" x2="([\\d.]+)" y2="([\\d.]+)"`
+          )
         );
         expect(lever, `${side} lever @${t}`).not.toBeNull();
         const wrist = applyToPoint(SIDE_ANCHORS.hand, pose[group] ?? []);
@@ -334,7 +415,10 @@ describe("machine fallback contacts", () => {
         leverX[side].push(Number(lever![3]));
       }
       const ankles: string[] = [];
-      for (const [side, label] of [["R", "far"], ["L", "near"]] as const) {
+      for (const [side, label] of [
+        ["R", "far"],
+        ["L", "near"],
+      ] as const) {
         const shank = pose[`shank${side}`] ?? [];
         const ankle = applyToPoint(SIDE_ANCHORS.ankle, shank);
         const foot = pose[`foot${side}`] ?? [];
@@ -361,7 +445,9 @@ describe("machine fallback contacts", () => {
           ...footOutline.map((point) => applyToPoint(point, foot)[1])
         );
         const pedal = scene.match(
-          new RegExp(`data-elliptical-pedal="${label}" x="([\\d.]+)" y="([\\d.]+)" width="35"`)
+          new RegExp(
+            `data-elliptical-pedal="${label}" x="([\\d.]+)" y="([\\d.]+)" width="35"`
+          )
         );
         expect(pedal, `${label} pedal @${t}`).not.toBeNull();
         expect(
@@ -386,14 +472,12 @@ describe("machine fallback contacts", () => {
             )
           )?.[1]
         );
-        expect(
-          pedalY + 3,
-          `${label} pedal clears the base @${t}`
-        ).toBeLessThan(198);
+        expect(pedalY + 3, `${label} pedal clears the base @${t}`).toBeLessThan(
+          198
+        );
       }
     }
   });
-
 });
 
 /** The measured wrist anchors — ON the art, since 2026-08-17. They used
@@ -427,7 +511,7 @@ describe("renderBodyDemo", () => {
         const [ax, ay] = polygon[i];
         const [bx, by] = polygon[j];
         if (
-          (ay > point[1]) !== (by > point[1]) &&
+          ay > point[1] !== by > point[1] &&
           point[0] < ((bx - ax) * (point[1] - ay)) / (by - ay) + ax
         ) {
           contained = !contained;
@@ -485,7 +569,9 @@ describe("renderBodyDemo", () => {
           expect(x, `left edge at ${t}`).toBeGreaterThanOrEqual(left + 8);
           expect(x, `right edge at ${t}`).toBeLessThanOrEqual(left + width - 8);
           expect(y, `top edge at ${t}`).toBeGreaterThanOrEqual(top + 8);
-          expect(y, `bottom edge at ${t}`).toBeLessThanOrEqual(top + height - 8);
+          expect(y, `bottom edge at ${t}`).toBeLessThanOrEqual(
+            top + height - 8
+          );
         }
       }
     }
@@ -1100,8 +1186,14 @@ describe("renderBodyDemo", () => {
       expect(leftElbow[0], `left elbow tucked @${t}`).toBeLessThan(31);
       expect(rightElbow[0], `right elbow tucked @${t}`).toBeGreaterThan(69);
       expect(rightElbow[0], `right elbow tucked @${t}`).toBeLessThan(76);
-      expect(Math.abs(left[0] - leftElbow[0]), `left forearm @${t}`).toBeLessThan(6);
-      expect(Math.abs(right[0] - rightElbow[0]), `right forearm @${t}`).toBeLessThan(6);
+      expect(
+        Math.abs(left[0] - leftElbow[0]),
+        `left forearm @${t}`
+      ).toBeLessThan(6);
+      expect(
+        Math.abs(right[0] - rightElbow[0]),
+        `right forearm @${t}`
+      ).toBeLessThan(6);
       heights.push((left[1] + right[1]) / 2);
       const svg = renderBodyDemo("close-grip-bench", t);
       expect(svg).toContain('<rect x="27" y="18" width="46" height="133"');
@@ -2678,11 +2770,18 @@ describe("renderBodyDemo", () => {
         const outline = fist.outline.map((point) => pt(point, p.handL));
         const crossingX = outline.flatMap((a, i) => {
           const b = outline[(i + 1) % outline.length];
-          if (shaftY < Math.min(a[1], b[1]) || shaftY > Math.max(a[1], b[1]) || a[1] === b[1])
+          if (
+            shaftY < Math.min(a[1], b[1]) ||
+            shaftY > Math.max(a[1], b[1]) ||
+            a[1] === b[1]
+          )
             return [];
           return [a[0] + ((b[0] - a[0]) * (shaftY - a[1])) / (b[1] - a[1])];
         });
-        expect(crossingX, `inverted row: shaft crosses visible fist @${t}`).toHaveLength(2);
+        expect(
+          crossingX,
+          `inverted row: shaft crosses visible fist @${t}`
+        ).toHaveLength(2);
         expect(Math.min(...crossingX)).toBeLessThan(Number(grip![1]));
         expect(Math.max(...crossingX)).toBeGreaterThan(Number(grip![1]) + 2);
         const shoe = SIDE_PIECES.find((piece) => piece.group === "footL")!;
@@ -3941,14 +4040,36 @@ describe("renderBodyDemo", () => {
         expect(scene).toContain('<circle cx="82" cy="101" r="3"');
         expect(scene).toContain('width="92" height="13"');
         const knees = antKnees("hip-abduction-machine", t);
-        expect(Math.abs(knees.AL[0] - knees.KL[0]), `left shin vertical @${t}`).toBeLessThan(4);
-        expect(Math.abs(knees.AR[0] - knees.KR[0]), `right shin vertical @${t}`).toBeLessThan(4);
-        const pads = [...(scene ?? "").matchAll(/<rect x="([\d.-]+)" y="([\d.-]+)" width="7" height="18"/g)];
+        expect(
+          Math.abs(knees.AL[0] - knees.KL[0]),
+          `left shin vertical @${t}`
+        ).toBeLessThan(4);
+        expect(
+          Math.abs(knees.AR[0] - knees.KR[0]),
+          `right shin vertical @${t}`
+        ).toBeLessThan(4);
+        const pads = [
+          ...(scene ?? "").matchAll(
+            /<rect x="([\d.-]+)" y="([\d.-]+)" width="7" height="18"/g
+          ),
+        ];
         expect(pads).toHaveLength(2);
-        expect(Math.abs(Number(pads[0][1]) + 12 - knees.KL[0]), `left pad follows knee @${t}`).toBeLessThan(0.1);
-        expect(Math.abs(Number(pads[0][2]) + 8 - knees.KL[1]), `left pad height @${t}`).toBeLessThan(0.1);
-        expect(Math.abs(Number(pads[1][1]) - 5 - knees.KR[0]), `right pad follows knee @${t}`).toBeLessThan(0.1);
-        expect(Math.abs(Number(pads[1][2]) + 8 - knees.KR[1]), `right pad height @${t}`).toBeLessThan(0.1);
+        expect(
+          Math.abs(Number(pads[0][1]) + 12 - knees.KL[0]),
+          `left pad follows knee @${t}`
+        ).toBeLessThan(0.1);
+        expect(
+          Math.abs(Number(pads[0][2]) + 8 - knees.KL[1]),
+          `left pad height @${t}`
+        ).toBeLessThan(0.1);
+        expect(
+          Math.abs(Number(pads[1][1]) - 5 - knees.KR[0]),
+          `right pad follows knee @${t}`
+        ).toBeLessThan(0.1);
+        expect(
+          Math.abs(Number(pads[1][2]) + 8 - knees.KR[1]),
+          `right pad height @${t}`
+        ).toBeLessThan(0.1);
       }
       const ad0 = antKnees("hip-adduction-machine", 0);
       const ad1 = antKnees("hip-adduction-machine", 1);
@@ -4328,8 +4449,8 @@ describe("renderBodyDemo", () => {
       ).toBeLessThan(0);
       expect(at(id, 1), "burpee: lands into the next squat").toEqual(at(id, 0));
       expect(at(id, 0.97), "burpee: grounded handoff").toEqual(at(id, 1));
-      const [left, top, width, height] = BODY_DEMOS[id].viewBox!
-        .split(" ")
+      const [left, top, width, height] = BODY_DEMOS[id]
+        .viewBox!.split(" ")
         .map(Number);
       for (let n = 0; n <= 40; n++) {
         const t = n / 40;
@@ -4338,11 +4459,15 @@ describe("renderBodyDemo", () => {
         )) {
           for (const point of polygon[1].split(" ")) {
             const [x, y] = point.split(",").map(Number);
-            expect(x, `burpee left edge at ${t}`).toBeGreaterThanOrEqual(left + 8);
+            expect(x, `burpee left edge at ${t}`).toBeGreaterThanOrEqual(
+              left + 8
+            );
             expect(x, `burpee right edge at ${t}`).toBeLessThanOrEqual(
               left + width - 8
             );
-            expect(y, `burpee top edge at ${t}`).toBeGreaterThanOrEqual(top + 8);
+            expect(y, `burpee top edge at ${t}`).toBeGreaterThanOrEqual(
+              top + 8
+            );
             expect(y, `burpee bottom edge at ${t}`).toBeLessThanOrEqual(
               top + height - 8
             );
@@ -4602,8 +4727,7 @@ describe("renderBodyDemo", () => {
       };
       const hand = (side: "L" | "R", t: number) =>
         pt(hands[side], at(id, t)[`hand${side}`]);
-      const shoulder = (side: "L" | "R") =>
-        pt(shoulders[side], p0.torso);
+      const shoulder = (side: "L" | "R") => pt(shoulders[side], p0.torso);
       expect(hand("L", 0)[0] - shoulder("L")[0]).toBeLessThan(-45);
       expect(hand("R", 0)[0] - shoulder("R")[0]).toBeGreaterThan(50);
       expect(hand("L", 0.5)[0] - shoulder("L")[0]).toBeGreaterThan(50);
@@ -4613,7 +4737,9 @@ describe("renderBodyDemo", () => {
       for (const side of ["L", "R"] as const) {
         const start = hand(side, 0);
         const loop = hand(side, 1);
-        expect(Math.hypot(start[0] - loop[0], start[1] - loop[1])).toBeLessThan(0.01);
+        expect(Math.hypot(start[0] - loop[0], start[1] - loop[1])).toBeLessThan(
+          0.01
+        );
         for (let i = 0; i < 6; i++) {
           const a = hand(side, i / 6);
           const b = hand(side, (i + 1) / 6);
@@ -4652,8 +4778,12 @@ describe("renderBodyDemo", () => {
       };
       // A vertical flutter reads from above as alternating foreshortening,
       // with the legs close together rather than sweeping like scissors.
-      expect(shankLength("L", 0.125) - shankLength("L", 0.375)).toBeGreaterThan(5);
-      expect(shankLength("R", 0.375) - shankLength("R", 0.125)).toBeGreaterThan(5);
+      expect(shankLength("L", 0.125) - shankLength("L", 0.375)).toBeGreaterThan(
+        5
+      );
+      expect(shankLength("R", 0.375) - shankLength("R", 0.125)).toBeGreaterThan(
+        5
+      );
       for (let i = 0; i < 120; i++) {
         const a = at(id, i / 120);
         const b = at(id, (i + 1) / 120);
@@ -5720,6 +5850,17 @@ describe("form beats — the caption is a claim about the frame", () => {
           expect(beats[3].cue).toContain("from your ankles");
           expect(beats[0].cue).toContain("hands free");
         }
+        continue;
+      }
+      if (id === "elliptical" || id === "assault-bike") {
+        // The moving handles and pedals complete one continuous cycle;
+        // reversing the last still would teach the wrong stroke.
+        expect(new Set(beats.map((beat) => beat.t)).size).toBe(6);
+        for (let i = 0; i < beats.length; i++) {
+          const next = beats[(i + 1) % beats.length].t;
+          expect((next - beats[i].t + 1) % 1).toBeCloseTo(1 / 6);
+        }
+        expect(getFormPlayback(id)).toBe("cycle");
         continue;
       }
       if (id === "walking-dumbbell-lunges") {

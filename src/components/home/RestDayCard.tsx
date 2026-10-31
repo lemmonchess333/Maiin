@@ -4,6 +4,8 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import { cardClasses } from "@/components/ui/cardClasses";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import { parseLocalDate } from "@/lib/dateHelpers";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 
 /**
  * Home's lead card on a rest day (DS3).
@@ -20,9 +22,12 @@ export default function RestDayCard({
   navigate,
 }: {
   /** Tomorrow's session, when there is one: its name and where it opens. */
-  tomorrow?: { label: string; target: string } | null;
+  tomorrow?: { label: string; target: string; dateKey?: string } | null;
   navigate?: (path: string) => void;
 }) {
+  const upcomingDay = tomorrow?.dateKey
+    ? formatShortWeekdayDayMonth(parseLocalDate(tomorrow.dateKey))
+    : null;
   return (
     <div
       className={cardClasses({
@@ -42,7 +47,8 @@ export default function RestDayCard({
             {tomorrow && (
               <>
                 {" "}
-                Tomorrow: <InlineNumerals>{tomorrow.label}</InlineNumerals>.
+                {upcomingDay ? `Next session, ${upcomingDay}: ` : "Tomorrow: "}
+                <InlineNumerals>{tomorrow.label}</InlineNumerals>.
               </>
             )}
           </p>
@@ -61,11 +67,14 @@ export default function RestDayCard({
           className="w-full"
           onClick={function () {
             haptic();
-            trackHomeEvent("home_card_tapped", { card: "rest_tomorrow" });
+            trackHomeEvent("home_card_tapped", {
+              card: upcomingDay ? "rest_upcoming" : "rest_tomorrow",
+              action: "details",
+            });
             navigate(tomorrow.target);
           }}
         >
-          See tomorrow
+          {upcomingDay ? "See next session" : "See tomorrow"}
         </Button>
       )}
     </div>

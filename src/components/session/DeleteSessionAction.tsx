@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { trainingHistoryReturnTo } from "@/lib/trainingHistory";
 import { Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -37,6 +38,7 @@ export default function DeleteSessionAction({
   sharedActivityId?: string | null;
 }) {
   const navigate = useNavigate();
+  const historyReturnTo = trainingHistoryReturnTo(useLocation().state);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -87,7 +89,7 @@ export default function DeleteSessionAction({
             // Back to wherever they came from — History, Home's day card,
             // a deep link. Replacing the entry means the browser Back
             // button can't return to a detail page whose document is gone.
-            navigate("/history", { replace: true });
+            navigate(historyReturnTo ?? "/history", { replace: true });
           } catch {
             setBusy(false);
             toast.error(`Couldn't delete this ${noun}. Try again.`);

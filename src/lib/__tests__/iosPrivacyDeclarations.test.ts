@@ -39,10 +39,7 @@ const pkg = JSON.parse(read("package.json")) as {
 /* ── A plist reader, enough for these files ────────────────────────── */
 
 type PlistValue =
-  | string
-  | boolean
-  | PlistValue[]
-  | { [key: string]: PlistValue };
+  string | boolean | PlistValue[] | { [key: string]: PlistValue };
 
 /** Parses the XML plist the iOS files use: dict, array, key, string,
  *  true and false, with comments. Throws on anything else, so a value of a
@@ -381,11 +378,26 @@ describe("SDKs — nothing that tracks is built in", () => {
   it("patches the App Tracking Transparency calls out on every install", () => {
     expect(pkg.devDependencies["patch-package"]).toBeDefined();
     expect(pkg.scripts.postinstall).toBe("patch-package");
-    // One patch, for the installed version (patch-package names them so).
-    const patches = readdirSync(resolve(repoRoot, "patches"));
-    expect(patches).toEqual([
-      `@capacitor-firebase+authentication+${authVersion}.patch`,
-    ]);
+    // Both native patches must match the installed package versions.
+    const liveActivitiesVersion = (
+      JSON.parse(
+        read("node_modules/capacitor-live-activities/package.json")
+      ) as {
+        version: string;
+      }
+    ).version;
+    const patches = readdirSync(resolve(repoRoot, "patches")).sort();
+    expect(patches).toEqual(
+      [
+        `@capacitor-firebase+authentication+${authVersion}.patch`,
+        `capacitor-live-activities+${liveActivitiesVersion}.patch`,
+      ].sort()
+    );
+    expect(
+      read(
+        "node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift"
+      )
+    ).toContain("import LiveActivitiesKit");
     // Applied: the plugin's Swift neither imports the framework nor calls
     // it, and both plugin methods are still there, answering "denied".
     const swiftFiles: string[] = [];

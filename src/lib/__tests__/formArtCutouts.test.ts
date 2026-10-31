@@ -112,16 +112,33 @@ describe("card frames", () => {
     expect(art!.frames[frame - 1]).not.toBe(art!.reference);
   });
 
-  it("leaves a set with a reviewed hand-made cut-out on its reference", () => {
-    /* docs/exercise-art/cutout-sources holds cut-outs reviewed against
-       their reference frame; a card frame would orphan the review. */
+  it("binds each reviewed hand-made cut-out to its current card frame", () => {
+    /* A prepared transparent source records the exact released frame shown
+       on the card, whether that frame is the review reference or a listed
+       pose. Changing the card frame must invalidate the prepared review. */
     const prepared = readdirSync(
       resolve(process.cwd(), "docs/exercise-art/cutout-sources")
     )
       .filter((f) => f.endsWith(".json"))
       .map((f) => f.replace(/\.json$/, ""));
     expect(prepared).toContain("ab-wheel");
-    for (const id of prepared) expect(CARD_FRAMES[id]).toBeUndefined();
+    for (const id of prepared) {
+      const art = getReleasedFormArtwork(id);
+      expect(art, `${id} has no released art`).not.toBeNull();
+      const record = JSON.parse(
+        readFileSync(
+          resolve(
+            process.cwd(),
+            "docs/exercise-art/cutout-sources",
+            `${id}.json`
+          ),
+          "utf8"
+        )
+      );
+      const source = cardFrameOf(id, art!);
+      expect(record.reference).toBe(source);
+      expect(record.referenceSha256).toBe(sha(publicFile(source)));
+    }
   });
 });
 

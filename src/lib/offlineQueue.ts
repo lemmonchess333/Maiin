@@ -55,6 +55,18 @@ interface QueuedWrite {
 }
 
 const queueListeners = new Set<() => void>();
+const syncedRunListeners = new Set<
+  (receipt: { uid: string; runId: string }) => void
+>();
+/** Fires only after the server acknowledges a canonical run create. */
+export const subscribeSyncedRunWrites = (
+  listener: (receipt: { uid: string; runId: string }) => void
+) => {
+  syncedRunListeners.add(listener);
+  return () => {
+    syncedRunListeners.delete(listener);
+  };
+};
 let queueVersion = 0;
 export const subscribeQueuedWrites = (listener: () => void) => {
   queueListeners.add(listener);
@@ -496,6 +508,20 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
           await import("@/hooks/useWorkoutDraft");
         if (auth.currentUser?.uid === uid)
           clearCompletedWorkoutDraft(uid, decoded.completionId);
+      }
+      if (
+        item.durable &&
+        !item.merge &&
+        item.collectionPath === `users/${uid}/runs` &&
+        item.docId
+      ) {
+        for (const listener of syncedRunListeners) {
+          try {
+            listener({ uid, runId: item.docId });
+          } catch (error) {
+            logger.warn("[OfflineQueue] synced-run listener failed", error);
+          }
+        }
       }
       landed.add(item.id);
       flushed++;

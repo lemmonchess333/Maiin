@@ -9,7 +9,7 @@
  * the one queued session would overwrite the saved streak.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, renderHook, waitFor } from "@testing-library/react";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
@@ -19,7 +19,12 @@ import { useSavedRuns } from "../useSavedRuns";
 import { useSavedSessions } from "../useSavedSessions";
 import { SAVED_WORKOUTS } from "@/lib/savedWorkouts";
 import { queueDurableWrite } from "@/lib/offlineQueue";
-import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
+import {
+  failNextFirestore,
+  resetFirestore,
+  seedFirestore,
+  unfiredFailures,
+} from "@/test/firestoreHarness";
 import { savedRunDoc, savedWorkoutDoc } from "@/test/sessionFixtures";
 
 const WINDOW = { latest: 10 } as const;
@@ -117,6 +122,26 @@ describe("useSavedRuns: where a run was run (Pgm8)", () => {
 });
 
 describe("the same engine for workouts", () => {
+  it("reports a refresh failure while preserving already visible sessions", async () => {
+    seedFirestore({
+      "users/runner/workouts/saved": savedWorkoutDoc("2026-09-01"),
+    });
+    const { result } = renderHook(() =>
+      useSavedSessions(SAVED_WORKOUTS, "runner", { all: true })
+    );
+    await waitFor(() => expect(result.current.evidenceReady).toBe(true));
+    expect(result.current.items.map((item) => item.id)).toEqual(["saved"]);
+    failNextFirestore("onSnapshot", { path: "users/runner/workouts" });
+    act(() => result.current.refresh());
+    await waitFor(() => expect(result.current.readFailed).toBe(true));
+    expect(unfiredFailures()).toEqual([]);
+    expect(result.current.items.map((item) => item.id)).toEqual(["saved"]);
+    expect(result.current.failed).toBe(false);
+    expect(result.current.evidenceReady).toBe(false);
+    act(() => result.current.refresh());
+    await waitFor(() => expect(result.current.evidenceReady).toBe(true));
+    expect(result.current.readFailed).toBe(false);
+  });
   it("shows a workout finished on this phone, and answers with the list", async () => {
     seedFirestore({
       "users/runner/workouts/synced": savedWorkoutDoc("2026-09-01"),

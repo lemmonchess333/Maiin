@@ -62,8 +62,18 @@ function plistKeys(xml: string): string[] {
 
 /** Paths the App target's Resources phase copies into the bundle. */
 function bundledResourcePaths(): string[] {
+  const target = pbxproj.match(
+    /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+  );
+  if (!target) throw new Error("no App PBXNativeTarget in project.pbxproj");
+  const resourcesId = target[1].match(
+    new RegExp(`(${OBJECT_ID.source}) /\\* Resources \\*/`)
+  )?.[1];
+  if (!resourcesId) throw new Error("App target has no Resources phase");
   const phase = pbxproj.match(
-    /isa = PBXResourcesBuildPhase;[\s\S]*?files = \(([\s\S]*?)\);/
+    new RegExp(
+      `${resourcesId} /\\* Resources \\*/ = \\{\\s*isa = PBXResourcesBuildPhase;[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+    )
   );
   if (!phase) throw new Error("no PBXResourcesBuildPhase in project.pbxproj");
   const buildFileIds = [
@@ -267,14 +277,14 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(workflow.match(/^\s*runs-on:\s*(\S+)/m)?.[1]).toBe("macos-26");
   });
 
-  it("signs the App target with the imported profile, never from the xcodebuild command line", () => {
+  it("signs the iPhone and Watch targets with their imported profiles, never from the xcodebuild command line", () => {
     // The committed project signs automatically. On a runner with no Apple
     // account that looks for a development profile that never exists, so
-    // the workflow switches the App target to manual signing first, and its
-    // step expects exactly these two settings to switch.
-    expect(pbxproj.match(/CODE_SIGN_STYLE = Automatic;/g)?.length).toBe(2);
+    // the workflow switches both app targets to manual signing first. Each
+    // target has Debug and Release settings; package targets stay untouched.
+    expect(pbxproj.match(/CODE_SIGN_STYLE = Automatic;/g)?.length).toBe(4);
     const sign = workflow.indexOf(
-      "name: Sign the App target with the App Store profile"
+      "name: Sign the iPhone and Watch targets with App Store profiles"
     );
     expect(sign).toBeGreaterThan(-1);
     expect(workflow.indexOf("name: Archive")).toBeGreaterThan(sign);
@@ -285,7 +295,33 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
   });
 
-  it("tells the manual export which profile signs the app", () => {
+  it("keeps Watch runs disabled in the TestFlight bundle until paired-device proof", () => {
+    expect(infoPlist).toMatch(
+      /<key>TroposConnectedTrainingEnabled<\/key>\s*<string>\$\(WATCH_RUN_RELEASE_ENABLED\)<\/string>/
+    );
+    const appConfigList = pbxproj.match(
+      /\/\* Build configuration list for PBXNativeTarget "App" \*\/ = \{[\s\S]*?buildConfigurations = \(([\s\S]*?)\);/
+    );
+    const releaseId = appConfigList?.[1].match(
+      new RegExp(`(${OBJECT_ID.source}) /\\* Release \\*/`)
+    )?.[1];
+    expect(releaseId).toBeDefined();
+    const appRelease = pbxproj.match(
+      new RegExp(
+        `^\\s*${releaseId} /\\* Release \\*/ = \\{([\\s\\S]*?)^\\s*\\};`,
+        "m"
+      )
+    );
+    expect(appRelease?.[1]).toContain(
+      "PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app;"
+    );
+    expect(appRelease?.[1]).toContain("WATCH_RUN_RELEASE_ENABLED = NO;");
+    expect(
+      workflowStep("Build web bundle and sync into the iOS project")
+    ).not.toMatch(/VITE_CONNECTED_TRAINING_ENABLED:\s*["']?true/);
+  });
+
+  it("tells the manual export which profile signs each app", () => {
     // Without the mapping a manual export stops at "no profiles for
     // com.tropos.app", after the archive has already taken its 20 minutes.
     const exportStep = workflowStep("Export .ipa");
@@ -295,9 +331,17 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(exportStep).toMatch(
       /<key>provisioningProfiles<\/key>\s*<dict>\s*<key>\$\{BUNDLE_ID\}<\/key><string>\$\{PROFILE_UUID\}<\/string>/
     );
+    expect(exportStep).toMatch(
+      /<key>\$\{WATCH_BUNDLE_ID\}<\/key><string>\$\{WATCH_PROFILE_UUID\}<\/string>/
+    );
     expect(
       workflowStep("Import signing certificate + provisioning profile")
     ).toMatch(/echo "PROFILE_UUID=\$PROFILE_UUID" >> "\$GITHUB_ENV"/);
+    expect(
+      workflowStep("Import signing certificate + provisioning profile")
+    ).toMatch(
+      /echo "WATCH_PROFILE_UUID=\$WATCH_PROFILE_UUID" >> "\$GITHUB_ENV"/
+    );
   });
 
   it("declares the entitlement each native plugin needs, and only while it is used", () => {
@@ -328,7 +372,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     const checked = [
       ...preflight.matchAll(/^\s+([A-Z0-9_]+): \$\{\{ secrets\.\1 \}\}/gm),
     ].map((m) => m[1]);
-    expect(checked.length).toBe(8);
+    expect(checked.length).toBe(9);
     // The VITE_* client config has its own check (scripts/check-web-env.mjs).
     const read_ = new Set(
       [...workflow.matchAll(/secrets\.([A-Z0-9_]+)/g)]

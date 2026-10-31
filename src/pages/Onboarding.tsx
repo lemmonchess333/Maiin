@@ -79,6 +79,8 @@ import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import NewAccountMethodNote from "@/components/onboarding/NewAccountMethodNote";
 import { startingDisplayName } from "@/lib/onboardingName";
 import { signInMethodOf } from "@/lib/signInMethod";
+import { ACTIVATION_JOURNEY_V2_ENABLED } from "@/lib/activationJourney";
+import { Capacitor } from "@capacitor/core";
 
 /* The review's reminder row is its own chunk, fetched once setup has
    drawn, so the questions before it do not carry it. */
@@ -787,7 +789,10 @@ export default function Onboarding() {
       // first invocation after idle spins up a cold instance that can exceed the
       // client SDK's default wait window and surface as functions/internal even
       // though the warm instance will handle the second call fine.
-      const completeOnboarding = httpsCallable(functions, "completeOnboarding");
+      const completeOnboarding = httpsCallable<
+        unknown,
+        { success: boolean; activationJourneyVersion?: 2 | null }
+      >(functions, "completeOnboarding");
       // P0-5: payload now includes weekSchedule as an explicit
       // top-level field. validatePlanPayload reads either the
       // top-level field or profileData.weekSchedule; sending both
@@ -797,9 +802,16 @@ export default function Onboarding() {
           profileData,
           programState,
           weekSchedule: plan.weekSchedule,
+          ...(ACTIVATION_JOURNEY_V2_ENABLED
+            ? {
+                activationJourneyVersion: 2,
+                onboardingPlatform: Capacitor.getPlatform(),
+              }
+            : {}),
         });
+      let commitResult;
       try {
-        await callCF();
+        commitResult = await callCF();
       } catch (err) {
         const code = (err as { code?: string })?.code;
         const msg = (err as { message?: string })?.message || "";
@@ -820,7 +832,7 @@ export default function Onboarding() {
           msg.toUpperCase().includes("INTERNAL");
         if (!isTransient) throw err;
         await new Promise((r) => setTimeout(r, 1200));
-        await callCF();
+        commitResult = await callCF();
       }
 
       onboardingCompletedRef.current = true;
@@ -856,8 +868,9 @@ export default function Onboarding() {
         toast.success("Setting up your program…");
         // Brief delay so the toast renders before the reload swallows it.
         await new Promise((r) => setTimeout(r, 600));
-        // Re-read the completed profile on Home, where the first-visit
-        // walk starts. Preserve the hosting basename.
+        // Re-read the completed profile on Home. The server-stamped journey
+        // marker selects the same first visit after this recovery reload.
+        // Preserve the hosting basename.
         window.location.assign(import.meta.env.BASE_URL || "/");
         return;
       }
@@ -906,20 +919,20 @@ export default function Onboarding() {
         runMode: effectiveRunMode,
       });
 
-      // Save succeeded — leave the onboarding surface explicitly. Flipping
-      // onboardingComplete=true makes App.tsx switch to the authenticated
-      // route set. The first screen of the app is the Pro offer (the
-      // Cal AI / MacroFactor placement: the product, shown once, right
-      // after the plan is made), and its "Continue with Free" lands on Home,
-      // whose first card is the session the review led with and where the
-      // first-visit walk starts (FV1; until then it opened Train on the
-      // review's activity). `replace` keeps Back from returning into the
-      // finished onboarding flow; `state.next` carries the destination so
-      // the offer page needs no knowledge of the plan.
-      navigate("/upgrade?from=onboarding", {
-        replace: true,
-        state: { next: "/" },
-      });
+      // Route from the accepted, persisted server version, not the stale
+      // React profile captured before refreshProfile(). An older callable
+      // that returns no version keeps the established offer route.
+      if (
+        ACTIVATION_JOURNEY_V2_ENABLED &&
+        commitResult.data.activationJourneyVersion === 2
+      ) {
+        navigate("/", { replace: true });
+      } else {
+        navigate("/upgrade?from=onboarding", {
+          replace: true,
+          state: { next: "/" },
+        });
+      }
     } catch (err) {
       logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code?.replace("functions/", "");
@@ -2010,7 +2023,9 @@ export default function Onboarding() {
               : step === 7
                 ? saveError
                   ? "Try again"
-                  : "Start my plan"
+                  : ACTIVATION_JOURNEY_V2_ENABLED
+                    ? "Go to Today"
+                    : "Start my plan"
                 : returnToReview
                   ? "Back to review"
                   : "Continue"}

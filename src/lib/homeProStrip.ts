@@ -23,11 +23,23 @@ export interface HomeProStripInput {
   hadFreeWeek: boolean;
   /** profile.createdAt in epoch ms, or null before it resolves. */
   createdAtMs: number | null;
+  /** Server-stamped plan completion time for the new activation journey. */
+  onboardingCompletedAtMs?: number | null;
+  /** Version 2 keeps the first settled Home visit clear, even after day 3. */
+  activationJourneyV2?: boolean;
+  /** Snapshot from when this Home visit began, scoped to the signed-in uid. */
+  hadPriorHomeVisit?: boolean;
   nowMs: number;
 }
 
 export function shouldShowHomeProStrip(input: HomeProStripInput): boolean {
   if (input.isPro || input.isInTrial || input.snoozed) return false;
+  if (input.activationJourneyV2) {
+    if (!input.hadPriorHomeVisit || input.onboardingCompletedAtMs == null)
+      return false;
+    const ageDays = (input.nowMs - input.onboardingCompletedAtMs) / 864e5;
+    return ageDays >= HOME_PRO_STRIP_MIN_ACCOUNT_AGE_DAYS;
+  }
   if (input.hadFreeWeek) return true;
   if (input.createdAtMs === null) return false;
   const ageDays = (input.nowMs - input.createdAtMs) / 864e5;
