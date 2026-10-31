@@ -11,6 +11,8 @@ import {
 } from "@/lib/notifications";
 import { logger } from "@/lib/logger";
 import { captureError } from "@/lib/errorReporting";
+import { readString, writeString } from "@/lib/localStore";
+import { parseLocalDate } from "@/lib/dateHelpers";
 import { format } from "date-fns";
 import {
   STREAK_NOTIFICATION_ID,
@@ -137,14 +139,25 @@ export function firstWeekNudgeAction(state: {
   hasLoggedToday: boolean;
   firstWeekNudgeDateKey: string | null;
   todayKey: string;
-}): "schedule" | "cancel" | "none" {
+  /**
+   * The account-wide claim (`settings/pushState`), when this phone read it:
+   * its fire date, and whether this phone made it. A claim this phone made
+   * whose own marker never saved is armed again for its date; one made
+   * elsewhere (another phone, the push sender) leaves nothing armed here.
+   */
+  sharedNudge?: { dateKey: string; mine: boolean } | null;
+}): "schedule" | "rearm" | "cancel" | "none" {
   if (state.loading) return "none";
-  if (state.firstWeekNudgeDateKey) {
+  const shared = state.firstWeekNudgeDateKey ? null : state.sharedNudge;
+  const marker =
+    state.firstWeekNudgeDateKey ?? (shared?.mine ? shared.dateKey : null);
+  if (marker) {
     if (!state.enabled) return "cancel";
-    if (state.firstWeekNudgeDateKey === state.todayKey && state.hasLoggedToday)
-      return "cancel";
+    if (marker === state.todayKey && state.hasLoggedToday) return "cancel";
+    if (shared?.mine && marker >= state.todayKey) return "rearm";
     return "none";
   }
+  if (shared) return "cancel";
   if (!state.enabled) return "none";
   if (!state.primingShown) return "none";
   if (state.currentStreak < 1 || state.currentStreak >= 2) return "none";
@@ -158,6 +171,50 @@ export function firstWeekNudgeAction(state: {
  * already logged today; nudging them tonight would be noise). Null on
  * malformed input, mirroring computeNextOccurrence.
  */
+/** The first-week nudge's time on its claimed fire date, the same evening
+ *  hour `computeTomorrowOccurrence` chose, so a re-arm fires when the
+ *  first arming would have. Null on malformed input. */
+export function firstWeekOccurrenceOn(
+  dateKey: string,
+  timeHHMM: string
+): Date | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
+  if (!match || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return null;
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  if (hours > 23 || minutes > 59) return null;
+  const target = parseLocalDate(dateKey);
+  if (hours < 8 || hours >= 22) target.setHours(8, 0, 0, 0);
+  else target.setHours(hours, minutes, 0, 0);
+  return target;
+}
+
+/** This phone's mark on the first-week claim, kept on the device, so the
+ *  phone that claimed can tell its claim from another's. */
+function firstWeekDeviceId(uid: string): string {
+  const key = `tropos:first-week-nudge-device:v1:${encodeURIComponent(uid)}`;
+  const stored = readString(key);
+  if (stored) return stored;
+  const id =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  writeString(key, id);
+  return id;
+}
+
+/** A claim that did not reach the server: offline, or it timed out. */
+function isNetworkFailure(error: unknown): boolean {
+  const code = String((error as { code?: unknown })?.code ?? "");
+  return (
+    (typeof navigator !== "undefined" && navigator.onLine === false) ||
+    code.endsWith("unavailable") ||
+    code.endsWith("deadline-exceeded")
+  );
+}
+
+const MARKER_ATTEMPTS = 3;
+
 export function computeTomorrowOccurrence(timeHHMM: string): Date | null {
   const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
   if (!match) return null;
@@ -333,12 +390,50 @@ export function useStreakReminderInternal(
   // The marker is stamped only when the OS accepted the schedule — if
   // permission lapsed at the OS level, the once-ever budget isn't consumed
   // and a later log day (still below the `>= 2` floor) may retry.
+  //
+  // Once the account-wide claim commits, the server sends nothing, so the
+  // armed notification is the only nudge there will be: it is never
+  // cancelled for a later change of state or a failed marker write. The
+  // marker write is retried, and a phone that lost it reads its own claim
+  // back and arms again for the claimed date. A claim that could not reach
+  // the server leaves the notification armed and is tried again on the next
+  // pass.
 
   useEffect(() => {
     if (!uid || loading || streaksLoading) return;
     let cancelled = false;
+    const sharedRef = doc(db, "users", uid, "settings", "pushState");
+    const saveMarker = async (dateKey: string) => {
+      for (let attempt = 1; attempt <= MARKER_ATTEMPTS; attempt++) {
+        try {
+          await updatePrefs({ firstWeekNudgeDateKey: dateKey });
+          return;
+        } catch {
+          // Retried here, then by the next pass from the shared claim.
+        }
+      }
+    };
     const reconcile = async () => {
       if (cancelled) return;
+      if (pushOwns !== false) {
+        await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
+        return;
+      }
+      const deviceId = firstWeekDeviceId(uid);
+      let sharedNudge: { dateKey: string; mine: boolean } | null = null;
+      if (!prefs.firstWeekNudgeDateKey && prefs.enabled && prefs.primingShown) {
+        try {
+          const shared = (await getDoc(sharedRef)).data();
+          if (typeof shared?.firstWeekNudgeDateKey === "string")
+            sharedNudge = {
+              dateKey: shared.firstWeekNudgeDateKey,
+              mine: shared.firstWeekNudgeDevice === deviceId,
+            };
+        } catch {
+          // Unread, the claim transaction below still checks it.
+        }
+        if (cancelled) return;
+      }
       const action = firstWeekNudgeAction({
         loading: false,
         enabled: prefs.enabled,
@@ -347,9 +442,24 @@ export function useStreakReminderInternal(
         hasLoggedToday,
         firstWeekNudgeDateKey: prefs.firstWeekNudgeDateKey ?? null,
         todayKey: format(new Date(), "yyyy-MM-dd"),
+        sharedNudge,
       });
-      if (pushOwns !== false || action === "cancel") {
+      if (action === "cancel") {
         await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
+        return;
+      }
+      if (action === "rearm" && sharedNudge) {
+        const fireAt = firstWeekOccurrenceOn(sharedNudge.dateKey, prefs.time);
+        if (fireAt && fireAt.getTime() > Date.now()) {
+          await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
+          await scheduleNotification({
+            id: FIRST_WEEK_NOTIFICATION_ID,
+            title: "A reminder for your next day",
+            body: "A quick log today keeps it going.",
+            scheduleAt: fireAt,
+          });
+        }
+        await saveMarker(sharedNudge.dateKey);
         return;
       }
       if (action !== "schedule") return;
@@ -365,38 +475,44 @@ export function useStreakReminderInternal(
       });
       if (!scheduled) return;
       if (cancelled) {
+        // Nothing is claimed yet: the pass that follows decides again.
         await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
         return;
       }
       const fireKey = format(fireAt, "yyyy-MM-dd");
+      let claimed: boolean;
       try {
         // Push and local use one account-wide once-ever marker. Claim it
         // after arming the device, and cancel if another device or the push
         // sender already claimed it. A transaction also keeps two local
-        // devices from each arming a first-week nudge.
-        const sharedRef = doc(db, "users", uid, "settings", "pushState");
-        const claimed = await runTransaction(db, async (transaction) => {
-          const shared = await transaction.get(sharedRef);
-          if (shared.data()?.firstWeekNudgeDateKey) return false;
+        // devices from each arming a first-week nudge. This phone's own
+        // earlier claim for the same date counts as its claim.
+        claimed = await runTransaction(db, async (transaction) => {
+          const shared = (await transaction.get(sharedRef)).data();
+          if (shared?.firstWeekNudgeDateKey)
+            return (
+              shared.firstWeekNudgeDateKey === fireKey &&
+              shared.firstWeekNudgeDevice === deviceId
+            );
           transaction.set(
             sharedRef,
-            { firstWeekNudgeDateKey: fireKey },
+            { firstWeekNudgeDateKey: fireKey, firstWeekNudgeDevice: deviceId },
             { merge: true }
           );
           return true;
         });
-        if (!claimed || cancelled) {
+      } catch (error) {
+        // Offline, the nudge stays armed and the next pass claims it. Any
+        // other refusal leaves nothing armed for a later pass to duplicate.
+        if (!isNetworkFailure(error))
           await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
-          return;
-        }
-        await updatePrefs({
-          firstWeekNudgeDateKey: fireKey,
-        });
-      } catch {
-        // A failed claim or local marker write cannot leave an unmarked
-        // notification armed for a later pass to duplicate.
-        await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
+        return;
       }
+      if (!claimed) {
+        await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
+        return;
+      }
+      await saveMarker(fireKey);
     };
     firstWeekChain.current = firstWeekChain.current.then(reconcile, reconcile);
     return () => {
