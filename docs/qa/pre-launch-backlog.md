@@ -10,6 +10,30 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The first-week reminder offer asks iOS for push (XB1 fix pack, 2026-10-31)
+
+After a v2 account's first saved session in its first week, and once the
+share question is answered, the finish screen offers evening reminders
+(`FirstWeekReturnOffer`). With push supported, Turn on reminders asks iOS
+for notification permission, registers the device's token and saves push
+consent for the streak nudge only; a refusal shows "Notifications are
+blocked" with a way to Settings. It stays hidden when setup's reminder row
+already turned training-day reminders on. The unit suite fakes the
+permission and the token; only a phone shows the system prompt.
+
+- [ ] **Allowed.** On a TestFlight build, make a new account (skip setup's
+      reminder row), save a first workout and answer the share question.
+      Passing: the offer appears only then; Turn on reminders shows the iOS
+      permission prompt once; after Allow, Settings → Notifications has
+      push on with the streak nudge only, and the offer does not come back
+      on the next finish.
+- [ ] **Denied.** As above, but tap Don't Allow. Passing: the card says
+      notifications are blocked, Open notification settings opens
+      Settings → Notifications, and no token is registered.
+- [ ] **Asked in setup.** Make a new account with setup's reminder row on,
+      then save a first workout. Passing: no reminder offer on the finish
+      screen, and no steps question on Home until the app is next opened.
+
 ## A lift's rest outside the app (Mob2 call 1, 2026-10-28)
 
 While a rest runs, the page's title counts it down ("1:23 rest", then
@@ -523,8 +547,9 @@ need a device.
       a test push sent after signing back in arrives.
 - [ ] **A new account's first-meal prompt and first-week card.** On a new
       account, log one meal, then open Home the next day. Passing: the
-      first-meal prompt is gone and the first-week card shows the meal
-      done.
+      first-meal prompt is gone. On a legacy account the first-week card
+      shows the meal done; a v2 account's card has no meal row, only its
+      first workout and first run (`firstWeek.ts`, `trainingOnly`).
 
 ## Server cost rows (survey items 43 to 46, 2026-10-20)
 

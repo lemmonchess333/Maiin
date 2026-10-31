@@ -314,9 +314,9 @@ export function useStreakReminderInternal(
   // Foreground events are NOT handled here directly. The hasLoggedToday
   // value comes from useStreaks, whose onSnapshot subscriptions reflect
   // activity changes in near-real-time while the app is open. Consent
-  // (`enabled` and `primingShown`) is asked on the workout finish screen
-  // and in Settings; the prompt that once asked after a first session was
-  // removed in FV2, having never opened.
+  // (`enabled` and `primingShown`) is asked on a saved workout's or run's
+  // finish screen (`CompletionReminderChoice`; in a v2 account's first
+  // week, `FirstWeekReturnOffer`) and in Settings.
 
   useEffect(() => {
     if (!uid || loading || streaksLoading) return;
