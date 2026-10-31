@@ -254,7 +254,7 @@ export function ChallengeCard({
           ActivityCard hero panels; static everything (WKWebView rule);
           accent is the sport-coded metric colour so a km challenge
           reads coral and a volume challenge purple at a glance.
-          v3: when a licensed editorial photo exists for the metric
+          v3: when an editorial photo exists for the metric
           (src/assets/editorial — Runna/Strava-style photography on
           editorial surfaces), it becomes the band: photo + sport tint
           wash + bottom scrim + white text. Without assets the v2

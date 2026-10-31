@@ -9,8 +9,8 @@
  * activity feed keeps user-data imagery (route scenes, muscle
  * figures). Recorded in GLOSSARY.md under "Editorial imagery".
  *
- * HOW TO ADD PHOTOS (operator): drop licensed images (Unsplash /
- * Pexels licence or owned) into `src/assets/editorial/` using the
+ * HOW TO ADD PHOTOS (operator): drop licensed or generated generic images
+ * with recorded provenance into `src/assets/editorial/` using the
  * stems below — see the README in that directory. Everything is
  * resolved at build time via import.meta.glob, so a missing file
  * simply resolves to null and the surface renders its designed
@@ -86,7 +86,7 @@ export function challengeEditorialStem(challenge: EditorialChallenge): string {
   return CHALLENGE_STEM_BY_METRIC[challenge.metric] ?? "challenge-hybrid-hero";
 }
 
-/** Editorial photo URL for a challenge, or null when its licensed asset
+/** Editorial photo URL for a challenge, or null when its asset
  *  has not been added. */
 export function challengeEditorialImage(
   challenge: EditorialChallenge
@@ -96,7 +96,7 @@ export function challengeEditorialImage(
 
 /** Editorial photo URL for a community space (Spc1 PR2) — stems are
  *  `space-<spaceId>` per the spaceDefs contract, e.g.
- *  `space-womens-running.webp`. Null until the licensed asset lands
+ *  `space-womens-running.webp`. Null until the editorial asset lands
  *  (the directory card renders its tinted fallback band). */
 export function spaceEditorialImage(spaceId: string): string | null {
   return byStem(`space-${spaceId}`);

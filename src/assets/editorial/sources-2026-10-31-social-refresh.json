@@ -1,0 +1,71 @@
+{
+  "updatedOn": "2026-10-31",
+  "notes": "Eight generic Social editorial covers generated with OpenAI image_gen. These replace the older asset versions documented in the 2026-09-14 and 2026-10-17/18 manifests. They illustrate interests and challenges, not Tropos members, named places, or actual events. Every output was reviewed at card/header crop and at 3x brightness for marks.",
+  "processing": "Source PNG resized to 1200 x 600 with Sharp fit:cover, encoded as WebP effort 6. No semantic edits after generation.",
+  "images": [
+    {
+      "asset": "challenge-training-minutes.webp",
+      "reason": "Replaces a licensed gym photo with a visible Nike shirt logo.",
+      "model": "OpenAI image_gen",
+      "prompt": "Create a photorealistic editorial sports photograph for a fitness app's generic 'Training Minutes' challenge cover. Landscape composition, approximately 2:1. A single adult athlete with a diverse, natural appearance in a small modern gym, seen from a three-quarter side angle after a hard training interval, glancing at a simple unbranded black sports watch on their wrist. Candid documentary energy, realistic anatomy and hands, subtle sweat, quiet concentration, natural window light, muted charcoal, warm neutral and dusty blue palette. Put the athlete's face, wrist and upper torso clearly in the middle and upper two thirds, with enough context to read as active training even when cropped to a short horizontal card. Keep lower left relatively dark and visually simple for white text overlay. No text, no logos, no brands or recognizable product markings anywhere, no signage, no poster, no watermark, no app interface, no split frame, no decorative graphics. Realistic photography, not an illustration or advertisement.",
+      "sourceSha256": "faf101330cae6cef6ba4f9ce1a3ae3db6d0a26ca56f5bb20687c3b7f4fbeb284",
+      "output": { "width": 1200, "height": 600, "quality": 80, "bytes": 38254, "sha256": "0d154a5ccacee1e73544a90ba3f71c897d35c47d76f004e9742dc4c88e35142f" }
+    },
+    {
+      "asset": "challenge-strength.webp",
+      "reason": "Replaces a cropped deadlift detail with Nike shoes and branded plates.",
+      "model": "OpenAI image_gen",
+      "prompt": "Photorealistic documentary editorial sports photograph for a generic 'Strength Builder' challenge in a fitness app, wide landscape 2:1. One adult athlete in a modest, real weight-training gym, shown in a natural three-quarter side view at the top of a controlled barbell deadlift. Athlete visible from knees through head, focused expression, correct human anatomy, hands gripping one straight bar, evenly matched plain matte-black circular plates on both ends, realistic bar and weight geometry. Unbranded charcoal training clothes and plain shoes, no product markings or letters. Natural side window light with warm highlights and deep shadows; restrained neutral palette, candid, gritty and credible, not a commercial fitness advertisement. The athlete and bar must remain legible in a short horizontal mobile card crop; put the head and shoulders in upper half and keep lower left dark and simple for white title overlay. No text, logos, trademarks, signs, watermarks, decorative graphics, or split frame.",
+      "sourceSha256": "969a574b6b309c1ba160ea74294c21c058defeb0e546f035725a0044ce8ae7b0",
+      "output": { "width": 1200, "height": 600, "quality": 80, "bytes": 49356, "sha256": "205b889b442f94b12cc270456f16c4c96644580149e03f58826e77e184ea7ac3" }
+    },
+    {
+      "asset": "space-lifters.webp",
+      "reason": "Shows people training together where the older cover showed only a barbell detail.",
+      "model": "OpenAI image_gen",
+      "prompt": "Photorealistic candid editorial photograph for a fitness app's 'Lifters' community group cover, wide landscape 2:1. Three adult gym members with varied appearances train together in a real, modest weight room. One athlete performs a controlled dumbbell row near a bench while two friends encourage and prepare their own lifts, with relaxed, authentic camaraderie rather than posed smiles. All faces and upper bodies visible around the center and upper half; readable as a human community even at a small mobile-card crop and a shallow wide banner crop. Realistic anatomy, hands, bench and dumbbell geometry. Soft directional window light, warm neutrals, deep charcoal shadows, subtle documentary grain, restrained and athletic. Leave lower-left area relatively dark and simple for white overlaid title. Plain unbranded gym clothes and equipment. No lettering, logos, trademarks, advertisements, signage, watermarks, decorative graphics, or collage.",
+      "sourceSha256": "c82d945e114b087311a69676beb066315164aec9dba3bc90f1992759313c4fa8",
+      "output": { "width": 1200, "height": 600, "quality": 80, "bytes": 48980, "sha256": "8e1f7f5353b4911ad8f1dfbccffd9ea3fba9c5cfcef835ca8df4f3b2586a0659" }
+    },
+    {
+      "asset": "space-womens-running.webp",
+      "reason": "Shows a running community where the older cover showed a single backlit runner.",
+      "model": "OpenAI image_gen",
+      "prompt": "Photorealistic documentary editorial photograph for a fitness app's 'Women's Running' community cover, wide landscape 2:1. Three adult women of different backgrounds running together on a leafy city park path at early morning, seen from a candid three-quarter side angle, mid-stride and chatting naturally. The group is recognizably a community even at small mobile-card size, with faces and upper bodies near the center upper two-thirds, park path and trees giving context; athletic motion looks anatomically correct. Atmospheric soft golden side light, restrained earthy greens, warm neutrals and charcoal shadows, authentic lived-in scene, not a glossy commercial or posed group portrait. Keep the lower-left area darker and relatively clear for overlaid white title. Plain unbranded clothes and shoes, no visible logos, lettering, trademarks, racing bibs, signs, watermarks, decorative graphics, collage, or text.",
+      "sourceSha256": "7088035a796935b8d2c78e398f9d5403cb4bd209e71e92434399d5754c2ee211",
+      "output": { "width": 1200, "height": 600, "quality": 80, "bytes": 82172, "sha256": "f6fb830d4163cf2fda4cd353e6c52a7e47d8f86e0fb1ea4fcefc4287da3f3489" }
+    },
+    {
+      "asset": "space-runners.webp",
+      "reason": "Replaces nearly black anonymous silhouettes with a readable club run.",
+      "model": "OpenAI image_gen",
+      "prompt": "Photorealistic documentary editorial photograph for a fitness app's general 'Runners' community cover, wide landscape 2:1. A small mixed group of four adult runners moving together along an ordinary urban riverside path at blue hour, candid rear three-quarter angle with a couple of side profiles visible, sharing the same pace. Clear natural running form and human connection, no race bibs. Overcast cool-blue ambient light with a restrained warm horizon; faces and bodies readable rather than silhouettes, realistic, slightly atmospheric, not a glossy advertising shot. Place the group in the central upper two-thirds so it survives both a wide shallow header and a smaller card crop; keep lower-left darker and visually quiet for white title. Plain unbranded clothing and shoes. No recognizable landmark, words, logos, trademarks, advertisements, signs, watermarks, decorative graphics, or collage.",
+      "sourceSha256": "bccf644c69cfd1d2623f14bc89229a48d2ff2f7d975c0c9048a0e5a7dbbb8ba8",
+      "output": { "width": 1200, "height": 600, "quality": 80, "bytes": 82288, "sha256": "fc03cf9a0a8932769ea0d93136dbe068cd73a85c9c87db1569e6900be15a8791" }
+    },
+    {
+      "asset": "challenge-fastest-5k.webp",
+      "reason": "Replaces a panning-blurred track image whose athletes disappear at card size.",
+      "model": "OpenAI image_gen",
+      "prompt": "Photorealistic documentary sports photograph for a fitness app's generic 'Fastest 5K' challenge cover, wide landscape 2:1. One adult runner accelerating hard along an ordinary outdoor running track, captured from a low three-quarter side angle at late afternoon. The runner is sharp and unmistakably athletic with realistic running form, while the track and distant trees have subtle motion softness. Focused expression, dynamic legs and arms, no race bib. Candid editorial energy, warm low sunlight, deep aubergine and charcoal shadows, muted natural colors, not a glossy advertisement. Put runner's face and upper body in central upper two-thirds and leave a dark simple lower-left region for white overlaid title; composition must remain legible in a very short horizontal phone card. Plain unbranded clothing and shoes, no text, lettering, logos, trademarks, watermarks, signage, decorative graphics, or collage.",
+      "sourceSha256": "7aab438a00340f37002a5e4312a805b791d07e50c3699fd06043a18c9aee7491",
+      "output": { "width": 1200, "height": 600, "quality": 80, "bytes": 44234, "sha256": "581dfddb3bf16adda8c62e0dfe1eac41ba215b982ca0867ff15b9e9677c64496" }
+    },
+    {
+      "asset": "challenge-mileage.webp",
+      "reason": "Replaces a tiny dark runner silhouette with a visible steady run and distance context.",
+      "model": "OpenAI image_gen",
+      "prompt": "Photorealistic documentary editorial sports photograph for a fitness app's generic monthly 'Mileage' running challenge cover, wide landscape 2:1. One adult runner on a long quiet gravel trail through low wooded hills at early morning, captured from a three-quarter rear side angle at a natural steady pace. The runner is clearly visible and occupies about one third of the frame, with the curving trail leading into the distance to suggest accumulating miles. Credible natural anatomy and running form, atmospheric overcast light with warm highlights, muted olive and slate colours, restrained, real and unposed. Keep the runner's upper body within central upper two-thirds and lower-left darker and simple for white overlaid title; readable in a shallow mobile card crop. Plain unbranded clothes and shoes, no words, race bibs, logos, trademarks, watermarks, signage, decorative graphics, or collage.",
+      "sourceSha256": "517a8dc02c88f00e1b236468852acccdacc2f3c38eefb20c27cad439bccaf122",
+      "output": { "width": 1200, "height": 600, "quality": 76, "bytes": 106840, "sha256": "5b92454a46aa2d381762a5ec8042e0ec0c12c7db5f8e8343f4c8a94061f37c77" }
+    },
+    {
+      "asset": "challenge-together.webp",
+      "reason": "Replaces tiny separated silhouettes with a recognizable shared run.",
+      "model": "OpenAI image_gen",
+      "prompt": "Photorealistic documentary editorial sports photograph for a fitness app's generic 'Together: 1,000 km' collective running challenge cover, wide landscape 2:1. A compact mixed group of six adult runners moving as one along a gently curving park path on a cool misty morning, seen from a low front three-quarter angle. One or two runners lead in the center with friends close behind, all natural in-motion expressions and believable running form; this should feel like shared distance, not a staged race or advertising campaign. Atmospheric soft light, muted forest green, grey and warm coral hints, deep but readable shadows. Keep runners large enough to recognize in a shallow mobile challenge card, faces and torsos in the central upper two-thirds, lower-left dark and simple for white title overlay. Plain unbranded clothing, no bibs, words, logos, trademarks, signage, watermarks, decorations, or collage.",
+      "sourceSha256": "bfd5f9a8d5f007447202f7f5fe3033e77355578526f03ba2ad5413205206c7d2",
+      "output": { "width": 1200, "height": 600, "quality": 80, "bytes": 108378, "sha256": "34ef84f092c5e919d2f80a888ea364cf4d05280e35a4df1f8d44031712966391" }
+    }
+  ]
+}
