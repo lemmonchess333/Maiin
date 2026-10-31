@@ -7,7 +7,7 @@
  */
 import { vi, expect, it, afterEach, beforeEach } from "vitest";
 import { render, screen, cleanup, act } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, useLocation, useSearchParams } from "react-router-dom";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({
@@ -110,6 +110,38 @@ it.each([
   seedFirestore(follow("friend"));
   open(url);
   expect(await screen.findByText(showing)).toBeInTheDocument();
+  expect(screen.queryByText("Feed showing")).toBeNull();
+});
+
+/* Together's Circles section strips the hand-off's params once it has
+   read them (CirclesSection's effect); this does the same on a tap. */
+function StripHandOff() {
+  const [, setSearchParams] = useSearchParams();
+  return (
+    <button
+      type="button"
+      onClick={() => setSearchParams({}, { replace: true })}
+    >
+      Strip
+    </button>
+  );
+}
+
+it("stays on Together once the Circle hand-off's params are stripped", async () => {
+  seedFirestore(follow("friend"));
+  render(
+    <MemoryRouter
+      initialEntries={["/social?circleCreate=race&circleTitle=Berlin"]}
+    >
+      <Social />
+      <StripHandOff />
+      <Where />
+    </MemoryRouter>
+  );
+  expect(await screen.findByText("Together showing")).toBeInTheDocument();
+  act(() => screen.getByRole("button", { name: "Strip" }).click());
+  expect(screen.getByTestId("where")).toHaveTextContent(/^$/);
+  expect(screen.getByText("Together showing")).toBeInTheDocument();
   expect(screen.queryByText("Feed showing")).toBeNull();
 });
 
