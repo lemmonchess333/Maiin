@@ -182,7 +182,7 @@ function ScheduleLayoutSheetBody({
           : "Tap any day to cycle through Rest, Lift, Run, Both."
       }
     >
-      <div className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-6 pt-4 space-y-5">
+      <div className="@container min-h-0 overflow-y-auto overscroll-contain px-5 pb-6 pt-4 space-y-5">
         {guided && reviewing ? (
           <>
             <Banner
@@ -286,8 +286,10 @@ function ScheduleLayoutSheetBody({
           </>
         ) : (
           <>
+            {/* One column under 11em of sheet (2x text on a phone), where a
+                third of the row was narrower than "Both". */}
             <div
-              className="grid grid-cols-3 gap-2"
+              className="grid grid-cols-3 gap-2 @max-[11em]:grid-cols-1"
               aria-label="Weekly layout summary"
             >
               {[

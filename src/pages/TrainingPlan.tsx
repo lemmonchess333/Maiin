@@ -489,15 +489,26 @@ export default function TrainingPlan() {
                 ].filter((item): item is string => item !== null)}
               />
             )}
-            <Card padded={false} size="compact" className="overflow-hidden">
+            {/* Under 14em of card (large text on a phone) the day's date
+                goes above its sessions rather than beside them: beside, the
+                date column grows with the text and leaves a session's words
+                too little room to fit. */}
+            <Card
+              padded={false}
+              size="compact"
+              className="overflow-hidden @container"
+            >
               <ol className="divide-y divide-border">
                 {model.days.map((day) => (
                   <li
                     key={day.dateKey}
-                    className={cn("flex gap-3 p-3", day.isToday && "bg-muted")}
+                    className={cn(
+                      "flex gap-3 p-3 @max-[14em]:flex-col @max-[14em]:gap-1",
+                      day.isToday && "bg-muted"
+                    )}
                     aria-current={day.isToday ? "date" : undefined}
                   >
-                    <div className="w-11 shrink-0 text-center">
+                    <div className="w-11 shrink-0 text-center @max-[14em]:flex @max-[14em]:w-auto @max-[14em]:items-baseline @max-[14em]:gap-2 @max-[14em]:text-left">
                       <p className="text-xs text-muted-foreground">
                         {formatShortWeekday(parseLocalDate(day.dateKey))}
                       </p>

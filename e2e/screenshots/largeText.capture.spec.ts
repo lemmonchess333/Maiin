@@ -26,6 +26,10 @@
  * Train, for a programme workout and for a saved routine's; and an empty
  * workout's review, with the sheets that say when it started and name it.
  *
+ * And the training plan's week and all sessions: the plan page, its week
+ * reset and the usual-week editor it opens, a race plan's week with the
+ * sheet that moves a run, and Training history with its dates sheet.
+ *
  * Each screen is opened at 393px and at 320px (Display Zoom on an SE or
  * a mini), with the root font at 135% (the largest standard size) and
  * 200% (where the app's scaling stops), and measured with layoutBreaks:
@@ -791,6 +795,108 @@ test.describe("large text", () => {
         .waitFor({ timeout: 25_000 });
       await page.waitForTimeout(800);
       await measure(page, "run-return", width, found);
+      expect(found).toEqual([]);
+    });
+
+    /* The training plan and all sessions: the plan page, its week reset,
+       the usual-week editor the reset opens and its review, Training
+       history and its dates sheet; then seed:fellbehind's race plan, whose
+       week has runs to move, with the move sheet. */
+    test(`the plan and all sessions at ${width}px`, async ({ page }) => {
+      test.setTimeout(240_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+      const dialog = page.getByRole("dialog").first();
+
+      await page.goto("program/plan");
+      await ready(page, page.getByRole("heading", { name: "Your plan" }));
+      await page
+        .getByRole("region", { name: "This week's plan" })
+        .getByRole("listitem")
+        .first()
+        .waitFor({ timeout: 20_000 });
+      await measure(page, "training-plan", width, found);
+
+      await page.goto("program/plan?reset=1");
+      const layout = page.getByRole("button", {
+        name: "Change usual weekly layout",
+      });
+      // A fresh account's plan can still be settling from the first visit.
+      await layout.waitFor({ state: "visible", timeout: 60_000 });
+      await ready(page, layout);
+      await measure(page, "week-reset", width, found);
+      await layout.click();
+      await dialog.waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "layout-sheet", width, found);
+      // One lifting day made a rest day (Lift, Run, Both, Rest), so the
+      // review has a change to say and the plan stays valid.
+      const liftDay = dialog.getByRole("button", { name: /: Lift\. / }).first();
+      const dayName = ((await liftDay.getAttribute("aria-label")) ?? "").split(
+        ":"
+      )[0];
+      const sameDay = dialog.getByRole("button", {
+        name: new RegExp(`^${dayName}: `),
+      });
+      for (let i = 0; i < 3; i++) await sameDay.click({ timeout: 10_000 });
+      await dialog
+        .getByRole("button", { name: "Review change" })
+        .click({ timeout: 10_000 });
+      await dialog
+        .getByRole("heading", { name: "Review usual week" })
+        .waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "layout-review", width, found);
+      await page.keyboard.press("Escape");
+
+      await page.goto("history/sessions");
+      const dates = page.locator('button[aria-haspopup="dialog"]').first();
+      await ready(page, dates);
+      await page
+        .getByRole("region", { name: "Saved sessions" })
+        .getByRole("link")
+        .first()
+        .waitFor({ timeout: 20_000 });
+      await measure(page, "training-history", width, found);
+      await dates.click();
+      await dialog.waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "history-dates", width, found);
+      await page.keyboard.press("Escape");
+
+      expect(found).toEqual([]);
+    });
+
+    test(`a race plan's week and its run move at ${width}px`, async ({
+      page,
+    }) => {
+      test.setTimeout(180_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page, {
+        email: "fellbehind-capture@tropos.test",
+        password: "test-password-123",
+      });
+      const found: string[] = [];
+      const dialog = page.getByRole("dialog").first();
+      await page.goto("program/plan");
+      await ready(page, page.getByRole("heading", { name: "Your plan" }));
+      await measure(page, "race-plan", width, found);
+      // A week whose runs have all passed (late on a Sunday) has none to
+      // move; the plan page above still measured.
+      const move = page.getByRole("button", { name: "Move a run" });
+      if (await move.isVisible({ timeout: 5_000 }).catch(() => false)) {
+        await move.click();
+        await dialog.waitFor({ timeout: 10_000 });
+        await page.waitForTimeout(800);
+        await measure(page, "move-run", width, found);
+      } else {
+        test.info().annotations.push({
+          type: "skipped-surface",
+          description: "move-run: no run left to move this week",
+        });
+      }
+
       expect(found).toEqual([]);
     });
 
