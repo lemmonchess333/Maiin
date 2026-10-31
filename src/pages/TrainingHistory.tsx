@@ -55,9 +55,19 @@ import {
   parseLocalDate,
 } from "@/lib/dateHelpers";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { workoutsWithBests } from "@/lib/workoutBests";
 import { formatDayMonthYear, formatMonthYear } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
+
+/** A click the browser takes elsewhere (a new tab or window), which the
+ *  page leaves alone. */
+const newTabClick = (event: MouseEvent) =>
+  event.button !== 0 ||
+  event.metaKey ||
+  event.ctrlKey ||
+  event.shiftKey ||
+  event.altKey;
 
 export default function TrainingHistory() {
   const { user } = useAuth();
@@ -133,15 +143,15 @@ export default function TrainingHistory() {
     .at(-1);
   // The rows on screen that set a new best, worked out after the page.
   const [bests, setBests] = useState<{ key: string; ids: Set<string> }>();
+  const visible = sessions.slice(0, position.count);
   const shownLifts = lifts.items.filter((w) =>
-    sessions.slice(0, position.count).some((row) => row.key === `lift:${w.id}`)
+    visible.some((row) => row.key === `lift:${w.id}`)
   );
   const bestsKey = shownLifts.map((w) => w.id).join();
   useEffect(() => {
     if (!user?.uid || !bestsKey) return;
     let live = true;
-    void import("@/lib/workoutBests")
-      .then(({ workoutsWithBests }) => workoutsWithBests(user.uid, shownLifts))
+    workoutsWithBests(user.uid, shownLifts)
       .then((ids) => live && setBests({ key: bestsKey, ids }))
       .catch(() => {});
     return () => {
@@ -151,7 +161,6 @@ export default function TrainingHistory() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid, bestsKey]);
   useTrainingHistoryRestore(position, !pending, sessions.length, provisional);
-  const visible = sessions.slice(0, position.count);
   // A source that filled its read may hold more of the period.
   const more =
     position.count < sessions.length ||
@@ -190,15 +199,7 @@ export default function TrainingHistory() {
   // this one with it, never stacking a fresh copy on top.
   const navigate = useNavigate();
   function back(event: MouseEvent) {
-    if (
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey ||
-      !cameFromInApp()
-    )
-      return;
+    if (newTabClick(event) || !cameFromInApp()) return;
     event.preventDefault();
     navigate(-1);
   }
@@ -390,14 +391,7 @@ export default function TrainingHistory() {
                             trainingHistoryReturnTo: `${location.pathname}${location.search}`,
                           }}
                           onClick={(event) => {
-                            if (
-                              event.button !== 0 ||
-                              event.metaKey ||
-                              event.ctrlKey ||
-                              event.shiftKey ||
-                              event.altKey
-                            )
-                              return;
+                            if (newTabClick(event)) return;
                             position.remember();
                             haptic("light");
                             window.scrollTo({

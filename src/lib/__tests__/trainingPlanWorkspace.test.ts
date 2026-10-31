@@ -288,8 +288,8 @@ describe("training plan workspace", () => {
       join(__dirname, "../../pages/TrainingPlan.tsx"),
       "utf8"
     );
-    expect(page).toContain('to="/empty-workout"');
-    expect(page).toContain('to="/run"');
+    expect(page).toContain('["/empty-workout", "Empty workout"]');
+    expect(page).toContain('["/run", "Free run"]');
     expect(page).toContain("Then ${model.thenLifts.join");
   });
 

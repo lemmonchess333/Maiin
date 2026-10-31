@@ -1200,6 +1200,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await clearOutgoingWatchAccount(uid, watchOwner, isCurrent);
             break;
           } catch (error) {
+            // Off the release the cleanup is best effort and never throws.
+            if (!CONNECTED_TRAINING_RELEASED) break;
             // A Watch holding the outgoing session cannot be exposed under a
             // different signed-in account: keep the next account behind the
             // loading gate, and let the person try again.

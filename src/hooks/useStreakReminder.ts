@@ -165,49 +165,22 @@ export function firstWeekNudgeAction(state: {
   return "schedule";
 }
 
-/**
- * A Date for TOMORROW at the given "HH:MM" — the first-week nudge always
- * fires the evening AFTER the log day, never the same evening (the user
- * already logged today; nudging them tonight would be noise). Null on
- * malformed input, mirroring computeNextOccurrence.
- */
-/** The first-week nudge's time on its claimed fire date, the same evening
- *  hour `computeTomorrowOccurrence` chose, so a re-arm fires when the
- *  first arming would have. Null on malformed input. */
-export function firstWeekOccurrenceOn(
-  dateKey: string,
-  timeHHMM: string
-): Date | null {
-  const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
-  if (!match || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return null;
-  const hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
-  if (hours > 23 || minutes > 59) return null;
-  const target = parseLocalDate(dateKey);
-  if (hours < 8 || hours >= 22) target.setHours(8, 0, 0, 0);
-  else target.setHours(hours, minutes, 0, 0);
-  return target;
-}
-
 /** This phone's mark on the first-week claim, kept on the device, so the
  *  phone that claimed can tell its claim from another's. */
 function firstWeekDeviceId(uid: string): string {
   const key = `tropos:first-week-nudge-device:v1:${encodeURIComponent(uid)}`;
   const stored = readString(key);
   if (stored) return stored;
-  const id =
-    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const id = crypto.randomUUID();
   writeString(key, id);
   return id;
 }
 
 /** A claim that did not reach the server: offline, or it timed out. */
 function isNetworkFailure(error: unknown): boolean {
-  const code = String((error as { code?: unknown })?.code ?? "");
+  const code = String((error as { code?: unknown })?.code);
   return (
-    (typeof navigator !== "undefined" && navigator.onLine === false) ||
+    !navigator.onLine ||
     code.endsWith("unavailable") ||
     code.endsWith("deadline-exceeded")
   );
@@ -215,20 +188,33 @@ function isNetworkFailure(error: unknown): boolean {
 
 const MARKER_ATTEMPTS = 3;
 
-export function computeTomorrowOccurrence(timeHHMM: string): Date | null {
+const FIRST_WEEK_NUDGE = {
+  id: FIRST_WEEK_NOTIFICATION_ID,
+  title: "A reminder for your next day",
+  body: "A quick log today keeps it going.",
+};
+
+/**
+ * When the first-week nudge fires: TOMORROW at the given "HH:MM", never the
+ * same evening (the user already logged today; nudging them tonight would
+ * be noise), held to 08:00–21:59 (from 22:00 it moves to 08:00 the day
+ * after). Given its claimed fire date, that day's time, so a re-arm fires
+ * when the first arming would have. Null on malformed input, mirroring
+ * computeNextOccurrence.
+ */
+export function computeTomorrowOccurrence(
+  timeHHMM: string,
+  dateKey?: string
+): Date | null {
   const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
   if (!match) return null;
   const hours = parseInt(match[1], 10);
   const minutes = parseInt(match[2], 10);
   if (hours > 23 || minutes > 59) return null;
-  const target = new Date();
-  target.setDate(target.getDate() + 1);
-  target.setHours(hours, minutes, 0, 0);
-  if (hours < 8) target.setHours(8, 0, 0, 0);
-  if (hours >= 22) {
-    target.setDate(target.getDate() + 1);
-    target.setHours(8, 0, 0, 0);
-  }
+  const target = dateKey ? parseLocalDate(dateKey) : new Date();
+  if (!dateKey) target.setDate(target.getDate() + (hours >= 22 ? 2 : 1));
+  if (hours < 8 || hours >= 22) target.setHours(8, 0, 0, 0);
+  else target.setHours(hours, minutes, 0, 0);
   return target;
 }
 
@@ -449,13 +435,14 @@ export function useStreakReminderInternal(
         return;
       }
       if (action === "rearm" && sharedNudge) {
-        const fireAt = firstWeekOccurrenceOn(sharedNudge.dateKey, prefs.time);
+        const fireAt = computeTomorrowOccurrence(
+          prefs.time,
+          sharedNudge.dateKey
+        );
         if (fireAt && fireAt.getTime() > Date.now()) {
           await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
           await scheduleNotification({
-            id: FIRST_WEEK_NOTIFICATION_ID,
-            title: "A reminder for your next day",
-            body: "A quick log today keeps it going.",
+            ...FIRST_WEEK_NUDGE,
             scheduleAt: fireAt,
           });
         }
@@ -468,9 +455,7 @@ export function useStreakReminderInternal(
       await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
       if (cancelled) return;
       const scheduled = await scheduleNotification({
-        id: FIRST_WEEK_NOTIFICATION_ID,
-        title: "A reminder for your next day",
-        body: "A quick log today keeps it going.",
+        ...FIRST_WEEK_NUDGE,
         scheduleAt: fireAt,
       });
       if (!scheduled) return;

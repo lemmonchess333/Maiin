@@ -15,6 +15,7 @@ import {
   useUid,
 } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { CONNECTED_TRAINING_RELEASED } from "@/lib/connectedTrainingRelease";
 import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
@@ -502,10 +503,10 @@ function AppRoutes() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        {watchAccountCleanup ? (
+        {CONNECTED_TRAINING_RELEASED && watchAccountCleanup ? (
           /* AuthProvider holds the next account back until the last one's
-             Watch run is cleared from this iPhone. Plain markup and the
-             entry's own Button, so the first chunk carries little of it. */
+             Watch run is cleared from this iPhone. Only a build with the
+             Watch released can fail that, so only it carries this. */
           <div role="alert" className="max-w-sm space-y-3 px-4 text-center">
             <p className="text-sm font-semibold">
               Couldn&apos;t clear Watch runs

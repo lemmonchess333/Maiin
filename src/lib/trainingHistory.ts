@@ -117,12 +117,6 @@ export interface HistorySession {
   notCounted: boolean;
 }
 
-function workoutSavedAtMs(workout: Workout): number {
-  const created = workout.createdAt as { toMillis?: () => number } | null;
-  const ms = typeof created?.toMillis === "function" ? created.toMillis() : 0;
-  return Number.isFinite(ms) ? ms : 0;
-}
-
 /** A day's sessions run newest first by when each was saved; a record with
  * no saved time, and a tie, fall back to its stable identity. */
 export function trainingHistorySessions(
@@ -150,7 +144,7 @@ export function trainingHistorySessions(
         id: workout.id,
         kind: "lift",
         day: workout.date,
-        savedAtMs: workoutSavedAtMs(workout),
+        savedAtMs: workout.createdAt?.toMillis?.() ?? 0,
         title: workoutTitle(workout),
         summary: [
           ...(Number.isFinite(minutes) && minutes > 0
@@ -175,9 +169,8 @@ export function trainingHistorySessions(
         id: run.id,
         kind: "run",
         day: run.day,
-        savedAtMs: Number.isFinite(run.completedAt?.getTime())
-          ? run.completedAt.getTime()
-          : 0,
+        // An invalid date's NaN reads as no time.
+        savedAtMs: run.completedAt?.getTime() || 0,
         title: runTitle(run),
         summary: [
           distanceLabel(run.distance, unit),

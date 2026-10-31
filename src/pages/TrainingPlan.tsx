@@ -430,7 +430,7 @@ export default function TrainingPlan() {
                   ? `/program?day=${model.nextLiftIndex}&express=1`
                   : null
               }
-              onOpen={(path) => navigate(path)}
+              onOpen={navigate}
               canMoveRun={canEdit && eligibleRuns.length > 0}
               canEditLayout={canResetLayout}
               moveReason={
@@ -626,24 +626,23 @@ export default function TrainingPlan() {
                             !evidenceFailed && (
                               <p className="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
                                 Add activity:
-                                <Link
-                                  to="/empty-workout"
-                                  className={buttonClasses({
-                                    variant: "ghost",
-                                    size: "sm",
-                                  })}
-                                >
-                                  Empty workout
-                                </Link>
-                                <Link
-                                  to="/run"
-                                  className={buttonClasses({
-                                    variant: "ghost",
-                                    size: "sm",
-                                  })}
-                                >
-                                  Free run
-                                </Link>
+                                {(
+                                  [
+                                    ["/empty-workout", "Empty workout"],
+                                    ["/run", "Free run"],
+                                  ] as const
+                                ).map(([to, label]) => (
+                                  <Link
+                                    key={to}
+                                    to={to}
+                                    className={buttonClasses({
+                                      variant: "ghost",
+                                      size: "sm",
+                                    })}
+                                  >
+                                    {label}
+                                  </Link>
+                                ))}
                               </p>
                             )}
                         </div>
