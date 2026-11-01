@@ -15,9 +15,24 @@
  * exercise row's name and the summary an older row carries, and each
  * movement label, which is a muscle group's own text when the app does
  * not know it.
+ *
+ * A post past ACTIVITY_MAX_BYTES is held the same way. The rules bound
+ * each field the app writes, but not the maps inside a list (a route's
+ * points, a lift's exercise rows), so a post near Firestore's 1 MiB limit
+ * can still be written, and everyone who opens Explore downloads it. The
+ * largest post the app writes is a few kilobytes.
  */
 
 const profanityFilter = require("../profanityFilter");
+const { storedSize } = require("./storedSize");
+
+/** The most a post may weigh and still reach anyone else. Fifty exercise
+ *  rows, a hundred route points and every text field at its cap come to
+ *  under a third of it. */
+const ACTIVITY_MAX_BYTES = 64 * 1024;
+
+/** What `flaggedActivityField` names for a post past that size. */
+const OVERSIZED = "size";
 
 /** The post's own text fields, in the order a reader meets them. */
 const ACTIVITY_TEXT_FIELDS = Object.freeze([
@@ -74,4 +89,19 @@ function objectionableActivityField(data) {
   return null;
 }
 
-module.exports = { ACTIVITY_TEXT_FIELDS, objectionableActivityField };
+/**
+ * Why a new post is held from everyone but its author: "size" for one past
+ * ACTIVITY_MAX_BYTES, else the field the word filter refuses, else null.
+ */
+function flaggedActivityField(data) {
+  if (storedSize(data) > ACTIVITY_MAX_BYTES) return OVERSIZED;
+  return objectionableActivityField(data);
+}
+
+module.exports = {
+  ACTIVITY_MAX_BYTES,
+  ACTIVITY_TEXT_FIELDS,
+  OVERSIZED,
+  flaggedActivityField,
+  objectionableActivityField,
+};

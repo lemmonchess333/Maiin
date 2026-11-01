@@ -1,6 +1,6 @@
 /**
- * Integration: a feed post whose shown text trips the word filter is made
- * private before it reaches any follower.
+ * Integration: a feed post whose shown text trips the word filter, or one
+ * past the size limit, is made private before it reaches any follower.
  *
  * Driven through the real create trigger against the emulator, so the test
  * holds what a follower ends up with, a feed copy or none, and not only
@@ -21,7 +21,12 @@ let onActivityCreated;
 
 const AUTHOR = "autoflag-alice";
 const FOLLOWER = "autoflag-bob";
-const POST_IDS = ["autoflag-clean", "autoflag-title", "autoflag-name"];
+const POST_IDS = [
+  "autoflag-clean",
+  "autoflag-title",
+  "autoflag-name",
+  "autoflag-size",
+];
 
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
@@ -63,10 +68,12 @@ async function followerHasCopy(id) {
 }
 
 suite("onActivityCreated reads every text a feed card shows", () => {
+  // The first call reaches a cold emulator, which can take past the
+  // default ten seconds.
   beforeEach(async () => {
     await wipe();
     await db.doc(`followers/${AUTHOR}/users/${FOLLOWER}`).set({});
-  });
+  }, 60_000);
 
   it("fans out a clean post", async () => {
     const after = await post("autoflag-clean");
@@ -78,6 +85,12 @@ suite("onActivityCreated reads every text a feed card shows", () => {
   it.each([
     ["autoflag-title", { activityTitle: "shit head" }, "activityTitle"],
     ["autoflag-name", { authorName: "shit head" }, "authorName"],
+    [
+      "autoflag-size",
+      // Rows the rules cannot look inside, a megabyte of them in all.
+      { routePreview: Array(100).fill({ lat: 0, lon: 0, n: "y".repeat(9000) }) },
+      "size",
+    ],
   ])("flags %s and keeps it from followers", async (id, fields, field) => {
     const after = await post(id, fields);
     expect(after).toMatchObject({

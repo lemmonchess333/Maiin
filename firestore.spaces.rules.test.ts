@@ -342,6 +342,56 @@ suite("firestore.rules — community spaces", () => {
         );
       });
 
+      it("refuses a figure that is not a number in range, or a pace past its length", async () => {
+        // Only the map's keys were checked: `avgPace: <1 MB>` passed.
+        await seedMember(MEMBER);
+        for (const [i, activity] of [
+          { ...run, avgPace: "x".repeat(1_000_000) },
+          { ...run, avgPace: "x".repeat(17) },
+          { ...run, avgPace: ["5:12"] },
+          { ...run, distance: "x".repeat(1000) },
+          { ...run, distance: -1 },
+          { ...run, duration: 86401 },
+          { ...run, elevationGain: "42" },
+          { ...lift, totalVolume: "8200" },
+          { ...lift, exerciseCount: 201 },
+          { ...lift, duration: [3600] },
+        ].entries()) {
+          await assertFails(
+            setDoc(
+              doc(db(MEMBER), `spaces/${SPACE}/posts/bad-${i}`),
+              post(activity)
+            )
+          );
+        }
+        // A pace written as text by an older build still posts.
+        await assertSucceeds(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/pace-text`),
+            post({ ...run, avgPace: "5:12 /km" })
+          )
+        );
+      });
+
+      it("refuses a muscle list past 600 characters, or one that is not text", async () => {
+        await seedMember(MEMBER);
+        await assertFails(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/p1`),
+            post({
+              ...lift,
+              muscleGroups: Array.from({ length: 20 }, () => "x".repeat(31)),
+            })
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/p2`),
+            post({ ...lift, muscleGroups: [{ big: "x".repeat(9000) }] })
+          )
+        );
+      });
+
       it("refuses a route, a muscle list or a lead name past its size", async () => {
         await seedMember(MEMBER);
         const route = Array.from({ length: 101 }, () => ({ lat: 0, lon: 0 }));

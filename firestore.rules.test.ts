@@ -2301,10 +2301,10 @@ suite(
       );
     });
 
-    it("oversized routePreview (>5000 points) — rejected (audit #11)", async () => {
+    it("oversized routePreview (>100 points) — rejected (audit #11)", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
-      // 5001 entries — one over the cap.
-      const bigRoute = Array.from({ length: 5001 }, (_, i) => ({
+      // 101 entries — one over the cap. A run's post carries 20.
+      const bigRoute = Array.from({ length: 101 }, (_, i) => ({
         lat: 51 + i * 0.00001,
         lon: -1 + i * 0.00001,
       }));
@@ -2316,11 +2316,12 @@ suite(
       );
     });
 
-    it("routePreview at the cap (5000 points) — accepted", async () => {
+    it("routePreview at the cap (100 points) — accepted", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
-      const cappedRoute = Array.from({ length: 5000 }, (_, i) => ({
+      const cappedRoute = Array.from({ length: 100 }, (_, i) => ({
         lat: 51 + i * 0.00001,
         lon: -1 + i * 0.00001,
+        breakBefore: i === 50,
       }));
       await assertSucceeds(
         setDoc(
@@ -2330,16 +2331,95 @@ suite(
       );
     });
 
-    it("oversized exercises array (>100) — rejected", async () => {
+    it("oversized exercises array (>50) — rejected; 50 rows as liftPost builds them — accepted", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
-      const bigExercises = Array.from({ length: 101 }, (_, i) => ({
-        name: `Ex ${i}`,
-        summary: "5x10",
-      }));
+      const row = (i: number) => ({
+        name: `Exercise ${i}`,
+        exerciseId: `exercise-${i}`,
+        summary: "3×10×60 kg",
+        setCount: 3,
+        targetReps: 10,
+        targetWeightKg: 60,
+      });
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-ex"),
-          makeValidActivity({ exercises: bigExercises })
+          makeValidActivity({
+            type: "workout",
+            exercises: Array.from({ length: 51 }, (_, i) => row(i)),
+          })
+        )
+      );
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "ok-ex"),
+          makeValidActivity({
+            type: "workout",
+            exercises: Array.from({ length: 50 }, (_, i) => row(i)),
+          })
+        )
+      );
+    });
+
+    it("each field holds its own type; a list cannot stand in for a name", async () => {
+      // A list of strings passed the old size() caps, since a list has a
+      // size too: 200 items of anything as a "name".
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      const bigList = Array.from({ length: 10 }, () => "x".repeat(1000));
+      for (const [i, overrides] of [
+        { workoutName: bigList },
+        { runName: bigList },
+        { activityTitle: bigList },
+        { prExercise: bigList },
+        { challengeMilestone: bigList },
+        { badgeEarned: bigList },
+        { prHit: "x".repeat(1000) },
+        { distance: "5000" },
+        { duration: "1800" },
+        { elevationGain: "40" },
+        { calories: "300" },
+        { totalVolume: "5000" },
+        { exerciseCount: "5" },
+        { prWeight: "90" },
+        { prCount: "1" },
+        { routePreview: { a: 1 } },
+        { exercises: "Bench press" },
+        { muscleGroups: "chest" },
+      ].entries()) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", `bad-type-${i}`),
+            makeValidActivity(overrides)
+          )
+        );
+      }
+    });
+
+    it("muscle groups are short strings: 600 characters in all", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "mg-at-cap"),
+          makeValidActivity({
+            muscleGroups: Array.from({ length: 20 }, () => "x".repeat(30)),
+          })
+        )
+      );
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "mg-past-cap"),
+          makeValidActivity({
+            muscleGroups: [
+              ...Array.from({ length: 19 }, () => "x".repeat(30)),
+              "x".repeat(31),
+            ],
+          })
+        )
+      );
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "mg-not-strings"),
+          makeValidActivity({ muscleGroups: [{ name: "x".repeat(9000) }] })
         )
       );
     });

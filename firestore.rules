@@ -1012,58 +1012,84 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.kudosCount == 0
         && request.resource.data.commentCount == 0
-        // Payload size caps — pathological payload prevention
+        // Payload size caps — pathological payload prevention. Every
+        // reader of a feed or Explore downloads the whole post, so each
+        // field is held to its type and to a size with room over what the
+        // app writes. The rules cannot look inside the maps in a list (a
+        // route's points, a lift's exercise rows); onActivityCreated
+        // holds a post past 64 KB from everyone but its author.
+        //   - routePreview: a run's post carries at most 20 points
+        //     (runPostRoute samples to 20).
+        //   - exercises: one row per exercise done (liftPost).
+        //   - muscleGroups: the session's movement categories, each a
+        //     short key ("horizontal_push").
         && (
           !('routePreview' in request.resource.data.keys())
-          || request.resource.data.routePreview.size() <= 5000
+          || (request.resource.data.routePreview is list
+              && request.resource.data.routePreview.size() <= 100)
         )
         && (
           !('exercises' in request.resource.data.keys())
-          || request.resource.data.exercises.size() <= 100
+          || (request.resource.data.exercises is list
+              && request.resource.data.exercises.size() <= 50)
         )
         && (
           !('muscleGroups' in request.resource.data.keys())
-          || request.resource.data.muscleGroups.size() <= 20
+          || (request.resource.data.muscleGroups is list
+              && request.resource.data.muscleGroups.size() <= 20
+              && request.resource.data.muscleGroups.join('').size() <= 600)
         )
-        // Numeric bounds — when present, must be in plausible range
+        && (
+          !('prHit' in request.resource.data.keys())
+          || request.resource.data.prHit is bool
+        )
+        // Numeric bounds — when present, a number in a plausible range
         && (
           !('distance' in request.resource.data.keys())
-          || (request.resource.data.distance >= 0
+          || (request.resource.data.distance is number
+              && request.resource.data.distance >= 0
               && request.resource.data.distance <= 500000)  // 500 km — covers ultras
         )
         && (
           !('duration' in request.resource.data.keys())
-          || (request.resource.data.duration >= 0
+          || (request.resource.data.duration is number
+              && request.resource.data.duration >= 0
               && request.resource.data.duration <= 86400)  // 24 h
         )
         && (
           !('elevationGain' in request.resource.data.keys())
-          || (request.resource.data.elevationGain >= 0
+          || (request.resource.data.elevationGain is number
+              && request.resource.data.elevationGain >= 0
               && request.resource.data.elevationGain <= 20000)  // 20 km vertical
         )
         && (
           !('calories' in request.resource.data.keys())
-          || (request.resource.data.calories >= 0
+          || (request.resource.data.calories is number
+              && request.resource.data.calories >= 0
               && request.resource.data.calories <= 50000)  // ultra-endurance ceiling
         )
         && (
           !('totalVolume' in request.resource.data.keys())
-          || (request.resource.data.totalVolume >= 0
+          || (request.resource.data.totalVolume is number
+              && request.resource.data.totalVolume >= 0
               && request.resource.data.totalVolume <= 1000000)  // 1M kg per session is plenty
         )
         && (
           !('exerciseCount' in request.resource.data.keys())
-          || (request.resource.data.exerciseCount >= 0
+          || (request.resource.data.exerciseCount is number
+              && request.resource.data.exerciseCount >= 0
               && request.resource.data.exerciseCount <= 200)
         )
         && (
           !('prWeight' in request.resource.data.keys())
-          || (request.resource.data.prWeight >= 0
+          || (request.resource.data.prWeight is number
+              && request.resource.data.prWeight >= 0
               && request.resource.data.prWeight <= 1000)
         )
         && (
           !('prCount' in request.resource.data.keys())
-          || (request.resource.data.prCount >= 0
+          || (request.resource.data.prCount is number
+              && request.resource.data.prCount >= 0
               && request.resource.data.prCount <= 1000)
         )
         // A pace is seconds a kilometre (runCompletion), or on an older
@@ -1078,27 +1104,33 @@ service cloud.firestore {
         // String length caps
         && (
           !('workoutName' in request.resource.data.keys())
-          || request.resource.data.workoutName.size() <= 200
+          || (request.resource.data.workoutName is string
+              && request.resource.data.workoutName.size() <= 200)
         )
         && (
           !('runName' in request.resource.data.keys())
-          || request.resource.data.runName.size() <= 200
+          || (request.resource.data.runName is string
+              && request.resource.data.runName.size() <= 200)
         )
         && (
           !('activityTitle' in request.resource.data.keys())
-          || request.resource.data.activityTitle.size() <= 200
+          || (request.resource.data.activityTitle is string
+              && request.resource.data.activityTitle.size() <= 200)
         )
         && (
           !('prExercise' in request.resource.data.keys())
-          || request.resource.data.prExercise.size() <= 200
+          || (request.resource.data.prExercise is string
+              && request.resource.data.prExercise.size() <= 200)
         )
         && (
           !('challengeMilestone' in request.resource.data.keys())
-          || request.resource.data.challengeMilestone.size() <= 200
+          || (request.resource.data.challengeMilestone is string
+              && request.resource.data.challengeMilestone.size() <= 200)
         )
         && (
           !('badgeEarned' in request.resource.data.keys())
-          || request.resource.data.badgeEarned.size() <= 200
+          || (request.resource.data.badgeEarned is string
+              && request.resource.data.badgeEarned.size() <= 200)
         )
         // The share sheets' optional note, cut at CAPTION_MAX
         // (src/lib/activityPost.ts). size() counts UTF-16 code units,
@@ -1436,6 +1468,14 @@ service cloud.firestore {
           .data.officialUids;
     }
 
+    /* One figure on a Space post's attached session: absent, or a number
+       from 0 to `max`. */
+    function spaceSnapshotNumber(field, max) {
+      let a = request.resource.data.activity;
+      return !(field in a)
+        || (a[field] is number && a[field] >= 0 && a[field] <= max);
+    }
+
     match /spaces/{spaceId} {
       // No parent doc in v1 (member counts are client aggregate
       // queries over /members — no forgeable counter, no trigger).
@@ -1550,7 +1590,9 @@ service cloud.firestore {
                    ])
                 && request.resource.data.activity.get('type', null)
                      in ['run', 'workout']
-                // The composer downsamples a route to 40 points.
+                // The composer downsamples a route to 40 points. The
+                // points are maps the rules cannot look inside, so
+                // onSpacePostWritten removes a post past 64 KB.
                 && (
                   !('routePreview' in request.resource.data.activity)
                   || (request.resource.data.activity.routePreview is list
@@ -1559,7 +1601,22 @@ service cloud.firestore {
                 && (
                   !('muscleGroups' in request.resource.data.activity)
                   || (request.resource.data.activity.muscleGroups is list
-                      && request.resource.data.activity.muscleGroups.size() <= 20)
+                      && request.resource.data.activity.muscleGroups.size() <= 20
+                      && request.resource.data.activity.muscleGroups.join('').size() <= 600)
+                )
+                // The session's figures, each a number in the range a
+                // feed post holds it to (the activities rule above).
+                && spaceSnapshotNumber('distance', 500000)
+                && spaceSnapshotNumber('duration', 86400)
+                && spaceSnapshotNumber('elevationGain', 20000)
+                && spaceSnapshotNumber('totalVolume', 1000000)
+                && spaceSnapshotNumber('exerciseCount', 200)
+                // Seconds a kilometre, or a pace's text.
+                && (
+                  !('avgPace' in request.resource.data.activity)
+                  || request.resource.data.activity.avgPace is number
+                  || (request.resource.data.activity.avgPace is string
+                      && request.resource.data.activity.avgPace.size() <= 16)
                 )
                 && (
                   !('leadExerciseId' in request.resource.data.activity)

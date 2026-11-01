@@ -6153,12 +6153,13 @@ exports.onActivityCreated = functions
       }
     }
 
-    // Profanity scan + auto-flag. Runs before fanout so flagged posts
-    // get visibility=private and are then skipped by the fanout block
-    // below.
+    // Profanity scan and size check + auto-flag. Runs before fanout so
+    // flagged posts get visibility=private and are then skipped by the
+    // fanout block below.
     try {
-      // Every text the feed card shows (lib/activityModeration.js).
-      const flaggedField = activityModeration.objectionableActivityField(data);
+      // Every text the feed card shows, and the post's size
+      // (lib/activityModeration.js).
+      const flaggedField = activityModeration.flaggedActivityField(data);
       if (flaggedField) {
         functions.logger.warn("onActivityCreated.auto_flag", {
           activityId,
