@@ -368,6 +368,10 @@ function laterThan(a, b) {
  *   - String fields are length-capped.
  *   - Self-notification is a silent no-op.
  *   - A kind the recipient switched off is not written (`muted`).
+ *   - `keepExisting: true` (with a `notificationId`) leaves a row that is
+ *     already there as it is: the same notice again, such as props taken
+ *     back and given again, is not news. Nothing is rewritten, so the row
+ *     keeps its time and does not come back as unread.
  *
  * Caller is responsible for rate limiting (kudos/comment CFs already
  * apply per-uid limits via `isRateLimited`).
@@ -381,6 +385,7 @@ async function createNotification({
   anonymous = false,
   notificationId,
   sourceEvent,
+  keepExisting = false,
 }) {
   if (!firestore || !fromUid || !toUid) {
     throw new Error("createNotification: firestore, fromUid, toUid required");
@@ -426,7 +431,9 @@ async function createNotification({
   // A deterministic id makes a fan-out from an at-least-once Firestore
   // trigger one row. Its source receipt below also preserves the first
   // delivery time on retries, so opening the tray stays meaningful.
-  // Auto-id stays for callables where every call is a distinct notice.
+  // A callable whose notice can come again (props, a like: on, off, on)
+  // passes one too, with keepExisting. Auto-id stays for callables where
+  // every call is a distinct notice (a comment).
   const itemRef =
     typeof notificationId === "string" && notificationId
       ? items.doc(notificationId)
@@ -452,6 +459,12 @@ async function createNotification({
       }))
     )
       return { skipped: true, deleting: true };
+    if (keepExisting && typeof notificationId === "string" && notificationId) {
+      const previous = await tx.get(itemRef);
+      if (previous.exists) {
+        return { notificationId: itemRef.id, skipped: true, duplicate: true };
+      }
+    }
     if (receipt) {
       const previous = await tx.get(itemRef);
       if (previous.exists) {

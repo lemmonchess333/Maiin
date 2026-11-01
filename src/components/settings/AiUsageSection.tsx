@@ -1,6 +1,7 @@
 import { Sparkles, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useScanUsage } from "@/hooks/useScanUsage";
+import { formatTimeOfDay } from "@/utils/formatters";
 
 /**
  * F1b lock pin #6 — Settings page daily-usage pill.
@@ -18,6 +19,10 @@ import { useScanUsage } from "@/hooks/useScanUsage";
  * Trial users (isInTrial=true) are treated as Pro by the hook so
  * they see the Pro view here as well — the trial experience
  * showcases the value Sub1a P1 set up for them.
+ *
+ * The counts are for the UTC day (src/lib/scanQuotaDay.ts), so the row
+ * names the local time they start again rather than calling them
+ * "today", which for most people they are not.
  */
 export default function AiUsageSection() {
   const navigate = useNavigate();
@@ -47,14 +52,20 @@ export default function AiUsageSection() {
       <div
         className="w-full flex items-center gap-3 p-4 rounded-2xl bg-card"
         role="group"
-        aria-label="AI usage today"
+        aria-label="AI usage"
       >
         <Sparkles className="size-5 text-primary" aria-hidden="true" />
         <div className="text-left">
-          <p className="text-sm font-medium text-foreground">AI usage today</p>
+          <p className="text-sm font-medium text-foreground">AI usage</p>
           <p className="text-xs text-muted-foreground font-mono tabular-nums">
             Text: {textAi.used} / {textAi.limit} · Image: {imageAi.used} /{" "}
             {imageAi.limit}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Resets at{" "}
+            <span className="font-mono tabular-nums">
+              {formatTimeOfDay(textAi.resetDate)}
+            </span>
           </p>
         </div>
       </div>

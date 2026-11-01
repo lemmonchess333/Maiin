@@ -106,11 +106,6 @@ const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const challengeAnnouncements = require("./lib/challengeAnnouncements");
 const { pushableBadgeIds } = require("./lib/badgeNudge");
 
-const appleIAP = require("./appleIAP");
-exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
-exports.appleIAPWebhook = appleIAP.appleIAPWebhook;
-exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
-
 // RevenueCat (ADR-0006): the entitlement source for in-app purchases.
 const revenueCat = require("./revenueCat");
 exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
@@ -186,6 +181,8 @@ const { engagementRejection } = require("./lib/engagementRejection");
 const { isDocumentId } = require("./lib/documentId");
 // The same filter over Community Space posts (onSpacePostWritten).
 const spacePostModeration = require("./lib/spacePostModeration");
+// The same filter over every text a feed post shows (onActivityCreated).
+const activityModeration = require("./lib/activityModeration");
 // The email that tells the owner a report has come in (createReport).
 const reportAlert = require("./lib/reportAlert");
 // Retried triggers: the window an event is retried in, and the side
@@ -296,17 +293,16 @@ const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
 // needs no new accessor grant.
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // Money-path audit F8: deleteMyAccount tombstones Apple billing
-// identities before sweeping their bindings; the write hash needs the
-// same BILLING_HMAC_SECRET restoreApplePurchases reads with. Already
-// provisioned (bound on restoreApplePurchases) — no new secret to set.
+// identities before sweeping their bindings, each hash keyed with
+// BILLING_HMAC_SECRET. lib/restrictedIdentities keys a restricted
+// account's kept identities with the same secret.
 const BILLING_HMAC_SECRET = defineSecret("BILLING_HMAC_SECRET");
 // The key before a rotation. lib/restrictedIdentities looks a restricted
 // identity up under the active AND the previous key, so a function that
 // reads or forgets them must be able to read both: bound on
-// onAuthUserCreated and liftRestriction for that, as restoreApplePurchases
-// binds it (appleIAP.js). Already provisioned there, so no new secret and
-// no new accessor grant. Without it a restricted person who deleted and
-// signed up again during a rotation was not restricted again.
+// onAuthUserCreated and liftRestriction for that. Without it a restricted
+// person who deleted and signed up again during a rotation would not be
+// restricted again.
 const BILLING_PREVIOUS_HMAC_SECRET = defineSecret(
   "BILLING_PREVIOUS_HMAC_SECRET"
 );
@@ -5947,11 +5943,7 @@ exports.recreditMyLiftVolume = functions
     // bug, not a quota event, so it must not consume a rate-limit slot.
     const startAfter = data && data.startAfter;
     if (startAfter !== undefined && startAfter !== null) {
-      if (
-        typeof startAfter !== "string" ||
-        !startAfter ||
-        startAfter.includes("/")
-      ) {
+      if (!isDocumentId(startAfter)) {
         throw new functions.https.HttpsError(
           "invalid-argument",
           "startAfter must be a workout document id."
@@ -6161,12 +6153,13 @@ exports.onActivityCreated = functions
       }
     }
 
-    // Profanity scan + auto-flag. Runs before fanout so flagged posts
-    // get visibility=private and are then skipped by the fanout block
-    // below.
+    // Profanity scan and size check + auto-flag. Runs before fanout so
+    // flagged posts get visibility=private and are then skipped by the
+    // fanout block below.
     try {
-      const SCAN_FIELDS = ["caption", "workoutName", "runName"];
-      const flaggedField = profanityFilter.findProfaneField(data, SCAN_FIELDS);
+      // Every text the feed card shows, and the post's size
+      // (lib/activityModeration.js).
+      const flaggedField = activityModeration.flaggedActivityField(data);
       if (flaggedField) {
         functions.logger.warn("onActivityCreated.auto_flag", {
           activityId,
@@ -6755,12 +6748,7 @@ exports.resolveReport = functions
     const restrictUser =
       data.restrictUser === undefined ? false : data.restrictUser;
     if (
-      typeof reportId !== "string" ||
-      !reportId ||
-      reportId !== reportId.trim() ||
-      reportId.includes("/") ||
-      reportId === "." ||
-      reportId === ".." ||
+      !isDocumentId(reportId) ||
       typeof hideActivity !== "boolean" ||
       typeof restrictUser !== "boolean"
     ) {
@@ -6975,14 +6963,7 @@ exports.liftRestriction = functions
     adminAuth.assertAdminCallable(context.auth.uid);
 
     const uid = data && typeof data === "object" ? data.uid : undefined;
-    if (
-      typeof uid !== "string" ||
-      !uid ||
-      uid !== uid.trim() ||
-      uid.includes("/") ||
-      uid === "." ||
-      uid === ".."
-    ) {
+    if (!isDocumentId(uid)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Which account? Send its uid."
@@ -7254,8 +7235,10 @@ exports.toggleKudosCallable = functions
       // now written server-side, atomically with the kudos doc.
       // Pre-PR-3 the client wrote `/notifications/...` directly
       // after the callable returned; that path is now rule-denied.
-      // Only notify on the ADD edge (kudosed=true) so re-tapping
-      // doesn't spam the recipient.
+      // Only the ADD edge (kudosed=true) notifies, under one id per giver
+      // and activity: props taken back and given again find that row and
+      // leave it as it is (keepExisting), so toggling them cannot fill the
+      // recipient's tray or bring the row back as unread.
       if (result && result.kudosed) {
         try {
           // Use the author verified inside the toggle txn — no post-txn
@@ -7277,6 +7260,8 @@ exports.toggleKudosCallable = functions
                 message: `${fromName} gave you props`,
               },
               serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+              notificationId: `kudos_${activityId}_${context.auth.uid}`,
+              keepExisting: true,
             });
           }
         } catch (notifErr) {
@@ -7373,8 +7358,10 @@ exports.toggleSpacePostLikeCallable = functions
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
         refuseAdd,
       });
-      // SOC-P2g — notify on the ADD edge only (re-tap can't spam), never
-      // self, never the retired coach author (not a notifiable user).
+      // SOC-P2g — notify on the ADD edge only, never self, never the
+      // retired coach author (not a notifiable user). One id per liker and
+      // post, kept once written (keepExisting), so a like taken back and
+      // given again cannot add a row or bring one back as unread.
       if (result && result.liked) {
         try {
           const postAuthorId = result.postAuthorId;
@@ -7399,6 +7386,8 @@ exports.toggleSpacePostLikeCallable = functions
                 message: `${fromName} gave your space post props`,
               },
               serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+              notificationId: `space_post_like_${spaceId}_${postId}_${context.auth.uid}`,
+              keepExisting: true,
             });
           }
         } catch (notifErr) {
@@ -7482,12 +7471,13 @@ exports.addSpacePostCommentCallable = functions
       );
     }
     assertCallerEmailVerified(context);
-    const { spaceId, postId, text, authorName, authorPhotoURL } = data || {};
+    const { spaceId, postId, text, authorName } = data || {};
+    // Each id names one document: a "/" in postId would point the comment
+    // and its counter at some other document under the post.
     if (
       typeof spaceId !== "string" ||
       !KNOWN_SPACE_IDS.includes(spaceId) ||
-      typeof postId !== "string" ||
-      !postId.trim()
+      !isDocumentId(postId)
     ) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -7532,7 +7522,6 @@ exports.addSpacePostCommentCallable = functions
         postId,
         text,
         authorName: fromName,
-        authorPhotoURL,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       });
@@ -7595,13 +7584,14 @@ exports.deleteSpacePostCommentCallable = functions
       );
     }
     const { spaceId, postId, commentId } = data || {};
+    // Each id names one document, as in the add above: a "/" would let a
+    // delete reach a document nested under a comment and take it off the
+    // post's count.
     if (
       typeof spaceId !== "string" ||
       !KNOWN_SPACE_IDS.includes(spaceId) ||
-      typeof postId !== "string" ||
-      !postId.trim() ||
-      typeof commentId !== "string" ||
-      !commentId.trim()
+      !isDocumentId(postId) ||
+      !isDocumentId(commentId)
     ) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -7649,7 +7639,7 @@ exports.addCommentCallable = functions
       );
     }
     assertCallerEmailVerified(context);
-    const { activityId, text, authorName, authorPhotoURL } = data || {};
+    const { activityId, text, authorName } = data || {};
     if (!isDocumentId(activityId)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -7719,7 +7709,6 @@ exports.addCommentCallable = functions
         activityId,
         text,
         authorName: fromName,
-        authorPhotoURL,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       });
@@ -7776,12 +7765,8 @@ exports.deleteCommentCallable = functions
       );
     }
     const { activityId, commentId } = data || {};
-    if (
-      typeof activityId !== "string" ||
-      !activityId.trim() ||
-      typeof commentId !== "string" ||
-      !commentId.trim()
-    ) {
+    // Each id names one document: a "/" would point the delete elsewhere.
+    if (!isDocumentId(activityId) || !isDocumentId(commentId)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "activityId + commentId required."
@@ -8135,15 +8120,11 @@ function goalSpaceInviteCode() {
   return out;
 }
 
-/** Safe display projection from the caller's own profile doc —
- *  never trusted from client input. */
-async function goalSpaceCallerProfile(uid) {
-  const snap = await admin.firestore().doc(`users/${uid}`).get();
-  const data = snap.exists ? snap.data() : {};
-  return {
-    displayName: data.displayName || "Member",
-    photoURL: data.photoURL || null,
-  };
+/** The caller's public name and photo, never the request's
+ *  (lib/goalSpaceMembership callerIdentity; memberDoc holds them to the
+ *  rules every social copy keeps). */
+function goalSpaceCallerProfile(uid) {
+  return goalSpaceMembership.callerIdentity(admin.firestore(), uid);
 }
 
 function mapGoalSpaceError(err) {
@@ -8477,8 +8458,12 @@ exports.onGoalSpaceEventCreated = functions
         db.collection(`goalSpaces/${spaceId}/members`).get(),
         db.doc(`goalSpaces/${spaceId}/members/${authorUid}`).get(),
       ]);
+      // The member's copy of their name, held again to the rules it is
+      // written under (lib/goalSpaceMembership memberDoc), so a refused or
+      // overlong copy never reaches another member's tray.
       const authorName =
-        (authorSnap.exists && authorSnap.data().displayName) ||
+        (authorSnap.exists &&
+          identityResync.carriedName(authorSnap.data().displayName)) ||
         "A Circle member";
       // Member doc ids ARE member uids. Fan out to everyone but the
       // author (createNotification also no-ops any self-notify).

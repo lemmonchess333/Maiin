@@ -5,6 +5,9 @@ const require = createRequire(import.meta.url);
 const {
   sendPasswordResetEmail,
   resetEmailHtml,
+  readResetEmail,
+  EMAIL_PATTERN,
+  MAX_EMAIL_LENGTH,
 } = require("../lib/passwordResetEmail");
 
 describe("sendPasswordResetEmail", () => {
@@ -40,7 +43,7 @@ describe("sendPasswordResetEmail", () => {
     expect(sendEmail).not.toHaveBeenCalled();
   });
 
-  it("rethrows a genuine failure (e.g. Admin outage) so the caller can 500", async () => {
+  it("rethrows a genuine failure (e.g. Admin outage) for the caller to log", async () => {
     const generateLink = vi
       .fn()
       .mockRejectedValue(new Error("internal error / backend unavailable"));
@@ -53,10 +56,87 @@ describe("sendPasswordResetEmail", () => {
     ).rejects.toThrow(/backend unavailable/);
   });
 
+  it("asks mayDeliver only once there is a link, and sends nothing on false", async () => {
+    const mayDeliver = vi.fn().mockResolvedValue(false);
+    const sendEmail = vi.fn();
+    await expect(
+      sendPasswordResetEmail({
+        generateLink: vi.fn().mockResolvedValue("https://reset.link/abc"),
+        sendEmail,
+        email: "a@b.com",
+        mayDeliver,
+      })
+    ).resolves.toEqual({ sent: false, reason: "daily-cap" });
+    expect(sendEmail).not.toHaveBeenCalled();
+
+    // No account: nothing to send, so nothing is counted.
+    mayDeliver.mockClear();
+    await sendPasswordResetEmail({
+      generateLink: vi
+        .fn()
+        .mockRejectedValue(new Error("no user record (user-not-found)")),
+      sendEmail,
+      email: "ghost@b.com",
+      mayDeliver,
+    });
+    expect(mayDeliver).not.toHaveBeenCalled();
+  });
+
   it("html embeds the link in both the button and the copy-paste fallback", () => {
     const html = resetEmailHtml("https://x.y/z", "Tropos");
     // Appears at least twice: CTA href + the visible fallback URL.
     expect(html.split("https://x.y/z").length - 1).toBeGreaterThanOrEqual(2);
     expect(html).toContain("Set a new password");
+  });
+});
+
+describe("readResetEmail", () => {
+  it("reads an address, trimmed", () => {
+    expect(readResetEmail({ email: "  alice@example.com " })).toBe(
+      "alice@example.com"
+    );
+    expect(readResetEmail({ email: "a.b+c@mail.example.co.uk" })).toBe(
+      "a.b+c@mail.example.co.uk"
+    );
+  });
+
+  it("refuses what is not an address", () => {
+    for (const email of ["", "alice", "a@b", "a@b.", "@b.com", "a b@c.d"]) {
+      expect(readResetEmail({ email })).toBeNull();
+    }
+    expect(readResetEmail({})).toBeNull();
+    expect(readResetEmail(null)).toBeNull();
+    expect(readResetEmail({ email: ["a@b.com"] })).toBeNull();
+  });
+
+  it("refuses an empty label in the domain", () => {
+    expect(readResetEmail({ email: "a@.b.com" })).toBeNull();
+    expect(readResetEmail({ email: "a@b..com" })).toBeNull();
+  });
+
+  it("takes 254 characters and refuses 255", () => {
+    const at = (n) => `${"a".repeat(64)}@${"b".repeat(n - 64 - 5)}.com`;
+    expect(at(254)).toHaveLength(MAX_EMAIL_LENGTH);
+    expect(readResetEmail({ email: at(254) })).toBe(at(254));
+    expect(readResetEmail({ email: at(255) })).toBeNull();
+  });
+
+  it("checks the length before the pattern", () => {
+    const test = vi.spyOn(RegExp.prototype, "test");
+    try {
+      readResetEmail({ email: `a@${"a.".repeat(200)}@` });
+      expect(test.mock.calls.some(([s]) => String(s).length > 254)).toBe(false);
+    } finally {
+      test.mockRestore();
+    }
+  });
+
+  it("matches in time proportional to length, even past the length check", () => {
+    // Defence in depth: the pattern alone stays fast on the string built
+    // to make an overlapping pattern backtrack. Generous bound for CI.
+    const crafted = `a@${"a.".repeat(200_000)}@`;
+    const started = performance.now();
+    expect(EMAIL_PATTERN.test(crafted)).toBe(false);
+    expect(performance.now() - started).toBeLessThan(2_000);
   });
 });

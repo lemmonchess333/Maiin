@@ -440,7 +440,7 @@ signal to push back / grill first.
   "Reminders fire while this tab is open"); pinned by `ReminderDiagnostics.test`._
 - **P2 — Web subscription billing stays first-class.** Strava sells on web via
   Stripe to dodge Apple's 30%. Tropos already mirrors this (`useStripeCheckout`
-  - the Stripe webhook); Apple IAP (`applePurchase.js`) is the **native-only**
+  - the Stripe webhook); Apple IAP (through RevenueCat) is the **native-only**
     path, not the only path. `useSubscription().isPro` already handles both — keep
     that surface intact. Don't consolidate behind IAP after iOS ships (revenue +
     no "install to subscribe" funnel break for desktop upgraders).

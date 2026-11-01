@@ -451,12 +451,12 @@ describe("assertUserWritableBySystem", () => {
       deletedAccounts: {},
     });
     await expect(
-      assertUserWritableBySystem(db, "alice", "appleIAPWebhook")
+      assertUserWritableBySystem(db, "alice", "revenueCatWebhook")
     ).rejects.toMatchObject({
       errorCode: ERROR_CODES.SYSTEM_WRITE_BLOCKED,
       kind: "active-deletion",
       uid: "alice",
-      reason: "appleIAPWebhook",
+      reason: "revenueCatWebhook",
     });
   });
 

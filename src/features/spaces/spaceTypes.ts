@@ -18,6 +18,7 @@
  * up via callables in the PR3 slice, mirroring the kudos lockdown.
  */
 import type { Timestamp } from "firebase/firestore";
+import type { RouteCoordinate } from "@/lib/routeSegments";
 
 /** The author of the retired weekly coach questions. MIRROR of
  *  COACH_AUTHOR_ID in functions/lib/spacePostEngagement.js, which keeps
@@ -55,7 +56,8 @@ export interface SpacePostActivitySnapshot {
   avgPace?: number;
   duration?: number;
   elevationGain?: number;
-  routePreview?: { lat: number; lon: number }[];
+  /** A route cut by a privacy zone carries `breakBefore` where it resumes. */
+  routePreview?: RouteCoordinate[];
   totalVolume?: number;
   exerciseCount?: number;
   muscleGroups?: string[];

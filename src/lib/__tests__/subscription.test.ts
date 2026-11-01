@@ -88,10 +88,10 @@ describe("getSubscriptionInfo", () => {
    *
    * It is not, for the only format ever written. `Date.parse` is
    * implementation-defined for arbitrary strings, but ECMA-262 mandates
-   * deterministic parsing of the ISO 8601 format — and the sole writer of
-   * this field is `functions/applePurchase.js`, which stores
-   * `expiresAt.toISOString()`. A UTC-offset ISO string denotes one absolute
-   * instant regardless of the reader's timezone or locale.
+   * deterministic parsing of the ISO 8601 format — and the writer of this
+   * field is `functions/lib/revenueCatEntitlement.js`, which stores
+   * `new Date(expiresAtMs).toISOString()`. A UTC-offset ISO string denotes
+   * one absolute instant regardless of the reader's timezone or locale.
    *
    * So these pin the contract rather than defer to a device: the format the
    * server writes, and the verdict's independence from the reader's clock
@@ -99,7 +99,7 @@ describe("getSubscriptionInfo", () => {
    * and the concern becomes real again.
    */
   it("the stored format is ISO 8601 with a UTC designator", () => {
-    // Mirrors what applePurchase.js writes. If this shape changes, the
+    // Mirrors what revenueCatEntitlement.js writes. If this shape changes, the
     // locale-independence argument below no longer holds.
     const written = new Date(Date.UTC(2026, 7, 2, 21, 0, 0)).toISOString();
     expect(written).toBe("2026-08-02T21:00:00.000Z");

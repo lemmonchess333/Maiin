@@ -239,7 +239,9 @@ export interface UserProfileSubscription {
   subscriptionTier: "free" | "pro";
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
-  /** Apple IAP — set on first IAP purchase by `functions/applePurchase.js`.
+  /** Apple IAP original transaction id. Nothing writes it now (App Store
+   *  purchases go through RevenueCat, ADR-0006); an older account may
+   *  still carry it, and the rules keep it server-only.
    *  Used by `AccountSection.tsx` to surface the pre-deletion Apple-cancel
    *  warning, since Apple has no admin-cancellation API for standard IAP
    *  subscriptions (Sub1 R1A pin b, P0b). */

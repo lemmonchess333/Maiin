@@ -12,6 +12,8 @@
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { liftPostLeadExerciseId } from "@/lib/liftPost";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
+import { applyPrivacyZones, type PrivacyZone } from "@/lib/privacyZones";
+import { sampleRoute, splitRouteSegments } from "@/lib/routeSegments";
 import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import type { SpacePostActivitySnapshot } from "./spaceTypes";
 import type { RecentSession } from "./useRecentSessions";
@@ -34,35 +36,42 @@ export const SPACE_POST_SNAPSHOT_KEYS = [
  *  keeping the RouteScene silhouette intact. */
 const ROUTE_POINTS_MAX = 40;
 
-function downsample<T>(points: T[], max: number): T[] {
-  if (points.length <= max) return points;
-  const step = (points.length - 1) / (max - 1);
-  return Array.from({ length: max }, (_, i) => points[Math.round(i * step)]);
+/** How a run's route is shared. `keepRouteEnds` is the poster's choice to
+ *  show where a run started and finished. `zones` is the poster's privacy
+ *  zones as they are now, or null while they are loading or could not be
+ *  read, which shares no route at all. */
+export interface SnapshotRouteOptions {
+  keepRouteEnds: boolean;
+  zones: PrivacyZone[] | null;
 }
 
-/** The snapshot of `a`. `keepRouteEnds` is the poster's choice to show
- *  where a run started and finished. */
+/** The snapshot of `a`. */
 export function spacePostSnapshot(
   a: RecentSession,
-  keepRouteEnds: boolean
+  { keepRouteEnds, zones }: SnapshotRouteOptions
 ): SpacePostActivitySnapshot {
   if (a.kind === "run") {
     const r = a.run;
-    // Any signed-in account can read a space post, so the route's ends are
-    // trimmed exactly as a run shared to the feed trims them: the privacy
-    // setting promises that the start and finish of a shared run are hidden.
+    // Any signed-in account can read a space post. The stored route was cut
+    // with the zones the run was saved under, so the zones as they are now
+    // are cut again here, as every other way of sharing a run does; then
+    // the ends are trimmed, as a run shared to the feed trims them.
+    const zoned =
+      r.routePreview && zones ? applyPrivacyZones(r.routePreview, zones) : null;
     const route =
-      r.routePreview && !keepRouteEnds
-        ? clipRouteEnds(r.routePreview, DEFAULT_CLIP_METERS)
-        : r.routePreview;
+      zoned && !keepRouteEnds
+        ? clipRouteEnds(zoned, DEFAULT_CLIP_METERS)
+        : zoned;
+    const drawable =
+      !!route && splitRouteSegments(route).some((piece) => piece.length > 1);
     return {
       type: "run",
       distance: r.distance,
       avgPace: r.avgPace,
       duration: r.duration,
       elevationGain: r.elevationGain,
-      ...(route && route.length > 1
-        ? { routePreview: downsample(route, ROUTE_POINTS_MAX) }
+      ...(route && drawable
+        ? { routePreview: sampleRoute(route, ROUTE_POINTS_MAX) }
         : {}),
     };
   }

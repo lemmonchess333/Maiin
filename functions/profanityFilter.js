@@ -11,8 +11,8 @@
  * in unit tests.
  *
  * Used by the onActivityCreated trigger in index.js: any activity
- * whose `caption`, `workoutName`, or `runName` contains a blocked
- * word gets auto-flagged and forced to private visibility. The
+ * whose shown text (lib/activityModeration.js lists it) contains a
+ * blocked word gets auto-flagged and forced to private visibility. The
  * activity isn't deleted — the author still sees their own
  * record. The flag flows into the moderation queue for human
  * review.

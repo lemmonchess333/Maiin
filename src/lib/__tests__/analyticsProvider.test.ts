@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Firebase Analytics provider gating. The provider stays a strict no-op
  * unless a platform path actually wires up:
@@ -17,10 +18,18 @@ vi.mock("@/lib/platform", () => ({
   isNativePlatform: () => isNativePlatform(),
 }));
 
-const getAnalytics = vi.fn(() => ({ __handle: true }));
+const initializeAnalytics = vi.fn(
+  (_app: unknown, _options?: { config?: Record<string, unknown> }) => ({
+    __handle: true,
+  })
+);
 const isSupported = vi.fn(async () => true);
 const logEvent = vi.fn();
-vi.mock("firebase/analytics", () => ({ getAnalytics, isSupported, logEvent }));
+vi.mock("firebase/analytics", () => ({
+  initializeAnalytics,
+  isSupported,
+  logEvent,
+}));
 
 const nativeSetEnabled = vi.fn(async (_opts: { enabled: boolean }) => {});
 const nativeLogEvent = vi.fn(
@@ -44,8 +53,9 @@ beforeEach(() => {
   isNativePlatform.mockReturnValue(false);
   isSupported.mockReset();
   isSupported.mockResolvedValue(true);
-  getAnalytics.mockReset();
-  getAnalytics.mockReturnValue({ __handle: true });
+  initializeAnalytics.mockReset();
+  initializeAnalytics.mockReturnValue({ __handle: true });
+  window.history.replaceState(null, "", import.meta.env.BASE_URL);
   logEvent.mockReset();
   nativeSetEnabled.mockReset();
   nativeSetEnabled.mockResolvedValue(undefined);
@@ -80,7 +90,7 @@ describe("analyticsProvider", () => {
       expect(mod.getAnalyticsStatus()).toBe("unsupported")
     );
     expect(mod.isAnalyticsActive()).toBe(false);
-    expect(getAnalytics).not.toHaveBeenCalled();
+    expect(initializeAnalytics).not.toHaveBeenCalled();
   });
 
   it("activates on web + configured + supported, then delivers events", async () => {
@@ -97,10 +107,10 @@ describe("analyticsProvider", () => {
     expect(logEvent).toHaveBeenCalledWith(
       { __handle: true },
       "signup_completed",
-      {
+      expect.objectContaining({
         method: "email",
         surface: "lifecycle",
-      }
+      })
     );
     // The native plugin is never touched on web.
     expect(nativeLogEvent).not.toHaveBeenCalled();
@@ -124,7 +134,7 @@ describe("analyticsProvider", () => {
       params: { primaryGoal: "running", surface: "lifecycle" },
     });
     // The web SDK is never touched on native.
-    expect(getAnalytics).not.toHaveBeenCalled();
+    expect(initializeAnalytics).not.toHaveBeenCalled();
   });
 
   it("native init failure (e.g. missing plist) → error status, stays a no-op", async () => {
@@ -144,6 +154,45 @@ describe("analyticsProvider", () => {
     await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
     mod.initAnalytics(FAKE_APP);
     await new Promise((r) => setTimeout(r));
-    expect(getAnalytics).toHaveBeenCalledTimes(1);
+    expect(initializeAnalytics).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("analyticsProvider — the page address on web", () => {
+  const base = import.meta.env.BASE_URL;
+  const origin = window.location.origin;
+
+  it("sends no automatic page view, and starts with a redacted address", async () => {
+    vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
+    window.history.replaceState(null, "", `${base}user/their-uid-123`);
+    const mod = await import("../analyticsProvider");
+    mod.initAnalytics(FAKE_APP);
+    await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
+
+    expect(initializeAnalytics).toHaveBeenCalledTimes(1);
+    const config = initializeAnalytics.mock.calls[0][1]?.config;
+    expect(config?.send_page_view).toBe(false);
+    expect(config?.page_location).toBe(`${origin}${base}user/:id`);
+  });
+
+  it("gives each event the route it was sent from, without ids or a search", async () => {
+    vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
+    const mod = await import("../analyticsProvider");
+    mod.initAnalytics(FAKE_APP);
+    await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
+
+    window.history.pushState(null, "", `${base}history/sessions?q=tempo#top`);
+    mod.logAnalyticsEvent("history_viewed", { surface: "history" });
+    window.history.pushState(null, "", `${base}user/their-uid-123`);
+    mod.logAnalyticsEvent("profile_viewed", { surface: "social" });
+
+    const sent = logEvent.mock.calls.map(
+      (call) => (call as unknown[])[2] as Record<string, unknown>
+    );
+    expect(sent[0].page_location).toBe(`${origin}${base}history/sessions`);
+    expect(sent[1].page_location).toBe(`${origin}${base}user/:id`);
+    for (const params of sent) {
+      expect(JSON.stringify(params)).not.toMatch(/their-uid-123|tempo/);
+    }
   });
 });

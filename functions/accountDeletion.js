@@ -493,17 +493,16 @@ async function deleteAccount({
     // retries. The earlier collection-group pass also covers retired rooms.
     await spacesCleanup.cleanupSpacesForUser({ firestore, uid, logger });
 
-    // 3c. Apple subscription bindings (money-path audit F8). The
-    // binding's uid is about to dangle; deleting it alone would re-open
-    // F7 (first-claim-wins theft of a now-unclaimed transaction), so
-    // each binding's identity is tombstoned into
-    // deletedBillingIdentities FIRST — restoreApplePurchases already
-    // refuses tombstoned identities (rotation-aware lookup reads the
-    // same collection). Order is the safety property: tombstone, THEN
-    // delete the binding. Fail-safe: if BILLING_HMAC_SECRET is
-    // unprovisioned the binding is KEPT (a locked-out re-signup is
-    // recoverable via support; a theft window is not) — log and move
-    // on, never block the remaining steps.
+    // 3c. Apple subscription bindings (money-path audit F8). Each
+    // binding carries the uid, so it goes with the account. Deleting it
+    // alone would leave the transaction unclaimed (F7), so its identity
+    // is tombstoned into deletedBillingIdentities FIRST: the record any
+    // path that binds an Apple transaction to an account must refuse.
+    // None does now (RevenueCat owns purchases, ADR-0006). Order is the
+    // safety property: tombstone, THEN delete the binding. Fail-safe: if
+    // BILLING_HMAC_SECRET is unprovisioned the binding is KEPT (a
+    // locked-out re-signup is recoverable via support; a theft window is
+    // not) — log and move on, never block the remaining steps.
     const billingRetentionUntil = new Date(now);
     billingRetentionUntil.setUTCMonth(billingRetentionUntil.getUTCMonth() + 13);
     const appleSubsSnap = await firestore

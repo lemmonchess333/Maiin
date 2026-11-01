@@ -224,14 +224,42 @@ export function needsAnterior(muscles: string[]): boolean {
 let demoCache: Map<string, ExerciseDemo> | null = null;
 let fetchPromise: Promise<void> | null = null;
 
-const DEMO_URL =
-  "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json";
+/** The free-exercise-db commit the app reads, not a branch: a commit's
+ *  files cannot change, so whoever controls that repository cannot change
+ *  the instructions and images the app shows. Moving it is a deliberate
+ *  update, made after reading the new catalogue. */
+const CATALOGUE_COMMIT = "f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5";
+
+const CATALOGUE_ROOT = `https://raw.githubusercontent.com/yuhonas/free-exercise-db/${CATALOGUE_COMMIT}/`;
+
+const DEMO_URL = `${CATALOGUE_ROOT}dist/exercises.json`;
 
 // free-exercise-db `images` are repo-relative paths (e.g. "Bench_Press/0.jpg");
 // the renderable URL is this base + the path. Prefixed at load so consumers get
 // full URLs.
-const IMAGE_BASE =
-  "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/";
+const IMAGE_BASE = `${CATALOGUE_ROOT}exercises/`;
+
+/**
+ * The address of one catalogue image, or null for a path the app will not
+ * load. Only a path relative to the catalogue's own image folder is
+ * accepted: an absolute URL could point anywhere and log who looked, and a
+ * `..` could climb out of the pinned folder.
+ */
+function catalogueImageUrl(path: unknown): string | null {
+  if (typeof path !== "string" || path === "") return null;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(path) || /^[/\\]/.test(path)) return null;
+  if (/[\\?#%]/.test(path)) return null;
+  if (
+    path.split("/").some((part) => part === "" || part === "." || part === "..")
+  )
+    return null;
+  try {
+    const url = new URL(path, IMAGE_BASE).href;
+    return url.startsWith(IMAGE_BASE) ? url : null;
+  } catch {
+    return null;
+  }
+}
 
 async function loadDemos(): Promise<Map<string, ExerciseDemo>> {
   if (demoCache) return demoCache;
@@ -254,6 +282,9 @@ async function loadDemos(): Promise<Map<string, ExerciseDemo>> {
       }[] = await res.json();
       const map = new Map<string, ExerciseDemo>();
       for (const ex of data) {
+        const images = (ex.images ?? [])
+          .map(catalogueImageUrl)
+          .filter((url): url is string => url !== null);
         map.set(normaliseKey(ex.name), {
           name: ex.name,
           category: ex.category ?? "",
@@ -261,12 +292,10 @@ async function loadDemos(): Promise<Map<string, ExerciseDemo>> {
           primaryMuscles: ex.primaryMuscles ?? [],
           secondaryMuscles: ex.secondaryMuscles ?? [],
           instructions: ex.instructions ?? [],
-          images: (ex.images ?? []).map((p) =>
-            p.startsWith("http") ? p : IMAGE_BASE + p
-          ),
+          images,
           // Everything from free-exercise-db is borrowed reference imagery,
           // never a vetted motion sequence (Demo1).
-          mediaKind: (ex.images ?? []).length > 0 ? "reference-photos" : "none",
+          mediaKind: images.length > 0 ? "reference-photos" : "none",
         });
       }
       demoCache = map;
