@@ -141,15 +141,14 @@ lifting,strength,training,plan,marathon,hybrid,5k,10k,half,macro,counter,food,lo
 
 ## App information
 
-| Field              | Entry                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Support URL        | `https://troposfit.com/support` (public, verified in a mobile browser on 2026-10-31; `src/pages/Support.tsx`)                                                                                                                                                                                                                                               |
-| Marketing URL      | Optional. Leave it empty until troposfit.com has a home page of its own                                                                                                                                                                                                                                                                                                                                                    |
-| Privacy Policy URL | `https://troposfit.com/privacy` (public, verified in a mobile browser on 2026-10-31). The static copy, `public/legal/privacy.html`, is generated from the same page (`npm run legal:sync`)                                                                                                                                                                                            |
-| Category           | Health & Fitness. No secondary category                                                                                                                                                                                                                                                                                                                                                                                    |
-| Copyright          | `2026 Myles Kennedy`, the owner named in the Terms (`src/pages/TermsOfService.tsx`)                                                                                                                                                                                                                                                                                                                                        |
+| Field              | Entry                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Support URL        | `https://troposfit.com/support` (public, verified in a mobile browser on 2026-10-31; `src/pages/Support.tsx`)                                                                                                                                                                                                                                                                                                                                                        |
+| Marketing URL      | Optional. Leave it empty until troposfit.com has a home page of its own                                                                                                                                                                                                                                                                                                                                                                                              |
+| Privacy Policy URL | `https://troposfit.com/privacy` (public, verified in a mobile browser on 2026-10-31). The static copy, `public/legal/privacy.html`, is generated from the same page (`npm run legal:sync`)                                                                                                                                                                                                                                                                           |
+| Category           | Health & Fitness. No secondary category                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Copyright          | `2026 Myles Kennedy`, the owner named in the Terms (`src/pages/TermsOfService.tsx`)                                                                                                                                                                                                                                                                                                                                                                                  |
 | Content rights     | "Yes, it contains third-party content": maps from OpenStreetMap through OpenFreeMap, weather from MET Norway, food data from Open Food Facts (each credited where it appears), photographs on Space and challenge cards (Unsplash and Pexels Licenses; source records in `src/assets/editorial/`), and real race names in Spaces. Audit any routes saved by earlier builds before answering for the final app (item 8 under [Before submitting](#before-submitting)) |
-
 
 ### Age rating
 
@@ -407,16 +406,17 @@ These are yours; none of them can be done from the code.
    resets and report alerts reach nobody but the Resend account's owner.
 7. **Reports reviewed within 24 hours.** The Terms and the review notes
    now promise it; the report email is how you find out.
-8. **Road routing is paused.** The
+8. **Road routing is removed** (1 November 2026). The
    [Mapbox Product Terms dated 20 October 2026](https://www.mapbox.com/legal/product-terms)
    prohibit storing Navigation API results in §2.10.1; §1.9 also prohibits
    storing other service results by default. Earlier builds saved Directions
-   geometry as planned routes. The current release disables both the client
-   controls and the callable, while the manual point-to-point planner remains.
-   Check whether a separate Mapbox agreement explicitly permits the prior
-   use, and audit existing saved plans before answering App Store content
-   rights. Reintroduce road routing only with a provider/licence that permits
-   the intended map display and saved route geometry.
+   geometry as planned routes. Road routing was first paused, then removed:
+   it will not come back on Mapbox, the app offers only the manual
+   point-to-point planner, and the Mapbox account can be closed. Do not
+   describe road-following routes anywhere in the listing. Audit existing
+   saved plans before answering App Store content rights. Any future road
+   routing needs a provider/licence that permits the intended map display
+   and saved route geometry.
 9. **Other settings.** Keep Google Signals off and Analytics unlinked
    from Ads. The food scan and typed meals call `gemini-3.8-flash`
    (`functions/lib/foodModel.js`; Vertex retired `gemini-2.0-flash`, which
