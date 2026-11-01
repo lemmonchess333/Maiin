@@ -57,9 +57,6 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
-          # Published Mapbox terms prohibit saving Directions results.
-          # The manual route planner remains available.
-          VITE_ROUTE_PLANNING_ENABLED: "false"
           # FCM Web push public VAPID key (#963). Public by design (it ships in
           # the client bundle); a secret only to match the other VITE_ vars.
           # Unset, `isPushSupported()` returns false, so the Settings toggle

@@ -23,7 +23,8 @@ import { dirname, resolve, relative, join } from "node:path";
  *     the owner. The server callable re-checks `ADMIN_UIDS` on its own,
  *     so this was a door nobody could open rather than a hole.
  *   - `VITE_FIREBASE_VAPID_KEY` — web push registration, skipped silently.
- *   - `VITE_ROUTE_PLANNING_ENABLED` — the Pro road-align layer, off.
+ *   - `VITE_ROUTE_PLANNING_ENABLED` — the Pro road-align layer, off. Road
+ *     routing has since been removed, and the var with it.
  *   - `VITE_REVENUECAT_IOS_KEY` — the one this rule was learned from.
  *
  * The reverse direction is the same failure wearing a different coat, and
