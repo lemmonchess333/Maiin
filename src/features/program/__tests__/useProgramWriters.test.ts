@@ -662,7 +662,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     expect(lastWrite.runDays!.length).toBeGreaterThan(0);
   });
 
-  /* A plan a newer build wrote (Run9's reopening adds one): this build
+  /* A plan a newer build wrote: this build
      cannot build it, and a refresh or regenerate here read it as free
      running and cleared it. Installed builds have to keep it before any
      build writes one. */
@@ -679,7 +679,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       }) as ScheduledRunDay;
     const seedNewer = () => {
       mockProfile = structuredProfile({
-        runMode: "starter" as MockProfile["runMode"],
+        runMode: "next_kind" as MockProfile["runMode"],
       });
       seedProgram({
         goal: "recomp",
@@ -694,7 +694,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
         programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
         liftWeekKey: localWeekKey(),
         runDays: [newerRunDay()],
-        runPlan: { mode: "starter", stage: 2 },
+        runPlan: { mode: "next_kind", step: 2 },
       } as unknown as ProgramState);
     };
 
@@ -710,7 +710,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       });
       const lastWrite = setDocCalls()[setDocCalls().length - 1]
         .data as ProgramState;
-      expect(lastWrite.runPlan).toEqual({ mode: "starter", stage: 2 });
+      expect(lastWrite.runPlan).toEqual({ mode: "next_kind", step: 2 });
       expect(lastWrite.runDays?.map((rd) => rd.id)).toEqual([
         "newer_build_run",
       ]);
@@ -728,7 +728,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       });
       const lastWrite = setDocCalls()[setDocCalls().length - 1]
         .data as ProgramState;
-      expect(lastWrite.runPlan).toEqual({ mode: "starter", stage: 2 });
+      expect(lastWrite.runPlan).toEqual({ mode: "next_kind", step: 2 });
       expect(lastWrite.runDays?.map((rd) => rd.id)).toEqual([
         "newer_build_run",
       ]);

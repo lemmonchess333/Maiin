@@ -59,7 +59,7 @@ export function starterTemplateId(stage: number): string {
 }
 
 /** The week key `weeks` weeks after `weekKey` (before it when negative). */
-function weekKeyAfter(weekKey: string, weeks: number): string {
+export function weekKeyAfter(weekKey: string, weeks: number): string {
   return localWeekKey(addLocalDays(parseLocalDate(weekKey), weeks * 7));
 }
 
@@ -97,6 +97,19 @@ export function emptyWeeksEndingWith(
     empty++;
   }
   return empty;
+}
+
+/**
+ * The day the week starting `weekKey` was done: the day of its run that
+ * made it so (`STARTER_RUNS_FOR_A_DONE_WEEK`). Null for a week not done.
+ */
+export function starterWeekDoneOn(
+  runDays: readonly string[],
+  weekKey: string
+): string | null {
+  const end = localDateString(addLocalDays(parseLocalDate(weekKey), 7));
+  const inWeek = runDays.filter((day) => day >= weekKey && day < end).sort();
+  return inWeek[STARTER_RUNS_FOR_A_DONE_WEEK - 1] ?? null;
 }
 
 /** Where the starter stands once the week left behind is weighed. */

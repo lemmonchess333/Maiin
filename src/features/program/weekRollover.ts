@@ -9,10 +9,9 @@
  * script stepping through a season) runs the code the app runs rather than a
  * copy of it.
  *
- * Which calendar a plan follows is `weekRolloverAnchor`'s answer: a plan
- * with run days, for a runner not in free running, follows the runs, which
- * are pinned to dates (ADR-0002); any other plan follows its lifts' week
- * key. So of the two rollovers below, at most one moves a given plan. When
+ * Which calendar a plan follows is `weekRolloverAnchor`'s answer: a race
+ * plan with run days, and a starter plan, follow the runs, which are pinned
+ * to dates (ADR-0002); any other plan follows its lifts' week key. So of the two rollovers below, at most one moves a given plan. When
  * the run side ends the run plan (a race passed), the plan follows its lifts
  * from then on, and the lift side moves it the rest of the way.
  *
@@ -35,7 +34,9 @@ import type { LayoffClass } from "./layoffDetection";
 import { profileNewRunnerUntil } from "./newRunner";
 import {
   isRunPlanFromNewerBuild,
+  isStarterPlanRunning,
   raceAwaitsItsEnding,
+  runWeekKeyOf,
   weekRolloverAnchor,
 } from "./programMaintenance";
 import { advanceWeek } from "./programEngine";
@@ -51,8 +52,15 @@ import {
   generateRacePlanV2,
   runTuningFromProfile,
   scheduleRecoveryWeekV2,
+  scheduleStarterWeek,
   type RunTuning,
 } from "./runScheduler";
+import {
+  clampStarterStage,
+  nextStarterStage,
+  starterWeekDoneOn,
+} from "./starterPlan";
+import { starterRunPlan, starterWeekFrom } from "./starterWeek";
 import { raceBlockWeek, type RaceBlockWeek } from "./weekPrescription";
 
 /**
@@ -273,6 +281,54 @@ export interface NextRunWeek extends Pick<ProgramState, "runDays" | "runPlan"> {
    *  race plan's lighter weeks and the race's own (`advanceWeek`): none once
    *  its race has passed, whatever the plan kept for the race's ending. */
   raceBlock: RaceBlockWeek | null;
+  /** The day a starter goal's last week was done, when the week left was
+   *  it: the plan is free running from here, and the profile's goal is
+   *  finished on this day in the same write (`finishStarterGoalPatch`). */
+  starterFinishedOn?: string;
+}
+
+/**
+ * A starter plan's next week: the week left weighed by the runs saved in
+ * it (`nextStarterStage`), then the stage's session on the week's run days.
+ * The week moved into, when it is today's, is built from today
+ * (`starterWeekFrom`). The goal finishes as its last stage's done week is
+ * left, and the plan is then free running.
+ */
+function nextStarterWeek(
+  current: ProgramState,
+  next: { weekStart: string; date: string; plannedFrom?: string },
+  weekSchedule: NonNullable<UserProfile["weekSchedule"]>,
+  recentRunDays: readonly string[] | null
+): NextRunWeek {
+  const stage = current.runPlan?.stage ?? 1;
+  const weekLeft = runWeekKeyOf(current);
+  const step = weekLeft
+    ? nextStarterStage(stage, weekLeft, recentRunDays)
+    : { finished: false, stage: clampStarterStage(stage) };
+  if (step.finished && weekLeft && recentRunDays) {
+    return {
+      runDays: [],
+      runPlan: undefined,
+      raceBlock: null,
+      starterFinishedOn:
+        starterWeekDoneOn(recentRunDays, weekLeft) ?? next.date,
+    };
+  }
+  const week = next.plannedFrom
+    ? starterWeekFrom({
+        weekSchedule,
+        stage: step.stage,
+        today: next.plannedFrom,
+      })
+    : {
+        runDays: scheduleStarterWeek({
+          weekSchedule,
+          weekStart: next.weekStart,
+          stage: step.stage,
+        }),
+        runPlan: starterRunPlan(step.stage, next.weekStart),
+      };
+  return { ...week, raceBlock: null };
 }
 
 /**
@@ -285,15 +341,22 @@ export interface NextRunWeek extends Pick<ProgramState, "runDays" | "runPlan"> {
  * `next.plannedFrom` is today when the week moved into is the one the
  * person is standing in, part gone: its race runs are planned from today,
  * as a plan made mid-week is (Run19).
+ *
+ * `recentRunDays` are the days of the recent saved runs, which a starter
+ * week is weighed by; null or left out, a starter's stage holds.
  */
 export function nextRunWeek(
   current: ProgramState,
   next: { weekStart: string; date: string; plannedFrom?: string },
   profile: UserProfile,
-  recentLayoff: LayoffClass
+  recentLayoff: LayoffClass,
+  recentRunDays: readonly string[] | null = null
 ): NextRunWeek {
   const weekSchedule = profile.weekSchedule ?? [];
   const runPlan = current.runPlan;
+  if (isStarterPlanRunning(current, profile)) {
+    return nextStarterWeek(current, next, weekSchedule, recentRunDays);
+  }
   // Asked about NEXT week's date, not today: the question is whether the
   // week being rolled into is still inside the recovery window.
   if (runPlan && isInRecoveryOn(runPlan, next.date)) {
@@ -393,6 +456,10 @@ export interface RolledOver {
   /** Weeks moved: 0 when this side's calendar is not the plan's, or not
    *  behind, and never more than `MAX_ROLLOVER_WEEKS`. */
   weeks: number;
+  /** The day a starter goal was finished in a week moved past
+   *  (`NextRunWeek.starterFinishedOn`): its profile patch goes in the
+   *  same write as the plan. */
+  starterFinishedOn?: string;
 }
 
 /**
@@ -414,7 +481,8 @@ export function rollRunWeeks(
   state: ProgramState,
   profile: UserProfile,
   today: string,
-  recentLayoff: LayoffClass
+  recentLayoff: LayoffClass,
+  recentRunDays: readonly string[] | null = null
 ): RolledOver {
   if (weekRolloverAnchor(state, profile)?.side !== "run") {
     return { state, weeks: 0 };
@@ -422,8 +490,9 @@ export function rollRunWeeks(
   const todayWeekKey = localWeekKey(parseLocalDate(today));
   let rolling = state;
   let weeks = 0;
+  let starterFinishedOn: string | undefined;
   while (weeks < MAX_ROLLOVER_WEEKS) {
-    const currentRunWeekKey = rolling.runDays?.[0]?.weekKey;
+    const currentRunWeekKey = runWeekKeyOf(rolling);
     if (!currentRunWeekKey || currentRunWeekKey >= todayWeekKey) break;
     const nextRunDate = addLocalDays(parseLocalDate(currentRunWeekKey), 7);
     // A race plan with nothing left to plan after its race stays where it
@@ -465,8 +534,10 @@ export function rollRunWeeks(
         ...(weekStart === todayWeekKey && { plannedFrom: today }),
       },
       profile,
-      recentLayoff
+      recentLayoff,
+      recentRunDays
     );
+    starterFinishedOn ??= runs.starterFinishedOn;
     const advanced = liftsAhead
       ? { ...rolling }
       : advanceWeek(
@@ -485,7 +556,11 @@ export function rollRunWeeks(
     rolling = advanced;
     weeks++;
   }
-  return { state: rolling, weeks };
+  return {
+    state: rolling,
+    weeks,
+    ...(starterFinishedOn && { starterFinishedOn }),
+  };
 }
 
 /**

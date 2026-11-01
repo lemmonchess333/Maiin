@@ -203,6 +203,10 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // setBoardSharing callable, which keeps the tally (friendsBoard/{uid})
   // in step with the answer.
   { field: "showWeekOnBoard", sanitized: false, serverOnly: true },
+  // Run9's starter goal (30 minutes without stopping). Value-gated in
+  // firestore.rules (`starterGoalValid`); the programme's transaction writes
+  // it when the goal is finished.
+  { field: "starterGoal", sanitized: true },
   { field: "stripeCustomerId", sanitized: false, serverGuarded: true },
   { field: "stripeSubscriptionId", sanitized: false, serverGuarded: true },
   { field: "subscriptionExpiresAt", sanitized: false, serverGuarded: true },
