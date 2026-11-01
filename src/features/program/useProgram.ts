@@ -71,8 +71,11 @@ import {
 } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
 import { rebuiltWeekFromToday } from "./racePlanContinuation";
-import { fetchRecentLayoff } from "./fetchRecentLayoff";
+import { fetchRecentRunning, type RecentRunning } from "./fetchRecentLayoff";
 import type { LayoffClass } from "./layoffDetection";
+
+/** No read: no layoff, and no runs known. */
+const NOTHING_READ: RecentRunning = { layoff: "none", runs: null };
 import { profileNewRunnerUntil } from "./newRunner";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
 import { readStoredRunSummary } from "@/lib/runResumeStorage";
@@ -304,31 +307,36 @@ export function useProgram() {
     /** The day it was read for: a week's rollover waits for that day's. */
     day: string | null;
     cls: LayoffClass;
-  }>({ uid: null, day: null, cls: "none" });
+    /** The recent runs the read found (`fetchRecentRunning`): a running
+     *  starting point climbs from what they say was done. */
+    runs: RecentRunning["runs"];
+  }>({ uid: null, day: null, cls: "none", runs: null });
   const recentLayoff: LayoffClass =
     layoffRead.uid && layoffRead.uid === user?.uid ? layoffRead.cls : "none";
+  const recentRuns =
+    layoffRead.uid && layoffRead.uid === user?.uid ? layoffRead.runs : null;
   /**
    * One read per account and day, shared: the effect below holds its
    * answer, and a rebuild that starts before it lands waits on the same
    * read rather than making a second.
    */
-  const layoffReads = useRef(new Map<string, Promise<LayoffClass>>());
+  const layoffReads = useRef(new Map<string, Promise<RecentRunning>>());
   const layoffFor = useCallback((uid: string, day: string) => {
     const key = `${uid}|${day}`;
     let read = layoffReads.current.get(key);
     if (!read) {
-      read = fetchRecentLayoff(uid, day);
+      read = fetchRecentRunning(uid, day);
       layoffReads.current.set(key, read);
     }
     return read;
   }, []);
   /** The layoff a rebuild is planned from: today's, for this account,
    *  waited for when it has not landed. */
-  const resolveLayoff = useCallback((): Promise<LayoffClass> => {
+  const resolveLayoff = useCallback((): Promise<RecentRunning> => {
     const signedIn = user?.uid;
     return signedIn
       ? layoffFor(signedIn, localDateString())
-      : Promise.resolve("none");
+      : Promise.resolve(NOTHING_READ);
   }, [user?.uid, layoffFor]);
   const [loading, setLoading] = useState(true);
   /**
@@ -468,10 +476,11 @@ export function useProgram() {
           raceWeekNeedsBuilding(next, profile, today)
         ) {
           // A cold load must use the same returning-runner evidence as rollover.
-          const layoff = await layoffFor(user.uid, today);
+          const read = await layoffFor(user.uid, today);
           if (cancelled || auth.currentUser?.uid !== user.uid) return;
           const runs = regenerateRacePlan({
-            recentLayoff: layoff,
+            recentLayoff: read.layoff,
+            recentRuns: read.runs,
             profile,
             raceGoal: profile.raceGoal,
             weekSchedule,
@@ -568,10 +577,11 @@ export function useProgram() {
           const today = localDateString();
           // A returner's first week has no strides, so even a first plan
           // waits for the read.
-          const layoff = await layoffFor(user.uid, today);
+          const read = await layoffFor(user.uid, today);
           if (cancelled || auth.currentUser?.uid !== user.uid) return;
           ({ runDays, runPlan } = regenerateRacePlan({
-            recentLayoff: layoff,
+            recentLayoff: read.layoff,
+            recentRuns: read.runs,
             profile,
             raceGoal: profile.raceGoal,
             weekSchedule,
@@ -1116,7 +1126,8 @@ export function useProgram() {
       programState,
       profile,
       today,
-      recentLayoff
+      recentLayoff,
+      recentRuns
     );
     if (weeks === 0) return;
 
@@ -1137,7 +1148,13 @@ export function useProgram() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
     saveProgram(
       (stored) => {
-        const rolled = rollRunWeeks(stored, profile, today, recentLayoff);
+        const rolled = rollRunWeeks(
+          stored,
+          profile,
+          today,
+          recentLayoff,
+          recentRuns
+        );
         return rolled.weeks === 0 ? null : rolled.state;
       },
       undefined,
@@ -1151,6 +1168,7 @@ export function useProgram() {
     saveProgram,
     layoffRead,
     recentLayoff,
+    recentRuns,
     user,
     mirrorReady,
     queuedWrites,
@@ -1194,8 +1212,9 @@ export function useProgram() {
     if (!profile?.runMode || profile.runMode === "freeform") return;
     let cancelled = false;
     const uid = user.uid;
-    void layoffFor(uid, today).then((cls) => {
-      if (!cancelled) setLayoffRead({ uid, day: today, cls });
+    void layoffFor(uid, today).then((read) => {
+      if (!cancelled)
+        setLayoffRead({ uid, day: today, cls: read.layoff, runs: read.runs });
     });
     return () => {
       cancelled = true;
@@ -1548,7 +1567,7 @@ export function useProgram() {
     //
     // Next week's runs are planned from today's layoff, waited for.
     const runsPlanned = !!profile?.runMode && profile.runMode !== "freeform";
-    const layoff = runsPlanned ? await resolveLayoff() : "none";
+    const read = runsPlanned ? await resolveLayoff() : NOTHING_READ;
     // Built against the live document, with the gate re-checked there: an
     // advance that overlaps the rollover's own transaction — which has just
     // advanced the week — declines rather than advancing a second time.
@@ -1570,7 +1589,8 @@ export function useProgram() {
                 date: localDateString(nextRunDate),
               },
               profile,
-              layoff
+              read.layoff,
+              read.runs
             )
           : null;
       const advanced = advanceWeek(
@@ -2284,10 +2304,10 @@ export function useProgram() {
         "recomp") as ProgramState["goal"];
       const weeklyTarget =
         weeklyTargetOverride ?? profile.weeklyWorkoutsTarget ?? 4;
-      const layoff =
+      const read =
         profile.runMode === "race_prep" && profile.raceGoal
           ? await resolveLayoff()
-          : "none";
+          : NOTHING_READ;
       // Prefer programState's persisted primaryGoal (set at onboarding),
       // falling back to the profile value. Regenerate with goal-aware reps.
       const build = (base: ProgramState | null): ProgramState => {
@@ -2323,7 +2343,8 @@ export function useProgram() {
           if (profile.runMode === "race_prep" && profile.raceGoal) {
             const today = localDateString();
             ({ runDays, runPlan } = regenerateRacePlan({
-              recentLayoff: layoff,
+              recentLayoff: read.layoff,
+              recentRuns: read.runs,
               profile,
               raceGoal: profile.raceGoal,
               weekSchedule: effectiveSchedule,
@@ -2440,7 +2461,7 @@ export function useProgram() {
       const runTarget =
         overrides?.weeklyRunDaysTarget ?? (getWeeklyRunTarget(profile) || 3);
       const weekStart = localWeekKey();
-      const layoff = await resolveLayoff();
+      const read = await resolveLayoff();
       // Built against the live document: the overrides snapshot, the
       // recovery check and the carried week position all read the state
       // the store holds at commit, not the render the tap happened on.
@@ -2503,7 +2524,8 @@ export function useProgram() {
           // passed) and we're re-rendering race_prep, drop phase
           // and recoveryEndDate.
           ({ runDays, runPlan } = regenerateRacePlan({
-            recentLayoff: layoff,
+            recentLayoff: read.layoff,
+            recentRuns: read.runs,
             profile,
             tuning: overrides?.tuning,
             raceGoal: profile.raceGoal,
@@ -3465,7 +3487,7 @@ export function useProgram() {
     // the render it was tapped on, a realign that overlapped the rollover
     // was refused, and repaired only by tapping again.
     const raceGoal = profile.raceGoal;
-    const layoff = await resolveLayoff();
+    const read = await resolveLayoff();
     let planned: ProgramState["runPlan"];
     let saved: ProgramState | null;
     try {
@@ -3474,7 +3496,8 @@ export function useProgram() {
         if (isInRecoveryOn(base.runPlan, today)) return null;
         const prevRunPlan = base.runPlan;
         const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
-          recentLayoff: layoff,
+          recentLayoff: read.layoff,
+          recentRuns: read.runs,
           profile,
           raceGoal,
           weekSchedule: profile.weekSchedule ?? [],

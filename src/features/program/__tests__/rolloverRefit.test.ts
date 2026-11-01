@@ -313,7 +313,7 @@ describe("a day its warm-ups outgrew, as the week moves on (Lift7)", () => {
     expect(over(before).length).toBeGreaterThan(0);
     const today = shift(START, 9);
     const rolled = onDay(today, () =>
-      rollRunWeeks(before, profile, weekOf(today), "none")
+      rollRunWeeks(before, profile, weekOf(today), "none", null)
     );
     expect(rolled.weeks).toBe(1);
     expect(rolled.state.currentPhase).toBe("progression");
@@ -518,7 +518,7 @@ describe("a plan the re-fit leaves alone (Lift7)", () => {
     const before = { ...trainedHeavier(state), liftWeekKey: WEEK_2 };
     const today = shift(START, 9);
     const rolled = onDay(today, () =>
-      rollRunWeeks(before, profile, weekOf(today), "none")
+      rollRunWeeks(before, profile, weekOf(today), "none", null)
     );
     expect(rolled.weeks).toBe(1);
     expect(rolled.state.workouts).toBe(before.workouts);

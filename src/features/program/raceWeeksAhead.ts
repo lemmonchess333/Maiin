@@ -245,7 +245,9 @@ export function raceWeeksAhead({
       date: localDateString(monday),
     };
     if (next.weekStart > raceWeek) break;
-    const moved = nextRunWeek(state, next, profile, recentLayoff);
+    // The weeks ahead as if followed: their runs aren't done yet, so a
+    // running starting point climbs them by the calendar.
+    const moved = nextRunWeek(state, next, profile, recentLayoff, null);
     // No race plan in the week moved into: free running from there on.
     if (moved.runPlan?.mode !== "race_prep") break;
     state = { ...state, runDays: moved.runDays, runPlan: moved.runPlan };

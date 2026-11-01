@@ -23,7 +23,8 @@ import {
 } from "@/lib/dateHelpers";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import type { LayoffClass } from "./layoffDetection";
+import type { DatedRun, LayoffClass } from "./layoffDetection";
+import { isWeekDone, recentRunning } from "./recentRunWeeks";
 import type { RunPlan, ScheduledRunDay } from "./programTypes";
 import { HARD_RUN_TYPES } from "./programTypes";
 import { newRunnerTemplate } from "./newRunner";
@@ -1108,6 +1109,14 @@ export interface RacePlanV2Input {
    * lasts.
    */
   leadInWeek?: string | null;
+  /**
+   * The person's recent saved runs (`fetchRecentRunning`, the read the
+   * layoff comes from), for a running starting point to climb from what was
+   * done in this week's plan and to size its rungs at their own pace when
+   * there is no confirmed one (`runningClimb`). Null or absent: not known,
+   * and the climb goes by the calendar, as for the weeks ahead.
+   */
+  recentRuns?: readonly DatedRun[] | null;
 }
 
 export interface RacePlanV2Output {
@@ -1793,6 +1802,17 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const baseline = isRunningBaseline(input.runningBaseline)
     ? input.runningBaseline
     : null;
+  /* The pace the climb's rungs are sized at: the confirmed one, else the
+     recent runs' own, so a long run's rung is the minutes it takes this
+     runner; the template's minutes with neither. It sizes the climb alone:
+     prescriptions keep the confirmed pace only (RUN-EV-08). */
+  const recent = input.recentRuns
+    ? recentRunning(
+        input.recentRuns,
+        localDateString(addLocalDays(parseLocalDate(input.currentDate), 1))
+      )
+    : null;
+  const climbPace = input.easyPaceSPerKm ?? recent?.paceSPerKm ?? null;
   /** A week of the block as the plan holds it: every fit applied, and the
    *  clash flag. */
   const fittedWeek = (week: ScheduledRunDay[]): ScheduledRunDay[] => {
@@ -1818,18 +1838,30 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       fitRunToTimeLimit(row, input.runTimeLimits, input.easyPaceSPerKm)
     );
     // The person's running, as it has climbed from their starting point by
-    // this week. It depends on the week alone, so a week behind this one,
-    // which only the taper's walk of the build builds, holds what it held.
+    // this week. This week's climbs from what was done before it, from the
+    // saved runs; a week behind it, which only the taper's walk of the build
+    // builds, and the weeks ahead go by the calendar, as if followed.
+    const weekKey = week[0]?.weekKey;
     const fitted = fitWeekToRunningBaseline(
       limited,
       baseline,
-      baseline && week[0]?.weekKey
-        ? runningClimb(baseline, week[0].weekKey, {
-            easyPaceSPerKm: input.easyPaceSPerKm,
+      baseline && weekKey
+        ? runningClimb(baseline, weekKey, {
+            easyPaceSPerKm: climbPace,
             isStepBack: isStepBackWeek,
+            done:
+              input.recentRuns && weekKey === thisWeekKey
+                ? {
+                    ...recentRunning(input.recentRuns, weekKey),
+                    lastWeekDone: isWeekDone(
+                      input.recentRuns,
+                      localDateString(addLocalDays(parseLocalDate(weekKey), -7))
+                    ),
+                  }
+                : null,
           })
         : null,
-      input.easyPaceSPerKm
+      climbPace
     );
     return fitted.map((row, index) => {
       const rd =

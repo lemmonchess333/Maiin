@@ -113,7 +113,7 @@ describe("a race plan made after its week's last run day (Run19)", () => {
         const monday = shift(MONDAY, week * 7);
         state = onDay(
           monday,
-          () => rollRunWeeks(state, profile, monday, "none").state
+          () => rollRunWeeks(state, profile, monday, "none", null).state
         );
         expect(
           state.runDays?.map((run) => run.weekKey),
@@ -133,6 +133,7 @@ describe("a race plan made after its week's last run day (Run19)", () => {
           profile,
           raceGoal: RACE,
           recentLayoff: "none",
+          recentRuns: null,
           weekSchedule: TUE_WED_SAT_RUNS,
           weeklyRunDays: 3,
           currentDate: today,
@@ -151,7 +152,7 @@ describe("a race plan made after its week's last run day (Run19)", () => {
     const state = madeOn(SUNDAY);
     // On the Monday its runs are in, nothing is behind.
     const monday = onDay(NEXT_MONDAY, () =>
-      rollRunWeeks(state, profile, NEXT_MONDAY, "none")
+      rollRunWeeks(state, profile, NEXT_MONDAY, "none", null)
     );
     expect(monday.weeks).toBe(0);
     expect(datesOf(monday.state)).toEqual(datesOf(state));

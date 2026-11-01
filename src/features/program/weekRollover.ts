@@ -31,7 +31,7 @@ import { carryCompletionsAcrossRegen } from "@/lib/runCompletionCarry";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
-import type { LayoffClass } from "./layoffDetection";
+import type { DatedRun, LayoffClass } from "./layoffDetection";
 import { profileNewRunnerUntil } from "./newRunner";
 import {
   isRunPlanFromNewerBuild,
@@ -118,6 +118,7 @@ export function regenerateRacePlan({
   profile,
   raceGoal,
   recentLayoff,
+  recentRuns,
   weekSchedule,
   weeklyRunDays,
   currentDate,
@@ -151,6 +152,11 @@ export function regenerateRacePlan({
    *  silently rebuild a returning runner's week at mid-block volume, and a
    *  compile error is a better guard than a convention. */
   recentLayoff: LayoffClass;
+  /** The recent saved runs the layoff was read from (`fetchRecentRunning`),
+   *  or null where none were read. Required for the same reason: a
+   *  running starting point climbs from what they say was done, and a site
+   *  that left them out would climb it by the calendar. */
+  recentRuns: readonly DatedRun[] | null;
   carry?: {
     currentWeek?: number;
     totalWeeks?: number;
@@ -217,6 +223,7 @@ export function regenerateRacePlan({
       // position 0.
       planTotalWeeks: carry?.totalWeeks,
       leadInWeek: carry?.leadInWeek,
+      recentRuns,
     });
   let v2: ReturnType<typeof generate>;
   let runDays: ScheduledRunDay[];
@@ -302,7 +309,9 @@ export function nextRunWeek(
   current: ProgramState,
   next: { weekStart: string; date: string; plannedFrom?: string },
   profile: UserProfile,
-  recentLayoff: LayoffClass
+  recentLayoff: LayoffClass,
+  /** The recent saved runs (`regenerateRacePlan`'s `recentRuns`). */
+  recentRuns: readonly DatedRun[] | null
 ): NextRunWeek {
   const weekSchedule = profile.weekSchedule ?? [];
   const runPlan = current.runPlan;
@@ -337,6 +346,7 @@ export function nextRunWeek(
     const regenerated = regenerateRacePlan({
       profile,
       recentLayoff,
+      recentRuns,
       raceGoal: profile.raceGoal,
       weekSchedule,
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
@@ -432,7 +442,9 @@ export function rollRunWeeks(
   state: ProgramState,
   profile: UserProfile,
   today: string,
-  recentLayoff: LayoffClass
+  recentLayoff: LayoffClass,
+  /** The recent saved runs (`regenerateRacePlan`'s `recentRuns`). */
+  recentRuns: readonly DatedRun[] | null
 ): RolledOver {
   if (weekRolloverAnchor(state, profile)?.side !== "run") {
     return { state, weeks: 0 };
@@ -483,7 +495,8 @@ export function rollRunWeeks(
         ...(weekStart === todayWeekKey && { plannedFrom: today }),
       },
       profile,
-      recentLayoff
+      recentLayoff,
+      recentRuns
     );
     const advanced = liftsAhead
       ? { ...rolling }

@@ -57,6 +57,7 @@ import { DEFAULT_CONFIG } from "@/components/run/runConfigDefaults";
 import { resolveAutoDerive } from "@/hooks/useRunFitnessAutoDerive";
 import {
   layoffFromRuns,
+  type DatedRun,
   type LayoffClass,
 } from "@/features/program/layoffDetection";
 import type {
@@ -337,7 +338,10 @@ export function runnerStartingPoint(
   return {
     version: 1,
     experience: frequency === "regular" ? "regular" : "building",
-    weeklyMinutes: Math.max(longestRunMinutes, Math.round(runner.weeklyMinutes)),
+    weeklyMinutes: Math.max(
+      longestRunMinutes,
+      Math.round(runner.weeklyMinutes)
+    ),
     longestRunMinutes,
     confirmedAt,
     source: "self_reported",
@@ -524,16 +528,19 @@ export class RunSide {
   /** The layoff class the rollover is given, as `fetchRecentLayoff` reads
    *  it: the 20 latest saved runs. */
   layoff(date: string): LayoffClass {
-    return layoffFromRuns(
-      this.saved.slice(0, 20).map((run) => ({
-        date: run.day,
-        distance: run.distance,
-        duration: run.duration,
-        isInvalid: run.isInvalid === true,
-        savedAnyway: run.savedAnyway === true,
-      })),
-      date
-    );
+    return layoffFromRuns(this.recentRuns(), date);
+  }
+
+  /** The latest saved runs as `fetchRecentRunning` reads them, which the
+   *  layoff comes from and a running starting point climbs from. */
+  recentRuns(): DatedRun[] {
+    return this.saved.slice(0, 20).map((run) => ({
+      date: run.day,
+      distance: run.distance,
+      duration: run.duration,
+      isInvalid: run.isInvalid === true,
+      savedAnyway: run.savedAnyway === true,
+    }));
   }
 
   /** Home's claim map. */

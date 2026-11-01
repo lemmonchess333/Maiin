@@ -253,6 +253,11 @@ export interface RaceGoalPlannerInput {
   easyPaceSPerKm?: number | null;
   existingState?: ProgramState | null;
   recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
+  /** The recent saved runs, as the save passes them
+   *  (`PlanBuilderInput.recentRuns`). */
+  recentRuns?:
+    | readonly import("@/features/program/layoffDetection").DatedRun[]
+    | null;
   /** Run20 (5): as the save passes it (`PlanBuilderInput.newRunnerUntil`),
    *  so the preview shows the weeks the save writes. */
   newRunnerUntil?: string | null;
@@ -396,6 +401,7 @@ export function getRaceGoalPlannerState(
       newRunnerUntil: input.newRunnerUntil,
       planTotalWeeks: continued?.totalWeeks,
       leadInWeek: continued?.leadInWeek,
+      recentRuns: input.recentRuns,
     });
   // The week the save plans (Run19): from today, over a continuing plan's
   // kept days, or next week's runs when none of this week's run days is

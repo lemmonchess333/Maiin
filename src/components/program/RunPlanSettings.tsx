@@ -15,6 +15,7 @@ import {
 import { isNonRaceGoal, type NonRaceGoal } from "@/lib/nonRaceGoal";
 import RunningBaselineSettings from "@/components/run/RunningBaselineSettings";
 import { useRunningStats } from "@/hooks/useRunningStats";
+import { datedRuns } from "@/features/program/fetchRecentLayoff";
 import { recentRunningContext } from "@/lib/recentRunningContext";
 import NonRaceGoalSettings from "@/components/run/NonRaceGoalSettings";
 import {
@@ -354,6 +355,12 @@ export default function RunPlanSettings({
           ),
     [recentRuns, recentLoading, recentFailed, today, startExperience]
   );
+  /* The same runs, for the plan to climb from what was done and to size
+     its long runs at this runner's pace. */
+  const recentRunsDone = useMemo(
+    () => (recentLoading || recentFailed ? null : datedRuns(recentRuns)),
+    [recentRuns, recentLoading, recentFailed]
+  );
   const planChanged =
     runMode !== saved.runMode ||
     (runMode === "race_prep" &&
@@ -427,6 +434,7 @@ export default function RunPlanSettings({
         newRunnerUntil,
         weekSchedule: profile.weekSchedule,
         distanceUnit: resolveDistanceUnit(profile.preferredDistanceUnit),
+        recentRuns: recentRunsDone,
       }),
     [
       raceDistance,
@@ -444,6 +452,7 @@ export default function RunPlanSettings({
       newRunnerUntil,
       profile.weekSchedule,
       profile.preferredDistanceUnit,
+      recentRunsDone,
     ]
   );
 
@@ -575,6 +584,7 @@ export default function RunPlanSettings({
         weeklyRunDays,
         runTuning: { volume: runVolume, difficulty: runDifficulty },
         recentLayoff,
+        recentRuns: recentRunsDone,
         newRunnerUntil,
         weekSchedule: profile.weekSchedule,
         // Run17: the long-run ceiling is measured at the confirmed easy pace.

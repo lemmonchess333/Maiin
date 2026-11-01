@@ -18,6 +18,7 @@ import { isRunDayComplete } from "@/lib/scheduledRunCompletion";
 import type { UserProfile } from "@/lib/auth";
 import { runningClimb, type RunningBaseline } from "../runningBaseline";
 import { baselineFromRecentRunning } from "../runningStartDraft";
+import { isWeekDone, recentRunning } from "../recentRunWeeks";
 import { generateRacePlanV2 } from "../runScheduler";
 import { plannedRunMinutes } from "../runTimeLimits";
 import { buildPlan, type PlanBuilderInput } from "../planBuilder";
@@ -268,7 +269,8 @@ describe("a plan made partway through a week starts with a lead-in (D)", () => {
       made.programState,
       { weekStart: "2026-11-02", date: "2026-11-02" },
       profile,
-      "none"
+      "none",
+      null
     );
     expect(week1.runPlan?.currentWeek).toBe(0);
     expect(week1.runPlan?.leadInWeek).toBeUndefined();
@@ -277,7 +279,8 @@ describe("a plan made partway through a week starts with a lead-in (D)", () => {
       { ...made.programState, ...week1 },
       { weekStart: "2026-11-09", date: "2026-11-09" },
       profile,
-      "none"
+      "none",
+      null
     );
     expect(week2.runPlan?.currentWeek).toBe(1);
   });
@@ -297,6 +300,7 @@ describe("a plan made partway through a week starts with a lead-in (D)", () => {
       currentDate: SUNDAY,
       weekStart: "2026-10-26",
       recentLayoff: "none",
+      recentRuns: null,
       plannedFrom: SUNDAY,
       carry: {
         currentWeek: plan.currentWeek,
@@ -308,5 +312,244 @@ describe("a plan made partway through a week starts with a lead-in (D)", () => {
     expect(rebuilt.runDays).toEqual(made.programState.runDays);
     expect(rebuilt.runPlan.leadInWeek).toBe("2026-10-26");
     expect(rebuilt.runPlan.totalWeeks).toBe(25);
+  });
+});
+
+/* The coordinator's review of the first build: without a benchmark the
+   climb's long-run rungs were the templates' minutes (6 km in 35), so the
+   owner's step from a 30-minute run onto 6 km was 1.67 times in distance at
+   their 8:52 /km; and the climb went by the calendar, so long runs skipped
+   still built it (the 90th percentile run 2.81 times the month's longest). */
+describe("the climb from what was done, at the runner's own pace", () => {
+  const setupInput: PlanBuilderInput = {
+    primaryGoal: "general",
+    nutritionPhase: "recomp",
+    experience: "intermediate",
+    liftDays: 4,
+    preferredSplit: "full_body",
+    runMode: "race_prep",
+    weeklyRunDays: 6,
+    equipment: "full_gym",
+    injuries: [],
+    currentDate: SUNDAY,
+    raceGoal: { distance: "marathon", targetDate: RACE },
+    runningBaseline: OWNER,
+  };
+  /** The owner's afternoon: 2.85 km in 25:16. */
+  const afternoon = { date: SUNDAY, distance: 2850, duration: 1516 };
+  const MONDAY = "2026-11-02";
+  const weekOf = (
+    runs: { date: string; distance: number; duration: number }[],
+    currentDate: string,
+    benchmark: number | null = null
+  ) =>
+    generateRacePlanV2({
+      weekSchedule: planWeekSchedule(4, 6, undefined),
+      raceGoal: { distance: "marathon", targetDate: RACE },
+      weeklyRunDays: 6,
+      currentDate,
+      weekStart: localWeekKey(parseLocalDate(currentDate)),
+      recentLayoff: "none",
+      runningBaseline: OWNER,
+      recentRuns: runs,
+      easyPaceSPerKm: benchmark,
+      planTotalWeeks: 25,
+    }).weeks[0];
+  const longest = (week: ScheduledRunDay[]) =>
+    Math.max(...week.map((run) => minutesOf(run.templateId)));
+
+  it("finds a week done with two saved runs in it, and the recent longest and pace", () => {
+    const runs = [
+      afternoon,
+      { date: "2026-11-03", distance: 1200, duration: 600 },
+      { date: "2026-11-05", distance: 1500, duration: 800, isInvalid: true },
+    ];
+    expect(isWeekDone(runs, "2026-10-26")).toBe(false);
+    expect(isWeekDone(runs, MONDAY)).toBe(false);
+    expect(
+      isWeekDone(
+        [...runs, { date: "2026-11-08", distance: 1, duration: 1 }],
+        MONDAY
+      )
+    ).toBe(false);
+    expect(
+      isWeekDone(
+        [...runs, { date: "2026-11-08", distance: 2400, duration: 1200 }],
+        MONDAY
+      )
+    ).toBe(true);
+    const recent = recentRunning(runs, "2026-11-04");
+    expect(recent.longestMinutes).toBeCloseTo(25.27, 1);
+    expect(recent.paceSPerKm).toBeCloseTo((1516 + 600) / 4.05, 0);
+    expect(recent.longestKm).toBeCloseTo(2.85, 2);
+    // The week of 28 October ran 10 minutes besides its longest.
+    expect(recent.otherMinutes).toBeCloseTo(10, 5);
+    expect(recentRunning(runs, SUNDAY)).toEqual({
+      longestMinutes: null,
+      longestKm: null,
+      otherMinutes: null,
+      paceSPerKm: null,
+    });
+  });
+
+  it("sizes the long-run rungs at the recent runs' pace, so 6 km waits for a 50-minute run", () => {
+    const pace = 1516 / 2.85;
+    const at = (n: number, done: boolean) =>
+      runningClimb(OWNER, shift(MONDAY, n * 7), {
+        easyPaceSPerKm: pace,
+        done: { longestMinutes: null, lastWeekDone: done },
+      }).longestMinutes;
+    // With no benchmark the templates say 6 km is 35 minutes; at their
+    // pace it is 53, so 40 and 50 minutes come first.
+    expect(
+      [0, 1, 2, 3, 4, 5].map(
+        (n) =>
+          runningClimb(OWNER, shift(MONDAY, n * 7), { easyPaceSPerKm: pace })
+            .longestMinutes
+      )
+    ).toEqual([20, 30, 40, 50, 53, 71].map((m) => expect.closeTo(m, 0)));
+    expect(at(0, false)).toBe(20);
+  });
+
+  it("holds a missed week, and climbs a rung above the longest run done after a done week", () => {
+    const pace = 1516 / 2.85;
+    const climb = (
+      weeks: number,
+      longestMinutes: number | null,
+      lastWeekDone: boolean
+    ) =>
+      runningClimb(OWNER, shift(MONDAY, weeks * 7), {
+        easyPaceSPerKm: pace,
+        done: { longestMinutes, lastWeekDone },
+      }).longestMinutes;
+    // Three weeks on, the calendar would give 50 minutes.
+    expect(climb(3, 30, true)).toBe(40);
+    expect(climb(3, 30, false)).toBe(30);
+    // The starting point's own 25 minutes count as done for four weeks...
+    expect(climb(3, null, true)).toBe(30);
+    // ...and after them nothing done holds it at the start, never under.
+    expect(climb(5, null, true)).toBe(20);
+    expect(climb(5, null, false)).toBe(20);
+    // A long run done well past the climb doesn't hurry it.
+    expect(climb(3, 140, true)).toBe(50);
+  });
+
+  it("holds the rest of the week at what was run besides the long run, not at the long run's rung", () => {
+    // Ten weeks on, long runs skipped and an hour run besides them in a
+    // week: the long run is a rung above 30 minutes, the rest of the week a
+    // step above the hour, and held at the hour after a missed week.
+    const climb = (lastWeekDone: boolean) =>
+      runningClimb(OWNER, shift(MONDAY, 10 * 7), {
+        easyPaceSPerKm: 1516 / 2.85,
+        done: { longestMinutes: 30, otherMinutes: 60, lastWeekDone },
+      });
+    expect(climb(true)).toEqual({ longestMinutes: 40, otherMinutes: 70 });
+    expect(climb(false)).toEqual({ longestMinutes: 30, otherMinutes: 60 });
+  });
+
+  it("counts a long run done by its distance, however quickly it was run", () => {
+    // At their 8:52 /km the 6 km rung is 53 minutes; 6 km run in 40 has
+    // done it, so five weeks on the climb is a rung past it.
+    const climb = (done: { longestMinutes: number; longestKm?: number }) =>
+      runningClimb(OWNER, shift(MONDAY, 5 * 7), {
+        easyPaceSPerKm: 1516 / 2.85,
+        done: { ...done, lastWeekDone: true },
+      }).longestMinutes;
+    expect(climb({ longestMinutes: 40, longestKm: 6 })).toBeCloseTo(71, 0);
+    expect(climb({ longestMinutes: 40 })).toBe(50);
+  });
+
+  it("holds the owner's week after one run, and builds it after two", () => {
+    // Monday after the lead-in: one run, last week not done.
+    const held = weekOf([afternoon], MONDAY);
+    expect(longest(held)).toBe(20);
+    // A week later with two runs done in the first week.
+    const runs = [
+      afternoon,
+      { date: "2026-11-03", distance: 1200, duration: 600 },
+      { date: "2026-11-08", distance: 2400, duration: 1200 },
+    ];
+    expect(longest(weekOf(runs, "2026-11-09"))).toBe(30);
+    // The same week with the first week missed holds at 25 minutes' rung.
+    expect(longest(weekOf([afternoon], "2026-11-09"))).toBe(20);
+    // Two weeks done, the longest 30 minutes: next is 40 minutes at their
+    // pace, where the templates' minutes would have made it 6 km (53
+    // minutes for them).
+    const third = weekOf(
+      [
+        ...runs,
+        { date: "2026-11-10", distance: 1200, duration: 600 },
+        { date: "2026-11-15", distance: 3400, duration: 1800 },
+      ],
+      "2026-11-16"
+    );
+    expect(third.some((run) => run.templateId === "easy_40")).toBe(true);
+    expect(third.some((run) => run.type === "long")).toBe(false);
+  });
+
+  it("holds the rollover's week when the week before was missed", () => {
+    const made = buildPlan({ ...setupInput, recentRuns: [afternoon] });
+    const profile = {
+      uid: "u",
+      ...made.profileUpdates,
+    } as unknown as UserProfile;
+    const week1 = nextRunWeek(
+      made.programState,
+      { weekStart: MONDAY, date: MONDAY },
+      profile,
+      "none",
+      [afternoon]
+    );
+    const into = (runs: (typeof afternoon)[] | null) =>
+      nextRunWeek(
+        { ...made.programState, ...week1 },
+        { weekStart: "2026-11-09", date: "2026-11-09" },
+        profile,
+        "none",
+        runs
+      ).runDays ?? [];
+    // Nothing run in the first week: the long run holds at 20 minutes.
+    expect(longest(into([afternoon]))).toBe(20);
+    // As if followed (no runs known), the calendar's 30.
+    expect(longest(into(null))).toBe(30);
+  });
+
+  it("keeps a benchmark's pace: the recent runs' pace sizes nothing for a benchmarked runner", () => {
+    // Runs at 4:00 /km, a benchmark at 8:00: the climb's 6 km is 48
+    // minutes, after 10, 20, 30 and 40.
+    const fast = [
+      { date: "2026-10-27", distance: 7500, duration: 1800 },
+      { date: "2026-10-29", distance: 7500, duration: 1800 },
+    ];
+    const pace = 480;
+    const sized = runningClimb(OWNER, shift(MONDAY, 3 * 7), {
+      easyPaceSPerKm: pace,
+    }).longestMinutes;
+    const plan = generateRacePlanV2({
+      weekSchedule: planWeekSchedule(4, 6, undefined),
+      raceGoal: { distance: "marathon", targetDate: RACE },
+      weeklyRunDays: 6,
+      currentDate: shift(MONDAY, 3 * 7),
+      weekStart: shift(MONDAY, 3 * 7),
+      recentLayoff: "none",
+      runningBaseline: OWNER,
+      easyPaceSPerKm: pace,
+      planTotalWeeks: 25,
+    });
+    const withRuns = generateRacePlanV2({
+      weekSchedule: planWeekSchedule(4, 6, undefined),
+      raceGoal: { distance: "marathon", targetDate: RACE },
+      weeklyRunDays: 6,
+      currentDate: shift(MONDAY, 3 * 7),
+      weekStart: shift(MONDAY, 3 * 7),
+      recentLayoff: "none",
+      runningBaseline: OWNER,
+      easyPaceSPerKm: pace,
+      planTotalWeeks: 25,
+      recentRuns: fast,
+    });
+    // The weeks ahead, which go by the calendar, are the same either way.
+    expect(withRuns.weeks.slice(1)).toEqual(plan.weeks.slice(1));
+    expect(sized).toBe(48);
   });
 });

@@ -60,27 +60,36 @@ export function isRunningBaseline(
   );
 }
 
+/** One rung of the climb: its minutes, and a long run's distance. */
+interface ClimbRung {
+  minutes: number;
+  km: number | null;
+}
+
 /**
  * The rungs a person's longest run climbs, for a runner at
  * `easyPaceSPerKm`: the easy runs shorter than the first long run, then the
  * long runs (Run23's ladder), each with its minutes at that pace (Run17;
- * the template's own minutes without a confirmed pace).
+ * the template's own minutes without a pace) and a long run with its
+ * distance.
  */
-function longRunRungs(easyPaceSPerKm?: number | null): number[] {
-  const minutes = (t: RunTemplate) => plannedRunMinutes(t, easyPaceSPerKm);
+function longRunRungs(easyPaceSPerKm?: number | null): ClimbRung[] {
+  const rung = (t: RunTemplate): ClimbRung => ({
+    minutes: plannedRunMinutes(t, easyPaceSPerKm),
+    km: t.type === "long" ? (t.config?.targetDistanceKm ?? null) : null,
+  });
   const longs = RUN_TEMPLATES.filter((t) => t.type === "long")
-    .map(minutes)
-    .sort((a, b) => a - b);
+    .map(rung)
+    .sort((a, b) => a.minutes - b.minutes);
   const easies = RUN_TEMPLATES.filter(
-    (t) =>
-      t.type === "easy" &&
-      !t.config?.strides &&
-      !isRunWalkTemplateId(t.id) &&
-      minutes(t) < longs[0]
+    (t) => t.type === "easy" && !t.config?.strides && !isRunWalkTemplateId(t.id)
   )
-    .map(minutes)
-    .sort((a, b) => a - b);
-  return [...new Set([...easies, ...longs])];
+    .map(rung)
+    .filter((r) => r.minutes < longs[0].minutes)
+    .sort((a, b) => a.minutes - b.minutes);
+  return [...easies, ...longs].filter(
+    (r, i, all) => i === 0 || r.minutes !== all[i - 1].minutes
+  );
 }
 
 /** How many minutes the week's running besides the long run climbs each
@@ -114,6 +123,22 @@ export interface RunningClimbWeek {
  * upper bound, so once the climb has passed it the starting point shapes
  * nothing.
  *
+ * It climbs from what was done, where that is known (`done`): never more
+ * than a rung above the longest run of the four weeks before the week (the
+ * starting point's own longest counting while it is four weeks old or
+ * less), and that rung only after a week that was done (`isWeekDone`); the
+ * rest of the week never more than a step above the most a week of the
+ * four ran besides its longest. A missed week holds the climb, and long
+ * runs skipped no longer build it:
+ * the single run far longer than the month's longest is the injury signal
+ * the evidence supports best (Frandsen 2025). It never comes under the
+ * starting point. The weeks ahead of this one, whose runs aren't done yet,
+ * climb by the calendar, as if the plan is followed.
+ *
+ * The rungs are minutes at `easyPaceSPerKm`: the runner's confirmed easy
+ * pace, else the pace of their recent runs, so a long run's rung is the
+ * minutes it takes them.
+ *
  * Tropos heuristics in the RUN-EV-06 register: the rungs are the plan's
  * own ladders; no percentage is taken from a source.
  */
@@ -123,12 +148,24 @@ export function runningClimb(
   options: {
     easyPaceSPerKm?: number | null;
     isStepBack?: (weekKey: string) => boolean;
+    /** What was done before this week, from the saved runs: the longest
+     *  run of the four weeks before it, in minutes and in km (null with
+     *  none), and whether the week before it was done. Null or absent: not
+     *  known. */
+    done?: {
+      longestMinutes: number | null;
+      longestKm?: number | null;
+      /** The most one of those weeks ran besides its longest run, in
+       *  minutes (null with none). */
+      otherMinutes?: number | null;
+      lastWeekDone: boolean;
+    } | null;
   } = {}
 ): RunningClimbWeek {
   const rungs = longRunRungs(options.easyPaceSPerKm);
   let start = 0;
-  rungs.forEach((minutes, i) => {
-    if (minutes <= baseline.longestRunMinutes) start = i;
+  rungs.forEach((rung, i) => {
+    if (rung.minutes <= baseline.longestRunMinutes) start = i;
   });
   const startWeek = firstFullWeekKey(baseline.confirmedAt);
   const week = localWeekKey(parseLocalDate(weekKey));
@@ -142,13 +179,61 @@ export function runningClimb(
   // A step-back week is a rung under the week before it.
   const steps =
     week >= startWeek && isStepBack(week) ? Math.max(0, climbed - 2) : climbed;
+  const startOther = Math.max(0, baseline.weeklyMinutes - rungs[start].minutes);
+  let longSteps = steps;
+  let otherMinutes = startOther + CLIMB_OTHER_RUNS_MINUTES * steps;
+  const done = options.done;
+  if (done) {
+    const reportDays = Math.round(
+      (parseLocalDate(week).getTime() -
+        parseLocalDate(baseline.confirmedAt).getTime()) /
+        86_400_000
+    );
+    const reported = reportDays <= RECENT_REPORT_DAYS;
+    const longestDone = Math.max(
+      done.longestMinutes ?? 0,
+      reported ? baseline.longestRunMinutes : 0
+    );
+    // A rung's minutes are an estimate at a pace, so a run within
+    // `DONE_RUNG_SHARE` of them has done it (a 10 km run in 60.5 minutes
+    // has done a rung planned at 60.8), and a long run's rung is done by
+    // its distance too, however quickly it was run.
+    let doneRung = -1;
+    rungs.forEach((rung, i) => {
+      if (
+        rung.minutes * DONE_RUNG_SHARE <= longestDone ||
+        (rung.km !== null && rung.km * DONE_RUNG_SHARE <= (done.longestKm ?? 0))
+      )
+        doneRung = i;
+    });
+    const step = done.lastWeekDone ? 1 : 0;
+    longSteps = Math.min(steps, Math.max(0, doneRung + step - start));
+    // The rest of the week the same way: a step above the most a week of
+    // the four ran besides its longest run, and held there after a missed
+    // week.
+    const otherDone = Math.max(
+      done.otherMinutes ?? 0,
+      reported ? baseline.weeklyMinutes - baseline.longestRunMinutes : 0
+    );
+    otherMinutes = Math.min(
+      otherMinutes,
+      Math.max(startOther, otherDone + CLIMB_OTHER_RUNS_MINUTES * step)
+    );
+  }
   return {
-    longestMinutes: rungs[Math.min(rungs.length - 1, start + steps)],
-    otherMinutes:
-      Math.max(0, baseline.weeklyMinutes - rungs[start]) +
-      CLIMB_OTHER_RUNS_MINUTES * steps,
+    longestMinutes:
+      rungs[Math.min(rungs.length - 1, start + longSteps)].minutes,
+    otherMinutes,
   };
 }
+
+/** How long the starting point's own longest run counts as done: four
+ *  weeks, the window it was given for. */
+const RECENT_REPORT_DAYS = 28;
+
+/** How much of a rung's minutes a run has to take to have done it: 95%, a
+ *  Tropos heuristic for a pace's day-to-day spread. */
+const DONE_RUNG_SHARE = 0.95;
 
 /**
  * Fit a week of generated runs to how far the person's running has climbed
@@ -166,8 +251,7 @@ export function fitWeekToRunningBaseline(
   climb: RunningClimbWeek | null,
   easyPaceSPerKm?: number | null
 ): ScheduledRunDay[] {
-  if (!isRunningBaseline(baseline) || !climb)
-    return week;
+  if (!isRunningBaseline(baseline) || !climb) return week;
   const templateFor = (row: ScheduledRunDay) =>
     RUN_TEMPLATES.find((t) => t.id === (row.userOverride ?? row.templateId));
   const minutes = (t: RunTemplate) => plannedRunMinutes(t, easyPaceSPerKm);

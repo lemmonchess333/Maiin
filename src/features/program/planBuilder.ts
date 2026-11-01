@@ -179,6 +179,9 @@ export interface PlanBuilderInput {
   runningBaseline?: RunningBaseline | null;
   runTimeLimits?: RunTimeLimits | null;
   recentLayoff?: import("./layoffDetection").LayoffClass;
+  /** The person's recent saved runs, which a running starting point
+   *  climbs from (`RacePlanV2Input.recentRuns`). Omitted: none known. */
+  recentRuns?: readonly import("./layoffDetection").DatedRun[] | null;
   /** Run20 (5): the day a new runner's first weeks end (`newRunnerUntil`),
    *  from setup's answer or the profile (`profileNewRunnerUntil`). Omitted →
    *  no new runner's weeks. */
@@ -770,6 +773,7 @@ function buildRunPlan(
           newRunnerUntil: input.newRunnerUntil,
           planTotalWeeks: continued?.totalWeeks,
           leadInWeek: continued?.leadInWeek,
+          recentRuns: input.recentRuns,
         }),
       { currentDate: input.currentDate, weekStart },
       input.currentDate,

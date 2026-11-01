@@ -103,7 +103,7 @@ import { isLowerBodyDay } from "@/features/program/easierToday";
 import { getScheduledRunStatus } from "@/lib/scheduledRunStatus";
 import { rollLiftWeeks, rollRunWeeks } from "@/features/program/weekRollover";
 import { raceWeekNeedsBuilding } from "@/features/program/programMaintenance";
-import type { LayoffClass } from "@/features/program/layoffDetection";
+import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
 import { sequentialInstanceIds } from "@/test/instanceIds";
 import {
   BASE_VARIANT,
@@ -531,12 +531,13 @@ function rollOver(
   profile: UserProfile,
   today: string,
   failures: RuleFailure[],
-  layoff: LayoffClass
+  layoff: LayoffClass,
+  recentRuns: readonly DatedRun[] | null
 ): ProgramState {
   const todayKey = weekOf(today);
   for (let pass = 0; pass < 20; pass++) {
     // The day: the week reached plans no run before it.
-    const run = rollRunWeeks(state, profile, today, layoff);
+    const run = rollRunWeeks(state, profile, today, layoff, recentRuns);
     if (run.weeks > 0) {
       state = { ...run.state, updatedAt: Date.now() };
       continue;
@@ -963,7 +964,8 @@ export function simulateLiftSeason(
           profile,
           date,
           season.failures,
-          runSide?.layoff(date) ?? "none"
+          runSide?.layoff(date) ?? "none",
+          runSide?.recentRuns() ?? null
         );
         if (varyPlan) state = varyPlan(state, date, profile);
         if (runSide && raceWeekNeedsBuilding(state, profile, date))
