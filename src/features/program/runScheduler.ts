@@ -1,7 +1,6 @@
 import {
   fitWeekToRunningBaseline,
   isRunningBaseline,
-  newRunnerUntilFromBaseline,
   runningClimb,
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
@@ -1226,14 +1225,8 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       weeks: [],
     };
   }
-  /* A new runner's first weeks, from setup's answer or from the starting
-     point they gave in the run plan editor, whichever ends later. */
-  const fromBaseline = newRunnerUntilFromBaseline(input.runningBaseline);
-  const newRunnerUntil =
-    fromBaseline &&
-    (!input.newRunnerUntil || fromBaseline > input.newRunnerUntil)
-      ? fromBaseline
-      : (input.newRunnerUntil ?? null);
+  /** Run20 (5): the day a new runner's first weeks end. */
+  const newRunnerUntil = input.newRunnerUntil ?? null;
 
   // Run22: the sizes the ramp gives the last build week's easy run and
   // medium-long run. A stepped taper week takes its shares of the minutes

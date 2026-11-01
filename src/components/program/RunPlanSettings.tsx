@@ -386,7 +386,6 @@ export default function RunPlanSettings({
    *  are no starting point, and the plan builds as it would for anyone. */
   const draftBaseline: RunningBaseline | null =
     shownBaseline &&
-    shownBaseline.experience !== "new" &&
     !shownBaseline.weeklyMinutes &&
     !shownBaseline.longestRunMinutes
       ? null

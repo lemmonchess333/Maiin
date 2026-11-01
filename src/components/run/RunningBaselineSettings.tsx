@@ -17,8 +17,9 @@ import SectionHeading from "@/components/ui/SectionHeading";
  * up or changed with no starting point takes one from the runs recorded in
  * the last four weeks, which the editor fills in (`fromRecent`) and this
  * says in a line with a way to change it; with none, it asks for the two
- * numbers, or "I'm new to running", which starts with the run-walk weeks.
- * What it shows is what the save keeps.
+ * numbers. What it shows is what the save keeps. Someone new to running
+ * starts from setup's "New to running" instead (Run20 (5); the starter goal
+ * Run9 reopened for them), not from here.
  */
 export default function RunningBaselineSettings({
   value,
@@ -35,7 +36,7 @@ export default function RunningBaselineSettings({
   fromRecent?: boolean;
   /** The starting point the recorded runs give, to go back to. */
   recentStart?: RunningBaseline | null;
-  defaultExperience?: Exclude<RunningBaseline["experience"], "new">;
+  defaultExperience?: RunningBaseline["experience"];
 }) {
   const today = localDateString();
   const [editing, setEditing] = useState(false);
@@ -45,14 +46,13 @@ export default function RunningBaselineSettings({
     // summary the moment both numbers are valid.
     setEditing(true);
     onChange({
-      ...(value && value.experience !== "new" ? value : empty),
+      ...(value ?? empty),
       ...patch,
       confirmedAt: today,
       source: "self_reported",
     });
   };
   const valid = isRunningBaseline(value);
-  const isNew = valid && value.experience === "new";
   const asking = value !== null && (editing || !valid);
   return (
     <section aria-label="Running starting point" className="space-y-2">
@@ -71,136 +71,102 @@ export default function RunningBaselineSettings({
       ) : !asking ? (
         <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
           <p className="text-sm text-foreground">
-            {isNew ? (
-              "New to running: your first six weeks run as run-walk, and the plan builds from there."
-            ) : (
-              <InlineNumerals>
-                {`Starting from ${
-                  value.source === "recorded"
-                    ? "your recent running"
-                    : "your running"
-                }: about ${value.weeklyMinutes} min a week, longest run ${
-                  value.longestRunMinutes
-                } min.`}
-              </InlineNumerals>
-            )}
+            <InlineNumerals>
+              {`Starting from ${
+                value.source === "recorded"
+                  ? "your recent running"
+                  : "your running"
+              }: about ${value.weeklyMinutes} min a week, longest run ${
+                value.longestRunMinutes
+              } min.`}
+            </InlineNumerals>
           </p>
           {fromRecent && (
             <p>From the runs recorded here in the last four weeks.</p>
           )}
-          {!isNew &&
-            preview.status !== "empty" &&
-            preview.status !== "invalid" && (
-              <p>
-                Previewed week: about{" "}
-                <span className="font-mono tabular-nums">
-                  {Math.round(preview.firstWeekMinutes)}
-                </span>{" "}
-                min.
-                {preview.firstWeekMinutes > value.weeklyMinutes &&
-                !preview.runWalkWeeks
-                  ? " This is more than your week: even the shortest runs on your run days add up past it. Fewer run days keep it closer."
-                  : ""}
-              </p>
-            )}
+          {preview.status !== "empty" && preview.status !== "invalid" && (
+            <p>
+              Previewed week: about{" "}
+              <span className="font-mono tabular-nums">
+                {Math.round(preview.firstWeekMinutes)}
+              </span>{" "}
+              min.
+              {preview.firstWeekMinutes > value.weeklyMinutes &&
+              !preview.runWalkWeeks
+                ? " This is more than your week: even the shortest runs on your run days add up past it. Fewer run days keep it closer."
+                : ""}
+            </p>
+          )}
           <Button variant="outline" onClick={() => setEditing(true)}>
             Change
           </Button>
         </div>
       ) : (
         <>
-          {value.experience !== "new" && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                {(
-                  [
-                    ["weeklyMinutes", "Minutes a week", 1200],
-                    ["longestRunMinutes", "Longest run, min", 300],
-                  ] as const
-                ).map(([key, label, max]) => (
-                  <label
-                    key={key}
-                    className="block space-y-2 text-xs text-muted-foreground"
-                  >
-                    <span>{label}</span>
-                    <input
-                      className="ds-input min-h-11 w-full font-mono tabular-nums"
-                      type="number"
-                      inputMode="numeric"
-                      min={10}
-                      max={max}
-                      step={1}
-                      aria-invalid={
-                        !Number.isInteger(value[key]) ||
-                        value[key] < 10 ||
-                        value[key] > max ||
-                        (key === "longestRunMinutes" &&
-                          value[key] > value.weeklyMinutes)
-                      }
-                      value={value[key] || ""}
-                      onChange={(e) => edit({ [key]: Number(e.target.value) })}
-                    />
-                  </label>
-                ))}
-              </div>
-              {!valid && (
-                <p role="status" className="text-xs text-muted-foreground">
-                  Your running in a usual week, and your longest run lately. The
-                  longest run is part of the week, so it can't be more.
-                </p>
-              )}
-              <label className="block space-y-2 text-xs text-muted-foreground">
-                <span>Running experience</span>
-                <Select
-                  value={value.experience}
-                  onChange={(e) =>
-                    edit({
-                      experience: e.target
-                        .value as RunningBaseline["experience"],
-                    })
+          <div className="grid grid-cols-2 gap-3">
+            {(
+              [
+                ["weeklyMinutes", "Minutes a week", 1200],
+                ["longestRunMinutes", "Longest run, min", 300],
+              ] as const
+            ).map(([key, label, max]) => (
+              <label
+                key={key}
+                className="block space-y-2 text-xs text-muted-foreground"
+              >
+                <span>{label}</span>
+                <input
+                  className="ds-input min-h-11 w-full font-mono tabular-nums"
+                  type="number"
+                  inputMode="numeric"
+                  min={10}
+                  max={max}
+                  step={1}
+                  aria-invalid={
+                    !Number.isInteger(value[key]) ||
+                    value[key] < 10 ||
+                    value[key] > max ||
+                    (key === "longestRunMinutes" &&
+                      value[key] > value.weeklyMinutes)
                   }
-                >
-                  <option value="building">Building a running routine</option>
-                  <option value="returning">Returning after a break</option>
-                  <option value="regular">
-                    Running regularly, including faster sessions
-                  </option>
-                </Select>
+                  value={value[key] || ""}
+                  onChange={(e) => edit({ [key]: Number(e.target.value) })}
+                />
               </label>
-              {value.experience !== "regular" && (
-                <p className="text-xs text-muted-foreground">
-                  Runs stay easy while your running builds towards the plan.
-                </p>
-              )}
-            </>
+            ))}
+          </div>
+          {!valid && (
+            <p role="status" className="text-xs text-muted-foreground">
+              Your running in a usual week, and your longest run lately. The
+              longest run is part of the week, so it can't be more.
+            </p>
+          )}
+          <label className="block space-y-2 text-xs text-muted-foreground">
+            <span>Running experience</span>
+            <Select
+              value={value.experience}
+              onChange={(e) =>
+                edit({
+                  experience: e.target.value as RunningBaseline["experience"],
+                })
+              }
+            >
+              <option value="building">Building a running routine</option>
+              <option value="returning">Returning after a break</option>
+              <option value="regular">
+                Running regularly, including faster sessions
+              </option>
+            </Select>
+          </label>
+          {value.experience !== "regular" && (
+            <p className="text-xs text-muted-foreground">
+              Runs stay easy while your running builds towards the plan.
+            </p>
           )}
           <div className="flex flex-wrap gap-2">
             {valid && (
               <Button variant="outline" onClick={() => setEditing(false)}>
                 Done
-              </Button>
-            )}
-            {value.experience !== "new" && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  onChange({
-                    version: 1,
-                    experience: "new",
-                    weeklyMinutes: 0,
-                    longestRunMinutes: 0,
-                    confirmedAt: today,
-                    source: "self_reported",
-                  });
-                  setEditing(false);
-                }}
-              >
-                I'm new to running
-              </Button>
-            )}
-            {value.experience === "new" && (
-              <Button variant="outline" onClick={() => onChange(empty)}>
-                I run already
               </Button>
             )}
             {recentStart && (
@@ -223,7 +189,7 @@ export default function RunningBaselineSettings({
       <RecentRunningContext
         onUse={(context) =>
           onChange({
-            ...(value && value.experience !== "new" ? value : empty),
+            ...(value ?? empty),
             weeklyMinutes: Math.max(
               Math.round(context.longestMinutes),
               Math.round(context.averageWeeklyMinutes)

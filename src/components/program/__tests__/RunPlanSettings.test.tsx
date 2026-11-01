@@ -426,32 +426,28 @@ describe("RunPlanSettings", () => {
       });
     });
 
-    it("asks for the two numbers with no runs recorded, or takes new to running", async () => {
+    it("asks for the two numbers with no runs recorded, and saves what was given", async () => {
       renderPage({ ...baseProfile, uid: "unrecorded-owner" } as UserProfile);
       await raceDay();
       expect(screen.getByLabelText("Minutes a week")).toHaveValue(null);
       expect(screen.getByLabelText("Longest run, min")).toHaveValue(null);
-      fireEvent.click(
-        screen.getByRole("button", { name: "I'm new to running" })
-      );
+      // A new runner starts from setup's "New to running", not from here.
       expect(
-        screen.getByText(/New to running: your first six weeks run as run-walk/)
-      ).toBeInTheDocument();
+        screen.queryByRole("button", { name: "I'm new to running" })
+      ).toBeNull();
+      fireEvent.change(screen.getByLabelText("Minutes a week"), {
+        target: { value: "60" },
+      });
+      fireEvent.change(screen.getByLabelText("Longest run, min"), {
+        target: { value: "30" },
+      });
       fireEvent.click(screen.getByRole("button", { name: /Save .*plan/ }));
       await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
-      const sent = sentPayload();
-      expect(sent.profileUpdates.runningBaseline).toMatchObject({
-        experience: "new",
-        weeklyMinutes: 0,
-        longestRunMinutes: 0,
+      expect(sentPayload().profileUpdates.runningBaseline).toMatchObject({
+        weeklyMinutes: 60,
+        longestRunMinutes: 30,
+        source: "self_reported",
       });
-      // Run-walk from today, whenever setup was.
-      expect(sent.programState.runDays?.length).toBeGreaterThan(0);
-      expect(
-        (sent.programState.runDays ?? []).every((run) =>
-          (run as { templateId?: string }).templateId?.startsWith("run_walk")
-        )
-      ).toBe(true);
     });
 
     it("leaves a race plan the person only opens as it is", () => {

@@ -1,7 +1,4 @@
-import {
-  newRunnerUntilFromBaseline,
-  type RunningBaseline,
-} from "@/features/program/runningBaseline";
+import type { RunningBaseline } from "@/features/program/runningBaseline";
 import {
   plannedRunMinutes,
   type RunTimeLimits,
@@ -314,13 +311,6 @@ export function getRaceGoalPlannerState(
   input: RaceGoalPlannerInput
 ): RaceGoalPlannerState {
   const { distance, targetDate, currentDate, liftDays, weeklyRunDays } = input;
-  // A new runner's first weeks: setup's, or the starting point's "I'm new
-  // to running", whichever ends later, as the generator takes them.
-  const fromStart = newRunnerUntilFromBaseline(input.runningBaseline);
-  const newRunnerUntil =
-    fromStart && (!input.newRunnerUntil || fromStart > input.newRunnerUntil)
-      ? fromStart
-      : (input.newRunnerUntil ?? null);
 
   // Distance-only fields are valid in every state (no date needed).
   const distanceLabel = raceDistanceLabel(distance);
@@ -524,8 +514,9 @@ export function getRaceGoalPlannerState(
       );
     }, 0),
     // From the six weeks, not this week's runs: a week can have none left.
-    runWalkWeeks: runWalkTemplateIdForWeek(weekStart, newRunnerUntil) !== null,
-    newRunnerNote: newRunnerRaceNote({ ...input, newRunnerUntil }),
+    runWalkWeeks:
+      runWalkTemplateIdForWeek(weekStart, input.newRunnerUntil) !== null,
+    newRunnerNote: newRunnerRaceNote(input),
     shortOfRace,
     recoveryWeeks,
     compressed: plan.compressed,

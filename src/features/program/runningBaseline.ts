@@ -19,14 +19,12 @@ import type { ScheduledRunDay } from "./programTypes";
  * and their longest recent run, confirmed by them, from their recorded runs
  * (`recorded`) or as they said it (`self_reported`). The plan starts there
  * and climbs (`runningClimb`): it is a starting point, not a ceiling.
- *
- * `new` is someone new to running: they report no running, and their plan
- * starts with the run-walk weeks (Run20 (5)), counted from the day they
- * said so (`newRunnerUntilFromBaseline`). Its minutes are both 0.
+ * Someone new to running has none: setup's "New to running" (Run20 (5),
+ * and the starter goal Run9 reopened for them) is their start.
  */
 export interface RunningBaseline {
   version: 1;
-  experience: "new" | "building" | "returning" | "regular";
+  experience: "building" | "returning" | "regular";
   weeklyMinutes: number;
   longestRunMinutes: number;
   confirmedAt: string;
@@ -41,7 +39,7 @@ export function isRunningBaseline(
   const v = value as RunningBaseline;
   if (
     v.version !== 1 ||
-    !["new", "building", "returning", "regular"].includes(v.experience) ||
+    !["building", "returning", "regular"].includes(v.experience) ||
     !["self_reported", "recorded"].includes(v.source) ||
     typeof v.confirmedAt !== "string" ||
     !/^\d{4}-\d{2}-\d{2}$/.test(v.confirmedAt) ||
@@ -50,8 +48,6 @@ export function isRunningBaseline(
     !Number.isFinite(v.longestRunMinutes)
   )
     return false;
-  if (v.experience === "new")
-    return v.weeklyMinutes === 0 && v.longestRunMinutes === 0;
   return (
     allowIncomplete ||
     (Number.isInteger(v.weeklyMinutes) &&
@@ -62,26 +58,6 @@ export function isRunningBaseline(
       v.longestRunMinutes <= 300 &&
       v.longestRunMinutes <= v.weeklyMinutes)
   );
-}
-
-/** How many weeks someone new to running runs as run-walk (Run20 (5)); the
- *  same six `NEW_RUNNER_WEEKS` holds, written out here so this module stays
- *  free of the new-runner module, which imports the run templates' fits. */
-const NEW_RUNNER_DAYS = 6 * 7;
-
-/**
- * The day a new runner's first weeks end, counted from the day they said
- * they were new to running in the run plan editor, or null for any other
- * starting point. Setup's own "New to running" counts from the day setup
- * finished (`profileNewRunnerUntil`); this lets someone whose setup was
- * long ago start the run-walk weeks when they start a race plan.
- */
-export function newRunnerUntilFromBaseline(baseline: unknown): string | null {
-  return isRunningBaseline(baseline) && baseline.experience === "new"
-    ? localDateString(
-        addLocalDays(parseLocalDate(baseline.confirmedAt), NEW_RUNNER_DAYS)
-      )
-    : null;
 }
 
 /**
@@ -182,9 +158,7 @@ export function runningClimb(
  * the total appear to fit. Saved work, run-walk sessions and the race are left as
  * they are. Someone building a routine or returning after a break runs easy
  * while the climb still holds their week under the plan's; once it doesn't,
- * the plan's own sessions stand. A new runner's starting point fits
- * nothing: their run-walk weeks and the build after them do
- * (`newRunnerTemplate`).
+ * the plan's own sessions stand.
  */
 export function fitWeekToRunningBaseline(
   week: ScheduledRunDay[],
@@ -192,7 +166,7 @@ export function fitWeekToRunningBaseline(
   climb: RunningClimbWeek | null,
   easyPaceSPerKm?: number | null
 ): ScheduledRunDay[] {
-  if (!isRunningBaseline(baseline) || baseline.experience === "new" || !climb)
+  if (!isRunningBaseline(baseline) || !climb)
     return week;
   const templateFor = (row: ScheduledRunDay) =>
     RUN_TEMPLATES.find((t) => t.id === (row.userOverride ?? row.templateId));

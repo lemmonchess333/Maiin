@@ -78,20 +78,6 @@ describe("planning preference sanitation at the deployed boundary", () => {
       ])
         values.push({ ...baseline, [key]: value });
     }
-    // New to running: no running to report, so both minutes are 0.
-    const newRunner = {
-      ...baseline,
-      experience: "new",
-      weeklyMinutes: 0,
-      longestRunMinutes: 0,
-    };
-    values.push(
-      newRunner,
-      { ...newRunner, weeklyMinutes: 10, longestRunMinutes: 10 },
-      { ...newRunner, longestRunMinutes: 10 },
-      { ...newRunner, weeklyMinutes: "0" },
-      { ...newRunner, confirmedAt: "2026-02-30" }
-    );
     for (const confirmedAt of [
       "2026-02-30",
       "0000-01-01",

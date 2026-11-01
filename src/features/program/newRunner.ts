@@ -13,7 +13,6 @@ import {
 } from "@/lib/workoutTemplates";
 import { DELOAD_LADDERS } from "@/lib/planDeloadWeek";
 import { plannedRunMinutes } from "./runTimeLimits";
-import { newRunnerUntilFromBaseline } from "./runningBaseline";
 
 /**
  * A new runner's first weeks (Run20 (5)): no tempo or intervals in them, so
@@ -35,9 +34,6 @@ export interface NewRunnerProfile {
   runFrequency?: string;
   createdAt?: unknown;
   onboardingCompletedAt?: unknown;
-  /** A running starting point of "I'm new to running", which counts the
-   *  first weeks from the day it was given (`newRunnerUntilFromBaseline`). */
-  runningBaseline?: unknown;
 }
 
 /**
@@ -66,17 +62,11 @@ export function newRunnerUntil(
 export function profileNewRunnerUntil(
   profile: NewRunnerProfile | null | undefined
 ): string | null {
-  const fromSetup = newRunnerUntil(
+  return newRunnerUntil(
     profile?.runFrequency,
     startDayKey(profile?.onboardingCompletedAt) ??
       startDayKey(profile?.createdAt)
   );
-  // Or from the run plan editor's "I'm new to running", whichever ends
-  // later: someone set up long ago starts the run-walk weeks then.
-  const fromStart = newRunnerUntilFromBaseline(profile?.runningBaseline);
-  return fromStart && (!fromSetup || fromStart > fromSetup)
-    ? fromStart
-    : fromSetup;
 }
 
 /**

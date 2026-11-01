@@ -16,17 +16,12 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { claimMapFor } from "@/lib/runClaims";
 import { isRunDayComplete } from "@/lib/scheduledRunCompletion";
 import type { UserProfile } from "@/lib/auth";
-import {
-  newRunnerUntilFromBaseline,
-  runningClimb,
-  type RunningBaseline,
-} from "../runningBaseline";
+import { runningClimb, type RunningBaseline } from "../runningBaseline";
 import { baselineFromRecentRunning } from "../runningStartDraft";
 import { generateRacePlanV2 } from "../runScheduler";
 import { plannedRunMinutes } from "../runTimeLimits";
 import { buildPlan, type PlanBuilderInput } from "../planBuilder";
 import { nextRunWeek, regenerateRacePlan } from "../weekRollover";
-import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "../programTypes";
 
 const minutesOf = (id: string) =>
@@ -152,22 +147,6 @@ describe("the starting point is where the plan starts, and it climbs (R5, R6)", 
     expect(quality(building.filter((run) => run.date! < "2027-01-01"))).toEqual(
       []
     );
-  });
-
-  it("starts someone new to running with the run-walk weeks, from the day they said so", () => {
-    const newToRunning: RunningBaseline = {
-      ...OWNER,
-      experience: "new",
-      weeklyMinutes: 0,
-      longestRunMinutes: 0,
-    };
-    expect(newRunnerUntilFromBaseline(newToRunning)).toBe("2026-12-13");
-    const plan = ownerPlan(newToRunning);
-    const runs = plan.weeks
-      .flat()
-      .filter((run) => run.date! < "2026-12-07" && run.type !== "race");
-    expect(runs.length).toBeGreaterThan(0);
-    expect(runs.every((run) => isRunWalkTemplateId(run.templateId))).toBe(true);
   });
 
   it("a lower report the person confirms caps the plan", () => {

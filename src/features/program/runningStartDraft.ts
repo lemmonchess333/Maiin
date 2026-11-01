@@ -6,7 +6,7 @@ import type { RunningBaseline } from "./runningBaseline";
 /** A starting point to answer from, in the run plan editor: no running
  *  given yet. Left blank, it is no starting point. */
 export function blankRunningStart(
-  experience: Exclude<RunningBaseline["experience"], "new">,
+  experience: RunningBaseline["experience"],
   today: string
 ): RunningBaseline {
   return {
@@ -34,7 +34,7 @@ export function baselineFromRecentRunning(
     longestMinutes: number;
   },
   confirmedAt: string,
-  experience: Exclude<RunningBaseline["experience"], "new">
+  experience: RunningBaseline["experience"]
 ): RunningBaseline | null {
   if (context.count <= 0 || !(context.longestMinutes > 0)) return null;
   const longest = Math.min(
