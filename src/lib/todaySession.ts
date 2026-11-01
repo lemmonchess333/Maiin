@@ -238,6 +238,10 @@ export interface TodaySession {
   run: TodayRun | null;
   /** Set on a rest day. */
   rest: RestDayOffer | null;
+  /** On a day with both, the run is drawn above the lift: the person's
+   *  aim is their running ("Support my running"), as setup's review
+   *  already shows. Absent reads as the lift first. */
+  runFirst?: boolean;
   /** Sessions under way that are not today's card: each gets a strip of
    *  its own above the cards. Absent reads as none. */
   inProgressElsewhere?: SessionInProgress[];
@@ -330,6 +334,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
             firstMeal: framing.firstMeal,
           })
         : null,
+    ...(profile?.primaryGoal === "running" && { runFirst: true }),
   });
 }
 

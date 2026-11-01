@@ -268,6 +268,23 @@ describe("todaySession — a run day", () => {
     expect(session.lift?.workout?.dayName).toBe("Push — Chest Focus");
     expect(session.run?.runDay?.id).toBe(`rd-${WEDNESDAY}`);
     expect(session.rest).toBeNull();
+    expect(session.runFirst).toBeUndefined();
+  });
+
+  it("puts the run first on a day with both when running is the aim", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "both" }, { primaryGoal: "running" }),
+        programState: programStateWith({
+          workouts: [PUSH],
+          runDays: [runDay(WEDNESDAY)],
+        }),
+      })
+    );
+    expect(session.type).toBe("both");
+    expect(session.lift?.workout).toBeTruthy();
+    expect(session.run?.runDay).toBeTruthy();
+    expect(session.runFirst).toBe(true);
   });
 });
 
