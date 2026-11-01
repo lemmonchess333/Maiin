@@ -31,6 +31,8 @@
 const { isCalendarDate } = require("./dateUtils");
 const { displayNameRefusal } = require("./objectionableText");
 const { isDocumentId } = require("./documentId");
+const { carriedName } = require("./identityResync");
+const { publicPhotoUrl } = require("./publicPhotoUrl");
 
 const GOAL_SPACE_MAX_MEMBERS = 8;
 const GOAL_SPACE_TEXT_MAX = 200;
@@ -113,11 +115,30 @@ async function reserveInviteCode({
   throw new GoalSpaceError("internal", "could not allocate invite code");
 }
 
+/**
+ * The name and photo a Circle copies for the person starting or joining
+ * it: their public profile's, the ones every other member could already
+ * see, never the private user document's (which the rules let its owner
+ * fill with anything) nor the request's.
+ */
+async function callerIdentity(firestore, uid) {
+  const snap = await firestore.doc(`users/${uid}/public/profile`).get();
+  const data = (snap.exists && snap.data()) || {};
+  return { displayName: data.displayName, photoURL: data.photoURL };
+}
+
+/**
+ * A member as the Circle shows them. The name is held to the rules every
+ * social copy keeps (identityResync carries a new one here by the same
+ * rule): trimmed, cut to the shared display-name length, and treated as
+ * none when the word filter refuses it. None reads as "Member". The photo
+ * is kept only when it is one a public profile may show.
+ */
 function memberDoc({ uid, displayName, photoURL, role, now }) {
   return {
     uid,
-    displayName: sanitizeDisplay(displayName, "Member"),
-    photoURL: typeof photoURL === "string" ? photoURL : null,
+    displayName: carriedName(displayName) || "Member",
+    photoURL: publicPhotoUrl(photoURL) || null,
     role,
     joinedAt: now,
   };
@@ -461,6 +482,7 @@ module.exports = {
   INVITE_CODE_TTL_MS,
   GoalSpaceError,
   assertNoBlockedPair,
+  callerIdentity,
   inviteCodeExpiresAt,
   createGoalSpace,
   joinGoalSpace,

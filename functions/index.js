@@ -8111,15 +8111,11 @@ function goalSpaceInviteCode() {
   return out;
 }
 
-/** Safe display projection from the caller's own profile doc —
- *  never trusted from client input. */
-async function goalSpaceCallerProfile(uid) {
-  const snap = await admin.firestore().doc(`users/${uid}`).get();
-  const data = snap.exists ? snap.data() : {};
-  return {
-    displayName: data.displayName || "Member",
-    photoURL: data.photoURL || null,
-  };
+/** The caller's public name and photo, never the request's
+ *  (lib/goalSpaceMembership callerIdentity; memberDoc holds them to the
+ *  rules every social copy keeps). */
+function goalSpaceCallerProfile(uid) {
+  return goalSpaceMembership.callerIdentity(admin.firestore(), uid);
 }
 
 function mapGoalSpaceError(err) {
@@ -8453,8 +8449,12 @@ exports.onGoalSpaceEventCreated = functions
         db.collection(`goalSpaces/${spaceId}/members`).get(),
         db.doc(`goalSpaces/${spaceId}/members/${authorUid}`).get(),
       ]);
+      // The member's copy of their name, held again to the rules it is
+      // written under (lib/goalSpaceMembership memberDoc), so a refused or
+      // overlong copy never reaches another member's tray.
       const authorName =
-        (authorSnap.exists && authorSnap.data().displayName) ||
+        (authorSnap.exists &&
+          identityResync.carriedName(authorSnap.data().displayName)) ||
         "A Circle member";
       // Member doc ids ARE member uids. Fan out to everyone but the
       // author (createNotification also no-ops any self-notify).
