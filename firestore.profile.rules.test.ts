@@ -818,6 +818,18 @@ suite("users/{uid} — raceGoal value gate", () => {
     await assertFails(write({ raceGoal: { targetDate: "2026-11-01" } }));
   });
 
+  it("accepts the goal time and the race-or-own answer, each in range", async () => {
+    await assertSucceeds(write({ raceGoal: { ...VALID, targetTimeS: 10800 } }));
+    for (const entry of ["race", "own"]) {
+      await assertSucceeds(write({ raceGoal: { ...VALID, entry } }));
+    }
+    await assertFails(write({ raceGoal: { ...VALID, entry: "solo" } }));
+    await assertFails(write({ raceGoal: { ...VALID, entry: true } }));
+    await assertFails(write({ raceGoal: { ...VALID, targetTimeS: 599 } }));
+    await assertFails(write({ raceGoal: { ...VALID, targetTimeS: 43201 } }));
+    await assertFails(write({ raceGoal: { ...VALID, targetTimeS: "3h" } }));
+  });
+
   it("refuses an extra key, so the map cannot silently grow", async () => {
     await assertFails(
       write({ raceGoal: { ...VALID, goalTimeSeconds: 10800 } })

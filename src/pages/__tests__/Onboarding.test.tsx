@@ -17,6 +17,7 @@ import {
 import * as planning from "@/lib/onboardingPlan";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
+import { loadWordFilter } from "@/lib/wordFilter";
 import { SETUP, SETUP_OPTIONS } from "@/test/journeyScreens";
 import {
   addLocalDays,
@@ -651,13 +652,60 @@ describe("a race needs a date", () => {
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
   });
 
-  it("releases it once a date is given", () => {
+  it("releases it once a date is given, and the race or on your own answered", () => {
     reachRunningPlan();
     fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
     fireEvent.change(screen.getByLabelText("Race target date"), {
       target: { value: "2027-06-01" },
     });
+    // Run9 STATUS 2026-11-01: neither is chosen until the person answers.
+    for (const name of ["A race I've entered", "On my own"])
+      expect(screen.getByRole("radio", { name })).toHaveAttribute(
+        "aria-checked",
+        "false"
+      );
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("radio", { name: "On my own" }));
     expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("saves the answer on the goal", async () => {
+    // The review's button waits for the word filter (the name check);
+    // loaded here so this test does not depend on one run before it.
+    await loadWordFilter();
+    const raceDay = localDateString(addLocalDays(new Date(), 70));
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runMode: "race_prep",
+      raceDistance: "10k",
+      raceTargetDate: raceDay,
+      raceEntry: "own",
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete.mock.calls[0][0].profileData.raceGoal).toEqual({
+      distance: "10k",
+      targetDate: raceDay,
+      entry: "own",
+    });
+  });
+
+  it("holds a setup saved before the question at the review", async () => {
+    await loadWordFilter();
+    const raceDraft = {
+      ...draft,
+      runMode: "race_prep" as const,
+      raceTargetDate: localDateString(addLocalDays(new Date(), 70)),
+    };
+    saveOnboardingDraft("setup-test", raceDraft);
+    open();
+    expect(screen.getByRole("button", { name: "Go to Today" })).toBeDisabled();
+    // The same setup with the answer goes on: the answer was all it lacked.
+    cleanup();
+    saveOnboardingDraft("setup-test", { ...raceDraft, raceEntry: "race" });
+    open();
+    expect(screen.getByRole("button", { name: "Go to Today" })).toBeEnabled();
   });
 
   it("releases it by going back to free running", () => {
@@ -875,6 +923,7 @@ describe("new runners", () => {
     fireEvent.change(screen.getByLabelText("Race target date"), {
       target: { value: localDateString(addLocalDays(new Date(), daysOut)) },
     });
+    fireEvent.click(screen.getByRole("radio", { name: "A race I've entered" }));
   };
 
   it("says so when the plan can't build to the race, and still goes on (R14c)", () => {
@@ -1106,6 +1155,11 @@ describe("setup, by the names the journeys use", () => {
     fireEvent.change(screen.getByLabelText(SETUP.raceDate), {
       target: { value: "2027-06-01" },
     });
+    fireEvent.click(
+      within(group(SETUP.raceEntry)).getByRole("radio", {
+        name: SETUP.raceEntered,
+      })
+    );
     expect(
       screen.getByRole("switch", { name: SETUP.legTrim })
     ).toBeInTheDocument();

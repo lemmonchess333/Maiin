@@ -128,6 +128,9 @@ export interface OnboardingDraft {
   weeklyRunDays: number;
   raceDistance: RaceDistance;
   raceTargetDate: string;
+  /** Run9: a race entered or run on your own, unset
+   *  until answered. Additive: older drafts have none. */
+  raceEntry?: "race" | "own";
   injuries: string[];
   gender: (typeof DRAFT_GENDERS)[number];
   ageRange: (typeof DRAFT_AGE_RANGES)[number];
@@ -221,6 +224,7 @@ export function isValidDraft(
     finiteInRange(d.weeklyRunDays, 0, 7) &&
     oneOf(VALID_RACE_DISTANCE, d.raceDistance) &&
     typeof d.raceTargetDate === "string" &&
+    (d.raceEntry === undefined || oneOf(["race", "own"], d.raceEntry)) &&
     Array.isArray(d.injuries) &&
     (d.injuries as unknown[]).every((i) => typeof i === "string") &&
     oneOf(DRAFT_GENDERS, d.gender) &&
