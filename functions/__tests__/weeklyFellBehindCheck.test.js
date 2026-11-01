@@ -158,6 +158,13 @@ describe("_fellBehindRatio", () => {
     expect(
       _fellBehindRatio(profile({ runMode: undefined }), programState(), [])
     ).toBeNull();
+    // A plan that is not a race repeats a missed week rather than falling
+    // behind one: the starter goal's, and whatever a newer build adds.
+    for (const runMode of ["starter", "next_kind"]) {
+      expect(
+        _fellBehindRatio(profile({ runMode }), programState(), [])
+      ).toBeNull();
+    }
     expect(
       _fellBehindRatio(
         profile(),

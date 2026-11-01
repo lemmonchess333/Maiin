@@ -262,6 +262,66 @@ describe("validatePlanPayload — runDays shape", () => {
   });
 });
 
+describe("validatePlanPayload — the starter goal's plan", () => {
+  function starterPayload() {
+    const p = validPayload();
+    p.profileData.runMode = "starter";
+    p.programState.runPlan = {
+      mode: "starter",
+      stage: 3,
+      stageWeekKey: "2026-05-11",
+    };
+    return p;
+  }
+
+  it("accepts a starter plan under the starter run mode", () => {
+    expect(validatePlanPayload(starterPayload())).toEqual([]);
+    for (const stage of [1, 9]) {
+      const p = starterPayload();
+      p.programState.runPlan.stage = stage;
+      expect(validatePlanPayload(p)).toEqual([]);
+    }
+  });
+
+  it("refuses the starter run mode beside a plan of another kind", () => {
+    // A build from before the starter rebuilds the plan as the retired
+    // structured week when saving lifting changes, and sends the profile's
+    // run mode with it: refused, so the starter's plan is not replaced.
+    const p = starterPayload();
+    p.programState.runPlan = { mode: "structured" };
+    expect(validatePlanPayload(p)).toContain(
+      "starter mode requires a starter programState.runPlan"
+    );
+    const none = starterPayload();
+    none.programState.runPlan = undefined;
+    expect(validatePlanPayload(none)).toContain(
+      "starter mode requires a starter programState.runPlan"
+    );
+  });
+
+  it("refuses a stage off the ladder and a week that is not a local date", () => {
+    for (const stage of [0, 10, 2.5, "3", undefined]) {
+      const p = starterPayload();
+      p.programState.runPlan.stage = stage;
+      expect(validatePlanPayload(p)).toContain(
+        "runPlan.stage must be a whole number 1-9"
+      );
+    }
+    for (const stageWeekKey of [
+      "2026-05-11T00:00:00Z",
+      "11/05/2026",
+      5,
+      undefined,
+    ]) {
+      const p = starterPayload();
+      p.programState.runPlan.stageWeekKey = stageWeekKey;
+      expect(validatePlanPayload(p)).toContain(
+        "runPlan.stageWeekKey must be a local YYYY-MM-DD"
+      );
+    }
+  });
+});
+
 describe("validatePlanPayload — runMode + raceGoal consistency", () => {
   it("rejects invalid runMode enum", () => {
     const p = validPayload();

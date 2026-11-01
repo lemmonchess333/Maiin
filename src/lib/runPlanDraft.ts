@@ -60,7 +60,7 @@ export const RUN_PLAN_DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 const KEY_BASE = "tropos.runPlan.draft";
 const keyFor = (uid: string) => scopedKey(KEY_BASE, uid);
 
-const RUN_MODES = ["freeform", "race_prep"] as const;
+const RUN_MODES = ["freeform", "race_prep", "starter"] as const;
 /* Restated from `runScheduler`'s unions rather than imported as values,
    because those are TYPE-only and carry no runtime array. The satisfies
    clauses below are what keep the two honest: adding a preset there

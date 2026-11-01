@@ -1130,6 +1130,10 @@ function ProgramInner() {
     currentWeek: programState?.runPlan?.currentWeek,
     totalWeeks: programState?.runPlan?.totalWeeks,
     runsTarget,
+    starterStage:
+      programState?.runPlan?.mode === "starter"
+        ? programState.runPlan.stage
+        : null,
   });
 
   const handleAdvanceWeek = async () => {

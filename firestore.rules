@@ -353,6 +353,41 @@ service cloud.firestore {
         || raceGoalValid();
     }
 
+    /* starterGoal value gate — Run9's starter goal, 30 minutes without
+       stopping. The client writes it in the programme's own transaction
+       when the goal's last week is done (`finishStarterGoalPatch`), and
+       setup and the run plan's settings send it through completeOnboarding
+       and configurePlan. A local "YYYY-MM-DD" for the day it began, and
+       optionally the day it finished, or the day a race goal took its place
+       with the stage it reached (1 to 9). `null` clears it. Same shape as
+       profileSanitizer.js's `starterGoal` and `StarterGoal` in
+       src/features/program/runModeResolution.ts. Gated only when the field
+       changes, like raceGoal above. */
+    function isLocalDateKey(v) {
+      return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function starterGoalValid() {
+      let g = request.resource.data.starterGoal;
+      return !('starterGoal' in request.resource.data)
+        || g == null
+        || (
+          g is map
+          && g.keys().hasAll(['startedOn'])
+          && g.keys().hasOnly(['startedOn', 'finishedOn', 'endedOn', 'stage'])
+          && isLocalDateKey(g.startedOn)
+          && (!('finishedOn' in g) || isLocalDateKey(g.finishedOn))
+          && (!('endedOn' in g) || isLocalDateKey(g.endedOn))
+          && (!('stage' in g) || (g.stage is int && g.stage >= 1 && g.stage <= 9))
+        );
+    }
+
+    function starterGoalUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['starterGoal'])
+        || starterGoalValid();
+    }
+
     /* shareDefaults value gate — who sees a finished session, per type:
        the answer to "Share sessions automatically?", which the finish
        screen acts on without asking again. The client writes one field
@@ -482,6 +517,9 @@ service cloud.firestore {
         // `timezone: null`), which `create` gates with hasOnly().
         'timezone',
         'runMode', 'weeklyRunDaysTarget', 'raceGoal', 'weekSchedule',
+        // Run9's starter goal: value-gated by starterGoalValid() above. Also
+        // in profileSanitizer.js.
+        'starterGoal',
         'weekScheduleVersion',
         // Pgm6 run-plan tuning knobs (volume preset + difficulty). Written by
         // the configurePlan CF today, but allow-listed here so a future direct
@@ -549,6 +587,7 @@ service cloud.firestore {
         && request.resource.data.subscriptionTier == 'free'
         && billingFieldsUnsetOnCreate()
         && raceGoalValid()
+        && starterGoalValid()
         && shareDefaultsValid()
         && notificationPreferencesValid()
         && approveFollowersValid();
@@ -557,6 +596,7 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedUserFields())
         && subscriptionFieldsUnchanged()
         && raceGoalUnchangedOrValid()
+        && starterGoalUnchangedOrValid()
         && shareDefaultsUnchangedOrValid()
         && notificationPreferencesUnchangedOrValid()
         && approveFollowersUnchangedOrValid();

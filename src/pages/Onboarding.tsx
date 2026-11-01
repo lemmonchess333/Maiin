@@ -1,4 +1,7 @@
 import { useState, useMemo, useEffect, useRef, Suspense } from "react";
+import { STARTER_MOST_RUNS_A_WEEK } from "@/features/program/starterPlan";
+import { STARTER_GOAL_NAME } from "@/features/program/starterProgress";
+import { setStarterGoalPatch } from "@/features/program/runModeResolution";
 import { Toggle } from "@/components/ui/Toggle";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -272,13 +275,33 @@ export default function Onboarding() {
   const runFrequency =
     trainingActivity === "lifting" ? "none" : chosenRunFrequency;
   const runConfirmed = trainingActivity === "lifting" || runningConfirmed;
-  const [runMode, setRunMode] = useState<"freeform" | "race_prep">(
-    draft?.runMode === "race_prep" ? "race_prep" : "freeform"
+  const [chosenRunMode, setRunMode] = useState<
+    "freeform" | "race_prep" | "starter"
+  >(
+    draft?.runMode === "race_prep" || draft?.runMode === "starter"
+      ? draft.runMode
+      : "freeform"
+  );
+  /* Run9's starter goal, 30 minutes without stopping, is offered to
+     someone who runs only and to anyone new to running; a lifter who
+     already runs keeps free running and race prep. */
+  const starterOffered =
+    trainingActivity === "running" || runFrequency === "new";
+  const runMode =
+    chosenRunMode === "starter" && !starterOffered ? "freeform" : chosenRunMode;
+  // The starter goal's runs a week, two or three, three unless asked for
+  // two; apart from a race plan's, which starts at two (Pgm7 A7).
+  const [starterRunDays, setStarterRunDays] = useState<number>(() =>
+    draft?.runMode === "starter"
+      ? Math.min(STARTER_MOST_RUNS_A_WEEK, Math.max(2, draft.weeklyRunDays))
+      : STARTER_MOST_RUNS_A_WEEK
   );
   // At least two, a race plan's least (A7), for a draft saved before that.
   const [weeklyRunDays, setWeeklyRunDays] = useState(
     Math.max(MIN_RACE_RUN_DAYS, draft?.weeklyRunDays ?? MIN_RACE_RUN_DAYS)
   );
+  // The runs a week the plan is built on: the starter goal's own count.
+  const planRunDays = runMode === "starter" ? starterRunDays : weeklyRunDays;
   const [raceDistance, setRaceDistance] = useState<
     OnboardingDraft["raceDistance"]
   >(draft?.raceDistance ?? "10k");
@@ -340,7 +363,7 @@ export default function Onboarding() {
       equipment,
       runFrequency,
       runMode,
-      weeklyRunDays,
+      weeklyRunDays: planRunDays,
       raceDistance,
       raceTargetDate,
       raceEntry,
@@ -383,7 +406,7 @@ export default function Onboarding() {
       equipment,
       runFrequency,
       runMode,
-      weeklyRunDays,
+      planRunDays,
       raceDistance,
       raceTargetDate,
       raceEntry,
@@ -525,7 +548,7 @@ export default function Onboarding() {
           experience,
           runFrequency,
           runMode,
-          weeklyRunDays,
+          weeklyRunDays: planRunDays,
           raceDistance,
           raceTargetDate,
           injuries,
@@ -552,7 +575,7 @@ export default function Onboarding() {
       experience,
       runFrequency,
       runMode,
-      weeklyRunDays,
+      planRunDays,
       raceDistance,
       raceTargetDate,
       injuries,
@@ -756,6 +779,13 @@ export default function Onboarding() {
                 targetDate: raceTargetDate,
                 ...(raceEntry ? { entry: raceEntry } : {}),
               },
+            }
+          : {}),
+        // Run9: the 30-minute goal begins today, the day setup finishes.
+        ...(effectiveRunMode === "starter"
+          ? {
+              starterGoal: setStarterGoalPatch(localDateString(new Date()))
+                .starterGoal,
             }
           : {}),
         injuries,
@@ -1003,7 +1033,9 @@ export default function Onboarding() {
       ? "No running selected"
       : (effectiveRunMode === "freeform"
           ? "Free running · no scheduled runs"
-          : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
+          : effectiveRunMode === "starter"
+            ? `${STARTER_GOAL_NAME} · ${effectiveRunDays} runs per week`
+            : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
         (recentRaceBenchmark
           ? ` · recent ${recentRaceDistance === "5k" ? "5K" : "10K"} in ${finishTimeLabel(recentRaceBenchmark.benchmark.timeS)}`
           : "");
@@ -1180,7 +1212,7 @@ export default function Onboarding() {
               <p className="text-sm text-muted-foreground">
                 {hasLifting
                   ? "Choose lift sessions per week and about how long each one is. The draft below updates with your plan."
-                  : "No lifts will be scheduled. Next, choose free running or prepare for a race."}
+                  : "No lifts will be scheduled. Next, choose free running, 30 minutes without stopping, or a race."}
               </p>
               {hasLifting && (
                 <WeekPreview
@@ -1235,6 +1267,9 @@ export default function Onboarding() {
                     onSelect={() => {
                       setRunConfirmed(true);
                       setRunFrequency(option.id);
+                      // Run9: New to running starts on the 30-minute goal;
+                      // the other plans stay a tap away.
+                      if (option.id === "new") setRunMode("starter");
                       /* This lands on the RACE-PREP plan only. Freeform
                          is a substrate with no scheduled runs (Run9a), so
                          its weekly target is 0 whichever tier is picked —
@@ -1255,16 +1290,42 @@ export default function Onboarding() {
               </div>
               {runConfirmed && runFrequency !== "none" && (
                 <div className="space-y-4">
-                  <SegmentedControl<"freeform" | "race_prep">
+                  <SegmentedControl<"freeform" | "race_prep" | "starter">
                     ariaLabel="Running plan"
                     tone="running"
+                    layout={starterOffered ? "wrap" : undefined}
                     value={runMode}
                     onChange={setRunMode}
                     options={[
                       { value: "freeform", label: "Free running" },
+                      ...(starterOffered
+                        ? [{ value: "starter" as const, label: "30 minutes" }]
+                        : []),
                       { value: "race_prep", label: "Race prep" },
                     ]}
                   />
+                  {runMode === "starter" && (
+                    <div className="space-y-4 rounded-2xl bg-card card-shadow p-4">
+                      <p className="text-sm">
+                        Run {STARTER_GOAL_NAME} in about nine weeks. It
+                        starts with short runs and walks between them, and a
+                        week repeats until you've done it.
+                      </p>
+                      <div className="space-y-2">
+                        <p className="text-sm">Runs per week</p>
+                        <SegmentedControl<"2" | "3">
+                          ariaLabel="Runs per week"
+                          tone="running"
+                          value={starterRunDays <= 2 ? "2" : "3"}
+                          onChange={(next) => setStarterRunDays(Number(next))}
+                          options={[
+                            { value: "2", label: "2" },
+                            { value: "3", label: "3" },
+                          ]}
+                        />
+                      </div>
+                    </div>
+                  )}
                   {runMode === "race_prep" && (
                     <div className="space-y-4 rounded-2xl bg-card card-shadow p-4">
                       <label className="block text-sm">
