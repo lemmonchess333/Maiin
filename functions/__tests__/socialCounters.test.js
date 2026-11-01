@@ -290,7 +290,34 @@ describe("addComment", () => {
     ).rejects.toThrow(/activity-not-accessible/);
   });
 
-  it("Cycle 6: authorPhotoURL persisted when present", async () => {
+  it("Cycle 6: the avatar is the commenter's public profile photo, never the request's", async () => {
+    const { addComment } = require("../lib/socialCounters");
+    const PROFILE_PHOTO =
+      "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Falice%2F1.jpg?alt=media";
+    const firestore = makeFirestoreStub({
+      initial: {
+        "activities/A1": { commentCount: 0 },
+        "users/alice/public/profile": { photoURL: PROFILE_PHOTO },
+      },
+    });
+    await addComment({
+      firestore,
+      uid: "alice",
+      activityId: "A1",
+      text: "hi",
+      authorName: "Alice",
+      // A request's own photo field is ignored, even one the boundary
+      // would pass: an unscreened upload in the right bucket.
+      authorPhotoURL:
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/progress-photos%2Falice%2Fx.jpg",
+      increment,
+      serverTimestamp,
+    });
+    const setOp = firestore._writes.find((w) => w.op === "set");
+    expect(setOp.data.authorPhotoURL).toBe(PROFILE_PHOTO);
+  });
+
+  it("Cycle 7: no profile photo, no avatar, whatever the request sends", async () => {
     const { addComment } = require("../lib/socialCounters");
     const firestore = makeFirestoreStub({
       initial: { "activities/A1": { commentCount: 0 } },
@@ -301,14 +328,13 @@ describe("addComment", () => {
       activityId: "A1",
       text: "hi",
       authorName: "Alice",
-      authorPhotoURL: "https://lh3.googleusercontent.com/a.png",
+      authorPhotoURL:
+        "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
       increment,
       serverTimestamp,
     });
     const setOp = firestore._writes.find((w) => w.op === "set");
-    expect(setOp.data.authorPhotoURL).toBe(
-      "https://lh3.googleusercontent.com/a.png"
-    );
+    expect("authorPhotoURL" in setOp.data).toBe(false);
   });
 });
 

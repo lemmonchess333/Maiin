@@ -70,18 +70,20 @@ const VERIFIED = { email_verified: true };
 
 /**
  * Every value a client can legitimately put in a photo field: the Storage
- * download URL (profilePhotoUpload appends `&v=`), the Google OAuth CDN
- * and the Apple OAuth CDN. Anything else loads as an <img src> on a
- * stranger's device, so it is a tracking pixel.
+ * download URL of a screened upload (profilePhotoUpload appends `&v=`), a
+ * Google sign-in avatar and the Apple CDN. Anything else loads as an
+ * <img src> on a stranger's device, so it is a tracking pixel or a photo
+ * nobody screened.
  */
 const ALLOWED_PHOTO_URLS = [
   "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media&v=1",
   "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
   "https://appleid.cdn-apple.com/static/bin/avatar/123.jpg",
 ];
-/** This project's bucket: the host alone admits any Firebase project's. */
+/** This project's bucket, in a screened folder: the host alone admits any
+ *  Firebase project's bucket. */
 const PHOTO_URL_ORIGIN =
-  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2F";
 /** Arbitrary host, suffix-phishing host, http downgrade, two non-http
  *  schemes, and a 2049-char value on an allowed origin (the size cap). */
 const REJECTED_PHOTO_URLS = [
@@ -94,6 +96,13 @@ const REJECTED_PHOTO_URLS = [
   "javascript:alert(1)",
   "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
   PHOTO_URL_ORIGIN + "a".repeat(2049 - PHOTO_URL_ORIGIN.length),
+  // A browser resolves the dot segments before it fetches: this loads
+  // from another project's bucket.
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.appspot.com/o/../../attacker-proj.appspot.com/o/pixel.png?alt=media",
+  // This project's bucket, a folder the photo screen never checks.
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/progress-photos%2Fowner-uid%2Fx.jpg?alt=media",
+  // Google's host, a shared Google Photos image rather than an avatar.
+  "https://lh3.googleusercontent.com/pw/AP1GczSynthetic=w600",
 ];
 
 suite("firestore.rules — users/{uid}/public/{doc}", () => {
@@ -423,6 +432,53 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
         },
         { merge: true }
       )
+    );
+  });
+
+  it("a stored photo the gate refuses blocks no other write; a new one is checked", async () => {
+    // Every write here is a merge, so the stored photo is in each request.
+    // One written before the gate took its present shape must not refuse
+    // the streak mirror or a rename, and must not be a way back in.
+    const stored =
+      "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.appspot.com/o/old-avatar.jpg?alt=media";
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "users", OWNER_UID, "public", "profile"),
+        {
+          uid: OWNER_UID,
+          displayName: "Owner",
+          photoURL: stored,
+        }
+      );
+    });
+    const ref = doc(
+      env.authenticatedContext(OWNER_UID).firestore(),
+      "users",
+      OWNER_UID,
+      "public",
+      "profile"
+    );
+    await assertSucceeds(
+      setDoc(ref, { currentStreak: 5, longestStreak: 9 }, { merge: true })
+    );
+    await assertSucceeds(
+      setDoc(
+        ref,
+        { displayName: "Owner Two", photoURL: stored },
+        { merge: true }
+      )
+    );
+    await assertFails(
+      setDoc(
+        ref,
+        {
+          photoURL: "https://lh3.googleusercontent.com/pw/AP1GczSynthetic=w600",
+        },
+        { merge: true }
+      )
+    );
+    await assertSucceeds(
+      setDoc(ref, { photoURL: ALLOWED_PHOTO_URLS[0] }, { merge: true })
     );
   });
 
@@ -2081,7 +2137,7 @@ suite(
             type: "workout",
             visibility: "followers",
             authorPhotoURL:
-              "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/foo.jpg",
+              "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fowner-uid%2Ffoo.jpg",
             workoutName: "Push day",
             exerciseCount: 6,
             totalVolume: 5400,

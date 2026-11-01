@@ -77,6 +77,13 @@ const REJECTED_PHOTO_URLS = [
   "javascript:alert(1)",
   "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
   "https://firebasestorage.googleapis.com/" + "a".repeat(2010),
+  // A browser resolves the dot segments before it fetches: this loads
+  // from another project's bucket.
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.appspot.com/o/../../attacker-proj.appspot.com/o/pixel.png?alt=media",
+  // This project's bucket, a folder the photo screen never checks.
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/progress-photos%2Fmember-uid%2Fx.jpg?alt=media",
+  // Google's host, a shared Google Photos image rather than an avatar.
+  "https://lh3.googleusercontent.com/pw/AP1GczSynthetic=w600",
 ];
 
 suite("firestore.rules — community spaces", () => {
@@ -235,6 +242,26 @@ suite("firestore.rules — community spaces", () => {
       const ref = doc(db(MEMBER), `spaces/${SPACE}/members/${MEMBER}`);
       await assertFails(updateDoc(ref, { photoURL: REJECTED_PHOTO_URLS[0] }));
       await assertSucceeds(updateDoc(ref, { photoURL: ALLOWED_PHOTO_URLS[1] }));
+    });
+
+    it("a stored photo the gate refuses blocks no rename; a new one is checked", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), `spaces/${SPACE}/members/${MEMBER}`),
+          {
+            joinedAt: new Date(),
+            displayName: "Test",
+            photoURL: "https://lh3.googleusercontent.com/old-avatar.png",
+          }
+        );
+      });
+      const ref = doc(db(MEMBER), `spaces/${SPACE}/members/${MEMBER}`);
+      await assertSucceeds(updateDoc(ref, { displayName: "Test Two" }));
+      await assertFails(
+        updateDoc(ref, {
+          photoURL: "https://lh3.googleusercontent.com/pw/AP1GczSynthetic=w600",
+        })
+      );
     });
   });
 
@@ -453,6 +480,34 @@ suite("firestore.rules — community spaces", () => {
         );
         await assertFails(
           setDoc(ref(`bad-photo-${i}`), { ...validPost(MEMBER), photoUrl: bad })
+        );
+      }
+    });
+
+    it("the attached photo is the author's own Space upload and nothing else", async () => {
+      // The composer uploads to space-photos/{uid}/ and the photo screen
+      // checks that folder. An avatar host, a profile photo or another
+      // member's Space photo is not a photo this post uploaded.
+      await seedMember(MEMBER);
+      const ref = (id: string) =>
+        doc(db(MEMBER), `spaces/${SPACE}/posts/${id}`);
+      const BUCKET =
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
+      await assertSucceeds(
+        setDoc(ref("own"), {
+          ...validPost(MEMBER),
+          photoUrl: `${BUCKET}space-photos%2F${MEMBER}%2F1714521600000.jpg?alt=media&token=t`,
+        })
+      );
+      for (const [i, photoUrl] of [
+        `${BUCKET}space-photos%2F${OTHER}%2F1.jpg?alt=media`,
+        `${BUCKET}profile-photos%2F${MEMBER}%2F1.jpg?alt=media`,
+        `${BUCKET}space-photos%2F${MEMBER}%2F1.jpg/../../../x.jpg`,
+        ALLOWED_PHOTO_URLS[1],
+        ALLOWED_PHOTO_URLS[2],
+      ].entries()) {
+        await assertFails(
+          setDoc(ref(`not-own-${i}`), { ...validPost(MEMBER), photoUrl })
         );
       }
     });

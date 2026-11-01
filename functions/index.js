@@ -7468,7 +7468,7 @@ exports.addSpacePostCommentCallable = functions
       );
     }
     assertCallerEmailVerified(context);
-    const { spaceId, postId, text, authorName, authorPhotoURL } = data || {};
+    const { spaceId, postId, text, authorName } = data || {};
     // Each id names one document: a "/" in postId would point the comment
     // and its counter at some other document under the post.
     if (
@@ -7519,7 +7519,6 @@ exports.addSpacePostCommentCallable = functions
         postId,
         text,
         authorName: fromName,
-        authorPhotoURL,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       });
@@ -7637,7 +7636,7 @@ exports.addCommentCallable = functions
       );
     }
     assertCallerEmailVerified(context);
-    const { activityId, text, authorName, authorPhotoURL } = data || {};
+    const { activityId, text, authorName } = data || {};
     if (!isDocumentId(activityId)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -7707,7 +7706,6 @@ exports.addCommentCallable = functions
         activityId,
         text,
         authorName: fromName,
-        authorPhotoURL,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       });

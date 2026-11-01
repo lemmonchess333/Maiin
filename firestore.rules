@@ -215,34 +215,68 @@ service cloud.firestore {
 
     /* Photo URL value gate — shared by every field a client writes that
        ANOTHER user's device will load as an <img src>: the public
-       profile avatar, activity and space-post author avatars, a space
-       post's attached photo, and the challenge-participant / space-member
-       identity rows. A URL a stranger's browser fetches is a tracking
-       pixel with a per-viewer IP unless its origin is one Tropos already
-       trusts to serve avatars:
-         - THIS project's Firebase Storage bucket (custom uploads, space
-           photos). The host alone was not enough: every Firebase project
-           serves from firebasestorage.googleapis.com, so a URL into an
-           attacker's own bucket passed, and its access logs carry every
-           viewer's IP. Both default bucket names a project can have are
-           listed; each is reserved to this project.
-         - Google OAuth CDN (lh3.googleusercontent.com)
-         - Apple OAuth CDN (appleid.cdn-apple.com)
+       profile avatar, activity and space-post author avatars, and the
+       challenge-participant / space-member identity rows. A URL a
+       stranger's browser fetches is a tracking pixel with a per-viewer
+       IP unless its origin is one Tropos already trusts, and an image
+       nobody screened unless it is one of the uploads Tropos screens:
+         - THIS project's Firebase Storage bucket, and only its two
+           screened folders, profile photos and Space photos
+           (lib/photoScreen.js checks every upload there; progress
+           photos are never screened). The host alone is not enough:
+           every Firebase project serves from firebasestorage.googleapis
+           .com, so a URL into an attacker's own bucket would pass, and
+           its access logs carry every viewer's IP. Both default bucket names
+           a project can have are listed; each is reserved to this
+           project. After /o/ the object name must be one path segment,
+           with no '/', '\\', '?' or '#' before the query: a browser
+           resolves '../' before it fetches, so '/o/../../other-bucket/'
+           would load from another project. A real download URL encodes
+           every slash in the object name as %2F.
+         - Google's account photos (lh3.googleusercontent.com/a/ and
+           /a-/), the avatar a Google sign-in gives. The same host serves
+           shared Google Photos and Drive files, so only the account
+           photo path is taken, as one segment with no '%' that could
+           encode a slash.
+         - Apple's CDN (appleid.cdn-apple.com), which serves only Apple's
+           own files.
        `https` only and anchored with `^`, so a downgrade or a
        suffix-phishing host (lh3.googleusercontent.com.evil.com) fails;
        capped at 2048 chars so the field cannot carry a payload.
        Null-safe: the type check runs first and `&&` short-circuits, so
        a null never reaches `.matches()` (which would be an evaluation
        error, not false). Whether absent / null / '' are legal is each
-       caller's decision — this speaks only to a present value. */
+       caller's decision — this speaks only to a present value.
+       functions/lib/publicPhotoUrl.js gives the server the same answer,
+       and its test reads these patterns. */
     function isAllowedPhotoUrl(v) {
       return v is string
         && v.size() <= 2048
         && (
-          v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/.*')
-          || v.matches('^https://lh3\\.googleusercontent\\.com/.*')
+          v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/(profile-photos|space-photos)%2F[^/\\\\?#]+([?#].*)?$')
+          || v.matches('^https://lh3\\.googleusercontent\\.com/a-?/[^/\\\\?#%]+$')
           || v.matches('^https://appleid\\.cdn-apple\\.com/.*')
         );
+    }
+
+    /* A photo field a write leaves as it is passes unchecked: a stored
+       URL the gate above refuses must not block a merge that touches
+       only other fields (the streak mirror, a name, the race toggle).
+       A new or changed value is always checked. */
+    function photoUnchanged(field) {
+      return resource != null
+        && field in resource.data
+        && request.resource.data[field] == resource.data[field];
+    }
+
+    /* A Space post's attached photo: the author's own upload under
+       space-photos/{uid}/ in this project's bucket, which is the only
+       place the composer puts one (src/lib/spacePhotoUpload.ts) and
+       which the photo screen checks. No avatar host qualifies. */
+    function isOwnSpacePhotoUrl(v) {
+      return v is string
+        && v.size() <= 2048
+        && v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/space-photos%2F' + request.auth.uid + '%2F[^/\\\\?#]+([?#].*)?$');
     }
 
     /* raceGoal value gate — the shape the app actually consumes.
@@ -775,8 +809,9 @@ service cloud.firestore {
              states; null is what createDefaultProfile writes for
              email signups before any upload, '' is what removeProfilePhoto
              writes when the user clears their custom upload)
-           - an origin isAllowedPhotoUrl trusts (own Storage bucket,
-             Google / Apple OAuth CDNs)
+           - an origin isAllowedPhotoUrl trusts (own Storage bucket's
+             screened folders, Google account photos, Apple's CDN)
+           - the value already stored, left as it is (photoUnchanged)
            The null and '' checks come BEFORE the helper so those two
            real states are accepted rather than type-checked. */
         && (
@@ -784,6 +819,7 @@ service cloud.firestore {
           || request.resource.data.photoURL == null
           || request.resource.data.photoURL == ''
           || isAllowedPhotoUrl(request.resource.data.photoURL)
+          || photoUnchanged('photoURL')
         )
         /* photoStoragePath gate — must point to the owner's own
            profile-photos folder. Prevents writing a value that would
@@ -1297,6 +1333,7 @@ service cloud.firestore {
           && (
             !('photoURL' in request.resource.data)
             || isAllowedPhotoUrl(request.resource.data.photoURL)
+            || photoUnchanged('photoURL')
           );
 
         allow delete: if request.auth != null
@@ -1438,6 +1475,7 @@ service cloud.firestore {
           && (
             !('photoURL' in request.resource.data)
             || isAllowedPhotoUrl(request.resource.data.photoURL)
+            || photoUnchanged('photoURL')
           );
 
         allow delete: if request.auth != null
@@ -1486,7 +1524,7 @@ service cloud.firestore {
           )
           && (
             !('photoUrl' in request.resource.data)
-            || isAllowedPhotoUrl(request.resource.data.photoUrl)
+            || isOwnSpacePhotoUrl(request.resource.data.photoUrl)
           )
           // The attached session is the composer's snapshot
           // (src/features/spaces/spacePostSnapshot.ts, whose key list

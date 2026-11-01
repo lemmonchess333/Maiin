@@ -148,7 +148,7 @@ await check("Mallory cannot write Alice's profile", async () =>
     setDoc(profileRefAsMallory, {
       ...base,
       photoURL:
-        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Falice%2F2.jpg?alt=media",
       photoStoragePath: "profile-photos/alice/1.jpg",
     })
   )
@@ -163,7 +163,7 @@ await check(
       setDoc(profileRef, {
         ...base,
         photoURL:
-          "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
+          "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Falice%2F2.jpg?alt=media",
         photoStoragePath: "profile-photos/mallory/1.jpg",
       })
     )
@@ -174,7 +174,7 @@ await check("Path outside profile-photos/ entirely is rejected", async () =>
     setDoc(profileRef, {
       ...base,
       photoURL:
-        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Falice%2F2.jpg?alt=media",
       photoStoragePath: "progress-photos/alice/1.enc",
     })
   )
@@ -219,12 +219,12 @@ await check(
     const batch = writeBatch(alice);
     batch.update(profileRef, {
       photoURL:
-        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Falice%2F2.jpg?alt=media",
       photoStoragePath: "profile-photos/alice/2.jpg",
     });
     batch.update(doc(alice, "users/alice"), {
       photoURL:
-        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Falice%2F2.jpg?alt=media",
     });
     await assertSucceeds(batch.commit());
   }
