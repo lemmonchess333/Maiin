@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeAnalyticsParams } from "../analyticsRedaction";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+import {
+  redactPagePath,
+  redactPageReferrer,
+  redactPageUrl,
+  sanitizeAnalyticsParams,
+} from "../analyticsRedaction";
 
 describe("sanitizeAnalyticsParams", () => {
   it("keeps safe primitive dimensions untouched", () => {
@@ -95,5 +103,64 @@ describe("sanitizeAnalyticsParams", () => {
     const input = { email: "a@b.com", ok: "v" };
     sanitizeAnalyticsParams(input);
     expect(input).toEqual({ email: "a@b.com", ok: "v" });
+  });
+});
+
+describe("the page address an event carries", () => {
+  it("replaces ids, names and slugs with :id and keeps the route's words", () => {
+    expect(redactPagePath("/user/Xy12abcDEF")).toBe("/user/:id");
+    expect(redactPagePath("/history/exercise/Bench%20Press")).toBe(
+      "/history/exercise/:id"
+    );
+    expect(redactPagePath("/space/womens-running/post/p1")).toBe(
+      "/space/:id/post/:id"
+    );
+    expect(redactPagePath("/run/r1")).toBe("/run/:id");
+    expect(redactPagePath("/settings/privacy")).toBe("/settings/privacy");
+    expect(redactPagePath("/")).toBe("/");
+  });
+
+  it("drops the query and the fragment, and keeps the base path", () => {
+    expect(
+      redactPageUrl("https://tropos.app/history/sessions?q=tempo#x", "/")
+    ).toBe("https://tropos.app/history/sessions");
+    expect(
+      redactPageUrl(
+        "https://example.github.io/Maiin/user/abc?from=feed",
+        "/Maiin/"
+      )
+    ).toBe("https://example.github.io/Maiin/user/:id");
+    expect(redactPageUrl("not a url")).toBe("");
+  });
+
+  it("keeps only the origin of another site's referrer", () => {
+    const origin = "https://tropos.app";
+    expect(
+      redactPageReferrer("https://mail.example.com/inbox?id=42", origin)
+    ).toBe("https://mail.example.com/");
+    expect(redactPageReferrer("https://tropos.app/user/abc?q=x", origin)).toBe(
+      "https://tropos.app/user/:id"
+    );
+    expect(redactPageReferrer("", origin)).toBe("");
+  });
+
+  it("knows every word in the app's routes, and redacts every parameter", () => {
+    // A route word missing from the list reads as an id: safe, but the
+    // route is lost from the reports. A parameter kept would be a leak.
+    const repoRoot = resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../.."
+    );
+    const app = readFileSync(resolve(repoRoot, "src/App.tsx"), "utf8");
+    const paths = [...app.matchAll(/path="([^"]+)"/g)]
+      .map((m) => m[1])
+      .filter((path) => path !== "*");
+    expect(paths.length).toBeGreaterThan(20);
+    for (const path of paths) {
+      const visited = path.replace(/:[A-Za-z]+/g, "some-id-123");
+      expect(redactPagePath(visited), path).toBe(
+        path.replace(/:[A-Za-z]+/g, ":id")
+      );
+    }
   });
 });

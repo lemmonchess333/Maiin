@@ -143,7 +143,7 @@ export default function RunDetail() {
     () =>
       privacy.loading || privacy.error
         ? []
-        : applyPrivacyZones(run?.points ?? [], privacy.zones),
+        : applyPrivacyZones<GPSPoint>(run?.points ?? [], privacy.zones),
     [run?.points, privacy.loading, privacy.error, privacy.zones]
   );
 

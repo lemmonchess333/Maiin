@@ -1,5 +1,5 @@
 import { haversine } from "./gps";
-import type { GPSPoint } from "./gps";
+import type { RouteCoordinate } from "./routeSegments";
 
 export interface PrivacyZone {
   id: string;
@@ -9,6 +9,11 @@ export interface PrivacyZone {
   radiusMeters: number;
 }
 
+/** What a share says when it goes without its route because the privacy
+ *  zones are still loading or could not be read. */
+export const ROUTE_WITHHELD_NOTE =
+  "Route withheld because privacy settings are unavailable.";
+
 /** Check if a point falls inside any privacy zone */
 function isInsideZone(lat: number, lon: number, zones: PrivacyZone[]): boolean {
   return zones.some((z) => haversine(lat, lon, z.lat, z.lon) <= z.radiusMeters);
@@ -17,7 +22,11 @@ function isInsideZone(lat: number, lon: number, zones: PrivacyZone[]): boolean {
 /** A sparse GPS trace can jump across a zone without a fix inside it.
  * Check the drawn segment too, on the same local longitude/latitude plane
  * used to render it. A small radius margin avoids rounding at the edge. */
-function crossesZone(a: GPSPoint, b: GPSPoint, zones: PrivacyZone[]): boolean {
+function crossesZone(
+  a: RouteCoordinate,
+  b: RouteCoordinate,
+  zones: PrivacyZone[]
+): boolean {
   return zones.some((zone) => {
     const scale = Math.cos((zone.lat * Math.PI) / 180);
     const ax = (a.lon - zone.lon) * scale;
@@ -54,11 +63,12 @@ function jitterMargin(routeLength: number): number {
 
 /** Remove every zone crossing and mark the surviving disconnected segments.
  * The marker is serializable in a flat Firestore array; maps and exports must
- * split on it, never draw a chord over the removed coordinates. */
-export function applyPrivacyZones(
-  points: GPSPoint[],
+ * split on it, never draw a chord over the removed coordinates. Takes a
+ * full trace or a stored preview of one: only the coordinates are read. */
+export function applyPrivacyZones<T extends RouteCoordinate>(
+  points: T[],
   zones: PrivacyZone[]
-): GPSPoint[] {
+): T[] {
   if (zones.length === 0 || points.length === 0) return points;
 
   const inside = points.map((p) => isInsideZone(p.lat, p.lon, zones));
@@ -95,7 +105,7 @@ export function applyPrivacyZones(
     i = j;
   }
 
-  const safe: GPSPoint[] = [];
+  const safe: T[] = [];
   let cut = false;
   for (let index = 0; index < points.length; index++) {
     if (drop[index]) {

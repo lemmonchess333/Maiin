@@ -21,6 +21,15 @@
  * never loads on native. This is the both-ways parity rule (CLAUDE.md) —
  * web keeps working as the preview surface, native delivers on-device.
  *
+ * The web SDK sends no page views of its own (`send_page_view: false`), and
+ * its config and every event carry a redacted page address and referrer
+ * instead of the browser's: otherwise a page view and each event carry the
+ * full URL, with another person's uid on `/user/:uid` and a typed search in
+ * `?q=`, past the param redaction `analyticsClient.emit` applies. The app sends no
+ * page views itself; its funnel is the named events. Native reports no
+ * URL: the native SDK sees one view controller, never the web view's
+ * address.
+ *
  * Never throws: analytics MUST NOT take down a calling flow. Init is async
  * and lazy — events emitted before init resolves are dropped rather than
  * queued. A few lost boot events are an acceptable trade for not carrying
@@ -29,6 +38,7 @@
 import type { FirebaseApp } from "firebase/app";
 import { isNativePlatform } from "./platform";
 import { logger } from "./logger";
+import { redactPageReferrer, redactPageUrl } from "./analyticsRedaction";
 
 /**
  * Why analytics is (or isn't) delivering. Surfaced on the operator
@@ -82,7 +92,7 @@ function initWeb(app: FirebaseApp): void {
 
   void (async () => {
     try {
-      const { getAnalytics, isSupported, logEvent } =
+      const { initializeAnalytics, isSupported, logEvent } =
         await import("firebase/analytics");
       if (!(await isSupported())) {
         status = "unsupported";
@@ -91,8 +101,13 @@ function initWeb(app: FirebaseApp): void {
         );
         return;
       }
-      const handle = getAnalytics(app);
-      deliver = (event, params) => logEvent(handle, event, params);
+      // The page fields in the config are what gtag's own events (user
+      // engagement and the like) carry; each event below sets its own.
+      const handle = initializeAnalytics(app, {
+        config: { send_page_view: false, ...redactedPage() },
+      });
+      deliver = (event, params) =>
+        logEvent(handle, event, { ...params, ...redactedPage() });
       status = "active";
       logger.log("[Analytics] Firebase Analytics (web) initialised.");
     } catch (err) {
@@ -100,6 +115,20 @@ function initWeb(app: FirebaseApp): void {
       logger.warn("[Analytics] web init failed:", err);
     }
   })();
+}
+
+/** The page fields a web event carries, in place of the ones gtag would
+ *  read from the address bar. */
+function redactedPage(): { page_location: string; page_referrer: string } {
+  const base = import.meta.env.BASE_URL;
+  return {
+    page_location: redactPageUrl(window.location.href, base),
+    page_referrer: redactPageReferrer(
+      document.referrer,
+      window.location.origin,
+      base
+    ),
+  };
 }
 
 /** Native path — @capacitor-firebase/analytics, backed by the plist config. */

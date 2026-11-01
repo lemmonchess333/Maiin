@@ -15,6 +15,7 @@ import { localDateString } from "@/lib/dateHelpers";
 import { flushQueue, queueDurableWrite } from "@/lib/offlineQueue";
 import { KEPT_ROUTE_POINTS, sampleRoute } from "@/lib/routeSegments";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
+import { ROUTE_WITHHELD_NOTE } from "@/lib/privacyZones";
 import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
 import { createSessionShare, type SessionShareAction } from "@/lib/sessionPost";
 import type { ActivityPreview, ShareDecision } from "@/lib/shareComposer";
@@ -207,7 +208,7 @@ export function runPostRoute(
       ...(p.breakBefore ? { breakBefore: true } : {}),
     })),
     note: options.withheld
-      ? "Route withheld because privacy settings are unavailable."
+      ? ROUTE_WITHHELD_NOTE
       : "This is the route included in your post.",
   };
 }
