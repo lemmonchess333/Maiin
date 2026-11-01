@@ -35,6 +35,25 @@ existing precedence. A changed generated row records its original template
 and the report date for explanation. Client/server sanitizers and real
 rollover tests cover this boundary.
 
+STATUS 2026-11-01, owner-approved (R5 and R6 of the training-engine pass,
+after a person with 3 km runs was given a 12 km first long run): the running
+starting point is where a race plan starts, not a ceiling. This week's long
+run is the rung at or under the start, and at most one rung above the
+longest run of the four weeks before, only after a done week (two or more
+saved runs, Run9a's rule, `isWeekDone` in `layoffDetection.ts`); a long rung
+also counts as done by its distance. The rest of the week is at most ten
+minutes over the most a recent week ran besides its longest run. Missed
+weeks hold both. Rungs are sized at the confirmed easy pace, else at the
+recent runs' pace. The start's own numbers count for the climb's first four
+weeks, weeks ahead climb as if followed, and the race plan's own weeks stay
+the upper bound. "It never expires into an automatic volume increase" and
+the four-week review's easy running are withdrawn: following the plan grows
+it, and missing it holds it. Recorded and self-reported starts are used
+alike; saving the plan is the confirmation. A race set up or changed with
+no start fills one from the last four weeks' runs, shown before saving,
+else asks for the two numbers; setup asks occasional and regular runners. A
+new runner's start stays Run9a's `newRunnerUntil` handoff.
+
 ## Recurring lifting time
 
 The lifting handoff prioritises realistic time and stable identity (Fleck
