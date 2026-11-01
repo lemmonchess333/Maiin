@@ -120,7 +120,11 @@ describe("removeObjectionableSpacePost", () => {
     const heavy = post({
       activity: {
         type: "run",
-        routePreview: Array(100).fill({ lat: 0, lon: 0, note: "y".repeat(9000) }),
+        routePreview: Array(100).fill({
+          lat: 0,
+          lon: 0,
+          note: "y".repeat(9000),
+        }),
       },
     });
     const db = memoryFirestore({ [POST]: heavy });

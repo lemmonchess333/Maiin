@@ -143,7 +143,10 @@ describe("flaggedActivityField", () => {
     const heavy = "y".repeat(9000);
     for (const post of [
       { ...CLEAN, exercises: Array(50).fill({ name: heavy }) },
-      { ...CLEAN, routePreview: Array(100).fill({ lat: 0, lon: 0, note: heavy }) },
+      {
+        ...CLEAN,
+        routePreview: Array(100).fill({ lat: 0, lon: 0, note: heavy }),
+      },
     ]) {
       expect(flaggedActivityField(post)).toBe("size");
     }

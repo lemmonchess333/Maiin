@@ -88,7 +88,9 @@ suite("onActivityCreated reads every text a feed card shows", () => {
     [
       "autoflag-size",
       // Rows the rules cannot look inside, a megabyte of them in all.
-      { routePreview: Array(100).fill({ lat: 0, lon: 0, n: "y".repeat(9000) }) },
+      {
+        routePreview: Array(100).fill({ lat: 0, lon: 0, n: "y".repeat(9000) }),
+      },
       "size",
     ],
   ])("flags %s and keeps it from followers", async (id, fields, field) => {
