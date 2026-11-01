@@ -61,23 +61,20 @@ describe("the running starting point, for someone new to running", () => {
     expect(noRunsLeft.runWalkWeeks).toBe(true);
   });
 
-  it("says run-walk doesn't follow the report", () => {
+  it("doesn't hold a run-walk week against the report", () => {
     render(
       <RunningBaselineSettings
-        value={baseline}
+        value={{ ...baseline, weeklyMinutes: 10 }}
         onChange={() => {}}
         preview={preview(newRunnerUntil("new", today))}
       />
     );
-    expect(
-      screen.getByText(/Your first weeks run as run-walk, whatever you report/)
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/won't increase on its own/)).toBeNull();
+    expect(screen.queryByText(/more than your week/)).toBeNull();
   });
 
   /* R5, R6: the starting point is where the plan starts, and the plan
-     climbs from it; it no longer promises to stay there. */
-  it("says the plan builds from the report, and never that it stays there", () => {
+     climbs from it; it never promised to stay there again. */
+  it("says where the plan starts, and never that it stays there", () => {
     render(
       <RunningBaselineSettings
         value={baseline}
@@ -86,9 +83,14 @@ describe("the running starting point, for someone new to running", () => {
       />
     );
     expect(
-      screen.getByText(/The plan starts here and builds a step a week/)
+      screen.getByText(
+        (_, node) =>
+          node?.tagName === "P" &&
+          node.textContent ===
+            "Starting from your running: about 20 min a week, longest run 10 min."
+      )
     ).toBeInTheDocument();
     expect(screen.queryByText(/won't increase on its own/)).toBeNull();
-    expect(screen.queryByText(/run-walk/)).toBeNull();
+    expect(screen.queryByText(/needs a review/)).toBeNull();
   });
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   render,
   screen,
@@ -18,6 +18,7 @@ import {
 } from "@/lib/dateHelpers";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import type { UserProfile } from "@/lib/auth";
+import type { RunSummaryItem } from "@/hooks/useRunningStats";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 
@@ -50,9 +51,11 @@ vi.mock("@/lib/firebase", () => ({
   storage: {},
 }));
 
+/** The runs recorded in the last four weeks, as the page reads them. */
+const recorded: { runs: RunSummaryItem[] } = { runs: [] };
 vi.mock("@/hooks/useRunningStats", () => ({
   useRunningStats: () => ({
-    runs: [],
+    runs: recorded.runs,
     loading: false,
     failed: false,
     refresh: vi.fn(),
@@ -344,7 +347,7 @@ describe("RunPlanSettings", () => {
     } as UserProfile;
     const first = renderPage(profile);
     fireEvent.click(screen.getByRole("button", { name: "Add starting point" }));
-    fireEvent.change(screen.getByLabelText("Recent minutes per week"), {
+    fireEvent.change(screen.getByLabelText("Minutes a week"), {
       target: { value: "90" },
     });
     fireEvent.click(
@@ -353,8 +356,8 @@ describe("RunPlanSettings", () => {
     expect(configureSpy).not.toHaveBeenCalled();
     first.unmount();
     renderPage(profile);
-    expect(screen.getByLabelText("Recent minutes per week")).toHaveValue(90);
-    fireEvent.change(screen.getByLabelText("Longest recent run, min"), {
+    expect(screen.getByLabelText("Minutes a week")).toHaveValue(90);
+    fireEvent.change(screen.getByLabelText("Longest run, min"), {
       target: { value: "30" },
     });
     fireEvent.click(screen.getByRole("button", { name: /Save .*plan/ }));
@@ -364,6 +367,107 @@ describe("RunPlanSettings", () => {
       weeklyMinutes: 90,
       longestRunMinutes: 30,
       confirmedAt: localDateString(),
+    });
+  });
+
+  /* R5 (owner, 1 November 2026): a race set up with no starting point
+     starts from the runs recorded in the last four weeks. The owner set a
+     marathon after a 25-minute run and was given a 12 km long run that
+     day. */
+  describe("a race set up with no starting point", () => {
+    afterEach(() => {
+      recorded.runs = [];
+    });
+    const raceDay = async () => {
+      fireEvent.click(
+        screen.getByRole("radio", { name: "Training for a race" })
+      );
+      fireEvent.change(screen.getByLabelText("Target date"), {
+        target: { value: RACE_TARGET_DATE },
+      });
+    };
+
+    it("starts from the runs recorded in the last four weeks, and saves what it showed", async () => {
+      recorded.runs = [
+        {
+          id: "afternoon",
+          distance: 2850,
+          duration: 1516,
+          completedAt: new Date(),
+          avgPace: 532,
+          elevationGain: 0,
+          calories: 0,
+          activityType: "run",
+          relativeEffort: null,
+        },
+      ];
+      renderPage({ ...baseProfile, uid: "recorded-owner" } as UserProfile);
+      await raceDay();
+      expect(
+        screen.getByText(
+          (_, node) =>
+            node?.tagName === "P" &&
+            node.textContent ===
+              "Starting from your recent running: about 25 min a week, longest run 25 min."
+        )
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Change" })
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Save .*plan/ }));
+      await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+      expect(sentPayload().profileUpdates.runningBaseline).toEqual({
+        version: 1,
+        experience: "building",
+        weeklyMinutes: 25,
+        longestRunMinutes: 25,
+        confirmedAt: localDateString(),
+        source: "recorded",
+      });
+    });
+
+    it("asks for the two numbers with no runs recorded, or takes new to running", async () => {
+      renderPage({ ...baseProfile, uid: "unrecorded-owner" } as UserProfile);
+      await raceDay();
+      expect(screen.getByLabelText("Minutes a week")).toHaveValue(null);
+      expect(screen.getByLabelText("Longest run, min")).toHaveValue(null);
+      fireEvent.click(
+        screen.getByRole("button", { name: "I'm new to running" })
+      );
+      expect(
+        screen.getByText(/New to running: your first six weeks run as run-walk/)
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Save .*plan/ }));
+      await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+      const sent = sentPayload();
+      expect(sent.profileUpdates.runningBaseline).toMatchObject({
+        experience: "new",
+        weeklyMinutes: 0,
+        longestRunMinutes: 0,
+      });
+      // Run-walk from today, whenever setup was.
+      expect(sent.programState.runDays?.length).toBeGreaterThan(0);
+      expect(
+        (sent.programState.runDays ?? []).every((run) =>
+          (run as { templateId?: string }).templateId?.startsWith("run_walk")
+        )
+      ).toBe(true);
+    });
+
+    it("leaves a race plan the person only opens as it is", () => {
+      recorded.runs = [];
+      renderPage({
+        ...baseProfile,
+        uid: "opened-owner",
+        runMode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
+      } as UserProfile);
+      expect(
+        screen.getByRole("button", { name: "Add starting point" })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /Save .*plan/ })
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -382,6 +486,7 @@ describe("RunPlanSettings", () => {
         source: "self_reported",
       },
     } as UserProfile);
+    fireEvent.click(screen.getByRole("button", { name: "Change" }));
     fireEvent.click(
       screen.getByRole("button", { name: "Remove starting point" })
     );
@@ -450,7 +555,7 @@ describe("RunPlanSettings", () => {
     pickRacePrep();
     for (const line of [
       "The longest your runs can be. Race day stays as planned.",
-      "Your recent weekly running, so the plan starts near it.",
+      "Your recent running. The plan climbs from it each week.",
       "How long your longest runs get.",
       "How much tempo and interval work each week has.",
       "A third fewer leg sets, at the same weights.",

@@ -72,6 +72,10 @@ import {
   lbToKg,
 } from "@/lib/weightUnits";
 import { newRunnerUntil } from "@/features/program/newRunner";
+import {
+  isRunningBaseline,
+  type RunningBaseline,
+} from "@/features/program/runningBaseline";
 import { runDoseLine } from "@/lib/runDose";
 import { smallPlatesHint } from "@/lib/liftRules";
 import { liftUnitForBodyWeight } from "@/lib/liftLoad";
@@ -300,6 +304,13 @@ export default function Onboarding() {
   const [recentRaceSeconds, setRecentRaceSeconds] = useState(
     draft?.recentRaceSeconds ?? ""
   );
+  // R5: the running a race plan starts from.
+  const [runningWeekMinutes, setRunningWeekMinutes] = useState(
+    draft?.runningWeekMinutes ?? ""
+  );
+  const [runningLongestMinutes, setRunningLongestMinutes] = useState(
+    draft?.runningLongestMinutes ?? ""
+  );
   const [injuries, setInjuries] = useState<string[]>(draft?.injuries ?? []);
   const [gender, setGender] = useState<OnboardingDraft["gender"]>(
     draft?.gender ?? "unspecified"
@@ -371,6 +382,8 @@ export default function Onboarding() {
       recentRaceDistance,
       recentRaceMinutes,
       recentRaceSeconds,
+      runningWeekMinutes,
+      runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
       reminderOn,
@@ -414,6 +427,8 @@ export default function Onboarding() {
       recentRaceDistance,
       recentRaceMinutes,
       recentRaceSeconds,
+      runningWeekMinutes,
+      runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
       reminderOn,
@@ -514,6 +529,35 @@ export default function Onboarding() {
   );
   const recentRaceBenchmark =
     recentRace && !("error" in recentRace) ? recentRace : null;
+  /* R5: someone who runs already, setting up a race plan, says how much
+     they run, and the plan starts there. Someone new to running starts
+     with the run-walk weeks instead. */
+  const askRunningNow =
+    runConfirmed &&
+    runMode === "race_prep" &&
+    (runFrequency === "occasional" || runFrequency === "regular");
+  const runningStart = useMemo<RunningBaseline | null>(
+    () =>
+      askRunningNow
+        ? {
+            version: 1,
+            experience: runFrequency === "regular" ? "regular" : "building",
+            weeklyMinutes: Number(runningWeekMinutes || NaN),
+            longestRunMinutes: Number(runningLongestMinutes || NaN),
+            confirmedAt: currentDate,
+            source: "self_reported",
+          }
+        : null,
+    [
+      askRunningNow,
+      runFrequency,
+      runningWeekMinutes,
+      runningLongestMinutes,
+      currentDate,
+    ]
+  );
+  const runningStartValid =
+    runningStart === null || isRunningBaseline(runningStart);
   const plan = useMemo(
     () =>
       buildOnboardingPlan(
@@ -539,7 +583,10 @@ export default function Onboarding() {
         goalPlan.fitnessGoal,
         currentDate,
         {
-          runningBaseline: profile?.runningBaseline ?? null,
+          runningBaseline:
+            runningStart && runningStartValid
+              ? runningStart
+              : (profile?.runningBaseline ?? null),
           runTimeLimits: profile?.runTimeLimits,
           runFitness: recentRaceBenchmark ?? profile?.runFitness,
         }
@@ -565,6 +612,8 @@ export default function Onboarding() {
       goalPlan.fitnessGoal,
       currentDate,
       profile?.runningBaseline,
+      runningStart,
+      runningStartValid,
       profile?.runTimeLimits,
       recentRaceBenchmark,
       profile?.runFitness,
@@ -598,6 +647,7 @@ export default function Onboarding() {
         liftDays: daysPerWeek,
         weeklyRunDays,
         newRunnerUntil: newRunnerUntil(runFrequency, currentDate),
+        runningBaseline: runningStartValid ? runningStart : null,
       }),
     [
       raceDistance,
@@ -606,6 +656,8 @@ export default function Onboarding() {
       daysPerWeek,
       weeklyRunDays,
       runFrequency,
+      runningStart,
+      runningStartValid,
     ]
   );
   /* The name step is the last; the word filter loads from the first, and
@@ -630,7 +682,8 @@ export default function Onboarding() {
         racePreview.status === "empty" ||
         raceEntry === undefined)
     ) &&
-    !(recentRace && "error" in recentRace);
+    !(recentRace && "error" in recentRace) &&
+    runningStartValid;
   const validBody =
     ageConfirmed &&
     bodyAnswered &&
@@ -1329,6 +1382,60 @@ export default function Onboarding() {
                           aria-invalid={racePreview.status === "invalid"}
                         />
                       </label>
+                      {askRunningNow && runningStart && (
+                        <div className="space-y-2">
+                          <p className="text-sm">Your running now</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            {(
+                              [
+                                {
+                                  key: "weeklyMinutes",
+                                  label: "Minutes a week",
+                                  value: runningWeekMinutes,
+                                  set: setRunningWeekMinutes,
+                                },
+                                {
+                                  key: "longestRunMinutes",
+                                  label: "Longest run, min",
+                                  value: runningLongestMinutes,
+                                  set: setRunningLongestMinutes,
+                                },
+                              ] as const
+                            ).map((field) => (
+                              <label
+                                key={field.key}
+                                className="block space-y-1 text-sm"
+                              >
+                                <span className="text-muted-foreground">
+                                  {field.label}
+                                </span>
+                                <input
+                                  inputMode="numeric"
+                                  className="ds-input min-h-11 w-full font-mono tabular-nums"
+                                  value={field.value}
+                                  aria-invalid={
+                                    field.value !== "" && !runningStartValid
+                                  }
+                                  onChange={(event) =>
+                                    field.set(
+                                      event.target.value
+                                        .replace(/\D/g, "")
+                                        .slice(0, 4)
+                                    )
+                                  }
+                                />
+                              </label>
+                            ))}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {runningWeekMinutes !== "" &&
+                            runningLongestMinutes !== "" &&
+                            !runningStartValid
+                              ? "The longest run is part of the week, so it can't be more, and each is at least 10 min."
+                              : "The plan starts from here and builds a step a week towards the race."}
+                          </p>
+                        </div>
+                      )}
                       {racePreview.status === "empty" ? (
                         <p className="text-sm text-muted-foreground">
                           Pick your race date, or choose Free running to start

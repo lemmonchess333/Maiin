@@ -652,7 +652,7 @@ describe("a race needs a date", () => {
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
   });
 
-  it("releases it once a date is given, and the race or on your own answered", () => {
+  it("releases it once a date, the race or on your own, and the running it starts from are given", () => {
     reachRunningPlan();
     fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
     fireEvent.change(screen.getByLabelText("Race target date"), {
@@ -666,6 +666,37 @@ describe("a race needs a date", () => {
       );
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     fireEvent.click(screen.getByRole("radio", { name: "On my own" }));
+    // R5: someone who runs already says how much, and the plan starts there.
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Minutes a week"), {
+      target: { value: "60" },
+    });
+    fireEvent.change(screen.getByLabelText("Longest run, min"), {
+      target: { value: "90" },
+    });
+    // The longest run is part of the week.
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    expect(
+      screen.getByText(/The longest run is part of the week/)
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Longest run, min"), {
+      target: { value: "30" },
+    });
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("doesn't ask someone new to running, whose plan starts with run-walk", () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
+    fireEvent.change(screen.getByLabelText("Race target date"), {
+      target: { value: "2027-06-01" },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "On my own" }));
+    expect(screen.queryByLabelText("Minutes a week")).toBeNull();
     expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
   });
 
@@ -1105,7 +1136,7 @@ describe("setup, by the names the journeys use", () => {
   const next = () =>
     fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
 
-  it("reaches Go to Today, with every answer the journeys give on its screen", () => {
+  it("reaches Go to Today, with every answer the journeys give on its screen", async () => {
     open();
     for (const aim of SETUP_OPTIONS.aims)
       expect(button(aim)).toBeInTheDocument();
@@ -1160,6 +1191,12 @@ describe("setup, by the names the journeys use", () => {
         name: SETUP.raceEntered,
       })
     );
+    fireEvent.change(screen.getByLabelText(SETUP.weekMinutes), {
+      target: { value: "150" },
+    });
+    fireEvent.change(screen.getByLabelText(SETUP.longestRun), {
+      target: { value: "60" },
+    });
     expect(
       screen.getByRole("switch", { name: SETUP.legTrim })
     ).toBeInTheDocument();
@@ -1197,7 +1234,21 @@ describe("setup, by the names the journeys use", () => {
     );
     next();
 
-    expect(screen.getByRole("button", { name: SETUP.start })).toBeEnabled();
+    // The name waits for the word filter, which loads from the first step.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: SETUP.start })).toBeEnabled()
+    );
+    // R5: the race plan starts from the running given.
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete.mock.calls[0][0].profileData.runningBaseline).toMatchObject(
+      {
+        experience: "regular",
+        weeklyMinutes: 150,
+        longestRunMinutes: 60,
+        source: "self_reported",
+      }
+    );
   });
 });
 
