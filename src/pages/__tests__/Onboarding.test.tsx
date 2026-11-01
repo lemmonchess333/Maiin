@@ -7,7 +7,15 @@ import {
   within,
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
+import {
+  beforeAll,
+  beforeEach,
+  afterEach,
+  describe,
+  it,
+  expect,
+  vi,
+} from "vitest";
 import Onboarding from "../Onboarding";
 import {
   saveOnboardingDraft,
@@ -17,6 +25,7 @@ import {
 import * as planning from "@/lib/onboardingPlan";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
+import { loadWordFilter } from "@/lib/wordFilter";
 import { SETUP, SETUP_OPTIONS } from "@/test/journeyScreens";
 import {
   addLocalDays,
@@ -86,6 +95,14 @@ const open = () =>
       <LocationProbe />
     </MemoryRouter>
   );
+/* The word filter as a session that has reached the review holds it:
+   setup starts loading it on the first step, and the review's button
+   waits for it. Loaded once here, so no test depends on an earlier one
+   having loaded it (unit-shuffle seed 5 ran "preserves the goal through
+   kg, lb, stone, and kg" first, and its Go to Today never committed). */
+beforeAll(async () => {
+  await loadWordFilter();
+});
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
@@ -1356,5 +1373,82 @@ describe("what each answer changes (FV3)", () => {
     });
     expect(target()).toHaveTextContent(/To lose about 0\.5 kg a week/);
     expect(target().textContent).not.toBe(holding);
+  });
+});
+
+/* Lose fat asks for the weight it is aiming at, below the weight now (A5
+   STATUS 2026-11-01): left empty, the plan started at maintenance. */
+describe("Lose fat and the goal weight", () => {
+  const goalWeight = () => screen.getByLabelText(/Goal weight/);
+  const backToReview = () =>
+    screen.getByRole("button", { name: "Back to review" });
+  const aimLower = "To lose fat, aim more than 1 kg below your weight now.";
+
+  it("holds the plan until the goal is more than 1 kg below the weight now", async () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      primaryGoal: "fat_loss",
+      bodyAnswered: true,
+    });
+    open();
+    expect(screen.getByRole("button", { name: "Go to Today" })).toBeDisabled();
+    expect(
+      screen.getByText("Check the answers above before creating your plan.")
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit about you" }));
+    expect(screen.queryByText("(optional)")).not.toBeInTheDocument();
+    expect(goalWeight()).toHaveAttribute("aria-required", "true");
+    expect(
+      screen.getByText("To lose fat, enter the weight you’re aiming for.")
+    ).toBeInTheDocument();
+    expect(backToReview()).toBeDisabled();
+
+    // 81.5 kg now: 81 is within the 1 kg that holds the weight, 90 is a gain.
+    for (const value of ["81", "90"]) {
+      fireEvent.change(goalWeight(), { target: { value } });
+      expect(screen.getByRole("alert")).toHaveTextContent(aimLower);
+      expect(goalWeight()).toHaveAttribute("aria-invalid", "true");
+      expect(backToReview()).toBeDisabled();
+    }
+
+    fireEvent.change(goalWeight(), { target: { value: "75" } });
+    expect(screen.queryByText(aimLower)).not.toBeInTheDocument();
+    expect(goalWeight()).toHaveAttribute("aria-invalid", "false");
+    fireEvent.click(backToReview());
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const payload = complete.mock.calls[0][0].profileData;
+    expect(payload.goalWeightKg).toBe(75);
+    expect(payload.weeklyRateKg).toBeLessThan(0);
+  });
+
+  it("says the margin in pounds for a pounds user", () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      primaryGoal: "fat_loss",
+      bodyAnswered: true,
+      weightUnit: "lbs",
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit about you" }));
+    fireEvent.change(goalWeight(), { target: { value: "180" } });
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "To lose fat, aim more than 2.2 lb below your weight now."
+    );
+  });
+
+  it("stays optional for every other goal", async () => {
+    saveOnboardingDraft("setup-test", { ...draft, bodyAnswered: true });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit about you" }));
+    expect(screen.getByText("(optional)")).toBeInTheDocument();
+    expect(
+      screen.getByText("Leave it empty to hold your current weight.")
+    ).toBeInTheDocument();
+    fireEvent.click(backToReview());
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete.mock.calls[0][0].profileData.weeklyRateKg).toBe(0);
   });
 });

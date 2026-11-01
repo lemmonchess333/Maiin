@@ -304,6 +304,9 @@ export interface SetupAnswers {
   equipment?: SetupOption<"equipment">;
   experience?: SetupOption<"experience">;
   weightKg: number;
+  /** Required by Lose fat, more than 1 kg under `weightKg` (A5 STATUS
+   *  2026-11-01); optional for every other aim. */
+  goalWeightKg?: number;
   heightCm: number;
   sex: SetupOption<"sexes">;
   age: SetupOption<"ages">;
@@ -417,6 +420,10 @@ export async function setUpPlan(
     .getByRole("radiogroup", { name: SETUP.age })
     .getByRole("radio", { name: answers.age, exact: true })
     .click();
+  if (answers.goalWeightKg !== undefined)
+    await page
+      .locator("#onboarding-goal-weight")
+      .fill(String(answers.goalWeightKg));
   await next(page);
 
   await button(page, SETUP.start).click();

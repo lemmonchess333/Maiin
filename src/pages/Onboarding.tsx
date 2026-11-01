@@ -7,7 +7,10 @@ import { setDocGuarded } from "@/lib/firestoreWrite";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
-import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
+import {
+  MAINTAIN_DEADBAND_KG,
+  resolveGoalWeightPlan,
+} from "@/lib/goalWeightPlan";
 import { HEIGHT_CM, WEIGHT_KG, formatHeight } from "@/lib/bodyMetrics";
 import { logger } from "@/lib/logger";
 import Button from "@/components/ui/Button";
@@ -467,6 +470,16 @@ export default function Onboarding() {
       }),
     [weightKg, goalWeightKgInput, paceKgPerWeek]
   );
+  /* Lose fat asks for the weight it is aiming at, below the weight now
+     (A5 STATUS 2026-11-01). Left empty, the plan started at maintenance,
+     the aim and the calories disagreeing; every other goal keeps the box
+     optional. The target still sets the direction (goalWeightPlan). */
+  const goalWeightRequired = primaryGoal === "fat_loss";
+  const goalWeightMissing = goalWeightRequired && goalWeightText.trim() === "";
+  const goalWeightNotBelow =
+    goalWeightRequired &&
+    goalWeightKgInput !== null &&
+    goalPlan.direction !== "lose";
   const paceLabel = (kg: number) =>
     weightUnit === "lbs"
       ? `${Math.round(kg * 2.20462 * 2) / 2} lb`
@@ -624,6 +637,8 @@ export default function Onboarding() {
     ageRange !== "under-16" &&
     metricsValid &&
     !goalWeightInvalid &&
+    !goalWeightMissing &&
+    !goalWeightNotBelow &&
     weightKg >= WEIGHT_KG.min &&
     weightKg <= WEIGHT_KG.max &&
     heightCm >= HEIGHT_CM.min &&
@@ -1714,10 +1729,15 @@ export default function Onboarding() {
                   htmlFor="onboarding-goal-weight"
                   className="block text-base font-semibold"
                 >
-                  Goal weight{" "}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    (optional)
-                  </span>
+                  Goal weight
+                  {!goalWeightRequired && (
+                    <>
+                      {" "}
+                      <span className="text-sm font-normal text-muted-foreground">
+                        (optional)
+                      </span>
+                    </>
+                  )}
                 </label>
                 {/* The field is 8rem wide, 256px at double text: it may
                     shrink below that so the unit beside it stays on a 320px
@@ -1728,11 +1748,16 @@ export default function Onboarding() {
                     inputMode="decimal"
                     className="ds-input w-32 min-w-0 min-h-11 font-mono tabular-nums"
                     value={goalWeightText}
-                    aria-invalid={goalWeightInvalid}
+                    aria-required={goalWeightRequired}
+                    aria-invalid={
+                      goalWeightInvalid || (bodyAnswered && goalWeightNotBelow)
+                    }
                     aria-describedby={
                       goalWeightInvalid
                         ? "onboarding-goal-weight-error"
-                        : undefined
+                        : bodyAnswered && goalWeightNotBelow
+                          ? "onboarding-goal-weight-direction"
+                          : undefined
                     }
                     placeholder={formatWeightInUnit(weightKg, weightUnit)}
                     onChange={(event) => setGoalWeightText(event.target.value)}
@@ -1752,10 +1777,23 @@ export default function Onboarding() {
                     </InlineNumerals>
                   </p>
                 )}
-                {goalPlan.direction === "maintain" ? (
+                {goalWeightNotBelow ? (
+                  // Judged against the weight entered, so it waits for one.
+                  bodyAnswered && (
+                    <p
+                      id="onboarding-goal-weight-direction"
+                      role="alert"
+                      className="text-sm text-destructive-strong"
+                    >
+                      <InlineNumerals>
+                        {`To lose fat, aim more than ${weightUnit === "lbs" ? `${Number(kgToLb(MAINTAIN_DEADBAND_KG).toFixed(1))} lb` : `${MAINTAIN_DEADBAND_KG} kg`} below your weight now.`}
+                      </InlineNumerals>
+                    </p>
+                  )
+                ) : goalPlan.direction === "maintain" ? (
                   <p className="text-sm text-muted-foreground">
-                    {primaryGoal === "fat_loss"
-                      ? "To lose fat, enter the weight you’re aiming for. Empty holds your current weight."
+                    {goalWeightRequired
+                      ? "To lose fat, enter the weight you’re aiming for."
                       : "Leave it empty to hold your current weight."}
                   </p>
                 ) : (
@@ -1774,7 +1812,7 @@ export default function Onboarding() {
                     tone="lifting"
                   />
                 )}
-                {goalPlan.direction !== "maintain" && (
+                {goalPlan.direction !== "maintain" && !goalWeightNotBelow && (
                   <p className="text-sm text-muted-foreground">
                     {goalPlan.direction === "lose" ? "Lose" : "Gain"} about{" "}
                     {paceLabel(paceKgPerWeek)} a week.
