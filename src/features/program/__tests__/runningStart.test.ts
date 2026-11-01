@@ -18,7 +18,7 @@ import { isRunDayComplete } from "@/lib/scheduledRunCompletion";
 import type { UserProfile } from "@/lib/auth";
 import { runningClimb, type RunningBaseline } from "../runningBaseline";
 import { baselineFromRecentRunning } from "../runningStartDraft";
-import { isWeekDone, recentRunning } from "../recentRunWeeks";
+import { isWeekDone, recentRunning } from "../layoffDetection";
 import { generateRacePlanV2 } from "../runScheduler";
 import { plannedRunMinutes } from "../runTimeLimits";
 import { buildPlan, type PlanBuilderInput } from "../planBuilder";
@@ -382,14 +382,23 @@ describe("the climb from what was done, at the runner's own pace", () => {
     expect(recent.longestMinutes).toBeCloseTo(25.27, 1);
     expect(recent.paceSPerKm).toBeCloseTo((1516 + 600) / 4.05, 0);
     expect(recent.longestKm).toBeCloseTo(2.85, 2);
-    // The week of 28 October ran 10 minutes besides its longest.
+    // The week of 28 October ran 10 minutes besides its longest, in two
+    // runs, so it was done.
     expect(recent.otherMinutes).toBeCloseTo(10, 5);
+    expect(recent.lastWeekDone).toBe(true);
     expect(recentRunning(runs, SUNDAY)).toEqual({
       longestMinutes: null,
       longestKm: null,
       otherMinutes: null,
       paceSPerKm: null,
+      lastWeekDone: false,
     });
+    expect(
+      recentRunning(
+        [...runs, { date: "2026-11-08", distance: 2400, duration: 1200 }],
+        "2026-11-09"
+      ).lastWeekDone
+    ).toBe(true);
   });
 
   it("sizes the long-run rungs at the recent runs' pace, so 6 km waits for a 50-minute run", () => {

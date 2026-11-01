@@ -23,8 +23,12 @@ import {
 } from "@/lib/dateHelpers";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import type { DatedRun, LayoffClass } from "./layoffDetection";
-import { isWeekDone, recentRunning } from "./recentRunWeeks";
+import {
+  recentPace,
+  recentRunning,
+  type DatedRun,
+  type LayoffClass,
+} from "./layoffDetection";
 import type { RunPlan, ScheduledRunDay } from "./programTypes";
 import { HARD_RUN_TYPES } from "./programTypes";
 import { newRunnerTemplate } from "./newRunner";
@@ -1234,9 +1238,6 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       weeks: [],
     };
   }
-  /** Run20 (5): the day a new runner's first weeks end. */
-  const newRunnerUntil = input.newRunnerUntil ?? null;
-
   // Run22: the sizes the ramp gives the last build week's easy run and
   // medium-long run. A stepped taper week takes its shares of the minutes
   // that week holds (`taperBuild`), which are these where no fit shortened
@@ -1272,9 +1273,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
      block's earlier weeks too, so a ladder starts at its first rung when the
      six weeks are over (Run20 (4)). */
   const isNewRunnerWeek = (blockWeek: number) =>
-    !!newRunnerUntil &&
+    !!input.newRunnerUntil &&
     localDateString(addLocalDays(weekStartDate, (blockWeek - startIndex) * 7)) <
-      newRunnerUntil;
+      input.newRunnerUntil;
   /** Run23: how far up the long-run ladder the block's weeks have climbed. */
   const climb: LongRunClimb = new Map();
   /** Week `w` of the block, before the fits below (`fittedWeek`). A week
@@ -1806,13 +1807,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
      recent runs' own, so a long run's rung is the minutes it takes this
      runner; the template's minutes with neither. It sizes the climb alone:
      prescriptions keep the confirmed pace only (RUN-EV-08). */
-  const recent = input.recentRuns
-    ? recentRunning(
-        input.recentRuns,
-        localDateString(addLocalDays(parseLocalDate(input.currentDate), 1))
-      )
-    : null;
-  const climbPace = input.easyPaceSPerKm ?? recent?.paceSPerKm ?? null;
+  const climbPace =
+    input.easyPaceSPerKm ??
+    (input.recentRuns && recentPace(input.recentRuns, input.currentDate));
   /** A week of the block as the plan holds it: every fit applied, and the
    *  clash flag. */
   const fittedWeek = (week: ScheduledRunDay[]): ScheduledRunDay[] => {
@@ -1829,7 +1826,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           : newRunnerTemplate(
               row.templateId,
               row.weekKey ?? "",
-              newRunnerUntil,
+              input.newRunnerUntil,
               input.easyPaceSPerKm
             );
       return next ? { ...row, templateId: next.id, type: next.type } : row;
@@ -1851,13 +1848,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             isStepBack: isStepBackWeek,
             done:
               input.recentRuns && weekKey === thisWeekKey
-                ? {
-                    ...recentRunning(input.recentRuns, weekKey),
-                    lastWeekDone: isWeekDone(
-                      input.recentRuns,
-                      localDateString(addLocalDays(parseLocalDate(weekKey), -7))
-                    ),
-                  }
+                ? recentRunning(input.recentRuns, weekKey)
                 : null,
           })
         : null,
