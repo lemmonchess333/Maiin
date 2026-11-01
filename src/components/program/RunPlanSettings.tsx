@@ -5,11 +5,13 @@ import {
   PLAN_SAVES_TOO_OFTEN,
 } from "@/lib/callableErrors";
 import {
-  baselineFromRecentRunning,
-  blankRunningStart,
   isRunningBaseline,
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
+import {
+  baselineFromRecentRunning,
+  blankRunningStart,
+} from "@/features/program/runningStartDraft";
 import { isNonRaceGoal, type NonRaceGoal } from "@/lib/nonRaceGoal";
 import RunningBaselineSettings from "@/components/run/RunningBaselineSettings";
 import { useRunningStats } from "@/hooks/useRunningStats";

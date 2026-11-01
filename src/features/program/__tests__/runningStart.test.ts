@@ -17,11 +17,11 @@ import { claimMapFor } from "@/lib/runClaims";
 import { isRunDayComplete } from "@/lib/scheduledRunCompletion";
 import type { UserProfile } from "@/lib/auth";
 import {
-  baselineFromRecentRunning,
   newRunnerUntilFromBaseline,
   runningClimb,
   type RunningBaseline,
 } from "../runningBaseline";
+import { baselineFromRecentRunning } from "../runningStartDraft";
 import { generateRacePlanV2 } from "../runScheduler";
 import { plannedRunMinutes } from "../runTimeLimits";
 import { buildPlan, type PlanBuilderInput } from "../planBuilder";

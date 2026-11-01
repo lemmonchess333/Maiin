@@ -2,10 +2,10 @@ import { useState } from "react";
 import RecentRunningContext from "./RecentRunningContext";
 import { localDateString } from "@/lib/dateHelpers";
 import {
-  blankRunningStart,
   isRunningBaseline,
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
+import { blankRunningStart } from "@/features/program/runningStartDraft";
 import type { RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import Button from "@/components/ui/Button";
 import InlineNumerals from "@/components/ui/InlineNumerals";
