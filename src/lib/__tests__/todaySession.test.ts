@@ -563,6 +563,25 @@ describe("todaySession — what a rest day offers", () => {
     ).toEqual({ kind: "first-meal" });
   });
 
+  it("keeps a version 2 starter goal's rest day, as a race plan's (Run9)", () => {
+    const starterProfile = profileWith(
+      { 5: "run" },
+      {
+        athleteType: "Runner",
+        runMode: "starter",
+        activationJourneyVersion: 2,
+      }
+    );
+    const plan = programStateWith({
+      runDays: [{ ...runDay(FRIDAY), templateId: "run_walk_1" }],
+    });
+    const session = todaySession(
+      newAccount({ profile: starterProfile, programState: plan })
+    );
+    expect(session.rest?.kind).toBe("rest");
+    expect(session.run).toBeNull();
+  });
+
   it("otherwise a rest day, with nothing tomorrow when tomorrow rests too", () => {
     expect(todaySession(input()).rest).toEqual({
       kind: "rest",
