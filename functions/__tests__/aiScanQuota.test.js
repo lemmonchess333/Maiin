@@ -9,10 +9,9 @@
  *   4. Pro user + text_ai: 100/day server-side cap.
  *   5. Counters are SEPARATE — burning text_ai doesn't affect
  *      image_ai (lock pin #7).
- *   6. Window rolls over when the user's local date changes (lock
- *      pin #2 — local midnight reset, timezone-aware).
- *   7. resolveDayKey falls back to UTC when timezone is missing or
- *      invalid (fail-closed).
+ *   6. Window rolls over when the UTC date changes, and only then: the
+ *      client-written `timezone` on the user doc cannot move it.
+ *   7. quotaDayKey is the UTC date, whatever the profile's timezone.
  *   8. Trial user (subscriptionTier="pro" via webhook) gets Pro
  *      limits — `computeEffectiveTier` handles this, no separate
  *      branch needed.
@@ -27,6 +26,7 @@ import { describe, it, expect, vi } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
+const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 
 // Light Firestore stub — same shape as our other helper tests.
 // `userData` and `usageData` are the fixture-injected current state;
@@ -210,33 +210,13 @@ describe("checkDailyAiQuota", () => {
     expect(result.remaining).toBe(99);
   });
 
-  it("Cycle 6 (timezone): user in Pacific/Auckland gets midnight reset 12h ahead of UTC user", async () => {
-    const { checkDailyAiQuota, resolveDayKey } = require("../lib/aiScanQuota");
-    // 2026-05-25T11:00:00Z is 2026-05-25T23:00 in Auckland (UTC+12)
-    // and 2026-05-25T11:00 in UTC. Both should map to "2026-05-25".
-    expect(
-      resolveDayKey("Pacific/Auckland", new Date("2026-05-25T11:00:00Z"))
-    ).toBe("2026-05-25");
-    expect(resolveDayKey(undefined, new Date("2026-05-25T11:00:00Z"))).toBe(
-      "2026-05-25"
-    );
-
-    // 2026-05-25T13:00:00Z is 2026-05-26T01:00 in Auckland (next day)
-    // but still 2026-05-25 in UTC.
-    expect(
-      resolveDayKey("Pacific/Auckland", new Date("2026-05-25T13:00:00Z"))
-    ).toBe("2026-05-26");
-    expect(resolveDayKey(undefined, new Date("2026-05-25T13:00:00Z"))).toBe(
-      "2026-05-25"
-    );
-
-    // Auckland user, midnight-just-passed local. Stored count for
-    // "2026-05-25" should be ignored because today is "2026-05-26".
+  it("Cycle 6 (UTC day): a zone ahead of UTC does not reset at its own midnight", async () => {
+    const { checkDailyAiQuota, quotaDayKey } = require("../lib/aiScanQuota");
+    // 2026-05-25T13:00:00Z is 01:00 on the 26th in Auckland, and still the
+    // 25th in UTC: the count from the 25th stands.
+    expect(quotaDayKey(new Date("2026-05-25T13:00:00Z"))).toBe("2026-05-25");
     const { firestore } = makeFirestoreStub({
-      userData: {
-        subscriptionTier: "pro",
-        timezone: "Pacific/Auckland",
-      },
+      userData: { subscriptionTier: "pro", timezone: "Pacific/Auckland" },
       usageData: { text_ai: { day: "2026-05-25", count: 100 } },
     });
     const result = await checkDailyAiQuota(firestore, {
@@ -244,21 +224,67 @@ describe("checkDailyAiQuota", () => {
       action: "text_ai",
       now: new Date("2026-05-25T13:00:00Z"),
     });
-    expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(99);
+    expect(result.allowed).toBe(false);
   });
 
-  it("Cycle 7: invalid timezone falls back to UTC (fail-closed, not silent-grant)", () => {
-    const { resolveDayKey } = require("../lib/aiScanQuota");
-    expect(
-      resolveDayKey("Not/A/Real/Zone", new Date("2026-05-25T11:00:00Z"))
-    ).toBe("2026-05-25");
-    expect(resolveDayKey("", new Date("2026-05-25T11:00:00Z"))).toBe(
+  it("Cycle 6 (UTC day): changing timezone does not reset the count; a new UTC day does", async () => {
+    const { checkDailyAiQuota } = require("../lib/aiScanQuota");
+    // Pacific/Kiritimati (UTC+14) and Pacific/Pago_Pago (UTC-11) never
+    // share a date: at 12:00 UTC one is on the 26th, the other the 25th.
+    const db = memoryFirestore({
+      "users/uid_hopper": {
+        subscriptionTier: "pro",
+        timezone: "Pacific/Kiritimati",
+      },
+    });
+    const scan = (now) =>
+      checkDailyAiQuota(db, { uid: "uid_hopper", action: "image_ai", now });
+    const noon = new Date("2026-05-25T12:00:00Z");
+    for (let i = 0; i < 100; i++) {
+      expect((await scan(noon)).allowed).toBe(true);
+    }
+    expect((await scan(noon)).allowed).toBe(false);
+    for (const zone of ["Pacific/Pago_Pago", "Pacific/Kiritimati"]) {
+      db.data.set("users/uid_hopper", {
+        subscriptionTier: "pro",
+        timezone: zone,
+      });
+      // Before: each switch moved the day key, and the count restarted.
+      expect((await scan(noon)).allowed).toBe(false);
+    }
+    expect(db.data.get("scanUsage/uid_hopper").image_ai).toEqual({
+      day: "2026-05-25",
+      count: 100,
+    });
+    // 00:00 UTC is the one thing that starts a fresh count.
+    const next = await scan(new Date("2026-05-26T00:00:00Z"));
+    expect(next).toMatchObject({ allowed: true, remaining: 99 });
+    expect(db.data.get("scanUsage/uid_hopper").image_ai).toEqual({
+      day: "2026-05-26",
+      count: 1,
+    });
+  });
+
+  it("Cycle 7: quotaDayKey is the UTC date, whatever zone the profile names", () => {
+    const { quotaDayKey } = require("../lib/aiScanQuota");
+    expect(quotaDayKey(new Date("2026-05-25T00:00:00Z"))).toBe("2026-05-25");
+    expect(quotaDayKey(new Date("2026-05-25T23:59:59.999Z"))).toBe(
       "2026-05-25"
     );
-    expect(resolveDayKey(null, new Date("2026-05-25T11:00:00Z"))).toBe(
-      "2026-05-25"
-    );
+    expect(quotaDayKey(new Date("2026-05-26T00:00:00Z"))).toBe("2026-05-26");
+  });
+
+  it("Cycle 7: the usage doc no longer carries the profile's timezone", async () => {
+    const { checkDailyAiQuota } = require("../lib/aiScanQuota");
+    const { firestore, writes } = makeFirestoreStub({
+      userData: { subscriptionTier: "pro", timezone: "Europe/London" },
+    });
+    await checkDailyAiQuota(firestore, {
+      uid: "uid_ivy",
+      action: "text_ai",
+      now: new Date("2026-05-25T15:00:00Z"),
+    });
+    expect(writes[0].data).not.toHaveProperty("timezone");
   });
 
   it("Cycle 8: trial user (subscriptionTier=pro via webhook) gets Pro limits — no extra branch", async () => {
