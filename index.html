@@ -30,6 +30,12 @@
          blocks all analytics delivery. Native iOS analytics doesn't
          touch the web CSP (it goes through the native SDK).
 
+         App Check's reCAPTCHA loads api.js from www.google.com/recaptcha/
+         and its release scripts from www.gstatic.com/recaptcha/, so
+         script-src names those two paths and no more of either host. The
+         service workers' importScripts of firebasejs from www.gstatic.com
+         answer to the worker's own policy, not this page's.
+
          connect-src carries https://raw.githubusercontent.com because
          src/lib/exerciseDemo.ts fetches the free-exercise-db catalogue
          and its images from that host for the exercise guide.
@@ -70,7 +76,7 @@
       http-equiv="Content-Security-Policy"
       content="
       default-src 'self';
-      script-src 'self' https://www.googletagmanager.com https://apis.google.com https://www.gstatic.com https://www.google.com/recaptcha/;
+      script-src 'self' https://www.googletagmanager.com https://apis.google.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/;
       style-src 'self' 'unsafe-inline';
       font-src 'self';
       img-src 'self' data: blob: https://*.appspot.com https://*.googleapis.com https://lh3.googleusercontent.com https://appleid.cdn-apple.com https://tiles.openfreemap.org https://images.openfoodfacts.org https://www.google-analytics.com https://www.googletagmanager.com;

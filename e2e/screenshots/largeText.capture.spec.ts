@@ -49,6 +49,7 @@ import {
   signInAsTestUser,
 } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
+import { SETUP } from "../../src/test/journeyScreens";
 import { settleCommunity } from "../helpers/settleCommunity";
 import { brokenWords, layoutBreaks } from "../helpers/layoutBreaks";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
@@ -448,6 +449,12 @@ test.describe("large text", () => {
       await page.getByRole("button", { name: /regular runner/i }).click();
       await page.getByRole("radio", { name: /race prep/i }).click();
       await page.getByRole("radio", { name: /^full$/i }).click();
+      // Run9: nothing is chosen for a new goal's event, and setup holds
+      // until it is.
+      await page
+        .getByRole("radiogroup", { name: SETUP.raceEntry })
+        .getByRole("radio", { name: SETUP.raceEntered, exact: true })
+        .click();
       await page
         .getByLabel(/race target date/i)
         .fill(

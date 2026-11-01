@@ -178,3 +178,162 @@ describe("every workflow names its token's permissions", () => {
     expect(missing).toEqual([]);
   });
 });
+
+/** A workflow's jobs, each with its whole text, read from the file's own
+ *  layout (two-space job keys under `jobs:`). */
+function jobTexts(file: string): Map<string, string> {
+  const src = readFileSync(resolve(workflowsDir, file), "utf8").replace(
+    /\r\n/g,
+    "\n"
+  );
+  const body = src.slice(src.search(/^jobs:\s*$/m));
+  const jobs = new Map<string, string>();
+  for (const part of body.split(/^ {2}(?=[\w-]+:\s*$)/m).slice(1)) {
+    jobs.set(part.slice(0, part.indexOf(":")), part);
+  }
+  return jobs;
+}
+
+/** A workflow's jobs, each with its steps' text (six-space step items). */
+function jobsOf(file: string): Map<string, string[]> {
+  return new Map(
+    [...jobTexts(file)].map(([name, text]) => [
+      name,
+      text.split(/^ {6}- /m).slice(1),
+    ])
+  );
+}
+
+/* A dependency's install scripts run with whatever is on the runner's disk.
+   google-github-actions/auth writes the production service account key to
+   a file; the Hosting deploy action writes it too, then runs `npx
+   firebase-tools`. Every install in a deploy job comes before either. */
+describe("deploy jobs install nothing once the service account key is on disk", () => {
+  const deployFiles = workflowFiles.filter((f) => /^deploy-.+\.ya?ml$/.test(f));
+  const KEY_ON_DISK =
+    /uses:\s*(google-github-actions\/auth|FirebaseExtended\/action-hosting-deploy)@/;
+  const INSTALL =
+    /\b(npm (ci|install|i)|npx|yarn|pnpm|pip3? install|pod install)\b/;
+
+  it("finds the deploy jobs that hold the key", () => {
+    const holding = deployFiles.flatMap((file) =>
+      [...jobsOf(file)].filter(([, steps]) =>
+        steps.some((s) => KEY_ON_DISK.test(s))
+      )
+    );
+    expect(holding.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("runs every install before the key is written", () => {
+    const offenders: string[] = [];
+    for (const file of deployFiles) {
+      for (const [job, steps] of jobsOf(file)) {
+        const keyed = steps.findIndex((s) => KEY_ON_DISK.test(s));
+        if (keyed < 0) continue;
+        steps.slice(keyed + 1).forEach((step) => {
+          if (INSTALL.test(step))
+            offenders.push(`${file} ${job}: ${step.split("\n")[0]}`);
+        });
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("gives the Hosting action a CLI it already has, at the pinned version", () => {
+    const [steps] = [...jobsOf("deploy-hosting.yml").values()];
+    const action = steps.findIndex((s) =>
+      /FirebaseExtended\/action-hosting-deploy@/.test(s)
+    );
+    const version = steps[action].match(/firebaseToolsVersion:\s*(\S+)/)?.[1];
+    const pinned = readFileSync(
+      resolve(workflowsDir, "deploy-firestore.yml"),
+      "utf8"
+    ).match(/npm install -g firebase-tools@(\S+)/)?.[1];
+    expect(version).toBe(pinned);
+    const fetched = steps
+      .slice(0, action)
+      .some((s) => s.includes(`npx --yes firebase-tools@${pinned} --version`));
+    expect(fetched).toBe(true);
+  });
+});
+
+/* Every merge to main deploys, and minor and patch bumps auto-merge, so a
+   version update waits a week after its release before Dependabot offers
+   it. Security updates are not subject to the cooldown. */
+describe("Dependabot waits a week before offering a new version", () => {
+  const src = readFileSync(resolve(repoRoot, ".github/dependabot.yml"), "utf8");
+  const entries = src.split(/^ {2}- package-ecosystem:/m).slice(1);
+
+  it("sets a cooldown of at least 7 days on every ecosystem", () => {
+    expect(entries.length).toBeGreaterThanOrEqual(3);
+    for (const entry of entries) {
+      const days = Number(
+        entry.match(/^ {4}cooldown:\s*\n {6}default-days:\s*(\d+)/m)?.[1] ?? 0
+      );
+      expect(days, entry.split("\n")[0]).toBeGreaterThanOrEqual(7);
+    }
+  });
+});
+
+/* Release credentials can live in the production environment, where only a
+   job that names it can read them. Every job in any workflow that reads
+   one names it, and no workflow that reads one runs for a pull request,
+   where the environment's main-only branch rule would refuse it. The Pages
+   job keeps its own github-pages environment; and Deploy production
+   passes secrets on with `secrets: inherit`, without which a called
+   workflow's job reads an environment secret as empty. */
+describe("jobs that read release credentials name the production environment", () => {
+  const RELEASE_SECRET =
+    /secrets\.(FIREBASE_SERVICE_ACCOUNT|ASC_API_\w+|IOS_\w+|APPLE_TEAM_ID|VITE_RECAPTCHA_V3_SITE_KEY)\b/;
+  const PRODUCTION = /^ {4}environment: production\s*$/m;
+  const readers = workflowFiles.flatMap((file) =>
+    [...jobTexts(file)]
+      .filter(([, text]) => RELEASE_SECRET.test(text))
+      .map(([job, text]) => ({ file, job, text }))
+  );
+
+  it("finds the deploys, the race-event writers and the rules checks", () => {
+    expect(readers.map((r) => `${r.file} ${r.job}`).sort()).toEqual([
+      "backfill-block-mirror.yml backfill",
+      "deploy-firestore.yml deploy",
+      "deploy-functions.yml deploy",
+      "deploy-hosting.yml build-and-deploy",
+      "deploy-ios.yml testflight",
+      "deploy-storage.yml deploy",
+      "race-date-check.yml refresh",
+      "sync-race-events.yml sync",
+      "verify-production-rules.yml verify",
+    ]);
+  });
+
+  it("leaves no job reading a release credential without it", () => {
+    const offenders = readers
+      .filter((r) => !PRODUCTION.test(r.text))
+      .map((r) => `${r.file} ${r.job}`);
+    expect(offenders).toEqual([]);
+  });
+
+  it("runs none of them for a pull request", () => {
+    const files = [...new Set(readers.map((r) => r.file))];
+    const offenders = files.filter((file) =>
+      /^ {2}pull_request(_target)?:|^on:.*\bpull_request/m.test(
+        readFileSync(resolve(workflowsDir, file), "utf8")
+      )
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("keeps the Pages job on github-pages", () => {
+    const pages = jobTexts("deploy.yml").get("build-and-deploy") ?? "";
+    expect(pages).toMatch(/^ {4}environment:\s*\n {6}name: github-pages\s*$/m);
+  });
+
+  it("passes every secret on to the called deploys", () => {
+    const calls = [...jobTexts("deploy-production.yml").values()].filter((t) =>
+      /^ {4}uses: \.\/\.github\/workflows\//m.test(t)
+    );
+    expect(calls.length).toBe(5);
+    for (const call of calls)
+      expect(call).toMatch(/^ {4}secrets: inherit\s*$/m);
+  });
+});
