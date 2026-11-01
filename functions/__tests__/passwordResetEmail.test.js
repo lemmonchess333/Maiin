@@ -5,6 +5,9 @@ const require = createRequire(import.meta.url);
 const {
   sendPasswordResetEmail,
   resetEmailHtml,
+  readResetEmail,
+  EMAIL_PATTERN,
+  MAX_EMAIL_LENGTH,
 } = require("../lib/passwordResetEmail");
 
 describe("sendPasswordResetEmail", () => {
@@ -58,5 +61,56 @@ describe("sendPasswordResetEmail", () => {
     // Appears at least twice: CTA href + the visible fallback URL.
     expect(html.split("https://x.y/z").length - 1).toBeGreaterThanOrEqual(2);
     expect(html).toContain("Set a new password");
+  });
+});
+
+describe("readResetEmail", () => {
+  it("reads an address, trimmed", () => {
+    expect(readResetEmail({ email: "  alice@example.com " })).toBe(
+      "alice@example.com"
+    );
+    expect(readResetEmail({ email: "a.b+c@mail.example.co.uk" })).toBe(
+      "a.b+c@mail.example.co.uk"
+    );
+  });
+
+  it("refuses what is not an address", () => {
+    for (const email of ["", "alice", "a@b", "a@b.", "@b.com", "a b@c.d"]) {
+      expect(readResetEmail({ email })).toBeNull();
+    }
+    expect(readResetEmail({})).toBeNull();
+    expect(readResetEmail(null)).toBeNull();
+    expect(readResetEmail({ email: ["a@b.com"] })).toBeNull();
+  });
+
+  it("refuses an empty label in the domain", () => {
+    expect(readResetEmail({ email: "a@.b.com" })).toBeNull();
+    expect(readResetEmail({ email: "a@b..com" })).toBeNull();
+  });
+
+  it("takes 254 characters and refuses 255", () => {
+    const at = (n) => `${"a".repeat(64)}@${"b".repeat(n - 64 - 5)}.com`;
+    expect(at(254)).toHaveLength(MAX_EMAIL_LENGTH);
+    expect(readResetEmail({ email: at(254) })).toBe(at(254));
+    expect(readResetEmail({ email: at(255) })).toBeNull();
+  });
+
+  it("checks the length before the pattern", () => {
+    const test = vi.spyOn(RegExp.prototype, "test");
+    try {
+      readResetEmail({ email: `a@${"a.".repeat(200)}@` });
+      expect(test.mock.calls.some(([s]) => String(s).length > 254)).toBe(false);
+    } finally {
+      test.mockRestore();
+    }
+  });
+
+  it("matches in time proportional to length, even past the length check", () => {
+    // Defence in depth: the pattern alone stays fast on the string built
+    // to make an overlapping pattern backtrack. Generous bound for CI.
+    const crafted = `a@${"a.".repeat(200_000)}@`;
+    const started = performance.now();
+    expect(EMAIL_PATTERN.test(crafted)).toBe(false);
+    expect(performance.now() - started).toBeLessThan(2_000);
   });
 });

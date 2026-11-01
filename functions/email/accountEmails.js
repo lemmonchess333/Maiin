@@ -78,9 +78,9 @@ exports.sendViaResend = sendViaResend;
 exports.sendPasswordResetLinkCallable = functions
   .runWith({ ...DEFAULT_HTTP_CAP, secrets: [RESEND_API_KEY] })
   .https.onCall(async (data) => {
-    const email =
-      data && typeof data.email === "string" ? data.email.trim() : "";
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    // Length first, then a pattern that cannot backtrack: see readResetEmail.
+    const email = passwordResetEmail.readResetEmail(data);
+    if (!email) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "A valid email is required."

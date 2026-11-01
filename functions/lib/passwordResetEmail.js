@@ -16,6 +16,32 @@
  * resolves { sent: false } and the caller returns the same neutral response.
  */
 
+/** The longest address mail can carry (RFC 5321's 256-octet path, less its
+ *  angle brackets). Checked before the pattern, so a long string costs one
+ *  length read and nothing else. */
+const MAX_EMAIL_LENGTH = 254;
+
+/** something@label.label…: the domain is labels joined by single dots, and
+ *  no part can match a dot, an @ or a space where the next part starts. So
+ *  any string matches in at most one way, and the check takes time in
+ *  proportion to its length. A pattern whose parts overlap, such as
+ *  `[^@\s]+\.[^@\s]+` (the first part can take dots too), tries every
+ *  split of a string built to fail, which keeps an instance busy for
+ *  minutes at a few hundred kilobytes. */
+const EMAIL_PATTERN = /^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/;
+
+/**
+ * The address from a reset request, trimmed, or null when there is none or
+ * it is not an address. The callable is unauthenticated, so this is the
+ * first thing it does with anything a caller sends.
+ */
+function readResetEmail(data) {
+  const email =
+    data && typeof data.email === "string" ? data.email.trim() : "";
+  if (!email || email.length > MAX_EMAIL_LENGTH) return null;
+  return EMAIL_PATTERN.test(email) ? email : null;
+}
+
 /** Branded HTML for the reset email. Inline styles — email clients strip
  *  <style>/CSS classes. Dark card on light bg, purple CTA (brand). */
 function resetEmailHtml(link, appName) {
@@ -80,4 +106,10 @@ async function sendPasswordResetEmail({
   return { sent: true };
 }
 
-module.exports = { sendPasswordResetEmail, resetEmailHtml };
+module.exports = {
+  sendPasswordResetEmail,
+  resetEmailHtml,
+  readResetEmail,
+  EMAIL_PATTERN,
+  MAX_EMAIL_LENGTH,
+};
