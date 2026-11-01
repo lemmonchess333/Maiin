@@ -7,7 +7,15 @@ import {
   within,
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
+import {
+  beforeAll,
+  beforeEach,
+  afterEach,
+  describe,
+  it,
+  expect,
+  vi,
+} from "vitest";
 import Onboarding from "../Onboarding";
 import {
   saveOnboardingDraft,
@@ -17,6 +25,7 @@ import {
 import * as planning from "@/lib/onboardingPlan";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
+import { loadWordFilter } from "@/lib/wordFilter";
 import { SETUP, SETUP_OPTIONS } from "@/test/journeyScreens";
 import {
   addLocalDays,
@@ -86,6 +95,14 @@ const open = () =>
       <LocationProbe />
     </MemoryRouter>
   );
+/* The word filter as a session that has reached the review holds it:
+   setup starts loading it on the first step, and the review's button
+   waits for it. Loaded once here, so no test depends on an earlier one
+   having loaded it (unit-shuffle seed 5 ran "preserves the goal through
+   kg, lb, stone, and kg" first, and its Go to Today never committed). */
+beforeAll(async () => {
+  await loadWordFilter();
+});
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
