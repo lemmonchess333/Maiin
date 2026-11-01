@@ -231,10 +231,9 @@ const eligibleRuns = (runs: readonly DatedRun[]) =>
   runs.filter((run) => !!run?.date && isVolumeEligible(run));
 
 /**
- * A week is done with two or more saved runs dated in it, as Run9's starter
- * counts a week (STATUS 2026-11-01: "with two a week, both"). One
- * definition, read by the running starting point's climb and there for the
- * starter's stages.
+ * A week is done with two or more saved runs dated in it, as Run9a's
+ * starter counts a week ("with two a week, both"). One definition, read by
+ * the running starting point's climb and there for the starter's stages.
  */
 export const DONE_WEEK_RUNS = 2;
 
