@@ -85,9 +85,17 @@ jobs:
             echo "::error::Refusing to deploy an E2E build to Hosting"
             exit 1
           fi
+      # The deploy action writes the service account key to disk and then
+      # runs `npx firebase-tools@<firebaseToolsVersion>`, which would install
+      # the CLI (latest, by default) with the key present. Fetch the pinned
+      # version into npx's cache first, while no key is on disk, so the
+      # action's npx finds it there and installs nothing.
+      - name: Fetch the Firebase CLI
+        run: npx --yes firebase-tools@15.34.0 --version
       - uses: FirebaseExtended/action-hosting-deploy@500ac625ca2dd40cbd15f7659af953801858032a # v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: adaptive-fitness-af8bb
           channelId: live
+          firebaseToolsVersion: 15.34.0

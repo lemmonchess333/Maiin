@@ -59,13 +59,15 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@15.34.0
+
+      # Every install comes before this step: a package's install scripts
+      # must never run while the service account key is on disk.
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools@15.34.0
 
       # The one-time approval above is an IAM role on the Storage service
       # agent, and firebase-tools checks or grants it only in an

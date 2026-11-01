@@ -27,6 +27,14 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@15.34.0
+
+      - name: Install function dependencies
+        run: npm ci --prefix functions
+
+      # Every install comes before this step: a package's install scripts
+      # must never run while the service account key is on disk.
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
@@ -62,12 +70,6 @@ jobs:
             echo "Secret Manager reachable (non-propagation response, attempt $i):"; echo "$out"; exit 0
           done
           echo "::warning::Secret Manager still not reachable after polling; deploy may 403."
-
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools@15.34.0
-
-      - name: Install function dependencies
-        run: npm ci --prefix functions
 
       - name: Test post-deploy challenge verification (offline)
         run: node --test scripts/rollover-deployed-challenges.test.mjs
