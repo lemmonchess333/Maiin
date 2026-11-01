@@ -928,8 +928,8 @@ suite("firestore.rules — /challenges", () => {
 
   // ── participant photoURL value gate ─────────────────────────────────
   // The participant row renders on the world-readable leaderboard, so its
-  // photoURL is loaded by every viewer. joinChallenge copies
-  // users/{uid}.photoURL and omits the field when there is none.
+  // photoURL is loaded by every viewer. joinChallenge copies the public
+  // profile's photoURL and omits the field when there is none.
   describe("participant photoURL value gate", () => {
     const CHALLENGE = "weekly-2026-01-01";
     const seedChallenge = () =>
@@ -966,7 +966,9 @@ suite("firestore.rules — /challenges", () => {
       }
     });
 
-    it("a cosmetic update cannot repoint photoURL off the allowed origins", async () => {
+    it("no client update, not even the photo or name a join may carry", async () => {
+      // identityResync carries a new public name and photo to the row
+      // with the Admin SDK; a client rename skipped the word filter.
       await seedChallenge();
       await env.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(
@@ -977,17 +979,82 @@ suite("firestore.rules — /challenges", () => {
             "participants",
             OWNER_UID
           ),
-          join(ALLOWED_PHOTO_URLS[1])
+          { ...join(ALLOWED_PHOTO_URLS[1]), displayName: "Owner" }
+        );
+        await setDoc(
+          doc(ctx.firestore(), "users", OWNER_UID, "public", "profile"),
+          { displayName: "Owner Two" }
         );
       });
       const db = env.authenticatedContext(OWNER_UID).firestore();
       const ref = doc(db, "challenges", CHALLENGE, "participants", OWNER_UID);
       await assertFails(
-        setDoc(ref, { photoURL: REJECTED_PHOTO_URLS[0] }, { merge: true })
-      );
-      await assertSucceeds(
         setDoc(ref, { photoURL: ALLOWED_PHOTO_URLS[2] }, { merge: true })
       );
+      await assertFails(
+        setDoc(ref, { displayName: "Owner Two" }, { merge: true })
+      );
+      await assertFails(
+        setDoc(ref, { displayName: "anything-unscreened" }, { merge: true })
+      );
+      // The row is still there to leave.
+      await assertSucceeds(deleteDoc(ref));
+    });
+  });
+
+  // ── the leaderboard name is the public profile's ───────────────────
+  // The board renders displayName to every signed-in viewer. The public
+  // profile's name is the one the word filter screens; the private user
+  // document's is not.
+  describe("participant displayName is the public profile's", () => {
+    const CHALLENGE = "weekly-2026-01-01";
+    const joinAs = (displayName?: unknown) => ({
+      currentValue: 0,
+      tierAchieved: null,
+      joinedAt: serverTimestamp(),
+      ...(displayName === undefined ? {} : { displayName }),
+    });
+    const seed = (profile: Record<string, unknown> | null) =>
+      env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "challenges", CHALLENGE),
+          validChallengeData
+        );
+        await setDoc(doc(ctx.firestore(), "users", OWNER_UID), {
+          displayName: "Private unscreened",
+        });
+        if (profile) {
+          await setDoc(
+            doc(ctx.firestore(), "users", OWNER_UID, "public", "profile"),
+            profile
+          );
+        }
+      });
+    const ref = () =>
+      doc(
+        env.authenticatedContext(OWNER_UID).firestore(),
+        "challenges",
+        CHALLENGE,
+        "participants",
+        OWNER_UID
+      );
+
+    it("a join with the public name succeeds; any other name fails", async () => {
+      await seed({ displayName: "Owner" });
+      await assertFails(setDoc(ref(), joinAs("Private unscreened")));
+      await assertFails(setDoc(ref(), joinAs("anything-unscreened")));
+      await assertFails(setDoc(ref(), joinAs(null)));
+      await assertSucceeds(setDoc(ref(), joinAs("Owner")));
+    });
+
+    it("with no public profile or name, only a join without a name succeeds", async () => {
+      await seed(null);
+      await assertFails(setDoc(ref(), joinAs("Owner")));
+      await assertSucceeds(setDoc(ref(), joinAs()));
+      await assertSucceeds(deleteDoc(ref()));
+      await seed({ displayName: null });
+      await assertFails(setDoc(ref(), joinAs("Owner")));
+      await assertSucceeds(setDoc(ref(), joinAs()));
     });
   });
 

@@ -1311,10 +1311,9 @@ service cloud.firestore {
       //     (displayName, photoURL, uid) are allowed. The optional `uid`
       //     body field, if present, must equal the path's {uid}
       //     (impersonation guard, same idiom as the public profile).
-      //   - UPDATE: only the cosmetic identity fields may change. Any
-      //     diff that touches currentValue or tierAchieved is denied —
-      //     those are written ONLY by the Admin SDK triggers, which
-      //     bypass these rules.
+      //   - UPDATE: none from a client. currentValue and tierAchieved
+      //     are written ONLY by the Admin SDK triggers, and the name and
+      //     photo by identityResync, all of which bypass these rules.
       //   - DELETE (leave): the participant themselves.
       // ========================================
       match /participants/{uid} {
@@ -1347,35 +1346,30 @@ service cloud.firestore {
             !('uid' in request.resource.data)
             || request.resource.data.uid == uid
           )
-          // Identity field type/length caps.
+          // The name on the leaderboard is the one the person's public
+          // profile shows: the profile's name is screened by the word
+          // filter (onPublicProfileWritten), and the private user
+          // document's is not. Absent is allowed; the board then says
+          // "Athlete".
           && (
             !('displayName' in request.resource.data)
             || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 50)
+                && request.resource.data.displayName.size() <= 50
+                && request.resource.data.displayName
+                     == get(/databases/$(database)/documents/users/$(uid)/public/profile)
+                          .data.get('displayName', null))
           )
           && (
             !('photoURL' in request.resource.data)
             || isAllowedPhotoUrl(request.resource.data.photoURL)
           );
 
-        // Updates may ONLY touch cosmetic identity fields. Any diff
-        // that affects currentValue or tierAchieved is rejected —
-        // server-only via the Admin SDK triggers.
-        allow update: if request.auth != null
-          && request.auth.uid == uid
-          && !isWriteFrozen(uid)
-          && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['displayName', 'photoURL'])
-          && (
-            !('displayName' in request.resource.data)
-            || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 50)
-          )
-          && (
-            !('photoURL' in request.resource.data)
-            || isAllowedPhotoUrl(request.resource.data.photoURL)
-            || photoUnchanged('photoURL')
-          );
+        // No client update. A row's progress is written by the Admin SDK
+        // triggers (syncChallengeProgress), and its name and photo by
+        // identityResync when the public profile changes, which carries
+        // neither a name the word filter refuses nor a restricted
+        // account's new one. A client update was a way round both.
+        allow update: if false;
 
         allow delete: if request.auth != null
           && request.auth.uid == uid

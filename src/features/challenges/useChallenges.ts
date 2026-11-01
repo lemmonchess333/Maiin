@@ -21,6 +21,7 @@ import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { showRestrictedToast } from "@/lib/accountRestriction";
 import { logger } from "@/lib/logger";
+import { DISPLAY_NAME_MAX } from "@/lib/displayNameLimit";
 import { THEME } from "@/lib/theme";
 import {
   resolveTier,
@@ -520,19 +521,30 @@ export function useChallenges() {
           }));
           return true;
         }
-        const profileSnap = await getDoc(doc(db, "users", uid));
-        const name = profileSnap.exists()
-          ? profileSnap.data().displayName || "Athlete"
-          : "Athlete";
-        const photoURL = profileSnap.exists()
-          ? ((profileSnap.data().photoURL as string | null | undefined) ?? null)
-          : null;
+        // The board shows the name and photo the public profile shows:
+        // that name is the one the word filter screens, and the rules
+        // refuse any other. With no public name the row carries none and
+        // the board says "Athlete".
+        const profileSnap = await getDoc(
+          doc(db, "users", uid, "public", "profile")
+        );
+        const publicProfile = profileSnap.exists() ? profileSnap.data() : {};
+        const name =
+          typeof publicProfile.displayName === "string" &&
+          publicProfile.displayName.length > 0 &&
+          publicProfile.displayName.length <= DISPLAY_NAME_MAX
+            ? publicProfile.displayName
+            : null;
+        const photoURL =
+          typeof publicProfile.photoURL === "string" && publicProfile.photoURL
+            ? publicProfile.photoURL
+            : null;
         if (!session.active || sessionRef.current !== session) return false;
         await setDocGuarded(participantRef, {
           currentValue: 0,
           tierAchieved: null,
           joinedAt: Timestamp.now(),
-          displayName: name,
+          ...(name ? { displayName: name } : {}),
           ...(photoURL ? { photoURL } : {}),
         });
         if (!session.active || sessionRef.current !== session) return false;
