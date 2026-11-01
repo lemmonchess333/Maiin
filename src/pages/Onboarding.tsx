@@ -77,7 +77,7 @@ import { smallPlatesHint } from "@/lib/liftRules";
 import { liftUnitForBodyWeight } from "@/lib/liftLoad";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import NewAccountMethodNote from "@/components/onboarding/NewAccountMethodNote";
-import { startingDisplayName } from "@/lib/onboardingName";
+import { chosenDraftName, startingDisplayName } from "@/lib/onboardingName";
 import { signInMethodOf } from "@/lib/signInMethod";
 import { ACTIVATION_JOURNEY_V2_ENABLED } from "@/lib/activationJourney";
 import { Capacitor } from "@capacitor/core";
@@ -197,7 +197,13 @@ export default function Onboarding() {
   /* The name Apple shares is set on the account just after it is made,
      and setup can open before it lands; it is taken when it arrives, while
      the person has not typed one of their own. */
-  const [nameTyped, setNameTyped] = useState(draft?.displayName !== undefined);
+  const [nameTyped, setNameTyped] = useState(
+    chosenDraftName(draft?.displayName, user?.email) !== undefined
+  );
+  /* Go to Today was pressed without a name it can publish: the field says
+     why from then on, rather than greeting an empty box with an error. */
+  const [nameAsked, setNameAsked] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
   const arrivedName = profile?.displayName?.trim() ?? "";
   const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
   if (arrivedName !== seenArrivedName) {
@@ -601,6 +607,12 @@ export default function Onboarding() {
      until it has, the name waits (valid false, nothing to say). */
   const wordFilter = useWordFilter();
   const displayNameValidation = validateDisplayName(displayName, wordFilter);
+  const nameMessage =
+    displayNameValidation.trimmed === ""
+      ? nameAsked
+        ? "Enter a name first."
+        : null
+      : displayNameValidation.message;
   /* A race with no date is not a race plan. Run9a lands a persisted
      race_prep with no usable date on the freeform substrate rather than
      leaving a dangling raceGoal — correct, and it stays as the backstop for
@@ -628,6 +640,11 @@ export default function Onboarding() {
     weightKg <= WEIGHT_KG.max &&
     heightCm >= HEIGHT_CM.min &&
     heightCm <= HEIGHT_CM.max;
+  const answersValid =
+    goalConfirmed &&
+    validRun &&
+    (!hasLifting || injuries.length > 0) &&
+    validBody;
   const canAdvance = [
     goalConfirmed,
     true,
@@ -636,12 +653,16 @@ export default function Onboarding() {
     injuries.length > 0,
     validBody,
     true,
-    goalConfirmed &&
-      validRun &&
-      (!hasLifting || injuries.length > 0) &&
-      validBody &&
-      displayNameValidation.valid,
+    answersValid && displayNameValidation.valid,
   ];
+  /* The review's button stays live while only the name stands in the way:
+     the name sits under the plan, below the fold on a phone, and a button
+     that did nothing gave no clue where to look. Held only while the word
+     filter loads, when there is nothing yet to say about the name. */
+  const nameLoading =
+    !displayNameValidation.valid && displayNameValidation.problem === null;
+  const buttonDisabled =
+    step === 7 ? !answersValid || nameLoading : !canAdvance[step];
   const chapters = hasLifting
     ? CHAPTERS
     : CHAPTERS.filter((name) => name !== "Your setup");
@@ -664,6 +685,12 @@ export default function Onboarding() {
     setStep(next);
   };
   const advance = () => {
+    if (step === 7 && answersValid && !displayNameValidation.valid) {
+      setNameAsked(true);
+      nameRef.current?.scrollIntoView({ block: "center" });
+      nameRef.current?.focus({ preventScroll: true });
+      return;
+    }
     if (!canAdvance[step] || pending.current) return;
     trackLifecycle("onboarding_step_completed", {
       step: STEP_IDS[step],
@@ -1944,27 +1971,42 @@ export default function Onboarding() {
                   Your public display name
                 </label>
                 <input
+                  ref={nameRef}
                   id="onboarding-name"
                   className="ds-input w-full min-h-11"
                   value={displayName}
                   maxLength={DISPLAY_NAME_MAX}
-                  aria-invalid={displayNameValidation.problem !== null}
+                  placeholder="A name or nickname"
+                  aria-required="true"
+                  aria-invalid={nameMessage !== null}
+                  aria-describedby={
+                    nameMessage
+                      ? "onboarding-name-note onboarding-name-error"
+                      : "onboarding-name-note"
+                  }
                   onChange={(event) => {
                     setNameTyped(true);
                     setDisplayName(event.target.value);
                   }}
                 />
-                <p className="text-sm text-muted-foreground">
+                <p
+                  id="onboarding-name-note"
+                  className="text-sm text-muted-foreground"
+                >
                   Other people can see this name on your profile. You can change
                   it later.
                 </p>
-                {displayNameValidation.message && (
-                  <p className="text-sm text-destructive-strong" role="alert">
-                    {displayNameValidation.message}
+                {nameMessage && (
+                  <p
+                    id="onboarding-name-error"
+                    className="text-sm text-destructive-strong"
+                    role="alert"
+                  >
+                    {nameMessage}
                   </p>
                 )}
               </div>
-              {!canAdvance[7] && (
+              {!answersValid && (
                 <p role="alert" className="text-sm text-destructive-strong">
                   Check the answers above before creating your plan.
                 </p>
@@ -2008,7 +2050,7 @@ export default function Onboarding() {
             size="lg"
             className="flex-1"
             loading={saving}
-            disabled={!canAdvance[step]}
+            disabled={buttonDisabled}
             onClick={advance}
             rightIcon={
               step === 7 ? (

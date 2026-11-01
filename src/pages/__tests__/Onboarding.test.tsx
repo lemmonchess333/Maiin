@@ -17,6 +17,7 @@ import {
 import * as planning from "@/lib/onboardingPlan";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
+import { track } from "@/lib/lifecycleAnalytics";
 import { SETUP, SETUP_OPTIONS } from "@/test/journeyScreens";
 import {
   addLocalDays,
@@ -89,6 +90,8 @@ const open = () =>
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
+  // jsdom draws no layout: Go to Today scrolls to a name it still needs.
+  Element.prototype.scrollIntoView = vi.fn();
   complete.mockResolvedValue({
     data: { success: true, activationJourneyVersion: 2 },
   });
@@ -227,10 +230,9 @@ describe("onboarding chapters and commit", () => {
     saveOnboardingDraft("setup-test", { ...draft, displayName: "shit head" });
     open();
     expect(screen.getByText(OBJECTIONABLE_NAME_MESSAGE)).toBeInTheDocument();
-    const start = screen.getByRole("button", { name: "Go to Today" });
-    expect(start).toBeDisabled();
-    fireEvent.click(start);
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     expect(complete).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(SETUP.name)).toHaveFocus();
   });
   it("shows the server's own sentence when it refuses the display name", async () => {
     saveOnboardingDraft("setup-test", draft);
@@ -427,6 +429,9 @@ describe("activity-relevant setup", () => {
       within(openWeek).getByRole("button", { name: "Mon: open day" })
     );
     expect(openWeek).toHaveTextContent("Mon · Run when it suits you.");
+    fireEvent.change(screen.getByLabelText(SETUP.name), {
+      target: { value: "Test runner" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     const payload = complete.mock.calls[0][0];
@@ -1143,7 +1148,54 @@ describe("setup, by the names the journeys use", () => {
     );
     next();
 
+    fireEvent.change(screen.getByRole("textbox", { name: SETUP.name }), {
+      target: { value: "Journey tester" },
+    });
     expect(screen.getByRole("button", { name: SETUP.start })).toBeEnabled();
+  });
+});
+
+/* The public name is shown on the profile and found by search, so it is
+   one the person gives: an email account's field starts empty, never from
+   the address, and Go to Today asks for it. */
+describe("the public name, at the review", () => {
+  const nameField = () => screen.getByLabelText(SETUP.name);
+
+  it("starts empty for an email account, with nothing wrong said yet", () => {
+    saveOnboardingDraft("setup-test", { ...draft, displayName: undefined });
+    open();
+    expect(nameField()).toHaveValue("");
+    expect(nameField()).toHaveAttribute("aria-invalid", "false");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("drops the address-made name a draft saved before", () => {
+    saveOnboardingDraft("setup-test", { ...draft, displayName: "test" });
+    open();
+    expect(nameField()).toHaveValue("");
+  });
+
+  it("asks for it at Go to Today, and goes on once it is given", async () => {
+    saveOnboardingDraft("setup-test", { ...draft, displayName: undefined });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    expect(complete).not.toHaveBeenCalled();
+    expect(nameField()).toHaveFocus();
+    expect(nameField()).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("alert")).toHaveTextContent("Enter a name first.");
+    const confirmed = () =>
+      expect(track).toHaveBeenCalledWith(
+        "onboarding_step_completed",
+        expect.objectContaining({ step: "confirm" })
+      );
+    expect(confirmed).toThrow();
+
+    fireEvent.change(nameField(), { target: { value: "  Sam  " } });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete.mock.calls[0][0].profileData.displayName).toBe("Sam");
+    confirmed();
   });
 });
 

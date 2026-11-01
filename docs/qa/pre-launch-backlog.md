@@ -10,6 +10,26 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Setup asks for the public name (2026-11-01)
+
+Setup no longer makes the public name from the email address: an email
+account's name field on the review starts empty, and Go to Today with no
+name scrolls to the field, focuses it and says "Enter a name first."
+(`onboardingName.ts`, `Onboarding.tsx`). jsdom draws no layout and opens
+no keyboard; only a phone shows where the field lands.
+
+- [ ] **The field comes up above the keyboard.** On a TestFlight build,
+      sign up with an email address and answer setup. On the review, tap
+      Go to Today without scrolling. Passing: the page moves to the name
+      field, the keyboard opens, and the field and "Enter a name first."
+      are both visible above it. Type a name and tap Go to Today: Home
+      opens, and from a second account Social's Search finds it by that
+      name, not by the address.
+- [ ] **A Google or Apple name still arrives.** Make an account with Sign
+      in with Apple (sharing the name) and one with Google. Passing: the
+      review's name field holds that name, and Go to Today goes straight
+      on.
+
 ## A v2 account's one first-week reminder ask (XB1 call 8, 2026-10-31)
 
 After a v2 account's first saved session in its first week, and once the

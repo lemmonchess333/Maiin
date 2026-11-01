@@ -40,6 +40,7 @@ export const SETUP = {
   height: "Height (cm)",
   sex: "Sex for calorie calculation",
   age: "Age range",
+  name: "Your public display name",
   start: "Go to Today",
 } as const;
 

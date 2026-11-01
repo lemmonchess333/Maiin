@@ -139,6 +139,9 @@ test("a new account can start training before replaying the guide", async ({
     .fill("178");
   await page.getByRole("radio", { name: /^25/ }).click();
   await next();
+  await page
+    .getByRole("textbox", { name: "Your public display name" })
+    .fill("Guide tester");
   await page.getByRole("button", { name: "Go to Today", exact: true }).click();
 
   // The saved plan opens Today with the training task ready and no tour or

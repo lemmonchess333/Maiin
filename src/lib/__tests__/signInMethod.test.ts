@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from "vitest";
 import { isAppleRelayEmail } from "../appleRelay";
-import { startingDisplayName } from "../onboardingName";
 import {
   readLastSignInMethod,
   rememberSignInMethod,
@@ -43,27 +42,5 @@ describe("Hide My Email", () => {
     expect(isAppleRelayEmail("K7X9@Private.iCloud.com")).toBe(true);
     expect(isAppleRelayEmail("sam@icloud.com")).toBe(false);
     expect(isAppleRelayEmail(null)).toBe(false);
-  });
-
-  it("never makes a setup name from a relay address", () => {
-    expect(
-      startingDisplayName(undefined, {
-        displayName: null,
-        email: "k7x9qzp2m@privaterelay.appleid.com",
-      })
-    ).toBe("Athlete");
-    expect(
-      startingDisplayName(undefined, {
-        displayName: null,
-        email: "sam.jones@gmail.com",
-      })
-    ).toBe("sam.jones");
-    expect(
-      startingDisplayName(undefined, {
-        displayName: "Sam Jones",
-        email: "k7x9qzp2m@privaterelay.appleid.com",
-      })
-    ).toBe("Sam Jones");
-    expect(startingDisplayName("Sam", null)).toBe("Sam");
   });
 });
