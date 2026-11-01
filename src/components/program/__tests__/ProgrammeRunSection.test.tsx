@@ -1547,6 +1547,50 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     expect(banner).not.toHaveTextContent(/easy_30|Templates/);
   });
 
+  /* Owner, 1 Nov 2026: the plan's counter waits on race week through the
+     recovery, so a recovery run's "Why this run" read "A short,
+     conversational shakeout for race week." */
+  it("explains a recovery run as the recovery's", () => {
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          id: "runday_recovery",
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+          date: TODAY_KEY,
+          dayIndex: TODAY_DOW,
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: {
+            distance: "marathon",
+            targetDate: localDateString(addLocalDays(new Date(), -3)),
+          },
+          phase: "recovery",
+          recoveryEndDate: localDateString(addLocalDays(new Date(), 25)),
+          totalWeeks: 17,
+          currentWeek: 16,
+        },
+      }
+    );
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      "Easy runs only for now, while your legs recover from the race."
+    );
+    expect(why).not.toHaveTextContent(/race week/);
+  });
+
   it("recovery-complete prompt renders when the recovery window has elapsed", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "race_prep" });

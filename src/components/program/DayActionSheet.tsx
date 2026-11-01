@@ -56,6 +56,7 @@ import {
   isScheduledRaceRunDay,
 } from "@/lib/workoutTemplates";
 import {
+  isRecoveryRunDay,
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
@@ -299,16 +300,13 @@ export default function DayActionSheet({
       currentWeek: rp?.currentWeek,
       totalWeeks: rp?.totalWeeks,
       distance: (rp?.raceGoal?.distance ?? profile?.raceGoal?.distance) as
-        | "5k"
-        | "10k"
-        | "half"
-        | "marathon"
-        | undefined,
+        "5k" | "10k" | "half" | "marathon" | undefined,
       weekHasQuality: weekHoldsQuality(
         programState?.runDays,
         run.runDay.weekKey
       ),
       racePace: selectedRacePace?.kind,
+      inRecovery: isRecoveryRunDay(rp, run.runDay.date),
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.

@@ -8,6 +8,7 @@ import LiftPurpose from "@/components/program/LiftPurpose";
 import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import { racePaceWorkFor } from "@/lib/racePace";
 import {
+  isRecoveryRunDay,
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
@@ -379,6 +380,10 @@ export default function DayPeekCard({
             resolved.run.runDay?.weekKey
           ),
           racePace: runRacePace?.kind,
+          inRecovery: isRecoveryRunDay(
+            programState?.runPlan,
+            resolved.run.runDay?.date
+          ),
         }).purpose
       : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)

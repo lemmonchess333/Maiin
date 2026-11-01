@@ -192,6 +192,56 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     expect(screen.queryByText("No activity logged")).not.toBeInTheDocument();
   });
 
+  it("explains a recovery run as the recovery's, not race week's", () => {
+    // The plan's counter still points at race week while it recovers.
+    const fromToday = (days: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return localDateString(d);
+    };
+    const date = localDateString();
+    const profile = {
+      ...makeProfile(
+        makeSchedule(["run", "run", "run", "run", "run", "run", "run"])
+      ),
+      runMode: "race_prep",
+    } as UserProfile;
+    const program = makeProgramState([
+      makeRunDay({
+        dayIndex: TODAY_DOW,
+        date,
+        weekKey: localWeekKey(parseLocalDate(date)),
+        templateId: "easy_30",
+      }),
+    ]);
+    program.runPlan = {
+      mode: "race_prep",
+      currentWeek: 15,
+      totalWeeks: 16,
+      raceGoal: { distance: "marathon", targetDate: fromToday(-3) },
+      phase: "recovery",
+      recoveryEndDate: fromToday(25),
+    } as ProgramState["runPlan"];
+    renderCard(
+      <DayPeekCard
+        todayKey={date}
+        dateKey={date}
+        profile={profile}
+        programState={program}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      "Easy runs only for now, while your legs recover from the race."
+    );
+    expect(why).not.toHaveTextContent(/race week/);
+  });
+
   it("keeps the actual dose and strides visible while disclosing the coaching reason", () => {
     const date = dayOfThisWeek(2);
     const profile = makeProfile(

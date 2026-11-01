@@ -158,6 +158,7 @@ import RaceWeeksAhead from "./RaceWeeksAhead";
 import type { LayoffClass } from "@/features/program/layoffDetection";
 import type { RaceDistance } from "@/lib/raceDayPlan";
 import {
+  isRecoveryRunDay,
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
@@ -876,6 +877,10 @@ export default function ProgrammeRunSection({
             profile.raceGoal?.distance,
           weekHasQuality: weekHoldsQuality(runDays, selectedRun.runDay.weekKey),
           racePace: selectedRacePace?.kind,
+          inRecovery: isRecoveryRunDay(
+            programState?.runPlan,
+            selectedRun.runDay.date
+          ),
         })
       : { purpose: null, weekLabel: null };
   // Non-breaking spaces: on a narrow card the eyebrow breaks before the
