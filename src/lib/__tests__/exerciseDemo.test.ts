@@ -108,6 +108,17 @@ describe("getExerciseDemo — image merge (D-LIFT-18)", () => {
     vi.unstubAllGlobals();
   });
 
+  /** One catalogue entry, as free-exercise-db writes it. */
+  const CATALOGUE_ENTRY = {
+    name: "Bench Press",
+    category: "strength",
+    equipment: "barbell",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["triceps"],
+    instructions: ["remote step"],
+    images: ["Bench_Press/0.jpg", "Bench_Press/1.jpg"],
+  };
+
   /** The module with an empty cache, whatever ran before. */
   async function freshDemo() {
     return (await import("../exerciseDemo")).getExerciseDemo;
@@ -141,6 +152,48 @@ describe("getExerciseDemo — image merge (D-LIFT-18)", () => {
     expect(demo!.images[0]).toMatch(
       /^https:\/\/raw\.githubusercontent\.com\/.*\/exercises\/Bench_Press\/0\.jpg$/
     );
+  });
+
+  it("reads the catalogue from a fixed commit, not a branch", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ json: async () => [CATALOGUE_ENTRY] });
+    vi.stubGlobal("fetch", fetchMock);
+    const demo = await (await freshDemo())("Bench Press");
+
+    const commitPath =
+      /^https:\/\/raw\.githubusercontent\.com\/yuhonas\/free-exercise-db\/[0-9a-f]{40}\//;
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(commitPath));
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(
+      /\/dist\/exercises\.json$/
+    );
+    for (const image of demo!.images) expect(image).toMatch(commitPath);
+  });
+
+  it("loads only images inside the catalogue's own folder", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: async () => [
+          {
+            ...CATALOGUE_ENTRY,
+            images: [
+              "Bench_Press/0.jpg",
+              "https://storage.googleapis.com/tracker/pixel.jpg",
+              "//evil.example/0.jpg",
+              "/yuhonas/other-repo/main/0.jpg",
+              "../../other-commit/exercises/0.jpg",
+              "Bench_Press/../../../x.jpg",
+              "Bench_Press/%2e%2e/x.jpg",
+              "data:image/png;base64,AAAA",
+            ],
+          },
+        ],
+      })
+    );
+    const demo = await (await freshDemo())("Bench Press");
+    expect(demo!.images).toHaveLength(1);
+    expect(demo!.images[0]).toMatch(/\/exercises\/Bench_Press\/0\.jpg$/);
   });
 
   it("carries commonMistakes from the authored exercise (D-LIFT-19/20)", async () => {
