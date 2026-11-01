@@ -466,6 +466,43 @@ describe("_fellBehindRatio — a first week is graded against what it planned", 
   });
 });
 
+/* D (owner, 1 November 2026): a race plan made from a Thursday starts with
+   a lead-in, and its weeks count from the Monday after. The lead-in is not
+   one of them, and once the app has moved the plan on, the Monday check
+   saw no runs planned for it and graded it against the weekly target. */
+describe("_fellBehindRatio — a race plan's lead-in isn't one of its weeks", () => {
+  const LEAD_IN = "2026-10-26";
+  const FIRST = "2026-11-02";
+  const runner = profile({
+    runMode: "race_prep",
+    weeklyRunDaysTarget: 6,
+    raceGoal: { distance: "marathon", targetDate: "2027-04-24" },
+  });
+  // Moved on into its first week: race week is the 25th from the Monday.
+  const movedOn = programState({
+    runDays: [{ date: "2026-11-03", weekKey: FIRST, status: "planned" }],
+    runPlan: {
+      mode: "race_prep",
+      raceGoal: { distance: "marathon", targetDate: "2027-04-24" },
+      totalWeeks: 25,
+      currentWeek: 0,
+    },
+  });
+
+  it("doesn't grade the lead-in week, nor any week before the plan's first", () => {
+    expect(_fellBehindRatio(runner, movedOn, [], LEAD_IN)).toBeNull();
+    expect(_fellBehindRatio(runner, movedOn, [], "2026-10-19")).toBeNull();
+    expect(
+      _decideFellBehindFlag(runner, movedOn, [], LEAD_IN).action
+    ).toBe("noop");
+  });
+
+  it("grades the plan's first week", () => {
+    const status = _fellBehindRatio(runner, movedOn, [], FIRST);
+    expect(status.fellBehind).toBe(true);
+  });
+});
+
 describe("_decideFellBehindFlag — idempotency + clear path", () => {
   it("re-firing on the same week with the same ratio → noop", () => {
     const programWithFlag = programState({
