@@ -446,6 +446,31 @@ describe("RunSummary — the week's runs are counted once", () => {
   });
 });
 
+describe("RunSummary — grade-adjusted pace", () => {
+  // Owner, 1 Nov 2026: "Grade-adjusted pace 8:44 /km — flat-equivalent
+  // for this climb". One sentence, not a statement and a dash.
+  it("says what the pace is in one sentence, with no dash", async () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/run-summary",
+            state: { ...savedRun(), elevationGain: 100 },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    const line = await screen.findByText(/^Grade-adjusted pace/);
+    expect(line.textContent).toMatch(
+      /^Grade-adjusted pace \d+:\d{2} \/km: the flat-ground equivalent of this climb$/
+    );
+  });
+});
+
 describe("RunSummary — Save", () => {
   /** The same run, finished and not yet saved: no receipt. */
   function renderUnsaved() {
