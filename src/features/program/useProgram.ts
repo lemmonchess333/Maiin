@@ -32,13 +32,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { captureError } from "@/lib/errorReporting";
-import {
-  doc,
-  getDoc,
-  getDocFromCache,
-  getDocFromServer,
-  onSnapshot,
-} from "firebase/firestore";
+import { doc, getDoc, getDocFromCache, onSnapshot } from "firebase/firestore";
 import {
   hasPendingProgrammeCompletion,
   queuedWritesVersion,
@@ -817,32 +811,85 @@ export function useProgram() {
    * the tested-copy-vs-running-copy mistake. Extracted once three callers
    * wanted it — success, a rejected remove/add, and the deload command.
    *
-   * Returns what it read (undefined when there was nothing to read) so a
-   * caller that must ACT on the server's result can do so without waiting a
-   * render for `programState` to catch up. `applyEaseWeek` needs it to count
-   * how many runs the server actually changed; every other caller ignores
-   * the value and just wants the state refreshed.
+   * Returns what it read (undefined when there was nothing to read). It is
+   * NOT a way to see what a command just committed: the mirror below
+   * listens to this document, so the read can answer from the mirror's
+   * copy, which may still be the version before the command. A caller that
+   * must act on the committed document waits for it (`awaitProgramState`).
    */
-  const refetchProgramState = useCallback(
-    async (
-      source: "default" | "server" = "default"
-    ): Promise<ProgramState | undefined> => {
-      if (!user) return undefined;
-      const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
-      const snap =
-        source === "server" ? await getDocFromServer(ref) : await getDoc(ref);
-      if (!snap.exists()) return undefined;
-      // RAW, for the same reason the mirror is raw: `programState` must be
-      // byte-for-byte what the store holds, because it is the `base` every
-      // writer commits against. A normalising refetch adds `skipped: false`
-      // to a workout day the store does not carry, so the next write that
-      // changes `workouts` after ANY applied command finds base ≠ store and
-      // is refused. The loader is the one place that may
-      // normalise, because it commits what it normalised.
-      const raw = snap.data() as ProgramState;
-      setProgramState(raw);
-      return raw;
-    },
+  const refetchProgramState = useCallback(async (): Promise<
+    ProgramState | undefined
+  > => {
+    if (!user) return undefined;
+    const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return undefined;
+    // RAW, for the same reason the mirror is raw: `programState` must be
+    // byte-for-byte what the store holds, because it is the `base` every
+    // writer commits against. A normalising refetch adds `skipped: false`
+    // to a workout day the store does not carry, so the next write that
+    // changes `workouts` after ANY applied command finds base ≠ store and
+    // is refused. The loader is the one place that may
+    // normalise, because it commits what it normalised.
+    const raw = snap.data() as ProgramState;
+    setProgramState(raw);
+    return raw;
+  }, [user]);
+
+  /**
+   * The programme document once it shows what a command just committed:
+   * the first server-confirmed snapshot `committed` accepts, or undefined
+   * if none arrives within `timeoutMs`.
+   *
+   * Watched, not read. `getDocFromServer` looks like the read for this and
+   * is not: with the mirror listening to this same document, the SDK hands
+   * a new server read the mirror's last snapshot (`eventManagerListen`
+   * gives a listener its query's current view, and that view is not from
+   * cache) without asking the server. Straight after the callable answers,
+   * that view can still be the week before the command, because the
+   * callable's reply and the listener's update race. An easier week that
+   * had been saved said "Couldn't adjust the week. Try again." and kept
+   * its sheet open (the run-coaching capture spec, 2026-11-01).
+   */
+  const awaitProgramState = useCallback(
+    (
+      committed: (state: ProgramState) => boolean,
+      timeoutMs = 10_000
+    ): Promise<ProgramState | undefined> =>
+      new Promise((resolve) => {
+        if (!user) {
+          resolve(undefined);
+          return;
+        }
+        const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+        let done = false;
+        let unsubscribe: (() => void) | undefined;
+        const finish = (state: ProgramState | undefined) => {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          unsubscribe?.();
+          // RAW, as the refetch above and the mirror keep it.
+          if (state) setProgramState(state);
+          resolve(state);
+        };
+        const timer = setTimeout(() => finish(undefined), timeoutMs);
+        unsubscribe = onSnapshot(
+          ref,
+          { includeMetadataChanges: true },
+          (snap) => {
+            if (snap.metadata.fromCache || snap.metadata.hasPendingWrites)
+              return;
+            if (!snap.exists()) return;
+            const state = snap.data() as ProgramState;
+            if (committed(state)) finish(state);
+          },
+          () => finish(undefined)
+        );
+        // A snapshot delivered during the subscribe call itself finished
+        // before `unsubscribe` was assigned.
+        if (done) unsubscribe();
+      }),
     [user]
   );
 
@@ -3094,16 +3141,16 @@ export function useProgram() {
       };
       try {
         await sendProgramCommand(command);
-        // A cached read can still show the old week immediately after the
-        // callable succeeds. The server stores the exact pre-ease days in
-        // easeSnapshot, so both sides of this count come from one committed
-        // document rather than a possibly stale client render.
-        const next = await refetchProgramState("server");
-        if (
-          !next?.easeSnapshot ||
-          next.easeSnapshot.weekNumber !== command.expectedWeekNumber
-        )
-          return null;
+        // The server stores the exact pre-ease days in easeSnapshot, so both
+        // sides of this count come from one committed document rather than
+        // a possibly stale client render. A read straight after the callable
+        // can still be the week before it (`awaitProgramState`), so this
+        // waits for the document that carries this week's snapshot.
+        const next = await awaitProgramState(
+          (state) =>
+            state.easeSnapshot?.weekNumber === command.expectedWeekNumber
+        );
+        if (!next?.easeSnapshot) return null;
         const after = next.runDays ?? [];
         const before = next.easeSnapshot.runDays;
         // `runDayId` is the id when present and dayIndex otherwise — the
@@ -3142,7 +3189,7 @@ export function useProgram() {
         return null;
       }
     },
-    [user, programState, refetchProgramState]
+    [user, programState, awaitProgramState]
   );
 
   /** RUN-EASE-01 — restore the pre-ease week from the server snapshot. */
