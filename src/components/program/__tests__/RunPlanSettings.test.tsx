@@ -385,6 +385,9 @@ describe("RunPlanSettings", () => {
       fireEvent.change(screen.getByLabelText("Target date"), {
         target: { value: RACE_TARGET_DATE },
       });
+      fireEvent.click(
+        screen.getByRole("radio", { name: "A race I've entered" })
+      );
     };
 
     it("starts from the runs recorded in the last four weeks, and saves what it showed", async () => {

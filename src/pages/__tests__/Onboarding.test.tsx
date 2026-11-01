@@ -711,6 +711,8 @@ describe("a race needs a date", () => {
       raceDistance: "10k",
       raceTargetDate: raceDay,
       raceEntry: "own",
+      runningWeekMinutes: "150",
+      runningLongestMinutes: "60",
     });
     open();
     fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
@@ -728,6 +730,8 @@ describe("a race needs a date", () => {
       ...draft,
       runMode: "race_prep" as const,
       raceTargetDate: localDateString(addLocalDays(new Date(), 70)),
+      runningWeekMinutes: "150",
+      runningLongestMinutes: "60",
     };
     saveOnboardingDraft("setup-test", raceDraft);
     open();
