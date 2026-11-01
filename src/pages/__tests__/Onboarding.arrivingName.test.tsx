@@ -84,7 +84,18 @@ afterEach(cleanup);
 describe("the name Apple shares, arriving after setup opens", () => {
   it("is taken when it lands, never the relay address", () => {
     const view = render(show());
-    expect(nameField().value).toBe("Athlete");
+    expect(nameField().value).toBe("");
+    h.profile = { displayName: "Sam Jones" };
+    view.rerender(show());
+    expect(nameField().value).toBe("Sam Jones");
+  });
+
+  it("is taken over a draft that holds only the old default", () => {
+    // Setup used to start a name-less account on "Athlete", and saved it
+    // into the draft on the first answer; that was never the person's.
+    saveOnboardingDraft("apple-new", { ...draft, displayName: "Athlete" });
+    const view = render(show());
+    expect(nameField().value).toBe("");
     h.profile = { displayName: "Sam Jones" };
     view.rerender(show());
     expect(nameField().value).toBe("Sam Jones");

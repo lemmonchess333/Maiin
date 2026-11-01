@@ -425,6 +425,10 @@ export async function setUpPlan(
     .click();
   await next(page);
 
+  // The public name starts empty for an email account (never the address).
+  await page
+    .getByRole("textbox", { name: SETUP.name, exact: true })
+    .fill("Journey tester");
   await button(page, SETUP.start).click();
   if (legacyClient) {
     await expect(
