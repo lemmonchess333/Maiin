@@ -28,6 +28,7 @@
 
 const { GoalSpaceError } = require("./goalSpaceMembership");
 const { isCalendarDate, DATE_KEY_RE } = require("./dateUtils");
+const { isDocumentId } = require("./documentId");
 
 const RESOLVE_ACTIONS = Object.freeze(["continue", "wrap"]);
 
@@ -77,7 +78,7 @@ async function resolveTarget({
   newTargetDate,
   now,
 }) {
-  if (typeof spaceId !== "string" || spaceId.length === 0) {
+  if (!isDocumentId(spaceId)) {
     throw new GoalSpaceError("invalid-argument", "spaceId required");
   }
   if (!RESOLVE_ACTIONS.includes(action)) {

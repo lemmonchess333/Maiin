@@ -5941,11 +5941,7 @@ exports.recreditMyLiftVolume = functions
     // bug, not a quota event, so it must not consume a rate-limit slot.
     const startAfter = data && data.startAfter;
     if (startAfter !== undefined && startAfter !== null) {
-      if (
-        typeof startAfter !== "string" ||
-        !startAfter ||
-        startAfter.includes("/")
-      ) {
+      if (!isDocumentId(startAfter)) {
         throw new functions.https.HttpsError(
           "invalid-argument",
           "startAfter must be a workout document id."
@@ -6749,12 +6745,7 @@ exports.resolveReport = functions
     const restrictUser =
       data.restrictUser === undefined ? false : data.restrictUser;
     if (
-      typeof reportId !== "string" ||
-      !reportId ||
-      reportId !== reportId.trim() ||
-      reportId.includes("/") ||
-      reportId === "." ||
-      reportId === ".." ||
+      !isDocumentId(reportId) ||
       typeof hideActivity !== "boolean" ||
       typeof restrictUser !== "boolean"
     ) {
@@ -6969,14 +6960,7 @@ exports.liftRestriction = functions
     adminAuth.assertAdminCallable(context.auth.uid);
 
     const uid = data && typeof data === "object" ? data.uid : undefined;
-    if (
-      typeof uid !== "string" ||
-      !uid ||
-      uid !== uid.trim() ||
-      uid.includes("/") ||
-      uid === "." ||
-      uid === ".."
-    ) {
+    if (!isDocumentId(uid)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Which account? Send its uid."
@@ -7477,11 +7461,12 @@ exports.addSpacePostCommentCallable = functions
     }
     assertCallerEmailVerified(context);
     const { spaceId, postId, text, authorName, authorPhotoURL } = data || {};
+    // Each id names one document: a "/" in postId would point the comment
+    // and its counter at some other document under the post.
     if (
       typeof spaceId !== "string" ||
       !KNOWN_SPACE_IDS.includes(spaceId) ||
-      typeof postId !== "string" ||
-      !postId.trim()
+      !isDocumentId(postId)
     ) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -7589,13 +7574,14 @@ exports.deleteSpacePostCommentCallable = functions
       );
     }
     const { spaceId, postId, commentId } = data || {};
+    // Each id names one document, as in the add above: a "/" would let a
+    // delete reach a document nested under a comment and take it off the
+    // post's count.
     if (
       typeof spaceId !== "string" ||
       !KNOWN_SPACE_IDS.includes(spaceId) ||
-      typeof postId !== "string" ||
-      !postId.trim() ||
-      typeof commentId !== "string" ||
-      !commentId.trim()
+      !isDocumentId(postId) ||
+      !isDocumentId(commentId)
     ) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -7770,12 +7756,8 @@ exports.deleteCommentCallable = functions
       );
     }
     const { activityId, commentId } = data || {};
-    if (
-      typeof activityId !== "string" ||
-      !activityId.trim() ||
-      typeof commentId !== "string" ||
-      !commentId.trim()
-    ) {
+    // Each id names one document: a "/" would point the delete elsewhere.
+    if (!isDocumentId(activityId) || !isDocumentId(commentId)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "activityId + commentId required."

@@ -30,6 +30,7 @@
 
 const { isCalendarDate } = require("./dateUtils");
 const { displayNameRefusal } = require("./objectionableText");
+const { isDocumentId } = require("./documentId");
 
 const GOAL_SPACE_MAX_MEMBERS = 8;
 const GOAL_SPACE_TEXT_MAX = 200;
@@ -277,7 +278,9 @@ async function joinGoalSpace({
         }
       }
     }
-    if (typeof sid !== "string" || typeof ic !== "string") {
+    // The Circle's id comes from the request (or the code it typed), and
+    // names one document: a "/" would point the join somewhere else.
+    if (!isDocumentId(sid) || typeof ic !== "string") {
       throw new GoalSpaceError("invalid-argument", "invite code required");
     }
 
@@ -353,7 +356,7 @@ async function renewGoalSpaceInviteCode({
   now,
   makeCode,
 }) {
-  if (typeof spaceId !== "string" || !spaceId) {
+  if (!isDocumentId(spaceId)) {
     throw new GoalSpaceError("invalid-argument", "spaceId required");
   }
   return firestore.runTransaction(async (tx) => {
@@ -397,6 +400,9 @@ async function renewGoalSpaceInviteCode({
  * explicit and simple; ownership transfer is a later feature).
  */
 async function leaveGoalSpace({ firestore, uid, spaceId }) {
+  if (!isDocumentId(spaceId)) {
+    throw new GoalSpaceError("invalid-argument", "spaceId required");
+  }
   await firestore.runTransaction(async (tx) => {
     const spaceRef = firestore.doc(`goalSpaces/${spaceId}`);
     const spaceSnap = await tx.get(spaceRef);
@@ -417,7 +423,10 @@ async function leaveGoalSpace({ firestore, uid, spaceId }) {
 
 /** Owner-only member removal. */
 async function removeGoalSpaceMember({ firestore, uid, spaceId, memberUid }) {
-  if (typeof memberUid !== "string" || memberUid === uid) {
+  if (!isDocumentId(spaceId)) {
+    throw new GoalSpaceError("invalid-argument", "spaceId required");
+  }
+  if (!isDocumentId(memberUid) || memberUid === uid) {
     throw new GoalSpaceError("invalid-argument", "memberUid required");
   }
   await firestore.runTransaction(async (tx) => {
