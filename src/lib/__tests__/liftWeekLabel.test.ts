@@ -134,6 +134,58 @@ describe("the lift week label derives from programme facts", () => {
         "Week 1 of 4 · Get stronger"
       );
     });
+    /* Owner, 1 Nov 2026: the run side said "Week 15 of 15" two weeks after
+       the marathon, and the lifting counted the same race block. The run
+       plan's counter waits on race week until the race's ending, with no
+       recovery when the race went unlogged; the lifting counts its own
+       weeks then, as it does in a recovery. */
+    describe("once race day has passed with no recovery", () => {
+      const raceDay = "2026-12-19"; // a Saturday
+      const passed = (over = {}) =>
+        race(15, {
+          runPlan: {
+            mode: "race_prep",
+            raceGoal: { distance: "half", targetDate: raceDay },
+            currentWeek: 15,
+            totalWeeks: 16,
+          } as RunPlan,
+          ...over,
+        });
+      it("still counts the race block on race day", () => {
+        expect(
+          liftWeekLabel(
+            passed({ currentPhase: "deload", raceWeek: "race" }),
+            raceDay,
+            "intermediate"
+          )
+        ).toBe("Week 16 of 16 · Race");
+      });
+      it("names the rest of race week by its own mark", () => {
+        expect(
+          liftWeekLabel(
+            passed({ currentPhase: "deload", raceWeek: "race" }),
+            "2026-12-20",
+            "intermediate"
+          )
+        ).toBe("Week 1 of 4 · Race");
+      });
+      it("counts the plan's own weeks after it", () => {
+        expect(
+          liftWeekLabel(
+            passed({
+              weekNumber: 6,
+              currentPhase: "deload",
+              raceWeek: "after",
+            }),
+            "2026-12-27",
+            "intermediate"
+          )
+        ).toBe("Week 2 of 4 · Recovery");
+        expect(
+          liftWeekLabel(passed({ weekNumber: 7 }), "2027-01-03", "intermediate")
+        ).toBe("Week 3 of 4 · Get stronger");
+      });
+    });
   });
   it("names a week from the history by its own number and mark", () => {
     // Where it sat in a cycle, a block or a race block isn't kept.
