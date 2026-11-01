@@ -179,20 +179,29 @@ describe("every workflow names its token's permissions", () => {
   });
 });
 
-/** A workflow's jobs, each with its steps' text, read from the file's own
- *  layout (two-space job keys under `jobs:`, six-space step items). */
-function jobsOf(file: string): Map<string, string[]> {
+/** A workflow's jobs, each with its whole text, read from the file's own
+ *  layout (two-space job keys under `jobs:`). */
+function jobTexts(file: string): Map<string, string> {
   const src = readFileSync(resolve(workflowsDir, file), "utf8").replace(
     /\r\n/g,
     "\n"
   );
   const body = src.slice(src.search(/^jobs:\s*$/m));
-  const jobs = new Map<string, string[]>();
+  const jobs = new Map<string, string>();
   for (const part of body.split(/^ {2}(?=[\w-]+:\s*$)/m).slice(1)) {
-    const name = part.slice(0, part.indexOf(":"));
-    jobs.set(name, part.split(/^ {6}- /m).slice(1));
+    jobs.set(part.slice(0, part.indexOf(":")), part);
   }
   return jobs;
+}
+
+/** A workflow's jobs, each with its steps' text (six-space step items). */
+function jobsOf(file: string): Map<string, string[]> {
+  return new Map(
+    [...jobTexts(file)].map(([name, text]) => [
+      name,
+      text.split(/^ {6}- /m).slice(1),
+    ])
+  );
 }
 
 /* A dependency's install scripts run with whatever is on the runner's disk.
@@ -263,5 +272,58 @@ describe("Dependabot waits a week before offering a new version", () => {
       );
       expect(days, entry.split("\n")[0]).toBeGreaterThanOrEqual(7);
     }
+  });
+});
+
+/* Release credentials can live in the production environment, where only a
+   job that names it can read them. Every deploy job that reads one names
+   it; the Pages job keeps its own github-pages environment; and Deploy
+   production passes secrets on with `secrets: inherit`, without which a
+   called workflow's job reads an environment secret as empty. */
+describe("deploy jobs that read release credentials name the production environment", () => {
+  const RELEASE_SECRET =
+    /secrets\.(FIREBASE_SERVICE_ACCOUNT|ASC_API_\w+|IOS_\w+|APPLE_TEAM_ID)\b/;
+  const deployFiles = workflowFiles.filter((f) => /^deploy-.+\.ya?ml$/.test(f));
+
+  it("covers the Firestore, Storage, Functions, Hosting and iOS deploys", () => {
+    const named = deployFiles.flatMap((file) =>
+      [...jobTexts(file)]
+        .filter(([, text]) => /^ {4}environment: production\s*$/m.test(text))
+        .map(([job]) => `${file} ${job}`)
+    );
+    expect(named.sort()).toEqual([
+      "deploy-firestore.yml deploy",
+      "deploy-functions.yml deploy",
+      "deploy-hosting.yml build-and-deploy",
+      "deploy-ios.yml testflight",
+      "deploy-storage.yml deploy",
+    ]);
+  });
+
+  it("leaves no job reading a release credential without it", () => {
+    const offenders = deployFiles.flatMap((file) =>
+      [...jobTexts(file)]
+        .filter(
+          ([, text]) =>
+            RELEASE_SECRET.test(text) &&
+            !/^ {4}environment: production\s*$/m.test(text)
+        )
+        .map(([job]) => `${file} ${job}`)
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("keeps the Pages job on github-pages", () => {
+    const pages = jobTexts("deploy.yml").get("build-and-deploy") ?? "";
+    expect(pages).toMatch(/^ {4}environment:\s*\n {6}name: github-pages\s*$/m);
+  });
+
+  it("passes every secret on to the called deploys", () => {
+    const calls = [...jobTexts("deploy-production.yml").values()].filter((t) =>
+      /^ {4}uses: \.\/\.github\/workflows\//m.test(t)
+    );
+    expect(calls.length).toBe(5);
+    for (const call of calls)
+      expect(call).toMatch(/^ {4}secrets: inherit\s*$/m);
   });
 });

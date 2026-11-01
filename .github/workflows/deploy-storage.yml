@@ -37,6 +37,10 @@ jobs:
   deploy:
     needs: verify
     runs-on: ubuntu-latest
+    # The production environment holds the release credentials: only a
+    # job that names it can read its secrets, and its branch rule decides
+    # where such a job may run. Repository secrets still reach this job.
+    environment: production
     # Under 2 minutes on the release of 19 October.
     timeout-minutes: 20
     # ── PACKET 11 DEPLOY GATE ────────────────────────────────────────────
