@@ -268,6 +268,9 @@ export interface PlanBuilderOutput {
           entry?: "race" | "own";
         })
       | null;
+    /** Run9's starter goal, when a caller begins, finishes or ends it
+     *  beside the plan (buildPlan itself never sets it). */
+    starterGoal?: import("./runModeResolution").StarterGoal | null;
     primaryGoal: PrimaryGoal;
     // Pgm4: persist the plan-shaping inputs so the stored profile matches
     // the generated plan. Pre-Pgm4 these were only writable via the

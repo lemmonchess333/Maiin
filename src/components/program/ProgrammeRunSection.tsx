@@ -156,9 +156,11 @@ import RaceCockpitCard from "./RaceCockpitCard";
 import StarterGoalCard from "./StarterGoalCard";
 import StarterDoneCard from "@/components/run/StarterDoneCard";
 import {
+  STARTER_GOAL_NAME,
   starterGoalReached,
   starterProgress,
 } from "@/features/program/starterProgress";
+import { useDismissOnce } from "@/hooks/useDismissOnce";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import RaceWeeksAhead from "./RaceWeeksAhead";
 import type { LayoffClass } from "@/features/program/layoffDetection";
@@ -573,6 +575,15 @@ export default function ProgrammeRunSection({
       ? starterProgress(programState, profile.starterGoal, savedRunDays)
       : null;
   const starterDone = starterGoalReached(profile, programState, savedRunDays);
+  // Offered on the free running hero to someone new to running who has not
+  // had the goal, until dismissed (per account on this device).
+  const { dismissed: starterOfferDismissed, dismiss: dismissStarterOffer } =
+    useDismissOnce("tropos-starter-offer");
+  const starterOffered =
+    currentMode === "freeform" &&
+    profile.runFrequency === "new" &&
+    !profile.starterGoal &&
+    !starterOfferDismissed;
 
   // Run8 PR1c — hero state machine. Single discriminator replaces
   // the scattered `currentMode === X && raceGoal && ...` conjunctions
@@ -1411,6 +1422,47 @@ export default function ProgrammeRunSection({
                   </span>
                 </p>
               )}
+            </Card>
+          )}
+
+          {/* Run9: the 30-minute goal, offered to a free runner who said
+              they are new to running and has not had it. Opens Run plan on
+              it; dismissed once. */}
+          {starterOffered && (
+            <Card size="compact" className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  navigate("/settings/run-plan?goal=starter");
+                }}
+                className="flex-1 flex items-center gap-3 text-left min-w-0"
+                style={{ minHeight: 44 }}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-running-strong">
+                    New to running?
+                  </p>
+                  <p className="text-base font-bold text-foreground">
+                    Run {STARTER_GOAL_NAME}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    About nine weeks, from short runs with walks between.
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  dismissStarterOffer();
+                }}
+                aria-label="Dismiss the 30-minute goal"
+                className="size-11 -my-2 -mr-2 flex items-center justify-center shrink-0 text-muted-foreground"
+              >
+                <X className="size-4" />
+              </button>
             </Card>
           )}
 

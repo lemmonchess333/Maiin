@@ -1229,3 +1229,100 @@ describe("RunPlanSettings", () => {
     expect(goal.targetDate).toBe("2028-01-01");
   });
 });
+
+/* Run9's starter goal in Settings → Run plan: offered to someone who runs
+   only, to anyone new to running and to anyone on it; chosen, it begins
+   today and clears a race goal; left for a race, it ends, kept with the
+   stage reached. Every change goes through configurePlan, which writes the
+   goal whole (functions/lib/raceGoalWrite.js). */
+describe("RunPlanSettings — the 30-minute goal", () => {
+  const today = () => localDateString(new Date());
+  const newRunner = {
+    ...baseProfile,
+    runFrequency: "new",
+  } as unknown as UserProfile;
+  const option = () =>
+    screen.queryByRole("radio", { name: "30 minutes without stopping" });
+
+  beforeEach(() => {
+    configureSpy.mockClear();
+    localStorage.clear();
+  });
+
+  it("is offered to someone new to running or who runs only, and no one else", () => {
+    const { unmount } = renderPage(baseProfile);
+    expect(option()).not.toBeInTheDocument();
+    unmount();
+    const runnerOnly = renderPage({
+      ...baseProfile,
+      athleteType: "Runner",
+    } as unknown as UserProfile);
+    expect(option()).toBeInTheDocument();
+    runnerOnly.unmount();
+    renderPage(newRunner);
+    expect(option()).toBeInTheDocument();
+  });
+
+  it("begins today when chosen, clearing a race goal, at the first stage", async () => {
+    renderPage(newRunner);
+    fireEvent.click(option()!);
+    expect(screen.getByText(/in about nine weeks/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "2" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save run plan" })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates.runMode).toBe("starter");
+    expect(payload.profileUpdates.starterGoal).toEqual({ startedOn: today() });
+    expect(payload.profileUpdates.raceGoal).toBeNull();
+    expect(payload.profileUpdates.weeklyRunDaysTarget).toBe(2);
+    expect(payload.programState.runPlan).toMatchObject({
+      mode: "starter",
+      stage: 1,
+    });
+  });
+
+  it("opens on the goal from Train's offer", () => {
+    renderPage(baseProfile, "/settings/run-plan?goal=starter");
+    expect(option()).toBeChecked();
+  });
+
+  it("opens on a 5K from the Done card's offer, its date still to choose", () => {
+    renderPage(baseProfile, "/settings/run-plan?goal=5k");
+    expect(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    ).toBeChecked();
+    expect(screen.getByRole("radio", { name: "5K" })).toBeChecked();
+  });
+
+  it("ends a running goal kept with its stage when a race takes its place", async () => {
+    const onStarter = {
+      ...newRunner,
+      runMode: "starter",
+      starterGoal: { startedOn: "2026-09-07" },
+      weeklyRunDaysTarget: 3,
+    } as unknown as UserProfile;
+    const programState = {
+      runDays: [],
+      runPlan: { mode: "starter", stage: 4, stageWeekKey: "2026-10-26" },
+      workouts: [],
+      weekNumber: 1,
+    } as unknown as ProgramState;
+    renderPage(onStarter, "/settings/run-plan", { programState });
+    expect(option()).toBeChecked();
+    pickRacePrep("On my own");
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: RACE_TARGET_DATE },
+    });
+    fireEvent.click(await screen.findByRole("button", { name: /Save .*plan/i }));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates.runMode).toBe("race_prep");
+    expect(payload.profileUpdates.starterGoal).toEqual({
+      startedOn: "2026-09-07",
+      endedOn: today(),
+      stage: 4,
+    });
+  });
+});

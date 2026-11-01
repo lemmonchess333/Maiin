@@ -6,6 +6,7 @@ import type { Goal } from "@/features/program/programTypes";
 import type { OnboardingDraft, OnboardingActivity } from "./onboardingDraft";
 import { resolveOnboardingRunMode } from "./onboardingRunMode";
 import { MIN_RACE_RUN_DAYS } from "./raceGoalPlanner";
+import { STARTER_MOST_RUNS_A_WEEK } from "@/features/program/starterPlan";
 import { liftUnitForBodyWeight } from "./liftLoad";
 
 /**
@@ -52,11 +53,14 @@ export function buildOnboardingPlan(
       draft.raceTargetDate && draft.raceTargetDate >= currentDate
     ),
   });
-  // A race plan needs at least two run days a week (Pgm7 A7).
+  // A race plan needs at least two run days a week (Pgm7 A7); the starter
+  // goal takes two or three (Run9).
   const weeklyRunDays =
     runMode === "freeform"
       ? 0
-      : Math.max(MIN_RACE_RUN_DAYS, draft.weeklyRunDays);
+      : runMode === "starter"
+        ? Math.min(STARTER_MOST_RUNS_A_WEEK, Math.max(2, draft.weeklyRunDays))
+        : Math.max(MIN_RACE_RUN_DAYS, draft.weeklyRunDays);
   return buildPlan({
     primaryGoal: draft.primaryGoal,
     nutritionPhase,

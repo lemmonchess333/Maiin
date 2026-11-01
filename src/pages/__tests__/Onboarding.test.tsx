@@ -18,7 +18,7 @@ import * as planning from "@/lib/onboardingPlan";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
 import { loadWordFilter } from "@/lib/wordFilter";
-import { SETUP, SETUP_OPTIONS } from "@/test/journeyScreens";
+import { SETUP, SETUP_OPTIONS, STARTER } from "@/test/journeyScreens";
 import {
   addLocalDays,
   localDateString,
@@ -691,6 +691,26 @@ describe("a race needs a date", () => {
     });
   });
 
+  it("begins the 30-minute goal today, with no race goal (Run9)", async () => {
+    await loadWordFilter();
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runFrequency: "new",
+      runMode: "starter",
+      weeklyRunDays: 3,
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Go to Today" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const { profileData, programState } = complete.mock.calls[0][0];
+    expect(profileData.runMode).toBe("starter");
+    expect(profileData.starterGoal).toEqual({
+      startedOn: localDateString(new Date()),
+    });
+    expect(profileData).not.toHaveProperty("raceGoal");
+    expect(programState.runPlan).toMatchObject({ mode: "starter", stage: 1 });
+  });
+
   it("holds a setup saved before the question at the review", async () => {
     await loadWordFilter();
     const raceDraft = {
@@ -870,10 +890,67 @@ describe("new runners", () => {
     const builder = vi.spyOn(planning, "buildOnboardingPlan");
     reachRunStep();
     fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    // New to running starts on the 30-minute goal (Run9); free running is
+    // a tap away and plans none.
+    fireEvent.click(screen.getByRole("radio", { name: "Free running" }));
     expect(
       builder.mock.results.at(-1)!.value.profileUpdates.weeklyRunDaysTarget
     ).toBe(0);
     builder.mockRestore();
+  });
+
+  /* Run9's reopening (call 5): New to running starts on the 30-minute
+     goal, three runs a week, with free running and race prep a tap away. */
+  it("starts someone new to running on the 30-minute goal, three runs a week", () => {
+    cleanup();
+    localStorage.clear();
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    reachRunStep();
+    fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    // The name the journeys find (src/test/journeyScreens.ts).
+    expect(
+      screen.getByRole("radio", { name: STARTER.setupOption })
+    ).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Free running" })).toBeEnabled();
+    expect(screen.getByRole("radio", { name: "Race prep" })).toBeEnabled();
+    expect(
+      screen.getByText(/Run 30 minutes without stopping in about nine weeks/)
+    ).toBeInTheDocument();
+    const plan = builder.mock.results.at(-1)!.value;
+    expect(plan.profileUpdates.runMode).toBe("starter");
+    expect(plan.profileUpdates.weeklyRunDaysTarget).toBe(3);
+    fireEvent.click(screen.getByRole("radio", { name: "2" }));
+    expect(
+      builder.mock.results.at(-1)!.value.profileUpdates.weeklyRunDaysTarget
+    ).toBe(2);
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+    builder.mockRestore();
+  });
+
+  it("offers the 30-minute goal to someone who runs only, not chosen for them", () => {
+    cleanup();
+    localStorage.clear();
+    reachRunStep();
+    fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
+    expect(screen.getByRole("radio", { name: "30 minutes" })).not.toBeChecked();
+    expect(screen.getByRole("radio", { name: "Free running" })).toBeChecked();
+  });
+
+  it("does not offer it to someone who lifts and already runs", () => {
+    cleanup();
+    localStorage.clear();
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Both" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
+    expect(
+      screen.queryByRole("radio", { name: "30 minutes" })
+    ).not.toBeInTheDocument();
+    // Someone who lifts and is new to running is offered it.
+    fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    expect(screen.getByRole("radio", { name: "30 minutes" })).toBeChecked();
   });
 
   it("starts them at two runs a week, a race plan's least (Pgm7 A7)", () => {

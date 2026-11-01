@@ -33,6 +33,19 @@ function wholeRaceGoal(next, stored, deleteField) {
 }
 
 /**
+ * The starter goal (Run9's 30 minutes without stopping) is written whole
+ * the same way: a goal begun after one finished or ended must not keep the
+ * old goal's `finishedOn`, `endedOn` or `stage`, which a merge would.
+ *
+ * @param {unknown} next - the starter goal the write sends (an object, or null)
+ * @param {unknown} stored - the starter goal on the profile now
+ * @param {unknown} deleteField - the SDK's delete sentinel
+ */
+function wholeStarterGoal(next, stored, deleteField) {
+  return wholeRaceGoal(next, stored, deleteField);
+}
+
+/**
  * @param {unknown} shown - the stored trainingForSpaceId
  * @param {unknown} raceGoal - the race goal the write leaves on the profile
  * @returns {boolean} true when the chip names a race the goal is not
@@ -46,4 +59,4 @@ function raceIdentityIsStale(shown, raceGoal) {
   return shown !== linked;
 }
 
-module.exports = { wholeRaceGoal, raceIdentityIsStale };
+module.exports = { wholeRaceGoal, wholeStarterGoal, raceIdentityIsStale };

@@ -48,7 +48,11 @@ const {
   mergeChangedFields,
   ProgrammeConflictError,
 } = require("./lib/stateTransition");
-const { wholeRaceGoal, raceIdentityIsStale } = require("./lib/raceGoalWrite");
+const {
+  wholeRaceGoal,
+  wholeStarterGoal,
+  raceIdentityIsStale,
+} = require("./lib/raceGoalWrite");
 const {
   runProgramCommandTransaction,
 } = require("./lib/programCommandTransaction");
@@ -993,6 +997,14 @@ exports.completeOnboarding = functions
             admin.firestore.FieldValue.serverTimestamp();
         }
 
+        // The starter goal is sent whole too (raceGoalWrite.js).
+        if (nextProfileData.starterGoal !== undefined) {
+          nextProfileData.starterGoal = wholeStarterGoal(
+            nextProfileData.starterGoal,
+            existingData.starterGoal,
+            admin.firestore.FieldValue.delete()
+          );
+        }
         const storedRaceGoal = existingData.raceGoal;
         const raceGoalAfter =
           nextProfileData.raceGoal !== undefined
@@ -1212,19 +1224,24 @@ exports.configurePlan = functions
       const withRaceGoal = (patch, storedProfile, publicSnap, write) => {
         const stored = storedProfile.raceGoal;
         const after = "raceGoal" in patch ? patch.raceGoal : stored;
-        write(
-          userRef,
-          "raceGoal" in patch
-            ? {
-                ...patch,
-                raceGoal: wholeRaceGoal(
-                  patch.raceGoal,
-                  stored,
-                  admin.firestore.FieldValue.delete()
-                ),
-              }
-            : patch
-        );
+        write(userRef, {
+          ...patch,
+          ...("raceGoal" in patch && {
+            raceGoal: wholeRaceGoal(
+              patch.raceGoal,
+              stored,
+              admin.firestore.FieldValue.delete()
+            ),
+          }),
+          // The starter goal is sent whole too (raceGoalWrite.js).
+          ...("starterGoal" in patch && {
+            starterGoal: wholeStarterGoal(
+              patch.starterGoal,
+              storedProfile.starterGoal,
+              admin.firestore.FieldValue.delete()
+            ),
+          }),
+        });
         if (
           publicSnap.exists &&
           raceIdentityIsStale(publicSnap.data().trainingForSpaceId, after)

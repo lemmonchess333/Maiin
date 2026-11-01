@@ -2468,3 +2468,64 @@ describe("ProgrammeRunSection — the starter goal (Run9)", () => {
     expect(screen.queryByText("Done")).not.toBeInTheDocument();
   });
 });
+
+/* Run9: Train offers the 30-minute goal to a free runner who said they are
+   new to running and has not had it; dismissed once. */
+describe("ProgrammeRunSection — the 30-minute goal offered", () => {
+  const freeNewRunner = (overrides: Partial<UserProfile> = {}) =>
+    makeProfile({
+      runMode: "freeform",
+      raceGoal: null,
+      runFrequency: "new",
+      ...overrides,
+    } as Partial<UserProfile>);
+  const offer = () =>
+    screen.queryByRole("button", { name: /Run 30 minutes without stopping/ });
+
+  beforeEach(() => {
+    localStorage.clear();
+    navigateMock.mockClear();
+  });
+
+  it("opens Run plan on the goal", () => {
+    renderSection(
+      { ...commonProps(), profile: freeNewRunner() },
+      makeProgramState([], { runPlan: undefined })
+    );
+    fireEvent.click(offer()!);
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/settings/run-plan?goal=starter"
+    );
+  });
+
+  it("goes once dismissed, and is not made to someone who has had the goal", () => {
+    const { unmount } = renderSection(
+      { ...commonProps(), profile: freeNewRunner() },
+      makeProgramState([], { runPlan: undefined })
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Dismiss the 30-minute goal" })
+    );
+    expect(offer()).not.toBeInTheDocument();
+    unmount();
+    localStorage.clear();
+    renderSection(
+      {
+        ...commonProps(),
+        profile: freeNewRunner({
+          starterGoal: { startedOn: "2026-01-05", endedOn: "2026-02-02", stage: 3 },
+        }),
+      },
+      makeProgramState([], { runPlan: undefined })
+    );
+    expect(offer()).not.toBeInTheDocument();
+  });
+
+  it("is not made to someone who already runs", () => {
+    renderSection(
+      { ...commonProps(), profile: freeNewRunner({ runFrequency: "regular" }) },
+      makeProgramState([], { runPlan: undefined })
+    );
+    expect(offer()).not.toBeInTheDocument();
+  });
+});
