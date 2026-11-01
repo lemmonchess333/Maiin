@@ -7232,8 +7232,10 @@ exports.toggleKudosCallable = functions
       // now written server-side, atomically with the kudos doc.
       // Pre-PR-3 the client wrote `/notifications/...` directly
       // after the callable returned; that path is now rule-denied.
-      // Only notify on the ADD edge (kudosed=true) so re-tapping
-      // doesn't spam the recipient.
+      // Only the ADD edge (kudosed=true) notifies, under one id per giver
+      // and activity: props taken back and given again find that row and
+      // leave it as it is (keepExisting), so toggling them cannot fill the
+      // recipient's tray or bring the row back as unread.
       if (result && result.kudosed) {
         try {
           // Use the author verified inside the toggle txn — no post-txn
@@ -7255,6 +7257,8 @@ exports.toggleKudosCallable = functions
                 message: `${fromName} gave you props`,
               },
               serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+              notificationId: `kudos_${activityId}_${context.auth.uid}`,
+              keepExisting: true,
             });
           }
         } catch (notifErr) {
@@ -7351,8 +7355,10 @@ exports.toggleSpacePostLikeCallable = functions
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
         refuseAdd,
       });
-      // SOC-P2g — notify on the ADD edge only (re-tap can't spam), never
-      // self, never the retired coach author (not a notifiable user).
+      // SOC-P2g — notify on the ADD edge only, never self, never the
+      // retired coach author (not a notifiable user). One id per liker and
+      // post, kept once written (keepExisting), so a like taken back and
+      // given again cannot add a row or bring one back as unread.
       if (result && result.liked) {
         try {
           const postAuthorId = result.postAuthorId;
@@ -7377,6 +7383,8 @@ exports.toggleSpacePostLikeCallable = functions
                 message: `${fromName} gave your space post props`,
               },
               serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+              notificationId: `space_post_like_${spaceId}_${postId}_${context.auth.uid}`,
+              keepExisting: true,
             });
           }
         } catch (notifErr) {
