@@ -41,9 +41,10 @@ interface MacroColumnProps {
    *  (the default). False mounts it at its figures. */
   drawIn?: boolean;
   /**
-   * "tile" is the larger standalone treatment. "compact" is used in the
-   * shared Food summary and Home's food card beside the calorie ring: a
-   * smaller icon and number, with the 12px labels unchanged.
+   * "tile" is the Food page's macro card. "compact" is the same tile at
+   * the size Home's food card draws it, on a tinted tile beside the
+   * calorie ring: a smaller icon and number, the 12px labels unchanged,
+   * and a bar track that shows on the tint.
    */
   size?: "tile" | "compact";
 }
@@ -330,9 +331,9 @@ export default function MacroColumn({
           compact ? "mt-2" : "mt-2.5"
         )}
         style={{
-          /* A compact reading sits on the same card as the calorie ring
-             on Home and Food, so its track is the ring's grey groove
-             (CalorieRing's COLOR_TRACK). */
+          /* A compact tile sits on Home's card beside the calorie ring,
+             so its track is the ring's grey groove (CalorieRing's
+             COLOR_TRACK): one grey for "not yet" across the card. */
           background: compact
             ? "hsl(var(--muted-foreground) / 0.2)"
             : "hsl(var(--muted))",
