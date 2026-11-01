@@ -43,7 +43,7 @@ describe("sendPasswordResetEmail", () => {
     expect(sendEmail).not.toHaveBeenCalled();
   });
 
-  it("rethrows a genuine failure (e.g. Admin outage) so the caller can 500", async () => {
+  it("rethrows a genuine failure (e.g. Admin outage) for the caller to log", async () => {
     const generateLink = vi
       .fn()
       .mockRejectedValue(new Error("internal error / backend unavailable"));

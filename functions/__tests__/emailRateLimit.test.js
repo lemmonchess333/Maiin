@@ -86,20 +86,23 @@ describe("isEmailRateLimited", () => {
 });
 
 describe("accountEmails wiring (regression guard for the arg-shift bug)", () => {
-  const source = readFileSync(
-    join(__dirnameLocal, "..", "email", "accountEmails.js"),
-    "utf8"
-  );
+  const read = (...parts) =>
+    readFileSync(join(__dirnameLocal, "..", ...parts), "utf8");
+  // The verification callable limits in accountEmails.js; the reset
+  // callable's request, limit included, is lib/passwordResetRequest.js.
+  const callables = read("email", "accountEmails.js");
+  const resetRequest = read("lib", "passwordResetRequest.js");
 
   it("routes both callables through the isEmailRateLimited adapter", () => {
-    const adapterCalls = source.match(/isEmailRateLimited\(/g) || [];
-    // Two call sites (password reset + verification) plus the import
-    // destructure => at least 2 invocation occurrences.
-    expect(adapterCalls.length).toBeGreaterThanOrEqual(2);
+    expect(callables).toMatch(/isEmailRateLimited\(/);
+    expect(callables).toContain("requestPasswordReset(");
+    expect(resetRequest).toMatch(/isEmailRateLimited\(/);
   });
 
   it("no longer calls the raw shared rateLimiter.isRateLimited directly", () => {
-    expect(source).not.toMatch(/rateLimiter\.isRateLimited/);
-    expect(source).not.toMatch(/require\(["']\.\.\/rateLimiter["']\)/);
+    for (const source of [callables, resetRequest]) {
+      expect(source).not.toMatch(/rateLimiter\.isRateLimited/);
+      expect(source).not.toMatch(/require\(["']\.\.\/rateLimiter["']\)/);
+    }
   });
 });
