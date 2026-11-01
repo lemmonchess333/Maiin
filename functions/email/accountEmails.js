@@ -7,9 +7,11 @@
  * - sendPasswordResetLinkCallable — UNAUTHENTICATED by design (user is
  *   logged out); Admin-minted link works for OAuth-only accounts;
  *   enumeration-neutral response (the same reply whether or not the
- *   address has an account or the email went); per-email rate limit.
+ *   address has an account or the email went); per-email rate limits and
+ *   a project-wide daily cap on sends.
  * - sendVerificationEmailCallable — AUTH-required, caller's own email
- *   only; branded Resend template instead of the Firebase default.
+ *   only; branded Resend template instead of the Firebase default;
+ *   per-account rate limits.
  *
  * Pure decision logic stays in lib/passwordResetRequest.js,
  * lib/passwordResetEmail.js and lib/verificationEmail.js
@@ -20,7 +22,10 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { defineSecret } = require("firebase-functions/params");
 const { DEFAULT_HTTP_CAP } = require("../lib/runtimeCaps");
-const { isEmailRateLimited } = require("../lib/emailRateLimit");
+const {
+  VERIFICATION_EMAIL_LIMITS,
+  firstEmailLimitHit,
+} = require("../lib/emailRateLimit");
 const { requestPasswordReset } = require("../lib/passwordResetRequest");
 const verificationEmail = require("../lib/verificationEmail");
 
@@ -123,18 +128,16 @@ exports.sendVerificationEmailCallable = functions
     if (currentUser.emailVerified) {
       return { ok: true, alreadyVerified: true };
     }
-    const limited = await isEmailRateLimited({
+    // A few minutes' burst and a day's total per account. Someone can
+    // sign up with an address that is not theirs, so this is also what an
+    // unwanted inbox receives at most.
+    const hit = await firstEmailLimitHit({
       firestore: admin.firestore(),
       key: `verifyemail_${context.auth.uid}`,
-      action: "verificationEmail",
-      maxCalls: 3,
-      windowMs: 600_000,
+      limits: VERIFICATION_EMAIL_LIMITS,
     });
-    if (limited) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Too many requests. Try again in a few minutes."
-      );
+    if (hit) {
+      throw new functions.https.HttpsError("resource-exhausted", hit.message);
     }
     try {
       await verificationEmail.sendVerificationEmail({

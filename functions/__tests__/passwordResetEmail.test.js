@@ -56,6 +56,32 @@ describe("sendPasswordResetEmail", () => {
     ).rejects.toThrow(/backend unavailable/);
   });
 
+  it("asks mayDeliver only once there is a link, and sends nothing on false", async () => {
+    const mayDeliver = vi.fn().mockResolvedValue(false);
+    const sendEmail = vi.fn();
+    await expect(
+      sendPasswordResetEmail({
+        generateLink: vi.fn().mockResolvedValue("https://reset.link/abc"),
+        sendEmail,
+        email: "a@b.com",
+        mayDeliver,
+      })
+    ).resolves.toEqual({ sent: false, reason: "daily-cap" });
+    expect(sendEmail).not.toHaveBeenCalled();
+
+    // No account: nothing to send, so nothing is counted.
+    mayDeliver.mockClear();
+    await sendPasswordResetEmail({
+      generateLink: vi
+        .fn()
+        .mockRejectedValue(new Error("no user record (user-not-found)")),
+      sendEmail,
+      email: "ghost@b.com",
+      mayDeliver,
+    });
+    expect(mayDeliver).not.toHaveBeenCalled();
+  });
+
   it("html embeds the link in both the button and the copy-paste fallback", () => {
     const html = resetEmailHtml("https://x.y/z", "Tropos");
     // Appears at least twice: CTA href + the visible fallback URL.

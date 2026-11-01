@@ -10,7 +10,11 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
-const { requestPasswordReset } = require("../lib/passwordResetRequest");
+const {
+  requestPasswordReset,
+  PASSWORD_RESET_SEND_CAP,
+  PASSWORD_RESET_SENDS_PER_DAY,
+} = require("../lib/passwordResetRequest");
 
 function harness({ accounts = ["alice@example.com"] } = {}) {
   const firestore = memoryFirestore();
@@ -87,5 +91,22 @@ describe("requestPasswordReset", () => {
       "sendPasswordResetLinkCallable",
       { sent: false, reason: "no-account" }
     );
+  });
+
+  it("warns when the day's cap on sends stops a send, and replies { ok: true }", async () => {
+    const h = harness();
+    h.firestore.data.set(
+      `rateLimits/${PASSWORD_RESET_SEND_CAP.key}_${PASSWORD_RESET_SEND_CAP.action}`,
+      { timestamps: Array(PASSWORD_RESET_SENDS_PER_DAY).fill(Date.now()) }
+    );
+    await expect(h.request("alice@example.com")).resolves.toEqual({
+      ok: true,
+    });
+    expect(h.sendEmail).not.toHaveBeenCalled();
+    expect(h.logger.warn).toHaveBeenCalledWith(
+      "sendPasswordResetLinkCallable.dailyCap",
+      { cap: PASSWORD_RESET_SENDS_PER_DAY }
+    );
+    expect(h.logger.error).not.toHaveBeenCalled();
   });
 });

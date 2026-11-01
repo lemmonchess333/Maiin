@@ -36,8 +36,7 @@ const EMAIL_PATTERN = /^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/;
  * first thing it does with anything a caller sends.
  */
 function readResetEmail(data) {
-  const email =
-    data && typeof data.email === "string" ? data.email.trim() : "";
+  const email = data && typeof data.email === "string" ? data.email.trim() : "";
   if (!email || email.length > MAX_EMAIL_LENGTH) return null;
   return EMAIL_PATTERN.test(email) ? email : null;
 }
@@ -78,6 +77,10 @@ function resetEmailHtml(link, appName) {
  * @param {(msg: {to: string, subject: string, html: string}) => Promise<void>} args.sendEmail
  * @param {string} args.email
  * @param {string} [args.appName]
+ * @param {() => Promise<boolean>} [args.mayDeliver] - asked once there is a
+ *   link to send; false skips the send. Asked only then, so whatever it
+ *   counts is emails about to go, never requests for an address with no
+ *   account.
  * @returns {Promise<{sent: boolean, reason?: string}>}
  */
 async function sendPasswordResetEmail({
@@ -85,6 +88,7 @@ async function sendPasswordResetEmail({
   sendEmail,
   email,
   appName = "Tropos",
+  mayDeliver = async () => true,
 }) {
   let link;
   try {
@@ -98,6 +102,7 @@ async function sendPasswordResetEmail({
     }
     throw err;
   }
+  if (!(await mayDeliver())) return { sent: false, reason: "daily-cap" };
   await sendEmail({
     to: email,
     subject: `Set your ${appName} password`,

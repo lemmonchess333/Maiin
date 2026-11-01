@@ -8,7 +8,12 @@
  *     string built to make a pattern backtrack costs nothing;
  *   - once an address is accepted, the reply is the same whether or not it
  *     has an account and whether or not the email went, so the reply cannot
- *     be used to find out which addresses have accounts.
+ *     be used to find out which addresses have accounts;
+ *   - one address gets at most 3 reset emails a day, and the project sends
+ *     at most PASSWORD_RESET_SENDS_PER_DAY, counting only emails sent.
+ *
+ * sendVerificationEmailCallable sends one account at most 3 in 10 minutes
+ * and 5 a day: someone can sign up with an address that is not theirs.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRequire } from "node:module";
@@ -18,7 +23,18 @@ process.env.GCLOUD_PROJECT ||= "demo-tropos";
 
 const admin = require("firebase-admin");
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
-const { sendPasswordResetLinkCallable } = require("../email/accountEmails");
+const {
+  sendPasswordResetLinkCallable,
+  sendVerificationEmailCallable,
+} = require("../email/accountEmails");
+const {
+  PASSWORD_RESET_SEND_CAP,
+  PASSWORD_RESET_SENDS_PER_DAY,
+} = require("../lib/passwordResetRequest");
+
+const MINUTE = 60 * 1000;
+const DAY = 24 * 60 * MINUTE;
+const T0 = Date.UTC(2026, 10, 1, 9, 0);
 
 let db;
 let auth;
@@ -43,6 +59,14 @@ beforeEach(() => {
       }
       return `https://tropos.example/reset?for=${encodeURIComponent(email)}`;
     }),
+    getUser: vi.fn(async (uid) => ({
+      uid,
+      email: "newbie@example.com",
+      emailVerified: false,
+    })),
+    generateEmailVerificationLink: vi.fn(
+      async () => "https://tropos.example/verify"
+    ),
   };
   Object.defineProperty(admin, "auth", {
     value: () => auth,
@@ -167,5 +191,136 @@ describe("sendPasswordResetLinkCallable — the reply says nothing about account
     replies.push(await reset("alice@example.com"));
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(new Set(replies.map((r) => JSON.stringify(r))).size).toBe(1);
+  });
+});
+
+/** Move the clock the limiter reads; nothing else is faked. */
+function at(ms) {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(ms);
+}
+
+describe("sendPasswordResetLinkCallable — limits per address", () => {
+  it("sends one address 3 resets a day, then refuses until the first is a day old", async () => {
+    for (const minutes of [0, 6, 12]) {
+      at(T0 + minutes * MINUTE);
+      await expect(reset("alice@example.com")).resolves.toEqual({ ok: true });
+    }
+    // Past the 5-minute window, so only the day refuses. Before: sent.
+    at(T0 + 18 * MINUTE);
+    await expect(reset("alice@example.com")).rejects.toMatchObject({
+      code: "resource-exhausted",
+      message:
+        "Too many reset requests for this address today. Try again tomorrow.",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    // The window rolls: a day after the first, one more is allowed.
+    at(T0 + DAY + MINUTE);
+    await expect(reset("alice@example.com")).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("limits an address with no account the same way, so the limit says nothing either", async () => {
+    for (const minutes of [0, 6, 12]) {
+      at(T0 + minutes * MINUTE);
+      await reset("nobody@example.com");
+    }
+    at(T0 + 18 * MINUTE);
+    await expect(reset("nobody@example.com")).rejects.toMatchObject({
+      code: "resource-exhausted",
+    });
+  });
+
+  it("counts each address on its own", async () => {
+    for (const minutes of [0, 6, 12, 18]) {
+      at(T0 + minutes * MINUTE);
+      await reset("alice@example.com").catch(() => {});
+    }
+    auth.accounts.add("bob@example.com");
+    await expect(reset("bob@example.com")).resolves.toEqual({ ok: true });
+  });
+});
+
+describe("sendPasswordResetLinkCallable — the project's daily cap on sends", () => {
+  const capPath = `rateLimits/${PASSWORD_RESET_SEND_CAP.key}_${PASSWORD_RESET_SEND_CAP.action}`;
+  const seedSends = (sentAt) =>
+    db.data.set(capPath, {
+      timestamps: Array.from(
+        { length: PASSWORD_RESET_SENDS_PER_DAY },
+        () => sentAt
+      ),
+    });
+
+  it("is 500 sends a rolling day", () => {
+    expect(PASSWORD_RESET_SENDS_PER_DAY).toBe(500);
+    expect(PASSWORD_RESET_SEND_CAP.windowMs).toBe(DAY);
+  });
+
+  it("sends nothing once the day's sends are used, and replies the same", async () => {
+    at(T0);
+    seedSends(T0 - 60 * MINUTE);
+    // Before: sent regardless.
+    await expect(reset("alice@example.com")).resolves.toEqual({ ok: true });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("sends again once those sends are a day old", async () => {
+    at(T0);
+    seedSends(T0 - DAY - MINUTE);
+    await expect(reset("alice@example.com")).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("counts only emails sent, not requests for addresses with no account", async () => {
+    at(T0);
+    for (const email of ["x@example.com", "y@example.com", "z@example.com"]) {
+      await reset(email);
+    }
+    expect(db.data.has(capPath)).toBe(false);
+    await reset("alice@example.com");
+    expect(db.data.get(capPath).timestamps).toEqual([T0]);
+  });
+});
+
+describe("sendVerificationEmailCallable — limits per account", () => {
+  const verify = () =>
+    sendVerificationEmailCallable.run({}, { auth: { uid: "newbie" } });
+
+  it("sends 3 in 10 minutes, then asks for a few minutes", async () => {
+    for (const minutes of [0, 1, 2]) {
+      at(T0 + minutes * MINUTE);
+      await expect(verify()).resolves.toEqual({ ok: true });
+    }
+    at(T0 + 3 * MINUTE);
+    await expect(verify()).rejects.toMatchObject({
+      code: "resource-exhausted",
+      message: "Too many requests. Try again in a few minutes.",
+    });
+  });
+
+  it("sends 5 a day, a burst refused on the way not counted, then refuses until the first is a day old", async () => {
+    for (const minutes of [0, 1, 2]) {
+      at(T0 + minutes * MINUTE);
+      await verify();
+    }
+    // Refused by the 10-minute window; it must not spend the day's five.
+    at(T0 + 3 * MINUTE);
+    await expect(verify()).rejects.toMatchObject({
+      message: "Too many requests. Try again in a few minutes.",
+    });
+    for (const minutes of [11, 12]) {
+      at(T0 + minutes * MINUTE);
+      await expect(verify()).resolves.toEqual({ ok: true });
+    }
+    // Past the 10-minute window, so only the day refuses. Before: sent.
+    at(T0 + 25 * MINUTE);
+    await expect(verify()).rejects.toMatchObject({
+      code: "resource-exhausted",
+      message: "Too many requests today. Try again tomorrow.",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    at(T0 + DAY + MINUTE);
+    await expect(verify()).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(6);
   });
 });
