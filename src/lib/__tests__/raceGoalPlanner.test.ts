@@ -436,3 +436,66 @@ describe("raceTargetVerdict — A2 feasibility (display register)", () => {
     expect(Math.round(v.goalPaceS)).toBe(300);
   });
 });
+
+/* C (owner, 1 November 2026): "Good runway" counted weeks only. The verdict
+   now weighs where the long run starts against what the race's plan
+   reaches in the weeks left. */
+describe("getRaceGoalPlannerState — the runway from the running starting point", () => {
+  const monday = "2026-11-02";
+  const start = {
+    version: 1 as const,
+    experience: "building" as const,
+    weeklyMinutes: 25,
+    longestRunMinutes: 25,
+    confirmedAt: monday,
+    source: "recorded" as const,
+  };
+  const weeksOut = (weeks: number, weekday = 5) =>
+    localDateString(addLocalDays(parseLocalDate(monday), weeks * 7 + weekday));
+  const at = (
+    distance: RaceDistance,
+    targetDate: string,
+    runningBaseline: typeof start | null
+  ) =>
+    getRaceGoalPlannerState({
+      ...base,
+      distance,
+      targetDate,
+      currentDate: monday,
+      liftDays: 4,
+      weeklyRunDays: 6,
+      runningBaseline,
+    });
+
+  it("says plainly when the long run can't climb to the race's in the weeks left", () => {
+    // A marathon thirteen weeks out is a full build by the weeks alone...
+    const plain = at("marathon", weeksOut(12), null);
+    expect(plain.status).toBe("healthy");
+    expect(plain.statusTitle).toBe("Good runway");
+    // ...but from a 25-minute longest run the long run reaches 15 km.
+    const s = at("marathon", weeksOut(12), start);
+    expect(s.status).toBe("healthy");
+    expect(s.shortOfRace).toEqual({ reaches: "15 km", raceNeeds: "25 km" });
+    expect(s.statusTitle).toBe("Short runway for your running");
+    expect(s.statusDescription).toBe(
+      "Starting from your running now, the long run builds to about 15 km before race week, where a marathon plan with these weeks builds to 25 km. A later race or a shorter one gives it time."
+    );
+  });
+
+  it("is a good runway when there's time to climb, as for the owner's April marathon", () => {
+    const s = at("marathon", "2027-04-24", start);
+    expect(s.shortOfRace).toBeNull();
+    expect(s.statusTitle).toBe("Good runway");
+    const half = at("half", weeksOut(12), start);
+    expect(half.shortOfRace).toBeNull();
+  });
+
+  it("adds the line to a compressed plan's", () => {
+    const s = at("marathon", weeksOut(9), start);
+    expect(s.status).toBe("compressed");
+    expect(s.statusTitle).toBe("Short runway");
+    expect(s.statusDescription).toMatch(
+      /^Tropos will compress the plan.*Starting from your running now, the long run builds to about/
+    );
+  });
+});
