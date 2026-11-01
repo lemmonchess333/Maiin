@@ -170,6 +170,9 @@ import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
 import {
   buildRaceCockpitViewModel,
   defaultRunDayKey,
+  raceDistanceLabel,
+  raceElapsedBannerCopy,
+  raceTitle,
   runCardStatus,
   runStripLabel,
 } from "@/lib/runProgrammeViewModel";
@@ -330,8 +333,8 @@ export default function ProgrammeRunSection({
   // Run8 PR1a — mode pills + race-goal form removed from this
   // surface. Mode + race goal now live on `/settings/run-plan`
   // (the focused RunPlanSettings editor). The Programme page no longer
-  // owns those writers; tap the section subtitle or the "Manage
-  // Run Plan ›" footer link to navigate.
+  // owns those writers; the race card's, the race-elapsed banner's or
+  // the footer's "Edit run plan" navigates there.
 
   // Run7 Q10 — per-week dismissibility for action-prompting banners.
   // raceElapsed is the only banner that's both action-prompting AND
@@ -600,6 +603,22 @@ export default function ProgrammeRunSection({
     !!raceGoal &&
     !raceElapsed &&
     raceCockpitVM !== null;
+  // The race-elapsed banner's words, or null when it doesn't show: race
+  // day has passed and nothing else (race today, "did you race?",
+  // recovery, its end, a no-show) has taken the race over. Like the race
+  // card, it carries the way into the run plan editor while it shows.
+  const raceElapsedBanner =
+    currentMode === "race_prep" &&
+    raceGoal &&
+    raceElapsed &&
+    heroState !== "race-recent" &&
+    heroState !== "race-today" &&
+    !inRecovery &&
+    !recoveryEnded &&
+    !isNoShow &&
+    !raceElapsedDismissed
+      ? raceElapsedBannerCopy(raceGoal, todayKeyDerivation)
+      : null;
 
   // ── Run14: ease-week nudge (RUN-05) ────────────────────────────────
   // Suggest+approve: evaluate the harder-streak trigger + every
@@ -1036,31 +1055,31 @@ export default function ProgrammeRunSection({
           (inRecovery, raceCompressed) stay non-dismissible; raceElapsed
           is action-prompting and dismissible per-week via localStorage. */}
 
-      {/* Warning: race day has passed (legacy elapsed fallback).
-          Dismissible per-week — once the user acknowledges, it stays
-          hidden until Monday rollover when the dismissal key resets. */}
-      {currentMode === "race_prep" &&
-        raceGoal &&
-        raceElapsed &&
-        heroState !== "race-recent" &&
-        heroState !== "race-today" &&
-        !inRecovery &&
-        !recoveryEnded &&
-        !isNoShow &&
-        !raceElapsedDismissed && (
-          <Banner
-            variant="warning"
-            title="Race day has passed"
-            description={
-              <>
-                {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}. Set
-                a new race goal or switch modes in Manage Run Plan.
-              </>
-            }
-            onDismiss={dismissRaceElapsedBanner}
-            dismissLabel="Dismiss race elapsed banner"
-          />
-        )}
+      {/* Warning: race day has passed (the elapsed fallback). Dismissible
+          per-week — once the user acknowledges, it stays hidden until
+          Monday rollover when the dismissal key resets. Its button is the
+          tab's way into the run plan editor while it shows. */}
+      {raceElapsedBanner && (
+        <Banner
+          variant="warning"
+          title={raceElapsedBanner.title}
+          description={raceElapsedBanner.description}
+          action={
+            <Button
+              variant="sport"
+              fullWidth
+              onClick={() => {
+                haptic();
+                navigate("/settings/run-plan");
+              }}
+            >
+              Edit run plan
+            </Button>
+          }
+          onDismiss={dismissRaceElapsedBanner}
+          dismissLabel="Dismiss race elapsed banner"
+        />
+      )}
 
       {/* Run9 (k): the compressed-plan note moved OFF the banner stack into
           the persistent RaceHeader below (a calm note, not an amber banner),
@@ -1073,7 +1092,7 @@ export default function ProgrammeRunSection({
       {contextualPrompt === "no-show" && raceGoal && (
         <Banner
           variant="warning"
-          title={`${raceGoal.distance.toUpperCase()} · ${raceGoal.targetDate}`}
+          title={raceTitle(raceGoal, todayKeyDerivation)}
           description="We marked this as no-show after 3 days with no log. Log it now if you ran it."
           action={
             /* One filled coral CTA per banner, the run's main action
@@ -1450,7 +1469,7 @@ export default function ProgrammeRunSection({
                 Race day
               </p>
               <p className="text-sm font-bold text-foreground">
-                {raceGoal.distance.toUpperCase()} · Today
+                {raceDistanceLabel(raceGoal.distance)} · Today
               </p>
               <p className="text-micro text-muted-foreground">
                 This is the one you've been training for. Good luck out there.
@@ -1509,7 +1528,7 @@ export default function ProgrammeRunSection({
                 Did you race?
               </p>
               <p className="text-sm font-bold text-foreground">
-                {raceGoal.distance.toUpperCase()}
+                {raceDistanceLabel(raceGoal.distance)}
                 {" · "}
                 {formatDistanceToNowStrict(
                   parseLocalDate(raceGoal.targetDate),
@@ -1903,10 +1922,11 @@ export default function ProgrammeRunSection({
       )}
 
       {/* The way into the run plan editor (/settings/run-plan) when there
-          is no race card to carry it: a free runner, and a race plan that
-          is over or recovering. With a race card on screen, its own "Edit
-          run plan" is the one way in. */}
-      {!showRaceCard && (
+          is no race card or race-elapsed banner to carry it: a free
+          runner, and a race plan that is over or recovering with no such
+          banner showing. With either on screen, its own "Edit run plan" is
+          the one way in. */}
+      {!showRaceCard && !raceElapsedBanner && (
         <div className="flex justify-end pt-2 border-t border-border/30">
           <button
             type="button"

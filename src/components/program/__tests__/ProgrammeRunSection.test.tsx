@@ -268,13 +268,11 @@ function commonProps() {
     // the chip + form behaviour, not the regenerator output.
     refreshRunSchedule: vi.fn(async () => {}),
     skipRecoveryEarly: vi.fn(async () => APPLIED),
-    realignRacePlan: vi.fn(
-      async (): Promise<RealignOutcome> => ({
-        status: "applied",
-        timing: "compressible",
-        totalWeeks: 4,
-      })
-    ),
+    realignRacePlan: vi.fn(async (): Promise<RealignOutcome> => ({
+      status: "applied",
+      timing: "compressible",
+      totalWeeks: 4,
+    })),
     dismissFellBehindPrompt: vi.fn(async () => APPLIED),
     // R23: the race plan's weeks ahead are built with today's layoff
     // reading, as the rollover builds next week.
@@ -1397,10 +1395,10 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     const dismissBtn = screen.getByRole("button", {
       name: /Dismiss race elapsed banner/i,
     });
-    expect(screen.getByText(/Race day has passed/i)).toBeInTheDocument();
+    expect(screen.getByText("Your race has passed")).toBeInTheDocument();
     fireEvent.click(dismissBtn);
     // Hidden after dismiss.
-    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Your race has passed")).not.toBeInTheDocument();
     // Remount → still hidden (localStorage persisted).
     unmount();
     renderWith(
@@ -1410,7 +1408,53 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
         programState={programState}
       />
     );
-    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Your race has passed")).not.toBeInTheDocument();
+  });
+
+  /* Owner, 1 Nov 2026: the banner read "MARATHON on 2026-10-17. Set a new
+     race goal or switch modes in Manage Run Plan.": the stored distance,
+     the stored date key, and a screen that doesn't exist. */
+  it("race-elapsed banner names the race in words and opens Edit run plan", () => {
+    navigateMock.mockClear();
+    const profile = makeProfile({
+      runMode: "race_prep",
+      raceGoal: { distance: "marathon", targetDate: "2020-10-17" },
+    } as Partial<UserProfile>);
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "marathon", targetDate: "2020-10-17" },
+        totalWeeks: 15,
+        currentWeek: 14,
+      },
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    const banner = screen
+      .getByText("Your race has passed")
+      .closest("[role]") as HTMLElement;
+    expect(banner).toHaveTextContent(
+      "Your marathon was on 17 Oct 2020. Set your next race, or change how you run."
+    );
+    expect(banner).not.toHaveTextContent(/MARATHON|2020-10-17|Manage/);
+    // The banner's button is the one way into the editor while it shows.
+    const edits = screen.getAllByRole("button", { name: /Edit run plan/i });
+    expect(edits).toHaveLength(1);
+    expect(banner).toContainElement(edits[0]);
+    fireEvent.click(edits[0]);
+    expect(navigateMock).toHaveBeenCalledWith("/settings/run-plan");
+    // Dismissed, the footer link takes its place.
+    fireEvent.click(
+      screen.getByRole("button", { name: /Dismiss race elapsed banner/i })
+    );
+    const footer = screen.getAllByRole("button", { name: /Edit run plan/i });
+    expect(footer).toHaveLength(1);
+    expect(banner).not.toContainElement(footer[0]);
   });
 
   it("malformed-plan warning hosts the Configure plan CTA inside the banner action slot", () => {
@@ -1463,6 +1507,9 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
       />
     );
     expect(screen.getByText(/We marked this as no-show/i)).toBeInTheDocument();
+    // The race in words, not its stored distance and date key.
+    expect(screen.getByText("10K · 18 Apr 2099")).toBeInTheDocument();
+    expect(screen.queryByText(/2099-04-18/)).not.toBeInTheDocument();
   });
 
   /* The banner said "Templates auto-set to easy_30 until recovery ends.":
@@ -1690,9 +1737,11 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
       screen.getByRole("button", { name: /I didn't race/i })
     ).toBeInTheDocument();
     // The elapsed race slot must NOT surface as a "Next · Pending" nag, and
-    // the legacy "Race day has passed" banner is suppressed for this state.
+    // the race-elapsed banner is suppressed for this state.
     expect(screen.queryByText(/^Next ·/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Your race has passed")).not.toBeInTheDocument();
+    // The race in words, not its stored distance: "10K · 3 days ago".
+    expect(screen.getByText(/^10K · \d+ days ago$/)).toBeInTheDocument();
   });
 
   it("Log it navigates to /run with the race-day scheduledRunId", () => {
@@ -1778,7 +1827,7 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
       />
     );
     expect(screen.getByText(/Race day/i)).toBeInTheDocument();
-    expect(screen.getByText(/HALF · Today/i)).toBeInTheDocument();
+    expect(screen.getByText("Half Marathon · Today")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Start race/i })
     ).toBeInTheDocument();

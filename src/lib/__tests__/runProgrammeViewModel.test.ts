@@ -6,6 +6,10 @@
 import { describe, it, expect } from "vitest";
 import {
   raceDistanceLabel,
+  raceDistanceInSentence,
+  raceDateLabel,
+  raceElapsedBannerCopy,
+  raceTitle,
   runStripLabel,
   runStripLines,
   buildRaceCockpitViewModel,
@@ -28,6 +32,69 @@ describe("raceDistanceLabel", () => {
   });
   it("passes through unknown distances unchanged", () => {
     expect(raceDistanceLabel("ultra")).toBe("ultra");
+  });
+});
+
+describe("race copy once race day has passed", () => {
+  // Owner, 1 Nov 2026: "MARATHON on 2026-10-17. Set a new race goal or
+  // switch modes in Manage Run Plan."
+  it("says the race in words, with an en-GB date", () => {
+    expect(
+      raceElapsedBannerCopy(
+        { distance: "marathon", targetDate: "2026-10-17" },
+        "2026-11-01"
+      )
+    ).toEqual({
+      title: "Your race has passed",
+      description:
+        "Your marathon was on 17 Oct. Set your next race, or change how you run.",
+    });
+    expect(
+      raceElapsedBannerCopy(
+        { distance: "half", targetDate: "2026-10-17" },
+        "2026-11-01"
+      ).description
+    ).toMatch(/^Your half marathon was on 17 Oct\./);
+    expect(
+      raceElapsedBannerCopy(
+        { distance: "5k", targetDate: "2026-10-17" },
+        "2026-11-01"
+      ).description
+    ).toMatch(/^Your 5K was on 17 Oct\./);
+  });
+
+  it("gives a race from another year its year", () => {
+    expect(raceDateLabel("2025-10-17", "2026-01-04")).toBe("17 Oct 2025");
+    expect(raceDateLabel("2026-10-17", "2026-11-01")).toBe("17 Oct");
+  });
+
+  it("leaves out a date key that doesn't parse rather than print it", () => {
+    expect(raceDateLabel("someday", "2026-11-01")).toBeNull();
+    expect(
+      raceElapsedBannerCopy(
+        { distance: "10k", targetDate: "someday" },
+        "2026-11-01"
+      ).description
+    ).toBe("Your 10K has passed. Set your next race, or change how you run.");
+    expect(
+      raceTitle({ distance: "10k", targetDate: "someday" }, "2026-11-01")
+    ).toBe("10K");
+  });
+
+  it("names the race and its date as a title", () => {
+    expect(
+      raceTitle(
+        { distance: "marathon", targetDate: "2026-10-17" },
+        "2026-11-01"
+      )
+    ).toBe("Marathon · 17 Oct");
+  });
+
+  it("puts a distance into a sentence in lower case where it is a word", () => {
+    expect(raceDistanceInSentence("marathon")).toBe("marathon");
+    expect(raceDistanceInSentence("half")).toBe("half marathon");
+    expect(raceDistanceInSentence("10k")).toBe("10K");
+    expect(raceDistanceInSentence("5k")).toBe("5K");
   });
 });
 

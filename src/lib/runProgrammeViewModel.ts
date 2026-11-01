@@ -24,6 +24,7 @@ import {
   isCurrentWeekInTaper,
 } from "@/features/program/runPlanTiming";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 
 // R4: the surface resolver + its types now live in `runPlanResolver`, which
 // reconciles the profile↔programState race-goal drift. The old copy here gated
@@ -54,6 +55,69 @@ export function raceDistanceLabel(distance: string): string {
     default:
       return distance;
   }
+}
+
+/** A race distance inside a sentence: "Your half marathon was on 17 Oct." */
+export function raceDistanceInSentence(distance: string): string {
+  switch (distance) {
+    case "half":
+      return "half marathon";
+    case "marathon":
+      return "marathon";
+    default:
+      return raceDistanceLabel(distance);
+  }
+}
+
+/**
+ * A race's date in a line of copy: "17 Oct", with the year when it is not
+ * this year's ("17 Oct 2025"), so an old race doesn't read as this month's.
+ * Null for a key that doesn't parse, so the caller can leave the date out
+ * rather than print the stored key.
+ */
+export function raceDateLabel(
+  targetDate: string,
+  todayKey: string
+): string | null {
+  const date = parseLocalDate(targetDate);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.getFullYear() === parseLocalDate(todayKey).getFullYear()
+    ? formatDayMonth(date)
+    : formatDayMonthYear(date);
+}
+
+/**
+ * A race's name and date as a banner title: "Marathon · 17 Oct", or the
+ * distance alone when the date doesn't parse.
+ */
+export function raceTitle(
+  raceGoal: { distance: string; targetDate: string },
+  todayKey: string
+): string {
+  const date = raceDateLabel(raceGoal.targetDate, todayKey);
+  const name = raceDistanceLabel(raceGoal.distance);
+  return date ? `${name} · ${date}` : name;
+}
+
+/**
+ * The words of the banner Train shows once race day has passed and no
+ * recovery, no-show or "did you race?" prompt has taken the race over.
+ * The way to act on it is the banner's "Edit run plan" button, so the
+ * body names the two things to do there and not the place.
+ */
+export function raceElapsedBannerCopy(
+  raceGoal: { distance: string; targetDate: string },
+  todayKey: string
+): { title: string; description: string } {
+  const date = raceDateLabel(raceGoal.targetDate, todayKey);
+  const race = raceDistanceInSentence(raceGoal.distance);
+  const when = date
+    ? `Your ${race} was on ${date}.`
+    : `Your ${race} has passed.`;
+  return {
+    title: "Your race has passed",
+    description: `${when} Set your next race, or change how you run.`,
+  };
 }
 
 /**
@@ -241,11 +305,7 @@ export function buildRaceCockpitViewModel(args: {
 
 /** The word before the date on Train's run card. */
 export type RunCardStatus =
-  | "Due today"
-  | "Tomorrow"
-  | "Pending"
-  | "Up next"
-  | "Upcoming";
+  "Due today" | "Tomorrow" | "Pending" | "Up next" | "Upcoming";
 
 /**
  * The word before the date on Train's run card, for the selected day.
