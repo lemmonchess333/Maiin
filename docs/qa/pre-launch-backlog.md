@@ -3261,3 +3261,19 @@ rules and emulator tests cover each; these need the consoles or a phone.
       plus verification and alert mail, and consider a log alert on
       `sendPasswordResetLinkCallable` lines at error level and its
       `dailyCap` warning.
+
+## The starter goal's engine (Run9 STATUS 2026-11-01, S3)
+
+The engine runs a starter plan (30 minutes without stopping, nine weekly
+stages) once one exists; nothing in the app begins one until S4. The
+server refuses the starter run mode beside a plan of another kind
+(`validatePlanPayload`), and builds from before the starter leave its plan
+alone on a rollover, a schedule change or a reset (S2), so an installed
+build cannot replace a starter's plan.
+
+- [ ] **An older build leaves a starter alone.** Once S4 ships and this
+      release's Functions deploy has run, sign in on a TestFlight build
+      from before S2 with an account on the starter goal, save a lifting
+      change in Settings → Programme, then open the app on a Monday.
+      Passing: the save is refused with a message rather than saved, and
+      the new build still shows the starter's week and stage afterwards.
