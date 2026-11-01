@@ -73,9 +73,6 @@ import { resolveRecoveryExit } from "./runModeResolution";
 import { rebuiltWeekFromToday } from "./racePlanContinuation";
 import { fetchRecentRunning, type RecentRunning } from "./fetchRecentLayoff";
 import type { LayoffClass } from "./layoffDetection";
-
-/** No read: no layoff, and no runs known. */
-const NOTHING_READ: RecentRunning = { layoff: "none", runs: null };
 import { profileNewRunnerUntil } from "./newRunner";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
 import { readStoredRunSummary } from "@/lib/runResumeStorage";
@@ -215,6 +212,9 @@ import {
 } from "./programOutcome";
 
 const PROGRAM_DOC = "current";
+
+/** No read: no layoff, and no runs known. */
+const NOTHING_READ: RecentRunning = { layoff: "none", runs: null };
 
 interface RefreshRunScheduleOverrides {
   profileUpdates?: Partial<UserProfile>;
