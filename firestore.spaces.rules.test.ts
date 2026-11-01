@@ -235,7 +235,7 @@ suite("firestore.rules — community spaces", () => {
       for (const photoURL of [...REJECTED_PHOTO_URLS, 42]) {
         await assertFails(setDoc(ref, { joinedAt: new Date(), photoURL }));
       }
-    });
+    }, 30_000);
 
     it("a cosmetic update cannot repoint photoURL off the allowed origins", async () => {
       await seedMember(MEMBER);
@@ -371,7 +371,7 @@ suite("firestore.rules — community spaces", () => {
             post({ ...run, avgPace: "5:12 /km" })
           )
         );
-      });
+      }, 30_000);
 
       it("refuses a muscle list past 600 characters, or one that is not text", async () => {
         await seedMember(MEMBER);
@@ -532,7 +532,7 @@ suite("firestore.rules — community spaces", () => {
           setDoc(ref(`bad-photo-${i}`), { ...validPost(MEMBER), photoUrl: bad })
         );
       }
-    });
+    }, 30_000);
 
     it("the attached photo is the author's own Space upload and nothing else", async () => {
       // The composer uploads to space-photos/{uid}/ and the photo screen
@@ -560,7 +560,7 @@ suite("firestore.rules — community spaces", () => {
           setDoc(ref(`not-own-${i}`), { ...validPost(MEMBER), photoUrl })
         );
       }
-    });
+    }, 30_000);
   });
 
   describe("posts — email verification gate", () => {

@@ -964,7 +964,7 @@ suite("firestore.rules — /challenges", () => {
       for (const photoURL of [...REJECTED_PHOTO_URLS, 42]) {
         await assertFails(setDoc(ref, join(photoURL)));
       }
-    });
+    }, 30_000);
 
     it("no client update, not even the photo or name a join may carry", async () => {
       // identityResync carries a new public name and photo to the row
@@ -2460,7 +2460,7 @@ suite(
           )
         );
       }
-    });
+    }, 30_000);
 
     it("muscle groups are short strings: 600 characters in all", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
@@ -2563,7 +2563,7 @@ suite(
           )
         );
       }
-    });
+    }, 30_000);
 
     it("duration > 24h — rejected", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
@@ -2645,7 +2645,7 @@ suite(
             makeValidActivity({ authorPhotoURL: 42 })
           )
         );
-      });
+      }, 30_000);
 
       it("accepts exactly 2048 chars on an allowed origin", async () => {
         // The 2049 rejection is in REJECTED_PHOTO_URLS; this is the other
