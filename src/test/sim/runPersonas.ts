@@ -317,6 +317,43 @@ function hybrid23(trim: boolean): LiftPersona {
   };
 }
 
+/** The owner, 1 November 2026: about 3 km a run, a couple of runs a week
+ *  (2.85 km in 25 minutes that afternoon), and a marathon 25 weeks out set
+ *  up that Sunday evening with every default: six run days, six lift days,
+ *  no benchmark and no goal time. Setup now asks how much they run. */
+export const OWNER_MARATHON: LiftPersona = {
+  name: "owner-marathon",
+  start: fromStart(0, 6),
+  answers: {
+    trainingActivity: "both",
+    primaryGoal: "general",
+    daysPerWeek: 6,
+    experience: "intermediate",
+    runFrequency: "occasional",
+    runMode: "race_prep",
+    weeklyRunDays: 6,
+    raceDistance: "marathon",
+    // A Saturday 174 days after the Sunday.
+    raceTargetDate: fromStart(25, 5),
+  },
+  nutrition: "recomp",
+  lifter: INTERMEDIATE_LIFTER,
+  sessionShare: 0.85,
+  calibrates: true,
+  tracked: BIG_FOUR,
+  runsFirst: true,
+  running: {
+    runner: {
+      vdot: 28,
+      weeklyMinutes: 50,
+      runningWeeks: 20,
+      longestRunKm: 3,
+      lifts: true,
+    },
+    runShare: 0.85,
+  },
+};
+
 export const HYBRID_3_4_TRIM = hybrid34(true);
 export const HYBRID_3_4_NO_TRIM = hybrid34(false);
 export const HYBRID_2_3_TRIM = hybrid23(true);
@@ -338,4 +375,5 @@ export const RUN_PERSONAS: readonly { persona: LiftPersona; weeks: number }[] =
     { persona: HYBRID_3_4_NO_TRIM, weeks: 22 },
     { persona: HYBRID_2_3_TRIM, weeks: 17 },
     { persona: HYBRID_2_3_NO_TRIM, weeks: 17 },
+    { persona: OWNER_MARATHON, weeks: 33 },
   ];

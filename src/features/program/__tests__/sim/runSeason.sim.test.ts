@@ -90,6 +90,25 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "taper-cut",
     "volume-jump",
   ],
+  /* The owner's own set-up (R5): six run days and six lift days, a
+     marathon 25 weeks out from about 3 km a run. The long run climbs a rung
+     a week from their 25 minutes, each rung past the single-run guard
+     (`spike`, Run23's one-rung steps), the step from a 30-minute run onto
+     the 6 km rung the largest for a runner the app has no pace for. The
+     marathon read whole (R1) gives a benchmark 5 VDOT under them, which
+     then calls their recovery runs too fast (`derived-low`, `easy-nag`).
+     Six lift days leave a major group out of some weeks
+     (`lift:acsm-coverage`). */
+  "owner-marathon": [
+    "derived-low",
+    "easy-nag",
+    "lift:acsm-coverage:chest",
+    "lift:acsm-coverage:posterior",
+    "lift:acsm-coverage:quads",
+    "long-share",
+    "spike",
+    "volume-jump",
+  ],
 };
 
 const seasons = new Map<string, Season>();

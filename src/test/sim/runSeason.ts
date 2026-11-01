@@ -63,6 +63,7 @@ import type {
   ProgramState,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
+import type { RunningBaseline } from "@/features/program/runningBaseline";
 import {
   BASE_RUNNER,
   VirtualRunner,
@@ -299,6 +300,48 @@ export function longestRunMinutes(
   const runWalk = templateOf(templateId)?.config.runWalk;
   if (runWalk) return Math.max(0, ...runWalk.runSecs) / 60;
   return plannedRunMinutes(templateId, easyPace);
+}
+
+/**
+ * The running starting point a persona gives at setup (R5), as Onboarding
+ * builds it: someone who runs already (an occasional or a regular runner),
+ * setting up a race, gives their minutes in a usual week and their longest
+ * run lately, and the plan starts there. Their longest run is the one the
+ * runner model arrives with (`VirtualRunner`): the persona's own, else a
+ * third of the week's minutes, at their easy pace. Null for anyone else:
+ * someone new to running starts with the run-walk weeks.
+ */
+export function runnerStartingPoint(
+  persona: {
+    answers: {
+      runFrequency?: string;
+      runMode?: string;
+    };
+    running?: RunHabits;
+  },
+  confirmedAt: string
+): RunningBaseline | null {
+  const runner = persona.running?.runner;
+  const frequency = persona.answers.runFrequency;
+  if (
+    !runner ||
+    persona.answers.runMode !== "race_prep" ||
+    (frequency !== "occasional" && frequency !== "regular")
+  )
+    return null;
+  const [fast, slow] = trainingBands(runner.vdot).easy;
+  const longest = runner.longestRunKm
+    ? (runner.longestRunKm * (fast + slow)) / 2 / 60
+    : runner.weeklyMinutes / 3;
+  const longestRunMinutes = Math.min(300, Math.max(10, Math.round(longest)));
+  return {
+    version: 1,
+    experience: frequency === "regular" ? "regular" : "building",
+    weeklyMinutes: Math.max(longestRunMinutes, Math.round(runner.weeklyMinutes)),
+    longestRunMinutes,
+    confirmedAt,
+    source: "self_reported",
+  };
 }
 
 /** A session's type, from the catalogue. */
