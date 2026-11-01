@@ -69,7 +69,12 @@ import { raceBlockWeek, type RaceBlockWeek } from "./weekPrescription";
  * to compressed and the UI banner needs to reflect that.
  */
 function makeRunPlanRecord(
-  v2: { totalWeeks: number; compressed: boolean; belowFloor: boolean },
+  v2: {
+    totalWeeks: number;
+    compressed: boolean;
+    belowFloor: boolean;
+    leadInWeek: string | null;
+  },
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
@@ -86,6 +91,8 @@ function makeRunPlanRecord(
     // Run9 phase-3 (Slice B): surface below-floor so the Realign UI names the
     // finish-safely risk instead of presenting a tight plan as a normal one.
     belowFloor: v2.belowFloor,
+    // While a plan made partway through a week is in its lead-in.
+    ...(v2.leadInWeek ? { leadInWeek: v2.leadInWeek } : {}),
   };
 }
 
@@ -147,6 +154,10 @@ export function regenerateRacePlan({
   carry?: {
     currentWeek?: number;
     totalWeeks?: number;
+    /** The plan's lead-in week (`RunPlan.leadInWeek`): carried with
+     *  `totalWeeks`, or a rebuild in that week reads the plan as a week
+     *  shorter than the time left and starts it again from this week. */
+    leadInWeek?: string;
     completedRaces?: string[];
     /** RUN-H1: an active recovery phase + its end date. A regen must NEVER
      *  silently drop recovery (makeRunPlanRecord doesn't emit these fields), so
@@ -205,6 +216,7 @@ export function regenerateRacePlan({
       // sites, which is the correct fallback: a new plan genuinely is at
       // position 0.
       planTotalWeeks: carry?.totalWeeks,
+      leadInWeek: carry?.leadInWeek,
     });
   let v2: ReturnType<typeof generate>;
   let runDays: ScheduledRunDay[];
@@ -339,7 +351,13 @@ export function nextRunWeek(
           plannedFrom: next.plannedFrom,
         }),
       carry: {
-        currentWeek: (runPlan?.currentWeek ?? 0) + 1,
+        // The week after a lead-in is the plan's first.
+        currentWeek:
+          runPlan?.leadInWeek &&
+          runPlan.leadInWeek ===
+            localWeekKey(addLocalDays(parseLocalDate(next.weekStart), -7))
+            ? 0
+            : (runPlan?.currentWeek ?? 0) + 1,
         totalWeeks: runPlan?.totalWeeks,
         completedRaces: runPlan?.completedRaces,
       },

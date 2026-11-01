@@ -72,12 +72,12 @@ describe("the running starting point, for someone new to running", () => {
     expect(
       screen.getByText(/Your first weeks run as run-walk, whatever you report/)
     ).toBeInTheDocument();
-    expect(
-      screen.queryByText(/^.*Weekly time stays within what you've reported/)
-    ).toBeNull();
+    expect(screen.queryByText(/won't increase on its own/)).toBeNull();
   });
 
-  it("promises the weekly time to anyone else, as before", () => {
+  /* R5, R6: the starting point is where the plan starts, and the plan
+     climbs from it; it no longer promises to stay there. */
+  it("says the plan builds from the report, and never that it stays there", () => {
     render(
       <RunningBaselineSettings
         value={baseline}
@@ -86,8 +86,9 @@ describe("the running starting point, for someone new to running", () => {
       />
     );
     expect(
-      screen.getByText(/Weekly time stays within what you've reported here/)
+      screen.getByText(/The plan starts here and builds a step a week/)
     ).toBeInTheDocument();
+    expect(screen.queryByText(/won't increase on its own/)).toBeNull();
     expect(screen.queryByText(/run-walk/)).toBeNull();
   });
 });

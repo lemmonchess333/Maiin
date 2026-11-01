@@ -64,12 +64,8 @@ import {
   DEFAULT_PROGRAM_SETTINGS,
 } from "./programTypes";
 import { planWeekSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
-import {
-  addLocalDays,
-  localWeekKey,
-  parseLocalDate,
-  weekPosition,
-} from "@/lib/dateHelpers";
+import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import { firstFullWeekKey } from "./runPlanTiming";
 import {
   applyDeload,
   balanceWeekVolume,
@@ -773,6 +769,7 @@ function buildRunPlan(
           runTimeLimits: input.runTimeLimits,
           newRunnerUntil: input.newRunnerUntil,
           planTotalWeeks: continued?.totalWeeks,
+          leadInWeek: continued?.leadInWeek,
         }),
       { currentDate: input.currentDate, weekStart },
       input.currentDate,
@@ -784,14 +781,18 @@ function buildRunPlan(
         : undefined
     );
     const totalWeeks = continuedBlockWeeks(racePlan.totalWeeks, continued);
+    const { leadInWeek: _keptLeadIn, ...kept } = continued ?? {};
     return {
       runDays,
       runPlan: {
-        ...continued,
+        ...kept,
         mode: "race_prep",
         raceGoal: input.raceGoal,
         totalWeeks,
         currentWeek: totalWeeks - racePlan.totalWeeks,
+        // A plan made partway through a week starts on the Monday after:
+        // the days left before it are its lead-in (`startsPartway`).
+        ...(racePlan.leadInWeek ? { leadInWeek: racePlan.leadInWeek } : {}),
         // P2-1: thread the compressed flag through so the Programme
         // run section can surface a "your plan is compressed" banner.
         compressed: racePlan.compressed,
@@ -1078,8 +1079,5 @@ export function firstLiftWeekKey(input: {
     const kept = input.existingState.liftWeekKey;
     return kept && kept > thisWeek ? kept : thisWeek;
   }
-  // weekPosition: 0 Monday … 6 Sunday; Thursday is 3.
-  return weekPosition(today.getDay()) >= 3
-    ? localWeekKey(addLocalDays(today, 7))
-    : thisWeek;
+  return firstFullWeekKey(input.currentDate);
 }

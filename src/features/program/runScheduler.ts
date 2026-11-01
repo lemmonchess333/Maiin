@@ -1,5 +1,8 @@
 import {
   fitWeekToRunningBaseline,
+  isRunningBaseline,
+  newRunnerUntilFromBaseline,
+  runningClimb,
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
 /* ─────────────────────────────────────────────
@@ -17,6 +20,7 @@ import {
   parseLocalDate,
   startOfLocalWeek,
   weekPosition,
+  wholeWeeksBetween,
 } from "@/lib/dateHelpers";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -47,9 +51,11 @@ import {
   getPhaseForWeek,
   getRaceFloorWeeks,
   isRampStepBack,
+  isRunStepBackWeek,
   lastRampWeekOf,
   RACE_CONFIGS,
   raceCalendarWeeks,
+  startsPartway,
   TAPER_WEEKS_BY_DISTANCE,
   trainingWeeksOf,
 } from "./runPlanTiming";
@@ -1092,10 +1098,26 @@ export interface RacePlanV2Input {
    * (`profileNewRunnerUntil`) or, at setup, from the answer just given.
    */
   newRunnerUntil?: string | null;
+  /**
+   * The plan's lead-in week (`RunPlan.leadInWeek`), the Monday of the week a
+   * plan made partway through it starts in. A plan made Thursday to Sunday
+   * (`startsPartway`) starts its first week on the Monday after, and the
+   * days left before it are a lead-in: easy runs only, no long run and no
+   * tempo or intervals, and not one of the race's weeks. A fresh plan
+   * (no `planTotalWeeks`) works this out from `currentDate`; a plan carried
+   * on keeps the lead-in it was made with through this, while that week
+   * lasts.
+   */
+  leadInWeek?: string | null;
 }
 
 export interface RacePlanV2Output {
+  /** The plan's weeks from the one `weekStart` names, or from its first
+   *  week when that one is the lead-in: race week is the last. */
   totalWeeks: number;
+  /** The lead-in week's Monday when `weeks[0]` is a lead-in, else null
+   *  (`RacePlanV2Input.leadInWeek`). */
+  leadInWeek: string | null;
   /** True when totalWeeks < race-config minWeeks. UI flags this as
    *  "compressed" so user knows the plan was shortened from the
    *  ideal. */
@@ -1105,7 +1127,8 @@ export interface RacePlanV2Output {
    *  shape — all easy, no quality, the long run capped at baseLongKm.
    *  `belowFloor` implies `compressed`. */
   belowFloor: boolean;
-  /** Week-by-week scheduled runs. weeks[0] is the current week. */
+  /** Week-by-week scheduled runs. weeks[0] is the current week: the
+   *  lead-in, when there is one, then the plan's weeks. */
   weeks: ScheduledRunDay[][];
 }
 
@@ -1133,20 +1156,38 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   // the right dates, and left the count itself to this change), and a race
   // exactly N weeks out on the anchor day past its own plan even from a
   // fresh Monday start.
-  const totalWeeks = raceCalendarWeeks(weekStartDate, target);
+  const calendarWeeks = raceCalendarWeeks(weekStartDate, target);
+  const thisWeekKey = localWeekKey(weekStartDate);
 
-  // `totalWeeks` is weeks REMAINING. The block may be longer — see
-  // `planTotalWeeks`. A carry shorter than the time left is stale or corrupt,
-  // so it is ignored rather than trusted.
-  const blockWeeks =
-    input.planTotalWeeks != null &&
-    Number.isFinite(input.planTotalWeeks) &&
-    input.planTotalWeeks >= totalWeeks
+  // `calendarWeeks` is weeks REMAINING, this one included. The block may be
+  // longer — see `planTotalWeeks`. A carry shorter than the time left is
+  // stale or corrupt, so it is ignored rather than trusted, unless this week
+  // is the plan's lead-in, which comes before its first week.
+  const carried =
+    input.planTotalWeeks != null && Number.isFinite(input.planTotalWeeks)
       ? input.planTotalWeeks
-      : totalWeeks;
-  /** How many weeks of the block are already behind the runner. 0 when the
-   *  plan is fresh, which is what makes the fallback byte-identical. */
-  const startIndex = blockWeeks - totalWeeks;
+      : null;
+  /** The plan's own lead-in, carried on while its week lasts. */
+  const carriedLeadIn =
+    carried !== null &&
+    input.leadInWeek === thisWeekKey &&
+    carried === calendarWeeks - 1;
+  const leadIn =
+    calendarWeeks >= 2 &&
+    (carriedLeadIn ||
+      // A fresh plan, or one whose carry is ignored: made today.
+      ((carried === null || carried < calendarWeeks) &&
+        startsPartway(input.currentDate) &&
+        localWeekKey(parseLocalDate(input.currentDate)) === thisWeekKey));
+  /** The plan's weeks from its current week, or from its first when this
+   *  one is the lead-in. */
+  const totalWeeks = leadIn ? calendarWeeks - 1 : calendarWeeks;
+  const blockWeeks =
+    carried !== null && carried >= totalWeeks ? carried : totalWeeks;
+  /** How many weeks of the block are already behind the runner: 0 when the
+   *  plan is fresh, which is what makes the fallback byte-identical, and -1
+   *  in its lead-in week. */
+  const startIndex = leadIn ? -1 : blockWeeks - totalWeeks;
 
   // Both of these describe the BLOCK, not the days left. Deriving them from
   // weeks-remaining meant every plan became "compressed" in its final weeks —
@@ -1177,8 +1218,22 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     // No run slot at all. Setup and the run plan editor start a race plan
     // at two run days (Pgm7 A7); a plan already on one keeps it (Pgm5), and
     // a week with none is a defensive fallback: an empty plan.
-    return { totalWeeks, compressed, belowFloor, weeks: [] };
+    return {
+      totalWeeks,
+      leadInWeek: leadIn ? thisWeekKey : null,
+      compressed,
+      belowFloor,
+      weeks: [],
+    };
   }
+  /* A new runner's first weeks, from setup's answer or from the starting
+     point they gave in the run plan editor, whichever ends later. */
+  const fromBaseline = newRunnerUntilFromBaseline(input.runningBaseline);
+  const newRunnerUntil =
+    fromBaseline &&
+    (!input.newRunnerUntil || fromBaseline > input.newRunnerUntil)
+      ? fromBaseline
+      : (input.newRunnerUntil ?? null);
 
   // Run22: the sizes the ramp gives the last build week's easy run and
   // medium-long run. A stepped taper week takes its shares of the minutes
@@ -1215,9 +1270,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
      block's earlier weeks too, so a ladder starts at its first rung when the
      six weeks are over (Run20 (4)). */
   const isNewRunnerWeek = (blockWeek: number) =>
-    !!input.newRunnerUntil &&
+    !!newRunnerUntil &&
     localDateString(addLocalDays(weekStartDate, (blockWeek - startIndex) * 7)) <
-      input.newRunnerUntil;
+      newRunnerUntil;
   /** Run23: how far up the long-run ladder the block's weeks have climbed. */
   const climb: LongRunClimb = new Map();
   /** Week `w` of the block, before the fits below (`fittedWeek`). A week
@@ -1225,8 +1280,25 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
    *  build builds those (`taperBuild`). */
   const blockWeekRuns = (w: number): ScheduledRunDay[] => {
     const offset = w - startIndex;
-    const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
     const weekStart = addLocalDays(weekStartDate, offset * 7);
+    // The lead-in, before the plan's first week: an easy run on each of
+    // the week's run days from today (Run19), so the running starting point
+    // fits the runs the lead-in holds. No long run and no tempo or
+    // intervals: the plan's first long run is the next weekend's (Run20
+    // (2)).
+    if (w < 0)
+      return runEligibleSlots
+        .map((dayIndex) =>
+          buildRunDayV2({
+            dayIndex,
+            templateId: "easy_30",
+            type: "easy",
+            weekStart,
+          })
+        )
+        .filter((run) => !run.date || run.date >= input.currentDate)
+        .sort((a, b) => weekPosition(a.dayIndex) - weekPosition(b.dayIndex));
+    const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
     const week: ScheduledRunDay[] = [];
     // Run20 (5): a new runner's first weeks hold no tempo or intervals.
     const newRunnerWeek = isNewRunnerWeek(w);
@@ -1710,7 +1782,24 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const bothDays = new Set(
     input.weekSchedule.filter((d) => d.type === "both").map((d) => d.day)
   );
-  const thisWeekKey = localWeekKey(weekStartDate);
+  /** The Monday of the block's first week. */
+  const blockWeekZero = localDateString(
+    addLocalDays(weekStartDate, -startIndex * 7)
+  );
+  /** Whether the week starting `weekKey` is one of the block's step-back
+   *  weeks, which a person's climb from their starting point eases off in
+   *  too (`runningClimb`). */
+  const isStepBackWeek = (weekKey: string) => {
+    const index = wholeWeeksBetween(blockWeekZero, weekKey);
+    return (
+      index >= 0 &&
+      index < blockWeeks &&
+      isRunStepBackWeek(index, blockWeeks, input.raceGoal.distance)
+    );
+  };
+  const baseline = isRunningBaseline(input.runningBaseline)
+    ? input.runningBaseline
+    : null;
   /** A week of the block as the plan holds it: every fit applied, and the
    *  clash flag. */
   const fittedWeek = (week: ScheduledRunDay[]): ScheduledRunDay[] => {
@@ -1727,7 +1816,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           : newRunnerTemplate(
               row.templateId,
               row.weekKey ?? "",
-              input.newRunnerUntil,
+              newRunnerUntil,
               input.easyPaceSPerKm
             );
       return next ? { ...row, templateId: next.id, type: next.type } : row;
@@ -1735,16 +1824,18 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     const limited = walked.map((row) =>
       fitRunToTimeLimit(row, input.runTimeLimits, input.easyPaceSPerKm)
     );
+    // The person's running, as it has climbed from their starting point by
+    // this week. It depends on the week alone, so a week behind this one,
+    // which only the taper's walk of the build builds, holds what it held.
     const fitted = fitWeekToRunningBaseline(
       limited,
-      input.runningBaseline,
-      // A week behind this one, which only the taper's walk of the build
-      // builds, is judged as the plan built it at its rollover: on its
-      // first day, so every rollover's walk finds the same weeks.
-      week[0]?.weekKey &&
-        (week[0].weekKey > input.currentDate || week[0].weekKey < thisWeekKey)
-        ? week[0].weekKey
-        : input.currentDate,
+      baseline,
+      baseline && week[0]?.weekKey
+        ? runningClimb(baseline, week[0].weekKey, {
+            easyPaceSPerKm: input.easyPaceSPerKm,
+            isStepBack: isStepBackWeek,
+          })
+        : null,
       input.easyPaceSPerKm
     );
     return fitted.map((row, index) => {
@@ -1825,10 +1916,18 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   };
   const buildLongestKm = () => taperBuild().longestKm;
 
-  const weeks = Array.from({ length: totalWeeks }, (_, offset) =>
+  // One week per calendar week from this one: the lead-in first, when this
+  // week is one, then the plan's.
+  const weeks = Array.from({ length: calendarWeeks }, (_, offset) =>
     fittedWeek(blockWeekRuns(startIndex + offset))
   );
-  return { totalWeeks, compressed, belowFloor, weeks };
+  return {
+    totalWeeks,
+    leadInWeek: leadIn ? thisWeekKey : null,
+    compressed,
+    belowFloor,
+    weeks,
+  };
 }
 
 /** Race template IDs by distance. Centralised to avoid scattering

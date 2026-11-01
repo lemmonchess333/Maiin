@@ -279,12 +279,7 @@ export interface LiftAtFinish {
 /** What a session did to a lift's numbers, read off the plan before and
  *  after it. */
 export type LiftOutcome =
-  | "own weight"
-  | "step"
-  | "reps"
-  | "hold"
-  | "miss"
-  | "lowered";
+  "own weight" | "step" | "reps" | "hold" | "miss" | "lowered";
 
 /** One lift in one session, as done. */
 export interface LiftDone {
@@ -339,6 +334,8 @@ export interface RunWeekPlan {
   planWeek: number | null;
   totalWeeks: number | null;
   phase: string | null;
+  /** The week is the plan's lead-in, before its first week. */
+  leadIn: boolean;
   /** Each planned run as weekday:template, in date order. */
   planned: string[];
   /** Their dates, in the same order. */
@@ -1374,6 +1371,7 @@ export function simulateLiftSeason(
         weekStart: from,
         planWeek: plan?.currentWeek ?? null,
         totalWeeks: plan?.totalWeeks ?? null,
+        leadIn: !!plan?.leadInWeek && plan.leadInWeek === weekOf(from),
         phase:
           plan?.phase === "recovery"
             ? "recovery"

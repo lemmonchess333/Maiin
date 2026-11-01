@@ -1,4 +1,7 @@
-import type { RunningBaseline } from "@/features/program/runningBaseline";
+import {
+  newRunnerUntilFromBaseline,
+  type RunningBaseline,
+} from "@/features/program/runningBaseline";
 import {
   plannedRunMinutes,
   type RunTimeLimits,
@@ -172,11 +175,7 @@ export function newRunnerRaceNote(input: {
  * and `invalid` are UI-only states the engine never sees.
  */
 export type RacePlannerStatus =
-  | "empty"
-  | "invalid"
-  | "healthy"
-  | "compressed"
-  | "below-floor";
+  "empty" | "invalid" | "healthy" | "compressed" | "below-floor";
 
 export interface RaceGoalPlannerInput {
   distance: RaceDistance;
@@ -247,6 +246,13 @@ export function getRaceGoalPlannerState(
   input: RaceGoalPlannerInput
 ): RaceGoalPlannerState {
   const { distance, targetDate, currentDate, liftDays, weeklyRunDays } = input;
+  // A new runner's first weeks: setup's, or the starting point's "I'm new
+  // to running", whichever ends later, as the generator takes them.
+  const fromStart = newRunnerUntilFromBaseline(input.runningBaseline);
+  const newRunnerUntil =
+    fromStart && (!input.newRunnerUntil || fromStart > input.newRunnerUntil)
+      ? fromStart
+      : (input.newRunnerUntil ?? null);
 
   // Distance-only fields are valid in every state (no date needed).
   const distanceLabel = raceDistanceLabel(distance);
@@ -335,6 +341,7 @@ export function getRaceGoalPlannerState(
         easyPaceSPerKm: input.easyPaceSPerKm,
         newRunnerUntil: input.newRunnerUntil,
         planTotalWeeks: continued?.totalWeeks,
+        leadInWeek: continued?.leadInWeek,
       }),
     { currentDate, weekStart: localWeekKey(now) },
     currentDate,
@@ -346,7 +353,8 @@ export function getRaceGoalPlannerState(
       : undefined
   );
   // The plan's weekly shape, before today's cut: what a week of it holds.
-  const shapeWeek = plan.weeks[0] ?? [];
+  // A lead-in holds the days left only, so the shape is the first week's.
+  const shapeWeek = plan.weeks[plan.leadInWeek ? 1 : 0] ?? [];
   if (plan.weeks[0]) plan.weeks[0] = firstWeek;
 
   // Status straight from the engine's own booleans (belowFloor ⊂ compressed).
@@ -419,9 +427,8 @@ export function getRaceGoalPlannerState(
       );
     }, 0),
     // From the six weeks, not this week's runs: a week can have none left.
-    runWalkWeeks:
-      runWalkTemplateIdForWeek(weekStart, input.newRunnerUntil) !== null,
-    newRunnerNote: newRunnerRaceNote(input),
+    runWalkWeeks: runWalkTemplateIdForWeek(weekStart, newRunnerUntil) !== null,
+    newRunnerNote: newRunnerRaceNote({ ...input, newRunnerUntil }),
     recoveryWeeks,
     compressed: plan.compressed,
     belowFloor: plan.belowFloor,

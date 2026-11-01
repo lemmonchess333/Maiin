@@ -4,10 +4,6 @@ import {
   runEvidenceDate,
 } from "@/lib/runExecutionEvidence";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
-import {
-  isRunningBaseline,
-  runningBaselineNeedsReview,
-} from "@/features/program/runningBaseline";
 import RunPlanPurpose from "@/components/run/RunPlanPurpose";
 /**
  * Programme Run tab — hybrid training cockpit.
@@ -1594,28 +1590,6 @@ export default function ProgrammeRunSection({
           card below: tap a day → that day's command card. Non-freeform only —
           freeform has no scheduled runs ("start whenever"); its hero above
           owns the Start CTA. */}
-      {currentMode === "race_prep" &&
-        !raceElapsed &&
-        !inRecovery &&
-        isRunningBaseline(profile.runningBaseline) &&
-        runningBaselineNeedsReview(
-          profile.runningBaseline,
-          todayKeyDerivation
-        ) && (
-          <Banner
-            variant="info"
-            title="Review your running starting point"
-            description="New weeks use easy running within your last report. Confirm your current training to review the next weeks of your plan."
-            action={
-              <Button
-                variant="outline"
-                onClick={() => navigate("/settings/run-plan")}
-              >
-                Review starting point
-              </Button>
-            }
-          />
-        )}
       {currentMode !== "freeform" && (
         <div
           className="space-y-3"

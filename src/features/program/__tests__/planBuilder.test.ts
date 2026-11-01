@@ -393,13 +393,25 @@ describe("buildPlan · a plan made mid-week plans no run before that day (Run19)
     expect(made.every((run) => run.date! >= thursday)).toBe(true);
   });
 
-  it("keeps the week's days from the day it is made, as a Monday plan has them", () => {
-    const fromThursday = (runs: ReturnType<typeof runsOf>) =>
-      runs
-        .filter((run) => run.date! >= thursday)
-        .map((run) => [run.date, run.templateId]);
-    expect(fromThursday(runsOf(buildPlan(raceInput(thursday))))).toEqual(
-      fromThursday(runsOf(buildPlan(raceInput(monday))))
+  it("made from a Thursday, its days left are a lead-in of easy runs, and its first week is the next", () => {
+    const fromMonday = buildPlan(raceInput(monday)).programState;
+    const fromThursday = buildPlan(raceInput(thursday)).programState;
+    // A Monday plan's week is its first; it holds the week's long run.
+    expect(fromMonday.runPlan?.leadInWeek).toBeUndefined();
+    expect(
+      runsOf({ programState: fromMonday } as never).some(
+        (run) => run.type === "long"
+      )
+    ).toBe(true);
+    // From the Thursday: easy runs on the days left, no long run and no
+    // tempo or intervals, and the race's weeks from the Monday after.
+    const leadIn = fromThursday.runDays ?? [];
+    expect(leadIn.length).toBeGreaterThan(0);
+    expect(leadIn.every((run) => run.type === "easy")).toBe(true);
+    expect(fromThursday.runPlan?.leadInWeek).toBe(monday);
+    expect(fromThursday.runPlan?.currentWeek).toBe(0);
+    expect(fromThursday.runPlan?.totalWeeks).toBe(
+      fromMonday.runPlan!.totalWeeks! - 1
     );
   });
 

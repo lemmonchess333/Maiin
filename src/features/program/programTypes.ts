@@ -15,12 +15,7 @@ import type { CanonicalMuscle } from "./muscleTaxonomy";
 export type { MovementCategory } from "@/lib/exerciseMovementCategory";
 
 export type SplitType =
-  | "full_body"
-  | "upper_lower"
-  | "ppl"
-  | "ppl_ul"
-  | "ppl_x2"
-  | "ppl_x2_fb";
+  "full_body" | "upper_lower" | "ppl" | "ppl_ul" | "ppl_x2" | "ppl_x2_fb";
 
 /**
  * User-facing split *preference* vocabulary — distinct from the engine's
@@ -41,11 +36,7 @@ export type SplitType =
  * is gone.
  */
 export type PreferredSplit =
-  | "full_body"
-  | "upper_lower"
-  | "ppl"
-  | "bro_split"
-  | "auto";
+  "full_body" | "upper_lower" | "ppl" | "bro_split" | "auto";
 
 export type Goal = "cut" | "lean bulk" | "recomp";
 
@@ -62,11 +53,7 @@ export type Goal = "cut" | "lean bulk" | "recomp";
  * every regenerate. `PrimaryGoal` + `GoalProfile` below fix that seam.
  */
 export type PrimaryGoal =
-  | "hypertrophy"
-  | "strength"
-  | "fat_loss"
-  | "general"
-  | "running";
+  "hypertrophy" | "strength" | "fat_loss" | "general" | "running";
 
 /**
  * Training-stimulus parameters derived from the user's `PrimaryGoal`.
@@ -525,9 +512,7 @@ export type ScheduledRunStatus = "planned" | "skipped" | "race_no_show";
  *  the original recorded state with no upside — the field stays
  *  as-is on existing docs. */
 export type LegacyScheduledRunStatus =
-  | "completed_exact"
-  | "completed_modified"
-  | "completed_late";
+  "completed_exact" | "completed_modified" | "completed_late";
 // PR-D: `race_completed_unlinked` dropped from the enum. Defined
 // pre-PR-D but never written by any code path — paper status with
 // dead UI branches across DayPeekCard, DayActionSheet,
@@ -662,6 +647,12 @@ export interface RunPlan {
    *  multi-race plans (Round 3 stress #52) by tracking per-race
    *  entry rather than a single boolean. */
   completedRaces?: string[];
+  /** The week key of a lead-in week: a plan made from a Thursday on has
+   *  its first week from the Monday after, and the days left before it hold
+   *  easy runs only (`startsPartway`). Set while that week lasts; the
+   *  rollover into the plan's first week drops it, and that week is
+   *  `currentWeek` 0. */
+  leadInWeek?: string;
 }
 
 /* ================================

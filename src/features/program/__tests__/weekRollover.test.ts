@@ -372,6 +372,12 @@ describe("a race week built mid-week (Run19, R21)", () => {
         currentDate: saturday,
         weekStart: weekOf(saturday),
         recentLayoff: "none",
+        // The plan it rebuilds, made on the week's Monday: a fresh plan made
+        // on a Saturday would be a lead-in.
+        carry: {
+          currentWeek: plan.state.runPlan?.currentWeek,
+          totalWeeks: plan.state.runPlan?.totalWeeks,
+        },
         ...extra,
       })
     );

@@ -134,8 +134,7 @@ async function firstPlanWritten(uid: string): Promise<void> {
     expect(
       (
         readDoc(`users/${uid}/programState/current`) as
-          | { runPlan?: unknown }
-          | undefined
+          { runPlan?: unknown } | undefined
       )?.runPlan
     ).toBeDefined()
   );
@@ -317,12 +316,14 @@ describe("the layoff reaches the plan the runner is given", () => {
   });
 
   it("uses the saved starting point during a real hook rollover", async () => {
+    // Given today, so the week rolled into is still the starting point's:
+    // a start the running has climbed past shapes nothing.
     const runningBaseline = {
       version: 1 as const,
       experience: "building" as const,
       weeklyMinutes: 90,
       longestRunMinutes: 30,
-      confirmedAt: "2026-01-01",
+      confirmedAt: localDateString(),
       source: "self_reported" as const,
     };
     mockProfile = { ...raceProfile(), runningBaseline };

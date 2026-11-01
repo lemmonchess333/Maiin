@@ -484,6 +484,7 @@ export function useProgram() {
               ? {
                   currentWeek: next.runPlan.currentWeek,
                   totalWeeks: next.runPlan.totalWeeks,
+                  leadInWeek: next.runPlan.leadInWeek,
                   completedRaces: next.runPlan.completedRaces,
                 }
               : undefined,
@@ -2513,6 +2514,7 @@ export function useProgram() {
             carry: {
               currentWeek: base.runPlan?.currentWeek,
               totalWeeks: base.runPlan?.totalWeeks,
+              leadInWeek: base.runPlan?.leadInWeek,
               completedRaces: base.runPlan?.completedRaces,
             },
           }));
@@ -3491,6 +3493,7 @@ export function useProgram() {
             // left generated a base week while the cockpit showed the carried
             // build phase.
             totalWeeks: prevRunPlan?.totalWeeks,
+            leadInWeek: prevRunPlan?.leadInWeek,
             completedRaces: prevRunPlan?.completedRaces,
           },
           prior: {

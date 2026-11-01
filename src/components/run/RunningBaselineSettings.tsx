@@ -2,7 +2,6 @@ import RecentRunningContext from "./RecentRunningContext";
 import { localDateString } from "@/lib/dateHelpers";
 import {
   isRunningBaseline,
-  runningBaselineNeedsReview,
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
 import type { RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
@@ -108,20 +107,13 @@ export default function RunningBaselineSettings({
               aria-live="polite"
               className="space-y-1 text-xs text-muted-foreground leading-relaxed"
             >
-              {runningBaselineNeedsReview(value, today) && (
-                <p>
-                  Your starting point needs a review. Easy running stays in
-                  place until you confirm your current training.
-                </p>
-              )}
               <p>
-                {value.experience === "regular" &&
-                !runningBaselineNeedsReview(value, today)
-                  ? "Faster sessions can stay where the plan and your recent running allow them."
-                  : "The plan will use easy running while you build consistency."}{" "}
+                {value.experience === "regular"
+                  ? "Faster sessions stay in the plan as your running builds."
+                  : "Runs stay easy while your running builds towards the plan."}{" "}
                 {preview.runWalkWeeks
-                  ? "Your first weeks run as run-walk, whatever you report here. After them, weekly time stays within your report. It won't increase on its own."
-                  : "Weekly time stays within what you've reported here, spread across the sessions your week has room for. It won't increase on its own."}
+                  ? "Your first weeks run as run-walk, whatever you report here."
+                  : "The plan starts here and builds a step a week towards the race."}
               </p>
               {preview.status !== "empty" && preview.status !== "invalid" && (
                 <p>
