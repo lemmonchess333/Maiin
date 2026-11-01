@@ -34,7 +34,7 @@ export const SETUP = {
   runsPerWeek: "Runs per week",
   raceDistance: "Race distance",
   raceDate: "Race target date",
-  /** Run9 STATUS 2026-11-01: asked of every distance goal, nothing chosen. */
+  /** Run9: asked of every distance goal, nothing chosen. */
   raceEntry: "Race or on your own",
   raceEntered: "A race I've entered",
   legTrim: "Lighten leg sessions while your runs build",

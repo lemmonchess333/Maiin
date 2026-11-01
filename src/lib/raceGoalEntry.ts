@@ -2,7 +2,7 @@ import { raceDistanceLabel } from "@/lib/runProgrammeViewModel";
 
 /**
  * A distance goal is a race the person has entered, or the distance run
- * on their own (Run9 STATUS 2026-11-01). The plan is the same either way;
+ * on their own (Run9). The plan is the same either way;
  * what changes is what its last day is called.
  */
 export type RaceGoalEntry = "race" | "own";

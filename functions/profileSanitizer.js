@@ -358,7 +358,7 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
           // A2: goal finish time in seconds — 10 minutes to 12 hours covers
           // every supported distance at any honest pace.
           targetTimeS: (d) => cleanNumber(d, { min: 600, max: 43200 }),
-          // Run9 STATUS 2026-11-01: a race the person has entered, or the
+          // Run9: a race the person has entered, or the
           // distance run on their own. Absent reads as a race.
           entry: (d) => cleanEnum(d, ["race", "own"]),
         }),

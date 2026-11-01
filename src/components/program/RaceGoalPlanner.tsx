@@ -75,7 +75,7 @@ interface RaceGoalPlannerProps {
   selectedEventSpaceId: string;
   onPickRace: (def: SpaceDef) => void;
   /** A race entered, or the distance run on your own; null until the
-   *  person answers (Run9 STATUS 2026-11-01). */
+   *  person answers (Run9). */
   entry: RaceGoalEntry | null;
   onEntryChange: (next: RaceGoalEntry) => void;
 }

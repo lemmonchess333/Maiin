@@ -260,7 +260,7 @@ export interface PlanBuilderOutput {
      *  RUN-EV-02; the CF sanitizer preserves a literal null). The optional
      *  eventSpaceId is the catalogue binding a caller may re-attach —
      *  buildPlan itself never sets it — and so is `entry`, a race entered
-     *  or run on your own (Run9 STATUS 2026-11-01). */
+     *  or run on your own (Run9). */
     raceGoal?:
       | (PlanBuilderInput["raceGoal"] & {
           eventSpaceId?: string;

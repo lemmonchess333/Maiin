@@ -128,7 +128,7 @@ export interface OnboardingDraft {
   weeklyRunDays: number;
   raceDistance: RaceDistance;
   raceTargetDate: string;
-  /** Run9 STATUS 2026-11-01: a race entered or run on your own, unset
+  /** Run9: a race entered or run on your own, unset
    *  until answered. Additive: older drafts have none. */
   raceEntry?: "race" | "own";
   injuries: string[];

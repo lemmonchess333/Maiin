@@ -285,8 +285,8 @@ export default function Onboarding() {
   const [raceTargetDate, setRaceTargetDate] = useState(
     draft?.raceTargetDate ?? ""
   );
-  /* A race entered, or the distance run on your own (Run9 STATUS
-     2026-11-01). Nothing is chosen until the person answers. */
+  /* A race entered, or the distance run on your own (Run9). Nothing is
+     chosen until the person answers. */
   const [raceEntry, setRaceEntry] = useState<RaceGoalEntry | undefined>(
     draft?.raceEntry
   );
@@ -798,8 +798,8 @@ export default function Onboarding() {
       // a shallow assign dropped startWeight and currentPhase.
       const { program: planProgram, ...planShape } = plan.profileUpdates;
       Object.assign(profileData, planShape);
-      // buildPlan's race goal carries no race-or-own answer (Run9 STATUS
-      // 2026-11-01); put it back on the goal the merge just replaced, as
+      // buildPlan's race goal carries no race-or-own answer (Run9); put it
+      // back on the goal the merge just replaced, as
       // the run-plan editor re-attaches a race's Space link.
       if (raceEntry && planShape.raceGoal) {
         profileData.raceGoal = { ...planShape.raceGoal, entry: raceEntry };

@@ -94,7 +94,7 @@ export interface RunPlanDraft {
   nonRaceGoal?: NonRaceGoal | null;
   /** Lift4 (10): the leg trim while the runs build. Additive in v1. */
   raceLegTrim?: boolean;
-  /** Run9 STATUS 2026-11-01: a race entered or run on your own; null
+  /** Run9: a race entered or run on your own; null
    *  while unanswered. Additive in v1. */
   raceEntry?: "race" | "own" | null;
 }

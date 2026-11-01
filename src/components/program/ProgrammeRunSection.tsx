@@ -391,7 +391,7 @@ export default function ProgrammeRunSection({
     [profile, programState, todayKeyDerivation]
   );
   const raceGoal = resolvedRunPlan.raceGoal ?? undefined;
-  // Run9 STATUS 2026-11-01: a goal run on your own names its day for the
+  // Run9: a goal run on your own names its day for the
   // distance ("Your 10K") rather than "Race day".
   const ownGoal = raceGoalEntry(raceGoal) === "own";
   const goalDay = goalDayName(raceGoal);

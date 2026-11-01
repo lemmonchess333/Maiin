@@ -287,7 +287,7 @@ export default function RunPlanSettings({
       ? deepLink.spaceId
       : (storedDraft?.raceEventSpaceId ?? saved.raceEventSpaceId)
   );
-  /** Run9 STATUS 2026-11-01: a race entered, or the distance run on your
+  /** Run9: a race entered, or the distance run on your
    *  own. Nothing is chosen for a new goal; a race picked from the
    *  catalogue, or arrived at from its Space, is one entered. */
   const [raceEntry, setRaceEntry] = useState<RaceGoalEntry | null>(

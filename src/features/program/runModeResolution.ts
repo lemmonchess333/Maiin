@@ -40,7 +40,7 @@ export interface RaceGoal {
   eventSpaceId?: string;
   /** A2: optional goal finish time, seconds. */
   targetTimeS?: number;
-  /** Run9 STATUS 2026-11-01: a race the person has entered, or the
+  /** Run9: a race the person has entered, or the
    *  distance run on their own. Absent on a goal set before the question
    *  was asked, which reads as a race (`raceGoalEntry`). */
   entry?: "race" | "own";
