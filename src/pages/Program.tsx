@@ -230,6 +230,7 @@ function ProgramInner() {
     realignRacePlan,
     dismissFellBehindPrompt,
     recentLayoff,
+    recentRuns,
     applyDeloadWeek,
     revertDeloadWeek,
     startTrainingBlock,
@@ -1468,6 +1469,7 @@ function ProgramInner() {
             realignRacePlan={realignRacePlan}
             dismissFellBehindPrompt={dismissFellBehindPrompt}
             recentLayoff={recentLayoff}
+            recentRuns={recentRuns}
           />
         </div>
       )}

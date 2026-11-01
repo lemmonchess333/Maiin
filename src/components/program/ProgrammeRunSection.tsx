@@ -151,7 +151,7 @@ import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import RaceWeeksAhead from "./RaceWeeksAhead";
-import type { LayoffClass } from "@/features/program/layoffDetection";
+import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
 import type { RaceDistance } from "@/lib/raceDayPlan";
 import {
   isRecoveryRunDay,
@@ -249,6 +249,9 @@ interface ProgrammeRunSectionProps {
    *  as on every regen site: left out, a returning runner's outline would
    *  show the quality sessions their plan holds back. */
   recentLayoff: LayoffClass;
+  /** The recent runs read with it (`useProgram`'s `recentRuns`), whose
+   *  pace the weeks ahead size a running starting point's climb at. */
+  recentRuns?: readonly DatedRun[] | null;
 }
 
 /** Two actions in a wrapping row: side by side while both labels fit on
@@ -273,6 +276,7 @@ export default function ProgrammeRunSection({
   realignRacePlan,
   dismissFellBehindPrompt,
   recentLayoff,
+  recentRuns,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   const todayKeyDerivation = useLocalDateKey();
@@ -1803,6 +1807,7 @@ export default function ProgrammeRunSection({
                   profile={profile}
                   programState={programState}
                   recentLayoff={recentLayoff}
+                  recentRuns={recentRuns}
                   today={todayKeyDerivation}
                 />
               }

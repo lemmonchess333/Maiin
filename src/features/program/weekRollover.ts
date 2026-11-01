@@ -119,6 +119,7 @@ export function regenerateRacePlan({
   raceGoal,
   recentLayoff,
   recentRuns,
+  recentRunsAsOf,
   weekSchedule,
   weeklyRunDays,
   currentDate,
@@ -157,6 +158,9 @@ export function regenerateRacePlan({
    *  running starting point climbs from what they say was done, and a site
    *  that left them out would climb it by the calendar. */
   recentRuns: readonly DatedRun[] | null;
+  /** The day `recentRuns` were read (`RacePlanV2Input.recentRunsAsOf`):
+   *  absent, `currentDate`. */
+  recentRunsAsOf?: string;
   carry?: {
     currentWeek?: number;
     totalWeeks?: number;
@@ -224,6 +228,7 @@ export function regenerateRacePlan({
       planTotalWeeks: carry?.totalWeeks,
       leadInWeek: carry?.leadInWeek,
       recentRuns,
+      recentRunsAsOf,
     });
   let v2: ReturnType<typeof generate>;
   let runDays: ScheduledRunDay[];
@@ -311,7 +316,10 @@ export function nextRunWeek(
   profile: UserProfile,
   recentLayoff: LayoffClass,
   /** The recent saved runs (`regenerateRacePlan`'s `recentRuns`). */
-  recentRuns: readonly DatedRun[] | null
+  recentRuns: readonly DatedRun[] | null,
+  /** The day they were read, when it is before `next`'s week: its weeks
+   *  climb as if followed (`regenerateRacePlan`'s `recentRunsAsOf`). */
+  recentRunsAsOf?: string
 ): NextRunWeek {
   const weekSchedule = profile.weekSchedule ?? [];
   const runPlan = current.runPlan;
@@ -347,6 +355,7 @@ export function nextRunWeek(
       profile,
       recentLayoff,
       recentRuns,
+      recentRunsAsOf,
       raceGoal: profile.raceGoal,
       weekSchedule,
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,

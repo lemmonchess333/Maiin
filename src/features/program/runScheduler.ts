@@ -1121,6 +1121,12 @@ export interface RacePlanV2Input {
    * and the climb goes by the calendar, as for the weeks ahead.
    */
   recentRuns?: readonly DatedRun[] | null;
+  /**
+   * The day `recentRuns` were read. The weeks after its week haven't been
+   * run yet, so they climb as if followed, at the runs' pace (the weeks
+   * ahead the outline shows). Absent: `currentDate`.
+   */
+  recentRunsAsOf?: string;
 }
 
 export interface RacePlanV2Output {
@@ -1807,9 +1813,10 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
      recent runs' own, so a long run's rung is the minutes it takes this
      runner; the template's minutes with neither. It sizes the climb alone:
      prescriptions keep the confirmed pace only (RUN-EV-08). */
+  const runsAsOf = input.recentRunsAsOf ?? input.currentDate;
   const climbPace =
     input.easyPaceSPerKm ??
-    (input.recentRuns && recentPace(input.recentRuns, input.currentDate));
+    (input.recentRuns && recentPace(input.recentRuns, runsAsOf));
   /** A week of the block as the plan holds it: every fit applied, and the
    *  clash flag. */
   const fittedWeek = (week: ScheduledRunDay[]): ScheduledRunDay[] => {
@@ -1836,8 +1843,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     );
     // The person's running, as it has climbed from their starting point by
     // this week. This week's climbs from what was done before it, from the
-    // saved runs; a week behind it, which only the taper's walk of the build
-    // builds, and the weeks ahead go by the calendar, as if followed.
+    // saved runs, once it has begun by the day they were read; a week behind
+    // it, which only the taper's walk of the build builds, and the weeks
+    // ahead go by the calendar, as if followed.
     const weekKey = week[0]?.weekKey;
     const fitted = fitWeekToRunningBaseline(
       limited,
@@ -1847,7 +1855,8 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             easyPaceSPerKm: climbPace,
             isStepBack: isStepBackWeek,
             done:
-              input.recentRuns && weekKey === thisWeekKey
+              // A week begun by the day the runs were read.
+              input.recentRuns && weekKey === thisWeekKey && weekKey <= runsAsOf
                 ? recentRunning(input.recentRuns, weekKey)
                 : null,
           })

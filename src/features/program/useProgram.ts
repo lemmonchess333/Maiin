@@ -3618,6 +3618,8 @@ export function useProgram() {
      *  plan realign will actually produce (the answer to the same read
      *  every rebuild waits for; never a second read). */
     recentLayoff,
+    /** The recent runs that read found, for the race plan's weeks ahead. */
+    recentRuns,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,
