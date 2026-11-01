@@ -6,7 +6,7 @@
  * Vitest requires ESM `import` for its own module, but helpers.js
  * is CommonJS — we use createRequire to import it cleanly without
  * dropping the rest of functions/ into ESM (which would require
- * editing every require() in index.js / appleIAP.js / etc.).
+ * editing every require() in index.js / revenueCat.js / etc.).
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createRequire } from "node:module";

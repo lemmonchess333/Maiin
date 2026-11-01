@@ -6,8 +6,8 @@
  * which hasn't been provisioned in Secret Manager FAILS the whole deploy (the
  * safety gate in docs/agents/functions-deploy.md). A hand-maintained command
  * list drifts from what the code actually binds (one did:
- * BILLING_PREVIOUS_HMAC_SECRET is bound on restoreApplePurchases but was only
- * mentioned as "rotation only"). This script reads the source as the single
+ * BILLING_PREVIOUS_HMAC_SECRET was bound but mentioned only as "rotation
+ * only"). This script reads the source as the single
  * source of truth: every secret in a `runWith({ secrets: [...] })` array must be
  * provisioned, full stop.
  *

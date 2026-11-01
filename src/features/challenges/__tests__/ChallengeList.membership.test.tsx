@@ -59,6 +59,8 @@ beforeEach(() => {
   h.toastSuccess.mockClear();
   seedFirestore({
     "users/weekly-member": h.profile,
+    // The join copies the name the public profile shows.
+    "users/weekly-member/public/profile": h.profile,
     ["challenges/" + ID]: {
       name: "Weekly Warrior",
       description: "Train twice this week",

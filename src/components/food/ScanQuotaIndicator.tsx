@@ -1,16 +1,10 @@
 import { DAILY_AI_LIMITS } from "@/lib/subscription";
+import { formatTimeOfDay } from "@/utils/formatters";
 
 interface ScanQuotaIndicatorProps {
   remaining: number;
   resetDate: Date;
   onUpgrade: () => void;
-}
-
-function formatResetDate(date: Date): string {
-  /* en-GB, like every other dated surface in the app. This was the last
-     rendered en-US date left in src/ after the BadgeGrid sweep — it printed
-     "Sep 1" in a caption sitting beside surfaces printing "1 Sep". */
-  return date.toLocaleDateString("en-GB", { month: "short", day: "numeric" });
 }
 
 /**
@@ -24,12 +18,16 @@ function formatResetDate(date: Date): string {
  * nothing — pre-wave2 it was an always-on "[N] scans left this month"
  * footnote), and `limit === 0` (free tier where scanning is Pro-only,
  * not a consumed quota) renders nothing — the locked scan icon already
- * carries that gate, and a "resets {date}" line would be a lie when no
+ * carries that gate, and a "resets at …" line would be a lie when no
  * scans ever return.
  *
+ * The reset is a time, not a date: the count starts again at 00:00 UTC
+ * (src/lib/scanQuotaDay.ts), which for most people is during their day,
+ * so a date would often name today.
+ *
  * States this component still owns:
- *   remaining === 1 → "1 free scan left · resets {date}" — informational
- *                     caption, no action.
+ *   remaining === 1 → "1 free scan left · resets at {HH:mm}" —
+ *                     informational caption, no action.
  *   remaining === 0 → exhausted copy with the upgrade action (tappable).
  *                     It names Pro's daily cap, not "unlimited": the
  *                     server stops Pro at DAILY_AI_LIMITS too.
@@ -39,7 +37,7 @@ export default function ScanQuotaIndicator({
   resetDate,
   onUpgrade,
 }: ScanQuotaIndicatorProps) {
-  const resetStr = formatResetDate(resetDate);
+  const resetStr = formatTimeOfDay(resetDate);
 
   if (remaining === 0) {
     return (
@@ -50,7 +48,7 @@ export default function ScanQuotaIndicator({
           className="text-caption text-muted-foreground font-medium active:opacity-70 transition-opacity"
         >
           Out of scans · upgrade for {DAILY_AI_LIMITS.pro.image_ai} a day ·
-          resets {resetStr}
+          resets at {resetStr}
         </button>
       </div>
     );
@@ -58,7 +56,7 @@ export default function ScanQuotaIndicator({
 
   return (
     <p className="text-center text-caption text-muted-foreground">
-      1 free scan left · resets {resetStr}
+      1 free scan left · resets at {resetStr}
     </p>
   );
 }

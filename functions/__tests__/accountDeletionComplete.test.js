@@ -159,6 +159,7 @@ function setup(extra = {}) {
       getUser: vi.fn().mockResolvedValue({
         uid: "alice",
         email: "alice@example.com",
+        emailVerified: true,
         providerData: [{ providerId: "google.com", uid: "alice-google" }],
       }),
       deleteUser: vi.fn().mockResolvedValue(undefined),

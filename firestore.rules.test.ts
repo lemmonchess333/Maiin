@@ -70,18 +70,20 @@ const VERIFIED = { email_verified: true };
 
 /**
  * Every value a client can legitimately put in a photo field: the Storage
- * download URL (profilePhotoUpload appends `&v=`), the Google OAuth CDN
- * and the Apple OAuth CDN. Anything else loads as an <img src> on a
- * stranger's device, so it is a tracking pixel.
+ * download URL of a screened upload (profilePhotoUpload appends `&v=`), a
+ * Google sign-in avatar and the Apple CDN. Anything else loads as an
+ * <img src> on a stranger's device, so it is a tracking pixel or a photo
+ * nobody screened.
  */
 const ALLOWED_PHOTO_URLS = [
   "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media&v=1",
   "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
   "https://appleid.cdn-apple.com/static/bin/avatar/123.jpg",
 ];
-/** This project's bucket: the host alone admits any Firebase project's. */
+/** This project's bucket, in a screened folder: the host alone admits any
+ *  Firebase project's bucket. */
 const PHOTO_URL_ORIGIN =
-  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2F";
 /** Arbitrary host, suffix-phishing host, http downgrade, two non-http
  *  schemes, and a 2049-char value on an allowed origin (the size cap). */
 const REJECTED_PHOTO_URLS = [
@@ -94,6 +96,13 @@ const REJECTED_PHOTO_URLS = [
   "javascript:alert(1)",
   "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
   PHOTO_URL_ORIGIN + "a".repeat(2049 - PHOTO_URL_ORIGIN.length),
+  // A browser resolves the dot segments before it fetches: this loads
+  // from another project's bucket.
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.appspot.com/o/../../attacker-proj.appspot.com/o/pixel.png?alt=media",
+  // This project's bucket, a folder the photo screen never checks.
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/progress-photos%2Fowner-uid%2Fx.jpg?alt=media",
+  // Google's host, a shared Google Photos image rather than an avatar.
+  "https://lh3.googleusercontent.com/pw/AP1GczSynthetic=w600",
 ];
 
 suite("firestore.rules — users/{uid}/public/{doc}", () => {
@@ -423,6 +432,53 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
         },
         { merge: true }
       )
+    );
+  });
+
+  it("a stored photo the gate refuses blocks no other write; a new one is checked", async () => {
+    // Every write here is a merge, so the stored photo is in each request.
+    // One written before the gate took its present shape must not refuse
+    // the streak mirror or a rename, and must not be a way back in.
+    const stored =
+      "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.appspot.com/o/old-avatar.jpg?alt=media";
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "users", OWNER_UID, "public", "profile"),
+        {
+          uid: OWNER_UID,
+          displayName: "Owner",
+          photoURL: stored,
+        }
+      );
+    });
+    const ref = doc(
+      env.authenticatedContext(OWNER_UID).firestore(),
+      "users",
+      OWNER_UID,
+      "public",
+      "profile"
+    );
+    await assertSucceeds(
+      setDoc(ref, { currentStreak: 5, longestStreak: 9 }, { merge: true })
+    );
+    await assertSucceeds(
+      setDoc(
+        ref,
+        { displayName: "Owner Two", photoURL: stored },
+        { merge: true }
+      )
+    );
+    await assertFails(
+      setDoc(
+        ref,
+        {
+          photoURL: "https://lh3.googleusercontent.com/pw/AP1GczSynthetic=w600",
+        },
+        { merge: true }
+      )
+    );
+    await assertSucceeds(
+      setDoc(ref, { photoURL: ALLOWED_PHOTO_URLS[0] }, { merge: true })
     );
   });
 
@@ -872,8 +928,8 @@ suite("firestore.rules — /challenges", () => {
 
   // ── participant photoURL value gate ─────────────────────────────────
   // The participant row renders on the world-readable leaderboard, so its
-  // photoURL is loaded by every viewer. joinChallenge copies
-  // users/{uid}.photoURL and omits the field when there is none.
+  // photoURL is loaded by every viewer. joinChallenge copies the public
+  // profile's photoURL and omits the field when there is none.
   describe("participant photoURL value gate", () => {
     const CHALLENGE = "weekly-2026-01-01";
     const seedChallenge = () =>
@@ -908,9 +964,11 @@ suite("firestore.rules — /challenges", () => {
       for (const photoURL of [...REJECTED_PHOTO_URLS, 42]) {
         await assertFails(setDoc(ref, join(photoURL)));
       }
-    });
+    }, 30_000);
 
-    it("a cosmetic update cannot repoint photoURL off the allowed origins", async () => {
+    it("no client update, not even the photo or name a join may carry", async () => {
+      // identityResync carries a new public name and photo to the row
+      // with the Admin SDK; a client rename skipped the word filter.
       await seedChallenge();
       await env.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(
@@ -921,17 +979,82 @@ suite("firestore.rules — /challenges", () => {
             "participants",
             OWNER_UID
           ),
-          join(ALLOWED_PHOTO_URLS[1])
+          { ...join(ALLOWED_PHOTO_URLS[1]), displayName: "Owner" }
+        );
+        await setDoc(
+          doc(ctx.firestore(), "users", OWNER_UID, "public", "profile"),
+          { displayName: "Owner Two" }
         );
       });
       const db = env.authenticatedContext(OWNER_UID).firestore();
       const ref = doc(db, "challenges", CHALLENGE, "participants", OWNER_UID);
       await assertFails(
-        setDoc(ref, { photoURL: REJECTED_PHOTO_URLS[0] }, { merge: true })
-      );
-      await assertSucceeds(
         setDoc(ref, { photoURL: ALLOWED_PHOTO_URLS[2] }, { merge: true })
       );
+      await assertFails(
+        setDoc(ref, { displayName: "Owner Two" }, { merge: true })
+      );
+      await assertFails(
+        setDoc(ref, { displayName: "anything-unscreened" }, { merge: true })
+      );
+      // The row is still there to leave.
+      await assertSucceeds(deleteDoc(ref));
+    });
+  });
+
+  // ── the leaderboard name is the public profile's ───────────────────
+  // The board renders displayName to every signed-in viewer. The public
+  // profile's name is the one the word filter screens; the private user
+  // document's is not.
+  describe("participant displayName is the public profile's", () => {
+    const CHALLENGE = "weekly-2026-01-01";
+    const joinAs = (displayName?: unknown) => ({
+      currentValue: 0,
+      tierAchieved: null,
+      joinedAt: serverTimestamp(),
+      ...(displayName === undefined ? {} : { displayName }),
+    });
+    const seed = (profile: Record<string, unknown> | null) =>
+      env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "challenges", CHALLENGE),
+          validChallengeData
+        );
+        await setDoc(doc(ctx.firestore(), "users", OWNER_UID), {
+          displayName: "Private unscreened",
+        });
+        if (profile) {
+          await setDoc(
+            doc(ctx.firestore(), "users", OWNER_UID, "public", "profile"),
+            profile
+          );
+        }
+      });
+    const ref = () =>
+      doc(
+        env.authenticatedContext(OWNER_UID).firestore(),
+        "challenges",
+        CHALLENGE,
+        "participants",
+        OWNER_UID
+      );
+
+    it("a join with the public name succeeds; any other name fails", async () => {
+      await seed({ displayName: "Owner" });
+      await assertFails(setDoc(ref(), joinAs("Private unscreened")));
+      await assertFails(setDoc(ref(), joinAs("anything-unscreened")));
+      await assertFails(setDoc(ref(), joinAs(null)));
+      await assertSucceeds(setDoc(ref(), joinAs("Owner")));
+    });
+
+    it("with no public profile or name, only a join without a name succeeds", async () => {
+      await seed(null);
+      await assertFails(setDoc(ref(), joinAs("Owner")));
+      await assertSucceeds(setDoc(ref(), joinAs()));
+      await assertSucceeds(deleteDoc(ref()));
+      await seed({ displayName: null });
+      await assertFails(setDoc(ref(), joinAs("Owner")));
+      await assertSucceeds(setDoc(ref(), joinAs()));
     });
   });
 
@@ -2081,7 +2204,7 @@ suite(
             type: "workout",
             visibility: "followers",
             authorPhotoURL:
-              "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/foo.jpg",
+              "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fowner-uid%2Ffoo.jpg",
             workoutName: "Push day",
             exerciseCount: 6,
             totalVolume: 5400,
@@ -2245,10 +2368,10 @@ suite(
       );
     });
 
-    it("oversized routePreview (>5000 points) — rejected (audit #11)", async () => {
+    it("oversized routePreview (>100 points) — rejected (audit #11)", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
-      // 5001 entries — one over the cap.
-      const bigRoute = Array.from({ length: 5001 }, (_, i) => ({
+      // 101 entries — one over the cap. A run's post carries 20.
+      const bigRoute = Array.from({ length: 101 }, (_, i) => ({
         lat: 51 + i * 0.00001,
         lon: -1 + i * 0.00001,
       }));
@@ -2260,11 +2383,12 @@ suite(
       );
     });
 
-    it("routePreview at the cap (5000 points) — accepted", async () => {
+    it("routePreview at the cap (100 points) — accepted", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
-      const cappedRoute = Array.from({ length: 5000 }, (_, i) => ({
+      const cappedRoute = Array.from({ length: 100 }, (_, i) => ({
         lat: 51 + i * 0.00001,
         lon: -1 + i * 0.00001,
+        breakBefore: i === 50,
       }));
       await assertSucceeds(
         setDoc(
@@ -2274,16 +2398,95 @@ suite(
       );
     });
 
-    it("oversized exercises array (>100) — rejected", async () => {
+    it("oversized exercises array (>50) — rejected; 50 rows as liftPost builds them — accepted", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
-      const bigExercises = Array.from({ length: 101 }, (_, i) => ({
-        name: `Ex ${i}`,
-        summary: "5x10",
-      }));
+      const row = (i: number) => ({
+        name: `Exercise ${i}`,
+        exerciseId: `exercise-${i}`,
+        summary: "3×10×60 kg",
+        setCount: 3,
+        targetReps: 10,
+        targetWeightKg: 60,
+      });
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-ex"),
-          makeValidActivity({ exercises: bigExercises })
+          makeValidActivity({
+            type: "workout",
+            exercises: Array.from({ length: 51 }, (_, i) => row(i)),
+          })
+        )
+      );
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "ok-ex"),
+          makeValidActivity({
+            type: "workout",
+            exercises: Array.from({ length: 50 }, (_, i) => row(i)),
+          })
+        )
+      );
+    });
+
+    it("each field holds its own type; a list cannot stand in for a name", async () => {
+      // A list of strings passed the old size() caps, since a list has a
+      // size too: 200 items of anything as a "name".
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      const bigList = Array.from({ length: 10 }, () => "x".repeat(1000));
+      for (const [i, overrides] of [
+        { workoutName: bigList },
+        { runName: bigList },
+        { activityTitle: bigList },
+        { prExercise: bigList },
+        { challengeMilestone: bigList },
+        { badgeEarned: bigList },
+        { prHit: "x".repeat(1000) },
+        { distance: "5000" },
+        { duration: "1800" },
+        { elevationGain: "40" },
+        { calories: "300" },
+        { totalVolume: "5000" },
+        { exerciseCount: "5" },
+        { prWeight: "90" },
+        { prCount: "1" },
+        { routePreview: { a: 1 } },
+        { exercises: "Bench press" },
+        { muscleGroups: "chest" },
+      ].entries()) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", `bad-type-${i}`),
+            makeValidActivity(overrides)
+          )
+        );
+      }
+    }, 30_000);
+
+    it("muscle groups are short strings: 600 characters in all", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "mg-at-cap"),
+          makeValidActivity({
+            muscleGroups: Array.from({ length: 20 }, () => "x".repeat(30)),
+          })
+        )
+      );
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "mg-past-cap"),
+          makeValidActivity({
+            muscleGroups: [
+              ...Array.from({ length: 19 }, () => "x".repeat(30)),
+              "x".repeat(31),
+            ],
+          })
+        )
+      );
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "mg-not-strings"),
+          makeValidActivity({ muscleGroups: [{ name: "x".repeat(9000) }] })
         )
       );
     });
@@ -2329,6 +2532,38 @@ suite(
         )
       );
     });
+
+    it("avgPace is seconds a kilometre, or an older post's short text", async () => {
+      // The card prints a string pace as it is, so a string is a pace's
+      // length at most: it was the one unbounded field on a post.
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "pace-number"),
+          makeValidActivity({ avgPace: 334.5 })
+        )
+      );
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "pace-text"),
+          makeValidActivity({ avgPace: "5:34 /km" })
+        )
+      );
+      for (const [i, avgPace] of [
+        "x".repeat(17),
+        "x".repeat(1_000_000),
+        ["5:34"],
+        { pace: 334 },
+        true,
+      ].entries()) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", `pace-bad-${i}`),
+            makeValidActivity({ avgPace })
+          )
+        );
+      }
+    }, 30_000);
 
     it("duration > 24h — rejected", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
@@ -2410,7 +2645,7 @@ suite(
             makeValidActivity({ authorPhotoURL: 42 })
           )
         );
-      });
+      }, 30_000);
 
       it("accepts exactly 2048 chars on an allowed origin", async () => {
         // The 2049 rejection is in REJECTED_PHOTO_URLS; this is the other
@@ -3139,6 +3374,39 @@ suite("firestore.rules — users/{uid} create self-grant guard", () => {
         trialExpiresAt: null,
       })
     );
+  });
+
+  it("an owner cannot delete their own users doc, so cannot recreate it bare", async () => {
+    // Delete-then-create was the one client path that wiped the fields only
+    // the server writes, a used trial among them.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", OWNER_UID), {
+        uid: OWNER_UID,
+        subscriptionTier: "free",
+        hasUsedTrial: true,
+        activationJourneyVersion: 2,
+        showWeekOnBoard: true,
+      });
+    });
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(deleteDoc(doc(ownerDb, "users", OWNER_UID)));
+    // Replacing the document wholesale drops the same fields, and is
+    // refused as an update.
+    await assertFails(
+      setDoc(doc(ownerDb, "users", OWNER_UID), {
+        uid: OWNER_UID,
+        subscriptionTier: "free",
+      })
+    );
+    let after: Record<string, unknown> | undefined;
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      after = (await getDoc(doc(ctx.firestore(), "users", OWNER_UID))).data();
+    });
+    expect(after).toMatchObject({
+      hasUsedTrial: true,
+      activationJourneyVersion: 2,
+      showWeekOnBoard: true,
+    });
   });
 
   it("free user CANNOT self-grant via a future trialExpiresAt on create", async () => {

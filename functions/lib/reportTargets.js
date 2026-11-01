@@ -17,6 +17,8 @@
  * all reads before the transaction's writes).
  */
 
+const { isDocumentId } = require("./documentId");
+
 /* Ids on the wire:
  *   activity            → "<activityId>"
  *   comment             → "<activityId>:<commentId>"
@@ -84,17 +86,7 @@ function isPlainObject(value) {
 }
 
 function assertDocumentId(value) {
-  if (
-    typeof value !== "string" ||
-    value.length === 0 ||
-    value !== value.trim() ||
-    value === "." ||
-    value === ".." ||
-    value.includes("/") ||
-    Buffer.byteLength(value, "utf8") > 1500
-  ) {
-    fail("invalid-report-target");
-  }
+  if (!isDocumentId(value)) fail("invalid-report-target");
   return value;
 }
 

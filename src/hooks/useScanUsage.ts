@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { localDateString } from "@/lib/dateHelpers";
+import { scanQuotaDayKey, nextScanQuotaReset } from "@/lib/scanQuotaDay";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
@@ -14,8 +14,9 @@ import { DAILY_AI_LIMITS } from "@/lib/subscription";
  *   {
  *     text_ai:  { day: "YYYY-MM-DD", count: number },
  *     image_ai: { day: "YYYY-MM-DD", count: number },
- *     timezone: "Europe/London" | null,
  *   }
+ * where `day` is the UTC day the count belongs to (src/lib/scanQuotaDay.ts
+ * says why it is UTC).
  *
  * Default action is `image_ai` to preserve the original
  * single-counter call sites (Food page Scan Meal button). New
@@ -33,39 +34,13 @@ export interface ScanUsage {
   limit: number;
   remaining: number;
   loading: boolean;
-  /** First moment of the next day in the user's local timezone —
-   *  when the counter resets. */
+  /** When the counter resets: the next 00:00 UTC, which is rarely the
+   *  person's own midnight. Show it as a time of day. */
   resetDate: Date;
   /** True when user has Pro-equivalent access (paid or trialing). */
   isUnlimited: boolean;
   /** Which counter this hook instance is tracking. */
   action: AiAction;
-}
-
-/**
- * Local-midnight reset boundary. Approximation — uses the device's
- * timezone via the standard Date API; the server-side counter
- * resolves the actual day key from the user's profile `timezone`
- * field when set (Pacific/Auckland users in our test fixtures get
- * the same answer either way as long as their device is in their
- * home zone). Display-only; the server is authoritative on the
- * counter rollover.
- */
-function getNextLocalMidnight(now = new Date()): Date {
-  const next = new Date(now);
-  next.setHours(24, 0, 0, 0);
-  return next;
-}
-
-function getTodayKey(now = new Date()): string {
-  /* The LOCAL day, matching the YYYY-MM-DD shape the server's
-     `resolveDayKey` produces. Local rather than sliced off an ISO
-     string, which is what the previous comment claimed the body did —
-     that idiom names the UTC day and is banned by `localDayKeyGuard`.
-     Either way this key is display-only: the server owns the counter's
-     rollover, so a disagreement at the local-midnight boundary is
-     bounded by its authoritative count. */
-  return localDateString(now);
 }
 
 export function useScanUsage(action: AiAction = "image_ai"): ScanUsage {
@@ -90,7 +65,7 @@ export function useScanUsage(action: AiAction = "image_ai"): ScanUsage {
       return () => clearTimeout(handle);
     }
 
-    const todayKey = getTodayKey();
+    const todayKey = scanQuotaDayKey();
     const ref = doc(db, "scanUsage", uid);
 
     const unsub = onSnapshot(
@@ -133,7 +108,7 @@ export function useScanUsage(action: AiAction = "image_ai"): ScanUsage {
     limit,
     remaining: Math.max(0, limit - used),
     loading,
-    resetDate: getNextLocalMidnight(),
+    resetDate: nextScanQuotaReset(),
     isUnlimited,
     action,
   };

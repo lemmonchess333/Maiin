@@ -215,34 +215,68 @@ service cloud.firestore {
 
     /* Photo URL value gate — shared by every field a client writes that
        ANOTHER user's device will load as an <img src>: the public
-       profile avatar, activity and space-post author avatars, a space
-       post's attached photo, and the challenge-participant / space-member
-       identity rows. A URL a stranger's browser fetches is a tracking
-       pixel with a per-viewer IP unless its origin is one Tropos already
-       trusts to serve avatars:
-         - THIS project's Firebase Storage bucket (custom uploads, space
-           photos). The host alone was not enough: every Firebase project
-           serves from firebasestorage.googleapis.com, so a URL into an
-           attacker's own bucket passed, and its access logs carry every
-           viewer's IP. Both default bucket names a project can have are
-           listed; each is reserved to this project.
-         - Google OAuth CDN (lh3.googleusercontent.com)
-         - Apple OAuth CDN (appleid.cdn-apple.com)
+       profile avatar, activity and space-post author avatars, and the
+       challenge-participant / space-member identity rows. A URL a
+       stranger's browser fetches is a tracking pixel with a per-viewer
+       IP unless its origin is one Tropos already trusts, and an image
+       nobody screened unless it is one of the uploads Tropos screens:
+         - THIS project's Firebase Storage bucket, and only its two
+           screened folders, profile photos and Space photos
+           (lib/photoScreen.js checks every upload there; progress
+           photos are never screened). The host alone is not enough:
+           every Firebase project serves from firebasestorage.googleapis
+           .com, so a URL into an attacker's own bucket would pass, and
+           its access logs carry every viewer's IP. Both default bucket names
+           a project can have are listed; each is reserved to this
+           project. After /o/ the object name must be one path segment,
+           with no '/', '\\', '?' or '#' before the query: a browser
+           resolves '../' before it fetches, so '/o/../../other-bucket/'
+           would load from another project. A real download URL encodes
+           every slash in the object name as %2F.
+         - Google's account photos (lh3.googleusercontent.com/a/ and
+           /a-/), the avatar a Google sign-in gives. The same host serves
+           shared Google Photos and Drive files, so only the account
+           photo path is taken, as one segment with no '%' that could
+           encode a slash.
+         - Apple's CDN (appleid.cdn-apple.com), which serves only Apple's
+           own files.
        `https` only and anchored with `^`, so a downgrade or a
        suffix-phishing host (lh3.googleusercontent.com.evil.com) fails;
        capped at 2048 chars so the field cannot carry a payload.
        Null-safe: the type check runs first and `&&` short-circuits, so
        a null never reaches `.matches()` (which would be an evaluation
        error, not false). Whether absent / null / '' are legal is each
-       caller's decision — this speaks only to a present value. */
+       caller's decision — this speaks only to a present value.
+       functions/lib/publicPhotoUrl.js gives the server the same answer,
+       and its test reads these patterns. */
     function isAllowedPhotoUrl(v) {
       return v is string
         && v.size() <= 2048
         && (
-          v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/.*')
-          || v.matches('^https://lh3\\.googleusercontent\\.com/.*')
+          v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/(profile-photos|space-photos)%2F[^/\\\\?#]+([?#].*)?$')
+          || v.matches('^https://lh3\\.googleusercontent\\.com/a-?/[^/\\\\?#%]+$')
           || v.matches('^https://appleid\\.cdn-apple\\.com/.*')
         );
+    }
+
+    /* A photo field a write leaves as it is passes unchecked: a stored
+       URL the gate above refuses must not block a merge that touches
+       only other fields (the streak mirror, a name, the race toggle).
+       A new or changed value is always checked. */
+    function photoUnchanged(field) {
+      return resource != null
+        && field in resource.data
+        && request.resource.data[field] == resource.data[field];
+    }
+
+    /* A Space post's attached photo: the author's own upload under
+       space-photos/{uid}/ in this project's bucket, which is the only
+       place the composer puts one (src/lib/spacePhotoUpload.ts) and
+       which the photo screen checks. No avatar host qualifies. */
+    function isOwnSpacePhotoUrl(v) {
+      return v is string
+        && v.size() <= 2048
+        && v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/space-photos%2F' + request.auth.uid + '%2F[^/\\\\?#]+([?#].*)?$');
     }
 
     /* raceGoal value gate — the shape the app actually consumes.
@@ -518,10 +552,13 @@ service cloud.firestore {
         && shareDefaultsUnchangedOrValid()
         && notificationPreferencesUnchangedOrValid()
         && approveFollowersUnchangedOrValid();
-      // Freeze delete too: the deletion executor uses the Admin SDK (which
-      // bypasses rules), so a client-side self-delete during the freeze /
-      // tombstone window is never the executor and should be blocked.
-      allow delete: if isOwnerAndNotDeleting(uid);
+      // No client delete. Account deletion runs on the server with the
+      // Admin SDK (deleteMyAccount), and nothing in the app deletes this
+      // document. A delete followed by a fresh create would wipe the
+      // fields only the server writes (hasUsedTrial, subscriptionTrial,
+      // stripeCustomerId, activationJourneyVersion, showWeekOnBoard), and
+      // a trial is decided from hasUsedTrial.
+      allow delete: if false;
     }
 
     // User subcollections — meals, workouts, runs, weights, water, bodyweight
@@ -775,8 +812,9 @@ service cloud.firestore {
              states; null is what createDefaultProfile writes for
              email signups before any upload, '' is what removeProfilePhoto
              writes when the user clears their custom upload)
-           - an origin isAllowedPhotoUrl trusts (own Storage bucket,
-             Google / Apple OAuth CDNs)
+           - an origin isAllowedPhotoUrl trusts (own Storage bucket's
+             screened folders, Google account photos, Apple's CDN)
+           - the value already stored, left as it is (photoUnchanged)
            The null and '' checks come BEFORE the helper so those two
            real states are accepted rather than type-checked. */
         && (
@@ -784,6 +822,7 @@ service cloud.firestore {
           || request.resource.data.photoURL == null
           || request.resource.data.photoURL == ''
           || isAllowedPhotoUrl(request.resource.data.photoURL)
+          || photoUnchanged('photoURL')
         )
         /* photoStoragePath gate — must point to the owner's own
            profile-photos folder. Prevents writing a value that would
@@ -976,84 +1015,125 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.kudosCount == 0
         && request.resource.data.commentCount == 0
-        // Payload size caps — pathological payload prevention
+        // Payload size caps — pathological payload prevention. Every
+        // reader of a feed or Explore downloads the whole post, so each
+        // field is held to its type and to a size with room over what the
+        // app writes. The rules cannot look inside the maps in a list (a
+        // route's points, a lift's exercise rows); onActivityCreated
+        // holds a post past 64 KB from everyone but its author.
+        //   - routePreview: a run's post carries at most 20 points
+        //     (runPostRoute samples to 20).
+        //   - exercises: one row per exercise done (liftPost).
+        //   - muscleGroups: the session's movement categories, each a
+        //     short key ("horizontal_push").
         && (
           !('routePreview' in request.resource.data.keys())
-          || request.resource.data.routePreview.size() <= 5000
+          || (request.resource.data.routePreview is list
+              && request.resource.data.routePreview.size() <= 100)
         )
         && (
           !('exercises' in request.resource.data.keys())
-          || request.resource.data.exercises.size() <= 100
+          || (request.resource.data.exercises is list
+              && request.resource.data.exercises.size() <= 50)
         )
         && (
           !('muscleGroups' in request.resource.data.keys())
-          || request.resource.data.muscleGroups.size() <= 20
+          || (request.resource.data.muscleGroups is list
+              && request.resource.data.muscleGroups.size() <= 20
+              && request.resource.data.muscleGroups.join('').size() <= 600)
         )
-        // Numeric bounds — when present, must be in plausible range
+        && (
+          !('prHit' in request.resource.data.keys())
+          || request.resource.data.prHit is bool
+        )
+        // Numeric bounds — when present, a number in a plausible range
         && (
           !('distance' in request.resource.data.keys())
-          || (request.resource.data.distance >= 0
+          || (request.resource.data.distance is number
+              && request.resource.data.distance >= 0
               && request.resource.data.distance <= 500000)  // 500 km — covers ultras
         )
         && (
           !('duration' in request.resource.data.keys())
-          || (request.resource.data.duration >= 0
+          || (request.resource.data.duration is number
+              && request.resource.data.duration >= 0
               && request.resource.data.duration <= 86400)  // 24 h
         )
         && (
           !('elevationGain' in request.resource.data.keys())
-          || (request.resource.data.elevationGain >= 0
+          || (request.resource.data.elevationGain is number
+              && request.resource.data.elevationGain >= 0
               && request.resource.data.elevationGain <= 20000)  // 20 km vertical
         )
         && (
           !('calories' in request.resource.data.keys())
-          || (request.resource.data.calories >= 0
+          || (request.resource.data.calories is number
+              && request.resource.data.calories >= 0
               && request.resource.data.calories <= 50000)  // ultra-endurance ceiling
         )
         && (
           !('totalVolume' in request.resource.data.keys())
-          || (request.resource.data.totalVolume >= 0
+          || (request.resource.data.totalVolume is number
+              && request.resource.data.totalVolume >= 0
               && request.resource.data.totalVolume <= 1000000)  // 1M kg per session is plenty
         )
         && (
           !('exerciseCount' in request.resource.data.keys())
-          || (request.resource.data.exerciseCount >= 0
+          || (request.resource.data.exerciseCount is number
+              && request.resource.data.exerciseCount >= 0
               && request.resource.data.exerciseCount <= 200)
         )
         && (
           !('prWeight' in request.resource.data.keys())
-          || (request.resource.data.prWeight >= 0
+          || (request.resource.data.prWeight is number
+              && request.resource.data.prWeight >= 0
               && request.resource.data.prWeight <= 1000)
         )
         && (
           !('prCount' in request.resource.data.keys())
-          || (request.resource.data.prCount >= 0
+          || (request.resource.data.prCount is number
+              && request.resource.data.prCount >= 0
               && request.resource.data.prCount <= 1000)
+        )
+        // A pace is seconds a kilometre (runCompletion), or on an older
+        // post the text "5:34": the card prints a string as it is, so one
+        // is held to a pace's length.
+        && (
+          !('avgPace' in request.resource.data.keys())
+          || request.resource.data.avgPace is number
+          || (request.resource.data.avgPace is string
+              && request.resource.data.avgPace.size() <= 16)
         )
         // String length caps
         && (
           !('workoutName' in request.resource.data.keys())
-          || request.resource.data.workoutName.size() <= 200
+          || (request.resource.data.workoutName is string
+              && request.resource.data.workoutName.size() <= 200)
         )
         && (
           !('runName' in request.resource.data.keys())
-          || request.resource.data.runName.size() <= 200
+          || (request.resource.data.runName is string
+              && request.resource.data.runName.size() <= 200)
         )
         && (
           !('activityTitle' in request.resource.data.keys())
-          || request.resource.data.activityTitle.size() <= 200
+          || (request.resource.data.activityTitle is string
+              && request.resource.data.activityTitle.size() <= 200)
         )
         && (
           !('prExercise' in request.resource.data.keys())
-          || request.resource.data.prExercise.size() <= 200
+          || (request.resource.data.prExercise is string
+              && request.resource.data.prExercise.size() <= 200)
         )
         && (
           !('challengeMilestone' in request.resource.data.keys())
-          || request.resource.data.challengeMilestone.size() <= 200
+          || (request.resource.data.challengeMilestone is string
+              && request.resource.data.challengeMilestone.size() <= 200)
         )
         && (
           !('badgeEarned' in request.resource.data.keys())
-          || request.resource.data.badgeEarned.size() <= 200
+          || (request.resource.data.badgeEarned is string
+              && request.resource.data.badgeEarned.size() <= 200)
         )
         // The share sheets' optional note, cut at CAPTION_MAX
         // (src/lib/activityPost.ts). size() counts UTF-16 code units,
@@ -1234,10 +1314,9 @@ service cloud.firestore {
       //     (displayName, photoURL, uid) are allowed. The optional `uid`
       //     body field, if present, must equal the path's {uid}
       //     (impersonation guard, same idiom as the public profile).
-      //   - UPDATE: only the cosmetic identity fields may change. Any
-      //     diff that touches currentValue or tierAchieved is denied —
-      //     those are written ONLY by the Admin SDK triggers, which
-      //     bypass these rules.
+      //   - UPDATE: none from a client. currentValue and tierAchieved
+      //     are written ONLY by the Admin SDK triggers, and the name and
+      //     photo by identityResync, all of which bypass these rules.
       //   - DELETE (leave): the participant themselves.
       // ========================================
       match /participants/{uid} {
@@ -1270,34 +1349,30 @@ service cloud.firestore {
             !('uid' in request.resource.data)
             || request.resource.data.uid == uid
           )
-          // Identity field type/length caps.
+          // The name on the leaderboard is the one the person's public
+          // profile shows: the profile's name is screened by the word
+          // filter (onPublicProfileWritten), and the private user
+          // document's is not. Absent is allowed; the board then says
+          // "Athlete".
           && (
             !('displayName' in request.resource.data)
             || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 50)
+                && request.resource.data.displayName.size() <= 50
+                && request.resource.data.displayName
+                     == get(/databases/$(database)/documents/users/$(uid)/public/profile)
+                          .data.get('displayName', null))
           )
           && (
             !('photoURL' in request.resource.data)
             || isAllowedPhotoUrl(request.resource.data.photoURL)
           );
 
-        // Updates may ONLY touch cosmetic identity fields. Any diff
-        // that affects currentValue or tierAchieved is rejected —
-        // server-only via the Admin SDK triggers.
-        allow update: if request.auth != null
-          && request.auth.uid == uid
-          && !isWriteFrozen(uid)
-          && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['displayName', 'photoURL'])
-          && (
-            !('displayName' in request.resource.data)
-            || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 50)
-          )
-          && (
-            !('photoURL' in request.resource.data)
-            || isAllowedPhotoUrl(request.resource.data.photoURL)
-          );
+        // No client update. A row's progress is written by the Admin SDK
+        // triggers (syncChallengeProgress), and its name and photo by
+        // identityResync when the public profile changes, which carries
+        // neither a name the word filter refuses nor a restricted
+        // account's new one. A client update was a way round both.
+        allow update: if false;
 
         allow delete: if request.auth != null
           && request.auth.uid == uid
@@ -1390,6 +1465,14 @@ service cloud.firestore {
           .data.officialUids;
     }
 
+    /* One figure on a Space post's attached session: absent, or a number
+       from 0 to `max`. */
+    function spaceSnapshotNumber(field, max) {
+      let a = request.resource.data.activity;
+      return !(field in a)
+        || (a[field] is number && a[field] >= 0 && a[field] <= max);
+    }
+
     match /spaces/{spaceId} {
       // No parent doc in v1 (member counts are client aggregate
       // queries over /members — no forgeable counter, no trigger).
@@ -1438,6 +1521,7 @@ service cloud.firestore {
           && (
             !('photoURL' in request.resource.data)
             || isAllowedPhotoUrl(request.resource.data.photoURL)
+            || photoUnchanged('photoURL')
           );
 
         allow delete: if request.auth != null
@@ -1486,7 +1570,7 @@ service cloud.firestore {
           )
           && (
             !('photoUrl' in request.resource.data)
-            || isAllowedPhotoUrl(request.resource.data.photoUrl)
+            || isOwnSpacePhotoUrl(request.resource.data.photoUrl)
           )
           // The attached session is the composer's snapshot
           // (src/features/spaces/spacePostSnapshot.ts, whose key list
@@ -1503,7 +1587,9 @@ service cloud.firestore {
                    ])
                 && request.resource.data.activity.get('type', null)
                      in ['run', 'workout']
-                // The composer downsamples a route to 40 points.
+                // The composer downsamples a route to 40 points. The
+                // points are maps the rules cannot look inside, so
+                // onSpacePostWritten removes a post past 64 KB.
                 && (
                   !('routePreview' in request.resource.data.activity)
                   || (request.resource.data.activity.routePreview is list
@@ -1512,7 +1598,22 @@ service cloud.firestore {
                 && (
                   !('muscleGroups' in request.resource.data.activity)
                   || (request.resource.data.activity.muscleGroups is list
-                      && request.resource.data.activity.muscleGroups.size() <= 20)
+                      && request.resource.data.activity.muscleGroups.size() <= 20
+                      && request.resource.data.activity.muscleGroups.join('').size() <= 600)
+                )
+                // The session's figures, each a number in the range a
+                // feed post holds it to (the activities rule above).
+                && spaceSnapshotNumber('distance', 500000)
+                && spaceSnapshotNumber('duration', 86400)
+                && spaceSnapshotNumber('elevationGain', 20000)
+                && spaceSnapshotNumber('totalVolume', 1000000)
+                && spaceSnapshotNumber('exerciseCount', 200)
+                // Seconds a kilometre, or a pace's text.
+                && (
+                  !('avgPace' in request.resource.data.activity)
+                  || request.resource.data.activity.avgPace is number
+                  || (request.resource.data.activity.avgPace is string
+                      && request.resource.data.activity.avgPace.size() <= 16)
                 )
                 && (
                   !('leadExerciseId' in request.resource.data.activity)

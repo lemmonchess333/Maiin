@@ -26,9 +26,8 @@ export default defineConfig({
       "e2e/**",
       "node_modules/**",
       // Exclude nested node_modules (e.g. `functions/node_modules/**`).
-      // Post-W1f we pulled in @apple/app-store-server-library which
-      // ships its own vitest-compatible test suite; without this the
-      // root-level runner picks them up and treats them as ours.
+      // A package can ship its own vitest-compatible test files; without
+      // this the root-level runner picks them up and treats them as ours.
       "**/node_modules/**",
       "functions/**",
       ".claude/**",

@@ -6,23 +6,27 @@
  *
  * - sendPasswordResetLinkCallable — UNAUTHENTICATED by design (user is
  *   logged out); Admin-minted link works for OAuth-only accounts;
- *   enumeration-neutral response; per-email rate limit.
+ *   enumeration-neutral response (the same reply whether or not the
+ *   address has an account or the email went); per-email rate limits and
+ *   a project-wide daily cap on sends.
  * - sendVerificationEmailCallable — AUTH-required, caller's own email
- *   only; branded Resend template instead of the Firebase default.
+ *   only; branded Resend template instead of the Firebase default;
+ *   per-account rate limits.
  *
- * Pure decision logic stays in lib/passwordResetEmail.js and
- * lib/verificationEmail.js (dependency-injected, unit-tested); this
- * module owns only the trigger wiring + Resend transport.
+ * Pure decision logic stays in lib/passwordResetRequest.js,
+ * lib/passwordResetEmail.js and lib/verificationEmail.js
+ * (dependency-injected, unit-tested); this module owns only the trigger
+ * wiring + Resend transport.
  */
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { defineSecret } = require("firebase-functions/params");
 const { DEFAULT_HTTP_CAP } = require("../lib/runtimeCaps");
 const {
-  isEmailRateLimited,
-  passwordResetKey,
+  VERIFICATION_EMAIL_LIMITS,
+  firstEmailLimitHit,
 } = require("../lib/emailRateLimit");
-const passwordResetEmail = require("../lib/passwordResetEmail");
+const { requestPasswordReset } = require("../lib/passwordResetRequest");
 const verificationEmail = require("../lib/verificationEmail");
 
 // Resend API key — provisioned via: firebase functions:secrets:set RESEND_API_KEY
@@ -71,59 +75,29 @@ exports.sendViaResend = sendViaResend;
  * — the user is logged out. Mints a reset link via the Admin SDK (works for
  * OAuth-only accounts too, unlike the client SDK) and emails it via Resend, so
  * a Google/Apple user can set a password — matching Spotify / MyFitnessPal.
- * Always returns { ok: true } (enumeration defence: a non-existent email
- * looks identical). Rate-limited per email to blunt reset-bombing; App Check
- * enforcement (roadmap) is the production hardening for the unauthed surface.
+ * Rate-limited per email to blunt reset-bombing; App Check enforcement
+ * (roadmap) is the production hardening for the unauthed surface.
+ *
+ * The request itself is lib/passwordResetRequest.js, whose header says why
+ * the reply is the same whether or not the address has an account.
  */
 exports.sendPasswordResetLinkCallable = functions
   .runWith({ ...DEFAULT_HTTP_CAP, secrets: [RESEND_API_KEY] })
   .https.onCall(async (data) => {
-    const email =
-      data && typeof data.email === "string" ? data.email.trim() : "";
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "A valid email is required."
-      );
-    }
-    // Keyed on a hash of the address (no auth uid — logged out). 5 per
-    // 5 min per address caps bombing a single victim.
-    const limited = await isEmailRateLimited({
+    const reply = await requestPasswordReset({
+      data,
       firestore: admin.firestore(),
-      key: passwordResetKey(email),
-      action: "passwordReset",
-      maxCalls: 5,
-      windowMs: 300_000,
+      generateLink: (e) => admin.auth().generatePasswordResetLink(e),
+      sendEmail: sendViaResend,
+      logger: functions.logger,
     });
-    if (limited) {
+    if (reply.refused) {
       throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Too many reset requests. Try again in a few minutes."
+        reply.refused.code,
+        reply.refused.message
       );
     }
-    try {
-      const result = await passwordResetEmail.sendPasswordResetEmail({
-        generateLink: (e) => admin.auth().generatePasswordResetLink(e),
-        sendEmail: sendViaResend,
-        email,
-      });
-      functions.logger.info("sendPasswordResetLinkCallable", {
-        sent: result.sent,
-        reason: result.reason,
-      });
-    } catch (err) {
-      // A genuine failure (Admin outage, Resend down) — surface so the client
-      // can say "try again", without leaking whether the account exists.
-      functions.logger.error("sendPasswordResetLinkCallable.error", {
-        error: err && err.message,
-      });
-      throw new functions.https.HttpsError(
-        "internal",
-        "Couldn't send the reset email. Try again in a moment."
-      );
-    }
-    // Neutral: identical response whether or not the account existed.
-    return { ok: true };
+    return reply;
   });
 
 /**
@@ -154,18 +128,16 @@ exports.sendVerificationEmailCallable = functions
     if (currentUser.emailVerified) {
       return { ok: true, alreadyVerified: true };
     }
-    const limited = await isEmailRateLimited({
+    // A few minutes' burst and a day's total per account. Someone can
+    // sign up with an address that is not theirs, so this is also what an
+    // unwanted inbox receives at most.
+    const hit = await firstEmailLimitHit({
       firestore: admin.firestore(),
       key: `verifyemail_${context.auth.uid}`,
-      action: "verificationEmail",
-      maxCalls: 3,
-      windowMs: 600_000,
+      limits: VERIFICATION_EMAIL_LIMITS,
     });
-    if (limited) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Too many requests. Try again in a few minutes."
-      );
+    if (hit) {
+      throw new functions.https.HttpsError("resource-exhausted", hit.message);
     }
     try {
       await verificationEmail.sendVerificationEmail({
