@@ -1066,6 +1066,15 @@ service cloud.firestore {
           || (request.resource.data.prCount >= 0
               && request.resource.data.prCount <= 1000)
         )
+        // A pace is seconds a kilometre (runCompletion), or on an older
+        // post the text "5:34": the card prints a string as it is, so one
+        // is held to a pace's length.
+        && (
+          !('avgPace' in request.resource.data.keys())
+          || request.resource.data.avgPace is number
+          || (request.resource.data.avgPace is string
+              && request.resource.data.avgPace.size() <= 16)
+        )
         // String length caps
         && (
           !('workoutName' in request.resource.data.keys())

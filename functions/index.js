@@ -181,6 +181,8 @@ const { engagementRejection } = require("./lib/engagementRejection");
 const { isDocumentId } = require("./lib/documentId");
 // The same filter over Community Space posts (onSpacePostWritten).
 const spacePostModeration = require("./lib/spacePostModeration");
+// The same filter over every text a feed post shows (onActivityCreated).
+const activityModeration = require("./lib/activityModeration");
 // The email that tells the owner a report has come in (createReport).
 const reportAlert = require("./lib/reportAlert");
 // Retried triggers: the window an event is retried in, and the side
@@ -6155,8 +6157,8 @@ exports.onActivityCreated = functions
     // get visibility=private and are then skipped by the fanout block
     // below.
     try {
-      const SCAN_FIELDS = ["caption", "workoutName", "runName"];
-      const flaggedField = profanityFilter.findProfaneField(data, SCAN_FIELDS);
+      // Every text the feed card shows (lib/activityModeration.js).
+      const flaggedField = activityModeration.objectionableActivityField(data);
       if (flaggedField) {
         functions.logger.warn("onActivityCreated.auto_flag", {
           activityId,

@@ -2386,6 +2386,38 @@ suite(
       );
     });
 
+    it("avgPace is seconds a kilometre, or an older post's short text", async () => {
+      // The card prints a string pace as it is, so a string is a pace's
+      // length at most: it was the one unbounded field on a post.
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "pace-number"),
+          makeValidActivity({ avgPace: 334.5 })
+        )
+      );
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "pace-text"),
+          makeValidActivity({ avgPace: "5:34 /km" })
+        )
+      );
+      for (const [i, avgPace] of [
+        "x".repeat(17),
+        "x".repeat(1_000_000),
+        ["5:34"],
+        { pace: 334 },
+        true,
+      ].entries()) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", `pace-bad-${i}`),
+            makeValidActivity({ avgPace })
+          )
+        );
+      }
+    });
+
     it("duration > 24h — rejected", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertFails(
