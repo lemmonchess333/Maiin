@@ -78,6 +78,10 @@ import { liftUnitForBodyWeight } from "@/lib/liftLoad";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import NewAccountMethodNote from "@/components/onboarding/NewAccountMethodNote";
 import { startingDisplayName } from "@/lib/onboardingName";
+import {
+  RACE_GOAL_ENTRY_OPTIONS,
+  type RaceGoalEntry,
+} from "@/lib/raceGoalEntry";
 import { signInMethodOf } from "@/lib/signInMethod";
 import { ACTIVATION_JOURNEY_V2_ENABLED } from "@/lib/activationJourney";
 import { Capacitor } from "@capacitor/core";
@@ -281,6 +285,11 @@ export default function Onboarding() {
   const [raceTargetDate, setRaceTargetDate] = useState(
     draft?.raceTargetDate ?? ""
   );
+  /* A race entered, or the distance run on your own (Run9 STATUS
+     2026-11-01). Nothing is chosen until the person answers. */
+  const [raceEntry, setRaceEntry] = useState<RaceGoalEntry | undefined>(
+    draft?.raceEntry
+  );
   // Adaptive paces §10.2: an optional recent race, which sets the paces.
   const [recentRaceDistance, setRecentRaceDistance] = useState<
     NonNullable<OnboardingDraft["recentRaceDistance"]>
@@ -334,6 +343,7 @@ export default function Onboarding() {
       weeklyRunDays,
       raceDistance,
       raceTargetDate,
+      raceEntry,
       injuries,
       gender,
       ageRange,
@@ -376,6 +386,7 @@ export default function Onboarding() {
       weeklyRunDays,
       raceDistance,
       raceTargetDate,
+      raceEntry,
       injuries,
       gender,
       ageRange,
@@ -615,7 +626,9 @@ export default function Onboarding() {
     !(
       runFrequency !== "none" &&
       runMode === "race_prep" &&
-      (racePreview.status === "invalid" || racePreview.status === "empty")
+      (racePreview.status === "invalid" ||
+        racePreview.status === "empty" ||
+        raceEntry === undefined)
     ) &&
     !(recentRace && "error" in recentRace);
   const validBody =
@@ -737,7 +750,13 @@ export default function Onboarding() {
         ...(effectiveRunMode === "race_prep" &&
         raceTargetDate &&
         raceTargetDate >= localDateString(new Date())
-          ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
+          ? {
+              raceGoal: {
+                distance: raceDistance,
+                targetDate: raceTargetDate,
+                ...(raceEntry ? { entry: raceEntry } : {}),
+              },
+            }
           : {}),
         injuries,
         // D16 — only persist a non-empty "why" (trimmed, ≤120). Omitted when
@@ -779,6 +798,12 @@ export default function Onboarding() {
       // a shallow assign dropped startWeight and currentPhase.
       const { program: planProgram, ...planShape } = plan.profileUpdates;
       Object.assign(profileData, planShape);
+      // buildPlan's race goal carries no race-or-own answer (Run9 STATUS
+      // 2026-11-01); put it back on the goal the merge just replaced, as
+      // the run-plan editor re-attaches a race's Space link.
+      if (raceEntry && planShape.raceGoal) {
+        profileData.raceGoal = { ...planShape.raceGoal, entry: raceEntry };
+      }
       profileData.program = {
         ...(profileData.program as Record<string, unknown>),
         ...planProgram,
@@ -1271,6 +1296,21 @@ export default function Onboarding() {
                           { value: "marathon", label: "Full" },
                         ]}
                       />
+                      <div className="space-y-2">
+                        <p className="text-sm">Race or on your own</p>
+                        <SegmentedControl<RaceGoalEntry | "">
+                          ariaLabel="Race or on your own"
+                          tone="running"
+                          layout="wrap"
+                          value={raceEntry ?? ""}
+                          onChange={(next) => {
+                            if (next !== "") setRaceEntry(next);
+                          }}
+                          options={RACE_GOAL_ENTRY_OPTIONS.map((o) => ({
+                            ...o,
+                          }))}
+                        />
+                      </div>
                       {raceRunDaysNote(raceDistance, weeklyRunDays) && (
                         <p className="text-sm text-muted-foreground">
                           {raceRunDaysNote(raceDistance, weeklyRunDays)}

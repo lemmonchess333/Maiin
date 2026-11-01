@@ -17,6 +17,7 @@ describe("race picker browsing", () => {
     onTargetDateChange: vi.fn(),
     onEventNameChange: vi.fn(),
     onPickRace: vi.fn(),
+    onEntryChange: vi.fn(),
   });
   const base = {
     distance: "marathon" as const,
@@ -24,6 +25,7 @@ describe("race picker browsing", () => {
     eventName: "Boston Marathon",
     minDate: "2026-09-14",
     selectedEventSpaceId: "boston-marathon",
+    entry: "race" as const,
     upcomingRaces: upcomingRaceSpaceDefs("2026-09-14"),
     state: getRaceGoalPlannerState({
       distance: "marathon",

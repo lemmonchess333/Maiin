@@ -314,7 +314,7 @@ service cloud.firestore {
         || (
           g is map
           && g.keys().hasAll(['distance', 'targetDate'])
-          && g.keys().hasOnly(['distance', 'targetDate', 'eventName', 'eventSpaceId'])
+          && g.keys().hasOnly(['distance', 'targetDate', 'eventName', 'eventSpaceId', 'targetTimeS', 'entry'])
           && g.distance in ['5k', '10k', 'half', 'marathon']
           // Local "YYYY-MM-DD". Pinned by pattern, not just length: the whole
           // race plan is derived from parsing this, and a 10-character
@@ -329,6 +329,14 @@ service cloud.firestore {
             !('eventSpaceId' in g)
             || (g.eventSpaceId is string && isKnownSpaceId(g.eventSpaceId))
           )
+          // A2's goal time, which the sanitizer kept and this gate refused.
+          && (
+            !('targetTimeS' in g)
+            || (g.targetTimeS is number
+              && g.targetTimeS >= 600 && g.targetTimeS <= 43200)
+          )
+          // Run9 STATUS 2026-11-01: a race entered, or run on your own.
+          && (!('entry' in g) || g.entry in ['race', 'own'])
         );
     }
 

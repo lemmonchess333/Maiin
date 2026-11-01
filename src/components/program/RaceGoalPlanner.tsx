@@ -41,6 +41,11 @@ import {
 } from "@/features/spaces/spaceDefs";
 import { raceEventDates } from "@/features/spaces/raceDates";
 import type { RaceDistance, RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
+import {
+  goalDayName,
+  RACE_GOAL_ENTRY_OPTIONS,
+  type RaceGoalEntry,
+} from "@/lib/raceGoalEntry";
 import PhaseRail from "./PhaseRail";
 import { Collapse } from "@/components/ui/Collapse";
 
@@ -69,6 +74,10 @@ interface RaceGoalPlannerProps {
   /** The draft's catalogue binding, "" when the goal is manual. */
   selectedEventSpaceId: string;
   onPickRace: (def: SpaceDef) => void;
+  /** A race entered, or the distance run on your own; null until the
+   *  person answers (Run9 STATUS 2026-11-01). */
+  entry: RaceGoalEntry | null;
+  onEntryChange: (next: RaceGoalEntry) => void;
 }
 
 /**
@@ -241,8 +250,11 @@ function UpcomingRacePicker({
   );
 }
 
-function outLabel(state: RaceGoalPlannerState): string {
-  if (state.daysOut === 0) return "Race day";
+function outLabel(
+  state: RaceGoalPlannerState,
+  goal: { distance: string; entry: RaceGoalEntry | null }
+): string {
+  if (state.daysOut === 0) return goalDayName(goal);
   const weeks = `${state.weeksOut} ${state.weeksOut === 1 ? "week" : "weeks"} out`;
   const days = `${state.daysOut} ${state.daysOut === 1 ? "day" : "days"}`;
   return `${weeks} · ${days}`;
@@ -260,6 +272,8 @@ export default function RaceGoalPlanner({
   upcomingRaces,
   selectedEventSpaceId,
   onPickRace,
+  entry,
+  onEntryChange,
 }: RaceGoalPlannerProps) {
   const trainingRaces = upcomingRaces.filter(
     (race) => race.event && isTrainableRaceEvent(race.event)
@@ -298,22 +312,47 @@ export default function RaceGoalPlanner({
         />
       </div>
 
-      {/* Race name (optional). No example in the field: a race the
-          person had not entered read as one already filled in. */}
+      {/* A race entered, or the distance on your own. Neither is chosen
+          for a new goal; the plan is the same, what its last day is
+          called is not. */}
       <div className="space-y-2">
-        <SectionHeading size="compact">
-          <label htmlFor="ps-race-event-name">Race name (optional)</label>
-        </SectionHeading>
-        <input
-          id="ps-race-event-name"
-          type="text"
-          value={eventName}
-          onChange={(e) => onEventNameChange(e.target.value)}
-          maxLength={60}
-          autoComplete="off"
-          className="ds-input block min-w-0 appearance-none text-sm"
+        <SectionHeading size="compact">Race or on your own</SectionHeading>
+        <SegmentedControl<RaceGoalEntry | "">
+          ariaLabel="Race or on your own"
+          tone="running"
+          layout="wrap"
+          options={RACE_GOAL_ENTRY_OPTIONS.map((o) => ({ ...o }))}
+          value={entry ?? ""}
+          onChange={(next) => {
+            if (next !== "") onEntryChange(next);
+          }}
         />
+        {entry === null && (
+          <p className="text-xs text-muted-foreground">
+            Choose one to save your plan.
+          </p>
+        )}
       </div>
+
+      {/* Race name (optional). No example in the field: a race the
+          person had not entered read as one already filled in. A goal
+          run on your own has no race to name. */}
+      {entry !== "own" && (
+        <div className="space-y-2">
+          <SectionHeading size="compact">
+            <label htmlFor="ps-race-event-name">Race name (optional)</label>
+          </SectionHeading>
+          <input
+            id="ps-race-event-name"
+            type="text"
+            value={eventName}
+            onChange={(e) => onEventNameChange(e.target.value)}
+            maxLength={60}
+            autoComplete="off"
+            className="ds-input block min-w-0 appearance-none text-sm"
+          />
+        </div>
+      )}
 
       {/* Target date */}
       <div className="space-y-2">
@@ -348,7 +387,7 @@ export default function RaceGoalPlanner({
           {/* Weeks/days out */}
           <div>
             <p className="text-base font-bold tabular-nums font-mono text-foreground">
-              {outLabel(state)}
+              {outLabel(state, { distance, entry })}
             </p>
             <SectionLabel className="text-running-strong">
               {state.statusTitle}

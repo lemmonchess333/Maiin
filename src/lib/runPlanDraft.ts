@@ -94,6 +94,9 @@ export interface RunPlanDraft {
   nonRaceGoal?: NonRaceGoal | null;
   /** Lift4 (10): the leg trim while the runs build. Additive in v1. */
   raceLegTrim?: boolean;
+  /** Run9 STATUS 2026-11-01: a race entered or run on your own; null
+   *  while unanswered. Additive in v1. */
+  raceEntry?: "race" | "own" | null;
 }
 
 interface Envelope extends RunPlanDraft {
@@ -208,5 +211,8 @@ export function loadRunPlanDraft(uid: string): RunPlanDraft | null {
       ? {}
       : { runTimeLimits: e.runTimeLimits }),
     ...(e.raceLegTrim === undefined ? {} : { raceLegTrim: e.raceLegTrim }),
+    ...(e.raceEntry === "race" || e.raceEntry === "own" || e.raceEntry === null
+      ? { raceEntry: e.raceEntry }
+      : {}),
   };
 }
