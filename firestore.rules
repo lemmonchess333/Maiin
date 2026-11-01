@@ -552,10 +552,13 @@ service cloud.firestore {
         && shareDefaultsUnchangedOrValid()
         && notificationPreferencesUnchangedOrValid()
         && approveFollowersUnchangedOrValid();
-      // Freeze delete too: the deletion executor uses the Admin SDK (which
-      // bypasses rules), so a client-side self-delete during the freeze /
-      // tombstone window is never the executor and should be blocked.
-      allow delete: if isOwnerAndNotDeleting(uid);
+      // No client delete. Account deletion runs on the server with the
+      // Admin SDK (deleteMyAccount), and nothing in the app deletes this
+      // document. A delete followed by a fresh create would wipe the
+      // fields only the server writes (hasUsedTrial, subscriptionTrial,
+      // stripeCustomerId, activationJourneyVersion, showWeekOnBoard), and
+      // a trial is decided from hasUsedTrial.
+      allow delete: if false;
     }
 
     // User subcollections — meals, workouts, runs, weights, water, bodyweight

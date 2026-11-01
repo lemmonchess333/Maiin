@@ -3376,6 +3376,39 @@ suite("firestore.rules — users/{uid} create self-grant guard", () => {
     );
   });
 
+  it("an owner cannot delete their own users doc, so cannot recreate it bare", async () => {
+    // Delete-then-create was the one client path that wiped the fields only
+    // the server writes, a used trial among them.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", OWNER_UID), {
+        uid: OWNER_UID,
+        subscriptionTier: "free",
+        hasUsedTrial: true,
+        activationJourneyVersion: 2,
+        showWeekOnBoard: true,
+      });
+    });
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(deleteDoc(doc(ownerDb, "users", OWNER_UID)));
+    // Replacing the document wholesale drops the same fields, and is
+    // refused as an update.
+    await assertFails(
+      setDoc(doc(ownerDb, "users", OWNER_UID), {
+        uid: OWNER_UID,
+        subscriptionTier: "free",
+      })
+    );
+    let after: Record<string, unknown> | undefined;
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      after = (await getDoc(doc(ctx.firestore(), "users", OWNER_UID))).data();
+    });
+    expect(after).toMatchObject({
+      hasUsedTrial: true,
+      activationJourneyVersion: 2,
+      showWeekOnBoard: true,
+    });
+  });
+
   it("free user CANNOT self-grant via a future trialExpiresAt on create", async () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
