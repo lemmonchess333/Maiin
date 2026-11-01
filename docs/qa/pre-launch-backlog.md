@@ -2623,6 +2623,12 @@ test reaches is a real iPad, a real storefront and App Store Connect.
 
 Affects: `functions/applePurchase.js`, new `appleSubscriptions/{originalTransactionId}` collection.
 
+STATUS 2026-11-01: `applePurchase.js`, `appleIAP.js` and the three
+functions they served (`restoreApplePurchases`, `verifyApplePurchase`,
+`appleIAPWebhook`) are deleted; purchases go through RevenueCat. The rows
+below are history. The checks that replace them are under "Security review
+fixes" at the end of this file.
+
 - [x] _(No longer applies, 2026-10-17: #2434 (0130e705, 2026-09-19) removed the client's direct StoreKit path (purchaseWithAppleIAP, cordova-plugin-purchase), and iOS purchases now go through RevenueCat. Nothing in src/ calls verifyApplePurchase or restoreApplePurchases, so a real purchase no longer creates appleSubscriptions docs. The server binding is still pinned by functions/**tests**/applePurchase.test.js 'claims the lookup doc on a brand-new transaction id'. ADR-0006 retires these functions at slice 8.)_ First real iOS purchase post-deploy — confirm a new `appleSubscriptions/<originalTransactionId>` doc is created with `uid` matching the purchaser, plus `productId` and `expiresAt`.
 - [x] _(No longer applies, 2026-10-17: Restore now calls RevenueCat (purchaseProvider.ts restorePurchases → rcRestore), not restoreApplePurchases (removed from the client in #2434 / 0130e705). Same-uid renewal on the legacy callable is pinned by applePurchase.test.js 'accepts when the transaction id is already bound to the SAME uid (legit renewal)'.)_ Restore-purchase flow on the same Apple ID under the same Tropos account — confirm the lookup doc updates in-place (timestamp changes, uid stays).
 - [x] _(Proven 2026-10-17: functions/**tests**/applePurchase.test.js 'rejects when the transaction id is already bound to a different uid' asserts the call rejects with /different account/ (line 656). The callable is still deployed (restoreApplePurchases updated in run 39063239262) but has no client caller.)_ Negative test: attempt to call `restoreApplePurchases` from a second test account using the first user's `originalTransactionId` (intercept via debug). Expect the function to throw `"different account"` and no user-doc write to land.
@@ -3219,3 +3225,59 @@ with the fake; only the phone shows the SDK replaying the write.
 - [ ] **Connecting Apple Health offline shows steps.** With Airplane Mode
       on, connect Apple Health from Settings → Health. Passing: today's
       steps appear without waiting for a connection.
+
+## Security review fixes (2026-11-01)
+
+Server and rules half of the November security review: the legacy Apple
+purchase functions deleted, the password-reset and verification emails
+capped and made to answer the same whether or not an account exists, AI
+scans counted by the UTC day, callable ids held to one document, Circle
+names and leaderboard names taken from the public profile, one props or
+like notification per giver, a restricted account's email kept only once
+verified, shared photo links held to screened uploads and real avatars,
+the feed word filter run over everything a card shows, post sizes bounded,
+and the `users/{uid}` document no longer deletable from the app. Unit,
+rules and emulator tests cover each; these need the consoles or a phone.
+
+- [ ] **The Apple functions are gone.** After the first Deploy production
+      run carrying this work, its "Deploy functions" log shows
+      `restoreApplePurchases`, `verifyApplePurchase` and `appleIAPWebhook`
+      each with "Successful delete operation".
+- [ ] **App Store notifications go to RevenueCat.** App Store Connect →
+      the app → App Information → App Store Server Notifications: the
+      Production and Sandbox URLs are both RevenueCat's (Version 2), not a
+      `cloudfunctions.net` address.
+- [ ] **The Apple secrets are deleted.** Once the functions are gone,
+      delete `APPLE_KEY_ID`, `APPLE_ISSUER_ID` and `APPLE_PRIVATE_KEY` in
+      Secret Manager (`npm run secrets:check` in `functions/` lists none of
+      them). Keep the In-App Purchase key itself in App Store Connect if
+      RevenueCat uses it. The `ALLOW_SANDBOX_IAP` repository variable, if
+      set, can go too: nothing reads it.
+- [ ] **Stored photo links still pass.** Before or soon after the rules
+      ship, look through `users/*/public/profile` `photoURL` values in the
+      Firestore console for any that are not a `profile-photos%2F` or
+      `space-photos%2F` download link, a Google `lh3…/a/` or `/a-/`
+      avatar, or an Apple CDN link. Such a document still renders, but a
+      new post, join or membership that copies its photo is refused.
+- [ ] **Photos and avatars on a phone and the web.** A fresh Google
+      sign-up writes its profile with the Google avatar; a profile photo
+      upload saves; a Space post with a photo posts; a comment shows the
+      commenter's profile photo; a Circle's member list shows each public
+      name.
+- [ ] **Challenge joins on an installed iOS build.** The rules now want a
+      join's name to match the public profile. Ship a TestFlight build
+      carrying this work soon after the deploy, then join a challenge on it:
+      the board shows the public name. An older build can be refused a
+      join for an account whose private and public names differ.
+- [ ] **Props on and off leaves one row.** With two accounts on TestFlight,
+      give props to the other's post, take it back and give it again a few
+      times. Passing: their tray shows one row, which does not come back
+      unread.
+- [ ] **A size flag reads well in moderation.** A feed post the server
+      makes private for its size carries `flaggedField: "size"`. If one
+      reaches `/admin/moderation`, it should read sensibly there.
+- [ ] **Resend's daily allowance fits.** The project sends at most 500
+      reset emails a day. Check the Resend plan's daily limit is above that
+      plus verification and alert mail, and consider a log alert on
+      `sendPasswordResetLinkCallable` lines at error level and its
+      `dailyCap` warning.

@@ -163,14 +163,18 @@ export default function Login() {
     } catch (err: unknown) {
       // Swallow user-not-found so the flow can't enumerate registered
       // emails; any OTHER failure (network, bad email format) is worth
-      // surfacing.
+      // surfacing. The server's own "Too many" line is shown as written:
+      // it says whether to wait minutes or until tomorrow, and a generic
+      // "Try again" would send someone at the day's limit round in circles.
       const message = err instanceof Error ? err.message : "";
       if (
         !message.includes("user-not-found") &&
         !message.includes("invalid-credential")
       ) {
         setError(
-          friendlyAuthError(message, "Couldn't send the link. Try again.")
+          message.startsWith("Too many")
+            ? message
+            : friendlyAuthError(message, "Couldn't send the link. Try again.")
         );
         setLoadingAction(null);
         return;

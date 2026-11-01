@@ -43,13 +43,11 @@ written`, `applyPartnerActivity`, `hybrid_score`, `_recoveryEndDateForRace`).
 
 ### Billing integrity (needs real payment rails)
 
-- [ ] **Apple subscription uniqueness** — first real iOS purchase creates
-      `appleSubscriptions/<originalTransactionId>` with the purchaser's `uid` +
-      `productId` + `expiresAt`. Restore on the same Apple ID under the same
-      Tropos account updates that doc in-place (timestamp changes, uid stays).
-      **Negative test:** call `restoreApplePurchases` from a _second_ test
-      account using the first user's `originalTransactionId` (intercept via
-      debug) → must throw `"different account"` with no user-doc write.
+- [x] _(No longer applies, 2026-11-01: `verifyApplePurchase`,
+      `restoreApplePurchases` and `appleIAPWebhook` are deleted, and App Store
+      purchases and restores go through RevenueCat (ADR-0006, STATUS
+      2026-11-01). Nothing writes `appleSubscriptions` now.)_ **Apple
+      subscription uniqueness**.
 - [ ] **Stripe webhook dedup** — on the next real webhook delivery, confirm
       `stripeEvents/<event.id>` has BOTH `claimedAt` (new) and `processedAt`.
       Force a handler crash (stripe-cli test event) → the doc is DELETED so
@@ -63,8 +61,8 @@ written`, `applyPartnerActivity`, `hybrid_score`, `_recoveryEndDateForRace`).
       per-callable `enforceAppCheck: true`, **low-risk tier first**
       (`sendTestPush`, `backfillMyActivityCategories` — the two tier-1
       callables the client actually calls) → **destructive last** (`deleteMyAccount`,
-      `verifyApplePurchase`, `restoreApplePurchases`). **Never** the webhooks
-      (`stripeWebhook`, `appleIAPWebhook`). Don't bulk-flip.
+      `syncRevenueCatEntitlement`). **Never** the webhooks
+      (`stripeWebhook`, `revenueCatWebhook`). Don't bulk-flip.
 - [ ] **Public-profile uid binding** (firestore.rules) — from the client SDK,
       `setDoc(users/<me>/public/profile, { uid: '<other-uid>', … }, {merge})`
       must be **rejected** `permission-denied`. The same write without `uid`

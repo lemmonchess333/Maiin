@@ -410,6 +410,7 @@ async function resyncAuthorIdentity({
 module.exports = {
   resyncAuthorIdentity,
   wantedIdentity,
+  carriedName,
   RECENT_DAYS,
   ACTIVITY_CAP,
   SCAN_CAP,

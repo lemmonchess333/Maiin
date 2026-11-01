@@ -95,17 +95,11 @@ firebase functions:config:set vertex.location=us-central1
 firebase functions:config:set vertex.project_id=$PROJECT_ID
 ```
 
-### Apple IAP (Cloud Functions only)
+### In-app purchases
 
-```
-firebase functions:config:set apple.key_id=$APPLE_KEY_ID
-firebase functions:config:set apple.issuer_id=$APPLE_ISSUER_ID
-firebase functions:config:set apple.private_key="$APPLE_PRIVATE_KEY"
-```
-
-The `BUNDLE_ID` constant in `functions/appleIAP.js:7` must match the
-`appId` in `capacitor.config.ts` and the bundle ID in Apple's App
-Store Connect. Drift breaks signature verification silently.
+App Store purchases and restores go through RevenueCat (ADR-0006); the
+functions hold no App Store key. Setup, including the RevenueCat secrets,
+is in `docs/iap/revenuecat-setup.md`.
 
 ### Stripe (Cloud Functions only — server-side keys)
 
@@ -300,15 +294,16 @@ Action:
 
 1. Look up the user's uid in Firestore → `users/{uid}`.
 2. Inspect `subscriptionTier`, `subscriptionUpdatedAt`,
-   `stripeSubscriptionId` / `appleOriginalTransactionId`.
+   `stripeSubscriptionId` / `subscriptionSource`.
 3. Cross-reference against the relevant webhook history:
    - Stripe → `stripeEvents/{event.id}` (PR D dedup records).
-   - Apple → `appleNotifications/{notificationUUID}` (PR D).
+   - RevenueCat (App Store) → `revenueCatEvents/{event.id}`, and the
+     customer's history in the RevenueCat dashboard.
 4. If a stale `subscription.deleted` event downgraded an active
    user, manually flip `subscriptionTier: "pro"` on the user doc
    and write `subscriptionUpdatedAt: <now-as-unix-seconds>` so
    the next legitimate event isn't rejected as stale.
-5. Open a support ticket with Stripe / Apple if the event ordering
+5. Open a support ticket with Stripe / RevenueCat if the event ordering
    itself looks wrong.
 
 ### Symptom: notification permission won't grant on iOS

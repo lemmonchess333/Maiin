@@ -28,7 +28,7 @@ const {
   assertCanInteractWithActivity,
 } = require("./activityAccess");
 const { refusedAddError } = require("./restriction");
-const { publicPhotoUrl } = require("./publicPhotoUrl");
+const { publicPhotoUrl, profilePhotoUrl } = require("./publicPhotoUrl");
 const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
 const { MAX_COMMENT_LENGTH } = require("./commentLimit");
 
@@ -181,8 +181,11 @@ async function toggleKudos({
  *   - firestore, uid, activityId — as above
  *   - text:        comment body (1 to MAX_COMMENT_LENGTH chars, validated)
  *   - authorName:  denormalised display name on the comment doc
- *   - authorPhotoURL: optional avatar
  *   - increment, serverTimestamp — sentinel factories
+ *
+ * The avatar on the comment is the commenter's public profile photo, read
+ * in the transaction (profilePhotoUrl), never a URL the request names: the
+ * profile's photo is one the photo screen checked.
  *
  * Returns: { commentId } — the generated comment doc id.
  *
@@ -198,7 +201,6 @@ async function addComment({
   activityId,
   text,
   authorName,
-  authorPhotoURL,
   increment,
   serverTimestamp,
 }) {
@@ -241,7 +243,7 @@ async function addComment({
       text: trimmed,
       createdAt: serverTimestamp(),
     };
-    const photo = publicPhotoUrl(authorPhotoURL);
+    const photo = await profilePhotoUrl(txn, firestore, uid);
     if (photo) data.authorPhotoURL = photo;
     txn.set(commentRef, data);
     txn.update(activityRef, { commentCount: increment(1) });
