@@ -1,5 +1,23 @@
 # Road-Aware Route Planning (Run11 — Mapbox)
 
+> **Retired, 1 November 2026. The code this document describes has been
+> removed.** After the release hold below, the owner decided road routing
+> will not come back on Mapbox, and wants the Mapbox account closed. The
+> `planRunningRoute` callable, its `MAPBOX_DIRECTIONS_TOKEN` secret binding,
+> `functions/lib/routePlanning.js`, the client's `routePlanningApi.ts`, the
+> Align to roads and loop actions in `RoutePlannerSheet.tsx`, and the
+> `VITE_ROUTE_PLANNING_ENABLED` build flag are gone. The straight-line,
+> tap-to-draw planner (`src/lib/routePlanner.ts`) stays. Deploy production
+> runs `firebase deploy --only functions --force`, so the first release with
+> the removal deletes `planRunningRoute` from production; after that the
+> token can be revoked, the secret deleted
+> (`firebase functions:secrets:destroy MAPBOX_DIRECTIONS_TOKEN`) and the
+> account closed. Routes saved by earlier builds still exist in members'
+> saved routes, which is why the privacy policy keeps its earlier-builds
+> Mapbox disclosure and the launch gate keeps their audit as an owner step.
+> Nothing below applies any more: it is kept as the record of what was
+> built, and why it was held.
+
 **Release hold, 31 October 2026:** The published
 [Mapbox Product Terms](https://www.mapbox.com/legal/product-terms) dated
 20 October prohibit storing Navigation API results (§2.10.1), and default

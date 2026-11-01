@@ -104,7 +104,6 @@ const {
 // Packet 19 — server-owned FCM token ownership (claim/release + send leases).
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const challengeAnnouncements = require("./lib/challengeAnnouncements");
-const routePlanning = require("./lib/routePlanning");
 const { pushableBadgeIds } = require("./lib/badgeNudge");
 
 const appleIAP = require("./appleIAP");
@@ -311,11 +310,6 @@ const BILLING_HMAC_SECRET = defineSecret("BILLING_HMAC_SECRET");
 const BILLING_PREVIOUS_HMAC_SECRET = defineSecret(
   "BILLING_PREVIOUS_HMAC_SECRET"
 );
-// Run11 (Mapbox supersession 2026-07-17): the Directions token lives ONLY
-// here — never in a VITE_* var, Actions variable, browser bundle, or
-// native app. A key in the client can be extracted and cannot enforce
-// the Pro gate.
-const MAPBOX_DIRECTIONS_TOKEN = defineSecret("MAPBOX_DIRECTIONS_TOKEN");
 
 // Scheduled (pubsub cron) sweeps iterate EVERY active user via
 // sweepActiveUsers. The Cloud Functions v1 default timeout is
@@ -8724,140 +8718,4 @@ exports.removeFollower = functions
     }
     const removed = await followRemoval.removeFollower(db, uid, followerUid);
     return { removed };
-  });
-
-// ══════════════════════════════════════════════
-// ROAD-AWARE ROUTE PLANNING (Run11 — Mapbox supersession 2026-07-17)
-// ══════════════════════════════════════════════
-
-/**
- * planRunningRoute — Pro-gated proxy to the Mapbox Directions walking
- * network (lib/routePlanning.js owns the pure logic). Two actions:
- *
- *   { action: "align", waypoints: [{lat,lon} x2..12] }
- *   { action: "loop",  start: {lat,lon}, targetKm: 3|5|10|15 }
- *
- * Returns { points: [{lat,lon}], distanceM, durationS } only. Request
- * coordinates are never persisted or logged (privacy contract in the
- * rollout doc) — failures log action + error code, nothing else. The
- * Pro gate is the Run11 lock's enforceable half: the token lives only
- * in Secret Manager, so entitlement is checked where the key is.
- */
-exports.planRunningRoute = functions
-  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [MAPBOX_DIRECTIONS_TOKEN] })
-  .https.onCall(async (data, context) => {
-    // The published Mapbox Product Terms (2026-10-20, §§1.9 and 2.10.1)
-    // prohibit storing Directions results. Our client saves the returned
-    // geometry as a planned route. Keep the callable closed even to older
-    // client builds until a replacement router or explicit licence is in
-    // place; hiding the buttons in new bundles is not a server boundary.
-    // This source-level hold also covers direct calls from older app builds.
-    // Re-enable only in a reviewed change with a licensed routing provider.
-    const roadRoutingReleased = false;
-    if (!roadRoutingReleased) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Road routing is unavailable."
-      );
-    }
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
-    }
-    const uid = context.auth.uid;
-    const firestore = admin.firestore();
-    await accountDeletionLocks.assertCallableActorNotDeleting(firestore, uid);
-
-    const userSnap = await firestore.doc(`users/${uid}`).get();
-    const tier = _computeEffectiveTier(
-      userSnap.exists ? userSnap.data() : null
-    );
-    if (tier !== "pro") {
-      throw new functions.https.HttpsError("permission-denied", "pro-required");
-    }
-
-    const action = data && data.action;
-    const isAlign = action === "align";
-    const isLoop = action === "loop";
-    if (!isAlign && !isLoop) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Unknown action."
-      );
-    }
-
-    // Per-action rate limits from the rollout doc: 15 manual alignments /
-    // 10 min, 4 loop generations / 10 min (each loop ≤4 provider calls).
-    const limited = await isRateLimited(
-      uid,
-      isAlign ? "planRouteAlign" : "planRouteLoop",
-      isAlign ? 15 : 4,
-      600_000
-    );
-    if (limited) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Too many route requests. Try again in a few minutes."
-      );
-    }
-
-    const token = process.env.MAPBOX_DIRECTIONS_TOKEN;
-    if (!token) {
-      // Bound secret missing at runtime — misconfiguration, not user error.
-      functions.logger.error("routePlanning.failed", {
-        action,
-        code: "token-missing",
-      });
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Route planning is not configured."
-      );
-    }
-
-    try {
-      if (isAlign) {
-        const waypoints = routePlanning.validateAlignWaypoints(
-          data && data.waypoints
-        );
-        return await routePlanning.alignToRoads({
-          fetchImpl: fetch,
-          token,
-          waypoints,
-        });
-      }
-      const loopRequest = routePlanning.validateLoopRequest(data);
-      return await routePlanning.generateLoop({
-        fetchImpl: fetch,
-        token,
-        start: loopRequest.start,
-        targetKm: loopRequest.targetKm,
-      });
-    } catch (error) {
-      if (error instanceof routePlanning.RoutePlanningError) {
-        // No coordinates in logs — action + bounded code + numeric HTTP
-        // status only. The status is what distinguishes a dead/quota'd
-        // token (401/403/429) from a genuinely unroutable request.
-        functions.logger.warn("routePlanning.failed", {
-          action,
-          code: error.code,
-          status: typeof error.status === "number" ? error.status : null,
-        });
-        if (error.code === "invalid-request") {
-          throw new functions.https.HttpsError(
-            "invalid-argument",
-            "Invalid route request."
-          );
-        }
-        if (error.code === "no-route") {
-          throw new functions.https.HttpsError(
-            "not-found",
-            "No route found for those points."
-          );
-        }
-        throw new functions.https.HttpsError(
-          "unavailable",
-          "Route planning is temporarily unavailable."
-        );
-      }
-      throw error;
-    }
   });

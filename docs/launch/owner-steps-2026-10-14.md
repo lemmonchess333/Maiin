@@ -196,12 +196,16 @@ These steps are what's left.
    steps.
 3. **Budget alert**: Google Cloud console → Billing → Budgets & alerts →
    create a budget (e.g. £50/month) that emails you.
-4. **Mapbox terms** (updated 31 October): the release now disables
-   road-following planning in the client and server because the published
-   terms prohibit storing Navigation API results and no separate agreement
-   permitting it has been confirmed. Point-to-point planning still works.
-   Keep road routing off until an explicit agreement or a compatible provider
-   is in place, and audit plans saved by older builds.
+4. **Mapbox** (updated 1 November): road routing is removed, and the
+   Mapbox account can be closed. On 31 October the release disabled
+   road-following planning because the published terms prohibit storing
+   Navigation API results; on 1 November you decided it will not come back
+   on Mapbox, and the callable, its secret binding, the client road actions
+   and the build flag were deleted. Point-to-point planning still works.
+   Once a Deploy production run with that change has finished (it deletes
+   `planRunningRoute` from production), revoke the Mapbox token, delete the
+   secret (`firebase functions:secrets:destroy MAPBOX_DIRECTIONS_TOKEN`) and
+   close the account. Still to do: audit plans saved by older builds.
 5. **App Store Connect listing**: paste the text from
    `docs/app-store/listing.md`, including:
    - Support URL `https://troposfit.com/support` and the Privacy/Terms links

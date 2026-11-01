@@ -27,7 +27,7 @@ export default function PrivacyPolicy() {
             Privacy Policy
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Last updated: October 2026
+            Last updated: November 2026
           </p>
         </div>
 
@@ -523,15 +523,15 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Route Planning (Mapbox, earlier builds):
                 </strong>{" "}
-                Road-aware planning is currently paused. In earlier builds, the map points
-                you tapped (or, for a generated loop, your chosen start point plus
-                a handful of nearby points we compute from it and your chosen
-                distance) were sent from our server to Mapbox&apos;s Directions
-                service to calculate a walking route. We sent only those
-                coordinates — never your name, account details, saved routes, or
-                run history — and did not separately log the request coordinates.
-                When you chose Save &amp; follow, the returned route geometry was
-                saved privately to your account.
+                Road-aware planning is no longer offered. In earlier builds, the
+                map points you tapped (or, for a generated loop, your chosen
+                start point plus a handful of nearby points we compute from it
+                and your chosen distance) were sent from our server to
+                Mapbox&apos;s Directions service to calculate a walking route.
+                We sent only those coordinates — never your name, account
+                details, saved routes, or run history — and did not separately
+                log the request coordinates. When you chose Save &amp; follow,
+                the returned route geometry was saved privately to your account.
               </li>
               <li>
                 <strong className="text-foreground">GitHub:</strong> the

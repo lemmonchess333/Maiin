@@ -71,10 +71,6 @@ jobs:
           # FCM Web push public VAPID key (#963). Public by design (ships in the
           # client bundle); kept as a secret only to match the other VITE_ vars.
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
-          # Mapbox Directions results are saved as planned routes, which the
-          # published 2026-10-20 terms prohibit without separate permission.
-          # Keep road actions hidden until the provider/licence is resolved.
-          VITE_ROUTE_PLANNING_ENABLED: "false"
           # Admin allowlist for /admin/moderation. Absent from every deploy
           # until now, so the queue 403'd for everyone including the owner.
           # Public by design (client-side route gate); listPendingReports

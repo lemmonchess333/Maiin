@@ -47,20 +47,6 @@ function runs(step: string, outcome: string, status: string): boolean {
   );
 }
 
-describe("road routing stays disabled in every production build", () => {
-  it.each([
-    ["deploy-hosting.yml", "build:hosting"],
-    ["deploy.yml", "build"],
-    ["deploy-ios.yml", "build:ios"],
-  ])("%s supplies the flag to its actual %s step", (workflow, script) => {
-    const build = steps(workflow).filter((step) =>
-      new RegExp(`(?:^|\\n)\\s*run: npm run ${script}$`, "m").test(step)
-    );
-    expect(build).toHaveLength(1);
-    expect(build[0]).toMatch(/^ {10}VITE_ROUTE_PLANNING_ENABLED: "false"$/m);
-  });
-});
-
 describe("screenshot baselines only come from complete successful runs", () => {
   const workflow = "app-screenshots.yml";
 

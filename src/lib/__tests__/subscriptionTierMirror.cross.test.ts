@@ -7,9 +7,9 @@
  *   server  `computeEffectiveTier`     functions/helpers.js
  *
  * The server copy is the one that spends money. It gates the AI-scan quota
- * (`aiScanQuota.js` → Vertex), `planRunningRoute` (Mapbox Directions), and —
- * via `calorieTargetResolution` — which calorie target the performance engine
- * scores adherence against. The client copy decides what the user is OFFERED.
+ * (`aiScanQuota.js` → Vertex) and, via `calorieTargetResolution`, which
+ * calorie target the performance engine scores adherence against. The
+ * client copy decides what the user is OFFERED.
  * Drift in either direction is bad in a different way: the UI promising a
  * scan the server refuses, or hiding one it would have allowed, or a tier
  * disagreement silently rescoring adherence against the wrong target.

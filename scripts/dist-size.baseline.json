@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6729756,
+  "total": 6728374,
   "coldStart": ["firebase-auth", "vendor"],
   "chunks": {
     "AccordionSection": 1612,
@@ -271,13 +271,13 @@
     "rotate-ccw": 201,
     "route": 255,
     "routePace": 1037,
-    "RoutePlannerSheet": 7395,
+    "RoutePlannerSheet": 6050,
     "routeQuality": 4073,
     "RouteScene": 1025,
     "routeSegments": 480,
     "Routine": 6291,
     "routineSession": 917,
-    "Run": 130722,
+    "Run": 130685,
     "runCompletion": 4669,
     "runConfigDefaults": 2888,
     "RunDetail": 12984,

@@ -271,7 +271,7 @@ const PINNED: Record<string, string> = {
   "functions/lib/mealDocs.js":
     "src/lib/__tests__/mealActiveSingleSource.test.ts",
   // Effective subscription tier. The SERVER copy is the one that spends
-  // money (Vertex scan quota, Mapbox routing, adherence target); the client
+  // money (Vertex scan quota, adherence target); the client
   // copy decides what is offered. Invisible to this gate until 2026-08-22 —
   // its header says "mirrors client getSubscriptionInfo" and the detector
   // wanted the definite article. See PHRASINGS below.

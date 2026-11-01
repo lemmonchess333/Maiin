@@ -85,14 +85,6 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
-  // Run11 (Mapbox supersession 2026-07-17) — Pro-gated Directions proxy.
-  // The token binding is the deploy gate: provision MAPBOX_DIRECTIONS_TOKEN
-  // before merging or every functions deploy fails (the #1636 class).
-  planRunningRoute: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: ["MAPBOX_DIRECTIONS_TOKEN"],
-  },
   // The pre-run weather strip, from MET Norway (currentWeather.js). MET needs no
   // key, so nothing to provision: its terms ask for a User-Agent instead.
   getCurrentWeather: {

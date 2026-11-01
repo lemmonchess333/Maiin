@@ -1,18 +1,26 @@
 /**
- * RoutePlannerSheet exit-affordance contract.
+ * RoutePlannerSheet — the exit affordance and the straight-line planner.
  *
  * Regression guard for "no way off this page": the planner opens on an empty
  * state (0 waypoints) and previously exposed NO visible dismiss control — the
  * Dialog's optional X wasn't enabled, and the only other in-panel buttons
  * (undo/clear) were shown-but-disabled, reading as broken navigation. These
  * pins the empty state: a working Close, and undo/clear absent until there's
- * a point to act on.
+ * a point to act on. The planner draws straight segments only (no road
+ * routing), so the tapped points are exactly what it saves and follows.
  *
- * maplibre-gl is mocked to a no-op map — the planner instantiates a real
- * GL map on open, which jsdom can't provide.
+ * maplibre-gl is mocked to a no-op map that keeps its click handler — the
+ * planner instantiates a real GL map on open, which jsdom can't provide.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import RoutePlannerSheet from "../RoutePlannerSheet";
 
 /* The planner shows its route length, so it reads the display unit — and
@@ -23,19 +31,7 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
 
-// The road-aware layer (Run11/Mapbox) reads Pro entitlement via
-// useSubscription → useAuth, which needs AuthProvider. Mock it like the
-// other useSubscription consumers (HeroDrillDownSheet.test.tsx) — these
-// exit-affordance pins are entitlement-independent, and the road
-// actions stay hidden anyway (VITE_ROUTE_PLANNING_ENABLED is unset).
-vi.mock("@/lib/subscription", () => ({
-  useSubscription: () => ({
-    tier: "free",
-    isInTrial: false,
-    trialDaysLeft: 0,
-    isPro: false,
-  }),
-}));
+vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 /** Every `new maplibregl.Map(...)` option bag, so the OPENING VIEW can be
  *  asserted — which is the thing that was broken and unpinned. */
@@ -52,6 +48,11 @@ const mapOpts = vi.hoisted(
 const controlCorners = vi.hoisted(() => [] as string[]);
 
 const mapFailure = vi.hoisted(() => ({ enabled: false }));
+/** The map's click handler, so a test can drop points as a tap would. */
+const mapClick = vi.hoisted(() => ({
+  handler: null as
+    null | ((e: { lngLat: { lat: number; lng: number } }) => void),
+}));
 
 vi.mock("maplibre-gl/dist/maplibre-gl.css", () => ({}));
 vi.mock("maplibre-gl", () => {
@@ -60,7 +61,9 @@ vi.mock("maplibre-gl", () => {
       if (mapFailure.enabled) throw new Error("WebGL2 unavailable");
       mapOpts.push(opts);
     }
-    on() {}
+    on(event: string, handler: never) {
+      if (event === "click") mapClick.handler = handler;
+    }
     once() {}
     off() {}
     addControl(_control: unknown, corner: string) {
@@ -89,23 +92,30 @@ afterEach(() => {
   mapOpts.length = 0;
   controlCorners.length = 0;
   mapFailure.enabled = false;
+  mapClick.handler = null;
 });
 
 function setup(
   overrides: Partial<React.ComponentProps<typeof RoutePlannerSheet>> = {}
 ) {
   const onClose = vi.fn();
+  const onSave = vi.fn().mockResolvedValue(true);
+  const onFollow = vi.fn();
   render(
     <RoutePlannerSheet
       open
       onClose={onClose}
       initialCenter={{ lat: 51.5, lon: -0.12 }}
-      onSave={vi.fn().mockResolvedValue(true)}
-      onFollow={vi.fn()}
+      onSave={onSave}
+      onFollow={onFollow}
       {...overrides}
     />
   );
-  return { onClose };
+  return { onClose, onSave, onFollow };
+}
+
+function tap(lat: number, lon: number) {
+  act(() => mapClick.handler?.({ lngLat: { lat, lng: lon } }));
 }
 
 describe("RoutePlannerSheet — exit affordance", () => {
@@ -129,6 +139,43 @@ describe("RoutePlannerSheet — exit affordance", () => {
     expect(
       screen.getByRole("button", { name: /Save & follow/ })
     ).toBeDisabled();
+  });
+});
+
+describe("RoutePlannerSheet — the straight-line planner", () => {
+  it("draws, undoes, closes the loop and saves the tapped points", async () => {
+    const { onSave, onFollow } = setup();
+    tap(51.5, -0.12);
+    tap(51.509, -0.12);
+    tap(51.509, -0.135);
+    tap(51.52, -0.135);
+    fireEvent.click(screen.getByRole("button", { name: "Undo last point" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close the loop" }));
+    expect(
+      screen.getByText("Point-to-point distance — segments don't follow roads.")
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Save & follow/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(onFollow).toHaveBeenCalledOnce());
+
+    const [, points] = onSave.mock.calls[0];
+    expect(
+      points.map((p: { lat: number; lon: number }) => [p.lat, p.lon])
+    ).toEqual([
+      [51.5, -0.12],
+      [51.509, -0.12],
+      [51.509, -0.135],
+      [51.5, -0.12],
+    ]);
+    expect(onFollow).toHaveBeenCalledWith(points);
+  });
+
+  it("offers no road routing", () => {
+    setup();
+    tap(51.5, -0.12);
+    tap(51.509, -0.12);
+    expect(screen.queryByRole("button", { name: /roads|loop$/i })).toBeNull();
   });
 });
 
