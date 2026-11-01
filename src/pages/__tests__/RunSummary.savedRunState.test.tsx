@@ -47,7 +47,15 @@ const h = vi.hoisted(() => ({
   skipRunDay: vi.fn(),
   track: vi.fn(),
   mapProps: [] as Record<string, unknown>[],
-  runPlan: undefined as { currentWeek: number; totalWeeks: number } | undefined,
+  runPlan: undefined as
+    | {
+        currentWeek: number;
+        totalWeeks: number;
+        raceGoal?: { distance: string; targetDate: string };
+        phase?: "recovery";
+        recoveryEndDate?: string;
+      }
+    | undefined,
   failedOptional: null as "kudos" | "week" | null,
   optionalAttempts: [] as string[],
 }));
@@ -387,7 +395,11 @@ describe("RunSummary — the week's runs are counted once", () => {
 
   it("names a race plan's week", async () => {
     (h.auth.profile as Record<string, unknown>).runMode = "race_prep";
-    h.runPlan = { currentWeek: 2, totalWeeks: 12 };
+    h.runPlan = {
+      currentWeek: 2,
+      totalWeeks: 12,
+      raceGoal: { distance: "10k", targetDate: "2099-04-18" },
+    };
     week.pulse = {
       lifts: null,
       runs: { count: 2, km: 9.5, planned: 3 },
@@ -396,6 +408,41 @@ describe("RunSummary — the week's runs are counted once", () => {
     renderSummary();
     expect(await screen.findByText("Week 3 of 12")).toBeInTheDocument();
     expect(screen.queryByText("runs this week")).toBeNull();
+  });
+
+  /* Owner, 1 Nov 2026: "Week 15 of 15" under a run two weeks after the
+     marathon. The plan's counter stays on race week once the race is
+     past, so read alone it never moves on. */
+  const daysFromToday = (days: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return localDateString(d);
+  };
+
+  it("counts no plan week once race day has passed", async () => {
+    (h.auth.profile as Record<string, unknown>).runMode = "race_prep";
+    h.runPlan = {
+      currentWeek: 14,
+      totalWeeks: 15,
+      raceGoal: { distance: "marathon", targetDate: daysFromToday(-15) },
+    };
+    renderSummary();
+    expect(await screen.findByText("Run saved")).toBeInTheDocument();
+    expect(screen.queryByText(/Week \d+ of \d+/)).toBeNull();
+  });
+
+  it("counts the recovery's week while the runner recovers", async () => {
+    (h.auth.profile as Record<string, unknown>).runMode = "race_prep";
+    h.runPlan = {
+      currentWeek: 14,
+      totalWeeks: 15,
+      raceGoal: { distance: "marathon", targetDate: daysFromToday(-10) },
+      phase: "recovery",
+      recoveryEndDate: daysFromToday(18),
+    };
+    renderSummary();
+    expect(await screen.findByText("Recovery week 2 of 4")).toBeInTheDocument();
+    expect(screen.queryByText("Week 15 of 15")).toBeNull();
   });
 });
 
