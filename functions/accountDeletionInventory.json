@@ -1125,7 +1125,7 @@
       "strategy": "deleteQueryInBatches",
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
-      "reason": "The Apple webhook's record of each notification it applied (functions/appleIAP.js), keyed by notification id so a redelivery is skipped, carrying the uid and the original transaction id. Kept for good and reached by no deletion until 2026-10-20, and the branch for an account being erased wrote its uid after the erasure; it writes none now. Records without a uid (no account matched, or the account was being erased) name only Apple's transaction id and stay as dedup.",
+      "reason": "The Apple webhook's record of each notification it applied, keyed by notification id so a redelivery is skipped, carrying the uid and the original transaction id. Kept for good and reached by no deletion until 2026-10-20, and the branch for an account being erased wrote its uid after the erasure; it writes none now. Records without a uid (no account matched, or the account was being erased) name only Apple's transaction id and stay as dedup. The webhook was removed on 2026-11-01 (RevenueCat owns purchases, ADR-0006): nothing writes this collection now. A record carrying a uid still goes when that account is deleted.",
       "testCoverageKey": "smoke::topLevelQuery::appleNotifications",
       "testCoverageStatus": "implemented",
       "implementation": "functions/lib/accountDeletionSocial.js"

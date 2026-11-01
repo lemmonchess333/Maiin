@@ -11,7 +11,7 @@
  * This guard scans `functions/index.js` for every INLINE function definition
  * (`exports.X = functions … .https/.firestore/.pubsub …`) and fails if it
  * doesn't also carry a `.runWith(`. A new uncapped function fails CI before it
- * can ship. (Re-exports of other modules — `exports.foo = appleIAP.foo` — carry
+ * can ship. (Re-exports of other modules — `exports.foo = revenueCat.foo` — carry
  * their caps in their own module and are out of scope here; the RHS isn't the
  * `functions` builder, so the scan skips them by construction.)
  */

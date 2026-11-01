@@ -59,8 +59,9 @@ the **Firestore doc** to spot-check. Run a query in
 
 ### Apple subscription uniqueness — #822 (`restoreApplePurchases`)
 
-- **Filter:** text `applySubscriptionToUser`
-- **Expect:** first purchase → `appleSubscriptions/<originalTransactionId>` doc created with `uid`, `productId`, `expiresAt`. Restore on same Apple ID + same Tropos account → that doc updates in place (uid stays). **Negative test:** a different account replaying the first user's `originalTransactionId` → throws `"different account"` (logged `applySubscriptionToUser.ownership_conflict`) and **no** user-doc write lands.
+No longer applies (2026-11-01): the Apple purchase functions are deleted, and
+App Store purchases and restores go through RevenueCat (ADR-0006, STATUS
+2026-11-01).
 
 ### Stripe webhook dedup — #822 (`stripeWebhook`)
 
@@ -71,4 +72,4 @@ the **Firestore doc** to spot-check. Run a query in
 
 ## App Check enforcement rollout (operator monitoring, not a firing)
 
-- Firebase Console → App Check → APIs → Cloud Functions: target **≥99% verified for ≥7 days** before flipping `enforceAppCheck` per-callable. If low, query `jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see which callables/uids lack tokens (usual culprit: native iOS until the Capacitor App Check plugin lands). Flip low-risk callables first — `sendTestPush`, `backfillMyActivityCategories`, the two the client actually calls (a callable with no call sites yields no telemetry, so it can't act as the canary); keep `deleteMyAccount` / `verifyApplePurchase` for last.
+- Firebase Console → App Check → APIs → Cloud Functions: target **≥99% verified for ≥7 days** before flipping `enforceAppCheck` per-callable. If low, query `jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see which callables/uids lack tokens (usual culprit: native iOS until the Capacitor App Check plugin lands). Flip low-risk callables first — `sendTestPush`, `backfillMyActivityCategories`, the two the client actually calls (a callable with no call sites yields no telemetry, so it can't act as the canary); keep `deleteMyAccount` / `syncRevenueCatEntitlement` for last.

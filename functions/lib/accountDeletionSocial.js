@@ -223,9 +223,9 @@ async function cleanupSocial({ firestore, uid, now, checkpoint }) {
   // billing tombstones keep what refunds need.
   await scan("checkout_audit", firestore.collection("audit_checkout_sessions")
     .where("uid", "==", uid), (doc) => doc.ref.delete());
-  // The Apple webhook's record of each notification it applied to this
-  // account (appleIAP.js), kept so a redelivery is skipped. Without it a
-  // late redelivery finds no binding and is recorded without a uid.
+  // Records of App Store notifications applied to this account, from
+  // before purchases went through RevenueCat. Nothing writes them now,
+  // but the ones that exist carry the uid.
   await scan("apple_notifications", firestore.collection("appleNotifications")
     .where("uid", "==", uid), (doc) => doc.ref.delete());
   // A comment the profanity filter removed (onCommentCreated) kept its

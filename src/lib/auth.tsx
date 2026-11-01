@@ -239,7 +239,9 @@ export interface UserProfileSubscription {
   subscriptionTier: "free" | "pro";
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
-  /** Apple IAP — set on first IAP purchase by `functions/applePurchase.js`.
+  /** Apple IAP original transaction id. Nothing writes it now (App Store
+   *  purchases go through RevenueCat, ADR-0006); an older account may
+   *  still carry it, and the rules keep it server-only.
    *  Used by `AccountSection.tsx` to surface the pre-deletion Apple-cancel
    *  warning, since Apple has no admin-cancellation API for standard IAP
    *  subscriptions (Sub1 R1A pin b, P0b). */
@@ -475,11 +477,13 @@ export interface UserProfileRunning {
    *  completeOnboarding alongside the plan. */
   raceLegTrim?: boolean;
   runningBaseline?:
-    import("@/features/program/runningBaseline").RunningBaseline | null;
+    | import("@/features/program/runningBaseline").RunningBaseline
+    | null;
   nonRaceGoal?: import("@/lib/nonRaceGoal").NonRaceGoal | null;
   liftTimeBudgetMinutes?: number | null;
   runTimeLimits?:
-    import("@/features/program/runTimeLimits").RunTimeLimits | null;
+    | import("@/features/program/runTimeLimits").RunTimeLimits
+    | null;
   // Run9 3a-ii: `null` is the explicit "no race" value so a freeform switch /
   // recovery exit can CLEAR a prior race (a merge write of `undefined` is
   // stripped and would leave the old goal stranded). Readers gate on

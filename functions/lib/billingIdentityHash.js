@@ -25,9 +25,10 @@
  *     code path runs in production.
  *   - Missing secret = deploy-time misconfiguration. The helper throws
  *     a specific error with the provisioning command in the message.
- *   - The restore-purchase site catches the throw, logs structured
- *     warning, and returns the generic `restore-unavailable` error
- *     (fail-closed for users, visible to operator).
+ *   - Each caller catches the throw and logs a structured warning:
+ *     account deletion keeps the Apple binding rather than drop it
+ *     untombstoned, and lib/restrictedIdentities.js keeps or finds
+ *     nothing (visible to the operator).
  *
  * Rotation contract:
  *   - Per decision-log #11, rotation strategy is store secretVersion
@@ -52,11 +53,11 @@ const crypto = require("crypto");
  *
  * Source is process.env.BILLING_HMAC_SECRET, populated by the
  * firebase-functions/params `defineSecret("BILLING_HMAC_SECRET")`
- * binding on the callables that perform billing-tombstone lookups
- * (restoreApplePurchases). Pre-v7 this read functions.config().billing;
- * that runtime-config API was removed in firebase-functions v7. Reading
- * process.env keeps this module importable from unit tests without
- * booting firebase-functions.
+ * binding on the functions that hash billing or restricted identities
+ * (account deletion, onAuthUserCreated, liftRestriction). Pre-v7 this
+ * read functions.config().billing; that runtime-config API was removed
+ * in firebase-functions v7. Reading process.env keeps this module
+ * importable from unit tests without booting firebase-functions.
  */
 function getBillingHmacSecret() {
   return process.env.BILLING_HMAC_SECRET || null;

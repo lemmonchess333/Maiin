@@ -100,7 +100,8 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     field: "appleProductId",
     sanitized: false,
     serverGuarded: true,
-    undeclared: "Apple IAP product id, written by verifyApplePurchase",
+    undeclared:
+      "Apple IAP product id; nothing writes it now, an older account may carry it",
   },
   // Polish2 call 4: Settings → Privacy → Approve followers. Value-gated in
   // firestore.rules (`approveFollowersValid`), which also reads it to

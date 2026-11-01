@@ -106,11 +106,6 @@ const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const challengeAnnouncements = require("./lib/challengeAnnouncements");
 const { pushableBadgeIds } = require("./lib/badgeNudge");
 
-const appleIAP = require("./appleIAP");
-exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
-exports.appleIAPWebhook = appleIAP.appleIAPWebhook;
-exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
-
 // RevenueCat (ADR-0006): the entitlement source for in-app purchases.
 const revenueCat = require("./revenueCat");
 exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
@@ -296,17 +291,16 @@ const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
 // needs no new accessor grant.
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // Money-path audit F8: deleteMyAccount tombstones Apple billing
-// identities before sweeping their bindings; the write hash needs the
-// same BILLING_HMAC_SECRET restoreApplePurchases reads with. Already
-// provisioned (bound on restoreApplePurchases) — no new secret to set.
+// identities before sweeping their bindings, each hash keyed with
+// BILLING_HMAC_SECRET. lib/restrictedIdentities keys a restricted
+// account's kept identities with the same secret.
 const BILLING_HMAC_SECRET = defineSecret("BILLING_HMAC_SECRET");
 // The key before a rotation. lib/restrictedIdentities looks a restricted
 // identity up under the active AND the previous key, so a function that
 // reads or forgets them must be able to read both: bound on
-// onAuthUserCreated and liftRestriction for that, as restoreApplePurchases
-// binds it (appleIAP.js). Already provisioned there, so no new secret and
-// no new accessor grant. Without it a restricted person who deleted and
-// signed up again during a rotation was not restricted again.
+// onAuthUserCreated and liftRestriction for that. Without it a restricted
+// person who deleted and signed up again during a rotation would not be
+// restricted again.
 const BILLING_PREVIOUS_HMAC_SECRET = defineSecret(
   "BILLING_PREVIOUS_HMAC_SECRET"
 );
