@@ -98,6 +98,8 @@ describe("firstWeekAction", () => {
       unlockRunSpeech: true,
     });
     expect(firstWeekPriorityTask(both)).toBe("workout");
+    // Home draws the run first for a running aim, and the list follows it.
+    expect(firstWeekPriorityTask({ ...both, runFirst: true })).toBe("run");
   });
 
   it("leads with the startable sport on a run-only hybrid day", () => {

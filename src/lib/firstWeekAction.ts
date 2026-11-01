@@ -75,7 +75,8 @@ export function firstWeekAction(
 }
 
 /** Order an unfinished hybrid task by the session Home can act on now.
- * Resume wins; when both sports can start, keep Home's lift-then-run order. */
+ * Resume wins; when both sports can start, follow Home's card order: the
+ * lift first, or the run when running is the person's aim (`runFirst`). */
 export function firstWeekPriorityTask(
   session: TodaySession
 ): FirstWeekTrainingTask | null {
@@ -85,6 +86,7 @@ export function firstWeekPriorityTask(
   const run = firstWeekAction("run", session).mode;
   if (workout === "resume") return "workout";
   if (run === "resume") return "run";
+  if (session.runFirst && run === "start") return "run";
   if (workout === "start") return "workout";
   if (run === "start") return "run";
   return null;
