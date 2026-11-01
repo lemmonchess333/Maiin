@@ -8,6 +8,7 @@ import { generateSchedule } from "@/lib/scheduleUtils";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState, ScheduledRunDay } from "../programTypes";
 import {
+  isRunPlanFromNewerBuild,
   raceWeekNeedsBuilding,
   weekRolloverAnchor,
 } from "../programMaintenance";
@@ -60,6 +61,17 @@ describe("weekRolloverAnchor", () => {
     ).toEqual({ side: "lift", weekKey: THIS_WEEK });
   });
 
+  it("leaves a run mode this build does not know to the lifts", () => {
+    // A newer build's plan (Run9's reopening adds one): rolled from its
+    // runs here, it would be read as free running and cleared.
+    expect(
+      weekRolloverAnchor(
+        { runDays: [runDay(LAST_WEEK, "easy_30")], liftWeekKey: THIS_WEEK },
+        profile({ runMode: "starter" as UserProfile["runMode"] })
+      )
+    ).toEqual({ side: "lift", weekKey: THIS_WEEK });
+  });
+
   it("rolls a plan without runs over from its lifts' week", () => {
     expect(
       weekRolloverAnchor({ runDays: [], liftWeekKey: LAST_WEEK }, profile())
@@ -68,6 +80,23 @@ describe("weekRolloverAnchor", () => {
 
   it("has nothing to roll over from before the lift week is written", () => {
     expect(weekRolloverAnchor({}, profile())).toBeNull();
+  });
+});
+
+describe("isRunPlanFromNewerBuild", () => {
+  it("knows the race plan, and the structured week it retired", () => {
+    expect(isRunPlanFromNewerBuild({ mode: "race_prep" })).toBe(false);
+    expect(isRunPlanFromNewerBuild({ mode: "structured" })).toBe(false);
+  });
+
+  it("reads no plan, or one with no mode, as not a newer build's", () => {
+    expect(isRunPlanFromNewerBuild(undefined)).toBe(false);
+    expect(isRunPlanFromNewerBuild(null)).toBe(false);
+    expect(isRunPlanFromNewerBuild({})).toBe(false);
+  });
+
+  it("reads any other mode as a newer build's plan", () => {
+    expect(isRunPlanFromNewerBuild({ mode: "starter" })).toBe(true);
   });
 });
 
