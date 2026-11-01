@@ -5,6 +5,7 @@ import {
 } from "./programTransition";
 import { ProgrammeConflictError, sameStoredValue } from "./stateTransition";
 import {
+  isRunPlanFromNewerBuild,
   raceAwaitsItsEnding,
   raceWeekNeedsBuilding,
   weekRolloverAnchor,
@@ -2337,6 +2338,10 @@ export function useProgram() {
               today,
               weekStart
             );
+          } else if (isRunPlanFromNewerBuild(base?.runPlan)) {
+            // A newer build's plan: kept, not rebuilt as free running.
+            runDays = base?.runDays ?? [];
+            runPlan = base?.runPlan;
           } else {
             // RUN-M: structured retired — a non-race state is freeform.
             runDays = [];
@@ -2516,6 +2521,11 @@ export function useProgram() {
         ) {
           // The race has passed: race prep is the race lifecycle's to end,
           // from the plan and its race day, so both stay as they are.
+          runDays = base.runDays ?? [];
+          runPlan = base.runPlan;
+        } else if (isRunPlanFromNewerBuild(base.runPlan)) {
+          // A newer build's plan: this build cannot rebuild it, and must
+          // not clear it.
           runDays = base.runDays ?? [];
           runPlan = base.runPlan;
         } else {

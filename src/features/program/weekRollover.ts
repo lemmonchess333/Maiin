@@ -33,7 +33,11 @@ import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import type { LayoffClass } from "./layoffDetection";
 import { profileNewRunnerUntil } from "./newRunner";
-import { raceAwaitsItsEnding, weekRolloverAnchor } from "./programMaintenance";
+import {
+  isRunPlanFromNewerBuild,
+  raceAwaitsItsEnding,
+  weekRolloverAnchor,
+} from "./programMaintenance";
 import { advanceWeek } from "./programEngine";
 import type {
   ManualCompletion,
@@ -353,6 +357,14 @@ export function nextRunWeek(
     // does. The lifts take the calendar over (`weekRolloverAnchor`), into
     // the week after the race: the plan kept still sits at its race week,
     // which the lift side mustn't read as the week moved into.
+    return {
+      runDays: current.runDays ?? [],
+      runPlan: { ...runPlan! },
+      raceBlock: null,
+    };
+  }
+  // A plan a newer build wrote is kept as it is, not read as free running.
+  if (isRunPlanFromNewerBuild(runPlan)) {
     return {
       runDays: current.runDays ?? [],
       runPlan: { ...runPlan! },

@@ -51,14 +51,36 @@ export function raceAwaitsItsEnding(
  * (`raceAwaitsItsEnding` on the week after its runs'), whose run days stay
  * where they are.
  */
+/** The run plans this build makes (`race_prep`) or retires (`structured`).
+ *  A plan of any other kind was written by a newer build (Run9's
+ *  reopening adds one), and this build leaves it exactly as it is:
+ *  rolling, refreshing or rebuilding it here would clear it, since every
+ *  one of those paths reads a plan that is not a race as free running. */
+const RUN_PLAN_MODES_THIS_BUILD_KNOWS: readonly string[] = [
+  "race_prep",
+  "structured",
+];
+
+export function isRunPlanFromNewerBuild(runPlan: unknown): boolean {
+  const mode =
+    runPlan && typeof runPlan === "object"
+      ? (runPlan as { mode?: unknown }).mode
+      : undefined;
+  return (
+    typeof mode === "string" && !RUN_PLAN_MODES_THIS_BUILD_KNOWS.includes(mode)
+  );
+}
+
 export function weekRolloverAnchor(
   state: Pick<ProgramState, "runDays" | "liftWeekKey" | "runPlan">,
   profile: Pick<UserProfile, "runMode" | "raceGoal">
 ): { side: "run" | "lift"; weekKey: string } | null {
   const runWeek = state.runDays?.[0]?.weekKey;
+  // The runs lead only for a race plan, the one plan this build rolls. A
+  // run mode it does not know (a newer build's) is left to the lifts, so
+  // its plan is never rolled into free running here.
   if (
-    profile.runMode &&
-    profile.runMode !== "freeform" &&
+    profile.runMode === "race_prep" &&
     runWeek &&
     !raceAwaitsItsEnding(
       state.runPlan,
