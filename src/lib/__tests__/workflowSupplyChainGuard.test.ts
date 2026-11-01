@@ -276,39 +276,49 @@ describe("Dependabot waits a week before offering a new version", () => {
 });
 
 /* Release credentials can live in the production environment, where only a
-   job that names it can read them. Every deploy job that reads one names
-   it; the Pages job keeps its own github-pages environment; and Deploy
-   production passes secrets on with `secrets: inherit`, without which a
-   called workflow's job reads an environment secret as empty. */
-describe("deploy jobs that read release credentials name the production environment", () => {
+   job that names it can read them. Every job in any workflow that reads
+   one names it, and no workflow that reads one runs for a pull request,
+   where the environment's main-only branch rule would refuse it. The Pages
+   job keeps its own github-pages environment; and Deploy production
+   passes secrets on with `secrets: inherit`, without which a called
+   workflow's job reads an environment secret as empty. */
+describe("jobs that read release credentials name the production environment", () => {
   const RELEASE_SECRET =
-    /secrets\.(FIREBASE_SERVICE_ACCOUNT|ASC_API_\w+|IOS_\w+|APPLE_TEAM_ID)\b/;
-  const deployFiles = workflowFiles.filter((f) => /^deploy-.+\.ya?ml$/.test(f));
+    /secrets\.(FIREBASE_SERVICE_ACCOUNT|ASC_API_\w+|IOS_\w+|APPLE_TEAM_ID|VITE_RECAPTCHA_V3_SITE_KEY)\b/;
+  const PRODUCTION = /^ {4}environment: production\s*$/m;
+  const readers = workflowFiles.flatMap((file) =>
+    [...jobTexts(file)]
+      .filter(([, text]) => RELEASE_SECRET.test(text))
+      .map(([job, text]) => ({ file, job, text }))
+  );
 
-  it("covers the Firestore, Storage, Functions, Hosting and iOS deploys", () => {
-    const named = deployFiles.flatMap((file) =>
-      [...jobTexts(file)]
-        .filter(([, text]) => /^ {4}environment: production\s*$/m.test(text))
-        .map(([job]) => `${file} ${job}`)
-    );
-    expect(named.sort()).toEqual([
+  it("finds the deploys, the race-event writers and the rules checks", () => {
+    expect(readers.map((r) => `${r.file} ${r.job}`).sort()).toEqual([
+      "backfill-block-mirror.yml backfill",
       "deploy-firestore.yml deploy",
       "deploy-functions.yml deploy",
       "deploy-hosting.yml build-and-deploy",
       "deploy-ios.yml testflight",
       "deploy-storage.yml deploy",
+      "race-date-check.yml refresh",
+      "sync-race-events.yml sync",
+      "verify-production-rules.yml verify",
     ]);
   });
 
   it("leaves no job reading a release credential without it", () => {
-    const offenders = deployFiles.flatMap((file) =>
-      [...jobTexts(file)]
-        .filter(
-          ([, text]) =>
-            RELEASE_SECRET.test(text) &&
-            !/^ {4}environment: production\s*$/m.test(text)
-        )
-        .map(([job]) => `${file} ${job}`)
+    const offenders = readers
+      .filter((r) => !PRODUCTION.test(r.text))
+      .map((r) => `${r.file} ${r.job}`);
+    expect(offenders).toEqual([]);
+  });
+
+  it("runs none of them for a pull request", () => {
+    const files = [...new Set(readers.map((r) => r.file))];
+    const offenders = files.filter((file) =>
+      /^ {2}pull_request(_target)?:|^on:.*\bpull_request/m.test(
+        readFileSync(resolve(workflowsDir, file), "utf8")
+      )
     );
     expect(offenders).toEqual([]);
   });
