@@ -92,6 +92,7 @@ import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
 import { Collapse } from "@/components/ui/Collapse";
 import { IconButton } from "@/components/ui/IconButton";
+import { goalDayName } from "@/lib/raceGoalEntry";
 
 interface DayActionSheetProps {
   open: boolean;
@@ -299,11 +300,7 @@ export default function DayActionSheet({
       currentWeek: rp?.currentWeek,
       totalWeeks: rp?.totalWeeks,
       distance: (rp?.raceGoal?.distance ?? profile?.raceGoal?.distance) as
-        | "5k"
-        | "10k"
-        | "half"
-        | "marathon"
-        | undefined,
+        "5k" | "10k" | "half" | "marathon" | undefined,
       weekHasQuality: weekHoldsQuality(
         programState?.runDays,
         run.runDay.weekKey
@@ -478,7 +475,7 @@ export default function DayActionSheet({
                 )}
                 {run.status === "race_no_show" && (
                   <span className="text-xs font-medium text-muted-foreground">
-                    Race day passed
+                    {goalDayName(profile?.raceGoal)} passed
                   </span>
                 )}
               </div>
@@ -510,7 +507,7 @@ export default function DayActionSheet({
                   disabled={!run.isStartable || isRaceTemplate}
                   aria-label={
                     isRaceTemplate
-                      ? "Race day · template locked"
+                      ? `${goalDayName(profile?.raceGoal)} · template locked`
                       : run.isStartable
                         ? "Run template"
                         : `${run.status} — template locked`
@@ -524,7 +521,7 @@ export default function DayActionSheet({
                 </Select>
                 {isRaceTemplate ? (
                   <span className="mt-1 block text-caption text-muted-foreground">
-                    Race day — the template is locked.
+                    {goalDayName(profile?.raceGoal)} — the template is locked.
                   </span>
                 ) : (
                   run.isStartable && (

@@ -503,6 +503,9 @@ export interface UserProfileRunning {
     /** Optional race-space link (races plan Q4) — present only when the
      *  goal was set from the race catalogue; manual goals lack it. */
     eventSpaceId?: string;
+    /** A race entered, or the distance run on your own (Run9). Absent
+     *  reads as a race (`raceGoalEntry`). */
+    entry?: "race" | "own";
   } | null;
   weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   /**

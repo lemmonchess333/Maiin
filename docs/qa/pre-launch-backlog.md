@@ -10,6 +10,22 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## A distance goal: a race entered, or on your own (Run9 STATUS 2026-11-01)
+
+Setup and Settings → Run plan ask "A race I've entered / On my own" of a
+distance goal, nothing chosen, and store it as `raceGoal.entry`; a goal
+run on your own calls its last day "Your 10K", not "Race day". The answer
+reaches the profile only through `configurePlan` and `completeOnboarding`,
+whose sanitizer keeps it from this release's Functions deploy; the rules
+gate (`raceGoalValid`) takes it from the Firestore deploy.
+
+- [ ] **It survives the server.** After Deploy production has run the
+      Functions and Firestore steps, on a TestFlight build set a 10K goal
+      On my own in Settings → Run plan and save. Passing: reopening Run
+      plan shows On my own still chosen (a sanitizer that dropped it would
+      read back as A race I've entered), and on the goal's date the run
+      tab says "Your 10K" and "Start your 10K".
+
 ## A v2 account's one first-week reminder ask (XB1 call 8, 2026-10-31)
 
 After a v2 account's first saved session in its first week, and once the

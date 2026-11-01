@@ -375,6 +375,12 @@ export async function setUpPlan(
       await page
         .getByRole("textbox", { name: SETUP.raceDate })
         .fill(answers.race.date);
+      // Run9 STATUS 2026-11-01: a race entered, or on your own; the
+      // journeys' races are entered ones.
+      await page
+        .getByRole("radiogroup", { name: SETUP.raceEntry })
+        .getByRole("radio", { name: SETUP.raceEntered, exact: true })
+        .click();
       if (answers.activity === "Both") {
         const trim = page.getByRole("switch", {
           name: SETUP.legTrim,

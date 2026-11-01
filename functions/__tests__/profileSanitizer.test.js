@@ -571,6 +571,28 @@ describe("sanitizeProfileData — nested objects", () => {
     });
   });
 
+  it("keeps raceGoal.entry, a race entered or run on your own, and drops anything else", () => {
+    for (const entry of ["race", "own"]) {
+      const out = sanitizeProfileData({
+        raceGoal: { distance: "10k", targetDate: "2026-12-01", entry },
+      });
+      expect(out.raceGoal).toEqual({
+        distance: "10k",
+        targetDate: "2026-12-01",
+        entry,
+      });
+    }
+    for (const entry of ["solo", "RACE", 1, null]) {
+      const out = sanitizeProfileData({
+        raceGoal: { distance: "10k", targetDate: "2026-12-01", entry },
+      });
+      expect(out.raceGoal).toEqual({
+        distance: "10k",
+        targetDate: "2026-12-01",
+      });
+    }
+  });
+
   it("sanitises raceGoal.eventSpaceId against the pinned space-id list (races plan Q4)", () => {
     // A known race-space id survives.
     const ok = sanitizeProfileData({
