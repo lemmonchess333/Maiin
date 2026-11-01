@@ -38,6 +38,12 @@ export interface RaceGoal {
    *  manually-entered goals simply lack it. Cross-links and the
    *  future training counter key off this exact id. */
   eventSpaceId?: string;
+  /** A2: optional goal finish time, seconds. */
+  targetTimeS?: number;
+  /** Run9: a race the person has entered, or the
+   *  distance run on their own. Absent on a goal set before the question
+   *  was asked, which reads as a race (`raceGoalEntry`). */
+  entry?: "race" | "own";
 }
 
 /**
@@ -164,6 +170,10 @@ export function setRaceGoalPatch(next: RaceGoal | null): RaceGoalWritePatch {
     targetDate: next.targetDate,
     ...(next.eventName ? { eventName: next.eventName } : {}),
     ...(next.eventSpaceId ? { eventSpaceId: next.eventSpaceId } : {}),
+    // Both were dropped here while the server copy kept them, so a goal
+    // time and the race-or-own answer did not survive this patch.
+    ...(next.targetTimeS ? { targetTimeS: next.targetTimeS } : {}),
+    ...(next.entry ? { entry: next.entry } : {}),
   };
   return { raceGoal, runMode: deriveRunMode(raceGoal) };
 }

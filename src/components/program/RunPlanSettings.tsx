@@ -68,6 +68,7 @@ import {
   raceRunDaysNote,
   raceTargetVerdict,
 } from "@/lib/raceGoalPlanner";
+import { raceGoalEntry, type RaceGoalEntry } from "@/lib/raceGoalEntry";
 import { parseRaceTimeToSeconds } from "@/lib/runPaces";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
@@ -199,14 +200,17 @@ export default function RunPlanSettings({
   const saved = useMemo(
     () => ({
       runMode: (profile.runMode === "race_prep" ? "race_prep" : "freeform") as
-        | "freeform"
-        | "race_prep",
+        "freeform" | "race_prep",
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
       raceDistance: (profile.raceGoal?.distance as RaceDistance) ?? "10k",
       raceTargetDate: profile.raceGoal?.targetDate ?? "",
       raceEventName: profile.raceGoal?.eventName ?? "",
       raceTargetTimeS: profile.raceGoal?.targetTimeS ?? 0,
       raceEventSpaceId: profile.raceGoal?.eventSpaceId ?? "",
+      // A goal from before the question reads as a race; no goal, no answer.
+      raceEntry: profile.raceGoal
+        ? raceGoalEntry(profile.raceGoal)
+        : (null as RaceGoalEntry | null),
       // Pgm6 knobs — missing → standard (same lazy default the engine uses).
       runVolume: runTuningFromProfile(profile).volume,
       runDifficulty: runTuningFromProfile(profile).difficulty,
@@ -282,6 +286,16 @@ export default function RunPlanSettings({
     deepLink
       ? deepLink.spaceId
       : (storedDraft?.raceEventSpaceId ?? saved.raceEventSpaceId)
+  );
+  /** Run9: a race entered, or the distance run on your
+   *  own. Nothing is chosen for a new goal; a race picked from the
+   *  catalogue, or arrived at from its Space, is one entered. */
+  const [raceEntry, setRaceEntry] = useState<RaceGoalEntry | null>(
+    deepLink
+      ? "race"
+      : storedDraft?.raceEntry !== undefined
+        ? storedDraft.raceEntry
+        : saved.raceEntry
   );
   const [runVolume, setRunVolume] = useState<RunVolumePreset>(
     storedDraft?.runVolume ?? saved.runVolume
@@ -380,6 +394,7 @@ export default function RunPlanSettings({
         raceEventName.trim() !== saved.raceEventName ||
         (raceTimeParsed ?? 0) !== saved.raceTargetTimeS ||
         raceEventSpaceId !== saved.raceEventSpaceId ||
+        raceEntry !== saved.raceEntry ||
         weeklyRunDays !== saved.weeklyRunDays ||
         runVolume !== saved.runVolume ||
         runDifficulty !== saved.runDifficulty ||
@@ -401,6 +416,7 @@ export default function RunPlanSettings({
         raceEventName,
         raceTimeStr,
         raceEventSpaceId,
+        raceEntry,
         runVolume,
         runDifficulty,
         runTimeLimits,
@@ -421,6 +437,7 @@ export default function RunPlanSettings({
     raceEventName,
     raceTimeStr,
     raceEventSpaceId,
+    raceEntry,
     runVolume,
     runDifficulty,
     runTimeLimits,
@@ -455,6 +472,13 @@ export default function RunPlanSettings({
     setRaceTargetDate(def.event.dateKey);
     setRaceEventName(def.name);
     setRaceEventSpaceId(def.id);
+    setRaceEntry("race");
+  }
+
+  function handleEntryChange(next: RaceGoalEntry): void {
+    setRaceEntry(next);
+    // A goal run on your own is no listed race's.
+    if (next === "own") setRaceEventSpaceId("");
   }
 
   // ── Save (RUN-EV-02: one draft computation, one atomic commit) ──────
@@ -508,7 +532,8 @@ export default function RunPlanSettings({
                 distance: raceDistance,
                 targetDate: raceTargetDate,
                 // Optional free-text; blank → key omitted (never undefined).
-                ...(raceEventName.trim()
+                // A race's name; a goal run on your own has none.
+                ...(raceEventName.trim() && raceEntry !== "own"
                   ? { eventName: raceEventName.trim() }
                   : {}),
                 ...(raceTimeParsed ? { targetTimeS: raceTimeParsed } : {}),
@@ -533,6 +558,13 @@ export default function RunPlanSettings({
           plan.profileUpdates.raceGoal = {
             ...plan.profileUpdates.raceGoal,
             eventSpaceId: raceEventSpaceId,
+          };
+        }
+        // buildPlan's raceGoal input carries no answer either.
+        if (raceEntry && plan.profileUpdates.raceGoal) {
+          plan.profileUpdates.raceGoal = {
+            ...plan.profileUpdates.raceGoal,
+            entry: raceEntry,
           };
         }
       } else {
@@ -618,20 +650,26 @@ export default function RunPlanSettings({
      primitive's loading state; failed, one line above it says so. An
      invalid field outranks both, since its tap sends nothing and the
      field needs fixing either way. */
+  const entryMissing = runMode === "race_prep" && raceEntry === null;
   const invalid =
-    raceDateInvalid || raceTimeInvalid || baselineInvalid || goalInvalid;
+    raceDateInvalid ||
+    entryMissing ||
+    raceTimeInvalid ||
+    baselineInvalid ||
+    goalInvalid;
   const programReady = readiness === "ready";
   const loadFailed = readiness === "failed" && !saving;
   const waitingForProgramme = !invalid && !saving && readiness === "pending";
   function revealInvalidField(): void {
     // Date first: it sits higher on the page and is the required one.
-    const target = raceDateInvalid
-      ? raceGoalRef.current
-      : baselineInvalid
-        ? document.getElementById("running-starting-point")
-        : goalInvalid
-          ? document.getElementById("weekly-running-goal")
-          : document.getElementById("ps-race-time");
+    const target =
+      raceDateInvalid || entryMissing
+        ? raceGoalRef.current
+        : baselineInvalid
+          ? document.getElementById("running-starting-point")
+          : goalInvalid
+            ? document.getElementById("weekly-running-goal")
+            : document.getElementById("ps-race-time");
     /* No `behavior`: the default defers to the computed
        `scroll-behavior`, so Reduce Motion gets an instant jump to the
        invalid field instead of a page-length glide. */
@@ -694,6 +732,8 @@ export default function RunPlanSettings({
             upcomingRaces={upcomingRaces}
             selectedEventSpaceId={raceEventSpaceId}
             onPickRace={handlePickRace}
+            entry={raceEntry}
+            onEntryChange={handleEntryChange}
           />
         </div>
       )}

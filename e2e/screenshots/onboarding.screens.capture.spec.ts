@@ -23,6 +23,7 @@ import { openSignUpForm } from "../helpers/auth";
  */
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
+import { SETUP } from "../../src/test/journeyScreens";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -134,6 +135,12 @@ test.describe("onboarding screenshots", () => {
        frames would quietly start filming the wrong race. A hard click on
        the radio role, because a silent miss here is the whole failure. */
     await page.getByRole("radio", { name: /^full$/i }).click({ timeout: 4000 });
+    // Run9: a race entered or one on your own. Nothing is chosen for a new
+    // goal and the step holds until it is, so this is a hard click too.
+    await page
+      .getByRole("radiogroup", { name: SETUP.raceEntry })
+      .getByRole("radio", { name: SETUP.raceEntered, exact: true })
+      .click({ timeout: 4000 });
 
     // The Run15 advisory: a marathon two weeks out is under the taper
     // floor → the ENGINE's mostly-easy line must appear at date entry.

@@ -260,9 +260,13 @@ export interface PlanBuilderOutput {
     /** Explicit null = clear the goal (freeform save via configurePlan —
      *  RUN-EV-02; the CF sanitizer preserves a literal null). The optional
      *  eventSpaceId is the catalogue binding a caller may re-attach —
-     *  buildPlan itself never sets it. */
+     *  buildPlan itself never sets it — and so is `entry`, a race entered
+     *  or run on your own (Run9). */
     raceGoal?:
-      | (PlanBuilderInput["raceGoal"] & { eventSpaceId?: string })
+      | (PlanBuilderInput["raceGoal"] & {
+          eventSpaceId?: string;
+          entry?: "race" | "own";
+        })
       | null;
     primaryGoal: PrimaryGoal;
     // Pgm4: persist the plan-shaping inputs so the stored profile matches
