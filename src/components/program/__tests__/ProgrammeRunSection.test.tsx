@@ -1784,8 +1784,10 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
     // the race-elapsed banner is suppressed for this state.
     expect(screen.queryByText(/^Next ·/)).not.toBeInTheDocument();
     expect(screen.queryByText("Your race has passed")).not.toBeInTheDocument();
-    // The race in words, not its stored distance: "10K · 3 days ago".
-    expect(screen.getByText(/^10K · \d+ days ago$/)).toBeInTheDocument();
+    // The race in words, and two calendar days after it, at midday, is
+    // two days ago (24-hour periods from race day's midnight rounded it
+    // to three).
+    expect(screen.getByText("10K · 2 days ago")).toBeInTheDocument();
   });
 
   it("Log it navigates to /run with the race-day scheduledRunId", () => {

@@ -23,6 +23,7 @@ import {
   getRacePhaseLabel,
   isCurrentWeekInTaper,
 } from "@/features/program/runPlanTiming";
+import { differenceInCalendarDays } from "date-fns";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 
@@ -84,6 +85,21 @@ export function raceDateLabel(
   return date.getFullYear() === parseLocalDate(todayKey).getFullYear()
     ? formatDayMonth(date)
     : formatDayMonthYear(date);
+}
+
+/**
+ * How long ago race day was, in calendar days in the person's own zone:
+ * "Yesterday", "2 days ago". Not in 24-hour periods from midnight on race
+ * day, which round the afternoon two days after a race up to three.
+ */
+export function raceDaysAgoLabel(targetDate: string, todayKey: string): string {
+  const days = differenceInCalendarDays(
+    parseLocalDate(todayKey),
+    parseLocalDate(targetDate)
+  );
+  if (days <= 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return `${days} days ago`;
 }
 
 /**

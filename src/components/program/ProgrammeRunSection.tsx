@@ -171,6 +171,7 @@ import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
 import {
   buildRaceCockpitViewModel,
   defaultRunDayKey,
+  raceDaysAgoLabel,
   raceDistanceLabel,
   raceElapsedBannerCopy,
   raceTitle,
@@ -1535,12 +1536,7 @@ export default function ProgrammeRunSection({
               <p className="text-sm font-bold text-foreground">
                 {raceDistanceLabel(raceGoal.distance)}
                 {" · "}
-                {formatDistanceToNowStrict(
-                  parseLocalDate(raceGoal.targetDate),
-                  {
-                    addSuffix: true,
-                  }
-                )}
+                {raceDaysAgoLabel(raceGoal.targetDate, todayKeyDerivation)}
               </p>
               <p className="text-micro text-muted-foreground">
                 Log it to start your recovery week, or let us know if you sat

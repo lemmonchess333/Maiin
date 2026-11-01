@@ -8,6 +8,7 @@ import {
   raceDistanceLabel,
   raceDistanceInSentence,
   raceDateLabel,
+  raceDaysAgoLabel,
   raceElapsedBannerCopy,
   raceTitle,
   runStripLabel,
@@ -79,6 +80,16 @@ describe("race copy once race day has passed", () => {
     expect(
       raceTitle({ distance: "10k", targetDate: "someday" }, "2026-11-01")
     ).toBe("10K");
+  });
+
+  // Owner, 1 Nov 2026: "3 days ago" on the second day after the race.
+  it("counts the days since race day on the calendar", () => {
+    expect(raceDaysAgoLabel("2026-05-27", "2026-05-28")).toBe("Yesterday");
+    expect(raceDaysAgoLabel("2026-05-27", "2026-05-29")).toBe("2 days ago");
+    expect(raceDaysAgoLabel("2026-05-27", "2026-05-30")).toBe("3 days ago");
+    // Across a clock change: a 25-hour day is still one day.
+    expect(raceDaysAgoLabel("2026-10-24", "2026-10-26")).toBe("2 days ago");
+    expect(raceDaysAgoLabel("2026-03-28", "2026-03-30")).toBe("2 days ago");
   });
 
   it("names the race and its date as a title", () => {
