@@ -33,11 +33,22 @@ const raceA: RaceGoal = { distance: "marathon", targetDate: "2026-09-01" };
 const raceA2: RaceGoal = { distance: "marathon", targetDate: "2026-09-01" }; // same race, distinct object
 const raceB: RaceGoal = { distance: "half", targetDate: "2026-07-15" }; // different race, future
 const racePast: RaceGoal = { distance: "5k", targetDate: "2026-01-01" }; // different race, past
+// Every optional key: the client copy rebuilt the goal from named keys and
+// dropped the goal time, while the server copy kept it.
+const raceFull: RaceGoal = {
+  distance: "10k",
+  targetDate: "2026-08-01",
+  eventName: "Riverside 10K",
+  eventSpaceId: "london-marathon",
+  targetTimeS: 2700,
+  entry: "own",
+};
 const TODAY = "2026-06-04";
 
 const raceGoals: (RaceGoal | null | undefined)[] = [
   raceA,
   raceB,
+  raceFull,
   null,
   undefined,
 ];
@@ -114,7 +125,7 @@ describe("runModeResolution — client (.ts) ↔ server (.js) parity", () => {
   });
 
   it("setRaceGoalPatch produces byte-identical patches", () => {
-    for (const g of [raceA, raceB, null]) {
+    for (const g of [raceA, raceB, raceFull, null]) {
       expect(js.setRaceGoalPatch(g)).toEqual(ts.setRaceGoalPatch(g));
     }
   });

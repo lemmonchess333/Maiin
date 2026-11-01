@@ -64,6 +64,20 @@ describe("race copy once race day has passed", () => {
     ).toMatch(/^Your 5K was on 17 Oct\./);
   });
 
+  it("calls a goal run on your own a goal day, not a race", () => {
+    expect(
+      raceElapsedBannerCopy(
+        { distance: "10k", targetDate: "2026-10-17" },
+        "2026-11-01",
+        true
+      )
+    ).toEqual({
+      title: "Your goal day has passed",
+      description:
+        "Your 10K was on 17 Oct. Set your next goal, or change how you run.",
+    });
+  });
+
   it("gives a race from another year its year", () => {
     expect(raceDateLabel("2025-10-17", "2026-01-04")).toBe("17 Oct 2025");
     expect(raceDateLabel("2026-10-17", "2026-11-01")).toBe("17 Oct");

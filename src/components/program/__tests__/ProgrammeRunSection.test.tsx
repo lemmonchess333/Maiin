@@ -1737,10 +1737,14 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
 
   // race 2 days ago, race-day slot still "planned" (not yet logged, server
   // hasn't flipped no-show). raceGoal is read from programState.runPlan.
-  function raceRecentState() {
+  function raceRecentState(entry?: "race" | "own") {
     const profile = makeProfile({
       runMode: "race_prep",
-      raceGoal: { distance: "10k", targetDate: "2026-05-27" },
+      raceGoal: {
+        distance: "10k",
+        targetDate: "2026-05-27",
+        ...(entry ? { entry } : {}),
+      },
     } as Partial<UserProfile>);
     const programState = makeProgramState(
       [
@@ -1790,6 +1794,22 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
     expect(screen.getByText("10K · 2 days ago")).toBeInTheDocument();
   });
 
+  it("asks after a goal run on your own without calling it a race", () => {
+    const { profile, programState } = raceRecentState("own");
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText("Ran your 10K?")).toBeInTheDocument();
+    expect(screen.queryByText(/Did you race\?/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "I didn't run it" })
+    ).toBeInTheDocument();
+  });
+
   it("Log it navigates to /run with the race-day scheduledRunId", () => {
     const { profile, programState } = raceRecentState();
     renderWith(
@@ -1836,10 +1856,14 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
 
   // ── race-today (T+0) hero body ──────────────────────────────────
   // System time is 2026-05-29 (this describe's beforeEach). Race ON today.
-  function raceTodayState() {
+  function raceTodayState(entry?: "race" | "own") {
     const profile = makeProfile({
       runMode: "race_prep",
-      raceGoal: { distance: "half", targetDate: "2026-05-29" },
+      raceGoal: {
+        distance: "half",
+        targetDate: "2026-05-29",
+        ...(entry ? { entry } : {}),
+      },
     } as Partial<UserProfile>);
     const programState = makeProgramState(
       [
@@ -1879,6 +1903,23 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
     ).toBeInTheDocument();
     // The race is NOT framed as a generic "Next ·" run.
     expect(screen.queryByText(/^Next ·/)).not.toBeInTheDocument();
+  });
+
+  it("names the day for the distance when the goal is run on your own", () => {
+    // Run9 STATUS 2026-11-01: no race was entered, so no "Race day".
+    const { profile, programState } = raceTodayState("own");
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText("Your half marathon")).toBeInTheDocument();
+    expect(screen.queryByText("Race day")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Start your half marathon" })
+    ).toBeInTheDocument();
   });
 
   it("Start race navigates to /run with the race-day scheduledRunId", () => {

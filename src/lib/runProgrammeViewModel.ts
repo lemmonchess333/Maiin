@@ -123,7 +123,10 @@ export function raceTitle(
  */
 export function raceElapsedBannerCopy(
   raceGoal: { distance: string; targetDate: string },
-  todayKey: string
+  todayKey: string,
+  /** A distance run on your own (Run9a), not a race entered: its day is
+   *  a goal day, and what comes next is a goal. */
+  ownGoal = false
 ): { title: string; description: string } {
   const date = raceDateLabel(raceGoal.targetDate, todayKey);
   const race = raceDistanceInSentence(raceGoal.distance);
@@ -131,8 +134,8 @@ export function raceElapsedBannerCopy(
     ? `Your ${race} was on ${date}.`
     : `Your ${race} has passed.`;
   return {
-    title: "Your race has passed",
-    description: `${when} Set your next race, or change how you run.`,
+    title: ownGoal ? "Your goal day has passed" : "Your race has passed",
+    description: `${when} Set your next ${ownGoal ? "goal" : "race"}, or change how you run.`,
   };
 }
 

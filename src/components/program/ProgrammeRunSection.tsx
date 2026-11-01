@@ -190,6 +190,11 @@ import {
 } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import { useUidForStorageKey } from "@/lib/auth";
+import {
+  goalDayName,
+  goalDayQuestion,
+  raceGoalEntry,
+} from "@/lib/raceGoalEntry";
 import type {
   ProgramState,
   ScheduledRunDay,
@@ -391,6 +396,10 @@ export default function ProgrammeRunSection({
     [profile, programState, todayKeyDerivation]
   );
   const raceGoal = resolvedRunPlan.raceGoal ?? undefined;
+  // Run9: a goal run on your own names its day for the
+  // distance ("Your 10K") rather than "Race day".
+  const ownGoal = raceGoalEntry(raceGoal) === "own";
+  const goalDay = goalDayName(raceGoal);
   const raceCompressed = !!programState?.runPlan?.compressed;
   /* `belowFloor` is persisted on runPlan (programTypes.ts). This read was
      added to carry it to the cockpit — but the JSX prop was never passed, so
@@ -619,7 +628,7 @@ export default function ProgrammeRunSection({
     !recoveryEnded &&
     !isNoShow &&
     !raceElapsedDismissed
-      ? raceElapsedBannerCopy(raceGoal, todayKeyDerivation)
+      ? raceElapsedBannerCopy(raceGoal, todayKeyDerivation, ownGoal)
       : null;
 
   // ── Run14: ease-week nudge (RUN-05) ────────────────────────────────
@@ -1472,7 +1481,7 @@ export default function ProgrammeRunSection({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold mb-0.5 text-running-strong">
-                Race day
+                {goalDay}
               </p>
               <p className="text-sm font-bold text-foreground">
                 {raceDistanceLabel(raceGoal.distance)} · Today
@@ -1487,7 +1496,11 @@ export default function ProgrammeRunSection({
                 haptic();
                 setManageDate(raceDayRunDay?.date ?? null);
               }}
-              aria-label="More options for race day"
+              aria-label={
+                ownGoal
+                  ? "More options for this run"
+                  : "More options for race day"
+              }
               icon={<MoreVertical aria-hidden="true" />}
               className="shrink-0 -mr-1"
             />
@@ -1505,7 +1518,9 @@ export default function ProgrammeRunSection({
               );
             }}
           >
-            Start race
+            {ownGoal
+              ? `Start ${goalDay.replace(/^Your/, "your")}`
+              : "Start race"}
           </Button>
         </div>
       )}
@@ -1531,7 +1546,7 @@ export default function ProgrammeRunSection({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold mb-0.5 text-running-strong">
-                Did you race?
+                {goalDayQuestion(raceGoal)}
               </p>
               <p className="text-sm font-bold text-foreground">
                 {raceDistanceLabel(raceGoal.distance)}
@@ -1567,7 +1582,7 @@ export default function ProgrammeRunSection({
                 dismissRaceRecent();
               }}
             >
-              I didn't race
+              {ownGoal ? "I didn't run it" : "I didn't race"}
             </Button>
           </div>
         </div>
