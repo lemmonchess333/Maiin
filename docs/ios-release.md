@@ -41,8 +41,10 @@ new TestFlight build, then install the build with Apple's TestFlight app.
 Nothing in this route needs a Mac: every value below comes from Apple's or
 Firebase's website.
 
-> ⚠️ The workflow has **never completed a run.** Treat the first run as a
-> bring-up. Before archiving it checks every secret, every profile and the
+> ⚠️ The workflow has **never completed a run.** The first dispatch on
+> 31 October 2026 stopped at preflight because `ASC_API_KEY_P8_BASE64` and
+> `IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` were missing. Treat the next run as
+> a bring-up. Before archiving it checks every secret, every profile and the
 > certificate, so a wrong file fails in the first minutes with a message
 > naming it.
 
