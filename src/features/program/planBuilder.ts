@@ -87,6 +87,7 @@ import {
   raceBlockWeek,
 } from "./weekPrescription";
 import { mainRepAnchor } from "./roleTable";
+import { starterWeekFrom } from "./starterWeek";
 import { represcribeMainLifts, represcribeSwapped } from "./represcribe";
 import { refitSessionsToTime, sessionMinutesFor } from "./sessionFit";
 import {
@@ -111,7 +112,7 @@ import {
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
-export type RunMode = "freeform" | "structured" | "race_prep";
+export type RunMode = "freeform" | "structured" | "race_prep" | "starter";
 
 export interface PlanBuilderInput {
   /** Training-focus enum (hypertrophy / strength / etc.). Drives
@@ -738,6 +739,20 @@ function buildRunPlan(
     return { runDays: [], runPlan: undefined };
   }
 
+  // Run9's starter goal: a change of layout or lifts keeps its stage, and
+  // its week is laid again on the new run days from today. A plan with no
+  // starter stage yet begins at the first.
+  if (input.runMode === "starter") {
+    const existing = input.existingState?.runPlan;
+    return starterWeekFrom({
+      weekSchedule,
+      stage: existing?.mode === "starter" ? (existing.stage ?? 1) : 1,
+      today: input.currentDate,
+      prior:
+        existing?.mode === "starter" ? input.existingState?.runDays : undefined,
+    });
+  }
+
   if (input.runMode === "race_prep") {
     if (!input.raceGoal) {
       // race_prep without raceGoal is an invalid input; the
@@ -936,6 +951,15 @@ export function validatePlanOutput(output: PlanBuilderOutput): void {
         "planBuilder: race_prep mode requires programState.runPlan.raceGoal"
       );
     }
+  }
+
+  // Parity with the server gate: a starter's run mode goes with a starter
+  // plan, as the race's does with its goal.
+  if (
+    profileUpdates.runMode === "starter" &&
+    programState.runPlan?.mode !== "starter"
+  ) {
+    throw new Error("planBuilder: starter mode requires a starter runPlan");
   }
 
   if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION) {

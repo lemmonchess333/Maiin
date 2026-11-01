@@ -15,6 +15,21 @@ import type { ProgramState } from "@/features/program/programTypes";
 const RACE = { distance: "10k", targetDate: "2027-04-18" };
 
 describe("runHeaderLine", () => {
+  it("names the starter goal and its week of nine (Run9)", () => {
+    expect(
+      runHeaderLine({
+        runMode: "starter",
+        raceGoal: null,
+        runsTarget: 3,
+        starterStage: 3,
+      })
+    ).toBe("30 minutes without stopping · Week 3 of 9");
+    // Before its plan is built, the goal alone.
+    expect(
+      runHeaderLine({ runMode: "starter", raceGoal: null, runsTarget: 3 })
+    ).toBe("30 minutes without stopping");
+  });
+
   it("leads with distance and week-of-M once the plan is built", () => {
     expect(
       runHeaderLine({

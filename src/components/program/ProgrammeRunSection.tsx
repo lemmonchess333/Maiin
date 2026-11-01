@@ -153,6 +153,12 @@ import { planEasierWeek } from "@/lib/adjustWeek";
 import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
+import StarterGoalCard from "./StarterGoalCard";
+import StarterDoneCard from "@/components/run/StarterDoneCard";
+import {
+  starterGoalReached,
+  starterProgress,
+} from "@/features/program/starterProgress";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import RaceWeeksAhead from "./RaceWeeksAhead";
 import type { LayoffClass } from "@/features/program/layoffDetection";
@@ -558,6 +564,15 @@ export default function ProgrammeRunSection({
     currentMode !== "freeform" &&
     runDaysFromThisWeek.length > 0 &&
     !nextStartable;
+
+  // Run9's starter goal: where it stands this week, weighed by the days of
+  // the saved runs as the rollover weighs them, and whether it is reached.
+  const savedRunDays = useMemo(() => runs.map(runEvidenceDate), [runs]);
+  const starterView =
+    currentMode === "starter"
+      ? starterProgress(programState, profile.starterGoal, savedRunDays)
+      : null;
+  const starterDone = starterGoalReached(profile, programState, savedRunDays);
 
   // Run8 PR1c — hero state machine. Single discriminator replaces
   // the scattered `currentMode === X && raceGoal && ...` conjunctions
@@ -985,7 +1000,9 @@ export default function ProgrammeRunSection({
       ? "Race prep"
       : currentMode === "structured"
         ? "Structured"
-        : "Freeform";
+        : currentMode === "starter"
+          ? "30-minute goal"
+          : "Freeform";
 
   // Run8 PR1a — handleModeChange + handleSaveRaceGoal removed.
   // Mode + race goal writers moved to Settings (then /settings/training;
@@ -1137,7 +1154,11 @@ export default function ProgrammeRunSection({
         <Banner
           variant="warning"
           title="Configure your runs"
-          description={`You're on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`}
+          description={
+            currentMode === "starter"
+              ? "Your 30-minute goal has no run days yet. Open Configure plan to add two or three."
+              : `You're on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
+          }
           action={
             <Button
               variant="sport"
@@ -1256,6 +1277,15 @@ export default function ProgrammeRunSection({
           the stepper visibly jumped when toggling tabs. The way into the
           editor is the race card's "Edit run plan", or the footer link when
           there is no race card. */}
+
+      {/* Run9's starter goal reached: a plain Done and the next goal,
+          offered once, the same card Home shows. */}
+      {starterDone && profile.starterGoal?.startedOn && (
+        <StarterDoneCard
+          startedOn={profile.starterGoal.startedOn}
+          navigate={navigate}
+        />
+      )}
 
       {/* ── Hero: freeform ──────────────────────────────────────────
           Start CTA + last-run + this-week summary lines. Empty
@@ -1776,6 +1806,9 @@ export default function ProgrammeRunSection({
                 }
               />
             ))}
+
+          {/* The starter goal's week, where a race plan has its card. */}
+          {starterView && <StarterGoalCard progress={starterView} />}
 
           {/* Race progress identity card — moved BELOW the selected-day card
               (cockpit reorder). Race-prep only; the actionable race-day /

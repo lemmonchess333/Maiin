@@ -587,6 +587,27 @@ describe("after race day, the race plan waits for the race's own ending", () => 
     expect(next.runPlan?.recoveryEndDate).toBe(shift(raceDay, 7));
   });
 
+  it("keeps a plan a newer build wrote, and its runs, as they are", () => {
+    // A plan this build cannot build. Read as free running it was cleared
+    // on the first rollover an older build ran.
+    const { state, profile } = racer();
+    const newer = {
+      ...state,
+      runPlan: { mode: "next_kind", step: 2 },
+    } as unknown as ProgramState;
+    const next = onDay(mondayAfter, () =>
+      nextRunWeek(
+        newer,
+        { weekStart: weekOf(mondayAfter), date: mondayAfter },
+        { ...profile, runMode: "next_kind" } as unknown as UserProfile,
+        "none"
+      )
+    );
+    expect(next.runPlan).toEqual({ mode: "next_kind", step: 2 });
+    expect(next.runDays).toEqual(newer.runDays);
+    expect(next.runDays?.length).toBeGreaterThan(0);
+  });
+
   it("is free running once race prep has ended", () => {
     const { state, profile } = racer();
     const ended = { ...profile, runMode: "freeform" } as UserProfile;

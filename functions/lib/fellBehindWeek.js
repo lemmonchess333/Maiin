@@ -113,9 +113,13 @@ function _plannedRunsInWeek(profile, programState, weekKey) {
  *  Monday 05:00 UTC sweep) and `maybeSendWeeklyRecap` (the local
  *  Monday-8am recap push) so the two can't drift. */
 function _fellBehindRatio(profile, programState, priorWeekRuns, priorWeekKey) {
-  // Gate 1 — freeform users have no prescriptive target; skip.
+  // Gate 1 — a race plan is graded here, and the retired structured week
+  // a profile not yet migrated may still carry. Free running has no
+  // prescriptive target, the starter goal repeats a missed week rather
+  // than falling behind one, and a plan of a kind this check does not know
+  // is not "behind" anything either.
   const runMode = profile && profile.runMode;
-  if (!runMode || runMode === "freeform") {
+  if (runMode !== "race_prep" && runMode !== "structured") {
     return null;
   }
 

@@ -64,8 +64,33 @@ export const RUN_WALK_TEMPLATE_IDS = [
   "run_walk_6",
 ] as const;
 
+/**
+ * Run9's starter goal (30 minutes without stopping): after the run-walk
+ * ladder's six weeks, which end on 20 minutes non-stop, a week at each of
+ * 20, 25 and 30 minutes non-stop. Each keeps the ladder's walk to warm up
+ * and walk to cool down, and is run by the clock with no pace set, as the
+ * ladder is. The order is the starter's (`STARTER_STAGE_TEMPLATE_IDS`).
+ */
+export const STARTER_NONSTOP_TEMPLATE_IDS = [
+  "run_nonstop_20",
+  "run_nonstop_25",
+  "run_nonstop_30",
+] as const;
+
+/**
+ * A session of walking and running, run by the clock with no pace: the
+ * run-walk ladder (`RUN_WALK_TEMPLATE_IDS`) and the starter's non-stop runs
+ * (`STARTER_NONSTOP_TEMPLATE_IDS`), which share its shape. Each is a new
+ * runner's prescription: shown with no pace, never judged on one, never
+ * swapped for a shorter or longer run, and kept out of pace trends, since
+ * its walks are in the run.
+ */
 export function isRunWalkTemplateId(id: string | null | undefined): boolean {
-  return (RUN_WALK_TEMPLATE_IDS as readonly string[]).includes(id ?? "");
+  const key = id ?? "";
+  return (
+    (RUN_WALK_TEMPLATE_IDS as readonly string[]).includes(key) ||
+    (STARTER_NONSTOP_TEMPLATE_IDS as readonly string[]).includes(key)
+  );
 }
 
 const repeat = (seconds: number, times: number) =>
@@ -474,6 +499,59 @@ export const RUN_TEMPLATES: RunTemplate[] = [
       runWalk: {
         warmupWalkSec: 300,
         runSecs: [1200],
+        walkSecs: [],
+        cooldownWalkSec: 300,
+      },
+    },
+  },
+  // The starter's non-stop runs (Run9), see STARTER_NONSTOP_TEMPLATE_IDS:
+  // the ladder's last session's shape, one run between the two walks.
+  {
+    id: "run_nonstop_20",
+    name: "Run 20 min",
+    type: "easy",
+    icon: "person-standing",
+    description: "Walk 5 min, then run 20 min without a break",
+    estimatedDuration: 30,
+    config: {
+      targetDurationMinutes: 30,
+      runWalk: {
+        warmupWalkSec: 300,
+        runSecs: [1200],
+        walkSecs: [],
+        cooldownWalkSec: 300,
+      },
+    },
+  },
+  {
+    id: "run_nonstop_25",
+    name: "Run 25 min",
+    type: "easy",
+    icon: "person-standing",
+    description: "Walk 5 min, then run 25 min without a break",
+    estimatedDuration: 35,
+    config: {
+      targetDurationMinutes: 35,
+      runWalk: {
+        warmupWalkSec: 300,
+        runSecs: [1500],
+        walkSecs: [],
+        cooldownWalkSec: 300,
+      },
+    },
+  },
+  {
+    id: "run_nonstop_30",
+    name: "Run 30 min",
+    type: "easy",
+    icon: "person-standing",
+    description: "Walk 5 min, then run 30 min without a break",
+    estimatedDuration: 40,
+    config: {
+      targetDurationMinutes: 40,
+      runWalk: {
+        warmupWalkSec: 300,
+        runSecs: [1800],
         walkSecs: [],
         cooldownWalkSec: 300,
       },

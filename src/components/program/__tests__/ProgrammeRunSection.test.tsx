@@ -2384,3 +2384,87 @@ describe("ProgrammeRunSection — one run is up next", () => {
     expect(screen.getByRole("region", { name: /^Upcoming · / })).toBeVisible();
   });
 });
+
+/* Run9's starter goal on Train: its own card where a race plan has one,
+   the week in weeks of nine, and the Done with the next goal offered once.
+   The week is the clock's, as the rollover keeps it. */
+describe("ProgrammeRunSection — the starter goal (Run9)", () => {
+  const thisWeek = localWeekKey(new Date());
+  const dayOfThisWeek = (n: number) =>
+    localDateString(addLocalDays(parseLocalDate(thisWeek), n));
+  const starterProfile = (overrides: Partial<UserProfile> = {}) =>
+    makeProfile({
+      runMode: "starter",
+      raceGoal: null,
+      starterGoal: { startedOn: "2026-01-05" },
+      ...overrides,
+    } as Partial<UserProfile>);
+  const starterState = (stage: number) =>
+    makeProgramState(
+      [
+        makeRunDay({
+          id: `runday_${thisWeek}_2_run_walk_${stage}`,
+          templateId: `run_walk_${Math.min(stage, 6)}`,
+          date: dayOfThisWeek(1),
+          weekKey: thisWeek,
+        }),
+      ],
+      { runPlan: { mode: "starter", stage, stageWeekKey: thisWeek } }
+    );
+  const runOn = (day: string) => ({
+    id: `run-${day}`,
+    distance: 3000,
+    duration: 1800,
+    avgPace: 600,
+    elevationGain: 0,
+    calories: 200,
+    activityType: "easy",
+    completedAt: new Date(parseLocalDate(day).getTime() + 12 * 3600 * 1000),
+  });
+
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("shows the goal's week, with none of a race plan's card", () => {
+    renderSection(
+      { ...commonProps(), profile: starterProfile() },
+      starterState(2)
+    );
+    expect(
+      screen.getByText("Week 2 of 9 · about 8 weeks to go")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Adjust this week/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Race day/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Done")).not.toBeInTheDocument();
+  });
+
+  it("says Done, with a 5K offered, once the last week's runs are saved", () => {
+    mockRecentRuns = [runOn(dayOfThisWeek(0)), runOn(dayOfThisWeek(2))];
+    renderSection(
+      { ...commonProps(), profile: starterProfile() },
+      starterState(9)
+    );
+    expect(screen.getByText("Done")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Train for a 5K" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("You've done it.")).toBeInTheDocument();
+  });
+
+  it("still says Done once the rollover has finished the goal", () => {
+    renderSection(
+      {
+        ...commonProps(),
+        profile: starterProfile({
+          runMode: "freeform",
+          starterGoal: { startedOn: "2026-01-05", finishedOn: "2026-03-12" },
+        }),
+      },
+      makeProgramState([], { runPlan: undefined })
+    );
+    expect(screen.getByText("Done")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+    expect(screen.queryByText("Done")).not.toBeInTheDocument();
+  });
+});
