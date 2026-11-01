@@ -863,18 +863,20 @@ export function useProgram() {
         }
         const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
         let done = false;
-        let unsubscribe: (() => void) | undefined;
+        // Held in an object: the subscribe call can deliver, and finish,
+        // before it has returned the function that ends it.
+        const listener: { stop?: () => void } = {};
         const finish = (state: ProgramState | undefined) => {
           if (done) return;
           done = true;
           clearTimeout(timer);
-          unsubscribe?.();
+          listener.stop?.();
           // RAW, as the refetch above and the mirror keep it.
           if (state) setProgramState(state);
           resolve(state);
         };
         const timer = setTimeout(() => finish(undefined), timeoutMs);
-        unsubscribe = onSnapshot(
+        listener.stop = onSnapshot(
           ref,
           { includeMetadataChanges: true },
           (snap) => {
@@ -886,9 +888,7 @@ export function useProgram() {
           },
           () => finish(undefined)
         );
-        // A snapshot delivered during the subscribe call itself finished
-        // before `unsubscribe` was assigned.
-        if (done) unsubscribe();
+        if (done) listener.stop();
       }),
     [user]
   );
