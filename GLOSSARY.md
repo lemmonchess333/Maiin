@@ -36,11 +36,12 @@ The rule:
 
 - **runDay** — a prescribed running slot for a specific date. Carries `id` (stable across regenerates within a week), `date` (YYYY-MM-DD, local timezone), `weekKey` (the Monday that starts its week, local: `localWeekKey`), `templateId` (e.g. `easy_30`, `tempo_20`, `long_10k`, `10k_race`), `status`. Persisted in `programState.runDays[]`.
 - **programState** — Firestore doc at `users/{uid}/programState/current`. Holds the user's running + lifting prescriptions: `runDays`, `runPlan`, `workouts`, `weekHistory`, `weekNumber`, `splitType`.
-- **runMode** — `freeform | race_prep` (the `structured` value was retired in Run9a; legacy structured profiles migrate to freeform on load). User profile field; drives schedule generation. The user-facing model is two-state: **freeform substrate + optional race-goal overlay**. Freeform = no scheduled runDays; race_prep = goal-anchored periodisation toward a target date.
+- **runMode** — `freeform | race_prep | starter` (`starter` while the starter goal runs, Run9) (the `structured` value was retired in Run9a; legacy structured profiles migrate to freeform on load). User profile field; drives schedule generation. The user-facing model is two-state: **freeform substrate + optional race-goal overlay**. Freeform = no scheduled runDays; race_prep = goal-anchored periodisation toward a target date.
 - **runPlan** — sub-object on programState. Holds mode-specific config: `mode`, `raceGoal` (race_prep only), `currentWeek`, `totalWeeks`, `compressed` flag (when race date forces a sub-minimum plan), `phase` (currently only `"recovery"`), `recoveryEndDate`.
 - **recovery phase** — post-race state where all run slots emit `easy_30` templates (in a new runner's first weeks, that week's run-walk, and the build's runs after them). Triggered by completing the race-day runDay. Distance-scaled: 5K=1w, 10K=2w, half=3w, marathon=4w. Cleared by the recovery-exit effect 7d after `recoveryEndDate`, or by `skipRecoveryEarly` writer.
 - **New runner's first weeks** — Run20 (5): the six weeks after someone who answered "New to running" at setup began, counted from the day setup finished (`onboardingCompletedAt`, stamped by the server; `createdAt` on a profile without it) (`newRunnerUntil`, `src/features/program/newRunner.ts`). A race plan's weeks that start before then hold no tempo or intervals, and every run in them but the race is that week's run-walk. Six is a Tropos heuristic inside the evidence's four to six. After them, each run is held to the minutes the running has built to: run-walk's last 20, and five more each week (`newRunnerBuildMinutes`), taking the longest run of its kind that fits (for a tempo or intervals session, a smaller dose of itself, the deload's rungs), else an easy run, until the plan's own runs fit. A recovery week in or after them is the same. Free running plans no runs, so the first weeks reach a new runner only through a race plan.
 - **Run-walk** — a session of easy runs with walks between them, after a warm-up walk and before a walk to finish (NHS Couch to 5K; Galloway). Spelled run-walk, not run/walk or walk-run. Templates `run_walk_1` to `run_walk_6` ("Run-walk 1" to "Run-walk 6"), one for each of a new runner's first weeks (`RUN_WALK_TEMPLATE_IDS`), from Couch to 5K's week 1 to 20 minutes non-stop. Type `easy`, timed and never paced: no pace target, alert, pill, verdict, split or time announcement, or trend, and it never sets a benchmark, since its pace averages the runs and the walks. A method, not a fallback, so anyone can pick one from the day sheet.
+- **Starter goal** — Run9: "30 minutes without stopping", for running-only accounts and anyone new to running (`profile.starterGoal`, `runPlan.mode: "starter"`). Nine stages a week each, Run20's six run-walk weeks then 20, 25 and 30 minutes non-stop (`starterPlan.ts`); two saved runs make a week done and move the stage on, fewer repeat it, and a three-week gap steps it back one. It ends in Done (`finishedOn`), or when a race goal takes its place (`endedOn`, with the stage reached). Copy says "30 minutes without stopping", or "30 minutes" on setup's option.
 - **race_no_show** — runDay status assigned when race date passes by >3 days without a logged run. Recoverable — legal transition to `completed_exact` via the late-reconciliation flow.
 - **expired** _(proposed, not shipped — Q6)_ — runDay status assigned when PR-G's auto-rollover archives a planned slot the user didn't act on. Distinct from `skipped` (deliberate user action). Doesn't break streaks; analytics may choose to count or ignore.
 - **softlink** _(proposed, not shipped — Q7 revision)_ — derive runDay completion at render time from the existence of a saved run with matching date + template, rather than persisting `linkedRunId`. Matches reference-app convention; eliminates user-facing link/unlink UI.
@@ -386,26 +387,49 @@ decisions deliberately deviate from the consumer-app convention; the
 reasons are recorded here per the reference-app rule (a deviation needs an
 explicit, written justification).
 
-### Running is the flexible side; the lift programme is the structured anchor
+### Running is the flexible side: a goal with an end is the only plan
 
 Garmin (Daily Suggested Workouts), Strava (Instant Workouts, 2026), and NRC
 all offer a **no-race adaptive "today's run" layer** — structure without a
-race. Tropos deliberately does **not**: a race goal is the only running
-"plan," and between/without races the run side is freeform logging. The tab is
-kept from feeling barren with a DESCRIPTIVE cadence line ("you've run 3× in the
-last 4 weeks", "last run 2 days ago") — descriptive only, computed client-side,
-NEVER a weekly target or progress bar. A target would be structure, which the
-run side deliberately does not add (a round-2 stress test caught that an earlier
-"weekly target + progress" idea both rendered "0 of 0" — weeklyRunDaysTarget is
-hard-zeroed for freeform — and contradicted this very position).
+goal. Tropos deliberately does **not**: **free running is the substrate**,
+and a **goal is the only running "plan"**. Between and without goals the run
+side is free logging. The tab is kept from feeling barren with a DESCRIPTIVE
+cadence line ("you've run 3× in the last 4 weeks", "last run 2 days ago") —
+descriptive only, computed client-side, NEVER a weekly target or progress
+bar. A target would be structure, which free running deliberately does not
+add (a round-2 stress test caught that an earlier "weekly target + progress"
+idea both rendered "0 of 0" — weeklyRunDaysTarget is hard-zeroed for
+freeform — and contradicted this very position).
 
-Tropos-specific reason: Tropos is a **hybrid** app. The **lift programme is
-the structured anchor** that's always present and periodized; running is
-deliberately the flexible complement. A single-sport runner would need a
-no-race structured layer, but a Tropos user always has the lift programme
-providing structure, so duplicating that on the run side adds a concept
-without a Tropos payoff. (Do NOT re-derive this as a gap to "fix" — it's a
-chosen position. Revisit only if Tropos adds a run-only user segment.)
+**A goal has an end.** Run9's reopening (STATUS 2026-11-01) settled what a
+goal is, now that setup offers Running only and the lift programme is no
+longer always there to give structure:
+
+- **A distance by a date** (race prep), **at a race or on your own**
+  (`raceGoal.entry`). Without an event the last day is named for the
+  distance ("Your 10K"), not "Race day".
+- **The starter goal: 30 minutes without stopping**, for running-only
+  accounts and anyone new to running, and pre-selected for New to running in
+  setup. Nine stages, a week each: Run20's six run-walk weeks, then 20, 25
+  and 30 minutes non-stop. A week is done with two saved runs; otherwise it
+  repeats, so the end has no date and Train counts weeks ("Week 3 of 9 ·
+  about 7 weeks to go"). It ends in a plain Done and the next goal offered
+  once ("Train for a 5K: at a race or on your own"), never a plan made by
+  itself.
+
+There is still **no open-ended weekly structure and no mode toggle**: a
+runner who finishes or leaves a goal is back on free running. Reference
+apps (checked 2026-11-01): five of six have a beginner plan that ends (NRC
+Get Started, Runna, Garmin Coach's run/walk 5K, TrainingPeaks' Couch to 5K
+plans, NHS Couch to 5K); none rolls straight into a next plan, and only NHS
+documents a next step.
+
+Tropos-specific reason for no layer beyond goals: Tropos is a **hybrid**
+app, and for a hybrid the **lift programme is the structured anchor**;
+running is its flexible complement. For a runner without lifts, a goal with
+an end gives structure without a permanent plan to keep up. (Do NOT
+re-derive an open-ended running plan as a gap to "fix" — it's a chosen
+position, revisited once already, for the run-only segment.)
 Note: the original Run9 migration note wrongly cited "matches NRC/Strava" —
 Strava removed static plans in 2025-07; that rationale is retired.
 

@@ -42,7 +42,7 @@ export default function StarterDoneCard({
           onClick={() => {
             haptic();
             dismiss();
-            navigate("/settings/run-plan");
+            navigate("/settings/run-plan?goal=5k");
           }}
         >
           Train for a 5K

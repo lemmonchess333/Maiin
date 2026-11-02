@@ -3293,3 +3293,23 @@ build cannot replace a starter's plan.
       change in Settings → Programme, then open the app on a Monday.
       Passing: the save is refused with a message rather than saved, and
       the new build still shows the starter's week and stage afterwards.
+
+## The starter goal's ways in (Run9 STATUS 2026-11-01, S4)
+
+Setup starts someone new to running on 30 minutes without stopping, Train
+offers it to a free runner new to running, and Settings → Run plan lists it
+for runners and new runners. Setup sends the goal through
+`completeOnboarding` and Settings through `configurePlan`, which write it
+whole (`wholeStarterGoal`), from this release's Functions deploy.
+
+- [ ] **A new runner's first weeks on a phone.** On a TestFlight build after
+      Deploy production, set up a running-only account as New to running and
+      keep the 30-minute goal. Passing: Train reads "Week 1 of 9 · about 9
+      weeks to go" with that week's run-walks on the strip; after a week
+      with one run, the Monday after shows "This week again"; after a week
+      with two, Week 2.
+- [ ] **A new goal after a finished one starts clean.** On an account whose
+      starter goal is finished, choose 30 minutes without stopping again in
+      Settings → Run plan and save. Passing: Train shows Week 1 of 9 (a
+      merge that kept the old `finishedOn` would leave the account on free
+      running with Done showing).

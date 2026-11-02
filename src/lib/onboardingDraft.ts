@@ -113,7 +113,12 @@ export const DRAFT_RUN_FREQUENCIES = [
   "none",
   "new",
 ] as const;
-export const DRAFT_RUN_MODES = ["freeform", "structured", "race_prep"] as const;
+export const DRAFT_RUN_MODES = [
+  "freeform",
+  "structured",
+  "race_prep",
+  "starter",
+] as const;
 export const DRAFT_RECENT_RACE_DISTANCES = ["5k", "10k"] as const;
 export const DRAFT_UNITS_HEIGHT = ["cm", "ft"] as const;
 export const DRAFT_UNITS_WEIGHT = ["kg", "lbs"] as const;

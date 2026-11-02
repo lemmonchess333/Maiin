@@ -221,6 +221,18 @@ export const TABS = {
 
 export type TabName = (typeof TABS)[Exclude<keyof typeof TABS, "navigation">];
 
+/** Run9's starter goal: setup's option, and its Done on Home and Train
+ *  (`StarterDoneCard`). */
+export const STARTER = {
+  setupOption: "30 minutes",
+  goal: "30 minutes without stopping",
+  done: "Done",
+  offer: "Train for a 5K",
+  notNow: "Not now",
+  /** Train's starter card once this week's runs are in. */
+  weekDone: "This week is done. The next one starts on Monday.",
+} as const;
+
 /**
  * An exercise's line on Train (`ExerciseRowSummary`), as a person reads it:
  * "3 sets × 5 reps · 100 kg", "3 sets × 8–12 reps", "3 sets × 30s", and

@@ -2,7 +2,11 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { wholeRaceGoal, raceIdentityIsStale } = require("../lib/raceGoalWrite");
+const {
+  wholeRaceGoal,
+  wholeStarterGoal,
+  raceIdentityIsStale,
+} = require("../lib/raceGoalWrite");
 
 const DELETE = Symbol("delete");
 
@@ -60,5 +64,33 @@ describe("raceIdentityIsStale", () => {
   it("has nothing to drop when no chip is shown", () => {
     expect(raceIdentityIsStale(null, null)).toBe(false);
     expect(raceIdentityIsStale(undefined, linked)).toBe(false);
+  });
+});
+
+describe("wholeStarterGoal", () => {
+  const DEL = Symbol("delete");
+
+  it("deletes a finished or ended goal's keys when a new goal begins", () => {
+    expect(
+      wholeStarterGoal(
+        { startedOn: "2026-11-02" },
+        { startedOn: "2026-08-03", finishedOn: "2026-10-08" },
+        DEL
+      )
+    ).toEqual({ startedOn: "2026-11-02", finishedOn: DEL });
+    expect(
+      wholeStarterGoal(
+        { startedOn: "2026-11-02" },
+        { startedOn: "2026-08-03", endedOn: "2026-09-14", stage: 4 },
+        DEL
+      )
+    ).toEqual({ startedOn: "2026-11-02", endedOn: DEL, stage: DEL });
+  });
+
+  it("keeps the goal as sent when nothing was stored, and passes a clear through", () => {
+    expect(wholeStarterGoal({ startedOn: "2026-11-02" }, undefined, DEL)).toEqual(
+      { startedOn: "2026-11-02" }
+    );
+    expect(wholeStarterGoal(null, { startedOn: "2026-08-03" }, DEL)).toBeNull();
   });
 });

@@ -8,6 +8,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { AuthUidContext } from "@/lib/auth";
 import StarterDoneCard from "../StarterDoneCard";
+import { STARTER } from "@/test/journeyScreens";
 
 function withUid(uid: string) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -26,8 +27,15 @@ describe("StarterDoneCard", () => {
     render(<StarterDoneCard startedOn="2026-09-07" navigate={vi.fn()} />, {
       wrapper: withUid("u1"),
     });
-    expect(screen.getByText("Done")).toBeInTheDocument();
-    expect(screen.getByText("30 minutes without stopping")).toBeInTheDocument();
+    // The names the journeys find (src/test/journeyScreens.ts).
+    expect(screen.getByText(STARTER.done)).toBeInTheDocument();
+    expect(screen.getByText(STARTER.goal)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: STARTER.offer })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: STARTER.notNow })
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/train for a 5K, at a race or on your own/i)
     ).toBeInTheDocument();
@@ -40,7 +48,7 @@ describe("StarterDoneCard", () => {
       { wrapper: withUid("u1") }
     );
     fireEvent.click(screen.getByRole("button", { name: "Train for a 5K" }));
-    expect(navigate).toHaveBeenCalledWith("/settings/run-plan");
+    expect(navigate).toHaveBeenCalledWith("/settings/run-plan?goal=5k");
     expect(screen.queryByText("Done")).not.toBeInTheDocument();
     unmount();
     // Home and Train read the same answer.
