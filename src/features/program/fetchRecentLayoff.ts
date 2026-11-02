@@ -48,37 +48,37 @@ export function datedRuns(saved: readonly SavedRun[]): DatedRun[] {
 
 /**
  * What the plan reads of the recent runs: how long the runner has been away,
- * and the days the runs fall on, which a starter week is weighed by
- * (`nextStarterStage`). `runDays` is null when the runs could not be read,
- * so a starter's stage holds rather than read a week as empty.
+ * and the runs themselves, dated. A starter week is weighed by the days they
+ * fall on (`nextStarterStage`), and a running starting point climbs from
+ * what they say was done (`runningClimb`). `runs` is null when they could
+ * not be read, so a starter's stage holds rather than read a week as empty,
+ * and a start climbs by the calendar.
  */
 export interface RecentRuns {
   layoff: LayoffClass;
-  runDays: string[] | null;
+  runs: DatedRun[] | null;
 }
 
 /**
  * The recent runs (`RECENT_RUN_SCAN_LIMIT` of them), read once. A failed
- * read settles as no layoff and no days known, never as an error (see
+ * read settles as no layoff and no runs known, never as an error (see
  * `fetchRecentLayoff` for why "none" is the safe direction).
  */
 export async function fetchRecentRuns(
   uid: string | null | undefined,
   todayKey: string
 ): Promise<RecentRuns> {
-  if (!uid) return { layoff: "none", runDays: null };
+  if (!uid) return { layoff: "none", runs: null };
   try {
     // Through the saved-run reader: ordered by `completedAt`, which every
     // saved run has (none has a `createdAt`, so ordering by that read none),
     // dated by the run's Lift3 day, and including runs saved on this phone.
     const saved = await fetchSavedRuns(uid, { latest: RECENT_RUN_SCAN_LIMIT });
-    return {
-      layoff: layoffFromRuns(datedRuns(saved), todayKey),
-      runDays: saved.map((run) => run.day).filter(Boolean),
-    };
+    const runs = datedRuns(saved);
+    return { layoff: layoffFromRuns(runs, todayKey), runs };
   } catch (err) {
     logger.warn("[layoff] recent-run read failed; treating as no layoff", err);
-    return { layoff: "none", runDays: null };
+    return { layoff: "none", runs: null };
   }
 }
 

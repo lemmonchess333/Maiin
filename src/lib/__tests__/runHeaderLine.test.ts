@@ -216,3 +216,33 @@ describe("runHeaderLine — fed by the resolver (the R4 regression)", () => {
     ).toBe("Race prep · Set your race goal");
   });
 });
+
+/* D (owner, 1 November 2026): set up on a Sunday evening, Train said "Week
+   1/26" of a plan whose first week was the next day's. A plan made partway
+   through a week says when its first week starts until it does. */
+describe("runHeaderLine — a plan's lead-in week", () => {
+  const raceGoal = { distance: "marathon", targetDate: "2027-04-24" };
+  it("says when the first week starts, then counts the race's weeks", () => {
+    expect(
+      runHeaderLine({
+        runMode: "race_prep",
+        raceGoal,
+        currentWeek: 0,
+        totalWeeks: 25,
+        leadInWeek: "2026-10-26",
+        todayKey: "2026-11-01",
+        runsTarget: 6,
+      })
+    ).toBe("Race prep · Marathon · Starts Mon 2 Nov");
+    expect(
+      runHeaderLine({
+        runMode: "race_prep",
+        raceGoal,
+        currentWeek: 0,
+        totalWeeks: 25,
+        todayKey: "2026-11-02",
+        runsTarget: 6,
+      })
+    ).toBe("Race prep · Marathon · Week 1/25");
+  });
+});

@@ -26,6 +26,8 @@
  */
 import { raceDistanceLabel } from "@/lib/runProgrammeViewModel";
 import { racePlanWeek, racePlanWeekLabel } from "@/lib/racePlanWeek";
+import { addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import type { RaceGoal } from "@/features/program/runModeResolution";
 import type { UserProfile } from "@/lib/auth";
 
@@ -56,6 +58,8 @@ export interface RunHeaderLineArgs {
   recoveryEndDate?: string | null;
   /** Local "YYYY-MM-DD": the week count depends on race day being past. */
   todayKey: string;
+  /** Plan-scoped: the plan's lead-in week (`RunPlan.leadInWeek`). */
+  leadInWeek?: string | null;
   /** Weekly run target, for the structured line. */
   runsTarget: number;
 }
@@ -68,6 +72,7 @@ export function runHeaderLine({
   phase,
   recoveryEndDate,
   todayKey,
+  leadInWeek,
   runsTarget,
 }: RunHeaderLineArgs): string {
   if (runMode === "race_prep") {
@@ -79,6 +84,12 @@ export function runHeaderLine({
     // Week counts come from the PLAN, so they are absent in exactly the
     // window the bug used to mangle. Falling back to the distance-only line
     // is the honest reading: the race is known, the plan is not built yet.
+    // A plan made partway through a week counts its weeks from the Monday
+    // after; until then the line says when its first week starts.
+    if (leadInWeek)
+      return `Race prep · ${dist} · Starts ${formatShortWeekdayDayMonth(
+        addLocalDays(parseLocalDate(leadInWeek), 7)
+      )}`;
     // Past race day the count is the recovery's, or none (`racePlanWeek`),
     // as on the run summary.
     const week = racePlanWeek({

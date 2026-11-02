@@ -294,7 +294,7 @@ describe("a race plan's coming weeks", () => {
     expect(weeks[0].weekKey).toBe(shift(MONDAY, 7));
     expect(weeks.at(-1)!.holds.race?.name).toBe("10K Race");
     const rolled = onDay(MONDAY, () =>
-      rollRunWeeks(stale.state, stale.profile, MONDAY, "none")
+      rollRunWeeks(stale.state, stale.profile, MONDAY, "none", null)
     );
     expect(rolled.weeks).toBe(1);
     expect(outline({ ...stale, state: rolled.state })).toEqual(weeks);
@@ -307,7 +307,7 @@ describe("a race plan's coming weeks", () => {
     const before = outline(plan);
     const next = shift(MONDAY, 7);
     const moved = onDay(TODAY, () =>
-      rollRunWeeks(plan.state, plan.profile, next, "none")
+      rollRunWeeks(plan.state, plan.profile, next, "none", null)
     );
     expect(moved.state.runDays?.[0]?.weekKey).toBe(next);
     expect(outline({ ...plan, state: moved.state })).toEqual(before);

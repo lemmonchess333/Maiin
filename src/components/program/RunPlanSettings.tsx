@@ -8,8 +8,15 @@ import {
   isRunningBaseline,
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
+import {
+  baselineFromRecentRunning,
+  blankRunningStart,
+} from "@/features/program/runningStartDraft";
 import { isNonRaceGoal, type NonRaceGoal } from "@/lib/nonRaceGoal";
 import RunningBaselineSettings from "@/components/run/RunningBaselineSettings";
+import { useRunningStats } from "@/hooks/useRunningStats";
+import { datedRuns } from "@/features/program/fetchRecentLayoff";
+import { recentRunningContext } from "@/lib/recentRunningContext";
 import NonRaceGoalSettings from "@/components/run/NonRaceGoalSettings";
 import {
   normalizeRunTimeLimits,
@@ -312,6 +319,9 @@ export default function RunPlanSettings({
         ? storedDraft.runningBaseline
         : saved.runningBaseline
     );
+  /* The person took the starting point away: the plan builds as it would
+     for anyone, and none is filled in again. */
+  const [baselineRemoved, setBaselineRemoved] = useState(false);
   const [nonRaceGoal, setNonRaceGoal] = useState<NonRaceGoal | null>(
     storedDraft?.nonRaceGoal !== undefined
       ? storedDraft.nonRaceGoal
@@ -322,10 +332,75 @@ export default function RunPlanSettings({
   );
   /* The leg trim is a lifting question: asked only of someone who lifts. */
   const lifts = (profile.weeklyWorkoutsTarget ?? 0) > 0;
+  const today = useLocalDateKey();
+
+  /* R5: a race plan set up or changed with no starting point starts from
+     the person's own running: the runs recorded here in the last four
+     weeks, or, with none, the two numbers they give. */
+  const {
+    runs: recentRuns,
+    loading: recentLoading,
+    failed: recentFailed,
+  } = useRunningStats(28);
+  const startExperience =
+    profile.runFrequency === "regular" ? "regular" : "building";
+  const recentStart = useMemo(
+    () =>
+      recentLoading || recentFailed
+        ? null
+        : baselineFromRecentRunning(
+            recentRunningContext(recentRuns, new Date()),
+            today,
+            startExperience
+          ),
+    [recentRuns, recentLoading, recentFailed, today, startExperience]
+  );
+  /* The same runs, for the plan to climb from what was done and to size
+     its long runs at this runner's pace. */
+  const recentRunsDone = useMemo(
+    () => (recentLoading || recentFailed ? null : datedRuns(recentRuns)),
+    [recentRuns, recentLoading, recentFailed]
+  );
+  const planChanged =
+    runMode !== saved.runMode ||
+    (runMode === "race_prep" &&
+      (raceDistance !== saved.raceDistance ||
+        raceTargetDate !== saved.raceTargetDate ||
+        raceEventName.trim() !== saved.raceEventName ||
+        (raceTimeParsed ?? 0) !== saved.raceTargetTimeS ||
+        raceEventSpaceId !== saved.raceEventSpaceId ||
+        raceEntry !== saved.raceEntry ||
+        weeklyRunDays !== saved.weeklyRunDays ||
+        runVolume !== saved.runVolume ||
+        runDifficulty !== saved.runDifficulty ||
+        (lifts && raceLegTrim !== saved.raceLegTrim) ||
+        runTimeLimits.sessionMinutes !== saved.runTimeLimits.sessionMinutes ||
+        runTimeLimits.longRunMinutes !== saved.runTimeLimits.longRunMinutes));
+  const fillsStart =
+    runMode === "race_prep" &&
+    planChanged &&
+    runningBaseline === null &&
+    !baselineRemoved &&
+    !recentLoading;
+  /** The starting point the section shows: the person's own, else the one
+   *  filled in from their recorded runs, else the questions, blank. */
+  const shownBaseline: RunningBaseline | null =
+    runningBaseline ??
+    (fillsStart
+      ? (recentStart ?? blankRunningStart(startExperience, today))
+      : null);
+  /** What the plan starts from and the save keeps: questions left blank
+   *  are no starting point, and the plan builds as it would for anyone. */
+  const draftBaseline: RunningBaseline | null =
+    shownBaseline &&
+    !shownBaseline.weeklyMinutes &&
+    !shownBaseline.longestRunMinutes
+      ? null
+      : shownBaseline;
   const baselineInvalid =
     runMode === "race_prep" &&
-    runningBaseline !== null &&
-    !isRunningBaseline(runningBaseline);
+    draftBaseline !== null &&
+    !isRunningBaseline(draftBaseline);
   const goalInvalid =
     runMode === "freeform" &&
     nonRaceGoal !== null &&
@@ -336,7 +411,6 @@ export default function RunPlanSettings({
      is the addressable thing; the goal time has its own id. */
   const raceGoalRef = useRef<HTMLDivElement>(null);
 
-  const today = useLocalDateKey();
   const liftDays = profile.weeklyWorkoutsTarget ?? 4;
   // Run20 (5): a new runner's first weeks, for the preview and the save.
   const newRunnerUntil = profileNewRunnerUntil(profile);
@@ -353,12 +427,14 @@ export default function RunPlanSettings({
         // Pgm6: preview with the same knobs the save will commit.
         tuning: { volume: runVolume, difficulty: runDifficulty },
         runTimeLimits,
-        runningBaseline,
+        runningBaseline: draftBaseline,
         easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
         existingState: programState,
         recentLayoff,
         newRunnerUntil,
         weekSchedule: profile.weekSchedule,
+        distanceUnit: resolveDistanceUnit(profile.preferredDistanceUnit),
+        recentRuns: recentRunsDone,
       }),
     [
       raceDistance,
@@ -369,12 +445,14 @@ export default function RunPlanSettings({
       runVolume,
       runDifficulty,
       runTimeLimits,
-      runningBaseline,
+      draftBaseline,
       profile.runFitness,
       programState,
       recentLayoff,
       newRunnerUntil,
       profile.weekSchedule,
+      profile.preferredDistanceUnit,
+      recentRunsDone,
     ]
   );
 
@@ -383,24 +461,11 @@ export default function RunPlanSettings({
 
   const dirty =
     (runMode === "race_prep" &&
-      JSON.stringify(runningBaseline) !==
+      JSON.stringify(draftBaseline) !==
         JSON.stringify(saved.runningBaseline)) ||
     (runMode === "freeform" &&
       JSON.stringify(nonRaceGoal) !== JSON.stringify(saved.nonRaceGoal)) ||
-    runMode !== saved.runMode ||
-    (runMode === "race_prep" &&
-      (raceDistance !== saved.raceDistance ||
-        raceTargetDate !== saved.raceTargetDate ||
-        raceEventName.trim() !== saved.raceEventName ||
-        (raceTimeParsed ?? 0) !== saved.raceTargetTimeS ||
-        raceEventSpaceId !== saved.raceEventSpaceId ||
-        raceEntry !== saved.raceEntry ||
-        weeklyRunDays !== saved.weeklyRunDays ||
-        runVolume !== saved.runVolume ||
-        runDifficulty !== saved.runDifficulty ||
-        (lifts && raceLegTrim !== saved.raceLegTrim) ||
-        runTimeLimits.sessionMinutes !== saved.runTimeLimits.sessionMinutes ||
-        runTimeLimits.longRunMinutes !== saved.runTimeLimits.longRunMinutes));
+    planChanged;
 
   /* Persist the draft on every change, so leaving the page keeps it.
      Keyed off `dirty` in BOTH directions: a draft that matches the saved
@@ -519,13 +584,15 @@ export default function RunPlanSettings({
         weeklyRunDays,
         runTuning: { volume: runVolume, difficulty: runDifficulty },
         recentLayoff,
+        recentRuns: recentRunsDone,
         newRunnerUntil,
         weekSchedule: profile.weekSchedule,
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,
         runTimeLimits,
+        // What the editor showed is what is saved (R5).
         runningBaseline:
-          runMode === "race_prep" ? runningBaseline : saved.runningBaseline,
+          runMode === "race_prep" ? draftBaseline : saved.runningBaseline,
         ...(runMode === "race_prep"
           ? {
               raceGoal: {
@@ -849,9 +916,19 @@ export default function RunPlanSettings({
       {runMode === "race_prep" && (
         <div id="running-starting-point">
           <RunningBaselineSettings
-            value={runningBaseline}
-            onChange={setRunningBaseline}
+            value={shownBaseline}
+            onChange={(next) => {
+              setBaselineRemoved(next === null);
+              setRunningBaseline(next);
+            }}
             preview={plannerState}
+            fromRecent={
+              runningBaseline === null &&
+              recentStart !== null &&
+              shownBaseline === recentStart
+            }
+            recentStart={recentStart}
+            defaultExperience={startExperience}
           />
         </div>
       )}

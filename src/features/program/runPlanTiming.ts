@@ -1,9 +1,34 @@
 /** Programme timing and display metadata. No session generation imports. */
 import {
+  addLocalDays,
+  localWeekKey,
   parseLocalDate,
   startOfLocalWeek,
   weekPosition,
 } from "@/lib/dateHelpers";
+
+/**
+ * Whether a plan made on `date` starts partway through its week: Thursday to
+ * Sunday. Monday to Wednesday still leaves most of a week to train in, so a
+ * plan made then counts that week as its first. A plan made later counts its
+ * first week from the Monday after, and the days left before it are a
+ * lead-in. The lifts already start a fresh plan this way (an owner call,
+ * `firstLiftWeekKey`); the runs follow the same day so the two sides agree on
+ * which week is the first.
+ */
+export function startsPartway(date: string): boolean {
+  // weekPosition: 0 Monday … 6 Sunday; Thursday is 3.
+  return weekPosition(parseLocalDate(date).getDay()) >= 3;
+}
+
+/** The Monday of the first full week of a plan made on `date`: its own week
+ *  from Monday to Wednesday, the next one from Thursday (`startsPartway`). */
+export function firstFullWeekKey(date: string): string {
+  const day = parseLocalDate(date);
+  return startsPartway(date)
+    ? localWeekKey(addLocalDays(day, 7))
+    : localWeekKey(day);
+}
 interface RaceConfig {
   peakLongKm: number;
   baseLongKm: number;
@@ -173,10 +198,9 @@ export function calendarDaysBetween(a: Date, b: Date): number {
  *  "healthy" with quality sessions in it. The race's weekday is fixed for
  *  the life of the plan, so this is the same on creation and on every
  *  carried regen — which is what lets it be derived rather than persisted.
- *  The declaration-side counterpart (a plan declared on the week's LAST day
- *  counts a week already behind the runner) is deliberately not corrected:
- *  it is true only at creation, a carry could not reproduce it, and the
- *  extra week unlocks nothing (`racePlanSafetySweep` pins that). */
+ *  The declaration side is the lead-in's: a plan declared from a Thursday
+ *  counts its weeks from the Monday after (`startsPartway`), so the part
+ *  week it was declared in is not one of them. */
 export function trainingWeeksOf(blockWeeks: number, target: Date): number {
   const raceOnFirstDay = weekPosition(target.getDay()) === 0;
   return Math.max(

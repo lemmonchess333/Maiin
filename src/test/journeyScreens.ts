@@ -37,6 +37,10 @@ export const SETUP = {
   /** Run9: asked of every distance goal, nothing chosen. */
   raceEntry: "Race or on your own",
   raceEntered: "A race I've entered",
+  /** The running a race plan starts from (R5), asked of someone who runs
+   *  already. */
+  weekMinutes: "Minutes a week",
+  longestRun: "Longest run, min",
   legTrim: "Lighten leg sessions while your runs build",
   noInjuries: "None",
   weight: "Weight (kg)",

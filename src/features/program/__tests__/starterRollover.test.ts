@@ -98,7 +98,10 @@ function starterState(stage: number, weekKey: string): ProgramState {
 }
 
 /** Tuesday and Thursday of the week starting `weekKey`. */
-const twoRuns = (weekKey: string) => [shift(weekKey, 1), shift(weekKey, 3)];
+/** Saved runs on these days, as the recent-runs read dates them. */
+const ranOn = (...days: string[]) => days.map((date) => ({ date }));
+const twoRuns = (weekKey: string) =>
+  ranOn(shift(weekKey, 1), shift(weekKey, 3));
 
 describe("a starter week moving on", () => {
   it("moves the stage on once two runs were saved in the week", () => {
@@ -129,7 +132,7 @@ describe("a starter week moving on", () => {
       { weekStart: week(1), date: week(1) },
       profile,
       "none",
-      [shift(W0, 2)]
+      ranOn(shift(W0, 2))
     );
     expect(next.runPlan?.stage).toBe(3);
     expect(next.runPlan?.stageWeekKey).toBe(week(1));
@@ -158,7 +161,7 @@ describe("a starter week moving on", () => {
       profile,
       "none",
       // A run outside the plan, on Sunday, counts as any other.
-      [shift(W0, 3), shift(W0, 1), shift(W0, 6)]
+      ranOn(shift(W0, 3), shift(W0, 1), shift(W0, 6))
     );
     expect(next.runPlan).toBeUndefined();
     expect(next.runDays).toEqual([]);
@@ -193,7 +196,7 @@ describe("rolling a starter plan over", () => {
 
   it("weighs each week of a gap, stepping back one as it reaches three weeks", () => {
     // Runs in the week before W0, then none for four weeks.
-    const before = [shift(W0, -6), shift(W0, -4)];
+    const before = ranOn(shift(W0, -6), shift(W0, -4));
     const today = week(4);
     const rolled = onDay(today, () =>
       rollRunWeeks(starterState(5, W0), profile, today, "none", before)
