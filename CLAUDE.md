@@ -543,6 +543,7 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
 - **Pages:** src/pages/ — route-level, lazy-loaded
 - **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards
   (LiftCTACard / RunCTACard / RestDayCard — Start on the card, no pills) →
+  StarterDoneCard (the starter goal reached: Done, and a 5K offered once) →
   FirstWeekCard (a new account's first seven days; for a v2 account one
   or two rows, the first workout and the first run) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by

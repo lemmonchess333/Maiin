@@ -1140,6 +1140,10 @@ function ProgramInner() {
         ? programState.runPlan.leadInWeek
         : null,
     runsTarget,
+    starterStage:
+      programState?.runPlan?.mode === "starter"
+        ? programState.runPlan.stage
+        : null,
   });
 
   const handleAdvanceWeek = async () => {

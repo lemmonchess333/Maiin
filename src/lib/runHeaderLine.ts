@@ -30,6 +30,8 @@ import { addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
 import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import type { RaceGoal } from "@/features/program/runModeResolution";
 import type { UserProfile } from "@/lib/auth";
+import { STARTER_GOAL_NAME } from "@/features/program/starterProgress";
+import { STARTER_STAGES } from "@/features/program/starterPlan";
 
 export interface RunHeaderLineArgs {
   /**
@@ -62,6 +64,8 @@ export interface RunHeaderLineArgs {
   leadInWeek?: string | null;
   /** Weekly run target, for the structured line. */
   runsTarget: number;
+  /** Plan-scoped: a starter plan's stage (Run9's starter goal). */
+  starterStage?: number | null;
 }
 
 export function runHeaderLine({
@@ -74,7 +78,14 @@ export function runHeaderLine({
   todayKey,
   leadInWeek,
   runsTarget,
+  starterStage,
 }: RunHeaderLineArgs): string {
+  if (runMode === "starter") {
+    // In weeks of the nine, as the goal's card says; the end moves.
+    return starterStage
+      ? `${STARTER_GOAL_NAME} · Week ${starterStage} of ${STARTER_STAGES}`
+      : STARTER_GOAL_NAME;
+  }
   if (runMode === "race_prep") {
     // Reachable only when the user genuinely has no goal — mode is race_prep
     // but nothing is set anywhere. With the reconciled goal this is a real
