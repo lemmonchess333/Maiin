@@ -174,3 +174,20 @@ it("choosing Together from Feed says so in the address", async () => {
   expect(await screen.findByText("Together showing")).toBeInTheDocument();
   expect(screen.getByTestId("where")).toHaveTextContent("?tab=together");
 });
+
+/* Not the opening tab, but the same page: its last card scrolls clear of
+   the floating tab bar, on the token Food pins (the tab bar's height, the
+   home indicator's inset and 1rem). */
+it("pads its foot by the tab bar's clearance", async () => {
+  const { container } = render(
+    <MemoryRouter initialEntries={["/social"]}>
+      <Social />
+    </MemoryRouter>
+  );
+  await screen.findByText("Together showing");
+  const root = container.firstElementChild as HTMLElement;
+  expect(root).toContainElement(
+    screen.getByRole("heading", { name: "Social" })
+  );
+  expect(root.style.paddingBottom).toBe("var(--page-bottom-pad)");
+});

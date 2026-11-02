@@ -1419,7 +1419,9 @@ describe("RunPlanSettings — the 30-minute goal", () => {
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
-    fireEvent.click(await screen.findByRole("button", { name: /Save .*plan/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
     await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
     const payload = sentPayload();
     expect(payload.profileUpdates.runMode).toBe("race_prep");

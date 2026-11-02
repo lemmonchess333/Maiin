@@ -63,6 +63,12 @@ export interface Challenge {
    *  per-user tier ladder. The `tiers` field is still set to a stub
    *  (gold = collectiveTarget) so existing sync logic doesn't break. */
   collectiveTarget?: number;
+  /** A community goal's total: every saved run in its window, joined or
+   *  not, in whole metres. Server-written (functions/lib/communityGoal.js);
+   *  read through `collectiveTotal`. */
+  collectiveMeters?: number;
+  /** How many people have a run in that total. Server-written. */
+  collectiveRunners?: number;
 }
 
 export interface ChallengeParticipant {
@@ -177,15 +183,6 @@ export function challengeLocalEndMs(
   const endKey = boundaryDayKey(endDate);
   if (!endKey) return null;
   return parseLocalDate(endKey).getTime();
-}
-
-/**
- * The collapsed entry to the not-joined challenges: how many more there
- * are, in plain words. No deadline: the monthly challenges all end on the
- * same day, and the featured card above already says when.
- */
-export function moreChallengesLabel(count: number): string {
-  return `See ${count} more ${count === 1 ? "challenge" : "challenges"}`;
 }
 
 /**

@@ -8,7 +8,7 @@
  *
  * The screens: Home, Train, History's five pages (and its charts again
  * on a Monday), Food and its manual entry and edit sheets, Social's
- * Together tab (again with its other challenges opened) and its feed
+ * Together tab (again with a challenge's sheet open) and its feed
  * on Following and on Explore, a Space, a profile and its followers and
  * following, Settings and every section of it, Train's exercise menu, a
  * workout, a run before, during and after, the exercise, run and workout
@@ -522,14 +522,17 @@ test.describe("large text", () => {
       await settleCommunity(page);
       await measure(page, "social-together", width, found);
 
-      // The challenges behind "See N more", opened into their compact rows.
+      // A challenge row, opened into its sheet.
       await page
-        .getByRole("button", { name: /^See \d+ more challenges?$/ })
+        .getByRole("region", { name: "Community" })
+        .locator('li > button[aria-haspopup="dialog"]')
+        .first()
         .click();
       await page
-        .getByRole("heading", { name: "Available" })
+        .getByRole("dialog")
         .waitFor({ state: "visible", timeout: 10_000 });
-      await measure(page, "social-together-more", width, found);
+      await measure(page, "social-together-challenge", width, found);
+      await page.keyboard.press("Escape");
 
       /* The Feed on Following, where Social opens for anyone who follows
          someone: its posts or its empty state, then the week card under

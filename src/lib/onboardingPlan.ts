@@ -40,8 +40,7 @@ export function buildOnboardingPlan(
   currentDate: string,
   runningPreferences?: {
     runningBaseline?:
-      | import("@/features/program/runningBaseline").RunningBaseline
-      | null;
+      import("@/features/program/runningBaseline").RunningBaseline | null;
     runTimeLimits?: RunTimeLimits | null;
     runFitness?: RunFitnessInput | null;
   }

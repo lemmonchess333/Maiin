@@ -88,6 +88,9 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // owned badge state — century_km / tonnage_100). Same enumerate-not-recurse
   // reason as above: these docs orphan under a deleted user without an entry.
   "lifetime",
+  // The community goal's per-run credits and per-goal tallies
+  // (lib/communityGoal.js). Server-owned, like `lifetime`.
+  "communityGoal",
   "dailyNutrition",
   "checkins",
   "trainingBlocks",

@@ -88,9 +88,9 @@ describe("wholeStarterGoal", () => {
   });
 
   it("keeps the goal as sent when nothing was stored, and passes a clear through", () => {
-    expect(wholeStarterGoal({ startedOn: "2026-11-02" }, undefined, DEL)).toEqual(
-      { startedOn: "2026-11-02" }
-    );
+    expect(
+      wholeStarterGoal({ startedOn: "2026-11-02" }, undefined, DEL)
+    ).toEqual({ startedOn: "2026-11-02" });
     expect(wholeStarterGoal(null, { startedOn: "2026-08-03" }, DEL)).toBeNull();
   });
 });

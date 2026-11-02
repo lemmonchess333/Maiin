@@ -115,13 +115,13 @@ export const LAUNCH_TEMPLATES: Array<{
   {
     type: "race",
     label: "Race Journey",
-    description: "Training for the same event — plan consistency and support.",
+    description: "Training for the same event, keeping each other to the plan.",
     namePlaceholder: "e.g. Spring half marathon",
   },
   {
     type: "nutrition_consistency",
     label: "Consistency Reset",
-    description: "Support for logging consistently — never calories or meals.",
+    description: "Support for logging consistently. Never calories or meals.",
     namePlaceholder: "e.g. Back to daily logging",
   },
 ];

@@ -375,6 +375,22 @@
       "testCoverageStatus": "planned"
     },
     {
+      "key": "userCommunityGoalCredits",
+      "domain": "A_private",
+      "type": "userSubcollection",
+      "path": "users/{uid}/communityGoal",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "healthFitness",
+      "recordPurpose": "private",
+      "strategy": "deleteSubcollection",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "The community goal's credits (functions/lib/communityGoal.js): one per counted run (run id, its day and metres) and one tally per goal. Server-written only; rules deny every client read and write. In USER_SUBCOLLECTIONS. The goal's own total and runner count carry no one's id and are left as they stand.",
+      "testCoverageKey": "smoke::userSubcollections::communityGoal",
+      "testCoverageStatus": "planned"
+    },
+    {
       "key": "userEngineLock",
       "domain": "F_usage",
       "type": "userSubcollection",

@@ -232,6 +232,10 @@ export default function Social() {
     <PageShell
       {...pullBindProps}
       title="Social"
+      /* The canonical --page-bottom-pad token (tab-bar height + the home
+         indicator's inset + 1rem), as Food pins it, so the last card on
+         Together or the Feed scrolls clear of the floating tab bar. */
+      style={{ paddingBottom: "var(--page-bottom-pad)" }}
       actions={
         <>
           <IconButton

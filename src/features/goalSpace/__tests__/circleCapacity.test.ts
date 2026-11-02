@@ -9,7 +9,7 @@
  * "2 members" for the circle whose sheet said "2 of 8 members".
  */
 import { describe, it, expect } from "vitest";
-import { isFull, memberLine } from "../circleCapacity";
+import { isFull, leadsWithInvite, memberLine } from "../circleCapacity";
 
 describe("circle capacity", () => {
   it("counts members without a ratio", () => {
@@ -43,5 +43,25 @@ describe("circle capacity", () => {
     // on parse), and the server compares against the stored value.
     expect(isFull({ memberCount: 4, maxMembers: 4 })).toBe(true);
     expect(isFull({ memberCount: 4, maxMembers: 8 })).toBe(false);
+  });
+});
+
+describe("leadsWithInvite", () => {
+  const space = (memberCount: number) => ({ memberCount, maxMembers: 8 });
+
+  it("is a circle of one its owner can invite to", () => {
+    expect(leadsWithInvite({ space: space(1), inviteCode: "K7P49M2H" })).toBe(
+      true
+    );
+  });
+
+  it("is not once someone has joined", () => {
+    expect(leadsWithInvite({ space: space(2), inviteCode: "K7P49M2H" })).toBe(
+      false
+    );
+  });
+
+  it("is not for a member left alone without the code", () => {
+    expect(leadsWithInvite({ space: space(1), inviteCode: null })).toBe(false);
   });
 });
