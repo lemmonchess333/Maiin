@@ -20,7 +20,7 @@ import { getApps, initializeApp } from "firebase-admin/app";
 import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { createRequire } from "node:module";
-import { onRealClock } from "./nodeClock";
+import { onRealClock, realNow } from "./nodeClock";
 
 const require = createRequire(import.meta.url);
 
@@ -105,6 +105,24 @@ async function verifiedCaller(bearer: string): Promise<DecodedIdToken> {
   }
 }
 
+/**
+ * `completeOnboarding` stamps the setup with the server's time, which the
+ * emulator reads from the real clock, not this process's. In production the
+ * two are the same day. A journey runs days ahead, a whole week on a Monday
+ * (`nextWeekday`), and the first-week card counts its seven days from that
+ * stamp (`firstWeek.ts`), so a stamp left on the real day hid the card on
+ * every Monday. A stamp written in this call (within the last minute, by the
+ * real clock) moves to the journey's moment; a retry's older stamp stays, as
+ * the handler keeps it.
+ */
+async function stampSetupOnJourneyDay(uid: string): Promise<void> {
+  const ref = emulatorAdmin().db.doc(`users/${uid}`);
+  const stamp = (await ref.get()).get("onboardingCompletedAt");
+  if (!(stamp instanceof Timestamp)) return;
+  if (realNow() - stamp.toMillis() > 60_000) return;
+  await ref.update({ onboardingCompletedAt: Timestamp.fromMillis(Date.now()) });
+}
+
 async function answer(route: Route, name: string, handler: CallableHandler) {
   if (route.request().method() === "OPTIONS") {
     await route.fulfill({ status: 204, headers: CORS });
@@ -119,6 +137,7 @@ async function answer(route: Route, name: string, handler: CallableHandler) {
     const result = await handler.run(route.request().postDataJSON().data, {
       auth: { uid: token.uid, token },
     });
+    if (name === "completeOnboarding") await stampSetupOnJourneyDay(token.uid);
     await route.fulfill({
       status: 200,
       contentType: "application/json",
