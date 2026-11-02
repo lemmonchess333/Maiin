@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Link,
   useLocation,
@@ -160,7 +160,14 @@ export default function TrainingHistory() {
     // shownLifts is read through its key.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid, bestsKey]);
-  useTrainingHistoryRestore(position, !pending, sessions.length, provisional);
+  const rowsRef = useRef<HTMLDivElement>(null);
+  useTrainingHistoryRestore(
+    position,
+    rowsRef,
+    !pending,
+    sessions.length,
+    provisional
+  );
   // A source that filled its read may hold more of the period.
   const more =
     position.count < sessions.length ||
@@ -368,103 +375,110 @@ export default function TrainingHistory() {
           </Card>
         ) : sessions.length > 0 ? (
           <>
-            {[...groups].map(([month, rows]) => (
-              <section
-                key={month}
-                aria-label={formatMonthYear(parseLocalDate(`${month}-01`))}
-                className="space-y-2"
-              >
-                <SectionHeading size="compact">
-                  {formatMonthYear(parseLocalDate(`${month}-01`))}
-                </SectionHeading>
-                <Card
-                  padded={false}
-                  size="compact"
-                  className="overflow-hidden @container"
+            <div ref={rowsRef} className="space-y-4">
+              {[...groups].map(([month, rows]) => (
+                <section
+                  key={month}
+                  aria-label={formatMonthYear(parseLocalDate(`${month}-01`))}
+                  className="space-y-2"
                 >
-                  <ul className="divide-y divide-border/50">
-                    {rows.map((session) => (
-                      <li key={session.key}>
-                        <Link
-                          to={session.href}
-                          state={{
-                            trainingHistoryReturnTo: `${location.pathname}${location.search}`,
-                          }}
-                          onClick={(event) => {
-                            if (newTabClick(event)) return;
-                            position.remember();
-                            haptic("light");
-                            window.scrollTo({
-                              top: 0,
-                              behavior: "instant",
-                            });
-                          }}
-                          className="flex min-h-[100px] items-center gap-[12px] p-[12px] text-left active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                        >
-                          <span
-                            className={cn(
-                              "size-9 rounded-lg shrink-0 inline-flex items-center justify-center @max-[12rem]:hidden",
-                              session.kind === "lift"
-                                ? "bg-lifting/12 text-lifting-strong"
-                                : "bg-running/12 text-running-strong"
-                            )}
-                            aria-label={
-                              session.kind === "lift" ? "Lift" : "Run"
-                            }
+                  <SectionHeading size="compact">
+                    {formatMonthYear(parseLocalDate(`${month}-01`))}
+                  </SectionHeading>
+                  <Card
+                    padded={false}
+                    size="compact"
+                    className="overflow-hidden @container"
+                  >
+                    <ul className="divide-y divide-border/50">
+                      {rows.map((session) => (
+                        <li key={session.key}>
+                          <Link
+                            to={session.href}
+                            state={{
+                              trainingHistoryReturnTo: `${location.pathname}${location.search}`,
+                            }}
+                            onClick={(event) => {
+                              if (newTabClick(event)) return;
+                              position.remember(rowsRef.current);
+                              haptic("light");
+                              window.scrollTo({
+                                top: 0,
+                                behavior: "instant",
+                              });
+                            }}
+                            className="flex min-h-[100px] items-center gap-[12px] p-[12px] text-left active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                           >
-                            {session.kind === "lift" ? (
-                              <Dumbbell className="size-5" aria-hidden="true" />
-                            ) : (
-                              <Footprints
-                                className="size-5"
-                                aria-hidden="true"
-                              />
-                            )}
-                          </span>
-                          <div className="flex min-w-0 flex-1 flex-col gap-1">
-                            <time
-                              dateTime={session.day}
-                              className="text-xs text-muted-foreground"
+                            <span
+                              className={cn(
+                                "size-9 rounded-lg shrink-0 inline-flex items-center justify-center @max-[12rem]:hidden",
+                                session.kind === "lift"
+                                  ? "bg-lifting/12 text-lifting-strong"
+                                  : "bg-running/12 text-running-strong"
+                              )}
+                              aria-label={
+                                session.kind === "lift" ? "Lift" : "Run"
+                              }
                             >
-                              {formatDayMonthYear(parseLocalDate(session.day))}
-                            </time>
-                            <span className="text-base font-bold break-words [overflow-wrap:anywhere]">
-                              {session.title}
-                              {bests?.key === bestsKey &&
-                                bests.ids.has(session.id) &&
-                                session.kind === "lift" && (
-                                  <span className="ml-2 text-micro font-semibold text-achievement-strong">
-                                    PR
-                                  </span>
-                                )}
-                            </span>
-                            <MetaLine size="xs" items={session.summary} />
-                            {session.notCounted && (
-                              <span className="text-xs text-muted-foreground">
-                                Saved · Not counted
-                              </span>
-                            )}
-                            {queued.has(session.key) && (
-                              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                                <CloudUpload
-                                  className="size-3.5 shrink-0"
+                              {session.kind === "lift" ? (
+                                <Dumbbell
+                                  className="size-5"
                                   aria-hidden="true"
                                 />
-                                Saved on this phone · Waiting to sync
+                              ) : (
+                                <Footprints
+                                  className="size-5"
+                                  aria-hidden="true"
+                                />
+                              )}
+                            </span>
+                            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                              <time
+                                dateTime={session.day}
+                                className="text-xs text-muted-foreground"
+                              >
+                                {formatDayMonthYear(
+                                  parseLocalDate(session.day)
+                                )}
+                              </time>
+                              <span className="text-base font-bold break-words [overflow-wrap:anywhere]">
+                                {session.title}
+                                {bests?.key === bestsKey &&
+                                  bests.ids.has(session.id) &&
+                                  session.kind === "lift" && (
+                                    <span className="ml-2 text-micro font-semibold text-achievement-strong">
+                                      PR
+                                    </span>
+                                  )}
                               </span>
-                            )}
-                          </div>
-                          <ChevronRight
-                            className="size-4 shrink-0 text-muted-foreground @max-[12rem]:hidden"
-                            aria-hidden="true"
-                          />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              </section>
-            ))}
+                              <MetaLine size="xs" items={session.summary} />
+                              {session.notCounted && (
+                                <span className="text-xs text-muted-foreground">
+                                  Saved · Not counted
+                                </span>
+                              )}
+                              {queued.has(session.key) && (
+                                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                  <CloudUpload
+                                    className="size-3.5 shrink-0"
+                                    aria-hidden="true"
+                                  />
+                                  Saved on this phone · Waiting to sync
+                                </span>
+                              )}
+                            </div>
+                            <ChevronRight
+                              className="size-4 shrink-0 text-muted-foreground @max-[12rem]:hidden"
+                              aria-hidden="true"
+                            />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                </section>
+              ))}
+            </div>
             {more && (
               <Button fullWidth variant="ghost" onClick={position.showMore}>
                 Show more sessions

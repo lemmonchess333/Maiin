@@ -18,7 +18,11 @@
 import type { Page, Route } from "@playwright/test";
 import { getApps, initializeApp } from "firebase-admin/app";
 import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import {
+  getFirestore,
+  Timestamp,
+  type Firestore,
+} from "firebase-admin/firestore";
 import { createRequire } from "node:module";
 import { onRealClock, realNow } from "./nodeClock";
 
@@ -44,7 +48,39 @@ interface CallableHandler {
 /** The Admin SDK on the emulator, one app for the whole process. */
 export function emulatorAdmin() {
   const app = getApps()[0] ?? initializeApp({ projectId: "demo-tropos" });
-  return { auth: getAuth(app), db: getFirestore(app), Timestamp };
+  return {
+    auth: getAuth(app),
+    db: deletesOnItsOwnClock(getFirestore(app)),
+    Timestamp,
+  };
+}
+
+const ownClockDeletes = new WeakSet<Firestore>();
+
+/**
+ * `recursiveDelete` on this one process-wide Firestore gives each call a
+ * BulkWriter of its own. Left to itself it reuses one, whose rate limiter
+ * remembers the time of its last request and throws ("Request time should
+ * not be before the last token refill time") at an earlier one. A spec that
+ * moves this process's clock (`openJourney`) then deletes leaves that time
+ * days ahead or hours behind the next spec's, so the next spec's cleanup
+ * threw, outside any try, by test order and the time of day. A writer of
+ * its own reads one clock for the whole delete.
+ */
+function deletesOnItsOwnClock(db: Firestore): Firestore {
+  if (ownClockDeletes.has(db)) return db;
+  ownClockDeletes.add(db);
+  const recursiveDelete = db.recursiveDelete.bind(db);
+  db.recursiveDelete = async (ref, writer) => {
+    if (writer) return recursiveDelete(ref, writer);
+    const own = db.bulkWriter();
+    try {
+      await recursiveDelete(ref, own);
+    } finally {
+      await own.close();
+    }
+  };
+  return db;
 }
 
 const CORS = {

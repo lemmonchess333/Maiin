@@ -336,7 +336,11 @@ test("browses lifts and runs, filters an older period and restores the expanded 
     await expect(list.getByRole("link")).toHaveCount(60);
     const olderLink = list.getByRole("link").nth(45);
     await olderLink.scrollIntoViewIfNeeded();
-    const scrollY = await page.evaluate(() => window.scrollY);
+    // Back returns to the same row, where it was on screen. The page offset
+    // is not the measure: the sync banner and "Updating this period…" sit
+    // above the rows and can come or go while the detail is open.
+    const rowTop = async () => (await olderLink.boundingBox())?.y ?? NaN;
+    const leftAt = await rowTop();
     const olderUrl = page.url();
     await olderLink.click();
     await expect(page.getByText("Bench Press", { exact: true })).toBeVisible();
@@ -346,13 +350,11 @@ test("browses lifts and runs, filters an older period and restores the expanded 
     await expect(page).toHaveURL(olderUrl);
     await expect(list.getByRole("link")).toHaveCount(60);
     await expect
-      .poll(async () =>
-        Math.abs((await page.evaluate(() => window.scrollY)) - scrollY)
-      )
+      .poll(async () => Math.abs((await rowTop()) - leftAt))
       .toBeLessThan(3);
     metrics.backRestoration = {
-      scrollY,
-      actual: await page.evaluate(() => window.scrollY),
+      rowTop: leftAt,
+      actual: await rowTop(),
       visible: await list.getByRole("link").count(),
     };
     await page
