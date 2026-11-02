@@ -13,6 +13,8 @@ import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 
 const RACE = { distance: "10k", targetDate: "2027-04-18" };
+/** A day well before RACE. */
+const TODAY = "2027-01-01";
 
 describe("runHeaderLine", () => {
   it("leads with distance and week-of-M once the plan is built", () => {
@@ -23,6 +25,7 @@ describe("runHeaderLine", () => {
         currentWeek: 2,
         totalWeeks: 12,
         runsTarget: 3,
+        todayKey: TODAY,
       })
       // currentWeek is 0-based on the wire and 1-based in the copy.
     ).toBe("Race prep · 10K · Week 3/12");
@@ -38,13 +41,19 @@ describe("runHeaderLine", () => {
         currentWeek: null,
         totalWeeks: null,
         runsTarget: 3,
+        todayKey: TODAY,
       })
     ).toBe("Race prep · 10K");
   });
 
   it("prompts for a goal only when there genuinely is none", () => {
     expect(
-      runHeaderLine({ runMode: "race_prep", raceGoal: null, runsTarget: 3 })
+      runHeaderLine({
+        runMode: "race_prep",
+        raceGoal: null,
+        runsTarget: 3,
+        todayKey: TODAY,
+      })
     ).toBe("Race prep · Set your race goal");
   });
 
@@ -57,17 +66,88 @@ describe("runHeaderLine", () => {
   // "Free running · Start whenever". Keep this case until the migration runs.
   it("pluralises the structured line", () => {
     expect(
-      runHeaderLine({ runMode: "structured", raceGoal: null, runsTarget: 1 })
+      runHeaderLine({
+        runMode: "structured",
+        raceGoal: null,
+        runsTarget: 1,
+        todayKey: TODAY,
+      })
     ).toBe("Structured · 1 run/week");
     expect(
-      runHeaderLine({ runMode: "structured", raceGoal: null, runsTarget: 4 })
+      runHeaderLine({
+        runMode: "structured",
+        raceGoal: null,
+        runsTarget: 4,
+        todayKey: TODAY,
+      })
     ).toBe("Structured · 4 runs/week");
   });
 
   it("is calm for freeform", () => {
     expect(
-      runHeaderLine({ runMode: "freeform", raceGoal: null, runsTarget: 0 })
+      runHeaderLine({
+        runMode: "freeform",
+        raceGoal: null,
+        runsTarget: 0,
+        todayKey: TODAY,
+      })
     ).toBe("Free running · Start whenever");
+  });
+});
+
+/* Owner, 1 Nov 2026: "Race prep · Marathon · Week 15/15" two weeks after
+   the marathon. The plan's counter stays on race week once race day has
+   passed; past it the line counts the recovery's week, or none. */
+describe("runHeaderLine — after race day", () => {
+  const MARATHON = { distance: "marathon", targetDate: "2026-10-17" };
+  const lastWeek = { currentWeek: 14, totalWeeks: 15 };
+
+  it("still counts the plan's last week on race day", () => {
+    expect(
+      runHeaderLine({
+        runMode: "race_prep",
+        raceGoal: MARATHON,
+        ...lastWeek,
+        todayKey: "2026-10-17",
+        runsTarget: 4,
+      })
+    ).toBe("Race prep · Marathon · Week 15/15");
+  });
+
+  it("counts no week once race day has passed with no recovery", () => {
+    expect(
+      runHeaderLine({
+        runMode: "race_prep",
+        raceGoal: MARATHON,
+        ...lastWeek,
+        todayKey: "2026-11-01",
+        runsTarget: 4,
+      })
+    ).toBe("Race prep · Marathon");
+  });
+
+  it("counts the recovery's week while it runs", () => {
+    const recovering = {
+      runMode: "race_prep" as const,
+      raceGoal: MARATHON,
+      ...lastWeek,
+      phase: "recovery",
+      recoveryEndDate: "2026-11-14",
+      runsTarget: 4,
+    };
+    expect(runHeaderLine({ ...recovering, todayKey: "2026-10-18" })).toBe(
+      "Race prep · Marathon · Recovery week 1/4"
+    );
+    expect(runHeaderLine({ ...recovering, todayKey: "2026-11-01" })).toBe(
+      "Race prep · Marathon · Recovery week 3/4"
+    );
+    expect(runHeaderLine({ ...recovering, todayKey: "2026-11-13" })).toBe(
+      "Race prep · Marathon · Recovery week 4/4"
+    );
+    // The recovery is over: no week to count.
+    expect(runHeaderLine({ ...recovering, todayKey: "2026-11-14" })).toBe(
+      "Race prep · Marathon"
+    );
   });
 });
 
@@ -99,6 +179,7 @@ describe("runHeaderLine — fed by the resolver (the R4 regression)", () => {
         currentWeek: programState.runPlan?.currentWeek,
         totalWeeks: programState.runPlan?.totalWeeks,
         runsTarget: 3,
+        todayKey: TODAY,
       })
     ).toBe("Race prep · 10K · Week 1/12");
   });
@@ -112,6 +193,7 @@ describe("runHeaderLine — fed by the resolver (the R4 regression)", () => {
         runMode: profile.runMode!,
         raceGoal: resolved.raceGoal,
         runsTarget: 3,
+        todayKey: TODAY,
       })
     ).toBe("Race prep · 10K");
   });
@@ -129,6 +211,7 @@ describe("runHeaderLine — fed by the resolver (the R4 regression)", () => {
         runMode: "race_prep",
         raceGoal: resolved.raceGoal,
         runsTarget: 3,
+        todayKey: TODAY,
       })
     ).toBe("Race prep · Set your race goal");
   });

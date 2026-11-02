@@ -468,6 +468,57 @@ describe("DayActionSheet — planned run", () => {
     expect(why).not.toHaveTextContent(/Why it's in your week/);
   });
 
+  it("explains a recovery run as the recovery's, not race week's", () => {
+    // The plan's counter still points at race week while it recovers.
+    const daysFromToday = (days: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+    const programState = {
+      ...makeProgramState([
+        makeRunDay({
+          id: "runday_recovery",
+          dayIndex: todayDow(),
+          date: todayKey(),
+          weekKey: todayWeekKey(),
+          templateId: "easy_30",
+          type: "easy",
+        }),
+      ]),
+      runPlan: {
+        mode: "race_prep",
+        currentWeek: 15,
+        totalWeeks: 16,
+        raceGoal: { distance: "marathon", targetDate: daysFromToday(-3) },
+        phase: "recovery",
+        recoveryEndDate: daysFromToday(25),
+      },
+    } as ProgramState;
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={
+          {
+            ...makeProfile([{ day: todayDow(), type: "run" }]),
+            runMode: "race_prep",
+          } as UserProfile
+        }
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...commonCallbacks()}
+      />
+    );
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      "Easy runs only for now, while your legs recover from the race."
+    );
+    expect(why).not.toHaveTextContent(/race week/);
+  });
+
   it("Run21 (2): gives the run one feel line, outside 'Why this run'", () => {
     const { profile, programState, callbacks } = setup();
     render(

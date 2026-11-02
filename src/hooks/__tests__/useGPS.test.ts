@@ -13,6 +13,7 @@ import { useGPS } from "../useGPS";
 import {
   MAX_PLAUSIBLE_SPEED_MPS,
   calculateSplits,
+  detectBestEfforts,
   type GPSPoint,
 } from "../../lib/gps";
 
@@ -447,9 +448,10 @@ describe("useGPS — holds: the trace stops when the run's clock does", () => {
     const resumed = result.current.points[result.current.points.length - 1];
     expect(result.current.points.length).toBe(before + 1);
     expect(resumed.pausedMs).toBe(heldMs);
-    // Only the step after the resume (smoothed, so a little under 3 m).
+    // Only the step after the resume: the runner is 6 m from the start,
+    // and the minute of wander while held adds nothing.
     expect(result.current.distance).toBeGreaterThan(distanceBefore);
-    expect(result.current.distance).toBeLessThan(distanceBefore + 3.01);
+    expect(result.current.distance).toBeLessThan(6.01);
   });
 
   it("does not record a fix taken while held, however late it arrives", () => {
@@ -483,6 +485,43 @@ describe("useGPS — holds: the trace stops when the run's clock does", () => {
     expect(result.current.distance).toBeLessThanOrEqual(
       2 * MAX_PLAUSIBLE_SPEED_MPS + 1e-6
     );
+  });
+
+  it("does not count a walk taken while paused as distance after the resume", () => {
+    /* Paused, walked 300 m to a fountain, resumed. The line across the
+       hold is credited only as far as the clock-running seconds allow; the
+       smoothing must not then drag the trace the rest of the 300 m over
+       the next seconds, which made the walk distance after all. */
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.start());
+    for (let s = 0; s <= 10; s++) fixAt(s * 3);
+    const before = result.current.distance;
+    act(() => result.current.pause());
+    vi.setSystemTime(Date.now() + 300_000);
+    act(() => result.current.resume());
+    // A minute of running on from the fountain at 3 m/s: 180 m.
+    for (let s = 1; s <= 60; s++) fixAt(330 + s * 3);
+    expect(result.current.distance - before).toBeLessThan(
+      180 + 2 * MAX_PLAUSIBLE_SPEED_MPS + 15
+    );
+  });
+
+  it("puts a gap in the signal's distance in the gap, not in a best 1K", () => {
+    /* 10:25 /km, a fix a second, and seven minutes with no fix (a phone in
+       a pocket) still running. The owner's run listed "1K 4:29" from
+       kilometres of 9:33 and 11:20: the smoothed trace caught up with the
+       runner after the gap, faster than anyone runs. */
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.start());
+    for (let s = 0; s <= 400; s++) fixAt(s * 1.6);
+    vi.setSystemTime(Date.now() + 419_000);
+    for (let s = 820; s <= 1320; s++) fixAt(s * 1.6);
+    const points = result.current.points;
+    const oneK = detectBestEfforts(points, result.current.distance).find(
+      (e) => e.label === "1K"
+    );
+    expect(oneK).toBeDefined();
+    expect(oneK!.time).toBeGreaterThan((1000 / 1.6) * 0.97);
   });
 
   it("times a split without the wait — end to end through the hook", () => {

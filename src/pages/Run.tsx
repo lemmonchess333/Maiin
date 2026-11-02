@@ -1,5 +1,6 @@
 import { localDateString } from "@/lib/dateHelpers";
 import {
+  isRecoveryRunDay,
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
@@ -831,6 +832,16 @@ export default function Run() {
     const day = id ? programState?.runDays?.find((d) => d.id === id) : null;
     return weekHoldsQuality(programState?.runDays, day?.weekKey);
   }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
+  // Whether the pinned run is one of the recovery's, after race day.
+  const launchInRecovery = useMemo(() => {
+    const id = planDecision.metadata.scheduledRunId;
+    const day = id ? programState?.runDays?.find((d) => d.id === id) : null;
+    return isRecoveryRunDay(programState?.runPlan, day?.date);
+  }, [
+    planDecision.metadata.scheduledRunId,
+    programState?.runDays,
+    programState?.runPlan,
+  ]);
 
   const handleStart = async (config: RunConfig) => {
     const uid = user?.uid ?? profile?.uid;
@@ -2083,6 +2094,7 @@ export default function Run() {
                     profile?.raceGoal?.distance,
                   weekHasQuality: launchWeekHasQuality,
                   racePace: launchRacePace?.kind,
+                  inRecovery: launchInRecovery,
                 }).purpose
               }
               prefill={planDecision.prefill}

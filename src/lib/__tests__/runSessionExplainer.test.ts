@@ -11,6 +11,8 @@ import { describe, it, expect } from "vitest";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getPhaseForWeek } from "@/features/program/runScheduler";
 import {
+  isRecoveryRunDay,
+  RECOVERY_RUN_WHY,
   runSessionExplainer,
   runSessionPresentation,
   weekHoldsQuality,
@@ -262,6 +264,58 @@ describe("the build names the quality sessions only in a week that holds one", (
     );
     expect(weekHoldsQuality([day("tempo_20")], undefined)).toBe(false);
     expect(weekHoldsQuality(undefined, week)).toBe(false);
+  });
+});
+
+/* Owner, 1 Nov 2026: in the weeks after the marathon the plan's counter
+   still pointed at race week, so a recovery run's "Why this run" read
+   "A short, conversational shakeout for race week." */
+describe("a recovery run after race day", () => {
+  const recovery = {
+    phase: "recovery",
+    recoveryEndDate: "2026-11-14",
+    raceGoal: { targetDate: "2026-10-17" },
+  };
+
+  it("is a day after the race inside the recovery", () => {
+    expect(isRecoveryRunDay(recovery, "2026-10-18")).toBe(true);
+    expect(isRecoveryRunDay(recovery, "2026-11-13")).toBe(true);
+    // Race week before the race is race week's still.
+    expect(isRecoveryRunDay(recovery, "2026-10-15")).toBe(false);
+    expect(isRecoveryRunDay(recovery, "2026-10-17")).toBe(false);
+    // The recovery is over.
+    expect(isRecoveryRunDay(recovery, "2026-11-14")).toBe(false);
+    // No recovery running.
+    expect(
+      isRecoveryRunDay({ raceGoal: recovery.raceGoal }, "2026-10-18")
+    ).toBe(false);
+    expect(isRecoveryRunDay(recovery, null)).toBe(false);
+  });
+
+  it("explains an easy run as the recovery's, not race week's", () => {
+    const input = {
+      ...race,
+      type: "easy",
+      templateId: "easy_30",
+      inRecovery: true,
+    };
+    expect(runSessionExplainer(input)).toBe(RECOVERY_RUN_WHY);
+    expect(runSessionExplainer(input)).not.toMatch(/race week/);
+    expect(runSessionPresentation(input)).toEqual({
+      purpose: RECOVERY_RUN_WHY,
+      weekLabel: null,
+    });
+  });
+
+  it("gives no plan reason for a run the person put in themselves", () => {
+    expect(
+      runSessionExplainer({
+        ...race,
+        type: "tempo",
+        templateId: "tempo_30",
+        inRecovery: true,
+      })
+    ).toBeNull();
   });
 });
 

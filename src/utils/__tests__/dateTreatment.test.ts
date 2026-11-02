@@ -165,6 +165,51 @@ describe("one date treatment (en-GB day-before-month)", () => {
     ).toEqual([]);
   });
 
+  it("each stored-day-key detector case reads as it should", () => {
+    for (const text of [
+      // A JSX child: the key as stored, on screen.
+      `<p>{raceGoal.distance} on {raceGoal.targetDate}.</p>`,
+      `<span>{ day?.dateKey }</span>`,
+      // A line of copy built in a template literal (a title, a label).
+      "title={`${raceGoal.distance} · ${raceGoal.targetDate}`}",
+      'aria-label={`Recovery ends ${runPlan.recoveryEndDate ?? "soon"}`}',
+    ])
+      expect(rawDayKeys(text), text).toHaveLength(1);
+    for (const text of [
+      // Formatted first.
+      "{formatDayMonth(parseLocalDate(raceGoal.targetDate))}",
+      "`Week of ${formatDayMonth(parseLocalDate(w.weekKey))}`",
+      // An attribute value, a key, an id or a URL: data, not copy.
+      "<RaceCard targetDate={raceGoal.targetDate} />",
+      'const key = `${uid}:tropos.dismiss.${raceGoal?.targetDate ?? "none"}`;',
+      "id={`perf-detail-${currentWeek.weekKey}`}",
+      "navigate(`/program?tab=run&rday=${day.dateKey}`)",
+      // A log line, tagged as the codebase tags them.
+      "logger.log(`[rollover] moved to ${plan.weekKey} today`)",
+      // A comment.
+      "// shows {raceGoal.targetDate} raw",
+    ])
+      expect(rawDayKeys(text), text).toEqual([]);
+  });
+
+  it("no stored day key printed as it is stored", () => {
+    const hits: string[] = [];
+    for (const file of walk(SRC_ROOT)) {
+      const rel = file.slice(SRC_ROOT.length + 1).replaceAll("\\", "/");
+      // The test harnesses under src/test print for the developer.
+      if (rel.startsWith("test/")) continue;
+      for (const hit of rawDayKeys(readFileSync(file, "utf8")))
+        hits.push(`${rel}:${hit}`);
+    }
+    expect(
+      hits,
+      "a stored day key (YYYY-MM-DD) printed as it is stored — parse it " +
+        "(parseLocalDate) and print it with a helper from " +
+        "src/utils/formatters.ts:\n" +
+        hits.join("\n")
+    ).toEqual([]);
+  });
+
   it("every pending file still holds the pattern it is excused for", () => {
     for (const rel of Object.keys(DAY_FIRST_PENDING)) {
       expect(
@@ -204,6 +249,60 @@ function isDayFirstPattern(pattern: string): boolean {
     /(?<![A-Za-z])(?:d{1,2}|do)(?![A-Za-z])/.test(tokens) &&
     /M{3,}|L{3,}/.test(tokens)
   );
+}
+
+/**
+ * The fields that hold a stored day key ("2026-10-17") by name across the
+ * app: a race's date, a recovery's end, and the day and week keys. `date`
+ * is not among them: the app also calls a pre-formatted string `date`
+ * (a share card's, a record's), so a name says nothing about it.
+ */
+const DAY_KEY_FIELD = String.raw`(?:targetDate|recoveryEndDate|dateKey|dayKey|weekKey|weekStartKey)`;
+
+/** A plain member chain ending in one of those fields, with nothing done
+ *  to it but an optional `?? fallback`: `raceGoal.targetDate`,
+ *  `day?.dateKey`, `runPlan.recoveryEndDate ?? "soon"`. */
+const RAW_DAY_KEY = String.raw`\s*[\w$]+(?:\??\.[\w$]+)*\??\.${DAY_KEY_FIELD}\s*(?:\?\?[^}]*)?`;
+
+/**
+ * Each place in `text` that prints a stored day key as it is stored, as its
+ * line and the match. The Train banner showed "MARATHON on 2026-10-17"
+ * from `{raceGoal.targetDate}` while the tests above stayed green: they
+ * look for a date FORMATTED the wrong way, and this one was never
+ * formatted at all. Two shapes:
+ *
+ *  - a JSX child, `{raceGoal.targetDate}`: an expression container that
+ *    is not an attribute's value (`=` before it) or a template's `${`;
+ *  - a line of copy built in a template literal, `${raceGoal.targetDate}`
+ *    in a template with a space outside its expressions. A key, an id or
+ *    a URL has none, and a log line opens with its `[tag]`.
+ *
+ * It sees only those field names. A day key held in a variable called
+ * anything else (`date`, `d`) passes unseen.
+ */
+function rawDayKeys(text: string): string[] {
+  const hits: string[] = [];
+  const at = (index: number) => text.slice(0, index).split("\n").length;
+  const jsxChild = new RegExp(String.raw`(?<![=$\w])\{${RAW_DAY_KEY}\}`);
+  const interpolation = new RegExp(String.raw`\$\{${RAW_DAY_KEY}\}`);
+  const rx = new RegExp(String.raw`\/\*[\s\S]*?\*\/|\/\/[^\n]*|${STR}`, "g");
+  // The code between comments and strings, where JSX children live.
+  const scanCode = (from: number, to: number) => {
+    const code = text.slice(from, to);
+    for (const c of code.matchAll(new RegExp(jsxChild.source, "g")))
+      hits.push(`${at(from + c.index)} ${c[0]}`);
+  };
+  let last = 0;
+  for (const m of text.matchAll(rx)) {
+    scanCode(last, m.index);
+    last = m.index + m[0].length;
+    if (m[0][0] !== "`") continue;
+    const outside = m[0].slice(1, -1).replace(/\$\{[^}]*\}/g, "");
+    if (!/\s/.test(outside) || outside.trimStart().startsWith("[")) continue;
+    if (interpolation.test(m[0])) hits.push(`${at(m.index)} ${m[0]}`);
+  }
+  scanCode(last, text.length);
+  return hits;
 }
 
 /**

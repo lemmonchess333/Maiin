@@ -1129,6 +1129,9 @@ function ProgramInner() {
     raceGoal: resolvedRunPlan.raceGoal,
     currentWeek: programState?.runPlan?.currentWeek,
     totalWeeks: programState?.runPlan?.totalWeeks,
+    phase: programState?.runPlan?.phase,
+    recoveryEndDate: programState?.runPlan?.recoveryEndDate,
+    todayKey,
     runsTarget,
   });
 

@@ -175,6 +175,21 @@ export function routeTimeAtDistance(
   return Math.max(0, (movingClockMs(last) - c0) / 1000);
 }
 
+/**
+ * Smooths a run of fixes: each fix pulls the position towards itself by how
+ * much it is trusted against the position so far.
+ *
+ * How unsure the position is grows with the time since the last fix
+ * (`processNoise` a second), not by a fixed step per fix. Per fix, a fix
+ * after two minutes without one was weighed as if a second had passed: it
+ * moved the position a sixth of the way, and the next dozen fixes, a second
+ * apart, dragged it the rest, at up to 90 m/s. Distance, splits and best
+ * efforts all measure the smoothed positions, so a 7-minute gap at 10:25 /km
+ * produced kilometres of 14:51 and 5:59 and a "1K 4:33". Weighed by its
+ * time, a fix after a long gap is mostly believed and the gap's distance
+ * lands in the gap. At a fix a second or faster nothing changes: a step is
+ * never counted as less than a second.
+ */
 export class KalmanFilter {
   private lat = 0;
   private lon = 0;
@@ -188,14 +203,19 @@ export class KalmanFilter {
   process(
     lat: number,
     lon: number,
-    accuracy: number
+    accuracy: number,
+    /** Seconds since the previous fix this filter took. */
+    secondsSinceLast = 1
   ): { lat: number; lon: number } {
     if (this.variance < 0) {
       this.lat = lat;
       this.lon = lon;
       this.variance = accuracy * accuracy;
     } else {
-      this.variance += this.processNoise;
+      const seconds = Number.isFinite(secondsSinceLast)
+        ? Math.max(1, secondsSinceLast)
+        : 1;
+      this.variance += this.processNoise * seconds;
       const k = this.variance / (this.variance + accuracy * accuracy);
       this.lat += k * (lat - this.lat);
       this.lon += k * (lon - this.lon);
@@ -776,11 +796,29 @@ export function totalDistance(points: GPSPoint[]): number {
 }
 
 /**
+ * Whether one step of a trace moves faster than any runner: more metres
+ * than `MAX_PLAUSIBLE_SPEED_MPS` covers in its seconds. The trace's own
+ * positions can do it where the raw fixes did not, which is all the speed
+ * gate (`readingVerdict`) looks at: after a gap in the fixes the smoothed
+ * position catches up with the runner over the next few seconds, carrying
+ * the gap's distance with none of its time.
+ */
+export function isImpossibleStep(metres: number, seconds: number): boolean {
+  return metres > MAX_PLAUSIBLE_SPEED_MPS * seconds;
+}
+
+/**
  * The fastest 1K / 5K / 10K inside one run: for every point, the shortest
  * stretch ending there that covers the distance, timed on the MOVING clock
  * (`movingClockMs`) and measured through `segmentMetres` — so a stretch
  * that waited at a crossing is timed without the wait, and a line drawn
  * across a pause cannot carry a stretch past the distance in no time.
+ *
+ * No stretch spans a step faster than any runner (`isImpossibleStep`). A
+ * 2.85 km run at 8:51 /km, with kilometres of 9:33 and 11:20, listed a
+ * "1K 4:29": the stretch over a gap's catch-up had the gap's distance
+ * without its time. Leaving such steps out of every stretch keeps the
+ * distance where it was run and only refuses the impossible timing.
  */
 export function detectBestEfforts(
   points: GPSPoint[],
@@ -797,15 +835,19 @@ export function detectBestEfforts(
 
   // Credited distance and moving clock at each point. The clock never steps
   // back, so no stretch can time out negative on a corrected phone clock.
+  // `impossible[i]`: the step into point i is faster than any runner.
   const cum = new Array<number>(n);
   const clock = new Array<number>(n);
+  const impossible = new Array<boolean>(n).fill(false);
   cum[0] = 0;
   clock[0] = movingClockMs(points[0]);
   for (let i = 1; i < n; i++) {
-    cum[i] =
-      cum[i - 1] +
-      (points[i].breakBefore ? 0 : segmentMetres(points[i - 1], points[i]));
+    const metres = points[i].breakBefore
+      ? 0
+      : segmentMetres(points[i - 1], points[i]);
+    cum[i] = cum[i - 1] + metres;
     clock[i] = Math.max(clock[i - 1], movingClockMs(points[i]));
+    impossible[i] = isImpossibleStep(metres, (clock[i] - clock[i - 1]) / 1000);
   }
 
   for (const effort of efforts) {
@@ -814,6 +856,11 @@ export function detectBestEfforts(
     let startIdx = 0;
 
     for (let endIdx = 1; endIdx < n; endIdx++) {
+      // A stretch starts after the last impossible step, never before it.
+      if (impossible[endIdx]) {
+        startIdx = endIdx;
+        continue;
+      }
       // Move the start up while the stretch would still cover the distance.
       while (
         startIdx < endIdx &&
