@@ -22,13 +22,19 @@ describe("runHeaderLine", () => {
       runHeaderLine({
         runMode: "starter",
         raceGoal: null,
+        todayKey: TODAY,
         runsTarget: 3,
         starterStage: 3,
       })
     ).toBe("30 minutes without stopping · Week 3 of 9");
     // Before its plan is built, the goal alone.
     expect(
-      runHeaderLine({ runMode: "starter", raceGoal: null, runsTarget: 3 })
+      runHeaderLine({
+        runMode: "starter",
+        raceGoal: null,
+        todayKey: TODAY,
+        runsTarget: 3,
+      })
     ).toBe("30 minutes without stopping");
   });
 
