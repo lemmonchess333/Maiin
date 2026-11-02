@@ -30,7 +30,7 @@ import { carryCompletionsAcrossRegen } from "@/lib/runCompletionCarry";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
-import type { LayoffClass } from "./layoffDetection";
+import type { DatedRun, LayoffClass } from "./layoffDetection";
 import { profileNewRunnerUntil } from "./newRunner";
 import {
   isRunPlanFromNewerBuild,
@@ -77,7 +77,12 @@ import { raceBlockWeek, type RaceBlockWeek } from "./weekPrescription";
  * to compressed and the UI banner needs to reflect that.
  */
 function makeRunPlanRecord(
-  v2: { totalWeeks: number; compressed: boolean; belowFloor: boolean },
+  v2: {
+    totalWeeks: number;
+    compressed: boolean;
+    belowFloor: boolean;
+    leadInWeek: string | null;
+  },
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
@@ -94,6 +99,8 @@ function makeRunPlanRecord(
     // Run9 phase-3 (Slice B): surface below-floor so the Realign UI names the
     // finish-safely risk instead of presenting a tight plan as a normal one.
     belowFloor: v2.belowFloor,
+    // While a plan made partway through a week is in its lead-in.
+    ...(v2.leadInWeek ? { leadInWeek: v2.leadInWeek } : {}),
   };
 }
 
@@ -119,6 +126,8 @@ export function regenerateRacePlan({
   profile,
   raceGoal,
   recentLayoff,
+  recentRuns,
+  recentRunsAsOf,
   weekSchedule,
   weeklyRunDays,
   currentDate,
@@ -152,9 +161,21 @@ export function regenerateRacePlan({
    *  silently rebuild a returning runner's week at mid-block volume, and a
    *  compile error is a better guard than a convention. */
   recentLayoff: LayoffClass;
+  /** The recent saved runs the layoff was read from (`fetchRecentRunning`),
+   *  or null where none were read. Required for the same reason: a
+   *  running starting point climbs from what they say was done, and a site
+   *  that left them out would climb it by the calendar. */
+  recentRuns: readonly DatedRun[] | null;
+  /** The day `recentRuns` were read (`RacePlanV2Input.recentRunsAsOf`):
+   *  absent, `currentDate`. */
+  recentRunsAsOf?: string;
   carry?: {
     currentWeek?: number;
     totalWeeks?: number;
+    /** The plan's lead-in week (`RunPlan.leadInWeek`): carried with
+     *  `totalWeeks`, or a rebuild in that week reads the plan as a week
+     *  shorter than the time left and starts it again from this week. */
+    leadInWeek?: string;
     completedRaces?: string[];
     /** RUN-H1: an active recovery phase + its end date. A regen must NEVER
      *  silently drop recovery (makeRunPlanRecord doesn't emit these fields), so
@@ -213,6 +234,9 @@ export function regenerateRacePlan({
       // sites, which is the correct fallback: a new plan genuinely is at
       // position 0.
       planTotalWeeks: carry?.totalWeeks,
+      leadInWeek: carry?.leadInWeek,
+      recentRuns,
+      recentRunsAsOf,
     });
   let v2: ReturnType<typeof generate>;
   let runDays: ScheduledRunDay[];
@@ -331,6 +355,11 @@ function nextStarterWeek(
   return { ...week, raceBlock: null };
 }
 
+/** The days the recent runs fall on, which a starter week is weighed by. */
+function runDaysOf(runs: readonly DatedRun[]): string[] {
+  return runs.map((run) => run.date).filter((day): day is string => !!day);
+}
+
 /**
  * The run side of moving the programme into the next week, shared by the
  * Monday rollover and "Start next week". `current` is the programme in the
@@ -342,20 +371,30 @@ function nextStarterWeek(
  * person is standing in, part gone: its race runs are planned from today,
  * as a plan made mid-week is (Run19).
  *
- * `recentRunDays` are the days of the recent saved runs, which a starter
- * week is weighed by; null or left out, a starter's stage holds.
+ * A starter week is weighed by the days of `recentRuns`; null or left out,
+ * a starter's stage holds.
  */
 export function nextRunWeek(
   current: ProgramState,
   next: { weekStart: string; date: string; plannedFrom?: string },
   profile: UserProfile,
   recentLayoff: LayoffClass,
-  recentRunDays: readonly string[] | null = null
+  /** The recent saved runs (`regenerateRacePlan`'s `recentRuns`), null
+   *  when they couldn't be read. A starter week is weighed by their days. */
+  recentRuns: readonly DatedRun[] | null = null,
+  /** The day they were read, when it is before `next`'s week: its weeks
+   *  climb as if followed (`regenerateRacePlan`'s `recentRunsAsOf`). */
+  recentRunsAsOf?: string
 ): NextRunWeek {
   const weekSchedule = profile.weekSchedule ?? [];
   const runPlan = current.runPlan;
   if (isStarterPlanRunning(current, profile)) {
-    return nextStarterWeek(current, next, weekSchedule, recentRunDays);
+    return nextStarterWeek(
+      current,
+      next,
+      weekSchedule,
+      recentRuns ? runDaysOf(recentRuns) : null
+    );
   }
   // Asked about NEXT week's date, not today: the question is whether the
   // week being rolled into is still inside the recovery window.
@@ -388,6 +427,8 @@ export function nextRunWeek(
     const regenerated = regenerateRacePlan({
       profile,
       recentLayoff,
+      recentRuns,
+      recentRunsAsOf,
       raceGoal: profile.raceGoal,
       weekSchedule,
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
@@ -402,7 +443,13 @@ export function nextRunWeek(
           plannedFrom: next.plannedFrom,
         }),
       carry: {
-        currentWeek: (runPlan?.currentWeek ?? 0) + 1,
+        // The week after a lead-in is the plan's first.
+        currentWeek:
+          runPlan?.leadInWeek &&
+          runPlan.leadInWeek ===
+            localWeekKey(addLocalDays(parseLocalDate(next.weekStart), -7))
+            ? 0
+            : (runPlan?.currentWeek ?? 0) + 1,
         totalWeeks: runPlan?.totalWeeks,
         completedRaces: runPlan?.completedRaces,
       },
@@ -482,7 +529,8 @@ export function rollRunWeeks(
   profile: UserProfile,
   today: string,
   recentLayoff: LayoffClass,
-  recentRunDays: readonly string[] | null = null
+  /** The recent saved runs (`regenerateRacePlan`'s `recentRuns`). */
+  recentRuns: readonly DatedRun[] | null = null
 ): RolledOver {
   if (weekRolloverAnchor(state, profile)?.side !== "run") {
     return { state, weeks: 0 };
@@ -535,7 +583,7 @@ export function rollRunWeeks(
       },
       profile,
       recentLayoff,
-      recentRunDays
+      recentRuns
     );
     starterFinishedOn ??= runs.starterFinishedOn;
     const advanced = liftsAhead

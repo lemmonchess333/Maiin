@@ -534,8 +534,8 @@ describe("pinnedWorkPace — the goal pace a session prescribes", () => {
 /* Run20 (5): a new runner's first six weeks run as run-walk, building to
    continuous running (NHS Couch to 5K). */
 describe("segmentsFromRunWalk", () => {
-  const ladder = RUN_WALK_TEMPLATE_IDS.map(
-    (id) => RUN_TEMPLATES.find((t) => t.id === id)!
+  const ladder = RUN_WALK_TEMPLATE_IDS.map((id) =>
+    RUN_TEMPLATES.find((t) => t.id === id)!
   );
   // Run9's starter goal goes on from the ladder: 20, 25 and 30 minutes
   // non-stop, in the same shape.

@@ -110,7 +110,9 @@ export interface RaceWeekStart {
  * planned a run again. The lifts are on a long first week meanwhile: the
  * rollover moves them with the runs, from the Monday after.
  */
-export function raceWeekFromToday<P extends { weeks: ScheduledRunDay[][] }>(
+export function raceWeekFromToday<
+  P extends { weeks: ScheduledRunDay[][]; leadInWeek?: string | null },
+>(
   generate: (from: RaceWeekStart) => P,
   week: RaceWeekStart,
   today: string,
@@ -122,7 +124,9 @@ export function raceWeekFromToday<P extends { weeks: ScheduledRunDay[][] }>(
   const plan = generate(week);
   const generated = plan.weeks[0] ?? [];
   const runDays = planWeekFromToday(generated, today, kept);
-  if (runDays.length > 0 || generated.length === 0)
+  // A lead-in holds only the days from today, so an empty one is a week
+  // with none of its run days left too.
+  if (runDays.length > 0 || (generated.length === 0 && !plan.leadInWeek))
     return { plan, runDays, weekStart: week.weekStart };
   const nextWeek = localDateString(
     addLocalDays(parseLocalDate(week.weekStart), 7)

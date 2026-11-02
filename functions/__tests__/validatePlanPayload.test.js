@@ -79,7 +79,10 @@ describe("validatePlanPayload — happy path", () => {
 
 describe("validatePlanPayload — shape gate", () => {
   it("rejects null profileData", () => {
-    const errors = validatePlanPayload({ ...validPayload(), profileData: null });
+    const errors = validatePlanPayload({
+      ...validPayload(),
+      profileData: null,
+    });
     expect(errors).toContain("profileData must be an object");
   });
 
@@ -89,7 +92,10 @@ describe("validatePlanPayload — shape gate", () => {
   });
 
   it("rejects null programState", () => {
-    const errors = validatePlanPayload({ ...validPayload(), programState: null });
+    const errors = validatePlanPayload({
+      ...validPayload(),
+      programState: null,
+    });
     expect(errors).toContain("programState must be an object");
   });
 
@@ -109,26 +115,35 @@ describe("validatePlanPayload — shape gate", () => {
 
 describe("validatePlanPayload — weekSchedule structure", () => {
   it("rejects non-array weekSchedule", () => {
-    const errors = validatePlanPayload({ ...validPayload(), weekSchedule: "not an array" });
+    const errors = validatePlanPayload({
+      ...validPayload(),
+      weekSchedule: "not an array",
+    });
     expect(errors).toContain("weekSchedule must be an array");
   });
 
   it("rejects weekSchedule with wrong length", () => {
     const p = validPayload();
     p.weekSchedule = p.weekSchedule.slice(0, 6);
-    expect(validatePlanPayload(p)).toContain("weekSchedule must have exactly 7 entries (got 6)");
+    expect(validatePlanPayload(p)).toContain(
+      "weekSchedule must have exactly 7 entries (got 6)"
+    );
   });
 
   it("rejects invalid day type", () => {
     const p = validPayload();
     p.weekSchedule[3].type = "yoga";
-    expect(validatePlanPayload(p)).toContain(`weekSchedule[3].type = "yoga" is invalid`);
+    expect(validatePlanPayload(p)).toContain(
+      `weekSchedule[3].type = "yoga" is invalid`
+    );
   });
 
   it("rejects day index mismatch (shuffled ordering)", () => {
     const p = validPayload();
     p.weekSchedule[2].day = 5;
-    expect(validatePlanPayload(p)).toContain("weekSchedule[2].day mismatch (expected 2, got 5)");
+    expect(validatePlanPayload(p)).toContain(
+      "weekSchedule[2].day mismatch (expected 2, got 5)"
+    );
   });
 
   it("accepts all four valid day types", () => {
@@ -157,7 +172,7 @@ describe("validatePlanPayload — runDays shape", () => {
     const p = validPayload();
     p.programState.runDays[0].date = "5/12/2026";
     expect(validatePlanPayload(p)).toContain(
-      `runDays[0].date invalid format (must be YYYY-MM-DD, got "5/12/2026")`,
+      `runDays[0].date invalid format (must be YYYY-MM-DD, got "5/12/2026")`
     );
   });
 
@@ -176,7 +191,7 @@ describe("validatePlanPayload — runDays shape", () => {
     const p = validPayload();
     p.programState.runDays[0].weekKey = "2026-05-10T00:00:00.000Z";
     expect(validatePlanPayload(p)).toContain(
-      "runDays[0].weekKey appears to be UTC ISO format (contains 'T')",
+      "runDays[0].weekKey appears to be UTC ISO format (contains 'T')"
     );
   });
 
@@ -195,7 +210,9 @@ describe("validatePlanPayload — runDays shape", () => {
   it("rejects unknown status enum", () => {
     const p = validPayload();
     p.programState.runDays[0].status = "moved";
-    expect(validatePlanPayload(p)).toContain(`runDays[0].status = "moved" is invalid`);
+    expect(validatePlanPayload(p)).toContain(
+      `runDays[0].status = "moved" is invalid`
+    );
   });
 
   it("rejects 'missed' status (derived, not stored)", () => {
@@ -203,13 +220,17 @@ describe("validatePlanPayload — runDays shape", () => {
     // Storing it directly would diverge from the derivation logic.
     const p = validPayload();
     p.programState.runDays[0].status = "missed";
-    expect(validatePlanPayload(p)).toContain(`runDays[0].status = "missed" is invalid`);
+    expect(validatePlanPayload(p)).toContain(
+      `runDays[0].status = "missed" is invalid`
+    );
   });
 
   it("rejects 'freeform_extra' status (lives on run doc, not scheduledRunDay)", () => {
     const p = validPayload();
     p.programState.runDays[0].status = "freeform_extra";
-    expect(validatePlanPayload(p)).toContain(`runDays[0].status = "freeform_extra" is invalid`);
+    expect(validatePlanPayload(p)).toContain(
+      `runDays[0].status = "freeform_extra" is invalid`
+    );
   });
 
   it("accepts all listed terminal statuses", () => {
@@ -235,7 +256,7 @@ describe("validatePlanPayload — runDays shape", () => {
     const p = validPayload();
     p.programState.runDays[0].userOverride = true;
     expect(validatePlanPayload(p)).toContain(
-      "runDays[0].userOverride must be string (template ID), not boolean",
+      "runDays[0].userOverride must be string (template ID), not boolean"
     );
   });
 
@@ -249,7 +270,7 @@ describe("validatePlanPayload — runDays shape", () => {
     const p = validPayload();
     p.programState.runDays = "not an array";
     expect(validatePlanPayload(p)).toContain(
-      "programState.runDays must be an array when present",
+      "programState.runDays must be an array when present"
     );
   });
 
@@ -326,7 +347,9 @@ describe("validatePlanPayload — runMode + raceGoal consistency", () => {
   it("rejects invalid runMode enum", () => {
     const p = validPayload();
     p.profileData.runMode = "cardio";
-    expect(validatePlanPayload(p)).toContain(`profileData.runMode = "cardio" is invalid`);
+    expect(validatePlanPayload(p)).toContain(
+      `profileData.runMode = "cardio" is invalid`
+    );
   });
 
   it("rejects race_prep without profileData.raceGoal", () => {
@@ -337,7 +360,9 @@ describe("validatePlanPayload — runMode + raceGoal consistency", () => {
       mode: "race_prep",
       raceGoal: { distance: "5k", targetDate: "2026-07-01" },
     };
-    expect(validatePlanPayload(p)).toContain("race_prep mode requires profileData.raceGoal");
+    expect(validatePlanPayload(p)).toContain(
+      "race_prep mode requires profileData.raceGoal"
+    );
   });
 
   it("rejects race_prep without programState.runPlan.raceGoal", () => {
@@ -346,7 +371,7 @@ describe("validatePlanPayload — runMode + raceGoal consistency", () => {
     p.profileData.raceGoal = { distance: "5k", targetDate: "2026-07-01" };
     p.programState.runPlan = { mode: "race_prep" }; // raceGoal missing inside runPlan
     expect(validatePlanPayload(p)).toContain(
-      "race_prep mode requires programState.runPlan.raceGoal",
+      "race_prep mode requires programState.runPlan.raceGoal"
     );
   });
 
@@ -356,7 +381,7 @@ describe("validatePlanPayload — runMode + raceGoal consistency", () => {
     p.profileData.raceGoal = { distance: "5k", targetDate: "2026-07-01" };
     delete p.programState.runPlan;
     expect(validatePlanPayload(p)).toContain(
-      "race_prep mode requires programState.runPlan.raceGoal",
+      "race_prep mode requires programState.runPlan.raceGoal"
     );
   });
 });
@@ -366,7 +391,7 @@ describe("validatePlanPayload — schema version gates", () => {
     const p = validPayload();
     delete p.profileData.weekScheduleVersion;
     expect(validatePlanPayload(p)).toContain(
-      "profileData.weekScheduleVersion required (number >= 1)",
+      "profileData.weekScheduleVersion required (number >= 1)"
     );
   });
 
@@ -374,7 +399,7 @@ describe("validatePlanPayload — schema version gates", () => {
     const p = validPayload();
     p.profileData.weekScheduleVersion = 0;
     expect(validatePlanPayload(p)).toContain(
-      "profileData.weekScheduleVersion required (number >= 1)",
+      "profileData.weekScheduleVersion required (number >= 1)"
     );
   });
 
@@ -382,7 +407,7 @@ describe("validatePlanPayload — schema version gates", () => {
     const p = validPayload();
     p.profileData.weekScheduleVersion = "1";
     expect(validatePlanPayload(p)).toContain(
-      "profileData.weekScheduleVersion required (number >= 1)",
+      "profileData.weekScheduleVersion required (number >= 1)"
     );
   });
 
@@ -390,7 +415,7 @@ describe("validatePlanPayload — schema version gates", () => {
     const p = validPayload();
     delete p.programState.programSchemaVersion;
     expect(validatePlanPayload(p)).toContain(
-      "programState.programSchemaVersion required (number >= 1)",
+      "programState.programSchemaVersion required (number >= 1)"
     );
   });
 
@@ -398,7 +423,7 @@ describe("validatePlanPayload — schema version gates", () => {
     const p = validPayload();
     p.programState.programSchemaVersion = 0;
     expect(validatePlanPayload(p)).toContain(
-      "programState.programSchemaVersion required (number >= 1)",
+      "programState.programSchemaVersion required (number >= 1)"
     );
   });
 });
@@ -429,10 +454,14 @@ describe("validatePlanPayload — accumulates multiple errors", () => {
       ],
     });
     expect(errors.length).toBeGreaterThan(5);
-    expect(errors.some((e) => e.includes("weekSchedule must have exactly 7"))).toBe(true);
+    expect(
+      errors.some((e) => e.includes("weekSchedule must have exactly 7"))
+    ).toBe(true);
     expect(errors.some((e) => e.includes("weekScheduleVersion"))).toBe(true);
     expect(errors.some((e) => e.includes("programSchemaVersion"))).toBe(true);
     expect(errors.some((e) => e.includes("runDays[0].id missing"))).toBe(true);
-    expect(errors.some((e) => e.includes("race_prep mode requires"))).toBe(true);
+    expect(errors.some((e) => e.includes("race_prep mode requires"))).toBe(
+      true
+    );
   });
 });

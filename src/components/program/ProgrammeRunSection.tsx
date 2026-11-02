@@ -4,10 +4,6 @@ import {
   runEvidenceDate,
 } from "@/lib/runExecutionEvidence";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
-import {
-  isRunningBaseline,
-  runningBaselineNeedsReview,
-} from "@/features/program/runningBaseline";
 import RunPlanPurpose from "@/components/run/RunPlanPurpose";
 /**
  * Programme Run tab — hybrid training cockpit.
@@ -155,7 +151,7 @@ import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import RaceWeeksAhead from "./RaceWeeksAhead";
-import type { LayoffClass } from "@/features/program/layoffDetection";
+import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
 import type { RaceDistance } from "@/lib/raceDayPlan";
 import {
   isRecoveryRunDay,
@@ -253,6 +249,9 @@ interface ProgrammeRunSectionProps {
    *  as on every regen site: left out, a returning runner's outline would
    *  show the quality sessions their plan holds back. */
   recentLayoff: LayoffClass;
+  /** The recent runs read with it (`useProgram`'s `recentRuns`), whose
+   *  pace the weeks ahead size a running starting point's climb at. */
+  recentRuns?: readonly DatedRun[] | null;
 }
 
 /** Two actions in a wrapping row: side by side while both labels fit on
@@ -277,6 +276,7 @@ export default function ProgrammeRunSection({
   realignRacePlan,
   dismissFellBehindPrompt,
   recentLayoff,
+  recentRuns,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   const todayKeyDerivation = useLocalDateKey();
@@ -1594,28 +1594,6 @@ export default function ProgrammeRunSection({
           card below: tap a day → that day's command card. Non-freeform only —
           freeform has no scheduled runs ("start whenever"); its hero above
           owns the Start CTA. */}
-      {currentMode === "race_prep" &&
-        !raceElapsed &&
-        !inRecovery &&
-        isRunningBaseline(profile.runningBaseline) &&
-        runningBaselineNeedsReview(
-          profile.runningBaseline,
-          todayKeyDerivation
-        ) && (
-          <Banner
-            variant="info"
-            title="Review your running starting point"
-            description="New weeks use easy running within your last report. Confirm your current training to review the next weeks of your plan."
-            action={
-              <Button
-                variant="outline"
-                onClick={() => navigate("/settings/run-plan")}
-              >
-                Review starting point
-              </Button>
-            }
-          />
-        )}
       {currentMode !== "freeform" && (
         <div
           className="space-y-3"
@@ -1829,6 +1807,7 @@ export default function ProgrammeRunSection({
                   profile={profile}
                   programState={programState}
                   recentLayoff={recentLayoff}
+                  recentRuns={recentRuns}
                   today={todayKeyDerivation}
                 />
               }

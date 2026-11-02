@@ -111,11 +111,17 @@ for (const budget of [null, 30] as const) {
         });
       }
       await page.getByRole("radio", { name: /Training for a race/ }).click();
-      await page
-        .getByRole("button", { name: "Add starting point", exact: true })
-        .click();
-      await page.getByLabel("Recent minutes per week").fill("90");
-      await page.getByLabel("Longest recent run, min").fill("30");
+      // A race with no starting point asks for one: the questions open on
+      // their own, or behind Add starting point.
+      const addStart = page.getByRole("button", {
+        name: "Add starting point",
+        exact: true,
+      });
+      const minutes = page.getByLabel("Minutes a week", { exact: true });
+      await addStart.or(minutes).first().waitFor();
+      if (await addStart.isVisible()) await addStart.click();
+      await minutes.fill("90");
+      await page.getByLabel("Longest run, min", { exact: true }).fill("30");
       const baseline = page.getByRole("region", {
         name: "Running starting point",
       });
@@ -131,12 +137,10 @@ for (const budget of [null, 30] as const) {
       }
       await page.goto("program");
       await page.goto("settings/run-plan");
-      await expect(page.getByLabel("Recent minutes per week")).toHaveValue(
-        "90"
-      );
-      await expect(page.getByLabel("Longest recent run, min")).toHaveValue(
-        "30"
-      );
+      // A saved start reads back as its summary.
+      await expect(
+        page.getByRole("region", { name: "Running starting point" })
+      ).toContainText("about 90 min a week, longest run 30 min");
     }
     await page.goto("program");
     // The SDK emulator banner stays visible but must not consume app taps.

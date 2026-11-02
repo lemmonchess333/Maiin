@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   fitWeekToRunningBaseline,
   isRunningBaseline,
-  runningBaselineNeedsReview,
+  runningClimb,
   type RunningBaseline,
 } from "../runningBaseline";
 import { buildPlan, type PlanBuilderInput } from "../planBuilder";
@@ -66,9 +66,14 @@ describe("confirmed running starting point", () => {
       plan.programState.runDays!.reduce((sum, row) => sum + duration(row), 0)
     ).toBe(preview.firstWeekMinutes);
     expect(preview.firstWeekMinutes).toBeLessThanOrEqual(90);
-    expect(plan.programState.runDays!.every((row) => row.type === "easy")).toBe(
-      true
-    );
+    // The first week's long run is the rung at or under the longest run
+    // given, run as a long run; the rest are easy.
+    const runs = plan.programState.runDays!;
+    expect(runs.find((row) => row.type === "long")?.templateId).toBe("long_6k");
+    expect(
+      runs.every((row) => row.type === "easy" || row.type === "long")
+    ).toBe(true);
+    expect(Math.max(...runs.map(duration))).toBeLessThanOrEqual(40);
     expect(plan.programState.runDays!.map((row) => row.date)).toEqual(
       original.programState.runDays!.map((row) => row.date)
     );
@@ -132,7 +137,7 @@ describe("confirmed running starting point", () => {
     for (const row of rows)
       expect(saved.programState.runDays).toContainEqual(row);
   });
-  it("preserves race day and regenerates the same future weeks, including the review boundary", () => {
+  it("preserves race day and regenerates the same future weeks, and a start above the race's curve shapes nothing", () => {
     const weekSchedule = buildPlan(input).weekSchedule;
     const args = {
       weekSchedule,
@@ -164,13 +169,11 @@ describe("confirmed running starting point", () => {
         planTotalWeeks: block.totalWeeks,
       });
       expect(regenerated.weeks[0]).toEqual(block.weeks[i]);
-      if (i > 4)
-        expect(
-          regenerated.weeks[0].every(
-            (row) => row.type === "easy" || row.type === "race"
-          )
-        ).toBe(true);
     }
+    // 400 minutes a week and a 150-minute run are past anything this
+    // marathon asks for: the race's curve is the plan, every week, and no
+    // week turns easy for want of a review.
+    expect(block.weeks).toEqual(unrestricted.weeks);
   });
   it("does not delete days or disguise a floor that exceeds the report", () => {
     const week: ScheduledRunDay[] = [0, 1, 2].map((dayIndex) => ({
@@ -178,20 +181,17 @@ describe("confirmed running starting point", () => {
       templateId: "easy_30",
       type: "easy",
     }));
+    const start = { ...baseline, weeklyMinutes: 10, longestRunMinutes: 10 };
     const result = fitWeekToRunningBaseline(
       week,
-      { ...baseline, weeklyMinutes: 10, longestRunMinutes: 10 },
-      input.currentDate
+      start,
+      runningClimb(start, start.confirmedAt)
     );
     expect(result).toHaveLength(3);
     expect(result.reduce((sum, row) => sum + duration(row), 0)).toBe(30);
     expect(week.every((row) => row.templateId === "easy_30")).toBe(true);
   });
-  it("treats stale and future reports conservatively", () => {
-    expect(runningBaselineNeedsReview(baseline, "2026-10-05")).toBe(false);
-    expect(runningBaselineNeedsReview(baseline, "2026-10-06")).toBe(true);
-    expect(runningBaselineNeedsReview(baseline, "2026-09-06")).toBe(true);
-  });
+
   it.each([
     null,
     {},

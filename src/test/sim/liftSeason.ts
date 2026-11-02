@@ -103,7 +103,7 @@ import { isLowerBodyDay } from "@/features/program/easierToday";
 import { getScheduledRunStatus } from "@/lib/scheduledRunStatus";
 import { rollLiftWeeks, rollRunWeeks } from "@/features/program/weekRollover";
 import { raceWeekNeedsBuilding } from "@/features/program/programMaintenance";
-import type { LayoffClass } from "@/features/program/layoffDetection";
+import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
 import { sequentialInstanceIds } from "@/test/instanceIds";
 import {
   BASE_VARIANT,
@@ -117,9 +117,11 @@ import {
   runKmOf,
   runTypeOf,
   RunSide,
+  runnerStartingPoint,
   type RunHabits,
   type RunRecord,
 } from "./runSeason";
+import type { RunningBaseline } from "@/features/program/runningBaseline";
 import { trainingBands } from "@/lib/runPaces";
 import { planDeloadWeek } from "@/lib/planDeloadWeek";
 import { resolveRunMoveOptions, canRescheduleRun } from "@/lib/runReschedule";
@@ -226,6 +228,10 @@ export interface SeasonOptions {
   /** A9 measured (decisions.md L18): a leg miss after a hard run counts in
    *  full, as it did before Lift4 (7) halved it. */
   hardRunMissCountsFull?: boolean;
+  /** The running starting point setup is given (R5), over the one the
+   *  persona's own running gives (`runnerStartingPoint`); null for none,
+   *  as someone who left it blank, or as every plan before R5. */
+  runningStart?: RunningBaseline | null;
 }
 
 /** A plan the app doesn't build, for a measured comparison. `start`
@@ -279,12 +285,7 @@ export interface LiftAtFinish {
 /** What a session did to a lift's numbers, read off the plan before and
  *  after it. */
 export type LiftOutcome =
-  | "own weight"
-  | "step"
-  | "reps"
-  | "hold"
-  | "miss"
-  | "lowered";
+  "own weight" | "step" | "reps" | "hold" | "miss" | "lowered";
 
 /** One lift in one session, as done. */
 export interface LiftDone {
@@ -339,6 +340,8 @@ export interface RunWeekPlan {
   planWeek: number | null;
   totalWeeks: number | null;
   phase: string | null;
+  /** The week is the plan's lead-in, before its first week. */
+  leadIn: boolean;
   /** Each planned run as weekday:template, in date order. */
   planned: string[];
   /** Their dates, in the same order. */
@@ -528,12 +531,13 @@ function rollOver(
   profile: UserProfile,
   today: string,
   failures: RuleFailure[],
-  layoff: LayoffClass
+  layoff: LayoffClass,
+  recentRuns: readonly DatedRun[] | null
 ): ProgramState {
   const todayKey = weekOf(today);
   for (let pass = 0; pass < 20; pass++) {
     // The day: the week reached plans no run before it.
-    const run = rollRunWeeks(state, profile, today, layoff);
+    const run = rollRunWeeks(state, profile, today, layoff, recentRuns);
     if (run.weeks > 0) {
       state = { ...run.state, updatedAt: Date.now() };
       continue;
@@ -816,7 +820,18 @@ export function simulateLiftSeason(
   try {
     atNoon(start);
     const answers = { ...DEFAULT_ANSWERS, ...persona.answers };
-    const plan = buildOnboardingPlan(answers, persona.nutrition, start);
+    // R5: setup asks someone who runs already, setting up a race, how much
+    // they run, and the plan starts there.
+    const runningStart =
+      options.runningStart !== undefined
+        ? options.runningStart
+        : runnerStartingPoint(persona, start);
+    const plan = buildOnboardingPlan(
+      answers,
+      persona.nutrition,
+      start,
+      runningStart ? { runningBaseline: runningStart } : undefined
+    );
     let state = migrateProgramState(
       normalizeProgramState(plan.programState),
       weekOf(start)
@@ -949,7 +964,8 @@ export function simulateLiftSeason(
           profile,
           date,
           season.failures,
-          runSide?.layoff(date) ?? "none"
+          runSide?.layoff(date) ?? "none",
+          runSide?.recentRuns() ?? null
         );
         if (varyPlan) state = varyPlan(state, date, profile);
         if (runSide && raceWeekNeedsBuilding(state, profile, date))
@@ -1374,6 +1390,7 @@ export function simulateLiftSeason(
         weekStart: from,
         planWeek: plan?.currentWeek ?? null,
         totalWeeks: plan?.totalWeeks ?? null,
+        leadIn: !!plan?.leadInWeek && plan.leadInWeek === weekOf(from),
         phase:
           plan?.phase === "recovery"
             ? "recovery"

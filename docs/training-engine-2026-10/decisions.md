@@ -742,6 +742,17 @@ against Lift4 as built on the simulator before it comes here with an answer.
   confirms, within the planning foundations' rule that nothing raises it
   unconfirmed; the size of the step is what the simulation sets, read
   against its spike check (R7).
+- **Answered with R5 (2026-11-01, owner-approved).** The starting point is
+  where the plan starts and climbs from, one rung a week above what was
+  actually run, at the runner's own pace; missed weeks hold it, and the
+  review that turned runs easy is withdrawn. The planning foundations record
+  (`docs/qa/planning-foundations-decisions.md`) carries the rule. Simulated
+  on the owner's marathon (about 3 km runs, 25 weeks out), median over 20
+  seeds × 3 variants: dose in weeks 2–5 against what was run 5.01 with no
+  start, 1.60 from own running; the biggest run against the month's longest
+  3.29 [3.24–3.35] and 1.34 [1.33–1.46]; injured 47% and 45%; every plan
+  still reaches its race's long run before the taper. Runners already above
+  the race curve's early weeks are unchanged (F15's 0.57–0.90 stays open).
 
 ### R7. Single runs far longer than the month's longest
 

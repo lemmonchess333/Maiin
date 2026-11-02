@@ -176,6 +176,10 @@ test.describe("onboarding screenshots", () => {
       timeout: 5000,
     });
     await shootBoth(page, "onboarding-3-race-advisory-compressed");
+    // R5: a race asks a regular runner for the running the plan starts
+    // from, and the step holds until both numbers are in.
+    await page.getByRole("textbox", { name: SETUP.weekMinutes }).fill("180");
+    await page.getByRole("textbox", { name: SETUP.longestRun }).fill("70");
     await next(page);
 
     // Step 2 — equipment AND lifting experience. Neither arrives chosen,

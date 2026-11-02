@@ -230,6 +230,7 @@ function ProgramInner() {
     realignRacePlan,
     dismissFellBehindPrompt,
     recentLayoff,
+    recentRuns,
     applyDeloadWeek,
     revertDeloadWeek,
     startTrainingBlock,
@@ -1132,6 +1133,12 @@ function ProgramInner() {
     phase: programState?.runPlan?.phase,
     recoveryEndDate: programState?.runPlan?.recoveryEndDate,
     todayKey,
+    // Only while it is this week: the rollover drops it after.
+    leadInWeek:
+      programState?.runPlan?.leadInWeek ===
+      localWeekKey(parseLocalDate(todayKey))
+        ? programState.runPlan.leadInWeek
+        : null,
     runsTarget,
   });
 
@@ -1462,6 +1469,7 @@ function ProgramInner() {
             realignRacePlan={realignRacePlan}
             dismissFellBehindPrompt={dismissFellBehindPrompt}
             recentLayoff={recentLayoff}
+            recentRuns={recentRuns}
           />
         </div>
       )}

@@ -2475,7 +2475,9 @@ export default function Run() {
                   <PaceZoneBar
                     /* The last 30 seconds, as the alerts read it: the whole
                      run's average carries the warm-up into every reading. */
-                    currentPace={rollingPaceSeconds(gps.points, 30) ?? 0}
+                    currentPace={
+                      clockHeld ? 0 : (rollingPaceSeconds(gps.points, 30) ?? 0)
+                    }
                     targetPace={barPace}
                     tolerance={15}
                   />
@@ -2631,6 +2633,7 @@ export default function Run() {
               onPause={handlePause}
               onLock={() => setLocked(true)}
               isPaused={phase === "paused"}
+              paceHeld={clockHeld}
               onResume={handleResume}
               onStop={() => {
                 haptic("success");

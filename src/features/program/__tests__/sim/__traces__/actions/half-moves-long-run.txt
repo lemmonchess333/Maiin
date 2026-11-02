@@ -57,12 +57,12 @@ w10 2026-05-11  build, plan week 10 of 14  counted 3/3  plan 188 min, long 15.0 
   ran     Wed 5x1k 7.6 km/38 min 5:04 · Fri easy_60 9.5 km/60 min 6:17 [on target] · Sun long_15k 15.0 km/94 min 6:15 [on target]
   week    192 min · 32.1 km · easy 88% · longest ×1.00 the month's
   runner  VDOT 41.09 · fitness 145 min · easy own 5:54–6:38, prescribed 5:45–6:28
-w11 2026-05-18  build, plan week 11 of 14  counted 2/3  plan 257 min, long 20.0 km, quality 1
-  planned Wed:tempo_40 · Fri:easy_75 · Sun:long_20k
+w11 2026-05-18  build, plan week 11 of 14  counted 2/3  plan 242 min, long 20.0 km, quality 1
+  planned Wed:tempo_40 · Fri:easy_60 · Sun:long_20k
   ran     Wed tempo_40 11.0 km/58 min 5:17 [on target] · Sun long_20k 20.0 km/125 min 6:16 [on target]
   week    183 min · 31.0 km · easy 78% · longest ×1.33 the month's
   runner  VDOT 41.37 · fitness 154 min · easy own 5:53–6:37, prescribed 5:45–6:28
-  · 2026-05-22: skipped the easy_75
+  · 2026-05-22: skipped the easy_60
 w12 2026-05-25  taper, plan week 12 of 14  counted 3/3  plan 139 min, long 12.0 km, quality 1
   planned Wed:8x400 · Fri:easy_40 · Sun:long_12k
   ran     Wed 8x400 5.9 km/32 min 5:23 (target too fast) · Fri easy_40 6.1 km/40 min 6:32 [on target] · Sun long_12k 12.0 km/76 min 6:20 [on target]

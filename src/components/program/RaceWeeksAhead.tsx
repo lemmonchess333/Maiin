@@ -17,7 +17,7 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import type { UserProfile } from "@/lib/auth";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth } from "@/utils/formatters";
-import type { LayoffClass } from "@/features/program/layoffDetection";
+import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
 import type { ProgramState } from "@/features/program/programTypes";
 import {
   hasRaceWeeksAhead,
@@ -30,6 +30,9 @@ interface RaceWeeksAheadProps {
   programState: ProgramState | null;
   /** Today's layoff reading, the one the rollover builds next week with. */
   recentLayoff: LayoffClass;
+  /** The recent runs read with it, whose pace a running starting point's
+   *  climb is sized at. */
+  recentRuns?: readonly DatedRun[] | null;
   /** Local "YYYY-MM-DD". */
   today: string;
 }
@@ -50,11 +53,19 @@ function WeeksAheadList({
   profile,
   programState,
   recentLayoff,
+  recentRuns,
   today,
 }: RaceWeeksAheadProps) {
   const weeks = useMemo(
-    () => raceWeeksAhead({ profile, programState, recentLayoff, today }),
-    [profile, programState, recentLayoff, today]
+    () =>
+      raceWeeksAhead({
+        profile,
+        programState,
+        recentLayoff,
+        recentRuns,
+        today,
+      }),
+    [profile, programState, recentLayoff, recentRuns, today]
   );
   return (
     <ol aria-label="The weeks ahead" className="mt-2 divide-y divide-border">

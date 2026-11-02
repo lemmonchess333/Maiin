@@ -134,7 +134,9 @@ function catchUp(
   const lines: string[] = [];
   let s = state;
   for (let pass = 0; pass < 6; pass++) {
-    const run = onDay(today, () => rollRunWeeks(s, profile, today, layoff));
+    const run = onDay(today, () =>
+      rollRunWeeks(s, profile, today, layoff, null)
+    );
     if (run.weeks > 0) {
       lines.push(`run  ${trace(run)}`);
       s = run.state;
@@ -290,7 +292,7 @@ describe("the rollover functions", () => {
     const run = runner();
     expect(
       onDay(later, () =>
-        rollRunWeeks(lift.state, lift.profile, weekOf(later), "none")
+        rollRunWeeks(lift.state, lift.profile, weekOf(later), "none", null)
       ).weeks
     ).toBe(0);
     expect(
@@ -304,7 +306,13 @@ describe("the rollover functions", () => {
     const run = runner();
     const today = shift(START, 4);
     const sameLift = rollLiftWeeks(lift.state, lift.profile, weekOf(today));
-    const sameRun = rollRunWeeks(run.state, run.profile, weekOf(today), "none");
+    const sameRun = rollRunWeeks(
+      run.state,
+      run.profile,
+      weekOf(today),
+      "none",
+      null
+    );
     expect(sameLift).toEqual({ state: lift.state, weeks: 0 });
     expect(sameRun).toEqual({ state: run.state, weeks: 0 });
   });
@@ -323,7 +331,7 @@ describe("the rollover functions", () => {
     for (const { state, profile } of [lifter(), runner()]) {
       const before = JSON.stringify(state);
       onDay(later, () => {
-        rollRunWeeks(state, profile, weekOf(later), "none");
+        rollRunWeeks(state, profile, weekOf(later), "none", null);
         rollLiftWeeks(state, profile, weekOf(later));
       });
       expect(JSON.stringify(state)).toBe(before);
@@ -340,7 +348,7 @@ describe("the rollover functions", () => {
     for (const { state, profile } of [lifter(), runner()]) {
       const move = () =>
         profile.runMode === "race_prep"
-          ? rollRunWeeks(state, profile, weekOf(later), "none")
+          ? rollRunWeeks(state, profile, weekOf(later), "none", null)
           : rollLiftWeeks(state, profile, weekOf(later));
       const first = onDay(later, move);
       expect(first.weeks).toBe(3);
@@ -372,6 +380,13 @@ describe("a race week built mid-week (Run19, R21)", () => {
         currentDate: saturday,
         weekStart: weekOf(saturday),
         recentLayoff: "none",
+        recentRuns: null,
+        // The plan it rebuilds, made on the week's Monday: a fresh plan made
+        // on a Saturday would be a lead-in.
+        carry: {
+          currentWeek: plan.state.runPlan?.currentWeek,
+          totalWeeks: plan.state.runPlan?.totalWeeks,
+        },
         ...extra,
       })
     );
@@ -434,8 +449,8 @@ describe("a plan caught up partway through the week", () => {
   const thursday = shift(START, 2 * 7 + 3);
   const caughtUp = (today: string) => {
     const { state, profile } = build(race10k);
-    return onDay(today, () => rollRunWeeks(state, profile, today, "none")).state
-      .runDays;
+    return onDay(today, () => rollRunWeeks(state, profile, today, "none", null))
+      .state.runDays;
   };
 
   it("plans no run before today", () => {
@@ -468,8 +483,9 @@ describe("a plan caught up partway through the week", () => {
     const tuesday = shift(thursday, -2);
     const { state, profile } = build({ ...race10k, raceTargetDate: tuesday });
     const days =
-      onDay(thursday, () => rollRunWeeks(state, profile, thursday, "none"))
-        .state.runDays ?? [];
+      onDay(thursday, () =>
+        rollRunWeeks(state, profile, thursday, "none", null)
+      ).state.runDays ?? [];
     expect(days.some((d) => d.date === tuesday)).toBe(true);
     // In race week: planned from Thursday, the race day was kept on its
     // date but filed under next week, which the rollover reads as the
@@ -502,7 +518,7 @@ describe("after race day, the race plan waits for the race's own ending", () => 
   const inRaceWeek = () => {
     const { state, profile } = racer();
     const raceWeek = onDay(shift(raceDay, -6), () =>
-      rollRunWeeks(state, profile, weekOf(raceDay), "none")
+      rollRunWeeks(state, profile, weekOf(raceDay), "none", null)
     ).state;
     return { state: raceWeek, profile };
   };
@@ -515,7 +531,8 @@ describe("after race day, the race plan waits for the race's own ending", () => 
         state,
         { weekStart: weekOf(mondayAfter), date: mondayAfter },
         profile,
-        "none"
+        "none",
+        null
       )
     );
     expect(next.runPlan?.raceGoal?.targetDate).toBe(raceDay);
@@ -527,7 +544,7 @@ describe("after race day, the race plan waits for the race's own ending", () => 
     expect(state.runDays?.some((rd) => rd.date === raceDay)).toBe(true);
     const later = shift(mondayAfter, 14);
     const runs = onDay(later, () =>
-      rollRunWeeks(state, profile, weekOf(later), "none")
+      rollRunWeeks(state, profile, weekOf(later), "none", null)
     );
     expect(runs.weeks).toBe(0);
     const lifts = onDay(later, () =>
@@ -550,7 +567,8 @@ describe("after race day, the race plan waits for the race's own ending", () => 
         state,
         { weekStart: weekOf(mondayAfter), date: mondayAfter },
         profile,
-        "none"
+        "none",
+        null
       )
     );
     expect(next.runDays).toEqual(state.runDays);
@@ -580,7 +598,8 @@ describe("after race day, the race plan waits for the race's own ending", () => 
         recovered,
         { weekStart: weekOf(weekAfter), date: weekAfter },
         profile,
-        "none"
+        "none",
+        null
       )
     );
     expect(next.runPlan?.phase).toBe("recovery");
@@ -600,7 +619,8 @@ describe("after race day, the race plan waits for the race's own ending", () => 
         newer,
         { weekStart: weekOf(mondayAfter), date: mondayAfter },
         { ...profile, runMode: "next_kind" } as unknown as UserProfile,
-        "none"
+        "none",
+        null
       )
     );
     expect(next.runPlan).toEqual({ mode: "next_kind", step: 2 });
@@ -616,7 +636,8 @@ describe("after race day, the race plan waits for the race's own ending", () => 
         state,
         { weekStart: weekOf(mondayAfter), date: mondayAfter },
         ended,
-        "none"
+        "none",
+        null
       )
     );
     expect(next.runPlan).toBeUndefined();
