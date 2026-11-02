@@ -364,6 +364,44 @@ describe("the featured monthly challenge", () => {
     expect(readDoc(participantPath(CORE_ID))).toBeUndefined();
   });
 
+  /* One page, one loud button. The weekly challenge's Join is the one
+     filled action; the featured card's and each row's are the quiet
+     secondary, the width of their words, whatever the sport, and the
+     sport is said by a tag on the card instead of by the button's colour. */
+  it("keeps one filled Join, the weekly one; the rest are quiet and tagged", async () => {
+    await openList();
+    await screen.findByText("September Active Days");
+    fireEvent.click(
+      screen.getByRole("button", { name: "See 2 more challenges" })
+    );
+    await screen.findByText("September Mileage");
+    const FILLED = /\bbg-(primary-strong|running-fill|nutrition-fill)\b/;
+    const joins = screen
+      .getAllByRole("button")
+      .filter((b) =>
+        /^Join/.test(b.getAttribute("aria-label") ?? b.textContent ?? "")
+      );
+    expect(joins.length).toBe(4);
+    const filled = joins.filter((b) => FILLED.test(b.className));
+    expect(filled.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Join weekly challenge",
+    ]);
+    for (const quiet of joins.filter((b) => !FILLED.test(b.className))) {
+      expect(quiet.className).toContain("bg-muted");
+      expect(quiet.className).not.toContain("w-full");
+    }
+    expect(
+      screen.getByText("September Mileage").closest("li")!.textContent
+    ).toContain("Running");
+    expect(
+      screen.getByText("September Strength Builder").closest("li")!.textContent
+    ).toContain("Lifting");
+    expect(
+      screen.getByText("September Active Days").closest(".rounded-2xl")!
+        .textContent
+    ).toContain("Run or lift");
+  });
+
   it("puts a joined featured goal first and leaves other memberships intact", async () => {
     const progress = {
       currentValue: 0,

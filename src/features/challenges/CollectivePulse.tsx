@@ -7,6 +7,7 @@ import {
 import { Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import type { Challenge, ChallengeParticipant } from "./useChallenges";
+import { collectiveTotal, showsCollectiveGoal } from "./collectiveGoal";
 
 /**
  * SOC-P1e — the collective-kilometres pulse strip.
@@ -18,9 +19,11 @@ import type { Challenge, ChallengeParticipant } from "./useChallenges";
  * collectiveTarget) from a card buried in "Available" into a compact
  * strip at the top of the challenges section.
  *
- * The line under the name is the figure and nothing else, from the first
- * kilometre: "0 of 1,000 km", then "412.5 of 1,000 km". Counting up, never
- * a shortfall or a percentage. Static bar; no animation (WKWebView rule).
+ * Not drawn until someone has added to it (`showsCollectiveGoal`): a goal
+ * at "0 of 1,000 km" over an empty bar reads as an empty room. From the
+ * first kilometre the line under the name is the figure and nothing else,
+ * "412.5 of 1,000 km". Counting up, never a shortfall or a percentage.
+ * Static bar; no animation (WKWebView rule).
  */
 export default function CollectivePulse({
   challenge,
@@ -32,10 +35,10 @@ export default function CollectivePulse({
   // The reader's distance unit; the board stores kilometres.
   const unit = useDistanceUnit();
   const target = challenge.collectiveTarget ?? 0;
-  if (target <= 0) return null;
+  if (!showsCollectiveGoal(target, leaderboard)) return null;
   // Same source the collective ChallengeCard uses: the loaded board
-  // (top 20) — an approximation that matches the card's own maths.
-  const total = leaderboard.reduce((s, p) => s + (p.currentValue || 0), 0);
+  // (top 20), an approximation that matches the card's own maths.
+  const total = collectiveTotal(leaderboard);
   const pct = Math.min((total / target) * 100, 100);
   const shown = (km: number) => distanceIn(km * 1000, unit);
   const label = distanceUnitLabel(unit);

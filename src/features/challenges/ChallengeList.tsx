@@ -310,6 +310,9 @@ export function ChallengeList({
             {finalDayLine(weeklyCh.endDate)}
           </p>
         ) : weeklyCh && !weeklyJoined ? (
+          /* The Together page's one filled button: this week's challenge
+             is the thing to do now. Every other Join on the page is the
+             quiet secondary (ChallengeCard, ChallengeRow). */
           <Button
             fullWidth
             loading={weeklyBusy}

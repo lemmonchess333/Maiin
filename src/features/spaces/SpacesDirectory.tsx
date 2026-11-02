@@ -21,6 +21,7 @@
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import InlineNumerals from "@/components/ui/InlineNumerals";
+import PhotoCaption from "@/components/ui/PhotoCaption";
 import RaceFilterChips from "./RaceFilterChips";
 import {
   ALL_RACE_FILTERS,
@@ -113,12 +114,6 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
               background: `linear-gradient(150deg, ${accent}59 0%, ${accent}1F 60%, transparent 100%)`,
             }}
           />
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(to top, ${THEME.scrim} 0%, ${THEME.scrimSoft} 45%, transparent 70%)`,
-            }}
-          />
         </>
       ) : (
         <Icon
@@ -131,7 +126,7 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
 
       {event && (
         <span
-          className={`absolute top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold ${
+          className={`absolute z-10 top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold ${
             photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
           }`}
           /* Same chip grammar as Joined. On a photo the pill is the SCRIM
@@ -155,7 +150,7 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
 
       {joined && (
         <span
-          className={`absolute top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
+          className={`absolute z-10 top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
             photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
           }`}
           style={
@@ -169,9 +164,13 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
         </span>
       )}
 
-      <div className="absolute bottom-3 left-3.5 right-3.5 min-w-0">
+      {/* The name takes two lines before it gives way, on every card, so
+          a long name wraps at a word rather than being cut on its first
+          line. The tags above sit over the caption's scrim (z-10), which
+          reaches them at larger text. */}
+      <PhotoCaption onPhoto={!!photo} className="px-3.5">
         <p
-          className={`text-base font-bold leading-tight ${event ? "line-clamp-2" : "truncate"} ${
+          className={`text-base font-bold leading-tight line-clamp-2 break-words ${
             photo ? "text-white" : "text-foreground"
           }`}
         >
@@ -214,7 +213,7 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
             )}
           </p>
         )}
-      </div>
+      </PhotoCaption>
     </Link>
   );
 }

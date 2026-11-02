@@ -43,10 +43,26 @@ describe("CollectivePulse", () => {
     expect(text(board)).not.toMatch(/\bkm\b/);
   });
 
+  it("is not drawn while nobody has added to it", () => {
+    unit = "km";
+    for (const leaderboard of [
+      [],
+      [{ uid: "a", currentValue: 0 }] as unknown as ChallengeParticipant[],
+    ]) {
+      const { container, unmount } = render(
+        <CollectivePulse challenge={challenge} leaderboard={leaderboard} />
+      );
+      expect(container).toBeEmptyDOMElement();
+      unmount();
+    }
+  });
+
   it("shows the figure from the first kilometre, with no explanation", () => {
     unit = "km";
-    const line = text([]);
-    expect(line).toContain(`0 of ${groupText(1000)} km`);
+    const line = text([
+      { uid: "a", currentValue: 1 },
+    ] as unknown as ChallengeParticipant[]);
+    expect(line).toContain(`1 of ${groupText(1000)} km`);
     expect(line).not.toMatch(/every run counts|starts the board/i);
     expect(line).not.toContain("—");
   });

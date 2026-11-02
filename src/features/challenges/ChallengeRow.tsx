@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { challengeEditorialImage } from "@/lib/editorialImages";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
@@ -8,13 +9,15 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { challengeGoal } from "./challengeFormat";
 import { challengeSport, SPORT_ACCENT } from "./challengeSport";
 import { getTimeRemaining, type Challenge } from "./useChallenges";
+import ChallengeSportTag from "./ChallengeSportTag";
 
 /**
  * One not-joined challenge in the "See more" list, as a row in a grouped
- * card: a small picture, the name, the goal, and a small Join in the
- * challenge's sport (coral for running, the primary purple otherwise, as
- * the full card's Join). The big picture card is kept for the featured
- * challenge alone, so the list reads as a list rather than five lobbies.
+ * card: a small picture, the name, its sport as a tag, the goal, and a
+ * quiet Join. The Join is neutral whatever the sport: the Together page
+ * keeps one filled button, and five coloured Joins read as five competing
+ * calls. The big picture card is kept for the featured challenge alone,
+ * so the list reads as a list rather than five lobbies.
  *
  * Says how long is left only when asked to (`showTimeLeft`): the monthly
  * challenges all end on the same day, which the featured card says.
@@ -77,6 +80,7 @@ export default function ChallengeRow({
           <p className="text-sm font-semibold text-foreground leading-snug break-words">
             {challenge.name}
           </p>
+          <ChallengeSportTag metric={challenge.metric} className="mt-1" />
           <p className="text-xs text-muted-foreground leading-snug mt-0.5">
             <InlineNumerals>{goal}</InlineNumerals>
           </p>
@@ -87,8 +91,8 @@ export default function ChallengeRow({
           )}
         </div>
         <Button
-          variant={sport === "running" ? "sport" : "primary"}
-          className="shrink-0"
+          variant="secondary"
+          className={`shrink-0 ${SECONDARY_ON_CARD_EDGE}`}
           loading={joining}
           onClick={handleJoin}
           aria-label={`Join ${challenge.name}`}
