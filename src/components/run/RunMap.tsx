@@ -189,6 +189,27 @@ export default function RunMap({
       });
 
       if (paceColored) {
+        /* A stretch with no pace of its own (the line across a pause, the
+           jump after a GPS gap) is drawn faint and dashed under the pace
+           colours. With only the route's dark casing there, it read as a
+           hole in the route on the dark map. */
+        map.addSource("pace-gaps", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: "pace-gaps-line",
+          type: "line",
+          source: "pace-gaps",
+          layout: { "line-join": "round", "line-cap": "butt" },
+          paint: {
+            "line-color": darkMode
+              ? "rgba(255,255,255,0.45)"
+              : "rgba(0,0,0,0.35)",
+            "line-width": 3,
+            "line-dasharray": [1.5, 1.5],
+          },
+        });
         map.addSource("pace-segments", {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },
@@ -268,8 +289,7 @@ export default function RunMap({
         .map((segment) => segment.map((p) => [p.lon, p.lat]));
 
       const routeSource = map.getSource("route") as
-        | maplibregl.GeoJSONSource
-        | undefined;
+        maplibregl.GeoJSONSource | undefined;
       if (routeSource) {
         routeSource.setData({
           type: "Feature",
@@ -291,10 +311,27 @@ export default function RunMap({
            jump after a gap. Those get no pace colour, and only the
            route's dark casing shows there. The steps live with the key
            under the map (`routePace.ts`), so the two cannot disagree. */
+        const gaps: typeof features = [];
         const ratios = routePaceRatios(visiblePoints, avgPaceSecPerKm);
         for (let i = 1; i < visiblePoints.length; i++) {
           const ratio = ratios[i];
-          if (ratio === null) continue;
+          if (ratio === null) {
+            // A break in the trace is not joined up; a stretch with no
+            // pace is, faintly.
+            if (!visiblePoints[i].breakBefore)
+              gaps.push({
+                type: "Feature" as const,
+                geometry: {
+                  type: "LineString" as const,
+                  coordinates: [
+                    [visiblePoints[i - 1].lon, visiblePoints[i - 1].lat],
+                    [visiblePoints[i].lon, visiblePoints[i].lat],
+                  ],
+                },
+                properties: { color: "" },
+              });
+            continue;
+          }
           const color = routePaceColor(ratio);
 
           features.push({
@@ -311,10 +348,14 @@ export default function RunMap({
         }
 
         const paceSource = map.getSource("pace-segments") as
-          | maplibregl.GeoJSONSource
-          | undefined;
+          maplibregl.GeoJSONSource | undefined;
         if (paceSource) {
           paceSource.setData({ type: "FeatureCollection", features });
+        }
+        const gapSource = map.getSource("pace-gaps") as
+          maplibregl.GeoJSONSource | undefined;
+        if (gapSource) {
+          gapSource.setData({ type: "FeatureCollection", features: gaps });
         }
       }
 
@@ -483,8 +524,7 @@ export default function RunMap({
     if (!map || !targetRoute || targetRoute.length < 2) return;
     const apply = () => {
       const src = map.getSource("target-route") as
-        | maplibregl.GeoJSONSource
-        | undefined;
+        maplibregl.GeoJSONSource | undefined;
       src?.setData({
         type: "Feature",
         geometry: {

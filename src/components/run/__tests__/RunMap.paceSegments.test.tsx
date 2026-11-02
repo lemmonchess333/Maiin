@@ -108,3 +108,55 @@ it("gives the line across a pause no pace colour", () => {
   expect(colours).toHaveLength(5);
   expect(new Set(colours)).toEqual(new Set([THEME.warning]));
 });
+
+it("draws the line across a pause faint and dashed, not as a hole", () => {
+  // With no pace colour, only the route's dark casing showed there, and on
+  // the dark map the route read as broken.
+  const held = 5 * 60_000;
+  const points = [
+    fix(0),
+    fix(1),
+    fix(2),
+    fix(3),
+    fix(4, held),
+    fix(5, held),
+    fix(6, held),
+  ];
+  render(
+    <RunMap
+      points={points}
+      currentPoint={null}
+      paceColored
+      avgPaceSecPerKm={(20 / 69.4) * 1000}
+    />
+  );
+  act(() => state.load.forEach((fn) => fn()));
+  const gaps = state.sources["pace-gaps"].setData.mock.calls.at(-1)![0];
+  expect(gaps.features).toHaveLength(1);
+  expect(gaps.features[0].geometry.coordinates).toEqual([
+    [points[3].lon, points[3].lat],
+    [points[4].lon, points[4].lat],
+  ]);
+});
+
+it("leaves a break in the trace unjoined", () => {
+  const points = [
+    fix(0),
+    fix(1),
+    fix(2),
+    { ...fix(3), breakBefore: true },
+    fix(4),
+    fix(5),
+  ];
+  render(
+    <RunMap
+      points={points}
+      currentPoint={null}
+      paceColored
+      avgPaceSecPerKm={(20 / 69.4) * 1000}
+    />
+  );
+  act(() => state.load.forEach((fn) => fn()));
+  const gaps = state.sources["pace-gaps"].setData.mock.calls.at(-1)![0];
+  expect(gaps.features).toHaveLength(0);
+});
