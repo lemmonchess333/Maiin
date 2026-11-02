@@ -300,6 +300,9 @@ export interface SetupAnswers {
     date: string;
     runsPerWeek: number;
     legTrim?: boolean;
+    /** The running the plan starts from (R5), which setup asks of someone
+     *  who runs already: minutes in a usual week, and the longest run. */
+    running?: { weekMinutes: number; longestRun: number };
   };
   equipment?: SetupOption<"equipment">;
   experience?: SetupOption<"experience">;
@@ -375,6 +378,24 @@ export async function setUpPlan(
       await page
         .getByRole("textbox", { name: SETUP.raceDate })
         .fill(answers.race.date);
+      // Run9 STATUS 2026-11-01: a race entered, or on your own; the
+      // journeys' races are entered ones.
+      await page
+        .getByRole("radiogroup", { name: SETUP.raceEntry })
+        .getByRole("radio", { name: SETUP.raceEntered, exact: true })
+        .click();
+      if ((answers.runner ?? "Regular runner") !== "New to running") {
+        const running = answers.race.running ?? {
+          weekMinutes: 180,
+          longestRun: 70,
+        };
+        await page
+          .getByRole("textbox", { name: SETUP.weekMinutes })
+          .fill(String(running.weekMinutes));
+        await page
+          .getByRole("textbox", { name: SETUP.longestRun })
+          .fill(String(running.longestRun));
+      }
       if (answers.activity === "Both") {
         const trim = page.getByRole("switch", {
           name: SETUP.legTrim,

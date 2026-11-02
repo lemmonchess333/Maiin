@@ -201,7 +201,13 @@ function live(c: Case) {
         runs.push(done(day.userOverride || day.templateId, day.date));
     }
     const moved = onDay(row.weekKey, () =>
-      rollRunWeeks(s, profile, row.weekKey, layoffFromRuns(runs, row.weekKey))
+      rollRunWeeks(
+        s,
+        profile,
+        row.weekKey,
+        layoffFromRuns(runs, row.weekKey),
+        null
+      )
     );
     expect(moved.weeks).toBe(1);
     s = moved.state;

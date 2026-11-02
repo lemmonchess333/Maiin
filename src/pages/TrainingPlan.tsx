@@ -5,6 +5,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { goalDayName } from "@/lib/raceGoalEntry";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -729,6 +730,7 @@ export default function TrainingPlan() {
           nextLiftName={model.nextLift?.dayName}
           initialRunId={move.id}
           blocked={!canEdit}
+          goalDay={goalDayName(profile.raceGoal)}
           onClose={() => setMove(null)}
           onMove={moveRunDay}
           onResult={handleResult}

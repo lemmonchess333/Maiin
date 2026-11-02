@@ -13,9 +13,14 @@
  * runway feedback the bare onboarding date field can't.
  *
  * No "structured" coercion here — structured is passed through untouched
- * (this helper only governs the race_prep-without-date case).
+ * (this helper only governs the race_prep-without-date case), and so is
+ * Run9's starter goal, which needs no date.
  */
-export type OnboardingRunMode = "freeform" | "structured" | "race_prep";
+export type OnboardingRunMode =
+  | "freeform"
+  | "structured"
+  | "race_prep"
+  | "starter";
 
 export function resolveOnboardingRunMode(input: {
   runFrequency: string;

@@ -59,6 +59,11 @@ interface RunBottomSheetProps {
   onPause: () => void;
   onLock: () => void;
   isPaused: boolean;
+  /** The run's clock is held (paused, or auto-paused while standing
+   *  still). There is no live pace then: the last half-minute of moving
+   *  time ends where the person stopped, and a GPS step in it read as a
+   *  pace no one runs. */
+  paceHeld?: boolean;
   onResume: () => void;
   onStop: () => void;
   onDiscard?: () => void;
@@ -330,6 +335,7 @@ export default function RunBottomSheet({
   onPause,
   onLock,
   isPaused,
+  paceHeld = false,
   onResume,
   onStop,
   onDiscard,
@@ -438,7 +444,8 @@ export default function RunBottomSheet({
      "AVG" caption beneath the live pace. The post-run summary still
      records the all-time average — that's the right number for the
      historical entry. */
-  const livePaceS = rollingPaceSeconds(points, 30);
+  const livePaceS =
+    isPaused || paceHeld ? null : rollingPaceSeconds(points, 30);
   const livePace = livePaceS === null ? "--:--" : paceMinSec(livePaceS, unit);
   const calories = estimateRunCalories(distance, weightKg);
   const elevation = totalElevationGain(points);

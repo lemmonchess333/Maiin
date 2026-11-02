@@ -49,6 +49,7 @@ import {
   signInAsTestUser,
 } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
+import { SETUP } from "../../src/test/journeyScreens";
 import { settleCommunity } from "../helpers/settleCommunity";
 import { brokenWords, layoutBreaks } from "../helpers/layoutBreaks";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
@@ -448,6 +449,12 @@ test.describe("large text", () => {
       await page.getByRole("button", { name: /regular runner/i }).click();
       await page.getByRole("radio", { name: /race prep/i }).click();
       await page.getByRole("radio", { name: /^full$/i }).click();
+      // Run9: nothing is chosen for a new goal's event, and setup holds
+      // until it is.
+      await page
+        .getByRole("radiogroup", { name: SETUP.raceEntry })
+        .getByRole("radio", { name: SETUP.raceEntered, exact: true })
+        .click();
       await page
         .getByLabel(/race target date/i)
         .fill(
@@ -458,6 +465,9 @@ test.describe("large text", () => {
       await recentRace.getByRole("radio", { name: "10K" }).click();
       await recentRace.getByRole("textbox", { name: "Minutes" }).fill("105");
       await recentRace.getByRole("textbox", { name: "Seconds" }).fill("59");
+      // R5: the running the plan starts from, which setup holds for.
+      await page.getByRole("textbox", { name: SETUP.weekMinutes }).fill("180");
+      await page.getByRole("textbox", { name: SETUP.longestRun }).fill("70");
       await page.waitForTimeout(500);
       await measure(page, "setup-running", width, found);
       await next();

@@ -37,6 +37,8 @@ interface Props {
   initialRunId?: string;
   /** Completion evidence or a session can change while the sheet is open. */
   blocked: boolean;
+  /** The goal's last day, as `goalDayName` names it. */
+  goalDay?: string;
   onClose: () => void;
   onMove: (
     id: string,
@@ -46,14 +48,26 @@ interface Props {
   onResult: (outcome: ProgramOutcome, message: string) => void;
 }
 
-const BLOCK_COPY: Record<MoveBlockReason, string> = {
-  same: "Current day",
-  past: "That date has passed",
-  occupied: "A run is already here",
-  race: "Race day stays on its date",
-  post_race: "After this week's race",
-  malformed: "This date is unavailable",
-};
+/** Why a day is not offered. `goalDay` names the goal's last day: "Race
+ *  day", or for a goal run on your own "Your 10K" (Run9). */
+function blockCopy(reason: MoveBlockReason, goalDay: string): string {
+  switch (reason) {
+    case "same":
+      return "Current day";
+    case "past":
+      return "That date has passed";
+    case "occupied":
+      return "A run is already here";
+    case "race":
+      return `${goalDay} stays on its date`;
+    case "post_race":
+      return goalDay === "Race day"
+        ? "After this week's race"
+        : `After ${goalDay.replace(/^Your/, "your")}`;
+    case "malformed":
+      return "This date is unavailable";
+  }
+}
 const WARNING_COPY: Record<MoveWarning, string> = {
   clashes_lift: "This demanding run will share a lifting day.",
   beside_hard: "This demanding run will be beside another demanding run.",
@@ -84,6 +98,7 @@ export default function MoveRunSheet({
   nextLiftName,
   initialRunId,
   blocked,
+  goalDay = "Race day",
   onClose,
   onMove,
   onResult,
@@ -343,7 +358,7 @@ export default function MoveRunSheet({
                       </span>
                       {candidate.blockReason && (
                         <span className="block text-xs text-muted-foreground">
-                          {BLOCK_COPY[candidate.blockReason]}
+                          {blockCopy(candidate.blockReason, goalDay)}
                         </span>
                       )}
                       {candidate.warning && (

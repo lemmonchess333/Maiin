@@ -458,7 +458,12 @@ export interface UserProfileSocial {
 
 /** Run and schedule configuration */
 export interface UserProfileRunning {
-  runMode?: "freeform" | "structured" | "race_prep";
+  runMode?: "freeform" | "structured" | "race_prep" | "starter";
+  /** Run9's reopening: the goal of 30 minutes without stopping. The record
+   *  stays once it is over (`StarterGoal`); `runMode` is "starter" only
+   *  while it runs (`deriveRunMode`). Its stage is on the run plan. */
+  starterGoal?:
+    import("@/features/program/runModeResolution").StarterGoal | null;
   weeklyRunDaysTarget?: number;
   weeklyRunsTarget?: number;
   /**
@@ -498,6 +503,9 @@ export interface UserProfileRunning {
     /** Optional race-space link (races plan Q4) — present only when the
      *  goal was set from the race catalogue; manual goals lack it. */
     eventSpaceId?: string;
+    /** A race entered, or the distance run on your own (Run9). Absent
+     *  reads as a race (`raceGoalEntry`). */
+    entry?: "race" | "own";
   } | null;
   weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   /**

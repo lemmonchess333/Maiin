@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   render,
   screen,
@@ -18,6 +18,7 @@ import {
 } from "@/lib/dateHelpers";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import type { UserProfile } from "@/lib/auth";
+import type { RunSummaryItem } from "@/hooks/useRunningStats";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 
@@ -50,9 +51,11 @@ vi.mock("@/lib/firebase", () => ({
   storage: {},
 }));
 
+/** The runs recorded in the last four weeks, as the page reads them. */
+const recorded: { runs: RunSummaryItem[] } = { runs: [] };
 vi.mock("@/hooks/useRunningStats", () => ({
   useRunningStats: () => ({
-    runs: [],
+    runs: recorded.runs,
     loading: false,
     failed: false,
     refresh: vi.fn(),
@@ -119,6 +122,14 @@ type Programme = {
   readiness?: ProgramReadiness;
   programState?: ProgramState | null;
 };
+
+/** Race prep as a person picks it now: the mode, then whether it is a
+ *  race they have entered, which the plan asks before it saves (Run9
+ *  STATUS 2026-11-01). */
+function pickRacePrep(entry: string = "A race I've entered") {
+  fireEvent.click(screen.getByRole("radio", { name: /Training for a race/i }));
+  fireEvent.click(screen.getByRole("radio", { name: entry }));
+}
 
 function renderPage(
   profile: UserProfile,
@@ -216,9 +227,7 @@ describe("RunPlanSettings", () => {
       weeklyRunDaysTarget: 1,
       weeklyRunsTarget: 1,
     } as unknown as UserProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     const less = screen.getByRole("button", { name: /Decrease run days/i });
     expect(less).toBeDisabled();
     expect(less.parentElement).toHaveTextContent("2");
@@ -270,9 +279,7 @@ describe("RunPlanSettings", () => {
       runFrequency,
       onboardingCompletedAt: { toMillis: () => setUp.getTime() },
     } as unknown as UserProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     fireEvent.click(screen.getByRole("radio", { name: "Half" }));
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: localDateString(addLocalDays(new Date(), 70)) },
@@ -340,7 +347,7 @@ describe("RunPlanSettings", () => {
     } as UserProfile;
     const first = renderPage(profile);
     fireEvent.click(screen.getByRole("button", { name: "Add starting point" }));
-    fireEvent.change(screen.getByLabelText("Recent minutes per week"), {
+    fireEvent.change(screen.getByLabelText("Minutes a week"), {
       target: { value: "90" },
     });
     fireEvent.click(
@@ -349,8 +356,8 @@ describe("RunPlanSettings", () => {
     expect(configureSpy).not.toHaveBeenCalled();
     first.unmount();
     renderPage(profile);
-    expect(screen.getByLabelText("Recent minutes per week")).toHaveValue(90);
-    fireEvent.change(screen.getByLabelText("Longest recent run, min"), {
+    expect(screen.getByLabelText("Minutes a week")).toHaveValue(90);
+    fireEvent.change(screen.getByLabelText("Longest run, min"), {
       target: { value: "30" },
     });
     fireEvent.click(screen.getByRole("button", { name: /Save .*plan/ }));
@@ -360,6 +367,106 @@ describe("RunPlanSettings", () => {
       weeklyMinutes: 90,
       longestRunMinutes: 30,
       confirmedAt: localDateString(),
+    });
+  });
+
+  /* R5 (owner, 1 November 2026): a race set up with no starting point
+     starts from the runs recorded in the last four weeks. The owner set a
+     marathon after a 25-minute run and was given a 12 km long run that
+     day. */
+  describe("a race set up with no starting point", () => {
+    afterEach(() => {
+      recorded.runs = [];
+    });
+    const raceDay = async () => {
+      fireEvent.click(
+        screen.getByRole("radio", { name: "Training for a race" })
+      );
+      fireEvent.change(screen.getByLabelText("Target date"), {
+        target: { value: RACE_TARGET_DATE },
+      });
+      fireEvent.click(
+        screen.getByRole("radio", { name: "A race I've entered" })
+      );
+    };
+
+    it("starts from the runs recorded in the last four weeks, and saves what it showed", async () => {
+      recorded.runs = [
+        {
+          id: "afternoon",
+          distance: 2850,
+          duration: 1516,
+          completedAt: new Date(),
+          avgPace: 532,
+          elevationGain: 0,
+          calories: 0,
+          activityType: "run",
+          relativeEffort: null,
+        },
+      ];
+      renderPage({ ...baseProfile, uid: "recorded-owner" } as UserProfile);
+      await raceDay();
+      expect(
+        screen.getByText(
+          (_, node) =>
+            node?.tagName === "P" &&
+            node.textContent ===
+              "Starting from your recent running: about 25 min a week, longest run 25 min."
+        )
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Change" })
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Save .*plan/ }));
+      await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+      expect(sentPayload().profileUpdates.runningBaseline).toEqual({
+        version: 1,
+        experience: "building",
+        weeklyMinutes: 25,
+        longestRunMinutes: 25,
+        confirmedAt: localDateString(),
+        source: "recorded",
+      });
+    });
+
+    it("asks for the two numbers with no runs recorded, and saves what was given", async () => {
+      renderPage({ ...baseProfile, uid: "unrecorded-owner" } as UserProfile);
+      await raceDay();
+      expect(screen.getByLabelText("Minutes a week")).toHaveValue(null);
+      expect(screen.getByLabelText("Longest run, min")).toHaveValue(null);
+      // A new runner starts from setup's "New to running", not from here.
+      expect(
+        screen.queryByRole("button", { name: "I'm new to running" })
+      ).toBeNull();
+      fireEvent.change(screen.getByLabelText("Minutes a week"), {
+        target: { value: "60" },
+      });
+      fireEvent.change(screen.getByLabelText("Longest run, min"), {
+        target: { value: "30" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Save .*plan/ }));
+      await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+      expect(sentPayload().profileUpdates.runningBaseline).toMatchObject({
+        weeklyMinutes: 60,
+        longestRunMinutes: 30,
+        source: "self_reported",
+      });
+    });
+
+    it("leaves a race plan the person only opens as it is", () => {
+      recorded.runs = [];
+      renderPage({
+        ...baseProfile,
+        uid: "opened-owner",
+        runMode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
+      } as UserProfile);
+      expect(
+        screen.getByRole("button", { name: "Add starting point" })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /Save .*plan/ })
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -378,6 +485,7 @@ describe("RunPlanSettings", () => {
         source: "self_reported",
       },
     } as UserProfile);
+    fireEvent.click(screen.getByRole("button", { name: "Change" }));
     fireEvent.click(
       screen.getByRole("button", { name: "Remove starting point" })
     );
@@ -403,7 +511,7 @@ describe("RunPlanSettings", () => {
 
   it("draws the plan's two knobs in the running colour, as Distance is", () => {
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: "Training for a race" }));
+    pickRacePrep();
     for (const name of ["Long-run volume", "Plan intensity"]) {
       const group = screen.getByRole("radiogroup", { name });
       const selected = Array.from(
@@ -421,7 +529,7 @@ describe("RunPlanSettings", () => {
      opens with the compact SectionHeading and none is boxed. */
   it("opens every race-prep group with the compact section heading", () => {
     renderPage({ ...baseProfile, weeklyWorkoutsTarget: 3 } as UserProfile);
-    fireEvent.click(screen.getByRole("radio", { name: "Training for a race" }));
+    pickRacePrep();
     for (const name of [
       "Race goal",
       "Distance",
@@ -443,10 +551,10 @@ describe("RunPlanSettings", () => {
 
   it("keeps each helper line short", () => {
     renderPage({ ...baseProfile, weeklyWorkoutsTarget: 3 } as UserProfile);
-    fireEvent.click(screen.getByRole("radio", { name: "Training for a race" }));
+    pickRacePrep();
     for (const line of [
       "The longest your runs can be. Race day stays as planned.",
-      "Your recent weekly running, so the plan starts near it.",
+      "Your recent running. The plan climbs from it each week.",
       "How long your longest runs get.",
       "How much tempo and interval work each week has.",
       "A third fewer leg sets, at the same weights.",
@@ -467,9 +575,7 @@ describe("RunPlanSettings", () => {
   it("reveals the race goal planner only in race prep", () => {
     renderPage(baseProfile);
     expect(screen.queryByText(/Target date/i)).not.toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     expect(screen.getByText(/Target date/i)).toBeInTheDocument();
     expect(screen.getByText(/Run days \/ week/i)).toBeInTheDocument();
   });
@@ -481,9 +587,7 @@ describe("RunPlanSettings", () => {
 
   async function saveRaceGoal() {
     const { refreshProfile } = renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
 
@@ -533,9 +637,7 @@ describe("RunPlanSettings", () => {
       weeklyRunsTarget: 2,
     } as unknown as UserProfile;
     renderPage(profile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     // 2 → 4 via the stepper.
@@ -568,9 +670,7 @@ describe("RunPlanSettings", () => {
 
   it("RUN-EV-02: preview ≡ commit — the committed weekSchedule IS the planner's derivation", async () => {
     renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     fireEvent.click(
@@ -637,9 +737,7 @@ describe("RunPlanSettings", () => {
 
   it("RACE-EVENT-IDENTITY-01: saving with an event name includes it in the raceGoal", async () => {
     renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
 
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
@@ -657,14 +755,13 @@ describe("RunPlanSettings", () => {
       distance: "10k",
       targetDate: RACE_TARGET_DATE,
       eventName: "London Marathon 2027",
+      entry: "race",
     });
   });
 
   it("D14: shows the Pgm6 tuning knobs in race prep and persists them on save", async () => {
     renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
 
     expect(screen.getByText("Long-run volume")).toBeInTheDocument();
     expect(screen.getByText("Intensity")).toBeInTheDocument();
@@ -695,9 +792,7 @@ describe("RunPlanSettings", () => {
 
   it("Lift4 (10): asks a lifter about the legs while the runs build, and saves the answer with the plan", async () => {
     renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     const legTrim = screen.getByRole("switch", {
       name: "Lighten leg sessions while your runs build",
     });
@@ -736,9 +831,7 @@ describe("RunPlanSettings", () => {
 
   it("Lift4 (10): not asked of someone who doesn't lift", () => {
     renderPage({ ...baseProfile, weeklyWorkoutsTarget: 0 } as UserProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     expect(
       screen.queryByRole("switch", {
         name: "Lighten leg sessions while your runs build",
@@ -787,9 +880,7 @@ describe("RunPlanSettings", () => {
       },
     } as unknown as UserProfile;
     renderPage(profile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     const time = screen.getByLabelText(/Goal time \(optional\)/i);
@@ -811,9 +902,7 @@ describe("RunPlanSettings", () => {
 
   it("A2: a malformed goal time blocks the save with a hint; empty stays absent", async () => {
     renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     const time = screen.getByLabelText(/Goal time \(optional\)/i);
@@ -832,9 +921,7 @@ describe("RunPlanSettings", () => {
     /* A 10K showed a 5K time ("e.g. 24:30") and a half a marathon one
        ("e.g. 3:59:00"). */
     renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     const time = screen.getByLabelText(/Goal time \(optional\)/i);
     for (const [distance, example] of [
       ["5K", "24:30"],
@@ -856,9 +943,7 @@ describe("RunPlanSettings", () => {
        covered only the DATE — leaving a filled, enabled "Save run plan"
        that silently did nothing. */
     renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -878,9 +963,7 @@ describe("RunPlanSettings", () => {
        something is wrong but never WHERE — and on a phone the offending
        field is usually scrolled off screen. */
     renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -896,9 +979,7 @@ describe("RunPlanSettings", () => {
   it("a valid draft still saves — the counterweight", async () => {
     // A button wired to refuse everything would pass both tests above.
     renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -997,9 +1078,7 @@ describe("RunPlanSettings", () => {
          programme. Its label and focus move are the behaviour the long
          comment above `invalid` keeps. */
       renderPage(baseProfile, "/settings/run-plan", { readiness: "pending" });
-      fireEvent.click(
-        screen.getByRole("radio", { name: /Training for a race/i })
-      );
+      pickRacePrep();
       fireEvent.change(screen.getByLabelText(/Target date/i), {
         target: { value: RACE_TARGET_DATE },
       });
@@ -1021,9 +1100,7 @@ describe("RunPlanSettings", () => {
        re-rendering IS that journey — the draft lives in component state,
        so nothing else distinguishes a remount from a return. */
     const { unmount } = renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -1041,9 +1118,7 @@ describe("RunPlanSettings", () => {
     // The invalid draft is exactly the one worth keeping: it is the edit
     // the user has not finished.
     const { unmount } = renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -1062,9 +1137,7 @@ describe("RunPlanSettings", () => {
        restoring one would reinstate a change the user had already backed
        out of. */
     const { unmount } = renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     fireEvent.click(screen.getByRole("radio", { name: /No race/i }));
     unmount();
 
@@ -1075,9 +1148,7 @@ describe("RunPlanSettings", () => {
 
   it("a saved plan clears the draft", async () => {
     const { unmount } = renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -1098,9 +1169,7 @@ describe("RunPlanSettings", () => {
        a specific event. Restoring an older half-finished goal over it
        would answer a question the user did not ask. */
     const { unmount } = renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -1148,6 +1217,61 @@ describe("RunPlanSettings", () => {
       targetDate: race.event!.dateKey,
       eventName: race.name,
       eventSpaceId: race.id,
+      // Arrived at from a race's Space: a race entered.
+      entry: "race",
+    });
+  });
+
+  /* Run9 STATUS 2026-11-01: a distance goal is a race entered or run on
+     your own, asked once, with nothing chosen for a new goal. */
+  describe("a race entered, or on your own", () => {
+    it("asks a new goal, chooses neither, and holds the save until answered", () => {
+      renderPage(baseProfile);
+      fireEvent.click(
+        screen.getByRole("radio", { name: /Training for a race/i })
+      );
+      for (const name of ["A race I've entered", "On my own"])
+        expect(screen.getByRole("radio", { name })).toHaveAttribute(
+          "aria-checked",
+          "false"
+        );
+      expect(
+        screen.getByText("Choose one to save your plan.")
+      ).toBeInTheDocument();
+      fireEvent.change(screen.getByLabelText(/Target date/i), {
+        target: { value: RACE_TARGET_DATE },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Save .*plan/i }));
+      expect(configureSpy).not.toHaveBeenCalled();
+    });
+
+    it("saves a goal on your own with no race name or race link", async () => {
+      renderPage(baseProfile);
+      pickRacePrep("On my own");
+      expect(screen.queryByLabelText(/Race name/i)).not.toBeInTheDocument();
+      fireEvent.change(screen.getByLabelText(/Target date/i), {
+        target: { value: RACE_TARGET_DATE },
+      });
+      fireEvent.click(
+        await screen.findByRole("button", { name: /Save .*plan/i })
+      );
+      await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+      expect(sentPayload().profileUpdates.raceGoal).toEqual({
+        distance: "10k",
+        targetDate: RACE_TARGET_DATE,
+        entry: "own",
+      });
+    });
+
+    it("reads a goal set before the question as a race entered", () => {
+      renderPage({
+        ...baseProfile,
+        runMode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
+      });
+      expect(
+        screen.getByRole("radio", { name: "A race I've entered" })
+      ).toHaveAttribute("aria-checked", "true");
     });
   });
 
@@ -1165,9 +1289,7 @@ describe("RunPlanSettings", () => {
   it("Door 2: picking a catalogue race prefills the draft and saves the binding", async () => {
     const race = firstUpcomingRace();
     renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
 
     openPickerFor(race);
     fireEvent.click(
@@ -1193,9 +1315,7 @@ describe("RunPlanSettings", () => {
   it("a manual date edit after picking clears the eventSpaceId binding", async () => {
     const race = firstUpcomingRace();
     renderPage(baseProfile);
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Training for a race/i })
-    );
+    pickRacePrep();
     openPickerFor(race);
     fireEvent.click(
       screen.getByRole("option", { name: new RegExp(race.name) })
@@ -1211,5 +1331,102 @@ describe("RunPlanSettings", () => {
     const goal = sentPayload().profileUpdates.raceGoal!;
     expect("eventSpaceId" in goal).toBe(false);
     expect(goal.targetDate).toBe("2028-01-01");
+  });
+});
+
+/* Run9's starter goal in Settings → Run plan: offered to someone who runs
+   only, to anyone new to running and to anyone on it; chosen, it begins
+   today and clears a race goal; left for a race, it ends, kept with the
+   stage reached. Every change goes through configurePlan, which writes the
+   goal whole (functions/lib/raceGoalWrite.js). */
+describe("RunPlanSettings — the 30-minute goal", () => {
+  const today = () => localDateString(new Date());
+  const newRunner = {
+    ...baseProfile,
+    runFrequency: "new",
+  } as unknown as UserProfile;
+  const option = () =>
+    screen.queryByRole("radio", { name: "30 minutes without stopping" });
+
+  beforeEach(() => {
+    configureSpy.mockClear();
+    localStorage.clear();
+  });
+
+  it("is offered to someone new to running or who runs only, and no one else", () => {
+    const { unmount } = renderPage(baseProfile);
+    expect(option()).not.toBeInTheDocument();
+    unmount();
+    const runnerOnly = renderPage({
+      ...baseProfile,
+      athleteType: "Runner",
+    } as unknown as UserProfile);
+    expect(option()).toBeInTheDocument();
+    runnerOnly.unmount();
+    renderPage(newRunner);
+    expect(option()).toBeInTheDocument();
+  });
+
+  it("begins today when chosen, clearing a race goal, at the first stage", async () => {
+    renderPage(newRunner);
+    fireEvent.click(option()!);
+    expect(screen.getByText(/in about nine weeks/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "2" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save run plan" })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates.runMode).toBe("starter");
+    expect(payload.profileUpdates.starterGoal).toEqual({ startedOn: today() });
+    expect(payload.profileUpdates.raceGoal).toBeNull();
+    expect(payload.profileUpdates.weeklyRunDaysTarget).toBe(2);
+    expect(payload.programState.runPlan).toMatchObject({
+      mode: "starter",
+      stage: 1,
+    });
+  });
+
+  it("opens on the goal from Train's offer", () => {
+    renderPage(baseProfile, "/settings/run-plan?goal=starter");
+    expect(option()).toBeChecked();
+  });
+
+  it("opens on a 5K from the Done card's offer, its date still to choose", () => {
+    renderPage(baseProfile, "/settings/run-plan?goal=5k");
+    expect(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    ).toBeChecked();
+    expect(screen.getByRole("radio", { name: "5K" })).toBeChecked();
+  });
+
+  it("ends a running goal kept with its stage when a race takes its place", async () => {
+    const onStarter = {
+      ...newRunner,
+      runMode: "starter",
+      starterGoal: { startedOn: "2026-09-07" },
+      weeklyRunDaysTarget: 3,
+    } as unknown as UserProfile;
+    const programState = {
+      runDays: [],
+      runPlan: { mode: "starter", stage: 4, stageWeekKey: "2026-10-26" },
+      workouts: [],
+      weekNumber: 1,
+    } as unknown as ProgramState;
+    renderPage(onStarter, "/settings/run-plan", { programState });
+    expect(option()).toBeChecked();
+    pickRacePrep("On my own");
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: RACE_TARGET_DATE },
+    });
+    fireEvent.click(await screen.findByRole("button", { name: /Save .*plan/i }));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates.runMode).toBe("race_prep");
+    expect(payload.profileUpdates.starterGoal).toEqual({
+      startedOn: "2026-09-07",
+      endedOn: today(),
+      stage: 4,
+    });
   });
 });

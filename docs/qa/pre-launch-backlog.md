@@ -10,6 +10,22 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## A distance goal: a race entered, or on your own (Run9 STATUS 2026-11-01)
+
+Setup and Settings → Run plan ask "A race I've entered / On my own" of a
+distance goal, nothing chosen, and store it as `raceGoal.entry`; a goal
+run on your own calls its last day "Your 10K", not "Race day". The answer
+reaches the profile only through `configurePlan` and `completeOnboarding`,
+whose sanitizer keeps it from this release's Functions deploy; the rules
+gate (`raceGoalValid`) takes it from the Firestore deploy.
+
+- [ ] **It survives the server.** After Deploy production has run the
+      Functions and Firestore steps, on a TestFlight build set a 10K goal
+      On my own in Settings → Run plan and save. Passing: reopening Run
+      plan shows On my own still chosen (a sanitizer that dropped it would
+      read back as A race I've entered), and on the goal's date the run
+      tab says "Your 10K" and "Start your 10K".
+
 ## A v2 account's one first-week reminder ask (XB1 call 8, 2026-10-31)
 
 After a v2 account's first saved session in its first week, and once the
@@ -3261,3 +3277,39 @@ rules and emulator tests cover each; these need the consoles or a phone.
       plus verification and alert mail, and consider a log alert on
       `sendPasswordResetLinkCallable` lines at error level and its
       `dailyCap` warning.
+
+## The starter goal's engine (Run9 STATUS 2026-11-01, S3)
+
+The engine runs a starter plan (30 minutes without stopping, nine weekly
+stages) once one exists; nothing in the app begins one until S4. The
+server refuses the starter run mode beside a plan of another kind
+(`validatePlanPayload`), and builds from before the starter leave its plan
+alone on a rollover, a schedule change or a reset (S2), so an installed
+build cannot replace a starter's plan.
+
+- [ ] **An older build leaves a starter alone.** Once S4 ships and this
+      release's Functions deploy has run, sign in on a TestFlight build
+      from before S2 with an account on the starter goal, save a lifting
+      change in Settings → Programme, then open the app on a Monday.
+      Passing: the save is refused with a message rather than saved, and
+      the new build still shows the starter's week and stage afterwards.
+
+## The starter goal's ways in (Run9 STATUS 2026-11-01, S4)
+
+Setup starts someone new to running on 30 minutes without stopping, Train
+offers it to a free runner new to running, and Settings → Run plan lists it
+for runners and new runners. Setup sends the goal through
+`completeOnboarding` and Settings through `configurePlan`, which write it
+whole (`wholeStarterGoal`), from this release's Functions deploy.
+
+- [ ] **A new runner's first weeks on a phone.** On a TestFlight build after
+      Deploy production, set up a running-only account as New to running and
+      keep the 30-minute goal. Passing: Train reads "Week 1 of 9 · about 9
+      weeks to go" with that week's run-walks on the strip; after a week
+      with one run, the Monday after shows "This week again"; after a week
+      with two, Week 2.
+- [ ] **A new goal after a finished one starts clean.** On an account whose
+      starter goal is finished, choose 30 minutes without stopping again in
+      Settings → Run plan and save. Passing: Train shows Week 1 of 9 (a
+      merge that kept the old `finishedOn` would leave the account on free
+      running with Done showing).
