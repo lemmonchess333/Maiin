@@ -20,7 +20,7 @@ import { getApps, initializeApp } from "firebase-admin/app";
 import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { createRequire } from "node:module";
-import { onRealClock } from "./nodeClock";
+import { onRealClock, realNow } from "./nodeClock";
 
 const require = createRequire(import.meta.url);
 
@@ -110,20 +110,28 @@ function profileOf(uid: string) {
 }
 
 /**
- * A new account's first setup, dated on the journey's day. The handler
+ * A new account's first setup, dated on the journey's clock. The handler
  * stamps `onboardingCompletedAt` (and the sign-up stamped `createdAt`) with
  * a server timestamp, which the emulator resolves on the real clock, not
  * this process's moved one. A journey starting on the next Monday is 7
  * days ahead when it runs on a Monday, so the account would open on its
- * eighth day, its first week already over. Production stamps both on the
- * day the person signs up and sets up, which here is the journey's day.
+ * eighth day, its first week already over. Both stamps move by the gap
+ * between the two clocks, as if the emulator's clock had moved with the
+ * journey's: what happened at a real time happened then on the journey's,
+ * and a spec that spaced them (setup days after sign-up) keeps its space.
  * Written before the reply, so the profile the app reads next has it.
  */
-async function startOnTheJourneysDay(uid: string): Promise<void> {
-  const at = Timestamp.fromMillis(Date.now());
-  await emulatorAdmin()
-    .db.doc(`users/${uid}`)
-    .update({ createdAt: at, onboardingCompletedAt: at });
+async function startOnTheJourneysClock(uid: string): Promise<void> {
+  const gap = Date.now() - realNow();
+  const ref = emulatorAdmin().db.doc(`users/${uid}`);
+  const profile = (await ref.get()).data() ?? {};
+  const moved: Record<string, Timestamp> = {};
+  for (const field of ["createdAt", "onboardingCompletedAt"]) {
+    const at = profile[field];
+    if (at instanceof Timestamp)
+      moved[field] = Timestamp.fromMillis(at.toMillis() + gap);
+  }
+  if (Object.keys(moved).length > 0) await ref.update(moved);
 }
 
 async function answer(route: Route, name: string, handler: CallableHandler) {
@@ -143,7 +151,7 @@ async function answer(route: Route, name: string, handler: CallableHandler) {
     const result = await handler.run(route.request().postDataJSON().data, {
       auth: { uid: token.uid, token },
     });
-    if (firstSetup) await startOnTheJourneysDay(token.uid);
+    if (firstSetup) await startOnTheJourneysClock(token.uid);
     await route.fulfill({
       status: 200,
       contentType: "application/json",
