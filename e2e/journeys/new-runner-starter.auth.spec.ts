@@ -89,11 +89,19 @@ test("a new runner repeats a week, moves on, and finishes the 30-minute goal", a
       page.getByText(`${STARTER.goal} · Week 1 of 9`),
       "Train's header names the goal and its week"
     ).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText("This week again: 2 runs move you on.")).toBeVisible();
+    await expect(
+      page.getByText("This week again: 2 runs move you on.")
+    ).toBeVisible();
 
     // Week two: two runs. The stage moves on.
     for (const run of runDaysOf(plan).slice(0, 2))
       await fastForwardRun(account, run, plan, "starter");
+    // The app has both runs before Monday comes, as a phone that saved
+    // them would: the rollover reads through its live view, which a run
+    // written from outside the page reaches a moment later.
+    await expect(page.getByText(STARTER.weekDone)).toBeVisible({
+      timeout: 20_000,
+    });
     plan = await advanceTo(page, account, week(2));
     expect(plan.runPlan).toMatchObject({ stage: 2, stageWeekKey: week(2) });
     expect(runDaysOf(plan)[0].templateId).toBe("run_walk_2");

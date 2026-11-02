@@ -8,6 +8,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import StarterGoalCard from "../StarterGoalCard";
 import type { StarterProgress } from "@/features/program/starterProgress";
+import { STARTER } from "@/test/journeyScreens";
 
 const progress = (p: Partial<StarterProgress> = {}): StarterProgress => ({
   stage: 3,
@@ -45,9 +46,8 @@ describe("StarterGoalCard", () => {
         progress={progress({ runsThisWeek: 2, repeated: true })}
       />
     );
-    expect(
-      screen.getByText("This week is done. The next one starts on Monday.")
-    ).toBeInTheDocument();
+    // The name the journey waits on (src/test/journeyScreens.ts).
+    expect(screen.getByText(STARTER.weekDone)).toBeInTheDocument();
     expect(screen.queryByText(/This week again/)).not.toBeInTheDocument();
     rerender(
       <StarterGoalCard
