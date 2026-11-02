@@ -43,21 +43,14 @@ export function raceAwaitsItsEnding(
   );
 }
 
-/**
- * The week the calendar rollover moves the plan on from. A plan with run
- * days rolls over from its runs' week (runs are pinned to dates, ADR-0002,
- * and the lifts move with them); a plan without, from the lifts' own. So
- * does a race plan with nothing left to plan after its race
- * (`raceAwaitsItsEnding` on the week after its runs'), whose run days stay
- * where they are.
- */
-/** The run plans this build makes (`race_prep`) or retires (`structured`).
- *  A plan of any other kind was written by a newer build (Run9's
- *  reopening adds one), and this build leaves it exactly as it is:
- *  rolling, refreshing or rebuilding it here would clear it, since every
- *  one of those paths reads a plan that is not a race as free running. */
+/** The run plans this build makes (`race_prep`, `starter`) or retires
+ *  (`structured`). A plan of any other kind was written by a newer build,
+ *  and this build leaves it exactly as it is: rolling, refreshing or
+ *  rebuilding it here would clear it, since every one of those paths reads
+ *  a plan it does not know as free running. */
 const RUN_PLAN_MODES_THIS_BUILD_KNOWS: readonly string[] = [
   "race_prep",
+  "starter",
   "structured",
 ];
 
@@ -71,14 +64,43 @@ export function isRunPlanFromNewerBuild(runPlan: unknown): boolean {
   );
 }
 
+/** Whether the plan is the starter goal's, for a profile still on it. */
+export function isStarterPlanRunning(
+  state: Pick<ProgramState, "runPlan">,
+  profile: Pick<UserProfile, "runMode">
+): boolean {
+  return profile.runMode === "starter" && state.runPlan?.mode === "starter";
+}
+
+/**
+ * The week a plan's runs are in: its run days' week, or a starter plan's
+ * own week, which it keeps when the schedule gives it no run day.
+ */
+export function runWeekKeyOf(
+  state: Pick<ProgramState, "runDays" | "runPlan">
+): string | undefined {
+  if (state.runPlan?.mode === "starter" && state.runPlan.stageWeekKey)
+    return state.runPlan.stageWeekKey;
+  return state.runDays?.[0]?.weekKey;
+}
+
+/**
+ * The week the calendar rollover moves the plan on from. A race plan with
+ * run days, and a starter plan, roll over from their runs' week (runs are
+ * pinned to dates, ADR-0002, and the lifts move with them); any other plan
+ * from the lifts' own. So does a race plan with nothing left to plan after
+ * its race (`raceAwaitsItsEnding` on the week after its runs'), whose run
+ * days stay where they are. A run mode this build does not know (a newer
+ * build's) is left to the lifts, so its plan is never rolled into free
+ * running here.
+ */
 export function weekRolloverAnchor(
   state: Pick<ProgramState, "runDays" | "liftWeekKey" | "runPlan">,
   profile: Pick<UserProfile, "runMode" | "raceGoal">
 ): { side: "run" | "lift"; weekKey: string } | null {
-  const runWeek = state.runDays?.[0]?.weekKey;
-  // The runs lead only for a race plan, the one plan this build rolls. A
-  // run mode it does not know (a newer build's) is left to the lifts, so
-  // its plan is never rolled into free running here.
+  const runWeek = runWeekKeyOf(state);
+  if (isStarterPlanRunning(state, profile) && runWeek)
+    return { side: "run", weekKey: runWeek };
   if (
     profile.runMode === "race_prep" &&
     runWeek &&
@@ -104,6 +126,18 @@ export function weekRolloverAnchor(
  * with one, and the rollover, which moves a race plan on from its runs'
  * week (`weekRolloverAnchor`), has nothing to move on from there.
  */
+/**
+ * Whether loading the plan has to build a starter week: a profile on the
+ * starter goal whose plan is not yet the starter's, as when the goal has
+ * just begun. A starter plan's later weeks are the rollover's.
+ */
+export function starterWeekNeedsBuilding(
+  state: Pick<ProgramState, "runPlan">,
+  profile: Pick<UserProfile, "runMode">
+): boolean {
+  return profile.runMode === "starter" && state.runPlan?.mode !== "starter";
+}
+
 export function raceWeekNeedsBuilding(
   state: Pick<ProgramState, "runDays" | "runPlan">,
   profile: UserProfile,

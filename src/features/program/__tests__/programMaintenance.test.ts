@@ -62,12 +62,16 @@ describe("weekRolloverAnchor", () => {
   });
 
   it("leaves a run mode this build does not know to the lifts", () => {
-    // A newer build's plan (Run9's reopening adds one): rolled from its
-    // runs here, it would be read as free running and cleared.
+    // A newer build's plan: rolled from its runs here, it would be read as
+    // free running and cleared.
     expect(
       weekRolloverAnchor(
-        { runDays: [runDay(LAST_WEEK, "easy_30")], liftWeekKey: THIS_WEEK },
-        profile({ runMode: "starter" as UserProfile["runMode"] })
+        {
+          runDays: [runDay(LAST_WEEK, "easy_30")],
+          liftWeekKey: THIS_WEEK,
+          runPlan: { mode: "next_kind" } as unknown as ProgramState["runPlan"],
+        },
+        profile({ runMode: "next_kind" as UserProfile["runMode"] })
       )
     ).toEqual({ side: "lift", weekKey: THIS_WEEK });
   });
@@ -84,8 +88,9 @@ describe("weekRolloverAnchor", () => {
 });
 
 describe("isRunPlanFromNewerBuild", () => {
-  it("knows the race plan, and the structured week it retired", () => {
+  it("knows the race plan, the starter's, and the structured week it retired", () => {
     expect(isRunPlanFromNewerBuild({ mode: "race_prep" })).toBe(false);
+    expect(isRunPlanFromNewerBuild({ mode: "starter" })).toBe(false);
     expect(isRunPlanFromNewerBuild({ mode: "structured" })).toBe(false);
   });
 
@@ -96,7 +101,7 @@ describe("isRunPlanFromNewerBuild", () => {
   });
 
   it("reads any other mode as a newer build's plan", () => {
-    expect(isRunPlanFromNewerBuild({ mode: "starter" })).toBe(true);
+    expect(isRunPlanFromNewerBuild({ mode: "next_kind" })).toBe(true);
   });
 });
 
