@@ -114,18 +114,25 @@ async function verifiedCaller(bearer: string): Promise<DecodedIdToken> {
  * (`firstWeek.ts`: the setup's on the current journey, the account's on the
  * legacy one), so stamps left on the real day hid the card on every Monday.
  * When this call has just written the setup stamp (within the last minute,
- * by the real clock), both move to the journey's moment; a retry's older
- * stamp stays, as the handler keeps it.
+ * by the real clock), it moves to the journey's moment; a retry's older stamp
+ * stays, as the handler keeps it. `createdAt` moves with it only while it is
+ * the real clock's too (sign-up's, minutes before), so a spec that has set
+ * its own account day keeps it.
  */
 async function stampSetupOnJourneyDay(uid: string): Promise<void> {
   const ref = emulatorAdmin().db.doc(`users/${uid}`);
-  const stamp = (await ref.get()).get("onboardingCompletedAt");
-  if (!(stamp instanceof Timestamp)) return;
-  if (realNow() - stamp.toMillis() > 60_000) return;
+  const profile = await ref.get();
+  const setup = profile.get("onboardingCompletedAt");
+  if (!(setup instanceof Timestamp)) return;
+  if (realNow() - setup.toMillis() > 60_000) return;
   const journeyNow = Timestamp.fromMillis(Date.now());
+  const created = profile.get("createdAt");
+  const signedUpJustNow =
+    created instanceof Timestamp &&
+    Math.abs(realNow() - created.toMillis()) < 15 * 60_000;
   await ref.update({
     onboardingCompletedAt: journeyNow,
-    createdAt: journeyNow,
+    ...(signedUpJustNow ? { createdAt: journeyNow } : {}),
   });
 }
 
