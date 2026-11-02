@@ -160,6 +160,16 @@ describe("StackedCTACards", function () {
       expect(runIdx).toBeGreaterThan(-1);
       expect(liftIdx).toBeLessThan(runIdx);
     });
+
+    it("RunCTA appears first when running is the person's aim", function () {
+      const { container } = renderCards({ ...bothDay(), runFirst: true });
+      const allText = container.textContent || "";
+      const liftIdx = allText.indexOf("Planned for today");
+      const runIdx = allText.indexOf("Today · Run day");
+      expect(liftIdx).toBeGreaterThan(-1);
+      expect(runIdx).toBeGreaterThan(-1);
+      expect(runIdx).toBeLessThan(liftIdx);
+    });
   });
 
   describe("home-declutter 4a — the session stack only", function () {

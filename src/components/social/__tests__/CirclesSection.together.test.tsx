@@ -3,12 +3,10 @@
  * (a) a failed list read renders the retry block (Retry → reload),
  *     never the cold-start selector; (b) a genuinely-empty list
  *     renders one short card, whose Start a circle opens the
- *     five-option goal selector (2026-10-01; it was the card), with
- *     "Private progress" routing to /review and never creating a
- *     circle; (c) the first
- *     ACTIVE circle leads as the featured hero card (title tap-target
- *     + weekly-focus action) fed by exactly ONE eager loadDetail,
- *     while the remaining circles keep their summary-row rendering.
+ *     five-option goal selector, with "Private progress" routing to
+ *     /review and never creating a circle; (c) each circle is a row
+ *     (title tap-target + its check-in), and the featured one (the
+ *     first active) is fed by exactly ONE eager loadDetail.
  */
 import {
   describe,
@@ -161,6 +159,11 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
     ]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
+    // The sheet and its options in the house voice: a full stop or a
+    // comma between a statement and its detail, not a dash.
+    const sheet = screen.getByRole("dialog");
+    expect(sheet.textContent).toContain("Private progress");
+    expect(sheet.textContent).not.toContain("—");
   });
 
   it("the goal you pick is the goal the sheet confirms — same string, both ends", async () => {
@@ -262,7 +265,7 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
     expect(pressed[0]).toHaveTextContent("Hybrid");
   });
 
-  it("featured circle renders as the hero card with ONE eager detail read; others stay rows", async () => {
+  it("each circle is a row with its check-in, and only the featured one is read in detail", async () => {
     const value = hookValue({
       circles: [
         circle("c1", "Autumn Strength Crew"),
@@ -276,18 +279,15 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
       </MemoryRouter>
     );
 
-    // Featured hero card: tap target named by the circle title + the
-    // single weekly-focus action.
+    // Each row: a tap target named by the circle's title, and its one
+    // next step, the check-in.
     expect(
       screen.getByRole("button", { name: /autumn strength crew/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Set weekly focus" })
-    ).toBeInTheDocument();
-    // The non-featured circle keeps the summary-row rendering.
-    expect(
       screen.getByRole("button", { name: /second circle/i })
     ).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Check in" })).toHaveLength(2);
 
     await waitFor(() => expect(value.loadDetail).toHaveBeenCalledTimes(1));
     expect(value.loadDetail).toHaveBeenCalledWith("c1");
@@ -413,7 +413,7 @@ describe("featured circle change", () => {
     ];
     expect(afterSwitch.filter((dom) => dom.includes("focusing"))).toEqual([]);
     expect(
-      screen.getByRole("button", { name: "Set weekly focus" })
+      screen.getByRole("button", { name: "Check in" })
     ).toBeInTheDocument();
   });
 });

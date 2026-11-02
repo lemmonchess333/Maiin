@@ -6,8 +6,9 @@
  *     - keep reads open to any authed user (leaderboard),
  *     - on CREATE allow only an identity/join payload with
  *       currentValue==0 (or omitted) and tierAchieved==null (or omitted),
- *     - on UPDATE deny any diff that touches currentValue/tierAchieved
- *       (diff().affectedKeys().hasOnly([...identity fields...])).
+ *     - refuse every client UPDATE (progress is the triggers', the name
+ *       and photo identityResync's),
+ *     - on CREATE take the name only as the public profile shows it.
  *
  *  2. useChallenges.ts — the client must no longer attempt to persist
  *     currentValue/tierAchieved (the old updateProgress() write that the
@@ -82,28 +83,20 @@ describe("firestore.rules — challenge participant docs are server-owned", () =
     expect(block!).toMatch(/request\.resource\.data\.keys\(\)\.hasOnly\(/);
   });
 
-  it("UPDATE only permits cosmetic identity fields (currentValue/tierAchieved immutable)", () => {
-    expect(block!).toMatch(/allow update:/);
-    // The diff allowlist must restrict to identity fields only, so any
-    // diff touching currentValue or tierAchieved is rejected.
-    expect(block!).toMatch(
-      /diff\(resource\.data\)\.affectedKeys\(\)\s*\.hasOnly\(\s*\[\s*['"]displayName['"]\s*,\s*['"]photoURL['"]\s*\]\s*\)/
-    );
+  it("UPDATE is refused to every client", () => {
+    // Progress is the Admin SDK triggers' to write, and the name and photo
+    // identityResync's. A client rename skipped the word filter and the
+    // restriction both.
+    expect(block!).toMatch(/allow update:\s*if\s+false\s*;/);
   });
 
-  it("UPDATE allowlist excludes the server-owned fields", () => {
-    // Extract the update rule's hasOnly([...]) and confirm neither
-    // server-owned field appears in it.
-    const updateAllowlist = block!.match(
-      /allow update:[\s\S]*?affectedKeys\(\)\s*\.hasOnly\(\s*\[([\s\S]*?)\]\s*\)/
+  it("CREATE takes the name only as the public profile shows it", () => {
+    const create = block!.match(/allow create:([\s\S]*?)allow update:/);
+    expect(create, "create rule not found").not.toBeNull();
+    expect(create![1]).toMatch(
+      /displayName\s*==\s*get\(\/databases\/\$\(database\)\/documents\/users\/\$\(uid\)\/public\/profile\)\s*\.data\.get\('displayName',\s*null\)/
     );
-    expect(
-      updateAllowlist,
-      "update hasOnly() allowlist not found"
-    ).not.toBeNull();
-    const list = updateAllowlist![1];
-    expect(list).not.toMatch(/currentValue/);
-    expect(list).not.toMatch(/tierAchieved/);
+    expect(create![1]).toMatch(/!isRestricted\(\)/);
   });
 
   it("DELETE (leave) stays owner-only", () => {

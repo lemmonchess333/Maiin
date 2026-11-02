@@ -1,0 +1,85 @@
+name: Backfill community goal
+
+# The run triggers add every eligible run to the month's community goal,
+# joined or not (functions/lib/communityGoal.js), but only runs saved after
+# they were deployed. This adds the goal's runs saved before then
+# (functions/scripts/backfill-community-goal.js). Each run's credit is
+# marked, so it is safe to run at any time and beside the live triggers.
+#
+# It runs by itself when this workflow or the backfill changes on main,
+# for the current month's goal; Run workflow repeats it, for another goal
+# if one is named. The second pass is the check: once the first has
+# credited every run, nothing is left to credit.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/backfill-community-goal.yml"
+      - "functions/scripts/backfill-community-goal.js"
+  workflow_dispatch:
+    inputs:
+      challenge_id:
+        description: "The goal's challenge id (empty: this month's, group-goal-YYYY-MM-01)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: community-goal-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    # The production environment holds the release credentials: only a
+    # job that names it can read its secrets, and its branch rule decides
+    # where such a job may run.
+    environment: production
+    # Install and two passes over every account's runs for one month.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+
+      - name: Install function dependencies
+        run: npm ci --prefix functions
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Name the goal
+        id: goal
+        env:
+          REQUESTED: ${{ inputs.challenge_id }}
+        run: |
+          set -euo pipefail
+          goal="${REQUESTED:-group-goal-$(date -u +%Y-%m)-01}"
+          if ! [[ "$goal" =~ ^group-goal-[0-9]{4}-[0-9]{2}-01$ ]]; then
+            echo "Not a community goal id: $goal" >&2
+            exit 1
+          fi
+          echo "id=$goal" >> "$GITHUB_OUTPUT"
+
+      - name: Backfill
+        run: node functions/scripts/backfill-community-goal.js adaptive-fitness-af8bb "${{ steps.goal.outputs.id }}"
+
+      - name: Run again and expect nothing left to credit
+        run: |
+          set -euo pipefail
+          node functions/scripts/backfill-community-goal.js adaptive-fitness-af8bb "${{ steps.goal.outputs.id }}" | tee second-run.json
+          node -e '
+            const t = JSON.parse(require("fs").readFileSync("second-run.json", "utf8"));
+            if (t.credited !== 0) {
+              console.error(`The second run still credited ${t.credited} runs.`);
+              process.exit(1);
+            }
+          '

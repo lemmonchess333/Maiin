@@ -40,10 +40,10 @@ export default function RunPlanPurpose({
       {trainingBasis && (
         <p className="text-sm text-muted-foreground leading-relaxed mt-2">
           {trainingBasis.reason === "experience"
-            ? "Easy running matches the starting point you chose."
+            ? "Easy running while your running builds towards the plan."
             : trainingBasis.reason === "review"
               ? "Easy running is in place until you review your current training."
-              : "This session was shortened to fit the recent running you confirmed."}{" "}
+              : "Shorter for now: the plan builds a step a week from the running you gave."}{" "}
           You can review this in your run plan settings.
         </p>
       )}

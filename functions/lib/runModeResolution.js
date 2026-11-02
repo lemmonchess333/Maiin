@@ -17,11 +17,20 @@
  * patch can't violate the invariant.
  */
 
-/** `runMode` follows `raceGoal` presence and nothing else. Recovery does NOT
- *  flip it — `raceGoal` stays present through recovery (cleared only at
- *  recovery-END), so a user mid-recovery is still "race_prep". */
-function deriveRunMode(raceGoal) {
-  return raceGoal ? "race_prep" : "freeform";
+/** Whether a starter goal (Run9's reopening: 30 minutes without stopping)
+ *  is running: begun, and neither finished nor ended. */
+function starterGoalIsActive(goal) {
+  return !!goal && !goal.finishedOn && !goal.endedOn;
+}
+
+/** `runMode` follows the goals and nothing else: a race goal makes it race
+ *  prep, and without one a running starter goal makes it "starter".
+ *  Recovery does NOT flip it — `raceGoal` stays present through recovery
+ *  (cleared only at recovery-END), so a user mid-recovery is still
+ *  "race_prep". */
+function deriveRunMode(raceGoal, starterGoal) {
+  if (raceGoal) return "race_prep";
+  return starterGoalIsActive(starterGoal) ? "starter" : "freeform";
 }
 
 /** Two race goals refer to the same race (same distance + target date). */
@@ -73,7 +82,36 @@ function setRaceGoalPatch(next) {
   return { raceGoal: next, runMode: deriveRunMode(next) };
 }
 
+/** The patch for beginning the starter goal. One goal at a time: it clears
+ *  a race goal. */
+function setStarterGoalPatch(startedOn) {
+  return { starterGoal: { startedOn }, raceGoal: null, runMode: "starter" };
+}
+
+/** The patch for the starter goal's last week done: the record kept with
+ *  the day, and back to free running. */
+function finishStarterGoalPatch(goal, finishedOn) {
+  return {
+    starterGoal: { startedOn: goal.startedOn, finishedOn },
+    runMode: "freeform",
+  };
+}
+
+/** The patch for a starter goal a race goal takes the place of: the record
+ *  kept with the day and the stage reached. The race goal's patch is
+ *  spread after it and sets `runMode`. */
+function endStarterGoalPatch(goal, endedOn, stage) {
+  return {
+    starterGoal: { startedOn: goal.startedOn, endedOn, stage },
+    runMode: "freeform",
+  };
+}
+
 module.exports = {
+  starterGoalIsActive,
+  setStarterGoalPatch,
+  finishStarterGoalPatch,
+  endStarterGoalPatch,
   deriveRunMode,
   isSameRace,
   raceGoalIsCompletedRace,

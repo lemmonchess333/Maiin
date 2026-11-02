@@ -49,6 +49,23 @@ export default function StackedCTACards({
   unit: DistanceUnit;
 }) {
   const { lift, run, rest } = session;
+  // On a day with both, the run goes above the lift when running is the
+  // person's aim (`todaySession` decides; this only draws it).
+  const runCard = run && (
+    <motion.div key="run" variants={fadeUp} data-guide-stop="today-run">
+      <RunCTACard
+        todayRun={run.runDay}
+        racePace={run.racePace}
+        completed={run.completed}
+        navigate={navigate}
+        isFirst={run.isFirst}
+        dose={run.dose}
+        unit={unit}
+        inProgress={run.inProgress}
+        startTarget={run.startTarget}
+      />
+    </motion.div>
+  );
 
   return (
     <motion.div
@@ -71,6 +88,7 @@ export default function StackedCTACards({
           />
         </motion.div>
       ))}
+      {session.runFirst && runCard}
       {lift?.workout && (
         <motion.div key="lift" variants={fadeUp} data-guide-stop="today-lift">
           <LiftCTACard
@@ -114,21 +132,7 @@ export default function StackedCTACards({
           />
         </motion.div>
       )}
-      {run && (
-        <motion.div key="run" variants={fadeUp} data-guide-stop="today-run">
-          <RunCTACard
-            todayRun={run.runDay}
-            racePace={run.racePace}
-            completed={run.completed}
-            navigate={navigate}
-            isFirst={run.isFirst}
-            dose={run.dose}
-            unit={unit}
-            inProgress={run.inProgress}
-            startTarget={run.startTarget}
-          />
-        </motion.div>
-      )}
+      {!session.runFirst && runCard}
       {rest && (
         <motion.div
           key="rest"

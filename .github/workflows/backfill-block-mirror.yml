@@ -33,6 +33,10 @@ concurrency:
 jobs:
   backfill:
     runs-on: ubuntu-latest
+    # The production environment holds the release credentials: only a
+    # job that names it can read its secrets, and its branch rule decides
+    # where such a job may run. Repository secrets still reach this job.
+    environment: production
     # Install and two passes over the block lists: a few minutes.
     timeout-minutes: 20
     steps:

@@ -34,6 +34,8 @@ import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { usePrivacyZones } from "@/hooks/usePrivacyZones";
+import { ROUTE_WITHHELD_NOTE } from "@/lib/privacyZones";
 import { recentSessionDay, type RecentSession } from "./useRecentSessions";
 import { spacePostSnapshot } from "./spacePostSnapshot";
 import { distanceLabel } from "@/lib/runLabels";
@@ -78,6 +80,11 @@ export default function SpacePostComposer({
   const gate = useEmailVerificationGate(user);
   const { isRestricted } = useRestrictedStatus(user?.uid);
   const unit = useDistanceUnit();
+  const privacy = usePrivacyZones();
+  // A run's route goes up only once the privacy zones are known: while they
+  // load, or after they fail, the post goes without it, as a run shared to
+  // the feed does.
+  const routeWithheld = privacy.loading || privacy.error;
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [picked, setPicked] = useState<RecentSession | null>(null);
@@ -166,10 +173,10 @@ export default function SpacePostComposer({
       body: body.trim(),
       ...(attached
         ? {
-            activity: spacePostSnapshot(
-              attached,
-              profile?.hideSharedRouteEnds === false
-            ),
+            activity: spacePostSnapshot(attached, {
+              keepRouteEnds: profile?.hideSharedRouteEnds === false,
+              zones: routeWithheld ? null : privacy.zones,
+            }),
           }
         : {}),
       ...(photoUrl ? { photoUrl } : {}),
@@ -348,6 +355,13 @@ export default function SpacePostComposer({
                 ))}
               </div>
             )}
+            {attached?.kind === "run" &&
+              !!attached.run.routePreview?.length &&
+              routeWithheld && (
+                <p className="text-xs text-muted-foreground">
+                  {ROUTE_WITHHELD_NOTE}
+                </p>
+              )}
           </div>
         )}
 

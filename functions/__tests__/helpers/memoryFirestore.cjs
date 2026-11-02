@@ -29,7 +29,9 @@ function memoryFirestore(seed = {}) {
           const keys = field.split(".");
           const last = keys.pop();
           const parent = keys.reduce((obj, key) => (obj[key] ||= {}), next);
-          parent[last] = v;
+          parent[last] = isIncrement(v)
+            ? (Number(parent[last]) || 0) + v.__increment
+            : v;
         }
         data.set(ref.path, next);
       } else
@@ -127,6 +129,7 @@ function memoryFirestore(seed = {}) {
               if (op === ">=") return actual >= expected;
               if (op === "<=") return actual != null && actual <= expected;
               if (op === "<") return actual < expected;
+              if (op === ">") return actual != null && actual > expected;
               throw new Error(`Unsupported query: ${op}`);
             });
           })
@@ -188,4 +191,12 @@ function memoryFirestore(seed = {}) {
     },
   };
 }
-module.exports = { memoryFirestore };
+// A stand-in for FieldValue.increment, for code that takes its FieldValue
+// as an argument: `update` adds it to the stored number, as Firestore does.
+function increment(n) {
+  return { __increment: n };
+}
+function isIncrement(v) {
+  return !!v && typeof v === "object" && typeof v.__increment === "number";
+}
+module.exports = { memoryFirestore, increment };

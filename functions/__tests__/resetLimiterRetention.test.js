@@ -41,7 +41,7 @@ describe("the password-reset limiter's key", () => {
   });
 
   it("is what the callable limits by", () => {
-    const source = read("email", "accountEmails.js");
+    const source = read("lib", "passwordResetRequest.js");
     expect(source).toContain("key: passwordResetKey(email)");
     // Before: `pwreset_${email.toLowerCase().replace(...)}`.
     expect(source).not.toMatch(/pwreset_\$\{email/);

@@ -18,6 +18,7 @@ const quiet = { warn: () => {}, info: () => {} };
 const GOOGLE_USER = {
   uid: "old-uid",
   email: " Troll@Example.com ",
+  emailVerified: true,
   providerData: [
     { providerId: "google.com", uid: "google-sub-1" },
     { providerId: "password", uid: "troll@example.com" },
@@ -107,6 +108,88 @@ describe("keepRestrictedIdentities", () => {
     ]);
     expect(row.expiresAt.toISOString()).toBe("2027-11-20T12:00:00.000Z");
     expect(JSON.stringify([...firestore.data.values()])).not.toMatch(/troll/i);
+  });
+
+  it("keeps the email only when the account verified it", async () => {
+    const keep = async (user) => {
+      const firestore = memoryFirestore({
+        "globalRestrictedUids/old-uid": { uid: "old-uid" },
+      });
+      await ids.keepRestrictedIdentities({
+        firestore,
+        auth: fakeAuth({ "old-uid": user }),
+        uid: "old-uid",
+        now: NOW,
+        logger: quiet,
+      });
+      return kept(firestore).sort();
+    };
+    const email = `restrictedIdentities/${key(
+      "restriction-email",
+      "troll@example.com"
+    )}`;
+    const google = `restrictedIdentities/${key(
+      "restriction-google.com",
+      "google-sub-1"
+    )}`;
+
+    // Signed up with an address that may be someone else's, never verified:
+    // the Google subject is kept, the address is not.
+    for (const emailVerified of [false, undefined, "true"]) {
+      expect(await keep({ ...GOOGLE_USER, emailVerified })).toEqual([google]);
+    }
+    expect(
+      await keep({
+        uid: "old-uid",
+        email: "troll@example.com",
+        emailVerified: false,
+        providerData: [{ providerId: "password", uid: "troll@example.com" }],
+      })
+    ).toEqual([]);
+
+    // A verified address is kept, with or without a provider.
+    expect(
+      await keep({
+        uid: "old-uid",
+        email: "troll@example.com",
+        emailVerified: true,
+        providerData: [{ providerId: "password", uid: "troll@example.com" }],
+      })
+    ).toEqual([email]);
+    expect(await keep(GOOGLE_USER)).toEqual([email, google].sort());
+  });
+
+  it("leaves the address's real owner free to sign up", async () => {
+    const firestore = memoryFirestore({
+      "globalRestrictedUids/old-uid": { uid: "old-uid" },
+    });
+    await ids.keepRestrictedIdentities({
+      firestore,
+      auth: fakeAuth({
+        "old-uid": {
+          uid: "old-uid",
+          email: "owner@example.com",
+          emailVerified: false,
+          providerData: [{ providerId: "password", uid: "owner@example.com" }],
+        },
+      }),
+      uid: "old-uid",
+      now: NOW,
+      logger: quiet,
+    });
+    expect(
+      await ids.carryRestriction({
+        firestore,
+        userRecord: {
+          uid: "real-owner",
+          email: "owner@example.com",
+          providerData: [{ providerId: "password", uid: "owner@example.com" }],
+        },
+        now: NOW + 60_000,
+        logger: quiet,
+      })
+    ).toBe(false);
+    expect(firestore.data.has("globalRestrictedUids/real-owner")).toBe(false);
   });
 
   it("without the secret keeps nothing and lets deletion go on", async () => {

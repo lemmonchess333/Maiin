@@ -1,4 +1,7 @@
 import { useState, useMemo, useEffect, useRef, Suspense } from "react";
+import { STARTER_MOST_RUNS_A_WEEK } from "@/features/program/starterPlan";
+import { STARTER_GOAL_NAME } from "@/features/program/starterProgress";
+import { setStarterGoalPatch } from "@/features/program/runModeResolution";
 import { Toggle } from "@/components/ui/Toggle";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -75,12 +78,20 @@ import {
   lbToKg,
 } from "@/lib/weightUnits";
 import { newRunnerUntil } from "@/features/program/newRunner";
+import {
+  isRunningBaseline,
+  type RunningBaseline,
+} from "@/features/program/runningBaseline";
 import { runDoseLine } from "@/lib/runDose";
 import { smallPlatesHint } from "@/lib/liftRules";
 import { liftUnitForBodyWeight } from "@/lib/liftLoad";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import NewAccountMethodNote from "@/components/onboarding/NewAccountMethodNote";
-import { startingDisplayName } from "@/lib/onboardingName";
+import { chosenDraftName, startingDisplayName } from "@/lib/onboardingName";
+import {
+  RACE_GOAL_ENTRY_OPTIONS,
+  type RaceGoalEntry,
+} from "@/lib/raceGoalEntry";
 import { signInMethodOf } from "@/lib/signInMethod";
 import { ACTIVATION_JOURNEY_V2_ENABLED } from "@/lib/activationJourney";
 import { Capacitor } from "@capacitor/core";
@@ -200,7 +211,13 @@ export default function Onboarding() {
   /* The name Apple shares is set on the account just after it is made,
      and setup can open before it lands; it is taken when it arrives, while
      the person has not typed one of their own. */
-  const [nameTyped, setNameTyped] = useState(draft?.displayName !== undefined);
+  const [nameTyped, setNameTyped] = useState(
+    chosenDraftName(draft?.displayName, user?.email) !== undefined
+  );
+  /* Go to Today was pressed without a name it can publish: the field says
+     why from then on, rather than greeting an empty box with an error. */
+  const [nameAsked, setNameAsked] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
   const arrivedName = profile?.displayName?.trim() ?? "";
   const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
   if (arrivedName !== seenArrivedName) {
@@ -271,18 +288,43 @@ export default function Onboarding() {
   const runFrequency =
     trainingActivity === "lifting" ? "none" : chosenRunFrequency;
   const runConfirmed = trainingActivity === "lifting" || runningConfirmed;
-  const [runMode, setRunMode] = useState<"freeform" | "race_prep">(
-    draft?.runMode === "race_prep" ? "race_prep" : "freeform"
+  const [chosenRunMode, setRunMode] = useState<
+    "freeform" | "race_prep" | "starter"
+  >(
+    draft?.runMode === "race_prep" || draft?.runMode === "starter"
+      ? draft.runMode
+      : "freeform"
+  );
+  /* Run9's starter goal, 30 minutes without stopping, is offered to
+     someone who runs only and to anyone new to running; a lifter who
+     already runs keeps free running and race prep. */
+  const starterOffered =
+    trainingActivity === "running" || runFrequency === "new";
+  const runMode =
+    chosenRunMode === "starter" && !starterOffered ? "freeform" : chosenRunMode;
+  // The starter goal's runs a week, two or three, three unless asked for
+  // two; apart from a race plan's, which starts at two (Pgm7 A7).
+  const [starterRunDays, setStarterRunDays] = useState<number>(() =>
+    draft?.runMode === "starter"
+      ? Math.min(STARTER_MOST_RUNS_A_WEEK, Math.max(2, draft.weeklyRunDays))
+      : STARTER_MOST_RUNS_A_WEEK
   );
   // At least two, a race plan's least (A7), for a draft saved before that.
   const [weeklyRunDays, setWeeklyRunDays] = useState(
     Math.max(MIN_RACE_RUN_DAYS, draft?.weeklyRunDays ?? MIN_RACE_RUN_DAYS)
   );
+  // The runs a week the plan is built on: the starter goal's own count.
+  const planRunDays = runMode === "starter" ? starterRunDays : weeklyRunDays;
   const [raceDistance, setRaceDistance] = useState<
     OnboardingDraft["raceDistance"]
   >(draft?.raceDistance ?? "10k");
   const [raceTargetDate, setRaceTargetDate] = useState(
     draft?.raceTargetDate ?? ""
+  );
+  /* A race entered, or the distance run on your own (Run9). Nothing is
+     chosen until the person answers. */
+  const [raceEntry, setRaceEntry] = useState<RaceGoalEntry | undefined>(
+    draft?.raceEntry
   );
   // Adaptive paces §10.2: an optional recent race, which sets the paces.
   const [recentRaceDistance, setRecentRaceDistance] = useState<
@@ -293,6 +335,13 @@ export default function Onboarding() {
   );
   const [recentRaceSeconds, setRecentRaceSeconds] = useState(
     draft?.recentRaceSeconds ?? ""
+  );
+  // R5: the running a race plan starts from.
+  const [runningWeekMinutes, setRunningWeekMinutes] = useState(
+    draft?.runningWeekMinutes ?? ""
+  );
+  const [runningLongestMinutes, setRunningLongestMinutes] = useState(
+    draft?.runningLongestMinutes ?? ""
   );
   const [injuries, setInjuries] = useState<string[]>(draft?.injuries ?? []);
   const [gender, setGender] = useState<OnboardingDraft["gender"]>(
@@ -334,9 +383,10 @@ export default function Onboarding() {
       equipment,
       runFrequency,
       runMode,
-      weeklyRunDays,
+      weeklyRunDays: planRunDays,
       raceDistance,
       raceTargetDate,
+      raceEntry,
       injuries,
       gender,
       ageRange,
@@ -364,6 +414,8 @@ export default function Onboarding() {
       recentRaceDistance,
       recentRaceMinutes,
       recentRaceSeconds,
+      runningWeekMinutes,
+      runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
       reminderOn,
@@ -376,9 +428,10 @@ export default function Onboarding() {
       equipment,
       runFrequency,
       runMode,
-      weeklyRunDays,
+      planRunDays,
       raceDistance,
       raceTargetDate,
+      raceEntry,
       injuries,
       gender,
       ageRange,
@@ -406,6 +459,8 @@ export default function Onboarding() {
       recentRaceDistance,
       recentRaceMinutes,
       recentRaceSeconds,
+      runningWeekMinutes,
+      runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
       reminderOn,
@@ -516,6 +571,35 @@ export default function Onboarding() {
   );
   const recentRaceBenchmark =
     recentRace && !("error" in recentRace) ? recentRace : null;
+  /* R5: someone who runs already, setting up a race plan, says how much
+     they run, and the plan starts there. Someone new to running starts
+     with the run-walk weeks instead. */
+  const askRunningNow =
+    runConfirmed &&
+    runMode === "race_prep" &&
+    (runFrequency === "occasional" || runFrequency === "regular");
+  const runningStart = useMemo<RunningBaseline | null>(
+    () =>
+      askRunningNow
+        ? {
+            version: 1,
+            experience: runFrequency === "regular" ? "regular" : "building",
+            weeklyMinutes: Number(runningWeekMinutes || NaN),
+            longestRunMinutes: Number(runningLongestMinutes || NaN),
+            confirmedAt: currentDate,
+            source: "self_reported",
+          }
+        : null,
+    [
+      askRunningNow,
+      runFrequency,
+      runningWeekMinutes,
+      runningLongestMinutes,
+      currentDate,
+    ]
+  );
+  const runningStartValid =
+    runningStart === null || isRunningBaseline(runningStart);
   const plan = useMemo(
     () =>
       buildOnboardingPlan(
@@ -527,7 +611,7 @@ export default function Onboarding() {
           experience,
           runFrequency,
           runMode,
-          weeklyRunDays,
+          weeklyRunDays: planRunDays,
           raceDistance,
           raceTargetDate,
           injuries,
@@ -541,7 +625,10 @@ export default function Onboarding() {
         goalPlan.fitnessGoal,
         currentDate,
         {
-          runningBaseline: profile?.runningBaseline ?? null,
+          runningBaseline:
+            runningStart && runningStartValid
+              ? runningStart
+              : (profile?.runningBaseline ?? null),
           runTimeLimits: profile?.runTimeLimits,
           runFitness: recentRaceBenchmark ?? profile?.runFitness,
         }
@@ -554,7 +641,7 @@ export default function Onboarding() {
       experience,
       runFrequency,
       runMode,
-      weeklyRunDays,
+      planRunDays,
       raceDistance,
       raceTargetDate,
       injuries,
@@ -567,6 +654,8 @@ export default function Onboarding() {
       goalPlan.fitnessGoal,
       currentDate,
       profile?.runningBaseline,
+      runningStart,
+      runningStartValid,
       profile?.runTimeLimits,
       recentRaceBenchmark,
       profile?.runFitness,
@@ -600,6 +689,7 @@ export default function Onboarding() {
         liftDays: daysPerWeek,
         weeklyRunDays,
         newRunnerUntil: newRunnerUntil(runFrequency, currentDate),
+        runningBaseline: runningStartValid ? runningStart : null,
       }),
     [
       raceDistance,
@@ -608,12 +698,20 @@ export default function Onboarding() {
       daysPerWeek,
       weeklyRunDays,
       runFrequency,
+      runningStart,
+      runningStartValid,
     ]
   );
   /* The name step is the last; the word filter loads from the first, and
      until it has, the name waits (valid false, nothing to say). */
   const wordFilter = useWordFilter();
   const displayNameValidation = validateDisplayName(displayName, wordFilter);
+  const nameMessage =
+    displayNameValidation.trimmed === ""
+      ? nameAsked
+        ? "Enter a name first."
+        : null
+      : displayNameValidation.message;
   /* A race with no date is not a race plan. Run9a lands a persisted
      race_prep with no usable date on the freeform substrate rather than
      leaving a dangling raceGoal — correct, and it stays as the backstop for
@@ -628,9 +726,12 @@ export default function Onboarding() {
     !(
       runFrequency !== "none" &&
       runMode === "race_prep" &&
-      (racePreview.status === "invalid" || racePreview.status === "empty")
+      (racePreview.status === "invalid" ||
+        racePreview.status === "empty" ||
+        raceEntry === undefined)
     ) &&
-    !(recentRace && "error" in recentRace);
+    !(recentRace && "error" in recentRace) &&
+    runningStartValid;
   const validBody =
     ageConfirmed &&
     bodyAnswered &&
@@ -643,6 +744,11 @@ export default function Onboarding() {
     weightKg <= WEIGHT_KG.max &&
     heightCm >= HEIGHT_CM.min &&
     heightCm <= HEIGHT_CM.max;
+  const answersValid =
+    goalConfirmed &&
+    validRun &&
+    (!hasLifting || injuries.length > 0) &&
+    validBody;
   const canAdvance = [
     goalConfirmed,
     true,
@@ -651,12 +757,16 @@ export default function Onboarding() {
     injuries.length > 0,
     validBody,
     true,
-    goalConfirmed &&
-      validRun &&
-      (!hasLifting || injuries.length > 0) &&
-      validBody &&
-      displayNameValidation.valid,
+    answersValid && displayNameValidation.valid,
   ];
+  /* The review's button stays live while only the name stands in the way:
+     the name sits under the plan, below the fold on a phone, and a button
+     that did nothing gave no clue where to look. Held only while the word
+     filter loads, when there is nothing yet to say about the name. */
+  const nameLoading =
+    !displayNameValidation.valid && displayNameValidation.problem === null;
+  const buttonDisabled =
+    step === 7 ? !answersValid || nameLoading : !canAdvance[step];
   const chapters = hasLifting
     ? CHAPTERS
     : CHAPTERS.filter((name) => name !== "Your setup");
@@ -679,6 +789,12 @@ export default function Onboarding() {
     setStep(next);
   };
   const advance = () => {
+    if (step === 7 && answersValid && !displayNameValidation.valid) {
+      setNameAsked(true);
+      nameRef.current?.scrollIntoView({ block: "center" });
+      nameRef.current?.focus({ preventScroll: true });
+      return;
+    }
     if (!canAdvance[step] || pending.current) return;
     trackLifecycle("onboarding_step_completed", {
       step: STEP_IDS[step],
@@ -752,7 +868,20 @@ export default function Onboarding() {
         ...(effectiveRunMode === "race_prep" &&
         raceTargetDate &&
         raceTargetDate >= localDateString(new Date())
-          ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
+          ? {
+              raceGoal: {
+                distance: raceDistance,
+                targetDate: raceTargetDate,
+                ...(raceEntry ? { entry: raceEntry } : {}),
+              },
+            }
+          : {}),
+        // Run9: the 30-minute goal begins today, the day setup finishes.
+        ...(effectiveRunMode === "starter"
+          ? {
+              starterGoal: setStarterGoalPatch(localDateString(new Date()))
+                .starterGoal,
+            }
           : {}),
         injuries,
         // D16 — only persist a non-empty "why" (trimmed, ≤120). Omitted when
@@ -794,6 +923,12 @@ export default function Onboarding() {
       // a shallow assign dropped startWeight and currentPhase.
       const { program: planProgram, ...planShape } = plan.profileUpdates;
       Object.assign(profileData, planShape);
+      // buildPlan's race goal carries no race-or-own answer (Run9); put it
+      // back on the goal the merge just replaced, as
+      // the run-plan editor re-attaches a race's Space link.
+      if (raceEntry && planShape.raceGoal) {
+        profileData.raceGoal = { ...planShape.raceGoal, entry: raceEntry };
+      }
       profileData.program = {
         ...(profileData.program as Record<string, unknown>),
         ...planProgram,
@@ -993,7 +1128,9 @@ export default function Onboarding() {
       ? "No running selected"
       : (effectiveRunMode === "freeform"
           ? "Free running · no scheduled runs"
-          : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
+          : effectiveRunMode === "starter"
+            ? `${STARTER_GOAL_NAME} · ${effectiveRunDays} runs per week`
+            : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
         (recentRaceBenchmark
           ? ` · recent ${recentRaceDistance === "5k" ? "5K" : "10K"} in ${finishTimeLabel(recentRaceBenchmark.benchmark.timeS)}`
           : "");
@@ -1170,7 +1307,7 @@ export default function Onboarding() {
               <p className="text-sm text-muted-foreground">
                 {hasLifting
                   ? "Choose lift sessions per week and about how long each one is. The draft below updates with your plan."
-                  : "No lifts will be scheduled. Next, choose free running or prepare for a race."}
+                  : "No lifts will be scheduled. Next, choose free running, 30 minutes without stopping, or a race."}
               </p>
               {hasLifting && (
                 <WeekPreview
@@ -1225,6 +1362,9 @@ export default function Onboarding() {
                     onSelect={() => {
                       setRunConfirmed(true);
                       setRunFrequency(option.id);
+                      // Run9: New to running starts on the 30-minute goal;
+                      // the other plans stay a tap away.
+                      if (option.id === "new") setRunMode("starter");
                       /* This lands on the RACE-PREP plan only. Freeform
                          is a substrate with no scheduled runs (Run9a), so
                          its weekly target is 0 whichever tier is picked —
@@ -1245,16 +1385,42 @@ export default function Onboarding() {
               </div>
               {runConfirmed && runFrequency !== "none" && (
                 <div className="space-y-4">
-                  <SegmentedControl<"freeform" | "race_prep">
+                  <SegmentedControl<"freeform" | "race_prep" | "starter">
                     ariaLabel="Running plan"
                     tone="running"
+                    layout={starterOffered ? "wrap" : undefined}
                     value={runMode}
                     onChange={setRunMode}
                     options={[
                       { value: "freeform", label: "Free running" },
+                      ...(starterOffered
+                        ? [{ value: "starter" as const, label: "30 minutes" }]
+                        : []),
                       { value: "race_prep", label: "Race prep" },
                     ]}
                   />
+                  {runMode === "starter" && (
+                    <div className="space-y-4 rounded-2xl bg-card card-shadow p-4">
+                      <p className="text-sm">
+                        Run {STARTER_GOAL_NAME} in about nine weeks. It starts
+                        with short runs and walks between them, and a week
+                        repeats until you've done it.
+                      </p>
+                      <div className="space-y-2">
+                        <p className="text-sm">Runs per week</p>
+                        <SegmentedControl<"2" | "3">
+                          ariaLabel="Runs per week"
+                          tone="running"
+                          value={starterRunDays <= 2 ? "2" : "3"}
+                          onChange={(next) => setStarterRunDays(Number(next))}
+                          options={[
+                            { value: "2", label: "2" },
+                            { value: "3", label: "3" },
+                          ]}
+                        />
+                      </div>
+                    </div>
+                  )}
                   {runMode === "race_prep" && (
                     <div className="space-y-4 rounded-2xl bg-card card-shadow p-4">
                       <label className="block text-sm">
@@ -1286,6 +1452,21 @@ export default function Onboarding() {
                           { value: "marathon", label: "Full" },
                         ]}
                       />
+                      <div className="space-y-2">
+                        <p className="text-sm">Race or on your own</p>
+                        <SegmentedControl<RaceGoalEntry | "">
+                          ariaLabel="Race or on your own"
+                          tone="running"
+                          layout="wrap"
+                          value={raceEntry ?? ""}
+                          onChange={(next) => {
+                            if (next !== "") setRaceEntry(next);
+                          }}
+                          options={RACE_GOAL_ENTRY_OPTIONS.map((o) => ({
+                            ...o,
+                          }))}
+                        />
+                      </div>
                       {raceRunDaysNote(raceDistance, weeklyRunDays) && (
                         <p className="text-sm text-muted-foreground">
                           {raceRunDaysNote(raceDistance, weeklyRunDays)}
@@ -1304,6 +1485,60 @@ export default function Onboarding() {
                           aria-invalid={racePreview.status === "invalid"}
                         />
                       </label>
+                      {askRunningNow && runningStart && (
+                        <div className="space-y-2">
+                          <p className="text-sm">Your running now</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            {(
+                              [
+                                {
+                                  key: "weeklyMinutes",
+                                  label: "Minutes a week",
+                                  value: runningWeekMinutes,
+                                  set: setRunningWeekMinutes,
+                                },
+                                {
+                                  key: "longestRunMinutes",
+                                  label: "Longest run, min",
+                                  value: runningLongestMinutes,
+                                  set: setRunningLongestMinutes,
+                                },
+                              ] as const
+                            ).map((field) => (
+                              <label
+                                key={field.key}
+                                className="block space-y-1 text-sm"
+                              >
+                                <span className="text-muted-foreground">
+                                  {field.label}
+                                </span>
+                                <input
+                                  inputMode="numeric"
+                                  className="ds-input min-h-11 w-full font-mono tabular-nums"
+                                  value={field.value}
+                                  aria-invalid={
+                                    field.value !== "" && !runningStartValid
+                                  }
+                                  onChange={(event) =>
+                                    field.set(
+                                      event.target.value
+                                        .replace(/\D/g, "")
+                                        .slice(0, 4)
+                                    )
+                                  }
+                                />
+                              </label>
+                            ))}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {runningWeekMinutes !== "" &&
+                            runningLongestMinutes !== "" &&
+                            !runningStartValid
+                              ? "The longest run is part of the week, so it can't be more, and each is at least 10 min."
+                              : "The plan starts from here and builds a step a week towards the race."}
+                          </p>
+                        </div>
+                      )}
                       {racePreview.status === "empty" ? (
                         <p className="text-sm text-muted-foreground">
                           Pick your race date, or choose Free running to start
@@ -1982,27 +2217,42 @@ export default function Onboarding() {
                   Your public display name
                 </label>
                 <input
+                  ref={nameRef}
                   id="onboarding-name"
                   className="ds-input w-full min-h-11"
                   value={displayName}
                   maxLength={DISPLAY_NAME_MAX}
-                  aria-invalid={displayNameValidation.problem !== null}
+                  placeholder="A name or nickname"
+                  aria-required="true"
+                  aria-invalid={nameMessage !== null}
+                  aria-describedby={
+                    nameMessage
+                      ? "onboarding-name-note onboarding-name-error"
+                      : "onboarding-name-note"
+                  }
                   onChange={(event) => {
                     setNameTyped(true);
                     setDisplayName(event.target.value);
                   }}
                 />
-                <p className="text-sm text-muted-foreground">
+                <p
+                  id="onboarding-name-note"
+                  className="text-sm text-muted-foreground"
+                >
                   Other people can see this name on your profile. You can change
                   it later.
                 </p>
-                {displayNameValidation.message && (
-                  <p className="text-sm text-destructive-strong" role="alert">
-                    {displayNameValidation.message}
+                {nameMessage && (
+                  <p
+                    id="onboarding-name-error"
+                    className="text-sm text-destructive-strong"
+                    role="alert"
+                  >
+                    {nameMessage}
                   </p>
                 )}
               </div>
-              {!canAdvance[7] && (
+              {!answersValid && (
                 <p role="alert" className="text-sm text-destructive-strong">
                   Check the answers above before creating your plan.
                 </p>
@@ -2046,7 +2296,7 @@ export default function Onboarding() {
             size="lg"
             className="flex-1"
             loading={saving}
-            disabled={!canAdvance[step]}
+            disabled={buttonDisabled}
             onClick={advance}
             rightIcon={
               step === 7 ? (

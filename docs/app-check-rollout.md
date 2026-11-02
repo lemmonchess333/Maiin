@@ -103,11 +103,11 @@ Add `enforceAppCheck: true` ONE at a time, watching error-reporting for
 App-Check-rejection spikes between each (the rate must already be ≥99% per
 Phase 3 before starting). Order:
 
-| Tier                                  | Callables                                                                                      | If it breaks                                                                                    |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| 1 — low risk (flip first)             | `sendTestPush`, `backfillMyActivityCategories`                                                 | a non-critical feature errors; user retries                                                     |
-| 2 — core flows                        | `completeOnboarding`, `configurePlan`                                                          | new users can't onboard / can't edit plan — flip only after Tier 1 is stable for days           |
-| 3 — destructive / billing (flip LAST) | `deleteMyAccount`, `verifyApplePurchase`, `restoreApplePurchases`, `syncRevenueCatEntitlement` | account deletion or purchase/restore breaks — highest blast radius, flip last and watch closely |
+| Tier                                  | Callables                                      | If it breaks                                                                                    |
+| ------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1 — low risk (flip first)             | `sendTestPush`, `backfillMyActivityCategories` | a non-critical feature errors; user retries                                                     |
+| 2 — core flows                        | `completeOnboarding`, `configurePlan`          | new users can't onboard / can't edit plan — flip only after Tier 1 is stable for days           |
+| 3 — destructive / billing (flip LAST) | `deleteMyAccount`, `syncRevenueCatEntitlement` | account deletion or purchase/restore breaks — highest blast radius, flip last and watch closely |
 
 > **A canary needs traffic.** Tier 1 listed five callables until
 > 2026-07-26; three of them could not have served the purpose:
@@ -135,17 +135,19 @@ Don't bother until the `onCall` rollout is complete and stable.
 
 ### ⛔ Never enforce — EXTERNAL webhooks
 
-These are called by Stripe / Apple / RevenueCat servers, which **cannot send
+These are called by Stripe / RevenueCat servers, which **cannot send
 an App Check token**. Enforcing (via the flag OR a manual header check OR an
 over-broad Console API toggle) would 403 every delivery and **silently break
 billing / subscription reconciliation**:
 
 - `stripeWebhook` — authed by the Stripe signature (`STRIPE_WEBHOOK_SECRET`).
-- `appleIAPWebhook` — authed by the signed JWS payload.
 - `revenueCatWebhook` — authed by the `Authorization` header RevenueCat sends
   (`REVENUECAT_WEBHOOK_AUTH`).
 
-All three declaration sites carry an inline `⛔ NEVER add enforceAppCheck`
+Apple's App Store Server Notifications go to RevenueCat, not to a Tropos
+function (ADR-0006, STATUS 2026-11-01).
+
+Both declaration sites carry an inline `⛔ NEVER add enforceAppCheck`
 marker so a future "secure all HTTP functions" pass can't accidentally break
 them.
 

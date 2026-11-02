@@ -8,7 +8,7 @@
  *
  * The screens: Home, Train, History's five pages (and its charts again
  * on a Monday), Food and its manual entry and edit sheets, Social's
- * Together tab (again with its other challenges opened) and its feed
+ * Together tab (again with a challenge's sheet open) and its feed
  * on Following and on Explore, a Space, a profile and its followers and
  * following, Settings and every section of it, Train's exercise menu, a
  * workout, a run before, during and after, the exercise, run and workout
@@ -49,6 +49,7 @@ import {
   signInAsTestUser,
 } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
+import { SETUP } from "../../src/test/journeyScreens";
 import { settleCommunity } from "../helpers/settleCommunity";
 import { brokenWords, layoutBreaks } from "../helpers/layoutBreaks";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
@@ -448,6 +449,12 @@ test.describe("large text", () => {
       await page.getByRole("button", { name: /regular runner/i }).click();
       await page.getByRole("radio", { name: /race prep/i }).click();
       await page.getByRole("radio", { name: /^full$/i }).click();
+      // Run9: nothing is chosen for a new goal's event, and setup holds
+      // until it is.
+      await page
+        .getByRole("radiogroup", { name: SETUP.raceEntry })
+        .getByRole("radio", { name: SETUP.raceEntered, exact: true })
+        .click();
       await page
         .getByLabel(/race target date/i)
         .fill(
@@ -458,6 +465,9 @@ test.describe("large text", () => {
       await recentRace.getByRole("radio", { name: "10K" }).click();
       await recentRace.getByRole("textbox", { name: "Minutes" }).fill("105");
       await recentRace.getByRole("textbox", { name: "Seconds" }).fill("59");
+      // R5: the running the plan starts from, which setup holds for.
+      await page.getByRole("textbox", { name: SETUP.weekMinutes }).fill("180");
+      await page.getByRole("textbox", { name: SETUP.longestRun }).fill("70");
       await page.waitForTimeout(500);
       await measure(page, "setup-running", width, found);
       await next();
@@ -512,14 +522,17 @@ test.describe("large text", () => {
       await settleCommunity(page);
       await measure(page, "social-together", width, found);
 
-      // The challenges behind "See N more", opened into their compact rows.
+      // A challenge row, opened into its sheet.
       await page
-        .getByRole("button", { name: /^See \d+ more challenges?$/ })
+        .getByRole("region", { name: "Community" })
+        .locator('li > button[aria-haspopup="dialog"]')
+        .first()
         .click();
       await page
-        .getByRole("heading", { name: "Available" })
+        .getByRole("dialog")
         .waitFor({ state: "visible", timeout: 10_000 });
-      await measure(page, "social-together-more", width, found);
+      await measure(page, "social-together-challenge", width, found);
+      await page.keyboard.press("Escape");
 
       /* The Feed on Following, where Social opens for anyone who follows
          someone: its posts or its empty state, then the week card under

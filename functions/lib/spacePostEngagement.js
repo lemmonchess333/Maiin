@@ -28,7 +28,7 @@ const POST_NOT_ACCESSIBLE = "space-post-not-accessible";
  *  can still like or reply to one, so the callables keep this id out of
  *  notifications: it is not a user. Clients hide those posts. */
 const COACH_AUTHOR_ID = "tropos-coach";
-const { publicPhotoUrl } = require("./publicPhotoUrl");
+const { profilePhotoUrl } = require("./publicPhotoUrl");
 const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
 const { refusedAddError } = require("./restriction");
 const { MAX_COMMENT_LENGTH } = require("./commentLimit");
@@ -82,6 +82,9 @@ async function toggleSpacePostLike({
  * No visibility gate beyond post-exists — space posts are readable by any
  * signed-in user, so commenting matches the read surface (the same
  * posture as likes: membership gates POSTING, not engagement).
+ *
+ * The avatar on the comment is the commenter's public profile photo, read
+ * in the transaction (profilePhotoUrl), never a URL the request names.
  */
 async function addSpacePostComment({
   firestore,
@@ -90,7 +93,6 @@ async function addSpacePostComment({
   postId,
   text,
   authorName,
-  authorPhotoURL,
   increment,
   serverTimestamp,
 }) {
@@ -132,7 +134,7 @@ async function addSpacePostComment({
       text: trimmed,
       createdAt: serverTimestamp(),
     };
-    const photo = publicPhotoUrl(authorPhotoURL);
+    const photo = await profilePhotoUrl(txn, firestore, uid);
     if (photo) data.authorPhotoURL = photo;
     await assertTransactionAccountsLive({ firestore, tx: txn, uids: [uid, postSnap.data().authorId] });
     txn.set(commentRef, data);

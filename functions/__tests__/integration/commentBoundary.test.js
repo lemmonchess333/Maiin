@@ -138,21 +138,27 @@ suite("comment HTTP boundary with emulator identities", () => {
   );
 
   it.each(targets)(
-    "%s preserves a supported avatar",
+    "%s writes the commenter's profile photo, not the request's",
     async (name, target, path) => {
-      const authorPhotoURL =
-        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fa.jpg?alt=media";
-      const response = await call(name, {
-        ...target,
-        text: "Synthetic",
-        authorName: "Audit",
-        authorPhotoURL,
-      });
-      expect(response.status).toBe(200);
-      const saved = await db
-        .doc(`${path}/${response.body.result.commentId}`)
-        .get();
-      expect(saved.data().authorPhotoURL).toBe(authorPhotoURL);
+      const profilePhoto = `https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2F${uid}%2Fa.jpg?alt=media`;
+      const profile = db.doc(`users/${uid}/public/profile`);
+      await profile.set({ photoURL: profilePhoto });
+      try {
+        const response = await call(name, {
+          ...target,
+          text: "Synthetic",
+          authorName: "Audit",
+          // In this project's bucket, but a folder nobody screens.
+          authorPhotoURL: `https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/progress-photos%2F${uid}%2Fx.jpg?alt=media`,
+        });
+        expect(response.status).toBe(200);
+        const saved = await db
+          .doc(`${path}/${response.body.result.commentId}`)
+          .get();
+        expect(saved.data().authorPhotoURL).toBe(profilePhoto);
+      } finally {
+        await profile.delete();
+      }
     }
   );
 

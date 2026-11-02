@@ -143,7 +143,7 @@ export default function RunDetail() {
     () =>
       privacy.loading || privacy.error
         ? []
-        : applyPrivacyZones(run?.points ?? [], privacy.zones),
+        : applyPrivacyZones<GPSPoint>(run?.points ?? [], privacy.zones),
     [run?.points, privacy.loading, privacy.error, privacy.zones]
   );
 
@@ -579,7 +579,7 @@ export default function RunDetail() {
             <span className="font-mono tabular-nums font-semibold text-foreground">
               {paceMinSec(gap.gapSecondsPerKm, unit)}
             </span>{" "}
-            {paceUnitLabel(unit)} — flat-equivalent for this climb
+            {paceUnitLabel(unit)}: the flat-ground equivalent of this climb
           </p>
         )}
 

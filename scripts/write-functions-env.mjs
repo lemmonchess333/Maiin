@@ -33,7 +33,6 @@ export const FUNCTION_SETTINGS = [
   "PUBLIC_APP_BASE_URL",
   // In-app purchases (docs/iap/revenuecat-setup.md).
   "REVENUECAT_SANDBOX_UIDS",
-  "ALLOW_SANDBOX_IAP",
   // Which origins and test plans the deployment allows (functions/helpers.js).
   "TROPOS_DEPLOY_ENV",
   // Stripe, dormant (Sub4).

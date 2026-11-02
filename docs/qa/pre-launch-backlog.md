@@ -10,6 +10,42 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Setup asks for the public name (2026-11-01)
+
+Setup no longer makes the public name from the email address: an email
+account's name field on the review starts empty, and Go to Today with no
+name scrolls to the field, focuses it and says "Enter a name first."
+(`onboardingName.ts`, `Onboarding.tsx`). jsdom draws no layout and opens
+no keyboard; only a phone shows where the field lands.
+
+- [ ] **The field comes up above the keyboard.** On a TestFlight build,
+      sign up with an email address and answer setup. On the review, tap
+      Go to Today without scrolling. Passing: the page moves to the name
+      field, the keyboard opens, and the field and "Enter a name first."
+      are both visible above it. Type a name and tap Go to Today: Home
+      opens, and from a second account Social's Search finds it by that
+      name, not by the address.
+- [ ] **A Google or Apple name still arrives.** Make an account with Sign
+      in with Apple (sharing the name) and one with Google. Passing: the
+      review's name field holds that name, and Go to Today goes straight
+      on.
+
+## A distance goal: a race entered, or on your own (Run9 STATUS 2026-11-01)
+
+Setup and Settings → Run plan ask "A race I've entered / On my own" of a
+distance goal, nothing chosen, and store it as `raceGoal.entry`; a goal
+run on your own calls its last day "Your 10K", not "Race day". The answer
+reaches the profile only through `configurePlan` and `completeOnboarding`,
+whose sanitizer keeps it from this release's Functions deploy; the rules
+gate (`raceGoalValid`) takes it from the Firestore deploy.
+
+- [ ] **It survives the server.** After Deploy production has run the
+      Functions and Firestore steps, on a TestFlight build set a 10K goal
+      On my own in Settings → Run plan and save. Passing: reopening Run
+      plan shows On my own still chosen (a sanitizer that dropped it would
+      read back as A race I've entered), and on the goal's date the run
+      tab says "Your 10K" and "Start your 10K".
+
 ## A v2 account's one first-week reminder ask (XB1 call 8, 2026-10-31)
 
 After a v2 account's first saved session in its first week, and once the
@@ -2603,6 +2639,12 @@ test reaches is a real iPad, a real storefront and App Store Connect.
 
 Affects: `functions/applePurchase.js`, new `appleSubscriptions/{originalTransactionId}` collection.
 
+STATUS 2026-11-01: `applePurchase.js`, `appleIAP.js` and the three
+functions they served (`restoreApplePurchases`, `verifyApplePurchase`,
+`appleIAPWebhook`) are deleted; purchases go through RevenueCat. The rows
+below are history. The checks that replace them are under "Security review
+fixes" at the end of this file.
+
 - [x] _(No longer applies, 2026-10-17: #2434 (0130e705, 2026-09-19) removed the client's direct StoreKit path (purchaseWithAppleIAP, cordova-plugin-purchase), and iOS purchases now go through RevenueCat. Nothing in src/ calls verifyApplePurchase or restoreApplePurchases, so a real purchase no longer creates appleSubscriptions docs. The server binding is still pinned by functions/**tests**/applePurchase.test.js 'claims the lookup doc on a brand-new transaction id'. ADR-0006 retires these functions at slice 8.)_ First real iOS purchase post-deploy — confirm a new `appleSubscriptions/<originalTransactionId>` doc is created with `uid` matching the purchaser, plus `productId` and `expiresAt`.
 - [x] _(No longer applies, 2026-10-17: Restore now calls RevenueCat (purchaseProvider.ts restorePurchases → rcRestore), not restoreApplePurchases (removed from the client in #2434 / 0130e705). Same-uid renewal on the legacy callable is pinned by applePurchase.test.js 'accepts when the transaction id is already bound to the SAME uid (legit renewal)'.)_ Restore-purchase flow on the same Apple ID under the same Tropos account — confirm the lookup doc updates in-place (timestamp changes, uid stays).
 - [x] _(Proven 2026-10-17: functions/**tests**/applePurchase.test.js 'rejects when the transaction id is already bound to a different uid' asserts the call rejects with /different account/ (line 656). The callable is still deployed (restoreApplePurchases updated in run 39063239262) but has no client caller.)_ Negative test: attempt to call `restoreApplePurchases` from a second test account using the first user's `originalTransactionId` (intercept via debug). Expect the function to throw `"different account"` and no user-doc write to land.
@@ -3199,3 +3241,126 @@ with the fake; only the phone shows the SDK replaying the write.
 - [ ] **Connecting Apple Health offline shows steps.** With Airplane Mode
       on, connect Apple Health from Settings → Health. Passing: today's
       steps appear without waiting for a connection.
+
+## Security review fixes (2026-11-01)
+
+Server and rules half of the November security review: the legacy Apple
+purchase functions deleted, the password-reset and verification emails
+capped and made to answer the same whether or not an account exists, AI
+scans counted by the UTC day, callable ids held to one document, Circle
+names and leaderboard names taken from the public profile, one props or
+like notification per giver, a restricted account's email kept only once
+verified, shared photo links held to screened uploads and real avatars,
+the feed word filter run over everything a card shows, post sizes bounded,
+and the `users/{uid}` document no longer deletable from the app. Unit,
+rules and emulator tests cover each; these need the consoles or a phone.
+
+- [ ] **The Apple functions are gone.** After the first Deploy production
+      run carrying this work, its "Deploy functions" log shows
+      `restoreApplePurchases`, `verifyApplePurchase` and `appleIAPWebhook`
+      each with "Successful delete operation".
+- [ ] **App Store notifications go to RevenueCat.** App Store Connect →
+      the app → App Information → App Store Server Notifications: the
+      Production and Sandbox URLs are both RevenueCat's (Version 2), not a
+      `cloudfunctions.net` address.
+- [ ] **The Apple secrets are deleted.** Once the functions are gone,
+      delete `APPLE_KEY_ID`, `APPLE_ISSUER_ID` and `APPLE_PRIVATE_KEY` in
+      Secret Manager (`npm run secrets:check` in `functions/` lists none of
+      them). Keep the In-App Purchase key itself in App Store Connect if
+      RevenueCat uses it. The `ALLOW_SANDBOX_IAP` repository variable, if
+      set, can go too: nothing reads it.
+- [ ] **Stored photo links still pass.** Before or soon after the rules
+      ship, look through `users/*/public/profile` `photoURL` values in the
+      Firestore console for any that are not a `profile-photos%2F` or
+      `space-photos%2F` download link, a Google `lh3…/a/` or `/a-/`
+      avatar, or an Apple CDN link. Such a document still renders, but a
+      new post, join or membership that copies its photo is refused.
+- [ ] **Photos and avatars on a phone and the web.** A fresh Google
+      sign-up writes its profile with the Google avatar; a profile photo
+      upload saves; a Space post with a photo posts; a comment shows the
+      commenter's profile photo; a Circle's member list shows each public
+      name.
+- [ ] **Challenge joins on an installed iOS build.** The rules now want a
+      join's name to match the public profile. Ship a TestFlight build
+      carrying this work soon after the deploy, then join a challenge on it:
+      the board shows the public name. An older build can be refused a
+      join for an account whose private and public names differ.
+- [ ] **Props on and off leaves one row.** With two accounts on TestFlight,
+      give props to the other's post, take it back and give it again a few
+      times. Passing: their tray shows one row, which does not come back
+      unread.
+- [ ] **A size flag reads well in moderation.** A feed post the server
+      makes private for its size carries `flaggedField: "size"`. If one
+      reaches `/admin/moderation`, it should read sensibly there.
+- [ ] **Resend's daily allowance fits.** The project sends at most 500
+      reset emails a day. Check the Resend plan's daily limit is above that
+      plus verification and alert mail, and consider a log alert on
+      `sendPasswordResetLinkCallable` lines at error level and its
+      `dailyCap` warning.
+
+## The starter goal's engine (Run9 STATUS 2026-11-01, S3)
+
+The engine runs a starter plan (30 minutes without stopping, nine weekly
+stages) once one exists; nothing in the app begins one until S4. The
+server refuses the starter run mode beside a plan of another kind
+(`validatePlanPayload`), and builds from before the starter leave its plan
+alone on a rollover, a schedule change or a reset (S2), so an installed
+build cannot replace a starter's plan.
+
+- [ ] **An older build leaves a starter alone.** Once S4 ships and this
+      release's Functions deploy has run, sign in on a TestFlight build
+      from before S2 with an account on the starter goal, save a lifting
+      change in Settings → Programme, then open the app on a Monday.
+      Passing: the save is refused with a message rather than saved, and
+      the new build still shows the starter's week and stage afterwards.
+
+## The starter goal's ways in (Run9 STATUS 2026-11-01, S4)
+
+Setup starts someone new to running on 30 minutes without stopping, Train
+offers it to a free runner new to running, and Settings → Run plan lists it
+for runners and new runners. Setup sends the goal through
+`completeOnboarding` and Settings through `configurePlan`, which write it
+whole (`wholeStarterGoal`), from this release's Functions deploy.
+
+- [ ] **A new runner's first weeks on a phone.** On a TestFlight build after
+      Deploy production, set up a running-only account as New to running and
+      keep the 30-minute goal. Passing: Train reads "Week 1 of 9 · about 9
+      weeks to go" with that week's run-walks on the strip; after a week
+      with one run, the Monday after shows "This week again"; after a week
+      with two, Week 2.
+- [ ] **A new goal after a finished one starts clean.** On an account whose
+      starter goal is finished, choose 30 minutes without stopping again in
+      Settings → Run plan and save. Passing: Train shows Week 1 of 9 (a
+      merge that kept the old `finishedOn` would leave the account on free
+      running with Done showing).
+
+## Together, you first, and the community goal (Soc14, 2026-11-02)
+
+The Together tab leads with the person's Circles and joined challenges,
+then this week's challenge, then Discover. The community goal counts every
+eligible saved run in its month, joined or not: `onRunCreated` adds the
+run's metres to the goal's `collectiveMeters` and the runner once to
+`collectiveRunners`, through a per-run credit in
+`users/{uid}/communityGoal`, and `onRunDeleted` takes exactly that credit
+back off. Unit, rules and emulator tests cover it; these need the console
+or a phone.
+
+- [ ] **The triggers carry the goal.** After the Deploy production run that
+      ships this, its deployed-source check passes, and the source of
+      `onRunCreated` names `creditRunToCommunityGoals`.
+- [ ] **This month's goal is backfilled.** Only runs saved after the
+      deploy count by themselves. The "Backfill community goal" workflow
+      adds the earlier ones: it runs by itself once merged, and Run
+      workflow repeats it (for another month's goal if one is named). Its
+      second pass must credit nothing. It is safe to run again or beside
+      the live triggers. Passing: the workflow is green, the goal's
+      document shows a `collectiveMeters` and `collectiveRunners` that look
+      right for the month, and Together's Discover shows the goal.
+- [ ] **A run moves the goal, and its delete takes it back.** On a phone,
+      save a short run: the goal's figure goes up by its distance and the
+      runner count by one if it was your first this month. Delete the run:
+      both go back.
+- [ ] **Together on a phone.** Your Circles first (a Circle of one offers
+      Invite someone), this week's challenge with the page's one filled
+      button, then Discover. Scroll to the bottom: the last card clears the
+      tab bar.

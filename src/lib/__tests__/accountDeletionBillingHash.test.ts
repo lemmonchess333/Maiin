@@ -13,7 +13,8 @@
  * function so the secret can be pinned without booting firebase-functions
  * config. The production helpers `billingIdentityHash` and
  * `billingIdentityLookupHashes` read the secret from process.env
- * (defineSecret binding) and are exercised by the appleIAP.js path.
+ * (defineSecret binding) and are exercised by account deletion and
+ * lib/restrictedIdentities.js.
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";

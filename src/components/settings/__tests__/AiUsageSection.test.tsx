@@ -117,6 +117,22 @@ describe("AiUsageSection — Sub1a F1b lock pin #6", () => {
     expect(screen.getByText(/Image: 4 \/ 100/)).toBeTruthy();
   });
 
+  it("Cycle 3b: pro user is told when the counts start again, not that they are today's", () => {
+    // The counts are for the UTC day, which starts at 00:00 UTC: a local
+    // time of day for most people, so the row names that time.
+    useScanUsageMock.mockImplementation((action) =>
+      makeUsage({ used: 12, limit: 100, isUnlimited: true }, action)
+    );
+    renderSection();
+    const resetsAt = new Date("2026-05-26T00:00:00Z");
+    const hh = String(resetsAt.getHours()).padStart(2, "0");
+    const mm = String(resetsAt.getMinutes()).padStart(2, "0");
+    expect(screen.getByText(`${hh}:${mm}`).parentElement).toHaveTextContent(
+      `Resets at ${hh}:${mm}`
+    );
+    expect(screen.queryByText(/today/i)).toBeNull();
+  });
+
   it("Cycle 4: pro user — row is non-interactive (no button role)", () => {
     useScanUsageMock.mockImplementation((action) =>
       makeUsage({ used: 0, limit: 100, isUnlimited: true }, action)
@@ -125,7 +141,7 @@ describe("AiUsageSection — Sub1a F1b lock pin #6", () => {
     expect(screen.queryByRole("button")).toBeNull();
     // Group landmark for screen readers — the row groups text + image
     // counters together so a screen reader announces them as one unit.
-    expect(screen.getByRole("group", { name: /AI usage today/ })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "AI usage" })).toBeTruthy();
   });
 
   it("Cycle 5: trial user (isUnlimited=true from hook) sees the Pro view", () => {

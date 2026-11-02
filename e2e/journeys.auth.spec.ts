@@ -115,7 +115,7 @@ test.describe("core user journeys", () => {
       timeout: 15_000,
     });
 
-    // "Race goal" is a radiogroup (No race / Training for a race). Choosing a race
+    // "Running goal" is a radiogroup (No race / Training for a race). Choosing a race
     // reveals the RaceGoalPlanner.
     await page.getByRole("radio", { name: /Training for a race/i }).click();
 
@@ -125,6 +125,12 @@ test.describe("core user journeys", () => {
     const target = new Date(Date.now() + 70 * 24 * 60 * 60 * 1000);
     const iso = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, "0")}-${String(target.getDate()).padStart(2, "0")}`;
     await page.locator("#ps-race-date").fill(iso);
+    // Run9 STATUS 2026-11-01: a race entered, or on your own, before the
+    // plan saves; neither is chosen for a new goal.
+    await page
+      .getByRole("radiogroup", { name: "Race or on your own" })
+      .getByRole("radio", { name: "A race I've entered", exact: true })
+      .click();
 
     // The planner derives a live preview for the chosen distance/date —
     // proves getRaceGoalPlannerState ran and the Base→Build→Taper→Race

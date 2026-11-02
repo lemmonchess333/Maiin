@@ -27,17 +27,20 @@ import {
   getTimeRemaining,
   isTierAchieved,
 } from "./useChallenges";
-import { THEME } from "@/lib/theme";
 import { challengeGoal, formatChallengeValue } from "./challengeFormat";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { Button } from "@/components/ui/Button";
+import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
+import PhotoCaption from "@/components/ui/PhotoCaption";
 import SectionLabel from "@/components/ui/SectionLabel";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { challengeEditorialImage } from "@/lib/editorialImages";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import { useChallengePercentile } from "./useChallengePercentile";
 import { challengeSport, SPORT_ACCENT, SPORT_BAR_FILL } from "./challengeSport";
+import ChallengeSportTag from "./ChallengeSportTag";
+import { collectiveTotal as goalTotal } from "./collectiveGoal";
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -223,7 +226,7 @@ export function ChallengeCard({
       ? challenge.participantCount
       : null;
   /* The card wears its sport (`challengeSport`): the hero band, the icon,
-     Join and the bar's fill. The tier metal never fills the bar. */
+     the sport tag and the bar's fill. The tier metal never fills the bar. */
   const sport = challengeSport(challenge.metric);
   const accent = SPORT_ACCENT[sport];
   const barFill = SPORT_BAR_FILL[sport];
@@ -294,14 +297,6 @@ export function ChallengeCard({
                 background: `linear-gradient(150deg, ${accent}59 0%, ${accent}1F 60%, transparent 100%)`,
               }}
             />
-            {/* Text scrim — theme-independent (the photo is the
-                surface, so overlay text is white in both themes). */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `linear-gradient(to top, ${THEME.scrim} 0%, ${THEME.scrimSoft} 45%, transparent 70%)`,
-              }}
-            />
           </>
         ) : (
           <HeroIcon
@@ -318,8 +313,9 @@ export function ChallengeCard({
         {/* Insets in px: in rem the reserve for the ghosted icon grew with
             the text and left "Distance" 64px at 320 px and 2× text. A
             photo band draws no icon, so it keeps no reserve. */}
-        <div
-          className={`absolute bottom-3 left-[16px] min-w-0 ${heroPhoto ? "right-[16px]" : "right-[80px]"}`}
+        <PhotoCaption
+          onPhoto={!!heroPhoto}
+          className={`pl-[16px] ${heroPhoto ? "pr-[16px]" : "pr-[80px]"}`}
         >
           {timeLeft && (
             <SectionLabel
@@ -336,7 +332,7 @@ export function ChallengeCard({
           >
             {challenge.name}
           </p>
-        </div>
+        </PhotoCaption>
         {/* The tier badge: the trophy in the text colour on the card,
             ringed in the tier's metal. White on gold was 1.4:1. */}
         {currentTier && (
@@ -351,6 +347,9 @@ export function ChallengeCard({
         )}
       </div>
       <div className="p-4 space-y-3">
+        {/* Which sport it counts, said in words; the button no longer
+            says it in colour. */}
+        <ChallengeSportTag metric={challenge.metric} />
         {/* The goal, from the challenge's own target in the reader's
             units; the stored description only for a metric it cannot
             phrase. */}
@@ -448,12 +447,13 @@ export function ChallengeCard({
 
         {/* Join button or progress */}
         {!joined ? (
-          /* Canonical CTA mapping: running challenges take the sport
-             (coral) variant, everything else the primary. The primitive
-             also supplies the 44px floor the old py-2.5 button missed. */
+          /* A quiet Join, the width of its words: the Together page keeps
+             one filled button (the weekly challenge's), and the sport is
+             the tag's to say, not the button's. The edge gives the muted
+             fill its 3:1 against the white card. */
           <Button
-            variant={sport === "running" ? "sport" : "primary"}
-            fullWidth
+            variant="secondary"
+            className={SECONDARY_ON_CARD_EDGE}
             onClick={handleJoin}
             loading={busy === "joining"}
           >
@@ -462,16 +462,13 @@ export function ChallengeCard({
         ) : challenge.collectiveTarget && challenge.collectiveTarget > 0 ? (
           /* PR 5: group_goal challenge.
              Renders a single collective progress bar instead of the
-             per-user tier ladder. Total = sum of every participant's
-             currentValue (we have it in `leaderboard`); target lives
-             on `challenge.collectiveTarget`. The user's individual
-             contribution is surfaced underneath as a "you contributed"
-             line so the personal stake is still legible. */
+             per-user tier ladder. The total is the server's, every
+             saved run in the window, joined or not (`goalTotal`); the
+             target lives on `challenge.collectiveTarget`. The user's
+             individual contribution is surfaced underneath as a "you
+             contributed" line so the personal stake is still legible. */
           (() => {
-            const collectiveTotal = leaderboard.reduce(
-              (s, p) => s + (p.currentValue || 0),
-              0
-            );
+            const collectiveTotal = goalTotal(challenge);
             const target = challenge.collectiveTarget!;
             const collPct = Math.min((collectiveTotal / target) * 100, 100);
             return (

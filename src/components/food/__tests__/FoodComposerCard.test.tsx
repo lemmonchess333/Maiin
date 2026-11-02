@@ -268,7 +268,7 @@ describe("FoodComposerCard — conditional quota caption (wave2 B)", () => {
 
   it("renders the last-scan caption at remaining === 1", () => {
     renderComposer({ scanUsage: quota({ remaining: 1 }) });
-    expect(screen.getByText(/1 free scan left · resets 10 Jun/i)).toBeTruthy();
+    expect(screen.getByText("1 free scan left · resets at 00:00")).toBeTruthy();
   });
 
   it("renders the exhausted caption with a working upgrade action at remaining === 0 (real quota)", () => {
@@ -277,7 +277,7 @@ describe("FoodComposerCard — conditional quota caption (wave2 B)", () => {
     // Pro's own daily cap, not "unlimited": the server stops Pro at
     // DAILY_AI_LIMITS too.
     const cta = screen.getByRole("button", {
-      name: "Out of scans · upgrade for 100 a day · resets 10 Jun",
+      name: "Out of scans · upgrade for 100 a day · resets at 00:00",
     });
     expect(cta.textContent).not.toMatch(/unlimited/i);
     fireEvent.click(cta);

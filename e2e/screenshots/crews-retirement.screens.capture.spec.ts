@@ -77,8 +77,8 @@ test.describe("crews retirement screenshots", () => {
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
-    // The three blocks with their data in: the seeded circle's featured
-    // card, not the Circles skeleton, and no Challenges skeleton either.
+    // The three sections with their data in: the seeded circle's row,
+    // not the Circles skeleton, and no Challenges skeleton either.
     await settleCommunity(page);
     await page
       .getByRole("button", { name: /autumn strength crew/i })

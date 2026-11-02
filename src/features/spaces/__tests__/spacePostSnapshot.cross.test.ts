@@ -84,7 +84,9 @@ describe("a Space post's session — the snapshot and the rules agree", () => {
     const written = new Set<string>();
     for (const session of [RUN, WORKOUT]) {
       for (const keepRouteEnds of [true, false]) {
-        const keys = Object.keys(spacePostSnapshot(session, keepRouteEnds));
+        const keys = Object.keys(
+          spacePostSnapshot(session, { keepRouteEnds, zones: [] })
+        );
         for (const key of keys) {
           expect(ruleKeys, `${key} is written but not allowed`).toContain(key);
           written.add(key);

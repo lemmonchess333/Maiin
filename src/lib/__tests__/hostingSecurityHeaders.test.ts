@@ -58,6 +58,20 @@ describe("App Check reCAPTCHA CSP requirements", () => {
     }
   );
 
+  it("allows only reCAPTCHA's path on www.gstatic.com for scripts", () => {
+    // reCAPTCHA's release scripts live under /recaptcha/. The rest of the
+    // host serves other Google libraries a policy bypass can use.
+    const sources = directives.get("script-src") ?? [];
+    expect(sources).toContain("https://www.gstatic.com/recaptcha/");
+    expect(
+      sources.filter(
+        (s) =>
+          s.includes("gstatic.com") &&
+          s !== "https://www.gstatic.com/recaptcha/"
+      )
+    ).toEqual([]);
+  });
+
   it("allows the secondary reCAPTCHA frame origin", () => {
     expect(directives.get("frame-src")).toContain(
       "https://recaptcha.google.com/recaptcha/"

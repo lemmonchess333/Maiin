@@ -119,8 +119,9 @@ export function firstWeek(input: FirstWeekInput): FirstWeek | null {
       done: input.runCount > 0,
     });
   if (input.trainingOnly) {
-    // Incomplete work leads. On a both-sport day the established lift-then-run
-    // order stays unless one of the two sessions is resumable.
+    // Incomplete work leads, then the session Home leads with
+    // (`priorityTask`: one to resume, else the first card that can start,
+    // which is the run for a running aim); otherwise the lift first.
     items.sort((a, b) => {
       if (a.done !== b.done) return a.done ? 1 : -1;
       if (a.key === input.priorityTask) return -1;

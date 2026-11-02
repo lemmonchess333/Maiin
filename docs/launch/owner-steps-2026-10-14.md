@@ -135,8 +135,9 @@ These steps are what's left.
 - [ ] App Information → App Store Server Notifications: Production and
       Sandbox both set to **RevenueCat's** URL, Version 2 (the last box in
       4.2 fills these in for you). Apple takes one URL, and RevenueCat is
-      what reads them. Not the old `appleIAPWebhook` address: that is the
-      path from before RevenueCat, due to be retired (#1104).
+      what reads them. Not the old `appleIAPWebhook` address: that function
+      is deleted (ADR-0006, STATUS 2026-11-01), so a notification sent there
+      is lost.
 
 ### 4.2 RevenueCat dashboard: check each of these is done
 

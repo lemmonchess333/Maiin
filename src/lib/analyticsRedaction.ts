@@ -104,3 +104,111 @@ export function sanitizeAnalyticsParams(
   }
   return out;
 }
+
+/**
+ * The words in the app's own routes (`path=` in App.tsx). Any other path
+ * segment is an id, a name or a slug: another person's uid on
+ * `/user/:uid`, an exercise name, a run or post id.
+ */
+const ROUTE_WORDS = new Set([
+  "activity",
+  "admin",
+  "moderation",
+  "dev",
+  "badge-seal",
+  "brand-bakeoff",
+  "break-food",
+  "break-social",
+  "form-motion-lab",
+  "weight-picker",
+  "diagnostics",
+  "empty-workout",
+  "followers",
+  "following",
+  "food",
+  "history",
+  "exercise",
+  "sessions",
+  "log",
+  "privacy",
+  "program",
+  "plan",
+  "review",
+  "routine",
+  "run",
+  "run-summary",
+  "settings",
+  "account",
+  "data",
+  "health",
+  "legacy",
+  "lift-plan",
+  "notifications",
+  "nutrition",
+  "pantry",
+  "profile",
+  "recently-deleted-meals",
+  "run-plan",
+  "shoes",
+  "subscription",
+  "support-legal",
+  "training",
+  "units-appearance",
+  "workout-prefs",
+  "social",
+  "space",
+  "post",
+  "support",
+  "terms",
+  "upgrade",
+  "user",
+  "workout",
+]);
+
+/** The route `pathname` is on, with every segment that is not a route word
+ *  replaced by `:id`. `/user/abc123` → `/user/:id`. */
+export function redactPagePath(pathname: string): string {
+  return pathname
+    .split("/")
+    .map((segment) =>
+      segment === "" || ROUTE_WORDS.has(segment) ? segment : ":id"
+    )
+    .join("/");
+}
+
+/**
+ * The page address an analytics event may carry: the origin and the
+ * redacted route, with no query or fragment (a typed search lives in
+ * `?q=`). `base` is the app's base path (`/Maiin/` on GitHub Pages), kept
+ * as it is.
+ */
+export function redactPageUrl(href: string, base = "/"): string {
+  try {
+    const url = new URL(href);
+    const root = base.endsWith("/") ? base.slice(0, -1) : base;
+    const path =
+      root && (url.pathname === root || url.pathname.startsWith(root + "/"))
+        ? root + redactPagePath(url.pathname.slice(root.length))
+        : redactPagePath(url.pathname);
+    return url.origin + path;
+  } catch {
+    return "";
+  }
+}
+
+/** The referrer an analytics event may carry: one of the app's own pages,
+ *  redacted as above, or only the origin of any other site. */
+export function redactPageReferrer(
+  referrer: string,
+  origin: string,
+  base = "/"
+): string {
+  try {
+    const url = new URL(referrer);
+    return url.origin === origin
+      ? redactPageUrl(referrer, base)
+      : url.origin + "/";
+  } catch {
+    return "";
+  }
+}

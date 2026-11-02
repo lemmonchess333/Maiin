@@ -17,6 +17,7 @@ const h = vi.hoisted(() => ({
   signedInBefore: false,
   signInWithGoogle: vi.fn(),
   signInWithApple: vi.fn(),
+  resetPassword: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -25,7 +26,7 @@ vi.mock("@/lib/auth", () => ({
     signUp: vi.fn(),
     signInWithGoogle: h.signInWithGoogle,
     signInWithApple: h.signInWithApple,
-    resetPassword: vi.fn(),
+    resetPassword: h.resetPassword,
     fetchSignInMethods: vi.fn(),
   }),
   hasSignedInOnThisDevice: () => h.signedInBefore,
@@ -350,3 +351,44 @@ function BackLink() {
     </button>
   );
 }
+
+/* The reset callable replies the same whether or not the address has an
+   account, so the screen says the same either way. What it can refuse is
+   the request itself, and its "Too many" line says when to try again. */
+describe("Login — Forgot password", () => {
+  async function askForReset() {
+    h.signedInBefore = true;
+    show();
+    fireEvent.change(screen.getByLabelText("Email address"), {
+      target: { value: "alice@example.com" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Forgot password?" }));
+    });
+  }
+
+  it("says a link is on its way only if there is an account", async () => {
+    h.resetPassword.mockResolvedValue(undefined);
+    await askForReset();
+    expect(h.resetPassword).toHaveBeenCalledWith("alice@example.com");
+    expect(
+      screen.getByText(
+        "If an account exists for alice@example.com, a reset link is on its way."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("shows the server's line when the address has asked too often today", async () => {
+    h.resetPassword.mockRejectedValue(
+      new Error(
+        "Too many reset requests for this address today. Try again tomorrow."
+      )
+    );
+    await askForReset();
+    // Before: "Couldn't send the link. Try again.", which cannot work
+    // until tomorrow.
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Too many reset requests for this address today. Try again tomorrow."
+    );
+  });
+});

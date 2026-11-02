@@ -89,8 +89,8 @@ async function assertCallableReferencedUidsNotDeleting(db, uids) {
  *
  * Webhook handlers ALSO have a path to write to paymentEventsPostDeletion
  * when this returns false — that's the operator-reviewable log. See
- * functions/index.js stripeWebhook and functions/appleIAP.js
- * appleIAPWebhook for the consume pattern.
+ * functions/index.js stripeWebhook and functions/revenueCat.js
+ * revenueCatWebhook for the consume pattern.
  */
 async function shouldSystemWriteProceed(db, uid, reason) {
   if (!uid) return true; // no target uid = nothing to protect

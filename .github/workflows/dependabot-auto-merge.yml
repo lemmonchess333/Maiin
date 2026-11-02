@@ -1,7 +1,9 @@
 # Auto-merge Dependabot PRs that are minor or patch version bumps.
 #
 # How it works:
-#   1. Dependabot opens a PR (e.g. "Bump react from 19.1.0 to 19.1.1").
+#   1. Dependabot opens a PR (e.g. "Bump react from 19.1.0 to 19.1.1"),
+#      no sooner than 7 days after that version's release (the cooldown
+#      in dependabot.yml; security updates are not held back).
 #   2. This workflow fires on the PR open + every subsequent push to its
 #      branch.
 #   3. dependabot/fetch-metadata classifies the update type (major /

@@ -97,28 +97,6 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
-  verifyApplePurchase: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: ["STRIPE_SECRET_KEY"],
-  },
-  appleIAPWebhook: {
-    kind: "http",
-    maxInstances: 100,
-    secrets: ["STRIPE_SECRET_KEY"],
-  },
-  restoreApplePurchases: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: [
-      "APPLE_ISSUER_ID",
-      "APPLE_KEY_ID",
-      "APPLE_PRIVATE_KEY",
-      "BILLING_HMAC_SECRET",
-      "BILLING_PREVIOUS_HMAC_SECRET",
-      "STRIPE_SECRET_KEY",
-    ],
-  },
   revenueCatWebhook: {
     kind: "http",
     maxInstances: 100,
@@ -631,6 +609,26 @@ describe("functions trigger metadata snapshot", () => {
     for (const [name, expected] of Object.entries(EXPECTED)) {
       expect({ [name]: actual[name] }).toEqual({ [name]: expected });
     }
+  });
+
+  /* App Store purchases and restores go through RevenueCat (ADR-0006),
+     which knows which account bought what. A function that takes a
+     transaction id from any signed-in caller and grants Pro for it lets
+     one account claim another's subscription, so none is exported, and no
+     function holds an App Store Server API key. */
+  it("exports no Apple purchase function and binds no App Store API key", () => {
+    const apple = [
+      "verifyApplePurchase",
+      "restoreApplePurchases",
+      "appleIAPWebhook",
+    ];
+    expect(Object.keys(fns).filter((name) => apple.includes(name))).toEqual([]);
+    const appleSecrets = Object.entries(actual).flatMap(([name, meta]) =>
+      meta.secrets
+        .filter((s) => s.startsWith("APPLE_"))
+        .map((s) => `${name}: ${s}`)
+    );
+    expect(appleSecrets).toEqual([]);
   });
 
   it("no trigger is missing a maxInstances cap (CLAUDE.md cost guard)", () => {

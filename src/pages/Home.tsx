@@ -29,6 +29,8 @@ import {
 import { firstWeekAction, firstWeekPriorityTask } from "@/lib/firstWeekAction";
 import { unlockSpeech } from "@/lib/speechUnlock";
 import FirstWeekCard from "@/components/home/FirstWeekCard";
+import StarterDoneCard from "@/components/run/StarterDoneCard";
+import { starterGoalReached } from "@/features/program/starterProgress";
 import {
   guideAllowedHere,
   guideRequest,
@@ -303,6 +305,18 @@ export default function Home() {
     runs: savedRuns,
     loading: savedRunsLoading,
   } = useClaimMapForProgram(programState);
+
+  // Run9's starter goal reached, by the days of the saved runs as the
+  // rollover weighs them: Home says Done, with the next goal offered once.
+  const starterDone = useMemo(
+    () =>
+      starterGoalReached(
+        profile,
+        programState,
+        savedRuns.map((run) => run.day)
+      ),
+    [profile, programState, savedRuns]
+  );
 
   // What was done, by date: the strip fills a day for a logged lift
   // session or run, and the week's counts read the same records.
@@ -1278,6 +1292,15 @@ export default function Home() {
           </TrackSectionView>
         )}
       </motion.div>
+
+      {/* Run9's starter goal reached: a plain Done under today's session,
+          with the next goal offered once (dismissed here or on Train). */}
+      {starterDone && profile?.starterGoal?.startedOn && (
+        <StarterDoneCard
+          startedOn={profile.starterGoal.startedOn}
+          navigate={navigate}
+        />
+      )}
 
       {/* A new account's first seven days, under today's session: the
           session is the day's action, this is what the week is for.

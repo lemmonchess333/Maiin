@@ -54,6 +54,8 @@ const EXPECTED: Record<string, string> = {
   "hybrid-3-4-no-trim": "16 weeks recreational: +1.5–3 VDOT (§6.1)",
   "hybrid-2-3-trim": "12 weeks novice-to-recreational: +1–3 VDOT (§6.1)",
   "hybrid-2-3-no-trim": "12 weeks novice-to-recreational: +1–3 VDOT (§6.1)",
+  "owner-marathon":
+    "no evidence band: a first marathon in 25 weeks from about 3 km a run",
 };
 
 const quantile = (sorted: number[], q: number) => {

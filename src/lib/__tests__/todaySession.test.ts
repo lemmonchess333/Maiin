@@ -268,6 +268,23 @@ describe("todaySession — a run day", () => {
     expect(session.lift?.workout?.dayName).toBe("Push — Chest Focus");
     expect(session.run?.runDay?.id).toBe(`rd-${WEDNESDAY}`);
     expect(session.rest).toBeNull();
+    expect(session.runFirst).toBeUndefined();
+  });
+
+  it("puts the run first on a day with both when running is the aim", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "both" }, { primaryGoal: "running" }),
+        programState: programStateWith({
+          workouts: [PUSH],
+          runDays: [runDay(WEDNESDAY)],
+        }),
+      })
+    );
+    expect(session.type).toBe("both");
+    expect(session.lift?.workout).toBeTruthy();
+    expect(session.run?.runDay).toBeTruthy();
+    expect(session.runFirst).toBe(true);
   });
 });
 
@@ -544,6 +561,25 @@ describe("todaySession — what a rest day offers", () => {
         })
       ).rest
     ).toEqual({ kind: "first-meal" });
+  });
+
+  it("keeps a version 2 starter goal's rest day, as a race plan's (Run9)", () => {
+    const starterProfile = profileWith(
+      { 5: "run" },
+      {
+        athleteType: "Runner",
+        runMode: "starter",
+        activationJourneyVersion: 2,
+      }
+    );
+    const plan = programStateWith({
+      runDays: [{ ...runDay(FRIDAY), templateId: "run_walk_1" }],
+    });
+    const session = todaySession(
+      newAccount({ profile: starterProfile, programState: plan })
+    );
+    expect(session.rest?.kind).toBe("rest");
+    expect(session.run).toBeNull();
   });
 
   it("otherwise a rest day, with nothing tomorrow when tomorrow rests too", () => {

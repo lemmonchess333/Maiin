@@ -252,3 +252,67 @@ describe("the lifting unit a new plan starts on", () => {
     }
   });
 });
+
+/* Run9's starter goal from setup: the plan the server accepts, through the
+   same sanitizers and validator completeOnboarding runs. */
+describe("the 30-minute goal from setup", () => {
+  const starterDraft = (
+    overrides: Partial<OnboardingDraft> = {}
+  ): OnboardingDraft => ({
+    ...draft,
+    primaryGoal: "running" as const,
+    daysPerWeek: 0,
+    runFrequency: "new" as const,
+    runMode: "starter" as const,
+    ...overrides,
+  });
+
+  it("begins at the first stage, from today, and passes the server's checks", () => {
+    const plan = buildOnboardingPlan(starterDraft(), "recomp", today);
+    expect(plan.profileUpdates.runMode).toBe("starter");
+    expect(plan.programState.runPlan).toMatchObject({
+      mode: "starter",
+      stage: 1,
+    });
+    expect(
+      plan.programState.runDays?.every((d) => d.templateId === "run_walk_1")
+    ).toBe(true);
+    const profileData = sanitizeProfileData({
+      ...plan.profileUpdates,
+      starterGoal: { startedOn: today },
+    });
+    expect(profileData.starterGoal).toEqual({ startedOn: today });
+    expect(
+      validatePlanPayload({
+        profileData,
+        programState: sanitizeProgramState(plan.programState).value,
+        weekSchedule: plan.weekSchedule,
+      })
+    ).toEqual([]);
+  });
+
+  it("plans two or three runs a week, three unless two are asked for", () => {
+    for (const [asked, planned] of [
+      [7, 3],
+      [3, 3],
+      [2, 2],
+      [1, 2],
+    ] as const) {
+      const plan = buildOnboardingPlan(
+        starterDraft({ weeklyRunDays: asked }),
+        "recomp",
+        today
+      );
+      expect(plan.profileUpdates.weeklyRunDaysTarget).toBe(planned);
+    }
+  });
+
+  it("is free running for someone who does not run", () => {
+    const plan = buildOnboardingPlan(
+      starterDraft({ runFrequency: "none", daysPerWeek: 3 }),
+      "recomp",
+      today
+    );
+    expect(plan.profileUpdates.runMode).toBe("freeform");
+  });
+});

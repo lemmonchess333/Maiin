@@ -8,10 +8,13 @@
  * uid never comes back: signing in again with the same Google or Apple
  * account, or signing up with the same email, makes a new uid with no
  * restriction. So when a RESTRICTED account is deleted, deletion keeps a
- * keyed hash of each way it signed in (its email address, and its Google
- * and Apple subjects) in `restrictedIdentities/{hash}`, for 13 months. A
- * new account carrying any of them is restricted as it is created
- * (`onAuthUserCreated`), and lifting a restriction forgets them.
+ * keyed hash of each way it signed in (its email address, when verified,
+ * and its Google and Apple subjects) in `restrictedIdentities/{hash}`, for
+ * 13 months. A new account carrying any of them is restricted as it is
+ * created (`onAuthUserCreated`), and lifting a restriction forgets them.
+ * The new account need not have verified the address: a kept address is
+ * one the restricted person proved was theirs, and that check runs once,
+ * at creation, before anyone could verify.
  *
  * Nothing else about the person is kept: no uid, no name, no reason. The
  * hash is the billing tombstone's HMAC (`BILLING_HMAC_SECRET`), with its
@@ -46,6 +49,20 @@ function identitiesOf(userRecord) {
     }
   }
   return identities;
+}
+
+/**
+ * The identities deletion keeps: each Google and Apple subject, and the
+ * email address only when the Auth record says it is verified. Sign-up
+ * takes any address and verifies it after setup, so an unverified one may
+ * be someone else's, and keeping it would restrict that person the moment
+ * they sign up. A Google or Apple subject is the provider's own account.
+ */
+function keptIdentitiesOf(userRecord) {
+  const verified = !!userRecord && userRecord.emailVerified === true;
+  return identitiesOf(userRecord).filter(
+    ([kind]) => kind !== "restriction-email" || verified
+  );
 }
 
 /** The keys to look under: the active secret's, and the previous one's
@@ -85,7 +102,7 @@ async function keepRestrictedIdentities({ firestore, auth, uid, now, logger }) {
   if (!user) return 0;
   let keys;
   try {
-    keys = identitiesOf(user).map(([kind, value]) =>
+    keys = keptIdentitiesOf(user).map(([kind, value]) =>
       billingIdentityHash.billingIdentityHash(kind, value)
     );
   } catch (err) {
@@ -180,6 +197,7 @@ module.exports = {
   COLLECTION,
   RETENTION_MONTHS,
   identitiesOf,
+  keptIdentitiesOf,
   keepRestrictedIdentities,
   carryRestriction,
   forgetRestrictedIdentities,

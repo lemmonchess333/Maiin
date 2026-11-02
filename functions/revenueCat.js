@@ -191,9 +191,9 @@ async function handleWebhook(req, res, deps) {
   }
 
   // Replays are harmless (every sync re-reads RevenueCat), but a delivery
-  // already processed skips the REST calls. Recorded after success, like
-  // appleNotifications, so a delivery that failed part-way is retried
-  // rather than hidden. The record holds no uid.
+  // already processed skips the REST calls. Recorded after success, so a
+  // delivery that failed part-way is retried rather than hidden. The
+  // record holds no uid.
   const eventId =
     typeof event.id === "string" && /^[A-Za-z0-9._:-]{1,200}$/.test(event.id)
       ? event.id

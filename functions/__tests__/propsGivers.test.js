@@ -31,7 +31,7 @@ function seeded({ post = {}, kudos = [] } = {}) {
     "users/ann/public/profile": {
       displayName: "Ann",
       photoURL:
-        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.appspot.com/o/a.jpg",
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.appspot.com/o/profile-photos%2Fann%2Fa.jpg",
     },
     "users/bo/public/profile": { displayName: "Bo" },
     "users/cy/public/profile": { displayName: "Cy" },
@@ -71,7 +71,7 @@ describe("toggleKudos keeps the newest givers on the post", () => {
         uid: "ann",
         name: "Ann",
         photoURL:
-          "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.appspot.com/o/a.jpg",
+          "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.appspot.com/o/profile-photos%2Fann%2Fa.jpg",
       },
     ]);
     expect(db.data.get(POST).recentPropsByUids).toEqual(["ann"]);

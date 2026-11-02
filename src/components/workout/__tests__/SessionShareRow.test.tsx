@@ -167,9 +167,10 @@ describe("no saved answer: ask once", () => {
       <SessionShareRow action={action("workout")} onAskingChange={asking} />
     );
     await screen.findByRole("heading", QUESTION);
-    expect(asking).toHaveBeenLastCalledWith(true);
+    // The callback is published by an effect after the render that shows
+    // the question, so the heading can be on screen a moment before it.
+    await waitFor(() => expect(asking).toHaveBeenLastCalledWith(true));
     fireEvent.click(screen.getByRole("button", { name: "Don't share" }));
-    // The callback is published by an effect after the answer changes.
     await waitFor(() => expect(asking).toHaveBeenLastCalledWith(false));
   });
 

@@ -238,6 +238,10 @@ export interface TodaySession {
   run: TodayRun | null;
   /** Set on a rest day. */
   rest: RestDayOffer | null;
+  /** On a day with both, the run is drawn above the lift: the person's
+   *  aim is their running ("Support my running"), as setup's review
+   *  already shows. Absent reads as the lift first. */
+  runFirst?: boolean;
   /** Sessions under way that are not today's card: each gets a strip of
    *  its own above the cards. Absent reads as none. */
   inProgressElsewhere?: SessionInProgress[];
@@ -330,6 +334,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
             firstMeal: framing.firstMeal,
           })
         : null,
+    ...(profile?.primaryGoal === "running" && { runFirst: true }),
   });
 }
 
@@ -431,10 +436,12 @@ function restDayOffer(
   ) {
     return { kind: "free-run", startTarget: runStartTarget(null) };
   }
-  // A race plan's rest day must stay rest. It cannot lead with a food
-  // prompt or offer an unscheduled run to satisfy activation.
+  // A race plan's rest day must stay rest, and so must the starter goal's
+  // (Run9). It cannot lead with a food prompt or offer an unscheduled run
+  // to satisfy activation.
   const version2RaceRest =
-    isActivationJourneyV2(profile) && profile?.runMode === "race_prep";
+    isActivationJourneyV2(profile) &&
+    (profile?.runMode === "race_prep" || profile?.runMode === "starter");
   if (day.firstMeal && !version2RaceRest) return { kind: "first-meal" };
   return {
     kind: "rest",
