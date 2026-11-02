@@ -12,6 +12,7 @@
  */
 import { getPhaseForWeek } from "@/features/program/runPlanTiming";
 import { isRunWalkTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { isInRecoveryOn } from "@/lib/runPlanResolver";
 
 export interface SessionExplainerInput {
   /** Template type from RUN_TEMPLATES ("easy" | "tempo" | "intervals" |
@@ -33,7 +34,38 @@ export interface SessionExplainerInput {
    *  that finishes at it rehearses race day, and a tempo at it practises
    *  the pace, in place of the reasons for a tempo at fitness pace. */
   racePace?: "finish" | "tempo" | null;
+  /** The run is one of the recovery's, after race day (`isRecoveryRunDay`).
+   *  The plan's week counter still points at race week then, so without
+   *  this its runs read as race week's. */
+  inRecovery?: boolean;
 }
+
+/**
+ * Whether a run on `dateKey` belongs to the recovery after race day: the
+ * plan is recovering on that day (`isInRecoveryOn`) and the day comes
+ * after the race. A day of race week before the race is race week's still,
+ * however the plan stands now.
+ */
+export function isRecoveryRunDay(
+  runPlan:
+    | {
+        phase?: string | null;
+        recoveryEndDate?: string | null;
+        raceGoal?: { targetDate?: string } | null;
+      }
+    | null
+    | undefined,
+  dateKey: string | null | undefined
+): boolean {
+  if (!dateKey || !isInRecoveryOn(runPlan, dateKey)) return false;
+  const raceDay = runPlan?.raceGoal?.targetDate;
+  return !raceDay || dateKey > raceDay;
+}
+
+/** Why a recovery run is in the week, in the recovery banner's words
+ *  ("Easy runs only until then, while your legs recover from the race."). */
+export const RECOVERY_RUN_WHY =
+  "Easy runs only for now, while your legs recover from the race.";
 
 /**
  * Whether the week `weekKey` starts holds a tempo or intervals session, the
@@ -65,6 +97,8 @@ export function runSessionPresentation(input: SessionExplainerInput): {
   weekLabel: string | null;
 } {
   const purpose = runSessionExplainer(input);
+  // The recovery has no week of the race plan to name.
+  if (input.inRecovery) return { purpose, weekLabel: null };
   if (
     !purpose ||
     input.currentWeek == null ||
@@ -97,6 +131,9 @@ export function runSessionExplainer(
     distance,
     weekHasQuality,
   } = input;
+  // A recovery week holds easy runs only. Any other run in it is the
+  // person's own choice, with no reason of the plan's to give.
+  if (input.inRecovery) return type === "easy" ? RECOVERY_RUN_WHY : null;
   if (
     currentWeek == null ||
     totalWeeks == null ||
