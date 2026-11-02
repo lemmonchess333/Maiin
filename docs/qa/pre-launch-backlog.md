@@ -3329,10 +3329,11 @@ or a phone.
       ships this, its deployed-source check passes, and the source of
       `onRunCreated` names `creditRunToCommunityGoals`.
 - [ ] **This month's goal is backfilled.** Only runs saved after the
-      deploy count by themselves. Once it has shipped, run
-      `node functions/scripts/backfill-community-goal.js adaptive-fitness-af8bb group-goal-YYYY-MM-01`
-      (the current month's id, with credentials for the project) once. It
-      is safe to run again or beside the live triggers. Passing: the goal's
+      deploy count by themselves. The "Backfill community goal" workflow
+      adds the earlier ones: it runs by itself once merged, and Run
+      workflow repeats it (for another month's goal if one is named). Its
+      second pass must credit nothing. It is safe to run again or beside
+      the live triggers. Passing: the workflow is green, the goal's
       document shows a `collectiveMeters` and `collectiveRunners` that look
       right for the month, and Together's Discover shows the goal.
 - [ ] **A run moves the goal, and its delete takes it back.** On a phone,
