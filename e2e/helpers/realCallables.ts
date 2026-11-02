@@ -106,21 +106,27 @@ async function verifiedCaller(bearer: string): Promise<DecodedIdToken> {
 }
 
 /**
- * `completeOnboarding` stamps the setup with the server's time, which the
- * emulator reads from the real clock, not this process's. In production the
- * two are the same day. A journey runs days ahead, a whole week on a Monday
- * (`nextWeekday`), and the first-week card counts its seven days from that
- * stamp (`firstWeek.ts`), so a stamp left on the real day hid the card on
- * every Monday. A stamp written in this call (within the last minute, by the
- * real clock) moves to the journey's moment; a retry's older stamp stays, as
- * the handler keeps it.
+ * Sign-up stamps the profile's `createdAt`, and `completeOnboarding` its
+ * `onboardingCompletedAt`, with the server's time, which the emulator reads
+ * from the real clock, not the journey's. In production the two are the same
+ * day. A journey runs days ahead, a whole week on a Monday (`nextWeekday`),
+ * and the first-week card counts its seven days from one stamp or the other
+ * (`firstWeek.ts`: the setup's on the current journey, the account's on the
+ * legacy one), so stamps left on the real day hid the card on every Monday.
+ * When this call has just written the setup stamp (within the last minute,
+ * by the real clock), both move to the journey's moment; a retry's older
+ * stamp stays, as the handler keeps it.
  */
 async function stampSetupOnJourneyDay(uid: string): Promise<void> {
   const ref = emulatorAdmin().db.doc(`users/${uid}`);
   const stamp = (await ref.get()).get("onboardingCompletedAt");
   if (!(stamp instanceof Timestamp)) return;
   if (realNow() - stamp.toMillis() > 60_000) return;
-  await ref.update({ onboardingCompletedAt: Timestamp.fromMillis(Date.now()) });
+  const journeyNow = Timestamp.fromMillis(Date.now());
+  await ref.update({
+    onboardingCompletedAt: journeyNow,
+    createdAt: journeyNow,
+  });
 }
 
 async function answer(route: Route, name: string, handler: CallableHandler) {
