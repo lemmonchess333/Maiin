@@ -9,6 +9,13 @@ import {
   weekKeyAfter,
 } from "./starterPlan";
 
+/** The device's record that a goal's Done was answered: per goal, keyed
+ *  by the day it began, so a later goal gets its own Done
+ *  (`useDismissOnce` scopes it to the account). */
+export function starterDoneKey(startedOn: string): string {
+  return `tropos-starter-done-${startedOn}`;
+}
+
 /** The starter goal's name, as Train, Home and setup say it. */
 export const STARTER_GOAL_NAME = "30 minutes without stopping";
 

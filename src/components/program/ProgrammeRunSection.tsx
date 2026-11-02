@@ -153,6 +153,7 @@ import StarterGoalCard from "./StarterGoalCard";
 import StarterDoneCard from "@/components/run/StarterDoneCard";
 import {
   STARTER_GOAL_NAME,
+  starterDoneKey,
   starterGoalReached,
   starterProgress,
 } from "@/features/program/starterProgress";
@@ -580,6 +581,15 @@ export default function ProgrammeRunSection({
       ? starterProgress(programState, profile.starterGoal, savedRunDays)
       : null;
   const starterDone = starterGoalReached(profile, programState, savedRunDays);
+  // Done's answer, held here as well as by the card: while Done shows, it
+  // is the next goal on offer, and the race prompt waits.
+  const starterDoneAnswer = useDismissOnce(
+    starterDoneKey(profile.starterGoal?.startedOn ?? "")
+  );
+  const starterDoneShowing =
+    starterDone &&
+    !!profile.starterGoal?.startedOn &&
+    !starterDoneAnswer.dismissed;
   // Offered on the free running hero to someone new to running who has not
   // had the goal, until dismissed (per account on this device).
   const { dismissed: starterOfferDismissed, dismiss: dismissStarterOffer } =
@@ -1316,10 +1326,11 @@ export default function ProgrammeRunSection({
 
       {/* Run9's starter goal reached: a plain Done and the next goal,
           offered once, the same card Home shows. */}
-      {starterDone && profile.starterGoal?.startedOn && (
+      {starterDoneShowing && profile.starterGoal?.startedOn && (
         <StarterDoneCard
           startedOn={profile.starterGoal.startedOn}
           navigate={navigate}
+          answer={starterDoneAnswer}
         />
       )}
 
@@ -1493,8 +1504,10 @@ export default function ProgrammeRunSection({
 
           {/* #975: one-time "Set a race goal" entry. Routes to the Race Goal
               Planner (/settings/run-plan). Dismissible; once a goal is set the
-              mode flips to race_prep and this freeform block stops rendering. */}
-          {!setRaceGoalDismissed && (
+              mode flips to race_prep and this freeform block stops rendering.
+              It waits while the starter goal's Done shows: that card already
+              offers the next goal. */}
+          {!setRaceGoalDismissed && !starterDoneShowing && (
             <Card size="compact" className="flex items-center gap-3">
               <button
                 type="button"

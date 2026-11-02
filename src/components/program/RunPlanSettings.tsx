@@ -837,9 +837,9 @@ export default function RunPlanSettings({
           whether there is a race. The same control as the race's
           Distance, in the running colour. */}
       <div className="space-y-2">
-        <SectionHeading size="compact">Race goal</SectionHeading>
+        <SectionHeading size="compact">Running goal</SectionHeading>
         <SegmentedControl
-          ariaLabel="Race goal"
+          ariaLabel="Running goal"
           tone="running"
           options={raceOrNotOptions(starterOffered)}
           layout={starterOffered ? "wrap" : undefined}

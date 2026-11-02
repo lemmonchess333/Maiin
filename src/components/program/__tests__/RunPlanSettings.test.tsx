@@ -500,7 +500,7 @@ describe("RunPlanSettings", () => {
      one wore a hand-mixed coral wash. */
   it("asks whether there is a race on a coral segmented control", () => {
     renderPage(baseProfile);
-    const group = screen.getByRole("radiogroup", { name: "Race goal" });
+    const group = screen.getByRole("radiogroup", { name: "Running goal" });
     const noRace = screen.getByRole("radio", { name: "No race" });
     expect(group).toContainElement(noRace);
     expect(noRace).toHaveAttribute("aria-checked", "true");
@@ -531,7 +531,7 @@ describe("RunPlanSettings", () => {
     renderPage({ ...baseProfile, weeklyWorkoutsTarget: 3 } as UserProfile);
     pickRacePrep();
     for (const name of [
-      "Race goal",
+      "Running goal",
       "Distance",
       "Race name (optional)",
       "Target date",
@@ -566,7 +566,7 @@ describe("RunPlanSettings", () => {
 
   it("shows only run controls — no lift/nutrition/equipment fields", () => {
     renderPage(baseProfile);
-    expect(screen.getByText("Race goal")).toBeInTheDocument();
+    expect(screen.getByText("Running goal")).toBeInTheDocument();
     expect(screen.queryByText(/Nutrition phase/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Equipment access/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Lift days/i)).not.toBeInTheDocument();

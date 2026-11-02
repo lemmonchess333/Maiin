@@ -2564,6 +2564,24 @@ describe("ProgrammeRunSection — the starter goal (Run9)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Not now" }));
     expect(screen.queryByText("Done")).not.toBeInTheDocument();
   });
+
+  it("holds back the race prompt while Done offers the next goal", () => {
+    renderSection(
+      {
+        ...commonProps(),
+        profile: starterProfile({
+          runMode: "freeform",
+          starterGoal: { startedOn: "2026-01-05", finishedOn: "2026-03-12" },
+        }),
+      },
+      makeProgramState([], { runPlan: undefined })
+    );
+    expect(screen.getByText("Done")).toBeInTheDocument();
+    expect(screen.queryByText(/Set a race goal/i)).not.toBeInTheDocument();
+    // Answered, the race prompt is back, the free runner's way to a race.
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+    expect(screen.getByText(/Set a race goal/i)).toBeInTheDocument();
+  });
 });
 
 /* Run9: Train offers the 30-minute goal to a free runner who said they are
