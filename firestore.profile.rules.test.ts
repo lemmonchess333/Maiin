@@ -901,6 +901,85 @@ suite("users/{uid} — raceGoal value gate", () => {
 });
 
 /**
+ * `starterGoal` value gate.
+ *
+ * Run9's starter goal (30 minutes without stopping). The programme's own
+ * transaction writes it from the client when the goal's last week is done,
+ * so unlike `raceGoal` a real client path exercises this rule. Each
+ * rejection is paired with the nearest accepted shape.
+ */
+suite("users/{uid} — starterGoal value gate", () => {
+  const UID = "sg1";
+  const RUNNING = { startedOn: "2026-11-02" };
+
+  async function write(patch: Record<string, unknown>) {
+    await seedProfile(UID);
+    const db = env.authenticatedContext(UID).firestore();
+    return setDoc(doc(db, `users/${UID}`), patch, { merge: true });
+  }
+
+  it("accepts a goal running, finished, or ended by a race", async () => {
+    await assertSucceeds(write({ starterGoal: RUNNING, runMode: "starter" }));
+    // The finish, as the programme's transaction writes it.
+    await assertSucceeds(
+      write({
+        starterGoal: { ...RUNNING, finishedOn: "2027-01-07" },
+        runMode: "freeform",
+      })
+    );
+    for (const stage of [1, 9]) {
+      await assertSucceeds(
+        write({ starterGoal: { ...RUNNING, endedOn: "2026-12-01", stage } })
+      );
+    }
+  });
+
+  it("accepts null, which clears it", async () => {
+    await assertSucceeds(write({ starterGoal: null }));
+  });
+
+  it("refuses a map without the day it began, or with other keys", async () => {
+    await assertFails(write({ starterGoal: {} }));
+    await assertFails(write({ starterGoal: { finishedOn: "2027-01-07" } }));
+    await assertFails(write({ starterGoal: { ...RUNNING, note: "x" } }));
+    await assertFails(write({ starterGoal: "2026-11-02" }));
+  });
+
+  it("refuses a day that is not a local YYYY-MM-DD", async () => {
+    for (const day of ["2026-11-02T00:00:00Z", "02/11/2026", "", 20261102]) {
+      await assertFails(write({ starterGoal: { startedOn: day } }));
+      await assertFails(
+        write({ starterGoal: { ...RUNNING, finishedOn: day } })
+      );
+      await assertFails(write({ starterGoal: { ...RUNNING, endedOn: day } }));
+    }
+  });
+
+  it("refuses a stage off the ladder", async () => {
+    for (const stage of [0, 10, 2.5, "4"]) {
+      await assertFails(write({ starterGoal: { ...RUNNING, stage } }));
+    }
+  });
+
+  it("gates create as well as update", async () => {
+    const db = env.authenticatedContext("sg2").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/sg2"), {
+        ...signupProfile("sg2"),
+        starterGoal: { startedOn: "soon" },
+      })
+    );
+    const ok = env.authenticatedContext("sg3").firestore();
+    await assertSucceeds(
+      setDoc(doc(ok, "users/sg3"), {
+        ...signupProfile("sg3"),
+        starterGoal: RUNNING,
+      })
+    );
+  });
+});
+
+/**
  * `shareDefaults` value gate.
  *
  * Who sees a finished session, per type — the answer to "Share sessions

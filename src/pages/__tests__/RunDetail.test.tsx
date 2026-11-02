@@ -197,6 +197,22 @@ describe("RunDetail — best efforts", () => {
   });
 });
 
+describe("RunDetail — grade-adjusted pace", () => {
+  /* Owner, 1 Nov 2026: "Grade-adjusted pace 8:44 /km — flat-equivalent
+     for this climb". A statement and its explanation joined by a dash is
+     the rhythm the house voice retires (DESIGN_GUIDE §3g); the dash was
+     never a genuine aside here. */
+  it("says what the pace is in one sentence, with no dash", () => {
+    h.run = savedRun({ elevationGain: 60 });
+    renderDetail();
+    const line = screen.getByText(/^Grade-adjusted pace/);
+    expect(line.textContent).toMatch(
+      /^Grade-adjusted pace \d+:\d{2} \/km: the flat-ground equivalent of this climb$/
+    );
+    expect(line.textContent).not.toContain("\u2014");
+  });
+});
+
 describe("RunDetail — what the runner said", () => {
   it("shows how it felt and the notes when the run has them", () => {
     h.run = savedRun({

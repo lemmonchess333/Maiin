@@ -48,7 +48,7 @@ import {
   RUN_TEMPLATES,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
-import type { LayoffClass } from "./layoffDetection";
+import type { DatedRun, LayoffClass } from "./layoffDetection";
 import type { ProgramState, RunPlan, ScheduledRunDay } from "./programTypes";
 import { isRunStepBackWeek } from "./runPlanTiming";
 import { raceBlockWeek, type RaceBlockWeek } from "./weekPrescription";
@@ -206,6 +206,7 @@ export function raceWeeksAhead({
   profile,
   programState,
   recentLayoff,
+  recentRuns = null,
   today,
 }: {
   profile: UserProfile;
@@ -213,6 +214,9 @@ export function raceWeeksAhead({
   /** Today's layoff reading (`useProgram`'s `recentLayoff`), which the
    *  rollover would build next week with. */
   recentLayoff: LayoffClass;
+  /** The recent runs read with it (`useProgram`'s `recentRuns`): a running
+   *  starting point's climb is sized at their pace. */
+  recentRuns?: readonly DatedRun[] | null;
   /** Local "YYYY-MM-DD". */
   today: string;
 }): RaceWeekAhead[] {
@@ -245,7 +249,17 @@ export function raceWeeksAhead({
       date: localDateString(monday),
     };
     if (next.weekStart > raceWeek) break;
-    const moved = nextRunWeek(state, next, profile, recentLayoff);
+    // The weeks ahead as if followed: their runs aren't done yet, so a
+    // running starting point climbs them by the calendar, at the pace of
+    // the runs read today.
+    const moved = nextRunWeek(
+      state,
+      next,
+      profile,
+      recentLayoff,
+      recentRuns,
+      today
+    );
     // No race plan in the week moved into: free running from there on.
     if (moved.runPlan?.mode !== "race_prep") break;
     state = { ...state, runDays: moved.runDays, runPlan: moved.runPlan };

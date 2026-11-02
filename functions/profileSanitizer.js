@@ -85,6 +85,16 @@ function cleanString(value, maxLength = MAX_STRING_LENGTH) {
   return trimmed;
 }
 
+/** A local "YYYY-MM-DD" that is a real calendar day. */
+function isCalendarDay(s) {
+  if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  if (Number(s.slice(0, 4)) < 1000) return false;
+  const date = new Date(s + "T00:00:00Z");
+  return (
+    Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === s
+  );
+}
+
 function cleanEnum(value, allowed) {
   if (typeof value !== "string") return undefined;
   return allowed.includes(value) ? value : undefined;
@@ -269,7 +279,31 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // D16 personal "why" — short free-text motivation (chip-seeded or custom).
   // Bounded to 120 chars; control chars stripped by cleanString.
   trainingWhy: (v) => cleanString(v, 120),
-  runMode: (v) => cleanEnum(v, ["freeform", "structured", "race_prep"]),
+  runMode: (v) =>
+    cleanEnum(v, ["freeform", "structured", "race_prep", "starter"]),
+  // Run9's starter goal (30 minutes without stopping): the day it began,
+  // and the day it finished, or the day a race goal took its place with the
+  // stage reached. `null` clears it. Same shape as firestore.rules'
+  // starterGoalValid() and StarterGoal in runModeResolution.ts.
+  starterGoal: (v) => {
+    if (v === null) return null;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    const day = isCalendarDay;
+    if (!day(v.startedOn)) return undefined;
+    if (v.finishedOn !== undefined && !day(v.finishedOn)) return undefined;
+    if (v.endedOn !== undefined && !day(v.endedOn)) return undefined;
+    if (
+      v.stage !== undefined &&
+      !(Number.isInteger(v.stage) && v.stage >= 1 && v.stage <= 9)
+    )
+      return undefined;
+    return {
+      startedOn: v.startedOn,
+      ...(v.finishedOn !== undefined && { finishedOn: v.finishedOn }),
+      ...(v.endedOn !== undefined && { endedOn: v.endedOn }),
+      ...(v.stage !== undefined && { stage: v.stage }),
+    };
+  },
   // Pgm6 run-plan tuning knobs — bounded enums, invalid values dropped.
   runVolume: (v) => cleanEnum(v, ["lighter", "standard", "bigger"]),
   runDifficulty: (v) => cleanEnum(v, ["gentler", "standard", "harder"]),

@@ -39,7 +39,16 @@ const VALID_RUN_STATUSES = new Set([
   // "freeform_extra" lives on the run doc itself via planMetadata.
 ]);
 
-const VALID_RUN_MODES = new Set(["freeform", "structured", "race_prep"]);
+const VALID_RUN_MODES = new Set([
+  "freeform",
+  "structured",
+  "race_prep",
+  "starter",
+]);
+
+/** A starter plan's stages (Run9's starter goal: STARTER_STAGES in
+ *  src/features/program/starterPlan.ts). */
+const STARTER_STAGES = 9;
 
 /**
  * Validate a v7 plan payload. Returns an array of error strings —
@@ -139,6 +148,30 @@ function validatePlanPayload({ profileData, programState, weekSchedule }) {
     }
     if (!programState.runPlan || !programState.runPlan.raceGoal) {
       errors.push("race_prep mode requires programState.runPlan.raceGoal");
+    }
+  }
+  // Run9's starter goal. A plan of another kind under it is refused: a
+  // build from before the starter, saving its lifting changes, sends the
+  // profile's run mode beside a plan it rebuilt as the retired structured
+  // week, which would have replaced the starter's.
+  if (profileData.runMode === "starter") {
+    const plan = programState.runPlan;
+    if (!plan || plan.mode !== "starter") {
+      errors.push("starter mode requires a starter programState.runPlan");
+    } else {
+      if (
+        !Number.isInteger(plan.stage) ||
+        plan.stage < 1 ||
+        plan.stage > STARTER_STAGES
+      ) {
+        errors.push(`runPlan.stage must be a whole number 1-${STARTER_STAGES}`);
+      }
+      if (
+        typeof plan.stageWeekKey !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(plan.stageWeekKey)
+      ) {
+        errors.push("runPlan.stageWeekKey must be a local YYYY-MM-DD");
+      }
     }
   }
 

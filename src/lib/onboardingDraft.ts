@@ -113,7 +113,12 @@ export const DRAFT_RUN_FREQUENCIES = [
   "none",
   "new",
 ] as const;
-export const DRAFT_RUN_MODES = ["freeform", "structured", "race_prep"] as const;
+export const DRAFT_RUN_MODES = [
+  "freeform",
+  "structured",
+  "race_prep",
+  "starter",
+] as const;
 export const DRAFT_RECENT_RACE_DISTANCES = ["5k", "10k"] as const;
 export const DRAFT_UNITS_HEIGHT = ["cm", "ft"] as const;
 export const DRAFT_UNITS_WEIGHT = ["kg", "lbs"] as const;
@@ -173,6 +178,11 @@ export interface OnboardingDraft {
   recentRaceDistance?: (typeof DRAFT_RECENT_RACE_DISTANCES)[number];
   recentRaceMinutes?: string;
   recentRaceSeconds?: string;
+  /** R5: the running a race plan starts from, asked of someone who runs
+   *  already: their minutes in a usual week and their longest run lately,
+   *  as typed. */
+  runningWeekMinutes?: string;
+  runningLongestMinutes?: string;
   /** Raw optional goal input, including a partial answer that needs correction. */
   goalWeightText?: string;
   /** Unsigned weekly pace; the target weight supplies its direction. */
@@ -262,6 +272,10 @@ export function isValidDraft(
       typeof d.recentRaceMinutes === "string") &&
     (d.recentRaceSeconds === undefined ||
       typeof d.recentRaceSeconds === "string") &&
+    (d.runningWeekMinutes === undefined ||
+      typeof d.runningWeekMinutes === "string") &&
+    (d.runningLongestMinutes === undefined ||
+      typeof d.runningLongestMinutes === "string") &&
     (d.goalWeightText === undefined || typeof d.goalWeightText === "string") &&
     (d.paceKgPerWeek === undefined ||
       oneOf([0.25, 0.5, 0.75], d.paceKgPerWeek)) &&

@@ -37,6 +37,10 @@ export const SETUP = {
   /** Run9: asked of every distance goal, nothing chosen. */
   raceEntry: "Race or on your own",
   raceEntered: "A race I've entered",
+  /** The running a race plan starts from (R5), asked of someone who runs
+   *  already. */
+  weekMinutes: "Minutes a week",
+  longestRun: "Longest run, min",
   legTrim: "Lighten leg sessions while your runs build",
   noInjuries: "None",
   weight: "Weight (kg)",
@@ -217,6 +221,18 @@ export const TABS = {
 } as const;
 
 export type TabName = (typeof TABS)[Exclude<keyof typeof TABS, "navigation">];
+
+/** Run9's starter goal: setup's option, and its Done on Home and Train
+ *  (`StarterDoneCard`). */
+export const STARTER = {
+  setupOption: "30 minutes",
+  goal: "30 minutes without stopping",
+  done: "Done",
+  offer: "Train for a 5K",
+  notNow: "Not now",
+  /** Train's starter card once this week's runs are in. */
+  weekDone: "This week is done. The next one starts on Monday.",
+} as const;
 
 /**
  * An exercise's line on Train (`ExerciseRowSummary`), as a person reads it:

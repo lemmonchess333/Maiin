@@ -579,7 +579,7 @@ export default function RunDetail() {
             <span className="font-mono tabular-nums font-semibold text-foreground">
               {paceMinSec(gap.gapSecondsPerKm, unit)}
             </span>{" "}
-            {paceUnitLabel(unit)} — flat-equivalent for this climb
+            {paceUnitLabel(unit)}: the flat-ground equivalent of this climb
           </p>
         )}
 

@@ -87,6 +87,65 @@ describe("raceLegTrim (Lift4 (10))", () => {
   });
 });
 
+describe("starterGoal (Run9's starter goal)", () => {
+  it("keeps a goal running, finished, or ended by a race at a stage", () => {
+    const running = { startedOn: "2026-11-02" };
+    const finished = { startedOn: "2026-09-07", finishedOn: "2026-11-05" };
+    const ended = { startedOn: "2026-09-07", endedOn: "2026-10-14", stage: 5 };
+    for (const goal of [running, finished, ended]) {
+      expect(sanitizeProfileData({ starterGoal: goal })).toEqual({
+        starterGoal: goal,
+      });
+    }
+  });
+
+  it("keeps an explicit null, which clears it", () => {
+    expect(sanitizeProfileData({ starterGoal: null })).toEqual({
+      starterGoal: null,
+    });
+  });
+
+  it("drops the goal for a day that isn't one, or a stage off the ladder", () => {
+    for (const startedOn of [
+      "2026-02-30",
+      "2026-11-02T00:00:00Z",
+      "02/11/2026",
+      "0999-01-01",
+      20261102,
+      undefined,
+    ]) {
+      expect(sanitizeProfileData({ starterGoal: { startedOn } })).toEqual({});
+    }
+    const start = { startedOn: "2026-11-02" };
+    expect(
+      sanitizeProfileData({ starterGoal: { ...start, finishedOn: "soon" } })
+    ).toEqual({});
+    expect(
+      sanitizeProfileData({ starterGoal: { ...start, endedOn: 3 } })
+    ).toEqual({});
+    for (const stage of [0, 10, 2.5, "4"]) {
+      expect(sanitizeProfileData({ starterGoal: { ...start, stage } })).toEqual(
+        {}
+      );
+    }
+    expect(sanitizeProfileData({ starterGoal: [start] })).toEqual({});
+  });
+
+  it("keeps only the goal's own fields", () => {
+    expect(
+      sanitizeProfileData({
+        starterGoal: { startedOn: "2026-11-02", note: "x" },
+      })
+    ).toEqual({ starterGoal: { startedOn: "2026-11-02" } });
+  });
+
+  it("knows the starter run mode", () => {
+    expect(sanitizeProfileData({ runMode: "starter" })).toEqual({
+      runMode: "starter",
+    });
+  });
+});
+
 describe("findUnexpectedProfileFields — loud-drop detection (ADR-0005)", () => {
   it("flags a field that is neither allow-listed nor server-managed", () => {
     // The forgotten-field case: a new profile field someone added client-side

@@ -662,6 +662,79 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     expect(lastWrite.runDays!.length).toBeGreaterThan(0);
   });
 
+  /* A plan a newer build wrote: this build
+     cannot build it, and a refresh or regenerate here read it as free
+     running and cleared it. Installed builds have to keep it before any
+     build writes one. */
+  describe("a plan a newer build wrote", () => {
+    const newerRunDay = (): ScheduledRunDay =>
+      ({
+        id: "newer_build_run",
+        dayIndex: 3,
+        date: localDateString(),
+        weekKey: localWeekKey(),
+        templateId: "run_walk_2",
+        type: "easy",
+        status: "planned",
+      }) as ScheduledRunDay;
+    const seedNewer = () => {
+      mockProfile = structuredProfile({
+        runMode: "next_kind" as MockProfile["runMode"],
+      });
+      seedProgram({
+        goal: "recomp",
+        currentPhase: "base",
+        weekNumber: 2,
+        splitType: "ppl",
+        workouts: [],
+        fatigueScore: 0,
+        updatedAt: Date.now(),
+        settings: { autoProgression: true, smallPlates: false },
+        weekHistory: [],
+        programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+        liftWeekKey: localWeekKey(),
+        runDays: [newerRunDay()],
+        runPlan: { mode: "next_kind", step: 2 },
+      } as unknown as ProgramState);
+    };
+
+    it("survives a refresh of the run schedule", async () => {
+      seedNewer();
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      markWrites();
+      await act(async () => {
+        await result.current.refreshRunSchedule();
+      });
+      const lastWrite = setDocCalls()[setDocCalls().length - 1]
+        .data as ProgramState;
+      expect(lastWrite.runPlan).toEqual({ mode: "next_kind", step: 2 });
+      expect(lastWrite.runDays?.map((rd) => rd.id)).toEqual([
+        "newer_build_run",
+      ]);
+    });
+
+    it("survives a regenerate", async () => {
+      seedNewer();
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      markWrites();
+      await act(async () => {
+        await result.current.regenerateProgram();
+      });
+      const lastWrite = setDocCalls()[setDocCalls().length - 1]
+        .data as ProgramState;
+      expect(lastWrite.runPlan).toEqual({ mode: "next_kind", step: 2 });
+      expect(lastWrite.runDays?.map((rd) => rd.id)).toEqual([
+        "newer_build_run",
+      ]);
+    });
+  });
+
   it("regenerateProgram writes programSchemaVersion + V2-shape runDays", async () => {
     // RACE-prep, not structured. Run9 retired structured and WIPES its
     // runDays + runPlan on load, so a structured user legitimately
