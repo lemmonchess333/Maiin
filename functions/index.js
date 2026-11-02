@@ -163,6 +163,8 @@ const challengeMarkers = require("./lib/challengeMarkers");
 const lifetimeAccrual = require("./lib/lifetimeAccrual");
 const workoutVolume = require("./lib/workoutVolume");
 const activityReversal = require("./lib/activityReversal");
+// The community goal: a total every saved run adds to, joined or not.
+const communityGoal = require("./lib/communityGoal");
 const spacePostPhoto = require("./lib/spacePostPhoto");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
@@ -5378,6 +5380,18 @@ exports.onRunCreated = functions
               )
         );
       }
+      // The community goal counts every run, joined or not
+      // (lib/communityGoal), through the same eligibility and bounds.
+      await steps.run("community goal", () =>
+        communityGoal.creditRunToCommunityGoals(db, {
+          uid,
+          runId,
+          data,
+          activityDateKey,
+          sourceRef: snap.ref,
+          fieldValue: admin.firestore.FieldValue,
+        })
+      );
     } else {
       console.log(
         `onRunCreated: skipping challenge/fastest-effort sync for ${uid} ` +
@@ -5663,6 +5677,13 @@ exports.onRunDeleted = functions
     // available. Retried on failure, as onWorkoutDeleted says why.
     await steps.run("challenges", () =>
       activityReversal.reverseChallengeProgressForSource(db, uid, runId)
+    );
+    await steps.run("community goal", () =>
+      communityGoal.reverseRunFromCommunityGoals(db, {
+        uid,
+        runId,
+        fieldValue: admin.firestore.FieldValue,
+      })
     );
     await steps.run("lifetime distance", () =>
       activityReversal.reverseLifetimeStat(

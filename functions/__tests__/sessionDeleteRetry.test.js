@@ -19,6 +19,7 @@ const challengeParticipation = require("../lib/challengeParticipationProgress");
 const friendsBoard = require("../lib/friendsBoard");
 const activityReversal = require("../lib/activityReversal");
 const healthWorkoutLedger = require("../lib/healthWorkoutLedger");
+const communityGoal = require("../lib/communityGoal");
 const { onWorkoutDeleted, onRunDeleted } = require("../index");
 
 const UID = "deleter";
@@ -68,7 +69,19 @@ beforeEach(() => {
       reversed.push("lifetime");
     }
   );
+  vi.spyOn(communityGoal, "reverseRunFromCommunityGoals").mockImplementation(
+    async () => {
+      reversed.push("community goal");
+    }
+  );
 });
+
+/* A run also comes off the community goal; a workout never went on it. */
+const all = (name) =>
+  name === "onRunDeleted"
+    ? ["challenges", "community goal", "lifetime"]
+    : ["challenges", "lifetime"];
+const without = (name, step) => all(name).filter((s) => s !== step);
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -76,9 +89,9 @@ describe.each(CASES)("%s", (_name, trigger, params, data) => {
   const deliver = (timestamp = NOW) =>
     trigger.run(snapOf(data), { params, timestamp });
 
-  it("resolves once both reversals land", async () => {
+  it("resolves once every reversal lands", async () => {
     await expect(deliver()).resolves.toBeNull();
-    expect(reversed).toEqual(["challenges", "lifetime"]);
+    expect(reversed).toEqual(all(_name));
     expect(healthWorkoutLedger.markDeletedRun).toHaveBeenCalledTimes(
       _name === "onRunDeleted" ? 1 : 0
     );
@@ -89,7 +102,7 @@ describe.each(CASES)("%s", (_name, trigger, params, data) => {
       new Error("ABORTED")
     );
     await expect(deliver()).rejects.toThrow(/challenges failed/);
-    expect(reversed).toEqual(["lifetime"]);
+    expect(reversed).toEqual(without(_name, "challenges"));
   });
 
   it("fails the event when the lifetime reversal fails", async () => {
@@ -97,8 +110,19 @@ describe.each(CASES)("%s", (_name, trigger, params, data) => {
       new Error("ABORTED")
     );
     await expect(deliver()).rejects.toThrow(/lifetime .* failed/);
-    expect(reversed).toEqual(["challenges"]);
+    expect(reversed).toEqual(without(_name, "lifetime"));
   });
+
+  it.runIf(_name === "onRunDeleted")(
+    "fails the event when the community goal reversal fails, after the others land",
+    async () => {
+      communityGoal.reverseRunFromCommunityGoals.mockRejectedValueOnce(
+        new Error("ABORTED")
+      );
+      await expect(deliver()).rejects.toThrow(/community goal failed/);
+      expect(reversed).toEqual(["challenges", "lifetime"]);
+    }
+  );
 
   it("drops an event past the retry window without touching anything", async () => {
     await expect(deliver(DAY_AND_A_HALF_AGO)).resolves.toBeNull();
