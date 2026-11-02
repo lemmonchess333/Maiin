@@ -139,10 +139,8 @@ test.describe("app screenshots", () => {
       await page
         .getByRole("navigation", { name: /main navigation/i })
         .waitFor({ state: "visible", timeout: 20000 });
-      // Together (Circles lead). Wait for the Together surface — the
-      // featured circle card / circles section, or the cold-start
-      // selector — before capturing so we don't shoot a
-      // perpetual-skeleton frame.
+      // Together: wait for its sections to land before capturing so we
+      // don't shoot a perpetual-skeleton frame.
       if (name === "social") {
         // Circles, Challenges and their boards past their skeletons: the
         // section label renders during loading, so it proves nothing.

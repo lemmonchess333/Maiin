@@ -4,10 +4,9 @@ import CirclesSection, {
   type CirclesSectionState,
 } from "@/components/social/CirclesSection";
 import SpacesDirectory from "@/features/spaces/SpacesDirectory";
-/* Soc5 item 10: ChallengeList lazy-loaded so the Social entry chunk
-   stays lean — it only loads when the user opens the Together tab.
-   lazyRetry gives the same stale-chunk recovery the page-level lazy
-   loads use. (FullLeaderboard gets the same treatment in FeedView.) */
+/* ChallengeList is lazy-loaded so the Social entry chunk stays lean: it
+   only loads when the user opens the Together tab. lazyRetry gives the
+   same stale-chunk recovery the page-level lazy loads use. */
 import { lazyRetry } from "@/lib/lazyRetry";
 const ChallengeList = lazyRetry(() =>
   import("@/features/challenges/ChallengeList").then((m) => ({
@@ -16,42 +15,34 @@ const ChallengeList = lazyRetry(() =>
 );
 
 /**
- * Together tab (SOCIAL-HOME-01, ordered by SOC-P1e): the page leads
- * with whichever primitive is ALIVE for this user.
+ * Together tab, in three sections (Soc14):
  *
- * - A LIVE (multi-member) circle is the deepest surface in the app —
- *   it leads, then Challenges, then Spaces.
- * - Without one (no circle, or a 1-member circle waiting on an
- *   invite), the lead position goes to the contexts a user can join
- *   ALONE on day one — Challenges, then Spaces — and Circles compacts
- *   below as the start/join affordance. Leading with an invite-code
- *   group presupposes you already know someone here; joining is the
- *   only social act that doesn't.
- * - Challenges sit above Spaces in both (Soc13): this week's challenge
- *   is something to do now, with an end date; Spaces are a directory to
- *   browse.
+ *   You        the person's Circles as compact rows, each with its next
+ *              step, a live Circle first; then the challenges they joined,
+ *              each with its progress. With no Circle and no joined
+ *              challenge, the start-or-join card alone.
+ *   This week  the weekly challenge, whose action is the page's one
+ *              filled button (or, with no Circle yet, Start a circle is)
+ *   Discover   the other challenges as a quiet list, the community goal
+ *              first once it has moved, then Spaces, then races
  *
- * Crews retired 2026-07-20 (docs/proposals/crews-retirement.md): the
- * legacy crew list/create/suggested sections that used to close this
- * tab duplicated the Spaces taxonomy ("Lifters" existed as both), and
- * their three jobs each have a better owner now — identity → Spaces,
- * competition → Challenges, self-made groups → Circles.
+ * ChallengeList reads the challenges once and lays the three sections out
+ * around the two parts that read their own data: the Circles section at
+ * the top of You and the Spaces directory at the foot of Discover.
  */
 export interface CommunityViewProps {
   /** True when the Together tab is the active top-level tab. The view
    *  itself stays mounted across tab switches (SOCIAL-HOME-01 Stage A)
    *  so its state survives exactly as it did pre-extraction. */
   active: boolean;
-  /** True while FeedView's FullLeaderboard overlay is open — the shell
-   *  hides the tab bar and every tab section, exactly as the old
-   *  inline `!showFullLeaderboard && <>` gate did. */
+  /** True while FeedView's FullLeaderboard overlay is open: the shell
+   *  hides the tab bar and every tab section. */
   chromeHidden: boolean;
   uid: string | undefined;
   /** Open the People search overlay (challenge empty-state CTA). */
   openPeople: () => void;
   /** The shell's pull-to-refresh action for this tab (same ref
-   *  pattern as FeedView). Spaces/Circles own their own reads, so
-   *  today this is a no-op placeholder that keeps the gesture wired. */
+   *  pattern as FeedView). */
   refreshRef: MutableRefObject<(() => Promise<void>) | null>;
 }
 
@@ -62,13 +53,10 @@ export default function CommunityView({
   openPeople,
   refreshRef,
 }: CommunityViewProps) {
-  /* SOC-P1d: pull-to-refresh on Together used to publish a literal
-     no-op — the spinner animated and nothing refetched, a control that
-     taught users the UI lies. The sections now publish their real
-     handles (circles reload with its generation guard; challenge
-     progress refetch, which cascades the leaderboards) and the shell's
-     pull awaits both. Challenge DOCS and space membership are live
-     subscriptions already — nothing to refetch there. */
+  /* Pull-to-refresh awaits the sections' real handles (circles reload
+     with its generation guard; challenge progress refetch, which cascades
+     the leaderboards). Challenge DOCS and space membership are live
+     subscriptions already, so there is nothing to refetch there. */
   const circlesRefreshRef = useRef<(() => Promise<void>) | null>(null);
   const challengesRefreshRef = useRef<(() => Promise<void>) | null>(null);
   useEffect(() => {
@@ -80,60 +68,51 @@ export default function CommunityView({
     };
   }, [refreshRef]);
 
-  /* SOC-P1e — CirclesSection reports whether the user's circle is
-     genuinely live; the page order derives from it. While loading we
-     keep the circles-first order (current behaviour — no layout jump
-     for the invested cohort; the cold-start reorder lands with the
-     data). setState is identity-stable for the child's effect dep. */
+  /* CirclesSection reports whether the user has a Circle. With none, its
+     start-or-join card's Start a circle is the page's filled button, and
+     the weekly challenge's action steps down to the quiet one. While the
+     Circles load the weekly keeps the filled button, so an account with
+     a Circle sees no colour change. setState is identity-stable for the
+     child's effect dep. */
   const [circlesState, setCirclesState] =
     useState<CirclesSectionState>("loading");
   const onCirclesState = useCallback(
     (s: CirclesSectionState) => setCirclesState(s),
     []
   );
-  const contextsLead = circlesState === "none" || circlesState === "solo";
 
   if (!active || chromeHidden) return null;
 
-  /* Keyed array so the reorder is a keyed MOVE, not an unmount/remount
-     — CirclesSection (and its reads) must survive the flip that its
-     own state report triggers. */
   const circles = uid ? (
     <CirclesSection
-      key="circles"
       uid={uid}
       onStateChange={onCirclesState}
       refreshRef={circlesRefreshRef}
     />
   ) : null;
-  const spaces = <SpacesDirectory key="spaces" />;
-  /* Challenges — the active / competitive surface. Empty-state CTA
-     jumps to Discover so users have a clear path to find people to
-     challenge. Suspense wraps the lazy chunk (Soc5 item 10); the
-     fallback is a single skeleton row so the surface doesn't jump on
-     first tab open. */
-  const challenges = (
-    <Suspense
-      key="challenges"
-      fallback={
-        <div
-          className="h-16 rounded-xl bg-muted/40 motion-safe:animate-pulse"
-          aria-hidden="true"
-        />
-      }
-    >
-      <ChallengeList
-        onFindFriends={openPeople}
-        refreshRef={challengesRefreshRef}
-      />
-    </Suspense>
-  );
 
+  /* Suspense wraps the lazy chunk; the fallback is a skeleton the shape
+     of the three sections' first cards, so the page does not jump on
+     first tab open. */
   return (
-    <section aria-label="Community" className="space-y-6">
-      {contextsLead
-        ? [challenges, spaces, circles]
-        : [circles, challenges, spaces]}
+    <section aria-label="Community">
+      <Suspense
+        fallback={
+          <div className="space-y-8" aria-hidden="true">
+            <div className="h-32 rounded-2xl bg-muted/40 motion-safe:animate-pulse" />
+            <div className="h-40 rounded-2xl bg-muted/40 motion-safe:animate-pulse" />
+            <div className="h-16 rounded-xl bg-muted/40 motion-safe:animate-pulse" />
+          </div>
+        }
+      >
+        <ChallengeList
+          onFindFriends={openPeople}
+          refreshRef={challengesRefreshRef}
+          circles={circles}
+          spaces={<SpacesDirectory />}
+          weeklyLeads={circlesState !== "none"}
+        />
+      </Suspense>
     </section>
   );
 }
