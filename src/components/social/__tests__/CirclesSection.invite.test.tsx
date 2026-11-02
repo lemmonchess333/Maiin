@@ -2,10 +2,9 @@
  * CIRCLE-INVITE-ACTIVATION-01 — a new circle is useful immediately:
  * (a) creating hands off straight into the "Your circle is ready"
  *     invite sheet with the RETURNED code (Share / Copy / Not now);
- * (b) a one-member circle's featured card leads with "Invite someone"
- *     (the focus action moves to the detail sheet); multi-member
- *     circles keep the focus button; a non-owner solo member (no
- *     inviteCode) falls back to the focus button.
+ * (b) a one-member circle's row leads with "Invite someone" and offers
+ *     no check-in; multi-member circles keep the check-in; a non-owner
+ *     solo member (no inviteCode) falls back to the check-in.
  */
 import {
   describe,
@@ -269,7 +268,7 @@ describe("post-create invite hand-off", () => {
   });
 });
 
-describe("one-member featured circle", () => {
+describe("a one-member circle's row", () => {
   it("leads with Invite someone (owner) and opens the hand-off with that circle's code", async () => {
     mockUseGoalSpaces.mockReturnValue(
       hookValue({ circles: [summary("c1", "Solo Circle", 1, "code-1")] })
@@ -280,19 +279,14 @@ describe("one-member featured circle", () => {
       </MemoryRouter>
     );
 
-    expect(
-      screen.getByText(
-        "Your circle is ready. Invite someone to make it a circle."
-      )
-    ).toBeInTheDocument();
     const invite = screen.getByRole("button", { name: /invite someone/i });
-    // Quiet, not filled: the Together page keeps one filled button.
-    expect(invite.className).toContain("bg-muted");
+    // A quiet text button, not filled: the Together page keeps one filled
+    // button, and the row says which Circle it invites to.
+    expect(invite.className).toContain("bg-transparent");
     expect(invite.className).not.toContain("bg-primary-strong");
-    // The focus action moves to the detail sheet for a solo circle.
-    expect(
-      screen.queryByRole("button", { name: /set weekly focus/i })
-    ).toBeNull();
+    expect(invite).toHaveAccessibleDescription(/Solo Circle/);
+    // A circle of one has no check-in to offer.
+    expect(screen.queryByRole("button", { name: /check in/i })).toBeNull();
 
     fireEvent.click(invite);
     await waitFor(() =>
@@ -300,7 +294,7 @@ describe("one-member featured circle", () => {
     );
   });
 
-  it("multi-member circles keep the focus button; a non-owner solo member falls back to it", () => {
+  it("multi-member circles keep the check-in; a non-owner solo member falls back to it", () => {
     mockUseGoalSpaces.mockReturnValue(
       hookValue({ circles: [summary("c2", "Full Circle", 3, "code-2")] })
     );
@@ -310,7 +304,7 @@ describe("one-member featured circle", () => {
       </MemoryRouter>
     );
     expect(
-      screen.getByRole("button", { name: /set weekly focus/i })
+      screen.getByRole("button", { name: /^check in$/i })
     ).toBeInTheDocument();
     unmount();
 
@@ -327,7 +321,7 @@ describe("one-member featured circle", () => {
       screen.queryByRole("button", { name: /invite someone/i })
     ).toBeNull();
     expect(
-      screen.getByRole("button", { name: /set weekly focus/i })
+      screen.getByRole("button", { name: /^check in$/i })
     ).toBeInTheDocument();
   });
 });
