@@ -205,6 +205,7 @@ import { enqueueCommand, isTransportFailure } from "./commandOutbox";
 import { repUnitForExerciseId } from "./repUnits";
 import { getExerciseById } from "@/lib/exercises";
 import { sendProgramCommand } from "./programCommandClient";
+import { profileShowsPatch } from "@/lib/profileRefresh";
 import { resolveLiftUnit, type LiftUnit } from "@/lib/liftLoad";
 import {
   APPLIED,
@@ -805,7 +806,15 @@ export function useProgram() {
         if (auth.currentUser?.uid === user.uid) setProgramState(saved);
         if (profilePatch && written) {
           try {
-            await refreshProfile?.();
+            // Until the read shows the patch: straight after the commit it
+            // can still come from before it (`profileRefresh.ts`).
+            await refreshProfile?.({
+              until: (data) =>
+                profileShowsPatch(
+                  data,
+                  profilePatch as Record<string, unknown>
+                ),
+            });
           } catch (error) {
             logger.warn("[Program] Saved; profile refresh failed", error);
             window.location.reload();
