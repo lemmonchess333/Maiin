@@ -2,7 +2,10 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { haptic } from "@/lib/haptic";
-import { STARTER_GOAL_NAME } from "@/features/program/starterProgress";
+import {
+  STARTER_GOAL_NAME,
+  starterDoneKey,
+} from "@/features/program/starterProgress";
 
 /**
  * Run9's reopening (call 6): the starter goal reached. A plain Done, and the
@@ -10,19 +13,24 @@ import { STARTER_GOAL_NAME } from "@/features/program/starterProgress";
  * no plan made by itself. The same card on Home and Train, one dismissal for
  * both, per account on this device and per goal (keyed by the day it
  * began), so a later goal gets its own. Taking the offer dismisses it too.
- * The caller decides the goal is reached (`starterGoalReached`).
+ * The caller decides the goal is reached (`starterGoalReached`). A caller
+ * that needs to know whether it is showing (Train, which holds back its
+ * race prompt meanwhile) passes the answer it holds for the same key.
  */
 export default function StarterDoneCard({
   startedOn,
   navigate,
+  answer,
 }: {
   /** The goal's start day, which keys the dismissal. */
   startedOn: string;
   navigate: (path: string) => void;
+  /** The caller's `useDismissOnce(starterDoneKey(startedOn))`, when it
+   *  needs it too; left out, the card holds its own. */
+  answer?: { dismissed: boolean; dismiss: () => void };
 }) {
-  const { dismissed, dismiss } = useDismissOnce(
-    `tropos-starter-done-${startedOn}`
-  );
+  const own = useDismissOnce(starterDoneKey(startedOn));
+  const { dismissed, dismiss } = answer ?? own;
   if (dismissed) return null;
   return (
     <Card className="space-y-3">

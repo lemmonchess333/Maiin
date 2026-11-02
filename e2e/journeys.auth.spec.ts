@@ -115,7 +115,7 @@ test.describe("core user journeys", () => {
       timeout: 15_000,
     });
 
-    // "Race goal" is a radiogroup (No race / Training for a race). Choosing a race
+    // "Running goal" is a radiogroup (No race / Training for a race). Choosing a race
     // reveals the RaceGoalPlanner.
     await page.getByRole("radio", { name: /Training for a race/i }).click();
 
