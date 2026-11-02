@@ -465,6 +465,9 @@ test.describe("large text", () => {
       await recentRace.getByRole("radio", { name: "10K" }).click();
       await recentRace.getByRole("textbox", { name: "Minutes" }).fill("105");
       await recentRace.getByRole("textbox", { name: "Seconds" }).fill("59");
+      // R5: the running the plan starts from, which setup holds for.
+      await page.getByRole("textbox", { name: SETUP.weekMinutes }).fill("180");
+      await page.getByRole("textbox", { name: SETUP.longestRun }).fill("70");
       await page.waitForTimeout(500);
       await measure(page, "setup-running", width, found);
       await next();
