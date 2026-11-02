@@ -105,6 +105,27 @@ async function verifiedCaller(bearer: string): Promise<DecodedIdToken> {
   }
 }
 
+function profileOf(uid: string) {
+  return emulatorAdmin().db.doc(`users/${uid}`).get();
+}
+
+/**
+ * A new account's first setup, dated on the journey's day. The handler
+ * stamps `onboardingCompletedAt` (and the sign-up stamped `createdAt`) with
+ * a server timestamp, which the emulator resolves on the real clock, not
+ * this process's moved one. A journey starting on the next Monday is 7
+ * days ahead when it runs on a Monday, so the account would open on its
+ * eighth day, its first week already over. Production stamps both on the
+ * day the person signs up and sets up, which here is the journey's day.
+ * Written before the reply, so the profile the app reads next has it.
+ */
+async function startOnTheJourneysDay(uid: string): Promise<void> {
+  const at = Timestamp.fromMillis(Date.now());
+  await emulatorAdmin()
+    .db.doc(`users/${uid}`)
+    .update({ createdAt: at, onboardingCompletedAt: at });
+}
+
 async function answer(route: Route, name: string, handler: CallableHandler) {
   if (route.request().method() === "OPTIONS") {
     await route.fulfill({ status: 204, headers: CORS });
@@ -116,9 +137,13 @@ async function answer(route: Route, name: string, handler: CallableHandler) {
   );
   const token = await verifiedCaller(bearer);
   try {
+    const firstSetup =
+      name === "completeOnboarding" &&
+      !(await profileOf(token.uid)).get("onboardingCompletedAt");
     const result = await handler.run(route.request().postDataJSON().data, {
       auth: { uid: token.uid, token },
     });
+    if (firstSetup) await startOnTheJourneysDay(token.uid);
     await route.fulfill({
       status: 200,
       contentType: "application/json",
