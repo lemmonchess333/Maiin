@@ -38,13 +38,19 @@ import { savedRunDoc } from "@/test/sessionFixtures";
 
 const USER = { uid: "starter1" };
 let mockProfile: Record<string, unknown> | null = null;
+const { refreshProfile } = vi.hoisted(() => ({
+  refreshProfile: vi.fn(
+    async (_options?: { until?: (data: Record<string, unknown>) => boolean }) =>
+      undefined
+  ),
+}));
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: USER,
     profile: mockProfile,
     updateProfile: vi.fn(async () => ({ ok: true })),
-    refreshProfile: vi.fn(async () => undefined),
+    refreshProfile,
   }),
   useUid: () => USER.uid,
 }));
@@ -135,6 +141,7 @@ async function planLastWeekAt(stage: number): Promise<void> {
 }
 
 beforeEach(() => {
+  refreshProfile.mockClear();
   const monday = parseLocalDate(TODAY);
   monday.setHours(12);
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -198,5 +205,13 @@ describe("the starter goal through useProgram", () => {
       },
       runMode: "freeform",
     });
+    // The profile is read again until the read shows the finish: one
+    // straight after the commit can still be from before it.
+    await waitFor(() => expect(refreshProfile).toHaveBeenCalled());
+    const until = refreshProfile.mock.calls.at(-1)?.[0]?.until;
+    expect(until?.(starterProfile())).toBe(false);
+    expect(
+      until?.({ ...starterProfile(), ...(profileWrite?.data as object) })
+    ).toBe(true);
   });
 });

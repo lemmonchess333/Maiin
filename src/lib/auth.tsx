@@ -70,6 +70,10 @@ import { logger } from "./logger";
 import { rememberSignInMethod, signInMethodOf } from "./signInMethod";
 import type { Goal } from "./types";
 import type { PreferredSplit } from "@/features/program/programTypes";
+import {
+  PROFILE_REFRESH_ATTEMPTS,
+  PROFILE_REFRESH_WAIT_MS,
+} from "./profileRefresh";
 
 /** Set once any account signs in on this device; the signed-out screen
  *  reads it to tell a returning person from a new one. Device-level, not
@@ -896,8 +900,15 @@ interface AuthContextType {
    * For mutations that go directly to Firestore (e.g. profile-photo
    * upload, which writes to `users/{uid}/public/profile` via its own
    * Storage-aware service rather than through `updateProfile`).
+   *
+   * `until`: after a write, re-read (a few times, briefly) until the read
+   * shows it. A read just after a committed write can be answered from the
+   * live listener's view of the document from before it
+   * (`src/lib/profileRefresh.ts`).
    */
-  refreshProfile: () => Promise<void>;
+  refreshProfile: (options?: {
+    until?: (data: Record<string, unknown>) => boolean;
+  }) => Promise<void>;
   /**
    * Set while a changed account waits on clearing the last account's Watch
    * run from this iPhone, after retrying failed. The app stays on its
@@ -1909,27 +1920,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user, profile]
   );
 
-  const refreshProfile = useCallback(async () => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) return;
-    // Capture identity BEFORE the await; never re-read auth.currentUser after
-    // it to stamp a snapshot fetched under a different UID. If the account
-    // switched during the read, drop A's snapshot rather than hydrate it as B.
-    const uid = currentUser.uid;
-    const { doc, getDoc, db } = await firestore();
-    const snap = await getDoc(doc(db, "users", uid));
-    if (auth.currentUser?.uid !== uid) return;
-    if (snap.exists()) {
-      setProfile(
-        hydrateProfile(
-          uid,
-          snap.data() as Record<string, unknown>,
-          currentUser.displayName ?? "",
-          currentUser.email ?? ""
-        )
-      );
-    }
-  }, []);
+  const refreshProfile = useCallback(
+    async (options?: {
+      until?: (data: Record<string, unknown>) => boolean;
+    }) => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      // Capture identity BEFORE the await; never re-read auth.currentUser after
+      // it to stamp a snapshot fetched under a different UID. If the account
+      // switched during the read, drop A's snapshot rather than hydrate it as B.
+      const uid = currentUser.uid;
+      const { doc, getDoc, db } = await firestore();
+      const ref = doc(db, "users", uid);
+      let snap = await getDoc(ref);
+      // A write just made may not be in the first read yet (see `until`).
+      for (
+        let attempt = 1;
+        options?.until &&
+        attempt < PROFILE_REFRESH_ATTEMPTS &&
+        auth.currentUser?.uid === uid &&
+        !(
+          snap.exists() && options.until(snap.data() as Record<string, unknown>)
+        );
+        attempt++
+      ) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, PROFILE_REFRESH_WAIT_MS)
+        );
+        snap = await getDoc(ref);
+      }
+      if (auth.currentUser?.uid !== uid) return;
+      if (snap.exists()) {
+        setProfile(
+          hydrateProfile(
+            uid,
+            snap.data() as Record<string, unknown>,
+            currentUser.displayName ?? "",
+            currentUser.email ?? ""
+          )
+        );
+      }
+    },
+    []
+  );
 
   // Stable identity for the Provider value — every consumer that
   // calls useAuth() depends on this. An inline object literal would
