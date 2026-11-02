@@ -1722,6 +1722,95 @@ describe.skipIf(!SEEDS)("L5 (F8): the time fit's warm-ups", () => {
   );
 });
 
+/** R5: what a season's plan did against the runner's own running. */
+function startOutcome(season: Season, persona: LiftPersona) {
+  const runner = persona.running!.runner;
+  const raceAt = season.runs.findIndex((r) => r.type === "race");
+  const race = raceAt >= 0 ? season.runs[raceAt] : undefined;
+  const before = season.runs.filter(
+    (r) => r.type !== "race" && (!race || r.date < race.date)
+  );
+  const ratios = before
+    .filter((r) => r.longestBefore > 0)
+    .map((r) => r.done.km / r.longestBefore);
+  // Weeks 2–5 of the season, the first full plan weeks.
+  const early = season.runWeeks.slice(1, 5);
+  const build = season.runWeeks.filter(
+    (w) => w.phase === "base" || w.phase === "build"
+  );
+  return {
+    dose:
+      early.reduce((n, w) => n + w.plannedMinutes, 0) /
+      early.length /
+      runner.weeklyMinutes,
+    ranDose:
+      early.reduce(
+        (n, w) =>
+          n +
+          season.runs
+            .filter(
+              (r) =>
+                r.date >= w.weekStart &&
+                r.date <=
+                  localDateString(addLocalDays(parseLocalDate(w.weekStart), 6))
+            )
+            .reduce((m, r) => m + r.done.minutes, 0),
+        0
+      ) /
+      early.length /
+      runner.weeklyMinutes,
+    spikes: ratios.filter((x) => x > 1.1).length,
+    biggest: Math.max(0, ...ratios),
+    buildLongestKm: Math.max(0, ...build.map((w) => w.longKm)),
+    injured: season.runs.some((r) => r.done.injury) ? 1 : 0,
+    vdotChange: (race?.trueVdot ?? runner.vdot) - runner.vdot,
+    finishMin: race?.raceTimeS ? race.raceTimeS / 60 : NaN,
+  };
+}
+
+describe.skipIf(!SEEDS)(
+  "R5: the plan starts from the runner's own running",
+  () => {
+    it(
+      "from the running setup is given, against no starting point",
+      () => {
+        report.push(
+          "",
+          "## R5: the plan starts from the runner's own running",
+          "",
+          "No starting point: the race plan as it builds for anyone, which is every plan made before R5 and one whose questions were left blank (the lead-in, D, is in both). From their own running: setup given the runner's own minutes a week and longest run (`runnerStartingPoint`; a new runner gives none and starts with run-walk). Per season, median [10th–90th], over the runner model's three variants. Dose: the planned minutes of weeks 2–5 against the minutes a week the runner arrived with; ran: what they did. Spikes: runs before the race over 1.1 times the month's longest (the single-run guard, Frandsen 2025), and the biggest such ratio. Build's longest: the longest long run planned before the taper, km.",
+          "",
+          "| persona | option | dose wk 2–5 | ran wk 2–5 | spikes | biggest ÷ month's longest | build's longest, km | injured | VDOT change | finish |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"
+        );
+        for (const { persona, weeks } of RUN_PERSONAS.filter(
+          ({ persona }) => persona.answers.runMode === "race_prep"
+        )) {
+          for (const [option, start] of [
+            ["no starting point", null],
+            ["from their own running", undefined],
+          ] as const) {
+            const list = runnerSeasons(persona, weeks, { runningStart: start });
+            const out = list.map((s) => startOutcome(s, persona));
+            const col = (
+              key: keyof ReturnType<typeof startOutcome>,
+              digits = 1
+            ) => range(out.map((o) => o[key]).filter(Number.isFinite), digits);
+            const injured = out.filter((o) => o.injured).length / out.length;
+            const finishes = out
+              .map((o) => o.finishMin)
+              .filter(Number.isFinite);
+            report.push(
+              `| ${persona.name} | ${option} | ${col("dose", 2)} | ${col("ranDose", 2)} | ${col("spikes", 0)} | ${col("biggest", 2)} | ${col("buildLongestKm", 0)} | ${fmt(injured * 100, 0)}% | ${col("vdotChange", 1)} | ${finishes.length ? clock(median(finishes) * 60) : "-"} |`
+            );
+          }
+        }
+      },
+      TIMEOUT * 3
+    );
+  }
+);
+
 afterAll(() => {
   if (!SEEDS) return;
   mkdirSync("test-results/sim", { recursive: true });

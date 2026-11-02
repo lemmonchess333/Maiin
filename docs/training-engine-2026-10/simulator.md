@@ -354,20 +354,24 @@ running-evidence §6.2–6.7. Every number is in `athleteParameters.ts`'s
 
 ### The personas
 
-| Persona              | Who                                                                                               | How they use the app                                                       |
-| -------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| couch-to-5k          | §6.5 A: sedentary (VDOT 24, 20 minutes a week), "New to running", a 5K in 11 weeks, 3 runs a week | sets up on a Thursday; 80% of runs                                         |
-| half-3-days          | VDOT 42 on 175 minutes a week, a half in 14 weeks on 3 run days                                   | 90%; entered a 5K                                                          |
-| sub-3-30             | §6.5 C: a 3:45 marathoner on about 48 km a week, sub-3:30 in 16 weeks, 5 run days                 | 92%; entered the 3:45 and the goal                                         |
-| sick-six-weeks       | §6.5 D: VDOT 44 on 220 minutes a week, a 10K in 20 weeks, 4 run days                              | 90%; 6 weeks off sick (weeks 6–11), app closed                             |
-| new-runner-marathon  | "New to running" at setup's default of one run a week, a marathon in 20 weeks                     | 85%                                                                        |
-| freeform-runner      | VDOT 38, no plan, 20 weeks                                                                        | 40, 40 and 75 minutes on Tuesday, Thursday and Sunday                      |
-| year-out-marathon    | §6.5 B: a 50-minute 10K on 30 km a week, a first marathon in 52 weeks, 3 lifts and 4 runs         | 85% of each; runs before lifting; crosses both of Auckland's clock changes |
-| hybrid-3-4-(no-)trim | VDOT 40, 3 lifts and 4 runs, a half in 16 weeks; the race leg trim on, and off                    | 90%; runs before lifting                                                   |
-| hybrid-2-3-(no-)trim | VDOT 36, 2 lifts and 3 runs, a 10K in 12 weeks; the leg trim on, and off                          | 85% of runs, 90% of lifts; lifts before running                            |
+| Persona              | Who                                                                                                          | How they use the app                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| couch-to-5k          | §6.5 A: sedentary (VDOT 24, 20 minutes a week), "New to running", a 5K in 11 weeks, 3 runs a week            | sets up on a Thursday; 80% of runs                                         |
+| half-3-days          | VDOT 42 on 175 minutes a week, a half in 14 weeks on 3 run days                                              | 90%; entered a 5K                                                          |
+| sub-3-30             | §6.5 C: a 3:45 marathoner on about 48 km a week, sub-3:30 in 16 weeks, 5 run days                            | 92%; entered the 3:45 and the goal                                         |
+| sick-six-weeks       | §6.5 D: VDOT 44 on 220 minutes a week, a 10K in 20 weeks, 4 run days                                         | 90%; 6 weeks off sick (weeks 6–11), app closed                             |
+| new-runner-marathon  | "New to running" at setup's default of one run a week, a marathon in 20 weeks                                | 85%                                                                        |
+| freeform-runner      | VDOT 38, no plan, 20 weeks                                                                                   | 40, 40 and 75 minutes on Tuesday, Thursday and Sunday                      |
+| year-out-marathon    | §6.5 B: a 50-minute 10K on 30 km a week, a first marathon in 52 weeks, 3 lifts and 4 runs                    | 85% of each; runs before lifting; crosses both of Auckland's clock changes |
+| hybrid-3-4-(no-)trim | VDOT 40, 3 lifts and 4 runs, a half in 16 weeks; the race leg trim on, and off                               | 90%; runs before lifting                                                   |
+| hybrid-2-3-(no-)trim | VDOT 36, 2 lifts and 3 runs, a 10K in 12 weeks; the leg trim on, and off                                     | 85% of runs, 90% of lifts; lifts before running                            |
+| owner-marathon       | the owner (R5): VDOT 28, about 3 km a run and 50 minutes a week, a marathon 25 weeks out, 6 lifts and 6 runs | sets up on a Sunday, a lead-in; 85% of each; runs before lifting           |
 
 Each season runs to the race, through its recovery and three weeks on,
-where the plan has to have let the race go.
+where the plan has to have let the race go. An occasional or regular
+runner setting up a race gives setup their own minutes a week and longest
+run, as the app now asks (R5, `runnerStartingPoint`); `runningStart: null`
+runs a season with none, as every plan before R5 had.
 
 ### The checks
 
