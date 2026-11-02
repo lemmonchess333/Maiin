@@ -235,8 +235,16 @@ export function useGPS(elapsedSeconds = 0) {
 
         const GOOD_FIX_M = 150;
         const makePoint = (useKalman: boolean): GPSPoint => {
+          // The filter takes the fixes that become points, so the time
+          // since the last point is the time it has gone without a fix,
+          // across a gap in the signal or a hold.
           const c = useKalman
-            ? kalmanRef.current.process(latitude, longitude, accuracy)
+            ? kalmanRef.current.process(
+                latitude,
+                longitude,
+                accuracy,
+                lastPoint ? (fixAt - lastPoint.timestamp) / 1000 : 1
+              )
             : { lat: latitude, lon: longitude };
           return {
             lat: c.lat,

@@ -56,6 +56,7 @@ import {
   isScheduledRaceRunDay,
 } from "@/lib/workoutTemplates";
 import {
+  isRecoveryRunDay,
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
@@ -306,6 +307,7 @@ export default function DayActionSheet({
         run.runDay.weekKey
       ),
       racePace: selectedRacePace?.kind,
+      inRecovery: isRecoveryRunDay(rp, run.runDay.date),
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
