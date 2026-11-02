@@ -79,10 +79,9 @@ test.describe("circle weekly focus screenshots", () => {
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
 
-    // The seeded circle renders as the FEATURED hero card
-    // (SOCIAL-HOME-01) after the journeys+space reads settle — its
-    // card body is the tap target and its accessible name includes
-    // the circle title.
+    // The seeded circle renders as a row under You after the
+    // journeys+space reads settle: its name is the tap target, and its
+    // accessible name includes the circle title.
     await page
       .getByRole("button", { name: /autumn strength crew/i })
       .waitFor({ state: "visible", timeout: 15000 });
@@ -92,12 +91,10 @@ test.describe("circle weekly focus screenshots", () => {
 
     // Detail sheet ready once the primary action + the partner's focus
     // timeline row are in — that's the surface under review (pulse line,
-    // focus copy, Back this focus). The featured card carries its OWN
-    // "Weekly focus" button (renamed from "Set weekly focus" in the
-    // 2026-08-22 frame sweep — it was the only wrapping button in the
-    // three-up row), so sheet assertions are scoped to the dialog to
-    // stay unambiguous. Anchored ^…$ so it cannot also match the
-    // radiogroup labelled "weekly focus".
+    // focus copy, Back this focus). The row behind the sheet carries its
+    // own check-in, so sheet assertions are scoped to the dialog to stay
+    // unambiguous. Anchored ^…$ so it cannot also match the radiogroup
+    // labelled "weekly focus".
     const detailSheet = page.getByRole("dialog");
     await detailSheet
       .getByRole("button", { name: /^weekly focus$/i })
@@ -115,8 +112,7 @@ test.describe("circle weekly focus screenshots", () => {
     await shootLightDark(page, "circles-detail-focus");
 
     // The weekly focus sheet — six radio options + primary action.
-    // Same dialog scoping: the page-level locator would also match the
-    // featured card's button behind the sheet.
+    // Same dialog scoping as above.
     await detailSheet
       .getByRole("button", { name: /^weekly focus$/i })
       .click({ timeout: 4000 });

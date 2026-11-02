@@ -17,6 +17,9 @@
  *   - errors: the owner creates and reads a crash report; nobody else can.
  *   - performance: owner-read; no client writes it, the owner included.
  *   - devices: server-only in both directions, owner included.
+ *   - communityGoal: the community goal's credits, server-only in both
+ *     directions, owner included. A client that could write its own
+ *     credit, or delete one, could move the total everyone reads.
  *   - spaces/{id}/posts/{id}/likes and comments: any signed-in user reads;
  *     no client writes — not the liker, not the post's author.
  *
@@ -228,6 +231,31 @@ suite(
           await assertFails(setDoc(doc(db, path), { token: "forged" }));
           await assertFails(deleteDoc(doc(db, path)));
         }
+      });
+    });
+
+    describe("users/{uid}/communityGoal — server-only in both directions", () => {
+      const goal = "group-goal-2026-11-01";
+      const credit = `users/${OWNER}/communityGoal/${goal}_run-1`;
+      const tally = `users/${OWNER}/communityGoal/${goal}`;
+
+      it("owner, another user and an anonymous caller are all denied read and write", async () => {
+        await seed(credit, { challengeId: goal, runId: "run-1", meters: 5000 });
+        await seed(tally, { challengeId: goal, runs: 1, meters: 5000 });
+        for (const db of [asOwner(), asOther(), asAnon()]) {
+          for (const path of [credit, tally]) {
+            await assertFails(getDoc(doc(db, path)));
+            await assertFails(setDoc(doc(db, path), { meters: 500000 }));
+            await assertFails(deleteDoc(doc(db, path)));
+          }
+        }
+        await assertFails(
+          setDoc(doc(asOwner(), `users/${OWNER}/communityGoal/${goal}_run-2`), {
+            challengeId: goal,
+            runId: "run-2",
+            meters: 5000,
+          })
+        );
       });
     });
 

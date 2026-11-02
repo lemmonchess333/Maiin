@@ -1,7 +1,7 @@
 /**
  * CIRCLE-TARGET-LIFECYCLE — the owner of a still-active Circle whose
- * target date has passed sees the continue/wrap prompt on the featured
- * hero card (taking precedence over the focus/invite action). Continue
+ * target date has passed sees the continue/wrap prompt under the featured
+ * Circle's row (in place of its check-in or invite). Continue
  * reveals a date input and calls resolveTarget("continue", date); Wrap
  * calls resolveTarget("wrap"). Non-owners and future-dated targets never
  * see it.
@@ -68,7 +68,7 @@ function summary(
       active: true,
       createdAt: 1,
     },
-    // Multi-member so the default action is the focus button, not invite.
+    // Multi-member so the default step is the check-in, not invite.
     inviteCode: null,
     inviteCodeExpiresAt: null,
   };
@@ -99,7 +99,7 @@ afterEach(() => cleanup());
 beforeEach(() => vi.clearAllMocks());
 
 describe("target reached — owner prompt", () => {
-  it("shows continue/wrap for an owner whose target passed (not the focus button)", () => {
+  it("shows continue/wrap for an owner whose target passed (not the check-in)", () => {
     mockUseGoalSpaces.mockReturnValue(
       hookValue({ circles: [summary("me", PAST)] })
     );
@@ -115,7 +115,7 @@ describe("target reached — owner prompt", () => {
     expect(
       screen.getByRole("button", { name: /wrap up/i })
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /weekly focus/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /check in/i })).toBeNull();
   });
 
   it("Continue reveals the date input and calls resolveTarget('continue', date)", async () => {
@@ -155,7 +155,7 @@ describe("target reached — owner prompt", () => {
 });
 
 describe("target reached — not shown", () => {
-  it("a non-owner with a passed target sees the focus button, no prompt", () => {
+  it("a non-owner with a passed target sees the check-in, no prompt", () => {
     mockUseGoalSpaces.mockReturnValue(
       hookValue({ circles: [summary("someone-else", PAST)] })
     );
@@ -166,7 +166,7 @@ describe("target reached — not shown", () => {
     );
     expect(screen.queryByText(/reached your target date/i)).toBeNull();
     expect(
-      screen.getByRole("button", { name: /weekly focus/i })
+      screen.getByRole("button", { name: /^check in$/i })
     ).toBeInTheDocument();
   });
 
@@ -181,7 +181,7 @@ describe("target reached — not shown", () => {
     );
     expect(screen.queryByText(/reached your target date/i)).toBeNull();
     expect(
-      screen.getByRole("button", { name: /weekly focus/i })
+      screen.getByRole("button", { name: /^check in$/i })
     ).toBeInTheDocument();
   });
 });

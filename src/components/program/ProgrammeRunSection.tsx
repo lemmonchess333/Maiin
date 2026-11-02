@@ -4,10 +4,6 @@ import {
   runEvidenceDate,
 } from "@/lib/runExecutionEvidence";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
-import {
-  isRunningBaseline,
-  runningBaselineNeedsReview,
-} from "@/features/program/runningBaseline";
 import RunPlanPurpose from "@/components/run/RunPlanPurpose";
 /**
  * Programme Run tab — hybrid training cockpit.
@@ -153,11 +149,21 @@ import { planEasierWeek } from "@/lib/adjustWeek";
 import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
+import StarterGoalCard from "./StarterGoalCard";
+import StarterDoneCard from "@/components/run/StarterDoneCard";
+import {
+  STARTER_GOAL_NAME,
+  starterDoneKey,
+  starterGoalReached,
+  starterProgress,
+} from "@/features/program/starterProgress";
+import { useDismissOnce } from "@/hooks/useDismissOnce";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import RaceWeeksAhead from "./RaceWeeksAhead";
-import type { LayoffClass } from "@/features/program/layoffDetection";
+import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
 import type { RaceDistance } from "@/lib/raceDayPlan";
 import {
+  isRecoveryRunDay,
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
@@ -170,6 +176,10 @@ import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
 import {
   buildRaceCockpitViewModel,
   defaultRunDayKey,
+  raceDaysAgoLabel,
+  raceDistanceLabel,
+  raceElapsedBannerCopy,
+  raceTitle,
   runCardStatus,
   runStripLabel,
 } from "@/lib/runProgrammeViewModel";
@@ -185,6 +195,11 @@ import {
 } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import { useUidForStorageKey } from "@/lib/auth";
+import {
+  goalDayName,
+  goalDayQuestion,
+  raceGoalEntry,
+} from "@/lib/raceGoalEntry";
 import type {
   ProgramState,
   ScheduledRunDay,
@@ -243,6 +258,9 @@ interface ProgrammeRunSectionProps {
    *  as on every regen site: left out, a returning runner's outline would
    *  show the quality sessions their plan holds back. */
   recentLayoff: LayoffClass;
+  /** The recent runs read with it (`useProgram`'s `recentRuns`), whose
+   *  pace the weeks ahead size a running starting point's climb at. */
+  recentRuns?: readonly DatedRun[] | null;
 }
 
 /** Two actions in a wrapping row: side by side while both labels fit on
@@ -267,6 +285,7 @@ export default function ProgrammeRunSection({
   realignRacePlan,
   dismissFellBehindPrompt,
   recentLayoff,
+  recentRuns,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   const todayKeyDerivation = useLocalDateKey();
@@ -330,8 +349,8 @@ export default function ProgrammeRunSection({
   // Run8 PR1a — mode pills + race-goal form removed from this
   // surface. Mode + race goal now live on `/settings/run-plan`
   // (the focused RunPlanSettings editor). The Programme page no longer
-  // owns those writers; tap the section subtitle or the "Manage
-  // Run Plan ›" footer link to navigate.
+  // owns those writers; the race card's, the race-elapsed banner's or
+  // the footer's "Edit run plan" navigates there.
 
   // Run7 Q10 — per-week dismissibility for action-prompting banners.
   // raceElapsed is the only banner that's both action-prompting AND
@@ -386,6 +405,10 @@ export default function ProgrammeRunSection({
     [profile, programState, todayKeyDerivation]
   );
   const raceGoal = resolvedRunPlan.raceGoal ?? undefined;
+  // Run9: a goal run on your own names its day for the
+  // distance ("Your 10K") rather than "Race day".
+  const ownGoal = raceGoalEntry(raceGoal) === "own";
+  const goalDay = goalDayName(raceGoal);
   const raceCompressed = !!programState?.runPlan?.compressed;
   /* `belowFloor` is persisted on runPlan (programTypes.ts). This read was
      added to carry it to the cockpit — but the JSX prop was never passed, so
@@ -550,6 +573,33 @@ export default function ProgrammeRunSection({
     runDaysFromThisWeek.length > 0 &&
     !nextStartable;
 
+  // Run9's starter goal: where it stands this week, weighed by the days of
+  // the saved runs as the rollover weighs them, and whether it is reached.
+  const savedRunDays = useMemo(() => runs.map(runEvidenceDate), [runs]);
+  const starterView =
+    currentMode === "starter"
+      ? starterProgress(programState, profile.starterGoal, savedRunDays)
+      : null;
+  const starterDone = starterGoalReached(profile, programState, savedRunDays);
+  // Done's answer, held here as well as by the card: while Done shows, it
+  // is the next goal on offer, and the race prompt waits.
+  const starterDoneAnswer = useDismissOnce(
+    starterDoneKey(profile.starterGoal?.startedOn ?? "")
+  );
+  const starterDoneShowing =
+    starterDone &&
+    !!profile.starterGoal?.startedOn &&
+    !starterDoneAnswer.dismissed;
+  // Offered on the free running hero to someone new to running who has not
+  // had the goal, until dismissed (per account on this device).
+  const { dismissed: starterOfferDismissed, dismiss: dismissStarterOffer } =
+    useDismissOnce("tropos-starter-offer");
+  const starterOffered =
+    currentMode === "freeform" &&
+    profile.runFrequency === "new" &&
+    !profile.starterGoal &&
+    !starterOfferDismissed;
+
   // Run8 PR1c — hero state machine. Single discriminator replaces
   // the scattered `currentMode === X && raceGoal && ...` conjunctions
   // for hero-adjacent decisions. Initially used to gate the L12
@@ -600,6 +650,22 @@ export default function ProgrammeRunSection({
     !!raceGoal &&
     !raceElapsed &&
     raceCockpitVM !== null;
+  // The race-elapsed banner's words, or null when it doesn't show: race
+  // day has passed and nothing else (race today, "did you race?",
+  // recovery, its end, a no-show) has taken the race over. Like the race
+  // card, it carries the way into the run plan editor while it shows.
+  const raceElapsedBanner =
+    currentMode === "race_prep" &&
+    raceGoal &&
+    raceElapsed &&
+    heroState !== "race-recent" &&
+    heroState !== "race-today" &&
+    !inRecovery &&
+    !recoveryEnded &&
+    !isNoShow &&
+    !raceElapsedDismissed
+      ? raceElapsedBannerCopy(raceGoal, todayKeyDerivation, ownGoal)
+      : null;
 
   // ── Run14: ease-week nudge (RUN-05) ────────────────────────────────
   // Suggest+approve: evaluate the harder-streak trigger + every
@@ -857,6 +923,10 @@ export default function ProgrammeRunSection({
             profile.raceGoal?.distance,
           weekHasQuality: weekHoldsQuality(runDays, selectedRun.runDay.weekKey),
           racePace: selectedRacePace?.kind,
+          inRecovery: isRecoveryRunDay(
+            programState?.runPlan,
+            selectedRun.runDay.date
+          ),
         })
       : { purpose: null, weekLabel: null };
   // Non-breaking spaces: on a narrow card the eyebrow breaks before the
@@ -976,7 +1046,9 @@ export default function ProgrammeRunSection({
       ? "Race prep"
       : currentMode === "structured"
         ? "Structured"
-        : "Freeform";
+        : currentMode === "starter"
+          ? "30-minute goal"
+          : "Freeform";
 
   // Run8 PR1a — handleModeChange + handleSaveRaceGoal removed.
   // Mode + race goal writers moved to Settings (then /settings/training;
@@ -1036,31 +1108,31 @@ export default function ProgrammeRunSection({
           (inRecovery, raceCompressed) stay non-dismissible; raceElapsed
           is action-prompting and dismissible per-week via localStorage. */}
 
-      {/* Warning: race day has passed (legacy elapsed fallback).
-          Dismissible per-week — once the user acknowledges, it stays
-          hidden until Monday rollover when the dismissal key resets. */}
-      {currentMode === "race_prep" &&
-        raceGoal &&
-        raceElapsed &&
-        heroState !== "race-recent" &&
-        heroState !== "race-today" &&
-        !inRecovery &&
-        !recoveryEnded &&
-        !isNoShow &&
-        !raceElapsedDismissed && (
-          <Banner
-            variant="warning"
-            title="Race day has passed"
-            description={
-              <>
-                {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}. Set
-                a new race goal or switch modes in Manage Run Plan.
-              </>
-            }
-            onDismiss={dismissRaceElapsedBanner}
-            dismissLabel="Dismiss race elapsed banner"
-          />
-        )}
+      {/* Warning: race day has passed (the elapsed fallback). Dismissible
+          per-week — once the user acknowledges, it stays hidden until
+          Monday rollover when the dismissal key resets. Its button is the
+          tab's way into the run plan editor while it shows. */}
+      {raceElapsedBanner && (
+        <Banner
+          variant="warning"
+          title={raceElapsedBanner.title}
+          description={raceElapsedBanner.description}
+          action={
+            <Button
+              variant="sport"
+              fullWidth
+              onClick={() => {
+                haptic();
+                navigate("/settings/run-plan");
+              }}
+            >
+              Edit run plan
+            </Button>
+          }
+          onDismiss={dismissRaceElapsedBanner}
+          dismissLabel="Dismiss race elapsed banner"
+        />
+      )}
 
       {/* Run9 (k): the compressed-plan note moved OFF the banner stack into
           the persistent RaceHeader below (a calm note, not an amber banner),
@@ -1073,7 +1145,7 @@ export default function ProgrammeRunSection({
       {contextualPrompt === "no-show" && raceGoal && (
         <Banner
           variant="warning"
-          title={`${raceGoal.distance.toUpperCase()} · ${raceGoal.targetDate}`}
+          title={raceTitle(raceGoal, todayKeyDerivation)}
           description="We marked this as no-show after 3 days with no log. Log it now if you ran it."
           action={
             /* One filled coral CTA per banner, the run's main action
@@ -1128,7 +1200,11 @@ export default function ProgrammeRunSection({
         <Banner
           variant="warning"
           title="Configure your runs"
-          description={`You're on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`}
+          description={
+            currentMode === "starter"
+              ? "Your 30-minute goal has no run days yet. Open Configure plan to add two or three."
+              : `You're on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
+          }
           action={
             <Button
               variant="sport"
@@ -1247,6 +1323,16 @@ export default function ProgrammeRunSection({
           the stepper visibly jumped when toggling tabs. The way into the
           editor is the race card's "Edit run plan", or the footer link when
           there is no race card. */}
+
+      {/* Run9's starter goal reached: a plain Done and the next goal,
+          offered once, the same card Home shows. */}
+      {starterDoneShowing && profile.starterGoal?.startedOn && (
+        <StarterDoneCard
+          startedOn={profile.starterGoal.startedOn}
+          navigate={navigate}
+          answer={starterDoneAnswer}
+        />
+      )}
 
       {/* ── Hero: freeform ──────────────────────────────────────────
           Start CTA + last-run + this-week summary lines. Empty
@@ -1375,10 +1461,53 @@ export default function ProgrammeRunSection({
             </Card>
           )}
 
+          {/* Run9: the 30-minute goal, offered to a free runner who said
+              they are new to running and has not had it. Opens Run plan on
+              it; dismissed once. */}
+          {starterOffered && (
+            <Card size="compact" className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  navigate("/settings/run-plan?goal=starter");
+                }}
+                className="flex-1 flex items-center gap-3 text-left min-w-0"
+                style={{ minHeight: 44 }}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-running-strong">
+                    New to running?
+                  </p>
+                  <p className="text-base font-bold text-foreground">
+                    Run {STARTER_GOAL_NAME}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    About nine weeks, from short runs with walks between.
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  dismissStarterOffer();
+                }}
+                aria-label="Dismiss the 30-minute goal"
+                className="size-11 -my-2 -mr-2 flex items-center justify-center shrink-0 text-muted-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            </Card>
+          )}
+
           {/* #975: one-time "Set a race goal" entry. Routes to the Race Goal
               Planner (/settings/run-plan). Dismissible; once a goal is set the
-              mode flips to race_prep and this freeform block stops rendering. */}
-          {!setRaceGoalDismissed && (
+              mode flips to race_prep and this freeform block stops rendering.
+              It waits while the starter goal's Done shows: that card already
+              offers the next goal. */}
+          {!setRaceGoalDismissed && !starterDoneShowing && (
             <Card size="compact" className="flex items-center gap-3">
               <button
                 type="button"
@@ -1447,10 +1576,10 @@ export default function ProgrammeRunSection({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold mb-0.5 text-running-strong">
-                Race day
+                {goalDay}
               </p>
               <p className="text-sm font-bold text-foreground">
-                {raceGoal.distance.toUpperCase()} · Today
+                {raceDistanceLabel(raceGoal.distance)} · Today
               </p>
               <p className="text-micro text-muted-foreground">
                 This is the one you've been training for. Good luck out there.
@@ -1462,7 +1591,11 @@ export default function ProgrammeRunSection({
                 haptic();
                 setManageDate(raceDayRunDay?.date ?? null);
               }}
-              aria-label="More options for race day"
+              aria-label={
+                ownGoal
+                  ? "More options for this run"
+                  : "More options for race day"
+              }
               icon={<MoreVertical aria-hidden="true" />}
               className="shrink-0 -mr-1"
             />
@@ -1480,7 +1613,9 @@ export default function ProgrammeRunSection({
               );
             }}
           >
-            Start race
+            {ownGoal
+              ? `Start ${goalDay.replace(/^Your/, "your")}`
+              : "Start race"}
           </Button>
         </div>
       )}
@@ -1506,17 +1641,12 @@ export default function ProgrammeRunSection({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold mb-0.5 text-running-strong">
-                Did you race?
+                {goalDayQuestion(raceGoal)}
               </p>
               <p className="text-sm font-bold text-foreground">
-                {raceGoal.distance.toUpperCase()}
+                {raceDistanceLabel(raceGoal.distance)}
                 {" · "}
-                {formatDistanceToNowStrict(
-                  parseLocalDate(raceGoal.targetDate),
-                  {
-                    addSuffix: true,
-                  }
-                )}
+                {raceDaysAgoLabel(raceGoal.targetDate, todayKeyDerivation)}
               </p>
               <p className="text-micro text-muted-foreground">
                 Log it to start your recovery week, or let us know if you sat
@@ -1547,7 +1677,7 @@ export default function ProgrammeRunSection({
                 dismissRaceRecent();
               }}
             >
-              I didn't race
+              {ownGoal ? "I didn't run it" : "I didn't race"}
             </Button>
           </div>
         </div>
@@ -1559,28 +1689,6 @@ export default function ProgrammeRunSection({
           card below: tap a day → that day's command card. Non-freeform only —
           freeform has no scheduled runs ("start whenever"); its hero above
           owns the Start CTA. */}
-      {currentMode === "race_prep" &&
-        !raceElapsed &&
-        !inRecovery &&
-        isRunningBaseline(profile.runningBaseline) &&
-        runningBaselineNeedsReview(
-          profile.runningBaseline,
-          todayKeyDerivation
-        ) && (
-          <Banner
-            variant="info"
-            title="Review your running starting point"
-            description="New weeks use easy running within your last report. Confirm your current training to review the next weeks of your plan."
-            action={
-              <Button
-                variant="outline"
-                onClick={() => navigate("/settings/run-plan")}
-              >
-                Review starting point
-              </Button>
-            }
-          />
-        )}
       {currentMode !== "freeform" && (
         <div
           className="space-y-3"
@@ -1762,6 +1870,9 @@ export default function ProgrammeRunSection({
               />
             ))}
 
+          {/* The starter goal's week, where a race plan has its card. */}
+          {starterView && <StarterGoalCard progress={starterView} />}
+
           {/* Race progress identity card — moved BELOW the selected-day card
               (cockpit reorder). Race-prep only; the actionable race-day /
               race-recent heroes stay on top. */}
@@ -1794,6 +1905,7 @@ export default function ProgrammeRunSection({
                   profile={profile}
                   programState={programState}
                   recentLayoff={recentLayoff}
+                  recentRuns={recentRuns}
                   today={todayKeyDerivation}
                 />
               }
@@ -1903,10 +2015,11 @@ export default function ProgrammeRunSection({
       )}
 
       {/* The way into the run plan editor (/settings/run-plan) when there
-          is no race card to carry it: a free runner, and a race plan that
-          is over or recovering. With a race card on screen, its own "Edit
-          run plan" is the one way in. */}
-      {!showRaceCard && (
+          is no race card or race-elapsed banner to carry it: a free
+          runner, and a race plan that is over or recovering with no such
+          banner showing. With either on screen, its own "Edit run plan" is
+          the one way in. */}
+      {!showRaceCard && !raceElapsedBanner && (
         <div className="flex justify-end pt-2 border-t border-border/30">
           <button
             type="button"

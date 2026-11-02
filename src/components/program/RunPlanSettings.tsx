@@ -1,4 +1,11 @@
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import { STARTER_MOST_RUNS_A_WEEK } from "@/features/program/starterPlan";
+import { STARTER_GOAL_NAME } from "@/features/program/starterProgress";
+import {
+  endStarterGoalPatch,
+  setStarterGoalPatch,
+  starterGoalIsActive,
+} from "@/features/program/runModeResolution";
 import {
   describeRejection,
   isRateLimitedRejection,
@@ -8,8 +15,15 @@ import {
   isRunningBaseline,
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
+import {
+  baselineFromRecentRunning,
+  blankRunningStart,
+} from "@/features/program/runningStartDraft";
 import { isNonRaceGoal, type NonRaceGoal } from "@/lib/nonRaceGoal";
 import RunningBaselineSettings from "@/components/run/RunningBaselineSettings";
+import { useRunningStats } from "@/hooks/useRunningStats";
+import { datedRuns } from "@/features/program/fetchRecentLayoff";
+import { recentRunningContext } from "@/lib/recentRunningContext";
 import NonRaceGoalSettings from "@/components/run/NonRaceGoalSettings";
 import {
   normalizeRunTimeLimits,
@@ -68,6 +82,7 @@ import {
   raceRunDaysNote,
   raceTargetVerdict,
 } from "@/lib/raceGoalPlanner";
+import { raceGoalEntry, type RaceGoalEntry } from "@/lib/raceGoalEntry";
 import { parseRaceTimeToSeconds } from "@/lib/runPaces";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
@@ -103,7 +118,7 @@ import {
   type RunDifficultyPreset,
 } from "@/features/program/runScheduler";
 
-type RunMode = "freeform" | "race_prep";
+type RunMode = "freeform" | "race_prep" | "starter";
 
 const RACE_DISTANCES: RaceDistance[] = ["5k", "10k", "half", "marathon"];
 
@@ -181,11 +196,29 @@ interface RunPlanSettingsProps {
 const formatRaceTime = formatClock;
 
 /** Whether the runner is training for a race. The stored mode follows from
- *  the answer (Run9a); the words never name it. */
-const RACE_OR_NOT_OPTIONS: { value: RunMode; label: string }[] = [
-  { value: "freeform", label: "No race" },
-  { value: "race_prep", label: "Training for a race" },
-];
+ *  the answer (Run9a); the words never name it. Run9's starter goal sits
+ *  between the two for those it is offered to (`starterOffered`). */
+function raceOrNotOptions(
+  starterOffered: boolean
+): { value: RunMode; label: string }[] {
+  return [
+    { value: "freeform", label: "No race" },
+    ...(starterOffered
+      ? [{ value: "starter" as const, label: STARTER_GOAL_NAME }]
+      : []),
+    { value: "race_prep", label: "Training for a race" },
+  ];
+}
+
+/**
+ * The goal a Train or Done card asks for (Run9): `?goal=starter` opens on the
+ * 30-minute goal, `?goal=5k` on a 5K, with its date and the race-or-own
+ * question still to answer. Read once on mount, as the race deep link is.
+ */
+function parseGoalDeepLink(params: URLSearchParams): "starter" | "5k" | null {
+  const goal = params.get("goal");
+  return goal === "starter" || goal === "5k" ? goal : null;
+}
 
 export default function RunPlanSettings({
   recentLayoff = "none",
@@ -198,15 +231,19 @@ export default function RunPlanSettings({
   // ── Saved baseline (the dirty-check reference) ──────────────────────
   const saved = useMemo(
     () => ({
-      runMode: (profile.runMode === "race_prep" ? "race_prep" : "freeform") as
-        | "freeform"
-        | "race_prep",
+      runMode: (profile.runMode === "race_prep" || profile.runMode === "starter"
+        ? profile.runMode
+        : "freeform") as RunMode,
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
       raceDistance: (profile.raceGoal?.distance as RaceDistance) ?? "10k",
       raceTargetDate: profile.raceGoal?.targetDate ?? "",
       raceEventName: profile.raceGoal?.eventName ?? "",
       raceTargetTimeS: profile.raceGoal?.targetTimeS ?? 0,
       raceEventSpaceId: profile.raceGoal?.eventSpaceId ?? "",
+      // A goal from before the question reads as a race; no goal, no answer.
+      raceEntry: profile.raceGoal
+        ? raceGoalEntry(profile.raceGoal)
+        : (null as RaceGoalEntry | null),
       // Pgm6 knobs — missing → standard (same lazy default the engine uses).
       runVolume: runTuningFromProfile(profile).volume,
       runDifficulty: runTuningFromProfile(profile).difficulty,
@@ -229,6 +266,14 @@ export default function RunPlanSettings({
   const [deepLink] = useState<RaceDeepLink | null>(() =>
     parseRaceDeepLink(searchParams)
   );
+  const [goalLink] = useState(() => parseGoalDeepLink(searchParams));
+  /* Run9's starter goal is offered to someone who runs only, to anyone
+     who said they are new to running, and to anyone already on it. */
+  const starterOffered =
+    profile.athleteType === "Runner" ||
+    profile.runFrequency === "new" ||
+    profile.runMode === "starter" ||
+    goalLink === "starter";
 
   /* Unsaved edits from a previous visit, read ONCE for the same reason as
      the deep link — a draft that reseeded on re-render would fight the
@@ -242,7 +287,11 @@ export default function RunPlanSettings({
 
   // ── Draft state ─────────────────────────────────────────────────────
   const [runMode, setRunMode] = useState<RunMode>(
-    deepLink ? "race_prep" : (storedDraft?.runMode ?? saved.runMode)
+    deepLink || goalLink === "5k"
+      ? "race_prep"
+      : goalLink === "starter"
+        ? "starter"
+        : (storedDraft?.runMode ?? saved.runMode)
   );
   /* A race plan needs at least two run days a week (Pgm7 A7). A race plan
      already on fewer keeps them (Pgm5: no silent rebuild), so its own count
@@ -255,7 +304,10 @@ export default function RunPlanSettings({
     Math.max(minRunDays, storedDraft?.weeklyRunDays ?? saved.weeklyRunDays)
   );
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
-    deepLink?.distance ?? storedDraft?.raceDistance ?? saved.raceDistance
+    deepLink?.distance ??
+      (goalLink === "5k" ? "5k" : undefined) ??
+      storedDraft?.raceDistance ??
+      saved.raceDistance
   );
   const [raceTargetDate, setRaceTargetDate] = useState<string>(
     deepLink?.date ?? storedDraft?.raceTargetDate ?? saved.raceTargetDate
@@ -283,6 +335,16 @@ export default function RunPlanSettings({
       ? deepLink.spaceId
       : (storedDraft?.raceEventSpaceId ?? saved.raceEventSpaceId)
   );
+  /** Run9: a race entered, or the distance run on your
+   *  own. Nothing is chosen for a new goal; a race picked from the
+   *  catalogue, or arrived at from its Space, is one entered. */
+  const [raceEntry, setRaceEntry] = useState<RaceGoalEntry | null>(
+    deepLink
+      ? "race"
+      : storedDraft?.raceEntry !== undefined
+        ? storedDraft.raceEntry
+        : saved.raceEntry
+  );
   const [runVolume, setRunVolume] = useState<RunVolumePreset>(
     storedDraft?.runVolume ?? saved.runVolume
   );
@@ -298,6 +360,9 @@ export default function RunPlanSettings({
         ? storedDraft.runningBaseline
         : saved.runningBaseline
     );
+  /* The person took the starting point away: the plan builds as it would
+     for anyone, and none is filled in again. */
+  const [baselineRemoved, setBaselineRemoved] = useState(false);
   const [nonRaceGoal, setNonRaceGoal] = useState<NonRaceGoal | null>(
     storedDraft?.nonRaceGoal !== undefined
       ? storedDraft.nonRaceGoal
@@ -308,10 +373,76 @@ export default function RunPlanSettings({
   );
   /* The leg trim is a lifting question: asked only of someone who lifts. */
   const lifts = (profile.weeklyWorkoutsTarget ?? 0) > 0;
+  const today = useLocalDateKey();
+
+  /* R5: a race plan set up or changed with no starting point starts from
+     the person's own running: the runs recorded here in the last four
+     weeks, or, with none, the two numbers they give. */
+  const {
+    runs: recentRuns,
+    loading: recentLoading,
+    failed: recentFailed,
+  } = useRunningStats(28);
+  const startExperience =
+    profile.runFrequency === "regular" ? "regular" : "building";
+  const recentStart = useMemo(
+    () =>
+      recentLoading || recentFailed
+        ? null
+        : baselineFromRecentRunning(
+            recentRunningContext(recentRuns, new Date()),
+            today,
+            startExperience
+          ),
+    [recentRuns, recentLoading, recentFailed, today, startExperience]
+  );
+  /* The same runs, for the plan to climb from what was done and to size
+     its long runs at this runner's pace. */
+  const recentRunsDone = useMemo(
+    () => (recentLoading || recentFailed ? null : datedRuns(recentRuns)),
+    [recentRuns, recentLoading, recentFailed]
+  );
+  const planChanged =
+    runMode !== saved.runMode ||
+    (runMode === "starter" && weeklyRunDays !== saved.weeklyRunDays) ||
+    (runMode === "race_prep" &&
+      (raceDistance !== saved.raceDistance ||
+        raceTargetDate !== saved.raceTargetDate ||
+        raceEventName.trim() !== saved.raceEventName ||
+        (raceTimeParsed ?? 0) !== saved.raceTargetTimeS ||
+        raceEventSpaceId !== saved.raceEventSpaceId ||
+        raceEntry !== saved.raceEntry ||
+        weeklyRunDays !== saved.weeklyRunDays ||
+        runVolume !== saved.runVolume ||
+        runDifficulty !== saved.runDifficulty ||
+        (lifts && raceLegTrim !== saved.raceLegTrim) ||
+        runTimeLimits.sessionMinutes !== saved.runTimeLimits.sessionMinutes ||
+        runTimeLimits.longRunMinutes !== saved.runTimeLimits.longRunMinutes));
+  const fillsStart =
+    runMode === "race_prep" &&
+    planChanged &&
+    runningBaseline === null &&
+    !baselineRemoved &&
+    !recentLoading;
+  /** The starting point the section shows: the person's own, else the one
+   *  filled in from their recorded runs, else the questions, blank. */
+  const shownBaseline: RunningBaseline | null =
+    runningBaseline ??
+    (fillsStart
+      ? (recentStart ?? blankRunningStart(startExperience, today))
+      : null);
+  /** What the plan starts from and the save keeps: questions left blank
+   *  are no starting point, and the plan builds as it would for anyone. */
+  const draftBaseline: RunningBaseline | null =
+    shownBaseline &&
+    !shownBaseline.weeklyMinutes &&
+    !shownBaseline.longestRunMinutes
+      ? null
+      : shownBaseline;
   const baselineInvalid =
     runMode === "race_prep" &&
-    runningBaseline !== null &&
-    !isRunningBaseline(runningBaseline);
+    draftBaseline !== null &&
+    !isRunningBaseline(draftBaseline);
   const goalInvalid =
     runMode === "freeform" &&
     nonRaceGoal !== null &&
@@ -322,7 +453,6 @@ export default function RunPlanSettings({
      is the addressable thing; the goal time has its own id. */
   const raceGoalRef = useRef<HTMLDivElement>(null);
 
-  const today = useLocalDateKey();
   const liftDays = profile.weeklyWorkoutsTarget ?? 4;
   // Run20 (5): a new runner's first weeks, for the preview and the save.
   const newRunnerUntil = profileNewRunnerUntil(profile);
@@ -339,12 +469,14 @@ export default function RunPlanSettings({
         // Pgm6: preview with the same knobs the save will commit.
         tuning: { volume: runVolume, difficulty: runDifficulty },
         runTimeLimits,
-        runningBaseline,
+        runningBaseline: draftBaseline,
         easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
         existingState: programState,
         recentLayoff,
         newRunnerUntil,
         weekSchedule: profile.weekSchedule,
+        distanceUnit: resolveDistanceUnit(profile.preferredDistanceUnit),
+        recentRuns: recentRunsDone,
       }),
     [
       raceDistance,
@@ -355,12 +487,14 @@ export default function RunPlanSettings({
       runVolume,
       runDifficulty,
       runTimeLimits,
-      runningBaseline,
+      draftBaseline,
       profile.runFitness,
       programState,
       recentLayoff,
       newRunnerUntil,
       profile.weekSchedule,
+      profile.preferredDistanceUnit,
+      recentRunsDone,
     ]
   );
 
@@ -369,23 +503,11 @@ export default function RunPlanSettings({
 
   const dirty =
     (runMode === "race_prep" &&
-      JSON.stringify(runningBaseline) !==
+      JSON.stringify(draftBaseline) !==
         JSON.stringify(saved.runningBaseline)) ||
     (runMode === "freeform" &&
       JSON.stringify(nonRaceGoal) !== JSON.stringify(saved.nonRaceGoal)) ||
-    runMode !== saved.runMode ||
-    (runMode === "race_prep" &&
-      (raceDistance !== saved.raceDistance ||
-        raceTargetDate !== saved.raceTargetDate ||
-        raceEventName.trim() !== saved.raceEventName ||
-        (raceTimeParsed ?? 0) !== saved.raceTargetTimeS ||
-        raceEventSpaceId !== saved.raceEventSpaceId ||
-        weeklyRunDays !== saved.weeklyRunDays ||
-        runVolume !== saved.runVolume ||
-        runDifficulty !== saved.runDifficulty ||
-        (lifts && raceLegTrim !== saved.raceLegTrim) ||
-        runTimeLimits.sessionMinutes !== saved.runTimeLimits.sessionMinutes ||
-        runTimeLimits.longRunMinutes !== saved.runTimeLimits.longRunMinutes));
+    planChanged;
 
   /* Persist the draft on every change, so leaving the page keeps it.
      Keyed off `dirty` in BOTH directions: a draft that matches the saved
@@ -401,6 +523,7 @@ export default function RunPlanSettings({
         raceEventName,
         raceTimeStr,
         raceEventSpaceId,
+        raceEntry,
         runVolume,
         runDifficulty,
         runTimeLimits,
@@ -421,6 +544,7 @@ export default function RunPlanSettings({
     raceEventName,
     raceTimeStr,
     raceEventSpaceId,
+    raceEntry,
     runVolume,
     runDifficulty,
     runTimeLimits,
@@ -455,6 +579,13 @@ export default function RunPlanSettings({
     setRaceTargetDate(def.event.dateKey);
     setRaceEventName(def.name);
     setRaceEventSpaceId(def.id);
+    setRaceEntry("race");
+  }
+
+  function handleEntryChange(next: RaceGoalEntry): void {
+    setRaceEntry(next);
+    // A goal run on your own is no listed race's.
+    if (next === "own") setRaceEventSpaceId("");
   }
 
   // ── Save (RUN-EV-02: one draft computation, one atomic commit) ──────
@@ -495,20 +626,23 @@ export default function RunPlanSettings({
         weeklyRunDays,
         runTuning: { volume: runVolume, difficulty: runDifficulty },
         recentLayoff,
+        recentRuns: recentRunsDone,
         newRunnerUntil,
         weekSchedule: profile.weekSchedule,
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,
         runTimeLimits,
+        // What the editor showed is what is saved (R5).
         runningBaseline:
-          runMode === "race_prep" ? runningBaseline : saved.runningBaseline,
+          runMode === "race_prep" ? draftBaseline : saved.runningBaseline,
         ...(runMode === "race_prep"
           ? {
               raceGoal: {
                 distance: raceDistance,
                 targetDate: raceTargetDate,
                 // Optional free-text; blank → key omitted (never undefined).
-                ...(raceEventName.trim()
+                // A race's name; a goal run on your own has none.
+                ...(raceEventName.trim() && raceEntry !== "own"
                   ? { eventName: raceEventName.trim() }
                   : {}),
                 ...(raceTimeParsed ? { targetTimeS: raceTimeParsed } : {}),
@@ -526,6 +660,30 @@ export default function RunPlanSettings({
       plan.profileUpdates.nonRaceGoal =
         runMode === "freeform" ? nonRaceGoal : saved.nonRaceGoal;
 
+      /* Run9's starter goal, one goal at a time. Chosen here, it begins
+         today, and setting it clears a race goal (below). Leaving it for a
+         race or free running ends it, kept with the stage reached, so a
+         race plan builds from there. buildPlan keeps a running starter's
+         stage on any other change. */
+      const todayKey = localDateString(new Date());
+      const starterRunning = starterGoalIsActive(profile.starterGoal);
+      if (runMode === "starter" && !starterRunning) {
+        plan.profileUpdates.starterGoal =
+          setStarterGoalPatch(todayKey).starterGoal;
+      } else if (
+        runMode !== "starter" &&
+        starterRunning &&
+        profile.starterGoal
+      ) {
+        plan.profileUpdates.starterGoal = endStarterGoalPatch(
+          profile.starterGoal,
+          todayKey,
+          programState?.runPlan?.mode === "starter"
+            ? (programState.runPlan.stage ?? 1)
+            : 1
+        ).starterGoal;
+      }
+
       if (runMode === "race_prep") {
         if (raceEventSpaceId && plan.profileUpdates.raceGoal) {
           // buildPlan's raceGoal input carries no catalogue binding (Q4) —
@@ -533,6 +691,13 @@ export default function RunPlanSettings({
           plan.profileUpdates.raceGoal = {
             ...plan.profileUpdates.raceGoal,
             eventSpaceId: raceEventSpaceId,
+          };
+        }
+        // buildPlan's raceGoal input carries no answer either.
+        if (raceEntry && plan.profileUpdates.raceGoal) {
+          plan.profileUpdates.raceGoal = {
+            ...plan.profileUpdates.raceGoal,
+            entry: raceEntry,
           };
         }
       } else {
@@ -572,7 +737,9 @@ export default function RunPlanSettings({
       toast.success(
         runMode === "race_prep"
           ? "Race plan saved"
-          : "Running goal and settings saved",
+          : runMode === "starter"
+            ? "30-minute goal saved"
+            : "Running goal and settings saved",
         { id: "run-plan" }
       );
     } catch (e) {
@@ -618,20 +785,26 @@ export default function RunPlanSettings({
      primitive's loading state; failed, one line above it says so. An
      invalid field outranks both, since its tap sends nothing and the
      field needs fixing either way. */
+  const entryMissing = runMode === "race_prep" && raceEntry === null;
   const invalid =
-    raceDateInvalid || raceTimeInvalid || baselineInvalid || goalInvalid;
+    raceDateInvalid ||
+    entryMissing ||
+    raceTimeInvalid ||
+    baselineInvalid ||
+    goalInvalid;
   const programReady = readiness === "ready";
   const loadFailed = readiness === "failed" && !saving;
   const waitingForProgramme = !invalid && !saving && readiness === "pending";
   function revealInvalidField(): void {
     // Date first: it sits higher on the page and is the required one.
-    const target = raceDateInvalid
-      ? raceGoalRef.current
-      : baselineInvalid
-        ? document.getElementById("running-starting-point")
-        : goalInvalid
-          ? document.getElementById("weekly-running-goal")
-          : document.getElementById("ps-race-time");
+    const target =
+      raceDateInvalid || entryMissing
+        ? raceGoalRef.current
+        : baselineInvalid
+          ? document.getElementById("running-starting-point")
+          : goalInvalid
+            ? document.getElementById("weekly-running-goal")
+            : document.getElementById("ps-race-time");
     /* No `behavior`: the default defers to the computed
        `scroll-behavior`, so Reduce Motion gets an instant jump to the
        invalid field instead of a page-length glide. */
@@ -664,20 +837,53 @@ export default function RunPlanSettings({
           whether there is a race. The same control as the race's
           Distance, in the running colour. */}
       <div className="space-y-2">
-        <SectionHeading size="compact">Race goal</SectionHeading>
+        <SectionHeading size="compact">Running goal</SectionHeading>
         <SegmentedControl
-          ariaLabel="Race goal"
+          ariaLabel="Running goal"
           tone="running"
-          options={RACE_OR_NOT_OPTIONS}
+          options={raceOrNotOptions(starterOffered)}
+          layout={starterOffered ? "wrap" : undefined}
           value={runMode}
           onChange={(next) => {
             haptic();
             setRunMode(next);
             if (next === "race_prep")
               setWeeklyRunDays((n) => Math.max(minRunDays, n));
+            // Two or three runs a week on the starter goal.
+            if (next === "starter")
+              setWeeklyRunDays((n) =>
+                Math.min(STARTER_MOST_RUNS_A_WEEK, Math.max(2, n))
+              );
           }}
         />
       </div>
+
+      {/* ── Run9's starter goal: what it is, and two or three runs ────── */}
+      {runMode === "starter" && (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Run {STARTER_GOAL_NAME} in about nine weeks. It starts with short
+            runs and walks between them, and a week repeats until you've done
+            it.
+          </p>
+          <div className="space-y-2">
+            <SectionHeading size="compact">Runs per week</SectionHeading>
+            <SegmentedControl<"2" | "3">
+              ariaLabel="Runs per week"
+              tone="running"
+              value={weeklyRunDays <= 2 ? "2" : "3"}
+              onChange={(next) => {
+                haptic();
+                setWeeklyRunDays(Number(next));
+              }}
+              options={[
+                { value: "2", label: "2" },
+                { value: "3", label: "3" },
+              ]}
+            />
+          </div>
+        </div>
+      )}
 
       {/* ── Race goal + runway (race prep only) ──────────────────────── */}
       {runMode === "race_prep" && (
@@ -694,6 +900,8 @@ export default function RunPlanSettings({
             upcomingRaces={upcomingRaces}
             selectedEventSpaceId={raceEventSpaceId}
             onPickRace={handlePickRace}
+            entry={raceEntry}
+            onEntryChange={handleEntryChange}
           />
         </div>
       )}
@@ -809,9 +1017,19 @@ export default function RunPlanSettings({
       {runMode === "race_prep" && (
         <div id="running-starting-point">
           <RunningBaselineSettings
-            value={runningBaseline}
-            onChange={setRunningBaseline}
+            value={shownBaseline}
+            onChange={(next) => {
+              setBaselineRemoved(next === null);
+              setRunningBaseline(next);
+            }}
             preview={plannerState}
+            fromRecent={
+              runningBaseline === null &&
+              recentStart !== null &&
+              shownBaseline === recentStart
+            }
+            recentStart={recentStart}
+            defaultExperience={startExperience}
           />
         </div>
       )}

@@ -26,6 +26,8 @@ import {
 import EditDistance from "@/components/run/EditDistance";
 import { auth, db } from "../lib/firebase";
 import { localDateString } from "../lib/dateHelpers";
+import { racePlanWeek, racePlanWeekLabel } from "../lib/racePlanWeek";
+import { resolveRunPlan } from "../lib/runPlanResolver";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
@@ -999,8 +1001,18 @@ export default function RunSummary() {
     return null;
   })();
 
-  const runPlanCurrentWeek = programState?.runPlan?.currentWeek;
-  const runPlanTotalWeeks = programState?.runPlan?.totalWeeks;
+  /* A race plan's week, as Train's header says it (`racePlanWeek`): the
+     plan's week up to race day, the recovery's after it, and none once
+     the race has passed with no recovery running. */
+  const raceWeek =
+    profile?.runMode === "race_prep"
+      ? racePlanWeek({
+          raceGoal: resolveRunPlan(profile, programState, localDateString())
+            .raceGoal,
+          runPlan: programState?.runPlan,
+          todayKey: localDateString(),
+        })
+      : null;
 
   /* When activityType is missing (legacy runs / malformed payload),
      treat as valid. Better to show a real summary than trap the user
@@ -1843,7 +1855,7 @@ export default function RunSummary() {
               <span className="font-mono tabular-nums font-semibold text-foreground">
                 {paceMinSec(gap.gapSecondsPerKm, unit)}
               </span>{" "}
-              {paceUnitLabel(unit)} — flat-equivalent for this climb
+              {paceUnitLabel(unit)}: the flat-ground equivalent of this climb
             </p>
           )}
 
@@ -1917,15 +1929,13 @@ export default function RunSummary() {
 
           {/* A race plan's week. The week's runs against the plan's are
               the card's above: this row counted them a second time. */}
-          {profile?.runMode === "race_prep" &&
-            runPlanTotalWeeks &&
-            runPlanCurrentWeek != null && (
-              <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center text-xs">
-                <span className="font-semibold text-foreground">
-                  Week {runPlanCurrentWeek + 1} of {runPlanTotalWeeks}
-                </span>
-              </div>
-            )}
+          {raceWeek && (
+            <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center text-xs">
+              <span className="font-semibold text-foreground">
+                {racePlanWeekLabel(raceWeek, "long")}
+              </span>
+            </div>
+          )}
 
           {/* Best efforts: the quickest 1K / 5K / 10K anywhere in the
               track. The same card a saved run shows. */}

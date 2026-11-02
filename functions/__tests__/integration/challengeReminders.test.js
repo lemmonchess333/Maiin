@@ -103,19 +103,18 @@ describe.skipIf(!enabled)(
       expect(await claim()).toBeTruthy();
     });
 
-    it("checks the real shared SUM rather than an individual runner's value", async () => {
+    it("checks the community total rather than an individual runner's value", async () => {
       await participant().delete();
       const group = candidate.definitions.find(
         (definition) => definition.collectiveTarget
       );
+      const goal = db.doc(`challenges/${group.id}`);
       await participant(group).set({ currentValue: 1 });
-      await participant(group, "monthly-reminder-peer").set({
-        currentValue: 999,
-      });
+      // Everyone's runs, joined or not: the members' own figures add to
+      // far less than the goal's total.
+      await goal.update({ collectiveMeters: 1_000_000 });
       expect(await claim()).toBeNull();
-      await participant(group, "monthly-reminder-peer").update({
-        currentValue: 998,
-      });
+      await goal.update({ collectiveMeters: 999_000 });
       const result = await claim();
       expect(result.definitions.map((definition) => definition.id)).toEqual([
         group.id,

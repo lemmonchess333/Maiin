@@ -82,6 +82,24 @@ function chooseSaturday() {
 }
 
 describe("run move review", () => {
+  it("names the goal's own day for a goal run on your own (Run9)", () => {
+    const race = {
+      ...run,
+      id: "race",
+      dayIndex: 6,
+      date: "2026-10-31",
+      templateId: "5k_race",
+      type: "race",
+    } as ScheduledRunDay;
+    const { unmount } = setup({ allRuns: [run, race] });
+    expect(screen.getByText("Race day stays on its date")).toBeInTheDocument();
+    expect(screen.getByText("After this week's race")).toBeInTheDocument();
+    unmount();
+    setup({ allRuns: [run, race], goalDay: "Your 5K" });
+    expect(screen.getByText("Your 5K stays on its date")).toBeInTheDocument();
+    expect(screen.getByText("After your 5K")).toBeInTheDocument();
+  });
+
   it("names a long run in the runner's unit", () => {
     const long = {
       ...run,

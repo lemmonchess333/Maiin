@@ -7,7 +7,7 @@
  * people use and inside the sheets they open.
  *
  * The screens: Home, Food, Train, History and its Lifting page, Social
- * (Together, again with its other challenges opened, and the Explore
+ * (Together, again with a challenge's sheet open, and the Explore
  * feed), Settings and six of its sections, a
  * profile, a Space, an exercise, a run, a workout and the Weekly review.
  * The sheets: Food's manual entry and a meal's edit sheet, the weight
@@ -275,14 +275,18 @@ test.describe("axe", () => {
     );
     await check(page, "social", found);
 
-    // The challenges behind "See N more", opened into their compact rows.
+    // A challenge row, opened into its sheet: its card, board and Join
+    // or Leave.
     await page
-      .getByRole("button", { name: /^See \d+ more challenges?$/ })
+      .getByRole("region", { name: "Community" })
+      .locator('li > button[aria-haspopup="dialog"]')
+      .first()
       .click();
     await page
-      .getByRole("heading", { name: "Available" })
+      .getByRole("dialog")
       .waitFor({ state: "visible", timeout: 10_000 });
-    await check(page, "social-more-challenges", found);
+    await check(page, "social-challenge-sheet", found);
+    await page.keyboard.press("Escape");
 
     await open(
       page,

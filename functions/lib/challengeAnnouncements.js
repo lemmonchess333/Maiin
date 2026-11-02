@@ -9,7 +9,7 @@ const { mayTargetUserConsent } = require("./pushConsent");
 const { withNativePushAlert } = require("./pushSend");
 const { isValidDateKey } = require("./challengeActivityWindow");
 const { resolveTier } = require("./challengeTiers");
-const { AggregateField } = require("firebase-admin/firestore");
+const { communityGoalKm } = require("./communityGoal");
 const deletionStatus = require("./accountDeletionStatus");
 
 const LOCAL_HOUR = 9;
@@ -153,16 +153,12 @@ async function claimReminder(db, uid, candidate, now, serverTimestamp) {
       let value = participant.data()?.currentValue;
       if (value === undefined) value = 0;
       if (definition.collectiveTarget) {
-        // Read the current community sum, not this member's mileage. Keep
-        // the aggregate outside the transaction's locks: locking every
-        // participant for each recipient would serialize the whole sweep.
+        // The community total, not this member's mileage: every saved
+        // run in the month, joined or not, as the server keeps it on the
+        // goal (lib/communityGoal).
         if (canonical.data().collectiveTarget !== definition.collectiveTarget)
           continue;
-        const total = await db
-          .collection(`challenges/${definition.id}/participants`)
-          .aggregate({ total: AggregateField.sum("currentValue") })
-          .get();
-        value = total.data().total;
+        value = communityGoalKm(canonical.data());
       }
       if (typeof value !== "number" || !Number.isFinite(value) || value < 0)
         continue;

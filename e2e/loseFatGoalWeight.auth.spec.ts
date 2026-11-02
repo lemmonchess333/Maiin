@@ -92,6 +92,9 @@ test.describe("lose fat with a goal weight", () => {
       );
       expect(reviewTarget).toBeGreaterThan(1000);
       await page
+        .getByRole("textbox", { name: "Your public display name" })
+        .fill("Goal weight tester");
+      await page
         .getByRole("button", { name: "Go to Today", exact: true })
         .click();
       await expect(

@@ -317,7 +317,9 @@ function bareUses(token: string): string[] {
 // (Train, Analytics) in text-primary went with it.
 // 2026-10-06: 41 → 42. Home's strip for a store trial's last two days
 // carries the same sparkle icon as the free-week strip beside it.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 42 } as const;
+// 42 → 41: Together's Circle rows draw their icon in text-primary-strong,
+// as the start-or-join card's does.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 41 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

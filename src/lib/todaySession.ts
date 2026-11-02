@@ -436,10 +436,12 @@ function restDayOffer(
   ) {
     return { kind: "free-run", startTarget: runStartTarget(null) };
   }
-  // A race plan's rest day must stay rest. It cannot lead with a food
-  // prompt or offer an unscheduled run to satisfy activation.
+  // A race plan's rest day must stay rest, and so must the starter goal's
+  // (Run9). It cannot lead with a food prompt or offer an unscheduled run
+  // to satisfy activation.
   const version2RaceRest =
-    isActivationJourneyV2(profile) && profile?.runMode === "race_prep";
+    isActivationJourneyV2(profile) &&
+    (profile?.runMode === "race_prep" || profile?.runMode === "starter");
   if (day.firstMeal && !version2RaceRest) return { kind: "first-meal" };
   return {
     kind: "rest",

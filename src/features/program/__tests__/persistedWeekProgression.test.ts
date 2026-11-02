@@ -200,9 +200,12 @@ describe("the fallback is exactly the old behaviour", () => {
       recentLayoff: "none" as const,
     };
     const fresh = generateRacePlanV2(args);
+    // Carried as the plan stores it: its block, and its lead-in week when
+    // it was made partway through one (this date is a Sunday).
     const carried = generateRacePlanV2({
       ...args,
       planTotalWeeks: fresh.totalWeeks,
+      leadInWeek: fresh.leadInWeek,
     });
     expect(carried.weeks).toEqual(fresh.weeks);
     expect(carried.compressed).toBe(fresh.compressed);

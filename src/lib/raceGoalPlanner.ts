@@ -64,7 +64,12 @@ import {
 } from "./runPaces";
 import { paceMinSec } from "./runLabels";
 import { formatDuration } from "@/utils/formatters";
-import { paceUnitLabel, type DistanceUnit } from "./distanceUnits";
+import {
+  distanceIn,
+  distanceUnitLabel,
+  paceUnitLabel,
+  type DistanceUnit,
+} from "./distanceUnits";
 
 export type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
@@ -165,6 +170,63 @@ export function newRunnerRaceNote(input: {
   return `${plan}, and a ${RACE_IN_A_SENTENCE[distance]} takes about ${aboutTime(raceMinutes)}. You can run-walk it, or choose a later date.`;
 }
 
+/** A run's minutes at the pace the plan plans with. */
+function runMinutesOf(run: ScheduledRunDay, easyPaceSPerKm?: number | null) {
+  const template = RUN_TEMPLATES.find((t) => t.id === run.templateId);
+  return template ? plannedRunMinutes(template, easyPaceSPerKm) : 0;
+}
+
+/** The longest run a plan's weeks build to before race week, and how it
+ *  reads: a long run by its distance, an easy run by its minutes. */
+function longestBeforeRace(
+  weeks: readonly ScheduledRunDay[][],
+  easyPaceSPerKm: number | null | undefined,
+  unit: DistanceUnit
+): { minutes: number; reads: string } | null {
+  let longest: ScheduledRunDay | null = null;
+  for (const week of weeks.slice(0, -1))
+    for (const run of week)
+      if (
+        run.type !== "race" &&
+        (!longest ||
+          runMinutesOf(run, easyPaceSPerKm) >
+            runMinutesOf(longest, easyPaceSPerKm))
+      )
+        longest = run;
+  if (!longest) return null;
+  const template = RUN_TEMPLATES.find((t) => t.id === longest.templateId);
+  const km = template?.type === "long" ? template.config?.targetDistanceKm : 0;
+  const minutes = runMinutesOf(longest, easyPaceSPerKm);
+  return {
+    minutes,
+    reads: km
+      ? `${Math.round(distanceIn(km * 1000, unit))} ${distanceUnitLabel(unit)}`
+      : `${Math.round(minutes)} min`,
+  };
+}
+
+/**
+ * C: whether a plan built from the person's running starting point can climb
+ * to the long run the race's own plan reaches in the weeks left. The plan
+ * from the starting point (`weeks`) against the same plan without one
+ * (`raceWeeks`): each one's longest run before race week. The starting point
+ * climbs a rung a week (`runningClimb`), so from a short longest run a race
+ * not far off arrives before the long run has climbed to the race's. Null
+ * when it gets there, or there is no starting point to climb from.
+ */
+export function runwayFromStart(
+  weeks: readonly ScheduledRunDay[][],
+  raceWeeks: () => readonly ScheduledRunDay[][],
+  easyPaceSPerKm: number | null | undefined,
+  unit: DistanceUnit
+): { reaches: string; raceNeeds: string } | null {
+  const reaches = longestBeforeRace(weeks, easyPaceSPerKm, unit);
+  if (!reaches) return null;
+  const needs = longestBeforeRace(raceWeeks(), easyPaceSPerKm, unit);
+  if (!needs || reaches.minutes >= needs.minutes) return null;
+  return { reaches: reaches.reads, raceNeeds: needs.reads };
+}
+
 /**
  * Five states, not four. `below-floor` (finish-safely) is DISTINCT from
  * `compressed`: below the taper-safe floor, compress-to-keep-date stops being
@@ -172,11 +234,7 @@ export function newRunnerRaceNote(input: {
  * and `invalid` are UI-only states the engine never sees.
  */
 export type RacePlannerStatus =
-  | "empty"
-  | "invalid"
-  | "healthy"
-  | "compressed"
-  | "below-floor";
+  "empty" | "invalid" | "healthy" | "compressed" | "below-floor";
 
 export interface RaceGoalPlannerInput {
   distance: RaceDistance;
@@ -195,10 +253,17 @@ export interface RaceGoalPlannerInput {
   easyPaceSPerKm?: number | null;
   existingState?: ProgramState | null;
   recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
+  /** The recent saved runs, as the save passes them
+   *  (`PlanBuilderInput.recentRuns`). */
+  recentRuns?:
+    | readonly import("@/features/program/layoffDetection").DatedRun[]
+    | null;
   /** Run20 (5): as the save passes it (`PlanBuilderInput.newRunnerUntil`),
    *  so the preview shows the weeks the save writes. */
   newRunnerUntil?: string | null;
   weekSchedule?: ScheduleDay[];
+  /** The unit the runway line gives distances in; km when omitted. */
+  distanceUnit?: DistanceUnit;
 }
 
 export interface RaceGoalPlannerState {
@@ -229,6 +294,10 @@ export interface RaceGoalPlannerState {
   /** Pgm8 (R14c): for a new runner whose plan can't build to the race, the
    *  line that says so (`newRunnerRaceNote`); null otherwise. */
   newRunnerNote: string | null;
+  /** The plan can't build from the running starting point to the long run
+   *  the race's plan reaches in the weeks left (`runwayFromStart`): the
+   *  longest run each builds to before race week. Null when it can. */
+  shortOfRace: { reaches: string; raceNeeds: string } | null;
   /** Post-race easy weeks (5k=1, 10k=2, half=3, marathon=4). */
   recoveryWeeks: number;
   compressed: boolean;
@@ -270,6 +339,7 @@ export function getRaceGoalPlannerState(
     firstWeekMinutes: 0,
     runWalkWeeks: false,
     newRunnerNote: null,
+    shortOfRace: null,
     recoveryWeeks,
     compressed: false,
     belowFloor: false,
@@ -311,6 +381,28 @@ export function getRaceGoalPlannerState(
     distance,
     targetDate,
   });
+  const generateFrom = (
+    from: { currentDate: string; weekStart: string },
+    runningBaseline: RunningBaseline | null | undefined
+  ) =>
+    generateRacePlanV2({
+      // Settings preview the same returning-runner guard used by the save.
+      // Calendar-only callers deliberately retain the no-history fallback.
+      recentLayoff: input.recentLayoff ?? "none",
+      weekSchedule,
+      raceGoal: { distance, targetDate },
+      weeklyRunDays,
+      currentDate: from.currentDate,
+      weekStart: from.weekStart,
+      tuning: input.tuning,
+      runningBaseline,
+      runTimeLimits: input.runTimeLimits,
+      easyPaceSPerKm: input.easyPaceSPerKm,
+      newRunnerUntil: input.newRunnerUntil,
+      planTotalWeeks: continued?.totalWeeks,
+      leadInWeek: continued?.leadInWeek,
+      recentRuns: input.recentRuns,
+    });
   // The week the save plans (Run19): from today, over a continuing plan's
   // kept days, or next week's runs when none of this week's run days is
   // left (`raceWeekFromToday`).
@@ -319,23 +411,7 @@ export function getRaceGoalPlannerState(
     runDays: firstWeek,
     weekStart,
   } = raceWeekFromToday(
-    (from) =>
-      generateRacePlanV2({
-        // Settings preview the same returning-runner guard used by the save.
-        // Calendar-only callers deliberately retain the no-history fallback.
-        recentLayoff: input.recentLayoff ?? "none",
-        weekSchedule,
-        raceGoal: { distance, targetDate },
-        weeklyRunDays,
-        currentDate: from.currentDate,
-        weekStart: from.weekStart,
-        tuning: input.tuning,
-        runningBaseline: input.runningBaseline,
-        runTimeLimits: input.runTimeLimits,
-        easyPaceSPerKm: input.easyPaceSPerKm,
-        newRunnerUntil: input.newRunnerUntil,
-        planTotalWeeks: continued?.totalWeeks,
-      }),
+    (from) => generateFrom(from, input.runningBaseline),
     { currentDate, weekStart: localWeekKey(now) },
     currentDate,
     continued
@@ -346,7 +422,26 @@ export function getRaceGoalPlannerState(
       : undefined
   );
   // The plan's weekly shape, before today's cut: what a week of it holds.
-  const shapeWeek = plan.weeks[0] ?? [];
+  // A lead-in holds the days left only, so the shape is the first week's.
+  const shapeWeek = plan.weeks[plan.leadInWeek ? 1 : 0] ?? [];
+  // C: whether the long run can climb from the starting point to what the
+  // race's own plan reaches in the weeks left.
+  const shortOfRace = runwayFromStart(
+    plan.weeks,
+    () =>
+      generateFrom(
+        {
+          // As the plan was made: from today, or from next week's Monday
+          // when none of this week's run days is left.
+          currentDate:
+            weekStart === localWeekKey(now) ? currentDate : weekStart,
+          weekStart,
+        },
+        null
+      ).weeks,
+    input.easyPaceSPerKm,
+    input.distanceUnit ?? "km"
+  );
   if (plan.weeks[0]) plan.weeks[0] = firstWeek;
 
   // Status straight from the engine's own booleans (belowFloor ⊂ compressed).
@@ -377,14 +472,20 @@ export function getRaceGoalPlannerState(
   let statusTitle: string;
   let statusDescription: string;
   let ctaLabel: string;
+  // C: the weeks are only half of the runway; the other half is where the
+  // long run starts from.
+  const shortLine = shortOfRace
+    ? `Starting from your running now, the long run builds to about ${shortOfRace.reaches} before race week, where a ${RACE_IN_A_SENTENCE[distance]} plan with these weeks builds to ${shortOfRace.raceNeeds}. A later race or a shorter one gives it time.`
+    : null;
   if (status === "healthy") {
-    statusTitle = "Good runway";
-    statusDescription = `Full Base → Build → Taper → Race progression for your ${lower}.`;
+    statusTitle = shortLine ? "Short runway for your running" : "Good runway";
+    statusDescription =
+      shortLine ??
+      `Full Base → Build → Taper → Race progression for your ${lower}.`;
     ctaLabel = "Save race plan";
   } else if (status === "compressed") {
     statusTitle = "Short runway";
-    statusDescription =
-      "Tropos will compress the plan — fewer quality sessions, and the long runs build in fewer weeks, with bigger jumps between them.";
+    statusDescription = `Tropos will compress the plan — fewer quality sessions, and the long runs build in fewer weeks, with bigger jumps between them.${shortLine ? ` ${shortLine}` : ""}`;
     ctaLabel = "Save compressed plan";
   } else {
     statusTitle = "Very tight";
@@ -422,6 +523,7 @@ export function getRaceGoalPlannerState(
     runWalkWeeks:
       runWalkTemplateIdForWeek(weekStart, input.newRunnerUntil) !== null,
     newRunnerNote: newRunnerRaceNote(input),
+    shortOfRace,
     recoveryWeeks,
     compressed: plan.compressed,
     belowFloor: plan.belowFloor,

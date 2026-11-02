@@ -105,6 +105,28 @@ function _plannedRunsInWeek(profile, programState, weekKey) {
   return count;
 }
 
+/** Pure: the Monday key of a race plan's first week, counted back from
+ *  race week's by its weeks (`runPlan.totalWeeks`, race week the last), or
+ *  null for a plan without them. */
+function _racePlanFirstWeek(runPlan, raceDate) {
+  if (
+    !runPlan ||
+    runPlan.mode !== "race_prep" ||
+    typeof raceDate !== "string" ||
+    !Number.isInteger(runPlan.totalWeeks) ||
+    runPlan.totalWeeks < 1
+  ) {
+    return null;
+  }
+  const race = parseUtcDate(raceDate);
+  if (!race || !Number.isFinite(race.getTime())) return null;
+  const monday = new Date(race.getTime());
+  monday.setUTCDate(
+    monday.getUTCDate() - ((race.getUTCDay() + 6) % 7) - 7 * (runPlan.totalWeeks - 1)
+  );
+  return utcDateString(monday);
+}
+
 /** Pure: the prior-week run-completion status against the user's
  *  weekly target, or `null` when the user has no prescriptive target
  *  (freeform / active recovery / a race plan graded on a week after its
@@ -113,9 +135,13 @@ function _plannedRunsInWeek(profile, programState, weekKey) {
  *  Monday 05:00 UTC sweep) and `maybeSendWeeklyRecap` (the local
  *  Monday-8am recap push) so the two can't drift. */
 function _fellBehindRatio(profile, programState, priorWeekRuns, priorWeekKey) {
-  // Gate 1 — freeform users have no prescriptive target; skip.
+  // Gate 1 — a race plan is graded here, and the retired structured week
+  // a profile not yet migrated may still carry. Free running has no
+  // prescriptive target, the starter goal repeats a missed week rather
+  // than falling behind one, and a plan of a kind this check does not know
+  // is not "behind" anything either.
   const runMode = profile && profile.runMode;
-  if (!runMode || runMode === "freeform") {
+  if (runMode !== "race_prep" && runMode !== "structured") {
     return null;
   }
 
@@ -140,6 +166,21 @@ function _fellBehindRatio(profile, programState, priorWeekRuns, priorWeekKey) {
     typeof priorWeekKey === "string" &&
     typeof raceDate === "string" &&
     raceDate < priorWeekKey
+  ) {
+    return null;
+  }
+
+  // Gate 2c — a week before a race plan's first week holds nothing of the
+  // plan to fall behind on: the lead-in a plan made from a Thursday starts
+  // with, or a week before the plan was made. The client's rollover can
+  // have moved the plan past its lead-in by the time this runs (a
+  // timezone ahead of UTC opens the app on its Monday first), so the first
+  // week is counted back from race week by the plan's own weeks.
+  const firstWeek = _racePlanFirstWeek(runPlan, raceDate);
+  if (
+    firstWeek &&
+    typeof priorWeekKey === "string" &&
+    priorWeekKey < firstWeek
   ) {
     return null;
   }

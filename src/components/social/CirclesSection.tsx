@@ -1,8 +1,6 @@
 /**
- * Circles (GOALS-CORE-01, slice 4) — the Goal Space surface on the
- * Social → Together tab. Per the audit IA, Circles render FIRST
- * with Spaces + Challenges below — no URL changes, no removed
- * entry points.
+ * Circles (GOALS-CORE-01, slice 4): the Goal Space surface at the top
+ * of Social → Together's You section, with no heading of its own.
  *
  * v1 scope (GsPb1 lock): invite-only via a paste code (spaceId.code —
  * shared out-of-band, no public discovery), the three launch
@@ -15,12 +13,15 @@
  * optional closed-enum focus, "Back this focus" response loop — so
  * raw health data structurally cannot enter either path.
  *
- * SOCIAL-HOME-01 Stage C: the user's active Circle leads as a featured
- * hero card with ONE useful action (the weekly focus), fed by an eager
- * one-shot loadDetail for AT MOST that circle; remaining circles stay
- * summary rows (no extra reads). A failed list read renders a retry
- * block; a genuinely-empty list renders the cold-start goal selector
- * instead of a static empty state.
+ * Each Circle is a compact row with its one next step (`CircleRow`):
+ * Invite someone while the owner is its only member, the check-in
+ * otherwise. The first active Circle is the featured one, read in detail
+ * by an eager one-shot loadDetail for AT MOST that circle (its focus
+ * count, whether you have checked in); the others stay summary rows (no
+ * extra reads). Start a circle and Join with code are one quiet line
+ * under the rows. A failed list read renders a retry block; a
+ * genuinely-empty list renders the start-or-join card, whose Start a
+ * circle is the page's one filled button.
  *
  * PROGRAM-CIRCLE-01 (slice 4a): the "Train together" hand-off — the
  * Programme surfaces deep-link here with ?circleCreate/&circleTitle/
@@ -33,12 +34,15 @@
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import { useCallback, useEffect, useState, type MutableRefObject } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Copy, Users } from "lucide-react";
+import { Copy, UserPlus, Users } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { cardClasses } from "@/components/ui/cardClasses";
+import CircleRow from "./CircleRow";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { Spinner } from "@/components/ui/Spinner";
 import { CirclesCardSkeleton } from "@/components/LoadingSkeleton";
@@ -61,7 +65,11 @@ import {
   type CircleDetail,
   type CircleSummary,
 } from "@/features/goalSpace/useGoalSpaces";
-import { isFull, memberLine } from "@/features/goalSpace/circleCapacity";
+import {
+  isFull,
+  leadsWithInvite,
+  memberLine,
+} from "@/features/goalSpace/circleCapacity";
 import {
   inviteCodeExpiryLine,
   isInviteCodeExpired,
@@ -231,7 +239,7 @@ function parseTrainTogetherParams(
   };
 }
 
-/** SOC-P1e — the circle state CommunityView orders the Together page by. */
+/** The Circle state CommunityView reads: which card holds the filled button. */
 export type CirclesSectionState = "loading" | "none" | "solo" | "live";
 
 export default function CirclesSection({
@@ -240,12 +248,11 @@ export default function CirclesSection({
   refreshRef,
 }: {
   uid: string;
-  /** SOC-P1e: reports whether the user has a LIVE (multi-member) circle,
-   *  a solo 1-member circle, or none — CommunityView leads with the
-   *  featured circle only when it's genuinely live; otherwise joinable
-   *  contexts (Spaces, Challenges) lead and this section compacts below.
-   *  A failed load reports "live" so the retry card keeps the lead
-   *  position rather than being buried by an error. */
+  /** Reports whether the user has a LIVE (multi-member) circle, a solo
+   *  1-member circle, or none. With none, this section's start-or-join
+   *  card carries the page's one filled button, so the weekly challenge's
+   *  steps down. A failed load reports "live": the retry card has no
+   *  filled button of its own. */
   onStateChange?: (state: CirclesSectionState) => void;
   /** SOC-P1d: CommunityView's pull-to-refresh awaits this section's real
    *  reload (published effect-time, same latest-ref pattern as the feed).
@@ -285,8 +292,7 @@ export default function CirclesSection({
     return true;
   };
 
-  /* SOC-P1e — report the ordering state upward (effect-time, latest
-     values). */
+  /* Report the state upward (effect-time, latest values). */
   useEffect(() => {
     if (!onStateChange) return;
     if (loading) onStateChange("loading");
@@ -397,11 +403,19 @@ export default function CirclesSection({
     [targetBusy, resolveTarget]
   );
 
-  /* SOCIAL-HOME-01 — featured circle: first active summary, else the
-     first. Only THIS circle gets an eager detail read; the remaining
-     circles stay summary rows (no extra reads). */
-  const featured = circles.find((c) => c.space.active) ?? circles[0] ?? null;
+  /* The featured circle: the first active one with someone else in it,
+     else the first active one, else the first. It is the first row, so a
+     live Circle leads the page. Only THIS circle gets an eager detail
+     read; the remaining circles stay summary rows (no extra reads). */
+  const featured =
+    circles.find((c) => c.space.active && c.space.memberCount >= 2) ??
+    circles.find((c) => c.space.active) ??
+    circles[0] ??
+    null;
   const featuredId = featured?.space.id ?? null;
+  const rows = featured
+    ? [featured, ...circles.filter((c) => c !== featured)]
+    : circles;
   /* Deliberately separate from the detail-sheet's members/events state —
      the sheet keeps its own load flow when opened. One-shot reads only;
      loadDetail never opens a listener. Stamped with the viewer and the
@@ -526,6 +540,21 @@ export default function CirclesSection({
     setEvents(detail.events);
   };
 
+  /* A row's check-in: the weekly focus sheet, for the Circle it is on.
+     The featured Circle's own check-in is already read; any other opens
+     its sheet first, which reads it, and the focus sheet over that. */
+  const checkIn = async (c: CircleSummary) => {
+    haptic("light");
+    if (c.space.id === featuredId) {
+      setFocusSource("featured");
+      setFocusSheetOpen(true);
+      return;
+    }
+    await openDetail(c);
+    setFocusSource("detail");
+    setFocusSheetOpen(true);
+  };
+
   /* CIRCLE-INVITE-ACTIVATION-01 — the moment a circle exists, the ONE
      thing that makes it useful is another member. Creation hands off
      straight into sharing the invite; a still-solo circle leads with
@@ -577,7 +606,7 @@ export default function CirclesSection({
     inviteCode: string;
   }) => {
     const code = inviteString(h.spaceId, h.inviteCode);
-    const text = `Join my Tropos circle "${h.title}" — invite code: ${code}`;
+    const text = `Join my Tropos circle "${h.title}". Invite code: ${code}`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -600,6 +629,21 @@ export default function CirclesSection({
         toast.error("Couldn't copy. Long-press the code to select it.");
       }
     }
+  };
+
+  /* Opens the invite hand-off (Share invite, Copy code) for one of the
+     owner's circles, from its card or from its sheet. */
+  const openInvite = (c: CircleSummary) => {
+    if (!c.inviteCode) return;
+    haptic("light");
+    setDetailOf(null);
+    setInviteHandoff({
+      title: circleTitle(c.space, wordFilter),
+      spaceId: c.space.id,
+      inviteCode: c.inviteCode,
+      inviteCodeExpiresAt: c.inviteCodeExpiresAt ?? 0,
+      seenAt: Date.now(),
+    });
   };
 
   const copyInviteCode = async (h: { spaceId: string; inviteCode: string }) => {
@@ -777,8 +821,6 @@ export default function CirclesSection({
 
   return (
     <div className="space-y-3">
-      <SectionHeading>Circles</SectionHeading>
-
       {isRestricted && <RestrictedNotice />}
 
       {/* The card's shape while the list loads, not a bare block: on a
@@ -858,182 +900,25 @@ export default function CirclesSection({
         </div>
       )}
 
-      {/* SOCIAL-HOME-01 — the featured circle leads as a hero card with
-          one useful action; the card body itself opens the detail sheet. */}
-      {!loading && !loadFailed && featured && (
-        <div className="bg-card rounded-2xl p-4 space-y-3">
-          <button
-            type="button"
-            onClick={() => void openDetail(featured)}
-            className="block w-full min-h-[44px] text-left active:scale-[0.97] transition-transform"
-          >
-            <p className="text-base font-bold text-foreground truncate">
-              {circleTitle(featured.space, wordFilter)}
-              {!featured.space.active && (
-                <span className="font-normal text-muted-foreground">
-                  {" "}
-                  · ended
-                </span>
-              )}
-            </p>
-            <p className="text-xs text-muted-foreground font-mono tabular-nums mt-0.5">
-              {featured.space.memberCount}{" "}
-              <span className="font-sans">
-                {featured.space.memberCount === 1 ? "member" : "members"}
-              </span>
-              {featured.space.targetDate && (
-                <span className="font-sans">
-                  {" "}
-                  · until {formatTargetDate(featured.space.targetDate)}
-                </span>
-              )}
-            </p>
-            {/* Chosen-focus pulse — a count, never a ranking. */}
-            {/* Not in a Circle of one, where "1 of 1 focusing" sits above
-                the prompt to invite someone. */}
-            {featuredDetail &&
-              featuredDetail.members.length >= 2 &&
-              featuredFocusCount > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  <span className="font-mono tabular-nums">
-                    {featuredFocusCount}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-mono tabular-nums">
-                    {featuredDetail.members.length}
-                  </span>{" "}
-                  focusing this week
-                </p>
-              )}
-          </button>
-          {isTargetReached(featured.space, uid) ? (
-            /* CIRCLE-TARGET-LIFECYCLE — the deadline arrived. The owner
-               continues (new future date) or wraps up. Takes precedence
-               over the invite/focus action: a reached target is the
-               most decision-worthy state on the card. */
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">
-                You've reached your target date. Keep training together, or wrap
-                this circle up.
-              </p>
-              {extendOpen ? (
-                <div className="space-y-2">
-                  <input
-                    type="date"
-                    value={newTargetDate}
-                    min={localTomorrowKey()}
-                    onChange={(e) => setNewTargetDate(e.target.value)}
-                    aria-label="New target date"
-                    className="ds-input text-sm"
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1"
-                      loading={targetBusy}
-                      disabled={!newTargetDate}
-                      onClick={() =>
-                        void handleContinueTarget(featured.space.id)
-                      }
-                    >
-                      Set new date
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setExtendOpen(false);
-                        setNewTargetDate("");
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    disabled={targetBusy}
-                    onClick={() => {
-                      haptic("light");
-                      setExtendOpen(true);
-                    }}
-                  >
-                    Continue
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="flex-1"
-                    loading={targetBusy}
-                    onClick={() => void handleWrapTarget(featured.space.id)}
-                  >
-                    Wrap up
-                  </Button>
-                </div>
-              )}
-            </div>
-          ) : featured.space.memberCount === 1 && featured.inviteCode ? (
-            /* CIRCLE-INVITE-ACTIVATION-01 — a one-member circle's one
-               useful action is inviting; the weekly focus stays
-               reachable through the detail sheet. Owner-only by
-               construction (inviteCode is only present for the
-               owner's summaries). */
-            <>
-              <p className="text-xs text-muted-foreground">
-                Your circle is ready — invite someone to make it a circle.
-              </p>
-              <Button
-                className="w-full"
-                onClick={() => {
-                  const code = featured.inviteCode;
-                  if (!code) return; // narrowing lost across the closure
-                  haptic("light");
-                  setInviteHandoff({
-                    title: circleTitle(featured.space, wordFilter),
-                    spaceId: featured.space.id,
-                    inviteCode: code,
-                    inviteCodeExpiresAt: featured.inviteCodeExpiresAt ?? 0,
-                    seenAt: Date.now(),
-                  });
-                }}
-              >
-                Invite someone
-              </Button>
-            </>
-          ) : (
-            <Button
-              className="w-full"
-              onClick={() => {
-                haptic("light");
-                setFocusSource("featured");
-                setFocusSheetOpen(true);
-              }}
-            >
-              {featuredMyCheckIn ? "Change weekly focus" : "Set weekly focus"}
-            </Button>
-          )}
-        </div>
-      )}
-
-      {!loading &&
-        !loadFailed &&
-        circles
-          .filter((c) => c.space.id !== featuredId)
-          .map((c) => (
-            <button
-              key={c.space.id}
-              type="button"
-              onClick={() => void openDetail(c)}
-              className="w-full min-h-[44px] p-3 rounded-xl bg-card flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
-            >
-              <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                <Users className="size-4 text-primary" aria-hidden="true" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground truncate">
+      {/* The Circles as compact rows, each with its one next step, and
+          Start a circle and Join with code as one quiet line under them.
+          The featured circle (the first active one) is the only one read
+          in detail, for its focus count and whether the person has
+          checked in this week; the rest stay summary rows. */}
+      {!loading && !loadFailed && circles.length > 0 && (
+        <div
+          className={cardClasses({
+            size: "compact",
+            padded: false,
+            className: "overflow-hidden",
+          })}
+        >
+          <ul aria-label="Your circles" className="divide-y divide-border/40">
+            {rows.map((c) => {
+              const isFeatured = c.space.id === featuredId;
+              const targetReached = isFeatured && isTargetReached(c.space, uid);
+              const title = (
+                <>
                   {circleTitle(c.space, wordFilter)}
                   {!c.space.active && (
                     <span className="font-normal text-muted-foreground">
@@ -1041,43 +926,162 @@ export default function CirclesSection({
                       · ended
                     </span>
                   )}
-                </p>
-                <p className="text-xs text-muted-foreground font-mono tabular-nums">
-                  {c.space.memberCount}{" "}
-                  <span className="font-sans">
-                    {c.space.memberCount === 1 ? "member" : "members"}
-                  </span>
+                </>
+              );
+              /* Chosen-focus pulse, a count and never a ranking, in place
+                 of the member count once anyone has set a focus. Not in a
+                 Circle of one, where "1 of 1 focusing" says nothing. */
+              const pulse =
+                isFeatured &&
+                featuredDetail &&
+                featuredDetail.members.length >= 2 &&
+                featuredFocusCount > 0;
+              const meta = pulse ? (
+                <>
+                  <span className="font-mono tabular-nums">
+                    {featuredFocusCount}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-mono tabular-nums">
+                    {featuredDetail!.members.length}
+                  </span>{" "}
+                  focusing this week
+                </>
+              ) : (
+                <>
+                  <span className="font-mono tabular-nums">
+                    {c.space.memberCount}
+                  </span>{" "}
+                  {c.space.memberCount === 1 ? "member" : "members"}
                   {c.space.targetDate && (
-                    <span className="font-sans">
-                      {" "}
-                      · until {formatTargetDate(c.space.targetDate)}
-                    </span>
+                    <> · until {formatTargetDate(c.space.targetDate)}</>
                   )}
-                </p>
-              </div>
-            </button>
-          ))}
-
-      {!loading && !loadFailed && circles.length > 0 && (
-        <div className="@container">
-          <div className="flex gap-2 @max-[18em]:flex-col">
+                </>
+              );
+              /* The one next step: a Circle of one that its owner can
+                 invite to asks for someone to invite; any other active
+                 Circle asks for this week's check-in. An ended Circle,
+                 or one whose target date has passed, has none here. */
+              const step =
+                !c.space.active || targetReached
+                  ? null
+                  : leadsWithInvite(c)
+                    ? "invite"
+                    : "check-in";
+              return (
+                <CircleRow
+                  key={c.space.id}
+                  title={title}
+                  meta={meta}
+                  circle={c}
+                  onOpen={openDetail}
+                  actionLabel={
+                    step === "invite"
+                      ? "Invite someone"
+                      : step === "check-in"
+                        ? isFeatured && featuredMyCheckIn
+                          ? "Change focus"
+                          : "Check in"
+                        : undefined
+                  }
+                  actionIcon={
+                    step === "invite" ? (
+                      <UserPlus className="size-4" aria-hidden />
+                    ) : undefined
+                  }
+                  onAction={step === "invite" ? openInvite : checkIn}
+                >
+                  {targetReached && (
+                    /* CIRCLE-TARGET-LIFECYCLE: the deadline arrived. The
+                       owner continues (a new future date) or wraps up;
+                       a reached target is the most decision-worthy state
+                       a Circle has, so it takes the step's place. */
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        You've reached your target date. Keep training together,
+                        or wrap this circle up.
+                      </p>
+                      {extendOpen ? (
+                        <div className="space-y-2">
+                          <input
+                            type="date"
+                            value={newTargetDate}
+                            min={localTomorrowKey()}
+                            onChange={(e) => setNewTargetDate(e.target.value)}
+                            aria-label="New target date"
+                            className="ds-input text-sm"
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              variant="secondary"
+                              className={cn("flex-1", SECONDARY_ON_CARD_EDGE)}
+                              loading={targetBusy}
+                              disabled={!newTargetDate}
+                              onClick={() =>
+                                void handleContinueTarget(c.space.id)
+                              }
+                            >
+                              Set new date
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => {
+                                setExtendOpen(false);
+                                setNewTargetDate("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="secondary"
+                            className={cn("flex-1", SECONDARY_ON_CARD_EDGE)}
+                            disabled={targetBusy}
+                            onClick={() => {
+                              haptic("light");
+                              setExtendOpen(true);
+                            }}
+                          >
+                            Continue
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="flex-1"
+                            loading={targetBusy}
+                            onClick={() => void handleWrapTarget(c.space.id)}
+                          >
+                            Wrap up
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CircleRow>
+              );
+            })}
+          </ul>
+          <div className="flex flex-wrap items-center justify-center gap-x-1 border-t border-border/40 px-2">
             <Button
-              variant="secondary"
-              size="sm"
-              className="flex-1"
+              variant="ghost"
+              className="px-[12px] text-primary-strong"
               onClick={() => {
                 if (refused()) return;
                 haptic("light");
-                setGoalPrechosen(false); // manual entry — user still picks a goal
+                setGoalPrechosen(false); // manual entry: the person still picks a goal
                 setShowCreate(true);
               }}
             >
               Start a circle
             </Button>
+            <span aria-hidden className="text-muted-foreground">
+              ·
+            </span>
             <Button
               variant="ghost"
-              size="sm"
-              className="flex-1"
+              className="px-[12px] text-primary-strong"
               onClick={() => {
                 if (refused()) return;
                 haptic("light");
@@ -1098,7 +1102,7 @@ export default function CirclesSection({
         open={chooserOpen}
         onOpenChange={setChooserOpen}
         title="What support would help?"
-        description="Circles are small, invite-only groups around one shared goal — numbers and photos stay private."
+        description="Circles are small, invite-only groups around one shared goal. Numbers and photos stay private."
       >
         <div className="px-4 space-y-2 pb-2">
           {COLD_START_OPTIONS.map((t) => (
@@ -1131,7 +1135,7 @@ export default function CirclesSection({
               Private progress
             </p>
             <p className="text-xs text-muted-foreground">
-              Private — just for you, never shared.
+              Just for you, never shared.
             </p>
           </button>
         </div>
@@ -1377,19 +1381,38 @@ export default function CirclesSection({
                   </p>
                 )}
                 {/* A code works for seven days. An expired one is not
-                    offered for copying, only replaced; a live one can be
-                    replaced at any time, which stops it working at once. */}
+                    offered for copying, only replaced, and the sheet says
+                    so before it offers the new one: the state, then the
+                    action. A live one can be replaced at any time, which
+                    stops it working at once. A circle of one leads with
+                    Invite someone, which opens the hand-off to share it. */}
                 {detailOf.inviteCode && !isFull(detailOf.space) && (
                   <div className="space-y-1">
                     {detailCodeExpired ? (
+                      <>
+                        <p className="text-xs text-muted-foreground">
+                          {inviteCodeExpiryLine(
+                            detailCodeExpiresAt,
+                            detailSeenAt
+                          )}
+                        </p>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="w-full"
+                          loading={renewing}
+                          onClick={() => void renewCode(detailOf.space.id)}
+                        >
+                          Make a new code
+                        </Button>
+                      </>
+                    ) : leadsWithInvite(detailOf) ? (
                       <Button
-                        variant="secondary"
-                        size="sm"
                         className="w-full"
-                        loading={renewing}
-                        onClick={() => void renewCode(detailOf.space.id)}
+                        leftIcon={<UserPlus className="size-4" aria-hidden />}
+                        onClick={() => openInvite(detailOf)}
                       >
-                        Make a new code
+                        Invite someone
                       </Button>
                     ) : (
                       <Button
@@ -1421,14 +1444,14 @@ export default function CirclesSection({
                         Copy invite code
                       </Button>
                     )}
-                    <div className="flex flex-wrap items-center justify-between gap-x-2">
-                      <p className="text-xs text-muted-foreground">
-                        {inviteCodeExpiryLine(
-                          detailCodeExpiresAt,
-                          detailSeenAt
-                        )}
-                      </p>
-                      {!detailCodeExpired && (
+                    {!detailCodeExpired && (
+                      <div className="flex flex-wrap items-center justify-between gap-x-2">
+                        <p className="text-xs text-muted-foreground">
+                          {inviteCodeExpiryLine(
+                            detailCodeExpiresAt,
+                            detailSeenAt
+                          )}
+                        </p>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1437,8 +1460,8 @@ export default function CirclesSection({
                         >
                           New code
                         </Button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1446,40 +1469,44 @@ export default function CirclesSection({
                     wrapping when one does not: a button's floor is its
                     one-line width (`min-w-fit`), so at large text "Need a
                     nudge" takes a row of its own instead of running off
-                    the sheet. */}
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    className="min-w-fit flex-1"
-                    onClick={() => {
-                      haptic("light");
-                      setFocusSource("detail");
-                      setFocusSheetOpen(true);
-                    }}
-                  >
-                    {/* "Weekly focus" both ways: the longer verbs made
+                    the sheet. Not in a circle of one the owner can invite
+                    to: a check-in there reaches nobody, so Invite someone
+                    is the sheet's one action until someone joins. */}
+                {!leadsWithInvite(detailOf) && (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      className="min-w-fit flex-1"
+                      onClick={() => {
+                        haptic("light");
+                        setFocusSource("detail");
+                        setFocusSheetOpen(true);
+                      }}
+                    >
+                      {/* "Weekly focus" both ways: the longer verbs made
                         this the only WRAPPING button in the three-up row
                         (~115px per cell) — two lines beside single-line
                         peers. The sheet it opens restates the verb. */}
-                    Weekly focus
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="min-w-fit flex-1"
-                    onClick={() => void publish("milestone")}
-                  >
-                    Milestone
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="min-w-fit flex-1"
-                    onClick={() => void publish("needs_support")}
-                  >
-                    Need a nudge
-                  </Button>
-                </div>
+                      Weekly focus
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="min-w-fit flex-1"
+                      onClick={() => void publish("milestone")}
+                    >
+                      Milestone
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="min-w-fit flex-1"
+                      onClick={() => void publish("needs_support")}
+                    >
+                      Need a nudge
+                    </Button>
+                  </div>
+                )}
 
                 <div className="space-y-1.5">
                   <SectionHeading size="compact" as="h3">
@@ -1500,7 +1527,9 @@ export default function CirclesSection({
                   )}
                   {events.length === 0 && (
                     <p className="text-xs text-muted-foreground">
-                      Quiet so far — setting a weekly focus gets things moving.
+                      {leadsWithInvite(detailOf)
+                        ? "Nothing yet. Check-ins start once someone joins."
+                        : "Quiet so far. Setting a weekly focus gets things moving."}
                     </p>
                   )}
                   {events.map((e) => {

@@ -126,3 +126,39 @@ describe("profile field-allowlist parity — rules ↔ sanitiser", () => {
     ).toEqual([]);
   });
 });
+
+/* The same parity one level down, for the race goal's own keys. The rules'
+   value gate (`raceGoalValid`) lists the keys a direct write may carry and
+   the sanitizer keeps the keys a Cloud Function write may carry; A2's goal
+   time was kept by one and refused by the other until the race-or-own
+   answer (Run9 STATUS 2026-11-01) was added to both. */
+describe("race goal keys, rules ↔ sanitizer", () => {
+  const sanitize = (
+    require(resolve(repoRoot, "functions/profileSanitizer.js")) as {
+      sanitizeProfileData: (p: unknown) => { raceGoal?: object };
+    }
+  ).sanitizeProfileData;
+
+  function rulesRaceGoalKeys(): string[] {
+    const rules = readFileSync(resolve(repoRoot, "firestore.rules"), "utf8");
+    const gate = rules.match(
+      /function raceGoalValid\(\)[\s\S]*?hasOnly\(\[([^\]]*)\]\)/
+    );
+    if (!gate) throw new Error("could not locate raceGoalValid() in rules");
+    return [...gate[1].matchAll(/'([a-zA-Z]+)'/g)].map((m) => m[1]).sort();
+  }
+
+  it("lets through the same keys on both paths", () => {
+    const kept = sanitize({
+      raceGoal: {
+        distance: "10k",
+        targetDate: "2026-12-01",
+        eventName: "Riverside 10K",
+        eventSpaceId: "london-marathon",
+        targetTimeS: 2700,
+        entry: "own",
+      },
+    }).raceGoal;
+    expect(Object.keys(kept ?? {}).sort()).toEqual(rulesRaceGoalKeys());
+  });
+});
