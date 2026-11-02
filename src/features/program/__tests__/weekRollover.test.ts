@@ -619,7 +619,8 @@ describe("after race day, the race plan waits for the race's own ending", () => 
         newer,
         { weekStart: weekOf(mondayAfter), date: mondayAfter },
         { ...profile, runMode: "starter" } as unknown as UserProfile,
-        "none"
+        "none",
+        null
       )
     );
     expect(next.runPlan).toEqual({ mode: "starter", stage: 2 });
