@@ -44,6 +44,16 @@ describe("locked constants (GsPb1)", () => {
     ]);
   });
 
+  /* The options the Start a circle sheet lists, in the house voice: a
+     statement and its detail take a full stop or a comma, not a dash. */
+  it("launch templates describe themselves without an em dash", () => {
+    for (const t of LAUNCH_TEMPLATES) {
+      expect(t.label, t.type).not.toContain("—");
+      expect(t.description, t.type).not.toContain("—");
+      expect(t.namePlaceholder, t.type).not.toContain("—");
+    }
+  });
+
   it("weekly-focus allowlist is exactly the six locked intents (SOCIAL-FOCUS-01)", () => {
     expect([...WEEKLY_FOCUS_OPTIONS]).toEqual([
       "strength",

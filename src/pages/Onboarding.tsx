@@ -1387,9 +1387,9 @@ export default function Onboarding() {
                   {runMode === "starter" && (
                     <div className="space-y-4 rounded-2xl bg-card card-shadow p-4">
                       <p className="text-sm">
-                        Run {STARTER_GOAL_NAME} in about nine weeks. It
-                        starts with short runs and walks between them, and a
-                        week repeats until you've done it.
+                        Run {STARTER_GOAL_NAME} in about nine weeks. It starts
+                        with short runs and walks between them, and a week
+                        repeats until you've done it.
                       </p>
                       <div className="space-y-2">
                         <p className="text-sm">Runs per week</p>

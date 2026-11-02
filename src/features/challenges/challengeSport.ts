@@ -1,3 +1,4 @@
+import { Activity, Dumbbell, Footprints, type LucideIcon } from "lucide-react";
 import { THEME } from "@/lib/theme";
 
 /**
@@ -5,7 +6,11 @@ import { THEME } from "@/lib/theme";
  * that follows from it. A challenge card wears its sport: coral for a
  * running challenge, purple for a lifting one, and the brand purple for a
  * mixed or time challenge, which counts either sport. That colour is the
- * hero band, the icon, the Join button and the progress bar's fill.
+ * hero band, the sport tag and the progress bar's fill.
+ *
+ * Join is not in the sport's colour. The Together page has one filled
+ * button, and a list of challenges each with a coloured Join read as many
+ * competing calls; the tag on the card says which sport it is instead.
  *
  * The tier metals (bronze, silver, gold) are never the fill. A bronze bar
  * beside purple and coral read as the food orange, and silver and gold
@@ -46,4 +51,26 @@ export const SPORT_BAR_FILL: Readonly<Record<ChallengeSport, string>> = {
   running: "bg-running",
   lifting: "bg-lifting",
   mixed: "bg-primary",
+};
+
+/** The small tag a challenge card wears to say its sport: a word and an
+ *  icon, on a 10% tint of the sport's colour with its AA text step. */
+export const SPORT_TAG: Readonly<
+  Record<ChallengeSport, { label: string; Icon: LucideIcon; tint: string }>
+> = {
+  running: {
+    label: "Running",
+    Icon: Footprints,
+    tint: "bg-running/10 text-running-strong",
+  },
+  lifting: {
+    label: "Lifting",
+    Icon: Dumbbell,
+    tint: "bg-lifting/10 text-lifting-strong",
+  },
+  mixed: {
+    label: "Run or lift",
+    Icon: Activity,
+    tint: "bg-primary/10 text-primary-strong",
+  },
 };

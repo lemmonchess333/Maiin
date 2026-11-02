@@ -17,10 +17,7 @@
  * Run9's starter goal, which needs no date.
  */
 export type OnboardingRunMode =
-  | "freeform"
-  | "structured"
-  | "race_prep"
-  | "starter";
+  "freeform" | "structured" | "race_prep" | "starter";
 
 export function resolveOnboardingRunMode(input: {
   runFrequency: string;

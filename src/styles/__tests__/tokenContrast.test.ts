@@ -819,7 +819,7 @@ describe("small secondary text on a tint", () => {
 describe("medal ranks — the numeral is text, the metal is a marker", () => {
   it.each([
     "src/components/social/LeaderboardRow.tsx",
-    "src/features/challenges/ChallengeList.tsx",
+    "src/features/challenges/WeeklyChallengeCard.tsx",
   ])("%s never colours the rank numeral with a medal", (path) => {
     const src = readFile(path);
     // Gold is 1.40:1 and silver 1.82:1 as text on the white card.

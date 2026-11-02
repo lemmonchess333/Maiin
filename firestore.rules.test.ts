@@ -808,6 +808,48 @@ suite("firestore.rules — /challenges", () => {
     await assertFails(deleteDoc(doc(db, "challenges", "weekly-2026-01-01")));
   });
 
+  // The community goal's total and runner count are the server's
+  // (functions/lib/communityGoal.js): every signed-in reader sees them,
+  // and no client moves them, its own runs included.
+  it("authed user reads a group goal's total — succeeds", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "group-goal-2026-01-01"),
+        {
+          ...validChallengeData,
+          collectiveTarget: 1000,
+          collectiveMeters: 412000,
+          collectiveRunners: 7,
+        }
+      );
+    });
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, "challenges", "group-goal-2026-01-01"))
+    );
+  });
+
+  it("authed user moves a group goal's total or runners — fails (server-owned)", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "group-goal-2026-01-01"),
+        {
+          ...validChallengeData,
+          collectiveTarget: 1000,
+          collectiveMeters: 412000,
+          collectiveRunners: 7,
+        }
+      );
+    });
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    const ref = doc(db, "challenges", "group-goal-2026-01-01");
+    await assertFails(
+      setDoc(ref, { collectiveMeters: 1000000 }, { merge: true })
+    );
+    await assertFails(setDoc(ref, { collectiveRunners: 8 }, { merge: true }));
+    await assertFails(setDoc(ref, { collectiveMeters: 0 }, { merge: true }));
+  });
+
   it("unauthed user creates a challenge — fails", async () => {
     const db = env.unauthenticatedContext().firestore();
     await assertFails(

@@ -2610,7 +2610,11 @@ describe("ProgrammeRunSection — the 30-minute goal offered", () => {
       {
         ...commonProps(),
         profile: freeNewRunner({
-          starterGoal: { startedOn: "2026-01-05", endedOn: "2026-02-02", stage: 3 },
+          starterGoal: {
+            startedOn: "2026-01-05",
+            endedOn: "2026-02-02",
+            stage: 3,
+          },
         }),
       },
       makeProgramState([], { runPlan: undefined })

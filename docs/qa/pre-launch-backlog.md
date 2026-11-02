@@ -3333,3 +3333,33 @@ whole (`wholeStarterGoal`), from this release's Functions deploy.
       Settings → Run plan and save. Passing: Train shows Week 1 of 9 (a
       merge that kept the old `finishedOn` would leave the account on free
       running with Done showing).
+
+## Together, you first, and the community goal (Soc14, 2026-11-02)
+
+The Together tab leads with the person's Circles and joined challenges,
+then this week's challenge, then Discover. The community goal counts every
+eligible saved run in its month, joined or not: `onRunCreated` adds the
+run's metres to the goal's `collectiveMeters` and the runner once to
+`collectiveRunners`, through a per-run credit in
+`users/{uid}/communityGoal`, and `onRunDeleted` takes exactly that credit
+back off. Unit, rules and emulator tests cover it; these need the console
+or a phone.
+
+- [ ] **The triggers carry the goal.** After the Deploy production run that
+      ships this, its deployed-source check passes, and the source of
+      `onRunCreated` names `creditRunToCommunityGoals`.
+- [ ] **This month's goal is backfilled.** Only runs saved after the
+      deploy count by themselves. Once it has shipped, run
+      `node functions/scripts/backfill-community-goal.js adaptive-fitness-af8bb group-goal-YYYY-MM-01`
+      (the current month's id, with credentials for the project) once. It
+      is safe to run again or beside the live triggers. Passing: the goal's
+      document shows a `collectiveMeters` and `collectiveRunners` that look
+      right for the month, and Together's Discover shows the goal.
+- [ ] **A run moves the goal, and its delete takes it back.** On a phone,
+      save a short run: the goal's figure goes up by its distance and the
+      runner count by one if it was your first this month. Delete the run:
+      both go back.
+- [ ] **Together on a phone.** Your Circles first (a Circle of one offers
+      Invite someone), this week's challenge with the page's one filled
+      button, then Discover. Scroll to the bottom: the last card clears the
+      tab bar.

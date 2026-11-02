@@ -311,13 +311,21 @@ describe("monthly closing reminders", () => {
     expect(await announcements.maybeSendReminder(args)).toBe(true);
   });
 
-  it("uses the shared total to skip a completed collective goal, not the member's mileage", async () => {
+  it("uses the community total to skip a completed collective goal, not the member's mileage", async () => {
     const args = reminderSetup();
     const group = args.definitions.find((item) => item.collectiveTarget);
     args.join(group, 1);
-    args.join(group, 999, "another-runner");
+    // Everyone's runs, joined or not, in whole metres on the goal: the
+    // members' own figures add to far less.
+    args.db.put(`challenges/${group.id}`, {
+      ...group,
+      collectiveMeters: 1_000_000,
+    });
     expect(await announcements.maybeSendReminder(args)).toBe(false);
-    args.join(group, 998, "another-runner");
+    args.db.put(`challenges/${group.id}`, {
+      ...group,
+      collectiveMeters: 999_000,
+    });
     expect(await announcements.maybeSendReminder(args)).toBe(true);
   });
 
