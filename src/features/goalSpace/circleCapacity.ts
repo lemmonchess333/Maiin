@@ -34,3 +34,18 @@ export function memberLine(space: CircleCapacity): string {
   const count = `${space.memberCount} ${space.memberCount === 1 ? "member" : "members"}`;
   return isFull(space) ? `${count} · full` : count;
 }
+
+/**
+ * A circle of one that its owner can invite to: its card and its sheet
+ * lead with Invite someone and offer no check-ins, since a weekly focus,
+ * a milestone or a nudge in a circle of one reaches nobody. The count is
+ * the summary's own, so no read is added for it. A member left alone
+ * without the code (only the owner's summary carries it) keeps the
+ * check-ins, as there is no invite to lead with.
+ */
+export function leadsWithInvite(circle: {
+  space: CircleCapacity;
+  inviteCode: string | null;
+}): boolean {
+  return circle.space.memberCount === 1 && !!circle.inviteCode;
+}

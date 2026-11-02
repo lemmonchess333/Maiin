@@ -281,9 +281,14 @@ describe("one-member featured circle", () => {
     );
 
     expect(
-      screen.getByText(/Your Circle is ready — invite someone/i)
+      screen.getByText(
+        "Your circle is ready. Invite someone to make it a circle."
+      )
     ).toBeInTheDocument();
     const invite = screen.getByRole("button", { name: /invite someone/i });
+    // Quiet, not filled: the Together page keeps one filled button.
+    expect(invite.className).toContain("bg-muted");
+    expect(invite.className).not.toContain("bg-primary-strong");
     // The focus action moves to the detail sheet for a solo circle.
     expect(
       screen.queryByRole("button", { name: /set weekly focus/i })
@@ -324,6 +329,72 @@ describe("one-member featured circle", () => {
     expect(
       screen.getByRole("button", { name: /set weekly focus/i })
     ).toBeInTheDocument();
+  });
+});
+
+describe("a circle of one leads with Invite someone in its sheet", () => {
+  /* A weekly focus, a milestone or a nudge in a circle of one reaches
+     nobody, so until someone joins the sheet's one action is the invite,
+     which opens the same hand-off as the card's. */
+  async function openSolo(inviteCode: string | null) {
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({ circles: [summary("c1", "Hear", 1, inviteCode)] })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^Hear/ }));
+    return screen.findByRole("dialog");
+  }
+
+  it("offers the invite and no check-ins to the owner", async () => {
+    const sheet = await openSolo("K7P49M2H");
+    const invite = await within(sheet).findByRole("button", {
+      name: "Invite someone",
+    });
+    for (const name of ["Weekly focus", "Milestone", "Need a nudge"])
+      expect(within(sheet).queryByRole("button", { name })).toBeNull();
+    expect(
+      within(sheet).getByText(
+        "Nothing yet. Check-ins start once someone joins."
+      )
+    ).toBeInTheDocument();
+    fireEvent.click(invite);
+    await screen.findByText("K7P4-9M2H");
+    expect(
+      screen.getByRole("button", { name: /share invite/i })
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the check-ins for a member left alone without the code", async () => {
+    const sheet = await openSolo(null);
+    expect(
+      await within(sheet).findByRole("button", { name: "Weekly focus" })
+    ).toBeInTheDocument();
+    expect(
+      within(sheet).queryByRole("button", { name: "Invite someone" })
+    ).toBeNull();
+  });
+
+  it("keeps the check-ins once someone has joined", async () => {
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({ circles: [summary("c1", "Hear", 2, "K7P49M2H")] })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^Hear/ }));
+    const sheet = await screen.findByRole("dialog");
+    expect(
+      await within(sheet).findByRole("button", { name: "Need a nudge" })
+    ).toBeInTheDocument();
+    expect(
+      within(sheet).queryByRole("button", { name: "Invite someone" })
+    ).toBeNull();
   });
 });
 
@@ -499,15 +570,16 @@ describe("an invite code expires", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Autumn Crew/ }));
     await screen.findByRole("dialog");
-    expect(
-      await screen.findByText("This code has expired.")
-    ).toBeInTheDocument();
+    const expired = await screen.findByText("This code has expired.");
     expect(
       screen.queryByRole("button", { name: /copy invite code/i })
     ).toBeNull();
+    const renew = screen.getByRole("button", { name: /make a new code/i });
+    // The state before the action: the sheet says the code has expired,
+    // then offers the new one.
     expect(
-      screen.getByRole("button", { name: /make a new code/i })
-    ).toBeInTheDocument();
+      expired.compareDocumentPosition(renew) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 });
 

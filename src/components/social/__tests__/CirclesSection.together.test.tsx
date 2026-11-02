@@ -161,6 +161,11 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
     ]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
+    // The sheet and its options in the house voice: a full stop or a
+    // comma between a statement and its detail, not a dash.
+    const sheet = screen.getByRole("dialog");
+    expect(sheet.textContent).toContain("Private progress");
+    expect(sheet.textContent).not.toContain("—");
   });
 
   it("the goal you pick is the goal the sheet confirms — same string, both ends", async () => {

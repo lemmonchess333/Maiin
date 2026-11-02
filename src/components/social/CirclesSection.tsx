@@ -33,11 +33,12 @@
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import { useCallback, useEffect, useState, type MutableRefObject } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Copy, Users } from "lucide-react";
+import { Copy, UserPlus, Users } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { Spinner } from "@/components/ui/Spinner";
@@ -61,7 +62,11 @@ import {
   type CircleDetail,
   type CircleSummary,
 } from "@/features/goalSpace/useGoalSpaces";
-import { isFull, memberLine } from "@/features/goalSpace/circleCapacity";
+import {
+  isFull,
+  leadsWithInvite,
+  memberLine,
+} from "@/features/goalSpace/circleCapacity";
 import {
   inviteCodeExpiryLine,
   isInviteCodeExpired,
@@ -577,7 +582,7 @@ export default function CirclesSection({
     inviteCode: string;
   }) => {
     const code = inviteString(h.spaceId, h.inviteCode);
-    const text = `Join my Tropos circle "${h.title}" — invite code: ${code}`;
+    const text = `Join my Tropos circle "${h.title}". Invite code: ${code}`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -600,6 +605,21 @@ export default function CirclesSection({
         toast.error("Couldn't copy. Long-press the code to select it.");
       }
     }
+  };
+
+  /* Opens the invite hand-off (Share invite, Copy code) for one of the
+     owner's circles, from its card or from its sheet. */
+  const openInvite = (c: CircleSummary) => {
+    if (!c.inviteCode) return;
+    haptic("light");
+    setDetailOf(null);
+    setInviteHandoff({
+      title: circleTitle(c.space, wordFilter),
+      spaceId: c.space.id,
+      inviteCode: c.inviteCode,
+      inviteCodeExpiresAt: c.inviteCodeExpiresAt ?? 0,
+      seenAt: Date.now(),
+    });
   };
 
   const copyInviteCode = async (h: { spaceId: string; inviteCode: string }) => {
@@ -975,30 +995,22 @@ export default function CirclesSection({
                 </div>
               )}
             </div>
-          ) : featured.space.memberCount === 1 && featured.inviteCode ? (
+          ) : leadsWithInvite(featured) ? (
             /* CIRCLE-INVITE-ACTIVATION-01 — a one-member circle's one
-               useful action is inviting; the weekly focus stays
-               reachable through the detail sheet. Owner-only by
-               construction (inviteCode is only present for the
-               owner's summaries). */
+               useful action is inviting, and its sheet offers no
+               check-ins until someone joins. Owner-only by construction
+               (inviteCode is only present for the owner's summaries).
+               Secondary, not filled: the Together page keeps one filled
+               button, the weekly challenge's. */
             <>
               <p className="text-xs text-muted-foreground">
-                Your circle is ready — invite someone to make it a circle.
+                Your circle is ready. Invite someone to make it a circle.
               </p>
               <Button
-                className="w-full"
-                onClick={() => {
-                  const code = featured.inviteCode;
-                  if (!code) return; // narrowing lost across the closure
-                  haptic("light");
-                  setInviteHandoff({
-                    title: circleTitle(featured.space, wordFilter),
-                    spaceId: featured.space.id,
-                    inviteCode: code,
-                    inviteCodeExpiresAt: featured.inviteCodeExpiresAt ?? 0,
-                    seenAt: Date.now(),
-                  });
-                }}
+                variant="secondary"
+                className={cn("w-full", SECONDARY_ON_CARD_EDGE)}
+                leftIcon={<UserPlus className="size-4" aria-hidden />}
+                onClick={() => openInvite(featured)}
               >
                 Invite someone
               </Button>
@@ -1098,7 +1110,7 @@ export default function CirclesSection({
         open={chooserOpen}
         onOpenChange={setChooserOpen}
         title="What support would help?"
-        description="Circles are small, invite-only groups around one shared goal — numbers and photos stay private."
+        description="Circles are small, invite-only groups around one shared goal. Numbers and photos stay private."
       >
         <div className="px-4 space-y-2 pb-2">
           {COLD_START_OPTIONS.map((t) => (
@@ -1131,7 +1143,7 @@ export default function CirclesSection({
               Private progress
             </p>
             <p className="text-xs text-muted-foreground">
-              Private — just for you, never shared.
+              Just for you, never shared.
             </p>
           </button>
         </div>
@@ -1377,19 +1389,38 @@ export default function CirclesSection({
                   </p>
                 )}
                 {/* A code works for seven days. An expired one is not
-                    offered for copying, only replaced; a live one can be
-                    replaced at any time, which stops it working at once. */}
+                    offered for copying, only replaced, and the sheet says
+                    so before it offers the new one: the state, then the
+                    action. A live one can be replaced at any time, which
+                    stops it working at once. A circle of one leads with
+                    Invite someone, which opens the hand-off to share it. */}
                 {detailOf.inviteCode && !isFull(detailOf.space) && (
                   <div className="space-y-1">
                     {detailCodeExpired ? (
+                      <>
+                        <p className="text-xs text-muted-foreground">
+                          {inviteCodeExpiryLine(
+                            detailCodeExpiresAt,
+                            detailSeenAt
+                          )}
+                        </p>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="w-full"
+                          loading={renewing}
+                          onClick={() => void renewCode(detailOf.space.id)}
+                        >
+                          Make a new code
+                        </Button>
+                      </>
+                    ) : leadsWithInvite(detailOf) ? (
                       <Button
-                        variant="secondary"
-                        size="sm"
                         className="w-full"
-                        loading={renewing}
-                        onClick={() => void renewCode(detailOf.space.id)}
+                        leftIcon={<UserPlus className="size-4" aria-hidden />}
+                        onClick={() => openInvite(detailOf)}
                       >
-                        Make a new code
+                        Invite someone
                       </Button>
                     ) : (
                       <Button
@@ -1421,14 +1452,14 @@ export default function CirclesSection({
                         Copy invite code
                       </Button>
                     )}
-                    <div className="flex flex-wrap items-center justify-between gap-x-2">
-                      <p className="text-xs text-muted-foreground">
-                        {inviteCodeExpiryLine(
-                          detailCodeExpiresAt,
-                          detailSeenAt
-                        )}
-                      </p>
-                      {!detailCodeExpired && (
+                    {!detailCodeExpired && (
+                      <div className="flex flex-wrap items-center justify-between gap-x-2">
+                        <p className="text-xs text-muted-foreground">
+                          {inviteCodeExpiryLine(
+                            detailCodeExpiresAt,
+                            detailSeenAt
+                          )}
+                        </p>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1437,8 +1468,8 @@ export default function CirclesSection({
                         >
                           New code
                         </Button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1446,40 +1477,44 @@ export default function CirclesSection({
                     wrapping when one does not: a button's floor is its
                     one-line width (`min-w-fit`), so at large text "Need a
                     nudge" takes a row of its own instead of running off
-                    the sheet. */}
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    className="min-w-fit flex-1"
-                    onClick={() => {
-                      haptic("light");
-                      setFocusSource("detail");
-                      setFocusSheetOpen(true);
-                    }}
-                  >
-                    {/* "Weekly focus" both ways: the longer verbs made
+                    the sheet. Not in a circle of one the owner can invite
+                    to: a check-in there reaches nobody, so Invite someone
+                    is the sheet's one action until someone joins. */}
+                {!leadsWithInvite(detailOf) && (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      className="min-w-fit flex-1"
+                      onClick={() => {
+                        haptic("light");
+                        setFocusSource("detail");
+                        setFocusSheetOpen(true);
+                      }}
+                    >
+                      {/* "Weekly focus" both ways: the longer verbs made
                         this the only WRAPPING button in the three-up row
                         (~115px per cell) — two lines beside single-line
                         peers. The sheet it opens restates the verb. */}
-                    Weekly focus
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="min-w-fit flex-1"
-                    onClick={() => void publish("milestone")}
-                  >
-                    Milestone
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="min-w-fit flex-1"
-                    onClick={() => void publish("needs_support")}
-                  >
-                    Need a nudge
-                  </Button>
-                </div>
+                      Weekly focus
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="min-w-fit flex-1"
+                      onClick={() => void publish("milestone")}
+                    >
+                      Milestone
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="min-w-fit flex-1"
+                      onClick={() => void publish("needs_support")}
+                    >
+                      Need a nudge
+                    </Button>
+                  </div>
+                )}
 
                 <div className="space-y-1.5">
                   <SectionHeading size="compact" as="h3">
@@ -1500,7 +1535,9 @@ export default function CirclesSection({
                   )}
                   {events.length === 0 && (
                     <p className="text-xs text-muted-foreground">
-                      Quiet so far — setting a weekly focus gets things moving.
+                      {leadsWithInvite(detailOf)
+                        ? "Nothing yet. Check-ins start once someone joins."
+                        : "Quiet so far. Setting a weekly focus gets things moving."}
                     </p>
                   )}
                   {events.map((e) => {
