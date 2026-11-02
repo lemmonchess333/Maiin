@@ -6,8 +6,12 @@ import {
 } from "@/lib/distanceUnits";
 import { Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
-import type { Challenge, ChallengeParticipant } from "./useChallenges";
-import { collectiveTotal, showsCollectiveGoal } from "./collectiveGoal";
+import type { Challenge } from "./useChallenges";
+import {
+  collectiveRunners,
+  collectiveTotal,
+  showsCollectiveGoal,
+} from "./collectiveGoal";
 
 /**
  * SOC-P1e — the collective-kilometres pulse strip.
@@ -19,26 +23,25 @@ import { collectiveTotal, showsCollectiveGoal } from "./collectiveGoal";
  * collectiveTarget) from a card buried in "Available" into a compact
  * strip at the top of the challenges section.
  *
- * Not drawn until someone has added to it (`showsCollectiveGoal`): a goal
- * at "0 of 1,000 km" over an empty bar reads as an empty room. From the
- * first kilometre the line under the name is the figure and nothing else,
- * "412.5 of 1,000 km". Counting up, never a shortfall or a percentage.
- * Static bar; no animation (WKWebView rule).
+ * The total is the server's: every saved run in the goal's month, joined
+ * or not (`collectiveTotal`). Not drawn until someone has added to it
+ * (`showsCollectiveGoal`): a goal at "0 of 1,000 km" over an empty bar
+ * reads as an empty room. From the first kilometre the line under the name
+ * is the figure and how many people ran it, "412.5 of 1,000 km · 7
+ * runners". Counting up, never a shortfall or a percentage. Static bar; no
+ * animation (WKWebView rule).
  */
 export default function CollectivePulse({
   challenge,
-  leaderboard = [],
 }: {
   challenge: Challenge;
-  leaderboard?: ChallengeParticipant[];
 }) {
-  // The reader's distance unit; the board stores kilometres.
+  // The reader's distance unit; the goal is set in kilometres.
   const unit = useDistanceUnit();
   const target = challenge.collectiveTarget ?? 0;
-  if (!showsCollectiveGoal(target, leaderboard)) return null;
-  // Same source the collective ChallengeCard uses: the loaded board
-  // (top 20), an approximation that matches the card's own maths.
-  const total = collectiveTotal(leaderboard);
+  if (!showsCollectiveGoal(challenge)) return null;
+  const total = collectiveTotal(challenge);
+  const runners = collectiveRunners(challenge);
   const pct = Math.min((total / target) * 100, 100);
   const shown = (km: number) => distanceIn(km * 1000, unit);
   const label = distanceUnitLabel(unit);
@@ -68,6 +71,15 @@ export default function CollectivePulse({
             </span>{" "}
             of <span className="font-mono tabular-nums">{targetText}</span>{" "}
             {label}
+            {runners > 0 && (
+              <>
+                {" · "}
+                <span className="font-mono tabular-nums">
+                  {runners.toLocaleString()}
+                </span>{" "}
+                {runners === 1 ? "runner" : "runners"}
+              </>
+            )}
           </p>
         </div>
       </div>

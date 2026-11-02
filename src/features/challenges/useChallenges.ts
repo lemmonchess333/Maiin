@@ -63,6 +63,12 @@ export interface Challenge {
    *  per-user tier ladder. The `tiers` field is still set to a stub
    *  (gold = collectiveTarget) so existing sync logic doesn't break. */
   collectiveTarget?: number;
+  /** A community goal's total: every saved run in its window, joined or
+   *  not, in whole metres. Server-written (functions/lib/communityGoal.js);
+   *  read through `collectiveTotal`. */
+  collectiveMeters?: number;
+  /** How many people have a run in that total. Server-written. */
+  collectiveRunners?: number;
 }
 
 export interface ChallengeParticipant {

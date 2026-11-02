@@ -40,7 +40,7 @@ import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import { useChallengePercentile } from "./useChallengePercentile";
 import { challengeSport, SPORT_ACCENT, SPORT_BAR_FILL } from "./challengeSport";
 import ChallengeSportTag from "./ChallengeSportTag";
-import { collectiveTotal as sumCollective } from "./collectiveGoal";
+import { collectiveTotal as goalTotal } from "./collectiveGoal";
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -462,13 +462,13 @@ export function ChallengeCard({
         ) : challenge.collectiveTarget && challenge.collectiveTarget > 0 ? (
           /* PR 5: group_goal challenge.
              Renders a single collective progress bar instead of the
-             per-user tier ladder. Total = sum of every participant's
-             currentValue (we have it in `leaderboard`); target lives
-             on `challenge.collectiveTarget`. The user's individual
-             contribution is surfaced underneath as a "you contributed"
-             line so the personal stake is still legible. */
+             per-user tier ladder. The total is the server's, every
+             saved run in the window, joined or not (`goalTotal`); the
+             target lives on `challenge.collectiveTarget`. The user's
+             individual contribution is surfaced underneath as a "you
+             contributed" line so the personal stake is still legible. */
           (() => {
-            const collectiveTotal = sumCollective(leaderboard);
+            const collectiveTotal = goalTotal(challenge);
             const target = challenge.collectiveTarget!;
             const collPct = Math.min((collectiveTotal / target) * 100, 100);
             return (

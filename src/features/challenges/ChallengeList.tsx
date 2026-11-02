@@ -200,12 +200,7 @@ export function ChallengeList({
                   </SectionHeading>
                 )}
                 {/* The community goal: drawn once someone has added to it. */}
-                {collectiveCh && (
-                  <CollectivePulse
-                    challenge={collectiveCh}
-                    leaderboard={leaderboards[collectiveCh.id]}
-                  />
-                )}
+                {collectiveCh && <CollectivePulse challenge={collectiveCh} />}
                 {discover.length > 0 && (
                   <ul aria-label="Challenges to join" className={LIST_CARD}>
                     {discover.map((ch) => (
