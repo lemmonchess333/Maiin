@@ -8,6 +8,7 @@ import {
 import { sameStoredValue } from "./stateTransition";
 import {
   raceWeekNeedsBuilding,
+  starterWeekNeedsBuilding,
   weekRolloverAnchor,
 } from "./programMaintenance";
 
@@ -33,6 +34,7 @@ export function homeProgramSnapshot(
       profile.runMode === "structured" ||
       !sameStoredValue(raw, programState) ||
       !!(anchor && anchor < week) ||
-      raceWeekNeedsBuilding(programState, profile, today),
+      raceWeekNeedsBuilding(programState, profile, today) ||
+      starterWeekNeedsBuilding(programState, profile),
   };
 }

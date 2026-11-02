@@ -27,6 +27,7 @@ import { racePaceBlockKm } from "../racePace";
 import {
   RUN_TEMPLATES,
   RUN_WALK_TEMPLATE_IDS,
+  STARTER_NONSTOP_TEMPLATE_IDS,
   type RunTemplate,
 } from "../workoutTemplates";
 import { GUIDED_WORKOUTS } from "../guidedRun";
@@ -536,13 +537,21 @@ describe("segmentsFromRunWalk", () => {
   const ladder = RUN_WALK_TEMPLATE_IDS.map(
     (id) => RUN_TEMPLATES.find((t) => t.id === id)!
   );
+  // Run9's starter goal goes on from the ladder: 20, 25 and 30 minutes
+  // non-stop, in the same shape.
+  const nonStop = STARTER_NONSTOP_TEMPLATE_IDS.map((id) =>
+    RUN_TEMPLATES.find((t) => t.id === id)!
+  );
   const shape = (t: RunTemplate) => t.config.runWalk!;
   const minutes = (seconds: number[]) =>
     seconds.reduce((a, b) => a + b, 0) / 60;
 
-  it("is a template for each of the six weeks, each conserving its stated time", () => {
-    expect(RUN_TEMPLATES.filter((t) => t.config.runWalk)).toEqual(ladder);
-    for (const t of ladder) {
+  it("is a template for each of the six weeks and the starter's non-stop runs, each conserving its stated time", () => {
+    expect(RUN_TEMPLATES.filter((t) => t.config.runWalk)).toEqual([
+      ...ladder,
+      ...nonStop,
+    ]);
+    for (const t of [...ladder, ...nonStop]) {
       expect(t.type, t.id).toBe("easy");
       expect(t.config.targetDurationMinutes, t.id).toBe(t.estimatedDuration);
       expect(segmentsDurationSeconds(segmentsFromRunWalk(shape(t))), t.id).toBe(
