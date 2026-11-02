@@ -137,9 +137,9 @@ function _racePlanFirstWeek(runPlan, raceDate) {
 function _fellBehindRatio(profile, programState, priorWeekRuns, priorWeekKey) {
   // Gate 1 — a race plan is graded here, and the retired structured week
   // a profile not yet migrated may still carry. Free running has no
-  // prescriptive target, and a plan of a kind this check does not know
-  // (Run9's reopening adds one whose missed week simply repeats) is not
-  // "behind" anything either.
+  // prescriptive target, the starter goal repeats a missed week rather
+  // than falling behind one, and a plan of a kind this check does not know
+  // is not "behind" anything either.
   const runMode = profile && profile.runMode;
   if (runMode !== "race_prep" && runMode !== "structured") {
     return null;

@@ -608,7 +608,15 @@ export interface ScheduledRunDay {
 }
 
 export interface RunPlan {
-  mode: "structured" | "race_prep";
+  /** `starter`: Run9's starter goal, 30 minutes without stopping, a week
+   *  at each stage (`starterPlan.ts`). */
+  mode: "structured" | "race_prep" | "starter";
+  /** A starter plan's stage, 1 to 9: the session every run in its week
+   *  takes. It moves on only once its week was done. */
+  stage?: number;
+  /** A starter plan's week: the Monday key of the week `stage` is for,
+   *  which the next rollover weighs. */
+  stageWeekKey?: string;
   raceGoal?: { distance: string; targetDate: string; eventName?: string };
   totalWeeks?: number;
   currentWeek?: number;

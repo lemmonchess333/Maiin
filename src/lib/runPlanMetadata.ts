@@ -44,14 +44,12 @@ import {
 
 // ─── Field types ─────────────────────────────────────────────────────
 
-export type PlanMode = "freeform" | "structured" | "race_prep";
+/** A saved run's snapshot of `profile.runMode`. `starter`: Run9's starter
+ *  goal, whose planned days are matched as any plan's are. */
+export type PlanMode = "freeform" | "structured" | "race_prep" | "starter";
 
 export type PlanSource =
-  | "today_plan"
-  | "url_template"
-  | "manual"
-  | "rest_day"
-  | "completed_day";
+  "today_plan" | "url_template" | "manual" | "rest_day" | "completed_day";
 
 /**
  * 10 fields written on every run doc. See the Phase B1 brief for the

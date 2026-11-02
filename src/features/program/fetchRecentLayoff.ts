@@ -47,6 +47,42 @@ export function datedRuns(saved: readonly SavedRun[]): DatedRun[] {
 }
 
 /**
+ * What the plan reads of the recent runs: how long the runner has been away,
+ * and the runs themselves, dated. A starter week is weighed by the days they
+ * fall on (`nextStarterStage`), and a running starting point climbs from
+ * what they say was done (`runningClimb`). `runs` is null when they could
+ * not be read, so a starter's stage holds rather than read a week as empty,
+ * and a start climbs by the calendar.
+ */
+export interface RecentRuns {
+  layoff: LayoffClass;
+  runs: DatedRun[] | null;
+}
+
+/**
+ * The recent runs (`RECENT_RUN_SCAN_LIMIT` of them), read once. A failed
+ * read settles as no layoff and no runs known, never as an error (see
+ * `fetchRecentLayoff` for why "none" is the safe direction).
+ */
+export async function fetchRecentRuns(
+  uid: string | null | undefined,
+  todayKey: string
+): Promise<RecentRuns> {
+  if (!uid) return { layoff: "none", runs: null };
+  try {
+    // Through the saved-run reader: ordered by `completedAt`, which every
+    // saved run has (none has a `createdAt`, so ordering by that read none),
+    // dated by the run's Lift3 day, and including runs saved on this phone.
+    const saved = await fetchSavedRuns(uid, { latest: RECENT_RUN_SCAN_LIMIT });
+    const runs = datedRuns(saved);
+    return { layoff: layoffFromRuns(runs, todayKey), runs };
+  } catch (err) {
+    logger.warn("[layoff] recent-run read failed; treating as no layoff", err);
+    return { layoff: "none", runs: null };
+  }
+}
+
+/**
  * Resolve the runner's layoff class, or `"none"` if it cannot be determined.
  *
  * Every failure mode returns `"none"`: no uid, an empty collection, a read
@@ -60,38 +96,5 @@ export async function fetchRecentLayoff(
   uid: string | null | undefined,
   todayKey: string
 ): Promise<LayoffClass> {
-  return (await fetchRecentRunning(uid, todayKey)).layoff;
-}
-
-/** The layoff, and the recent runs it was read from. */
-export interface RecentRunning {
-  layoff: LayoffClass;
-  /** The latest `RECENT_RUN_SCAN_LIMIT` saved runs, or null when they
-   *  couldn't be read. A running starting point climbs from what they say
-   *  was done (`runningClimb`). */
-  runs: DatedRun[] | null;
-}
-
-/**
- * `fetchRecentLayoff`'s one read, with the runs it read: a race plan's week
- * is built from both, and reading them once costs nothing more. A failed
- * read is `"none"` and no runs, which a starting point reads as not known
- * and climbs by the calendar, as before.
- */
-export async function fetchRecentRunning(
-  uid: string | null | undefined,
-  todayKey: string
-): Promise<RecentRunning> {
-  if (!uid) return { layoff: "none", runs: null };
-  try {
-    // Through the saved-run reader: ordered by `completedAt`, which every
-    // saved run has (none has a `createdAt`, so ordering by that read none),
-    // dated by the run's Lift3 day, and including runs saved on this phone.
-    const saved = await fetchSavedRuns(uid, { latest: RECENT_RUN_SCAN_LIMIT });
-    const runs = datedRuns(saved);
-    return { layoff: layoffFromRuns(runs, todayKey), runs };
-  } catch (err) {
-    logger.warn("[layoff] recent-run read failed; treating as no layoff", err);
-    return { layoff: "none", runs: null };
-  }
+  return (await fetchRecentRuns(uid, todayKey)).layoff;
 }

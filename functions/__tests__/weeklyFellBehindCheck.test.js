@@ -159,10 +159,12 @@ describe("_fellBehindRatio", () => {
       _fellBehindRatio(profile({ runMode: undefined }), programState(), [])
     ).toBeNull();
     // A plan that is not a race repeats a missed week rather than falling
-    // behind one, whatever run mode a newer build calls it.
-    expect(
-      _fellBehindRatio(profile({ runMode: "starter" }), programState(), [])
-    ).toBeNull();
+    // behind one: the starter goal's, and whatever a newer build adds.
+    for (const runMode of ["starter", "next_kind"]) {
+      expect(
+        _fellBehindRatio(profile({ runMode }), programState(), [])
+      ).toBeNull();
+    }
     expect(
       _fellBehindRatio(
         profile(),
@@ -492,9 +494,9 @@ describe("_fellBehindRatio — a race plan's lead-in isn't one of its weeks", ()
   it("doesn't grade the lead-in week, nor any week before the plan's first", () => {
     expect(_fellBehindRatio(runner, movedOn, [], LEAD_IN)).toBeNull();
     expect(_fellBehindRatio(runner, movedOn, [], "2026-10-19")).toBeNull();
-    expect(
-      _decideFellBehindFlag(runner, movedOn, [], LEAD_IN).action
-    ).toBe("noop");
+    expect(_decideFellBehindFlag(runner, movedOn, [], LEAD_IN).action).toBe(
+      "noop"
+    );
   });
 
   it("grades the plan's first week", () => {

@@ -105,35 +105,33 @@ async function verifiedCaller(bearer: string): Promise<DecodedIdToken> {
   }
 }
 
+function profileOf(uid: string) {
+  return emulatorAdmin().db.doc(`users/${uid}`).get();
+}
+
 /**
- * Sign-up stamps the profile's `createdAt`, and `completeOnboarding` its
- * `onboardingCompletedAt`, with the server's time, which the emulator reads
- * from the real clock, not the journey's. In production the two are the same
- * day. A journey runs days ahead, a whole week on a Monday (`nextWeekday`),
- * and the first-week card counts its seven days from one stamp or the other
- * (`firstWeek.ts`: the setup's on the current journey, the account's on the
- * legacy one), so stamps left on the real day hid the card on every Monday.
- * When this call has just written the setup stamp (within the last minute,
- * by the real clock), it moves to the journey's moment; a retry's older stamp
- * stays, as the handler keeps it. `createdAt` moves with it only while it is
- * the real clock's too (sign-up's, minutes before), so a spec that has set
- * its own account day keeps it.
+ * A new account's first setup, dated on the journey's clock. The handler
+ * stamps `onboardingCompletedAt` (and the sign-up stamped `createdAt`) with
+ * a server timestamp, which the emulator resolves on the real clock, not
+ * this process's moved one. A journey starting on the next Monday is 7
+ * days ahead when it runs on a Monday, so the account would open on its
+ * eighth day, its first week already over. Both stamps move by the gap
+ * between the two clocks, as if the emulator's clock had moved with the
+ * journey's: what happened at a real time happened then on the journey's,
+ * and a spec that spaced them (setup days after sign-up) keeps its space.
+ * Written before the reply, so the profile the app reads next has it.
  */
-async function stampSetupOnJourneyDay(uid: string): Promise<void> {
+async function startOnTheJourneysClock(uid: string): Promise<void> {
+  const gap = Date.now() - realNow();
   const ref = emulatorAdmin().db.doc(`users/${uid}`);
-  const profile = await ref.get();
-  const setup = profile.get("onboardingCompletedAt");
-  if (!(setup instanceof Timestamp)) return;
-  if (realNow() - setup.toMillis() > 60_000) return;
-  const journeyNow = Timestamp.fromMillis(Date.now());
-  const created = profile.get("createdAt");
-  const signedUpJustNow =
-    created instanceof Timestamp &&
-    Math.abs(realNow() - created.toMillis()) < 15 * 60_000;
-  await ref.update({
-    onboardingCompletedAt: journeyNow,
-    ...(signedUpJustNow ? { createdAt: journeyNow } : {}),
-  });
+  const profile = (await ref.get()).data() ?? {};
+  const moved: Record<string, Timestamp> = {};
+  for (const field of ["createdAt", "onboardingCompletedAt"]) {
+    const at = profile[field];
+    if (at instanceof Timestamp)
+      moved[field] = Timestamp.fromMillis(at.toMillis() + gap);
+  }
+  if (Object.keys(moved).length > 0) await ref.update(moved);
 }
 
 async function answer(route: Route, name: string, handler: CallableHandler) {
@@ -147,10 +145,13 @@ async function answer(route: Route, name: string, handler: CallableHandler) {
   );
   const token = await verifiedCaller(bearer);
   try {
+    const firstSetup =
+      name === "completeOnboarding" &&
+      !(await profileOf(token.uid)).get("onboardingCompletedAt");
     const result = await handler.run(route.request().postDataJSON().data, {
       auth: { uid: token.uid, token },
     });
-    if (name === "completeOnboarding") await stampSetupOnJourneyDay(token.uid);
+    if (firstSetup) await startOnTheJourneysClock(token.uid);
     await route.fulfill({
       status: 200,
       contentType: "application/json",

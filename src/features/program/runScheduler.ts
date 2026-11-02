@@ -32,6 +32,7 @@ import {
 import type { RunPlan, ScheduledRunDay } from "./programTypes";
 import { HARD_RUN_TYPES } from "./programTypes";
 import { newRunnerTemplate } from "./newRunner";
+import { starterRunSlots, starterTemplateId } from "./starterPlan";
 import {
   chooseQualityRunSlots,
   easyDaysInFillOrder,
@@ -996,6 +997,28 @@ export function scheduleRecoveryWeekV2(input: {
       })
     )
     .sort((a, b) => weekPosition(a.dayIndex) - weekPosition(b.dayIndex));
+}
+
+/**
+ * A starter week (Run9's reopening, `starterPlan.ts`): the stage's session
+ * on each of the week's starter run days (`starterRunSlots`), in week
+ * order. `from` is the first day the week may plan a run, for a week made
+ * part gone; the days before it are left out. The schedule decides how many
+ * runs there are, as a race plan's does, up to three: with fewer than two
+ * run days the week can still be done, with a run outside the plan.
+ */
+export function scheduleStarterWeek(input: {
+  weekSchedule: ScheduleDay[];
+  weekStart: string;
+  stage: number;
+  from?: string;
+}): ScheduledRunDay[] {
+  const weekStart = startOfLocalWeek(parseLocalDate(input.weekStart));
+  const templateId = starterTemplateId(input.stage);
+  const type = RUN_TEMPLATES.find((t) => t.id === templateId)?.type ?? "easy";
+  return starterRunSlots(input.weekSchedule)
+    .map((dayIndex) => buildRunDayV2({ dayIndex, templateId, type, weekStart }))
+    .filter((day) => !input.from || !day.date || day.date >= input.from);
 }
 
 export interface RacePlanV2Input {

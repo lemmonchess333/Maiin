@@ -8,6 +8,7 @@ import {
   isRunPlanFromNewerBuild,
   raceAwaitsItsEnding,
   raceWeekNeedsBuilding,
+  starterWeekNeedsBuilding,
   weekRolloverAnchor,
 } from "./programMaintenance";
 import { raceRestSkips } from "./raceRest";
@@ -69,9 +70,13 @@ import {
   normalizeProgramState,
   transitionStatus,
 } from "./programTypes";
-import { resolveRecoveryExit } from "./runModeResolution";
+import {
+  finishStarterGoalPatch,
+  resolveRecoveryExit,
+} from "./runModeResolution";
+import { starterWeekFrom } from "./starterWeek";
 import { rebuiltWeekFromToday } from "./racePlanContinuation";
-import { fetchRecentRunning, type RecentRunning } from "./fetchRecentLayoff";
+import { fetchRecentRuns, type RecentRuns } from "./fetchRecentLayoff";
 import type { LayoffClass } from "./layoffDetection";
 import { profileNewRunnerUntil } from "./newRunner";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
@@ -214,7 +219,7 @@ import {
 const PROGRAM_DOC = "current";
 
 /** No read: no layoff, and no runs known. */
-const NOTHING_READ: RecentRunning = { layoff: "none", runs: null };
+const NOTHING_READ: RecentRuns = { layoff: "none", runs: null };
 
 interface RefreshRunScheduleOverrides {
   profileUpdates?: Partial<UserProfile>;
@@ -307,9 +312,10 @@ export function useProgram() {
     /** The day it was read for: a week's rollover waits for that day's. */
     day: string | null;
     cls: LayoffClass;
-    /** The recent runs the read found (`fetchRecentRunning`): a running
-     *  starting point climbs from what they say was done. */
-    runs: RecentRunning["runs"];
+    /** The recent runs the read found (`fetchRecentRuns`): a starter week
+     *  is weighed by their days, and a running starting point climbs from
+     *  what they say was done. Null when they could not be read. */
+    runs: RecentRuns["runs"];
   }>({ uid: null, day: null, cls: "none", runs: null });
   const recentLayoff: LayoffClass =
     layoffRead.uid && layoffRead.uid === user?.uid ? layoffRead.cls : "none";
@@ -320,24 +326,24 @@ export function useProgram() {
    * answer, and a rebuild that starts before it lands waits on the same
    * read rather than making a second.
    */
-  const layoffReads = useRef(new Map<string, Promise<RecentRunning>>());
-  const layoffFor = useCallback((uid: string, day: string) => {
+  const recentRunReads = useRef(new Map<string, Promise<RecentRuns>>());
+  const recentRunsFor = useCallback((uid: string, day: string) => {
     const key = `${uid}|${day}`;
-    let read = layoffReads.current.get(key);
+    let read = recentRunReads.current.get(key);
     if (!read) {
-      read = fetchRecentRunning(uid, day);
-      layoffReads.current.set(key, read);
+      read = fetchRecentRuns(uid, day);
+      recentRunReads.current.set(key, read);
     }
     return read;
   }, []);
   /** The layoff a rebuild is planned from: today's, for this account,
    *  waited for when it has not landed. */
-  const resolveLayoff = useCallback((): Promise<RecentRunning> => {
+  const resolveLayoff = useCallback((): Promise<RecentRuns> => {
     const signedIn = user?.uid;
     return signedIn
-      ? layoffFor(signedIn, localDateString())
+      ? recentRunsFor(signedIn, localDateString())
       : Promise.resolve(NOTHING_READ);
-  }, [user?.uid, layoffFor]);
+  }, [user?.uid, recentRunsFor]);
   const [loading, setLoading] = useState(true);
   /**
    * The mirror's gate — deliberately NOT `loading`.
@@ -466,6 +472,13 @@ export function useProgram() {
         if (profile.runMode === "structured") {
           next = { ...next, runDays: [] };
           delete next.runPlan;
+        } else if (starterWeekNeedsBuilding(next, profile)) {
+          // A starter goal just begun: its first week, from today, at the
+          // first stage. Its later weeks are the rollover's.
+          next = {
+            ...next,
+            ...starterWeekFrom({ weekSchedule, stage: 1, today }),
+          };
         } else if (
           profile.raceGoal &&
           // Earlier weeks belong to auto-rollover, which archives their
@@ -476,7 +489,7 @@ export function useProgram() {
           raceWeekNeedsBuilding(next, profile, today)
         ) {
           // A cold load must use the same returning-runner evidence as rollover.
-          const read = await layoffFor(user.uid, today);
+          const read = await recentRunsFor(user.uid, today);
           if (cancelled || auth.currentUser?.uid !== user.uid) return;
           const runs = regenerateRacePlan({
             recentLayoff: read.layoff,
@@ -570,14 +583,21 @@ export function useProgram() {
         // migrated structured user) gets no auto-assigned runDays.
         let runDays: ScheduledRunDay[] | undefined;
         let runPlan: ProgramState["runPlan"];
-        if (effectiveRunMode === "race_prep" && profile.raceGoal) {
+        if (effectiveRunMode === "starter") {
+          // A starter goal's first week, from today, at the first stage.
+          ({ runDays, runPlan } = starterWeekFrom({
+            weekSchedule: profile.weekSchedule ?? [],
+            stage: 1,
+            today: localDateString(),
+          }));
+        } else if (effectiveRunMode === "race_prep" && profile.raceGoal) {
           const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
           const today = localDateString();
           // A returner's first week has no strides, so even a first plan
           // waits for the read.
-          const read = await layoffFor(user.uid, today);
+          const read = await recentRunsFor(user.uid, today);
           if (cancelled || auth.currentUser?.uid !== user.uid) return;
           ({ runDays, runPlan } = regenerateRacePlan({
             recentLayoff: read.layoff,
@@ -1122,13 +1142,11 @@ export function useProgram() {
     // saveProgram below writes them all, and a plan further behind moves
     // again when this effect runs on the saved plan. Given the day, not
     // the week: the week reached plans no run before today.
-    const { state: rolling, weeks } = rollRunWeeks(
-      programState,
-      profile,
-      today,
-      recentLayoff,
-      recentRuns
-    );
+    const {
+      state: rolling,
+      weeks,
+      starterFinishedOn,
+    } = rollRunWeeks(programState, profile, today, recentLayoff, recentRuns);
     if (weeks === 0) return;
 
     logger.log(
@@ -1142,6 +1160,11 @@ export function useProgram() {
     // Rolled again in the transaction, from the plan the store holds: this
     // copy can be behind it (see saveProgram), and a decline repaints from
     // the store, where the week has already moved.
+    //
+    // A starter goal finished in a week moved past goes back to free running
+    // in the same write: the profile's goal is kept with its day
+    // (`finishStarterGoalPatch`), so the plan and the run mode never
+    // disagree. Declined, neither is written.
     //
     // saveProgram sets state only after its awaited write, never
     // synchronously: the rule counts any call that reaches a setter.
@@ -1157,14 +1180,25 @@ export function useProgram() {
         );
         return rolled.weeks === 0 ? null : rolled.state;
       },
-      undefined,
+      starterFinishedOn
+        ? finishStarterGoalPatch(
+            profile.starterGoal ?? { startedOn: starterFinishedOn },
+            starterFinishedOn
+          )
+        : undefined,
       { quiet: true }
     ).catch((err) => {
       logger.warn("[auto-rollover] save failed", err);
+      // A finish refused over the profile: the profile held here is behind
+      // the stored one, and the next pass would be refused the same way.
+      // Read it again, so the next pass plans from what is stored.
+      if (starterFinishedOn && err instanceof ProgrammeConflictError)
+        void refreshProfile?.();
     });
   }, [
     programState,
     profile,
+    refreshProfile,
     saveProgram,
     layoffRead,
     recentLayoff,
@@ -1212,14 +1246,14 @@ export function useProgram() {
     if (!profile?.runMode || profile.runMode === "freeform") return;
     let cancelled = false;
     const uid = user.uid;
-    void layoffFor(uid, today).then((read) => {
+    void recentRunsFor(uid, today).then((read) => {
       if (!cancelled)
         setLayoffRead({ uid, day: today, cls: read.layoff, runs: read.runs });
     });
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, profile?.runMode, today, layoffFor]);
+  }, [user?.uid, profile?.runMode, today, recentRunsFor]);
 
   useEffect(() => {
     if (!programState || !profile) return;
@@ -2360,6 +2394,18 @@ export function useProgram() {
               today,
               weekStart
             );
+          } else if (profile.runMode === "starter") {
+            // The starter goal keeps its stage through a reset; its week is
+            // laid again from today on the layout. A plan not yet the
+            // starter's begins at the first stage.
+            const starter =
+              base?.runPlan?.mode === "starter" ? base : undefined;
+            ({ runDays, runPlan } = starterWeekFrom({
+              weekSchedule: effectiveSchedule,
+              stage: starter?.runPlan?.stage ?? 1,
+              today: localDateString(),
+              prior: starter?.runDays,
+            }));
           } else if (isRunPlanFromNewerBuild(base?.runPlan)) {
             // A newer build's plan: kept, not rebuilt as free running.
             runDays = base?.runDays ?? [];
@@ -2547,6 +2593,17 @@ export function useProgram() {
           // from the plan and its race day, so both stay as they are.
           runDays = base.runDays ?? [];
           runPlan = base.runPlan;
+        } else if (profile.runMode === "starter") {
+          // A starter keeps its stage; its week is laid again on the new
+          // run days from today, the days already gone as they were. A plan
+          // not yet the starter's begins at the first stage.
+          const starter = base.runPlan?.mode === "starter" ? base : undefined;
+          ({ runDays, runPlan } = starterWeekFrom({
+            weekSchedule,
+            stage: starter?.runPlan?.stage ?? 1,
+            today: localDateString(),
+            prior: starter?.runDays,
+          }));
         } else if (isRunPlanFromNewerBuild(base.runPlan)) {
           // A newer build's plan: this build cannot rebuild it, and must
           // not clear it.
@@ -2572,8 +2629,9 @@ export function useProgram() {
             : rd;
         });
         // Run19: the layout changes the week from today. Its days already
-        // gone stay as they were, and none is planned before today.
-        if (runPlan) {
+        // gone stay as they were, and none is planned before today. A
+        // starter's week was built so (`starterWeekFrom`).
+        if (runPlan && runPlan.mode !== "starter") {
           runDays = rebuiltWeekFromToday(
             base.runDays ?? [],
             runDays,
