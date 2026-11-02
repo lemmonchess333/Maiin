@@ -180,15 +180,6 @@ export function challengeLocalEndMs(
 }
 
 /**
- * The collapsed entry to the not-joined challenges: how many more there
- * are, in plain words. No deadline: the monthly challenges all end on the
- * same day, and the featured card above already says when.
- */
-export function moreChallengesLabel(count: number): string {
-  return `See ${count} more ${count === 1 ? "challenge" : "challenges"}`;
-}
-
-/**
  * How long a challenge has left, for the person's own day: "6 days left",
  * "3 hours left", "40 min left". The units are words or spaced "min",
  * never "40m" (forty metres, in an app that counts distance). The last
