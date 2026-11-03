@@ -116,27 +116,38 @@ export default function SpacePostCard({
             background: `linear-gradient(150deg, ${THEME.running}24 0%, ${THEME.running}0A 55%, ${THEME.running}12 100%)`,
           }}
         >
-          <RouteScene preview={activity.routePreview!} />
-          {(activity.distance ?? 0) > 0 && (
-            <div className="absolute bottom-2.5 left-3.5">
-              <p className="text-xl font-bold font-figure tabular-nums leading-none text-running">
-                {distanceValue(activity.distance ?? 0, unit, 2)}
-              </p>
-              <SectionLabel className="mt-0.5">
-                {distanceUnitLabel(unit)}
-              </SectionLabel>
-            </div>
-          )}
-          {(activity.avgPace ?? 0) > 0 && (
-            <div className="absolute bottom-2.5 right-3.5 text-right">
-              <p className="text-sm font-bold font-mono tabular-nums leading-none text-foreground">
-                {paceMinSec(activity.avgPace!, unit)}
-              </p>
-              <SectionLabel className="mt-0.5">
-                {paceUnitLabel(unit)}
-              </SectionLabel>
-            </div>
-          )}
+          {/* The numbers in a row under the route, not over it, as on
+              the feed's card: laid over it, a route starting at a corner
+              drew its start ring on one. */}
+          <RouteScene
+            preview={activity.routePreview!}
+            footer={
+              ((activity.distance ?? 0) > 0 || (activity.avgPace ?? 0) > 0) && (
+                <div className="flex shrink-0 items-end gap-3 px-3.5 pb-2.5">
+                  {(activity.distance ?? 0) > 0 && (
+                    <div className="min-w-0">
+                      <p className="text-xl font-bold font-figure tabular-nums leading-none text-running">
+                        {distanceValue(activity.distance ?? 0, unit, 2)}
+                      </p>
+                      <SectionLabel className="mt-0.5">
+                        {distanceUnitLabel(unit)}
+                      </SectionLabel>
+                    </div>
+                  )}
+                  {(activity.avgPace ?? 0) > 0 && (
+                    <div className="ml-auto min-w-0 text-right">
+                      <p className="text-sm font-bold font-mono tabular-nums leading-none text-foreground">
+                        {paceMinSec(activity.avgPace!, unit)}
+                      </p>
+                      <SectionLabel className="mt-0.5">
+                        {paceUnitLabel(unit)}
+                      </SectionLabel>
+                    </div>
+                  )}
+                </div>
+              )
+            }
+          />
         </div>
       )}
       {isLiftAttach && activity && (

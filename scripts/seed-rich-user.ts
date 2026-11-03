@@ -465,14 +465,14 @@ async function main() {
      its commentCount, the second the seeded user's own, whose row has the
      delete menu, with a reaction on the first. None of the props is the
      seeded user's, so Explore draws the card as before. */
-  const propsGivers = [
-    "Jordan Reyes",
-    "Sam Okafor",
-    "Priya Nair",
-    "Leo Martins",
-    "Aisha Bello",
+  const propsGivers: { name: string; photoURL: string | null }[] = [
+    { name: "Jordan Reyes", photoURL: null },
+    { name: "Sam Okafor", photoURL: null },
+    { name: "Priya Nair", photoURL: null },
+    { name: "Leo Martins", photoURL: null },
+    { name: "Aisha Bello", photoURL: null },
   ];
-  for (const [i, name] of propsGivers.entries()) {
+  for (const [i, { name, photoURL }] of propsGivers.entries()) {
     const giver = `rich-props-${i + 1}`;
     await db
       .collection("users")
@@ -483,7 +483,7 @@ async function main() {
         uid: giver,
         displayName: name,
         displayNameLower: name.toLowerCase(),
-        photoURL: null,
+        photoURL,
         athleteType: "Hybrid",
       });
     await db
@@ -494,9 +494,18 @@ async function main() {
       .set({ createdAt: hoursAgo(8 - i) });
   }
   /* The three newest givers, as toggleKudos keeps them on the post, so
-     its card says who gave props ("Aisha Bello and 4 others"). */
+     its card says who gave props ("Aisha Bello and 4 others"). Each copy
+     is the giver's public name AND photo, as the callable writes it
+     (socialCounters.propsGiver): the card draws only this copy and reads
+     no profile, and the rig runs no Functions, so nothing carries a photo
+     given to a profile above (or set later) onto the post. A copy with
+     the name alone draws an initial for a giver who has a photo. */
   const newestGivers = propsGivers
-    .map((name, i) => ({ uid: `rich-props-${i + 1}`, name }))
+    .map(({ name, photoURL }, i) => ({
+      uid: `rich-props-${i + 1}`,
+      name,
+      ...(photoURL ? { photoURL } : {}),
+    }))
     .reverse()
     .slice(0, 3);
   await db
@@ -516,7 +525,7 @@ async function main() {
     .doc("rich-c0")
     .set({
       authorId: "rich-props-1",
-      authorName: propsGivers[0],
+      authorName: propsGivers[0].name,
       text: "That bench is moving. Is 70 kg next?",
       reactions: { fire: ["rich-feed-author"] },
       createdAt: hoursAgo(8),

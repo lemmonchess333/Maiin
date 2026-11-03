@@ -308,13 +308,18 @@ function ProfileContent({
               following
             </p>
           )}
-          {trainingForSpaceId && !youBlockedThem && (
-            <div className="mt-2">
-              <TrainingForChip spaceId={trainingForSpaceId} />
-            </div>
-          )}
         </div>
       </div>
+
+      {/* The race chip under the header row, across the page. Beside the
+          avatar it had the name's column, a third of a 320px screen at
+          large text, and the race's name broke inside its words. Hidden
+          while empty: the chip shows nothing for a race that has passed. */}
+      {trainingForSpaceId && !youBlockedThem && (
+        <div className="empty:hidden">
+          <TrainingForChip spaceId={trainingForSpaceId} />
+        </div>
+      )}
 
       {isOwnProfile ? (
         <div className="space-y-2">

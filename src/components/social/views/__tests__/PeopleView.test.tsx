@@ -58,13 +58,18 @@ vi.mock("@/lib/socialAnalytics", () => ({ track: vi.fn() }));
 const toasts = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: toasts }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 beforeEach(() => {
   H.people = [];
   H.loading = false;
   H.activeArgs = [];
   H.spacesReady = true;
   H.entries = [];
+  toasts.success.mockClear();
+  toasts.error.mockClear();
 });
 
 function renderPeople(blockedReady: boolean) {
@@ -166,5 +171,35 @@ it("says so when the invite link can't be copied", async () => {
     )
   );
   expect(toasts.success).not.toHaveBeenCalled();
+  vi.unstubAllGlobals();
+});
+
+it("shares the app's public address, not the page's own origin", async () => {
+  // From the iPhone app the page's origin is capacitor://localhost, which
+  // opens nothing for the person the invite is sent to.
+  expect(window.location.origin).not.toBe("https://troposfit.com");
+  const share = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal("navigator", { ...navigator, share });
+  renderPeople(true);
+  fireEvent.click(screen.getByRole("button", { name: "Share invite link" }));
+  await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
+  expect(share.mock.calls[0][0]).toMatchObject({
+    url: "https://troposfit.com",
+  });
+  cleanup();
+  vi.unstubAllGlobals();
+
+  // No share sheet: the copied text carries the same address.
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal("navigator", {
+    ...navigator,
+    share: undefined,
+    clipboard: { writeText },
+  });
+  renderPeople(true);
+  fireEvent.click(screen.getByRole("button", { name: "Share invite link" }));
+  await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+  expect(writeText.mock.calls[0][0]).toMatch(/ https:\/\/troposfit\.com$/);
+  expect(toasts.success).toHaveBeenCalledWith("Invite link copied");
   vi.unstubAllGlobals();
 });

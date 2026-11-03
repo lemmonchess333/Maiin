@@ -3364,3 +3364,21 @@ or a phone.
       Invite someone), this week's challenge with the page's one filled
       button, then Discover. Scroll to the bottom: the last card clears the
       tab bar.
+
+## Social capture fixes: invites, partner streaks, the route hero (2026-11-03)
+
+Six fixes from capturing Social against the emulator rig. Unit and rules
+tests cover them; these need a phone or the deployed rules.
+
+- [ ] **An invite from the iPhone app opens the app.** On a phone, People →
+      Share invite link, and a Circle's Share invite: the share sheet's
+      link is `https://troposfit.com`, and it opens the web app from
+      Messages. It was `capacitor://localhost`.
+- [ ] **A partner streak is offered.** After the Deploy production run
+      that ships the rules, open the profile of someone you follow who
+      follows you back and has no bond with you: the partner streak card
+      offers to start one. Before, the read of a bond that did not exist
+      yet was refused and the card never showed.
+- [ ] **The route keeps off the distance.** In the feed on a phone, at
+      the phone's largest text size too, a run card's route sits above
+      its distance, never on it.

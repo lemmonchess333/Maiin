@@ -1969,7 +1969,12 @@ service cloud.firestore {
     // tracks a shared streak (days both logged a session). Only the two
     // members may read or write their bond.
     //
-    //   - READ: either member.
+    //   - READ: either member. And a pair with no bond yet reads as no
+    //     document for either of the two its id names: the app reads the
+    //     pair's id to learn whether to offer one (getBond), and a
+    //     refused read there settled every pair as not eligible, so a
+    //     streak was never offered. Nobody else learns whether two other
+    //     people have a bond.
     //   - CREATE: SERVER-ONLY (`if false`). Each person holds at most five
     //     bonds, and rules cannot count documents, so the
     //     startPartnerStreak callable makes every bond in a transaction
@@ -1997,7 +2002,23 @@ service cloud.firestore {
         return request.auth != null
           && request.auth.uid in resource.data.members;
       }
-      allow read: if bondMember();
+      /* The caller is one of the two people the id names. A pair's id is
+         its two uids, sorted and joined with "__" (bondId in
+         partnerStreakApi.ts, bondIdFor in functions/lib/partnerBonds.js),
+         and a uid Firebase Auth makes is letters and digits only. */
+      function namedInBondId() {
+        let ids = bondId.split('__');
+        return request.auth != null
+          && ids.size() == 2
+          && request.auth.uid in ids;
+      }
+      /* `resource` is null for a document that does not exist, and
+         `resource.data` on it is an error that refuses the read: so a
+         missing bond is asked about by name, and an existing one by its
+         members, the stored list a server wrote. */
+      allow get: if (resource == null && namedInBondId())
+        || (resource != null && bondMember());
+      allow list: if bondMember();
       // Server-only: a create here could not count the bonds either person
       // already holds (see the header). The startPartnerStreak callable is
       // the one writer.

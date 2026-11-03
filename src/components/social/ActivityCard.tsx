@@ -254,6 +254,7 @@ function ActivityCard({
     viewerUid: user?.uid ?? null,
     viewerGave: liked,
     blocked,
+    viewerPhotoURL: profile?.photoURL,
   });
   const givenBy = propsLine(givers, kudosCount);
 
@@ -380,17 +381,23 @@ function ActivityCard({
         background: `linear-gradient(150deg, ${THEME.running}24 0%, ${THEME.running}0A 55%, ${THEME.running}12 100%)`,
       }}
     >
-      <RouteScene preview={routePreview!} />
-      {showDistanceOverlay && (
-        <div className="absolute bottom-3 left-4">
-          <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-running">
-            {distanceValue(activity?.distance || 0, unit, 2)}
-          </p>
-          <SectionLabel className="mt-0.5">
-            {distanceUnitLabel(unit)}
-          </SectionLabel>
-        </div>
-      )}
+      {/* The numeral sits under the route, not over it: laid over the
+          drawing, a route starting bottom-left put its start ring on it. */}
+      <RouteScene
+        preview={routePreview!}
+        footer={
+          showDistanceOverlay && (
+            <div className="shrink-0 px-4 pb-3">
+              <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-running">
+                {distanceValue(activity?.distance || 0, unit, 2)}
+              </p>
+              <SectionLabel className="mt-0.5">
+                {distanceUnitLabel(unit)}
+              </SectionLabel>
+            </div>
+          )
+        }
+      />
     </div>
   );
 
@@ -821,11 +828,14 @@ function ActivityCard({
        screen. At double text a 393px phone's card is 11em wide, and rows
        sized for 22em squeezed the author's name to nothing. */
     <div className="@container bg-card rounded-2xl overflow-hidden card-shadow">
-      {/* Hybrid card: map on top (shorter), then divider, then workout content */}
+      {/* Hybrid card: map on top (shorter), then divider, then workout
+          content. Its height in rem, as the run card's: the numeral under
+          the route grows with the text, and a fixed 120px left the route
+          almost no room at double text. */}
       {isHybrid ? (
         <>
           {routePreview &&
-            toPost(renderRouteHero("h-[120px]"), { focusable: false })}
+            toPost(renderRouteHero("h-30"), { focusable: false })}
           <div className="p-4 pb-0">
             {renderAuthorRow(
               <p className="text-small text-muted-foreground whitespace-nowrap @max-[14em]:whitespace-normal">

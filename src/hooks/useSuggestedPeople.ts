@@ -11,7 +11,8 @@ import { noteFollowState } from "@/hooks/useFollowState";
  *
  * v1 strategy lives in `getSuggestedPeople`:
  *   - recent public posters
- *   - filters out self, already-followed, blocked
+ *   - filters out self, already-followed, blocked, and a follow request
+ *     waiting either way (theirs is answered above the suggestions)
  *
  * Re-fetches when the user identity changes. Consumers that
  * need fresh data (e.g. after following someone and wanting them gone
@@ -87,7 +88,7 @@ export function useSuggestedPeople(
     }).then(
       (list) => {
         if (cancelled) return;
-        // Everyone suggested is someone not followed yet, so their
+        // Everyone suggested is someone not followed or asked yet, so their
         // Follow buttons needn't each ask.
         for (const p of list) noteFollowState(uid, p.uid, false);
         setSuggestions({

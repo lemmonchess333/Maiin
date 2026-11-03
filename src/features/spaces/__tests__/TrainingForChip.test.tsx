@@ -57,6 +57,24 @@ describe("TrainingForChip — display gate", () => {
     expect(link).toHaveAttribute("href", `/space/${raceDef.id}`);
   });
 
+  it("wraps as one line of text: the weeks stay with the name or move under it whole", () => {
+    /* On a narrow profile the weeks, a flex item of their own, stood to
+       the right of the wrapped name as a narrow column ("· 23" over
+       "wks"). They are now in the name's own run of text, unbreakable. */
+    mockOverrides.mockReturnValue({
+      [raceDef.id]: { dateKey: isoDaysFromNow(21) },
+    });
+    renderChip(raceDef.id);
+    const link = screen.getByRole("link");
+    const weeks = screen.getByText("· 3 wks");
+    expect(weeks).toHaveClass("whitespace-nowrap");
+    const text = weeks.parentElement!;
+    expect(text).not.toBe(link);
+    expect(text.textContent).toBe(`Training for ${raceDef.name} · 3 wks`);
+    // And the chip never runs past its column.
+    expect(link).toHaveClass("max-w-full");
+  });
+
   it("says 'race week' inside the final week", () => {
     mockOverrides.mockReturnValue({
       [raceDef.id]: { dateKey: isoDaysFromNow(3) },

@@ -268,9 +268,17 @@ describe("someone else's profile", () => {
       },
     });
     renderAt("/user/alice");
-    expect(await screen.findByTestId("training-for")).toHaveTextContent(
-      "london-marathon"
-    );
+    const chip = await screen.findByTestId("training-for");
+    expect(chip).toHaveTextContent("london-marathon");
+    // Under the header row, across the page, not in the name's column
+    // beside the avatar: a third of a 320px screen at large text, where
+    // the race's name broke inside its words.
+    const nameColumn = screen.getByRole("heading", {
+      level: 1,
+      name: "Alice",
+    }).parentElement!;
+    expect(nameColumn.contains(chip)).toBe(false);
+    expect(nameColumn.parentElement!.contains(chip)).toBe(false);
     fireEvent.click(screen.getByRole("link", { name: "Open Bob" }));
     await screen.findByRole("heading", { level: 1, name: "Bob" });
     expect(screen.queryByTestId("training-for")).toBeNull();
