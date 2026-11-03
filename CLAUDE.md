@@ -17,7 +17,7 @@ npm run verify       # Everything CI's unit job blocks a merge on: run before pu
 
 ## Tech Stack
 
-- **Frontend:** React 19 + TypeScript 5.9 + Vite 7
+- **Frontend:** React 19 + TypeScript 5.9 + Vite 8 (Rolldown)
 - **Styling:** Tailwind CSS v4 (via @tailwindcss/vite plugin)
 - **Routing:** React Router v7
 - **Backend:** Firebase 12 (Auth, Firestore, Cloud Functions, Storage)

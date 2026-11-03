@@ -31,7 +31,7 @@ that browser. It is a standalone development page, outside the production app.
 
 ## Tech stack
 
-- **Frontend:** React 19 + TypeScript 5.9 + Vite 7
+- **Frontend:** React 19 + TypeScript 5.9 + Vite 8 (Rolldown)
 - **Styling:** Tailwind CSS v4 via `@tailwindcss/vite`
 - **Routing:** React Router v7
 - **Backend:** Firebase 12 (Auth, Firestore, Cloud Functions, Storage)
