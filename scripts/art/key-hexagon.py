@@ -33,6 +33,15 @@ rgb = a.astype(np.float32)
 spill = np.clip((np.minimum(r, b) - g), 0, 255).astype(np.float32) * (1 - alpha)
 rgb[..., 0] -= spill * 0.5
 rgb[..., 2] -= spill * 0.5
+if frame == "coin":
+    # A coin's reeded edge leaves a ring of faintly pink pixels that the
+    # ramp keeps fully opaque, so the partial despill above never reaches
+    # them. None of the three metals nor the black enamel has red and blue
+    # both above green, so any pixel that does carries magenta: bring red
+    # and blue down to green there, whatever its alpha.
+    spill_all = np.clip(np.minimum(rgb[..., 0], rgb[..., 2]) - rgb[..., 1], 0, 255)
+    rgb[..., 0] -= spill_all
+    rgb[..., 2] -= spill_all
 rgb = np.clip(rgb, 0, 255).astype(np.uint8)
 A = (alpha * 255).astype(np.uint8)
 # Hexagon bbox from the solid pixels.
