@@ -53,6 +53,12 @@ are never confused, made of the same materials so they read as one family:
    _"change only the metal and the glow"_.
 3. **Medals** — each definition image-edited from its tier master:
    _"replace only the emblem"_, same size and place, lower third plain.
+   With `--from-gold` only the gold is edited from its master, and that
+   gold medal is the reference for its bronze and silver: _"change only the
+   metal and the glow"_. The three tiers then carry one emblem, as the
+   badges' tiers differ only in metal; drawn from separate tier masters,
+   the first run's Training Minutes came out three different clocks. Make
+   new sets with it.
 4. **Key + frame** — `key-hexagon.py … 512 coin` keys the magenta and fits
    the coin to the `coin` frame (it fills 96% of the square: x and y
    2..98 of 100), the box `MedalArt` draws the art in, so the
@@ -61,8 +67,8 @@ are never confused, made of the same materials so they read as one family:
 
 ```
 GEMINI_API_KEY=… python3 scripts/art/generate-medals.py
-# re-roll one against the saved tier masters:
-GEMINI_API_KEY=… python3 scripts/art/generate-medals.py --skip-masters --only autumn-push --tiers silver
+# re-roll one set against the saved masters, its gold first:
+GEMINI_API_KEY=… python3 scripts/art/generate-medals.py --skip-masters --from-gold --only autumn-push
 ```
 
 The prompts and the emblem table live in the script; edit them there, not
@@ -73,11 +79,11 @@ here, so this page cannot drift from what ran.
 | Definition         | Challenge (functions/lib/challengeDefs.js)                 | Emblem                                        |
 | ------------------ | ---------------------------------------------------------- | --------------------------------------------- |
 | `weekly-warrior`   | Weekly Warrior, `weekly-…`                                 | a small dumbbell inside an open laurel wreath |
-| `monthly-mileage`  | {Month} Mileage, `monthly-…`                               | running footprints climbing a curving path    |
+| `monthly-mileage`  | {Month} Mileage, `monthly-…`                               | a map location pin                            |
 | `strength-builder` | {Month} Strength Builder, `strength-monthly-…`             | a short barbell with one large plate each end |
-| `active-days`      | {Month} Active Days, `featured-monthly-…` (Jan, Mar…)      | a calendar page with a bold tick              |
-| `training-minutes` | {Month} Training Minutes, `featured-monthly-…` (Feb, Apr…) | a clock face at ten past ten                  |
-| `hybrid-hero`      | {Month} Hybrid Hero, `global-monthly-…`                    | a dumbbell and a running shoe under one star  |
+| `active-days`      | {Month} Active Days, `featured-monthly-…` (Jan, Mar…)      | a desk calendar block with a bold tick        |
+| `training-minutes` | {Month} Training Minutes, `featured-monthly-…` (Feb, Apr…) | an hourglass                                  |
+| `hybrid-hero`      | {Month} Hybrid Hero, `global-monthly-…`                    | a winged dumbbell                             |
 | `fastest-5k`       | Fastest 5K, `fastest-5k-…`                                 | a stopwatch with speed lines                  |
 | `spring-reset`     | Spring Reset, `seasonal-…` from March                      | a sprout with two leaves                      |
 | `summer-shred`     | Summer Shred, `seasonal-…` from June                       | a round sun with short rays                   |

@@ -19,7 +19,10 @@ key-hexagon.py, as generate-badges.py runs the badges:
      metal and the glow change.
   3. MEDALS  — each definition image-edited from ITS tier master: only the
      emblem changes. The lower third of the face stays plain enamel: the
-     goal is printed there in code.
+     goal is printed there in code. With --from-gold, only the GOLD is
+     edited from its master; bronze and silver are metal-swapped from that
+     gold medal, so the three tiers carry one emblem, as the badges' tiers
+     differ only in metal. Every set made since the first run uses it.
   4. KEY     — magenta → alpha, the coin fitted to the `coin` frame (it
      fills 96% of the square), 512 px WebP at q82 into
      public/medals/<definition>-<tier>.webp.
@@ -29,7 +32,7 @@ src/features/challenges/medalArt.ts; the procedural medal stands in for any
 that is not listed.
 
 Usage (from the repo root):
-  GEMINI_API_KEY=… python3 scripts/art/generate-medals.py [--style-ref path.png|.webp] [--work DIR] [--only definition …] [--tiers gold …] [--skip-masters]
+  GEMINI_API_KEY=… python3 scripts/art/generate-medals.py [--style-ref path.png|.webp] [--work DIR] [--only definition …] [--tiers gold …] [--skip-masters] [--from-gold]
 
 --work keeps the intermediates (masters, raw generations, keyed PNGs) so one
 medal can be re-rolled with --only (and --tiers) and --skip-masters without
@@ -62,11 +65,17 @@ TIER_EDIT = {
 # icon each definition carries in challengeDefs.js where it has one.
 MEDALS = [
     ("weekly-warrior", "a small dumbbell held inside an open laurel wreath"),
-    ("monthly-mileage", "a pair of running footprints climbing a gently curving path"),
+    # Re-rolled (--from-gold): footprints on a path read as a blob at 64 px.
+    ("monthly-mileage", "a map location pin, a teardrop-shaped marker pointing down with a round hole near its top, sculpted with real depth and bevelled edges, never a flat outline"),
     ("strength-builder", "a short barbell loaded with one large round plate at each end, held level"),
-    ("active-days", "a calendar page with a bold tick mark on it"),
-    ("training-minutes", "a round clock face with its hands at ten past ten"),
-    ("hybrid-hero", "a dumbbell and a running shoe side by side beneath a single five-pointed star"),
+    # Re-rolled (--from-gold): the first calendar came out a flat app glyph.
+    ("active-days", "a thick desk calendar block with two binder rings across its top edge and a bold raised tick mark on its face, sculpted with real depth and bevelled edges, never a flat outline"),
+    # Re-rolled (--from-gold): a clock face is a disc on a disc, and its three
+    # tiers came out three different clocks.
+    ("training-minutes", "an hourglass with a frame of two flat discs joined by two slim posts and sand gathered in its lower bulb, sculpted with real depth and bevelled edges, never a flat outline"),
+    # Re-rolled (--from-gold): three objects were too busy at 64 px, and a
+    # dumbbell with a shoe is the hybrid_athlete badge's emblem.
+    ("hybrid-hero", "a short dumbbell held level with a pair of small swept-back wings rising from behind its handle, one wing each side, sculpted with real depth and bevelled edges, never a flat outline"),
     ("fastest-5k", "a stopwatch with three short speed lines trailing from its left side"),
     ("spring-reset", "a young sprout with two leaves rising from a small mound of soil"),
     ("summer-shred", "a round sun with short straight rays"),
@@ -91,13 +100,16 @@ MASTER_PROMPT = (
 )
 
 
-def tier_prompt(tier):
+def tier_prompt(tier, emblem="the star emblem"):
+    """Gold to `tier`: the tier masters (the star), and with --from-gold each
+    medal's bronze and silver from its gold (the emblem kept exactly)."""
     metal, glow = TIER_EDIT[tier]
+    kept = "with its size and place" if emblem == "the star emblem" else "with its exact shape, every detail, its size and place"
     return (
         "Keep this exact round medal, camera angle, framing, lighting, the milled rim, the smooth black enamel "
-        "face, the star emblem with its size and place in the upper half of the face, the plain lower third "
+        f"face, {emblem} {kept} in the upper half of the face, the plain lower third "
         "of the face, and the flat solid magenta background. Change only the metal and the glow: every gold "
-        f"metal part (the bevelled rim and the star emblem) becomes {metal}, and the warm golden light behind "
+        f"metal part (the bevelled rim and {emblem}) becomes {metal}, and the warm golden light behind "
         f"the face and around the emblem becomes {glow}. Nothing else changes."
     )
 
@@ -126,6 +138,8 @@ def main():
     ap.add_argument("--only", nargs="*", default=[], help="definitions to make (default: all)")
     ap.add_argument("--tiers", nargs="*", default=list(METAL), help="tiers to make (default: all three)")
     ap.add_argument("--skip-masters", action="store_true", help="reuse --work/tier-*.png")
+    ap.add_argument("--from-gold", action="store_true",
+                    help="make each gold from the gold master, then its bronze and silver from that gold")
     ap.add_argument("--workers", type=int, default=3)
     a = ap.parse_args()
     os.makedirs(a.work, exist_ok=True)
@@ -159,13 +173,7 @@ def main():
             for t, (ok, msg) in zip(TIER_EDIT, ex.map(lambda t: gen(tier_png(t), tier_prompt(t), tier_png("gold")), TIER_EDIT)):
                 print(f"tier {t}:", "ok" if ok else "FAILED " + msg)
 
-    def one(job):
-        definition, emblem, tier = job
-        key = f"{definition}-{tier}"
-        raw = os.path.join(a.work, f"{key}.png")
-        ok, msg = gen(raw, medal_prompt(tier, emblem), tier_png(tier))
-        if not ok:
-            return key, "FAILED " + msg
+    def key_and_ship(key, raw):
         stem = os.path.join(a.work, f"keyed-{key}")
         k = subprocess.run([sys.executable, KEY_HEX, raw, stem, "512", "coin"], capture_output=True, text=True)
         if k.returncode != 0:
@@ -174,13 +182,39 @@ def main():
         Image.open(stem + ".png").save(dst, quality=82, method=6)
         return key, f"ok {os.path.getsize(dst)} B  {k.stdout.splitlines()[0]}"
 
-    jobs = [(d, e, t) for d, e in MEDALS if not a.only or d in a.only for t in METAL if t in a.tiers]
+    def one(job):
+        definition, emblem, tier = job
+        key = f"{definition}-{tier}"
+        raw = os.path.join(a.work, f"{key}.png")
+        if a.from_gold and tier != "gold":
+            # The gold of this definition is the reference: only the metal moves.
+            gold_raw = os.path.join(a.work, f"{definition}-gold.png")
+            ok, msg = gen(raw, tier_prompt(tier, "the emblem"), gold_raw)
+        else:
+            ok, msg = gen(raw, medal_prompt(tier, emblem), tier_png(tier))
+        if not ok:
+            return key, "FAILED " + msg
+        return key_and_ship(key, raw)
+
+    chosen = [(d, e) for d, e in MEDALS if not a.only or d in a.only]
     made = []
-    with cf.ThreadPoolExecutor(a.workers) as ex:
-        for key, msg in ex.map(one, jobs):
-            print(key, msg, flush=True)
-            if msg.startswith("ok"):
-                made.append(key)
+
+    def run(jobs):
+        with cf.ThreadPoolExecutor(a.workers) as ex:
+            for key, msg in ex.map(one, jobs):
+                print(key, msg, flush=True)
+                if msg.startswith("ok"):
+                    made.append(key)
+
+    if a.from_gold:
+        # Golds first (a fresh one unless only the lower tiers are asked for),
+        # then the lower tiers from them.
+        if "gold" in a.tiers:
+            run([(d, e, "gold") for d, e in chosen])
+        run([(d, e, t) for d, e in chosen for t in METAL if t != "gold" and t in a.tiers
+             and os.path.exists(os.path.join(a.work, f"{d}-gold.png"))])
+    else:
+        run([(d, e, t) for d, e in chosen for t in METAL if t in a.tiers])
     if made:
         print("\nAdd to MEDAL_ART_KEYS (src/features/challenges/medalArt.ts) once reviewed:")
         for key in made:
