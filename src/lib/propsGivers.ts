@@ -5,8 +5,12 @@
  *
  * The server keeps the newest givers on the post (`recentPropsBy`,
  * `functions/lib/socialCounters.js`), with each one's public name and
- * photo, so a card names them without a read per card. Tapping the line
- * still opens the full list.
+ * photo, so a card names them without a read per card. A photo set or
+ * changed later reaches the copies through `onPublicProfileIdentityChanged`
+ * (`functions/lib/identityResync.js`), so a face drawn as an initial is a
+ * copy that holds no photo: a seed that writes the list must copy the
+ * photo too, as the callable does. Tapping the line still opens the full
+ * list.
  */
 
 /** The givers a post names. Pinned to the server's by
@@ -43,6 +47,10 @@ export function readPropsGivers(value: unknown): PropsGiver[] {
  * The givers a reader is shown: nobody either side of a block with them,
  * and the reader as "You", first, once they have given props (a tap that
  * has not reached the post yet included).
+ *
+ * "You" wears the reader's own photo as they have it now. The copy on the
+ * post is missing until the server has the tap, and on a post from before
+ * they set or changed it; their own photo needs no read.
  */
 export function shownPropsGivers(
   givers: PropsGiver[],
@@ -50,13 +58,21 @@ export function shownPropsGivers(
     viewerUid,
     viewerGave,
     blocked,
-  }: { viewerUid: string | null; viewerGave: boolean; blocked: Set<string> }
+    viewerPhotoURL,
+  }: {
+    viewerUid: string | null;
+    viewerGave: boolean;
+    blocked: Set<string>;
+    /** The reader's own current photo (their profile), if they have one. */
+    viewerPhotoURL?: string | null;
+  }
 ): PropsGiver[] {
   const others = givers.filter(
     (g) => g.uid !== viewerUid && !blocked.has(g.uid)
   );
   if (!viewerGave || !viewerUid) return others.slice(0, RECENT_PROPS_MAX);
-  const photo = givers.find((g) => g.uid === viewerUid)?.photoURL;
+  const photo =
+    viewerPhotoURL || givers.find((g) => g.uid === viewerUid)?.photoURL;
   const you: PropsGiver = {
     uid: viewerUid,
     name: "You",

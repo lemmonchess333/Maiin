@@ -67,6 +67,10 @@ const DEMO: FeedItem[] = [
       elevationGain: 42,
       routePreview: loop(),
       commentCount: 2,
+      moments: [
+        { kind: "firstDistance", meters: 5000 },
+        { kind: "streak", days: 7 },
+      ],
     },
   },
   {
@@ -84,6 +88,13 @@ const DEMO: FeedItem[] = [
       totalVolume: 6420,
       exerciseCount: 3,
       duration: 3120,
+      // A post written now (Soc15): its new best is a moment, not the
+      // older posts' PR line below.
+      prCount: 1,
+      moments: [
+        { kind: "pr", exercise: "Bench Press", weightKg: 60, reps: 8 },
+        { kind: "planWeek", week: 4, weeks: 12 },
+      ],
       muscleGroups: ["horizontal_push", "vertical_pull"],
       exercises: [
         lift("Bench Press", 3, 8, 60),
@@ -147,6 +158,12 @@ const WORST: FeedItem[] = [
       avgPace: 451,
       duration: 45_296,
       elevationGain: 2845,
+      // Moments (Soc15): the widest of each run kind, three to a post.
+      moments: [
+        { kind: "firstDistance", meters: 21097 },
+        { kind: "fastestEffort", meters: 10000, seconds: 86_399 },
+        { kind: "longestRun", meters: 100_420 },
+      ],
       routePreview: loop(2),
       commentCount: 1284,
     },
@@ -171,6 +188,18 @@ const WORST: FeedItem[] = [
       exerciseCount: 12,
       prCount: 12,
       duration: 9_540,
+      // Moments (Soc15): a PR on the longest name the post lists, at a
+      // load converted from lb, and the longest milestones.
+      moments: [
+        {
+          kind: "pr",
+          exercise: "Single-Arm Dumbbell Bulgarian Split Squat (Paused)",
+          weightKg: 142.8816,
+          reps: 12,
+        },
+        { kind: "streak", days: 365 },
+        { kind: "planWeek", week: 104, weeks: 104 },
+      ],
       muscleGroups: [
         "horizontal_push",
         "vertical_push",

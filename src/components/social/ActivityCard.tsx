@@ -58,6 +58,7 @@ import {
   Flag,
   Ban,
   BookmarkPlus,
+  Medal,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 
@@ -75,6 +76,8 @@ import {
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { elevationLabel } from "@/lib/runLabels";
 import { commentQuickChips } from "@/lib/commentChips";
+import { postMomentsOf } from "@/lib/postMoments";
+import { postMomentLines, type PostMomentLines } from "./postMomentLines";
 
 const formatDur = formatClock;
 
@@ -85,6 +88,14 @@ const RUN_STAT_COLUMNS =
 /** The exercise rows a card in a list draws; the post's own page draws
  *  them all. */
 const FEED_EXERCISE_ROWS = 3;
+
+/** A moment's icon (Soc15). */
+const MOMENT_ICONS: Record<PostMomentLines["icon"], typeof Trophy> = {
+  trophy: Trophy,
+  medal: Medal,
+  flame: Flame,
+  flag: Flag,
+};
 
 interface ActivityCardProps {
   feedItem: FeedItem;
@@ -254,6 +265,7 @@ function ActivityCard({
     viewerUid: user?.uid ?? null,
     viewerGave: liked,
     blocked,
+    viewerPhotoURL: profile?.photoURL,
   });
   const givenBy = propsLine(givers, kudosCount);
 
@@ -309,6 +321,17 @@ function ActivityCard({
     )
   ).filter((label) => label.trim().toLowerCase() !== titleKey);
   const prCount = activity?.prCount as number | undefined;
+  /* What happened to the author in the session (Soc15): read whole, so a
+     malformed or older post draws none. */
+  const moments = postMomentsOf(activity?.moments);
+  /* A PR moment's exercise, by the id its row on the post carries: a
+     kettlebell reads in whole bells in lb. */
+  const momentExerciseId = (name: string) => {
+    const row = (Array.isArray(rawExercises) ? rawExercises : []).find(
+      (item) => (item as { name?: unknown } | null)?.name === name
+    ) as { exerciseId?: unknown } | undefined;
+    return typeof row?.exerciseId === "string" ? row.exerciseId : undefined;
+  };
 
   /* ---- Hero panels (Social uplift v1) -------------------------------
      Runs: the GPS trace becomes a glowing scene with the distance
@@ -380,17 +403,23 @@ function ActivityCard({
         background: `linear-gradient(150deg, ${THEME.running}24 0%, ${THEME.running}0A 55%, ${THEME.running}12 100%)`,
       }}
     >
-      <RouteScene preview={routePreview!} />
-      {showDistanceOverlay && (
-        <div className="absolute bottom-3 left-4">
-          <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-running">
-            {distanceValue(activity?.distance || 0, unit, 2)}
-          </p>
-          <SectionLabel className="mt-0.5">
-            {distanceUnitLabel(unit)}
-          </SectionLabel>
-        </div>
-      )}
+      {/* The numeral sits under the route, not over it: laid over the
+          drawing, a route starting bottom-left put its start ring on it. */}
+      <RouteScene
+        preview={routePreview!}
+        footer={
+          showDistanceOverlay && (
+            <div className="shrink-0 px-4 pb-3">
+              <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-running">
+                {distanceValue(activity?.distance || 0, unit, 2)}
+              </p>
+              <SectionLabel className="mt-0.5">
+                {distanceUnitLabel(unit)}
+              </SectionLabel>
+            </div>
+          )
+        }
+      />
     </div>
   );
 
@@ -821,11 +850,14 @@ function ActivityCard({
        screen. At double text a 393px phone's card is 11em wide, and rows
        sized for 22em squeezed the author's name to nothing. */
     <div className="@container bg-card rounded-2xl overflow-hidden card-shadow">
-      {/* Hybrid card: map on top (shorter), then divider, then workout content */}
+      {/* Hybrid card: map on top (shorter), then divider, then workout
+          content. Its height in rem, as the run card's: the numeral under
+          the route grows with the text, and a fixed 120px left the route
+          almost no room at double text. */}
       {isHybrid ? (
         <>
           {routePreview &&
-            toPost(renderRouteHero("h-[120px]"), { focusable: false })}
+            toPost(renderRouteHero("h-30"), { focusable: false })}
           <div className="p-4 pb-0">
             {renderAuthorRow(
               <p className="text-small text-muted-foreground whitespace-nowrap @max-[14em]:whitespace-normal">
@@ -901,6 +933,61 @@ function ActivityCard({
       )}
 
       <div className="px-4 pb-4">
+        {/* Moments (Soc15), Strava's way: a tile, a bold line and the
+            figures under it, each from the post's own numbers in the
+            reader's units. Gold for a best, the brand purple for the rest
+            (`postMomentLines`). At large text the tile stands above the
+            words, as the PR line's icon does below. */}
+        {moments.length > 0 && (
+          <ul className="mb-3 space-y-2.5">
+            {moments.map((moment, i) => {
+              const lines = postMomentLines(moment, {
+                distanceUnit: unit,
+                liftUnit,
+                exerciseIdOf: momentExerciseId,
+              });
+              const Icon = MOMENT_ICONS[lines.icon];
+              return (
+                <li
+                  key={`${moment.kind}-${i}`}
+                  className="flex items-center gap-3 @max-[16em]:flex-col @max-[16em]:items-start @max-[16em]:gap-1.5"
+                >
+                  <span
+                    aria-hidden="true"
+                    data-moment-tone={lines.tone}
+                    className={`grid size-10 shrink-0 place-items-center rounded-xl ${
+                      lines.tone === "best"
+                        ? "bg-achievement/15 text-achievement"
+                        : "bg-primary/15 text-primary"
+                    }`}
+                  >
+                    <Icon className="size-5" />
+                  </span>
+                  <div className="min-w-0 max-w-full flex-1 @max-[16em]:flex-none">
+                    <p className="text-sm font-bold font-mono tabular-nums text-foreground break-words">
+                      {lines.headline}
+                    </p>
+                    {lines.detail && (
+                      <p
+                        dir="auto"
+                        className="text-sm text-muted-foreground break-words"
+                      >
+                        {lines.detail.text}
+                        {lines.detail.text && lines.detail.figure ? " " : ""}
+                        {lines.detail.figure && (
+                          <span className="font-mono tabular-nums">
+                            {lines.detail.figure}
+                          </span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
         {/* The PR and challenge lines: an icon, then the words. Beside the
             icon, a large-text line can be narrower than one word, which
             then splits ("Comple/ted"). So on a card under 16em the icon

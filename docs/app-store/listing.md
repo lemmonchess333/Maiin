@@ -377,6 +377,9 @@ These are yours; none of them can be done from the code.
    production run (`docs/iap/revenuecat-setup.md` Part C). Verify the
    deployed value in the console before the purchase test; repository
    variable access was unavailable during the 2026-10-31 audit.
+   The same uid goes in `DISCOVERY_HIDDEN_UIDS` too, so the reviewer's
+   posts reach only the account's followers and stay out of everyone's
+   Explore and suggestions (Soc15, `functions/lib/discoveryHidden.js`).
 3. **Public pages: checked 2026-10-31.** `/terms`, `/privacy` and `/support`
    rendered at `troposfit.com` without sign-in in a mobile browser. Recheck
    the listing links once they are entered in App Store Connect.

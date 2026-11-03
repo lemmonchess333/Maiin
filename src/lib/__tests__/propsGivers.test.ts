@@ -62,6 +62,40 @@ describe("shownPropsGivers", () => {
     ]);
   });
 
+  it("gives You the reader's own photo before the server has the tap", () => {
+    // The tap is on screen at once; the server's copy of the reader, photo
+    // and all, lands on the post later. Their face was an initial till then.
+    expect(
+      shownPropsGivers([ann], {
+        viewerUid: "me",
+        viewerGave: true,
+        blocked: none,
+        viewerPhotoURL: "https://x/me.jpg",
+      })[0]
+    ).toEqual({ uid: "me", name: "You", photoURL: "https://x/me.jpg" });
+  });
+
+  it("gives You the photo the reader has now over an older copy on the post", () => {
+    const me = { uid: "me", name: "Me", photoURL: "https://x/old.jpg" };
+    expect(
+      shownPropsGivers([me, ann], {
+        viewerUid: "me",
+        viewerGave: true,
+        blocked: none,
+        viewerPhotoURL: "https://x/new.jpg",
+      })[0].photoURL
+    ).toBe("https://x/new.jpg");
+    // No photo of their own: the post's copy, as before.
+    expect(
+      shownPropsGivers([me, ann], {
+        viewerUid: "me",
+        viewerGave: true,
+        blocked: none,
+        viewerPhotoURL: null,
+      })[0].photoURL
+    ).toBe("https://x/old.jpg");
+  });
+
   it("shows You before the server has the tap, and drops a taken-back You", () => {
     expect(
       shownPropsGivers([ann], {

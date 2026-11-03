@@ -20,6 +20,14 @@ import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
 import { createSessionShare, type SessionShareAction } from "@/lib/sessionPost";
 import type { ActivityPreview, ShareDecision } from "@/lib/shareComposer";
 import type { ActivityPost } from "@/lib/activityPost";
+import {
+  runHistoryOf,
+  runPostMoments,
+  type RunHistory,
+  type RunMomentContext,
+} from "@/lib/postMoments";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import type { SavedRun } from "@/lib/savedRuns";
 import type { GPSPoint, Split } from "@/lib/gps";
 import type { RouteQuality } from "@/lib/routeQuality";
 import type { RunConfig } from "@/components/run/RunSetupModal";
@@ -77,6 +85,10 @@ export interface FinishedRun {
   /** The name the runner gave it on the finish screen. Empty or absent,
    *  the run takes `runPostName`'s (`runName.ts`). */
   name?: string;
+  /** What the finish screen knew beyond the run (Soc15): the earlier runs
+   *  it is compared with, the streak, whether it is the first session.
+   *  Read for the post's moments, never saved on the run. */
+  moments?: RunMomentContext;
 }
 
 /** Privacy cuts change the route, not when the run started. Older callers
@@ -86,15 +98,42 @@ function startOf(run: FinishedRun, now: Date): Date {
   return first ? new Date(first) : now;
 }
 
+/** When the run started: its identity's start, else its first point. */
+function runStart(run: FinishedRun, now: Date): Date {
+  return run.identity ? new Date(run.identity.startedAt) : startOf(run, now);
+}
+
+/**
+ * The local day a run belongs to (Lift3): the day it started, not the day
+ * Save was tapped, so a run begun before midnight counts on the day it
+ * began. The saved run's `date`, and the day its streak counts.
+ */
+export function runDay(run: FinishedRun, now: Date = new Date()): string {
+  return run.identity?.startLocalDate ?? localDateString(runStart(run, now));
+}
+
+/**
+ * The earlier runs a run's moments compare it with: every saved run that
+ * counts (`isVolumeEligible`: not invalid, not saved anyway), less the run
+ * itself, once saved. Read from the history the finish screen already
+ * holds.
+ */
+export function earlierRunHistory(
+  runs: readonly SavedRun[],
+  runId: string | null | undefined
+): RunHistory {
+  return runHistoryOf(
+    runs.filter((run) => run.id !== runId && isVolumeEligible(run))
+  );
+}
+
 /** The saved run, as `users/{uid}/runs/{id}` holds it. */
 export function runDocument(run: FinishedRun, now: Date = new Date()) {
   // Legacy paths and fixtures that bypass Run.tsx can arrive without
   // plan metadata: they are saved as freeform, so the block is always
   // well formed.
   const plan = run.runConfig?.planMetadata ?? freeformPlanMetadata("freeform");
-  const startedAt = run.identity
-    ? new Date(run.identity.startedAt)
-    : startOf(run, now);
+  const startedAt = runStart(run, now);
   const recordingStartedAt =
     typeof run.recordingStartedAt === "number" &&
     Number.isFinite(run.recordingStartedAt) &&
@@ -130,10 +169,9 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
         }
       : {}),
     ...(run.heartRate ? { heartRate: run.heartRate } : {}),
-    // Lift3: a run belongs to the local day it started, not the day Save
-    // was tapped, so a run begun before midnight counts on the day it
-    // began. The server's sweeps and the recovery path query by it.
-    date: run.identity?.startLocalDate ?? localDateString(startedAt),
+    // Lift3: a run belongs to the local day it started (`runDay`). The
+    // server's sweeps and the recovery path query by it.
+    date: runDay(run, now),
     notes: run.notes.trim(),
     // RUN-03 and A6: null, not absent, when skipped or not judged, so
     // the field's shape does not split.
@@ -248,6 +286,9 @@ export function runPost(
 ): ActivityPost {
   const name = runNameOf(run);
   const caption = decision.caption?.trim();
+  // A run saved despite invalid figures is never offered for sharing, and
+  // its efforts are not kept; it names no moment either way.
+  const moments = run.isInvalid ? [] : runPostMoments(run, run.moments);
   return {
     authorId: author.uid,
     authorName: author.displayName || "Athlete",
@@ -264,6 +305,7 @@ export function runPost(
     elevationGain: run.elevationGain,
     calories: run.calories,
     routePreview: route.routePreview,
+    ...(moments.length > 0 ? { moments } : {}),
   };
 }
 

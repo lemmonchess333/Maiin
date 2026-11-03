@@ -175,8 +175,11 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import type { SessionShareAction } from "@/lib/sessionPost";
 import {
   liftSessionDay,
+  liftWorkoutId,
   type LiftCompletionReceipt,
 } from "@/lib/liftCompletion";
+import { hasEarlierSession } from "@/lib/firstSession";
+import type { LiftMomentFacts } from "@/lib/postMoments";
 import GuideHint from "@/components/guide/GuideHint";
 import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
 import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
@@ -368,7 +371,7 @@ export default function WorkoutSession({
   // Loads are stored in kg; the lifter reads and types them in this unit.
   const liftUnit = useLiftUnit();
   const [initialDay] = useState(incomingDay);
-  const { awardEventBadge, awardEventBadges } = useStreaks();
+  const { awardEventBadge, awardEventBadges, streakWithDay } = useStreaks();
   // LIFT-01: bind the draft to this exact session — scope + epoch +
   // day metadata + executable exercise layout. setLogs/exerciseNotes
   // are positional over day.exercises, so a draft from a different
@@ -430,6 +433,23 @@ export default function WorkoutSession({
    *  best set at 00:05 in a session begun at 23:40 sat on a day the
    *  workout is not. */
   const sessionDay = liftSessionDay(originalStartedAt);
+  /* Whether the account had a session before this one, for the post's
+     "First session on Tropos" (Soc15): read once as the session opens, two
+     documents a kind, long before Finish. Null until known. */
+  const earlierSessionRef = useRef<boolean | null>(null);
+  const firstSessionUid = user?.uid;
+  useEffect(() => {
+    if (!firstSessionUid) return;
+    let current = true;
+    void hasEarlierSession(firstSessionUid, {
+      workoutId: liftWorkoutId(source, completionIdRef.current),
+    }).then((earlier) => {
+      if (current) earlierSessionRef.current = earlier;
+    });
+    return () => {
+      current = false;
+    };
+  }, [firstSessionUid, source]);
   const [showResumePrompt, setShowResumePrompt] = useState(
     initialDraft !== null && !initialDraft.completionPending && !resumeDraft
   );
@@ -1765,6 +1785,47 @@ export default function WorkoutSession({
     await handleFinish(decided);
   };
 
+  /* The streak and the first-session answer as the first Finish found
+     them, kept for a retry, which posts the same: by then a save that
+     queued may count this session in the streak it is measured against.
+     Null until the first Finish. */
+  const atFirstFinish = useRef<Pick<
+    LiftMomentFacts,
+    "streak" | "firstSession"
+  > | null>(null);
+  /** What the session's post says happened (Soc15): the new bests the
+   *  finish screen lists, the streak milestone it reached, and whether it
+   *  is the first session. A moment never costs the save: the streak is
+   *  left out if it can't be worked out. */
+  const sessionMoments = (): LiftMomentFacts => {
+    if (!atFirstFinish.current) {
+      let streak: LiftMomentFacts["streak"] = null;
+      try {
+        streak = streakWithDay(sessionDay);
+      } catch (err) {
+        logger.warn("[WorkoutSession] streak for the post not read", err);
+      }
+      atFirstFinish.current = {
+        streak,
+        firstSession: earlierSessionRef.current === false,
+      };
+    }
+    return {
+      ...atFirstFinish.current,
+      prs: [...prResults.entries()].flatMap(([key, result]) =>
+        result.kind === "best"
+          ? [
+              {
+                exercise: key.slice(0, key.lastIndexOf(":")),
+                weightKg: result.weight,
+                reps: result.reps,
+              },
+            ]
+          : []
+      ),
+    };
+  };
+
   const finishPending = useRef(false);
   const handleFinish = async (decided?: SessionPrescription) => {
     if (finishPending.current || saved) return;
@@ -1831,6 +1892,7 @@ export default function WorkoutSession({
         // The draft is deleted the moment the workout commits, so Finish was
         // the last point at which they still existed.
         exerciseNotes,
+        moments: sessionMoments(),
       });
 
       // A callback from an outgoing account must never recreate its draft

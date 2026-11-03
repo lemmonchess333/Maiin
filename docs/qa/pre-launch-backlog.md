@@ -3364,3 +3364,42 @@ or a phone.
       Invite someone), this week's challenge with the page's one filled
       button, then Discover. Scroll to the bottom: the last card clears the
       tab bar.
+
+## Social capture fixes: invites, partner streaks, the route hero (2026-11-03)
+
+Six fixes from capturing Social against the emulator rig. Unit and rules
+tests cover them; these need a phone or the deployed rules.
+
+- [ ] **An invite from the iPhone app opens the app.** On a phone, People →
+      Share invite link, and a Circle's Share invite: the share sheet's
+      link is `https://troposfit.com`, and it opens the web app from
+      Messages. It was `capacitor://localhost`.
+- [ ] **A partner streak is offered.** After the Deploy production run
+      that ships the rules, open the profile of someone you follow who
+      follows you back and has no bond with you: the partner streak card
+      offers to start one. Before, the read of a bond that did not exist
+      yet was refused and the card never showed.
+- [ ] **The route keeps off the distance.** In the feed on a phone, at
+      the phone's largest text size too, a run card's route sits above
+      its distance, never on it.
+
+## Following fills on follow, and the App Review account kept out of discovery (Soc15, 2026-11-03)
+
+- [ ] **Set `DISCOVERY_HIDDEN_UIDS`.** Settings → Secrets and variables →
+      Actions → Variables: a variable named `DISCOVERY_HIDDEN_UIDS` holding
+      App Review's demo account uid (comma-separated if there is more
+      than one), then run Deploy production. The step "Write
+      functions/.env from repository variables" lists the name, and the
+      Cloud Functions console shows the variable on `onActivityCreated`
+      and `discoveryHiddenSweep`.
+- [ ] **The demo account's posts leave Explore.** The day after that
+      deploy (the sweep runs at 03:40 UTC), open Social → Explore as
+      another account: none of the demo account's posts show, and it is
+      not suggested as a recent poster (it can still be suggested to
+      people in a Space it joined). A post the demo account makes now is
+      followers-only (`discoveryHidden: true` on the activity).
+- [ ] **Following shows a person's recent sessions at once.** Follow
+      someone who shared sessions in the last 30 days and has not posted
+      since: Following shows up to 10 of them, in date order, without
+      waiting for their next session. Accepting a follow request does
+      the same for the person who asked.

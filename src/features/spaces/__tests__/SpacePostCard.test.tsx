@@ -21,7 +21,10 @@ vi.mock("@/hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({ blocked: new Set(), addBlocked: vi.fn() }),
 }));
 vi.mock("@/lib/socialApi", () => ({ blockUser: vi.fn() }));
-vi.mock("@/components/social/RouteScene", () => ({ default: () => null }));
+// The drawing left out; the numbers the card puts under it kept.
+vi.mock("@/components/social/RouteScene", () => ({
+  default: ({ footer }: { footer?: React.ReactNode }) => footer ?? null,
+}));
 vi.mock("@/components/social/MiniMuscleFigure", () => ({
   default: () => null,
   hasMuscleFigure: () => false,

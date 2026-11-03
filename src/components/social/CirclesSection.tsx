@@ -82,6 +82,7 @@ import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/objectionableMessages";
 import { loadWordFilter } from "@/lib/wordFilter";
 import { useWordFilter } from "@/hooks/useWordFilter";
 import { circleTitle } from "@/features/goalSpace/circleTitle";
+import { appInviteUrl } from "@/lib/publicLinks";
 
 // weekly_check_in copy is dynamic (checkInTimelineCopy — the focus
 // changes the sentence); the static map covers every other kind.
@@ -612,7 +613,7 @@ export default function CirclesSection({
         await navigator.share({
           title: "Join my circle on Tropos",
           text,
-          url: window.location.origin,
+          url: appInviteUrl(),
         });
         trackSocialEvent("circle_invite_sent", { inviteMethod: "share" });
       } catch {
@@ -620,9 +621,7 @@ export default function CirclesSection({
       }
     } else {
       try {
-        await navigator.clipboard.writeText(
-          `${text} ${window.location.origin}`
-        );
+        await navigator.clipboard.writeText(`${text} ${appInviteUrl()}`);
         toast.success("Invite copied.");
         trackSocialEvent("circle_invite_sent", { inviteMethod: "copy" });
       } catch {

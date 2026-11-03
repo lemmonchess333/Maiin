@@ -104,6 +104,11 @@ for (const width of [320, 393]) {
         document.documentElement.classList.remove("dark");
       });
     }
+    // Said before the assertion: a CI run that ends on the job's timeout
+    // prints no failure details, only what the tests logged.
+    if (found.length > 0) {
+      console.log(`[break-social ${width}px] breaks:\n  ${found.join("\n  ")}`);
+    }
     expect(found).toEqual([]);
   });
 }

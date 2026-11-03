@@ -26,12 +26,34 @@ import type { Page } from "@playwright/test";
  * so the document height is already stable — `settleFullPageHeight` and
  * this helper address different halves of "is the page ready", and a frame
  * with both remote imagery and late-mounting cards wants both.
+ *
+ * A `loading="lazy"` image is switched to eager first (Soc15, 2026-11-03).
+ * A full-page frame shows the whole page, so an image far below the
+ * viewport belongs in it too, and a lazy image that never comes near the
+ * viewport never starts loading: CI's Chromium then kept its `decode()`
+ * pending for good. That stalled the break-social lab's worst-case page,
+ * whose lower lift drawings sat past the lazy-load distance once moments
+ * made its cards taller, for the whole 180 s test timeout on every attempt
+ * (the older Chromium used locally settles it). Each decode is also given
+ * at most DECODE_TIMEOUT_MS, so no one image can hold a capture run.
  */
+const DECODE_TIMEOUT_MS = 5_000;
+
 export async function settleImages(page: Page): Promise<void> {
   await page
-    .evaluate(async () => {
+    .evaluate(async (timeoutMs) => {
       const imgs = Array.from(document.images);
-      await Promise.all(imgs.map((i) => i.decode().catch(() => undefined)));
-    })
+      for (const img of imgs) {
+        if (img.loading === "lazy") img.loading = "eager";
+      }
+      await Promise.all(
+        imgs.map((img) =>
+          Promise.race([
+            img.decode().catch(() => undefined),
+            new Promise((resolve) => setTimeout(resolve, timeoutMs)),
+          ])
+        )
+      );
+    }, DECODE_TIMEOUT_MS)
     .catch(() => undefined);
 }

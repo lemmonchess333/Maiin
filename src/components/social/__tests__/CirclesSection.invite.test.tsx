@@ -148,6 +148,7 @@ function hookValue(overrides: Record<string, unknown> = {}) {
  */
 afterEach(async () => {
   cleanup();
+  vi.unstubAllGlobals();
   await new Promise((resolve) => setTimeout(resolve, 0));
 });
 beforeEach(() => {
@@ -265,6 +266,31 @@ describe("post-create invite hand-off", () => {
         inviteMethod: "copy",
       })
     );
+  });
+
+  it("Share invite sends the app's public address, not the page's own origin", async () => {
+    // From the iPhone app the page's origin is capacitor://localhost, which
+    // opens nothing for the friend the invite is sent to.
+    expect(window.location.origin).not.toBe("https://troposfit.com");
+    const share = vi.fn(async () => {});
+    vi.stubGlobal("navigator", { ...navigator, share });
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({ circles: [summary("c1", "Solo Circle", 1, "code-1")] })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /invite someone/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /share invite/i })
+    );
+    await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
+    expect(share).toHaveBeenCalledWith(
+      expect.objectContaining({ url: "https://troposfit.com" })
+    );
+    vi.unstubAllGlobals();
   });
 });
 

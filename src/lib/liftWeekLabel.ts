@@ -7,6 +7,7 @@ import {
   type RaceBlockWeek,
 } from "@/features/program/weekPrescription";
 import { racePlanWeek } from "@/lib/racePlanWeek";
+import type { PlanWeekFacts } from "@/lib/postMoments";
 
 type ProgrammeContext = Partial<
   Pick<
@@ -75,6 +76,55 @@ export function liftWeekCounter(
   return lighterWeeksScheduled(experience, state.workouts?.length ?? 0)
     ? `Week ${cycle} of 4`
     : `Week ${state.weekNumber}`;
+}
+
+/**
+ * The week of a lifting plan with a set length, as Train counts it: a
+ * training block's ("Week 2 of 8"), else, while a race plan places the
+ * lighter weeks, the race block's ("Week 6 of 16"). `ends` is true for a
+ * block, whose last week ends the plan; the lifting carries on past race
+ * week. Null for a plan with no length to count against: the 4-week cycle
+ * starts again, and a plain counter ("Week 7") has no end. A post's "Week 4
+ * of 12 done" reads it (Soc15).
+ */
+export function liftPlanWeek(
+  state: ProgrammeContext | null | undefined,
+  /** Local "YYYY-MM-DD": the day the lift counts on. */
+  today: string
+): { week: number; weeks: number; ends: boolean } | null {
+  if (!state || state.archived) return null;
+  const block = state.trainingBlock;
+  const blockWeek = block ? blockWeekOf(block, today) : null;
+  if (block && blockWeek !== null)
+    return { week: blockWeek, weeks: block.durationWeeks, ends: true };
+  const race = raceBlockOnDisplay(state, today);
+  return race
+    ? { week: race.weekIndex + 1, weeks: race.totalWeeks, ends: false }
+    : null;
+}
+
+/** Every lift the week plans is done or skipped. */
+function weekPlanDone(state: ProgrammeContext): boolean {
+  const days = state.workouts ?? [];
+  return days.length > 0 && days.every((day) => day.completed || day.skipped);
+}
+
+/**
+ * What a lift saved into the plan did to its week, for the post: the
+ * plan's set-length week (`liftPlanWeek`) and whether the lift was the
+ * week's last planned session still to do. `before` is the plan the lift
+ * was saved against, `after` the plan with its day marked done. Null for a
+ * plan with no length.
+ */
+export function liftPlanFacts(
+  before: ProgrammeContext,
+  after: ProgrammeContext,
+  today: string
+): PlanWeekFacts | null {
+  const week = liftPlanWeek(before, today);
+  return week
+    ? { ...week, weekDone: !weekPlanDone(before) && weekPlanDone(after) }
+    : null;
 }
 
 /**

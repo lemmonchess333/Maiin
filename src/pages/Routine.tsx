@@ -1,5 +1,6 @@
 import type { SessionPrescription } from "@/features/program/sessionCompletion";
 import { completeLift } from "@/lib/liftCompletion";
+import type { LiftMomentFacts } from "@/lib/postMoments";
 import { resolveLiftUnit } from "@/lib/liftLoad";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -116,6 +117,8 @@ export default function Routine() {
             rpe?: number;
           }>
         >;
+        /** The session's new bests and streak, for its post (Soc15). */
+        moments?: LiftMomentFacts;
       }
     ) => {
       // Fail CLOSED — returning silently would let WorkoutSession clear the
@@ -156,6 +159,7 @@ export default function Routine() {
         title: routine.name,
         notes: `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`,
         extra: { routineId: routine.id, routineName: routine.name },
+        moments: sessionData.moments,
       });
       return receipt;
     },

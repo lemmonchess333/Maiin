@@ -114,6 +114,11 @@ export interface SavedRun extends RunSummaryItem {
    *  tempo's race goal (A2, `pinnedWorkPace`): their pace says what the
    *  goal was, not what the runner can do. */
   workPacePinned?: boolean;
+  /** The quickest 1K, 5K and 10K in the trace, as the run saved them
+   *  (`detectBestEfforts`): metres and seconds. Absent for a run that
+   *  timed none, and for runs saved before they were kept. A new run's
+   *  post compares its own with them (Soc15). */
+  bestEfforts?: { distance: number; time: number }[];
 }
 
 /**
@@ -190,6 +195,19 @@ function workPortionOf(
 const text = (value: unknown): string | undefined =>
   typeof value === "string" && value ? value : undefined;
 
+/** A saved run's best efforts, each a positive distance and time; those
+ *  that can't be read are left out. */
+function bestEffortsOf(value: unknown): { distance: number; time: number }[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((effort: unknown) => {
+    if (!effort || typeof effort !== "object") return [];
+    const { distance, time } = effort as { distance?: unknown; time?: unknown };
+    return measured(distance) && measured(time) && distance > 0 && time > 0
+      ? [{ distance, time }]
+      : [];
+  });
+}
+
 /**
  * A stored run document as a `SavedRun`, or null when it has no readable
  * completion time (such a document cannot be windowed or dated).
@@ -199,6 +217,7 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
   if (!completedAt) return null;
   const date = isRunDateKey(data.date) ? data.date : undefined;
   const savedAt = toDate(data.createdAt) ?? completedAt;
+  const bestEfforts = bestEffortsOf(data.bestEfforts);
 
   return {
     id,
@@ -256,6 +275,7 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
     workPacePinned:
       Array.isArray(data.runConfig?.segments) &&
       pinnedWorkPace(data.runConfig.segments as SessionSegment[]) !== null,
+    ...(bestEfforts.length > 0 ? { bestEfforts } : {}),
   };
 }
 

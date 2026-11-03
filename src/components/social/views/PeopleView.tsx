@@ -21,6 +21,7 @@ import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import { IconButton } from "@/components/ui/IconButton";
+import { appInviteUrl } from "@/lib/publicLinks";
 
 export interface PeopleViewProps {
   /** True when the People (find) tab is the active top-level tab.
@@ -192,7 +193,7 @@ export default function PeopleView({
         await navigator.share({
           title: "Join me on Tropos",
           text,
-          url: window.location.origin,
+          url: appInviteUrl(),
         });
       } catch {
         /* user cancelled */
@@ -201,9 +202,7 @@ export default function PeopleView({
       // The clipboard can refuse (no permission, an insecure context), and
       // a promise that rejected here said nothing at all.
       try {
-        await navigator.clipboard.writeText(
-          text + " " + window.location.origin
-        );
+        await navigator.clipboard.writeText(text + " " + appInviteUrl());
         toast.success("Invite link copied");
       } catch {
         toast.error("Couldn't copy the invite link. Try again.");

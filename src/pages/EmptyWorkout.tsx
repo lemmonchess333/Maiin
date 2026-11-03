@@ -82,6 +82,7 @@ export default function EmptyWorkout() {
         bodyweightKg: profile?.weightKg ?? 0,
         title: name,
         notes: name,
+        moments: sessionData.moments,
       });
       return receipt;
     },

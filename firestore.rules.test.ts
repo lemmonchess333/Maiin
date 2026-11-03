@@ -2470,6 +2470,135 @@ suite(
       );
     });
 
+    /* Moments (Soc15): a kind and its numbers, never typed text. Each
+       refusal below has a twin that creates, so the rule refuses the one
+       thing wrong with it and not the field. activityPostFields.cross
+       .test.ts holds the rule's lists to src/lib/postMoments.ts. */
+    describe("moments (Soc15)", () => {
+      const EVERY_KIND = [
+        { kind: "pr", exercise: "Bench Press", weightKg: 92.5, reps: 5 },
+        { kind: "longestRun", meters: 21345.6 },
+        { kind: "firstDistance", meters: 21097 },
+        { kind: "fastestEffort", meters: 5000, seconds: 1361.4 },
+        { kind: "streak", days: 30 },
+        { kind: "planWeek", week: 4, weeks: 12 },
+        { kind: "planComplete" },
+        { kind: "firstSession" },
+      ];
+      const post = (id: string, moments: unknown) =>
+        setDoc(
+          doc(
+            env.authenticatedContext(OWNER_UID, VERIFIED).firestore(),
+            "activities",
+            id
+          ),
+          makeValidActivity({ moments })
+        );
+
+      it("a post carries up to three moments of every kind", async () => {
+        for (let i = 0; i < EVERY_KIND.length; i += 3) {
+          await assertSucceeds(
+            post(`moments-${i}`, EVERY_KIND.slice(i, i + 3))
+          );
+        }
+        await assertSucceeds(post("moments-none", []));
+      });
+
+      it("a fourth moment is refused; three create", async () => {
+        const four = EVERY_KIND.slice(0, 4);
+        await assertFails(post("moments-four", four));
+        await assertSucceeds(post("moments-three", four.slice(0, 3)));
+      });
+
+      it("refuses a moment that is not a list of maps", async () => {
+        await assertFails(post("moments-map", { kind: "firstSession" }));
+        await assertFails(post("moments-text", ["New PR"]));
+        await assertFails(post("moments-null", [null]));
+      });
+
+      it("refuses a kind it does not know, a key too many and a key missing", async () => {
+        await assertFails(post("moment-kind", [{ kind: "localLegend" }]));
+        await assertFails(post("moment-nokind", [{ days: 30 }]));
+        await assertFails(
+          post("moment-extra", [{ kind: "streak", days: 30, note: "nice" }])
+        );
+        await assertFails(
+          post("moment-missing", [{ kind: "pr", exercise: "Squat", reps: 5 }])
+        );
+        await assertFails(
+          post("moment-extra-bare", [{ kind: "firstSession", text: "hi" }])
+        );
+        await assertSucceeds(post("moment-ok", [{ kind: "streak", days: 30 }]));
+      });
+
+      it("checks every index, not only the first", async () => {
+        const bad = { kind: "streak", days: 8 };
+        const good = { kind: "firstSession" };
+        await assertFails(post("moment-bad-2nd", [good, bad]));
+        await assertFails(post("moment-bad-3rd", [good, good, bad]));
+        await assertSucceeds(post("moment-good-3", [good, good, good]));
+      });
+
+      it("holds a PR's exercise to 1–60 characters and its numbers to a set", async () => {
+        const pr = (over: Record<string, unknown>) => [
+          { kind: "pr", exercise: "Squat", weightKg: 100, reps: 5, ...over },
+        ];
+        await assertSucceeds(post("pr-60", pr({ exercise: "e".repeat(60) })));
+        await assertFails(post("pr-61", pr({ exercise: "e".repeat(61) })));
+        await assertFails(post("pr-empty", pr({ exercise: "" })));
+        await assertFails(post("pr-number-name", pr({ exercise: 7 })));
+        await assertFails(post("pr-zero-kg", pr({ weightKg: 0 })));
+        await assertFails(post("pr-heavy", pr({ weightKg: 1000.5 })));
+        await assertFails(post("pr-zero-reps", pr({ reps: 0 })));
+        await assertFails(post("pr-half-rep", pr({ reps: 5.5 })));
+        await assertFails(post("pr-text-reps", pr({ reps: "5" })));
+      });
+
+      it("holds the run moments to their distances and times", async () => {
+        await assertFails(
+          post("first-7k", [{ kind: "firstDistance", meters: 7000 }])
+        );
+        await assertSucceeds(
+          post("first-marathon", [{ kind: "firstDistance", meters: 42195 }])
+        );
+        await assertFails(
+          post("fast-half", [
+            { kind: "fastestEffort", meters: 21097, seconds: 5400 },
+          ])
+        );
+        await assertFails(
+          post("fast-zero", [
+            { kind: "fastestEffort", meters: 1000, seconds: 0 },
+          ])
+        );
+        await assertFails(
+          post("longest-zero", [{ kind: "longestRun", meters: 0 }])
+        );
+        await assertFails(
+          post("longest-far", [{ kind: "longestRun", meters: 500001 }])
+        );
+      });
+
+      it("holds a streak to its milestones and a plan's week inside the plan", async () => {
+        await assertFails(post("streak-8", [{ kind: "streak", days: 8 }]));
+        await assertSucceeds(
+          post("streak-365", [{ kind: "streak", days: 365 }])
+        );
+        await assertFails(
+          post("week-past", [{ kind: "planWeek", week: 13, weeks: 12 }])
+        );
+        await assertFails(
+          post("week-zero", [{ kind: "planWeek", week: 0, weeks: 12 }])
+        );
+        await assertFails(
+          post("week-long", [{ kind: "planWeek", week: 1, weeks: 105 }])
+        );
+        await assertSucceeds(
+          post("week-last", [{ kind: "planWeek", week: 12, weeks: 12 }])
+        );
+      });
+    });
+
     it("each field holds its own type; a list cannot stand in for a name", async () => {
       // A list of strings passed the old size() caps, since a list has a
       // size too: 200 items of anything as a "name".

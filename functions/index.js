@@ -41,6 +41,8 @@ const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
 const runRename = require("./lib/runRename");
 const followRemoval = require("./lib/followRemoval");
+const followBackfill = require("./lib/followBackfill");
+const discoveryHidden = require("./lib/discoveryHidden");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
 const friendsBoard = require("./lib/friendsBoard");
 const restrictedIdentities = require("./lib/restrictedIdentities");
@@ -2992,6 +2994,28 @@ exports.weeklyPerformanceRollup = functions
   );
 
 // ── 3) Scheduled: daily refresh (02:10 UTC) ──
+
+/**
+ * discoveryHiddenSweep — the accounts in DISCOVERY_HIDDEN_UIDS (App
+ * Review's demo account) share with their followers only (Soc15). New posts
+ * are made followers-only in onActivityCreated; this makes any public post
+ * such an account already has followers-only too, so adding a uid to the
+ * list clears its past posts from Explore and suggestions within a day
+ * (lib/discoveryHidden.js). With the list empty it reads nothing.
+ */
+exports.discoveryHiddenSweep = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("40 3 * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "discoveryHiddenSweep", async () => {
+      const { hidden } = await discoveryHidden.sweepDiscoveryHidden({
+        firestore: db,
+      });
+      functions.logger.info("discoveryHiddenSweep.done", { hidden });
+      return { hidden };
+    })
+  );
 
 exports.dailyPerformanceRefresh = functions
   .runWith(SCHEDULED_CAP)
@@ -6226,6 +6250,22 @@ exports.onActivityCreated = functions
       throw err;
     }
 
+    // Soc15: an account kept out of discovery (App Review's demo
+    // account, DISCOVERY_HIDDEN_UIDS) shares with its followers only, so
+    // its public post is made followers-only before it fans out
+    // (lib/discoveryHidden.js). A retry makes the same update.
+    if (
+      authorId &&
+      data.visibility === "public" &&
+      discoveryHidden.isDiscoveryHidden(authorId)
+    ) {
+      await snap.ref.update(discoveryHidden.HIDE_UPDATE);
+      data.visibility = discoveryHidden.HIDE_UPDATE.visibility;
+      functions.logger.info("onActivityCreated.discovery_hidden", {
+        activityId,
+      });
+    }
+
     // 2026-05-26 audit PR 3 — server-side fan-out. Replaces the
     // client `postActivity` fan-out loop. /feeds writes are
     // server-only post-PR-3 so this is the only path that can
@@ -8585,6 +8625,9 @@ async function sendFollowNotice({
  * request", under the Follow requests switch. Only the person asked can
  * write an edge carrying `fromRequest` (firestore.rules), so the notice
  * cannot be forged by the asker.
+ *
+ * Either way the new follower's Following gets the person's recent shared
+ * sessions (Soc15, lib/followBackfill), so a follow shows something today.
  */
 exports.onFollowerCreated = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -8592,7 +8635,8 @@ exports.onFollowerCreated = functions
   .onCreate(async (snap, context) => {
     const { uid, followerUid } = context.params;
     if (!uid || !followerUid || uid === followerUid) return null;
-    // Retried: the notification's id is fixed per follower (above).
+    // Retried: the notification's id is fixed per follower (above), and
+    // the backfill's rows are keyed by activity and skip ones that exist.
     if (pastRetryWindow(context)) return null;
     if (snap.data() && snap.data().fromRequest === true) {
       await sendFollowNotice({
@@ -8603,16 +8647,26 @@ exports.onFollowerCreated = functions
         logKey: "onFollowerCreated",
         sourceEvent: socialFanout.notificationSourceEvent(snap, context),
       });
-      return null;
+    } else {
+      await sendFollowNotice({
+        toUid: uid,
+        fromUid: followerUid,
+        type: "follow",
+        verb: "started following you",
+        logKey: "onFollowerCreated",
+        sourceEvent: socialFanout.notificationSourceEvent(snap, context),
+      });
     }
-    await sendFollowNotice({
-      toUid: uid,
-      fromUid: followerUid,
-      type: "follow",
-      verb: "started following you",
-      logKey: "onFollowerCreated",
-      sourceEvent: socialFanout.notificationSourceEvent(snap, context),
+    // Soc15: the new follower's Following shows this person's recent
+    // sessions at once, not only the next one (lib/followBackfill).
+    const { written } = await followBackfill.backfillFollowedPosts({
+      firestore: db,
+      followerUid,
+      authorUid: uid,
     });
+    if (written > 0) {
+      functions.logger.info("onFollowerCreated.backfill", { written });
+    }
     return null;
   });
 

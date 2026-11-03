@@ -169,6 +169,13 @@ const EXPECTED = {
     schedule: "10 2 * * *",
     timeoutSeconds: 540,
   },
+  discoveryHiddenSweep: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "40 3 * * *",
+    timeoutSeconds: 540,
+  },
   rolloverChallenges: {
     kind: "schedule",
     maxInstances: 1,

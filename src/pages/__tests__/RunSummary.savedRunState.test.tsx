@@ -108,6 +108,10 @@ const week = vi.hoisted(() => ({
   },
 }));
 vi.mock("@/hooks/useWeekPulse", () => ({ useWeekPulse: () => week.pulse }));
+// The streak a run's post measures against (Soc15); none here.
+vi.mock("@/features/streaks/useStreaks", () => ({
+  useStreaks: () => ({ streakWithDay: () => null }),
+}));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: h.track }));
 vi.mock("@/components/run/RunMapLazy", () => ({
   default: (props: Record<string, unknown>) => {

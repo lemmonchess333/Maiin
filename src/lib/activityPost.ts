@@ -9,8 +9,10 @@
  * with the rules. A share sheet that sends a field the rules do not
  * know is a type error, not a post that fails on a phone.
  *
- * No imports, so the rules tests can read it without starting Firebase.
+ * No runtime imports, so the rules tests can read it without starting
+ * Firebase.
  */
+import type { PostMoment } from "./postMoments";
 
 /**
  * The caption box's limit, counted in UTF-16 code units. Both
@@ -72,6 +74,10 @@ export type ActivityPost = {
   challengeMilestone?: string;
   badgeEarned?: string;
   routePreview?: Array<{ lat: number; lon: number; breakBefore?: boolean }>;
+  /** What happened to the author in the session (Soc15): a new PR, the
+   *  longest run yet, a streak reached. At most three, each a kind and its
+   *  numbers (`postMoments.ts`); absent when there were none. */
+  moments?: PostMoment[];
 };
 
 /* Every field, once. A `Record` over the type's keys makes the compiler
@@ -102,6 +108,7 @@ const FIELDS: Record<keyof ActivityPost, true> = {
   challengeMilestone: true,
   badgeEarned: true,
   routePreview: true,
+  moments: true,
 };
 
 export const ACTIVITY_POST_FIELDS = Object.keys(FIELDS) as ReadonlyArray<
