@@ -77,13 +77,23 @@ export function finalDayLine(endDate: Timestamp | Date | undefined): string {
 export function cardsShowingTimeLeft(
   ordered: readonly ({ id: string } & Edition)[]
 ): Set<string> {
-  const anchor =
-    ordered.find(isFeaturedChallenge) ??
-    ordered.find((c) => c.type === "monthly");
+  const anchor = timeLeftAnchor(ordered);
   const monthEnd = anchor ? boundaryDayKey(anchor.endDate) : null;
   const shown = new Set<string>();
   for (const c of ordered) {
     if (c === anchor || boundaryDayKey(c.endDate) !== monthEnd) shown.add(c.id);
   }
   return shown;
+}
+
+/** The card that says the month's time left for the rest: the featured
+ *  challenge, else the first monthly one. A list that says it once, above
+ *  its rows, reads it from here. */
+export function timeLeftAnchor<T extends { id: string } & Edition>(
+  ordered: readonly T[]
+): T | undefined {
+  return (
+    ordered.find(isFeaturedChallenge) ??
+    ordered.find((c) => c.type === "monthly")
+  );
 }

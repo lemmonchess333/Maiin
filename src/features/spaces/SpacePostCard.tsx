@@ -49,7 +49,6 @@ export default function SpacePostCard({
   spaceId,
   postId,
   post,
-  accent,
   onRemoved,
   liked = false,
   likeDelta = 0,
@@ -60,7 +59,6 @@ export default function SpacePostCard({
   spaceId: string;
   postId: string;
   post: SpacePostDoc;
-  accent: string;
   onRemoved: (postId: string) => void;
   /** SOC-P2c — viewer's like state + optimistic count delta + toggle.
    *  When onToggleLike is absent the count renders read-only (the
@@ -207,8 +205,6 @@ export default function SpacePostCard({
               photoURL={post.authorPhotoURL}
               displayName={post.authorName}
               size="md"
-              fallbackBg={`${accent}20`}
-              fallbackColor={accent}
             />
           </div>
           <div className="flex-1 min-w-0">

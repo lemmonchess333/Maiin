@@ -14,9 +14,17 @@ import RestrictedNotice from "@/components/social/RestrictedNotice";
 import { toast } from "@/lib/toast";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useAuth } from "@/lib/auth";
-import { useChallenges, type Challenge } from "./useChallenges";
+import {
+  getTimeRemaining,
+  useChallenges,
+  type Challenge,
+} from "./useChallenges";
 import { featuredChallengesFirst } from "./challengeOrder";
-import { cardsShowingTimeLeft, joinedMessage } from "./challengeEditions";
+import {
+  cardsShowingTimeLeft,
+  joinedMessage,
+  timeLeftAnchor,
+} from "./challengeEditions";
 import ChallengeRow from "./ChallengeRow";
 import JoinedChallengeRow from "./JoinedChallengeRow";
 import WeeklyChallengeCard from "./WeeklyChallengeCard";
@@ -116,7 +124,14 @@ export function ChallengeList({
   // Time left is said once for the month in each list, and again only by
   // a challenge that ends on another day.
   const joinedTimeLeft = cardsShowingTimeLeft(joined);
+  /* Discover says the month's time left once, on its heading; a row says
+     its own only when it ends on another day. */
+  const discoverAnchor = timeLeftAnchor(discover);
   const discoverTimeLeft = cardsShowingTimeLeft(discover);
+  if (discoverAnchor) discoverTimeLeft.delete(discoverAnchor.id);
+  const discoverMonthLeft = discoverAnchor
+    ? getTimeRemaining(discoverAnchor.endDate)
+    : "";
   const opened = openId
     ? (challenges.find((c) => c.id === openId) ?? null)
     : null;
@@ -195,9 +210,16 @@ export function ChallengeList({
           : (discover.length > 0 || collectiveCh) && (
               <div className="space-y-2">
                 {discover.length > 0 && (
-                  <SectionHeading as="h3" size="compact">
-                    Challenges
-                  </SectionHeading>
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                    <SectionHeading as="h3" size="compact">
+                      Challenges
+                    </SectionHeading>
+                    {discoverMonthLeft && (
+                      <p className="text-xs text-muted-foreground">
+                        {discoverMonthLeft}
+                      </p>
+                    )}
+                  </div>
                 )}
                 {/* The community goal: drawn once someone has added to it. */}
                 {collectiveCh && <CollectivePulse challenge={collectiveCh} />}
@@ -207,7 +229,6 @@ export function ChallengeList({
                       <ChallengeRow
                         key={ch.id}
                         challenge={ch}
-                        onJoin={() => join(ch)}
                         onOpen={() => setOpenId(ch.id)}
                         showTimeLeft={discoverTimeLeft.has(ch.id)}
                       />

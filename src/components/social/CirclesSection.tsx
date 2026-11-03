@@ -1003,14 +1003,22 @@ export default function CirclesSection({
                       </p>
                       {extendOpen ? (
                         <div className="space-y-2">
-                          <input
-                            type="date"
-                            value={newTargetDate}
-                            min={localTomorrowKey()}
-                            onChange={(e) => setNewTargetDate(e.target.value)}
-                            aria-label="New target date"
-                            className="ds-input text-sm"
-                          />
+                          {/* An empty date field draws as a blank bar on
+                              the iPhone, and its intrinsic width runs past
+                              the card: a visible label says what it is,
+                              and the field takes the card's width. */}
+                          <label className="block space-y-1">
+                            <span className="text-xs font-semibold text-foreground">
+                              New target date
+                            </span>
+                            <input
+                              type="date"
+                              value={newTargetDate}
+                              min={localTomorrowKey()}
+                              onChange={(e) => setNewTargetDate(e.target.value)}
+                              className="ds-input block w-full min-w-0 max-w-full appearance-none text-sm"
+                            />
+                          </label>
                           <div className="flex gap-2">
                             <Button
                               variant="secondary"

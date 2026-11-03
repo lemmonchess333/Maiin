@@ -75,13 +75,13 @@ describe("useDiscoverFeed — uid/generation ownership", () => {
 
     // A's stale fetch resolves: its items must NOT commit under B.
     await act(async () => {
-      feed.calls[0].resolve({ items: [activity("a1", "A")], lastDoc: "A-end" });
+      feed.calls[0].resolve({ items: [activity("a1", "X")], lastDoc: "A-end" });
     });
     expect(result.current.items).toEqual([]);
 
     // B's own page lands, and is what B sees.
     await act(async () => {
-      feed.calls[1].resolve({ items: [activity("b1", "B")], lastDoc: "B-end" });
+      feed.calls[1].resolve({ items: [activity("b1", "X")], lastDoc: "B-end" });
     });
     expect(result.current.items.map((i) => i.id)).toEqual(["b1"]);
   });
@@ -91,7 +91,7 @@ describe("useDiscoverFeed — uid/generation ownership", () => {
       useDiscoverFeed(true, BLOCKED)
     );
     await act(async () => {
-      feed.calls[0].resolve({ items: fullPage("a", "A"), lastDoc: "A-cursor" });
+      feed.calls[0].resolve({ items: fullPage("a", "X"), lastDoc: "A-cursor" });
     });
     expect(result.current.items).toHaveLength(20);
     expect(result.current.hasMore).toBe(true);
@@ -137,7 +137,7 @@ describe("useDiscoverFeed — uid/generation ownership", () => {
         // Runs in B's commit, after the hook's own layout effect.
         if (step === 1) {
           feed.calls[0].resolve({
-            items: [activity("a1", "A")],
+            items: [activity("a1", "X")],
             lastDoc: "A-end",
           });
         }
@@ -175,9 +175,7 @@ describe("useDiscoverFeed — hidden posts", () => {
 
   it("leaves out a post the person hid from their feed", async () => {
     const hidden = new Set(["h1"]);
-    const { result } = renderHook(() =>
-      useDiscoverFeed(true, BLOCKED, hidden)
-    );
+    const { result } = renderHook(() => useDiscoverFeed(true, BLOCKED, hidden));
     await act(async () => {
       feed.calls[0].resolve({
         items: [activity("h1", "X"), activity("k1", "X")],
@@ -185,5 +183,25 @@ describe("useDiscoverFeed — hidden posts", () => {
       });
     });
     expect(result.current.items.map((i) => i.activityId)).toEqual(["k1"]);
+  });
+});
+
+describe("useDiscoverFeed — the reader's own posts", () => {
+  beforeEach(() => {
+    authUser.current = { uid: "A" };
+    feed.calls = [];
+  });
+
+  /* Explore is for finding other people; the reader's own sessions are on
+     their profile and under Following. */
+  it("leaves out the reader's own posts", async () => {
+    const { result } = renderHook(() => useDiscoverFeed(true, BLOCKED));
+    await act(async () => {
+      feed.calls[0].resolve({
+        items: [activity("mine", "A"), activity("theirs", "X")],
+        lastDoc: "end",
+      });
+    });
+    expect(result.current.items.map((i) => i.activityId)).toEqual(["theirs"]);
   });
 });

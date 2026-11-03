@@ -127,7 +127,7 @@ function renderCard(item: FeedItem, allExercises = false) {
 /** The figure over the stats' "exercises" (or "exercise") caption. */
 const exerciseCountShown = () =>
   screen
-    .getAllByText(/^exercises?$/)
+    .queryAllByText(/^exercises?$/)
     .find((el) => !el.classList.contains("sr-only"))?.previousElementSibling
     ?.textContent;
 
@@ -241,7 +241,9 @@ describe("a lift card's exercise list", () => {
     expect(screen.queryByText("T-Bar Row")).toBeNull();
     expect(screen.queryByText("—")).toBeNull();
     expect(screen.queryByRole("link", { name: /more/ })).toBeNull();
-    expect(exerciseCountShown()).toBe("3");
+    // Every exercise done is a row, so no count repeats them (and the
+    // workout's own 4 never shows).
+    expect(exerciseCountShown()).toBeUndefined();
   });
 
   it("saves as a routine only the exercises it draws", () => {

@@ -436,6 +436,7 @@ export default function FeedView({
                 narrow phone: the Feed is where Social opens. */}
             <SegmentedControl<FeedSubTab>
               ariaLabel="Feed source"
+              emphasis="tabs"
               layout="fill-wrap"
               value={feedSubTab}
               onChange={(next) => {
@@ -637,13 +638,6 @@ export default function FeedView({
                       spaceName={def.name}
                       postId={item.postId}
                       post={item.post}
-                      accent={
-                        def.accent === "running"
-                          ? THEME.running
-                          : def.accent === "lifting"
-                            ? THEME.lifting
-                            : THEME.brand
-                      }
                       uid={uid}
                       onRemoved={() =>
                         communitiesFeed.remove(item.spaceId, item.postId)

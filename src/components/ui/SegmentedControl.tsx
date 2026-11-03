@@ -23,6 +23,11 @@
  * Lift/Run switch keeps its sport coding. A coloured LABEL on a grey fill
  * cannot do that job: any fill bright enough to clear 3:1 on the dark
  * track leaves the -strong labels near 2:1 on it.
+ * `emphasis="tabs"` is the second level of a page's navigation, under a
+ * track control that already picks the page's part (Social's Feed, then
+ * its Following / Spaces / Explore): text tabs on a hairline, the selected
+ * one in the foreground colour over a 2px primary underline. Two tracks
+ * stacked read as one control twice and took a quarter of the screen.
  * `layout="wrap"` drops the shared track and renders individual pills,
  * muted when unselected (a contiguous track can't wrap cleanly).
  * `layout="fill-wrap"` keeps the track and its equal parts, but a part
@@ -78,8 +83,10 @@ export interface SegmentedControlProps<T extends string | number> {
    *  domain whose colour IS the meaning — today that is the Food
    *  surface's meal slot, and `mealSlotPickerIdentity.test.tsx` pins it
    *  there. Reach for `track` everywhere else; a second solid group on a
-   *  neutral surface is the drift this primitive exists to stop. */
-  emphasis?: "track" | "solid";
+   *  neutral surface is the drift this primitive exists to stop. `tabs` =
+   *  underlined text tabs, only for a second level under a track control
+   *  (see the header). */
+  emphasis?: "track" | "solid" | "tabs";
   /** `fill` = equal-width row (default); `wrap` = auto-width pills;
    *  `fill-wrap` = the equal-width row, wrapping onto more rows rather
    *  than cutting a label short. */
@@ -179,12 +186,14 @@ function SegmentedControl<T extends string | number>({
         // pill carry its own background below.
         emphasis === "solid"
           ? "flex-wrap items-center gap-2"
-          : layout === "wrap"
-            ? "flex-wrap gap-1.5"
-            : cn(
-                "gap-1 p-1 rounded-xl bg-muted",
-                layout === "fill-wrap" && "flex-wrap"
-              ),
+          : emphasis === "tabs"
+            ? cn("border-b border-border/60", layout !== "fill" && "flex-wrap")
+            : layout === "wrap"
+              ? "flex-wrap gap-1.5"
+              : cn(
+                  "gap-1 p-1 rounded-xl bg-muted",
+                  layout === "fill-wrap" && "flex-wrap"
+                ),
         className
       )}
     >
@@ -205,43 +214,53 @@ function SegmentedControl<T extends string | number>({
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
               OPTION_BASE,
-              emphasis === "solid"
-                ? "rounded-full border px-4"
-                : layout === "fill"
-                  ? // Equal parts end a label in "…" when it no longer
-                    // fits, as iOS's own segmented control does, rather
-                    // than pushing the row off the screen at larger text
-                    // ("Analytics PRs Badges" on a 320px phone).
-                    "flex-1 min-w-0 truncate"
-                  : layout === "fill-wrap"
-                    ? // Equal parts from a zero basis, none narrower than
-                      // its label: the row wraps where they can't share
-                      // it. The inset is px so it doesn't grow with text.
-                      "flex-1 min-w-max px-[8px]"
-                    : "px-4",
-              emphasis === "solid"
+              emphasis === "tabs"
+                ? "flex-1 min-w-max rounded-none px-[8px]"
+                : emphasis === "solid"
+                  ? "rounded-full border px-4"
+                  : layout === "fill"
+                    ? // Equal parts end a label in "…" when it no longer
+                      // fits, as iOS's own segmented control does, rather
+                      // than pushing the row off the screen at larger text
+                      // ("Analytics PRs Badges" on a 320px phone).
+                      "flex-1 min-w-0 truncate"
+                    : layout === "fill-wrap"
+                      ? // Equal parts from a zero basis, none narrower than
+                        // its label: the row wraps where they can't share
+                        // it. The inset is px so it doesn't grow with text.
+                        "flex-1 min-w-max px-[8px]"
+                      : "px-4",
+              emphasis === "tabs"
                 ? selected
-                  ? cn(
-                      "border-transparent text-white",
-                      tone === "nutrition" ? "bg-nutrition-fill" : "bg-primary"
-                    )
-                  : "border-border/80 bg-card text-muted-foreground hover:bg-muted/60"
-                : selected
-                  ? cn(
-                      // The fill is the selected state: 3:1 or more
-                      // against the track, white 4.5:1 or more on it.
-                      "text-white",
-                      tone === "running"
-                        ? "bg-running-fill"
-                        : tone === "lifting"
-                          ? "bg-lifting-fill"
-                          : "bg-segment-selected"
-                    )
-                  : // Unselected: transparent on the shared track (fill), or
-                    // an individual muted pill when wrapped (no track behind).
-                    layout === "wrap"
-                    ? "bg-muted text-muted-foreground"
-                    : "text-muted-foreground"
+                  ? // The underline is the selected state: primary is over
+                    // 3:1 on the page in both themes.
+                    "text-foreground shadow-[inset_0_-2px_0_0_hsl(var(--primary))]"
+                  : "text-muted-foreground hover:text-foreground"
+                : emphasis === "solid"
+                  ? selected
+                    ? cn(
+                        "border-transparent text-white",
+                        tone === "nutrition"
+                          ? "bg-nutrition-fill"
+                          : "bg-primary"
+                      )
+                    : "border-border/80 bg-card text-muted-foreground hover:bg-muted/60"
+                  : selected
+                    ? cn(
+                        // The fill is the selected state: 3:1 or more
+                        // against the track, white 4.5:1 or more on it.
+                        "text-white",
+                        tone === "running"
+                          ? "bg-running-fill"
+                          : tone === "lifting"
+                            ? "bg-lifting-fill"
+                            : "bg-segment-selected"
+                      )
+                    : // Unselected: transparent on the shared track (fill), or
+                      // an individual muted pill when wrapped (no track behind).
+                      layout === "wrap"
+                      ? "bg-muted text-muted-foreground"
+                      : "text-muted-foreground"
             )}
           >
             {opt.label}
