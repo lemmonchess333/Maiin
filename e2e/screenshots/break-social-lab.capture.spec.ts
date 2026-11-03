@@ -15,6 +15,10 @@
  * truncating on purpose and is not counted. Double text stands in for a
  * large-text setting: a browser's text zoom, or a WebView that follows
  * the system font size.
+ *
+ * The trophy case (Soc15) is measured with them, every medal shown, each
+ * medal against its own tile; and the first medal's full-screen reveal is
+ * measured on its own, against the screen.
  */
 import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
@@ -42,6 +46,8 @@ async function shoot(page: Page, name: string) {
 
 const CARDS = 'section[aria-label="Activity cards"]';
 const ROWS = 'section[aria-label="Leaderboard rows"]';
+const MEDALS = 'section[aria-label="Lab medals"]';
+const REVEAL = '[data-testid="medal-reveal"] [role="dialog"]';
 
 /** The activity cards and leaderboard rows, measured against their card. */
 const breaks = async (page: Page) => [
@@ -50,7 +56,22 @@ const breaks = async (page: Page) => [
   // The author's name in a card's header, which links to their profile.
   ...(await clippedNames(page, `${CARDS} a[href*="/user/"] [dir="auto"]`)),
   ...(await brokenWords(page, undefined, `${CARDS}, ${ROWS}`)),
+  // Each medal stays inside its tile, its name whole.
+  ...(await layoutBreaks(page, `${MEDALS} li *`, "li")),
+  ...(await brokenWords(page, undefined, MEDALS)),
 ];
+
+/** The reveal: every word inside the screen and its own box. */
+const revealBreaks = async (page: Page) => [
+  ...(await layoutBreaks(page, `${REVEAL} *`, '[role="dialog"]')),
+  ...(await brokenWords(page, undefined, REVEAL)),
+];
+
+/** Every medal in the case, not just the first two rows. */
+async function showAllMedals(page: Page) {
+  const all = page.getByRole("button", { name: /^See all \d+$/ });
+  if (await all.count()) await all.click();
+}
 
 for (const width of [320, 393]) {
   test(`break-social lab at ${width}px — nothing spills or overflows`, async ({
@@ -79,6 +100,7 @@ for (const width of [320, 393]) {
       await expect(
         page.getByRole("heading", { name: "Break social" })
       ).toBeVisible();
+      await showAllMedals(page);
       for (const dark of [false, true]) {
         await page.evaluate(
           (value) => document.documentElement.classList.toggle("dark", value),
@@ -108,6 +130,47 @@ for (const width of [320, 393]) {
     // prints no failure details, only what the tests logged.
     if (found.length > 0) {
       console.log(`[break-social ${width}px] breaks:\n  ${found.join("\n  ")}`);
+    }
+    expect(found).toEqual([]);
+  });
+}
+
+for (const width of [320, 393]) {
+  test(`medal reveal at ${width}px — nothing spills or overflows`, async ({
+    page,
+  }) => {
+    test.skip(!emulatorActive, "emulator capture only");
+    test.setTimeout(120_000);
+    // Reduced motion: the medal stands where it settles, so the frame
+    // and the measure see it there rather than mid-swing.
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.setViewportSize({ width, height: 852 });
+    await signInAsTestUser(page);
+    const found: string[] = [];
+    for (const data of DATASETS) {
+      await page.goto(`dev/break-social?data=${data}&reveal=1`);
+      await expect(page.getByRole("dialog")).toBeVisible();
+      for (const size of ["", "200%"]) {
+        await page.evaluate((value) => {
+          document.documentElement.style.fontSize = value;
+        }, size);
+        await page.waitForTimeout(400);
+        await page.screenshot({
+          animations: "disabled",
+          path: `screenshots/medal-reveal-${data}-${width}${size ? "-text200" : ""}.png`,
+        });
+        found.push(
+          ...(await revealBreaks(page)).map(
+            (s) => `${data}${size ? " 200%" : ""}: ${s}`
+          )
+        );
+      }
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = "";
+      });
+    }
+    if (found.length > 0) {
+      console.log(`[medal reveal ${width}px] breaks:\n  ${found.join("\n  ")}`);
     }
     expect(found).toEqual([]);
   });

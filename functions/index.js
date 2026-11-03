@@ -45,6 +45,8 @@ const followBackfill = require("./lib/followBackfill");
 const discoveryHidden = require("./lib/discoveryHidden");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
 const friendsBoard = require("./lib/friendsBoard");
+// Soc15: a medal per challenge edition, and the public trophy case.
+const medals = require("./lib/medals");
 const restrictedIdentities = require("./lib/restrictedIdentities");
 const {
   mergeChangedFields,
@@ -5095,6 +5097,61 @@ exports.onChallengeParticipantDeleted = functions
       context.params.challengeId,
       context.timestamp
     );
+    return null;
+  });
+
+/**
+ * A medal for each challenge edition (Soc15, lib/medals.js): the
+ * person's highest tier, kept in users/{uid}/medals/{challengeId} and
+ * mirrored into their public profile's medalSummary, the trophy case.
+ *
+ * The one writer of medals. The participant's tier is written by several
+ * paths and a deleted run can lower it, so the medal is derived here from
+ * the participant document rather than by any of them. onWrite, so a
+ * rise, a reversal and a leave all reach it; a write that cannot move a
+ * medal (progress below bronze, a name carried by identityResync) returns
+ * before any read.
+ *
+ * Retried: every delivery reads the participant, the challenge and the
+ * medal as they are now, inside the transaction that writes the medal
+ * and the summary, and writes nothing already right. So a second
+ * delivery, or one arriving after a newer write, changes nothing. A
+ * medal is frozen once its challenge has settled (MEDAL_SETTLE_MS after
+ * its end); an account being deleted gets none.
+ */
+exports.onChallengeParticipantWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("challenges/{challengeId}/participants/{uid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { challengeId, uid } = context.params;
+    const before = change.before.exists ? change.before.data() || {} : null;
+    const after = change.after.exists ? change.after.data() || {} : null;
+    if (!medals.participantChangeMayMoveMedal(before, after)) return null;
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onChallengeParticipantWritten"
+      ))
+    )
+      return null;
+    const at = Date.parse(context.timestamp || "");
+    const result = await medals.syncMedal({
+      firestore: db,
+      uid,
+      challengeId,
+      // The event's own time, the same on every redelivery.
+      eventMs: Number.isFinite(at) ? at : Date.now(),
+      isDelete: !after,
+    });
+    if (result.changed) {
+      functions.logger.info("onChallengeParticipantWritten.medal", {
+        uid,
+        challengeId,
+        ...result,
+      });
+    }
     return null;
   });
 

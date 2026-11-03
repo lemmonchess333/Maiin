@@ -49,7 +49,8 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 // server-written copy of who has blocked each account.
 // Connected training adds the account-scoped Apple Health export ledger.
 // The community goal adds userCommunityGoalCredits, its per-run credits.
-export const EXPECTED_INCLUDED_COUNT = 61;
+// Soc15 bumped to 62 — userMedals, a medal per challenge edition.
+export const EXPECTED_INCLUDED_COUNT = 62;
 // S4e STATUS 2026-10-20 bumped excluded to 12 — restrictedIdentities, a
 // deleted restricted account's hashed sign-in identities, retained.
 export const EXPECTED_EXCLUDED_COUNT = 12;

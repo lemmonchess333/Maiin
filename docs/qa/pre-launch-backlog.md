@@ -3403,3 +3403,56 @@ tests cover them; these need a phone or the deployed rules.
       since: Following shows up to 10 of them, in date order, without
       waiting for their next session. Accepting a follow request does
       the same for the person who asked.
+
+## Medals and a trophy case (Soc15, 2026-11-03)
+
+A medal is a person's highest tier in one challenge edition. The new
+`onChallengeParticipantWritten` trigger is its one writer
+(`functions/lib/medals.js`): it keeps `users/{uid}/medals/{challengeId}`
+and the public profile's `medalSummary` in step with the participant
+document until the challenge settles (48 hours after its end), then leaves
+them frozen. The profile shows the trophy case; Social reveals a new medal
+once. Unit, rules and component tests cover it; these need the console, a
+dispatch or a phone.
+
+- [ ] **The trigger deploys and is read back.** After the Deploy
+      production run that ships this, its deployed-source check lists
+      `onChallengeParticipantWritten` (with `lib/medals.js`) and finds its
+      retries on, and the Cloud Functions console shows it on
+      `challenges/{challengeId}/participants/{uid}`, document write.
+- [ ] **Backfill the medals earned before the deploy (owner step).** Only
+      tiers reached after the deploy make medals by themselves. Once the
+      trigger is deployed, Actions → "Backfill medals" → Run workflow,
+      with the challenge id left empty (every challenge that ended in the
+      last 13 months, and the running ones). It does not run by itself.
+      Passing: the workflow is green (its second pass must write nothing),
+      the first pass prints a `written` count, and your own profile's
+      Medals section shows a medal for each challenge you reached a tier
+      in. Safe to run again, or beside the trigger.
+- [ ] **No client can set the summary.** After the rules deploy, the
+      rules check (verify-production-rules) is green, and from a signed-in
+      browser console a `setDoc` of `medalSummary` on your own public
+      profile is refused while a write of your display name still lands.
+- [ ] **A medal on a phone.** Join this month's Mileage and save runs past
+      10 km: the next visit to Social opens the reveal ("Bronze ·
+      <Month> Mileage") once, with the medal swinging in, confetti and
+      the figure in your units; Done closes it and it does not come back.
+      Reach 25 km: Silver is revealed. Delete a run that drops you under
+      25 km while the month is running: the trophy case shows Bronze
+      again. Another account opening your profile sees the same case.
+- [ ] **Illustrate the medals (owner step, needs a Gemini key).** The
+      medals are drawn in code until their art exists. With
+      `GEMINI_API_KEY` exported, run `python3
+  scripts/art/generate-medals.py` (33 images: 11 challenge
+      definitions × bronze, silver, gold), review them as
+      `docs/badges/MEDAL_ART_BRIEF.md` says, and add the good ones to
+      `MEDAL_ART_KEYS` in `src/features/challenges/medalArt.ts`. Passing:
+      the trophy case and the reveal show the round black-enamel medals,
+      with the goal and the edition still printed on them.
+- [ ] **Share from the reveal on the iPhone app.** Share opens the share
+      sheet with a square image of the medal; Save Image keeps it.
+- [ ] **Reduce Motion and large text.** With Reduce Motion on, the reveal
+      fades in without the swing, the rays and the confetti. At the
+      phone's largest text size the trophy case steps to fewer columns
+      with every name whole, and the reveal scrolls rather than cutting
+      off Done.

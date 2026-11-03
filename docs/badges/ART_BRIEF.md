@@ -198,3 +198,12 @@ cracks, clip and shards line up with the art. The magenta background is
 what makes keying trivial: it is the one colour none of the four metals
 or the black stone contains. Review on `/dev/badge-seal` (dev builds) or
 in the `badge-seal-*` capture frames.
+
+## Challenge medals
+
+The round challenge medals (Soc15) share this material language: black
+enamel face, tier-metal relief emblem, magenta key. They are a coin, never
+a hexagon, one image per challenge definition and tier, with the edition
+and goal drawn in code over the art. The brief, the prompts and how to drop
+them in: `MEDAL_ART_BRIEF.md` beside this file;
+the generator: `scripts/art/generate-medals.py`.

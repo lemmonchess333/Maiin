@@ -122,6 +122,16 @@ export function formatMonthYear(d: Date): string {
   return d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 }
 
+/** "Nov 2026": a month and its year, short (the edition a medal carries). */
+export function formatShortMonthYear(d: Date): string {
+  return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+}
+
+/** "Nov": the month alone, short (a medal's edition across two months). */
+export function formatShortMonth(d: Date): string {
+  return d.toLocaleDateString("en-GB", { month: "short" });
+}
+
 /** "November": the month alone, in full ("You're in for November."). */
 export function formatMonth(d: Date): string {
   return d.toLocaleDateString("en-GB", { month: "long" });

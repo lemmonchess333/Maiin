@@ -91,6 +91,9 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // The community goal's per-run credits and per-goal tallies
   // (lib/communityGoal.js). Server-owned, like `lifetime`.
   "communityGoal",
+  // A medal per challenge edition (lib/medals.js, Soc15). Server-owned,
+  // owner-read; the public summary goes with `public` below.
+  "medals",
   "dailyNutrition",
   "checkins",
   "trainingBlocks",

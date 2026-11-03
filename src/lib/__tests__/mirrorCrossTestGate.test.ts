@@ -195,6 +195,10 @@ const PINNED: Record<string, string> = {
     "src/features/program/__tests__/validatePlanPayload.cross.test.ts",
   "functions/lib/challengeTiers.js":
     "src/features/challenges/__tests__/challengeTiers.cross.test.ts",
+  // Soc15: the medal the server writes and the one the app reads (its
+  // summary, and the finale card's own) must be the same medal.
+  "functions/lib/medals.js":
+    "src/features/challenges/__tests__/medals.cross.test.ts",
   "functions/lib/partnerStreakEngine.js":
     "src/features/partnerStreak/__tests__/engineMirror.test.ts",
   // Packet 18 — CF programme reducer mirrors the client run-day transition

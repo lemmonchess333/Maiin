@@ -21,6 +21,7 @@ import { ErrorState } from "../components/ui/ErrorState";
 import { EmptyState } from "../components/ui/EmptyState";
 import { BADGE_ART, BADGE_ICONS } from "../features/streaks/badges";
 import { BadgeHex } from "../features/streaks/BadgeHex";
+import TrophyCase from "@/features/challenges/TrophyCase";
 import {
   Flame,
   MoreHorizontal,
@@ -159,6 +160,7 @@ function ProfileContent({
     countsFailed,
     badges,
     badgesFailed,
+    medals,
     posts,
     postsLoading,
     postsFailed,
@@ -499,6 +501,11 @@ function ProfileContent({
               ))}
             </ul>
           )}
+
+          {/* The trophy case (Soc15): a medal for every challenge
+              edition they reached a tier in. Drawn once the public
+              profile has been read; a read that failed draws nothing. */}
+          {medals && <TrophyCase medals={medals} isOwn={isOwnProfile} />}
 
           <section className="space-y-2" aria-labelledby="profile-sessions">
             <SectionHeading id="profile-sessions">

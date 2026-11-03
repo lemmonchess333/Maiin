@@ -25,6 +25,7 @@ RETRY_REQUIRED = frozenset({
     "onActivityCreated", "onGoalSpaceEventCreated", "onPublicProfileWritten",
     "onFollowerCreated", "onFollowRequestCreated",
     "onBlockWritten", "onPublicProfileIdentityChanged",
+    "onChallengeParticipantWritten",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -128,6 +129,12 @@ def source_targets():
         # Checking index.js alone misses a stale independently changed library.
         "rolloverChallenges": ["index.js", "package-lock.json", "lib/challengeDefs.js"],
         "onChallengeParticipantCreated": challenge_paths,
+        # Soc15: the one writer of medals and the public trophy case.
+        "onChallengeParticipantWritten": ["index.js", "package-lock.json", "lib/medals.js",
+                                          "lib/challengeActivityWindow.js", "lib/dateUtils.js",
+                                          "lib/deletionTransactionGuard.js",
+                                          "lib/accountDeletionStatus.js", "lib/triggerRetry.js",
+                                          "lib/accountDeletionLocks.js"],
         "onRunUpdated": challenge_paths,
         # The reversal is what a delete runs, and it fails the event when it
         # does not land so the retry can apply it.

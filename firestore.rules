@@ -789,6 +789,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    /* A medal per challenge edition (Soc15, functions/lib/medals.js).
+       Written only by onChallengeParticipantWritten and the medal
+       backfill, from the participant document; a client that could write
+       one could award itself gold. The owner reads their own for the
+       reveal; everyone else reads the public summary. */
+    match /users/{uid}/medals/{challengeId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
     // ========================================
     // Latent subcollections — owner-only, write-frozen during deletion
     // ========================================
@@ -843,6 +853,10 @@ service cloud.firestore {
           'longestStreak',
           'createdAt',
           'badgeSummary',
+          // Soc15 — the trophy case. SERVER-ONLY: listed so a merge
+          // write of the owner's other fields passes over it, and held
+          // below to absent or unchanged, so no client can set it.
+          'medalSummary',
           // SOC-P2f — self-declared "Training for {race}" identity.
           // Value-gated below to null or a KNOWN space id; the client
           // renders it only for race-kind spaces with an upcoming date,
@@ -972,6 +986,20 @@ service cloud.firestore {
         )
         && publicProfileDaysValid('currentStreak')
         && publicProfileDaysValid('longestStreak')
+        /* The medals other people read (Soc15). Written only by the
+           server, from each challenge's participant document
+           (functions/lib/medals.js), so the owner's device may leave it
+           as it is and nothing else: a client that could write it could
+           show any medal it liked on its profile. A write without the
+           field (a first profile, a full overwrite) passes, which only
+           ever takes the person's own trophy case down; a later medal
+           write puts its own line back, and the backfill the rest. */
+        && (
+          !('medalSummary' in request.resource.data)
+          || (resource != null
+              && request.resource.data.medalSummary
+                   == resource.data.get('medalSummary', null))
+        )
         && (
           !('badgeSummary' in request.resource.data)
           || (resource != null

@@ -1,7 +1,9 @@
 import { useSearchParams } from "react-router-dom";
 import ActivityCard from "@/components/social/ActivityCard";
 import LeaderboardRow from "@/components/social/LeaderboardRow";
-import { BOARD, FEED, type BreakDataset } from "./breakSocialFixtures";
+import TrophyCase from "@/features/challenges/TrophyCase";
+import MedalReveal from "@/features/challenges/MedalReveal";
+import { BOARD, FEED, MEDALS, type BreakDataset } from "./breakSocialFixtures";
 
 /*
  * DEV/TEST-ONLY break-social lab. Not in production builds; see the route
@@ -12,6 +14,10 @@ import { BOARD, FEED, type BreakDataset } from "./breakSocialFixtures";
  * people produce (breakSocialFixtures.ts). The data swaps at the props,
  * the same boundary the feed fills, so a break here is a break in the
  * component. `?data=` keeps the choice across a reload.
+ *
+ * The trophy case (Soc15) sits under the board (its See all shows every
+ * medal), and `?reveal=1` opens the first medal's full-screen reveal over
+ * the lab.
  */
 const DATASETS: { key: BreakDataset; label: string }[] = [
   { key: "demo", label: "Demo data" },
@@ -23,6 +29,7 @@ export default function BreakSocialLab() {
   const [params, setParams] = useSearchParams();
   const raw = params.get("data");
   const dataset: BreakDataset = raw === "worst" || raw === "one" ? raw : "demo";
+  const reveal = params.get("reveal") === "1";
 
   return (
     <div className="min-h-screen bg-background px-4 pt-6 pb-28 space-y-6">
@@ -52,6 +59,17 @@ export default function BreakSocialLab() {
           ))}
         </div>
       </section>
+
+      <section aria-label="Lab medals">
+        <TrophyCase medals={MEDALS[dataset]} isOwn={false} />
+      </section>
+
+      {reveal && (
+        <MedalReveal
+          medal={MEDALS[dataset][0]}
+          onDone={() => setParams({ data: dataset }, { replace: true })}
+        />
+      )}
 
       {/* Chrome, not design: plain and fixed, out of the way. */}
       <div

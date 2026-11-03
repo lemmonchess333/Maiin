@@ -14,6 +14,7 @@
  * be checked against it at /dev/break-social.
  */
 import type { FeedItem } from "@/hooks/useSocialFeed";
+import type { Medal } from "@/features/challenges/medals";
 
 export type BreakDataset = "demo" | "worst" | "one";
 
@@ -488,5 +489,147 @@ export const BOARD: Record<BreakDataset, BoardRow[]> = {
       isSelf: true,
       selfInitial: "S",
     },
+  ],
+};
+
+/* ── Medals (Soc15): the trophy case and the reveal ──────────────────── */
+
+/** A medal as the public summary carries it. Fixed day keys: nothing here
+ *  is held to a window. */
+function medal(
+  challengeId: string,
+  over: Partial<Medal> & Pick<Medal, "name" | "metric" | "tier">
+): Medal {
+  return {
+    challengeId,
+    type: "monthly",
+    value: 52.4,
+    goal: 50,
+    startDate: "2026-10-01",
+    endDate: "2026-11-01",
+    ...over,
+  };
+}
+
+/** Each dataset's trophy case, newest first as the summary is read. The
+ *  worst case is every metric at once: the longest name the server keeps
+ *  (60 characters), a season across a year end, a week across two months,
+ *  and figures past a million. */
+export const MEDALS: Record<BreakDataset, Medal[]> = {
+  demo: [
+    medal("monthly-2026-10-01", {
+      name: "October Mileage",
+      metric: "total_km",
+      tier: "gold",
+    }),
+    medal("strength-monthly-2026-10-01", {
+      name: "October Strength Builder",
+      metric: "total_volume",
+      tier: "silver",
+      value: 18240,
+      goal: 15000,
+    }),
+    medal("fastest-5k-2026-10-01", {
+      name: "Fastest 5K",
+      metric: "fastest_effort",
+      tier: "bronze",
+      value: 2041,
+      goal: 2100,
+      targetDistance: 5000,
+    }),
+    medal("weekly-2026-09-28", {
+      name: "Weekly Warrior",
+      metric: "workout_count",
+      type: "weekly",
+      tier: "silver",
+      value: 4,
+      goal: 4,
+      startDate: "2026-09-28",
+      endDate: "2026-10-05",
+    }),
+  ],
+  worst: [
+    medal("seasonal-2026-12-01", {
+      name: "Winter Bulk of the Long Northern Hemisphere Season Challenge",
+      metric: "total_volume",
+      type: "seasonal",
+      tier: "gold",
+      value: 1_234_567,
+      goal: 50000,
+      startDate: "2026-12-01",
+      endDate: "2027-03-01",
+    }),
+    medal("weekly-2026-11-30", {
+      name: "Weekly Warrior",
+      metric: "workout_count",
+      type: "weekly",
+      tier: "gold",
+      value: 1234,
+      goal: 6,
+      startDate: "2026-11-30",
+      endDate: "2026-12-07",
+    }),
+    medal("global-monthly-2026-11-01", {
+      name: "November Hybrid Hero",
+      metric: "hybrid_score",
+      tier: "silver",
+      value: 9_876_543,
+      goal: 8000,
+      startDate: "2026-11-01",
+      endDate: "2026-12-01",
+    }),
+    medal("featured-monthly-2026-11-01", {
+      name: "November Training Minutes",
+      metric: "training_minutes",
+      tier: "bronze",
+      value: 123_456,
+      goal: 120,
+      startDate: "2026-11-01",
+      endDate: "2026-12-01",
+    }),
+    medal("featured-monthly-2026-10-01", {
+      name: "October Active Days",
+      metric: "active_days",
+      tier: "gold",
+      value: 31,
+      goal: 20,
+    }),
+    medal("fastest-5k-2026-10-01", {
+      name: "Fastest 5K",
+      metric: "fastest_effort",
+      tier: "gold",
+      value: 1199,
+      goal: 1500,
+      targetDistance: 5000,
+    }),
+    medal("monthly-2026-10-01", {
+      name: "October Mileage",
+      metric: "total_km",
+      tier: "silver",
+      value: 12345.6,
+      goal: 25,
+    }),
+    medal("seasonal-2026-09-01", {
+      name: "Autumn Push",
+      metric: "hybrid_score",
+      type: "seasonal",
+      tier: "bronze",
+      value: 512,
+      goal: 500,
+      startDate: "2026-09-01",
+      endDate: "2026-12-01",
+    }),
+  ],
+  one: [
+    medal("weekly-2026-10-26", {
+      name: "Weekly Warrior",
+      metric: "workout_count",
+      type: "weekly",
+      tier: "bronze",
+      value: 2,
+      goal: 2,
+      startDate: "2026-10-26",
+      endDate: "2026-11-02",
+    }),
   ],
 };

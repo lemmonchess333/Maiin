@@ -179,6 +179,11 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /databases/{database}/documents",
   "match /{document=**}",
   "match /users/{uid}/performance/{doc}",
+  // Soc15: a medal per challenge edition. Owner READ only; written by
+  // onChallengeParticipantWritten and the medal backfill, which check
+  // the deletion freeze in their transaction, and swept with the user's
+  // tree (USER_SUBCOLLECTIONS, userMedals).
+  "match /users/{uid}/medals/{challengeId}",
   "match /{path=**}/public/{doc}",
   "match /scanUsage/{uid}",
   // Polish2: the week on followers' boards. Read-only for clients; the
