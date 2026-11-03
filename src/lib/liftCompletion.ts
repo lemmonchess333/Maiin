@@ -35,6 +35,7 @@ import {
 } from "@/lib/workoutCompletion";
 import { liftPost, liftPostPreview, type LiftForPost } from "@/lib/liftPost";
 import type { LiftUnit } from "@/lib/liftLoad";
+import type { LiftMomentFacts } from "@/lib/postMoments";
 import { logger } from "@/lib/logger";
 import type {
   ProgramExercise,
@@ -217,6 +218,11 @@ export interface FinishedLift {
   /** The unit the lifter reads loads in (Lift18), for the share sheet's
    *  preview. The post itself stores kg. Kg when missing. */
   liftUnit?: LiftUnit;
+  /** What the session's post says happened (Soc15): its new bests, the
+   *  streak and the plan's week, as the workout screen and the plan knew
+   *  them at Finish. Read once the post is built, never saved on the
+   *  workout. */
+  moments?: LiftMomentFacts;
 }
 
 export interface LiftCompletion extends LiftCompletionReceipt {
@@ -299,6 +305,7 @@ export async function completeLift(
     title: finished.title,
     exercises,
     durationMinutes: totals.durationMinutes,
+    ...(finished.moments ? { moments: finished.moments } : {}),
   };
   const share = createSessionShare({
     uid,

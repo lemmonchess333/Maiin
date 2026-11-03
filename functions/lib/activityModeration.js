@@ -12,9 +12,10 @@
  * The card (src/components/social/ActivityCard.tsx) shows the author's
  * name, the title (activityTitle, else workoutName, else runName), the
  * caption, the PR, challenge and badge lines, a pace stored as text, each
- * exercise row's name and the summary an older row carries, and each
+ * exercise row's name and the summary an older row carries, each
  * movement label, which is a muscle group's own text when the app does
- * not know it.
+ * not know it, and a PR moment's exercise name (Soc15: the one text a
+ * moment carries; the rest are kinds and numbers).
  *
  * A post past ACTIVITY_MAX_BYTES is held the same way. The rules bound
  * each field the app writes, but not the maps inside a list (a route's
@@ -63,6 +64,14 @@ function exerciseTexts(exercises) {
   return texts;
 }
 
+/** The exercise name each PR moment shows (src/lib/postMoments.ts). */
+function momentTexts(moments) {
+  if (!Array.isArray(moments)) return [];
+  return moments
+    .filter((moment) => moment && typeof moment.exercise === "string")
+    .map((moment) => moment.exercise);
+}
+
 /** The movement labels, as the card spells an unknown key: its words
  *  split at the underscores. */
 function muscleTexts(muscleGroups) {
@@ -74,7 +83,8 @@ function muscleTexts(muscleGroups) {
 
 /**
  * The first field whose text the filter refuses, or null for a post it
- * passes. A list field is named whole ("exercises", "muscleGroups").
+ * passes. A list field is named whole ("exercises", "muscleGroups",
+ * "moments").
  */
 function objectionableActivityField(data) {
   if (!data || typeof data !== "object") return null;
@@ -85,6 +95,9 @@ function objectionableActivityField(data) {
   }
   if (muscleTexts(data.muscleGroups).some(profanityFilter.containsProfanity)) {
     return "muscleGroups";
+  }
+  if (momentTexts(data.moments).some(profanityFilter.containsProfanity)) {
+    return "moments";
   }
   return null;
 }

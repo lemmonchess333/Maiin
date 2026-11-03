@@ -39,7 +39,8 @@ If you only remember ten things:
    `text-muted-foreground`, or `THEME.*` — never paste `#7B72E9` inline.
 8. **Light AND dark mode both have to work.** Every change is reviewed in both.
 9. **Calm over flashy. Breathing room over density.** Subtle shadows, soft
-   tinted backgrounds, generous padding. When in doubt, do less.
+   tinted backgrounds, generous padding. When in doubt, do less — except
+   Social and rewards: §14 (Soc15).
 10. **Design for 1000+ users, not "the one current user."** Cold-start states,
     light-trainers, lapsed users, vacation gaps are all real segments. A design
     that breaks for them is a bug, not an edge case.
@@ -1174,3 +1175,9 @@ or touching a CTA button, route it through `Button` with the variant above.
 - The streak flame is brand purple (Polish3, call 4). Its tiers are steps of the purple ramp, deeper as the streak runs longer (1, 7, 30 days), and at 100 days its heart is the platinum of the top badge tier. The table is `src/features/streaks/flameTiers.ts`, built from `THEME.purpleRamp` and `THEME.tier.platinum`; `eslint.config.js` bans any hex literal in it (`PALETTE_TABLES`). Gold is never a tier colour
 - A challenge's bar fills in its sport's colour (Polish3, call 6): coral for a running challenge, purple for a lifting one, brand purple for a mixed or time one (`challengeSport.ts`). The tier metal is a marker, never the bar's fill and never text: a reached tier's dot is the metal, and the trophy badge and a leaderboard row's tier word are drawn in the text colour inside a ring of it, as the leaderboard ranks are
 - People's names (owner, 2026-10-05, from the break-social pass). A name reads in its own direction (`dir="auto"`) but keeps to the start of its row. A profile's heading wraps to two lines before it truncates. On a card narrower than 20.5em (under 360px at normal text size) a post's Follow is an icon (`InlineFollow`), so the author's name and time keep the room. At large text sizes the feed card, exercise rows and leaderboard rows wrap rather than clip: the card is a query container measured in em, its stats go from three columns to two to one, and the capture spec measures every dataset at 200% text. Display names are 2–50 characters in the app, the server's sanitizer and every rules cap on a copied name, pinned by `displayNameLimit.cross.test.ts`. The worst cases live at `/dev/break-social`
+
+### 14l. Social and rewards may be loud (Soc15 call 1, 3 November 2026)
+
+- **The owner's call.** Calm stays for logging and Home. Social and rewards may be loud: colour, motion, a full-screen reveal for a medal. Social has to pull people back the way Strava, Hevy and Nike Run Club do, and it starts with the moments that happen to you ("Kudos on your first activity!", a streak slide). §0's calm rule still holds everywhere else.
+- **Moments on posts come from real data, never free text.** A moment is a kind and its numbers (`src/lib/postMoments.ts`): a new PR, the longest run yet, a first 5K, 10K, half or marathon, a fastest 1K, 5K or 10K, a streak reaching 7, 14, 30, 50, 100, 200 or 365 days, a plan's week done or the programme complete, a first session. The finish screens work them out from what they already hold, a post carries at most three (most significant first), and firestore.rules refuses any other shape. The card words them in the reader's units (`postMomentLines.ts`), so nothing a person types becomes a moment.
+- **How a moment draws.** A row above the post's actions, as Strava's are: an icon tile, a bold line and the figures under it. A best (a PR, the longest run, a first distance, a fastest effort) is gold, the `--achievement` family, because gold means a new best and nothing else (§14b). A streak keeps its flame's brand purple (§14k), and a plan's week and a first session take the same. At large text the tile stands above the words. Older posts keep their PR and challenge lines as they were.

@@ -31,6 +31,16 @@ import {
   ACTIVITY_POST_STAMPS,
   CAPTION_MAX,
 } from "../activityPost";
+import {
+  FASTEST_EFFORT_METERS,
+  FIRST_DISTANCE_METERS,
+  MAX_POST_MOMENTS,
+  MOMENT_EXERCISE_MAX,
+  MOMENT_LIMITS,
+  POST_MOMENT_KEYS,
+  POST_MOMENT_KINDS,
+  STREAK_MILESTONES,
+} from "../postMoments";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -127,5 +137,107 @@ describe("feed post fields: postActivity and firestore.rules agree", () => {
       "payload: (decision: ShareDecision) => ActivityPost;"
     );
     expect(helper).toContain("postActivity(payload)");
+  });
+});
+
+/** The rules' `validPostMoment`, each kind's clause by its kind. */
+function momentClauses(): Map<string, string> {
+  const rules = readFileSync(resolve(repoRoot, "firestore.rules"), "utf8");
+  const start = rules.indexOf("function validPostMoment(m) {");
+  const end = rules.indexOf("\n    }\n", start);
+  if (start < 0 || end < 0) throw new Error("could not locate validPostMoment");
+  const body = rules.slice(start, end);
+  const marks = [...body.matchAll(/m\.kind == '([A-Za-z]+)'/g)];
+  const clauses = new Map<string, string>();
+  marks.forEach((mark, i) => {
+    const next = marks[i + 1]?.index ?? body.length;
+    clauses.set(mark[1], body.slice(mark.index, next));
+  });
+  return clauses;
+}
+
+const numbersIn = (list: string) =>
+  list.split(",").map((n) => Number(n.trim()));
+
+/** The list a field is held to in a kind's clause (`m.days in [...]`). */
+function listIn(clause: string, field: string): number[] {
+  const at = clause.indexOf(`m.${field} in [`);
+  expect(at, `${field} is held to a list`).toBeGreaterThanOrEqual(0);
+  const open = clause.indexOf("[", at);
+  return numbersIn(clause.slice(open + 1, clause.indexOf("]", open)));
+}
+
+/** A field's upper bound in a kind's clause (`m.x <= n`, or its size). */
+function upperBound(clause: string, field: string): number {
+  for (const form of [`m.${field}.size() <= `, `m.${field} <= `]) {
+    const at = clause.indexOf(form);
+    if (at >= 0) return parseInt(clause.slice(at + form.length), 10);
+  }
+  throw new Error(`no upper bound on ${field}`);
+}
+
+describe("post moments: postMoments.ts and firestore.rules agree", () => {
+  it("the create rule holds a post to MAX_POST_MOMENTS and checks each one", () => {
+    const rule = activitiesCreateRule();
+    expect(rule).toContain("request.resource.data.moments is list");
+    const cap = rule.match(/moments\.size\(\) <= (\d+)/);
+    expect(cap, "the create rule caps the moments").toBeTruthy();
+    expect(Number(cap![1])).toBe(MAX_POST_MOMENTS);
+    // Every index under the cap is checked, and none past it.
+    const checked = [
+      ...rule.matchAll(
+        /validPostMoment\(request\.resource\.data\.moments\[(\d+)\]\)/g
+      ),
+    ].map((m) => Number(m[1]));
+    expect(checked).toEqual(
+      Array.from({ length: MAX_POST_MOMENTS }, (_, i) => i)
+    );
+  });
+
+  it("the rules know exactly the module's kinds, each with exactly its keys", () => {
+    const clauses = momentClauses();
+    expect([...clauses.keys()].sort()).toEqual([...POST_MOMENT_KINDS].sort());
+    for (const kind of POST_MOMENT_KINDS) {
+      const clause = clauses.get(kind)!;
+      const only = clause.match(/keys\(\)\.hasOnly\(\[([^\]]*)\]\)/);
+      expect(only, `${kind} has a key list`).toBeTruthy();
+      const keys = [...only![1].matchAll(/'([A-Za-z]+)'/g)].map((m) => m[1]);
+      expect(keys.sort(), kind).toEqual([...POST_MOMENT_KEYS[kind]].sort());
+      // A kind with keys beyond `kind` requires every one of them.
+      if (keys.length > 1) {
+        const all = clause.match(/keys\(\)\.hasAll\(\[([^\]]*)\]\)/);
+        expect(all?.[1], `${kind} requires its keys`).toBe(only![1]);
+      }
+    }
+  });
+
+  it("the rules' lists are the module's: first distances, effort distances, streak days", () => {
+    const clauses = momentClauses();
+    expect(listIn(clauses.get("firstDistance")!, "meters")).toEqual([
+      ...FIRST_DISTANCE_METERS,
+    ]);
+    expect(listIn(clauses.get("fastestEffort")!, "meters")).toEqual([
+      ...FASTEST_EFFORT_METERS,
+    ]);
+    expect(listIn(clauses.get("streak")!, "days")).toEqual([
+      ...STREAK_MILESTONES,
+    ]);
+  });
+
+  it("the rules hold each number and the exercise name to the module's bounds", () => {
+    const clauses = momentClauses();
+    const pr = clauses.get("pr")!;
+    expect(upperBound(pr, "exercise")).toBe(MOMENT_EXERCISE_MAX);
+    expect(upperBound(pr, "weightKg")).toBe(MOMENT_LIMITS.weightKgMax);
+    expect(upperBound(pr, "reps")).toBe(MOMENT_LIMITS.repsMax);
+    expect(upperBound(clauses.get("longestRun")!, "meters")).toBe(
+      MOMENT_LIMITS.metersMax
+    );
+    expect(upperBound(clauses.get("fastestEffort")!, "seconds")).toBe(
+      MOMENT_LIMITS.secondsMax
+    );
+    expect(upperBound(clauses.get("planWeek")!, "weeks")).toBe(
+      MOMENT_LIMITS.weeksMax
+    );
   });
 });

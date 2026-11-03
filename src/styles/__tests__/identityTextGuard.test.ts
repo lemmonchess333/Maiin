@@ -158,7 +158,10 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-09-27: 10 → 11. The finish screen's New bests rows each end in
   // a gold Trophy ICON (3:1 non-text); the figure beside it, which is
   // text, takes `text-achievement-strong`.
-  achievement: 11, // Companion finish removes the decorative trophy.
+  // 2026-11-03: 11 → 12. A post's moment of a best (Soc15) sits in a
+  // gold-tinted tile whose only content is its ICON (3:1 non-text); the
+  // moment's words beside it are foreground and muted text.
+  achievement: 12, // Companion finish removes the decorative trophy.
 };
 
 /**
@@ -319,7 +322,10 @@ function bareUses(token: string): string[] {
 // carries the same sparkle icon as the free-week strip beside it.
 // 42 → 41: Together's Circle rows draw their icon in text-primary-strong,
 // as the start-or-join card's does.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 41 } as const;
+// 2026-11-03: 41 → 42. A post's streak, plan or first-session moment
+// (Soc15) sits in a purple-tinted tile whose only content is its ICON;
+// its words are foreground and muted text.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 42 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

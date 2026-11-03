@@ -79,7 +79,17 @@ import {
 import RunStatGrid from "@/components/run/RunStatGrid";
 import HeartRateSummaryCard from "@/components/run/HeartRateSummaryCard";
 import { useWeekPulse, type PendingRun } from "../hooks/useWeekPulse";
-import { allocateRunId, completeRun, runPostRoute } from "@/lib/runCompletion";
+import {
+  allocateRunId,
+  completeRun,
+  earlierRunHistory,
+  runDay,
+  runPostRoute,
+  type FinishedRun,
+} from "@/lib/runCompletion";
+import { hasEarlierSession } from "@/lib/firstSession";
+import type { StreakChange } from "@/lib/postMoments";
+import { useStreaks } from "@/features/streaks/useStreaks";
 import {
   RUN_NAME_MAX,
   runNameOf,
@@ -487,6 +497,14 @@ export default function RunSummary() {
   // "yes I did do this scheduled run" reconciliation path
   // (Q5 P74 — DayActionSheet's contextual hint).
   const { markManualComplete, skipRunDay, programState } = useProgram();
+  /* The streak a run's post measures against (Soc15), and whether it is
+     the first session, as the first Save found them: a retry finds the run
+     already in the streak. Null until then. */
+  const { streakWithDay } = useStreaks();
+  const atFirstSave = useRef<{
+    streak: StreakChange | null;
+    firstSession: boolean;
+  } | null>(null);
   // P3-1: reconciliation choice — 'pending' until the user picks,
   // then 'completed' / 'skipped' / 'dismissed' once they do.
   //
@@ -648,6 +666,21 @@ export default function RunSummary() {
       cancelled = true;
     };
   }, [uid, hasRun]);
+  /* Whether the account had a session before this run, for its post's
+     "First session on Tropos" (Soc15): two documents a kind, read once as
+     the screen opens. Null until known, and whenever it can't be. */
+  const earlierSessionRef = useRef<boolean | null>(null);
+  const ownRunId = state?.identity?.runId ?? receipt?.id ?? null;
+  useEffect(() => {
+    if (!uid || !hasRun) return;
+    let cancelled = false;
+    void hasEarlierSession(uid, { runId: ownRunId }).then((earlier) => {
+      if (!cancelled) earlierSessionRef.current = earlier;
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, hasRun, ownRunId]);
   const paceHistory = useMemo<PaceInsightRun[]>(
     () => (historyRead && historyRead.uid === uid ? historyRead.runs : []),
     [historyRead, uid]
@@ -1182,6 +1215,55 @@ export default function RunSummary() {
               (connectedPrefsLoading || connectedPrefsFailed),
           }
         );
+      const finishedRun: FinishedRun = {
+        ...(state.identity ? { identity: state.identity } : {}),
+        startedAt,
+        recordingStartedAt: state.recordingStartedAt ?? undefined,
+        finishedAt: state.finishedAt,
+        heartRate,
+        points: savedPoints,
+        distance,
+        elapsed,
+        avgPaceSeconds,
+        calories,
+        elevationGain,
+        splits,
+        runConfig,
+        intervalData,
+        notes,
+        relativeEffort,
+        paceVerdictTone: paceVerdict?.tone ?? null,
+        isInvalid,
+        invalidReason: invalidReason ?? null,
+        routeQuality: state.routeQuality ?? null,
+        workPortion: state.workPortion ?? null,
+        shoeId: effectiveShoeId,
+        bestEfforts,
+        name: nameToSave,
+      };
+      /* What the run's post says happened (Soc15): the earlier runs this
+         screen read, the streak and whether it is the first session. A
+         moment never costs the save: the streak is left out if it can't
+         be worked out. */
+      if (!atFirstSave.current) {
+        let streak: StreakChange | null = null;
+        try {
+          streak = streakWithDay(runDay(finishedRun));
+        } catch (err) {
+          logger.warn("[RunSave] streak for the post not read", err);
+        }
+        atFirstSave.current = {
+          streak,
+          firstSession: earlierSessionRef.current === false,
+        };
+      }
+      finishedRun.moments = {
+        ...atFirstSave.current,
+        history:
+          historyRead && historyRead.uid === user.uid
+            ? earlierRunHistory(historyRead.runs, saveRunId)
+            : null,
+      };
       const completion = completeRun({
         uid: user.uid,
         author: {
@@ -1190,32 +1272,7 @@ export default function RunSummary() {
         },
         runId: saveRunId,
         alreadySaved: savedRunId !== null,
-        run: {
-          ...(state.identity ? { identity: state.identity } : {}),
-          startedAt,
-          recordingStartedAt: state.recordingStartedAt ?? undefined,
-          finishedAt: state.finishedAt,
-          heartRate,
-          points: savedPoints,
-          distance,
-          elapsed,
-          avgPaceSeconds,
-          calories,
-          elevationGain,
-          splits,
-          runConfig,
-          intervalData,
-          notes,
-          relativeEffort,
-          paceVerdictTone: paceVerdict?.tone ?? null,
-          isInvalid,
-          invalidReason: invalidReason ?? null,
-          routeQuality: state.routeQuality ?? null,
-          workPortion: state.workPortion ?? null,
-          shoeId: effectiveShoeId,
-          bestEfforts,
-          name: nameToSave,
-        },
+        run: finishedRun,
         // Loading or unread privacy settings withhold the route.
         route: runPostRoute(savedPoints, {
           withheld: Boolean(privacyZonesLoading || privacyZonesError),

@@ -29,12 +29,15 @@ vi.mock("@/lib/shareComposer", async (importOriginal) => ({
 
 import {
   completeRun,
+  earlierRunHistory,
+  runDay,
   runDocument,
   runPost,
   runPostPreview,
   runPostRoute,
   type FinishedRun,
 } from "../runCompletion";
+import type { SavedRun } from "../savedRuns";
 import { pendingDocumentWrites } from "../offlineQueue";
 import { runPostName } from "../runName";
 import type { RacePaceWork } from "../racePace";
@@ -405,6 +408,93 @@ describe("the run's post", () => {
       calories: 420,
       routePreview: route.routePreview,
     });
+  });
+});
+
+describe("moments on a run's post (Soc15)", () => {
+  const route = { routePreview: [], note: "" };
+  const saved = (
+    id: string,
+    distance: number,
+    extra: Partial<SavedRun> = {}
+  ): SavedRun =>
+    ({
+      id,
+      distance,
+      duration: 1800,
+      avgPace: 300,
+      isInvalid: false,
+      savedAnyway: false,
+      ...extra,
+    }) as SavedRun;
+
+  it("compares the run with the earlier runs that count, less itself", () => {
+    const history = earlierRunHistory(
+      [
+        saved("a", 6000, {
+          bestEfforts: [{ distance: 5000, time: 1400 }],
+        }),
+        saved("b", 5200),
+        saved("c", 4100),
+        // Neither a run saved despite invalid figures, nor one saved
+        // anyway, is a run to beat.
+        saved("bad", 9000, { isInvalid: true }),
+        saved("anyway", 9500, {
+          savedAnyway: true,
+          bestEfforts: [{ distance: 5000, time: 900 }],
+        }),
+        // The run itself, once saved.
+        saved("this-run", 6600),
+      ],
+      "this-run"
+    );
+    expect(history).toEqual({
+      count: 3,
+      longestMeters: 6000,
+      fastestSeconds: { 5000: 1400 },
+    });
+    const post = runPost(
+      { uid: "runner" },
+      run({
+        moments: {
+          history,
+          streak: { before: 13, after: 14 },
+          firstSession: false,
+        },
+      }),
+      route,
+      { visibility: "public" }
+    );
+    expect(post.moments).toEqual([
+      { kind: "streak", days: 14 },
+      { kind: "fastestEffort", meters: 5000, seconds: 1385 },
+      { kind: "longestRun", meters: 6600 },
+    ]);
+  });
+
+  it("writes none for a run with nothing to tell, or saved despite invalid figures", () => {
+    const quiet = runPost({ uid: "runner" }, run(), route, {
+      visibility: "public",
+    });
+    expect(quiet).not.toHaveProperty("moments");
+    const invalid = runPost(
+      { uid: "runner" },
+      run({
+        isInvalid: true,
+        moments: { history: null, firstSession: true },
+      }),
+      route,
+      { visibility: "public" }
+    );
+    expect(invalid).not.toHaveProperty("moments");
+  });
+
+  it("never saves the moments on the run itself, and dates the streak by the run's day", () => {
+    const finished = run({ moments: { firstSession: true } });
+    const doc = runDocument(finished, FINISH);
+    expect(doc).not.toHaveProperty("moments");
+    expect(runDay(finished, FINISH)).toBe(doc.date);
+    expect(runDay(finished, FINISH)).toBe(localDateString(START));
   });
 });
 

@@ -21,6 +21,8 @@ import {
   liftSessionDay,
   liftWorkoutId,
 } from "@/lib/liftCompletion";
+import { liftPlanFacts } from "@/lib/liftWeekLabel";
+import type { LiftMomentFacts } from "@/lib/postMoments";
 import {
   applySessionProgression,
   toSessionProgression,
@@ -178,6 +180,11 @@ export interface CompletedSessionData {
    *  session started (`useHardRunBefore`). Recorded on the workout, and a
    *  leg miss counts half (Lift4 (7)). */
   afterHardRun?: boolean;
+  /** What the workout screen knew for the session's post (Soc15): its new
+   *  bests, the streak, whether it is the first session. The plan's week
+   *  is added by the writer that holds the plan. Never saved on the
+   *  workout. */
+  moments?: LiftMomentFacts;
 }
 import type { RaceTiming } from "./runPlanTiming";
 import { scheduleRecoveryWeekV2, type RunTuning } from "./runScheduler";
@@ -1449,6 +1456,17 @@ export function useProgram() {
           )
         : programState;
 
+      // Soc15: the week of a plan with a set length that this lift
+      // finished, for its post. Only for the day the plan has in hand: a
+      // lift saved against a week that has moved on finishes none.
+      const plan = matchesCurrentDay
+        ? liftPlanFacts(
+            programState,
+            committedState,
+            liftSessionDay(sessionData.startedAt)
+          )
+        : null;
+
       // ── CORE persistence boundary: the workout and the plan in one
       // transaction (`commitWorkoutCompletion`, through `completeLift`).
       // Pre-packet-15 the plan was saved and the workout written after it
@@ -1492,6 +1510,7 @@ export function useProgram() {
           },
         },
         completion: completionContext,
+        moments: { ...sessionData.moments, plan },
       });
       if (receipt.syncStatus === "synced") committedState = committed ?? null;
       else

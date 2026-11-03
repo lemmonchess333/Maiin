@@ -440,3 +440,51 @@ describe("liftPostLeadArt", () => {
     expect(liftPostLeadArt([null, 3, "x"])).toBeNull();
   });
 });
+
+describe("moments on a lift post (Soc15)", () => {
+  it("carries the session's moments and counts its new bests for the PR chip", () => {
+    const post = liftPost(
+      AUTHOR,
+      {
+        ...LIFT,
+        moments: {
+          prs: [
+            { exercise: "Bench Press", weightKg: 62.5, reps: 8 },
+            // A second new best in the same exercise: counted, not named.
+            { exercise: "Bench Press", weightKg: 70, reps: 3 },
+            { exercise: "Weighted Plank", weightKg: 25, reps: 8 },
+          ],
+          streak: { before: 6, after: 7 },
+          firstSession: false,
+          plan: { week: 2, weeks: 6, ends: true, weekDone: true },
+        },
+      },
+      { visibility: "public" }
+    );
+    expect(post.prCount).toBe(3);
+    expect(post.moments).toEqual([
+      { kind: "streak", days: 7 },
+      { kind: "pr", exercise: "Bench Press", weightKg: 62.5, reps: 8 },
+      { kind: "pr", exercise: "Weighted Plank", weightKg: 25, reps: 8 },
+    ]);
+  });
+
+  it("writes neither field for a session with nothing to tell", () => {
+    for (const lift of [
+      LIFT,
+      {
+        ...LIFT,
+        moments: {
+          prs: [],
+          streak: { before: 8, after: 9 },
+          firstSession: false,
+          plan: null,
+        },
+      },
+    ]) {
+      const post = liftPost(AUTHOR, lift, { visibility: "public" });
+      expect(post).not.toHaveProperty("moments");
+      expect(post).not.toHaveProperty("prCount");
+    }
+  });
+});

@@ -80,6 +80,29 @@ describe("objectionableActivityField", () => {
     }
   });
 
+  it("reads a PR moment's exercise name, the one text a moment shows", () => {
+    expect(
+      objectionableActivityField({
+        ...CLEAN,
+        moments: [
+          { kind: "streak", days: 30 },
+          { kind: "pr", exercise: "shit head", weightKg: 90, reps: 5 },
+        ],
+      })
+    ).toBe("moments");
+    expect(
+      objectionableActivityField({
+        ...CLEAN,
+        moments: [
+          { kind: "pr", exercise: "Bench press", weightKg: 90, reps: 5 },
+          { kind: "firstSession" },
+          null,
+          "shit",
+        ],
+      })
+    ).toBeNull();
+  });
+
   it("reads a muscle group as the card spells it", () => {
     expect(
       objectionableActivityField({ ...CLEAN, muscleGroups: ["shit_head"] })
@@ -101,8 +124,8 @@ describe("objectionableActivityField", () => {
 
 describe("flaggedActivityField", () => {
   /** The largest post the app can write: fifty exercise rows as liftPost
-   *  builds them, a hundred route points, every text field at its cap and
-   *  the longest photo URL. */
+   *  builds them, a hundred route points, three moments, every text field
+   *  at its cap and the longest photo URL. */
   const LARGEST = {
     ...CLEAN,
     authorName: "a".repeat(50),
@@ -131,6 +154,12 @@ describe("flaggedActivityField", () => {
       lat: 51.5 + i / 1000,
       lon: -0.12 - i / 1000,
       breakBefore: true,
+    })),
+    moments: Array.from({ length: 3 }, () => ({
+      kind: "pr",
+      exercise: "e".repeat(60),
+      weightKg: 1000,
+      reps: 1000,
     })),
   };
 

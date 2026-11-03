@@ -142,6 +142,65 @@ service cloud.firestore {
         );
     }
 
+    /* One moment on a feed post (Soc15, src/lib/postMoments.ts): a map
+       whose keys are exactly its kind's, each number in the range
+       `isPostMoment` holds it to. A moment is a kind and numbers the app
+       works out, never typed text, so the one string is a PR's exercise
+       name, capped as the app caps it. activityPostFields.cross.test.ts
+       holds the kinds, keys and lists here to the module's. */
+    function validPostMoment(m) {
+      return m is map
+        && 'kind' in m
+        && m.kind is string
+        && (
+          (m.kind == 'pr'
+            && m.keys().hasOnly(['kind', 'exercise', 'weightKg', 'reps'])
+            && m.keys().hasAll(['kind', 'exercise', 'weightKg', 'reps'])
+            && m.exercise is string
+            && m.exercise.size() > 0
+            && m.exercise.size() <= 60
+            && m.weightKg is number
+            && m.weightKg > 0
+            && m.weightKg <= 1000
+            && m.reps is int
+            && m.reps >= 1
+            && m.reps <= 1000)
+          || (m.kind == 'longestRun'
+            && m.keys().hasOnly(['kind', 'meters'])
+            && m.keys().hasAll(['kind', 'meters'])
+            && m.meters is number
+            && m.meters > 0
+            && m.meters <= 500000)
+          || (m.kind == 'firstDistance'
+            && m.keys().hasOnly(['kind', 'meters'])
+            && m.keys().hasAll(['kind', 'meters'])
+            && m.meters in [5000, 10000, 21097, 42195])
+          || (m.kind == 'fastestEffort'
+            && m.keys().hasOnly(['kind', 'meters', 'seconds'])
+            && m.keys().hasAll(['kind', 'meters', 'seconds'])
+            && m.meters in [1000, 5000, 10000]
+            && m.seconds is number
+            && m.seconds > 0
+            && m.seconds <= 86400)
+          || (m.kind == 'streak'
+            && m.keys().hasOnly(['kind', 'days'])
+            && m.keys().hasAll(['kind', 'days'])
+            && m.days in [7, 14, 30, 50, 100, 200, 365])
+          || (m.kind == 'planWeek'
+            && m.keys().hasOnly(['kind', 'week', 'weeks'])
+            && m.keys().hasAll(['kind', 'week', 'weeks'])
+            && m.week is int
+            && m.weeks is int
+            && m.week >= 1
+            && m.week <= m.weeks
+            && m.weeks <= 104)
+          || (m.kind == 'planComplete'
+            && m.keys().hasOnly(['kind']))
+          || (m.kind == 'firstSession'
+            && m.keys().hasOnly(['kind']))
+        );
+    }
+
     /* Has a moderator restricted the signed-in account? (S4e, STATUS
        2026-10-06.)
 
@@ -1039,7 +1098,7 @@ service cloud.firestore {
           'muscleGroups', 'exercises',
           'prHit', 'prExercise', 'prWeight', 'prCount',
           'challengeMilestone', 'badgeEarned',
-          'routePreview', 'caption'
+          'routePreview', 'caption', 'moments'
         ])
         // Required fields + types
         && request.resource.data.authorName is string
@@ -1089,6 +1148,19 @@ service cloud.firestore {
           || (request.resource.data.muscleGroups is list
               && request.resource.data.muscleGroups.size() <= 20
               && request.resource.data.muscleGroups.join('').size() <= 600)
+        )
+        // Moments (Soc15): at most three, each checked by index as far as
+        // the list goes (`validPostMoment`).
+        && (
+          !('moments' in request.resource.data.keys())
+          || (request.resource.data.moments is list
+              && request.resource.data.moments.size() <= 3
+              && (request.resource.data.moments.size() < 1
+                  || validPostMoment(request.resource.data.moments[0]))
+              && (request.resource.data.moments.size() < 2
+                  || validPostMoment(request.resource.data.moments[1]))
+              && (request.resource.data.moments.size() < 3
+                  || validPostMoment(request.resource.data.moments[2])))
         )
         && (
           !('prHit' in request.resource.data.keys())

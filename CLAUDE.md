@@ -163,6 +163,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `todaySession.ts`       | Home's session card: which card a day gets, tomorrow's name    |
 | `liftCompletion.ts`     | Finishing a lift: the saved workout, the save and its receipt  |
 | `liftPost.ts`           | A lift's feed post, built from what was done, and its reader   |
+| `postMoments.ts`        | A post's moments (Soc15): the pure rules and the stored shape  |
 | `runCompletion.ts`      | Finishing a run: the saved run, the save resumed by id, a post |
 | `subscription.ts`       | Pro subscription handling                                      |
 | `firebase.ts`           | Firebase app initialization & Firestore/Auth/Storage exports   |

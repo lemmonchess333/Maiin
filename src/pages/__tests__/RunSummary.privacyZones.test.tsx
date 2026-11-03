@@ -62,6 +62,10 @@ vi.mock("@/hooks/useShoes", () => ({
   useShoes: () => ({ updateMileage: vi.fn(), defaultShoe: null }),
 }));
 vi.mock("@/hooks/useWeekPulse", () => ({ useWeekPulse: h.weekPulse }));
+// The streak a run's post measures against (Soc15); none here.
+vi.mock("@/features/streaks/useStreaks", () => ({
+  useStreaks: () => ({ streakWithDay: () => null }),
+}));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/analytics/ElevationProfile", () => ({

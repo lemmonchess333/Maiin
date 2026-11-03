@@ -20,6 +20,7 @@ import { formatExerciseSummary, NO_SETS_SUMMARY } from "@/lib/exerciseSummary";
 import { workoutTonnageKg, type WorkoutExercise } from "@/lib/savedWorkouts";
 import type { ActivityPreview, ShareDecision } from "@/lib/shareComposer";
 import type { ActivityPost, PostedExercise } from "@/lib/activityPost";
+import { liftPostMoments, type LiftMomentFacts } from "@/lib/postMoments";
 import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
 import { formatDuration } from "@/utils/formatters";
 
@@ -30,6 +31,10 @@ export interface LiftForPost {
   exercises: WorkoutExercise[];
   /** Minutes as saved. */
   durationMinutes: number;
+  /** What the finish screen knew about the session beyond its sets: its
+   *  new bests, the streak, the plan's week (Soc15). Absent for a workout
+   *  posted later from its own page, which has none to tell. */
+  moments?: LiftMomentFacts;
 }
 
 /**
@@ -103,6 +108,10 @@ export function liftPost(
 ): ActivityPost {
   const { done, tonnageKg } = liftFigures(lift);
   const caption = decision.caption?.trim();
+  const moments = liftPostMoments(lift.moments);
+  // Every new best the finish screen listed, which the card's PR chip
+  // counts; the moments name the strongest in each exercise.
+  const prCount = lift.moments?.prs?.length ?? 0;
   return {
     authorId: author.uid,
     authorName: author.displayName || "Athlete",
@@ -117,6 +126,8 @@ export function liftPost(
     duration: Math.round(lift.durationMinutes * 60),
     muscleGroups: [...new Set(done.map((ex) => ex.category).filter(Boolean))],
     exercises: postedExercises(done),
+    ...(prCount > 0 ? { prCount } : {}),
+    ...(moments.length > 0 ? { moments } : {}),
   };
 }
 
