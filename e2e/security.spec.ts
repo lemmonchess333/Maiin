@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { isInsecureHttpResource } from "./helpers/resourceSecurity";
 
 test.describe("Security & CSP", () => {
   test("Content-Security-Policy meta tag exists", async ({ page }) => {
@@ -66,11 +67,21 @@ test.describe("Security & CSP", () => {
 
   test("external resources use HTTPS", async ({ page }) => {
     await page.goto("");
-    // All link[href] and script[src] should use https or relative paths
-    const insecureLinks = await page.locator('link[href^="http:"]').count();
-    const insecureScripts = await page.locator('script[src^="http:"]').count();
-    expect(insecureLinks).toBe(0);
-    expect(insecureScripts).toBe(0);
+    // Vite may turn relative module-preload URLs into absolute localhost URLs.
+    // Inspect resolved URLs so protocol-relative and differently cased HTTP
+    // resources cannot bypass the check. Only same-origin loopback HTTP is OK.
+    const resources = await page.locator("link[href], script[src]").evaluateAll(
+      (elements) => elements.map((element) => ({
+        tag: element.tagName.toLowerCase(),
+        url: element instanceof HTMLLinkElement
+          ? element.href
+          : (element as HTMLScriptElement).src,
+      })),
+    );
+    const insecureResources = resources.filter(({ url }) =>
+      isInsecureHttpResource(url, page.url()),
+    );
+    expect(insecureResources, "Insecure resource URLs (tag and URL)").toEqual([]);
   });
 
   test("noscript fallback exists", async ({ page }) => {
@@ -79,3 +90,4 @@ test.describe("Security & CSP", () => {
     expect(noscript).toBeGreaterThan(0);
   });
 });
+
