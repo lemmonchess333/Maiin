@@ -56,7 +56,6 @@ function renderCard(post: SpacePostDoc) {
       spaceId="runners"
       postId="p1"
       post={post}
-      accent="#D4637A"
       onRemoved={() => {}}
     />
   );
@@ -96,7 +95,6 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         spaceId="runners"
         postId="p1"
         post={makePost({ likeCount: 2 })}
-        accent="#D4637A"
         onRemoved={() => {}}
         onToggleLike={onToggleLike}
       />
@@ -112,7 +110,6 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         spaceId="runners"
         postId="p1"
         post={makePost({ likeCount: 2 })}
-        accent="#D4637A"
         onRemoved={() => {}}
         liked
         likeDelta={1}
@@ -130,7 +127,6 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         spaceId="runners"
         postId="p1"
         post={makePost({ likeCount: 4 })}
-        accent="#D4637A"
         onRemoved={() => {}}
       />
     );

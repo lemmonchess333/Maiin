@@ -370,6 +370,30 @@ describe("SegmentedControl", () => {
     expect(selected).not.toContain("bg-segment-selected");
   });
 
+  /* A second level under a track control is text on a hairline: the
+     selected tab is underlined, and none of the tabs is a filled pill. */
+  it("the tabs emphasis underlines the selected tab and fills none", () => {
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={() => {}}
+        ariaLabel="Feed source"
+        emphasis="tabs"
+        layout="fill-wrap"
+      />
+    );
+    const group = screen.getByRole("radiogroup", { name: "Feed source" });
+    expect(group.className).toContain("border-b");
+    expect(group.className).not.toContain("bg-muted");
+    const selected = screen.getByRole("radio", { name: "4" }).className;
+    expect(selected).toContain("hsl(var(--primary))");
+    expect(selected).not.toContain("bg-segment-selected");
+    const other = screen.getByRole("radio", { name: "3" }).className;
+    expect(other).toContain("text-muted-foreground");
+    expect(other).not.toContain("hsl(var(--primary))");
+  });
+
   it("eases the press rather than snapping it", () => {
     render(
       <SegmentedControl

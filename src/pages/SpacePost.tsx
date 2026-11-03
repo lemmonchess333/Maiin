@@ -35,7 +35,6 @@ import { logger } from "@/lib/logger";
 import type { SpacePostState } from "@/lib/notificationTarget";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { spaceDef } from "@/features/spaces/spaceDefs";
-import { SPACE_ACCENT_HEX } from "@/features/spaces/spaceAccent";
 import {
   isMemberFacing,
   type SpacePostDoc,
@@ -200,7 +199,6 @@ function SpacePostPage({
             spaceId={shown.def.id}
             postId={postId}
             post={shown.post}
-            accent={SPACE_ACCENT_HEX[shown.def.accent]}
             // The author deleted it: back to the Space it was in.
             onRemoved={() => navigate(spacePath, { replace: true })}
             liked={likes.liked.has(postId)}

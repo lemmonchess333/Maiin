@@ -473,7 +473,6 @@ export default function Space() {
       spaceId={def.id}
       postId={post.id}
       post={post}
-      accent={accent}
       onRemoved={handleRemoved}
       liked={spaceLikes.liked.has(post.id)}
       likeDelta={spaceLikes.deltas[post.id] ?? 0}

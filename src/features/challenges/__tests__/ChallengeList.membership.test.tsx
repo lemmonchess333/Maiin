@@ -296,7 +296,9 @@ describe("the featured monthly challenge", () => {
     screen.getByRole("list", { name: "Challenges to join" });
   const rowNames = (list: HTMLElement) =>
     [...list.querySelectorAll(":scope > li")].map(
-      (li) => li.querySelector("p")?.textContent
+      (li) =>
+        (li.querySelector("[data-challenge-name]") ?? li.querySelector("p"))
+          ?.textContent
     );
 
   it("lists every challenge not joined as a quiet row, the featured one first", async () => {
@@ -311,7 +313,7 @@ describe("the featured monthly challenge", () => {
     expect(screen.queryByRole("button", { name: /^See \d+ more/ })).toBeNull();
   });
 
-  it("says the month's time left once, on the first row", async () => {
+  it("says the month's time left once, on the Challenges heading", async () => {
     await openList();
     await screen.findByText("September Active Days");
     // Read as the app reads them, so the figures hold in every time zone.
@@ -327,12 +329,13 @@ describe("the featured monthly challenge", () => {
     const said = (text: string) =>
       (document.body.textContent ?? "").split(text).length - 1;
     expect(said(month)).toBe(1);
-    expect(
-      screen.getByText("September Active Days").closest("li")!.textContent
-    ).toContain(month);
+    expect(discoverList().textContent).not.toContain(month);
   });
 
-  it("lists the others as compact rows that say their goal, each with a Join", async () => {
+  /* A row says the challenge and its goal, and opens it: Join is in the
+     sheet, as a running app's challenge list does it, not a button on
+     every row. */
+  it("lists the others as compact rows that say their goal, and joins from the sheet", async () => {
     await openList();
     const mileage = (await screen.findByText("September Mileage")).closest(
       "li"
@@ -345,11 +348,11 @@ describe("the featured monthly challenge", () => {
     expect(strength.textContent).toContain(
       `Lift ${group(5000)} kg in total this month.`
     );
-    expect(
-      screen.getByRole("button", { name: "Join September Mileage" })
-    ).toBeInTheDocument();
+    expect(within(discoverList()).queryByText("Join")).toBeNull();
+    fireEvent.click(within(strength).getByRole("button"));
+    const sheet = await screen.findByRole("dialog");
     fireEvent.click(
-      screen.getByRole("button", { name: "Join September Strength Builder" })
+      await within(sheet).findByRole("button", { name: "Join challenge" })
     );
     await waitFor(() =>
       expect(readDoc(participantPath(STRENGTH_ID))).toMatchObject({
@@ -362,37 +365,23 @@ describe("the featured monthly challenge", () => {
     expect(readDoc(participantPath(CORE_ID))).toBeUndefined();
   });
 
-  /* One page, one loud button. The weekly challenge's Join is the one
-     filled action; each row's is the quiet secondary, the width of its
-     word, whatever the sport, and the sport is said by a tag instead of
-     by the button's colour. */
-  it("keeps one filled Join, the weekly one; the rest are quiet and tagged", async () => {
+  /* One page, one loud button: the weekly challenge's Join. The rows
+     carry none, and say their sport with the icon and the goal's words
+     rather than a tag. */
+  it("keeps one Join on the page, the weekly one", async () => {
     await openList();
     await screen.findByText("September Mileage");
-    const FILLED = /\bbg-(primary-strong|running-fill|nutrition-fill)\b/;
     const joins = screen
       .getAllByRole("button")
       .filter((b) =>
         /^Join/.test(b.getAttribute("aria-label") ?? b.textContent ?? "")
       );
-    expect(joins.length).toBe(4);
-    const filled = joins.filter((b) => FILLED.test(b.className));
-    expect(filled.map((b) => b.getAttribute("aria-label"))).toEqual([
+    expect(joins.map((b) => b.getAttribute("aria-label"))).toEqual([
       "Join weekly challenge",
     ]);
-    for (const quiet of joins.filter((b) => !FILLED.test(b.className))) {
-      expect(quiet.className).toContain("bg-muted");
-      expect(quiet.className).not.toContain("w-full");
-    }
-    expect(
-      screen.getByText("September Mileage").closest("li")!.textContent
-    ).toContain("Running");
-    expect(
-      screen.getByText("September Strength Builder").closest("li")!.textContent
-    ).toContain("Lifting");
-    expect(
-      screen.getByText("September Active Days").closest("li")!.textContent
-    ).toContain("Run or lift");
+    expect(discoverList().textContent).not.toMatch(
+      /Running|Lifting|Run or lift/
+    );
   });
 
   it("steps the weekly Join down when the page's filled button is Start a circle", async () => {
@@ -450,9 +439,21 @@ describe("the featured monthly challenge", () => {
     await screen.findByText("September Active Days");
     expect(readDoc(participantPath(FEATURED_ID))).toBeUndefined();
     fireEvent.click(
-      screen.getByRole("button", { name: "Join September Active Days" })
+      within(
+        screen.getByText("September Active Days").closest("li")!
+      ).getByRole("button")
     );
-    const yours = await screen.findByRole("list", { name: "Your challenges" });
+    fireEvent.click(
+      await within(await screen.findByRole("dialog")).findByRole("button", {
+        name: "Join challenge",
+      })
+    );
+    // The sheet stays open over the page, which it hides from assistive
+    // tech while it is.
+    const yours = await screen.findByRole("list", {
+      name: "Your challenges",
+      hidden: true,
+    });
     expect(readDoc(participantPath(FEATURED_ID))).toMatchObject({
       currentValue: 0,
     });
@@ -463,7 +464,10 @@ describe("the featured monthly challenge", () => {
     expect(readDoc(participantPath(STRENGTH_ID))).toBeUndefined();
     expect(readDoc(PATH)).toBeUndefined();
     fireEvent.click(
-      within(yours).getByRole("button", { name: "September Active Days" })
+      within(yours).getByRole("button", {
+        name: "September Active Days",
+        hidden: true,
+      })
     );
     const sheet = await screen.findByRole("dialog");
     // The card loads with the sheet's first opening.

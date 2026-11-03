@@ -446,7 +446,12 @@ behaviour.
   clears 3:1 against the track in both themes and its label 4.5:1
   (`controlBoundaries.test.ts`). A coloured label on the grey cannot keep
   the sport coding at AA, which is why the sport rides in the fill.
-  `emphasis="solid"` is the Food meal pills (§3f).
+  `emphasis="solid"` is the Food meal pills (§3f). `emphasis="tabs"` is
+  a page's second level under a track control (Social's Feed, then
+  Following / Spaces / Explore): text tabs on a hairline, the selected one
+  in the foreground over a 2px primary underline. Owner, 2026-11-03, after
+  the Mobbin social review: two stacked tracks read as one control twice
+  and took a quarter of the screen. Nowhere else.
 - **`.ds-input`**: every text field, textarea and select. Light: a white
   box with the 3:1 control edge. Dark: a filled box on `--muted` with the
   `--border` hairline, no bright outline; its label or placeholder names

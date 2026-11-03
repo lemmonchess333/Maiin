@@ -12,7 +12,6 @@ export default function SpaceFeedPost({
   spaceName,
   postId,
   post,
-  accent,
   uid,
   onRemoved,
 }: {
@@ -20,7 +19,6 @@ export default function SpaceFeedPost({
   spaceName: string;
   postId: string;
   post: SpacePostDoc;
-  accent: string;
   uid: string | null;
   onRemoved: () => void;
 }) {
@@ -54,7 +52,6 @@ export default function SpaceFeedPost({
         spaceId={spaceId}
         postId={postId}
         post={post}
-        accent={accent}
         onRemoved={onRemoved}
         liked={likes.liked.has(postId)}
         likeDelta={likes.deltas[postId] ?? 0}

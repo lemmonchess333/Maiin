@@ -280,17 +280,6 @@ function ActivityCard({
   const createdAtObj = feedItem.createdAt as
     { toDate?: () => Date } | undefined;
   const timeAgo = createdAtObj?.toDate ? getTimeAgo(createdAtObj.toDate()) : "";
-  // DS1b: these stay inline — they're passed as `fallbackBg`/`fallbackColor`
-  // string PROPS to <Avatar/>, not applied as classes here, so there's no
-  // className form to migrate to.
-  /* The tint is the identity; the initial on it takes the AA text step.
-     The bare identity measured 3.10:1 (coral) and 3.35:1 (purple) on its
-     tint over the light card, 4.32:1 and 4.01:1 over the dark one, under
-     the 4.5:1 a 16px letter needs. */
-  const avatarBg = isRun ? `${THEME.running}20` : `${THEME.lifting}20`;
-  const avatarColor = isRun
-    ? "hsl(var(--running-strong))"
-    : "hsl(var(--lifting-strong))";
   const chips = commentQuickChips(feedItem.type);
 
   /* Every shape of lift post the feed holds, read one way: a post made
@@ -304,6 +293,10 @@ function ActivityCard({
   /* The exercises done, as the post's page lists them: a stored count can
      include one with no set done. */
   const exerciseCount = activity ? liftPostExerciseCount(activity) : 0;
+  /* The count says something only where the rows don't: when the card
+     lists every exercise, "3 exercises" under three rows repeats them. */
+  const showExerciseCount =
+    exerciseCount > 0 && (shownExercises.length === 0 || moreExercises > 0);
   /* The movement labels, less one that only repeats the title (or the
      summary drawn in its place): a Push day's post is titled "Push"
      already. */
@@ -355,7 +348,7 @@ function ActivityCard({
   const hasLiftStats =
     muscleLabels.length > 0 ||
     (!showVolumeOverlay && (activity?.totalVolume ?? 0) > 0) ||
-    exerciseCount > 0 ||
+    showExerciseCount ||
     (!showPrChip && (prCount ?? 0) > 0) ||
     (!isHybrid && (activity?.duration ?? 0) > 0);
   const hasCaption =
@@ -786,7 +779,7 @@ function ActivityCard({
               <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
             </div>
           )}
-          {exerciseCount > 0 && (
+          {showExerciseCount && (
             <div className="min-w-0">
               <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
                 {exerciseCount}
@@ -835,8 +828,6 @@ function ActivityCard({
             toPost(renderRouteHero("h-[120px]"), { focusable: false })}
           <div className="p-4 pb-0">
             {renderAuthorRow(
-              `${THEME.brand}20`,
-              THEME.brand,
               <p className="text-small text-muted-foreground whitespace-nowrap @max-[14em]:whitespace-normal">
                 {timeAgo}
               </p>
@@ -865,8 +856,6 @@ function ActivityCard({
 
           <div className="p-4">
             {renderAuthorRow(
-              avatarBg,
-              avatarColor,
               <div className="flex items-center gap-1 text-muted-foreground">
                 {isRun ? (
                   <Footprints className="size-3.5 text-running" />
@@ -1025,10 +1014,12 @@ function ActivityCard({
             <button
               type="button"
               onClick={() => setShowSaveRoutine(true)}
-              aria-label="Save as routine"
-              className="p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
+              className="flex items-center gap-1.5 p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
             >
-              <BookmarkPlus className="size-5" />
+              <BookmarkPlus className="size-5" aria-hidden="true" />
+              {/* The bookmark alone read as "save the post": the word says
+                  it copies the session into your routines. */}
+              <span className="text-xs font-medium">Save as routine</span>
             </button>
           )}
           {onShare && (
@@ -1070,6 +1061,18 @@ function ActivityCard({
             </span>
           </button>
         )}
+
+        {/* Nobody's given props yet, on someone else's session: one quiet
+            line, as the running apps say "Be the first to like this", so
+            a new post doesn't read as ignored. */}
+        {!givenBy &&
+          kudosCount === 0 &&
+          !liked &&
+          feedItem.authorId !== user?.uid && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Be the first to give props
+            </p>
+          )}
 
         {/* Kudos list popup */}
         {showKudosList && (
@@ -1207,11 +1210,7 @@ function ActivityCard({
      a name too long to sit beside the avatar goes under it, with the
      row's whole width: beside it, the name would be cut to its first
      letters ("Ale…"). One row for the standard and the hybrid card. */
-  function renderAuthorRow(
-    fallbackBg: string,
-    fallbackColor: string,
-    time: ReactNode
-  ) {
+  function renderAuthorRow(time: ReactNode) {
     return (
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2 @max-[18em]:items-start">
         <Link
@@ -1222,8 +1221,6 @@ function ActivityCard({
             photoURL={feedItem.authorPhotoURL}
             displayName={feedItem.authorName}
             size="lg"
-            fallbackBg={fallbackBg}
-            fallbackColor={fallbackColor}
           />
           <div className="flex-1 min-w-0 @max-[18em]:flex-auto @max-[18em]:max-w-full">
             <p
