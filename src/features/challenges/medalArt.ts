@@ -88,7 +88,43 @@ export function medalDefinition(medal: {
  * as `<definition>-<tier>`. Empty until the art is generated: the
  * procedural medal stands in for every one.
  */
-const MEDAL_ART_KEYS: readonly `${MedalDefinition}-${MedalTier}`[] = [];
+// Every definition and tier, generated 2026-11-03 (scripts/art/generate-medals.py)
+// and reviewed as a set; training-minutes silver and gold were re-rolled.
+const MEDAL_ART_KEYS: readonly `${MedalDefinition}-${MedalTier}`[] = [
+  "weekly-warrior-bronze",
+  "weekly-warrior-silver",
+  "weekly-warrior-gold",
+  "monthly-mileage-bronze",
+  "monthly-mileage-silver",
+  "monthly-mileage-gold",
+  "strength-builder-bronze",
+  "strength-builder-silver",
+  "strength-builder-gold",
+  "active-days-bronze",
+  "active-days-silver",
+  "active-days-gold",
+  "training-minutes-bronze",
+  "training-minutes-silver",
+  "training-minutes-gold",
+  "hybrid-hero-bronze",
+  "hybrid-hero-silver",
+  "hybrid-hero-gold",
+  "fastest-5k-bronze",
+  "fastest-5k-silver",
+  "fastest-5k-gold",
+  "spring-reset-bronze",
+  "spring-reset-silver",
+  "spring-reset-gold",
+  "summer-shred-bronze",
+  "summer-shred-silver",
+  "summer-shred-gold",
+  "autumn-push-bronze",
+  "autumn-push-silver",
+  "autumn-push-gold",
+  "winter-bulk-bronze",
+  "winter-bulk-silver",
+  "winter-bulk-gold",
+];
 
 export const MEDAL_ART: Readonly<Record<string, string>> = Object.fromEntries(
   MEDAL_ART_KEYS.map((key) => [
