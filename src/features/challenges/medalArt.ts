@@ -89,7 +89,9 @@ export function medalDefinition(medal: {
  * procedural medal stands in for every one.
  */
 // Every definition and tier, generated 2026-11-03 (scripts/art/generate-medals.py)
-// and reviewed as a set; training-minutes silver and gold were re-rolled.
+// and reviewed as a set beside the badges. Monthly Mileage, Active Days, Training
+// Minutes and Hybrid Hero were re-drawn gold first (--from-gold), each lower tier
+// copied from its gold.
 const MEDAL_ART_KEYS: readonly `${MedalDefinition}-${MedalTier}`[] = [
   "weekly-warrior-bronze",
   "weekly-warrior-silver",
