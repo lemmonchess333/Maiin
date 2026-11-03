@@ -289,8 +289,12 @@ describe("completeLift", () => {
 
   it("posts the session's moments and its PR count, never saved on the workout (Soc15)", async () => {
     h.compose.mockResolvedValue({ visibility: "public", caption: "" });
+    // A session of its own: a post is remembered per session for the life
+    // of the module (sessionPost.ts), so sharing c1 here would answer the
+    // other tests' c1 posts with this one whenever it runs first.
     const receipt = await completeLift(
       routineLift({
+        completionId: "c-moments",
         moments: {
           prs: [{ exercise: "Bench Press", weightKg: 60, reps: 8 }],
           streak: { before: 29, after: 30 },
@@ -308,7 +312,7 @@ describe("completeLift", () => {
         { kind: "pr", exercise: "Bench Press", weightKg: 60, reps: 8 },
       ],
     });
-    const saved = readDoc("users/lifter/workouts/routine-c1");
+    const saved = readDoc("users/lifter/workouts/routine-c-moments");
     expect(saved).not.toHaveProperty("moments");
     expect(saved).not.toHaveProperty("prCount");
   });
