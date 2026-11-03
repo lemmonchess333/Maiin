@@ -74,6 +74,7 @@ for (const width of [320, 393]) {
     await signInAsTestUser(page);
 
     const found: string[] = [];
+    const started = Date.now();
     for (const data of DATASETS) {
       await page.goto(`dev/break-social?data=${data}`);
       await expect(
@@ -103,6 +104,14 @@ for (const width of [320, 393]) {
         document.documentElement.style.fontSize = "";
         document.documentElement.classList.remove("dark");
       });
+      // Said as it happens: a CI run that ends on the job's timeout prints
+      // no failure details, only these lines.
+      console.log(
+        `[break-social ${width}px] ${data} measured at ${Math.round((Date.now() - started) / 1000)}s`
+      );
+    }
+    if (found.length > 0) {
+      console.log(`[break-social ${width}px] breaks:\n  ${found.join("\n  ")}`);
     }
     expect(found).toEqual([]);
   });
