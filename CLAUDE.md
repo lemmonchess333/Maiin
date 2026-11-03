@@ -17,7 +17,7 @@ npm run verify       # Everything CI's unit job blocks a merge on: run before pu
 
 ## Tech Stack
 
-- **Frontend:** React 19 + TypeScript 5.9 + Vite 7
+- **Frontend:** React 19 + TypeScript 5.9 + Vite 8 (Rolldown)
 - **Styling:** Tailwind CSS v4 (via @tailwindcss/vite plugin)
 - **Routing:** React Router v7
 - **Backend:** Firebase 12 (Auth, Firestore, Cloud Functions, Storage)
@@ -69,7 +69,7 @@ e2e/                    # Playwright specs; screenshot capture specs in e2e/scre
 ## Architecture Notes
 
 - **All pages are lazy-loaded** via `lazyRetry()` wrapper in App.tsx (handles stale cache)
-- **Manual chunks** in vite.config.ts: firebase-auth, firebase-db, firebase-messaging, firebase-analytics, firebase-installations, charts, vendor, maplibre, motion, date-fns, barcode, body-highlighter. `check-dist-size` also holds which of them `index.html` preloads
+- **Pinned chunks** in vite.config.ts (Rolldown `codeSplitting` groups): firebase-auth, firebase-db, firebase-messaging, firebase-analytics, firebase-installations, charts, vendor, maplibre, motion, date-fns, barcode, body-highlighter. `check-dist-size` also holds which chunks `index.html` preloads, and no lazy one may join them
 - **Path alias:** `@/` maps to `src/`
 - **Base path:** `/Maiin/` (for GitHub Pages deployment)
 - **Offline support:** `src/lib/offlineQueue.ts` queues writes when offline

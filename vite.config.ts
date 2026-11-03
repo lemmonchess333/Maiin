@@ -2,8 +2,8 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
-import { shrinkFormFrames } from "./scripts/art/shrink-form-frames";
-import { firstPaintFontPreloads } from "./scripts/first-paint-fonts";
+import { shrinkFormFrames } from "./scripts/art/shrink-form-frames.ts";
+import { firstPaintFontPreloads } from "./scripts/first-paint-fonts.ts";
 
 const isCapacitor = process.env.CAPACITOR_BUILD === "true";
 // Firebase Hosting serves from the domain root, AND from the same origin as the
@@ -21,7 +21,7 @@ const isFirebaseHosting = process.env.HOSTING_TARGET === "firebase";
  * it sees it, so a stray E2E build can't ship to production.
  *
  * Why a separate file rather than a top-of-bundle `banner` string:
- * esbuild's minifier strips ordinary `/* *\/` comments. Even the
+ * The minifier strips ordinary `/* *\/` comments. Even the
  * legal-comment `/*! *\/` form only survives in a subset of
  * chunks under Vite's defaults (`legalComments: "none"`). Emitting
  * a dedicated asset is invariant to minifier behaviour and shows
@@ -64,7 +64,7 @@ function shrinkFormFramesPlugin(): Plugin {
         path.join(outDir, "form-frames"),
         {
           cacheDir: path.resolve(
-            __dirname,
+            import.meta.dirname,
             "node_modules/.cache/tropos-form-frames"
           ),
         }
@@ -137,11 +137,11 @@ export default defineConfig(({ mode }) => ({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
   build: {
-    minify: "esbuild",
+    minify: "oxc",
     sourcemap: false,
     // Performance budget: warn if any chunk exceeds this limit (KB)
     // maplibre (~1MB) and barcode (~416KB) are already lazy-loaded in their own chunks
@@ -154,96 +154,93 @@ export default defineConfig(({ mode }) => ({
     assetsInlineLimit: (file) =>
       /\.(woff2?|ttf|otf|eot)$/i.test(file) ? false : undefined,
 
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        // No experimentalMinChunkSize, though two chunks in five are
-        // under 1 KB. Measured at 2, 5, 10, 15 and 20 KB: Rollup merges a
-        // small chunk into whichever chunk it judges cheapest, counting
-        // only the small chunk's own bytes. It moved firestoreWrite
-        // (600 B) into the entry, which put firebase-db on every cold
-        // start (check-dist-size's coldStart gate fails at every size),
-        // and the 395 B play icon into GuideWalk, so Home then loaded
-        // GuideWalk statically. Naming the entry's own code as a manual
-        // chunk keeps merges out of it, and sends the shared small chunks
-        // into big lazy ones instead: Home's closure grew 40%. The small
-        // chunks are the cheaper cost.
+        // Rolldown keeps the code shared by several pages in small
+        // chunks of its own rather than folding it into the entry, so a
+        // cold start preloads about twenty small files where Rollup sent
+        // three. The bytes are the same or fewer (check-dist-size).
         //
-        // FUNCTION form, not the object form. The object form
-        // (`charts: ["recharts"]`) claims the listed package AND its
-        // entire dependency subtree into the chunk — recharts' subtree
-        // includes shared utilities (clsx, react-is, tiny-invariant,
-        // use-sync-external-store) that eager code also imports, which
-        // gave the entry chunk a static edge to the 403KB charts chunk
-        // and made index.html modulepreload it on every cold start.
-        // The function form pins ONLY the named packages; shared deps
-        // float free and Rollup hoists them into the eager graph where
-        // they belong.
+        // includeDependenciesRecursively is off: left on, a group claims
+        // its package AND every module that package imports. recharts
+        // imports shared utilities (clsx, react-is, tiny-invariant,
+        // use-sync-external-store) that eager code imports too, which
+        // gives the entry a static edge to the 400 KB charts chunk and
+        // index.html then preloads it, with motion, body-highlighter and
+        // firebase-analytics, on every cold start. Off, a group pins only
+        // the modules chunkFor names; the shared ones stay with the code
+        // that loads first.
         //
         // @capacitor-firebase/analytics (the native plugin) is not pinned:
         // analyticsProvider imports it dynamically, on native only, and
-        // Rollup gives it a lazy chunk of its own. The web SDK it falls
-        // back to is pinned to firebase-analytics below, which is lazy too.
-        manualChunks(id: string) {
-          if (!id.includes("node_modules")) return undefined;
-          if (id.includes("node_modules/recharts/")) return "charts";
-          if (id.includes("node_modules/maplibre-gl/")) return "maplibre";
-          if (
-            /node_modules\/(framer-motion|motion-dom|motion-utils)\//.test(id)
-          )
-            return "motion";
-          if (id.includes("node_modules/date-fns/")) return "date-fns";
-          if (id.includes("node_modules/@zxing/")) return "barcode";
-          if (id.includes("node_modules/react-body-highlighter/"))
-            return "body-highlighter";
-          // firestore/storage product code + their shims → firebase-db;
-          // everything else firebase (+ idb, used by @firebase/app for
-          // IndexedDB persistence) → firebase-auth. Order matters: the
-          // db match must run before the catch-all.
-          if (
-            /node_modules\/(@firebase\/(firestore|storage|webchannel-wrapper)|firebase\/(firestore|storage))\//.test(
-              id
-            )
-          )
-            return "firebase-db";
-          // The web push and web analytics SDKs, and the installations SDK
-          // both of them use, each get a chunk of their own: the catch-all
-          // below would put them in firebase-auth, which every cold start
-          // loads, though each is reached only by a dynamic import (a web
-          // push gesture or the signed-in listener; analytics once the app
-          // has started, on the web) and the iPhone app reaches neither.
-          if (id.includes("node_modules/@firebase/installations/"))
-            return "firebase-installations";
-          if (/node_modules\/(@firebase\/|firebase\/)messaging\//.test(id))
-            return "firebase-messaging";
-          if (/node_modules\/(@firebase\/|firebase\/)analytics\//.test(id))
-            return "firebase-analytics";
-          if (/node_modules\/(@firebase\/|firebase\/|idb\/)/.test(id))
-            return "firebase-auth";
-          if (
-            /node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(
-              id
-            )
-          )
-            return "vendor";
-          // Micro-utils shared by BOTH the eager graph and lazy-pinned
-          // libs (recharts et al). Left unpinned, Rollup's small-chunk
-          // merging can host them INSIDE a lazy chunk (it merged clsx
-          // into charts), which silently gives the entry a static edge
-          // to that whole chunk — index.html then modulepreloads 403KB
-          // of recharts on every cold start just to reach clsx. Pin
-          // them to vendor (always eager) so a lazy chunk can never
-          // become their host. If a future bundle-size audit shows a
-          // lazy chunk back in index.html's modulepreload list, look
-          // for a new shared micro-dep first.
-          if (
-            /node_modules\/(clsx|react-is|tiny-invariant|use-sync-external-store)\//.test(
-              id
-            )
-          )
-            return "vendor";
-          return undefined;
+        // gets a lazy chunk of its own. The web SDK it falls back to is
+        // pinned to firebase-analytics below, which is lazy too.
+        codeSplitting: {
+          includeDependenciesRecursively: false,
+          groups: [{ name: chunkFor, debugName: "pinned packages" }],
         },
       },
     },
   },
 }));
+
+/** The chunk a module is pinned to, or undefined to let Rolldown place it.
+ *  Only packages are pinned: the app's own code follows its imports. */
+function chunkFor(id: string) {
+  if (!id.includes("node_modules")) return undefined;
+  if (id.includes("node_modules/recharts/")) return "charts";
+  if (id.includes("node_modules/maplibre-gl/")) return "maplibre";
+  if (/node_modules\/(framer-motion|motion-dom|motion-utils)\//.test(id))
+    return "motion";
+  if (id.includes("node_modules/date-fns/")) return "date-fns";
+  if (id.includes("node_modules/@zxing/")) return "barcode";
+  if (id.includes("node_modules/react-body-highlighter/"))
+    return "body-highlighter";
+  // firestore/storage product code + their shims → firebase-db;
+  // everything else firebase (+ idb, used by @firebase/app for
+  // IndexedDB persistence) → firebase-auth. Order matters: the
+  // db match must run before the catch-all.
+  if (
+    /node_modules\/(@firebase\/(firestore|storage|webchannel-wrapper)|firebase\/(firestore|storage))\//.test(
+      id
+    )
+  )
+    return "firebase-db";
+  // The web push and web analytics SDKs, and the installations SDK
+  // both of them use, each get a chunk of their own: the catch-all
+  // below would put them in firebase-auth, which every cold start
+  // loads, though each is reached only by a dynamic import (a web
+  // push gesture or the signed-in listener; analytics once the app
+  // has started, on the web) and the iPhone app reaches neither.
+  if (id.includes("node_modules/@firebase/installations/"))
+    return "firebase-installations";
+  if (/node_modules\/(@firebase\/|firebase\/)messaging\//.test(id))
+    return "firebase-messaging";
+  if (/node_modules\/(@firebase\/|firebase\/)analytics\//.test(id))
+    return "firebase-analytics";
+  if (/node_modules\/(@firebase\/|firebase\/|idb\/)/.test(id))
+    return "firebase-auth";
+  if (
+    /node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(
+      id
+    )
+  )
+    return "vendor";
+  // Micro-utils shared by BOTH the eager graph and lazy-pinned
+  // libs (recharts et al). Left unpinned, the bundler's small-chunk
+  // merging can host them INSIDE a lazy chunk (it merged clsx
+  // into charts), which silently gives the entry a static edge
+  // to that whole chunk — index.html then modulepreloads 403KB
+  // of recharts on every cold start just to reach clsx. Pin
+  // them to vendor (always eager) so a lazy chunk can never
+  // become their host. If a future bundle-size audit shows a
+  // lazy chunk back in index.html's modulepreload list, look
+  // for a new shared micro-dep first.
+  if (
+    /node_modules\/(clsx|react-is|tiny-invariant|use-sync-external-store)\//.test(
+      id
+    )
+  )
+    return "vendor";
+  return undefined;
+}
