@@ -154,9 +154,11 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
     def test_social_fanout_targets_cover_changed_privacy_and_retry_artifacts(self):
         targets = verifier.source_targets()
         expected = {
-            "onActivityCreated": {"index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js"},
+            "onActivityCreated": {"index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js",
+                                  "lib/discoveryHidden.js"},
             "onGoalSpaceEventCreated": {"index.js", "package-lock.json", "rateLimiter.js", "lib/socialFanout.js"},
-            "onFollowerCreated": {"index.js", "package-lock.json", "lib/socialFanout.js"},
+            "onFollowerCreated": {"index.js", "package-lock.json", "lib/socialFanout.js",
+                                  "lib/followBackfill.js", "lib/feedIndex.js"},
             "onFollowRequestCreated": {"index.js", "package-lock.json", "lib/socialFanout.js"},
         }
         for name, artifacts in expected.items():

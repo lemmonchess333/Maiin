@@ -137,9 +137,11 @@ def source_targets():
                                               "lib/triggerRetry.js"],
         # Read back the privacy-safe feed index writer and the Circle
         # admission receipt before a release can report either trigger current.
-        "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js"],
+        "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js",
+                              "lib/discoveryHidden.js"],
         "onGoalSpaceEventCreated": ["index.js", "package-lock.json", "rateLimiter.js", "lib/socialFanout.js"],
-        "onFollowerCreated": ["index.js", "package-lock.json", "lib/socialFanout.js"],
+        "onFollowerCreated": ["index.js", "package-lock.json", "lib/socialFanout.js",
+                              "lib/followBackfill.js", "lib/feedIndex.js"],
         "onFollowRequestCreated": ["index.js", "package-lock.json", "lib/socialFanout.js"],
         "getCurrentWeather": ["index.js", "currentWeather.js", "lib/metWeather.js"],
         # The reminder before a free trial is charged, and the sync it reads.

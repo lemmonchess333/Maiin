@@ -3382,3 +3382,24 @@ tests cover them; these need a phone or the deployed rules.
 - [ ] **The route keeps off the distance.** In the feed on a phone, at
       the phone's largest text size too, a run card's route sits above
       its distance, never on it.
+
+## Following fills on follow, and the App Review account kept out of discovery (Soc15, 2026-11-03)
+
+- [ ] **Set `DISCOVERY_HIDDEN_UIDS`.** Settings → Secrets and variables →
+      Actions → Variables: a variable named `DISCOVERY_HIDDEN_UIDS` holding
+      App Review's demo account uid (comma-separated if there is more
+      than one), then run Deploy production. The step "Write
+      functions/.env from repository variables" lists the name, and the
+      Cloud Functions console shows the variable on `onActivityCreated`
+      and `discoveryHiddenSweep`.
+- [ ] **The demo account's posts leave Explore.** The day after that
+      deploy (the sweep runs at 03:40 UTC), open Social → Explore as
+      another account: none of the demo account's posts show, and it is
+      not suggested as a recent poster (it can still be suggested to
+      people in a Space it joined). A post the demo account makes now is
+      followers-only (`discoveryHidden: true` on the activity).
+- [ ] **Following shows a person's recent sessions at once.** Follow
+      someone who shared sessions in the last 30 days and has not posted
+      since: Following shows up to 10 of them, in date order, without
+      waiting for their next session. Accepting a follow request does
+      the same for the person who asked.
