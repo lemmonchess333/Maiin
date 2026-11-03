@@ -41,6 +41,7 @@ const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
 const runRename = require("./lib/runRename");
 const followRemoval = require("./lib/followRemoval");
+const followBackfill = require("./lib/followBackfill");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
 const friendsBoard = require("./lib/friendsBoard");
 const restrictedIdentities = require("./lib/restrictedIdentities");
@@ -8585,6 +8586,9 @@ async function sendFollowNotice({
  * request", under the Follow requests switch. Only the person asked can
  * write an edge carrying `fromRequest` (firestore.rules), so the notice
  * cannot be forged by the asker.
+ *
+ * Either way the new follower's Following gets the person's recent shared
+ * sessions (Soc15, lib/followBackfill), so a follow shows something today.
  */
 exports.onFollowerCreated = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -8592,7 +8596,8 @@ exports.onFollowerCreated = functions
   .onCreate(async (snap, context) => {
     const { uid, followerUid } = context.params;
     if (!uid || !followerUid || uid === followerUid) return null;
-    // Retried: the notification's id is fixed per follower (above).
+    // Retried: the notification's id is fixed per follower (above), and
+    // the backfill's rows are keyed by activity and skip ones that exist.
     if (pastRetryWindow(context)) return null;
     if (snap.data() && snap.data().fromRequest === true) {
       await sendFollowNotice({
@@ -8603,16 +8608,26 @@ exports.onFollowerCreated = functions
         logKey: "onFollowerCreated",
         sourceEvent: socialFanout.notificationSourceEvent(snap, context),
       });
-      return null;
+    } else {
+      await sendFollowNotice({
+        toUid: uid,
+        fromUid: followerUid,
+        type: "follow",
+        verb: "started following you",
+        logKey: "onFollowerCreated",
+        sourceEvent: socialFanout.notificationSourceEvent(snap, context),
+      });
     }
-    await sendFollowNotice({
-      toUid: uid,
-      fromUid: followerUid,
-      type: "follow",
-      verb: "started following you",
-      logKey: "onFollowerCreated",
-      sourceEvent: socialFanout.notificationSourceEvent(snap, context),
+    // Soc15: the new follower's Following shows this person's recent
+    // sessions at once, not only the next one (lib/followBackfill).
+    const { written } = await followBackfill.backfillFollowedPosts({
+      firestore: db,
+      followerUid,
+      authorUid: uid,
     });
+    if (written > 0) {
+      functions.logger.info("onFollowerCreated.backfill", { written });
+    }
     return null;
   });
 
