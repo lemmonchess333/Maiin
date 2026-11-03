@@ -75,11 +75,18 @@ for (const width of [320, 393]) {
 
     const found: string[] = [];
     const started = Date.now();
+    // Each step said as it is reached, so a run that stalls shows where.
+    const step = (what: string) =>
+      console.log(
+        `[break-social ${width}px] ${what} at ${Math.round((Date.now() - started) / 1000)}s`
+      );
     for (const data of DATASETS) {
+      step(`${data}: open`);
       await page.goto(`dev/break-social?data=${data}`);
       await expect(
         page.getByRole("heading", { name: "Break social" })
       ).toBeVisible();
+      step(`${data}: drawn`);
       for (const dark of [false, true]) {
         await page.evaluate(
           (value) => document.documentElement.classList.toggle("dark", value),
@@ -90,8 +97,10 @@ for (const width of [320, 393]) {
           page,
           `break-social-${data}-${width}-${dark ? "dark" : "light"}`
         );
+        step(`${data}: ${dark ? "dark" : "light"} frame`);
       }
       found.push(...(await breaks(page)).map((s) => `${data}: ${s}`));
+      step(`${data}: measured`);
 
       // Double text size: text grows, and boxes sized in px do not.
       await page.evaluate(() => {
@@ -99,6 +108,7 @@ for (const width of [320, 393]) {
       });
       await page.waitForTimeout(300);
       await shoot(page, `break-social-${data}-${width}-text200`);
+      step(`${data}: 200% frame`);
       found.push(...(await breaks(page)).map((s) => `${data} 200%: ${s}`));
       await page.evaluate(() => {
         document.documentElement.style.fontSize = "";
@@ -106,9 +116,7 @@ for (const width of [320, 393]) {
       });
       // Said as it happens: a CI run that ends on the job's timeout prints
       // no failure details, only these lines.
-      console.log(
-        `[break-social ${width}px] ${data} measured at ${Math.round((Date.now() - started) / 1000)}s`
-      );
+      step(`${data}: done`);
     }
     if (found.length > 0) {
       console.log(`[break-social ${width}px] breaks:\n  ${found.join("\n  ")}`);
