@@ -54,10 +54,13 @@ vi.mock("maplibre-gl", () => ({
 }));
 
 import {
+  BASEMAP_CREDIT,
   BASEMAP_ORIGIN,
   BASEMAP_STYLES,
   addBasemapCredit,
+  basemapCreditText,
   basemapStyle,
+  burnBasemapCredit,
 } from "../basemap";
 
 const repoRoot = resolve(__dirname, "../../..");
@@ -124,15 +127,34 @@ describe("every map carries the credit", () => {
     ).toEqual([
       "src/components/run/RoutePlannerSheet.tsx",
       "src/components/run/RunMap.tsx",
+      "src/lib/routeMapImage.ts",
     ]);
   });
 
+  /* A map drawn into an image (a run post's map, Soc15 call 5) has no
+     control to hold the credit, so the credit goes into the image: the
+     text its sources name, drawn on the canvas the image is encoded
+     from. Every other map adds the control. */
+  const IMAGE_MAPS = ["src/lib/routeMapImage.ts"];
+
   it.each(
     builders.map((f) => [relative(repoRoot, f).replaceAll("\\", "/"), f])
-  )("%s draws the basemap and adds its credit", (_name, file) => {
+  )("%s draws the basemap and adds its credit", (name, file) => {
     const src = readFileSync(file, "utf8");
     expect(src).toMatch(/style:\s*basemapStyle\(/);
-    expect(src).toMatch(/addBasemapCredit\(/);
+    if (IMAGE_MAPS.includes(name)) {
+      expect(src).not.toMatch(/addBasemapCredit\(/);
+      expect(src).toMatch(/attributionControl:\s*false/);
+      expect(src).toMatch(
+        /burnBasemapCredit\(\s*ctx,\s*basemapCreditText\(map\)/
+      );
+      // Drawn on the canvas that becomes the image, before it is encoded.
+      expect(src.indexOf("burnBasemapCredit(ctx")).toBeLessThan(
+        src.indexOf("out.toBlob(")
+      );
+    } else {
+      expect(src).toMatch(/addBasemapCredit\(/);
+    }
   });
 
   it("no source file still names CARTO's hosts", () => {
@@ -270,5 +292,109 @@ describe("addBasemapCredit", () => {
     for (const event of ["styledata", "sourcedata", "click"]) {
       expect(map.listening(event)).toBe(0);
     }
+  });
+});
+
+describe("the credit in a map image", () => {
+  /** OpenFreeMap's TileJSON attribution, as the live control receives it. */
+  const TILEJSON_ATTRIBUTION =
+    '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>';
+
+  function loadedMap(attributions: Record<string, string | undefined>) {
+    return {
+      getStyle: () => ({
+        sources: Object.fromEntries(
+          Object.keys(attributions).map((id) => [id, {}])
+        ),
+      }),
+      getSource: (id: string) => ({ attribution: attributions[id] }),
+    };
+  }
+
+  it("is the text the live control shows: the sources' attribution", () => {
+    const credit = basemapCreditText(
+      loadedMap({
+        ne2_shaded: undefined,
+        openmaptiles: TILEJSON_ATTRIBUTION,
+      }) as never
+    );
+    expect(credit).toBe(BASEMAP_CREDIT);
+    expect(credit).toBe("OpenFreeMap © OpenMapTiles Data from OpenStreetMap");
+  });
+
+  it("falls back to the basemap's credit when the sources name no OpenStreetMap", () => {
+    expect(basemapCreditText(loadedMap({}) as never)).toBe(BASEMAP_CREDIT);
+    expect(
+      basemapCreditText(loadedMap({ openmaptiles: "Someone" }) as never)
+    ).toBe(BASEMAP_CREDIT);
+  });
+
+  function fakeContext() {
+    return {
+      font: "",
+      fillStyle: "",
+      textBaseline: "",
+      measureText: vi.fn((text: string) => ({ width: text.length * 10 })),
+      fillText: vi.fn(),
+      beginPath: vi.fn(),
+      roundRect: vi.fn() as ReturnType<typeof vi.fn> | undefined,
+      rect: vi.fn(),
+      fill: vi.fn(),
+    };
+  }
+
+  it("still draws its pill on a WebView with no roundRect (iOS 15)", () => {
+    const ctx = fakeContext();
+    ctx.roundRect = undefined;
+    burnBasemapCredit(ctx as never, BASEMAP_CREDIT, {
+      width: 720,
+      height: 288,
+      scale: 2,
+      dark: false,
+    });
+    expect(ctx.rect).toHaveBeenCalledOnce();
+    expect(ctx.fill).toHaveBeenCalledOnce();
+    expect(ctx.fillText).toHaveBeenCalledWith(
+      BASEMAP_CREDIT,
+      expect.any(Number),
+      expect.any(Number),
+      expect.any(Number)
+    );
+  });
+
+  it("is drawn whole in the image's bottom-right corner, on its own pill", () => {
+    const ctx = fakeContext();
+    burnBasemapCredit(ctx as never, BASEMAP_CREDIT, {
+      width: 720,
+      height: 288,
+      scale: 2,
+      dark: false,
+    });
+    expect(ctx.fillText).toHaveBeenCalledOnce();
+    const [text, x, y, maxWidth] = ctx.fillText.mock.calls[0];
+    expect(text).toBe(BASEMAP_CREDIT);
+    // Room for all of it: never squeezed below its measured width.
+    expect(maxWidth).toBe(BASEMAP_CREDIT.length * 10);
+    const [px, py, pw, ph] = ctx.roundRect!.mock.calls[0];
+    expect(px + pw).toBeLessThanOrEqual(720);
+    expect(py + ph).toBeLessThanOrEqual(288);
+    expect(px + pw).toBeGreaterThan(700);
+    expect(py + ph).toBeGreaterThan(270);
+    expect(x).toBeGreaterThan(px);
+    expect(y).toBeGreaterThan(py);
+    expect(y).toBeLessThan(py + ph);
+  });
+
+  it("never runs past the image's width", () => {
+    const ctx = fakeContext();
+    burnBasemapCredit(ctx as never, BASEMAP_CREDIT, {
+      width: 300,
+      height: 120,
+      scale: 1,
+      dark: true,
+    });
+    const [px, , pw] = ctx.roundRect!.mock.calls[0];
+    expect(px).toBeGreaterThanOrEqual(0);
+    expect(px + pw).toBeLessThanOrEqual(300);
   });
 });

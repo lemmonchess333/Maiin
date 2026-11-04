@@ -13,6 +13,11 @@
  * Everything a style loads (the style itself, its TileJSON, the tiles,
  * glyphs and sprites) comes from BASEMAP_ORIGIN. index.html's CSP allows
  * that one origin, and basemap.test.ts holds the two together.
+ *
+ * A run post's map is an image of a map (routeMapImage.ts), with no
+ * control to hold the credit, so the credit is drawn into the image
+ * (`burnBasemapCredit`). basemap.test.ts holds every map to one or the
+ * other.
  */
 import {
   AttributionControl,
@@ -21,6 +26,7 @@ import {
 } from "maplibre-gl";
 // The credit's placement and dark styling, loaded with the maps.
 import "./basemapCredit.css";
+import { THEME } from "./theme";
 
 export const BASEMAP_ORIGIN = "https://tiles.openfreemap.org";
 
@@ -77,4 +83,95 @@ export function addBasemapCredit(
     map.off("sourcedata", foldOnShow);
     map.off("click", fold);
   };
+}
+
+/**
+ * The credit as the live map's control shows it: the basemap's TileJSON
+ * attribution (`tiles.openfreemap.org/planet`) as text. The run card's map
+ * image carries it in its corner (`burnBasemapCredit`), where no control
+ * can.
+ */
+export const BASEMAP_CREDIT =
+  "OpenFreeMap © OpenMapTiles Data from OpenStreetMap";
+
+/** HTML attribution as the text the control shows. */
+function creditText(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&copy;|&#169;/g, "©")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * The credit a loaded map's sources name, as its attribution control would
+ * show it, so an image made from the map says what the map would. Falls
+ * back to BASEMAP_CREDIT when the sources name none, or name one without
+ * OpenStreetMap, whose credit is required on every map.
+ */
+export function basemapCreditText(
+  map: Pick<MapLibreMap, "getStyle" | "getSource">
+): string {
+  const names: string[] = [];
+  for (const id of Object.keys(map.getStyle()?.sources ?? {})) {
+    const html = map.getSource(id)?.attribution;
+    if (!html) continue;
+    const text = creditText(html);
+    if (text && !names.includes(text)) names.push(text);
+  }
+  const credit = names.join(" ");
+  return /OpenStreetMap/.test(credit) ? credit : BASEMAP_CREDIT;
+}
+
+/**
+ * Draw the credit into the bottom-right corner of an image made from a
+ * map: small type on a pill of the map's own ground, as the live control
+ * sits on the map. `scale` is the image's pixels per CSS pixel.
+ */
+export function burnBasemapCredit(
+  ctx: Pick<
+    CanvasRenderingContext2D,
+    | "font"
+    | "fillStyle"
+    | "textBaseline"
+    | "measureText"
+    | "fillText"
+    | "beginPath"
+    | "roundRect"
+    | "rect"
+    | "fill"
+  >,
+  credit: string,
+  {
+    width,
+    height,
+    scale,
+    dark,
+  }: { width: number; height: number; scale: number; dark: boolean }
+): void {
+  const fontPx = 9 * scale;
+  const padX = 5 * scale;
+  const padY = 3 * scale;
+  const inset = 4 * scale;
+  ctx.font = `500 ${fontPx}px "Plus Jakarta Sans", -apple-system, system-ui, sans-serif`;
+  ctx.textBaseline = "middle";
+  const textWidth = Math.min(
+    ctx.measureText(credit).width,
+    width - 2 * (inset + padX)
+  );
+  const pillWidth = textWidth + 2 * padX;
+  const pillHeight = fontPx + 2 * padY;
+  const x = width - inset - pillWidth;
+  const y = height - inset - pillHeight;
+  ctx.fillStyle = dark ? `${THEME.surface}CC` : "rgba(255, 255, 255, 0.8)";
+  ctx.beginPath();
+  // Safari before 16 (the app runs from iOS 15.4) has no roundRect.
+  if (typeof ctx.roundRect === "function")
+    ctx.roundRect(x, y, pillWidth, pillHeight, pillHeight / 2);
+  else ctx.rect(x, y, pillWidth, pillHeight);
+  ctx.fill();
+  ctx.fillStyle = dark ? THEME.textPrimary : THEME.bg;
+  ctx.fillText(credit, x + padX, y + pillHeight / 2, textWidth);
 }

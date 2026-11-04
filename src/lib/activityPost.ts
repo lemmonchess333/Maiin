@@ -74,6 +74,12 @@ export type ActivityPost = {
   challengeMilestone?: string;
   badgeEarned?: string;
   routePreview?: Array<{ lat: number; lon: number; breakBefore?: boolean }>;
+  /** The run's map image in each theme, by download URL (Soc15 call 5).
+   *  Never sent with the post: the author's app names it once the post
+   *  exists and the images are uploaded (`routeMapUpload.ts`), and the
+   *  rules take only the author's own `route-maps/{uid}/{postId}/` files,
+   *  on a post that shares a route. */
+  routeMap?: { light: string; dark: string };
   /** What happened to the author in the session (Soc15): a new PR, the
    *  longest run yet, a streak reached. At most three, each a kind and its
    *  numbers (`postMoments.ts`); absent when there were none. */
@@ -108,6 +114,7 @@ const FIELDS: Record<keyof ActivityPost, true> = {
   challengeMilestone: true,
   badgeEarned: true,
   routePreview: true,
+  routeMap: true,
   moments: true,
 };
 

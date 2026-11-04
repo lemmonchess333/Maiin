@@ -34,6 +34,7 @@ import {
   collection,
   setDoc,
   deleteDoc,
+  deleteField,
   serverTimestamp,
   Timestamp,
   writeBatch,
@@ -3097,6 +3098,241 @@ suite(
           { merge: true }
         )
       );
+    });
+
+    // Soc15 call 5: a run post's map image, named by the author's app once
+    // the post exists (src/lib/routeMapUpload.ts). Only this post's own two
+    // images in this project's bucket, only on a post that shares a route.
+    describe("a run post's map image (routeMap)", () => {
+      const BUCKET =
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
+      const mapUrl = (
+        author: string,
+        post: string,
+        theme: string,
+        bucket = BUCKET
+      ) =>
+        `${bucket}route-maps%2F${author}%2F${post}%2F${theme}.jpg?alt=media&token=t0k`;
+      const ownMap = (post = "R1") => ({
+        light: mapUrl(OWNER_UID, post, "light"),
+        dark: mapUrl(OWNER_UID, post, "dark"),
+      });
+      const ROUTE = [
+        { lat: 51.5, lon: -0.12 },
+        { lat: 51.51, lon: -0.12 },
+      ];
+
+      async function seedRun(id: string, extra: Record<string, unknown> = {}) {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(doc(ctx.firestore(), "activities", id), {
+            ...makeValidActivity({ routePreview: ROUTE }),
+            createdAt: new Date(),
+            ...extra,
+          });
+        });
+      }
+      const nameMap = (db: Firestore, id: string, routeMap: unknown) =>
+        setDoc(doc(db, "activities", id), { routeMap }, { merge: true });
+
+      it("the author can name their post's own two images", async () => {
+        await seedRun("R1");
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertSucceeds(nameMap(ownerDb, "R1", ownMap()));
+        // And name them again (a retry), still only its own.
+        await assertSucceeds(nameMap(ownerDb, "R1", ownMap()));
+        // Either bucket name the project's storage answers to.
+        await assertSucceeds(
+          nameMap(ownerDb, "R1", {
+            light: mapUrl(
+              OWNER_UID,
+              "R1",
+              "light",
+              BUCKET.replace("firebasestorage.app", "appspot.com")
+            ),
+            dark: mapUrl(OWNER_UID, "R1", "dark"),
+          })
+        );
+      });
+
+      it("nobody else can name a map on it, a follower or a stranger", async () => {
+        await seedRun("R1");
+        const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+        await assertFails(nameMap(strangerDb, "R1", ownMap()));
+        await assertFails(
+          nameMap(strangerDb, "R1", {
+            light: mapUrl(STRANGER_UID, "R1", "light"),
+            dark: mapUrl(STRANGER_UID, "R1", "dark"),
+          })
+        );
+      });
+
+      it("takes no URL but this post's own image for each theme", async () => {
+        await seedRun("R1");
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        const bad: [string, unknown][] = [
+          // Someone else's map, or another of the author's posts' maps.
+          [
+            "another person's",
+            {
+              light: mapUrl(STRANGER_UID, "R1", "light"),
+              dark: mapUrl(STRANGER_UID, "R1", "dark"),
+            },
+          ],
+          ["another post's", ownMap("R2")],
+          // The themes swapped, or one missing, or one more.
+          ["swapped themes", { light: ownMap().dark, dark: ownMap().light }],
+          ["one theme", { light: ownMap().light }],
+          ["an extra key", { ...ownMap(), extra: ownMap().light }],
+          // Another bucket, another host, another folder, plain http.
+          [
+            "another bucket",
+            {
+              light: mapUrl(
+                OWNER_UID,
+                "R1",
+                "light",
+                BUCKET.replace("adaptive-fitness-af8bb", "evil-project")
+              ),
+              dark: ownMap().dark,
+            },
+          ],
+          [
+            "a tracking pixel",
+            { light: "https://evil.example/p.gif", dark: ownMap().dark },
+          ],
+          [
+            "a space photo",
+            {
+              light: `${BUCKET}space-photos%2F${OWNER_UID}%2F1.jpg?alt=media`,
+              dark: ownMap().dark,
+            },
+          ],
+          [
+            "http",
+            {
+              light: ownMap().light.replace("https://", "http://"),
+              dark: ownMap().dark,
+            },
+          ],
+          // A file other than the theme's JPEG in the right folder.
+          [
+            "a nested file",
+            {
+              light: `${BUCKET}route-maps%2F${OWNER_UID}%2FR1%2Fx%2Flight.jpg?alt=media`,
+              dark: ownMap().dark,
+            },
+          ],
+          [
+            "too long",
+            { light: ownMap().light + "x".repeat(2048), dark: ownMap().dark },
+          ],
+          ["not a map", "https://example.com"],
+          ["null", null],
+        ];
+        for (const [, routeMap] of bad) {
+          await assertFails(nameMap(ownerDb, "R1", routeMap));
+        }
+        // Anchor: the same write with its own map lands.
+        await assertSucceeds(nameMap(ownerDb, "R1", ownMap()));
+      });
+
+      it("names no map on a post that shares no route", async () => {
+        await seedRun("W1", { type: "workout", routePreview: [] });
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(doc(ctx.firestore(), "activities", "W2"), {
+            ...makeValidActivity({ type: "workout" }),
+            createdAt: new Date(),
+          });
+        });
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertFails(nameMap(ownerDb, "W1", ownMap("W1")));
+        await assertFails(nameMap(ownerDb, "W2", ownMap("W2")));
+      });
+
+      it("changes nothing else in the same write, and is never taken off", async () => {
+        await seedRun("R1");
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        // A map named together with any other change is refused whole.
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "R1"),
+            { routeMap: ownMap(), visibility: "private" },
+            { merge: true }
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "R1"),
+            { routeMap: ownMap(), distance: 99999 },
+            { merge: true }
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "R1"),
+            { routeMap: ownMap(), kudosCount: 5 },
+            { merge: true }
+          )
+        );
+        // Anchor: the map alone lands.
+        await assertSucceeds(nameMap(ownerDb, "R1", ownMap()));
+        // Once named, it cannot be taken off.
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "R1"),
+            { routeMap: deleteField() },
+            { merge: true }
+          )
+        );
+        // Visibility alone still changes with a map on the post.
+        await assertSucceeds(
+          setDoc(
+            doc(ownerDb, "activities", "R1"),
+            { visibility: "followers" },
+            { merge: true }
+          )
+        );
+      });
+
+      it("a restricted account names a map on its private post only", async () => {
+        await seedRun("PUB");
+        await seedRun("PRIV", { visibility: "private" });
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(
+            doc(ctx.firestore(), "globalRestrictedUids", OWNER_UID),
+            {
+              restrictedAt: new Date(),
+            }
+          );
+        });
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertFails(nameMap(ownerDb, "PUB", ownMap("PUB")));
+        await assertSucceeds(nameMap(ownerDb, "PRIV", ownMap("PRIV")));
+      });
+
+      it("a create may carry only the post's own map, of a route it shares", async () => {
+        const ownerDb = env
+          .authenticatedContext(OWNER_UID, VERIFIED)
+          .firestore();
+        await assertSucceeds(
+          setDoc(
+            doc(ownerDb, "activities", "C1"),
+            makeValidActivity({ routePreview: ROUTE, routeMap: ownMap("C1") })
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "C2"),
+            makeValidActivity({ routePreview: ROUTE, routeMap: ownMap("C1") })
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "C3"),
+            makeValidActivity({ routeMap: ownMap("C3") })
+          )
+        );
+      });
     });
 
     it("client cannot directly write comment doc (server-only)", async () => {

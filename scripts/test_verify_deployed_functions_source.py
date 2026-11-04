@@ -174,6 +174,12 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                 self.assertTrue(artifacts.issubset(targets[name]))
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
 
+    def test_post_deletion_reads_back_its_route_map_cleanup(self):
+        paths = verifier.source_targets()["onActivityDeleted"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/socialFanout.js",
+                         "lib/routeMapFiles.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+
     def test_retry_enabled_social_fanout_exports_require_deployed_retries(self):
         self.assertTrue({"onActivityCreated", "onGoalSpaceEventCreated", "onFollowerCreated", "onFollowRequestCreated"}
                         .issubset(verifier.RETRY_REQUIRED))

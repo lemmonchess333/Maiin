@@ -80,6 +80,7 @@ export function createSessionShare({
   source,
   preview,
   payload,
+  afterPost,
 }: {
   uid: string;
   type: ShareType;
@@ -87,6 +88,10 @@ export function createSessionShare({
   /** What the share sheet shows. Only built if the sheet opens. */
   preview: () => ActivityPreview;
   payload: (decision: ShareDecision) => ActivityPost;
+  /** Work that adds to the post once it exists (a run's map image). Run
+   *  once, when this action posts it online, and never awaited: the post
+   *  is done without it. A post queued offline does not run it. */
+  afterPost?: (activityId: string) => void;
 }): SessionShareAction {
   const key = keyOf(uid, source);
   const post = (decision?: ShareDecision): Promise<ShareOutcome> => {
@@ -104,6 +109,13 @@ export function createSessionShare({
         chosen.visibility
       );
       live.set(key, outcome);
+      if (outcome.status === "posted" && afterPost) {
+        try {
+          afterPost(outcome.activityId);
+        } catch (err) {
+          logger.warn("[sessionPost] after-post work failed:", err);
+        }
+      }
       return outcome;
     })().finally(() => {
       inflight.delete(key);

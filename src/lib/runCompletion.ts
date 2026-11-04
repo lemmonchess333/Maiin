@@ -13,7 +13,11 @@ import { collection, doc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { localDateString } from "@/lib/dateHelpers";
 import { flushQueue, queueDurableWrite } from "@/lib/offlineQueue";
-import { KEPT_ROUTE_POINTS, sampleRoute } from "@/lib/routeSegments";
+import {
+  KEPT_ROUTE_POINTS,
+  sampleRoute,
+  type RouteCoordinate,
+} from "@/lib/routeSegments";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
 import { ROUTE_WITHHELD_NOTE } from "@/lib/privacyZones";
 import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
@@ -220,31 +224,62 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
 /** The route a run's post carries, and the line the share sheet shows
  *  under it. */
 export interface RunPostRoute {
-  routePreview: { lat: number; lon: number; breakBefore?: boolean }[];
+  /** The post's own copy of the route: 20 points, drawn by the card. */
+  routePreview: RouteCoordinate[];
+  /** The same shared route at the map's resolution (`ROUTE_MAP_POINTS`),
+   *  for the map image made after the post exists (`routeMapUpload.ts`).
+   *  Never written to the post: the image is what carries it. */
+  mapLine: RouteCoordinate[];
   note: string;
 }
 
+/** How many points of the shared route the map image draws: enough for a
+ *  smooth line on a street map, where 20 cut every corner. */
+export const ROUTE_MAP_POINTS = 400;
+
 /**
- * The route a post may carry: none while the privacy settings are loading
- * or unread, and otherwise the trace with its ends clipped unless the user
- * chose to show them. Worked out once, before any choice, so the route
- * previewed is the route posted.
+ * The part of a run's trace a post may show, the one rule for every
+ * picture of it: nothing while the privacy settings are loading or
+ * unread, and otherwise the trace (privacy zones already cut out by the
+ * caller) with its ends clipped unless the user chose to show them. The
+ * post's 20-point preview and the map image are both samples of what
+ * this returns, so neither can show a point the other may not.
+ */
+export function sharedRouteTrace<T extends RouteCoordinate>(
+  points: T[],
+  options: { withheld: boolean; showEnds: boolean }
+): T[] {
+  if (options.withheld) return [];
+  return options.showEnds
+    ? points.slice()
+    : clipRouteEnds(points, DEFAULT_CLIP_METERS);
+}
+
+/** A sample of the shared trace, as the post stores points. */
+function routeSample(
+  shared: RouteCoordinate[],
+  limit: number
+): RouteCoordinate[] {
+  return sampleRoute(shared, limit).map((p) => ({
+    lat: p.lat,
+    lon: p.lon,
+    ...(p.breakBefore ? { breakBefore: true } : {}),
+  }));
+}
+
+/**
+ * The route a post may carry (`sharedRouteTrace`), at the preview's 20
+ * points and at the map's resolution. Worked out once, before any choice,
+ * so the route previewed is the route posted and the route on the map.
  */
 export function runPostRoute(
   points: GPSPoint[],
   options: { withheld: boolean; showEnds: boolean }
 ): RunPostRoute {
-  const shared = options.withheld
-    ? []
-    : options.showEnds
-      ? points
-      : clipRouteEnds(points, DEFAULT_CLIP_METERS);
+  const shared = sharedRouteTrace(points, options);
   return {
-    routePreview: sampleRoute(shared, 20).map((p) => ({
-      lat: p.lat,
-      lon: p.lon,
-      ...(p.breakBefore ? { breakBefore: true } : {}),
-    })),
+    routePreview: routeSample(shared, 20),
+    mapLine: routeSample(shared, ROUTE_MAP_POINTS),
     note: options.withheld
       ? ROUTE_WITHHELD_NOTE
       : "This is the route included in your post.",
@@ -378,6 +413,16 @@ export function completeRun({
             preview: () => runPostPreview(run, route, unit),
             payload: (decision) =>
               runPost({ uid, ...author }, run, route, decision),
+            // The post's map image, made in the background once the post
+            // exists, its code loaded only then. A post queued offline
+            // keeps the drawn route: the queue's drain is where a later
+            // map would hook in.
+            afterPost: (activityId) =>
+              void import("@/lib/routeMapUpload")
+                .then(({ attachRouteMap }) =>
+                  attachRouteMap({ uid, activityId, route })
+                )
+                .catch(() => {}),
           }),
         }),
   };

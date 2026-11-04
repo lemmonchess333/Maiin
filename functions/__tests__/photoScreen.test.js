@@ -26,12 +26,16 @@ const visionAnswer = (body, status = 200) =>
   vi.fn(async () => ({ ok: status < 400, status, json: async () => body }));
 
 describe("screenedOwner", () => {
-  it("names the uploader of a Space post's photo or a profile photo", () => {
+  it("names the uploader of a Space post's photo, a profile photo or a run post's map", () => {
     expect(screenedOwner("space-photos/u1/1760000000000.jpg")).toBe("u1");
     expect(screenedOwner("profile-photos/u1/avatar-1.jpg")).toBe("u1");
+    // Soc15 call 5: any client can put any JPEG at its own map path.
+    expect(screenedOwner("route-maps/u1/post-1/light.jpg")).toBe("u1");
+    expect(screenedOwner("route-maps/u1/post-1/dark.jpg")).toBe("u1");
+    expect(screenedOwner("route-maps//post-1/dark.jpg")).toBeNull();
   });
 
-  it.each(["space-photos", "profile-photos"])(
+  it.each(["space-photos", "profile-photos", "route-maps"])(
     "covers recursive Storage objects under %s, including dotted filenames",
     (prefix) => {
       expect(screenedOwner(`${prefix}/u1/nested/a.jpg`)).toBe("u1");

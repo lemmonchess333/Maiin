@@ -155,6 +155,10 @@ const STORAGE_PREFIX_TEMPLATES = Object.freeze([
   // The Firestore posts are deleted by the spaces cleanup step (3d);
   // this sweep removes their blobs.
   "space-photos/__UID__/",
+  // Run post map images (Soc15 call 5, src/lib/routeMapUpload.ts),
+  // route-maps/{uid}/{activityId}/. Each folder goes with its post
+  // (onActivityDeleted); this sweep removes every one the account has.
+  "route-maps/__UID__/",
 ]);
 
 function storagePrefixesFor(uid) {
