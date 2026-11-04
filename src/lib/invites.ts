@@ -81,7 +81,7 @@ export async function lookupInviterName(code: string): Promise<string | null> {
 
 /** What a code that cannot be one says, before anything is sent. */
 export const NOT_A_CODE =
-  "Invite codes are 8 letters and numbers, like K7P4-9M2H.";
+  "Invite codes are 8 letters and numbers, like ABCD-2345.";
 
 /** What a failed fetch of the person's own code says on a tap. */
 export const INVITE_CODE_UNAVAILABLE =

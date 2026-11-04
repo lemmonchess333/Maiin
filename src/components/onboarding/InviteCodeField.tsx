@@ -53,7 +53,7 @@ export default function InviteCodeField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={() => setLeft(true)}
-          placeholder="K7P4-9M2H"
+          placeholder="ABCD-2345"
           autoComplete="off"
           autoCapitalize="characters"
           autoCorrect="off"

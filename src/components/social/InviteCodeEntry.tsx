@@ -118,7 +118,7 @@ export default function InviteCodeEntry({ disabled }: { disabled: boolean }) {
               setValue(e.target.value);
               if (message) setMessage(null);
             }}
-            placeholder="K7P4-9M2H"
+            placeholder="ABCD-2345"
             autoComplete="off"
             autoCapitalize="characters"
             autoCorrect="off"
