@@ -3424,8 +3424,10 @@ dispatch or a phone.
       tiers reached after the deploy make medals by themselves. Once the
       trigger is deployed, Actions → "Backfill medals" → Run workflow,
       with the challenge id left empty (every challenge that ended in the
-      last 13 months, and the running ones). It does not run by itself.
-      Passing: the workflow is green (its second pass must write nothing),
+      last 13 months, and the running ones). A dated line added to
+      `.github/backfill-medals.request` on main runs it the same way; the
+      first was added on 4 November 2026, after Deploy production run 676
+      shipped the trigger. Nothing else runs it. Passing: the workflow is green (its second pass must write nothing),
       the first pass prints a `written` count, and your own profile's
       Medals section shows a medal for each challenge you reached a tier
       in. Safe to run again, or beside the trigger.

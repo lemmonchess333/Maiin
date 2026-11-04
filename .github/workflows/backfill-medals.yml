@@ -10,8 +10,11 @@ name: Backfill medals
 # beside it.
 #
 # Run it by hand from the Actions tab once Deploy production has shipped
-# the trigger (docs/qa/pre-launch-backlog.md, the Soc15 medals rows): it
-# does not run by itself. Name a challenge id to backfill that one alone.
+# the trigger (docs/qa/pre-launch-backlog.md, the Soc15 medals rows), or
+# add a dated line to .github/backfill-medals.request on main: a change to
+# that file runs it too, for every challenge, which is the way to start it
+# from a session whose GitHub app cannot dispatch a workflow. Nothing else
+# runs it. Name a challenge id (by hand) to backfill that one alone.
 # The second pass is the check: once the first has written every medal,
 # nothing is left to write.
 
@@ -22,6 +25,13 @@ on:
         description: "One challenge's id (empty: every challenge that ended in the last 13 months, and the running ones)"
         required: false
         default: ""
+  # A new line in the request file on main: every challenge, as a dispatch
+  # with no id. Only main, which is also the only branch the production
+  # environment lets this job read its credentials on.
+  push:
+    branches: [main]
+    paths:
+      - .github/backfill-medals.request
 
 permissions:
   contents: read
