@@ -140,5 +140,26 @@ class RulesVerificationTest(unittest.TestCase):
             self.assertNotIn("secret", output.getvalue())
 
 
+    def test_cli_tries_a_timed_out_token_request_again(self):
+        timeout = verifier.subprocess.TimeoutExpired("gcloud", verifier.TOKEN_TIMEOUT_S)
+        with patch.object(verifier.subprocess, "check_output", side_effect=[timeout, "secret"]) as gcloud, patch.object(verifier.time, "sleep") as sleep, patch.object(verifier, "check_services", return_value=[{"service": "firestore", "status": "match"}]), patch.dict(verifier.os.environ, {"GITHUB_STEP_SUMMARY": ""}), contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(verifier.main(["--service", "firestore"]), 0)
+            self.assertEqual(gcloud.call_count, 2)
+            sleep.assert_called_once_with(verifier.TOKEN_PAUSES_S[0])
+            self.assertNotIn("secret", output.getvalue())
+
+    def test_cli_fails_once_every_token_request_timed_out(self):
+        timeout = verifier.subprocess.TimeoutExpired("gcloud", verifier.TOKEN_TIMEOUT_S)
+        with patch.object(verifier.subprocess, "check_output", side_effect=[timeout] * verifier.TOKEN_ATTEMPTS) as gcloud, patch.object(verifier.time, "sleep"), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(verifier.main([]), 1)
+            self.assertEqual(gcloud.call_count, verifier.TOKEN_ATTEMPTS)
+
+    def test_cli_does_not_retry_a_gcloud_error(self):
+        with patch.object(verifier.subprocess, "check_output", side_effect=verifier.subprocess.CalledProcessError(1, "gcloud")) as gcloud, patch.object(verifier.time, "sleep") as sleep, contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(verifier.main([]), 1)
+            self.assertEqual(gcloud.call_count, 1)
+            sleep.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

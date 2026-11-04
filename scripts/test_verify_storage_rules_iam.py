@@ -323,6 +323,55 @@ class CliTest(unittest.TestCase):
         self.assertNotIn("securityReviewer", output.getvalue())
         self.assertNotIn("secret", output.getvalue() + errors.getvalue())
 
+    def run_with_gcloud(self, side_effect, result=None):
+        """main() with gcloud answering in turn from `side_effect` and the
+        pauses between attempts not slept."""
+        with tempfile.TemporaryDirectory() as directory:
+            summary = Path(directory) / "summary.md"
+            with patch.object(check, "read_storage_rules", return_value=CROSS_SERVICE_RULES), patch.object(
+                check.subprocess, "check_output", side_effect=side_effect
+            ) as gcloud, patch.object(check.time, "sleep") as sleep, patch.object(
+                check, "check_cross_service_iam", return_value=result
+            ), patch.dict(
+                check.os.environ, {"GITHUB_STEP_SUMMARY": str(summary)}
+            ), contextlib.redirect_stdout(io.StringIO()) as output:
+                code = check.main([])
+            return code, output.getvalue(), summary.read_text(), gcloud, sleep
+
+    def test_a_timed_out_token_request_is_tried_again(self):
+        # Run 675 of Deploy production: one 30 s wait for a token, with the
+        # key fine, stopped the release.
+        timeout = check.subprocess.TimeoutExpired("gcloud", check.TOKEN_TIMEOUT_S)
+        code, output, _, gcloud, sleep = self.run_with_gcloud(
+            [timeout, "secret-token\n"], result={"status": "granted", "member": AGENT}
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(gcloud.call_count, 2)
+        sleep.assert_called_once_with(check.TOKEN_PAUSES_S[0])
+        self.assertEqual(gcloud.call_args.kwargs["timeout"], check.TOKEN_TIMEOUT_S)
+        self.assertNotIn("secret-token", output)
+
+    def test_every_attempt_timing_out_is_a_temporary_failure(self):
+        timeout = check.subprocess.TimeoutExpired("gcloud", check.TOKEN_TIMEOUT_S)
+        code, output, summary, gcloud, sleep = self.run_with_gcloud([timeout] * check.TOKEN_ATTEMPTS)
+        self.assertEqual(code, 1)
+        self.assertEqual(gcloud.call_count, check.TOKEN_ATTEMPTS)
+        self.assertEqual(sleep.call_count, check.TOKEN_ATTEMPTS - 1)
+        self.assertIn(json.dumps({"reason": "token-timeout", "status": "unverified"}), output)
+        self.assertIn("usually temporary", summary)
+        self.assertNotIn("FIREBASE_SERVICE_ACCOUNT", summary)
+
+    def test_a_gcloud_error_is_not_tried_again(self):
+        # A bad key stays bad: no second request, and the credentials advice.
+        code, _, summary, gcloud, sleep = self.run_with_gcloud(
+            check.subprocess.CalledProcessError(1, "gcloud", stderr="secret")
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual(gcloud.call_count, 1)
+        sleep.assert_not_called()
+        self.assertIn("FIREBASE_SERVICE_ACCOUNT", summary)
+        self.assertNotIn("secret", summary)
+
     def test_bad_local_config_fails_before_any_credentials(self):
         with patch.object(check, "read_storage_rules", side_effect=KeyError("storage")), patch.object(
             check.subprocess, "check_output"
