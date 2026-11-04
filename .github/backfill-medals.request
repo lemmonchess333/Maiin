@@ -1,0 +1,7 @@
+# Each line added to this file on main runs the "Backfill medals" workflow
+# (.github/workflows/backfill-medals.yml) once, for every challenge that
+# ended in the last 13 months and the running ones, as Actions → Run
+# workflow does with no challenge named. Add a dated line saying why; the
+# workflow's run on that commit is its record. The backfill writes only
+# medals that are missing, so a second request is harmless.
+2026-11-04 first backfill, after Deploy production run 676 shipped onChallengeParticipantWritten
