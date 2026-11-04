@@ -149,6 +149,12 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "hideSharedRouteEnds", sanitized: true },
   { field: "hideWeightNumber", sanitized: true },
   { field: "injuries", sanitized: true },
+  // Soc15 invites: the person's own code, written only by getInviteCode,
+  // and when they joined from someone's, written only by redeemInvite. A
+  // client that could write the first could claim any code, and one that
+  // could clear the second could join from a second invite.
+  { field: "inviteCode", sanitized: false, serverOnly: true },
+  { field: "invitedAt", sanitized: false, serverOnly: true },
   {
     field: "lastActiveAt",
     sanitized: false,

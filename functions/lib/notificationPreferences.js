@@ -10,7 +10,8 @@
  * an account approves each follower unless it turns that off, and a
  * request nobody hears about just waits. The same switch carries the
  * answer to a request the person made: one switch for the request, both
- * ways.
+ * ways. Invites (Soc15) are on by default: someone joining from your link
+ * or code is what sharing it asked for.
  *
  * `createNotification` (socialFanout.js) reads `users/{uid}.
  * notificationPreferences` and writes nothing for a kind that is off: a
@@ -31,6 +32,7 @@ const NOTIFICATION_CATEGORIES = Object.freeze([
   "followRequests",
   "circles",
   "spaces",
+  "invites",
 ]);
 
 /** What a switch is when the person has never touched it. */
@@ -41,6 +43,7 @@ const NOTIFICATION_DEFAULTS = Object.freeze({
   followRequests: true,
   circles: true,
   spaces: true,
+  invites: true,
 });
 
 /**
@@ -67,6 +70,7 @@ const CATEGORY_BY_TYPE = Object.freeze({
   circle_routine_shared: "circles",
   space_post_like: "spaces",
   space_post_comment: "spaces",
+  invite_joined: "invites",
 });
 
 /** The switch for a notification type, or null when it has none. */

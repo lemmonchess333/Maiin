@@ -59,6 +59,10 @@ function setup(extra = {}) {
     // Polish2: the week on followers' boards, Alice's and Bob's.
     "friendsBoard/alice": { sessions: 3 },
     "friendsBoard/bob": { sessions: 1 },
+    // Soc15: Alice's invite code, an old one of hers, and Bob's.
+    "inviteCodes/K7P49M2H": { uid: "alice", createdAt: now },
+    "inviteCodes/A2B3C4D5": { uid: "alice", createdAt: now },
+    "inviteCodes/Z9Y8X7W6": { uid: "bob", createdAt: now },
     "spaces/running/posts/bobs-post": { authorId: "bob", likeCount: 2 },
     "spaces/running/posts/bobs-post/likes/alice": { createdAt: now },
     "spaces/running/posts/bobs-post/likes/carol": { createdAt: now },
@@ -191,6 +195,7 @@ function setup(extra = {}) {
 // smoke::topLevelOwn::friendsBoard
 // smoke::topLevelOwn::blockedBy
 // smoke::blockedByReverse
+// smoke::topLevelQuery::inviteCodes
 /* The billing tombstone's secret, which a restricted account's kept
    identities are hashed with. */
 let priorSecret;
@@ -225,6 +230,8 @@ describe("complete account erasure", () => {
       "followRequests/alice/users/bob",
       "followRequests/carol/users/alice",
       "friendsBoard/alice",
+      "inviteCodes/K7P49M2H",
+      "inviteCodes/A2B3C4D5",
       "notifications/bob/items/from-alice",
       "spaces/running/posts/bobs-post/likes/alice",
       "goalSpaces/old/events/event",
@@ -254,6 +261,7 @@ describe("complete account erasure", () => {
       "followRequests/carol/users/bob",
       "blockedBy/bob/users/carol",
       "friendsBoard/bob",
+      "inviteCodes/Z9Y8X7W6",
       "challenges/weekly/participants/bob/applied/run-4",
     ])
       expect(data.has(path), path).toBe(true);

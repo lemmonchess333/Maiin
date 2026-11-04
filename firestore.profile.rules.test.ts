@@ -1198,8 +1198,11 @@ suite("users/{uid} — notificationPreferences value gate", () => {
     kudos: true,
     comments: true,
     follows: true,
+    followRequests: true,
     circles: true,
     spaces: true,
+    // Soc15: someone joining from the person's invite.
+    invites: true,
   };
 
   async function write(patch: Record<string, unknown>) {
@@ -1226,9 +1229,12 @@ suite("users/{uid} — notificationPreferences value gate", () => {
         write({ notificationPreferences: { ...ALL_ON, follows: bad } })
       );
     }
+    await assertFails(
+      write({ notificationPreferences: { ...ALL_ON, invites: "off" } })
+    );
   });
 
-  it("refuses any key but the five switches", async () => {
+  it("refuses any key but the seven switches", async () => {
     await assertFails(
       write({ notificationPreferences: { ...ALL_ON, crewJoin: true } })
     );

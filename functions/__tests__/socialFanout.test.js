@@ -1023,7 +1023,7 @@ describe("notificationPreferences — the switch table", () => {
     );
   });
 
-  it("S3's defaults: props and comments on, new followers off; Polish2's follow requests on", () => {
+  it("S3's defaults: props and comments on, new followers off; Polish2's follow requests and Soc15's invites on", () => {
     expect(NOTIFICATION_DEFAULTS).toEqual({
       kudos: true,
       comments: true,
@@ -1031,6 +1031,7 @@ describe("notificationPreferences — the switch table", () => {
       followRequests: true,
       circles: true,
       spaces: true,
+      invites: true,
     });
   });
 });

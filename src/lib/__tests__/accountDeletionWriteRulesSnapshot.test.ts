@@ -156,6 +156,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // for deletion); senders + the executor sweep use the Admin SDK.
   "match /users/{uid}/devices/{tokenHash}",
   "match /fcmTokenClaims/{tokenHash}",
+  // Soc15 invite codes: fully client-locked (`allow read, write: if
+  // false`). Written only by the getInviteCode and redeemInvite callables,
+  // both actor-locked for deletion; the executor sweeps by the uid field.
+  "match /inviteCodes/{code}",
   // SOC-P2c — space-post likes. Client READ only ("did I like this");
   // ALL writes are server-only via toggleSpacePostLikeCallable, whose
   // deletion actor-lock (assertCallableActorNotDeleting) covers the

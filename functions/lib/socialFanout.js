@@ -262,6 +262,9 @@ const VALID_NOTIFICATION_TYPES = [
   // BOTH when adding a notifying callable, and the test will say so.
   "space_post_like",
   "space_post_comment",
+  // Soc15: someone joined from the recipient's invite and the two now
+  // follow each other (redeemInvite). Named; opens their profile.
+  "invite_joined",
 ];
 
 function sanitiseNotificationData(data) {

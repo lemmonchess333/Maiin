@@ -541,6 +541,23 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/followRequests/{uid}/users/{requesterUid}",
   },
+  // Soc15 invites: a person's code, whose a code is (signed out), and a
+  // new account using one, which follows both ways.
+  getInviteCode: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  lookupInvite: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  redeemInvite: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   // Polish3 call 1: the person blocked's copy of a block, on every write.
   onBlockWritten: {
     kind: "event",
