@@ -98,6 +98,30 @@ service firebase.storage {
       allow delete: if isOwnerAndWritable(uid);
     }
 
+    // Run post maps (Soc15 call 5) — the image of a run post's shared
+    // route on the basemap, light and dark, made by the author's app once
+    // the post exists (src/lib/routeMapUpload.ts). Owner write of exactly
+    // those two names, as a small JPEG, and only beside a post of theirs
+    // that exists, so a file here is always some post's map. Signed-in
+    // `get`, never `list`, as for space photos: a map is reached from its
+    // post's URL. Screened like every photo others see
+    // (functions/lib/photoScreen.js); the files go with their post
+    // (onActivityDeleted, functions/lib/routeMapFiles.js) and the
+    // account-deletion executor sweeps the whole prefix (routeMapsStorage).
+    match /route-maps/{uid}/{activityId}/{name} {
+      allow get: if request.auth != null;
+      allow create, update: if isOwnerAndWritable(uid)
+        && name in ['light.jpg', 'dark.jpg']
+        && request.resource.contentType == 'image/jpeg'
+        && request.resource.size < 512 * 1024
+        && firestore.exists(
+          /databases/(default)/documents/activities/$(activityId))
+        && firestore.get(
+          /databases/(default)/documents/activities/$(activityId))
+            .data.authorId == uid;
+      allow delete: if isOwnerAndWritable(uid);
+    }
+
     // Profile photos — owner-only write, authenticated get. `get` and
     // never `list`, as for space photos: an avatar is reached from the
     // public profile's URL, not by listing someone's folder.

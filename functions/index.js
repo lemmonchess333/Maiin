@@ -174,6 +174,8 @@ const activityReversal = require("./lib/activityReversal");
 // The community goal: a total every saved run adds to, joined or not.
 const communityGoal = require("./lib/communityGoal");
 const spacePostPhoto = require("./lib/spacePostPhoto");
+// A run post's map images, deleted with the post (Soc15 call 5).
+const routeMapFiles = require("./lib/routeMapFiles");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -6374,6 +6376,9 @@ exports.onActivityCreated = functions
  * deletion executor all delete `activities/{id}`, and each copy left behind
  * points at a post the rules no longer let anyone read.
  *
+ * A run post's map images go with it too (lib/routeMapFiles.js, Soc15
+ * call 5): its `route-maps/{authorId}/{activityId}/` folder.
+ *
  * No account-deletion guard, unlike onWorkoutDeleted / onRunDeleted: those
  * write, and could re-create what the executor erased. This only deletes
  * copies of a post that is already gone, which can only shrink what the
@@ -6382,9 +6387,10 @@ exports.onActivityCreated = functions
 exports.onActivityDeleted = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("activities/{activityId}")
-  .onDelete(async (_snap, context) => {
+  .onDelete(async (snap, context) => {
     const { activityId } = context.params;
-    // Retried: removing copies already gone removes nothing.
+    // Retried: removing copies already gone removes nothing, and deleting
+    // a folder already empty deletes nothing.
     if (pastRetryWindow(context)) return null;
     try {
       const { removed } = await socialFanout.removeActivityFromFeeds({
@@ -6395,6 +6401,16 @@ exports.onActivityDeleted = functions
         activityId,
         removed,
       });
+      const mapFolder = await routeMapFiles.deleteRouteMapFiles({
+        data: snap.data(),
+        activityId,
+        getBucket: () => admin.storage().bucket(),
+        logger: functions.logger,
+      });
+      if (mapFolder)
+        functions.logger.info("onActivityDeleted.route_map_removed", {
+          activityId,
+        });
     } catch (err) {
       functions.logger.error("onActivityDeleted.error", {
         activityId,

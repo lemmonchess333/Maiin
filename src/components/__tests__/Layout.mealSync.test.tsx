@@ -369,7 +369,7 @@ describe("meal sync status — real queue and Layout, shared Firestore fake", ()
       runId: "actual-run",
       alreadySaved: false,
       run,
-      route: { routePreview: [], note: "" },
+      route: { routePreview: [], mapLine: [], note: "" },
       unit: "km",
     });
     await waitFor(() => expect(getQueueLength(uid)).toBe(0));

@@ -3458,3 +3458,52 @@ scripts/art/generate-medals.py` (33 images: 11 challenge
       phone's largest text size the trophy case steps to fewer columns
       with every name whole, and the reveal scrolls rather than cutting
       off Done.
+
+## Maps on run cards (Soc15 call 5, 2026-11-04)
+
+A run posted online gets a street map: the author's app draws the post's
+shared route on the basemap in both themes (`src/lib/routeMapImage.ts`),
+uploads them to `route-maps/{uid}/{activityId}/{light,dark}.jpg`, has
+`screenPhoto` check them and names them on the post as `routeMap`
+(`routeMapUpload.ts`). The card shows the one for the theme on screen
+(`RouteMapHero`). storage.rules lets only the author write there, beside
+a post of theirs that exists; firestore.rules lets only the author name
+the post's own two files; `onActivityDeleted` empties the post's folder
+(`functions/lib/routeMapFiles.js`) and the deletion executor sweeps
+`route-maps/{uid}/`. Unit, rules and function tests cover each part, and
+Chromium drew a map; WebGL on an iPhone, the deployed rules and the
+console are left.
+
+- [ ] **The map on an iPhone, in both themes.** On a TestFlight build,
+      save an outdoor run of a kilometre or more, online, with sharing
+      on. Passing: within a minute Social's card for it shows the route
+      on the streets, coral with a hollow start ring and a solid finish
+      dot, sharp rather than blurred, with "OpenFreeMap © OpenMapTiles
+      Data from OpenStreetMap" legible in its bottom-right corner and the
+      distance under the map. Switch Settings → Units and theme to the
+      other theme: the card shows the other map. At the largest text size
+      the map keeps its shape and the distance stays under it.
+- [ ] **The map hides what the post hides.** With a privacy zone round
+      home and route ends hidden (the default), run from home through
+      the zone and back. Passing: the card's map starts and ends away
+      from the door, and the line has a gap at the zone rather than a
+      line across it. A run saved while the privacy settings would not
+      load posts with no route and gets no map.
+- [ ] **Storage refuses another person's path (after the Storage
+      deploy).** Signed in as A in a browser console, upload a JPEG to
+      `route-maps/{B's uid}/{B's post id}/light.jpg`, and to A's own uid
+      with a post id A does not have. Passing: both are refused, and the
+      same upload beside one of A's run posts lands. A `setDoc` merge of
+      `routeMap` naming B's files on A's post is refused by the Firestore
+      rules (verify-production-rules green first).
+- [ ] **Deleting a post deletes its map.** After a run post's map has
+      appeared, Undo it on the finish screen (or delete the run). Passing:
+      within a minute `route-maps/{uid}/{activityId}/` is gone from the
+      Storage console and the logs show
+      `onActivityDeleted.route_map_removed`. Deleting a test account
+      removes its whole `route-maps/{uid}/` folder.
+- [ ] **The deploy reads back the cleanup and the screen.** After the
+      Deploy production run that ships this, its deployed-source check
+      lists `onActivityDeleted` with `lib/routeMapFiles.js`, and
+      `screenPhoto` and `screenUploadedPhoto` with `lib/photoScreen.js`.
+      Each map in the Storage console is under 150 KB.

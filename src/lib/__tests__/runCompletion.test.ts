@@ -26,6 +26,11 @@ vi.mock("@/lib/shareComposer", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/shareComposer")>()),
   compose: h.compose,
 }));
+// The post's map image (Soc15 call 5) is drawn with WebGL, which jsdom
+// has not got; what is held here is what the run hands it.
+vi.mock("@/lib/routeMapUpload", () => ({
+  attachRouteMap: vi.fn(async () => {}),
+}));
 
 import {
   completeRun,
@@ -38,6 +43,7 @@ import {
   type FinishedRun,
 } from "../runCompletion";
 import type { SavedRun } from "../savedRuns";
+import { attachRouteMap } from "../routeMapUpload";
 import { pendingDocumentWrites } from "../offlineQueue";
 import { runPostName } from "../runName";
 import type { RacePaceWork } from "../racePace";
@@ -356,7 +362,7 @@ describe("the run's post", () => {
   });
 
   it("saves and posts the runner's own name, else the one it was given", () => {
-    const route = { routePreview: [], note: "" };
+    const route = { routePreview: [], mapLine: [], note: "" };
     const named = run({ name: "  Bridges loop " });
     expect(runDocument(named, FINISH).name).toBe("Bridges loop");
     expect(runPostPreview(named, route, "km").title).toBe("Bridges loop");
@@ -374,7 +380,7 @@ describe("the run's post", () => {
 
   it("previews the distance in the runner's unit", () => {
     // It said kilometres to a runner who reads miles.
-    const route = { routePreview: [], note: "" };
+    const route = { routePreview: [], mapLine: [], note: "" };
     expect(runPostPreview(run(), route, "mi").meta[0]).toBe("4.10 mi");
     expect(runPostPreview(run(), route, "km").meta[0]).toBe("6.60 km");
   });
@@ -412,7 +418,7 @@ describe("the run's post", () => {
 });
 
 describe("moments on a run's post (Soc15)", () => {
-  const route = { routePreview: [], note: "" };
+  const route = { routePreview: [], mapLine: [], note: "" };
   const saved = (
     id: string,
     distance: number,
@@ -499,7 +505,7 @@ describe("moments on a run's post (Soc15)", () => {
 });
 
 describe("completeRun", () => {
-  const route = { routePreview: [], note: "" };
+  const route = { routePreview: [], mapLine: [], note: "" };
 
   it("queues the run under a new id before any server write", () => {
     const done = completeRun({
@@ -628,5 +634,39 @@ describe("completeRun", () => {
         unit: "km",
       }).share
     ).toBeUndefined();
+  });
+
+  it("hands the post its map once it exists online: the route it shared, under its id", async () => {
+    vi.mocked(attachRouteMap).mockClear();
+    online.mockReturnValue(true);
+    const shared = runPostRoute(trace(600), {
+      withheld: false,
+      showEnds: false,
+    });
+    const done = completeRun({
+      uid: "runner",
+      author: {},
+      runId: "run-map",
+      alreadySaved: false,
+      run: run(),
+      route: shared,
+      unit: "km",
+    });
+    // Before the post exists there is nothing to put a map on.
+    expect(attachRouteMap).not.toHaveBeenCalled();
+    const outcome = await done.share!.post({
+      visibility: "public",
+      caption: "",
+    });
+    expect(outcome.status).toBe("posted");
+    if (outcome.status !== "posted") return;
+    // Its code is loaded once the post exists, so the call lands after.
+    await vi.waitFor(() =>
+      expect(attachRouteMap).toHaveBeenCalledExactlyOnceWith({
+        uid: "runner",
+        activityId: outcome.activityId,
+        route: shared,
+      })
+    );
   });
 });

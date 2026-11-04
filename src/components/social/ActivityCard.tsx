@@ -64,6 +64,8 @@ import { toast } from "@/lib/toast";
 
 import MiniMuscleFigure, { hasMuscleFigure } from "./MiniMuscleFigure";
 import RouteScene from "./RouteScene";
+import RouteMapHero from "./RouteMapHero";
+import { hasRouteMap } from "./routeMapSrc";
 import { getTimeAgo } from "../../lib/timeAgo";
 import { Spinner } from "../ui/Spinner";
 import { IconButton } from "../ui/IconButton";
@@ -396,32 +398,39 @@ function ActivityCard({
       content
     );
 
-  const renderRouteHero = (heightClass: string) => (
-    <div
-      className={`relative ${heightClass} border-b border-border/50`}
-      style={{
-        background: `linear-gradient(150deg, ${THEME.running}24 0%, ${THEME.running}0A 55%, ${THEME.running}12 100%)`,
-      }}
-    >
-      {/* The numeral sits under the route, not over it: laid over the
-          drawing, a route starting bottom-left put its start ring on it. */}
-      <RouteScene
-        preview={routePreview!}
-        footer={
-          showDistanceOverlay && (
-            <div className="shrink-0 px-4 pb-3">
-              <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-running">
-                {distanceValue(activity?.distance || 0, unit, 2)}
-              </p>
-              <SectionLabel className="mt-0.5">
-                {distanceUnitLabel(unit)}
-              </SectionLabel>
-            </div>
-          )
-        }
-      />
+  const routeHeroBackground = {
+    background: `linear-gradient(150deg, ${THEME.running}24 0%, ${THEME.running}0A 55%, ${THEME.running}12 100%)`,
+  };
+  /* The numeral sits under the route, not over it: laid over the
+     drawing, a route starting bottom-left put its start ring on it. */
+  const routeFooter = showDistanceOverlay && (
+    <div className="shrink-0 px-4 pb-3">
+      <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-running">
+        {distanceValue(activity?.distance || 0, unit, 2)}
+      </p>
+      <SectionLabel className="mt-0.5">{distanceUnitLabel(unit)}</SectionLabel>
     </div>
   );
+  /* A post with a map image (Soc15 call 5) shows it in a box of the
+     image's own ratio, its numbers in a row under it with a little more
+     room above; one without keeps the drawn route at the hero's height. */
+  const renderRouteHero = (heightClass: string) =>
+    hasRouteMap(activity?.routeMap) ? (
+      <div
+        className="relative border-b border-border/50"
+        style={routeHeroBackground}
+      >
+        <RouteMapHero preview={routePreview!} routeMap={activity?.routeMap} />
+        {routeFooter && <div className="pt-3">{routeFooter}</div>}
+      </div>
+    ) : (
+      <div
+        className={`relative ${heightClass} border-b border-border/50`}
+        style={routeHeroBackground}
+      >
+        <RouteScene preview={routePreview!} footer={routeFooter} />
+      </div>
+    );
 
   /* The volume numeral and the PR chip a lift's hero carries, whichever
      hero it is. */

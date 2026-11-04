@@ -338,6 +338,35 @@ service cloud.firestore {
         && v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/space-photos%2F' + request.auth.uid + '%2F[^/\\\\?#]+([?#].*)?$');
     }
 
+    /* A run post's map image (Soc15 call 5): the download URL of its
+       author's own upload of THIS post's map in one theme,
+       route-maps/{authorId}/{postId}/{light|dark}.jpg in this project's
+       bucket, the one place src/lib/routeMapUpload.ts puts it and the
+       path the photo screen checks. Nothing else, no avatar host, no
+       other post's map. */
+    function isRouteMapUrl(v, authorId, postId, theme) {
+      return v is string
+        && v.size() <= 2048
+        && v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/route-maps%2F' + authorId + '%2F' + postId + '%2F' + theme + '\\.jpg([?#].*)?$');
+    }
+
+    /* A post's `routeMap`: exactly its light and dark images. */
+    function isRouteMap(m, authorId, postId) {
+      return m is map
+        && m.keys().hasAll(['light', 'dark'])
+        && m.keys().hasOnly(['light', 'dark'])
+        && isRouteMapUrl(m.light, authorId, postId, 'light')
+        && isRouteMapUrl(m.dark, authorId, postId, 'dark');
+    }
+
+    /* A map is made only of a route a post shares: none while the route
+       is withheld, as runPostRoute's preview is empty then. */
+    function sharesRoute(data) {
+      return 'routePreview' in data
+        && data.routePreview is list
+        && data.routePreview.size() > 1;
+    }
+
     /* raceGoal value gate — the shape the app actually consumes.
        `allowedUserFields()` gates key NAMES only, so before this the field
        could hold any map at all: `raceGoal: { anything: <...> }` was a legal
@@ -1126,7 +1155,7 @@ service cloud.firestore {
           'muscleGroups', 'exercises',
           'prHit', 'prExercise', 'prWeight', 'prCount',
           'challengeMilestone', 'badgeEarned',
-          'routePreview', 'caption', 'moments'
+          'routePreview', 'routeMap', 'caption', 'moments'
         ])
         // Required fields + types
         && request.resource.data.authorName is string
@@ -1165,6 +1194,15 @@ service cloud.firestore {
           !('routePreview' in request.resource.data.keys())
           || (request.resource.data.routePreview is list
               && request.resource.data.routePreview.size() <= 100)
+        )
+        // The map image (Soc15 call 5) is named by the author's app once
+        // the post exists (the update below); a create may carry only the
+        // same thing: this post's own two images, of a route it shares.
+        && (
+          !('routeMap' in request.resource.data.keys())
+          || (sharesRoute(request.resource.data)
+              && isRouteMap(request.resource.data.routeMap,
+                            request.auth.uid, activityId))
         )
         && (
           !('exercises' in request.resource.data.keys())
@@ -1298,27 +1336,42 @@ service cloud.firestore {
       // addCommentCallable + deleteCommentCallable in functions/index.js
       // which flip the counter and underlying kudos/comment doc in
       // one Firestore transaction.
+      // The author may change two things: who sees the post, and (Soc15
+      // call 5) its map image, once their app has made it. One or the
+      // other per write; every other field stays as it was posted.
       allow update: if request.auth != null
         && !isWriteFrozen(request.auth.uid)
         && resource.data.authorId == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['visibility'])
-        // The same three values a create may hold.
-        && request.resource.data.visibility in ['public', 'followers', 'private']
-        // A flagged activity stays private. The word filter
-        // (onActivityCreated) and a moderator's Hide content both flag
-        // it and make it private; without this its author could make
-        // it public again with one write, undoing both.
         && (
-          resource.data.get('flagged', false) != true
-          || request.resource.data.visibility == 'private'
-        )
-        // A restricted account may narrow who sees a post, never widen it.
-        && (
-          request.resource.data.visibility == 'private'
-          || (request.resource.data.visibility == 'followers'
-              && resource.data.visibility == 'public')
-          || !isRestricted()
+          (request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['visibility'])
+            // The same three values a create may hold.
+            && request.resource.data.visibility in ['public', 'followers', 'private']
+            // A flagged activity stays private. The word filter
+            // (onActivityCreated) and a moderator's Hide content both flag
+            // it and make it private; without this its author could make
+            // it public again with one write, undoing both.
+            && (
+              resource.data.get('flagged', false) != true
+              || request.resource.data.visibility == 'private'
+            )
+            // A restricted account may narrow who sees a post, never widen it.
+            && (
+              request.resource.data.visibility == 'private'
+              || (request.resource.data.visibility == 'followers'
+                  && resource.data.visibility == 'public')
+              || !isRestricted()
+            ))
+          || (request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['routeMap'])
+            // This post's own two images, of a route it shares
+            // (src/lib/routeMapUpload.ts). Never taken off once named.
+            && sharesRoute(resource.data)
+            && isRouteMap(request.resource.data.routeMap,
+                          resource.data.authorId, activityId)
+            // A restricted account adds nothing others see (S4e), as a
+            // create holds it: its private post may still have its map.
+            && (resource.data.visibility == 'private' || !isRestricted()))
         );
       allow delete: if request.auth != null
         && !isWriteFrozen(request.auth.uid)

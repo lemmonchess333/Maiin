@@ -941,7 +941,7 @@
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
       "storageAuditNote": "Audited src/lib/progressPhotos.ts (uploadProgressPhoto) \u2014 only progress-photos/{uid}/{uuid}.enc uploads; older photos are {ts}.{webp,enc}. No alternate paths.",
-      "storageInventoryAuditNote": "Comprehensive Storage audit across src/: ZERO Food/AI/share/export/route/map storage paths exist. FoodAnalyzer sends images transiently via fetch \u2014 no Storage upload. ShareCard renders via html-to-image client-side \u2014 no upload. No GPX export storage. The two photo prefixes are the complete Storage inventory.",
+      "storageInventoryAuditNote": "Comprehensive Storage audit across src/: ZERO Food/AI/share/export/route/map storage paths exist. FoodAnalyzer sends images transiently via fetch \u2014 no Storage upload. ShareCard renders via html-to-image client-side \u2014 no upload. No GPX export storage. The two photo prefixes are the complete Storage inventory. (Superseded 2026-11-04: space-photos/{uid}/ and route-maps/{uid}/ now exist; each has its own entry.)",
       "reason": "Progress photo blobs (encrypted webp). Storage rules write-freeze via custom auth claim",
       "testCoverageKey": "smoke::storage::progressPhotos",
       "testCoverageStatus": "planned"
@@ -1074,6 +1074,23 @@
       "storageAuditNote": "Audited src/lib/spacePhotoUpload.ts \u2014 only space-photos/{uid}/{ts}.jpg uploads (owner-write / authenticated-read per storage.rules). No alternate paths.",
       "reason": "Community Space post photos (Spc1 PR4 \u2014 the operator's photo-post amendment). Blobs live for the post's lifetime; post deletion does not delete the blob (soft simplicity, same trade-off as food photos), so this prefix sweep is the cleanup path on account deletion. In STORAGE_PREFIX_TEMPLATES (functions/accountDeletion.js step 6).",
       "testCoverageKey": "unit::accountDeletion.storagePrefixes",
+      "testCoverageStatus": "implemented"
+    },
+    {
+      "key": "routeMapsStorage",
+      "domain": "C_ugc",
+      "type": "storagePrefix",
+      "path": "route-maps/{uid}/",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "location",
+      "recordPurpose": "userContent",
+      "strategy": "deleteStoragePrefix",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "storageAuditNote": "Audited src/lib/routeMapUpload.ts \u2014 only route-maps/{uid}/{activityId}/{light,dark}.jpg uploads (owner-write beside an existing own post / authenticated-get per storage.rules). No alternate paths.",
+      "reason": "Run post map images (Soc15 call 5): the shared route drawn on the basemap, which shows where the person ran. Each post's folder is deleted with the post (onActivityDeleted, functions/lib/routeMapFiles.js); this prefix sweep removes every remaining one on account deletion. In STORAGE_PREFIX_TEMPLATES (functions/accountDeletion.js step 6).",
+      "testCoverageKey": "unit::accountDeletion.routeMapsStorage",
       "testCoverageStatus": "implemented"
     },
     {

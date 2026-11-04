@@ -146,6 +146,9 @@ def source_targets():
         # admission receipt before a release can report either trigger current.
         "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js",
                               "lib/discoveryHidden.js"],
+        # A deleted post leaves the feeds, and a run post's map files go with it.
+        "onActivityDeleted": ["index.js", "package-lock.json", "lib/socialFanout.js",
+                              "lib/routeMapFiles.js"],
         "onGoalSpaceEventCreated": ["index.js", "package-lock.json", "rateLimiter.js", "lib/socialFanout.js"],
         "onFollowerCreated": ["index.js", "package-lock.json", "lib/socialFanout.js",
                               "lib/followBackfill.js", "lib/feedIndex.js"],
