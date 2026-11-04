@@ -142,7 +142,10 @@ All 30 are illustrated (first set 2026-08-29, regenerated to match the seal
 ## The seal (the sealed hexagon a new badge is tapped out of)
 
 `BadgeEarnedModal` shows a new badge inside a sealed hexagon that the user
-taps three times to crack and break open. Since 2026-09-13 the seal is
+taps three times to crack and break open, and since 2026-11-03 the medal
+reveal (`MedalReveal`) opens a new medal the same way, through the same
+`SealStage` (`src/features/streaks/SealCeremony.tsx`) drawn larger. Since
+2026-09-13 the seal is
 **rendered art**, one WebP per tier (`public/badges/seal_{tier}.webp`,
 ~25 KB each, registered in `SEAL_ART`), layered over an SVG seal
 (`src/features/streaks/BadgeSeal.tsx`) that stays as the instant fallback

@@ -17,7 +17,7 @@ import { BOARD, FEED, MEDALS, type BreakDataset } from "./breakSocialFixtures";
  *
  * The trophy case (Soc15) sits under the board (its See all shows every
  * medal), and `?reveal=1` opens the first medal's full-screen reveal over
- * the lab.
+ * the lab, sealed, as it opens in the app: tap the seal to reach the medal.
  */
 const DATASETS: { key: BreakDataset; label: string }[] = [
   { key: "demo", label: "Demo data" },
