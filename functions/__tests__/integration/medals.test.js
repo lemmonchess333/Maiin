@@ -101,7 +101,12 @@ suite(
       const stored = (await medal(RUNNING).get()).data();
       expect(stored).toMatchObject({ tier: "bronze", value: 12, goal: 10 });
       const updateTime = (await participant(RUNNING).get()).updateTime;
-      expect(stored.earnedAt).toBe(updateTime.toDate().toISOString());
+      // toMillis, as the trigger reads it: toDate() rounds to the nearest
+      // millisecond and toMillis() floors, so the two differ by 1 ms
+      // whenever the write landed in the second half of one.
+      expect(stored.earnedAt).toBe(
+        new Date(updateTime.toMillis()).toISOString()
+      );
 
       const pub = (await profile().get()).data();
       expect(pub.medalSummary[RUNNING]).toMatchObject({ tier: "bronze" });
