@@ -21,6 +21,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -43,7 +44,16 @@ GRANT_COMMAND = (
 
 # Failures a later run can clear: the request did not complete, or Google
 # was busy or failing. No role or setting change fixes them.
-TRANSIENT = re.compile(r"network-unavailable|http-(408|429|5\d\d)")
+TRANSIENT = re.compile(r"network-unavailable|token-timeout|http-(408|429|5\d\d)")
+
+# `gcloud auth print-access-token` that does not answer is the runner's
+# network or Google's token endpoint being slow, not a bad key: run 675 of
+# Deploy production lost its release to one 30 s wait, with the Firestore
+# job of the same run authenticated a minute earlier. A timed-out request
+# is tried again; one that fails outright is not, since a bad key stays bad.
+TOKEN_ATTEMPTS = 3
+TOKEN_TIMEOUT_S = 45
+TOKEN_PAUSES_S = (5, 15)
 # gcloud gave no token, or Google refused the one it gave.
 CREDENTIALS = ("credentials-unavailable", "missing-credentials", "http-401")
 
@@ -211,6 +221,26 @@ def report(result, project):
             summary.write("\n".join(lines) + "\n")
 
 
+def access_token():
+    """gcloud's access token, trying again when a request times out.
+
+    Raises VerificationError("token-timeout") once every attempt has timed
+    out. A gcloud that exits with an error, or is missing, raises as it does
+    (CalledProcessError, OSError): that is the credentials, not the network.
+    """
+    for attempt in range(TOKEN_ATTEMPTS):
+        try:
+            return subprocess.check_output(
+                ["gcloud", "auth", "print-access-token"], text=True,
+                stderr=subprocess.PIPE, timeout=TOKEN_TIMEOUT_S,
+            ).strip()
+        except subprocess.TimeoutExpired:
+            if attempt + 1 == TOKEN_ATTEMPTS:
+                raise VerificationError("token-timeout") from None
+            time.sleep(TOKEN_PAUSES_S[attempt])
+    raise VerificationError("token-timeout")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", default="adaptive-fitness-af8bb")
@@ -227,10 +257,7 @@ def main(argv=None):
         result = {"status": "not-needed"}
     else:
         try:
-            token = subprocess.check_output(
-                ["gcloud", "auth", "print-access-token"], text=True,
-                stderr=subprocess.PIPE, timeout=30,
-            ).strip()
+            token = access_token()
             if not token:
                 raise VerificationError("missing-credentials")
             result = check_cross_service_iam(make_client(token), args.project, source)

@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -118,6 +119,31 @@ def check_services(read, project, service, bucket, root=ROOT):
     return results
 
 
+# A token request that does not answer is the runner's network or Google's
+# token endpoint being slow, not a bad key (Deploy production run 675 lost a
+# release to one 30 s wait in verify_storage_rules_iam.py, which shares this
+# shape): a timed-out request is tried again, one that fails outright is not.
+TOKEN_ATTEMPTS = 3
+TOKEN_TIMEOUT_S = 45
+TOKEN_PAUSES_S = (5, 15)
+
+
+def access_token():
+    """gcloud's access token, trying again when a request times out. The
+    last timeout, a gcloud error and a missing gcloud raise as they do."""
+    for attempt in range(TOKEN_ATTEMPTS):
+        try:
+            return subprocess.check_output(
+                ["gcloud", "auth", "print-access-token"], text=True,
+                stderr=subprocess.PIPE, timeout=TOKEN_TIMEOUT_S,
+            ).strip()
+        except subprocess.TimeoutExpired:
+            if attempt + 1 == TOKEN_ATTEMPTS:
+                raise
+            time.sleep(TOKEN_PAUSES_S[attempt])
+    raise subprocess.TimeoutExpired("gcloud", TOKEN_TIMEOUT_S)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", default="adaptive-fitness-af8bb")
@@ -128,10 +154,7 @@ def main(argv=None):
         print("Rules verification failed: invalid-project", file=sys.stderr)
         return 1
     try:
-        token = subprocess.check_output(
-            ["gcloud", "auth", "print-access-token"], text=True,
-            stderr=subprocess.PIPE, timeout=30,
-        ).strip()
+        token = access_token()
         if not token:
             raise VerificationError("missing-credentials")
         results = check_services(make_reader(token), args.project, args.service, args.bucket)
