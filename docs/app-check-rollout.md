@@ -103,11 +103,11 @@ Add `enforceAppCheck: true` ONE at a time, watching error-reporting for
 App-Check-rejection spikes between each (the rate must already be ≥99% per
 Phase 3 before starting). Order:
 
-| Tier                                  | Callables                                      | If it breaks                                                                                    |
-| ------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| 1 — low risk (flip first)             | `sendTestPush`, `backfillMyActivityCategories` | a non-critical feature errors; user retries                                                     |
-| 2 — core flows                        | `completeOnboarding`, `configurePlan`          | new users can't onboard / can't edit plan — flip only after Tier 1 is stable for days           |
-| 3 — destructive / billing (flip LAST) | `deleteMyAccount`, `syncRevenueCatEntitlement` | account deletion or purchase/restore breaks — highest blast radius, flip last and watch closely |
+| Tier                                  | Callables                                                      | If it breaks                                                                                                                                                          |
+| ------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — low risk (flip first)             | `sendTestPush`, `backfillMyActivityCategories`, `lookupInvite` | a non-critical feature errors; user retries. `lookupInvite` is the one signed-out callable: refused, the welcome screen says "A friend invited you" instead of a name |
+| 2 — core flows                        | `completeOnboarding`, `configurePlan`                          | new users can't onboard / can't edit plan — flip only after Tier 1 is stable for days                                                                                 |
+| 3 — destructive / billing (flip LAST) | `deleteMyAccount`, `syncRevenueCatEntitlement`                 | account deletion or purchase/restore breaks — highest blast radius, flip last and watch closely                                                                       |
 
 > **A canary needs traffic.** Tier 1 listed five callables until
 > 2026-07-26; three of them could not have served the purpose:
