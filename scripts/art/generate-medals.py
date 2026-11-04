@@ -28,7 +28,7 @@ key-hexagon.py, as generate-badges.py runs the badges:
      public/medals/<definition>-<tier>.webp.
 
 Then add each "<definition>-<tier>" that came out well to MEDAL_ART_KEYS in
-src/features/challenges/medalArt.ts; the procedural medal stands in for any
+src/features/challenges/medalDefinitions.ts; the procedural medal stands in for any
 that is not listed.
 
 Usage (from the repo root):
@@ -58,8 +58,8 @@ TIER_EDIT = {
 }
 
 # definition · emblem. The definitions are MEDAL_DEFINITIONS in
-# src/features/challenges/medalArt.ts, one per challenge the server builds
-# (functions/lib/challengeDefs.js), pinned equal by medalArt.cross.test.ts.
+# src/features/challenges/medalDefinitions.ts, one per challenge the server builds
+# (functions/lib/challengeDefs.js), pinned equal by medalDefinitions.cross.test.ts.
 # Emblems are filled silhouettes (line art reads worse as metal relief on a
 # black face), each distinct from the 30 badges' emblems, and drawn from the
 # icon each definition carries in challengeDefs.js where it has one.
@@ -216,7 +216,7 @@ def main():
     else:
         run([(d, e, t) for d, e in chosen for t in METAL if t in a.tiers])
     if made:
-        print("\nAdd to MEDAL_ART_KEYS (src/features/challenges/medalArt.ts) once reviewed:")
+        print("\nAdd to MEDAL_ART_KEYS (src/features/challenges/medalDefinitions.ts) once reviewed:")
         for key in made:
             print(f'  "{key}",')
 

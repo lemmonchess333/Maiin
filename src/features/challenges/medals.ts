@@ -15,7 +15,7 @@ import {
 } from "@/utils/formatters";
 import { formatChallengeValue } from "./challengeFormat";
 import { challengeSport, type ChallengeSport } from "./challengeSport";
-import { medalArtFor } from "./medalArt";
+import { medalArtFor } from "./medalDefinitions";
 
 /**
  * Medals and the trophy case (Soc15). A medal is a person's highest tier
@@ -355,7 +355,7 @@ export function medalGoalFace(
 
 /** What MedalArt draws for a medal: its metal, its sport, the goal on
  *  its face, its edition, and its definition's illustration when one has
- *  been made (medalArt.ts). */
+ *  been made (medalDefinitions.ts). */
 export function medalFace(
   medal: Medal,
   liftUnit: LiftUnit = "kg",

@@ -17,7 +17,7 @@ import {
   MEDAL_DEFINITIONS,
   medalArtFor,
   medalDefinition,
-} from "../medalArt";
+} from "../medalDefinitions";
 
 const require = createRequire(import.meta.url);
 const server = require("../../../../functions/lib/challengeDefs.js") as {

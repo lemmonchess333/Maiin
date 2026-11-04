@@ -3443,10 +3443,10 @@ dispatch or a phone.
 - [ ] **Illustrate the medals (owner step, needs a Gemini key).** The
       medals are drawn in code until their art exists. With
       `GEMINI_API_KEY` exported, run `python3
-  scripts/art/generate-medals.py` (33 images: 11 challenge
+scripts/art/generate-medals.py` (33 images: 11 challenge
       definitions × bronze, silver, gold), review them as
       `docs/badges/MEDAL_ART_BRIEF.md` says, and add the good ones to
-      `MEDAL_ART_KEYS` in `src/features/challenges/medalArt.ts`. Passing:
+      `MEDAL_ART_KEYS` in `src/features/challenges/medalDefinitions.ts`. Passing:
       the trophy case and the reveal show the round black-enamel medals,
       with the goal and the edition still printed on them.
 - [ ] **Share from the reveal on the iPhone app.** Share opens the share

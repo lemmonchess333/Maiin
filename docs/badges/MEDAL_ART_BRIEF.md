@@ -91,9 +91,9 @@ here, so this page cannot drift from what ran.
 | `winter-bulk`      | Winter Bulk, `seasonal-…` from December                    | a six-pointed snowflake                       |
 
 The community goal (`group-goal-…`) awards no medal and has no art.
-`medalDefinition` in `src/features/challenges/medalArt.ts` maps an edition
+`medalDefinition` in `src/features/challenges/medalDefinitions.ts` maps an edition
 to its definition (the id prefix, and for the two that rotate the metric
-or the month the season starts), and `medalArt.cross.test.ts` holds the
+or the month the season starts), and `medalDefinitions.cross.test.ts` holds the
 list equal to the server's catalogue and to this script's table.
 
 ## Dropping the art in
@@ -104,7 +104,7 @@ list equal to the server's catalogue and to this script's table.
    184 px (the reveal), in both themes. The lower third of the face must
    be plain: the goal is printed there.
 3. Add each reviewed `"<definition>-<tier>"` to `MEDAL_ART_KEYS` in
-   `src/features/challenges/medalArt.ts` (the script prints the lines).
+   `src/features/challenges/medalDefinitions.ts` (the script prints the lines).
    A definition may light up one tier at a time; the rest stay drawn.
 4. Look at `/dev/break-social` (the trophy case, and `?reveal=1` for the
    reveal) and run `break-social-lab.capture.spec.ts`, which measures both

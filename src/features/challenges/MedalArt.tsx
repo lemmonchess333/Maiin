@@ -72,7 +72,7 @@ function editionType(edition: string): {
  * and from the sport colours a challenge card wears (`SPORT_ACCENT`).
  *
  * Two medals, one layout. With `imageSrc` (a definition's Gemini
- * illustration, medalArt.ts) the coin is the art, in the badges' material
+ * illustration, medalDefinitions.ts) the coin is the art, in the badges' material
  * (black enamel face, the emblem in tier-metal relief), and the goal is
  * struck over its lower face in the metal's light. Without it, or while
  * the art loads, or if it fails, the coin is drawn here: a metal face

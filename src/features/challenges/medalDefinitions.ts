@@ -27,7 +27,7 @@ type MedalTier = "bronze" | "silver" | "gold";
  * (functions/lib/challengeDefs.js `buildCurrentChallenges`), each named
  * once, whatever its edition. The community goal (`group-goal-…`) awards
  * none. Pinned against the server's catalogue and the generator's list by
- * medalArt.cross.test.ts.
+ * medalDefinitions.cross.test.ts.
  */
 export const MEDAL_DEFINITIONS = [
   "weekly-warrior",
