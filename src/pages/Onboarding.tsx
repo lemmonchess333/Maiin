@@ -95,6 +95,10 @@ import {
 import { signInMethodOf } from "@/lib/signInMethod";
 import { ACTIVATION_JOURNEY_V2_ENABLED } from "@/lib/activationJourney";
 import { Capacitor } from "@capacitor/core";
+import InviteCodeField from "@/components/onboarding/InviteCodeField";
+import { formatInviteCode, normaliseInviteCode } from "@/lib/inviteCode";
+import { readPendingInvite } from "@/lib/pendingInvite";
+import { ENTER_CODE_LATER, redeemInviteAfterSetup } from "@/lib/invites";
 
 /* The review's reminder row is its own chunk, fetched once setup has
    drawn, so the questions before it do not carry it. */
@@ -218,6 +222,12 @@ export default function Onboarding() {
      why from then on, rather than greeting an empty box with an error. */
   const [nameAsked, setNameAsked] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  /* Soc15: a friend's invite code, from a link opened on this device or
+     typed on the last step. Used once the plan is made. */
+  const [inviteCode, setInviteCode] = useState(() => {
+    const pending = readPendingInvite();
+    return pending ? formatInviteCode(pending) : "";
+  });
   const arrivedName = profile?.displayName?.trim() ?? "";
   const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
   if (arrivedName !== seenArrivedName) {
@@ -1052,6 +1062,16 @@ export default function Onboarding() {
           "Onboarding: public profile seed failed (will be populated lazily):",
           publicErr
         );
+      }
+
+      // Soc15: a friend's invite, used now the plan is made and the public
+      // name is there for the inviter's notification. Not awaited: its
+      // toast lands on Home, and a refusal cannot undo the plan.
+      const invite = normaliseInviteCode(inviteCode);
+      if (invite) {
+        void redeemInviteAfterSetup(invite);
+      } else if (inviteCode.trim()) {
+        toast.error(`That invite code didn't look right. ${ENTER_CODE_LATER}`);
       }
 
       // Save succeeded — close the top of the activation funnel before
@@ -2252,6 +2272,7 @@ export default function Onboarding() {
                   </p>
                 )}
               </div>
+              <InviteCodeField value={inviteCode} onChange={setInviteCode} />
               {!answersValid && (
                 <p role="alert" className="text-sm text-destructive-strong">
                   Check the answers above before creating your plan.

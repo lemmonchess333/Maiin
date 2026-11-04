@@ -3,7 +3,8 @@
  * origin: `capacitor://localhost` from the iPhone app, which opens
  * nothing for the person it is sent to, and the GitHub Pages host with
  * the app's `/Maiin/` base dropped. The two share buttons are held to it
- * in `PeopleView.test.tsx` and `CirclesSection.invite.test.tsx`.
+ * in `PeopleView.test.tsx` and `CirclesSection.invite.test.tsx`. A
+ * person's invite (Soc15) carries their code in the same address.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { appInviteUrl, PUBLIC_APP_ORIGIN } from "@/lib/publicLinks";
@@ -14,6 +15,12 @@ describe("appInviteUrl", () => {
   it("is the production web app", () => {
     expect(PUBLIC_APP_ORIGIN).toBe("https://troposfit.com");
     expect(appInviteUrl()).toBe("https://troposfit.com");
+  });
+
+  it("carries a person's invite code (Soc15)", () => {
+    expect(appInviteUrl("K7P49M2H")).toBe(
+      "https://troposfit.com/?invite=K7P49M2H"
+    );
   });
 
   it.each([
@@ -32,5 +39,8 @@ describe("appInviteUrl", () => {
     });
     expect(globalThis.location.href).toBe(href);
     expect(appInviteUrl()).toBe("https://troposfit.com");
+    expect(appInviteUrl("K7P49M2H")).toBe(
+      "https://troposfit.com/?invite=K7P49M2H"
+    );
   });
 });

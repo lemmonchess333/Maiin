@@ -19,6 +19,7 @@ import appIconUrl from "@/assets/brand/app-icon.svg";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
+import InviteNote from "@/components/onboarding/InviteNote";
 import { FoodTabIcon } from "@/components/icons/TabIcons";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { readLastSignInMethod, type SignInMethod } from "@/lib/signInMethod";
@@ -301,6 +302,8 @@ export default function Login() {
               </p>
             </div>
           </div>
+          {/* Soc15: arrived from a friend's invite link. */}
+          <InviteNote />
           {/* Each row's picture gives way under 9em (double text on a
               narrow phone), leaving the words the row. Wide-first. */}
           <ul className="@container space-y-2" aria-label="What Tropos plans">
@@ -398,6 +401,10 @@ export default function Login() {
             </p>
           </div>
         </div>
+
+        {/* Soc15: arrived from a friend's invite link; signing up keeps
+            the code for setup. Sign-in has nothing to say about it. */}
+        {isSignUp && <InviteNote />}
 
         {/* Notices and errors sit above every way in, so one from the
             Apple or Google sheet is read where the eye already is. */}

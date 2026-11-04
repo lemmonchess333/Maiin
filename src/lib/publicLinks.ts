@@ -13,8 +13,15 @@
 /** The production web app's origin. */
 export const PUBLIC_APP_ORIGIN = "https://troposfit.com";
 
+/** The query parameter an invite link carries its code in. The web app
+ *  keeps it from the first page it opens (`pendingInvite.ts`). */
+export const INVITE_PARAM = "invite";
+
 /** The link an invite shares: the app's front door, which signs a new
- *  person up or a returning one in. */
-export function appInviteUrl(): string {
-  return PUBLIC_APP_ORIGIN;
+ *  person up or a returning one in. With a person's code (Soc15) it
+ *  carries who sent it, so joining from it follows both ways. */
+export function appInviteUrl(code?: string): string {
+  return code
+    ? `${PUBLIC_APP_ORIGIN}/?${INVITE_PARAM}=${encodeURIComponent(code)}`
+    : PUBLIC_APP_ORIGIN;
 }

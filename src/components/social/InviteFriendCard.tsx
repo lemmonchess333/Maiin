@@ -1,0 +1,170 @@
+/**
+ * InviteFriendCard — People's "Bring a friend": the person's own invite
+ * link and code (Soc15 calls 4 and 5).
+ *
+ * The link carries the code (`https://troposfit.com/?invite=K7P49M2H`), and
+ * the code is shown too, to read out or to type: the iPhone app does not
+ * open troposfit.com links, so a friend who installs it types the code
+ * during setup. Either way the two follow each other once the friend's
+ * plan is made.
+ *
+ * The code is made the first time it is asked for (getInviteCode) and kept
+ * on the account (`profile.inviteCode`), so after that it shows at once. A
+ * restricted account gets none: the card's actions are off, as People's
+ * other ways of reaching people are.
+ */
+import { useEffect, useState } from "react";
+import { Copy, Share } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/Button";
+import { THEME } from "@/lib/theme";
+import { toast } from "@/lib/toast";
+import { appInviteUrl } from "@/lib/publicLinks";
+import { formatInviteCode, normaliseInviteCode } from "@/lib/inviteCode";
+import { fetchMyInviteCode, INVITE_CODE_UNAVAILABLE } from "@/lib/invites";
+
+export default function InviteFriendCard({
+  active,
+  disabled,
+}: {
+  /** People is open: the code is fetched only then, and once. */
+  active: boolean;
+  /** A restricted account: no code is made and the actions are off. */
+  disabled: boolean;
+}) {
+  const { profile } = useAuth();
+  const [code, setCode] = useState<string | null>(() =>
+    normaliseInviteCode(profile?.inviteCode)
+  );
+  const [fetching, setFetching] = useState(false);
+
+  /* The code shows as soon as People opens: made once, on the first open
+     after setup, and read from the profile after that (the server returns
+     the same code to every ask). A failure leaves the line out; Share asks
+     again. */
+  useEffect(() => {
+    if (!active || disabled || code) return;
+    let live = true;
+    fetchMyInviteCode()
+      .then((next) => {
+        if (live) setCode(next);
+      })
+      .catch(() => {
+        /* Share asks again and says so if it fails. */
+      });
+    return () => {
+      live = false;
+    };
+  }, [active, disabled, code]);
+
+  const ensureCode = async (): Promise<string | null> => {
+    if (code) return code;
+    setFetching(true);
+    try {
+      const next = await fetchMyInviteCode();
+      setCode(next);
+      return next;
+    } catch {
+      toast.error(INVITE_CODE_UNAVAILABLE);
+      return null;
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  const share = async () => {
+    const mine = await ensureCode();
+    if (!mine) return;
+    const text = `I'm tracking my lifts and runs on Tropos. Join me with my invite code ${formatInviteCode(mine)} and we'll follow each other.`;
+    const url = appInviteUrl(mine);
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Join me on Tropos", text, url });
+      } catch {
+        /* cancelled */
+      }
+      return;
+    }
+    // The clipboard can refuse (no permission, an insecure context), and
+    // a promise that rejected here said nothing at all.
+    try {
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      toast.success("Invite link copied");
+    } catch {
+      toast.error("Couldn't copy the invite link. Try again.");
+    }
+  };
+
+  const copyCode = async () => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(formatInviteCode(code));
+      toast.success("Code copied");
+    } catch {
+      toast.error("Couldn't copy. Long-press the code to select it.");
+    }
+  };
+
+  return (
+    <div
+      className="p-3 rounded-2xl border space-y-3"
+      style={{
+        background: `linear-gradient(135deg, ${THEME.brand}18, ${THEME.brand}08)`,
+        borderColor: `${THEME.brand}33`,
+      }}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className="size-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: `${THEME.brand}25` }}
+        >
+          <Share
+            className="size-4"
+            style={{ color: THEME.brand }}
+            aria-hidden="true"
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">
+            Invite a training partner
+          </p>
+          <p className="text-small text-muted-foreground leading-relaxed mt-0.5">
+            When they join with your link or code, you follow each other.
+          </p>
+        </div>
+      </div>
+      {code && !disabled && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="flex-1 min-w-[min(100%,10em)]">
+            <p className="text-xs font-semibold text-muted-foreground">
+              Your code
+            </p>
+            <p className="text-lg font-semibold font-mono tabular-nums text-foreground select-all">
+              {formatInviteCode(code)}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            onClick={() => void copyCode()}
+            leftIcon={<Copy className="size-4" aria-hidden="true" />}
+          >
+            Copy code
+          </Button>
+        </div>
+      )}
+      <Button
+        fullWidth
+        onClick={() => void share()}
+        loading={fetching}
+        disabled={disabled}
+        aria-label={
+          disabled
+            ? "Inviting is unavailable while your account is restricted"
+            : undefined
+        }
+      >
+        Share invite link
+      </Button>
+    </div>
+  );
+}
