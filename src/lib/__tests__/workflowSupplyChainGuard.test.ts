@@ -296,6 +296,7 @@ describe("jobs that read release credentials name the production environment", (
     expect(readers.map((r) => `${r.file} ${r.job}`).sort()).toEqual([
       "backfill-block-mirror.yml backfill",
       "backfill-community-goal.yml backfill",
+      "backfill-medals.yml backfill",
       "deploy-firestore.yml deploy",
       "deploy-functions.yml deploy",
       "deploy-hosting.yml build-and-deploy",

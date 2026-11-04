@@ -93,7 +93,9 @@ export type ReturnSurface =
   | "badge"
   | "priming"
   | "lift-return"
-  | "run-return";
+  | "run-return"
+  // Soc15: a new medal's reveal, on Social (MedalRevealGate).
+  | "medal-reveal";
 
 /**
  * What the user did with a return surface. `dismissed` is the close with

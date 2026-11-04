@@ -139,6 +139,14 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
         self.assertEqual(len(paths), len(set(paths)))
         self.assertIn("onBlockWritten", verifier.RETRY_REQUIRED)
 
+    def test_medal_trigger_reads_back_its_rules_freeze_guard_and_retry_guard(self):
+        paths = verifier.source_targets()["onChallengeParticipantWritten"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/medals.js",
+                         "lib/challengeActivityWindow.js", "lib/deletionTransactionGuard.js",
+                         "lib/triggerRetry.js", "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+        self.assertIn("onChallengeParticipantWritten", verifier.RETRY_REQUIRED)
+
     def test_comment_callables_and_deletion_read_back_the_shared_comment_rules(self):
         targets = verifier.source_targets()
         for name in ("addCommentCallable", "addSpacePostCommentCallable"):

@@ -249,3 +249,69 @@ describe("useUserProfileData — following from the page", () => {
     expect(result.current.followers).toBe(1);
   });
 });
+
+describe("useUserProfileData — the trophy case (Soc15)", () => {
+  const medalLine = (over: Record<string, unknown> = {}) => ({
+    tier: "gold",
+    name: "November Mileage",
+    metric: "total_km",
+    type: "monthly",
+    value: 52.4,
+    goal: 50,
+    startDate: "2026-11-01",
+    endDate: "2026-12-01",
+    ...over,
+  });
+
+  it("reads someone else's medals from their public summary, newest first, skipping a line that is not one", async () => {
+    seedFirestore({
+      "users/alice/public/profile": {
+        displayName: "Alice",
+        medalSummary: {
+          "monthly-2026-10-01": medalLine({
+            name: "October Mileage",
+            startDate: "2026-10-01",
+            endDate: "2026-11-01",
+          }),
+          "monthly-2026-11-01": medalLine(),
+          junk: { tier: "platinum" },
+        },
+      },
+    });
+    const { result } = await settled("alice", "viewer");
+    expect(result.current.medals?.map((m) => m.challengeId)).toEqual([
+      "monthly-2026-11-01",
+      "monthly-2026-10-01",
+    ]);
+  });
+
+  it("reads your own medals from the same public summary", async () => {
+    seedFirestore({
+      "users/me": { displayName: "Me" },
+      "users/me/public/profile": {
+        displayName: "Me",
+        medalSummary: { "monthly-2026-11-01": medalLine() },
+      },
+    });
+    const { result } = await settled("me", "me");
+    expect(result.current.medals).toHaveLength(1);
+  });
+
+  it("holds no medals for a profile without a summary", async () => {
+    seedFirestore({ "users/alice/public/profile": { displayName: "Alice" } });
+    const { result } = await settled("alice", "viewer");
+    expect(result.current.medals).toEqual([]);
+  });
+
+  it("knows no medals when the public read failed, rather than none", async () => {
+    seedFirestore({ "users/me": { displayName: "Me" } });
+    failNextFirestore("getDoc", {
+      path: "users/me/public/profile",
+      code: "unavailable",
+    });
+    const { result } = await settled("me", "me");
+    expect(result.current.status).toBe("ready");
+    expect(result.current.medals).toBeNull();
+    expect(unfiredFailures()).toEqual([]);
+  });
+});

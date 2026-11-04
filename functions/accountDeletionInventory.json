@@ -391,6 +391,22 @@
       "testCoverageStatus": "planned"
     },
     {
+      "key": "userMedals",
+      "domain": "A_private",
+      "type": "userSubcollection",
+      "path": "users/{uid}/medals",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "healthFitness",
+      "recordPurpose": "private",
+      "strategy": "deleteSubcollection",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "A medal per challenge edition (functions/lib/medals.js, Soc15): the challenge's name and window, the tier reached, the value and when each tier came. Server-written only by onChallengeParticipantWritten and the medal backfill, which check the deletion freeze inside their transaction; owner-read. In USER_SUBCOLLECTIONS. The public copy (medalSummary) lives on users/{uid}/public/profile and goes with that row.",
+      "testCoverageKey": "smoke::userSubcollections::medals",
+      "testCoverageStatus": "planned"
+    },
+    {
       "key": "userEngineLock",
       "domain": "F_usage",
       "type": "userSubcollection",

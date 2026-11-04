@@ -63,6 +63,9 @@ graphify-out/
 # Badge-art intermediates from scripts/art/generate-badges.py (raw generations on magenta,
 # tier masters, keyed PNGs) — only the keyed WebPs under public/badges/ are shipped.
 scripts/art/.work-badges/
+# The same for the challenge medals (scripts/art/generate-medals.py); only the
+# keyed WebPs under public/medals/ are shipped.
+scripts/art/.work-medals/
 
 # Local race-date audit; CI records its output in the Actions summary.
 /race-date-report.json

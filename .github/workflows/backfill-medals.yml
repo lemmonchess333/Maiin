@@ -1,0 +1,82 @@
+name: Backfill medals
+
+# onChallengeParticipantWritten keeps each person's medal for a challenge
+# (users/{uid}/medals) and their public trophy case (medalSummary) in step
+# with their participant document, but only for writes after it was
+# deployed. This gives every participant who reached a tier before then the
+# medal for it: the challenges that ended in the last 13 months, and the
+# ones still running (functions/scripts/backfill-medals.js). A medal that
+# exists is left to the trigger, so it is safe to run at any time and
+# beside it.
+#
+# Run it by hand from the Actions tab once Deploy production has shipped
+# the trigger (docs/qa/pre-launch-backlog.md, the Soc15 medals rows): it
+# does not run by itself. Name a challenge id to backfill that one alone.
+# The second pass is the check: once the first has written every medal,
+# nothing is left to write.
+
+on:
+  workflow_dispatch:
+    inputs:
+      challenge_id:
+        description: "One challenge's id (empty: every challenge that ended in the last 13 months, and the running ones)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: medal-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    # The production environment holds the release credentials: only a
+    # job that names it can read its secrets, and its branch rule decides
+    # where such a job may run.
+    environment: production
+    # Install and two passes over a year of challenges' medal holders.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install function dependencies
+        run: npm ci --prefix functions
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Name the challenge
+        id: challenge
+        env:
+          REQUESTED: ${{ inputs.challenge_id }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$REQUESTED" && ! "$REQUESTED" =~ ^[a-z0-9-]{1,80}$ ]]; then
+            echo "Not a challenge id: $REQUESTED" >&2
+            exit 1
+          fi
+          echo "id=$REQUESTED" >> "$GITHUB_OUTPUT"
+
+      - name: Backfill
+        run: node functions/scripts/backfill-medals.js adaptive-fitness-af8bb "${{ steps.challenge.outputs.id }}"
+
+      - name: Run again and expect nothing left to write
+        run: |
+          set -euo pipefail
+          node functions/scripts/backfill-medals.js adaptive-fitness-af8bb "${{ steps.challenge.outputs.id }}" | tee second-run.json
+          node -e '
+            const t = JSON.parse(require("fs").readFileSync("second-run.json", "utf8"));
+            if (t.written !== 0) {
+              console.error(`The second run still wrote ${t.written} medals.`);
+              process.exit(1);
+            }
+          '

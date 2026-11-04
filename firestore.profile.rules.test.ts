@@ -706,6 +706,86 @@ suite("users/{uid}/public/profile — the other two value gates", () => {
 });
 
 /**
+ * `medalSummary` — the trophy case other people read (Soc15). Written only
+ * by the server (functions/lib/medals.js), from each challenge's
+ * participant document. A client that could set it could show any medal
+ * it liked on its profile, so the owner may leave it as it is and nothing
+ * else. Each refusal is paired with the write the app really makes beside
+ * it, so a gate that refused every profile write could not pass.
+ */
+suite("users/{uid}/public/profile — medalSummary is the server's", () => {
+  const ME = "pub-medals";
+  const path = `users/${ME}/public/profile`;
+  const gold = {
+    "monthly-2026-11-01": {
+      tier: "gold",
+      name: "November Mileage",
+      metric: "total_km",
+      type: "monthly",
+      value: 52.4,
+      goal: 50,
+      startDate: "2026-11-01",
+      endDate: "2026-12-01",
+    },
+  };
+  const seed = (data: Record<string, unknown>) =>
+    env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), path), data);
+    });
+  const ref = () => doc(env.authenticatedContext(ME).firestore(), path);
+
+  it("refuses a client that writes one on a new profile", async () => {
+    await assertFails(
+      setDoc(ref(), { displayName: "Me", medalSummary: gold }, { merge: true })
+    );
+    await assertSucceeds(setDoc(ref(), { displayName: "Me" }, { merge: true }));
+  });
+
+  it("refuses a client that adds to, raises or empties the stored one", async () => {
+    await seed({ uid: ME, displayName: "Me", medalSummary: gold });
+    const raised = {
+      "monthly-2026-11-01": {
+        ...gold["monthly-2026-11-01"],
+        tier: "gold",
+        value: 999,
+      },
+    };
+    for (const forged of [
+      raised,
+      { ...gold, "weekly-2026-11-02": gold["monthly-2026-11-01"] },
+      {},
+    ]) {
+      await assertFails(updateDoc(ref(), { medalSummary: forged }));
+    }
+    // Firestore merges a map key by key, so a merge write adding one line
+    // is a change too.
+    await assertFails(
+      setDoc(
+        ref(),
+        { medalSummary: { "weekly-2026-11-02": gold["monthly-2026-11-01"] } },
+        { merge: true }
+      )
+    );
+  });
+
+  it("lets a profile holding one write its other fields", async () => {
+    await seed({ uid: ME, displayName: "Me", medalSummary: gold });
+    await assertSucceeds(
+      setDoc(ref(), { displayName: "Sam", currentStreak: 3 }, { merge: true })
+    );
+  });
+
+  /* A first profile's write is a full set (writeNewProfileDocs), and
+     refusing one that drops the field would refuse a sign-up whose public
+     copy was already there. Dropping it only takes the person's own case
+     down; the server puts it back. */
+  it("lets a full overwrite leave it out", async () => {
+    await seed({ uid: ME, displayName: "Me", medalSummary: gold });
+    await assertSucceeds(setDoc(ref(), { uid: ME, displayName: "Me" }));
+  });
+});
+
+/**
  * `raceGoal` value gate.
  *
  * `allowedUserFields()` gates key NAMES, so before this rule the field could

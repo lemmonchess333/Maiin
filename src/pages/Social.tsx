@@ -21,6 +21,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
 import { shouldShowFollowingFeed } from "@/lib/socialGates";
 import PageShell from "@/components/ui/PageShell";
+import MedalRevealGate from "@/features/challenges/MedalRevealGate";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 
 /* SOCIAL-HOME-01: the page leads with shared goals. Two top-level
@@ -269,6 +270,19 @@ export default function Social() {
         </>
       }
     >
+      {/* A new medal's reveal (Soc15), once per medal and tier, on the
+          next visit to Social and never over Home. A blocking surface in
+          the coordinator, so it never opens over another sheet; it waits
+          while the page's own overlays (notifications, People, the full
+          board) are open. */}
+      {uid && (
+        <MedalRevealGate
+          key={uid}
+          uid={uid}
+          held={showNotifications || peopleOpen || chromeHidden}
+        />
+      )}
+
       <NotificationsSheet
         open={showNotifications}
         onOpenChange={setShowNotifications}

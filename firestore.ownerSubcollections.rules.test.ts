@@ -221,6 +221,37 @@ suite(
       });
     });
 
+    describe("users/{uid}/medals — server-written, owner-read (Soc15)", () => {
+      const path = `users/${OWNER}/medals/monthly-2026-11-01`;
+      const medal = {
+        challengeId: "monthly-2026-11-01",
+        name: "November Mileage",
+        metric: "total_km",
+        tier: "silver",
+        value: 31.2,
+      };
+
+      it("the owner reads a medal; another user and an anonymous caller cannot", async () => {
+        await seed(path, medal);
+        await assertSucceeds(getDoc(doc(asOwner(), path)));
+        await assertFails(getDoc(doc(asOther(), path)));
+        await assertFails(getDoc(doc(asAnon(), path)));
+      });
+
+      it("no client writes one — the owner included", async () => {
+        // A writable medal would let a person award themselves gold.
+        await seed(path, medal);
+        for (const db of [asOwner(), asOther(), asAnon()]) {
+          await assertFails(setDoc(doc(db, path), { ...medal, tier: "gold" }));
+          await assertFails(updateDoc(doc(db, path), { tier: "gold" }));
+          await assertFails(deleteDoc(doc(db, path)));
+        }
+        await assertFails(
+          setDoc(doc(asOwner(), `users/${OWNER}/medals/weekly-new`), medal)
+        );
+      });
+    });
+
     describe("users/{uid}/devices — server-only in both directions", () => {
       const path = `users/${OWNER}/devices/token-hash-a`;
 

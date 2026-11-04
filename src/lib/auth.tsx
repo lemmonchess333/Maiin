@@ -658,6 +658,13 @@ export interface PublicProfile {
   createdAt: Timestamp | FieldValue;
   /** Optional — absent when the user has never earned a badge. */
   badgeSummary?: BadgeSummary;
+  /**
+   * The trophy case (Soc15): a line per challenge medal, the newest 40.
+   * SERVER-WRITTEN ONLY (functions/lib/medals.js); the rules hold a client
+   * write to leaving it as it is, so no mirror-write site sets it. Read
+   * through `parseMedalSummary` (src/features/challenges/medals.ts).
+   */
+  medalSummary?: Record<string, unknown>;
 }
 
 /* ================================

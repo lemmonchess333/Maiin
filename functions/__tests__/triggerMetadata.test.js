@@ -225,6 +225,16 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/challenges/{challengeId}/participants/{uid}",
   },
+  // Soc15: the one writer of medals and the public trophy case
+  // (lib/medals.js). onWrite, so a rise, a reversal and a leave all reach it.
+  onChallengeParticipantWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/challenges/{challengeId}/participants/{uid}",
+  },
   onWorkoutCreated: {
     kind: "event",
     maxInstances: 50,

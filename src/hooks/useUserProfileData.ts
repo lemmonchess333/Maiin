@@ -21,6 +21,7 @@ import { logger } from "@/lib/logger";
 import type { FeedItem } from "@/hooks/useSocialFeed";
 import { publicStreakAsOf } from "@/features/streaks/publicStreak";
 import { localDateString } from "@/lib/dateHelpers";
+import { parseMedalSummary, type Medal } from "@/features/challenges/medals";
 
 /** Posts the profile lists, newest first. Also the window "This week"
  *  is counted from, so it is larger than a week's sessions for anyone. */
@@ -139,6 +140,9 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
   const [countsFailed, setCountsFailed] = useState(false);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
   const [badgesFailed, setBadgesFailed] = useState(false);
+  // The trophy case (Soc15): null until the public profile has been read,
+  // so a failed read is not drawn as "no medals".
+  const [medals, setMedals] = useState<Medal[] | null>(null);
   const [posts, setPosts] = useState<PostsState>(POSTS_LOADING);
   const [attempt, setAttempt] = useState(0);
 
@@ -179,13 +183,18 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
             ? pubData.trainingForSpaceId
             : null
         );
+        // The public summary for your own profile too: a profile shows how
+        // it looks to other people.
+        setMedals(parseMedalSummary(pubData.medalSummary));
         if (!isOwn) {
           const summary = pubData.badgeSummary as
-            | { earnedMap?: Record<string, unknown> }
-            | undefined;
+            { earnedMap?: Record<string, unknown> } | undefined;
           setBadges(newestBadges(summary?.earnedMap ?? {}));
         }
       }
+      // A profile with no public copy yet holds no medals; a read that
+      // failed says nothing either way.
+      if (!pubData && pub.status === "fulfilled") setMedals([]);
       const source = ownData ?? pubData;
       if (source) {
         setIdentity({
@@ -280,6 +289,7 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     setFollowingCount(null);
     setCountsFailed(false);
     setBadgesFailed(false);
+    setMedals(null);
     setAttempt((n) => n + 1);
   }, []);
 
@@ -303,6 +313,7 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     countsFailed,
     badges,
     badgesFailed,
+    medals,
     posts: posts.items,
     postsLoading: posts.loading,
     postsFailed: posts.failed,

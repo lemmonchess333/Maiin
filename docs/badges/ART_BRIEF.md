@@ -142,7 +142,10 @@ All 30 are illustrated (first set 2026-08-29, regenerated to match the seal
 ## The seal (the sealed hexagon a new badge is tapped out of)
 
 `BadgeEarnedModal` shows a new badge inside a sealed hexagon that the user
-taps three times to crack and break open. Since 2026-09-13 the seal is
+taps three times to crack and break open, and since 2026-11-03 the medal
+reveal (`MedalReveal`) opens a new medal the same way, through the same
+`SealStage` (`src/features/streaks/SealCeremony.tsx`) drawn larger. Since
+2026-09-13 the seal is
 **rendered art**, one WebP per tier (`public/badges/seal_{tier}.webp`,
 ~25 KB each, registered in `SEAL_ART`), layered over an SVG seal
 (`src/features/streaks/BadgeSeal.tsx`) that stays as the instant fallback
@@ -198,3 +201,12 @@ cracks, clip and shards line up with the art. The magenta background is
 what makes keying trivial: it is the one colour none of the four metals
 or the black stone contains. Review on `/dev/badge-seal` (dev builds) or
 in the `badge-seal-*` capture frames.
+
+## Challenge medals
+
+The round challenge medals (Soc15) share this material language: black
+enamel face, tier-metal relief emblem, magenta key. They are a coin, never
+a hexagon, one image per challenge definition and tier, with the edition
+and goal drawn in code over the art. The brief, the prompts and how to drop
+them in: `MEDAL_ART_BRIEF.md` beside this file;
+the generator: `scripts/art/generate-medals.py`.
