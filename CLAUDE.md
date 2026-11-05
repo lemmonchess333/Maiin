@@ -48,6 +48,7 @@ src/
 ├── features/           # Feature modules (see "Feature Modules" below)
 │   ├── challenges/     # Challenge system
 │   ├── goalSpace/      # Goal Spaces / Circles
+│   ├── league/         # Weekly leagues: the card, the page, the reveal (Soc15 call 3)
 │   ├── partnerStreak/  # Partner bonds + shared-day streaks
 │   ├── program/        # Workout program engine (engine, templates, scheduler)
 │   ├── run/            # Run-surface feature modules
@@ -105,6 +106,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)         |
 | `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts            |
 | `FollowList.tsx`                       | `/followers`, `/following`         | Your own followers and following, from your profile's counts; Remove follower   |
+| `League.tsx`                           | `/league`                          | The weekly league: your group's standings, its zones, the countdown, Leave      |
 | `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows)  |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                     |
 | `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here)  |
@@ -201,6 +203,15 @@ and makes every bond: the `startPartnerStreak` callable counts both people's
 bonds against `MAX_PARTNERS` in the transaction that creates one, and the
 rules refuse a client create; `partnerLimit.cross.test.ts` pins the limit
 both sides). `run/` holds run-surface feature modules.
+
+### league/
+
+Weekly leagues (Soc15 call 3): `LeagueCard.tsx` (Social's Together tab),
+`LeagueResultGate.tsx` / `LeagueResultReveal.tsx` (the Monday result,
+once per device), `TierBadge.tsx` (the five drawn tiers), `useLeague.ts`
+(the figure, the membership, the group's standings) and `leagueRules.ts`,
+the client's copy of `functions/lib/leagueRules.js` (pinned by
+`__tests__/leagueRules.cross.test.ts`). The page is `src/pages/League.tsx`.
 
 ### challenges/
 

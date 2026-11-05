@@ -52,6 +52,9 @@ const HOLDS_NO_ONE: Record<string, string> = {
   revenueCatEvents:
     "a webhook event's id, its type and what the sync did; the app user id is not kept",
   stripeEvents: "a webhook event's id, its type and when it was claimed",
+  // Soc15 call 3: the leagues' figure.
+  leagueStatus:
+    "leagueStatus/current: how many people have joined the leagues and whether this week has groups, a count",
 };
 
 function files(dir: string, keep: (path: string) => boolean): string[] {

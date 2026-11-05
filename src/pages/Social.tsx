@@ -22,6 +22,7 @@ import NotificationsSheet from "@/components/social/NotificationsSheet";
 import { shouldShowFollowingFeed } from "@/lib/socialGates";
 import PageShell from "@/components/ui/PageShell";
 import MedalRevealGate from "@/features/challenges/MedalRevealGate";
+import LeagueResultGate from "@/features/league/LeagueResultGate";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 
 /* SOCIAL-HOME-01: the page leads with shared goals. Two top-level
@@ -277,6 +278,16 @@ export default function Social() {
           board) are open. */}
       {uid && (
         <MedalRevealGate
+          key={uid}
+          uid={uid}
+          held={showNotifications || peopleOpen || chromeHidden}
+        />
+      )}
+      {/* A league week's result (Soc15 call 3), once per result on this
+          device, the first time Social opens after Monday's turn. Through
+          the same coordinator, so it and a medal never open together. */}
+      {uid && (
+        <LeagueResultGate
           key={uid}
           uid={uid}
           held={showNotifications || peopleOpen || chromeHidden}

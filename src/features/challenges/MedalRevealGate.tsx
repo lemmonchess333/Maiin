@@ -1,5 +1,6 @@
-import { Component, Suspense, useCallback, type ReactNode } from "react";
+import { Suspense, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
+import RevealBoundary from "@/components/RevealBoundary";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useMedalReveal } from "./useMedalReveal";
@@ -16,26 +17,6 @@ const MedalReveal = lazyRetry(() => import("./MedalReveal"), {
  *  the number matters only against a surface added later; it takes the
  *  retired badge's place, under every decision. */
 export const MEDAL_REVEAL_PRIORITY = 20;
-
-/** A reveal that cannot load or draw shows nothing, and the page goes on. */
-class RevealBoundary extends Component<
-  { children: ReactNode; onError: () => void },
-  { failed: boolean }
-> {
-  state = { failed: false };
-
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  componentDidCatch() {
-    this.props.onError();
-  }
-
-  render() {
-    return this.state.failed ? null : this.props.children;
-  }
-}
 
 /**
  * The medal reveal's place on Social (Soc15). Mounted by the Social page,
