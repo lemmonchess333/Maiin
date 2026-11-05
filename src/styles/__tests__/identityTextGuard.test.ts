@@ -218,7 +218,9 @@ const EXPECTED_INLINE_USES = {
   // the EmptyState primitive too.
   // 32 → 33. The week pulse's streak flame, an icon, follows the streak
   // flame from amber to the brand purple.
-  "THEME.brand": 33,
+  // 33 → 34. The notification tray's league result (Soc15 call 3): its
+  // medal icon, in the brand purple Social's rewards wear.
+  "THEME.brand": 34,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.

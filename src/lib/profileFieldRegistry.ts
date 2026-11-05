@@ -161,6 +161,10 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     undeclared: "activity timestamp written by the Firestore triggers",
   },
   { field: "lastLogDate", sanitized: true },
+  // Soc15 call 3: in the weekly leagues or not. Written only by the
+  // setLeagueSharing callable, which keeps the membership
+  // (leagueMembers/{uid}) in step with the answer.
+  { field: "leagueOptIn", sanitized: false, serverOnly: true },
   { field: "liftTimeBudgetMinutes", sanitized: true },
   // Lift18: the unit lifting loads are shown in; loads stay stored in kg.
   { field: "liftingWeightUnit", sanitized: true },

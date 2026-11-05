@@ -102,6 +102,14 @@ function memoryFirestore(seed = {}) {
       select: () => q,
       limit: (n) => collection(path, group, filters, cursor, n),
       startAfter: (r) => collection(path, group, filters, r.path || r, cap),
+      // An aggregation, as Firestore's count(): the matching documents'
+      // number, without them.
+      count: () => ({
+        get: async () => {
+          const result = await q.get();
+          return { data: () => ({ count: result.size }) };
+        },
+      }),
       get: async () => {
         check(path, "query");
         const paths = [...data.keys()]

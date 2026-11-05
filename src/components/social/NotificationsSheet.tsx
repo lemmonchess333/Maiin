@@ -11,6 +11,7 @@ import {
   HeartHandshake,
   ClipboardList,
   Flame,
+  Medal,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
@@ -61,6 +62,9 @@ const TYPE_ICON: Record<
   space_post_like: { Icon: Flame, color: THEME.running },
   space_post_comment: { Icon: MessageCircle, color: THEME.running },
   invite_joined: { Icon: UserCheck, color: THEME.semantic.positive },
+  // Soc15 call 3: the league's result, in the brand purple Social's
+  // rewards wear.
+  league_result: { Icon: Medal, color: THEME.brand },
 };
 
 /** Fallback copy when the server didn't store a pre-built `message`. */
@@ -97,6 +101,8 @@ function fallbackMessage(n: NotificationItem): string {
       return `${who} commented on your space post`;
     case "invite_joined":
       return `${who} joined from your invite. You follow each other now`;
+    case "league_result":
+      return "Your league week is over";
     default:
       return who;
   }

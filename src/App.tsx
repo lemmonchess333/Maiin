@@ -194,6 +194,8 @@ const Routine = lazyRetry(() => import("@/pages/Routine"));
 const EmptyWorkout = lazyRetry(() => import("@/pages/EmptyWorkout"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
 const FollowList = lazyRetry(() => import("@/pages/FollowList"));
+// Soc15 call 3: the weekly league, opened from its card on Social.
+const League = lazyRetry(() => import("@/pages/League"));
 const ExerciseHistory = lazyRetry(() => import("@/pages/ExerciseHistory"));
 // PR N (audit P2 #17): hidden operator-diagnostics route. Lazy-loaded
 // like every other page; not wired into any nav. Reachable only by
@@ -884,6 +886,14 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <FollowList kind="followers" />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/league"
+                          element={
+                            <RouteErrorBoundary>
+                              <League />
                             </RouteErrorBoundary>
                           }
                         />

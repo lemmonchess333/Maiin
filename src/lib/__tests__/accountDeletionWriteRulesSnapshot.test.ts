@@ -194,6 +194,19 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // setBoardSharing callable (actor-locked) and the session triggers
   // (system-writer guard) write it, and the executor deletes it.
   "match /friendsBoard/{uid}",
+  // Soc15 call 3: weekly leagues, server-written throughout. Members read
+  // their membership, their group and its standings; the turn's markers
+  // are server only, and the figure names no one. setLeagueSharing is
+  // actor-locked, the turn and the session triggers read the deletion
+  // state in their transactions, and the executor removes the account's
+  // membership, standing and place (leagues.removeLeagueTraces) and its
+  // results (USER_SUBCOLLECTIONS).
+  "match /users/{uid}/leagueResults/{weekKey}",
+  "match /leagueMembers/{uid}",
+  "match /leagueGroups/{groupId}",
+  "match /standings/{memberUid}",
+  "match /leagueWeeks/{weekKey}",
+  "match /leagueStatus/{doc}",
   // Polish3 call 1: who has blocked this account. Read by that account
   // only; onBlockWritten writes it (system-writer guard), and the
   // executor deletes it both ways (blockedByOwn, blockedByReverse).

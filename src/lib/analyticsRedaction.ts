@@ -127,6 +127,7 @@ const ROUTE_WORDS = new Set([
   "following",
   "food",
   "history",
+  "league",
   "exercise",
   "sessions",
   "log",

@@ -142,6 +142,24 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
         self.assertIn("lib/notificationPreferences.js", targets["redeemInvite"])
 
+    def test_league_functions_read_back_the_rules_and_the_plan_count(self):
+        targets = verifier.source_targets()
+        for name in ("weeklyLeagueTurn", "setLeagueSharing"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/leagues.js",
+                                 "lib/leagueRules.js", "lib/leaguePlanned.js",
+                                 "lib/restriction.js",
+                                 "lib/accountDeletionLocks.js"}.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        self.assertIn("lib/notificationPreferences.js", targets["weeklyLeagueTurn"])
+        # The session triggers keep a standing current, so they read the
+        # leagues' files back too.
+        for name in ("onWorkoutCreated", "onWorkoutUpdated", "onWorkoutDeleted",
+                     "onRunCreated", "onRunUpdated", "onRunDeleted"):
+            with self.subTest(function=name):
+                self.assertIn("lib/leagues.js", targets[name])
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
     def test_block_mirror_reads_back_its_reconciler_and_retry_guard(self):
         paths = verifier.source_targets()["onBlockWritten"]
         self.assertTrue({"index.js", "package-lock.json", "lib/blockMirror.js",

@@ -13,6 +13,9 @@ const ChallengeList = lazyRetry(() =>
     default: m.ChallengeList,
   }))
 );
+/* The weekly league's card (Soc15 call 3), its own chunk for the same
+   reason: it loads with Together, not with Social. */
+const LeagueCard = lazyRetry(() => import("@/features/league/LeagueCard"));
 
 /**
  * Together tab, in three sections (Soc14):
@@ -22,7 +25,8 @@ const ChallengeList = lazyRetry(() =>
  *              each with its progress. With no Circle and no joined
  *              challenge, the start-or-join card alone.
  *   This week  the weekly challenge, whose action is the page's one
- *              filled button (or, with no Circle yet, Start a circle is)
+ *              filled button (or, with no Circle yet, Start a circle is),
+ *              then the weekly league
  *   Discover   the other challenges as a quiet list, the community goal
  *              first once it has moved, then Spaces, then races
  *
@@ -110,6 +114,20 @@ export default function CommunityView({
           refreshRef={challengesRefreshRef}
           circles={circles}
           spaces={<SpacesDirectory />}
+          league={
+            uid ? (
+              <Suspense
+                fallback={
+                  <div
+                    className="h-36 rounded-2xl bg-muted/40 motion-safe:animate-pulse"
+                    aria-hidden="true"
+                  />
+                }
+              >
+                <LeagueCard uid={uid} />
+              </Suspense>
+            ) : null
+          }
           weeklyLeads={circlesState !== "none"}
         />
       </Suspense>

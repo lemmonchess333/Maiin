@@ -119,6 +119,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "leagueOptIn",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "lastActiveAt",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

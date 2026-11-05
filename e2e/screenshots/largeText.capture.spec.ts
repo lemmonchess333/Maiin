@@ -534,6 +534,12 @@ test.describe("large text", () => {
       await measure(page, "social-together-challenge", width, found);
       await page.keyboard.press("Escape");
 
+      // The weekly league's page (Soc15 call 3): for the seeded account,
+      // which has not joined, what joining shows and Join.
+      await page.goto("league");
+      await ready(page, page.getByRole("button", { name: "Join the league" }));
+      await measure(page, "league", width, found);
+
       /* The Feed on Following, where Social opens for anyone who follows
          someone: its posts or its empty state, then the week card under
          them past its spinner. */

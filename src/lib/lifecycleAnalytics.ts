@@ -95,7 +95,9 @@ export type ReturnSurface =
   | "lift-return"
   | "run-return"
   // Soc15: a new medal's reveal, on Social (MedalRevealGate).
-  | "medal-reveal";
+  | "medal-reveal"
+  // Soc15 call 3: a league week's result, on Social (LeagueResultGate).
+  | "league-result";
 
 /**
  * What the user did with a return surface. `dismissed` is the close with

@@ -50,7 +50,9 @@ const LIST_CARD = cardClasses({
  *   You        `circles` (the person's Circles, or the start-or-join card
  *              without one), then the challenges they joined, each with
  *              its progress, then any that ended this week
- *   This week  the weekly challenge (`WeeklyChallengeCard`)
+ *   This week  the weekly challenge (`WeeklyChallengeCard`), then
+ *              `league`, the weekly league (both are this week's and end
+ *              on Sunday)
  *   Discover   the challenges they have not joined as a quiet list, the
  *              community goal first once it has moved, then `spaces`
  *
@@ -64,6 +66,7 @@ export function ChallengeList({
   refreshRef,
   circles,
   spaces,
+  league,
   weeklyLeads = true,
 }: {
   onFindFriends?: () => void;
@@ -74,6 +77,8 @@ export function ChallengeList({
   circles?: ReactNode;
   /** The foot of Discover: the Spaces and races directory. */
   spaces?: ReactNode;
+  /** Under the weekly challenge: the weekly league (Soc15 call 3). */
+  league?: ReactNode;
   /** False while the page has a Start a circle card, which is then the
    *  page's one filled button and the weekly action steps down. */
   weeklyLeads?: boolean;
@@ -201,6 +206,7 @@ export function ChallengeList({
             onFindFriends={onFindFriends}
           />
         )}
+        {league}
       </section>
 
       <section aria-labelledby={discoverId} className="space-y-5">

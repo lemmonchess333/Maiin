@@ -29,6 +29,7 @@ const spacesCleanup = require("./lib/spacesCleanup");
 const deletedAccountsTombstone = require("./lib/deletedAccountsTombstone");
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const challengeParticipationCleanup = require("./lib/challengeParticipationCleanup");
+const leagues = require("./lib/leagues");
 
 /**
  * Every subcollection under users/{uid}.
@@ -94,6 +95,9 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // A medal per challenge edition (lib/medals.js, Soc15). Server-owned,
   // owner-read; the public summary goes with `public` below.
   "medals",
+  // How each league week went (lib/leagues.js, Soc15 call 3). Server-owned,
+  // owner-read.
+  "leagueResults",
   "dailyNutrition",
   "checkins",
   "trainingBlocks",
@@ -588,6 +592,11 @@ async function deleteAccount({
     // Polish2: the week shown on followers' boards. The session triggers
     // that recompute it write nothing for an account being deleted.
     await firestore.doc(`friendsBoard/${uid}`).delete();
+    // Soc15 call 3: the account's league membership, its standing in this
+    // week's group and its place in the group's members (lib/leagues.js).
+    // The writers (the turn, the session triggers, setLeagueSharing) each
+    // read the deletion state before writing.
+    await leagues.removeLeagueTraces(firestore, uid);
 
     // 5. The user document itself
     stage = "user_document";

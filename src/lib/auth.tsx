@@ -434,6 +434,10 @@ export interface UserProfileSocial {
    *  absent = not asked yet (their own board row offers "Show my week"),
    *  false = no. Server-written by setBoardSharing, never by the client. */
   showWeekOnBoard?: boolean;
+  /** Whether this person is in the weekly leagues (Soc15 call 3): absent
+   *  = never joined, false = left. Server-written by setLeagueSharing,
+   *  never by the client. */
+  leagueOptIn?: boolean;
   /** This person's invite code (Soc15), as `inviteCodes/{code}` holds it:
    *  absent until they first ask for it. Server-written by getInviteCode,
    *  never by the client. */

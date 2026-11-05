@@ -45,6 +45,9 @@ const followBackfill = require("./lib/followBackfill");
 const discoveryHidden = require("./lib/discoveryHidden");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
 const friendsBoard = require("./lib/friendsBoard");
+// Soc15 call 3: weekly leagues, scored against each person's own plan.
+const leagues = require("./lib/leagues");
+const leagueRules = require("./lib/leagueRules");
 // Soc15: a medal per challenge edition, and the public trophy case.
 const medals = require("./lib/medals");
 const restrictedIdentities = require("./lib/restrictedIdentities");
@@ -5210,6 +5213,9 @@ exports.onWorkoutCreated = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
     const data = snap.data();
     // Which day this session belongs to — the workout's own local date,
     // NOT trigger delivery time. Drives challenge-window attribution.
@@ -5373,6 +5379,9 @@ exports.onRunCreated = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
     const data = snap.data();
     // The run's own local day — drives challenge-window attribution, so a
     // run flushed offline in a later month still credits the right window.
@@ -5581,6 +5590,9 @@ exports.onWorkoutUpdated = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
     if (
       !(after.revision > 0) ||
       (before.revision === after.revision &&
@@ -5627,6 +5639,9 @@ exports.onRunUpdated = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
     // A renamed run's post takes the new name (lib/runRename), read from
     // the current documents, so a retry writes it once.
     if (
@@ -5704,6 +5719,9 @@ exports.onWorkoutDeleted = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
     // Each reversal runs whatever happens to the other, and a failure
     // fails the event so failurePolicy delivers it again. The source is
     // already gone, so nothing else would ever re-fire: caught and logged,
@@ -5770,6 +5788,9 @@ exports.onRunDeleted = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
     const data = snap.data() || {};
     // No isVolumeEligibleRun re-check here, unlike the create side. An
     // ineligible run never credited, so it has no markers and every
@@ -8859,6 +8880,84 @@ exports.setBoardSharing = functions
     await friendsBoard.setBoardSharing(db, uid, share);
     return { share };
   });
+
+/**
+ * setLeagueSharing — the person's answer to weekly leagues (Soc15 call 3):
+ * join or leave. Joining stores the answer and a Bronze membership; the
+ * person is placed in a group on the next Monday's turn. Leaving stores the
+ * answer, deletes their standing and takes them out of their group at once
+ * (lib/leagues.js). The answer is server-written, as setBoardSharing's is,
+ * so the membership and the answer cannot disagree.
+ *
+ * A restricted account cannot join (it reaches no one, S4e) but can always
+ * leave.
+ */
+exports.setLeagueSharing = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    const join = data && data.join;
+    if (typeof join !== "boolean") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "join must be true or false."
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    if (join) await restriction.assertNotRestricted(db, uid, functions);
+    const limited = await isRateLimited(uid, "leagueSharing", 10, 60_000);
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Try again in a minute."
+      );
+    }
+    const { joined } = await leagues.setLeagueSharing(db, uid, join);
+    return { join, joined };
+  });
+
+/**
+ * weeklyLeagueTurn — the leagues' week (Soc15 call 3), Monday 12:15 UTC:
+ * after every timezone's Sunday has ended (the last, UTC-12, ends at 12:00
+ * UTC). It settles last week's groups (each member's result, new tier and
+ * one notification), forms this week's from the people who opted in and
+ * trained in the last 14 days, and writes the figure the locked card reads.
+ * Keyed by this week's Monday in leagueWeeks/{weekKey}, so a second run
+ * does nothing twice (lib/leagues.js runLeagueTurn).
+ */
+exports.weeklyLeagueTurn = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("15 12 * * 1")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "weeklyLeagueTurn", async () => {
+      const summary = await leagues.runLeagueTurn(db, {
+        isHidden: discoveryHidden.isDiscoveryHidden,
+        notify: (uid, result) =>
+          socialFanout.createNotification({
+            firestore: db,
+            fromUid: leagues.LEAGUE_SENDER,
+            toUid: uid,
+            anonymous: true,
+            notificationId: `league-${result.weekKey}`,
+            keepExisting: true,
+            data: {
+              type: "league_result",
+              message: leagueRules.resultMessage(result),
+            },
+            serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+          }),
+      });
+      functions.logger.info("weeklyLeagueTurn.done", summary);
+      return summary;
+    })
+  );
 
 /**
  * removeFollower — Remove follower on your own followers list (Mob2 call

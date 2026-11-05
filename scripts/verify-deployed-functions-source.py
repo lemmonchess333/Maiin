@@ -66,7 +66,8 @@ def source_targets():
                       "lib/accountDeletionSocial.js", "lib/accountDeletionRetry.js",
                       "lib/accountDeletionLocks.js", "lib/accountDeletionAuth.js",
                       "lib/accountDeletionLedger.js", "lib/accountDeletionMinimisation.js",
-                      "lib/accountDeletionStatus.js", "lib/commentReactions.js"]
+                      "lib/accountDeletionStatus.js", "lib/commentReactions.js",
+                      "lib/leagues.js"]
     challenge_paths = ["index.js", "package-lock.json", "lib/challengeDefs.js",
                        "lib/challengeBackfill.js", "lib/challengeActivityWindow.js",
                        "lib/challengeTiers.js", "lib/challengeMarkers.js",
@@ -83,6 +84,12 @@ def source_targets():
     invite_paths = ["index.js", "package-lock.json", "lib/inviteCodes.js",
                     "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
                     "lib/restriction.js", "lib/accountDeletionLocks.js"]
+    # Soc15 call 3: the leagues' one writer, its rules and its planned count.
+    league_lib = ["lib/leagues.js", "lib/leagueRules.js", "lib/leaguePlanned.js"]
+    league_paths = ["index.js", "package-lock.json"] + league_lib + [
+                    "lib/friendsBoard.js", "lib/deletionTransactionGuard.js",
+                    "lib/accountDeletionStatus.js", "lib/restriction.js",
+                    "lib/accountDeletionLocks.js"]
     return {
         "deleteMyAccount": deletion_paths,
         "resumeAccountDeletions": deletion_paths,
@@ -122,6 +129,12 @@ def source_targets():
         # of the codes themselves, with the checks it holds them to.
         "redeemInvite": invite_paths + ["lib/socialFanout.js", "lib/notificationPreferences.js"],
         "getInviteCode": invite_paths,
+        # Soc15 call 3: weekly leagues. The turn settles, forms and notifies;
+        # the callable joins and leaves; the session triggers below keep each
+        # standing current.
+        "weeklyLeagueTurn": league_paths + ["lib/socialFanout.js", "lib/notificationPreferences.js",
+                                            "lib/discoveryHidden.js"],
+        "setLeagueSharing": league_paths,
         # Ship1: the photos other people see, screened for nudity.
         "screenPhoto": ["index.js", "lib/photoScreen.js"],
         "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],
@@ -131,11 +144,12 @@ def source_targets():
         "liftRestriction": ["index.js"],
         # Race day: the daily no-show and recovery checks, and the recovery
         # entry a saved race run makes.
-        "onRunCreated": challenge_paths + ["lib/raceReconciliation.js", "lib/raceDayCompletion.js"],
+        "onRunCreated": challenge_paths + ["lib/raceReconciliation.js", "lib/raceDayCompletion.js"]
+                        + league_lib,
         "configurePlan": training_paths,
         "applyProgramCommand": training_paths,
-        "onWorkoutCreated": training_paths + challenge_paths[2:],
-        "onWorkoutUpdated": training_paths + challenge_paths[2:],
+        "onWorkoutCreated": training_paths + challenge_paths[2:] + league_lib,
+        "onWorkoutUpdated": training_paths + challenge_paths[2:] + league_lib,
         # Monthly rotation and participation must execute the same source that
         # passed CI, including the new active-day/minute recomputation helper.
         # Checking index.js alone misses a stale independently changed library.
@@ -147,13 +161,13 @@ def source_targets():
                                           "lib/deletionTransactionGuard.js",
                                           "lib/accountDeletionStatus.js", "lib/triggerRetry.js",
                                           "lib/accountDeletionLocks.js"],
-        "onRunUpdated": challenge_paths,
+        "onRunUpdated": challenge_paths + league_lib,
         # The reversal is what a delete runs, and it fails the event when it
         # does not land so the retry can apply it.
         "onWorkoutDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
-                                              "lib/triggerRetry.js"],
+                                              "lib/triggerRetry.js"] + league_lib,
         "onRunDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
-                                              "lib/triggerRetry.js"],
+                                              "lib/triggerRetry.js"] + league_lib,
         # Read back the privacy-safe feed index writer and the Circle
         # admission receipt before a release can report either trigger current.
         "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js",

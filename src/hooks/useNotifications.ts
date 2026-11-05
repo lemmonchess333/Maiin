@@ -64,6 +64,9 @@ export const TRAY_NOTIFICATION_TYPES = [
   // Soc15 — someone joined from the recipient's invite, and the two now
   // follow each other. The row opens their profile.
   "invite_joined",
+  // Soc15 call 3 — how the recipient's league week went. From the league,
+  // not a person: no sender, and the row opens the league.
+  "league_result",
 ] as const;
 
 export type NotificationType = (typeof TRAY_NOTIFICATION_TYPES)[number];
