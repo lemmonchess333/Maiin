@@ -4,7 +4,7 @@ import { ArrowDown, ArrowUp, ChevronLeft } from "lucide-react";
 import { useAuth, useUid } from "@/lib/auth";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import { THEME } from "@/lib/theme";
+import { LEAGUE_LIGHT } from "@/features/league/leaguePalettes";
 import { cn } from "@/lib/utils";
 import Avatar from "@/components/Avatar";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
@@ -213,7 +213,7 @@ function Standings({
   const shown = ranked.filter((s) => s.uid === uid || !blocked.has(s.uid));
   const firstBelowUp = shown.findIndex((s) => s.rank > up);
   const firstDown = shown.findIndex((s) => s.rank > n - down);
-  const metal = THEME.tier[tier];
+  const metal = LEAGUE_LIGHT[tier];
 
   return (
     <>

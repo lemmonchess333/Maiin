@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { THEME } from "@/lib/theme";
+import { LEAGUE_LIGHT } from "@/features/league/leaguePalettes";
 import { cardClasses } from "@/components/ui/cardClasses";
 import { Button } from "@/components/ui/Button";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
@@ -139,7 +139,7 @@ export default function LeagueCard({ uid }: { uid: string }) {
   }
 
   const { me, ranked, tier, weekKey } = state;
-  const metal = THEME.tier[tier];
+  const metal = LEAGUE_LIGHT[tier];
   return (
     <Link
       to="/league"

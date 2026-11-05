@@ -115,12 +115,6 @@ export const THEME = {
     silver: "#C0C0C0",
     gold: "#FFD700",
     platinum: "#E5E4E2",
-    /* The weekly leagues' fifth and highest tier (Soc15 call 3, owner,
-       3 November 2026): Bronze, Silver, Gold, Platinum, Diamond. An ice
-       blue, the stone's own light, kept pale like the other metals so it
-       reads as a rank and not as a sport or a status colour. Leagues only:
-       badges and medals stop at Platinum. */
-    diamond: "#9ADCF0",
   },
 
   // Calendar dot colours — only TWO, ever

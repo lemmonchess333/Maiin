@@ -7,6 +7,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useBackDismiss } from "@/lib/backDismiss";
 import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";
+import { LEAGUE_LIGHT } from "@/features/league/leaguePalettes";
 import { resultTitle, weekOfLine, type LeagueResult } from "./league";
 import { ordinal } from "./leagueRules";
 import TierBadge from "./TierBadge";
@@ -76,7 +77,7 @@ export default function LeagueResultReveal({
   const titleId = useId();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const tier = result.newTier;
-  const metal = THEME.tier[tier];
+  const metal = LEAGUE_LIGHT[tier];
   const rose = result.outcome === "up";
   const fell = result.outcome === "down";
 
