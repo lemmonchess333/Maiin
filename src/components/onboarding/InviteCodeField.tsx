@@ -3,9 +3,9 @@
  *
  * On the last step, under the name. Closed unless a code is waiting: an
  * invite link opened on this device leaves its code (`pendingInvite.ts`),
- * and the field opens with it filled in. The iPhone app does not open
- * troposfit.com links, so there the person types the code a friend read
- * out or sent. Nothing is sent until the plan is made; then the code is
+ * and the field opens with it filled in. After installing the iPhone app,
+ * the person can paste a code copied before installation. Nothing is sent
+ * until the plan is made; then the code is
  * used: the friend follows this person, who follows them or asks to, by
  * the friend's Approve followers (Onboarding's finish, then
  * `redeemInviteAfterSetup`).
@@ -20,9 +20,13 @@ import { NOT_A_CODE } from "@/lib/invites";
 export default function InviteCodeField({
   value,
   onChange,
+  deliveryRevision,
+  disabled = false,
 }: {
   value: string;
   onChange: (next: string) => void;
+  deliveryRevision: number;
+  disabled?: boolean;
 }) {
   const inputId = useId();
   const noteId = useId();
@@ -31,7 +35,14 @@ export default function InviteCodeField({
   const [left, setLeft] = useState(false);
   // Open from the start when a code is waiting; after that the person opens
   // and closes it, and clearing the field does not snap it shut.
-  const [startsOpen] = useState(() => value.trim().length > 0);
+  const [open, setOpen] = useState(() => value.trim().length > 0);
+  const [seenValue, setSeenValue] = useState(value);
+  const [seenDelivery, setSeenDelivery] = useState(deliveryRevision);
+  if (value !== seenValue || deliveryRevision !== seenDelivery) {
+    setSeenValue(value);
+    setSeenDelivery(deliveryRevision);
+    if (value.trim()) setOpen(true);
+  }
   const typed = value.trim();
   const invalid =
     left && typed.length > 0 && normaliseInviteCode(typed) === null;
@@ -39,7 +50,8 @@ export default function InviteCodeField({
   return (
     <details
       className="rounded-2xl bg-card card-shadow px-4"
-      open={startsOpen || undefined}
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
     >
       <summary className="min-h-11 py-3 cursor-pointer text-base font-semibold">
         Invited by a friend?
@@ -52,6 +64,7 @@ export default function InviteCodeField({
           id={inputId}
           className="ds-input w-full min-h-11 font-mono"
           value={value}
+          disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
           onBlur={() => setLeft(true)}
           placeholder="ABCD-2345"

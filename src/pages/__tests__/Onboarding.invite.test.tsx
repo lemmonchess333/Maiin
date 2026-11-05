@@ -5,6 +5,7 @@
  * name the person and nothing about it can stop setup finishing.
  */
 import {
+  act,
   render,
   screen,
   fireEvent,
@@ -105,6 +106,18 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("setup's invite field", () => {
+  it.each(["", "MAYA"])(
+    "forgets a linked code when the person finishes with replacement %s",
+    async (replacement) => {
+      savePendingInvite("K7P49M2H");
+      open();
+      fireEvent.change(codeField(), { target: { value: replacement } });
+      await goToToday();
+      await waitFor(() => expect(h.refresh).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(readPendingInvite()).toBeNull());
+      expect(h.redeem).not.toHaveBeenCalled();
+    }
+  );
   it("opens filled in with a code a link left, and uses it once the plan is made", async () => {
     savePendingInvite("K7P49M2H");
     open();
@@ -161,3 +174,73 @@ describe("setup's invite field", () => {
     expect(h.redeem).not.toHaveBeenCalled();
   });
 });
+
+it("opens and updates the invite field when a link arrives during setup", async () => {
+  open();
+  expect(codeField().closest("details")).not.toHaveAttribute("open");
+  act(() => {
+    savePendingInvite("K7P49M2H");
+  });
+  expect(codeField()).toHaveValue("K7P4-9M2H");
+  expect(codeField().closest("details")).toHaveAttribute("open");
+  act(() => {
+    savePendingInvite("A2B3C4D5");
+  });
+  expect(codeField()).toHaveValue("A2B3-C4D5");
+  await goToToday();
+  await waitFor(() =>
+    expect(h.redeem).toHaveBeenCalledExactlyOnceWith({ code: "A2B3C4D5" })
+  );
+});
+
+it("reopens a dismissed field when the same invite is delivered again", () => {
+  savePendingInvite("K7P49M2H");
+  open();
+  const details = codeField().closest("details")!;
+  act(() => {
+    details.open = false;
+    fireEvent(details, new Event("toggle"));
+  });
+  expect(details).not.toHaveAttribute("open");
+  act(() => {
+    savePendingInvite("K7P49M2H");
+  });
+  expect(details).toHaveAttribute("open");
+  expect(codeField()).toHaveValue("K7P4-9M2H");
+});
+
+it.each(["plan", "refresh"])(
+  "keeps a link opened while %s is pending for confirmation instead of redeeming the old code",
+  async (phase) => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    if (phase === "plan")
+      h.complete.mockImplementationOnce(async () => {
+        await held;
+        return { data: {} };
+      });
+    else h.refresh.mockReturnValueOnce(held);
+    savePendingInvite("K7P49M2H");
+    open();
+    await goToToday();
+    await waitFor(() =>
+      expect(phase === "plan" ? h.complete : h.refresh).toHaveBeenCalledTimes(1)
+    );
+    expect(codeField()).toBeDisabled();
+    act(() => {
+      savePendingInvite("A2B3C4D5");
+    });
+    await act(async () => {
+      release();
+    });
+    await waitFor(() =>
+      expect(h.toast.success).toHaveBeenCalledWith(
+        "Your latest invite is saved. Open Social, then Find people to use it."
+      )
+    );
+    expect(h.redeem).not.toHaveBeenCalled();
+    expect(readPendingInvite()).toBe("A2B3C4D5");
+  }
+);

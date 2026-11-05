@@ -479,6 +479,7 @@ jobs:
 
           python3 - <<'PY'
           import datetime, hashlib, json, os, plistlib, sys
+          from scripts.verify_ios_entitlements import mismatched_entitlements
 
           profiles = os.environ["PROFILES"]
           team = os.environ["APPLE_TEAM_ID"]
@@ -505,7 +506,7 @@ jobs:
               now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
               if profile["ExpirationDate"] < now:
                   problems.append(f"{bundle}: profile expired on {profile['ExpirationDate']:%Y-%m-%d}")
-              mismatched = sorted(key for key, value in wanted.items() if have.get(key) != value)
+              mismatched = mismatched_entitlements(wanted, have)
               if mismatched:
                   problems.append(
                       f"{bundle}: profile lacks matching " + ", ".join(mismatched)

@@ -7,7 +7,12 @@
  */
 import { vi, expect, it, afterEach, beforeEach } from "vitest";
 import { render, screen, cleanup, act } from "@testing-library/react";
-import { MemoryRouter, useLocation, useSearchParams } from "react-router-dom";
+import {
+  MemoryRouter,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({
@@ -190,4 +195,33 @@ it("pads its foot by the tab bar's clearance", async () => {
     screen.getByRole("heading", { name: "Social" })
   );
   expect(root.style.paddingBottom).toBe("var(--page-bottom-pad)");
+});
+
+function OpenInvite() {
+  const navigate = useNavigate();
+  return (
+    <button onClick={() => void navigate("/social?tab=find")}>
+      Open invite
+    </button>
+  );
+}
+
+it("reopens Find people for a second invite after dismissing the first", async () => {
+  render(
+    <MemoryRouter initialEntries={["/social?tab=find"]}>
+      <Social />
+      <OpenInvite />
+    </MemoryRouter>
+  );
+  const close = await screen.findByRole("button", {
+    name: "Close people search",
+  });
+  act(() => close.click());
+  expect(
+    screen.queryByRole("button", { name: "Close people search" })
+  ).toBeNull();
+  act(() => screen.getByRole("button", { name: "Open invite" }).click());
+  expect(
+    await screen.findByRole("button", { name: "Close people search" })
+  ).toBeInTheDocument();
 });

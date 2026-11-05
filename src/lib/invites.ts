@@ -22,7 +22,13 @@ import {
   isRestrictedRefusal,
   RESTRICTED_TOAST,
 } from "@/lib/accountRestriction";
-import { clearPendingInvite, savePendingInvite } from "@/lib/pendingInvite";
+import {
+  clearPendingInvite,
+  pendingInviteUnchanged,
+  savePendingInvite,
+  snapshotPendingInvite,
+  type PendingInviteSnapshot,
+} from "@/lib/pendingInvite";
 import { toast } from "@/lib/toast";
 
 /** The caller's own code, made the first time they ask. */
@@ -183,14 +189,17 @@ export function isFinalInviteRefusal(err: unknown): boolean {
  * tries, the inviter's busy day) is kept on the device, so People offers
  * it again.
  */
-export async function redeemInviteAfterSetup(code: string): Promise<void> {
+export async function redeemInviteAfterSetup(
+  code: string,
+  pending: PendingInviteSnapshot = snapshotPendingInvite()
+): Promise<void> {
   try {
     const result = await redeemInviteCode(code);
-    clearPendingInvite();
+    clearPendingInvite(pending);
     toast.success(inviteJoinedLine(result.inviterName, result.requested));
   } catch (err) {
-    if (isFinalInviteRefusal(err)) clearPendingInvite();
-    else savePendingInvite(code);
+    if (isFinalInviteRefusal(err)) clearPendingInvite(pending);
+    else if (pendingInviteUnchanged(pending)) savePendingInvite(code);
     toast.error(describeInviteRefusal(err, "setup"));
   }
 }

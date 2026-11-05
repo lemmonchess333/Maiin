@@ -11,19 +11,30 @@
  * will do.
  */
 import { useEffect, useState } from "react";
-import { UserPlus } from "lucide-react";
-import { readPendingInvite } from "@/lib/pendingInvite";
+import { Copy, UserPlus } from "lucide-react";
+import { usePendingInvite } from "@/hooks/usePendingInvite";
+import { formatInviteCode } from "@/lib/inviteCode";
+import { isNativePlatform } from "@/lib/platform";
+import { Button } from "@/components/ui/Button";
 import { lookupInviterName } from "@/lib/invites";
 
 export default function InviteNote() {
-  const [code] = useState(() => readPendingInvite());
-  const [name, setName] = useState<string | null>(null);
+  const code = usePendingInvite();
+  const [inviter, setInviter] = useState<{
+    code: string;
+    name: string | null;
+  } | null>(null);
+  const [copyResult, setCopyResult] = useState<{
+    code: string;
+    message: string;
+  } | null>(null);
+  const name = inviter?.code === code ? inviter.name : null;
 
   useEffect(() => {
     if (!code) return;
     let live = true;
     void lookupInviterName(code).then((found) => {
-      if (live) setName(found);
+      if (live) setInviter({ code, name: found });
     });
     return () => {
       live = false;
@@ -31,25 +42,72 @@ export default function InviteNote() {
   }, [code]);
 
   if (!code) return null;
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(formatInviteCode(code));
+      setCopyResult({
+        code,
+        message: "Code copied. Keep it for setup after installing Tropos.",
+      });
+    } catch {
+      setCopyResult({
+        code,
+        message:
+          "Couldn’t copy. Touch and hold the code to select and copy it.",
+      });
+    }
+  };
   return (
-    <div
-      role="status"
-      className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/8 border border-primary/15 text-sm"
-    >
-      <UserPlus
-        className="size-4 shrink-0 mt-0.5 text-primary"
-        aria-hidden="true"
-      />
-      <div className="min-w-0">
-        <p className="font-semibold text-foreground">
-          {name
-            ? `${name} invited you to Tropos`
-            : "A friend invited you to Tropos"}
-        </p>
-        <p className="text-muted-foreground">
-          They'll follow you once you've set up your plan.
-        </p>
+    <div className="p-[12px] rounded-xl bg-primary/8 border border-primary/15 text-sm">
+      <div className="flex items-start gap-2.5">
+        <UserPlus
+          className="size-4 shrink-0 mt-0.5 text-primary"
+          aria-hidden="true"
+        />
+        <div className="min-w-0 flex-1">
+          <p role="status" className="font-semibold text-foreground">
+            {name
+              ? `${name} invited you to Tropos`
+              : "A friend invited you to Tropos"}
+          </p>
+          <p className="text-muted-foreground">
+            They'll follow you once you've set up your plan.
+          </p>
+        </div>
       </div>
+      {!isNativePlatform() && (
+        <div className="mt-3 space-y-2">
+          <p className="text-sm text-foreground">
+            Installing Tropos on your iPhone? Copy this code first.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-mono tabular-nums font-semibold select-all">
+              {formatInviteCode(code)}
+            </p>
+            <Button
+              variant="outline"
+              className="max-w-full"
+              onClick={() => void copyCode()}
+              leftIcon={<Copy className="size-4" aria-hidden="true" />}
+            >
+              Copy invite code
+            </Button>
+          </div>
+          <p className="text-muted-foreground">
+            After installing, paste it into “Invited by a friend?” during setup.
+            Already finished setup? Open Social, then Find people to use it
+            within your account’s first 14 days.
+          </p>
+          <p className="text-muted-foreground">
+            The code won’t transfer automatically when you install the app. You
+            can also return to the original message and tap its invite link
+            again after installing.
+          </p>
+          {copyResult?.code === code && (
+            <p role="status">{copyResult.message}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

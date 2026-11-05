@@ -3,9 +3,8 @@
  * link and code (Soc15 calls 4 and 5).
  *
  * The link carries the code (`https://troposfit.com/?invite=K7P49M2H`), and
- * the code is shown too, to read out or to type: the iPhone app does not
- * open troposfit.com links, so a friend who installs it types the code
- * during setup. Either way, once the friend's plan is made, this person
+ * the code is shown too, to read out or paste after installing the app.
+ * Once the friend's plan is made, this person
  * follows them, and they follow this person at once or, while this person
  * approves followers (the default), ask to (Soc15 call 4 as narrowed by
  * its STATUS line): a code posted publicly reaches no followers-only post.
@@ -156,6 +155,10 @@ export default function InviteFriendCard({
           </Button>
         </div>
       )}
+      <p className="text-small text-muted-foreground">
+        If your friend needs to install Tropos, ask them to copy the code first
+        and paste it into “Invited by a friend?” during setup.
+      </p>
       <Button
         fullWidth
         onClick={() => void share()}

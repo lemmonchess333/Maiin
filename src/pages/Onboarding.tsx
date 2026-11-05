@@ -96,8 +96,13 @@ import { signInMethodOf } from "@/lib/signInMethod";
 import { ACTIVATION_JOURNEY_V2_ENABLED } from "@/lib/activationJourney";
 import { Capacitor } from "@capacitor/core";
 import InviteCodeField from "@/components/onboarding/InviteCodeField";
-import { formatInviteCode, normaliseInviteCode } from "@/lib/inviteCode";
-import { readPendingInvite } from "@/lib/pendingInvite";
+import { normaliseInviteCode } from "@/lib/inviteCode";
+import { useInviteCodeInput } from "@/hooks/usePendingInvite";
+import {
+  clearPendingInvite,
+  pendingInviteUnchanged,
+  snapshotPendingInvite,
+} from "@/lib/pendingInvite";
 import { ENTER_CODE_LATER, redeemInviteAfterSetup } from "@/lib/invites";
 
 /* The review's reminder row is its own chunk, fetched once setup has
@@ -224,10 +229,7 @@ export default function Onboarding() {
   const nameRef = useRef<HTMLInputElement>(null);
   /* Soc15: a friend's invite code, from a link opened on this device or
      typed on the last step. Used once the plan is made. */
-  const [inviteCode, setInviteCode] = useState(() => {
-    const pending = readPendingInvite();
-    return pending ? formatInviteCode(pending) : "";
-  });
+  const [inviteCode, setInviteCode, inviteRevision] = useInviteCodeInput();
   const arrivedName = profile?.displayName?.trim() ?? "";
   const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
   if (arrivedName !== seenArrivedName) {
@@ -821,6 +823,7 @@ export default function Onboarding() {
   const handleFinish = async () => {
     if (!user || pending.current || !canAdvance[7]) return;
     pending.current = true;
+    const pendingInviteAtFinish = snapshotPendingInvite();
     setSaving(true);
     setSaveError("");
     try {
@@ -1068,10 +1071,23 @@ export default function Onboarding() {
       // name is there for the inviter's notification. Not awaited: its
       // toast lands on Home, and a refusal cannot undo the plan.
       const invite = normaliseInviteCode(inviteCode);
-      if (invite) {
-        void redeemInviteAfterSetup(invite);
-      } else if (inviteCode.trim()) {
-        toast.error(`That invite code didn't look right. ${ENTER_CODE_LATER}`);
+      if (!pendingInviteUnchanged(pendingInviteAtFinish)) {
+        // A link opened while the plan was saving was not the code on
+        // the Finish button's form. Keep it for explicit confirmation.
+        toast.success(
+          "Your latest invite is saved. Open Social, then Find people to use it."
+        );
+      } else if (invite) {
+        void redeemInviteAfterSetup(invite, pendingInviteAtFinish);
+      } else {
+        // Clearing or replacing the field with an invalid entry also
+        // supersedes the old linked code; do not offer it to another account.
+        clearPendingInvite(pendingInviteAtFinish);
+        if (inviteCode.trim()) {
+          toast.error(
+            `That invite code didn't look right. ${ENTER_CODE_LATER}`
+          );
+        }
       }
 
       // Save succeeded — close the top of the activation funnel before
@@ -2272,7 +2288,12 @@ export default function Onboarding() {
                   </p>
                 )}
               </div>
-              <InviteCodeField value={inviteCode} onChange={setInviteCode} />
+              <InviteCodeField
+                value={inviteCode}
+                onChange={setInviteCode}
+                deliveryRevision={inviteRevision}
+                disabled={saving}
+              />
               {!answersValid && (
                 <p role="alert" className="text-sm text-destructive-strong">
                   Check the answers above before creating your plan.

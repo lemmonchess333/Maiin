@@ -5,9 +5,17 @@
  * line to appear.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 
-const h = vi.hoisted(() => ({ lookup: vi.fn() }));
+const h = vi.hoisted(() => ({ lookup: vi.fn(), native: false }));
+vi.mock("@/lib/platform", () => ({ isNativePlatform: () => h.native }));
 vi.mock("@/lib/firebase", () => ({ functions: {} }));
 vi.mock("firebase/functions", () => ({ httpsCallable: () => h.lookup }));
 
@@ -16,7 +24,8 @@ import { savePendingInvite } from "@/lib/pendingInvite";
 
 beforeEach(() => {
   localStorage.clear();
-  h.lookup.mockReset();
+  h.lookup.mockReset().mockResolvedValue({ data: { inviter: null } });
+  h.native = false;
 });
 afterEach(cleanup);
 
@@ -60,5 +69,68 @@ describe("InviteNote", () => {
     expect(
       screen.getByText("A friend invited you to Tropos")
     ).toBeInTheDocument();
+  });
+});
+
+describe("install fallback", () => {
+  it("copies the displayed code only on request and explains installation", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    savePendingInvite("K7P49M2H");
+    render(<InviteNote />);
+    expect(screen.getByText("K7P4-9M2H")).toHaveClass("select-all");
+    expect(writeText).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/won’t transfer automatically/)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Copy invite code" }));
+    await screen.findByText(
+      "Code copied. Keep it for setup after installing Tropos."
+    );
+    expect(writeText).toHaveBeenCalledExactlyOnceWith("K7P4-9M2H");
+  });
+  it("offers manual copy if clipboard access fails or is unavailable", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: undefined,
+    });
+    savePendingInvite("K7P49M2H");
+    render(<InviteNote />);
+    fireEvent.click(screen.getByRole("button", { name: "Copy invite code" }));
+    await screen.findByText(/Touch and hold the code/);
+    expect(screen.getByText("K7P4-9M2H")).toBeInTheDocument();
+  });
+  it("does not offer installation inside the installed app", async () => {
+    h.native = true;
+    savePendingInvite("K7P49M2H");
+    render(<InviteNote />);
+    await waitFor(() => expect(h.lookup).toHaveBeenCalled());
+    expect(
+      screen.queryByRole("button", { name: "Copy invite code" })
+    ).toBeNull();
+  });
+  it("updates for a late native link and ignores an older lookup response", async () => {
+    let resolveOld!: (value: unknown) => void;
+    h.lookup.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOld = resolve;
+        })
+    );
+    render(<InviteNote />);
+    act(() => {
+      savePendingInvite("K7P49M2H");
+    });
+    act(() => {
+      savePendingInvite("A2B3C4D5");
+    });
+    expect(screen.getByText("A2B3-C4D5")).toBeInTheDocument();
+    await act(async () => {
+      resolveOld({ data: { inviter: { firstName: "Old" } } });
+    });
+    expect(screen.queryByText("Old invited you to Tropos")).toBeNull();
   });
 });
