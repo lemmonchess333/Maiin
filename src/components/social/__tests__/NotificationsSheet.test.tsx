@@ -372,6 +372,18 @@ describe("NotificationsSheet — answering a follow request from its row", () =>
     expect(body.contains(decline)).toBe(false);
   });
 
+  it("says a request came from the person's invite, and offers Accept beside it", () => {
+    // Joining from the invite of someone who approves followers asks to
+    // follow them (Soc15 call 4, STATUS 2026-11-05): one tap accepts.
+    renderSheet([{ ...ask(), fromInvite: true }]);
+    expect(
+      screen.getByText("Robin joined from your invite and asked to follow you")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Accept Robin" })
+    ).toBeInTheDocument();
+  });
+
   it("still opens the asker's profile from the row itself", () => {
     renderSheet([ask()]);
     fireEvent.click(screen.getByText("Robin asked to follow you"));

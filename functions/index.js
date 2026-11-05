@@ -8746,6 +8746,7 @@ async function sendFollowNotice({
   verb,
   logKey,
   sourceEvent,
+  fromInvite = false,
 }) {
   try {
     const profileSnap = await db.doc(`users/${fromUid}/public/profile`).get();
@@ -8755,7 +8756,12 @@ async function sendFollowNotice({
       firestore: admin.firestore(),
       fromUid,
       toUid,
-      data: { type, fromName, message: `${fromName} ${verb}` },
+      data: {
+        type,
+        fromName,
+        message: `${fromName} ${verb}`,
+        ...(fromInvite ? { fromInvite: true } : {}),
+      },
       serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       notificationId: `${type}_${fromUid}`,
       sourceEvent,
@@ -8850,11 +8856,18 @@ exports.onFollowRequestCreated = functions
     if (!uid || !requesterUid || uid === requesterUid) return null;
     // Retried: the notification's id is fixed per asker (above).
     if (pastRetryWindow(context)) return null;
+    // A request made by joining from this person's invite (redeemInvite,
+    // when they approve followers) says so: it is the one notice of the
+    // join, and Accept on it makes the follow both ways.
+    const fromInvite = (snap.data() || {}).fromInvite === true;
     await sendFollowNotice({
       toUid: uid,
       fromUid: requesterUid,
       type: "follow_request",
-      verb: "asked to follow you",
+      verb: fromInvite
+        ? "joined from your invite and asked to follow you"
+        : "asked to follow you",
+      fromInvite,
       logKey: "onFollowRequestCreated",
       sourceEvent: socialFanout.notificationSourceEvent(snap, context),
     });
@@ -9043,7 +9056,9 @@ exports.removeFollower = functions
 // ═══════════════════════════════════════════════════════════════
 // Invites that carry who sent them (Soc15 calls 4 and 5). Each person's
 // code, the signed-out lookup of whose it is, and its use by a new account,
-// which follows both ways (lib/inviteCodes.js). The rules refuse every
+// which the inviter follows at once, and which follows the inviter at once
+// or asks to, by the inviter's Approve followers (lib/inviteCodes.js,
+// Soc15 call 4 and its STATUS line). The rules refuse every
 // client read and write of `inviteCodes`, and no client writes an edge
 // carrying `fromInvite`: these callables are the only writers.
 // ═══════════════════════════════════════════════════════════════
@@ -9201,7 +9216,10 @@ exports.redeemInvite = functions
     const inviterName = await inviteCodes
       .publicName(firestore, result.inviterUid)
       .catch(() => null);
-    if (!result.alreadyJoined) {
+    // A join that made a follow request is told by onFollowRequestCreated,
+    // which says it came from the invite; this notice is for the follow
+    // made both ways at once, to an inviter who does not approve followers.
+    if (!result.alreadyJoined && !result.requested) {
       // Best-effort: the follows are made whether or not the notice lands.
       try {
         const fromName = await socialFanout.senderDisplayName(firestore, uid);
@@ -9227,5 +9245,9 @@ exports.redeemInvite = functions
     functions.logger.info("redeemInvite", {
       alreadyJoined: result.alreadyJoined,
     });
-    return { inviterName, alreadyJoined: result.alreadyJoined };
+    return {
+      inviterName,
+      alreadyJoined: result.alreadyJoined,
+      requested: result.requested === true,
+    };
   });

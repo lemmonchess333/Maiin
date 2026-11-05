@@ -110,7 +110,7 @@ describe("setup's invite field", () => {
     open();
     expect(codeField()).toHaveValue("K7P4-9M2H");
     expect(
-      screen.getByText("You'll follow each other once your plan is made.")
+      screen.getByText("They'll follow you once your plan is made.")
     ).toBeInTheDocument();
 
     await goToToday();

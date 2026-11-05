@@ -5,8 +5,9 @@
  * Setup offers the same field; this is the way back for someone who
  * skipped it, mistyped it, or opened the friend's link after setting up.
  * It starts from a code an invite link left on this device. Using the
- * code makes the two follow each other at once (redeemInvite); the line
- * that says so replaces the field.
+ * code makes the friend follow this person at once, and this person follow
+ * them or ask to, by the friend's Approve followers (redeemInvite); the
+ * line that says which replaces the field.
  *
  * Nothing shows for an older account, one that already joined from an
  * invite, or a restricted one.
@@ -82,7 +83,7 @@ export default function InviteCodeEntry({ disabled }: { disabled: boolean }) {
     try {
       const result = await redeemInviteCode(code);
       clearPendingInvite();
-      setJoined(inviteJoinedLine(result.inviterName));
+      setJoined(inviteJoinedLine(result.inviterName, result.requested));
       // So the field stays away when People opens again.
       void refreshProfile({ until: (d) => d.invitedAt != null }).catch(
         () => {}
@@ -105,7 +106,7 @@ export default function InviteCodeEntry({ disabled }: { disabled: boolean }) {
           htmlFor={inputId}
           className="block text-sm text-muted-foreground"
         >
-          Enter their invite code and you'll follow each other.
+          Enter their invite code and they'll follow you.
         </label>
         {/* The button drops under the field when the two no longer fit
             (larger text), rather than squeezing the code. Wide-first. */}

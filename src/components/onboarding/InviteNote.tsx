@@ -47,7 +47,7 @@ export default function InviteNote() {
             : "A friend invited you to Tropos"}
         </p>
         <p className="text-muted-foreground">
-          You'll follow each other once you've set up your plan.
+          They'll follow you once you've set up your plan.
         </p>
       </div>
     </div>
