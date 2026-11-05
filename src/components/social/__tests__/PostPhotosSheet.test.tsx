@@ -276,3 +276,7 @@ describe("PostPhotosSheet", () => {
     ).toBeNull();
   });
 });
+
+vi.mock("@/hooks/useActivityMedia", () => ({
+  useActivityMedia: (url: string) => (url ? `blob:${url}` : undefined),
+}));

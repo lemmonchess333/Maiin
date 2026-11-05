@@ -1,3 +1,4 @@
+import { useActivityMedia } from "@/hooks/useActivityMedia";
 /**
  * A post's photos, full screen (Soc15 call 2).
  *
@@ -88,6 +89,7 @@ export default function PostPhotoViewer({
   }, []);
 
   const photo = photos[index];
+  const src = useActivityMedia(photo?.url);
   if (!photo) return null;
   const name = authorName.trim();
   const title = name
@@ -139,7 +141,7 @@ export default function PostPhotoViewer({
       >
         <motion.img
           key={photo.id}
-          src={photo.url}
+          src={src}
           alt={postPhotoAlt(index, count, authorName, kind)}
           width={photo.w}
           height={photo.h}
