@@ -159,6 +159,9 @@ vi.mock("@/components/social/PeopleToFollowRow", () => ({
 vi.mock("@/components/social/LeaderboardCard", () => ({
   default: () => <div data-testid="points">leaderboard</div>,
 }));
+/* The live pulse reads Firestore, which this suite does not fake; its
+   line is driven on the one fake in PulseLine.test and Social.feed.test. */
+vi.mock("@/components/social/PulseLine", () => ({ default: () => null }));
 vi.mock("@/components/social/TrajectoryCard", () => ({
   default: ({ loading }: { loading: boolean }) => (
     <div data-testid="points" data-loading={String(loading)}>

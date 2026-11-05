@@ -25,6 +25,27 @@
   transform: scale(0.96);
 }
 
+/* ─── LIVE PULSE (Social's "Today: 14 sessions on Tropos") ────
+   A ring grows out of the dot and fades, every 2.4 s: transform and
+   opacity only (§14h), the Feed's one ambient loop, and only when motion
+   is welcome. PulseLine also leaves the ring out under Reduce Motion. */
+@keyframes ds-live-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  70%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ds-live-pulse {
+    animation: ds-live-pulse 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+}
+
 /* ─── SKELETON (LoadingSkeleton's `Skeleton`) ─────────────────
    A breathing opacity and a sweep across the theme-flipped
    `--skeleton-shimmer` gradient the component sets inline. Only when

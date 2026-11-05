@@ -193,6 +193,10 @@ const PINNED: Record<string, string> = {
   // maxLength. A basename pair with src/lib/commentLimit.ts.
   "functions/lib/commentLimit.js":
     "src/lib/__tests__/commentLimit.cross.test.ts",
+  // Soc15's live pulse: the server counts each session in `pulse/{its
+  // date}`; the app reads `pulse/{its local today}` and its `sessions`.
+  // A basename pair with src/lib/pulse.ts.
+  "functions/lib/pulse.js": "src/lib/__tests__/pulse.cross.test.ts",
   // Feed schema: writer output, both client query constraints and the read
   // rule must agree or the Following feed is either refused or leaks legacy rows.
   "functions/lib/feedIndex.js": "src/lib/__tests__/feedIndex.cross.test.ts",

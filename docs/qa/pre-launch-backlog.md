@@ -3739,7 +3739,7 @@ release, the console and a phone.
 - [ ] **The count matches the console.** For one race people are training
       for: in the console, Firestore → `users`, filter
       `raceGoal.eventSpaceId == <id>` and `raceGoal.targetDate >=
-      <yesterday's date, UTC>`. Passing: the number of documents equals
+    <yesterday's date, UTC>`. Passing: the number of documents equals
       `raceCohorts/<id>.count`. Then, on a test account bound to that race,
       choose another listed race in the run-plan editor and save. Passing:
       within a minute the first race's count is one lower and the second's
@@ -3754,3 +3754,43 @@ release, the console and a phone.
       whose hero says "N people on Tropos are training for this race". At
       the largest text size the card's words drop under the photo, and the
       hero's words stay clear of Back.
+
+## The live pulse (Soc15, 2026-11-05)
+
+One line on Social's Feed, "Today: 14 sessions on Tropos", read live from
+`pulse/{the viewer's local today}`. The count is written only by the
+session create and delete triggers, once per session through
+`users/{uid}/pulseCredits` (`functions/lib/pulse.js`), and both expire by
+TTL eight days after the day starts. The unit (`pulse.test.js`,
+`PulseLine.test.tsx`), rules (`firestore.pulse.rules.test.ts`) and
+emulator (`integration/pulse.test.js`) suites cover the logic; these need
+the release, the console and a phone.
+
+- [ ] **The release carries the rules, the TTL policies and the
+      functions.** Passing: the Deploy production run's Firestore stage is
+      green, its "Wait for indexes and retention policies to be ready" step
+      included; the console's Firestore → Time-to-live tab lists `pulse`
+      and `pulseCredits` on `expiresAt` as Active; the rules check
+      (verify-production-rules) is green; and the deployed-source check
+      lists `lib/pulse.js` for `onWorkoutCreated`, `onRunCreated`,
+      `onWorkoutDeleted` and `onRunDeleted`.
+- [ ] **No client writes the pulse.** From a signed-in browser console a
+      `setDoc` or `updateDoc` on `pulse/{today}` and a `getDoc` of your own
+      `users/{you}/pulseCredits/{any}` are each refused, while a `getDoc`
+      of `pulse/{today}` reads.
+- [ ] **A session moves the count.** Finish a workout on a TestFlight
+      build. Passing: within a minute the console shows `pulse/{today}`
+      one higher, with `expiresAt` eight days after today's midnight UTC,
+      and `users/{you}/pulseCredits/workout_{id}`; deleting the workout
+      takes it back one and removes the credit.
+- [ ] **The first day the line appears (owner step).** On the first day
+      ten or more sessions are saved across Tropos. Passing: Social → Feed
+      shows "Today: 10 sessions on Tropos" (or more) under the source
+      control, the dot pulsing; with Reduce Motion on, the dot is still;
+      Home shows nothing of it. Below ten the line is absent, not "Today:
+      3 sessions". At the largest text size the line wraps under the dot
+      rather than running off the screen.
+- [ ] **Old days go.** Ten days after the first day with sessions (TTL
+      deletes within about a day of `expiresAt`). Passing: that day's
+      `pulse` document is gone, and so is every `pulseCredits` document
+      whose `dateKey` is that day.

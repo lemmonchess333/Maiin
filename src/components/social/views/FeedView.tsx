@@ -24,6 +24,7 @@ import { spaceDef } from "@/features/spaces/spaceDefs";
 import SpaceFeedPost from "./SpaceFeedPost";
 import ActivityCard from "@/components/social/ActivityCard";
 import PeopleToFollowRow from "@/components/social/PeopleToFollowRow";
+import PulseLine from "@/components/social/PulseLine";
 import { useSuggestedPeople } from "@/hooks/useSuggestedPeople";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import LeaderboardCard from "@/components/social/LeaderboardCard";
@@ -472,6 +473,10 @@ export default function FeedView({
                 ),
               }))}
             />
+
+            {/* Soc15: other people are training today, whichever source
+                is on screen. Social only; nothing below ten sessions. */}
+            <PulseLine />
 
             {/* A thin follow graph gets one line and a route to People. */}
             {feedSubTab !== "communities" &&
