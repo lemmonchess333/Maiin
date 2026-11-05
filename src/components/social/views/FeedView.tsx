@@ -339,6 +339,13 @@ export default function FeedView({
     feedSubTab === "explore" ||
     (feedSubTab === "following" &&
       shouldRenderFollowingList(followingCount ?? 0));
+  /* Explore showing its empty state ("Tropos is quiet right now"): the
+     same condition the empty state below is drawn on. */
+  const exploreQuiet =
+    feedSubTab === "explore" &&
+    !activeFeed.loading &&
+    activeFeed.items.length === 0 &&
+    !exploreFeed.error;
 
   /* Where the cards that used to sit above the feed go now: the
      Following points card under the third post (or the last, on a
@@ -475,8 +482,10 @@ export default function FeedView({
             />
 
             {/* Soc15: other people are training today, whichever source
-                is on screen. Social only; nothing below ten sessions. */}
-            <PulseLine />
+                is on screen. Social only; nothing below ten sessions. Not
+                over Explore's empty state, whose locked headline ("Tropos
+                is quiet right now", Soc5) would contradict it. */}
+            {!exploreQuiet && <PulseLine />}
 
             {/* A thin follow graph gets one line and a route to People. */}
             {feedSubTab !== "communities" &&

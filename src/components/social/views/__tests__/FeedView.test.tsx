@@ -161,7 +161,9 @@ vi.mock("@/components/social/LeaderboardCard", () => ({
 }));
 /* The live pulse reads Firestore, which this suite does not fake; its
    line is driven on the one fake in PulseLine.test and Social.feed.test. */
-vi.mock("@/components/social/PulseLine", () => ({ default: () => null }));
+vi.mock("@/components/social/PulseLine", () => ({
+  default: () => <p data-testid="pulse-line" />,
+}));
 vi.mock("@/components/social/TrajectoryCard", () => ({
   default: ({ loading }: { loading: boolean }) => (
     <div data-testid="points" data-loading={String(loading)}>
@@ -313,6 +315,20 @@ describe("FeedView — explore empty state routes somewhere useful", () => {
     expect(screen.getByText("Tropos is quiet right now")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /open together/i }));
     expect(openTogether).toHaveBeenCalled();
+  });
+
+  it("shows no pulse over it, which would say the opposite", () => {
+    // "Today: 14 sessions on Tropos" above "Tropos is quiet right now".
+    setup();
+    expect(screen.getByText("Tropos is quiet right now")).toBeInTheDocument();
+    expect(screen.queryByTestId("pulse-line")).toBeNull();
+  });
+
+  it("shows the pulse over Explore once it has posts", () => {
+    feedItems = ["a", "b"].map(post);
+    setup();
+    expect(screen.queryByText("Tropos is quiet right now")).toBeNull();
+    expect(screen.getByTestId("pulse-line")).toBeInTheDocument();
   });
 });
 
