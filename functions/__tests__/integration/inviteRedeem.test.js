@@ -110,9 +110,16 @@ suite("joining from an invite", () => {
     expect((await db.doc(`users/${MAYA}`).get()).data().inviteCode).toBe(code);
   });
 
-  it("follows both ways and tells the inviter, not as a follow", async () => {
+  it("follows both ways for an inviter who doesn't approve followers, and tells them, not as a follow", async () => {
+    await db
+      .doc(`users/${MAYA}`)
+      .set({ approveFollowers: false }, { merge: true });
     const result = await fns.redeemInvite.run({ code }, as(SAM));
-    expect(result).toEqual({ inviterName: "Maya Patel", alreadyJoined: false });
+    expect(result).toEqual({
+      inviterName: "Maya Patel",
+      alreadyJoined: false,
+      requested: false,
+    });
 
     for (const path of [
       `following/${SAM}/users/${MAYA}`,
@@ -156,10 +163,55 @@ suite("joining from an invite", () => {
     );
   });
 
+  it("by default the inviter follows at once and the new person asks, told once as from the invite", async () => {
+    // Approve followers is on unless turned off (Soc15 call 4, STATUS
+    // 2026-11-05): a code posted publicly reaches no followers-only post.
+    const result = await fns.redeemInvite.run({ code }, as(SAM));
+    expect(result).toEqual({
+      inviterName: "Maya Patel",
+      alreadyJoined: false,
+      requested: true,
+    });
+    expect((await db.doc(`following/${MAYA}/users/${SAM}`).get()).exists).toBe(
+      true
+    );
+    expect((await db.doc(`followers/${SAM}/users/${MAYA}`).get()).exists).toBe(
+      true
+    );
+    expect((await db.doc(`following/${SAM}/users/${MAYA}`).get()).exists).toBe(
+      false
+    );
+    expect((await db.doc(`followers/${MAYA}/users/${SAM}`).get()).exists).toBe(
+      false
+    );
+    const request = db.doc(`followRequests/${MAYA}/users/${SAM}`);
+    expect((await request.get()).data().fromInvite).toBe(true);
+
+    // The request's trigger, as Firestore would run it: the one notice.
+    await fns.onFollowRequestCreated.run(await request.get(), {
+      params: { uid: MAYA, requesterUid: SAM },
+    });
+    const mayas = (
+      await db.collection(`notifications/${MAYA}/items`).get()
+    ).docs.map((d) => ({ id: d.id, ...d.data() }));
+    expect(mayas).toHaveLength(1);
+    expect(mayas[0]).toMatchObject({
+      id: `follow_request_${SAM}`,
+      type: "follow_request",
+      fromUserId: SAM,
+      fromInvite: true,
+      message: "Sam joined from your invite and asked to follow you",
+    });
+  });
+
   it("sends no notice to an inviter who switched invites off", async () => {
-    await db
-      .doc(`users/${MAYA}`)
-      .set({ notificationPreferences: { invites: false } }, { merge: true });
+    await db.doc(`users/${MAYA}`).set(
+      {
+        approveFollowers: false,
+        notificationPreferences: { invites: false },
+      },
+      { merge: true }
+    );
     await fns.redeemInvite.run({ code }, as(SAM));
     expect(
       (await db.collection(`notifications/${MAYA}/items`).get()).size
@@ -174,6 +226,7 @@ suite("joining from an invite", () => {
     await expect(fns.redeemInvite.run({ code }, as(SAM))).resolves.toEqual({
       inviterName: "Maya Patel",
       alreadyJoined: true,
+      requested: true,
     });
     const { code: lees } = await fns.getInviteCode.run({}, as(LEE));
     expect(await refusal(fns.redeemInvite.run({ code: lees }, as(SAM)))).toBe(

@@ -3517,9 +3517,12 @@ code; the web app keeps a link's code until setup (`pendingInvite.ts`),
 and the welcome and sign-up screens name the inviter through the
 signed-out `lookupInvite`. Setup's optional "Invited by a friend?" and
 People's field for an account in its first 14 days use the code
-(`redeemInvite`): both people follow each other at once, whatever Approve
-followers says, and the inviter gets "X joined from your invite" under a
-new Invites switch. The rules refuse every client read and write of
+(`redeemInvite`): the inviter follows the new person at once, and the new
+person follows the inviter at once only when the inviter has Approve
+followers off, otherwise asking with a request marked as from the invite
+(Soc15 call 4, STATUS 2026-11-05). The inviter gets "X joined from your
+invite" under a new Invites switch, or "X joined from your invite and
+asked to follow you" under Follow requests. The rules refuse every client read and write of
 `inviteCodes` and any client edge carrying `fromInvite`; deleting an
 account deletes its code. Unit, rules and emulator tests cover each part;
 these need a phone, the deployed rules or the console.
@@ -3539,15 +3542,21 @@ these need a phone, the deployed rules or the console.
 - [ ] **Typing a code during setup on a phone.** Install the TestFlight
       build fresh, sign up, and on setup's last step open "Invited by a
       friend?", type a friend's code (lower case and with or without the
-      dash), then Go to Today. Passing: Home shows the toast "You and
-      <name> now follow each other", both profiles list the other under
-      Followers and Following, and neither saw a follow request, even with
-      Approve followers on for both. A mistyped code says "Invite codes are
+      dash), then Go to Today. Passing, with the friend's Approve followers
+      on (the default): Home shows the toast "<name> follows you now. Your
+      request to follow them is waiting", the friend appears under your
+      Followers but not your Following, and the friend has a request from
+      you. With the friend's Approve followers off: "You and <name> now
+      follow each other", and both profiles list the other under Followers
+      and Following. A mistyped code says "Invite codes are
       8 letters and numbers…" when leaving the field, and an unknown one
       toasts where to try again.
-- [ ] **The inviter is told.** On the inviter's phone, Social's bell shows
-      "<name> joined from your invite. You follow each other now"; tapping
-      it opens their profile. With Settings → Notifications → Invites off,
+- [ ] **The inviter is told.** On the inviter's phone, with Approve
+      followers on, Social's bell shows "<name> joined from your invite and
+      asked to follow you" with Accept beside it, and Accept makes the
+      follow both ways; nobody new can see a followers-only post before
+      that. With Approve followers off, it shows "<name> joined from your
+      invite. You follow each other now"; tapping it opens their profile. With Settings → Notifications → Invites off,
       the next person to join adds no row. No "started following you" row
       arrives for an invite, even with New followers on.
 - [ ] **People offers the code for 14 days.** An account under 14 days old

@@ -6,7 +6,8 @@
  * and the field opens with it filled in. The iPhone app does not open
  * troposfit.com links, so there the person types the code a friend read
  * out or sent. Nothing is sent until the plan is made; then the code is
- * used and the two follow each other (Onboarding's finish, then
+ * used: the friend follows this person, who follows them or asks to, by
+ * the friend's Approve followers (Onboarding's finish, then
  * `redeemInviteAfterSetup`).
  *
  * Optional: leaving it empty changes nothing, and a code that cannot be one
@@ -63,7 +64,7 @@ export default function InviteCodeField({
           aria-describedby={invalid ? `${noteId} ${errorId}` : noteId}
         />
         <p id={noteId} className="text-sm text-muted-foreground">
-          You'll follow each other once your plan is made.
+          They'll follow you once your plan is made.
         </p>
         {invalid && (
           <p id={errorId} className="text-sm text-destructive-strong">

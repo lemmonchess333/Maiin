@@ -63,9 +63,9 @@ async function follow(edge = {}) {
 }
 
 /** Bob asks to follow Alice, then the trigger runs. */
-async function ask() {
+async function ask(request = {}) {
   const ref = db.doc(`followRequests/${RECIPIENT}/users/${FOLLOWER}`);
-  await ref.set({ requestedAt: new Date() });
+  await ref.set({ requestedAt: new Date(), ...request });
   await onFollowRequestCreated.run(await ref.get(), {
     params: { uid: RECIPIENT, requesterUid: FOLLOWER },
   });
@@ -137,6 +137,22 @@ suite("a follow request is announced unless switched off", () => {
       type: "follow_request",
       fromUserId: FOLLOWER,
       message: "Bob asked to follow you",
+    });
+  });
+
+  it("says a request made by joining from the invite came from it", async () => {
+    // redeemInvite writes it for an inviter who approves followers
+    // (Soc15 call 4, STATUS 2026-11-05): this is the one notice of the join.
+    await db.doc(`users/${RECIPIENT}`).set({ displayName: "Alice" });
+    await ask({ fromInvite: true });
+    const rows = await items();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      id: `follow_request_${FOLLOWER}`,
+      type: "follow_request",
+      fromUserId: FOLLOWER,
+      fromInvite: true,
+      message: "Bob joined from your invite and asked to follow you",
     });
   });
 

@@ -10,11 +10,15 @@
  * read and write of `inviteCodes`, and `inviteCode` is not a field a client
  * may write.
  *
- * A new account that uses someone's code (redeemInvite) follows them and is
- * followed back at once, whatever `approveFollowers` says: using the link
- * or the code counts as both people accepting. Strava, Duolingo and Hevy
- * credit the person who invited you and connect you straight away. Nothing
- * else about approval changes.
+ * A new account that uses someone's code (redeemInvite) is followed by them
+ * at once: using their link or code counts as the new person accepting the
+ * inviter. Whether the new person follows the inviter at once depends on
+ * the inviter's own `approveFollowers` (absent means on). With it off they
+ * do, both ways at once, as Strava, Duolingo and Hevy connect you. With it
+ * on, the new person sends a follow request marked `fromInvite`, which the
+ * inviter accepts in one tap from its notification (Soc15 call 4, narrowed
+ * by its STATUS line): a code posted publicly no longer lets
+ * a stranger past the approval that keeps followers-only posts private.
  *
  * What the redemption checks, all in one transaction:
  * - the code exists and is not the caller's own;
@@ -30,12 +34,16 @@
  * are one refusal, `code-not-found`, so the reply never says whether a
  * person who blocked you exists.
  *
- * It writes the four follow edges the app reads (both directions, both
- * lists), each `{ followedAt, fromInvite: true }`; readers check only that
- * an edge exists, and onFollowerCreated reads `fromInvite` to send no
- * "started following you" for it. It deletes any follow request between
- * the two, and stamps `invitedAt` on the caller. The inviter's
- * notification is the callable's, after the commit.
+ * It writes the inviter's two follow edges (their following list, the new
+ * person's followers list) and, when the inviter does not approve
+ * followers, the new person's two as well, each `{ followedAt, fromInvite:
+ * true }`; readers check only that an edge exists, and onFollowerCreated
+ * reads `fromInvite` to send no "started following you" for it. When the
+ * inviter approves followers it writes the new person's request instead,
+ * `{ requestedAt, fromInvite: true }`, and onFollowRequestCreated tells the
+ * inviter, saying the person joined from their invite. It deletes any
+ * request the follows make moot, and stamps `invitedAt` on the caller. The
+ * notice for an instant two-way follow is the callable's, after the commit.
  *
  * The alphabet, the length and the 14-day window are mirrored in
  * src/lib/inviteCode.ts; inviteCode.cross.test.ts pins the two.
@@ -173,7 +181,6 @@ const requestDoc = (firestore, of, asker) =>
 // as a subcollection of the user, and the edges above are not.
 const userRef = (firestore, uid) => firestore.collection("users").doc(uid);
 
-
 /**
  * The caller's invite code: the one they have, or a new one. Returns
  * `{ code, created }`. The callable refuses a restricted account, and one
@@ -186,7 +193,8 @@ async function getOrCreateInviteCode({
   createdAt,
   makeCode = makeInviteCode,
 }) {
-  if (!isUid(uid)) throw new InviteError("invalid-argument", "setup-unfinished");
+  if (!isUid(uid))
+    throw new InviteError("invalid-argument", "setup-unfinished");
   const candidates = Array.from({ length: CODE_ATTEMPTS }, () => makeCode());
   return firestore.runTransaction(async (tx) => {
     const [user, live] = await Promise.all([
@@ -237,7 +245,8 @@ async function redeemInvite({
 }) {
   const normalised = normaliseInviteCode(code);
   if (!normalised) throw new InviteError("not-found", "code-not-found");
-  if (!isUid(uid)) throw new InviteError("invalid-argument", "setup-unfinished");
+  if (!isUid(uid))
+    throw new InviteError("invalid-argument", "setup-unfinished");
 
   return firestore.runTransaction(async (tx) => {
     const codeSnap = await tx.get(codeRef(firestore, normalised));
@@ -251,10 +260,12 @@ async function redeemInvite({
 
     const [
       user,
+      inviter,
       iFollow,
       myFollowerCopy,
       theyFollow,
       theirFollowerCopy,
+      myRequest,
       iBlocked,
       theyBlocked,
       iAmRestricted,
@@ -263,10 +274,12 @@ async function redeemInvite({
       themLive,
     ] = await Promise.all([
       tx.get(userRef(firestore, uid)),
+      tx.get(userRef(firestore, inviterUid)),
       tx.get(followingEdge(firestore, uid, inviterUid)),
       tx.get(followerEdge(firestore, inviterUid, uid)),
       tx.get(followingEdge(firestore, inviterUid, uid)),
       tx.get(followerEdge(firestore, uid, inviterUid)),
+      tx.get(requestDoc(firestore, inviterUid, uid)),
       tx.get(blockDoc(firestore, uid, inviterUid)),
       tx.get(blockDoc(firestore, inviterUid, uid)),
       tx.get(restrictedDoc(firestore, uid)),
@@ -274,14 +287,21 @@ async function redeemInvite({
       transactionAccountsLive({ firestore, tx, uids: [uid] }),
       transactionAccountsLive({ firestore, tx, uids: [inviterUid] }),
     ]);
+    const fromInvite = (snap) =>
+      snap.exists && (snap.data() || {}).fromInvite === true;
 
     if (!user.exists) {
       throw new InviteError("failed-precondition", "setup-unfinished");
     }
     if ((user.data() || {}).invitedAt != null) {
-      // The same invite again: the follow it made is still there.
-      if (iFollow.exists && (iFollow.data() || {}).fromInvite === true) {
-        return { inviterUid, alreadyJoined: true };
+      // The same invite again: what it made is still there. The caller
+      // follows the inviter, or is still asking to.
+      if (fromInvite(iFollow) || fromInvite(theyFollow)) {
+        return {
+          inviterUid,
+          alreadyJoined: true,
+          requested: !iFollow.exists && myRequest.exists,
+        };
       }
       throw new InviteError("failed-precondition", "already-invited");
     }
@@ -314,20 +334,41 @@ async function redeemInvite({
     }
 
     const edge = { followedAt: serverTimestamp, fromInvite: true };
-    if (!iFollow.exists) tx.set(followingEdge(firestore, uid, inviterUid), edge);
-    if (!myFollowerCopy.exists)
-      tx.set(followerEdge(firestore, inviterUid, uid), edge);
+    // The inviter follows the new person at once: using their link counts
+    // as the new person accepting them.
     if (!theyFollow.exists)
       tx.set(followingEdge(firestore, inviterUid, uid), edge);
     if (!theirFollowerCopy.exists)
       tx.set(followerEdge(firestore, uid, inviterUid), edge);
-    tx.delete(requestDoc(firestore, inviterUid, uid));
     tx.delete(requestDoc(firestore, uid, inviterUid));
+    // The new person follows the inviter at once only when the inviter
+    // takes followers without approving them (absent means approving).
+    // Otherwise they ask, and the inviter accepts in one tap: a code
+    // posted publicly reaches no one's followers-only posts on its own.
+    const approves =
+      ((inviter.exists && inviter.data()) || {}).approveFollowers !== false;
+    let requested = false;
+    if (iFollow.exists) {
+      if (!myFollowerCopy.exists)
+        tx.set(followerEdge(firestore, inviterUid, uid), edge);
+      tx.delete(requestDoc(firestore, inviterUid, uid));
+    } else if (approves) {
+      tx.set(requestDoc(firestore, inviterUid, uid), {
+        requestedAt: serverTimestamp,
+        fromInvite: true,
+      });
+      requested = true;
+    } else {
+      tx.set(followingEdge(firestore, uid, inviterUid), edge);
+      if (!myFollowerCopy.exists)
+        tx.set(followerEdge(firestore, inviterUid, uid), edge);
+      tx.delete(requestDoc(firestore, inviterUid, uid));
+    }
     tx.update(userRef(firestore, uid), { invitedAt: serverTimestamp });
     tx.update(codeRef(firestore, normalised), {
       redemptions: [...recent, nowMs],
     });
-    return { inviterUid, alreadyJoined: false };
+    return { inviterUid, alreadyJoined: false, requested };
   });
 }
 

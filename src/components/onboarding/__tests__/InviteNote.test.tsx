@@ -40,7 +40,7 @@ describe("InviteNote", () => {
     ).toBeInTheDocument();
     expect(h.lookup).toHaveBeenCalledWith({ code: "K7P49M2H" });
     expect(
-      screen.getByText("You'll follow each other once you've set up your plan.")
+      screen.getByText("They'll follow you once you've set up your plan.")
     ).toBeInTheDocument();
   });
 

@@ -295,6 +295,9 @@ function sanitiseNotificationData(data) {
   if (typeof data.postId === "string" && data.postId) {
     out.postId = data.postId.slice(0, 128);
   }
+  // A follow request made by joining from the recipient's invite (Soc15
+  // call 4 and its STATUS line): the tray says so.
+  if (data.fromInvite === true) out.fromInvite = true;
   return out;
 }
 
@@ -322,8 +325,10 @@ async function recipientWants(firestore, toUid, type) {
 function eventTime(value) {
   const seconds = value?.seconds;
   const nanoseconds = value?.nanoseconds;
-  return Number.isSafeInteger(seconds) && Number.isInteger(nanoseconds) &&
-    nanoseconds >= 0 && nanoseconds < 1_000_000_000
+  return Number.isSafeInteger(seconds) &&
+    Number.isInteger(nanoseconds) &&
+    nanoseconds >= 0 &&
+    nanoseconds < 1_000_000_000
     ? { seconds, nanoseconds }
     : null;
 }
@@ -332,19 +337,29 @@ function eventTime(value) {
  * of the same follow edge can occur within one millisecond. The fixed-size
  * hash and one latest timestamp are bounded by the notification's own TTL. */
 function notificationSourceEvent(snapshot, context) {
-  if (typeof context?.eventId !== "string" || !context.eventId) return undefined;
+  if (typeof context?.eventId !== "string" || !context.eventId)
+    return undefined;
   let time = eventTime(snapshot?.createTime);
   if (!time && typeof context.timestamp === "string") {
-    const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/.exec(context.timestamp);
+    const match =
+      /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/.exec(
+        context.timestamp
+      );
     const ms = match ? Date.parse(match[1] + match[3]) : NaN;
     if (Number.isFinite(ms)) {
-      time = { seconds: ms / 1000, nanoseconds: Number((match[2] || "").padEnd(9, "0")) };
+      time = {
+        seconds: ms / 1000,
+        nanoseconds: Number((match[2] || "").padEnd(9, "0")),
+      };
     }
   }
   // Older callers/tests without complete event metadata keep their existing
   // behavior; the deployed Firestore triggers supply both ID and createTime.
   if (!time) return undefined;
-  return { id: createHash("sha256").update(context.eventId).digest("hex"), ...time };
+  return {
+    id: createHash("sha256").update(context.eventId).digest("hex"),
+    ...time,
+  };
 }
 
 function validSourceEvent(value) {
@@ -355,8 +370,10 @@ function validSourceEvent(value) {
 }
 
 function laterThan(a, b) {
-  return a.seconds > b.seconds ||
-    (a.seconds === b.seconds && a.nanoseconds > b.nanoseconds);
+  return (
+    a.seconds > b.seconds ||
+    (a.seconds === b.seconds && a.nanoseconds > b.nanoseconds)
+  );
 }
 
 /**
@@ -444,8 +461,10 @@ async function createNotification({
     typeof notificationId === "string" && notificationId
       ? items.doc(notificationId)
       : items.doc();
-  const receipt = typeof notificationId === "string" && notificationId
-    ? validSourceEvent(sourceEvent) : null;
+  const receipt =
+    typeof notificationId === "string" && notificationId
+      ? validSourceEvent(sourceEvent)
+      : null;
 
   const notif = {
     ...sanitiseNotificationData(data),
