@@ -6,6 +6,7 @@ function memoryFirestore(seed = {}) {
   const operations = [];
   const failures = new Map();
   let autoIds = 0;
+  let lastReadMs = 0;
   function check(path, operation) {
     const key = `${operation}:${path}`;
     if (failures.has(key)) throw failures.get(key);
@@ -34,13 +35,20 @@ function memoryFirestore(seed = {}) {
             : v;
         }
         data.set(ref.path, next);
-      } else
-        data.set(
-          ref.path,
-          options?.merge
-            ? { ...data.get(ref.path), ...value }
-            : structuredClone(value)
-        );
+      } else {
+        // An increment in a set adds to the stored number (merge) or to 0
+        // (a fresh document), as Firestore's does.
+        const merge = !!options?.merge;
+        const before = merge ? data.get(ref.path) || {} : {};
+        const next = merge ? { ...before } : {};
+        for (const [field, v] of Object.entries(
+          merge ? value : structuredClone(value)
+        ))
+          next[field] = isIncrement(v)
+            ? (Number(before[field]) || 0) + v.__increment
+            : v;
+        data.set(ref.path, next);
+      }
     }
   }
   function ref(path) {
@@ -103,11 +111,16 @@ function memoryFirestore(seed = {}) {
       limit: (n) => collection(path, group, filters, cursor, n),
       startAfter: (r) => collection(path, group, filters, r.path || r, cap),
       // An aggregation, as Firestore's count(): the matching documents'
-      // number, without them.
+      // number, without them, and the time it was read. Each read is
+      // later than the last, as Firestore's read times are.
       count: () => ({
         get: async () => {
           const result = await q.get();
-          return { data: () => ({ count: result.size }) };
+          const readMs = (lastReadMs = Math.max(Date.now(), lastReadMs + 1));
+          return {
+            readTime: { toMillis: () => readMs },
+            data: () => ({ count: result.size }),
+          };
         },
       }),
       get: async () => {

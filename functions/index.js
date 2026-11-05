@@ -50,6 +50,8 @@ const leagues = require("./lib/leagues");
 const leagueRules = require("./lib/leagueRules");
 // Soc15: a medal per challenge edition, and the public trophy case.
 const medals = require("./lib/medals");
+// Soc15: plan groups, how many people are training for each race.
+const raceCohorts = require("./lib/raceCohorts");
 const restrictedIdentities = require("./lib/restrictedIdentities");
 const {
   mergeChangedFields,
@@ -176,6 +178,8 @@ const workoutVolume = require("./lib/workoutVolume");
 const activityReversal = require("./lib/activityReversal");
 // The community goal: a total every saved run adds to, joined or not.
 const communityGoal = require("./lib/communityGoal");
+// The live pulse: each day's count of sessions across Tropos (Soc15).
+const pulse = require("./lib/pulse");
 const spacePostPhoto = require("./lib/spacePostPhoto");
 // A run post's map images, deleted with the post (Soc15 call 5).
 const routeMapFiles = require("./lib/routeMapFiles");
@@ -4237,6 +4241,74 @@ exports._needsRaceNoShowEvaluation = _needsRaceNoShowEvaluation;
 exports._recoveryEndDateForRace = _recoveryEndDateForRace;
 
 // ══════════════════════════════════════════════
+// Plan groups (Soc15): how many people are training for each race
+// ══════════════════════════════════════════════
+//
+// `raceCohorts/{spaceId}` = { count, updatedAt }, a count aggregation over
+// the race goals bound to that race space whose race is still ahead
+// (lib/raceCohorts.js). Recounted, never incremented.
+
+/**
+ * A write to a user document that sets, moves or clears a race goal bound
+ * to a race space recounts the old space and the new one.
+ *
+ * Why a trigger on `users/{uid}` rather than a call in each writer: the
+ * goal has many writers. `completeOnboarding` and `configurePlan` send it
+ * whole, `applyProgramCommand` writes it as a profile effect (the recovery
+ * exit), `dailyRaceReconciliationSweep` clears it after a race, the rules
+ * still let the owner's own client write it, and account deletion removes
+ * the document. One trigger sees all of them, deletion included, and a
+ * writer added later cannot forget to recount. Almost every write to the
+ * document leaves the goal's space and race day alone, and returns before
+ * it reads anything.
+ *
+ * Not held back for an account being deleted: the recount stores a number
+ * about the race, nothing about the person, and the deleted document is
+ * exactly what it must stop counting. Retried: a second delivery counts the
+ * same people, and an older count never replaces a newer one.
+ */
+exports.onRaceGoalWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const spaceIds = raceCohorts.spacesToRecount(
+      change.before.exists ? change.before.data() : null,
+      change.after.exists ? change.after.data() : null
+    );
+    if (spaceIds.length === 0) return null;
+    const steps = triggerSteps("onRaceGoalWritten");
+    for (const spaceId of spaceIds) {
+      await steps.run(spaceId, () =>
+        raceCohorts.recountRaceCohort(db, spaceId)
+      );
+    }
+    steps.settle();
+    return null;
+  });
+
+/**
+ * dailyRaceCohortRecount — every race still ahead, counted again each
+ * night at 04:30 UTC, after the race reconciliation sweep has cleared the
+ * goals of races that are over. It puts right a count whose trigger gave
+ * up and fills in the races nobody has changed a goal for since this
+ * shipped; a race already past is skipped.
+ */
+exports.dailyRaceCohortRecount = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("30 4 * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "dailyRaceCohortRecount", async () => {
+      const summary = await raceCohorts.sweepRaceCohorts(db, {
+        log: functions.logger,
+      });
+      functions.logger.info("dailyRaceCohortRecount.done", summary);
+      return summary;
+    })
+  );
+
+// ══════════════════════════════════════════════
 // PR-L L2 — recovery-entry on onRunCreated
 // ══════════════════════════════════════════════
 //
@@ -5162,6 +5234,13 @@ exports.onChallengeParticipantWritten = functions
     return null;
   });
 
+/** A trigger's event time (the source write's commit), the same on every
+ *  redelivery of it; the clock when the event carries none. */
+function eventTimeMs(context) {
+  const at = Date.parse((context && context.timestamp) || "");
+  return Number.isFinite(at) ? at : Date.now();
+}
+
 // ── 4) Trigger: instant recompute on new workout ──
 
 exports.onWorkoutCreated = functions
@@ -5300,6 +5379,20 @@ exports.onWorkoutCreated = functions
       );
       await applyPartnerActivity(db, uid, workoutStreakDay);
     });
+
+    // Soc15: the live pulse counts every saved workout on its own day
+    // (lib/pulse). Dated by the event, the same on every redelivery.
+    await steps.run("pulse", () =>
+      pulse.creditSessionToPulse(db, {
+        uid,
+        kind: "workout",
+        sessionId: workoutId,
+        data,
+        sourceRef: snap.ref,
+        fieldValue: admin.firestore.FieldValue,
+        nowMs: eventTimeMs(context),
+      })
+    );
 
     steps.settle();
 
@@ -5501,6 +5594,19 @@ exports.onRunCreated = functions
           activityDateKey,
           sourceRef: snap.ref,
           fieldValue: admin.firestore.FieldValue,
+        })
+      );
+      // Soc15: the live pulse counts the run on its own day, through the
+      // same eligibility and the shared-credit bounds (lib/pulse).
+      await steps.run("pulse", () =>
+        pulse.creditSessionToPulse(db, {
+          uid,
+          kind: "run",
+          sessionId: runId,
+          data,
+          sourceRef: snap.ref,
+          fieldValue: admin.firestore.FieldValue,
+          nowMs: eventTimeMs(context),
         })
       );
     } else {
@@ -5742,6 +5848,16 @@ exports.onWorkoutDeleted = functions
         lifetimeAccrual.liftVolumeKgFor(data)
       )
     );
+    // Soc15: off the live pulse, by the day its credit recorded.
+    await steps.run("pulse", () =>
+      pulse.reverseSessionFromPulse(db, {
+        uid,
+        kind: "workout",
+        sessionId: workoutId,
+        fieldValue: admin.firestore.FieldValue,
+        nowMs: eventTimeMs(context),
+      })
+    );
     steps.settle();
     console.log(`onWorkoutDeleted: reversed ${workoutId} for ${uid}`);
     return null;
@@ -5816,6 +5932,16 @@ exports.onRunDeleted = functions
         runId,
         lifetimeAccrual.runMetersFor(data)
       )
+    );
+    // Soc15: off the live pulse, by the day its credit recorded.
+    await steps.run("pulse", () =>
+      pulse.reverseSessionFromPulse(db, {
+        uid,
+        kind: "run",
+        sessionId: runId,
+        fieldValue: admin.firestore.FieldValue,
+        nowMs: eventTimeMs(context),
+      })
     );
     steps.settle();
     console.log(`onRunDeleted: reversed ${runId} for ${uid}`);

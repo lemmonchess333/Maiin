@@ -2252,6 +2252,29 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    /* A race's plan group (Soc15): how many people on Tropos are training
+       for it, `{ count, updatedAt }`, recounted by the server from the race
+       goals bound to the race's space (functions/lib/raceCohorts.js). A
+       number about a race that names no one: any signed-in person reads
+       it, and no client writes it, since a count a client could set would
+       be a claim. */
+    match /raceCohorts/{spaceId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    /* The live pulse (Soc15, functions/lib/pulse.js): how many sessions
+       were saved for one day across Tropos, which Social's Feed shows as
+       "Today: 14 sessions on Tropos". A count that names no one, so any
+       signed-in person reads it; only the session triggers write it, and
+       no client may, since every client could move it. Each person's
+       credits (users/{uid}/pulseCredits) have no rule: no client reads or
+       writes them, the owner included. */
+    match /pulse/{dateKey} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // ========================================
     // Partner streaks (SOCIAL S3): a 1:1 bond between two users that
     // tracks a shared streak (days both logged a session). Only the two

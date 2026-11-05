@@ -3705,3 +3705,92 @@ suites cover the logic; these need the release, the console and phones.
       the confirmation names what happens; afterwards the group's other
       members no longer see your row, `leagueMembers/{you}` is gone, and
       the next Monday does not place you.
+
+## Plan groups (Soc15, 2026-11-05)
+
+How many people on Tropos are training for each race, `raceCohorts/{spaceId}`,
+recounted (never incremented) by `onRaceGoalWritten`, on any write to
+`users/{uid}` that sets, moves or clears a goal bound to a race space, and by
+`dailyRaceCohortRecount` at 04:30 UTC for every race still ahead
+(`functions/lib/raceCohorts.js`). The unit (`raceCohorts.test.js`,
+`planGroup.test.ts`, `PlanGroupCard.test.tsx`, `SpacePlanGroup.test.tsx`),
+rules (`firestore.spaces.rules.test.ts`) and emulator
+(`integration/raceCohorts.test.js`) suites cover the logic; these need the
+release, the console and a phone.
+
+- [ ] **The release carries the rules, the index and the functions.**
+      Passing: the Deploy production run's Firestore and Functions stages
+      are green; the rules check (verify-production-rules) is green, and the
+      deployed rules read back with `match /raceCohorts/{spaceId}` (read
+      when signed in, no write); the readiness gate passes and the
+      console's Indexes tab lists `users` (raceGoal.eventSpaceId,
+      raceGoal.targetDate) as enabled; and the deployed-source check lists
+      `onRaceGoalWritten`, with retries on, and `dailyRaceCohortRecount`,
+      each with `lib/raceCohorts.js`. Cloud Scheduler shows
+      `dailyRaceCohortRecount` at `30 4 * * *`, Etc/UTC.
+- [ ] **The first night fills in every race.** The morning after the
+      release, or straight away with Cloud Scheduler → Force run (safe to
+      repeat: it counts again and stores the same numbers). Passing:
+      `jobRuns/dailyRaceCohortRecount` records a success whose summary has
+      `catalogue: true` and `races` equal to the races in
+      `config/raceEvents` whose date is today or later; each of them has a
+      `raceCohorts/{id}` document. Until this has run, a race nobody has
+      changed a goal for since the release shows the cold-start line.
+- [ ] **The count matches the console.** For one race people are training
+      for: in the console, Firestore → `users`, filter
+      `raceGoal.eventSpaceId == <id>` and `raceGoal.targetDate >=
+    <yesterday's date, UTC>`. Passing: the number of documents equals
+      `raceCohorts/<id>.count`. Then, on a test account bound to that race,
+      choose another listed race in the run-plan editor and save. Passing:
+      within a minute the first race's count is one lower and the second's
+      one higher, and both `updatedAt` values are newer.
+- [ ] **No client writes a count.** From a signed-in browser console a
+      `setDoc` on `raceCohorts/<id>` is refused, and a `getDoc` of it
+      succeeds.
+- [ ] **The card and the hero on an iPhone.** On a TestFlight account
+      bound to a race with 3 or more people in its group. Passing: Social →
+      Together → This week shows "You and N others are training for <race>"
+      with the weeks to go and the race's photo, and opens the race's space,
+      whose hero says "N people on Tropos are training for this race". At
+      the largest text size the card's words drop under the photo, and the
+      hero's words stay clear of Back.
+
+## The live pulse (Soc15, 2026-11-05)
+
+One line on Social's Feed, "Today: 14 sessions on Tropos", read live from
+`pulse/{the viewer's local today}`. The count is written only by the
+session create and delete triggers, once per session through
+`users/{uid}/pulseCredits` (`functions/lib/pulse.js`), and both expire by
+TTL eight days after the day starts. The unit (`pulse.test.js`,
+`PulseLine.test.tsx`), rules (`firestore.pulse.rules.test.ts`) and
+emulator (`integration/pulse.test.js`) suites cover the logic; these need
+the release, the console and a phone.
+
+- [ ] **The release carries the rules, the TTL policies and the
+      functions.** Passing: the Deploy production run's Firestore stage is
+      green, its "Wait for indexes and retention policies to be ready" step
+      included; the console's Firestore → Time-to-live tab lists `pulse`
+      and `pulseCredits` on `expiresAt` as Active; the rules check
+      (verify-production-rules) is green; and the deployed-source check
+      lists `lib/pulse.js` for `onWorkoutCreated`, `onRunCreated`,
+      `onWorkoutDeleted` and `onRunDeleted`.
+- [ ] **No client writes the pulse.** From a signed-in browser console a
+      `setDoc` or `updateDoc` on `pulse/{today}` and a `getDoc` of your own
+      `users/{you}/pulseCredits/{any}` are each refused, while a `getDoc`
+      of `pulse/{today}` reads.
+- [ ] **A session moves the count.** Finish a workout on a TestFlight
+      build. Passing: within a minute the console shows `pulse/{today}`
+      one higher, with `expiresAt` eight days after today's midnight UTC,
+      and `users/{you}/pulseCredits/workout_{id}`; deleting the workout
+      takes it back one and removes the credit.
+- [ ] **The first day the line appears (owner step).** On the first day
+      ten or more sessions are saved across Tropos. Passing: Social → Feed
+      shows "Today: 10 sessions on Tropos" (or more) under the source
+      control, the dot pulsing; with Reduce Motion on, the dot is still;
+      Home shows nothing of it. Below ten the line is absent, not "Today:
+      3 sessions". At the largest text size the line wraps under the dot
+      rather than running off the screen.
+- [ ] **Old days go.** Ten days after the first day with sessions (TTL
+      deletes within about a day of `expiresAt`). Passing: that day's
+      `pulse` document is gone, and so is every `pulseCredits` document
+      whose `dateKey` is that day.

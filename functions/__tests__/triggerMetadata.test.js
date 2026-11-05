@@ -209,6 +209,23 @@ const EXPECTED = {
     schedule: "0 4 * * *",
     timeoutSeconds: 540,
   },
+  // Soc15 plan groups: a race goal set, moved or cleared recounts its race
+  // (the old one and the new one), and every race still ahead is recounted
+  // at 04:30 UTC, after the reconciliation sweep has cleared finished goals.
+  onRaceGoalWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource: "projects/{project}/databases/(default)/documents/users/{uid}",
+  },
+  dailyRaceCohortRecount: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "30 4 * * *",
+    timeoutSeconds: 540,
+  },
   onChallengeParticipantCreated: {
     kind: "event",
     maxInstances: 50,

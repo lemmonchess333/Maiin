@@ -86,6 +86,8 @@ import {
   countPostsThisWeek,
   spaceHeroMeta,
 } from "@/features/spaces/spaceHeroMeta";
+import { planGroupHeroLine, planGroupRace } from "@/features/spaces/planGroup";
+import { useRaceCohort } from "@/features/spaces/useRaceCohort";
 import {
   isMemberFacing,
   type SpacePostDoc,
@@ -295,7 +297,7 @@ function postsPage(spaceId: string, cursor: QueryDocumentSnapshot | null) {
 export default function Space() {
   const { spaceId } = useParams<{ spaceId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const def = spaceId ? spaceDef(spaceId) : undefined;
   const { joined, memberCount, busy, join, leave, restricted } =
     useSpaceMembership(spaceId);
@@ -414,6 +416,18 @@ export default function Space() {
       ? resolveRaceEvent(def, overrides)
       : undefined;
 
+  /* Soc15 plan groups: on the race your own goal is bound to, while it is
+     ahead, the hero says how many people on Tropos are training for it.
+     Nobody else's view reads the count. */
+  const planGroup = planGroupRace(
+    profile?.raceGoal,
+    overrides,
+    localDateString()
+  );
+  const yourRaceAhead = !!def && planGroup?.def.id === def.id;
+  const cohort = useRaceCohort(yourRaceAhead && def ? def.id : null);
+  const planGroupLine = yourRaceAhead ? planGroupHeroLine(cohort.count) : null;
+
   const handleRemoved = useCallback((postId: string) => {
     setPosts((prev) => prev?.filter((p) => p.id !== postId) ?? prev);
   }, []);
@@ -486,9 +500,11 @@ export default function Space() {
     <div className="pb-6">
       {/* Hero header — photo (wash + scrim, white text) or the tinted
           fallback band. Back button floats on the art; membership sits
-          beside the name as one small control. */}
+          beside the name as one small control. 176px tall, and taller
+          when its words need it (larger text, a second line under the
+          name), so they never run up under Back. */}
       <div
-        className="relative h-44 overflow-hidden"
+        className="relative flex min-h-44 flex-col justify-end overflow-hidden"
         style={
           photo
             ? undefined
@@ -538,7 +554,7 @@ export default function Space() {
             street), and people did not know they could go back. Over a
             photo the chip is the dark scrim RunDetail's back button uses
             over its map; over the plain tinted hero it is the page colour. */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 left-3 z-10">
           <IconButton
             onClick={() => navigate(-1)}
             aria-label="Back"
@@ -550,8 +566,9 @@ export default function Space() {
         </div>
         {/* Join or Joined drops under the name where the two do not fit
             side by side (larger text), rather than squeezing the name
-            out of its column. */}
-        <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-end gap-x-3 gap-y-2">
+            out of its column. The top padding keeps the words clear of
+            Back (12px down, 44px tall). */}
+        <div className="relative flex flex-wrap items-end gap-x-3 gap-y-2 px-4 pb-4 pt-16">
           <div className="min-w-[min(100%,10em)] flex-1">
             <h1
               className={`text-h2 font-extrabold leading-tight ${
@@ -567,6 +584,17 @@ export default function Space() {
             >
               <InlineNumerals>{meta}</InlineNumerals>
             </p>
+            {/* Your plan group: the people training for your race. */}
+            {planGroupLine && (
+              <p
+                className={`text-micro font-semibold mt-0.5 ${
+                  photo ? "text-white" : "text-foreground"
+                }`}
+                data-testid="plan-group-hero"
+              >
+                <InlineNumerals>{planGroupLine}</InlineNumerals>
+              </p>
+            )}
           </div>
           {joined === false && (
             <Button

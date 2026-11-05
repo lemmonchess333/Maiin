@@ -52,7 +52,8 @@ const LIST_CARD = cardClasses({
  *              its progress, then any that ended this week
  *   This week  the weekly challenge (`WeeklyChallengeCard`), then
  *              `league`, the weekly league (both are this week's and end
- *              on Sunday)
+ *              on Sunday), then `planGroup`, the people training for the
+ *              person's race and its weeks to go
  *   Discover   the challenges they have not joined as a quiet list, the
  *              community goal first once it has moved, then `spaces`
  *
@@ -67,6 +68,7 @@ export function ChallengeList({
   circles,
   spaces,
   league,
+  planGroup,
   weeklyLeads = true,
 }: {
   onFindFriends?: () => void;
@@ -79,6 +81,9 @@ export function ChallengeList({
   spaces?: ReactNode;
   /** Under the weekly challenge: the weekly league (Soc15 call 3). */
   league?: ReactNode;
+  /** Under the league: the person's plan group, the people on Tropos
+   *  training for their race (Soc15). Renders nothing without one. */
+  planGroup?: ReactNode;
   /** False while the page has a Start a circle card, which is then the
    *  page's one filled button and the weekly action steps down. */
   weeklyLeads?: boolean;
@@ -207,6 +212,7 @@ export function ChallengeList({
           />
         )}
         {league}
+        {planGroup}
       </section>
 
       <section aria-labelledby={discoverId} className="space-y-5">

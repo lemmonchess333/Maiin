@@ -142,6 +142,16 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
         self.assertIn("lib/notificationPreferences.js", targets["redeemInvite"])
 
+    def test_plan_group_counts_read_back_their_one_writer(self):
+        targets = verifier.source_targets()
+        for name in ("onRaceGoalWritten", "dailyRaceCohortRecount"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/raceCohorts.js",
+                                 "lib/spaceIds.js"}.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        self.assertIn("lib/triggerRetry.js", targets["onRaceGoalWritten"])
+        self.assertIn("onRaceGoalWritten", verifier.RETRY_REQUIRED)
+
     def test_league_functions_read_back_the_rules_and_the_plan_count(self):
         targets = verifier.source_targets()
         for name in ("weeklyLeagueTurn", "setLeagueSharing"):
@@ -158,6 +168,16 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                      "onRunCreated", "onRunUpdated", "onRunDeleted"):
             with self.subTest(function=name):
                 self.assertIn("lib/leagues.js", targets[name])
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
+    def test_session_triggers_read_back_the_pulse_and_its_deletion_guard(self):
+        targets = verifier.source_targets()
+        # Soc15: the session create and delete triggers are the live pulse's
+        # one writer, and read the deletion freeze in its transaction.
+        for name in ("onWorkoutCreated", "onWorkoutDeleted", "onRunCreated", "onRunDeleted"):
+            with self.subTest(function=name):
+                self.assertTrue({"lib/pulse.js", "lib/deletionTransactionGuard.js",
+                                 "lib/accountDeletionStatus.js"}.issubset(targets[name]))
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
 
     def test_block_mirror_reads_back_its_reconciler_and_retry_guard(self):

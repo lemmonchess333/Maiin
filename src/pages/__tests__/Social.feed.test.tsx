@@ -168,8 +168,8 @@ describe("Follow from a post on Explore, chosen as the source", () => {
     ).toBeInTheDocument();
     expect(youFollow()).toBeUndefined();
     // Each post's card, found from its Follow link (newest first).
-    const [first, second] = followLinks().map(
-      (link) => link.closest<HTMLElement>(".card-shadow")!
+    const [first, second] = followLinks().map((link) =>
+      link.closest<HTMLElement>(".card-shadow")!
     );
 
     fireEvent.click(within(first).getByRole("button", { name: "Follow Bea" }));
@@ -207,5 +207,38 @@ describe("The Spaces source", () => {
       await screen.findByText("Track night, 6 x 800 m.")
     ).toBeInTheDocument();
     expect(screen.getByText("First 10K done.")).toBeInTheDocument();
+  });
+});
+
+describe("The live pulse (Soc15)", () => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  /** The viewer's local today, from the clock. */
+  const todayKey = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+  const pulseLine = () => screen.queryByText(/sessions on Tropos$/);
+
+  it("the Feed says how many sessions Tropos saw today, and Together does not", async () => {
+    seedFirestore({
+      [`pulse/${todayKey()}`]: { sessions: 14, updatedAt: minutesAgo(1) },
+    });
+    renderSocial("/social?tab=feed&feed=explore");
+    await waitFor(() =>
+      expect(pulseLine()?.closest("p")).toHaveTextContent(
+        "Today: 14 sessions on Tropos"
+      )
+    );
+    // In the Feed's own section, under its source control.
+    const feed = screen.getByRole("region", { name: "Activity feed" });
+    expect(feed).toContainElement(pulseLine());
+    cleanup();
+
+    // Anchored on Together having drawn: its tab is the one selected.
+    renderSocial("/social?tab=together");
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: "Together" })).toBeChecked()
+    );
+    expect(pulseLine()).toBeNull();
   });
 });

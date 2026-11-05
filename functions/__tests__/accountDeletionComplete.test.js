@@ -9,6 +9,8 @@ const {
   resumeDeletions,
 } = require("../lib/accountDeletionRetry");
 const now = Date.UTC(2026, 8, 15);
+/** The live pulse's day for `now` (Soc15). */
+const pulseDay = new Date(now).toISOString().slice(0, 10);
 const logger = { warn: vi.fn(), info: vi.fn(), error: vi.fn() };
 
 function setup(extra = {}) {
@@ -80,6 +82,19 @@ function setup(extra = {}) {
     },
     "users/alice/leagueResults/2026-09-07": { outcome: "up", tier: "bronze" },
     "users/bob/leagueResults/2026-09-07": { outcome: "stay", tier: "gold" },
+    // Soc15: the live pulse. A day's count, with one session of Alice's and
+    // one of Bob's in it, and each one's credit under its owner.
+    [`pulse/${pulseDay}`]: { sessions: 2 },
+    "users/alice/pulseCredits/workout_w1": {
+      kind: "workout",
+      sessionId: "w1",
+      dateKey: pulseDay,
+    },
+    "users/bob/pulseCredits/run_r1": {
+      kind: "run",
+      sessionId: "r1",
+      dateKey: pulseDay,
+    },
     "friendsBoard/bob": { sessions: 1 },
     // Soc15: Alice's invite code, an old one of hers, and Bob's.
     "inviteCodes/K7P49M2H": { uid: "alice", createdAt: now },
@@ -222,6 +237,7 @@ function setup(extra = {}) {
 // smoke::topLevelQuery::leagueGroups
 // smoke::leagueStandings
 // smoke::userSubcollections::leagueResults
+// smoke::userSubcollections::pulseCredits
 /* The billing tombstone's secret, which a restricted account's kept
    identities are hashed with. */
 let priorSecret;
@@ -261,6 +277,7 @@ describe("complete account erasure", () => {
       "leagueMembers/alice",
       "leagueGroups/wk-001/standings/alice",
       "users/alice/leagueResults/2026-09-07",
+      "users/alice/pulseCredits/workout_w1",
       "notifications/bob/items/from-alice",
       "spaces/running/posts/bobs-post/likes/alice",
       "goalSpaces/old/events/event",
@@ -294,9 +311,12 @@ describe("complete account erasure", () => {
       "leagueMembers/bob",
       "leagueGroups/wk-001/standings/bob",
       "users/bob/leagueResults/2026-09-07",
+      "users/bob/pulseCredits/run_r1",
       "challenges/weekly/participants/bob/applied/run-4",
     ])
       expect(data.has(path), path).toBe(true);
+    // The day's count names no one and stands, as the community goal's.
+    expect(data.get(`pulse/${pulseDay}`)).toEqual({ sessions: 2 });
     // The group stays for Bob, without Alice in it.
     expect(data.get("leagueGroups/wk-001")).toMatchObject({
       memberUids: ["bob"],

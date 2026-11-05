@@ -188,6 +188,33 @@ describe("MedalRevealGate", () => {
     );
   });
 
+  it("draws the reveal in the document's body, outside the page", async () => {
+    // Inside the page the stage was a child of PageShell's `space-y-4`,
+    // whose bottom margin cut it short and let the tab bar show below it.
+    const now = new Date();
+    const day = (d: Date) => d.toISOString().slice(0, 10);
+    seedFirestore({
+      [`users/${UID}/medals/monthly-x`]: medalDoc({
+        startDate: day(new Date(now.getTime() - 30 * DAY)),
+        endDate: day(new Date(now.getTime() - 2 * DAY)),
+      }),
+    });
+    render(
+      <SurfaceCoordinatorProvider>
+        <main data-testid="page" className="space-y-4">
+          <p>Social</p>
+          <MedalRevealGate uid={UID} />
+        </main>
+      </SurfaceCoordinatorProvider>
+    );
+    const dialog = await sealed();
+    const page = screen.getByTestId("page");
+    expect(page.contains(dialog)).toBe(false);
+    expect(screen.getByTestId("medal-reveal").parentElement).toBe(
+      document.body
+    );
+  });
+
   it("waits while an overlay on the page is open, and opens once it closes", async () => {
     seedFirestore({ [`users/${UID}/medals/monthly-x`]: medalDoc() });
     const { rerender } = renderGate(true);

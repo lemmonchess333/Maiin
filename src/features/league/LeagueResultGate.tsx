@@ -29,8 +29,10 @@ export const LEAGUE_RESULT_PRIORITY = 21;
  * once per result per device. Keyed by its caller on the account.
  *
  * Drawn into the document's body, as the photo viewer is: inside the
- * page, the page's own layer kept the stage under the floating tab bar,
- * whose top showed at the foot of the screen in the emulator captures.
+ * page it was a child of PageShell's `space-y-4`, whose 16 px bottom
+ * margin cut the fixed stage short of the screen's foot, and the floating
+ * tab bar showed in the strip below it in the emulator captures. The
+ * medal reveal had the same strip and is drawn into the body too.
  */
 export default function LeagueResultGate({
   uid,

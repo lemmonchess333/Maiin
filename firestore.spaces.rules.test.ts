@@ -8,6 +8,8 @@
  *   - official / pinned are unforgeable without system/config.officialUids
  *   - officials can pin and moderate-delete; ordinary users cannot
  *   - the spaces/{id} parent path is fully denied
+ *   - a race's plan-group count (raceCohorts/{id}) is read by anyone
+ *     signed in and written by no client
  *
  * Same emulator-gated harness as firestore.rules.test.ts: skips when
  * FIRESTORE_EMULATOR_HOST is unset; REQUIRE_FIRESTORE_EMULATOR=1 turns
@@ -687,6 +689,55 @@ suite("firestore.rules — community spaces", () => {
           pinned: true,
         })
       );
+    });
+  });
+
+  /* Plan groups (Soc15): raceCohorts/{spaceId} is how many people are
+     training for a race, recounted by the server alone. A number that names
+     no one, so anyone signed in reads it; a count a client could set would
+     be a claim, so no client writes it, its own race's included. */
+  describe("race cohorts (plan groups)", () => {
+    const RACE = "manchester-marathon";
+    const COHORT = `raceCohorts/${RACE}`;
+    const seedCohort = () =>
+      env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), COHORT), {
+          count: 12,
+          updatedAt: new Date(),
+        });
+      });
+
+    it("anyone signed in reads a race's count", async () => {
+      await seedCohort();
+      await assertSucceeds(getDoc(doc(db(MEMBER), COHORT)));
+      // Verification gates public content, not reading a number.
+      await assertSucceeds(getDoc(doc(db(OTHER, UNVERIFIED), COHORT)));
+    });
+
+    it("a signed-out reader is refused", async () => {
+      await seedCohort();
+      await assertFails(
+        getDoc(doc(env.unauthenticatedContext().firestore(), COHORT))
+      );
+    });
+
+    it("no client creates, changes or deletes a count", async () => {
+      await assertFails(
+        setDoc(doc(db(MEMBER), COHORT), { count: 12, updatedAt: new Date() })
+      );
+      await seedCohort();
+      await assertFails(updateDoc(doc(db(MEMBER), COHORT), { count: 500 }));
+      await assertFails(
+        setDoc(doc(db(MEMBER), COHORT), { count: 13 }, { merge: true })
+      );
+      await assertFails(deleteDoc(doc(db(MEMBER), COHORT)));
+      // The refusals above are the rules', not a missing document: the
+      // count is there, and unchanged.
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const snap = await getDoc(doc(ctx.firestore(), COHORT));
+        if (snap.data()?.count !== 12)
+          throw new Error("the seeded count changed");
+      });
     });
   });
 });
