@@ -47,6 +47,7 @@ function shown() {
       "Circles",
       "Spaces",
       "Invites",
+      "Leagues",
     ].map((l) => [l, switchFor(l).getAttribute("aria-checked") === "true"])
   );
 }
@@ -64,7 +65,7 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("ActivityNotificationsGroup", () => {
-  it("shows S3's defaults to someone who never chose, and Polish2's follow requests and Soc15's invites on", () => {
+  it("shows S3's defaults to someone who never chose, and Polish2's follow requests and Soc15's invites and leagues on", () => {
     render(<ActivityNotificationsGroup />);
     expect(shown()).toEqual({
       Props: true,
@@ -74,6 +75,7 @@ describe("ActivityNotificationsGroup", () => {
       Circles: true,
       Spaces: true,
       Invites: true,
+      Leagues: true,
     });
   });
 
@@ -105,6 +107,7 @@ describe("ActivityNotificationsGroup", () => {
         circles: true,
         spaces: true,
         invites: true,
+        leagues: true,
       },
     });
     expect(switchFor("New followers")).toHaveAttribute("aria-checked", "true");

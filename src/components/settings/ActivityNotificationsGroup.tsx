@@ -51,6 +51,11 @@ const ROWS: {
     label: "Invites",
     description: "When someone joins from your invite",
   },
+  {
+    category: "leagues",
+    label: "Leagues",
+    description: "Your result each Monday, if you've joined",
+  },
 ];
 
 export default function ActivityNotificationsGroup() {

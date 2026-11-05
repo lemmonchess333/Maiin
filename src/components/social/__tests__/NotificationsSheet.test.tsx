@@ -154,6 +154,21 @@ describe("NotificationsSheet", () => {
     expect(navigateMock).toHaveBeenCalledWith("/user/u-mia");
   });
 
+  it("a league result says how the week went and opens the league, naming nobody", () => {
+    const { onOpenChange } = renderSheet([
+      item({
+        id: "league-week",
+        type: "league_result",
+        fromUserId: "",
+        fromName: undefined,
+        message: "You moved up to Silver",
+      }),
+    ]);
+    fireEvent.click(screen.getByText("You moved up to Silver"));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(navigateMock).toHaveBeenCalledWith("/league");
+  });
+
   it("an accepted follow request names who said yes and opens their profile", () => {
     renderSheet([
       item({

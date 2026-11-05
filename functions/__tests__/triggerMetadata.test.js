@@ -527,6 +527,20 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // Soc15 call 3: weekly leagues. Joining or leaving, and the week's turn,
+  // Monday 12:15 UTC, after every timezone's Sunday has ended.
+  setLeagueSharing: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  weeklyLeagueTurn: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "15 12 * * 1",
+    timeoutSeconds: 540,
+  },
   // Mob2 call 7: Remove follower, both edges of one follow of the caller.
   removeFollower: {
     kind: "callable",
@@ -744,5 +758,16 @@ describe("functions trigger metadata snapshot", () => {
     expect(
       fns.hourlyChallengeAnnouncements.__endpoint.scheduleTrigger.timeZone
     ).toBe("Etc/UTC");
+  });
+
+  /* The league turn's 12:15 is a UTC time: it is the first quarter hour
+     after the last timezone's Sunday ends (UTC-12, at 12:00 UTC). In a
+     local zone it would move with that zone's clock changes, and in
+     British summer time land at 11:15 UTC, before Sunday had ended
+     everywhere. */
+  it("the league turn keeps a UTC schedule", () => {
+    expect(fns.weeklyLeagueTurn.__endpoint.scheduleTrigger.timeZone).toBe(
+      "Etc/UTC"
+    );
   });
 });

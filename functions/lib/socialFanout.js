@@ -265,6 +265,9 @@ const VALID_NOTIFICATION_TYPES = [
   // Soc15: someone joined from the recipient's invite and the two now
   // follow each other (redeemInvite). Named; opens their profile.
   "invite_joined",
+  // Soc15 call 3: how the recipient's league week went (weeklyLeagueTurn).
+  // From the league, not a person: anonymous, and opens the league.
+  "league_result",
 ];
 
 function sanitiseNotificationData(data) {

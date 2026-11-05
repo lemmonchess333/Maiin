@@ -576,7 +576,7 @@ service cloud.firestore {
         || p == null
         || (
           p is map
-          && p.keys().hasOnly(['kudos', 'comments', 'follows', 'followRequests', 'circles', 'spaces', 'invites'])
+          && p.keys().hasOnly(['kudos', 'comments', 'follows', 'followRequests', 'circles', 'spaces', 'invites', 'leagues'])
           && (!('kudos' in p) || p.kudos is bool)
           && (!('comments' in p) || p.comments is bool)
           && (!('follows' in p) || p.follows is bool)
@@ -584,6 +584,7 @@ service cloud.firestore {
           && (!('circles' in p) || p.circles is bool)
           && (!('spaces' in p) || p.spaces is bool)
           && (!('invites' in p) || p.invites is bool)
+          && (!('leagues' in p) || p.leagues is bool)
         );
     }
 
@@ -886,6 +887,15 @@ service cloud.firestore {
        one could award itself gold. The owner reads their own for the
        reveal; everyone else reads the public summary. */
     match /users/{uid}/medals/{challengeId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    /* How each league week went (Soc15 call 3, functions/lib/leagues.js):
+       tier, new tier, place and points, written by weeklyLeagueTurn when it
+       settles the week. The owner reads theirs for the result reveal; a
+       client that could write one could promote itself. */
+    match /users/{uid}/leagueResults/{weekKey} {
       allow read: if isOwner(uid);
       allow write: if false;
     }
@@ -2195,6 +2205,50 @@ service cloud.firestore {
             && !blockExistsBetween(uid, request.auth.uid)
           )
         );
+      allow write: if false;
+    }
+
+    /* Weekly leagues (Soc15 call 3, functions/lib/leagues.js). Opt-in
+       (users/{uid}.leagueOptIn, set only by the setLeagueSharing callable)
+       and server-written throughout: the turn, the session triggers and
+       the callable write with the Admin SDK, and no client writes any of
+       these, its own included, since a standing is a count of sessions,
+       not a claim.
+
+       A person's membership (tier, this week's group) is theirs to read. */
+    match /leagueMembers/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    /* A week's group, read by its members only: a league shows a first
+       name, a photo and a week's points to about twenty people who chose
+       to be shown, and to nobody else. A block between two members is
+       filtered in the app (useBlockedUsers), as on every social surface:
+       the group was drawn without blocked pairs, and a block made during
+       the week leaves both in the group they joined. */
+    match /leagueGroups/{groupId} {
+      allow read: if request.auth != null
+        && request.auth.uid in resource.data.memberUids;
+      allow write: if false;
+
+      match /standings/{memberUid} {
+        allow read: if request.auth != null
+          && request.auth.uid in get(/databases/$(database)/documents/leagueGroups/$(groupId)).data.memberUids;
+        allow write: if false;
+      }
+    }
+
+    /* The turn's own step markers for a week: counts only, server only. */
+    match /leagueWeeks/{weekKey} {
+      allow read, write: if false;
+    }
+
+    /* The figure the locked league card shows ("3 so far"): a count the
+       server keeps, so no client ever counts users. Any signed-in person
+       reads it; nobody writes it. */
+    match /leagueStatus/{doc} {
+      allow read: if request.auth != null;
       allow write: if false;
     }
 

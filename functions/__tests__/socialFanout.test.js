@@ -997,6 +997,8 @@ describe("notificationPreferences — the switch table", () => {
     NOTIFICATION_CATEGORIES,
     NOTIFICATION_DEFAULTS,
     CATEGORY_BY_TYPE,
+    categoryFor,
+    wantsNotification,
   } = require("../lib/notificationPreferences");
   const { VALID_NOTIFICATION_TYPES } = require("../lib/socialFanout");
 
@@ -1023,7 +1025,7 @@ describe("notificationPreferences — the switch table", () => {
     );
   });
 
-  it("S3's defaults: props and comments on, new followers off; Polish2's follow requests and Soc15's invites on", () => {
+  it("S3's defaults: props and comments on, new followers off; Polish2's follow requests and Soc15's invites and leagues on", () => {
     expect(NOTIFICATION_DEFAULTS).toEqual({
       kudos: true,
       comments: true,
@@ -1032,7 +1034,15 @@ describe("notificationPreferences — the switch table", () => {
       circles: true,
       spaces: true,
       invites: true,
+      leagues: true,
     });
+  });
+
+  it("a league result goes under the Leagues switch, and only there", () => {
+    expect(categoryFor("league_result")).toBe("leagues");
+    expect(wantsNotification(undefined, "league_result")).toBe(true);
+    expect(wantsNotification({ leagues: false }, "league_result")).toBe(false);
+    expect(wantsNotification({ invites: false }, "league_result")).toBe(true);
   });
 });
 

@@ -58,6 +58,28 @@ function setup(extra = {}) {
     "followRequests/carol/users/bob": { requestedAt: now },
     // Polish2: the week on followers' boards, Alice's and Bob's.
     "friendsBoard/alice": { sessions: 3 },
+    // Soc15 call 3: Alice and Bob in this week's league group, her
+    // membership, her result from last week, and Bob's own.
+    "leagueMembers/alice": { uid: "alice", tier: "silver", groupId: "wk-001" },
+    "leagueMembers/bob": { uid: "bob", tier: "gold", groupId: "wk-001" },
+    "leagueGroups/wk-001": {
+      weekKey: "2026-09-14",
+      tier: "silver",
+      memberUids: ["alice", "bob"],
+      size: 2,
+    },
+    "leagueGroups/wk-001/standings/alice": {
+      uid: "alice",
+      name: "Alice",
+      points: 50,
+    },
+    "leagueGroups/wk-001/standings/bob": {
+      uid: "bob",
+      name: "Bob",
+      points: 75,
+    },
+    "users/alice/leagueResults/2026-09-07": { outcome: "up", tier: "bronze" },
+    "users/bob/leagueResults/2026-09-07": { outcome: "stay", tier: "gold" },
     "friendsBoard/bob": { sessions: 1 },
     // Soc15: Alice's invite code, an old one of hers, and Bob's.
     "inviteCodes/K7P49M2H": { uid: "alice", createdAt: now },
@@ -196,6 +218,10 @@ function setup(extra = {}) {
 // smoke::topLevelOwn::blockedBy
 // smoke::blockedByReverse
 // smoke::topLevelQuery::inviteCodes
+// smoke::topLevelOwn::leagueMembers
+// smoke::topLevelQuery::leagueGroups
+// smoke::leagueStandings
+// smoke::userSubcollections::leagueResults
 /* The billing tombstone's secret, which a restricted account's kept
    identities are hashed with. */
 let priorSecret;
@@ -232,6 +258,9 @@ describe("complete account erasure", () => {
       "friendsBoard/alice",
       "inviteCodes/K7P49M2H",
       "inviteCodes/A2B3C4D5",
+      "leagueMembers/alice",
+      "leagueGroups/wk-001/standings/alice",
+      "users/alice/leagueResults/2026-09-07",
       "notifications/bob/items/from-alice",
       "spaces/running/posts/bobs-post/likes/alice",
       "goalSpaces/old/events/event",
@@ -262,9 +291,17 @@ describe("complete account erasure", () => {
       "blockedBy/bob/users/carol",
       "friendsBoard/bob",
       "inviteCodes/Z9Y8X7W6",
+      "leagueMembers/bob",
+      "leagueGroups/wk-001/standings/bob",
+      "users/bob/leagueResults/2026-09-07",
       "challenges/weekly/participants/bob/applied/run-4",
     ])
       expect(data.has(path), path).toBe(true);
+    // The group stays for Bob, without Alice in it.
+    expect(data.get("leagueGroups/wk-001")).toMatchObject({
+      memberUids: ["bob"],
+      size: 1,
+    });
     // The removal is still counted; who wrote it, and what, is not.
     expect(data.get("commentModeration/alice-comment")).toEqual({
       action: "auto_delete",

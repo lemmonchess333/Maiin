@@ -494,6 +494,95 @@ describe("resyncAuthorIdentity — bounds", () => {
   });
 });
 
+/* Soc15 call 3: a league standing names its member by the first word of
+   their public name, with their photo, in this week's group only. */
+describe("resyncAuthorIdentity — a league standing", () => {
+  function inALeague(profile) {
+    const firestore = world(profile);
+    firestore.data.set("leagueMembers/alice", {
+      uid: "alice",
+      tier: "gold",
+      groupId: "this-week",
+      weekKey: "2026-10-19",
+    });
+    firestore.data.set("leagueGroups/this-week/standings/alice", {
+      uid: "alice",
+      name: "Alice",
+      photo: OLD_PHOTO,
+      points: 75,
+    });
+    // A standing of hers in a group she is not in now, and Bob's row.
+    firestore.data.set("leagueGroups/other/standings/alice", {
+      uid: "alice",
+      name: "Alice",
+      photo: OLD_PHOTO,
+    });
+    firestore.data.set("leagueGroups/this-week/standings/bob", {
+      uid: "bob",
+      name: "Bob",
+    });
+    return firestore;
+  }
+
+  it("carries the first word of the new name, and the new photo, to this week's row", async () => {
+    const firestore = inALeague({
+      displayName: "Alicia Maria New",
+      photoURL: NEW_PHOTO,
+    });
+    const result = await run(firestore);
+    expect(
+      doc(firestore, "leagueGroups/this-week/standings/alice")
+    ).toMatchObject({ name: "Alicia", photo: NEW_PHOTO, points: 75 });
+    expect(result.updated.leagueStanding).toBe(1);
+    expect(doc(firestore, "leagueGroups/other/standings/alice").name).toBe(
+      "Alice"
+    );
+    expect(doc(firestore, "leagueGroups/this-week/standings/bob").name).toBe(
+      "Bob"
+    );
+  });
+
+  it("a removed photo comes off the row", async () => {
+    const firestore = inALeague({ displayName: "Alice" });
+    await run(firestore, { name: false, photo: true });
+    expect(doc(firestore, "leagueGroups/this-week/standings/alice").photo).toBe(
+      DELETED
+    );
+  });
+
+  it("carries nothing a refused name or a restricted account would", async () => {
+    const refused = inALeague({
+      displayName: "shit head",
+      photoURL: OLD_PHOTO,
+    });
+    await run(refused, { name: true, photo: false });
+    expect(doc(refused, "leagueGroups/this-week/standings/alice").name).toBe(
+      "Alice"
+    );
+    const restricted = inALeague({ displayName: "Zed", photoURL: NEW_PHOTO });
+    restricted.data.set("globalRestrictedUids/alice", { at: 1 });
+    await run(restricted);
+    expect(
+      doc(restricted, "leagueGroups/this-week/standings/alice")
+    ).toMatchObject({ name: "Alice", photo: OLD_PHOTO });
+  });
+
+  it("someone between weeks has no row to carry to", async () => {
+    const firestore = inALeague({ displayName: "Alicia", photoURL: NEW_PHOTO });
+    firestore.data.set("leagueMembers/alice", {
+      uid: "alice",
+      tier: "gold",
+      groupId: null,
+      weekKey: null,
+    });
+    const result = await run(firestore);
+    expect(result.updated.leagueStanding).toBeUndefined();
+    expect(doc(firestore, "leagueGroups/this-week/standings/alice").name).toBe(
+      "Alice"
+    );
+  });
+});
+
 describe("wantedIdentity", () => {
   it("trims a name and cuts it at the display-name limit", () => {
     expect(

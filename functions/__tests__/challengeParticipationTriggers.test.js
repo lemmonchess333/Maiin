@@ -6,6 +6,7 @@ process.env.GCLOUD_PROJECT ||= "tropos-unit-test";
 const projection = require("../lib/challengeParticipationProgress");
 const deletion = require("../lib/accountDeletionLocks");
 const board = require("../lib/friendsBoard");
+const leagues = require("../lib/leagues");
 const fns = require("../index");
 const source = { date: "2027-01-10", durationMinutes: 30 };
 const snap = { data: () => source };
@@ -15,10 +16,17 @@ const context = {
 
 afterEach(() => vi.restoreAllMocks());
 
-/** The friends board's refresh reads the user's profile; these tests run
- *  without Firestore, so it is stood in (and pinned below). */
-const standInBoard = () =>
-  vi.spyOn(board, "refreshBoardWeek").mockResolvedValue(undefined);
+/** The friends board's refresh reads the user's profile, and the league
+ *  standing's the membership; these tests run without Firestore, so both
+ *  are stood in (and pinned below). */
+const standInLeague = () =>
+  vi
+    .spyOn(leagues, "refreshLeagueStanding")
+    .mockResolvedValue({ written: false });
+const standInBoard = () => {
+  standInLeague();
+  return vi.spyOn(board, "refreshBoardWeek").mockResolvedValue(undefined);
+};
 
 describe("participation projection trigger reliability", () => {
   it.each([
@@ -65,6 +73,41 @@ describe("participation projection trigger reliability", () => {
         expect.anything(),
         context.params.uid,
         ["2027-01-10", "2027-02-01"]
+      );
+      // Soc15 call 3: and so does the league standing.
+      expect(leagues.refreshLeagueStanding).toHaveBeenCalledWith(
+        expect.anything(),
+        context.params.uid,
+        ["2027-01-10", "2027-02-01"]
+      );
+    }
+  );
+
+  it.each([
+    "onWorkoutCreated",
+    "onRunCreated",
+    "onWorkoutDeleted",
+    "onRunDeleted",
+  ])(
+    "%s refreshes the league standing with the session's day",
+    async (name) => {
+      vi.spyOn(deletion, "shouldSystemWriteProceed").mockResolvedValue(true);
+      vi.spyOn(
+        projection,
+        "reconcileParticipationChallenges"
+      ).mockResolvedValue(undefined);
+      vi.spyOn(board, "refreshBoardWeek").mockResolvedValue(undefined);
+      const league = vi
+        .spyOn(leagues, "refreshLeagueStanding")
+        .mockRejectedValue(new Error("standing unavailable"));
+      // A failure fails the event, so failurePolicy delivers it again.
+      await expect(fns[name].run(snap, context)).rejects.toThrow(
+        "standing unavailable"
+      );
+      expect(league).toHaveBeenCalledWith(
+        expect.anything(),
+        context.params.uid,
+        ["2027-01-10"]
       );
     }
   );

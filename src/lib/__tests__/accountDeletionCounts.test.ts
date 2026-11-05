@@ -53,7 +53,9 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 // Soc15 call 5 bumped to 63 — routeMapsStorage, run post map images.
 // Soc15 invites bumped to 64 — inviteCodesOwn, a person's invite code.
 // Soc15 call 2 bumped to 65 — postPhotosStorage, a shared session's photos.
-export const EXPECTED_INCLUDED_COUNT = 65;
+// Soc15 call 3 bumped to 69 — weekly leagues: userLeagueResults,
+// leagueMembersOwn, leagueGroupMemberships and leagueStandingsOwn.
+export const EXPECTED_INCLUDED_COUNT = 69;
 // S4e STATUS 2026-10-20 bumped excluded to 12 — restrictedIdentities, a
 // deleted restricted account's hashed sign-in identities, retained.
 export const EXPECTED_EXCLUDED_COUNT = 12;

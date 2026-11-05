@@ -4,7 +4,8 @@
  * Polish2: follow requests on, since a request no one sees just waits).
  * The follow requests switch covers both ways: someone asking to follow
  * you, and the answer to a request you made. Invites (Soc15) are on: someone
- * joining from your link or code is what sharing it asked for.
+ * joining from your link or code is what sharing it asked for. Leagues
+ * (Soc15 call 3) are on: one result on a Monday, for someone who joined.
  *
  * The server decides what is sent: createNotification
  * (functions/lib/socialFanout.js) reads `profile.notificationPreferences`
@@ -25,6 +26,7 @@ export const NOTIFICATION_CATEGORIES = [
   "circles",
   "spaces",
   "invites",
+  "leagues",
 ] as const;
 
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
@@ -45,6 +47,7 @@ export const NOTIFICATION_DEFAULTS: Readonly<
   circles: true,
   spaces: true,
   invites: true,
+  leagues: true,
 };
 
 /** Whether a kind is on: the stored boolean, else its default — the same

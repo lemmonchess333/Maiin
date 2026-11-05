@@ -206,6 +206,10 @@ const PINNED: Record<string, string> = {
   // summary, and the finale card's own) must be the same medal.
   "functions/lib/medals.js":
     "src/features/challenges/__tests__/medals.cross.test.ts",
+  // Soc15 call 3: a league standing's planned sessions, the server copy of
+  // trainingWeek.ts's count.
+  "functions/lib/leaguePlanned.js":
+    "src/lib/__tests__/leaguePlanned.cross.test.ts",
   "functions/lib/partnerStreakEngine.js":
     "src/features/partnerStreak/__tests__/engineMirror.test.ts",
   // Packet 18 — CF programme reducer mirrors the client run-day transition
