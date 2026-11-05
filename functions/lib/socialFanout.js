@@ -296,7 +296,7 @@ function sanitiseNotificationData(data) {
     out.postId = data.postId.slice(0, 128);
   }
   // A follow request made by joining from the recipient's invite (Soc15
-  // call 4, STATUS 2026-11-05): the tray says so.
+  // call 4 and its STATUS line): the tray says so.
   if (data.fromInvite === true) out.fromInvite = true;
   return out;
 }

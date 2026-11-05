@@ -64,7 +64,7 @@ export const TRAY_NOTIFICATION_TYPES = [
   // Soc15 — someone joined from the recipient's invite, and the two now
   // follow each other: a recipient who takes followers without approving
   // them. One who approves gets a follow_request marked fromInvite instead
-  // (Soc15 call 4, STATUS 2026-11-05). The row opens their profile.
+  // (Soc15 call 4 and its STATUS line). The row opens their profile.
   "invite_joined",
   // Soc15 call 3 — how the recipient's league week went. From the league,
   // not a person: no sender, and the row opens the league.
@@ -85,7 +85,7 @@ export interface NotificationItem {
   postId?: string;
   message?: string;
   /** On a follow_request: the asker joined from the recipient's invite
-   *  (Soc15 call 4, STATUS 2026-11-05), and the row says so. */
+   *  (Soc15 call 4 and its STATUS line), and the row says so. */
   fromInvite?: boolean;
   /** Resolved server timestamp; null only in the brief pending window. */
   createdAt: Date | null;

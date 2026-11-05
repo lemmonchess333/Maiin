@@ -7,8 +7,8 @@
  * open troposfit.com links, so a friend who installs it types the code
  * during setup. Either way, once the friend's plan is made, this person
  * follows them, and they follow this person at once or, while this person
- * approves followers (the default), ask to (Soc15 call 4, STATUS
- * 2026-11-05): a code posted publicly reaches no followers-only post.
+ * approves followers (the default), ask to (Soc15 call 4 as narrowed by
+ * its STATUS line): a code posted publicly reaches no followers-only post.
  *
  * The code is made the first time it is asked for (getInviteCode) and kept
  * on the account (`profile.inviteCode`), so after that it shows at once. A

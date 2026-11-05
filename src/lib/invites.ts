@@ -6,7 +6,7 @@
  * account using one (redeemInvite). The inviter follows the new person at
  * once; the new person follows the inviter at once when the inviter takes
  * followers without approving them, and otherwise asks, the request marked
- * as from the invite (Soc15 call 4, STATUS 2026-11-05). This file calls them
+ * as from the invite (Soc15 call 4 and its STATUS line). This file calls them
  * and words their answers: the one line a redemption gets, and a sentence
  * for each refusal. `inviteRefusals.test.ts` pins every reason the server
  * can give (INVITE_REFUSALS in functions/lib/inviteCodes.js) to one here,
@@ -43,8 +43,8 @@ export interface InviteRedemption {
   /** The same invite was used before (a reply lost on the way back). */
   alreadyJoined: boolean;
   /** The inviter approves followers: they follow the person now, and the
-   *  person's follow of them waits as a request (Soc15 call 4, STATUS
-   *  2026-11-05). False when the two follow each other already. */
+   *  person's follow of them waits as a request (Soc15 call 4 and its
+   *  STATUS line). False when the two follow each other already. */
   requested: boolean;
 }
 

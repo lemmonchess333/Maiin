@@ -9012,7 +9012,7 @@ exports.removeFollower = functions
 // code, the signed-out lookup of whose it is, and its use by a new account,
 // which the inviter follows at once, and which follows the inviter at once
 // or asks to, by the inviter's Approve followers (lib/inviteCodes.js,
-// Soc15 call 4 and its STATUS of 2026-11-05). The rules refuse every
+// Soc15 call 4 and its STATUS line). The rules refuse every
 // client read and write of `inviteCodes`, and no client writes an edge
 // carrying `fromInvite`: these callables are the only writers.
 // ═══════════════════════════════════════════════════════════════

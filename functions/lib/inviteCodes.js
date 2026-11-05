@@ -17,7 +17,7 @@
  * do, both ways at once, as Strava, Duolingo and Hevy connect you. With it
  * on, the new person sends a follow request marked `fromInvite`, which the
  * inviter accepts in one tap from its notification (Soc15 call 4, narrowed
- * by its STATUS of 5 November 2026): a code posted publicly no longer lets
+ * by its STATUS line): a code posted publicly no longer lets
  * a stranger past the approval that keeps followers-only posts private.
  *
  * What the redemption checks, all in one transaction:
