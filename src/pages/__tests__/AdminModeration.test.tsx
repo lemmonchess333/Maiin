@@ -15,6 +15,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 
 const h = vi.hoisted(() => ({
@@ -111,6 +112,50 @@ describe("AdminModeration — the pending queue", () => {
     fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
     expect(screen.queryByRole("alert")).toBeNull();
     expect(await screen.findByText("No pending reports.")).toBeInTheDocument();
+  });
+});
+
+describe("AdminModeration — a reported post's photos (Soc15 call 2)", () => {
+  const BUCKET =
+    "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
+  const url = (n: number) =>
+    `${BUCKET}post-photos%2Fauthor%2Factivity-1%2FPhoto0000${n}.jpg?alt=media&token=t`;
+
+  it("shows them as thumbnails, each opening the full photo", async () => {
+    const withPhotos = report("r1", "Hill reps");
+    h.list.mockResolvedValue(
+      answer([
+        {
+          ...withPhotos,
+          target: { caption: "Hill reps", photos: [url(1), url(2), url(3)] },
+        },
+      ])
+    );
+    render(<AdminModeration />);
+    const list = await screen.findByRole("list", {
+      name: "Photos on the reported post",
+    });
+    const images = within(list).getAllByRole("img");
+    expect(images.map((img) => img.getAttribute("src"))).toEqual([
+      url(1),
+      url(2),
+      url(3),
+    ]);
+    expect(images[1]).toHaveAccessibleName("Reported post, 2 of 3");
+    expect(within(list).getAllByRole("link")[0]).toHaveAttribute(
+      "href",
+      url(1)
+    );
+  });
+
+  it("shows none for a post without photos, or a server that sends none", async () => {
+    h.list.mockResolvedValue(answer([report("r1", "No photos here")]));
+    render(<AdminModeration />);
+    // Anchor: the report itself is on screen.
+    expect(await screen.findByText("No photos here")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("list", { name: "Photos on the reported post" })
+    ).toBeNull();
   });
 });
 

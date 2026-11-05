@@ -66,6 +66,8 @@ import MiniMuscleFigure, { hasMuscleFigure } from "./MiniMuscleFigure";
 import RouteScene from "./RouteScene";
 import RouteMapHero from "./RouteMapHero";
 import { hasRouteMap } from "./routeMapSrc";
+import PostPhotoGrid from "./PostPhotoGrid";
+import { postPhotosOf } from "@/lib/postPhotos";
 import { getTimeAgo } from "../../lib/timeAgo";
 import { Spinner } from "../ui/Spinner";
 import { IconButton } from "../ui/IconButton";
@@ -326,6 +328,8 @@ function ActivityCard({
   /* What happened to the author in the session (Soc15): read whole, so a
      malformed or older post draws none. */
   const moments = postMomentsOf(activity?.moments);
+  /* The author's photos of the session (Soc15 call 2), at most four. */
+  const photos = postPhotosOf(activity?.photos);
   /* A PR moment's exercise, by the id its row on the post carries: a
      kettlebell reads in whole bells in lb. */
   const momentExerciseId = (name: string) => {
@@ -942,6 +946,19 @@ function ActivityCard({
       )}
 
       <div className="px-4 pb-4">
+        {/* The author's photos (Soc15 call 2), under the session's own
+            numbers and route, before what happened in it: the same place on
+            the run, lift and hybrid cards, as Strava and Hevy put a post's
+            photos after its stats. A tap opens them full screen. */}
+        {photos.length > 0 && (
+          <PostPhotoGrid
+            photos={photos}
+            authorName={feedItem.authorName}
+            kind={isRun ? "run" : "workout"}
+            className="mb-3"
+          />
+        )}
+
         {/* Moments (Soc15), Strava's way: a tile, a bold line and the
             figures under it, each from the post's own numbers in the
             reader's units. Gold for a best, the brand purple for the rest

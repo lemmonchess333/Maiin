@@ -8,7 +8,13 @@
  * and says the post is unavailable when not.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { act, render, screen, cleanup } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+} from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 
 vi.mock("firebase/firestore");
@@ -33,7 +39,11 @@ vi.mock("@/components/social/ActivityCard", () => ({
     onComment,
     commentDelta = 0,
   }: {
-    feedItem: { summary: string; liked?: boolean };
+    feedItem: {
+      summary: string;
+      liked?: boolean;
+      activity?: { photos?: unknown[] };
+    };
     openComments?: boolean;
     allExercises?: boolean;
     linkToPost?: boolean;
@@ -43,7 +53,8 @@ vi.mock("@/components/social/ActivityCard", () => ({
     <article data-testid="post">
       {feedItem.summary} · liked {String(!!feedItem.liked)} · comments{" "}
       {String(!!openComments)} · every exercise {String(!!allExercises)} · links
-      to itself {String(linkToPost)} · comments added {commentDelta}
+      to itself {String(linkToPost)} · comments added {commentDelta} · photos{" "}
+      {feedItem.activity?.photos?.length ?? 0}
       <button type="button" onClick={onComment}>
         Comment
       </button>
@@ -72,6 +83,40 @@ vi.mock("@/components/social/ActivityPostComments", () => ({
       </section>
     );
   },
+}));
+
+// The photos sheet has its own suite; here it says what it was given and
+// hands back one more photo.
+vi.mock("@/components/social/PostPhotosSheet", () => ({
+  default: ({
+    open,
+    activityId,
+    photos,
+    visibility,
+    onPhotosChange,
+  }: {
+    open: boolean;
+    activityId: string;
+    photos: { id: string }[];
+    visibility?: string;
+    onPhotosChange: (photos: unknown[]) => void;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Photos">
+        {activityId} · {photos.length} photos · {visibility}
+        <button
+          type="button"
+          onClick={() =>
+            onPhotosChange([
+              ...photos,
+              { id: "Added00001", url: "https://x/y.jpg", w: 10, h: 10 },
+            ])
+          }
+        >
+          Add one
+        </button>
+      </div>
+    ) : null,
 }));
 
 import ActivityPost from "../ActivityPost";
@@ -219,5 +264,57 @@ describe("the post a notice opens", () => {
       await screen.findByText("This post isn't available")
     ).toBeInTheDocument();
     expect(screen.queryByTestId("post")).toBeNull();
+  });
+});
+
+describe("photos on your own post (Soc15 call 2)", () => {
+  const PHOTO = {
+    id: "Photo00001",
+    url: "https://firebasestorage.googleapis.com/v0/b/b/o/post-photos%2Fviewer%2Fa1%2FPhoto00001.jpg",
+    w: 1600,
+    h: 1200,
+  };
+  let online: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
+  });
+  afterEach(() => online.mockRestore());
+
+  it("offers Add photos on your own post, and the sheet's photos reach the card at once", async () => {
+    seedFirestore({ "activities/a1": POST });
+    renderAt("/activity/a1");
+    await screen.findByTestId("post");
+    fireEvent.click(screen.getByRole("button", { name: "Add photos" }));
+    const sheet = await screen.findByRole("dialog", { name: "Photos" });
+    expect(sheet).toHaveTextContent("a1 · 0 photos · public");
+    fireEvent.click(screen.getByRole("button", { name: "Add one" }));
+    expect(screen.getByTestId("post")).toHaveTextContent("photos 1");
+    expect(screen.getByRole("button", { name: "Edit photos" })).toBeEnabled();
+  });
+
+  it("says Edit photos on a post that has some, and hands the sheet its list", async () => {
+    seedFirestore({ "activities/a1": { ...POST, photos: [PHOTO] } });
+    renderAt("/activity/a1");
+    fireEvent.click(await screen.findByRole("button", { name: "Edit photos" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Photos" })
+    ).toHaveTextContent("a1 · 1 photos · public");
+  });
+
+  it("offers nothing on someone else's post", async () => {
+    seedFirestore({ "activities/a1": { ...POST, authorId: "maya" } });
+    renderAt("/activity/a1");
+    await screen.findByTestId("post");
+    expect(screen.queryByRole("button", { name: "Add photos" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit photos" })).toBeNull();
+  });
+
+  it("offline, the button is off and says why", async () => {
+    online.mockReturnValue(false);
+    seedFirestore({ "activities/a1": POST });
+    renderAt("/activity/a1");
+    await screen.findByTestId("post");
+    expect(screen.getByRole("button", { name: "Add photos" })).toBeDisabled();
+    expect(screen.getByText("Photos need a connection.")).toBeInTheDocument();
   });
 });

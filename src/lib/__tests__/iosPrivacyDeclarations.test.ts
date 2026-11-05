@@ -39,10 +39,7 @@ const pkg = JSON.parse(read("package.json")) as {
 /* ── A plist reader, enough for these files ────────────────────────── */
 
 type PlistValue =
-  | string
-  | boolean
-  | PlistValue[]
-  | { [key: string]: PlistValue };
+  string | boolean | PlistValue[] | { [key: string]: PlistValue };
 
 /** Parses the XML plist the iOS files use: dict, array, key, string,
  *  true and false, with comments. Throws on anything else, so a value of a
@@ -291,6 +288,8 @@ describe("Info.plist — purpose strings cover every use", () => {
     [/progress photo/, "src/components/progress/ProgressPhotoDaySheet.tsx"],
     [/profile photo/, "src/components/settings/SettingsAvatar.tsx"],
     [/Space post/, "src/features/spaces/SpacePostComposer.tsx"],
+    // Soc15 call 2: photos on a shared session's post.
+    [/your posts/, "src/components/social/PostPhotosSheet.tsx"],
   ];
 
   it("the camera string names each use, and each is a real photo input", () => {
@@ -383,7 +382,9 @@ describe("SDKs — nothing that tracks is built in", () => {
     expect(pkg.scripts.postinstall).toBe("patch-package");
     // Both native patches must match the installed package versions.
     const liveActivitiesVersion = (
-      JSON.parse(read("node_modules/capacitor-live-activities/package.json")) as {
+      JSON.parse(
+        read("node_modules/capacitor-live-activities/package.json")
+      ) as {
         version: string;
       }
     ).version;
@@ -395,7 +396,9 @@ describe("SDKs — nothing that tracks is built in", () => {
       ].sort()
     );
     expect(
-      read("node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift")
+      read(
+        "node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift"
+      )
     ).toContain("import LiveActivitiesKit");
     // Applied: the plugin's Swift neither imports the framework nor calls
     // it, and both plugin methods are still there, answering "denied".

@@ -148,10 +148,13 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">
-                  Profile and Space Photos (optional):
+                  Profile, Post and Space Photos (optional):
                 </strong>{" "}
-                the profile photo you set, and photos you attach to a Space
-                post.
+                the profile photo you set, photos you add to a session you
+                share, and photos you attach to a Space post. Before a photo for
+                a post is uploaded, the app saves it again at a smaller size,
+                which leaves out the location and other details your camera
+                stored in the file.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -435,7 +438,7 @@ export default function PrivacyPolicy() {
               <li>
                 <strong className="text-foreground">Google (Firebase):</strong>{" "}
                 Firebase Authentication (sign-in), Cloud Firestore (your data),
-                Cloud Storage (progress, profile and Space photos), Cloud
+                Cloud Storage (progress, profile, post and Space photos), Cloud
                 Functions (our server code), App Check (which checks that
                 requests come from the real app; on the web it uses reCAPTCHA),
                 Google Analytics for Firebase (usage analytics, section 2) and,
@@ -445,11 +448,11 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Photo checks (Google Cloud Vision):
                 </strong>{" "}
-                a photo you set as your profile photo or attach to a Space post
-                is checked by Google Cloud Vision&apos;s SafeSearch before other
-                people can see it, and a photo with nudity is deleted. Google
-                processes the photo only to return the check and does not use it
-                to train its models.
+                a photo you set as your profile photo, add to a session you
+                share or attach to a Space post is checked by Google Cloud
+                Vision&apos;s SafeSearch before other people can see it, and a
+                photo with nudity is deleted. Google processes the photo only to
+                return the check and does not use it to train its models.
               </li>
               <li>
                 <strong className="text-foreground">

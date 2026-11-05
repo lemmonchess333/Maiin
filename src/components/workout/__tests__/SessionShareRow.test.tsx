@@ -465,6 +465,60 @@ describe("Undo", () => {
   });
 });
 
+describe("photos on the post (Soc15 call 2)", () => {
+  it("a posted session offers Add photos, which opens the photos sheet", async () => {
+    saved({ run: "public" });
+    render(<SessionShareRow action={action("run")} />);
+    await screen.findByText("Shared publicly");
+    const add = screen.getByRole("button", { name: "Add photos" });
+    expect(add).toBeEnabled();
+    fireEvent.click(add);
+    expect(
+      await screen.findByRole("dialog", { name: "Photos" })
+    ).toBeInTheDocument();
+  });
+
+  it("a session waiting to post offline offers no photos until it is posted", async () => {
+    saved({ run: "followers" });
+    const a = action(
+      "run",
+      vi.fn(async (): Promise<ShareOutcome> => ({
+        status: "queued",
+        visibility: "followers",
+      }))
+    );
+    render(<SessionShareRow action={a} />);
+    // Anchor: the queued post is on screen, with its Undo.
+    await screen.findByText(
+      "Will share with your followers when you're back online"
+    );
+    expect(screen.getByRole("button", { name: "Undo sharing" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Add photos" })).toBeNull();
+  });
+
+  it("offline, Add photos is off and says why", async () => {
+    saved({ workout: "followers" });
+    render(<SessionShareRow action={action("workout")} />);
+    await screen.findByText("Shared with your followers");
+    setOnline(false);
+    fireEvent(window, new Event("offline"));
+    expect(
+      await screen.findByText("Photos need a connection.")
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add photos" })).toBeDisabled();
+  });
+
+  it("a removed post offers no photos", async () => {
+    saved({ workout: "followers" });
+    render(<SessionShareRow action={action("workout")} />);
+    await screen.findByText("Shared with your followers");
+    h.withdraw.mockResolvedValue("removed");
+    fireEvent.click(screen.getByRole("button", { name: "Undo sharing" }));
+    await screen.findByText("Removed from the feed.");
+    expect(screen.queryByRole("button", { name: "Add photos" })).toBeNull();
+  });
+});
+
 describe("screen readers", () => {
   it("announce what happened through one status region that stays mounted", async () => {
     saved({ run: "followers" });

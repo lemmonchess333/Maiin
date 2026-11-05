@@ -114,6 +114,13 @@ function functionsJsFiles(): string[] {
 
 // Mirror file → its cross-test (relative to repo root). Each must exist.
 const PINNED: Record<string, string> = {
+  // A post's photos (Soc15 call 2): the server's limit of four, its photo
+  // id rule and its "this post's own upload" URL check are held to the
+  // app's and the rules' by the paths cross-test. The rest of each module
+  // (the client's reader and alt text, the server's folder cleanup) has no
+  // counterpart on the other side.
+  "functions/lib/postPhotos.js":
+    "src/lib/__tests__/postPhotoPaths.cross.test.ts",
   // The photo detail's cap: the field stops where analyzeFood starts
   // refusing.
   "functions/lib/foodPhotoDetail.js":
