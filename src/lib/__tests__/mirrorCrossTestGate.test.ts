@@ -114,6 +114,11 @@ function functionsJsFiles(): string[] {
 
 // Mirror file → its cross-test (relative to repo root). Each must exist.
 const PINNED: Record<string, string> = {
+  // Server authorization and client transport differ, but object identity
+  // must round-trip across both implementations, including legacy records.
+  "functions/lib/activityMedia.js":
+    "src/lib/__tests__/activityMedia.cross.test.ts",
+
   // A post's photos (Soc15 call 2): the server's limit of four, its photo
   // id rule and its "this post's own upload" URL check are held to the
   // app's and the rules' by the paths cross-test. The rest of each module

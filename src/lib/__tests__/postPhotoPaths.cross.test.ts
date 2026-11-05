@@ -2,9 +2,9 @@
  * One place for a shared session's photos, held everywhere it is named
  * (Soc15 call 2): `post-photos/{uid}/{activityId}/{photoId}.jpg`.
  *
- * Seven things name it, and each can drift on its own without the others
- * noticing: the app's upload (postPhotoUpload.ts), storage.rules (who may
- * write there), firestore.rules (the URLs a post may name, `isPostPhotoUrl`),
+ * The app and server must agree: the app's callable upload
+ * (postPhotoUpload.ts), the gateway (functions/lib/activityMedia.js),
+ * storage.rules (direct reads/uploads denied; owner cleanup retained), firestore.rules (the URLs a post may name, `isPostPhotoUrl`),
  * the server's copy of that answer for the moderation queue
  * (functions/lib/postPhotos.js), the photo screen
  * (functions/lib/photoScreen.js), the post's delete trigger
@@ -28,6 +28,8 @@ const require = createRequire(import.meta.url);
 
 const upload = read("src/lib/postPhotoUpload.ts");
 const storageRules = read("storage.rules");
+const gateway = read("functions/lib/activityMedia.js");
+const media = require("../../../functions/lib/activityMedia.js");
 const firestoreRules = read("firestore.rules");
 const serverPhotos = require("../../../functions/lib/postPhotos.js");
 
@@ -35,32 +37,33 @@ const serverPhotos = require("../../../functions/lib/postPhotos.js");
 const ID_RULE = "^[A-Za-z0-9_-]{8,64}";
 
 describe("post-photos/{uid}/{activityId}/{photoId}.jpg, named the same everywhere", () => {
-  it("is where the app uploads, a JPEG under a new random id", () => {
-    expect(upload).toContain(
-      "ref(storage, `post-photos/${uid}/${activityId}/${id}.jpg`)"
-    );
-    expect(upload).toContain('contentType: "image/jpeg"');
+  it("uses the callable for JPEG uploads under a new random id", () => {
+    expect(upload).toMatch(/uploadActivityMedia\(\s*\{\s*activityId,\s*kind: "photo",\s*id\s*\},\s*blob\s*\)/);
+    expect(upload).not.toContain("uploadBytes(");
+    expect(upload).not.toContain("getDownloadURL(");
     expect(upload).toContain("const id = newPostPhotoId();");
     expect(newPostPhotoId()).toMatch(new RegExp(`${ID_RULE}$`));
+    expect(gateway).toContain('${request.kind === "photo" ? "post-photos" : "route-maps"}/${authorId}/${request.activityId}/${request.id}.jpg');
+    expect(gateway).toContain('/^[A-Za-z0-9_-]{8,64}$/');
+    expect(gateway).toContain('contentType: "image/jpeg"');
+    expect(media.LIMITS.photo).toBe(2 * 1024 * 1024);
+    expect(media.namesMedia(media.mediaUrl(
+      "adaptive-fitness-af8bb.firebasestorage.app",
+      "post-photos/u1/post-1/Ab3dEf6hIj.jpg"
+    ), "post-photos/u1/post-1/Ab3dEf6hIj.jpg")).toBe(true);
   });
 
-  it("is what storage.rules lets the owner write: a random-id JPEG under 2 MB, beside their own post", () => {
+  it("denies direct Storage reads/uploads while retaining owner cleanup", () => {
     const block = storageRules.slice(
       storageRules.indexOf("match /post-photos/{uid}/{activityId}/{name}"),
       storageRules.indexOf("// Profile photos")
     );
-    expect(block).toContain("allow get: if request.auth != null;");
-    expect(block).not.toMatch(/allow (read|list)/);
-    expect(block).toContain("isOwnerAndWritable(uid)");
-    expect(block).toContain(`name.matches('${ID_RULE}[.]jpg$')`);
-    expect(block).toContain("request.resource.contentType == 'image/jpeg'");
-    expect(block).toMatch(/request\.resource\.size < 2 \* 1024 \* 1024/);
-    expect(block).toContain("activities/$(activityId)");
-    expect(block).toContain(".data.authorId == uid");
-    // The app's own ceiling sits under the rules'.
+    expect(block).toContain("allow get, list, create, update: if false;");
+    expect(block).toContain("allow delete: if isOwnerAndWritable(uid);");
     expect(upload).toContain(
       "export const POST_PHOTO_MAX_BYTES = 2 * 1024 * 1024;"
     );
+    expect(upload).toContain("ref(storage, `post-photos/${uid}/${activityId}/${id}.jpg`)");
   });
 
   it("is the only folder a post's photos may name, each its own id, at most four", () => {

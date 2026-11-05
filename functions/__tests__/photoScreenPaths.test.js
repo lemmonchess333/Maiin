@@ -19,6 +19,7 @@ const originals = new Map(
 );
 const realFirestore = admin.firestore;
 const file = {
+  getMetadata: vi.fn(async () => [{ generation: "123" }]),
   download: vi.fn(async () => [Buffer.from("jpeg")]),
   delete: vi.fn(async () => undefined),
 };
@@ -70,12 +71,12 @@ describe.each(["space-photos", "profile-photos", "route-maps", "post-photos"])(
       "the upload trigger screens and deletes a refused %s",
       async (suffix) => {
         const path = `${prefix}/u1${suffix}`;
-        await screenUploadedPhoto.run({ name: path, bucket: "test-bucket" });
+        await screenUploadedPhoto.run({ name: path, bucket: "test-bucket", generation: "123" });
 
         expect(storage.bucket).toHaveBeenCalledWith("test-bucket");
-        expect(bucket.file).toHaveBeenCalledWith(path);
+        expect(bucket.file).toHaveBeenCalledWith(path, { generation: "123" });
         expect(file.download).toHaveBeenCalledOnce();
-        expect(file.delete).toHaveBeenCalledWith({ ignoreNotFound: true });
+        expect(file.delete).toHaveBeenCalledWith({ ignoreNotFound: true, ifGenerationMatch: "123" });
       }
     );
 
@@ -84,8 +85,9 @@ describe.each(["space-photos", "profile-photos", "route-maps", "post-photos"])(
       await expect(
         screenPhoto.run({ path }, { auth: { uid: "u1", token: {} } })
       ).resolves.toEqual({ ok: false });
-      expect(bucket.file).toHaveBeenCalledWith(path);
-      expect(file.delete).toHaveBeenCalledWith({ ignoreNotFound: true });
+      expect(file.getMetadata).toHaveBeenCalledOnce();
+      expect(bucket.file).toHaveBeenCalledWith(path, { generation: "123" });
+      expect(file.delete).toHaveBeenCalledWith({ ignoreNotFound: true, ifGenerationMatch: "123" });
     });
 
     it("the callable still rejects another owner's nested object before Vision", async () => {
@@ -104,8 +106,29 @@ describe.each(["space-photos", "profile-photos", "route-maps", "post-photos"])(
 it.each(["progress-photos/u1/nested/a.jpg", "food-photos/u1/a..jpg"])(
   "the upload trigger leaves the private object %s unscreened",
   async (path) => {
-    await screenUploadedPhoto.run({ name: path, bucket: "test-bucket" });
+    await screenUploadedPhoto.run({ name: path, bucket: "test-bucket", generation: "123" });
     expect(getAccessToken).not.toHaveBeenCalled();
     expect(bucket.file).not.toHaveBeenCalled();
   }
 );
+
+
+it("refuses to screen without a generation rather than deleting the current object", async () => {
+  file.getMetadata.mockResolvedValueOnce([{}]);
+  await expect(screenPhoto.run({ path: "post-photos/u1/post/photo_001.jpg" }, { auth: { uid: "u1", token: {} } })).rejects.toMatchObject({ code: "unavailable" });
+  expect(file.download).not.toHaveBeenCalled();
+  expect(file.delete).not.toHaveBeenCalled();
+});
+
+it("a delayed owner screen cannot delete a newer activity-media generation", async () => {
+  let currentGeneration = "123";
+  file.getMetadata.mockImplementationOnce(async () => {
+    const observed = currentGeneration;
+    currentGeneration = "124";
+    return [{ generation: observed }];
+  });
+  await expect(screenPhoto.run({ path: "route-maps/u1/post/light.jpg" }, { auth: { uid: "u1", token: {} } })).resolves.toEqual({ ok: false });
+  expect(currentGeneration).toBe("124");
+  expect(bucket.file).toHaveBeenCalledWith("route-maps/u1/post/light.jpg", { generation: "123" });
+  expect(file.delete).toHaveBeenCalledWith({ ignoreNotFound: true, ifGenerationMatch: "123" });
+});

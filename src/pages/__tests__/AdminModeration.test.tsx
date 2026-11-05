@@ -137,14 +137,14 @@ describe("AdminModeration — a reported post's photos (Soc15 call 2)", () => {
     });
     const images = within(list).getAllByRole("img");
     expect(images.map((img) => img.getAttribute("src"))).toEqual([
-      url(1),
-      url(2),
-      url(3),
+      `blob:${url(1)}`,
+      `blob:${url(2)}`,
+      `blob:${url(3)}`,
     ]);
     expect(images[1]).toHaveAccessibleName("Reported post, 2 of 3");
     expect(within(list).getAllByRole("link")[0]).toHaveAttribute(
       "href",
-      url(1)
+      `blob:${url(1)}`
     );
   });
 
@@ -316,3 +316,7 @@ describe("AdminModeration — restricted accounts (S4e)", () => {
     expect(await screen.findByText("Dana R.")).toBeInTheDocument();
   });
 });
+
+vi.mock("@/hooks/useActivityMedia", () => ({
+  useActivityMedia: (url: string) => (url ? `blob:${url}` : undefined),
+}));

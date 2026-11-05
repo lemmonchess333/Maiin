@@ -1,3 +1,4 @@
+import { useActivityMedia } from "@/hooks/useActivityMedia";
 /**
  * Admin moderation queue page.
  *
@@ -151,6 +152,34 @@ function targetPhotos(report: Report): string[] {
         typeof url === "string" && url.startsWith("https://")
     )
     .slice(0, 4);
+}
+
+function ReportedPhoto({
+  url,
+  reportId,
+  alt,
+}: {
+  url: string;
+  reportId: string;
+  alt: string;
+}) {
+  const src = useActivityMedia(url, reportId);
+  return (
+    <a
+      href={src}
+      target="_blank"
+      rel="noreferrer"
+      className="block aspect-square overflow-hidden rounded-lg bg-muted"
+    >
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        className="size-full object-cover"
+      />
+    </a>
+  );
 }
 
 function targetPreview(report: Report): string {
@@ -391,20 +420,11 @@ export default function AdminModeration() {
                     >
                       {targetPhotos(report).map((url, i, all) => (
                         <li key={url}>
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block aspect-square overflow-hidden rounded-lg bg-muted"
-                          >
-                            <img
-                              src={url}
-                              alt={`Reported post, ${i + 1} of ${all.length}`}
-                              loading="lazy"
-                              decoding="async"
-                              className="size-full object-cover"
-                            />
-                          </a>
+                          <ReportedPhoto
+                            url={url}
+                            reportId={report.reportId}
+                            alt={`Reported post, ${i + 1} of ${all.length}`}
+                          />
                         </li>
                       ))}
                     </ul>

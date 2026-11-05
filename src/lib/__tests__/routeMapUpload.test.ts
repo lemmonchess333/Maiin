@@ -32,24 +32,16 @@ vi.mock("../firebase", () => ({
   functions: {},
   auth: { currentUser: { uid: "runner" } },
 }));
-vi.mock("firebase/storage", () => ({
-  ref: (_storage: unknown, path: string) => ({ fullPath: path }),
-  uploadBytes: vi.fn(
-    async (r: { fullPath: string }, _blob: Blob, meta: object) => {
-      H.events.push(`upload ${r.fullPath} ${JSON.stringify(meta)}`);
+vi.mock("../activityMedia", () => ({
+  uploadActivityMedia: vi.fn(
+    async (key: { activityId: string; id: string }) => {
+      const path = `route-maps/runner/${key.activityId}/${key.id}.jpg`;
+      H.events.push(`upload ${path}`);
+      H.events.push(`screen ${path}`);
+      if (H.screen !== "ok") throw new Error(H.screen);
+      return `https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/${encodeURIComponent(path)}`;
     }
   ),
-  getDownloadURL: vi.fn(
-    async (r: { fullPath: string }) =>
-      `https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/${encodeURIComponent(r.fullPath)}?alt=media&token=t`
-  ),
-}));
-vi.mock("firebase/functions", () => ({
-  httpsCallable: () => async (payload: { path: string }) => {
-    H.events.push(`screen ${payload.path}`);
-    if (H.screen === "unavailable") throw new Error("unavailable");
-    return { data: { ok: H.screen === "ok" } };
-  },
 }));
 vi.mock("../routeMapImage", () => ({
   renderRouteMapImages: vi.fn((line: unknown) => H.render!(line)),
@@ -110,14 +102,10 @@ describe("attachRouteMap", () => {
     expect(vi.mocked(renderRouteMapImages).mock.calls[0][0]).toBe(
       SHARED.mapLine
     );
-    const meta = JSON.stringify({
-      contentType: "image/jpeg",
-      cacheControl: "public, max-age=31536000, immutable",
-    });
     expect(H.events).toEqual([
-      `upload route-maps/runner/${postId}/light.jpg ${meta}`,
+      `upload route-maps/runner/${postId}/light.jpg`,
       `screen route-maps/runner/${postId}/light.jpg`,
-      `upload route-maps/runner/${postId}/dark.jpg ${meta}`,
+      `upload route-maps/runner/${postId}/dark.jpg`,
       `screen route-maps/runner/${postId}/dark.jpg`,
     ]);
     const routeMap = readDoc(`activities/${postId}`)?.routeMap as Record<

@@ -136,6 +136,9 @@ def source_targets():
                                             "lib/discoveryHidden.js"],
         "setLeagueSharing": league_paths,
         # Ship1: the photos other people see, screened for nudity.
+        "readReportedActivityMedia": ["index.js", "lib/activityMedia.js", "lib/photoScreen.js", "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js", "adminAuth.js"],
+        "readActivityMedia": ["index.js", "lib/activityMedia.js", "lib/photoScreen.js", "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js"],
+        "uploadActivityMedia": ["index.js", "lib/activityMedia.js", "lib/photoScreen.js", "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js"],
         "screenPhoto": ["index.js", "lib/photoScreen.js"],
         "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],
         # S4e: a restriction refuses props and comments; the moderation page lifts one.

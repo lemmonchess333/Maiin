@@ -1,3 +1,4 @@
+import { useActivityMedia } from "@/hooks/useActivityMedia";
 /**
  * RouteMapHero — a run card's route on a real street map (Soc15 call 5).
  *
@@ -28,7 +29,8 @@ function MapImage({
   src: string;
 }) {
   const [state, setState] = useState<"loading" | "shown" | "failed">("loading");
-  const shown = state === "shown";
+  const imageUrl = useActivityMedia(src);
+  const shown = state === "shown" && Boolean(imageUrl);
   return (
     <>
       {/* The drawing until the map is in; under it, out of the
@@ -36,9 +38,9 @@ function MapImage({
       <div className="absolute inset-0" aria-hidden={shown || undefined}>
         <RouteScene preview={preview} />
       </div>
-      {state !== "failed" && (
+      {state !== "failed" && imageUrl && (
         <img
-          src={src}
+          src={imageUrl}
           alt="Run route map"
           aria-hidden={!shown || undefined}
           loading="lazy"

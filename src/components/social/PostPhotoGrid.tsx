@@ -1,3 +1,4 @@
+import { useActivityMedia } from "@/hooks/useActivityMedia";
 /**
  * A post's photos on its card (Soc15 call 2), laid out by how many there
  * are, as Strava and Hevy lay theirs out:
@@ -43,24 +44,25 @@ function Tile({
   onOpen: () => void;
 }) {
   const [failed, setFailed] = useState(false);
+  const src = useActivityMedia(photo.url);
   return (
     <button
       type="button"
       onClick={onOpen}
-      aria-label={failed ? alt : undefined}
+      aria-label={alt}
       className={cn(
         "relative min-h-0 overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
         className
       )}
     >
-      {failed ? (
+      {failed || !src ? (
         <ImageOff
           aria-hidden="true"
           className="absolute left-1/2 top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 text-muted-foreground"
         />
       ) : (
         <img
-          src={photo.url}
+          src={src}
           alt={alt}
           width={photo.w}
           height={photo.h}

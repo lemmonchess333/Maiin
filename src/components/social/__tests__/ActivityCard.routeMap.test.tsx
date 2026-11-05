@@ -120,11 +120,15 @@ describe("a run card with a map image", () => {
 
   it("shows the theme on screen's image, and follows the theme when it flips", async () => {
     const { container } = renderCard();
-    expect(mapImage(container)!.getAttribute("src")).toBe(ROUTE_MAP.light);
+    expect(mapImage(container)!.getAttribute("src")).toBe(
+      `blob:${ROUTE_MAP.light}`
+    );
     await act(async () => {
       document.documentElement.classList.add("dark");
     });
-    expect(mapImage(container)!.getAttribute("src")).toBe(ROUTE_MAP.dark);
+    expect(mapImage(container)!.getAttribute("src")).toBe(
+      `blob:${ROUTE_MAP.dark}`
+    );
   });
 
   it("keeps the drawn route when the image will not load", () => {
@@ -184,3 +188,7 @@ describe("the card loads no map library", () => {
     }
   });
 });
+
+vi.mock("@/hooks/useActivityMedia", () => ({
+  useActivityMedia: (url: string) => (url ? `blob:${url}` : undefined),
+}));
