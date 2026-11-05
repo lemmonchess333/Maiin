@@ -382,7 +382,13 @@ describe("lookupInviter — the signed-out welcome line", () => {
     expect(
       await lookupInviter({
         firestore: world({
-          "deletedAccounts/maya": { deletedAt: NOW, expiresAt: NOW + DAY },
+          // Dated from the real clock: transactionAccountsLive compares
+          // the tombstone's expiresAt with Date.now(), so a date pinned
+          // to NOW goes stale (unit-future, and any run a day later).
+          "deletedAccounts/maya": {
+            deletedAt: Date.now(),
+            expiresAt: Date.now() + DAY,
+          },
         }),
         code: CODE,
       })
