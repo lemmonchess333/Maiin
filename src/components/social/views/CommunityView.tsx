@@ -4,6 +4,7 @@ import CirclesSection, {
   type CirclesSectionState,
 } from "@/components/social/CirclesSection";
 import SpacesDirectory from "@/features/spaces/SpacesDirectory";
+import PlanGroupCard from "@/features/spaces/PlanGroupCard";
 /* ChallengeList is lazy-loaded so the Social entry chunk stays lean: it
    only loads when the user opens the Together tab. lazyRetry gives the
    same stale-chunk recovery the page-level lazy loads use. */
@@ -26,7 +27,8 @@ const LeagueCard = lazyRetry(() => import("@/features/league/LeagueCard"));
  *              challenge, the start-or-join card alone.
  *   This week  the weekly challenge, whose action is the page's one
  *              filled button (or, with no Circle yet, Start a circle is),
- *              then the weekly league
+ *              then the weekly league, then the person's plan group (the
+ *              people training for their race), when they have one
  *   Discover   the other challenges as a quiet list, the community goal
  *              first once it has moved, then Spaces, then races
  *
@@ -128,6 +130,7 @@ export default function CommunityView({
               </Suspense>
             ) : null
           }
+          planGroup={uid ? <PlanGroupCard /> : null}
           weeklyLeads={circlesState !== "none"}
         />
       </Suspense>
