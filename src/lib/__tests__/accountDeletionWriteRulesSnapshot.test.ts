@@ -207,6 +207,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /standings/{memberUid}",
   "match /leagueWeeks/{weekKey}",
   "match /leagueStatus/{doc}",
+  // Soc15 plan groups: how many people are training for each race, a
+  // count the server recounts (lib/raceCohorts.js). Read by anyone signed
+  // in, written by no client, and it names no one.
+  "match /raceCohorts/{spaceId}",
   // Polish3 call 1: who has blocked this account. Read by that account
   // only; onBlockWritten writes it (system-writer guard), and the
   // executor deletes it both ways (blockedByOwn, blockedByReverse).

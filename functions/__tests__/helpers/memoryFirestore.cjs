@@ -6,6 +6,7 @@ function memoryFirestore(seed = {}) {
   const operations = [];
   const failures = new Map();
   let autoIds = 0;
+  let lastReadMs = 0;
   function check(path, operation) {
     const key = `${operation}:${path}`;
     if (failures.has(key)) throw failures.get(key);
@@ -103,11 +104,16 @@ function memoryFirestore(seed = {}) {
       limit: (n) => collection(path, group, filters, cursor, n),
       startAfter: (r) => collection(path, group, filters, r.path || r, cap),
       // An aggregation, as Firestore's count(): the matching documents'
-      // number, without them.
+      // number, without them, and the time it was read. Each read is
+      // later than the last, as Firestore's read times are.
       count: () => ({
         get: async () => {
           const result = await q.get();
-          return { data: () => ({ count: result.size }) };
+          const readMs = (lastReadMs = Math.max(Date.now(), lastReadMs + 1));
+          return {
+            readTime: { toMillis: () => readMs },
+            data: () => ({ count: result.size }),
+          };
         },
       }),
       get: async () => {

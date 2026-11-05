@@ -50,6 +50,8 @@ const leagues = require("./lib/leagues");
 const leagueRules = require("./lib/leagueRules");
 // Soc15: a medal per challenge edition, and the public trophy case.
 const medals = require("./lib/medals");
+// Soc15: plan groups, how many people are training for each race.
+const raceCohorts = require("./lib/raceCohorts");
 const restrictedIdentities = require("./lib/restrictedIdentities");
 const {
   mergeChangedFields,
@@ -4235,6 +4237,74 @@ exports._utcDateString = _utcDateString;
 exports._decideReconciliationActions = _decideReconciliationActions;
 exports._needsRaceNoShowEvaluation = _needsRaceNoShowEvaluation;
 exports._recoveryEndDateForRace = _recoveryEndDateForRace;
+
+// ══════════════════════════════════════════════
+// Plan groups (Soc15): how many people are training for each race
+// ══════════════════════════════════════════════
+//
+// `raceCohorts/{spaceId}` = { count, updatedAt }, a count aggregation over
+// the race goals bound to that race space whose race is still ahead
+// (lib/raceCohorts.js). Recounted, never incremented.
+
+/**
+ * A write to a user document that sets, moves or clears a race goal bound
+ * to a race space recounts the old space and the new one.
+ *
+ * Why a trigger on `users/{uid}` rather than a call in each writer: the
+ * goal has many writers. `completeOnboarding` and `configurePlan` send it
+ * whole, `applyProgramCommand` writes it as a profile effect (the recovery
+ * exit), `dailyRaceReconciliationSweep` clears it after a race, the rules
+ * still let the owner's own client write it, and account deletion removes
+ * the document. One trigger sees all of them, deletion included, and a
+ * writer added later cannot forget to recount. Almost every write to the
+ * document leaves the goal's space and race day alone, and returns before
+ * it reads anything.
+ *
+ * Not held back for an account being deleted: the recount stores a number
+ * about the race, nothing about the person, and the deleted document is
+ * exactly what it must stop counting. Retried: a second delivery counts the
+ * same people, and an older count never replaces a newer one.
+ */
+exports.onRaceGoalWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const spaceIds = raceCohorts.spacesToRecount(
+      change.before.exists ? change.before.data() : null,
+      change.after.exists ? change.after.data() : null
+    );
+    if (spaceIds.length === 0) return null;
+    const steps = triggerSteps("onRaceGoalWritten");
+    for (const spaceId of spaceIds) {
+      await steps.run(spaceId, () =>
+        raceCohorts.recountRaceCohort(db, spaceId)
+      );
+    }
+    steps.settle();
+    return null;
+  });
+
+/**
+ * dailyRaceCohortRecount — every race still ahead, counted again each
+ * night at 04:30 UTC, after the race reconciliation sweep has cleared the
+ * goals of races that are over. It puts right a count whose trigger gave
+ * up and fills in the races nobody has changed a goal for since this
+ * shipped; a race already past is skipped.
+ */
+exports.dailyRaceCohortRecount = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("30 4 * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "dailyRaceCohortRecount", async () => {
+      const summary = await raceCohorts.sweepRaceCohorts(db, {
+        log: functions.logger,
+      });
+      functions.logger.info("dailyRaceCohortRecount.done", summary);
+      return summary;
+    })
+  );
 
 // ══════════════════════════════════════════════
 // PR-L L2 — recovery-entry on onRunCreated

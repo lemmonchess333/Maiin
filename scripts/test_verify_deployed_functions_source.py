@@ -142,6 +142,16 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
         self.assertIn("lib/notificationPreferences.js", targets["redeemInvite"])
 
+    def test_plan_group_counts_read_back_their_one_writer(self):
+        targets = verifier.source_targets()
+        for name in ("onRaceGoalWritten", "dailyRaceCohortRecount"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/raceCohorts.js",
+                                 "lib/spaceIds.js"}.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        self.assertIn("lib/triggerRetry.js", targets["onRaceGoalWritten"])
+        self.assertIn("onRaceGoalWritten", verifier.RETRY_REQUIRED)
+
     def test_league_functions_read_back_the_rules_and_the_plan_count(self):
         targets = verifier.source_targets()
         for name in ("weeklyLeagueTurn", "setLeagueSharing"):

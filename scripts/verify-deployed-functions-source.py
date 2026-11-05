@@ -25,7 +25,7 @@ RETRY_REQUIRED = frozenset({
     "onActivityCreated", "onGoalSpaceEventCreated", "onPublicProfileWritten",
     "onFollowerCreated", "onFollowRequestCreated",
     "onBlockWritten", "onPublicProfileIdentityChanged",
-    "onChallengeParticipantWritten",
+    "onChallengeParticipantWritten", "onRaceGoalWritten",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -189,6 +189,12 @@ def source_targets():
         # The daily race sweep: a no-show, the end of recovery, a finished race with no plan.
         "dailyRaceReconciliationSweep": ["index.js", "lib/raceReconciliation.js",
                                          "lib/raceDayCompletion.js", "lib/runModeResolution.js", "lib/dateUtils.js"],
+        # Soc15 plan groups: the one writer of raceCohorts, on a race goal's
+        # write and each night, and the space ids it counts.
+        "onRaceGoalWritten": ["index.js", "package-lock.json", "lib/raceCohorts.js",
+                              "lib/spaceIds.js", "lib/triggerRetry.js"],
+        "dailyRaceCohortRecount": ["index.js", "package-lock.json", "lib/raceCohorts.js",
+                                   "lib/spaceIds.js", "lib/jobRuns.js"],
         # Native APNs alerts share the existing send/ownership path. Every
         # executing sender and callable must have the new source, not only
         # the newly introduced monthly schedule.
