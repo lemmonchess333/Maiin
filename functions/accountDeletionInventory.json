@@ -1112,6 +1112,23 @@
       "testCoverageStatus": "implemented"
     },
     {
+      "key": "postPhotosStorage",
+      "domain": "C_ugc",
+      "type": "storagePrefix",
+      "path": "post-photos/{uid}/",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "userContent",
+      "recordPurpose": "userContent",
+      "strategy": "deleteStoragePrefix",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "storageAuditNote": "Audited src/lib/postPhotoUpload.ts \u2014 only post-photos/{uid}/{activityId}/{photoId}.jpg uploads (owner-write beside an existing own post / authenticated-get per storage.rules); the client also deletes a photo it takes off a post. No alternate paths.",
+      "reason": "A shared session's photos (Soc15 call 2): one to four on a feed post, screened before the post names them. Each post's folder is deleted with the post (onActivityDeleted, functions/lib/postPhotos.js), named or not; this prefix sweep removes every remaining one on account deletion. In STORAGE_PREFIX_TEMPLATES (functions/accountDeletion.js step 6).",
+      "testCoverageKey": "unit::accountDeletion.postPhotosStorage",
+      "testCoverageStatus": "implemented"
+    },
+    {
       "key": "userFcmDevices",
       "domain": "F_usage",
       "type": "userSubcollection",

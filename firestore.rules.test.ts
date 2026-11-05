@@ -3335,6 +3335,274 @@ suite(
       });
     });
 
+    // Soc15 call 2: one to four photos on a shared session, named by the
+    // author's app once each is uploaded beside the post and screened
+    // (src/lib/postPhotoUpload.ts). Only this post's own uploads in this
+    // project's bucket, never on a create, and never with another change.
+    describe("a post's photos", () => {
+      const BUCKET =
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
+      const photoUrl = (
+        author: string,
+        post: string,
+        id: string,
+        bucket = BUCKET
+      ) =>
+        `${bucket}post-photos%2F${author}%2F${post}%2F${id}.jpg?alt=media&token=t0k`;
+      const IDS = [
+        "Aaaaaaaa1",
+        "Bbbbbbbb2",
+        "Cccccccc3",
+        "Dddddddd4",
+        "Eeeee5",
+      ];
+      const photo = (i: number, post = "P1", author = OWNER_UID) => ({
+        id: IDS[i],
+        url: photoUrl(author, post, IDS[i]),
+        w: 1600,
+        h: 1200,
+      });
+      const photos = (n: number, post = "P1") =>
+        Array.from({ length: n }, (_, i) => photo(i, post));
+
+      async function seedPost(id: string, extra: Record<string, unknown> = {}) {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(doc(ctx.firestore(), "activities", id), {
+            ...makeValidActivity(),
+            createdAt: new Date(),
+            ...extra,
+          });
+        });
+      }
+      const verifiedOwner = () =>
+        env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      const setPhotos = (db: Firestore, id: string, value: unknown) =>
+        setDoc(doc(db, "activities", id), { photos: value }, { merge: true });
+
+      it("the author can name one to four of their post's own photos, on a lift's post or a run's", async () => {
+        await seedPost("P1");
+        await seedPost("W1", { type: "workout" });
+        const db = verifiedOwner();
+        for (const n of [1, 2, 3, 4]) {
+          await assertSucceeds(setPhotos(db, "P1", photos(n)));
+        }
+        await assertSucceeds(setPhotos(db, "W1", photos(2, "W1")));
+        // Either bucket name the project's storage answers to.
+        await assertSucceeds(
+          setPhotos(db, "P1", [
+            {
+              ...photo(0),
+              url: photoUrl(
+                OWNER_UID,
+                "P1",
+                IDS[0],
+                BUCKET.replace("firebasestorage.app", "appspot.com")
+              ),
+            },
+          ])
+        );
+      });
+
+      it("the author can take photos off, down to none, or the field away", async () => {
+        await seedPost("P1", { photos: photos(4) });
+        const db = verifiedOwner();
+        await assertSucceeds(setPhotos(db, "P1", [photo(0), photo(2)]));
+        await assertSucceeds(setPhotos(db, "P1", []));
+        await seedPost("P2", { photos: photos(2, "P2") });
+        await assertSucceeds(
+          setDoc(
+            doc(db, "activities", "P2"),
+            { photos: deleteField() },
+            { merge: true }
+          )
+        );
+      });
+
+      it("refuses a fifth photo", async () => {
+        await seedPost("P1");
+        const db = verifiedOwner();
+        await assertFails(setPhotos(db, "P1", [...photos(4), photo(4)]));
+        // Anchor: the same four alone land.
+        await assertSucceeds(setPhotos(db, "P1", photos(4)));
+      });
+
+      it("takes no URL but this post's own upload of that photo, and no other shape", async () => {
+        await seedPost("P1");
+        const db = verifiedOwner();
+        const one = photo(0);
+        const bad: [string, unknown][] = [
+          [
+            "another person's",
+            { ...one, url: photoUrl(STRANGER_UID, "P1", one.id) },
+          ],
+          [
+            "another post's",
+            { ...one, url: photoUrl(OWNER_UID, "P2", one.id) },
+          ],
+          ["another photo's", { ...one, url: photo(1).url }],
+          [
+            "another bucket",
+            {
+              ...one,
+              url: photoUrl(
+                OWNER_UID,
+                "P1",
+                one.id,
+                BUCKET.replace("adaptive-fitness-af8bb", "evil-project")
+              ),
+            },
+          ],
+          ["a tracking pixel", { ...one, url: "https://evil.example/p.gif" }],
+          [
+            "a route map",
+            {
+              ...one,
+              url: `${BUCKET}route-maps%2F${OWNER_UID}%2FP1%2Flight.jpg`,
+            },
+          ],
+          [
+            "a nested file",
+            {
+              ...one,
+              url: `${BUCKET}post-photos%2F${OWNER_UID}%2FP1%2Fx%2F${one.id}.jpg`,
+            },
+          ],
+          ["http", { ...one, url: one.url.replace("https://", "http://") }],
+          ["too long", { ...one, url: one.url + "x".repeat(2048) }],
+          ["an extra key", { ...one, caption: "hi" }],
+          ["no size", { id: one.id, url: one.url }],
+          ["a fractional width", { ...one, w: 1600.5 }],
+          ["a zero height", { ...one, h: 0 }],
+          ["a width past 4096", { ...one, w: 4097 }],
+          ["a text width", { ...one, w: "1600" }],
+          [
+            "an id with a slash",
+            {
+              ...one,
+              id: "Aaaa/aaa1",
+              url: photoUrl(OWNER_UID, "P1", "Aaaa/aaa1"),
+            },
+          ],
+          [
+            "a short id",
+            { ...one, id: "Aa1", url: photoUrl(OWNER_UID, "P1", "Aa1") },
+          ],
+          ["not a map", one.url],
+          ["null", null],
+        ];
+        for (const [, entry] of bad) {
+          await assertFails(setPhotos(db, "P1", [entry]));
+          // A bad photo after a good one is refused too: every index is
+          // checked.
+          await assertFails(setPhotos(db, "P1", [photo(1), entry]));
+        }
+        await assertFails(setPhotos(db, "P1", "not a list"));
+        await assertFails(setPhotos(db, "P1", { 0: one }));
+        // Anchor: the same write with its own photo lands.
+        await assertSucceeds(setPhotos(db, "P1", [one]));
+      });
+
+      it("nobody else can name photos on it, a follower or a stranger", async () => {
+        await seedPost("P1");
+        const strangerDb = env
+          .authenticatedContext(STRANGER_UID, VERIFIED)
+          .firestore();
+        await assertFails(setPhotos(strangerDb, "P1", photos(1)));
+        await assertFails(
+          setPhotos(strangerDb, "P1", [
+            { ...photo(0), url: photoUrl(STRANGER_UID, "P1", IDS[0]) },
+          ])
+        );
+        await seedPost("P2", { photos: photos(2, "P2") });
+        await assertFails(setPhotos(strangerDb, "P2", []));
+      });
+
+      it("changes nothing else in the same write", async () => {
+        await seedPost("P1", {
+          routePreview: [
+            { lat: 51.5, lon: -0.12 },
+            { lat: 51.51, lon: -0.12 },
+          ],
+        });
+        const db = verifiedOwner();
+        for (const other of [
+          { visibility: "private" },
+          { caption: "edited" },
+          { distance: 99999 },
+          { kudosCount: 5 },
+          {
+            routeMap: {
+              light: `${BUCKET}route-maps%2F${OWNER_UID}%2FP1%2Flight.jpg?alt=media`,
+              dark: `${BUCKET}route-maps%2F${OWNER_UID}%2FP1%2Fdark.jpg?alt=media`,
+            },
+          },
+        ]) {
+          await assertFails(
+            setDoc(
+              doc(db, "activities", "P1"),
+              { photos: photos(1), ...other },
+              { merge: true }
+            )
+          );
+        }
+        // Anchor: the photos alone land.
+        await assertSucceeds(setPhotos(db, "P1", photos(1)));
+        // Visibility alone still changes on a post with photos.
+        await assertSucceeds(
+          setDoc(
+            doc(db, "activities", "P1"),
+            { visibility: "followers" },
+            { merge: true }
+          )
+        );
+      });
+
+      it("a create carries no photos", async () => {
+        const db = verifiedOwner();
+        await assertFails(
+          setDoc(
+            doc(db, "activities", "C1"),
+            makeValidActivity({ photos: photos(1, "C1") })
+          )
+        );
+        await assertFails(
+          setDoc(doc(db, "activities", "C2"), makeValidActivity({ photos: [] }))
+        );
+        // Anchor: the same post without them lands.
+        await assertSucceeds(
+          setDoc(doc(db, "activities", "C3"), makeValidActivity())
+        );
+      });
+
+      it("an unverified account adds none, and may still take its photos off", async () => {
+        await seedPost("P1", { photos: photos(2) });
+        const unverifiedDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertFails(setPhotos(unverifiedDb, "P1", photos(3)));
+        await assertFails(setPhotos(unverifiedDb, "P1", [photo(0), photo(2)]));
+        await assertSucceeds(setPhotos(unverifiedDb, "P1", [photo(1)]));
+        // Anchor: verified, the same addition lands.
+        await assertSucceeds(setPhotos(verifiedOwner(), "P1", photos(3)));
+      });
+
+      it("a restricted account adds photos to its private post only, and may take them off any", async () => {
+        await seedPost("PUB", { photos: [photo(0, "PUB")] });
+        await seedPost("FOL", { visibility: "followers" });
+        await seedPost("PRIV", { visibility: "private" });
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(
+            doc(ctx.firestore(), "globalRestrictedUids", OWNER_UID),
+            { restrictedAt: new Date() }
+          );
+        });
+        const db = verifiedOwner();
+        await assertFails(setPhotos(db, "PUB", photos(2, "PUB")));
+        await assertFails(setPhotos(db, "FOL", photos(1, "FOL")));
+        await assertSucceeds(setPhotos(db, "PRIV", photos(2, "PRIV")));
+        // Taking its own photos off stays open (S4e).
+        await assertSucceeds(setPhotos(db, "PUB", []));
+      });
+    });
+
     it("client cannot directly write comment doc (server-only)", async () => {
       await env.withSecurityRulesDisabled(async (ctx) => {
         const db = ctx.firestore();

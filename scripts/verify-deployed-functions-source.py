@@ -79,6 +79,7 @@ def source_targets():
                                 "lib/pushSchedule.js", "lib/accountDeletionLocks.js"]
     circle_paths = ["index.js", "package-lock.json", "lib/goalSpaceMembership.js",
                     "lib/restriction.js", "lib/accountDeletionLocks.js"]
+    report_paths = ["index.js", "lib/reportTargets.js", "lib/postPhotos.js", "lib/routeMapFiles.js"]
     invite_paths = ["index.js", "package-lock.json", "lib/inviteCodes.js",
                     "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
                     "lib/restriction.js", "lib/accountDeletionLocks.js"]
@@ -90,7 +91,11 @@ def source_targets():
         "addCommentCallable": comment_paths + ["lib/objectionableText.js"],
         "addSpacePostCommentCallable": comment_paths + ["lib/objectionableText.js"],
         # Moderation (App Review 1.2): the report alert and the Space post filter.
-        "createReport": ["index.js", "lib/reportAlert.js", "lib/reportTargets.js"],
+        # A reported post's preview carries its photos (Soc15 call 2), so the
+        # queue's reader and the hide action read back the same resolver.
+        "createReport": report_paths + ["lib/reportAlert.js"],
+        "listPendingReports": report_paths,
+        "resolveReport": report_paths,
         "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js", "lib/spacePostPhoto.js"],
         "onPublicProfileWritten": ["index.js", "package-lock.json", "lib/objectionableText.js",
                                    "profanityFilter.js", "lib/hateTerms.js", "lib/triggerRetry.js",
@@ -153,9 +158,9 @@ def source_targets():
         # admission receipt before a release can report either trigger current.
         "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js",
                               "lib/discoveryHidden.js"],
-        # A deleted post leaves the feeds, and a run post's map files go with it.
+        # A deleted post leaves the feeds, and its map files and photos go with it.
         "onActivityDeleted": ["index.js", "package-lock.json", "lib/socialFanout.js",
-                              "lib/routeMapFiles.js"],
+                              "lib/routeMapFiles.js", "lib/postPhotos.js"],
         "onGoalSpaceEventCreated": ["index.js", "package-lock.json", "rateLimiter.js", "lib/socialFanout.js"],
         "onFollowerCreated": ["index.js", "package-lock.json", "lib/socialFanout.js",
                               "lib/followBackfill.js", "lib/feedIndex.js"],

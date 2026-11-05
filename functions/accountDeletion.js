@@ -159,6 +159,11 @@ const STORAGE_PREFIX_TEMPLATES = Object.freeze([
   // route-maps/{uid}/{activityId}/. Each folder goes with its post
   // (onActivityDeleted); this sweep removes every one the account has.
   "route-maps/__UID__/",
+  // A shared session's photos (Soc15 call 2, src/lib/postPhotoUpload.ts),
+  // post-photos/{uid}/{activityId}/. Each folder goes with its post
+  // (onActivityDeleted); this sweep removes every one the account has,
+  // the uploads no post ever named included.
+  "post-photos/__UID__/",
 ]);
 
 function storagePrefixesFor(uid) {

@@ -3,9 +3,10 @@
 /**
  * Screening a photo other people will see (Ship1).
  *
- * Three kinds of upload reach other people: a Space post's photo
- * (`space-photos/{uid}/…`), a profile photo (`profile-photos/{uid}/…`)
- * and a run post's map image (`route-maps/{uid}/…`, Soc15 call 5). The
+ * Four kinds of upload reach other people: a Space post's photo
+ * (`space-photos/{uid}/…`), a profile photo (`profile-photos/{uid}/…`),
+ * a run post's map image (`route-maps/{uid}/…`, Soc15 call 5) and a
+ * shared session's photos (`post-photos/{uid}/…`, Soc15 call 2). The
  * app draws a map, but any client may put any JPEG at its own path, so a
  * map is screened as a photo is.
  * Each is checked with Google Cloud Vision's SafeSearch before anyone
@@ -28,6 +29,7 @@ const SCREENED_PATHS = [
   /^space-photos\/([^/]+)(?:\/[\s\S]*)?$/,
   /^profile-photos\/([^/]+)(?:\/[\s\S]*)?$/,
   /^route-maps\/([^/]+)(?:\/[\s\S]*)?$/,
+  /^post-photos\/([^/]+)(?:\/[\s\S]*)?$/,
 ];
 
 /** SafeSearch's likelihoods at which a photo is refused as nudity. */

@@ -241,6 +241,8 @@ Audited May 2026. Re-verify when products change. Each subsection lists what the
 
 **Tropos position (locked in the Social uplift arc, PRs #1575/#1576/v3):** conform on both halves. Editorial surfaces (challenge cards first; plan/curated surfaces may follow) render licensed photography with a sport-coded tint wash + scrim (`src/lib/editorialImages.ts`, assets in `src/assets/editorial/` — build-time glob, designed no-photo fallback until assets land). Feed cards stay user-data imagery: GPS route scenes and the brand muscle figure. Stock people never appear inside the peer feed; private user photos (progress/food) never leak to social. An earlier blanket "no stock imagery anywhere" stance was overturned by the operator citing Runna/Strava — the refined line above is the durable decision.
 
+STATUS 2026-11-05 (Soc15 call 2): the feed's user imagery now includes the person's own photos. A **post photo** is one of the one to four photos the author adds to a shared session after it is posted (`photos: [{ id, url, w, h }]` on `activities/{id}`, files at `post-photos/{uid}/{activityId}/{photoId}.jpg`, screened before the post names them, deleted with the post). Not a **meal photo**, which stays on the device (Food9), nor a progress photo, which only its owner reads; neither ever reaches social. Strava, Hevy and Nike Run Club all let a post carry its author's photos.
+
 ### Follow approval (Polish2, 2026-10-20)
 
 **Reference apps** (checked against their own pages, 2026-10-20):

@@ -18,6 +18,7 @@
  */
 
 const { isDocumentId } = require("./documentId");
+const { postPhotoUrls } = require("./postPhotos");
 
 /* Ids on the wire:
  *   activity            → "<activityId>"
@@ -264,6 +265,10 @@ async function resolveReportTarget({
         runName: previewString(data.runName),
         visibility: previewString(data.visibility),
         flagged: data.flagged === true,
+        // A post's photos are part of what was reported (Soc15 call 2):
+        // the queue shows them, so a moderator sees the post as its
+        // readers did. Only this post's own uploads, at most four.
+        photos: postPhotoUrls(data.photos, uid, target.activityId),
       },
     };
   }

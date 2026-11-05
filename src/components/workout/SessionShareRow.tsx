@@ -29,15 +29,24 @@
  * A restricted account shares nothing (S4e): the row waits for that answer
  * too, so an automatic share never goes out ahead of it, and then says so
  * in the row's place. A post that already went out keeps its Undo.
+ *
+ * A post that went out online offers Add photos under it (Soc15 call 2):
+ * sharing is mostly automatic, so this row is where most posts get their
+ * photos (PostPhotosSheet). A post waiting in the offline queue offers
+ * nothing until it is posted, and offline the button is off and says why.
  */
-import { useEffect, useId, useState } from "react";
-import { Check, Clock, EyeOff, Globe, Users } from "lucide-react";
+import { Suspense, useEffect, useId, useState } from "react";
+import { Camera, Check, Clock, EyeOff, Globe, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/lib/auth";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
+import { POST_PHOTOS_COPY } from "@/components/social/postPhotosCopy";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { lazyRetry } from "@/lib/lazyRetry";
+import { knownPostPhotos, type PostPhoto } from "@/lib/postPhotos";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
@@ -78,6 +87,11 @@ const NOTE: Record<Note, string> = {
   removed: "Removed from the feed.",
   cancelled: "It won't be shared.",
 };
+
+/* Loaded the first time a person opens it: most finish screens never do. */
+const PostPhotosSheet = lazyRetry(
+  () => import("@/components/social/PostPhotosSheet")
+);
 
 const NOUN: Record<ShareType, string> = {
   run: "run",
@@ -320,6 +334,14 @@ function ShareRow({
         )}
       </div>
 
+      {live && live.outcome.status === "posted" && !live.undoing && (
+        <FinishPostPhotos
+          key={live.outcome.activityId}
+          activityId={live.outcome.activityId}
+          visibility={live.outcome.visibility}
+        />
+      )}
+
       {state.kind === "ask" && (
         // The standard card: the answers are secondary buttons, whose fill
         // is the muted tone, so a muted card would hide them.
@@ -374,6 +396,68 @@ function ShareRow({
         >
           Share this session
         </Button>
+      )}
+    </div>
+  );
+}
+
+/** Add photos, under a session's post once it is posted (Soc15 call 2),
+ *  and the sheet it opens. The photos this app session has already put
+ *  on the post come back with a finish screen that mounts again, so the
+ *  sheet never writes a list without them. */
+function FinishPostPhotos({
+  activityId,
+  visibility,
+}: {
+  activityId: string;
+  visibility: ShareVisibility;
+}) {
+  const { isOnline } = useOnlineStatus();
+  const [open, setOpen] = useState(false);
+  /* Mounted from the first open on, so it can animate closed. */
+  const [opened, setOpened] = useState(false);
+  const [photos, setPhotos] = useState<PostPhoto[]>(
+    () => knownPostPhotos(activityId) ?? []
+  );
+  const count = photos.length;
+  return (
+    <div className="space-y-2">
+      <Button
+        variant="secondary"
+        fullWidth
+        leftIcon={<Camera className="size-4 shrink-0" aria-hidden />}
+        disabled={!isOnline}
+        onClick={() => {
+          haptic("light");
+          setOpened(true);
+          setOpen(true);
+        }}
+      >
+        {count > 0 ? POST_PHOTOS_COPY.edit : POST_PHOTOS_COPY.add}
+      </Button>
+      {!isOnline ? (
+        <p className="text-xs text-muted-foreground">
+          {POST_PHOTOS_COPY.offline}
+        </p>
+      ) : (
+        count > 0 && (
+          <p className="text-xs text-muted-foreground">
+            <span className="font-mono tabular-nums">{count}</span>{" "}
+            {count === 1 ? "photo" : "photos"} on the post
+          </p>
+        )
+      )}
+      {opened && (
+        <Suspense fallback={null}>
+          <PostPhotosSheet
+            open={open}
+            onOpenChange={setOpen}
+            activityId={activityId}
+            photos={photos}
+            onPhotosChange={setPhotos}
+            visibility={visibility}
+          />
+        </Suspense>
       )}
     </div>
   );

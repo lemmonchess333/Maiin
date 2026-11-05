@@ -176,6 +176,8 @@ const communityGoal = require("./lib/communityGoal");
 const spacePostPhoto = require("./lib/spacePostPhoto");
 // A run post's map images, deleted with the post (Soc15 call 5).
 const routeMapFiles = require("./lib/routeMapFiles");
+// A shared session's photos, deleted with the post (Soc15 call 2).
+const postPhotos = require("./lib/postPhotos");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -6377,7 +6379,10 @@ exports.onActivityCreated = functions
  * points at a post the rules no longer let anyone read.
  *
  * A run post's map images go with it too (lib/routeMapFiles.js, Soc15
- * call 5): its `route-maps/{authorId}/{activityId}/` folder.
+ * call 5): its `route-maps/{authorId}/{activityId}/` folder. So do the
+ * post's photos (lib/postPhotos.js, Soc15 call 2): its
+ * `post-photos/{authorId}/{activityId}/` folder, whatever the post named,
+ * since an upload can land and never be named.
  *
  * No account-deletion guard, unlike onWorkoutDeleted / onRunDeleted: those
  * write, and could re-create what the executor erased. This only deletes
@@ -6409,6 +6414,16 @@ exports.onActivityDeleted = functions
       });
       if (mapFolder)
         functions.logger.info("onActivityDeleted.route_map_removed", {
+          activityId,
+        });
+      const photoFolder = await postPhotos.deletePostPhotoFiles({
+        data: snap.data(),
+        activityId,
+        getBucket: () => admin.storage().bucket(),
+        logger: functions.logger,
+      });
+      if (photoFolder)
+        functions.logger.info("onActivityDeleted.post_photos_removed", {
           activityId,
         });
     } catch (err) {
@@ -6578,7 +6593,8 @@ function queueReason(value) {
 
 /**
  * Screens a photo the caller just uploaded for other people to see, a
- * Space post's or their profile's, before the app uses it
+ * Space post's, a shared session's or their profile's, before the app
+ * uses it
  * (lib/photoScreen.js, Ship1). Answers { ok: false } when the photo is
  * refused as nudity, its file already deleted, and "unavailable" when it
  * could not be checked, so the app posts nothing it couldn't check.

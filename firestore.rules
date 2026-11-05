@@ -370,6 +370,53 @@ service cloud.firestore {
         && data.routePreview.size() > 1;
     }
 
+    /* A shared session's photo (Soc15 call 2): the download URL of its
+       author's own upload of THIS post's photo `id`,
+       post-photos/{authorId}/{postId}/{id}.jpg in this project's bucket,
+       the one place src/lib/postPhotoUpload.ts puts one and the path the
+       photo screen checks. Nothing else, no avatar host, no other post's
+       photo. The id is held to its own pattern first (`isPostPhoto`), so
+       only letters, digits, '-' and '_' are spliced into this one.
+       functions/lib/postPhotos.js gives the moderation queue the same
+       answer. */
+    function isPostPhotoUrl(v, authorId, postId, id) {
+      return v is string
+        && v.size() <= 2048
+        && v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/post-photos%2F' + authorId + '%2F' + postId + '%2F' + id + '\\.jpg([?#].*)?$');
+    }
+
+    /* One entry of a post's `photos`: exactly its id, url, w and h; the
+       url this post's own upload of that id; each side a whole number of
+       pixels the app could have made (it encodes to a 1600 px edge). */
+    function isPostPhoto(p, authorId, postId) {
+      return p is map
+        && p.keys().hasAll(['id', 'url', 'w', 'h'])
+        && p.keys().hasOnly(['id', 'url', 'w', 'h'])
+        && p.id is string
+        && p.id.matches('^[A-Za-z0-9_-]{8,64}$')
+        && isPostPhotoUrl(p.url, authorId, postId, p.id)
+        && p.w is int && p.w >= 1 && p.w <= 4096
+        && p.h is int && p.h >= 1 && p.h <= 4096;
+    }
+
+    /* A post's `photos`: at most four, each checked at its index, as far
+       as the list goes, since rules cannot loop. */
+    function isPostPhotoList(photos, authorId, postId) {
+      return photos is list
+        && photos.size() <= 4
+        && (photos.size() < 1 || isPostPhoto(photos[0], authorId, postId))
+        && (photos.size() < 2 || isPostPhoto(photos[1], authorId, postId))
+        && (photos.size() < 3 || isPostPhoto(photos[2], authorId, postId))
+        && (photos.size() < 4 || isPostPhoto(photos[3], authorId, postId));
+    }
+
+    /* An update that only takes photos off a post (or puts them in another
+       order): every photo left on it was on it already. */
+    function onlyRemovesPostPhotos() {
+      return !('photos' in request.resource.data)
+        || request.resource.data.photos.hasOnly(resource.data.get('photos', []));
+    }
+
     /* raceGoal value gate — the shape the app actually consumes.
        `allowedUserFields()` gates key NAMES only, so before this the field
        could hold any map at all: `raceGoal: { anything: <...> }` was a legal
@@ -1351,9 +1398,11 @@ service cloud.firestore {
       // addCommentCallable + deleteCommentCallable in functions/index.js
       // which flip the counter and underlying kudos/comment doc in
       // one Firestore transaction.
-      // The author may change two things: who sees the post, and (Soc15
-      // call 5) its map image, once their app has made it. One or the
-      // other per write; every other field stays as it was posted.
+      // The author may change three things: who sees the post, (Soc15
+      // call 5) its map image, once their app has made it, and (Soc15
+      // call 2) its photos. One of them per write; every other field
+      // stays as it was posted. `photos` is never on a create: a photo
+      // is uploaded beside a post that exists and named once screened.
       allow update: if request.auth != null
         && !isWriteFrozen(request.auth.uid)
         && resource.data.authorId == request.auth.uid
@@ -1387,6 +1436,23 @@ service cloud.firestore {
             // A restricted account adds nothing others see (S4e), as a
             // create holds it: its private post may still have its map.
             && (resource.data.visibility == 'private' || !isRestricted()))
+          || (request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['photos'])
+            // The post's whole list, one to four of its own screened
+            // uploads (src/lib/postPhotoUpload.ts), or none at all.
+            && (!('photos' in request.resource.data)
+                || isPostPhotoList(request.resource.data.photos,
+                                   resource.data.authorId, activityId))
+            && (
+              // Taking photos off is always open: they are the author's
+              // own things, which a restriction never holds back (S4e).
+              onlyRemovesPostPhotos()
+              // Adding one is public content: a verified email, as a post
+              // needs, and a restricted account adds to its private post
+              // only, as for a map.
+              || (isEmailVerified()
+                  && (resource.data.visibility == 'private' || !isRestricted()))
+            ))
         );
       allow delete: if request.auth != null
         && !isWriteFrozen(request.auth.uid)

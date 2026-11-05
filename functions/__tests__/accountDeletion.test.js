@@ -467,12 +467,13 @@ describe("deleteAccount — failure semantics", () => {
     const prefixesCalled = stubs.calls.filter((c) =>
       c.startsWith("storage.deleteFiles")
     );
-    expect(prefixesCalled).toHaveLength(5);
+    expect(prefixesCalled).toHaveLength(6);
     expect(prefixesCalled[0]).toContain("progress-photos/");
     expect(prefixesCalled[1]).toContain("profile-photos/");
     expect(prefixesCalled[2]).toContain("food-photos/");
     expect(prefixesCalled[3]).toContain("space-photos/");
     expect(prefixesCalled[4]).toContain("route-maps/");
+    expect(prefixesCalled[5]).toContain("post-photos/");
   });
 
   it.each(["users/user-abc/public/profile", "scanUsage/user-abc"])(
@@ -831,6 +832,7 @@ describe("storagePrefixesFor", () => {
       "food-photos/alice/",
       "space-photos/alice/",
       "route-maps/alice/",
+      "post-photos/alice/",
     ]);
   });
 
