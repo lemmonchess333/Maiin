@@ -11,7 +11,26 @@ import PeopleView from "@/components/social/views/PeopleView";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {}, auth: { currentUser: null } }));
-vi.mock("@/lib/auth", () => ({ useUid: () => "me" }));
+const A = vi.hoisted(() => ({
+  profile: { uid: "me", inviteCode: undefined as string | undefined } as Record<
+    string,
+    unknown
+  > | null,
+  creationTime: new Date().toUTCString(),
+  fetchCode: vi.fn(),
+}));
+vi.mock("@/lib/auth", () => ({
+  useUid: () => "me",
+  useAuth: () => ({
+    user: { uid: "me", metadata: { creationTime: A.creationTime } },
+    profile: A.profile,
+    refreshProfile: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+vi.mock("@/lib/invites", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/invites")>()),
+  fetchMyInviteCode: A.fetchCode,
+}));
 
 const H = vi.hoisted(() => ({
   people: [] as {
@@ -63,6 +82,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 beforeEach(() => {
+  A.profile = { uid: "me", inviteCode: undefined };
+  A.creationTime = new Date().toUTCString();
+  A.fetchCode.mockReset().mockResolvedValue("K7P49M2H");
   H.people = [];
   H.loading = false;
   H.activeArgs = [];
@@ -174,7 +196,7 @@ it("says so when the invite link can't be copied", async () => {
   vi.unstubAllGlobals();
 });
 
-it("shares the app's public address, not the page's own origin", async () => {
+it("shares the app's public address with the person's code, not the page's own origin", async () => {
   // From the iPhone app the page's origin is capacitor://localhost, which
   // opens nothing for the person the invite is sent to.
   expect(window.location.origin).not.toBe("https://troposfit.com");
@@ -183,9 +205,11 @@ it("shares the app's public address, not the page's own origin", async () => {
   renderPeople(true);
   fireEvent.click(screen.getByRole("button", { name: "Share invite link" }));
   await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
+  // Soc15: the link carries who sent it.
   expect(share.mock.calls[0][0]).toMatchObject({
-    url: "https://troposfit.com",
+    url: "https://troposfit.com/?invite=K7P49M2H",
   });
+  expect(share.mock.calls[0][0].text).toContain("K7P4-9M2H");
   cleanup();
   vi.unstubAllGlobals();
 
@@ -199,7 +223,61 @@ it("shares the app's public address, not the page's own origin", async () => {
   renderPeople(true);
   fireEvent.click(screen.getByRole("button", { name: "Share invite link" }));
   await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
-  expect(writeText.mock.calls[0][0]).toMatch(/ https:\/\/troposfit\.com$/);
+  expect(writeText.mock.calls[0][0]).toMatch(
+    / https:\/\/troposfit\.com\/\?invite=K7P49M2H$/
+  );
   expect(toasts.success).toHaveBeenCalledWith("Invite link copied");
   vi.unstubAllGlobals();
+});
+
+it("shows the person's code to read out, made once when People opens", async () => {
+  renderPeople(true);
+  expect(await screen.findByText("K7P4-9M2H")).toBeInTheDocument();
+  expect(screen.getByText("Your code")).toBeInTheDocument();
+  expect(A.fetchCode).toHaveBeenCalledTimes(1);
+});
+
+it("reads a code the account already has without asking for one", () => {
+  A.profile = { uid: "me", inviteCode: "A2B3C4D5" };
+  renderPeople(true);
+  expect(screen.getByText("A2B3-C4D5")).toBeInTheDocument();
+  expect(A.fetchCode).not.toHaveBeenCalled();
+});
+
+it("says so when the code can't be had, and shares nothing", async () => {
+  A.fetchCode.mockRejectedValue(new Error("offline"));
+  const share = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal("navigator", { ...navigator, share });
+  renderPeople(true);
+  await waitFor(() => expect(A.fetchCode).toHaveBeenCalledTimes(1));
+  fireEvent.click(screen.getByRole("button", { name: "Share invite link" }));
+  await waitFor(() =>
+    expect(toasts.error).toHaveBeenCalledWith(
+      "Couldn't get your invite code. Check your connection and try again."
+    )
+  );
+  expect(share).not.toHaveBeenCalled();
+  expect(screen.queryByText("Your code")).toBeNull();
+});
+
+it("offers a new account a field for a friend's code, and an older one none", () => {
+  renderPeople(true);
+  expect(
+    screen.getByRole("heading", { name: "Invited by a friend?" })
+  ).toBeInTheDocument();
+  cleanup();
+
+  A.creationTime = new Date(Date.now() - 15 * 86_400_000).toUTCString();
+  renderPeople(true);
+  expect(
+    screen.queryByRole("heading", { name: "Invited by a friend?" })
+  ).toBeNull();
+  cleanup();
+
+  A.creationTime = new Date().toUTCString();
+  A.profile = { uid: "me", invitedAt: { seconds: 1 } };
+  renderPeople(true);
+  expect(
+    screen.queryByRole("heading", { name: "Invited by a friend?" })
+  ).toBeNull();
 });

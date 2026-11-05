@@ -434,6 +434,14 @@ export interface UserProfileSocial {
    *  absent = not asked yet (their own board row offers "Show my week"),
    *  false = no. Server-written by setBoardSharing, never by the client. */
   showWeekOnBoard?: boolean;
+  /** This person's invite code (Soc15), as `inviteCodes/{code}` holds it:
+   *  absent until they first ask for it. Server-written by getInviteCode,
+   *  never by the client. */
+  inviteCode?: string;
+  /** When this account joined from someone's invite (a Firestore
+   *  timestamp): absent until it does, and then People stops offering a
+   *  code field. Server-written by redeemInvite, never by the client. */
+  invitedAt?: unknown;
   /** LEGACY (share composer superseded these, #1416): the saved share
    *  default decides auto-posting now — `shareDefaults` above. Nothing has
    *  READ these three since; the Settings switches that wrote

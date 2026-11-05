@@ -3507,3 +3507,59 @@ console are left.
       lists `onActivityDeleted` with `lib/routeMapFiles.js`, and
       `screenPhoto` and `screenUploadedPhoto` with `lib/photoScreen.js`.
       Each map in the Storage console is under 150 KB.
+
+## Invites that carry who sent them (Soc15 calls 4 and 5, 2026-11-04)
+
+Each person has one invite code (`getInviteCode`, kept at
+`inviteCodes/{code}` and on the user document as `inviteCode`). People's
+Bring a friend shares `https://troposfit.com/?invite=<code>` and shows the
+code; the web app keeps a link's code until setup (`pendingInvite.ts`),
+and the welcome and sign-up screens name the inviter through the
+signed-out `lookupInvite`. Setup's optional "Invited by a friend?" and
+People's field for an account in its first 14 days use the code
+(`redeemInvite`): both people follow each other at once, whatever Approve
+followers says, and the inviter gets "X joined from your invite" under a
+new Invites switch. The rules refuse every client read and write of
+`inviteCodes` and any client edge carrying `fromInvite`; deleting an
+account deletes its code. Unit, rules and emulator tests cover each part;
+these need a phone, the deployed rules or the console.
+
+- [ ] **Sharing from the iPhone app.** On a TestFlight build, Social →
+      Find people → Bring a friend shows "Your code" with an eight-character
+      code within a second or two of opening, and Share invite link opens
+      the share sheet with "...my invite code K7P4-9M2H..." and
+      `https://troposfit.com/?invite=K7P49M2H` (your code). Copy code puts
+      the grouped code on the clipboard. A restricted test account shows no
+      code and the button is off.
+- [ ] **The link names the inviter, signed out.** Open the shared link in
+      a private browser window. Passing: the address bar loses
+      `?invite=…`, and the welcome screen says "<first name> invited you to
+      Tropos" (or "A friend invited you to Tropos" for a code that is not
+      real), also on Get started's sign-up form, not on sign-in.
+- [ ] **Typing a code during setup on a phone.** Install the TestFlight
+      build fresh, sign up, and on setup's last step open "Invited by a
+      friend?", type a friend's code (lower case and with or without the
+      dash), then Go to Today. Passing: Home shows the toast "You and
+      <name> now follow each other", both profiles list the other under
+      Followers and Following, and neither saw a follow request, even with
+      Approve followers on for both. A mistyped code says "Invite codes are
+      8 letters and numbers…" when leaving the field, and an unknown one
+      toasts where to try again.
+- [ ] **The inviter is told.** On the inviter's phone, Social's bell shows
+      "<name> joined from your invite. You follow each other now"; tapping
+      it opens their profile. With Settings → Notifications → Invites off,
+      the next person to join adds no row. No "started following you" row
+      arrives for an invite, even with New followers on.
+- [ ] **People offers the code for 14 days.** An account under 14 days old
+      that skipped the field sees "Invited by a friend?" at the top of Find
+      people; using a code there shows the one line in its place, and the
+      field does not come back. An account older than 14 days, or one that
+      has joined from an invite, does not see it.
+- [ ] **Deployed rules and functions.** After the Deploy production run
+      that ships this: verify-production-rules is green; a browser-console
+      `getDoc(doc(db, "inviteCodes", "<a real code>"))` signed in is
+      refused; the deployed-source check lists `redeemInvite` and
+      `getInviteCode` with `lib/inviteCodes.js`; the Cloud Functions console
+      shows `getInviteCode`, `lookupInvite` and `redeemInvite` at max
+      instances 100. Deleting a test account that made a code removes its
+      `inviteCodes` document.

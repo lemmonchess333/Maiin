@@ -17,6 +17,11 @@ import { registerServiceWorker } from "./lib/register-sw";
 import { initErrorMonitoring } from "./lib/errorReporting";
 import { startSystemChromeSync } from "./lib/systemChrome";
 import { startSystemTextSizeSync } from "./lib/systemTextSize";
+import { captureInviteFromUrl } from "./lib/pendingInvite";
+
+// An invite link's code (Soc15), kept for setup and taken out of the
+// address before the router reads it.
+captureInviteFromUrl();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

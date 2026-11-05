@@ -61,6 +61,9 @@ export const TRAY_NOTIFICATION_TYPES = [
   // carries no post id), not the actor's profile.
   "space_post_like",
   "space_post_comment",
+  // Soc15 — someone joined from the recipient's invite, and the two now
+  // follow each other. The row opens their profile.
+  "invite_joined",
 ] as const;
 
 export type NotificationType = (typeof TRAY_NOTIFICATION_TYPES)[number];

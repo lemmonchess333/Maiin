@@ -246,7 +246,10 @@ service cloud.firestore {
        request, that it was one (onFollowerCreated reads `fromRequest` to
        tell the follower). Nothing else. Both edges are readable by anyone
        signed in, and an open shape let a follower park up to a megabyte
-       on someone else's followers list, paid for by every reader of it. */
+       on someone else's followers list, paid for by every reader of it.
+       An edge from an invite carries `fromInvite` instead, written only by
+       the redeemInvite callable with the Admin SDK; neither shape below
+       allows it, so no client can say it joined from someone's invite. */
     function isDirectFollowEdge() {
       return request.resource.data.keys().hasOnly(['followedAt'])
         && request.resource.data.followedAt is timestamp;
@@ -526,13 +529,14 @@ service cloud.firestore {
         || p == null
         || (
           p is map
-          && p.keys().hasOnly(['kudos', 'comments', 'follows', 'followRequests', 'circles', 'spaces'])
+          && p.keys().hasOnly(['kudos', 'comments', 'follows', 'followRequests', 'circles', 'spaces', 'invites'])
           && (!('kudos' in p) || p.kudos is bool)
           && (!('comments' in p) || p.comments is bool)
           && (!('follows' in p) || p.follows is bool)
           && (!('followRequests' in p) || p.followRequests is bool)
           && (!('circles' in p) || p.circles is bool)
           && (!('spaces' in p) || p.spaces is bool)
+          && (!('invites' in p) || p.invites is bool)
         );
     }
 
@@ -803,6 +807,17 @@ service cloud.firestore {
        "helpfully" without tripping over this one. A readable claim would
        leak which account owns a device token. */
     match /fcmTokenClaims/{tokenHash} {
+      allow read, write: if false;
+    }
+    /* Invite codes (Soc15): `inviteCodes/{code}` = { uid, createdAt,
+       redemptions }, one per person, written only by the getInviteCode and
+       redeemInvite callables (functions/lib/inviteCodes.js). Already
+       default-deny by absence; the explicit block records the decision. A
+       readable code would let anyone list codes and follow their owners
+       both ways, and a writable one would let a client claim any code. The
+       owner sees their own on their user document (`inviteCode`, which no
+       client may write). */
+    match /inviteCodes/{code} {
       allow read, write: if false;
     }
     /* Performance data — written ONLY by Cloud Functions

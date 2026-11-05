@@ -3,7 +3,8 @@
  * (S3: one switch per kind, props and comments on, new followers off;
  * Polish2: follow requests on, since a request no one sees just waits).
  * The follow requests switch covers both ways: someone asking to follow
- * you, and the answer to a request you made.
+ * you, and the answer to a request you made. Invites (Soc15) are on: someone
+ * joining from your link or code is what sharing it asked for.
  *
  * The server decides what is sent: createNotification
  * (functions/lib/socialFanout.js) reads `profile.notificationPreferences`
@@ -23,6 +24,7 @@ export const NOTIFICATION_CATEGORIES = [
   "followRequests",
   "circles",
   "spaces",
+  "invites",
 ] as const;
 
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
@@ -42,6 +44,7 @@ export const NOTIFICATION_DEFAULTS: Readonly<
   followRequests: true,
   circles: true,
   spaces: true,
+  invites: true,
 };
 
 /** Whether a kind is on: the stored boolean, else its default — the same

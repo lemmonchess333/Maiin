@@ -60,6 +60,7 @@ const TYPE_ICON: Record<
   // the flame action itself uses.
   space_post_like: { Icon: Flame, color: THEME.running },
   space_post_comment: { Icon: MessageCircle, color: THEME.running },
+  invite_joined: { Icon: UserCheck, color: THEME.semantic.positive },
 };
 
 /** Fallback copy when the server didn't store a pre-built `message`. */
@@ -94,6 +95,8 @@ function fallbackMessage(n: NotificationItem): string {
       return `${who} gave your space post props`;
     case "space_post_comment":
       return `${who} commented on your space post`;
+    case "invite_joined":
+      return `${who} joined from your invite. You follow each other now`;
     default:
       return who;
   }

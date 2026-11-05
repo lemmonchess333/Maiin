@@ -497,6 +497,22 @@ async function deleteAccount({
       );
     }
 
+    // 3b'. The account's invite code (Soc15, lib/inviteCodes.js):
+    // `inviteCodes/{code}` carries the uid under a code id, so neither the
+    // users/{uid} sweep nor the uid-keyed sweep reaches it. Deleted, so the
+    // code joins no one to a deleted account. One per person; queried by
+    // the field in case an old one was replaced.
+    const inviteCodesSnap = await firestore
+      .collection("inviteCodes")
+      .where("uid", "==", uid)
+      .get();
+    if (!inviteCodesSnap.empty) {
+      await deleteRefsInBatches(
+        firestore,
+        inviteCodesSnap.docs.map((d) => d.ref)
+      );
+    }
+
     // 3d. Community Spaces (Spc1 PR4) — memberships + authored posts,
     // swept per KNOWN space id (lib/spacesCleanup; bounded config, no
     // collectionGroup blast radius). Failures preserve Auth and the worker

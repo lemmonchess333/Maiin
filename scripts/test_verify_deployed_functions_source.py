@@ -132,6 +132,16 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                          "lib/accountDeletionLocks.js"}.issubset(paths))
         self.assertEqual(len(paths), len(set(paths)))
 
+    def test_invite_callables_read_back_the_checks_they_hold(self):
+        targets = verifier.source_targets()
+        for name in ("redeemInvite", "getInviteCode"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/inviteCodes.js",
+                                 "lib/deletionTransactionGuard.js", "lib/restriction.js",
+                                 "lib/accountDeletionLocks.js"}.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        self.assertIn("lib/notificationPreferences.js", targets["redeemInvite"])
+
     def test_block_mirror_reads_back_its_reconciler_and_retry_guard(self):
         paths = verifier.source_targets()["onBlockWritten"]
         self.assertTrue({"index.js", "package-lock.json", "lib/blockMirror.js",

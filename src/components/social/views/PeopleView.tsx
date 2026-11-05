@@ -13,15 +13,15 @@ import FollowButton from "@/components/social/FollowButton";
 import FollowRequestsSection from "@/components/social/FollowRequestsSection";
 import FollowsYouBadge from "@/components/social/FollowsYouBadge";
 import PartnerReadyBadge from "@/components/social/PartnerReadyBadge";
-import { Share, Users, X, Search } from "lucide-react";
+import { Users, X, Search } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
-import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import { IconButton } from "@/components/ui/IconButton";
-import { appInviteUrl } from "@/lib/publicLinks";
+import InviteFriendCard from "@/components/social/InviteFriendCard";
+import InviteCodeEntry from "@/components/social/InviteCodeEntry";
 
 export interface PeopleViewProps {
   /** True when the People (find) tab is the active top-level tab.
@@ -186,30 +186,6 @@ export default function PeopleView({
     };
   }, []);
 
-  const handleShareInvite = async () => {
-    const text = "I'm tracking my lifts and runs on Tropos. Come join me.";
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Join me on Tropos",
-          text,
-          url: appInviteUrl(),
-        });
-      } catch {
-        /* user cancelled */
-      }
-    } else {
-      // The clipboard can refuse (no permission, an insecure context), and
-      // a promise that rejected here said nothing at all.
-      try {
-        await navigator.clipboard.writeText(text + " " + appInviteUrl());
-        toast.success("Invite link copied");
-      } catch {
-        toast.error("Couldn't copy the invite link. Try again.");
-      }
-    }
-  };
-
   if (!active || chromeHidden) return null;
 
   return (
@@ -225,6 +201,10 @@ export default function PeopleView({
         {/* Polish2: requests to follow you, answered here whether or not
             their notifications are on. Nothing while there are none. */}
         <FollowRequestsSection active={active} />
+        {/* Soc15: a new account that arrived with a friend's invite code,
+            or was given one, uses it here if setup did not. Nothing for an
+            older account or one that already joined from an invite. */}
+        <InviteCodeEntry disabled={isRestricted} />
         {/* Section order rebuilt per audit: search-first because
       that's the highest-intent task on this surface. Suggested
       people next (most relevant social action). Invite
@@ -456,50 +436,13 @@ export default function PeopleView({
       for high-intent users trying to find someone specific. */}
         <div className="space-y-3">
           <SectionHeading>Bring a friend</SectionHeading>
-          <div
-            className="p-3 rounded-2xl border"
-            style={{
-              background: `linear-gradient(135deg, ${THEME.brand}18, ${THEME.brand}08)`,
-              borderColor: `${THEME.brand}33`,
-            }}
-          >
-            <div className="flex items-start gap-3 mb-2">
-              <div
-                className="size-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: `${THEME.brand}25` }}
-              >
-                <Share className="size-4" style={{ color: THEME.brand }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  Invite a training partner
-                </p>
-                <p className="text-small text-muted-foreground leading-relaxed mt-0.5">
-                  Share your link and compare lifts, runs and challenge
-                  progress.
-                </p>
-              </div>
-            </div>
-            {/* A brand-new account got a coach mark here, "Share your
-                profile link to get started" (Soc5c). It drew behind this
-                overlay and saved itself as seen after six seconds, so
-                nobody ever saw it, and the card above already says it.
-                Removed with the coach-mark component (FV2). */}
-            <button
-              type="button"
-              onClick={handleShareInvite}
-              disabled={isRestricted}
-              aria-label={
-                isRestricted
-                  ? "Inviting is unavailable while your account is restricted"
-                  : undefined
-              }
-              className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ background: THEME.brandStrong }}
-            >
-              Share invite link
-            </button>
-          </div>
+          {/* The link carries the person's invite code, and the code is
+              shown to read out or type (Soc15). A brand-new account got a
+              coach mark here, "Share your profile link to get started"
+              (Soc5c). It drew behind this overlay and saved itself as seen
+              after six seconds, so nobody ever saw it, and the card already
+              says it. Removed with the coach-mark component (FV2). */}
+          <InviteFriendCard active={active} disabled={isRestricted} />
         </div>
       </div>
     </section>

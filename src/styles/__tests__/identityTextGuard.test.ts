@@ -325,7 +325,10 @@ function bareUses(token: string): string[] {
 // 2026-11-03: 41 → 42. A post's streak, plan or first-session moment
 // (Soc15) sits in a purple-tinted tile whose only content is its ICON;
 // its words are foreground and muted text.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 42 } as const;
+// 2026-11-04: 42 → 43. The signed-out invite line (Soc15) carries a
+// person icon in brand purple, as the sign-in notice beside it carries its
+// mail icon; its words are foreground and muted text.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 43 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

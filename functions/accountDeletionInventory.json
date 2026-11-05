@@ -696,6 +696,24 @@
       "testCoverageStatus": "planned"
     },
     {
+      "key": "inviteCodesOwn",
+      "domain": "D_crossUserEdge",
+      "type": "topLevelQueryByField",
+      "path": "inviteCodes",
+      "where": ["uid", "==", "{uid}"],
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "system",
+      "strategy": "deleteQueryInBatches",
+      "lockNeeded": "callable-actor",
+      "hasNestedSubcollections": false,
+      "reason": "The account's invite code (Soc15): inviteCodes/{code} = { uid, createdAt, redemptions }, written only by the getInviteCode and redeemInvite callables (functions/lib/inviteCodes.js), each of which refuses an account being deleted. The uid sits under a code id, so the users/{uid} and uid-keyed sweeps miss it; deleted by a query on the field, so the code joins no one to a deleted account. The copy on the user document (`inviteCode`) and the joiner's `invitedAt` go with users/{uid}; the follow edges an invite made go with the follow sweeps.",
+      "testCoverageKey": "smoke::topLevelQuery::inviteCodes",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/accountDeletion.js"
+    },
+    {
       "key": "activitiesOwnKudos",
       "domain": "E_fanout",
       "type": "contentIdReferenceCleanup",

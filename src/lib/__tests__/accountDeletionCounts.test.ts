@@ -51,7 +51,8 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 // The community goal adds userCommunityGoalCredits, its per-run credits.
 // Soc15 bumped to 62 — userMedals, a medal per challenge edition.
 // Soc15 call 5 bumped to 63 — routeMapsStorage, run post map images.
-export const EXPECTED_INCLUDED_COUNT = 63;
+// Soc15 invites bumped to 64 — inviteCodesOwn, a person's invite code.
+export const EXPECTED_INCLUDED_COUNT = 64;
 // S4e STATUS 2026-10-20 bumped excluded to 12 — restrictedIdentities, a
 // deleted restricted account's hashed sign-in identities, retained.
 export const EXPECTED_EXCLUDED_COUNT = 12;

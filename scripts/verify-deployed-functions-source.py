@@ -79,6 +79,9 @@ def source_targets():
                                 "lib/pushSchedule.js", "lib/accountDeletionLocks.js"]
     circle_paths = ["index.js", "package-lock.json", "lib/goalSpaceMembership.js",
                     "lib/restriction.js", "lib/accountDeletionLocks.js"]
+    invite_paths = ["index.js", "package-lock.json", "lib/inviteCodes.js",
+                    "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
+                    "lib/restriction.js", "lib/accountDeletionLocks.js"]
     return {
         "deleteMyAccount": deletion_paths,
         "resumeAccountDeletions": deletion_paths,
@@ -110,6 +113,10 @@ def source_targets():
         "startPartnerStreak": ["index.js", "package-lock.json", "lib/partnerBonds.js",
                                "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
                                "lib/restriction.js", "lib/accountDeletionLocks.js"],
+        # Soc15 invites: the one writer of follows both ways from a code, and
+        # of the codes themselves, with the checks it holds them to.
+        "redeemInvite": invite_paths + ["lib/socialFanout.js", "lib/notificationPreferences.js"],
+        "getInviteCode": invite_paths,
         # Ship1: the photos other people see, screened for nudity.
         "screenPhoto": ["index.js", "lib/photoScreen.js"],
         "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],

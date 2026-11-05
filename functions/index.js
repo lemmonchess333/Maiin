@@ -8699,7 +8699,11 @@ async function sendFollowNotice({
  * write an edge carrying `fromRequest` (firestore.rules), so the notice
  * cannot be forged by the asker.
  *
- * Either way the new follower's Following gets the person's recent shared
+ * A follow made from an invite (`fromInvite`, written only by redeemInvite
+ * with the Admin SDK; the rules refuse it from a client) tells neither
+ * person: redeemInvite tells the inviter "X joined from your invite".
+ *
+ * Every way the new follower's Following gets the person's recent shared
  * sessions (Soc15, lib/followBackfill), so a follow shows something today.
  */
 exports.onFollowerCreated = functions
@@ -8711,7 +8715,12 @@ exports.onFollowerCreated = functions
     // Retried: the notification's id is fixed per follower (above), and
     // the backfill's rows are keyed by activity and skip ones that exist.
     if (pastRetryWindow(context)) return null;
-    if (snap.data() && snap.data().fromRequest === true) {
+    const edge = snap.data() || {};
+    if (edge.fromInvite === true) {
+      // Made by redeemInvite, both ways at once: the person who joined has
+      // just been told, and the inviter gets "joined from your invite"
+      // from the callable, so neither is told about a follow as well.
+    } else if (edge.fromRequest === true) {
       await sendFollowNotice({
         toUid: followerUid,
         fromUid: uid,
@@ -8868,4 +8877,194 @@ exports.removeFollower = functions
     }
     const removed = await followRemoval.removeFollower(db, uid, followerUid);
     return { removed };
+  });
+
+// ═══════════════════════════════════════════════════════════════
+// Invites that carry who sent them (Soc15 calls 4 and 5). Each person's
+// code, the signed-out lookup of whose it is, and its use by a new account,
+// which follows both ways (lib/inviteCodes.js). The rules refuse every
+// client read and write of `inviteCodes`, and no client writes an edge
+// carrying `fromInvite`: these callables are the only writers.
+// ═══════════════════════════════════════════════════════════════
+const inviteCodes = require("./lib/inviteCodes");
+
+/** A refusal from lib/inviteCodes as the callable's error, its reason in
+ *  `details.reason` for the app to word (src/lib/invites.ts). */
+function mapInviteError(err) {
+  if (err instanceof inviteCodes.InviteError) {
+    return new functions.https.HttpsError(err.code, err.reason, {
+      reason: err.reason,
+    });
+  }
+  if (err && err.code === "account-restricted") {
+    return restriction.restrictedError(functions);
+  }
+  functions.logger.error("invite callable failed", {
+    message: err && err.message,
+  });
+  return new functions.https.HttpsError("internal", "Something went wrong.");
+}
+
+/**
+ * getInviteCode — the caller's own invite code, made the first time they
+ * ask and the same one after. A restricted account gets none: an invite
+ * reaches the people who use it (S4e).
+ */
+exports.getInviteCode = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
+    if (await isRateLimited(uid, "inviteCode", 10, 600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many requests. Try again in a few minutes."
+      );
+    }
+    try {
+      const { code } = await inviteCodes.getOrCreateInviteCode({
+        firestore: admin.firestore(),
+        uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { code };
+    } catch (err) {
+      throw mapInviteError(err);
+    }
+  });
+
+/**
+ * lookupInvite — whose code this is, for the signed-out welcome screen:
+ * `{ inviter: { firstName } }`, or `{ inviter: null }` for a code that is
+ * unknown, malformed, belongs to a restricted or deleting account, or when
+ * the caller has asked too often. UNAUTHENTICATED by design (the person has
+ * no account yet), so it answers with the first word of a public name and
+ * nothing else, and every miss looks the same.
+ *
+ * Limited per caller address (a hash of it, as the password reset keys on
+ * a hash of the address typed) and across the project per day, so the
+ * 6.6e11 codes cannot be walked for names. App Check is not enforced on
+ * any callable yet; this one joins the per-callable rollout in
+ * docs/app-check-rollout.md.
+ */
+exports.lookupInvite = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const code = inviteCodes.normaliseInviteCode(data && data.code);
+    if (!code) return { inviter: null };
+    const key = inviteCodes.lookupKey(
+      context.rawRequest && context.rawRequest.ip
+    );
+    if (
+      (await isRateLimited(key, "inviteLookup", 20, 3_600_000)) ||
+      (await isRateLimited(key, "inviteLookupDay", 60, 86_400_000)) ||
+      (await isRateLimited(
+        "invitelookup_all",
+        "inviteLookupAll",
+        inviteCodes.LOOKUPS_PER_DAY,
+        86_400_000
+      ))
+    ) {
+      return { inviter: null };
+    }
+    try {
+      return {
+        inviter: await inviteCodes.lookupInviter({
+          firestore: admin.firestore(),
+          code,
+        }),
+      };
+    } catch (err) {
+      functions.logger.warn("lookupInvite.failed", {
+        message: err && err.message,
+      });
+      return { inviter: null };
+    }
+  });
+
+/**
+ * redeemInvite — a new account uses someone's invite code: the two follow
+ * each other at once, whatever either's approveFollowers says, and the
+ * inviter is told (Soc15 call 4). The checks and the writes are one
+ * transaction in lib/inviteCodes.js; the account's age comes from Auth.
+ * Returns `{ inviterName, alreadyJoined }` for the app's one line.
+ */
+exports.redeemInvite = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
+    // A few tries at a time and a day's worth in all: a typo is retried,
+    // a walk through the codes is not.
+    if (
+      (await isRateLimited(uid, "inviteRedeem", 5, 600_000)) ||
+      (await isRateLimited(uid, "inviteRedeemDay", 20, 86_400_000))
+    ) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many tries. Wait a few minutes, then try again."
+      );
+    }
+    const account = await admin.auth().getUser(uid);
+    const createdAtMs = Date.parse(
+      (account.metadata && account.metadata.creationTime) || ""
+    );
+    let result;
+    try {
+      result = await inviteCodes.redeemInvite({
+        firestore: admin.firestore(),
+        uid,
+        code: data && data.code,
+        nowMs: Date.now(),
+        accountCreatedAtMs: createdAtMs,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (err) {
+      throw mapInviteError(err);
+    }
+    const firestore = admin.firestore();
+    const inviterName = await inviteCodes
+      .publicName(firestore, result.inviterUid)
+      .catch(() => null);
+    if (!result.alreadyJoined) {
+      // Best-effort: the follows are made whether or not the notice lands.
+      try {
+        const fromName = await socialFanout.senderDisplayName(firestore, uid);
+        await socialFanout.createNotification({
+          firestore,
+          fromUid: uid,
+          toUid: result.inviterUid,
+          data: {
+            type: "invite_joined",
+            fromName,
+            message: `${fromName} joined from your invite. You follow each other now`,
+          },
+          serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+          notificationId: `invite_joined_${uid}`,
+          keepExisting: true,
+        });
+      } catch (notifErr) {
+        functions.logger.warn("redeemInvite.notification_failed", {
+          message: notifErr && notifErr.message,
+        });
+      }
+    }
+    functions.logger.info("redeemInvite", {
+      alreadyJoined: result.alreadyJoined,
+    });
+    return { inviterName, alreadyJoined: result.alreadyJoined };
   });
