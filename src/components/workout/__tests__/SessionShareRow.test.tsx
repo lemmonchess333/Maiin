@@ -501,10 +501,13 @@ describe("photos on the post (Soc15 call 2)", () => {
     render(<SessionShareRow action={action("workout")} />);
     await screen.findByText("Shared with your followers");
     setOnline(false);
-    fireEvent(window, new Event("offline"));
-    expect(
-      await screen.findByText("Photos need a connection.")
-    ).toBeInTheDocument();
+    // Add photos listens for the event from an effect, which can still be
+    // waiting when the post's line is on screen (unit-locale fr_FR, 5
+    // November). Sent until it is heard; hearing it twice changes nothing.
+    await waitFor(() => {
+      fireEvent(window, new Event("offline"));
+      expect(screen.getByText("Photos need a connection.")).toBeInTheDocument();
+    });
     expect(screen.getByRole("button", { name: "Add photos" })).toBeDisabled();
   });
 

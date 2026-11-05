@@ -15,7 +15,7 @@
  *
  * Gated on FIRESTORE_EMULATOR_HOST — skips in an ordinary unit run.
  */
-import { describe, it, expect, beforeAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -26,6 +26,8 @@ const suite = EMULATOR_HOST ? describe : describe.skip;
 let db;
 let onActivityCreated;
 let onActivityDeleted;
+/** The Storage folders the delete trigger emptied, in order. */
+let emptied = [];
 
 const AUTHOR = "feedrm-alice";
 const FOLLOWER = "feedrm-bob";
@@ -38,7 +40,17 @@ beforeAll(() => {
   const idx = require("../../index");
   onActivityCreated = idx.onActivityCreated;
   onActivityDeleted = idx.onActivityDeleted;
-  db = require("firebase-admin").firestore();
+  const admin = require("firebase-admin");
+  db = admin.firestore();
+  // Every deleted post's photo folder is emptied (lib/postPhotos.js, Soc15
+  // call 2), and this job runs no Storage emulator: the real client found
+  // no bucket and failed the trigger. The folder each delete empties is
+  // recorded instead, which the first test reads.
+  vi.spyOn(admin.storage(), "bucket").mockReturnValue({
+    deleteFiles: async ({ prefix }) => {
+      emptied.push(prefix);
+    },
+  });
 });
 
 async function wipe() {
@@ -94,6 +106,7 @@ async function hasCopy(uid, id) {
 
 suite("a deleted post leaves every feed it was copied into", () => {
   beforeEach(async () => {
+    emptied = [];
     await wipe();
     await db.doc(`followers/${AUTHOR}/users/${FOLLOWER}`).set({});
   });
@@ -127,6 +140,9 @@ suite("a deleted post leaves every feed it was copied into", () => {
     expect(
       (await db.doc(`notifications/${AUTHOR}/items/feedrm-n1`).get()).exists
     ).toBe(true);
+    // Its photo folder goes with it, and only its own. A post with no
+    // route has no map folder to empty.
+    expect(emptied).toEqual([`post-photos/${AUTHOR}/feedrm-a1/`]);
   });
 
   it("copies a post taken back before its fan-out ran into no feed", async () => {
