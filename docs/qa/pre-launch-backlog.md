@@ -3705,3 +3705,52 @@ suites cover the logic; these need the release, the console and phones.
       the confirmation names what happens; afterwards the group's other
       members no longer see your row, `leagueMembers/{you}` is gone, and
       the next Monday does not place you.
+
+## Plan groups (Soc15, 2026-11-05)
+
+How many people on Tropos are training for each race, `raceCohorts/{spaceId}`,
+recounted (never incremented) by `onRaceGoalWritten`, on any write to
+`users/{uid}` that sets, moves or clears a goal bound to a race space, and by
+`dailyRaceCohortRecount` at 04:30 UTC for every race still ahead
+(`functions/lib/raceCohorts.js`). The unit (`raceCohorts.test.js`,
+`planGroup.test.ts`, `PlanGroupCard.test.tsx`, `SpacePlanGroup.test.tsx`),
+rules (`firestore.spaces.rules.test.ts`) and emulator
+(`integration/raceCohorts.test.js`) suites cover the logic; these need the
+release, the console and a phone.
+
+- [ ] **The release carries the rules, the index and the functions.**
+      Passing: the Deploy production run's Firestore and Functions stages
+      are green; the rules check (verify-production-rules) is green, and the
+      deployed rules read back with `match /raceCohorts/{spaceId}` (read
+      when signed in, no write); the readiness gate passes and the
+      console's Indexes tab lists `users` (raceGoal.eventSpaceId,
+      raceGoal.targetDate) as enabled; and the deployed-source check lists
+      `onRaceGoalWritten`, with retries on, and `dailyRaceCohortRecount`,
+      each with `lib/raceCohorts.js`. Cloud Scheduler shows
+      `dailyRaceCohortRecount` at `30 4 * * *`, Etc/UTC.
+- [ ] **The first night fills in every race.** The morning after the
+      release, or straight away with Cloud Scheduler → Force run (safe to
+      repeat: it counts again and stores the same numbers). Passing:
+      `jobRuns/dailyRaceCohortRecount` records a success whose summary has
+      `catalogue: true` and `races` equal to the races in
+      `config/raceEvents` whose date is today or later; each of them has a
+      `raceCohorts/{id}` document. Until this has run, a race nobody has
+      changed a goal for since the release shows the cold-start line.
+- [ ] **The count matches the console.** For one race people are training
+      for: in the console, Firestore → `users`, filter
+      `raceGoal.eventSpaceId == <id>` and `raceGoal.targetDate >=
+      <yesterday's date, UTC>`. Passing: the number of documents equals
+      `raceCohorts/<id>.count`. Then, on a test account bound to that race,
+      choose another listed race in the run-plan editor and save. Passing:
+      within a minute the first race's count is one lower and the second's
+      one higher, and both `updatedAt` values are newer.
+- [ ] **No client writes a count.** From a signed-in browser console a
+      `setDoc` on `raceCohorts/<id>` is refused, and a `getDoc` of it
+      succeeds.
+- [ ] **The card and the hero on an iPhone.** On a TestFlight account
+      bound to a race with 3 or more people in its group. Passing: Social →
+      Together → This week shows "You and N others are training for <race>"
+      with the weeks to go and the race's photo, and opens the race's space,
+      whose hero says "N people on Tropos are training for this race". At
+      the largest text size the card's words drop under the photo, and the
+      hero's words stay clear of Back.
