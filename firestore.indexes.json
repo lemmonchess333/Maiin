@@ -517,6 +517,18 @@
       "fieldPath": "deletionExpiresAt",
       "ttl": true,
       "indexes": []
+    },
+    {
+      "collectionGroup": "pulse",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "pulseCredits",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
     }
   ]
 }

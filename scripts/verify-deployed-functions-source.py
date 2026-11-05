@@ -86,6 +86,8 @@ def source_targets():
                     "lib/restriction.js", "lib/accountDeletionLocks.js"]
     # Soc15 call 3: the leagues' one writer, its rules and its planned count.
     league_lib = ["lib/leagues.js", "lib/leagueRules.js", "lib/leaguePlanned.js"]
+    # Soc15: the live pulse's one writer, and the deletion guard it reads.
+    pulse_lib = ["lib/pulse.js", "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js"]
     league_paths = ["index.js", "package-lock.json"] + league_lib + [
                     "lib/friendsBoard.js", "lib/deletionTransactionGuard.js",
                     "lib/accountDeletionStatus.js", "lib/restriction.js",
@@ -145,10 +147,10 @@ def source_targets():
         # Race day: the daily no-show and recovery checks, and the recovery
         # entry a saved race run makes.
         "onRunCreated": challenge_paths + ["lib/raceReconciliation.js", "lib/raceDayCompletion.js"]
-                        + league_lib,
+                        + league_lib + pulse_lib,
         "configurePlan": training_paths,
         "applyProgramCommand": training_paths,
-        "onWorkoutCreated": training_paths + challenge_paths[2:] + league_lib,
+        "onWorkoutCreated": training_paths + challenge_paths[2:] + league_lib + pulse_lib,
         "onWorkoutUpdated": training_paths + challenge_paths[2:] + league_lib,
         # Monthly rotation and participation must execute the same source that
         # passed CI, including the new active-day/minute recomputation helper.
@@ -165,9 +167,9 @@ def source_targets():
         # The reversal is what a delete runs, and it fails the event when it
         # does not land so the retry can apply it.
         "onWorkoutDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
-                                              "lib/triggerRetry.js"] + league_lib,
+                                              "lib/triggerRetry.js"] + league_lib + pulse_lib,
         "onRunDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
-                                              "lib/triggerRetry.js"] + league_lib,
+                                              "lib/triggerRetry.js"] + league_lib + pulse_lib,
         # Read back the privacy-safe feed index writer and the Circle
         # admission receipt before a release can report either trigger current.
         "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js",

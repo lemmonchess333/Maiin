@@ -58,6 +58,9 @@ const HOLDS_NO_ONE: Record<string, string> = {
   // Soc15: plan groups.
   raceCohorts:
     "raceCohorts/{spaceId}: how many people are training for a race, a count recounted from the goals, so a deleted account drops out of it",
+  // Soc15: the live pulse. Each person's credits are userPulseCredits.
+  pulse:
+    "pulse/{day}: how many sessions were saved for a day across Tropos, a count",
 };
 
 function files(dir: string, keep: (path: string) => boolean): string[] {

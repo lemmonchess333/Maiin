@@ -178,6 +178,8 @@ const workoutVolume = require("./lib/workoutVolume");
 const activityReversal = require("./lib/activityReversal");
 // The community goal: a total every saved run adds to, joined or not.
 const communityGoal = require("./lib/communityGoal");
+// The live pulse: each day's count of sessions across Tropos (Soc15).
+const pulse = require("./lib/pulse");
 const spacePostPhoto = require("./lib/spacePostPhoto");
 // A run post's map images, deleted with the post (Soc15 call 5).
 const routeMapFiles = require("./lib/routeMapFiles");
@@ -5232,6 +5234,13 @@ exports.onChallengeParticipantWritten = functions
     return null;
   });
 
+/** A trigger's event time (the source write's commit), the same on every
+ *  redelivery of it; the clock when the event carries none. */
+function eventTimeMs(context) {
+  const at = Date.parse((context && context.timestamp) || "");
+  return Number.isFinite(at) ? at : Date.now();
+}
+
 // ── 4) Trigger: instant recompute on new workout ──
 
 exports.onWorkoutCreated = functions
@@ -5370,6 +5379,20 @@ exports.onWorkoutCreated = functions
       );
       await applyPartnerActivity(db, uid, workoutStreakDay);
     });
+
+    // Soc15: the live pulse counts every saved workout on its own day
+    // (lib/pulse). Dated by the event, the same on every redelivery.
+    await steps.run("pulse", () =>
+      pulse.creditSessionToPulse(db, {
+        uid,
+        kind: "workout",
+        sessionId: workoutId,
+        data,
+        sourceRef: snap.ref,
+        fieldValue: admin.firestore.FieldValue,
+        nowMs: eventTimeMs(context),
+      })
+    );
 
     steps.settle();
 
@@ -5571,6 +5594,19 @@ exports.onRunCreated = functions
           activityDateKey,
           sourceRef: snap.ref,
           fieldValue: admin.firestore.FieldValue,
+        })
+      );
+      // Soc15: the live pulse counts the run on its own day, through the
+      // same eligibility and the shared-credit bounds (lib/pulse).
+      await steps.run("pulse", () =>
+        pulse.creditSessionToPulse(db, {
+          uid,
+          kind: "run",
+          sessionId: runId,
+          data,
+          sourceRef: snap.ref,
+          fieldValue: admin.firestore.FieldValue,
+          nowMs: eventTimeMs(context),
         })
       );
     } else {
@@ -5812,6 +5848,16 @@ exports.onWorkoutDeleted = functions
         lifetimeAccrual.liftVolumeKgFor(data)
       )
     );
+    // Soc15: off the live pulse, by the day its credit recorded.
+    await steps.run("pulse", () =>
+      pulse.reverseSessionFromPulse(db, {
+        uid,
+        kind: "workout",
+        sessionId: workoutId,
+        fieldValue: admin.firestore.FieldValue,
+        nowMs: eventTimeMs(context),
+      })
+    );
     steps.settle();
     console.log(`onWorkoutDeleted: reversed ${workoutId} for ${uid}`);
     return null;
@@ -5886,6 +5932,16 @@ exports.onRunDeleted = functions
         runId,
         lifetimeAccrual.runMetersFor(data)
       )
+    );
+    // Soc15: off the live pulse, by the day its credit recorded.
+    await steps.run("pulse", () =>
+      pulse.reverseSessionFromPulse(db, {
+        uid,
+        kind: "run",
+        sessionId: runId,
+        fieldValue: admin.firestore.FieldValue,
+        nowMs: eventTimeMs(context),
+      })
     );
     steps.settle();
     console.log(`onRunDeleted: reversed ${runId} for ${uid}`);

@@ -2263,6 +2263,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    /* The live pulse (Soc15, functions/lib/pulse.js): how many sessions
+       were saved for one day across Tropos, which Social's Feed shows as
+       "Today: 14 sessions on Tropos". A count that names no one, so any
+       signed-in person reads it; only the session triggers write it, and
+       no client may, since every client could move it. Each person's
+       credits (users/{uid}/pulseCredits) have no rule: no client reads or
+       writes them, the owner included. */
+    match /pulse/{dateKey} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // ========================================
     // Partner streaks (SOCIAL S3): a 1:1 bond between two users that
     // tracks a shared streak (days both logged a session). Only the two

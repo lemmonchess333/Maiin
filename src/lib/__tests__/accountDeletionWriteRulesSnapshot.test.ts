@@ -211,6 +211,12 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // count the server recounts (lib/raceCohorts.js). Read by anyone signed
   // in, written by no client, and it names no one.
   "match /raceCohorts/{spaceId}",
+  // Soc15: the live pulse. A day's count names no one: any signed-in
+  // reader, no client writer. The session triggers write it and each
+  // person's credit (users/{uid}/pulseCredits, no client access at all),
+  // reading the deletion state in their transaction; the executor sweeps
+  // the credits (USER_SUBCOLLECTIONS, userPulseCredits).
+  "match /pulse/{dateKey}",
   // Polish3 call 1: who has blocked this account. Read by that account
   // only; onBlockWritten writes it (system-writer guard), and the
   // executor deletes it both ways (blockedByOwn, blockedByReverse).

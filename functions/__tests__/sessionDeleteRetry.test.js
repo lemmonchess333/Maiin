@@ -21,6 +21,7 @@ const leagues = require("../lib/leagues");
 const activityReversal = require("../lib/activityReversal");
 const healthWorkoutLedger = require("../lib/healthWorkoutLedger");
 const communityGoal = require("../lib/communityGoal");
+const pulse = require("../lib/pulse");
 const { onWorkoutDeleted, onRunDeleted } = require("../index");
 
 const UID = "deleter";
@@ -78,13 +79,17 @@ beforeEach(() => {
       reversed.push("community goal");
     }
   );
+  vi.spyOn(pulse, "reverseSessionFromPulse").mockImplementation(async () => {
+    reversed.push("pulse");
+  });
 });
 
-/* A run also comes off the community goal; a workout never went on it. */
+/* A run also comes off the community goal; a workout never went on it.
+   Both come off the live pulse (Soc15). */
 const all = (name) =>
   name === "onRunDeleted"
-    ? ["challenges", "community goal", "lifetime"]
-    : ["challenges", "lifetime"];
+    ? ["challenges", "community goal", "lifetime", "pulse"]
+    : ["challenges", "lifetime", "pulse"];
 const without = (name, step) => all(name).filter((s) => s !== step);
 
 afterEach(() => vi.restoreAllMocks());
@@ -124,9 +129,25 @@ describe.each(CASES)("%s", (_name, trigger, params, data) => {
         new Error("ABORTED")
       );
       await expect(deliver()).rejects.toThrow(/community goal failed/);
-      expect(reversed).toEqual(["challenges", "lifetime"]);
+      expect(reversed).toEqual(["challenges", "lifetime", "pulse"]);
     }
   );
+
+  it("fails the event when the pulse reversal fails, after the others land", async () => {
+    pulse.reverseSessionFromPulse.mockRejectedValueOnce(new Error("ABORTED"));
+    await expect(deliver()).rejects.toThrow(/pulse failed/);
+    expect(reversed).toEqual(without(_name, "pulse"));
+    expect(pulse.reverseSessionFromPulse).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        uid: UID,
+        kind: _name === "onRunDeleted" ? "run" : "workout",
+        sessionId: _name === "onRunDeleted" ? "r1" : "w1",
+        // The event's own time, the same on every redelivery.
+        nowMs: Date.parse(NOW),
+      })
+    );
+  });
 
   it("drops an event past the retry window without touching anything", async () => {
     await expect(deliver(DAY_AND_A_HALF_AGO)).resolves.toBeNull();

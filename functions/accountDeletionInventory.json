@@ -391,6 +391,22 @@
       "testCoverageStatus": "planned"
     },
     {
+      "key": "userPulseCredits",
+      "domain": "A_private",
+      "type": "userSubcollection",
+      "path": "users/{uid}/pulseCredits",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "healthFitness",
+      "recordPurpose": "private",
+      "strategy": "deleteSubcollection",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "The live pulse's credits (functions/lib/pulse.js, Soc15): one per counted session (its kind, id and day), each expiring by TTL eight days after its day starts. Server-written only by the session triggers, which read the deletion freeze inside their transaction; rules deny every client read and write. In USER_SUBCOLLECTIONS. The day's count (pulse/{dateKey}) carries no one's id and is left as it stands.",
+      "testCoverageKey": "smoke::userSubcollections::pulseCredits",
+      "testCoverageStatus": "planned"
+    },
+    {
       "key": "userMedals",
       "domain": "A_private",
       "type": "userSubcollection",

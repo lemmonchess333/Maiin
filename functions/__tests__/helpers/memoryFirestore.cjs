@@ -35,13 +35,20 @@ function memoryFirestore(seed = {}) {
             : v;
         }
         data.set(ref.path, next);
-      } else
-        data.set(
-          ref.path,
-          options?.merge
-            ? { ...data.get(ref.path), ...value }
-            : structuredClone(value)
-        );
+      } else {
+        // An increment in a set adds to the stored number (merge) or to 0
+        // (a fresh document), as Firestore's does.
+        const merge = !!options?.merge;
+        const before = merge ? data.get(ref.path) || {} : {};
+        const next = merge ? { ...before } : {};
+        for (const [field, v] of Object.entries(
+          merge ? value : structuredClone(value)
+        ))
+          next[field] = isIncrement(v)
+            ? (Number(before[field]) || 0) + v.__increment
+            : v;
+        data.set(ref.path, next);
+      }
     }
   }
   function ref(path) {
