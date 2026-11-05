@@ -3637,3 +3637,62 @@ or the console.
       `resolveReport` with `lib/reportTargets.js` and `lib/postPhotos.js`,
       and `screenPhoto` and `screenUploadedPhoto` with
       `lib/photoScreen.js`.
+
+## Weekly leagues (Soc15 call 3, 2026-11-05)
+
+Groups of about 20, scored on sessions done against each person's own
+plan, opt-in through `setLeagueSharing`, formed and settled by
+`weeklyLeagueTurn` every Monday at 12:15 UTC, and kept current by the
+session triggers (`functions/lib/leagues.js`). The unit, rules
+(`firestore.leagues.rules.test.ts`), cross (`leaguePlanned.cross.test.ts`,
+`leagueRules.cross.test.ts`) and emulator (`integration/leagues.test.js`)
+suites cover the logic; these need the release, the console and phones.
+
+- [ ] **The release carries the rules, the index and the functions.**
+      Passing: the Deploy production run's Firestore and Functions stages
+      are green; the rules check (verify-production-rules) is green; the
+      console's Indexes tab lists `users` (leagueOptIn, lastActiveAt) as
+      enabled; and the deployed-source check lists `weeklyLeagueTurn` and
+      `setLeagueSharing` with `lib/leagues.js`, `lib/leagueRules.js` and
+      `lib/leaguePlanned.js`, and the six session triggers with
+      `lib/leagues.js`. Cloud Scheduler shows `weeklyLeagueTurn` at
+      `15 12 * * 1`, Etc/UTC.
+- [ ] **No client writes a league.** From a signed-in browser console a
+      `setDoc` on `leagueMembers/{you}`, on your own standing or on
+      `leagueStatus/current`, and an `updateDoc` of `leagueOptIn` on your
+      own user document, are each refused, while a write of your display
+      name still lands.
+- [ ] **The first real Monday turn, in the console (owner step).** On the
+      first Monday after ten or more people have joined and trained in the
+      last 14 days, after 12:15 UTC. Passing: Firestore shows
+      `leagueWeeks/{that Monday}` with `formed.groups` above 0 and a
+      `finishedAt`; `leagueStatus/current` reads `open: true` with that
+      week; each group in `leagueGroups` has 10 to 30 `memberUids` and a
+      standing per member; `jobRuns/weeklyLeagueTurn` records a success.
+      Before ten, the same run leaves `open: false` with the `joined`
+      count, and the card says "Leagues open when 10 people have joined."
+      If it failed: Cloud Scheduler → Force run is safe (a second run does
+      nothing twice).
+- [ ] **The second Monday settles the first.** Passing: every member of
+      last week's groups has `users/{uid}/leagueResults/{last Monday}`,
+      the top quarter with points moved up, last week's groups are gone,
+      and this week's are drawn from the new tiers.
+- [ ] **The Monday notification on a phone.** On a TestFlight account in
+      a league, after the second Monday's turn. Passing: Social's bell
+      shows one new row, "You moved up to Silver" (or stayed, or moved
+      down), naming nobody, with a medal icon; tapping it opens the league.
+      With Settings → Notifications → Leagues off, the next Monday writes
+      no row.
+- [ ] **The reveal on an iPhone.** Open Social after the result. Passing:
+      the full-screen result opens once, with the new tier's badge, its
+      light, and for a rise the rays and confetti; Done closes it and it
+      does not come back; See your league opens the page. With Reduce
+      Motion on, the badge fades in and nothing is thrown. At the largest
+      text size the reveal scrolls rather than cutting off Done.
+- [ ] **A session moves the standing.** In a group, finish a workout.
+      Passing: within a minute the card's sessions read one more and the
+      page's row moves; deleting the workout takes it back.
+- [ ] **Leaving is immediate.** Leave the league from the page. Passing:
+      the confirmation names what happens; afterwards the group's other
+      members no longer see your row, `leagueMembers/{you}` is gone, and
+      the next Monday does not place you.
