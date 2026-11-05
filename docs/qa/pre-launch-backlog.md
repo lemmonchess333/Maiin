@@ -3563,3 +3563,77 @@ these need a phone, the deployed rules or the console.
       shows `getInviteCode`, `lookupInvite` and `redeemInvite` at max
       instances 100. Deleting a test account that made a code removes its
       `inviteCodes` document.
+
+## Photos on posts (Soc15 call 2, 2026-11-05)
+
+A shared session can carry one to four photos, added after the post
+exists: from the finish screen's posted row (Add photos, under Undo) or
+on the author's own `/activity/:activityId` page (`PostPhotosSheet`).
+Each photo is re-encoded on the phone to a 1600 px longest edge at JPEG
+0.82 (`src/lib/imageEncode.ts`, which leaves its EXIF behind), uploaded
+to `post-photos/{uid}/{activityId}/{photoId}.jpg` under a random id,
+checked by `screenPhoto`, and only then named on the post's `photos`
+list in one update (`postPhotoUpload.ts`). storage.rules lets only the
+author write there, a JPEG under 2 MB beside a post of theirs that
+exists; firestore.rules lets only the author set `photos` alone, at most
+four, each the post's own file, with a verified email (a restricted
+account on its private posts only; taking photos off is always open);
+`onActivityDeleted` empties the post's folder whatever it names
+(`functions/lib/postPhotos.js`); the deletion executor sweeps
+`post-photos/{uid}/`; and a report of the post shows its photos on
+`/admin/moderation`. Unit, rules (Firestore and Storage, against the
+emulators) and function tests cover each part, and Chromium drew the
+card, the viewer and the sheet; these need a phone, the deployed rules
+or the console.
+
+- [ ] **Picking from the library and the camera on an iPhone.** On a
+      TestFlight build, finish a run with sharing on, online. Passing: the
+      posted row shows Add photos under Undo; tapping it and then Add
+      photos offers Photo Library and Take Photo (taking one does not end
+      the app, which it would without `NSCameraUsageDescription`). Pick
+      three from the library, one of them a HEIC portrait: each tile
+      spins, then shows, and "Added 3 photos." appears; Social's card shows
+      one large on the left and two stacked on the right, the portrait the
+      right way up. Turn on Airplane Mode: the button greys out with
+      "Photos need a connection."
+- [ ] **A downloaded post photo carries no location.** Take a photo with
+      Location Services on for the Camera (so the original carries GPS),
+      add it to a post, then download the photo from the Storage console
+      (or open its URL on a Mac) and read it with `exiftool` or Preview →
+      Show Inspector. Passing: no GPS block, no camera model, no original
+      date; the longest side is 1600 px or less and the file is well under
+      1 MB.
+- [ ] **A refused photo never appears (needs Cloud Vision on).** Add a
+      photo SafeSearch rates as nudity (a classical nude from a museum's
+      public-domain collection usually rates LIKELY), with one ordinary
+      photo in the same pick. Passing: the sheet says "This photo can't be used. Photos
+      with nudity aren't allowed.", the card and the post's page never show
+      it, its file is gone from `post-photos/{uid}/{activityId}/`, and the
+      logs show `screenPhoto.refused`. The ordinary photo is on the post.
+- [ ] **Deleting the post deletes its folder.** After photos are on a
+      post, Undo it on the finish screen (or delete the session). Passing:
+      within a minute `post-photos/{uid}/{activityId}/` is gone from the
+      Storage console, a file uploaded and never named included, and the
+      logs show `onActivityDeleted.post_photos_removed`. Deleting a test
+      account removes its whole `post-photos/{uid}/` folder. Taking one
+      photo off in the sheet removes its file.
+- [ ] **Storage refuses another person's path (after the Storage
+      deploy).** Signed in as A in a browser console, upload a JPEG to
+      `post-photos/{B's uid}/{B's post id}/AbCdEf123456.jpg`, and to A's
+      own uid with a post id A does not have, and as `1.jpg` beside A's
+      own post. Passing: all three are refused, and the same upload under
+      a random id beside one of A's posts lands. A `setDoc` merge of
+      `photos` naming B's file on A's post, or a fifth photo, is refused by
+      the Firestore rules (verify-production-rules green first).
+- [ ] **The moderation page shows the photos.** Report a post with
+      photos from a second account, then open `/admin/moderation` as an
+      admin. Passing: the report's Target shows the photos as thumbnails,
+      each opening the full photo; Hide content makes the post private, and
+      the author still sees it and its photos.
+- [ ] **The deploy reads back the changed functions.** After the Deploy
+      production run that ships this, its deployed-source check lists
+      `onActivityDeleted` with `lib/postPhotos.js` and
+      `lib/routeMapFiles.js`, `createReport`, `listPendingReports` and
+      `resolveReport` with `lib/reportTargets.js` and `lib/postPhotos.js`,
+      and `screenPhoto` and `screenUploadedPhoto` with
+      `lib/photoScreen.js`.
