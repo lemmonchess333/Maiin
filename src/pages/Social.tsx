@@ -121,7 +121,11 @@ export default function Social() {
   const [peopleOpen, setPeopleOpen] = useState(false);
   const legacyFindHandledRef = useRef(false);
   useEffect(() => {
-    if (tabFromUrl !== "find" || legacyFindHandledRef.current) return;
+    if (tabFromUrl !== "find") {
+      legacyFindHandledRef.current = false;
+      return;
+    }
+    if (legacyFindHandledRef.current) return;
     legacyFindHandledRef.current = true;
     setPeopleOpen(true);
     setParam("tab", "together");

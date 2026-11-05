@@ -114,6 +114,24 @@ describe("invite refusals in words", () => {
 });
 
 describe("redeemInviteAfterSetup", () => {
+  it.each(["success", "refused", "offline"])(
+    "does not restore a superseded link after a manually entered code is %s",
+    async (outcome) => {
+      savePendingInvite("K7P49M2H");
+      if (outcome === "success")
+        callable.run.mockResolvedValueOnce({ data: { inviterName: "Lee" } });
+      else
+        callable.run.mockRejectedValueOnce(
+          outcome === "refused"
+            ? refusal("code-not-found")
+            : new TypeError("offline")
+        );
+      await redeemInviteAfterSetup("A2B3C4D5");
+      expect(readPendingInvite()).toBe(
+        outcome === "offline" ? "A2B3C4D5" : null
+      );
+    }
+  );
   it("says who they now follow, and forgets the code", async () => {
     savePendingInvite("K7P49M2H");
     callable.run.mockResolvedValueOnce({
@@ -140,4 +158,32 @@ describe("redeemInviteAfterSetup", () => {
       `${INVITE_REFUSAL_WORDS["code-not-found"]} ${ENTER_CODE_LATER}`
     );
   });
+});
+
+describe("a newer link while setup redemption is pending", () => {
+  it.each(["success", "refused", "offline"])(
+    "keeps the newer code after an older %s",
+    async (outcome) => {
+      let resolve!: (value: unknown) => void;
+      let reject!: (reason: unknown) => void;
+      callable.run.mockReturnValueOnce(
+        new Promise((done, fail) => {
+          resolve = done;
+          reject = fail;
+        })
+      );
+      savePendingInvite("K7P49M2H");
+      const pending = redeemInviteAfterSetup("K7P49M2H");
+      savePendingInvite("A2B3C4D5");
+      if (outcome === "success") resolve({ data: { inviterName: "Maya" } });
+      else
+        reject(
+          outcome === "refused"
+            ? refusal("code-not-found")
+            : new TypeError("offline")
+        );
+      await pending;
+      expect(readPendingInvite()).toBe("A2B3C4D5");
+    }
+  );
 });

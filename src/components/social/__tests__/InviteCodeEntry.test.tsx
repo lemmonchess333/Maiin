@@ -9,6 +9,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cleanup,
+  act,
   fireEvent,
   render,
   screen,
@@ -50,6 +51,100 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("InviteCodeEntry", () => {
+  it("holds the submitted input while a request is pending, then restores editing on failure", async () => {
+    let reject!: (reason: unknown) => void;
+    h.redeem.mockReturnValue(
+      new Promise((_done, fail) => {
+        reject = fail;
+      })
+    );
+    savePendingInvite("K7P49M2H");
+    render(<InviteCodeEntry disabled={false} />);
+    use();
+    expect(field()).toBeDisabled();
+    await act(async () => {
+      reject(new TypeError("offline"));
+    });
+    expect(field()).toBeEnabled();
+    expect(field()).toHaveValue("K7P4-9M2H");
+  });
+  it("does not attach an older request's error to a newly opened link", async () => {
+    let reject!: (reason: unknown) => void;
+    h.redeem.mockReturnValue(
+      new Promise((_done, fail) => {
+        reject = fail;
+      })
+    );
+    savePendingInvite("K7P49M2H");
+    render(<InviteCodeEntry disabled={false} />);
+    use();
+    act(() => {
+      savePendingInvite("A2B3C4D5");
+    });
+    await act(async () => {
+      reject(new TypeError("offline"));
+    });
+    expect(field()).toHaveValue("A2B3-C4D5");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("clears an old refusal when the same link is explicitly reopened", async () => {
+    h.redeem.mockRejectedValue(new TypeError("offline"));
+    savePendingInvite("K7P49M2H");
+    render(<InviteCodeEntry disabled={false} />);
+    use();
+    await screen.findByRole("alert");
+    act(() => {
+      savePendingInvite("K7P49M2H");
+    });
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+  it.each(["success", "refused", "offline"])(
+    "replaces the pending link with the manually entered code after %s",
+    async (outcome) => {
+      savePendingInvite("K7P49M2H");
+      if (outcome === "success")
+        h.redeem.mockResolvedValue({ data: { inviterName: "Lee" } });
+      else
+        h.redeem.mockRejectedValue(
+          outcome === "refused"
+            ? {
+                code: "functions/not-found",
+                details: { reason: "code-not-found" },
+              }
+            : new TypeError("offline")
+        );
+      render(<InviteCodeEntry disabled={false} />);
+      fireEvent.change(field(), { target: { value: "A2B3C4D5" } });
+      use();
+      if (outcome === "success")
+        await screen.findByText("You and Lee now follow each other");
+      else await screen.findByRole("alert");
+      expect(readPendingInvite()).toBe(
+        outcome === "offline" ? "A2B3C4D5" : null
+      );
+    }
+  );
+
+  it("preserves a newer link while a manually entered code is submitted", async () => {
+    let resolve!: (value: unknown) => void;
+    h.redeem.mockReturnValue(
+      new Promise((done) => {
+        resolve = done;
+      })
+    );
+    savePendingInvite("K7P49M2H");
+    render(<InviteCodeEntry disabled={false} />);
+    fireEvent.change(field(), { target: { value: "A2B3C4D5" } });
+    use();
+    act(() => {
+      savePendingInvite("K7P49M2H");
+    });
+    await act(async () => {
+      resolve({ data: { inviterName: "Lee" } });
+    });
+    expect(readPendingInvite()).toBe("K7P49M2H");
+  });
   it("uses a code at once and says the inviter follows them and their request waits", async () => {
     // The inviter approves followers, the default (Soc15 call 4, STATUS
     // 2026-11-05): they follow the new person, who asks to follow back.

@@ -9,6 +9,10 @@
   </array>
   <key>com.apple.developer.devicecheck.appattest-environment</key>
   <string>production</string>
+  <key>com.apple.developer.associated-domains</key>
+  <array>
+    <string>applinks:troposfit.com</string>
+  </array>
   <key>com.apple.developer.healthkit</key>
   <true/>
 </dict></plist>

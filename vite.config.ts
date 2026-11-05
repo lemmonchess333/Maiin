@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import { shrinkFormFrames } from "./scripts/art/shrink-form-frames.ts";
+import { universalLinksPlugin } from "./scripts/ios/universal-links.ts";
 import { firstPaintFontPreloads } from "./scripts/first-paint-fonts.ts";
 
 const isCapacitor = process.env.CAPACITOR_BUILD === "true";
@@ -129,6 +130,10 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     releaseDebugTokenGuard(),
+    universalLinksPlugin(
+      process.env.IOS_APP_ID_PREFIX,
+      isFirebaseHosting && !isCapacitor
+    ),
     shrinkFormFramesPlugin(),
     firstPaintFontsPlugin(),
     react(),

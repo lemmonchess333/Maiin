@@ -13,16 +13,19 @@
  * invite, or a restricted one.
  */
 import { useId, useState, type FormEvent } from "react";
+import { useInviteCodeInput } from "@/hooks/usePendingInvite";
 import { UserCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
+import { isWithinInviteWindow, normaliseInviteCode } from "@/lib/inviteCode";
 import {
-  formatInviteCode,
-  isWithinInviteWindow,
-  normaliseInviteCode,
-} from "@/lib/inviteCode";
-import { clearPendingInvite, readPendingInvite } from "@/lib/pendingInvite";
+  clearPendingInvite,
+  pendingInviteRevision,
+  pendingInviteUnchanged,
+  savePendingInvite,
+  snapshotPendingInvite,
+} from "@/lib/pendingInvite";
 import {
   describeInviteRefusal,
   inviteJoinedLine,
@@ -34,12 +37,18 @@ import {
 export default function InviteCodeEntry({ disabled }: { disabled: boolean }) {
   const { user, profile, refreshProfile } = useAuth();
   const [now] = useState(() => Date.now());
-  const [value, setValue] = useState(() => {
-    const pending = readPendingInvite();
-    return pending ? formatInviteCode(pending) : "";
-  });
+  const [value, setValue, revision] = useInviteCodeInput();
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<{
+    code: string;
+    revision: number;
+    text: string;
+  } | null>(null);
+  const message =
+    error?.revision === revision &&
+    error.code === (normaliseInviteCode(value) ?? value)
+      ? error.text
+      : null;
   const [joined, setJoined] = useState<string | null>(null);
   const inputId = useId();
   const messageId = useId();
@@ -75,22 +84,30 @@ export default function InviteCodeEntry({ disabled }: { disabled: boolean }) {
     if (saving) return;
     const code = normaliseInviteCode(value);
     if (!code) {
-      setMessage(NOT_A_CODE);
+      setError({ code: value, revision, text: NOT_A_CODE });
       return;
     }
     setSaving(true);
-    setMessage(null);
+    setError(null);
+    const pending = snapshotPendingInvite();
     try {
       const result = await redeemInviteCode(code);
-      clearPendingInvite();
+      clearPendingInvite(pending);
       setJoined(inviteJoinedLine(result.inviterName, result.requested));
       // So the field stays away when People opens again.
       void refreshProfile({ until: (d) => d.invitedAt != null }).catch(
         () => {}
       );
     } catch (err) {
-      if (isFinalInviteRefusal(err)) clearPendingInvite();
-      setMessage(describeInviteRefusal(err, "people"));
+      const unchanged = pendingInviteUnchanged(pending);
+      if (isFinalInviteRefusal(err)) clearPendingInvite(pending);
+      else if (unchanged) savePendingInvite(code);
+      if (unchanged)
+        setError({
+          code,
+          revision: pendingInviteRevision(),
+          text: describeInviteRefusal(err, "people"),
+        });
     } finally {
       setSaving(false);
     }
@@ -115,9 +132,10 @@ export default function InviteCodeEntry({ disabled }: { disabled: boolean }) {
             id={inputId}
             className="ds-input flex-1 min-w-[min(100%,10em)] min-h-11 font-mono"
             value={value}
+            disabled={saving}
             onChange={(e) => {
               setValue(e.target.value);
-              if (message) setMessage(null);
+              if (error) setError(null);
             }}
             placeholder="ABCD-2345"
             autoComplete="off"

@@ -14,8 +14,9 @@
  * is kept for the 14 days an account may use an invite and cleared once
  * used or refused, so a second account on the phone does not find it.
  *
- * The iPhone app does not open troposfit.com links (no associated
- * domains), so there a person types the code in setup instead.
+ * Installed iPhone builds can receive the same code through Universal
+ * Links. Installing the app does not transfer browser storage: copy the
+ * code before installing, or tap the original link again afterward.
  */
 import { readJson, remove, writeJson } from "@/lib/localStore";
 import { INVITE_WINDOW_DAYS, normaliseInviteCode } from "@/lib/inviteCode";
@@ -24,14 +25,60 @@ import { INVITE_PARAM } from "@/lib/publicLinks";
 const PENDING_INVITE_KEY = "tropos.pendingInvite";
 const KEEP_MS = INVITE_WINDOW_DAYS * 86_400_000;
 
+const listeners = new Set<() => void>();
+let revision = 0;
+
+/** Each delivered link counts, even if its code is the same as before. */
+export function pendingInviteRevision(): number {
+  return revision;
+}
+
+export interface PendingInviteSnapshot {
+  revision: number;
+  code: string | null;
+}
+
+/** Capture before sending a manually edited or link-filled code. */
+export function snapshotPendingInvite(): PendingInviteSnapshot {
+  return { revision, code: readPendingInvite() };
+}
+
+export function pendingInviteUnchanged(
+  snapshot: PendingInviteSnapshot
+): boolean {
+  return (
+    revision === snapshot.revision && readPendingInvite() === snapshot.code
+  );
+}
+
+/** Same-window updates, including links delivered to an already open app. */
+export function subscribePendingInvite(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function notifyPendingInvite(): void {
+  revision++;
+  for (const listener of listeners) listener();
+}
+
 interface StoredInvite {
   code?: unknown;
   savedAt?: unknown;
 }
 
+// A native link should still fill the current screen when storage is blocked.
+// This fallback deliberately makes no promise across reload or installation.
+let volatileInvite: StoredInvite | null | undefined;
+
 /** The code waiting on this device, or null. */
 export function readPendingInvite(now = Date.now()): string | null {
-  const stored = readJson<StoredInvite | null>(PENDING_INVITE_KEY, null);
+  const stored =
+    volatileInvite !== undefined
+      ? volatileInvite
+      : readJson<StoredInvite | null>(PENDING_INVITE_KEY, null);
   if (!stored || typeof stored !== "object") return null;
   const code = normaliseInviteCode(stored.code);
   const savedAt = stored.savedAt;
@@ -50,12 +97,23 @@ export function readPendingInvite(now = Date.now()): string | null {
 export function savePendingInvite(code: string, now = Date.now()): boolean {
   const normalised = normaliseInviteCode(code);
   if (!normalised) return false;
-  return writeJson(PENDING_INVITE_KEY, { code: normalised, savedAt: now });
+  const saved = writeJson(PENDING_INVITE_KEY, {
+    code: normalised,
+    savedAt: now,
+  });
+  volatileInvite = saved ? undefined : { code: normalised, savedAt: now };
+  notifyPendingInvite();
+  return saved;
 }
 
 /** Forget the waiting code: it was used, or the server refused it. */
-export function clearPendingInvite(): void {
-  remove(PENDING_INVITE_KEY);
+export function clearPendingInvite(snapshot?: PendingInviteSnapshot): void {
+  // Clear the code that was waiting when submission began, even if the
+  // person manually replaced it. Preserve only a subsequently opened link.
+  if (snapshot && !pendingInviteUnchanged(snapshot)) return;
+  // Even a refused removal must not resurrect an old stored code in this session.
+  volatileInvite = remove(PENDING_INVITE_KEY) ? undefined : null;
+  notifyPendingInvite();
 }
 
 /**
