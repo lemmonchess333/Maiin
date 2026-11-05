@@ -3,8 +3,10 @@
  *
  * The server holds everything: a person's code (getInviteCode), whose a
  * code is for the signed-out welcome screen (lookupInvite), and a new
- * account using one (redeemInvite), which makes the two follow each other
- * at once, whatever either's approveFollowers says. This file calls them
+ * account using one (redeemInvite). The inviter follows the new person at
+ * once; the new person follows the inviter at once when the inviter takes
+ * followers without approving them, and otherwise asks, the request marked
+ * as from the invite (Soc15 call 4, STATUS 2026-11-05). This file calls them
  * and words their answers: the one line a redemption gets, and a sentence
  * for each refusal. `inviteRefusals.test.ts` pins every reason the server
  * can give (INVITE_REFUSALS in functions/lib/inviteCodes.js) to one here,
@@ -40,6 +42,10 @@ export interface InviteRedemption {
   inviterName: string | null;
   /** The same invite was used before (a reply lost on the way back). */
   alreadyJoined: boolean;
+  /** The inviter approves followers: they follow the person now, and the
+   *  person's follow of them waits as a request (Soc15 call 4, STATUS
+   *  2026-11-05). False when the two follow each other already. */
+  requested: boolean;
 }
 
 /** Use `code` for the signed-in account. Rejects with the callable's
@@ -49,7 +55,7 @@ export async function redeemInviteCode(
 ): Promise<InviteRedemption> {
   const res = await httpsCallable<
     { code: string },
-    { inviterName?: unknown; alreadyJoined?: unknown }
+    { inviterName?: unknown; alreadyJoined?: unknown; requested?: unknown }
   >(
     functions,
     "redeemInvite"
@@ -58,6 +64,7 @@ export async function redeemInviteCode(
   return {
     inviterName: typeof name === "string" && name.trim() ? name.trim() : null,
     alreadyJoined: res.data?.alreadyJoined === true,
+    requested: res.data?.requested === true,
   };
 }
 
@@ -87,8 +94,17 @@ export const NOT_A_CODE =
 export const INVITE_CODE_UNAVAILABLE =
   "Couldn't get your invite code. Check your connection and try again.";
 
-/** The one line a redemption gets. */
-export function inviteJoinedLine(inviterName: string | null): string {
+/** The one line a redemption gets: both ways at once, or, when the inviter
+ *  approves followers, their follow now and the person's request waiting. */
+export function inviteJoinedLine(
+  inviterName: string | null,
+  requested = false
+): string {
+  if (requested) {
+    return inviterName
+      ? `${inviterName} follows you now. Your request to follow them is waiting`
+      : "Your friend follows you now. Your request to follow them is waiting";
+  }
   return inviterName
     ? `You and ${inviterName} now follow each other`
     : "You and your friend now follow each other";
@@ -171,7 +187,7 @@ export async function redeemInviteAfterSetup(code: string): Promise<void> {
   try {
     const result = await redeemInviteCode(code);
     clearPendingInvite();
-    toast.success(inviteJoinedLine(result.inviterName));
+    toast.success(inviteJoinedLine(result.inviterName, result.requested));
   } catch (err) {
     if (isFinalInviteRefusal(err)) clearPendingInvite();
     else savePendingInvite(code);

@@ -5,8 +5,10 @@
  * The link carries the code (`https://troposfit.com/?invite=K7P49M2H`), and
  * the code is shown too, to read out or to type: the iPhone app does not
  * open troposfit.com links, so a friend who installs it types the code
- * during setup. Either way the two follow each other once the friend's
- * plan is made.
+ * during setup. Either way, once the friend's plan is made, this person
+ * follows them, and they follow this person at once or, while this person
+ * approves followers (the default), ask to (Soc15 call 4, STATUS
+ * 2026-11-05): a code posted publicly reaches no followers-only post.
  *
  * The code is made the first time it is asked for (getInviteCode) and kept
  * on the account (`profile.inviteCode`), so after that it shows at once. A
@@ -75,7 +77,7 @@ export default function InviteFriendCard({
   const share = async () => {
     const mine = await ensureCode();
     if (!mine) return;
-    const text = `I'm tracking my lifts and runs on Tropos. Join me with my invite code ${formatInviteCode(mine)} and we'll follow each other.`;
+    const text = `I'm tracking my lifts and runs on Tropos. Join me with my invite code ${formatInviteCode(mine)}.`;
     const url = appInviteUrl(mine);
     if (navigator.share) {
       try {
@@ -129,7 +131,9 @@ export default function InviteFriendCard({
             Invite a training partner
           </p>
           <p className="text-small text-muted-foreground leading-relaxed mt-0.5">
-            When they join with your link or code, you follow each other.
+            {profile?.approveFollowers === false
+              ? "When they join with your link or code, you follow each other."
+              : "When they join with your link or code, you'll follow them and they'll ask to follow you."}
           </p>
         </div>
       </div>

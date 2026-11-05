@@ -78,7 +78,9 @@ function fallbackMessage(n: NotificationItem): string {
     case "follow":
       return `${who} started following you`;
     case "follow_request":
-      return `${who} asked to follow you`;
+      return n.fromInvite
+        ? `${who} joined from your invite and asked to follow you`
+        : `${who} asked to follow you`;
     case "follow_accepted":
       return `${who} accepted your follow request`;
     case "challenge_milestone":

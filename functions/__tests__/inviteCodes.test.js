@@ -82,6 +82,8 @@ const EDGES = [
   "following/maya/users/sam",
   "followers/sam/users/maya",
 ];
+/** Maya following Sam: made at once whatever Maya approves. */
+const INVITER_EDGES = ["following/maya/users/sam", "followers/sam/users/maya"];
 
 describe("the code itself", () => {
   it("has no character that reads as another", () => {
@@ -200,27 +202,72 @@ describe("getOrCreateInviteCode", () => {
 });
 
 describe("redeemInvite — joining from an invite", () => {
-  it("follows both ways at once, marked as from the invite", async () => {
-    const firestore = world();
+  it("with Approve followers off, follows both ways at once, marked as from the invite", async () => {
+    const firestore = world({
+      "users/maya": { inviteCode: CODE, approveFollowers: false },
+    });
     await expect(redeem(firestore)).resolves.toEqual({
       inviterUid: "maya",
       alreadyJoined: false,
+      requested: false,
     });
     for (const path of EDGES)
       expect(firestore.data.get(path), path).toEqual({
         followedAt: STAMP,
         fromInvite: true,
       });
+    expect(firestore.data.has("followRequests/maya/users/sam")).toBe(false);
     expect(firestore.data.get("users/sam").invitedAt).toBe(STAMP);
     expect(firestore.data.get(`inviteCodes/${CODE}`).redemptions).toEqual([
       NOW,
     ]);
   });
 
-  it("counts as accepting, whatever either approves", async () => {
+  it("by default the inviter follows at once and the new person asks, so a public code reaches no followers-only post", async () => {
+    // approveFollowers absent means on (Soc15 call 4, STATUS 2026-11-05).
+    const firestore = world();
+    await expect(redeem(firestore)).resolves.toEqual({
+      inviterUid: "maya",
+      alreadyJoined: false,
+      requested: true,
+    });
+    for (const path of INVITER_EDGES)
+      expect(firestore.data.get(path), path).toEqual({
+        followedAt: STAMP,
+        fromInvite: true,
+      });
+    expect(firestore.data.has("following/sam/users/maya")).toBe(false);
+    expect(firestore.data.has("followers/maya/users/sam")).toBe(false);
+    expect(firestore.data.get("followRequests/maya/users/sam")).toEqual({
+      requestedAt: STAMP,
+      fromInvite: true,
+    });
+    expect(firestore.data.get("users/sam").invitedAt).toBe(STAMP);
+  });
+
+  it("counts as the new person accepting the inviter, whatever they approve", async () => {
     const firestore = world({
       "users/maya": { inviteCode: CODE, approveFollowers: true },
       "users/sam": { approveFollowers: true },
+      "followRequests/maya/users/sam": { requestedAt: 1 },
+      "followRequests/sam/users/maya": { requestedAt: 1 },
+    });
+    await redeem(firestore);
+    for (const path of INVITER_EDGES)
+      expect(firestore.data.has(path), path).toBe(true);
+    // Maya follows Sam now, so her request to is moot; Sam's to her
+    // stands, marked as from the invite.
+    expect(firestore.data.has("followRequests/sam/users/maya")).toBe(false);
+    expect(firestore.data.get("followRequests/maya/users/sam")).toEqual({
+      requestedAt: STAMP,
+      fromInvite: true,
+    });
+    expect(firestore.data.has("following/sam/users/maya")).toBe(false);
+  });
+
+  it("with Approve followers off, clears any request between the two", async () => {
+    const firestore = world({
+      "users/maya": { inviteCode: CODE, approveFollowers: false },
       "followRequests/maya/users/sam": { requestedAt: 1 },
       "followRequests/sam/users/maya": { requestedAt: 1 },
     });
@@ -251,6 +298,21 @@ describe("redeemInvite — joining from an invite", () => {
     await expect(redeem(firestore)).resolves.toEqual({
       inviterUid: "maya",
       alreadyJoined: true,
+      requested: true,
+    });
+    expect(firestore.operations.length).toBe(before);
+  });
+
+  it("answers a second call the same way when the two follow each other", async () => {
+    const firestore = world({
+      "users/maya": { inviteCode: CODE, approveFollowers: false },
+    });
+    await redeem(firestore);
+    const before = firestore.operations.length;
+    await expect(redeem(firestore)).resolves.toEqual({
+      inviterUid: "maya",
+      alreadyJoined: true,
+      requested: false,
     });
     expect(firestore.operations.length).toBe(before);
   });
@@ -258,7 +320,7 @@ describe("redeemInvite — joining from an invite", () => {
   it("reads a typed code as stored", async () => {
     const firestore = world();
     await redeem(firestore, { code: "k7p4-9m2h" });
-    expect(firestore.data.has("following/sam/users/maya")).toBe(true);
+    expect(firestore.data.has("following/maya/users/sam")).toBe(true);
   });
 });
 

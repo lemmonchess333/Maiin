@@ -1,7 +1,8 @@
 /**
  * People's "Invited by a friend?" (Soc15 call 4): for an account in its
  * first 14 days that has not joined from an invite. A code is used at
- * once, and the line that says the two follow each other replaces the
+ * once, and the line that says what it made (the two following each other,
+ * or the inviter following and the new request waiting) replaces the
  * field; a refusal says why under it, and a code that cannot be one is
  * not sent.
  */
@@ -35,9 +36,7 @@ import { readPendingInvite, savePendingInvite } from "@/lib/pendingInvite";
 import { INVITE_REFUSAL_WORDS, NOT_A_CODE } from "@/lib/invites";
 
 const field = () =>
-  screen.getByLabelText(
-    "Enter their invite code and you'll follow each other."
-  );
+  screen.getByLabelText("Enter their invite code and they'll follow you.");
 const use = () =>
   fireEvent.click(screen.getByRole("button", { name: "Use code" }));
 
@@ -51,15 +50,23 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("InviteCodeEntry", () => {
-  it("uses a code at once and says who they now follow", async () => {
+  it("uses a code at once and says the inviter follows them and their request waits", async () => {
+    // The inviter approves followers, the default (Soc15 call 4, STATUS
+    // 2026-11-05): they follow the new person, who asks to follow back.
     h.redeem.mockResolvedValue({
-      data: { inviterName: "Maya Patel", alreadyJoined: false },
+      data: {
+        inviterName: "Maya Patel",
+        alreadyJoined: false,
+        requested: true,
+      },
     });
     render(<InviteCodeEntry disabled={false} />);
     fireEvent.change(field(), { target: { value: "k7p4-9m2h" } });
     use();
     expect(
-      await screen.findByText("You and Maya Patel now follow each other")
+      await screen.findByText(
+        "Maya Patel follows you now. Your request to follow them is waiting"
+      )
     ).toBeInTheDocument();
     expect(h.redeem).toHaveBeenCalledWith({ code: "K7P49M2H" });
     expect(screen.queryByRole("button", { name: "Use code" })).toBeNull();

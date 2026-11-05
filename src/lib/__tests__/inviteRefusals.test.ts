@@ -102,6 +102,15 @@ describe("invite refusals in words", () => {
       "You and your friend now follow each other"
     );
   });
+
+  it("says the request waits when the inviter approves followers", () => {
+    expect(inviteJoinedLine("Maya", true)).toBe(
+      "Maya follows you now. Your request to follow them is waiting"
+    );
+    expect(inviteJoinedLine(null, true)).toBe(
+      "Your friend follows you now. Your request to follow them is waiting"
+    );
+  });
 });
 
 describe("redeemInviteAfterSetup", () => {

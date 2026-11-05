@@ -244,6 +244,31 @@ it("reads a code the account already has without asking for one", () => {
   expect(A.fetchCode).not.toHaveBeenCalled();
 });
 
+it("says what an invite makes, by whether the person approves followers", () => {
+  // Approving is the default (absent): the friend asks to follow back, so
+  // a code posted publicly reaches no followers-only post (Soc15 call 4,
+  // STATUS 2026-11-05).
+  A.profile = { uid: "me", inviteCode: "A2B3C4D5" };
+  const { unmount } = renderPeople(true);
+  expect(
+    screen.getByText(
+      "When they join with your link or code, you'll follow them and they'll ask to follow you."
+    )
+  ).toBeInTheDocument();
+  unmount();
+  A.profile = {
+    uid: "me",
+    inviteCode: "A2B3C4D5",
+    approveFollowers: false,
+  };
+  renderPeople(true);
+  expect(
+    screen.getByText(
+      "When they join with your link or code, you follow each other."
+    )
+  ).toBeInTheDocument();
+});
+
 it("says so when the code can't be had, and shares nothing", async () => {
   A.fetchCode.mockRejectedValue(new Error("offline"));
   const share = vi.fn().mockResolvedValue(undefined);
