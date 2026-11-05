@@ -116,6 +116,47 @@ describe("resolveReportTarget — target uid comes from the stored doc", () => {
     expect(r.preview.authorName).toBe("Bo");
   });
 
+  it("activity: the preview carries the post's own photos (Soc15 call 2), nothing else it names", async () => {
+    const bucket =
+      "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
+    const own = (id) => ({
+      id,
+      url: `${bucket}post-photos%2Fauthor-9%2Fa1%2F${id}.jpg?alt=media&token=t`,
+      w: 1600,
+      h: 1200,
+    });
+    const { firestore } = makeFs({
+      "activities/a1": {
+        authorId: "author-9",
+        visibility: "public",
+        photos: [
+          own("Aaaaaaaa1"),
+          // Not this post's upload: never shown, whatever the post holds.
+          { ...own("Bbbbbbbb2"), url: "https://evil.example/p.gif" },
+          own("Cccccccc3"),
+        ],
+      },
+      "activities/a2": { authorId: "author-9", visibility: "public" },
+    });
+    const withPhotos = await resolveReportTarget({
+      firestore,
+      reporterUid: "stranger",
+      targetType: "activity",
+      targetId: "a1",
+    });
+    expect(withPhotos.preview.photos).toEqual([
+      own("Aaaaaaaa1").url,
+      own("Cccccccc3").url,
+    ]);
+    const without = await resolveReportTarget({
+      firestore,
+      reporterUid: "stranger",
+      targetType: "activity",
+      targetId: "a2",
+    });
+    expect(without.preview.photos).toEqual([]);
+  });
+
   it("comment: derives from the comment author + requires the parent readable", async () => {
     const { firestore, txReader } = makeFs({
       "comments/a1/items/c1": { authorId: "commenter", text: "hi" },

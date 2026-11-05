@@ -25,6 +25,10 @@
  *                            owner upload of light.jpg / dark.jpg only,
  *                            JPEG under 512 KB, only beside the owner's
  *                            own post; ANY-authenticated get, no list
+ *   - post-photos/{uid}/{activityId}: a post's photos (Soc15 call 2);
+ *                            owner upload of a random-id .jpg only, JPEG
+ *                            under 2 MB, only beside the owner's own post;
+ *                            ANY-authenticated get, no list
  *   - MIME allowlist is closed-set (jpeg/png/webp) — svg+xml (XSS
  *     carrier) and gif must be rejected
  *   - size caps: 10MB progress/food, 5MB profile
@@ -424,6 +428,171 @@ suite("storage.rules", () => {
       await assertFails(deleteObject(ref(authed(OWNER), light)));
       // Still readable, as every other prefix is under the freeze.
       await assertSucceeds(getBytes(ref(authed(OTHER), light)));
+    });
+  });
+
+  // Soc15 call 2: a shared session's photos, one to four, uploaded by the
+  // author's app beside a post that exists (src/lib/postPhotoUpload.ts),
+  // each under a random id.
+  describe("post-photos/{uid}/{activityId} — a post's photos", () => {
+    const POST = "post-1";
+    const ID = "Ab3dEf6hIj9kLm2nOp5q";
+    const photo = `post-photos/${OWNER}/${POST}/${ID}.jpg`;
+    const PNG = { contentType: "image/png" };
+    const oneAndAHalfMB = new Uint8Array(1.5 * 1024 * 1024);
+    const twoMB = new Uint8Array(2 * 1024 * 1024);
+
+    async function seedPost(id = POST, authorId = OWNER) {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "activities", id), {
+          authorId,
+          type: "workout",
+        });
+      });
+    }
+
+    /* As for route maps: the upload reads the post from Firestore, and
+       where the Storage emulator cannot reach Firestore the tests that
+       need it skip rather than report a false failure. */
+    let crossServiceWorks = false;
+    beforeAll(async () => {
+      const probe = "probe-post-photo-uid";
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "activities", "probe-post"), {
+          authorId: probe,
+        });
+      });
+      try {
+        await uploadBytes(
+          ref(
+            env.authenticatedContext(probe).storage(),
+            `post-photos/${probe}/probe-post/${ID}.jpg`
+          ),
+          smallBytes,
+          JPEG
+        );
+        crossServiceWorks = true;
+      } catch {
+        crossServiceWorks = false;
+        console.warn(
+          "[storage.rules] Cross-service Firestore reads are unavailable to the " +
+            "Storage emulator in this environment — SKIPPING the post photo " +
+            "upload tests that read the post."
+        );
+      }
+      await env.clearFirestore();
+      await env.clearStorage();
+    }, 30_000);
+
+    it("ANY signed-in user can get a photo; anon cannot; nobody can list a folder", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await uploadBytes(ref(ctx.storage(), photo), smallBytes, JPEG);
+      });
+      await assertSucceeds(getBytes(ref(authed(OTHER), photo)));
+      await assertSucceeds(getBytes(ref(authed(OWNER), photo)));
+      await assertFails(getBytes(ref(anon(), photo)));
+      for (const folder of [
+        `post-photos/${OWNER}`,
+        `post-photos/${OWNER}/${POST}`,
+      ]) {
+        await assertFails(listAll(ref(authed(OTHER), folder)));
+        await assertFails(listAll(ref(authed(OWNER), folder)));
+      }
+    });
+
+    it("another user cannot write or delete the owner's photo, even on their own post id", async () => {
+      await seedPost();
+      await seedPost("other-post", OTHER);
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await uploadBytes(ref(ctx.storage(), photo), smallBytes, JPEG);
+      });
+      await assertFails(
+        uploadBytes(ref(authed(OTHER), photo), smallBytes, JPEG)
+      );
+      await assertFails(
+        uploadBytes(
+          ref(authed(OTHER), `post-photos/${OWNER}/other-post/${ID}.jpg`),
+          smallBytes,
+          JPEG
+        )
+      );
+      await assertFails(deleteObject(ref(authed(OTHER), photo)));
+      await assertFails(uploadBytes(ref(anon(), photo), smallBytes, JPEG));
+    });
+
+    it("the owner can upload a photo beside their post, and delete it", async (ctx) => {
+      if (!crossServiceWorks) return ctx.skip();
+      await seedPost();
+      await assertSucceeds(
+        uploadBytes(ref(authed(OWNER), photo), oneAndAHalfMB, JPEG)
+      );
+      await assertSucceeds(deleteObject(ref(authed(OWNER), photo)));
+    });
+
+    it("refuses a photo with no post, or beside someone else's post", async (ctx) => {
+      if (!crossServiceWorks) return ctx.skip();
+      await assertFails(
+        uploadBytes(ref(authed(OWNER), photo), smallBytes, JPEG)
+      );
+      await seedPost(POST, OTHER);
+      await assertFails(
+        uploadBytes(ref(authed(OWNER), photo), smallBytes, JPEG)
+      );
+      // Anchor: the same upload lands once the post is the owner's.
+      await seedPost(POST, OWNER);
+      await assertSucceeds(
+        uploadBytes(ref(authed(OWNER), photo), smallBytes, JPEG)
+      );
+    });
+
+    it("takes only a random-id JPEG name, as a JPEG under 2 MB", async (ctx) => {
+      if (!crossServiceWorks) return ctx.skip();
+      await seedPost();
+      for (const name of [
+        "1.jpg",
+        `${ID}.png`,
+        `${ID}.jpeg`,
+        `nested/${ID}.jpg`,
+        "has space1.jpg",
+        `${ID}.jpg.exe`,
+      ]) {
+        await assertFails(
+          uploadBytes(
+            ref(authed(OWNER), `post-photos/${OWNER}/${POST}/${name}`),
+            smallBytes,
+            JPEG
+          )
+        );
+      }
+      await assertFails(
+        uploadBytes(ref(authed(OWNER), photo), smallBytes, PNG)
+      );
+      await assertFails(
+        uploadBytes(ref(authed(OWNER), photo), smallBytes, SVG)
+      );
+      await assertFails(uploadBytes(ref(authed(OWNER), photo), twoMB, JPEG));
+      await assertSucceeds(
+        uploadBytes(ref(authed(OWNER), photo), smallBytes, JPEG)
+      );
+    });
+
+    it("freezes uploads and deletes while the account is being deleted", async (ctx) => {
+      if (!crossServiceWorks) return ctx.skip();
+      await seedPost();
+      await env.withSecurityRulesDisabled(async (c) => {
+        await uploadBytes(ref(c.storage(), photo), smallBytes, JPEG);
+      });
+      await seedTombstone();
+      await assertFails(
+        uploadBytes(
+          ref(authed(OWNER), `post-photos/${OWNER}/${POST}/Zz9yXx8wVv7u.jpg`),
+          smallBytes,
+          JPEG
+        )
+      );
+      await assertFails(deleteObject(ref(authed(OWNER), photo)));
+      // Still readable, as every other prefix is under the freeze.
+      await assertSucceeds(getBytes(ref(authed(OTHER), photo)));
     });
   });
 

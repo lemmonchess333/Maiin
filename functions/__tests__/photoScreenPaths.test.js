@@ -63,7 +63,7 @@ afterEach(() => {
   }
 });
 
-describe.each(["space-photos", "profile-photos", "route-maps"])(
+describe.each(["space-photos", "profile-photos", "route-maps", "post-photos"])(
   "%s path screening",
   (prefix) => {
     it.each(["/nested/a.jpg", "/a..jpg", "/nested/../a.jpg", "", "/"])(

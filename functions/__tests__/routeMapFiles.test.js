@@ -14,6 +14,7 @@ const require = createRequire(import.meta.url);
 process.env.GCLOUD_PROJECT ||= "tropos-unit-test";
 
 const routeMapFiles = require("../lib/routeMapFiles");
+const postPhotos = require("../lib/postPhotos");
 const socialFanout = require("../lib/socialFanout");
 const { onActivityDeleted } = require("../index");
 
@@ -145,12 +146,19 @@ describe("onActivityDeleted — the post's map", () => {
         return "route-maps/author-uid/post-1/";
       }
     );
+    // The post's photo folder goes too (postPhotos.test.js).
+    vi.spyOn(postPhotos, "deletePostPhotoFiles").mockImplementation(
+      async () => {
+        order.push("photos");
+        return "post-photos/author-uid/post-1/";
+      }
+    );
   });
   afterEach(() => vi.restoreAllMocks());
 
   it("hands the deleted post and its id to the cleanup, after the feeds", async () => {
     await onActivityDeleted.run(snap, context);
-    expect(order).toEqual(["feeds", "map"]);
+    expect(order).toEqual(["feeds", "map", "photos"]);
     const [args] = routeMapFiles.deleteRouteMapFiles.mock.calls[0];
     expect(args.data).toEqual(RUN_POST);
     expect(args.activityId).toBe("post-1");

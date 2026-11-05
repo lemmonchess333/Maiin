@@ -28,7 +28,8 @@ function couldHaveRouteMap(data) {
 }
 
 /** One path segment as Storage names it: not empty, no slash, not a dot
- *  name. A blank author would make the prefix every author's folder. */
+ *  name. A blank author would make the prefix every author's folder. A
+ *  post's photo folder is held to the same rule (lib/postPhotos.js). */
 function isSegment(value) {
   return (
     typeof value === "string" &&
@@ -65,4 +66,9 @@ async function deleteRouteMapFiles({ data, activityId, getBucket, logger }) {
   return prefix;
 }
 
-module.exports = { couldHaveRouteMap, routeMapPrefix, deleteRouteMapFiles };
+module.exports = {
+  couldHaveRouteMap,
+  isSegment,
+  routeMapPrefix,
+  deleteRouteMapFiles,
+};
