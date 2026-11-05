@@ -20,6 +20,8 @@ const {
   backfillMyActivityCategories,
   recreditMyLiftVolume,
   sendTestPush,
+  readActivityMedia,
+  readReportedActivityMedia,
 } = require("../index");
 
 const TEN_MINUTES = 600_000;
@@ -178,4 +180,47 @@ describe("rate-limited callables — auth precedence", () => {
       expect(limiterCalls).toEqual([]);
     }
   );
+});
+
+
+describe("activity media read callables", () => {
+  let previousAdmins;
+  beforeEach(() => {
+    previousAdmins = process.env.ADMIN_UIDS;
+    process.env.ADMIN_UIDS = UID;
+  });
+  afterEach(() => {
+    if (previousAdmins === undefined) delete process.env.ADMIN_UIDS;
+    else process.env.ADMIN_UIDS = previousAdmins;
+  });
+
+  it("does not export the tokenless upload callable during reader adoption", () => {
+    expect(require("../index")).not.toHaveProperty("uploadActivityMedia");
+  });
+  for (const [callable, action, maxCalls, windowMs] of [
+    [readActivityMedia, "readActivityMedia", 240, 60_000],
+    [readReportedActivityMedia, "readReportedActivityMedia", 240, 60_000],
+  ]) {
+    it(`caps ${action}, checks deletion before writing the limiter and forbids caching`, async () => {
+      const headers = [];
+      await expect(callable.run({}, { ...CONTEXT, rawRequest: { res: { setHeader: (...args) => headers.push(args) } } })).rejects.toMatchObject({ code: "resource-exhausted" });
+      expect(limiterCalls).toEqual([{ uid: UID, action, maxCalls, windowMs }]);
+      expect(order).toEqual(["lock", "limiter"]);
+      expect(headers).toEqual([["Cache-Control", "private, no-store, max-age=0"]]);
+    });
+    it(`requires auth for ${action} before reads or limiter writes`, async () => {
+      await expect(callable.run({}, {})).rejects.toMatchObject({ code: "unauthenticated" });
+      expect(order).toEqual([]);
+    });
+  }
+});
+
+
+it("rejects a non-admin on reported media before the rate limiter", async () => {
+  const old = process.env.ADMIN_UIDS;
+  process.env.ADMIN_UIDS = "other-admin";
+  try {
+    await expect(readReportedActivityMedia.run({}, CONTEXT)).rejects.toMatchObject({ code: "permission-denied" });
+    expect(limiterCalls).toEqual([]);
+  } finally { if (old === undefined) delete process.env.ADMIN_UIDS; else process.env.ADMIN_UIDS = old; }
 });

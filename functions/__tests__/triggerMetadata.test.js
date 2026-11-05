@@ -342,6 +342,8 @@ const EXPECTED = {
   // Ship1: the photos other people see, screened for nudity
   // (lib/photoScreen.js). The callable is what the app waits on; the
   // Storage trigger is the backstop for a client that skips it.
+  readReportedActivityMedia: { kind: "callable", maxInstances: 10, secrets: [] },
+  readActivityMedia: { kind: "callable", maxInstances: 100, secrets: [] },
   screenPhoto: {
     kind: "callable",
     maxInstances: 100,

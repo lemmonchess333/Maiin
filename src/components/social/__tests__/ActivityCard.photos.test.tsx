@@ -15,6 +15,7 @@ import { MemoryRouter } from "react-router-dom";
 import ActivityCard from "../ActivityCard";
 import type { FeedItem } from "../../../hooks/useSocialFeed";
 import type { PostPhoto } from "@/lib/postPhotos";
+import { useActivityMedia } from "@/hooks/useActivityMedia";
 
 vi.mock("../../../lib/auth", () => ({
   useAuth: () => ({ user: { uid: "viewer" }, profile: null }),
@@ -169,6 +170,14 @@ describe("a post's photos on its card", () => {
       "Photo 2 of 2 from Maya Chen's run"
     );
   });
+
+  it("keeps a photo tile named when the gateway provides no image", () => {
+    vi.mocked(useActivityMedia).mockReturnValueOnce(undefined);
+    const { container } = renderCard({ photos: photos(1) });
+    const tile = tiles(container)[0];
+    expect(tile.querySelector("img")).toBeNull();
+    expect(tile).toHaveAccessibleName("Photo 1 of 1 from Maya Chen's run");
+  });
 });
 
 describe("the full-screen viewer", () => {
@@ -188,7 +197,7 @@ describe("the full-screen viewer", () => {
     expect(viewer()).toHaveAttribute("aria-modal", "true");
     expect(within(viewer()).getByText("2 of 3")).toBeInTheDocument();
     expect(shown()).toHaveAttribute("alt", "Photo 2 of 3 from Maya Chen's run");
-    expect(shown()).toHaveAttribute("src", photo(2).url);
+    expect(shown()).toHaveAttribute("src", `blob:${photo(2).url}`);
     expect(shown().className).toMatch(/object-contain/);
     // Over everything, on the dark stage, below the status bar.
     expect(viewer().className).toMatch(/fixed inset-0/);
@@ -269,3 +278,7 @@ describe("the full-screen viewer", () => {
     ).toBeNull();
   });
 });
+
+vi.mock("@/hooks/useActivityMedia", () => ({
+  useActivityMedia: vi.fn((url: string) => (url ? `blob:${url}` : undefined)),
+}));

@@ -140,6 +140,16 @@ describe("screenStoredPhoto", () => {
     expect(file.delete).toHaveBeenCalledWith({ ignoreNotFound: true });
   });
 
+  it("pins delayed finalize screening and deletion to that exact generation", async () => {
+    const { file, bucket } = bucketWith();
+    await screenStoredPhoto({
+      bucket, path: "route-maps/u1/post/light.jpg", generation: "123", accessToken: "t",
+      fetchImpl: visionAnswer({ responses: [{ safeSearchAnnotation: annotation("VERY_LIKELY") }] }),
+    });
+    expect(bucket.file).toHaveBeenCalledWith("route-maps/u1/post/light.jpg", { generation: "123" });
+    expect(file.delete).toHaveBeenCalledWith({ ignoreNotFound: true, ifGenerationMatch: "123" });
+  });
+
   it("keeps a photo that passes", async () => {
     const { file, bucket } = bucketWith();
     const result = await screenStoredPhoto({
