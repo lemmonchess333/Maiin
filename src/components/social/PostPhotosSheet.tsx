@@ -1,3 +1,4 @@
+import { useActivityMedia } from "@/hooks/useActivityMedia";
 /**
  * The photos on one of your shared sessions (Soc15 call 2): add up to
  * four, take any off.
@@ -39,6 +40,22 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { POST_PHOTOS_COPY } from "./postPhotosCopy";
+
+function PhotoImage({ photo, alt }: { photo: PostPhoto; alt: string }) {
+  const src = useActivityMedia(photo.url);
+  return (
+    <img
+      src={src}
+      alt={alt}
+      width={photo.w}
+      height={photo.h}
+      loading="lazy"
+      decoding="async"
+      draggable={false}
+      className="absolute inset-0 size-full object-cover"
+    />
+  );
+}
 
 const photosWord = (n: number) => (n === 1 ? "1 photo" : `${n} photos`);
 
@@ -169,15 +186,9 @@ export default function PostPhotosSheet({
                 key={photo.id}
                 className="relative aspect-square overflow-hidden rounded-xl bg-muted"
               >
-                <img
-                  src={photo.url}
+                <PhotoImage
+                  photo={photo}
                   alt={`${i + 1} of ${photos.length} on this post`}
-                  width={photo.w}
-                  height={photo.h}
-                  loading="lazy"
-                  decoding="async"
-                  draggable={false}
-                  className="absolute inset-0 size-full object-cover"
                 />
                 {/* The whole 44px corner is the target; the circle in it
                     is what shows, so a small tile keeps its photo. */}

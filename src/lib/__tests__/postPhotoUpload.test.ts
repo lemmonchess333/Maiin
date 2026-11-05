@@ -52,32 +52,30 @@ vi.mock("../imageEncode", () => ({
 }));
 vi.mock("firebase/storage", () => ({
   ref: (_storage: unknown, path: string) => ({ fullPath: path }),
-  uploadBytes: vi.fn(
-    async (r: { fullPath: string }, _blob: Blob, meta: object) => {
-      const source = H.current;
-      H.sourceOf.set(r.fullPath, source);
-      H.events.push(`upload ${source} ${JSON.stringify(meta)}`);
-      if (H.upload[source] === "hang") return new Promise(() => {});
-      if (H.upload[source] === "fail") throw new Error("network");
-    }
-  ),
-  getDownloadURL: vi.fn(
-    async (r: { fullPath: string }) =>
-      `https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/${encodeURIComponent(r.fullPath)}?alt=media&token=t`
-  ),
   deleteObject: vi.fn(async (r: { fullPath: string }) => {
     H.events.push(`delete ${r.fullPath}`);
     if (H.deleteFails) throw new Error("storage/unauthorized");
   }),
 }));
-vi.mock("firebase/functions", () => ({
-  httpsCallable: () => async (payload: { path: string }) => {
-    const source = H.sourceOf.get(payload.path) ?? "";
-    H.events.push(`screen ${source}`);
-    const answer = H.screen[source] ?? "ok";
-    if (answer === "unavailable") throw new Error("unavailable");
-    return { data: { ok: answer === "ok" } };
-  },
+vi.mock("../activityMedia", () => ({
+  uploadActivityMedia: vi.fn(
+    async (key: { activityId: string; id: string }) => {
+      const source = H.current;
+      const path = `post-photos/maya/${key.activityId}/${key.id}.jpg`;
+      H.sourceOf.set(path, source);
+      H.events.push(`upload ${source}`);
+      if (H.upload[source] === "hang") return new Promise(() => {});
+      if (H.upload[source] === "fail") throw new Error("network");
+      H.events.push(`screen ${source}`);
+      const answer = H.screen[source] ?? "ok";
+      if (answer === "unavailable") throw new Error("unavailable");
+      if (answer === "refused") {
+        const { PhotoRefusedError } = await import("../photoScreen");
+        throw new PhotoRefusedError();
+      }
+      return `https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/${encodeURIComponent(path)}`;
+    }
+  ),
 }));
 
 import {
@@ -143,15 +141,11 @@ describe("addPostPhotos", () => {
       { name: "a.heic", opts: { maxEdge: 1600, quality: 0.82 } },
       { name: "b.jpg", opts: { maxEdge: 1600, quality: 0.82 } },
     ]);
-    const meta = JSON.stringify({
-      contentType: "image/jpeg",
-      cacheControl: "public, max-age=31536000, immutable",
-    });
     // Each screened before the next starts, and before anything is named.
     expect(H.events).toEqual([
-      `upload a.heic ${meta}`,
+      "upload a.heic",
       "screen a.heic",
-      `upload b.jpg ${meta}`,
+      "upload b.jpg",
       "screen b.jpg",
     ]);
     const paths = [...H.sourceOf.keys()];

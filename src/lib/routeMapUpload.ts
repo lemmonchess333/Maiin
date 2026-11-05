@@ -6,10 +6,10 @@
  * made online. It draws the route's `mapLine` (the shared route at the
  * map's resolution; `sharedRouteTrace` holds it to the post preview's
  * privacy) in both themes (routeMapImage.ts), uploads them to
- * `route-maps/{uid}/{activityId}/{light|dark}.jpg`, runs the same screen
- * as every photo other people see (`screenUploadedPhoto`: any client can
- * put any JPEG at its own path), and names the two download URLs on the
- * post as `routeMap`. The card shows the one for the reader's theme over
+ * `route-maps/{uid}/{activityId}/{light|dark}.jpg` through the authenticated
+ * uploadActivityMedia gateway, which screens before storing without
+ * bearer tokens, and names the two object identities on the post as
+ * `routeMap`. The card shows the one for the reader's theme over
  * its drawn route.
  *
  * Nothing waits on it and nothing hears from it: offline, with no WebGL,
@@ -23,11 +23,10 @@
  * here.
  */
 import { doc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { updateDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "@/lib/logger";
-import { screenUploadedPhoto } from "@/lib/photoScreen";
+import { uploadActivityMedia } from "@/lib/activityMedia";
 import type { RouteCoordinate } from "@/lib/routeSegments";
 import {
   hasRouteMapLine,
@@ -35,14 +34,14 @@ import {
   type RouteMapTheme,
 } from "@/lib/routeMapGeometry";
 
-/** The largest image the app uploads. storage.rules refuses one at 512 KB;
+/** The largest image the app uploads. the gateway refuses one at 512 KB;
  *  a map at its size is under 150 KB. */
 export const ROUTE_MAP_MAX_BYTES = 400 * 1024;
 
 /** The whole job's ceiling: drawing both maps, uploading and screening. */
 const CEILING_MS = 60_000;
 
-/** The download URL of each theme's image, as the post names them. */
+/** The stable identity of each theme's image, never a fetch capability. */
 export type RouteMap = Record<RouteMapTheme, string>;
 
 /** What this reads of a post's `RunPostRoute` (runCompletion.ts). */
@@ -64,26 +63,22 @@ function canDrawMaps(): boolean {
   );
 }
 
-/** The two images, uploaded, screened and named by download URL. */
+/** The two images, screened, stored tokenlessly and named by identity. */
 async function uploadRouteMap(
   uid: string,
   activityId: string,
   images: Record<RouteMapTheme, Blob>
 ): Promise<RouteMap> {
+  if (auth.currentUser?.uid !== uid) throw new Error("Media unavailable");
   const urls: Partial<RouteMap> = {};
   for (const theme of ROUTE_MAP_THEMES) {
     const image = images[theme];
     if (image.size >= ROUTE_MAP_MAX_BYTES)
       throw new Error(`route map too large (${image.size} bytes)`);
-    // One line, so the deletion drift scan (accountDeletionDrift) sees it.
-    const file = ref(storage, `route-maps/${uid}/${activityId}/${theme}.jpg`);
-    await uploadBytes(file, image, {
-      contentType: "image/jpeg",
-      cacheControl: "public, max-age=31536000, immutable",
-    });
-    // Screened as a Space post's photo is, before the post names it.
-    await screenUploadedPhoto(file.fullPath);
-    urls[theme] = await getDownloadURL(file);
+    urls[theme] = await uploadActivityMedia(
+      { activityId, kind: "map", id: theme },
+      image
+    );
   }
   return urls as RouteMap;
 }

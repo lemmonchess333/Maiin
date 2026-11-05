@@ -2,9 +2,9 @@
  * One place for a run post's map images, held everywhere it is named
  * (Soc15 call 5): `route-maps/{uid}/{activityId}/{light|dark}.jpg`.
  *
- * Six things name it, and each can drift on its own without the others
- * noticing: the app's upload (routeMapUpload.ts), storage.rules (who may
- * write there), firestore.rules (the URLs a post may name), the photo
+ * The app and server must agree: the app's callable upload
+ * (routeMapUpload.ts), the gateway (functions/lib/activityMedia.js),
+ * storage.rules (direct reads/uploads denied; owner cleanup retained), firestore.rules (the URLs a post may name), the photo
  * screen (functions/lib/photoScreen.js), the post's delete trigger
  * (functions/lib/routeMapFiles.js) and the account-deletion sweep
  * (functions/accountDeletion.js, inventory key routeMapsStorage,
@@ -26,30 +26,37 @@ const require = createRequire(import.meta.url);
 
 const upload = read("src/lib/routeMapUpload.ts");
 const storageRules = read("storage.rules");
+const gateway = read("functions/lib/activityMedia.js");
+const media = require("../../../functions/lib/activityMedia.js");
 const firestoreRules = read("firestore.rules");
 
 describe("route-maps/{uid}/{activityId}/{theme}.jpg, named the same everywhere", () => {
-  it("is where the app uploads, a JPEG for each theme", () => {
-    expect(upload).toContain(
-      "ref(storage, `route-maps/${uid}/${activityId}/${theme}.jpg`)"
-    );
-    expect(upload).toContain('contentType: "image/jpeg"');
+  it("uses the callable for JPEG uploads for each theme", () => {
+    expect(upload).toContain('uploadActivityMedia(');
+    expect(upload).toContain('{ activityId, kind: "map", id: theme }');
+    expect(upload).not.toContain("uploadBytes(");
+    expect(upload).not.toContain("getDownloadURL(");
     expect([...ROUTE_MAP_THEMES].sort()).toEqual(["dark", "light"]);
+    expect(gateway).toContain('${request.kind === "photo" ? "post-photos" : "route-maps"}/${authorId}/${request.activityId}/${request.id}.jpg');
+    expect(gateway).toContain('["light", "dark"].includes(data.id)');
+    expect(gateway).toContain('contentType: "image/jpeg"');
+    expect(media.LIMITS.map).toBe(512 * 1024);
+    expect(upload).toContain("export const ROUTE_MAP_MAX_BYTES = 400 * 1024;");
+    for (const theme of ROUTE_MAP_THEMES) {
+      const path = `route-maps/u1/post-1/${theme}.jpg`;
+      expect(media.namesMedia(media.mediaUrl(
+        "adaptive-fitness-af8bb.firebasestorage.app", path
+      ), path)).toBe(true);
+    }
   });
 
-  it("is what storage.rules lets the owner write: those two names, a JPEG, beside their own post", () => {
+  it("denies direct Storage reads/uploads while retaining owner cleanup", () => {
     const block = storageRules.slice(
       storageRules.indexOf("match /route-maps/{uid}/{activityId}/{name}"),
-      storageRules.indexOf("// Profile photos")
+      storageRules.indexOf("match /post-photos/{uid}/{activityId}/{name}")
     );
-    expect(block).toContain("allow get: if request.auth != null;");
-    expect(block).not.toMatch(/allow (read|list)/);
-    expect(block).toContain("isOwnerAndWritable(uid)");
-    expect(block).toContain("name in ['light.jpg', 'dark.jpg']");
-    expect(block).toContain("request.resource.contentType == 'image/jpeg'");
-    expect(block).toMatch(/request\.resource\.size < 512 \* 1024/);
-    expect(block).toContain("activities/$(activityId)");
-    expect(block).toContain(".data.authorId == uid");
+    expect(block).toContain("allow get, list, create, update: if false;");
+    expect(block).toContain("allow delete: if isOwnerAndWritable(uid);");
   });
 
   it("is the only folder a post's routeMap may name, one image per theme", () => {

@@ -91,12 +91,16 @@ async function safeSearch(bytes, accessToken, fetchImpl = fetch) {
  * Screens a stored photo, deleting it when refused.
  * @returns {Promise<{refused: boolean, adult: string}>}
  */
-async function screenStoredPhoto({ bucket, path, accessToken, fetchImpl }) {
-  const file = bucket.file(path);
+async function screenStoredPhoto({ bucket, path, generation, accessToken, fetchImpl }) {
+  // Finalize events describe a particular generation: a delayed event must
+  // never screen or delete a replacement uploaded at the same path.
+  const file = generation ? bucket.file(path, { generation }) : bucket.file(path);
   const [bytes] = await file.download();
   const annotation = await safeSearch(bytes, accessToken, fetchImpl);
   const refused = refusesPhoto(annotation);
-  if (refused) await file.delete({ ignoreNotFound: true });
+  if (refused) await file.delete(generation
+    ? { ignoreNotFound: true, ifGenerationMatch: generation }
+    : { ignoreNotFound: true });
   return { refused, adult: annotation.adult };
 }
 

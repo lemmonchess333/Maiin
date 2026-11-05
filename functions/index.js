@@ -89,6 +89,7 @@ const socialCounters = require("./lib/socialCounters");
 const commentReactions = require("./lib/commentReactions");
 const reportTargets = require("./lib/reportTargets");
 const photoScreen = require("./lib/photoScreen");
+const { createActivityMediaHandlers } = require("./lib/activityMedia");
 const socialFanout = require("./lib/socialFanout");
 // Push (FCM) — epic #961. Pure decision helpers; the cron below is the I/O shell.
 const {
@@ -6612,6 +6613,43 @@ function queueReason(value) {
     : "other";
 }
 
+// No Storage download URLs are issued for activity photos or route maps.
+// Every read rechecks current membership/visibility, blocks and deletion locks.
+function activityMediaHandlers() {
+  return createActivityMediaHandlers({
+    db: admin.firestore(),
+    bucket: admin.storage().bucket(),
+    assertAdmin: (uid) => adminAuth.assertAdminCallable(uid),
+    getAccessToken: async () => (await admin.credential.applicationDefault().getAccessToken()).access_token,
+  });
+}
+async function activityMediaCall(method, data, context) {
+  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
+  context.rawRequest?.res?.setHeader("Cache-Control", "private, no-store, max-age=0");
+  await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), context.auth.uid);
+  const upload = method === "upload";
+  if (method === "readReported") adminAuth.assertAdminCallable(context.auth.uid);
+  if (await isRateLimited(context.auth.uid, upload ? "uploadActivityMedia" : method === "readReported" ? "readReportedActivityMedia" : "readActivityMedia", upload ? 30 : 240, upload ? 600_000 : 60_000)) {
+    throw new functions.https.HttpsError("resource-exhausted", "Too many media requests. Try again shortly.");
+  }
+  try {
+    return await activityMediaHandlers()[method](data, context);
+  } catch (error) {
+    // Never log images, URLs or Vision responses.
+    const allowed = ["unauthenticated", "invalid-argument", "permission-denied", "failed-precondition", "aborted", "unavailable"];
+    throw new functions.https.HttpsError(allowed.includes(error.code) ? error.code : "unavailable", "Unable to access this media.", error.details);
+  }
+}
+exports.readActivityMedia = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall((data, context) => activityMediaCall("read", data, context));
+exports.readReportedActivityMedia = functions
+  .runWith(ADMIN_HTTP_CAP)
+  .https.onCall((data, context) => activityMediaCall("readReported", data, context));
+exports.uploadActivityMedia = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall((data, context) => activityMediaCall("upload", data, context));
+
 /**
  * Screens a photo the caller just uploaded for other people to see, a
  * Space post's, a shared session's or their profile's, before the app
@@ -6649,9 +6687,16 @@ exports.screenPhoto = functions
       const accessToken = await admin.credential
         .applicationDefault()
         .getAccessToken();
+      // Keep older clients working during the server-first rollout. Pin the
+      // object we inspect so a concurrent replacement cannot be deleted by a
+      // stale result. This owner-only callable never issues download tokens.
+      const bucket = admin.storage().bucket();
+      const [metadata] = await bucket.file(path).getMetadata();
+      if (!metadata.generation) throw new Error("Missing object generation.");
       const { refused, adult } = await photoScreen.screenStoredPhoto({
-        bucket: admin.storage().bucket(),
+        bucket,
         path,
+        generation: metadata.generation,
         accessToken: accessToken.access_token,
       });
       if (refused)
@@ -6691,6 +6736,7 @@ exports.screenUploadedPhoto = functions
       const { refused, adult } = await photoScreen.screenStoredPhoto({
         bucket: admin.storage().bucket(object.bucket),
         path,
+        generation: object.generation,
         accessToken: accessToken.access_token,
       });
       if (refused)

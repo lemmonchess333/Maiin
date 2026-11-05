@@ -10,11 +10,12 @@
  *      its longest side, a JPEG at 0.82. The canvas keeps the pixels and
  *      nothing else, so the photo's EXIF, the place it was taken included,
  *      never leaves the phone. Nothing is uploaded as the file picked.
- *   2. uploaded to `post-photos/{uid}/{activityId}/{photoId}.jpg` under a
- *      new random id (storage.rules: the owner, beside their own post, a
- *      JPEG under 2 MB);
- *   3. screened (`screenUploadedPhoto`), as every photo other people see.
- *      A refused photo is already deleted on the server.
+ *   2. sent to uploadActivityMedia under a new random id. The server
+ *      checks the current owner, screens the bytes, then saves a JPEG
+ *      under 2 MB to `post-photos/{uid}/{activityId}/{photoId}.jpg`
+ *      without a bearer token. A refused photo is never saved.
+ * The returned URL identifies the object; readers use readActivityMedia,
+ * never that URL as an image source.
  * with a 30 s ceiling for each photo. Then ONE update names the post's
  * whole list, the photos already on it and every new one that passed.
  * A photo that was refused or failed is never named; the ones that passed
@@ -26,17 +27,13 @@
  * sweep). An upload that lands and is never named goes the same way.
  */
 import { doc } from "firebase/firestore";
-import {
-  deleteObject,
-  getDownloadURL,
-  ref,
-  uploadBytes,
-} from "firebase/storage";
-import { db, storage } from "@/lib/firebase";
+import { deleteObject, ref } from "firebase/storage";
+import { auth, db, storage } from "@/lib/firebase";
 import { updateDocGuarded } from "@/lib/firestoreWrite";
 import { encodeJpeg } from "@/lib/imageEncode";
 import { logger } from "@/lib/logger";
-import { PhotoRefusedError, screenUploadedPhoto } from "@/lib/photoScreen";
+import { PhotoRefusedError } from "@/lib/photoScreen";
+import { uploadActivityMedia } from "@/lib/activityMedia";
 import {
   newPostPhotoId,
   POST_PHOTO_MAX,
@@ -48,7 +45,7 @@ import {
 export const POST_PHOTO_MAX_EDGE = 1600;
 /** The JPEG quality it is encoded at. */
 export const POST_PHOTO_JPEG_QUALITY = 0.82;
-/** storage.rules refuses a photo at 2 MB; a photo at this size is well
+/** The gateway refuses a photo at 2 MB; normal encoded photos are well
  *  under 1 MB. */
 export const POST_PHOTO_MAX_BYTES = 2 * 1024 * 1024;
 /** Each photo's ceiling: encoding, uploading and screening it. */
@@ -59,11 +56,7 @@ export const POST_PHOTO_CEILING_MS = 30_000;
 const photoRef = (uid: string, activityId: string, id: string) =>
   ref(storage, `post-photos/${uid}/${activityId}/${id}.jpg`);
 
-async function uploadOne(
-  uid: string,
-  activityId: string,
-  file: Blob
-): Promise<PostPhoto> {
+async function uploadOne(activityId: string, file: Blob): Promise<PostPhoto> {
   const { blob, width, height } = await encodeJpeg(file, {
     maxEdge: POST_PHOTO_MAX_EDGE,
     quality: POST_PHOTO_JPEG_QUALITY,
@@ -71,14 +64,10 @@ async function uploadOne(
   if (blob.size >= POST_PHOTO_MAX_BYTES)
     throw new Error(`photo too large (${blob.size} bytes)`);
   const id = newPostPhotoId();
-  const stored = photoRef(uid, activityId, id);
-  await uploadBytes(stored, blob, {
-    contentType: "image/jpeg",
-    cacheControl: "public, max-age=31536000, immutable",
-  });
-  // Screened before the post can name it (Ship1).
-  await screenUploadedPhoto(stored.fullPath);
-  const url = await getDownloadURL(stored);
+  const url = await uploadActivityMedia(
+    { activityId, kind: "photo", id },
+    blob
+  );
   return { id, url, w: width, h: height };
 }
 
@@ -93,10 +82,11 @@ export async function uploadPostPhoto(
   activityId: string,
   file: Blob
 ): Promise<PostPhoto> {
+  if (auth.currentUser?.uid !== uid) throw new Error("Media unavailable");
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
-      uploadOne(uid, activityId, file),
+      uploadOne(activityId, file),
       new Promise<never>((_, reject) => {
         timer = setTimeout(
           () => reject(new Error("photo upload timed out")),
