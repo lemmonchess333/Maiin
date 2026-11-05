@@ -613,6 +613,38 @@ describe("the turn: settling last week", () => {
     });
   });
 
+  it("settles a group an earlier turn left standing, in its own week", async () => {
+    // A turn cut off part way leaves a group behind; the next turn's week
+    // is a later one, and settling only that week would strand it.
+    const TWO_WEEKS = dayOf(WEEK, -14);
+    const seed = lastWeeksGroup(10);
+    for (const key of Object.keys(seed)) {
+      if (key.startsWith("leagueMembers/") || key === "leagueGroups/last-001")
+        seed[key] = { ...seed[key], weekKey: TWO_WEEKS };
+      const workout = /^users\/[^/]+\/workouts\/w(\d+)$/.exec(key);
+      if (workout)
+        seed[key] = {
+          ...seed[key],
+          date: dayOf(TWO_WEEKS, Number(workout[1])),
+        };
+    }
+    const firestore = memoryFirestore(seed);
+    const notify = vi.fn();
+    const summary = await turn(firestore, { notify });
+    expect(summary.settled).toEqual({ groups: 1, results: 10 });
+    expect(
+      firestore.data.get(`users/m00/leagueResults/${TWO_WEEKS}`)
+    ).toMatchObject({ weekKey: TWO_WEEKS, points: 100, outcome: "up" });
+    expect(firestore.data.has(`users/m00/leagueResults/${LAST_WEEK}`)).toBe(
+      false
+    );
+    expect(notify).toHaveBeenCalledWith(
+      "m00",
+      expect.objectContaining({ weekKey: TWO_WEEKS })
+    );
+    expect(firestore.data.has("leagueGroups/last-001")).toBe(false);
+  });
+
   it("a member who left before Monday gets no result", async () => {
     const firestore = memoryFirestore(lastWeeksGroup(10));
     await leagues.setLeagueSharing(firestore, "m03", false, {

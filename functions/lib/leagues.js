@@ -333,12 +333,15 @@ async function settleOneGroup(db, groupRef, weekKey, { now, notify }) {
   if (!first.exists) return { results: 0 };
   const memberUids = (first.data().memberUids || []).slice();
   if (!first.data().settledAt) {
-    for (const uid of memberUids) {
-      await writeStanding(db, uid, groupRef.id, weekKey, {
+    // Side by side: each standing is its own document and its transaction
+    // only reads the group, so members do not contend. One at a time, a
+    // turn of a few thousand people ran past the function's 540 s.
+    await inBatches(memberUids, CONCURRENCY, (uid) =>
+      writeStanding(db, uid, groupRef.id, weekKey, {
         now,
         weekIsCurrent: false,
-      });
-    }
+      })
+    );
   }
 
   const results = await db.runTransaction(async (tx) => {
@@ -402,14 +405,24 @@ async function settleOneGroup(db, groupRef, weekKey, { now, notify }) {
   return { results: results.length };
 }
 
-/** Settle every group of `weekKey`. */
+/** Settle every group of `weekKey`, and any of an earlier week still
+ *  standing: a turn cut off part way leaves its unsettled groups behind,
+ *  and the next turn's week is a later one, so settling only `weekKey`
+ *  would leave them, and their members' places, for good. Each group is
+ *  settled in its own week. */
 async function settleWeek(db, weekKey, { now, notify }) {
-  const groups = await db.collection(GROUPS).where("weekKey", "==", weekKey).get();
+  const groups = await db.collection(GROUPS).where("weekKey", "<=", weekKey).get();
   let results = 0;
-  for (const group of groups.docs) {
-    const out = await settleOneGroup(db, group.ref, weekKey, { now, notify });
+  await inBatches(groups.docs, GROUP_CONCURRENCY, async (group) => {
+    const own = (group.data() || {}).weekKey;
+    const out = await settleOneGroup(
+      db,
+      group.ref,
+      typeof own === "string" ? own : weekKey,
+      { now, notify }
+    );
     results += out.results;
-  }
+  });
   return { groups: groups.docs.length, results };
 }
 
