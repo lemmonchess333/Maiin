@@ -1,4 +1,5 @@
 import { Suspense, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence } from "framer-motion";
 import RevealBoundary from "@/components/RevealBoundary";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
@@ -35,6 +36,12 @@ export const MEDAL_REVEAL_PRIORITY = 20;
  * by leaving the app does not come back, and one that never loaded does.
  * Keyed by its caller on the account (`key={uid}`), so a reveal read for
  * one account is never shown to the next.
+ *
+ * Drawn into the document's body, as the league result is. Inside the
+ * page it was a child of PageShell's `space-y-4`, whose 16 px bottom
+ * margin cut the fixed stage short of the screen's foot, and the
+ * floating tab bar showed in the strip below it (emulator capture,
+ * 5 November 2026).
  */
 export default function MedalRevealGate({
   uid,
@@ -65,7 +72,7 @@ export default function MedalRevealGate({
     clear();
   }, [dismiss, clear]);
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {showing && medal && (
         <RevealBoundary key={medal.challengeId} onError={done}>
@@ -74,6 +81,7 @@ export default function MedalRevealGate({
           </Suspense>
         </RevealBoundary>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
