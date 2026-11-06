@@ -129,8 +129,8 @@ describe("a starter week", () => {
   it("is done with two runs, and not with one", () => {
     expect(starterWeekDone([W3, "2026-10-07"], W3)).toBe(true);
     expect(starterWeekDone([W3], W3)).toBe(false);
-    // Two on one day are two runs.
-    expect(starterWeekDone([W3, W3], W3)).toBe(true);
+    // Duplicate records on one date are one exposure.
+    expect(starterWeekDone([W3, W3], W3)).toBe(false);
   });
 
   it("counts the weeks in a row with no run", () => {

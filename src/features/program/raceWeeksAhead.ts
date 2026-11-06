@@ -1,3 +1,4 @@
+import { runWeekKeyOf } from "./programMaintenance";
 /**
  * The weeks ahead of a race plan (R23, locked in Pgm8): each
  * week from next week to race week, by its Monday, with its long run and
@@ -229,7 +230,7 @@ export function raceWeeksAhead({
   // A plan behind the calendar is walked through the weeks it has still to
   // catch up; one moved on early ("Start next week") already holds its
   // next week, which is the first week ahead.
-  let week = programState.runDays?.[0]?.weekKey ?? thisWeek;
+  let week = runWeekKeyOf(programState) ?? thisWeek;
   if (week > thisWeek) {
     weeks.push(
       weekAhead(

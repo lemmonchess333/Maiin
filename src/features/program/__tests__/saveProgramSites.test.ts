@@ -55,6 +55,11 @@ const EXPECTED_WRITERS: ReadonlyArray<{
 }> = [
   {
     owner: "useEffect",
+    category: "deliberate",
+    why: "beginner prescription migration on a live stored snapshot — prunes only future planned rows using existing scheduler spacing; preserves today/history and writes against the transaction-current document",
+  },
+  {
+    owner: "useEffect",
     category: "week-engine",
     why: "run-side auto week-rollover — calls advanceWeek, whose dependency closure is 12 of 16 helpers unmirrored (ADR-0011, measured)",
   },
@@ -152,7 +157,7 @@ describe("programme document writers outside the command boundary", () => {
   it("matches ADR-0011's reasoning for all but one, which is marked", () => {
     /* Seven are covered by the ADR's reasoning: the six it enumerates,
        and easing back after a break, which its 2026-10-06 update adds for
-       the same reason. One deliberate fallback. One genuinely outside the
+       the same reason. Two deliberate compatibility writers (legacy reorder and beginner prescription repair). One genuinely outside the
        account.
 
        Pinning the SHAPE of that gap rather than hiding it means the next
@@ -162,7 +167,7 @@ describe("programme document writers outside the command boundary", () => {
     const byCategory = (c: string) =>
       EXPECTED_WRITERS.filter((w) => w.category === c).length;
     expect(byCategory("week-engine") + byCategory("whole-plan")).toBe(7);
-    expect(byCategory("deliberate")).toBe(1);
+    expect(byCategory("deliberate")).toBe(2);
     expect(byCategory("unaccounted")).toBe(1);
   });
 

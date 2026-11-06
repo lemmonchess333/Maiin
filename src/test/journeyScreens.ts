@@ -231,7 +231,7 @@ export const STARTER = {
   offer: "Train for a 5K",
   notNow: "Not now",
   /** Train's starter card once this week's runs are in. */
-  weekDone: "This week is done. The next one starts on Monday.",
+  weekDone: "This stage is complete. The next one starts on Monday.",
 } as const;
 
 /**

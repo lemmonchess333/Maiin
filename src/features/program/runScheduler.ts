@@ -1252,10 +1252,10 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   /* Run15 — see `recentLayoff` on the input. */
   const detrained = input.recentLayoff === "detrained";
 
-  const runEligibleSlots = input.weekSchedule
+  const availableRunSlots = input.weekSchedule
     .filter((d) => d.type === "run" || d.type === "both")
     .map((d) => d.day);
-  if (runEligibleSlots.length === 0) {
+  if (availableRunSlots.length === 0) {
     // No run slot at all. Setup and the run plan editor start a race plan
     // at two run days (Pgm7 A7); a plan already on one keeps it (Pgm5), and
     // a week with none is a defensive fallback: an empty plan.
@@ -1305,6 +1305,14 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     !!input.newRunnerUntil &&
     localDateString(addLocalDays(weekStartDate, (blockWeek - startIndex) * 7)) <
       input.newRunnerUntil;
+  // A block begun as a beginner keeps its spaced schedule throughout.
+  // Lifting the cap automatically after six calendar weeks would create a
+  // new 3-to-6-day frequency jump without evidence of readiness. The block
+  // origin survives weekly regeneration through planTotalWeeks.
+  const beginnerBlock =
+    !!input.newRunnerUntil &&
+    localDateString(addLocalDays(weekStartDate, -Math.max(0, startIndex) * 7)) <
+      input.newRunnerUntil;
   /** Run23: how far up the long-run ladder the block's weeks have climbed. */
   const climb: LongRunClimb = new Map();
   /** Week `w` of the block, before the fits below (`fittedWeek`). A week
@@ -1313,6 +1321,10 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const blockWeekRuns = (w: number): ScheduledRunDay[] => {
     const offset = w - startIndex;
     const weekStart = addLocalDays(weekStartDate, offset * 7);
+    // Established blocks retain chosen training/taper frequency unchanged.
+    const runEligibleSlots = beginnerBlock
+      ? starterRunSlots(input.weekSchedule)
+      : availableRunSlots;
     // The lead-in, before the plan's first week: an easy run on each of
     // the week's run days from today (Run19), so the running starting point
     // fits the runs the lead-in holds. No long run and no tempo or
@@ -1420,11 +1432,15 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       // — and excludes the race's own date, so nothing shares its slot
       // (`raceRunDayDate.run-m2`).
       runEligibleSlots
-        .filter(
-          (d) =>
-            dateForDayOfWeek(localWeekKey(weekStart), d) <
-            input.raceGoal.targetDate
-        )
+        .filter((d) => {
+          const date = dateForDayOfWeek(localWeekKey(weekStart), d);
+          const lastAllowed = beginnerBlock
+            ? localDateString(addLocalDays(target, -1))
+            : input.raceGoal.targetDate;
+          return date < lastAllowed;
+        })
+        // The event remains visible, not a claim of beginner race readiness.
+        .slice(0, beginnerBlock ? 2 : undefined)
         .forEach((d) =>
           week.push(
             buildRunDayV2({
@@ -1856,7 +1872,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     // the fits, which leave a run-walk session as it is: each fits in 30
     // minutes, the shortest time limit there is, and the running baseline
     // fits continuous runs. Both fits only ever shorten a run.
-    const walked = week.map((row) => {
+    const dayBeforeRace = localDateString(addLocalDays(target, -1));
+    const eligibleWeek = beginnerBlock
+      ? week.filter((row) => row.type === "race" || row.date !== dayBeforeRace)
+      : week;
+    const walked = eligibleWeek.map((row) => {
       const next =
         row.type === "race"
           ? null

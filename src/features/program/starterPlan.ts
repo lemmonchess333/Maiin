@@ -13,10 +13,11 @@ import {
 
 /**
  * The starter goal (Run9's reopening): a new runner's plan to 30 minutes
- * without stopping, a week at each stage. Run20's run-walk ladder gives the
+ * without stopping, with stages that can span multiple weeks. Run20's ladder gives the
  * first six, ending on 20 minutes non-stop; then a week each of 20, 25 and
  * 30 minutes non-stop. It ends where NHS Couch to 5K ends, and like it can
- * take longer than nine weeks: a stage moves on only once its week was done,
+ * take longer than nine weeks: a stage moves on only once enough distinct
+ * running days have been completed,
  * so the end has no date.
  *
  * What a week moving on does with the stage is here, as pure functions of
@@ -28,13 +29,13 @@ export const STARTER_STAGE_TEMPLATE_IDS = [
   ...STARTER_NONSTOP_TEMPLATE_IDS,
 ] as const;
 
-/** Stages in the starter goal: nine, so about nine weeks. */
+/** Nine stages, not a fixed nine-week deadline. */
 export const STARTER_STAGES = STARTER_STAGE_TEMPLATE_IDS.length;
 
 /**
- * Saved runs in a week that make it done, the stage then moving on. Two of
- * three planned is enough; with two a week, both. Any saved run counts, one
- * outside the plan included: the runner ran.
+ * Distinct running days in a week that make it done, the stage then moving on. Two of
+ * three planned is enough; with two a week, both. A saved run outside the plan counts too, one
+ * credit per day, so duplicate imports cannot advance the stage.
  */
 export const STARTER_RUNS_FOR_A_DONE_WEEK = 2;
 
@@ -69,7 +70,7 @@ export function runsInWeek(
   weekKey: string
 ): number {
   const end = localDateString(addLocalDays(parseLocalDate(weekKey), 7));
-  return runDays.filter((day) => day >= weekKey && day < end).length;
+  return new Set(runDays.filter((day) => day >= weekKey && day < end)).size;
 }
 
 /** Whether the week starting `weekKey` was done (`STARTER_RUNS_FOR_A_DONE_WEEK`). */
@@ -99,17 +100,21 @@ export function emptyWeeksEndingWith(
   return empty;
 }
 
-/**
- * The day the week starting `weekKey` was done: the day of its run that
- * made it so (`STARTER_RUNS_FOR_A_DONE_WEEK`). Null for a week not done.
- */
-export function starterWeekDoneOn(
+/** Distinct recent running days at this stage. A long absence must not
+ * reuse old credits; the three-week window matches the existing step-back
+ * policy, not a claim about a medically safe recovery interval. */
+export function starterStageRunDays(
   runDays: readonly string[],
-  weekKey: string
-): string | null {
-  const end = localDateString(addLocalDays(parseLocalDate(weekKey), 7));
-  const inWeek = runDays.filter((day) => day >= weekKey && day < end).sort();
-  return inWeek[STARTER_RUNS_FOR_A_DONE_WEEK - 1] ?? null;
+  weekKey: string,
+  stageStartedWeek = weekKey
+): string[] {
+  const end = weekKeyAfter(weekKey, 1);
+  const recentStart = weekKeyAfter(weekKey, -2);
+  const creditStart =
+    stageStartedWeek > recentStart ? stageStartedWeek : recentStart;
+  return [
+    ...new Set(runDays.filter((day) => day >= creditStart && day < end)),
+  ].sort();
 }
 
 /** Where the starter stands once the week left behind is weighed. */
@@ -118,7 +123,8 @@ export type StarterStep =
 
 /**
  * The stage for the week after the one starting `weekLeft`, given the days
- * the runner's saved runs fall on. A done week moves the stage on, and the
+ * the runner's saved runs fall on. Distinct days since this stage began
+ * accumulate across weeks, so one available day does not block progress. The
  * last stage's done week finishes the goal. A week not done repeats the
  * stage, except that the week completing a gap of
  * `STARTER_STEP_BACK_EMPTY_WEEKS` with no run steps it back one: once for a
@@ -134,11 +140,15 @@ export type StarterStep =
 export function nextStarterStage(
   stage: number,
   weekLeft: string,
-  runDays: readonly string[] | null
+  runDays: readonly string[] | null,
+  stageStartedWeek: string = weekLeft
 ): StarterStep {
   const current = clampStarterStage(stage);
   if (!runDays) return { finished: false, stage: current };
-  if (starterWeekDone(runDays, weekLeft)) {
+  if (
+    starterStageRunDays(runDays, weekLeft, stageStartedWeek).length >=
+    STARTER_RUNS_FOR_A_DONE_WEEK
+  ) {
     return current >= STARTER_STAGES
       ? { finished: true, stage: current }
       : { finished: false, stage: current + 1 };
@@ -156,7 +166,8 @@ export function nextStarterStage(
  * (a run day, or a day of both), as a race plan's are, up to
  * `STARTER_MOST_RUNS_A_WEEK`. With more run days than that, the ones with
  * the most rest between them, the week taken round from Sunday to Monday;
- * then the most without a lift; then the earliest in the week.
+ * then the most without a lift; then the earliest in the week. Adjacent
+ * selections are reduced even when fewer than four days were selected.
  */
 export function starterRunSlots(
   weekSchedule: readonly ScheduleDay[]
@@ -164,9 +175,9 @@ export function starterRunSlots(
   const slots = weekSchedule
     .filter((d) => d.type === "run" || d.type === "both")
     .map((d) => d.day)
+    .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6)
     .filter((day, i, all) => all.indexOf(day) === i)
     .sort((a, b) => weekPosition(a) - weekPosition(b));
-  if (slots.length <= STARTER_MOST_RUNS_A_WEEK) return slots;
   const runOnly = new Set(
     weekSchedule.filter((d) => d.type === "run").map((d) => d.day)
   );
@@ -178,18 +189,24 @@ export function starterRunSlots(
   };
   const withoutLift = (pick: number[]) =>
     pick.filter((d) => runOnly.has(d)).length;
-  // Every three, in week order, so the first of equals is the earliest.
-  const picks: number[][] = [];
-  for (let i = 0; i < slots.length; i++)
-    for (let j = i + 1; j < slots.length; j++)
-      for (let k = j + 1; k < slots.length; k++)
-        picks.push([slots[i], slots[j], slots[k]]);
-  return picks.reduce((best, pick) => {
-    const gap = smallestGap(pick) - smallestGap(best);
-    return gap > 0 || (gap === 0 && withoutLift(pick) > withoutLift(best))
-      ? pick
-      : best;
-  });
+  // At most 128 subsets. Maximize available sessions WITHOUT creating an
+  // adjacent pair, including Sunday/Monday. Availability is not permission
+  // to add an unselected day or overwrite a lifting day.
+  let best: number[] = [];
+  for (let mask = 1; mask < 1 << slots.length; mask++) {
+    const pick = slots.filter((_, i) => (mask & (1 << i)) !== 0);
+    if (pick.length > STARTER_MOST_RUNS_A_WEEK || smallestGap(pick) < 2)
+      continue;
+    if (
+      pick.length > best.length ||
+      (pick.length === best.length &&
+        (smallestGap(pick) > smallestGap(best) ||
+          (smallestGap(pick) === smallestGap(best) &&
+            withoutLift(pick) > withoutLift(best))))
+    )
+      best = pick;
+  }
+  return best;
 }
 
 /**

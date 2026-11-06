@@ -21,12 +21,12 @@ const goal = { startedOn: "2026-09-01" };
 describe("starterProgress", () => {
   it("says the week in weeks of nine and the weeks to go, never a date", () => {
     const view = starterProgress(plan(3), goal, [])!;
-    expect(view.weekLabel).toBe("Week 3 of 9");
-    expect(view.toGoLabel).toBe("about 7 weeks to go");
+    expect(view.weekLabel).toBe("Stage 3 of 9");
+    expect(view.toGoLabel).toBe("7 stages to go");
     expect(starterProgress(plan(8), goal, [])!.toGoLabel).toBe(
-      "about 2 weeks to go"
+      "2 stages to go"
     );
-    expect(starterProgress(plan(9), goal, [])!.toGoLabel).toBe("the last week");
+    expect(starterProgress(plan(9), goal, [])!.toGoLabel).toBe("the last stage");
   });
 
   it("counts this week's saved runs against the two that make it done", () => {

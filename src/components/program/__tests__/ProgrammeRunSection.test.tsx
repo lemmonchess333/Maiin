@@ -2529,7 +2529,7 @@ describe("ProgrammeRunSection — the starter goal (Run9)", () => {
       starterState(2)
     );
     expect(
-      screen.getByText("Week 2 of 9 · about 8 weeks to go")
+      screen.getByText("Stage 2 of 9 · 8 stages to go")
     ).toBeInTheDocument();
     expect(screen.queryByText(/Adjust this week/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Race day/i)).not.toBeInTheDocument();

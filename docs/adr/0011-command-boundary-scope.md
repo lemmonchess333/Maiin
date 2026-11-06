@@ -119,3 +119,21 @@ return's weeks it starts are counted down by `advanceWeek`. It runs once
 per return, on the person's yes, against the live document
 (`saveProgram`'s updater), so the clobber window is the rollover's.
 `saveProgramSites.test.ts` names it with the others.
+
+## 2026-11-06: beginner prescription compatibility repair
+
+The updated beginner scheduler limits prescriptions to at most three selected,
+nonconsecutive days. Existing same-week documents also need a narrow repair;
+waiting for rollover would leave their old seven-day schedule visible.
+`useProgram` therefore persists the same idempotent repair used by its initial
+loader and Home projection when a live stored snapshot arrives. It recomputes
+against the transaction-current document, preserving completed/manual rows,
+historical dates, today's slots, stage, race date and availability. It only
+removes future planned slots. `saveProgramSites.test.ts` explicitly inventories
+this deliberate compatibility writer; it does not change the general command
+boundary or authorize a wider migration.
+
+Past uncompleted slots are retained conservatively, and today's slots may still
+reflect old spacing. Installed older clients can restore old prescriptions
+until an updated client repairs them; this is not a server-enforced training
+policy. Marathon recovery changes are excluded from this release.

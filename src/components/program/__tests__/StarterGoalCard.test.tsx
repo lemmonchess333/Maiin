@@ -12,8 +12,8 @@ import { STARTER } from "@/test/journeyScreens";
 
 const progress = (p: Partial<StarterProgress> = {}): StarterProgress => ({
   stage: 3,
-  weekLabel: "Week 3 of 9",
-  toGoLabel: "about 7 weeks to go",
+  weekLabel: "Stage 3 of 9",
+  toGoLabel: "7 stages to go",
   runsThisWeek: 0,
   runsForTheWeek: 2,
   repeated: false,
@@ -26,7 +26,7 @@ describe("StarterGoalCard", () => {
     render(<StarterGoalCard progress={progress()} />);
     expect(screen.getByText("30 minutes without stopping")).toBeInTheDocument();
     expect(
-      screen.getByText("Week 3 of 9 · about 7 weeks to go")
+      screen.getByText("Stage 3 of 9 · 7 stages to go")
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/compress|taper|base|build|easier|realign/i)
@@ -36,7 +36,7 @@ describe("StarterGoalCard", () => {
   it("says once, plainly, that a week repeats", () => {
     render(<StarterGoalCard progress={progress({ repeated: true })} />);
     expect(
-      screen.getByText("This week again: 2 runs move you on.")
+      screen.getByText("This stage again: 2 more runs on separate days to move on.")
     ).toBeInTheDocument();
   });
 
@@ -53,8 +53,8 @@ describe("StarterGoalCard", () => {
       <StarterGoalCard
         progress={progress({
           stage: 9,
-          weekLabel: "Week 9 of 9",
-          toGoLabel: "the last week",
+          weekLabel: "Stage 9 of 9",
+          toGoLabel: "the last stage",
           runsThisWeek: 2,
           reached: true,
         })}

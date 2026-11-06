@@ -81,7 +81,7 @@ export function runWeekKeyOf(
 ): string | undefined {
   if (state.runPlan?.mode === "starter" && state.runPlan.stageWeekKey)
     return state.runPlan.stageWeekKey;
-  return state.runDays?.[0]?.weekKey;
+  return state.runDays?.[0]?.weekKey ?? state.runPlan?.emptyRunWeekKey;
 }
 
 /**

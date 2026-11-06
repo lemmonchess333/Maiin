@@ -79,7 +79,7 @@ it("counts the journey's saved runs as their days arrive, without remounting", a
   // both, so waiting longer cannot make the starter week done.
   await screen.findByText("0 saved runs");
   expect(
-    screen.getByText("This week again: 2 runs move you on.")
+    screen.getByText("This stage again: 2 more runs on separate days to move on.")
   ).toBeVisible();
   expect(screen.queryByText(STARTER.weekDone)).not.toBeInTheDocument();
 
