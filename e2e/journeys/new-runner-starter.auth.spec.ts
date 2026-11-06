@@ -87,11 +87,11 @@ test("a new runner repeats a week, moves on, and finishes the 30-minute goal", a
     expect(plan.runPlan).toMatchObject({ stage: 1, stageWeekKey: week(1) });
     await openTab(page, TABS.train);
     await expect(
-      page.getByText(`${STARTER.goal} · Week 1 of 9`),
-      "Train's header names the goal and its week"
+      page.getByText(`${STARTER.goal} · Stage 1 of 9`),
+      "Train's header names the goal and its stage"
     ).toBeVisible({ timeout: 20_000 });
     await expect(
-      page.getByText("This week again: 2 runs move you on.")
+      page.getByText("This stage again: 1 more run on separate days to move on.")
     ).toBeVisible();
 
     // Week two: two runs. The stage moves on.
