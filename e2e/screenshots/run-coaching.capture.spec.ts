@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
 import { settleImages } from "../helpers/settleImages";
+import { isProgramCommandResponse } from "../helpers/programCommandResponse";
 import { computePlanMetadata } from "../../src/lib/runPlanMetadata";
 import {
   localDateString,
@@ -180,11 +181,8 @@ test("running feedback follows edits and opens a reversible easier-week preview"
   // Server work has its own bounded wait; the normal UI assertions below
   // start after the matching command response, not while it is in flight.
   const waitForCommand = (kind: string) =>
-    page.waitForResponse(
-      (response) =>
-        response.url().endsWith("/applyProgramCommand") &&
-        response.request().method() === "POST" &&
-        response.request().postDataJSON().data.kind === kind
+    page.waitForResponse((response) =>
+      isProgramCommandResponse(response, kind, uid)
     );
   const [applied] = await Promise.all([
     waitForCommand("applyEaseWeek"),
