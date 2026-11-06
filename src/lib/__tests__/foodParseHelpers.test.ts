@@ -213,3 +213,16 @@ describe("round1", () => {
     expect(round1(12.55)).toBeCloseTo(12.6, 5);
   });
 });
+
+it.each([
+  ["0.5 x 100g", 50],
+  ["1,5 × 30 g", 45],
+  [".5 x 100g", 50],
+  [",5 g", 0.5],
+  ["-25g", null],
+  ["-2 x -25g", null],
+  ["2 x -25g", null],
+  ["-2 x 25g", null],
+])("reads the complete serving quantity %s", (label, grams) => {
+  expect(parseServingGrams(label as string)).toBe(grams);
+});

@@ -1638,7 +1638,11 @@ export default function WorkoutSession({
     const planned = plannedAt(index);
     if (!planned) return;
     const back = replacementId === planned.exerciseId;
-    const last = lastSetsById.current.get(replacementId);
+    // Returning to the plan restores this slot's history, not another
+    // day's copy of the same exercise (for example heavy and light bench).
+    const last = back
+      ? history?.lastOf(planned)
+      : lastSetsById.current.get(replacementId);
     const exercise = back
       ? planned
       : swappedForToday(planned, replacementId, {
