@@ -111,6 +111,14 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // The programme itself (users/{uid}/programState/current) plus every
   // settings doc: reminders, run plan, notification prefs.
   "programState",
+  // Dormant canonical running authority, immutable previews and receipts.
+  // Sibling collections deliberately avoid nested erasure blind spots.
+  "runningState",
+  "runningProposals",
+  "runningReceipts",
+  "runningReviewReceipts",
+  "runningTrainingReports",
+  "runningReportReceipts",
   "settings",
   "streaks",
   // The cross-user-readable projection. `public/profile` is ALSO deleted

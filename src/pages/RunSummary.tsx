@@ -1,3 +1,8 @@
+import CanonicalActivityLink from "@/components/run/CanonicalActivityLink";
+import {
+  CANONICAL_RUNNING_LAUNCH_ENABLED,
+  RUNNING_PRESCRIPTION_GATE_ENABLED,
+} from "@/features/program/runningPrescriptionFeature";
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
@@ -2159,6 +2164,18 @@ export default function RunSummary() {
                   </p>
                 );
               })()}
+            {saved &&
+              savedRunId &&
+              user &&
+              RUNNING_PRESCRIPTION_GATE_ENABLED &&
+              CANONICAL_RUNNING_LAUNCH_ENABLED && (
+                <CanonicalActivityLink
+                  key={`${user.uid}:${savedRunId}`}
+                  uid={user.uid}
+                  activityId={savedRunId}
+                  proof={runConfig?.canonicalLaunch}
+                />
+              )}
             {saved && (
               <CompletionExtras
                 share={shareAction}

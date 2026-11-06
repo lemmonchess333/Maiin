@@ -68,6 +68,18 @@ const require = createRequire(import.meta.url);
 process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "tropos-unit-test";
 
 const EXPECTED = {
+  // Authenticated running protocol: real exports, source-time release gate off.
+  negotiateRunningAuthority: { kind: "callable", maxInstances: 10, secrets: [] },
+  enrollRunningAuthority: { kind: "callable", maxInstances: 10, secrets: [] },
+  saveRunningReview: { kind: "callable", maxInstances: 10, secrets: [] },
+  createRunningProposal: { kind: "callable", maxInstances: 10, secrets: [] },
+  acceptRunningProposal: { kind: "callable", maxInstances: 10, secrets: [] },
+  submitOutsideTrainingReport: { kind: "callable", maxInstances: 10, secrets: [] },
+  completeRunningMigration: { kind: "callable", maxInstances: 10, secrets: [] },
+  adoptInitialRunningPlan: { kind: "callable", maxInstances: 10, secrets: [] },
+  authorizeRunningLaunch: { kind: "callable", maxInstances: 10, secrets: [] },
+  registerRunningStart: { kind: "callable", maxInstances: 10, secrets: [] },
+  reconcileRunningActivity: { kind: "callable", maxInstances: 10, secrets: [] },
   resumeAccountDeletions: {
     kind: "schedule",
     maxInstances: 1,

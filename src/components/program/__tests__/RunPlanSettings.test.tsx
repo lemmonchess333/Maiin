@@ -40,6 +40,31 @@ import type { ProgramReadiness } from "@/features/program/useProgram";
 // half only a real browser can show.
 Element.prototype.scrollIntoView = vi.fn();
 
+const prescriptionGate = vi.hoisted(() => ({ enabled: false }));
+vi.mock(
+  "@/features/program/runningPrescriptionGate",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("@/features/program/runningPrescriptionGate")
+    >()),
+    get RUNNING_PRESCRIPTION_GATE_ENABLED() {
+      return prescriptionGate.enabled;
+    },
+  })
+);
+vi.mock("@/lib/raceGoalPlanner", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("@/lib/raceGoalPlanner")>();
+  return {
+    ...original,
+    getRaceGoalPlannerState: vi.fn(original.getRaceGoalPlannerState),
+  };
+});
+import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
+beforeEach(() => {
+  prescriptionGate.enabled = false;
+});
+
 const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
 vi.mock("firebase/functions", () => ({
   httpsCallable: () => configureSpy,
@@ -1430,5 +1455,42 @@ describe("RunPlanSettings — the 30-minute goal", () => {
       endedOn: today(),
       stage: 4,
     });
+  });
+});
+
+describe("RunPlanSettings prescription compatibility gate", () => {
+  it("keeps draft race fields editable without generating or applying a legacy plan", async () => {
+    prescriptionGate.enabled = true;
+    vi.mocked(getRaceGoalPlannerState).mockClear();
+    configureSpy.mockClear();
+    localStorage.clear();
+    const { onOpenFullSettings } = renderPage({
+      ...baseProfile,
+      uid: "gated-runner",
+      runMode: "race_prep",
+      raceGoal: {
+        distance: "10k",
+        targetDate: RACE_TARGET_DATE,
+        entry: "race",
+      },
+    } as UserProfile);
+    expect(
+      screen.getByText("Plan guidance needs a fresh review")
+    ).toBeInTheDocument();
+    const date = screen.getByLabelText(/Target date/i);
+    fireEvent.change(date, { target: { value: MARATHON_TARGET_DATE } });
+    expect(date).toHaveValue(MARATHON_TARGET_DATE);
+    expect(getRaceGoalPlannerState).not.toHaveBeenCalled();
+    expect(screen.queryByText(/After race day:/)).toBeNull();
+    const save = screen.getByRole("button", {
+      name: "Review required to save",
+    });
+    expect(save).toBeDisabled();
+    fireEvent.click(save);
+    expect(configureSpy).not.toHaveBeenCalled();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Programme.*Your setup/ })
+    );
+    expect(onOpenFullSettings).toHaveBeenCalledOnce();
   });
 });

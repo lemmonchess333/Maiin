@@ -1,3 +1,5 @@
+import { RUNNING_PRESCRIPTION_GATE_ENABLED } from "@/features/program/runningPrescriptionGate";
+import { Banner } from "@/components/ui/Banner";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { STARTER_MOST_RUNS_A_WEEK } from "@/features/program/starterPlan";
 import { STARTER_GOAL_NAME } from "@/features/program/starterProgress";
@@ -63,7 +65,11 @@ import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
  * the week from the same `planWeekSchedule(liftDays, weeklyRunDays, …)`
  * derivation, so what the runway preview shows is what the save writes.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { RUNNING_ADAPTATION_ENABLED } from "@/features/program/runningAdaptationApply";
+const RunningAdaptationFlow = RUNNING_ADAPTATION_ENABLED && RUNNING_PRESCRIPTION_GATE_ENABLED
+  ? lazy(() => import("./RunningAdaptationFlow"))
+  : null;
 import { formatClock } from "@/utils/formatters";
 import { useSearchParams } from "react-router-dom";
 import { ChevronRight, Minus, Plus, SlidersHorizontal } from "lucide-react";
@@ -228,6 +234,8 @@ export default function RunPlanSettings({
   refreshProfile,
   onOpenFullSettings,
 }: RunPlanSettingsProps) {
+  // Enabled negotiation never authorizes this legacy generator, even when ready.
+  const legacyPrescriptionsAllowed = !RUNNING_PRESCRIPTION_GATE_ENABLED;
   // ── Saved baseline (the dirty-check reference) ──────────────────────
   const saved = useMemo(
     () => ({
@@ -460,25 +468,28 @@ export default function RunPlanSettings({
   // Runway preview — same engine the save commits (raceGoalPlanner.ts).
   const plannerState = useMemo(
     () =>
-      getRaceGoalPlannerState({
-        distance: raceDistance,
-        targetDate: raceTargetDate,
-        currentDate: today,
-        liftDays,
-        weeklyRunDays,
-        // Pgm6: preview with the same knobs the save will commit.
-        tuning: { volume: runVolume, difficulty: runDifficulty },
-        runTimeLimits,
-        runningBaseline: draftBaseline,
-        easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
-        existingState: programState,
-        recentLayoff,
-        newRunnerUntil,
-        weekSchedule: profile.weekSchedule,
-        distanceUnit: resolveDistanceUnit(profile.preferredDistanceUnit),
-        recentRuns: recentRunsDone,
-      }),
+      !legacyPrescriptionsAllowed
+        ? null
+        : getRaceGoalPlannerState({
+            distance: raceDistance,
+            targetDate: raceTargetDate,
+            currentDate: today,
+            liftDays,
+            weeklyRunDays,
+            // Pgm6: preview with the same knobs the save will commit.
+            tuning: { volume: runVolume, difficulty: runDifficulty },
+            runTimeLimits,
+            runningBaseline: draftBaseline,
+            easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
+            existingState: programState,
+            recentLayoff,
+            newRunnerUntil,
+            weekSchedule: profile.weekSchedule,
+            distanceUnit: resolveDistanceUnit(profile.preferredDistanceUnit),
+            recentRuns: recentRunsDone,
+          }),
     [
+      legacyPrescriptionsAllowed,
       raceDistance,
       raceTargetDate,
       today,
@@ -591,6 +602,7 @@ export default function RunPlanSettings({
   // ── Save (RUN-EV-02: one draft computation, one atomic commit) ──────
   async function handleSave(): Promise<void> {
     if (
+      !legacyPrescriptionsAllowed ||
       saving ||
       !dirty ||
       // Not before the programme has loaded: see `readiness`. The button
@@ -818,20 +830,30 @@ export default function RunPlanSettings({
     input?.focus({ preventScroll: true });
   }
 
-  const saveLabel = saving
-    ? "Saving…"
-    : raceDateInvalid
-      ? "Fix race date"
-      : raceTimeInvalid
-        ? "Fix goal time"
-        : baselineInvalid || goalInvalid
-          ? "Check running details"
-          : runMode === "race_prep" && plannerState.ctaLabel
-            ? plannerState.ctaLabel
-            : "Save run plan";
+  const saveLabel = !legacyPrescriptionsAllowed
+    ? "Review required to save"
+    : saving
+      ? "Saving…"
+      : raceDateInvalid
+        ? "Fix race date"
+        : raceTimeInvalid
+          ? "Fix goal time"
+          : baselineInvalid || goalInvalid
+            ? "Check running details"
+            : runMode === "race_prep" && plannerState?.ctaLabel
+              ? plannerState?.ctaLabel
+              : "Save run plan";
 
   return (
     <div className="space-y-4 pb-6">
+      {RunningAdaptationFlow && <Suspense fallback={<p role="status">Loading running review…</p>}><RunningAdaptationFlow expectedUid={profile.uid} /></Suspense>}
+      {!legacyPrescriptionsAllowed && (
+        <Banner
+          variant="neutral"
+          title="Plan guidance needs a fresh review"
+          description="Previews and plan changes are unavailable. You can keep editing your draft."
+        />
+      )}
       {/* ── Race or not ───────────────────────────────────────────────
           Run9a: the plan is a race goal or nothing, so the question is
           whether there is a race. The same control as the race's
@@ -859,7 +881,7 @@ export default function RunPlanSettings({
       </div>
 
       {/* ── Run9's starter goal: what it is, and two or three runs ────── */}
-      {runMode === "starter" && (
+      {legacyPrescriptionsAllowed && runMode === "starter" && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             Run {STARTER_GOAL_NAME} in about nine weeks. It starts with short
@@ -927,6 +949,7 @@ export default function RunPlanSettings({
             </p>
           )}
           {(() => {
+            if (!legacyPrescriptionsAllowed) return null;
             const verdict = raceTargetVerdict({
               distance: raceDistance,
               targetTimeS: raceTimeParsed ?? undefined,
@@ -967,11 +990,12 @@ export default function RunPlanSettings({
                 run days, so some days hold both.
               </p>
             )}
-            {raceRunDaysNote(raceDistance, weeklyRunDays) && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                {raceRunDaysNote(raceDistance, weeklyRunDays)}
-              </p>
-            )}
+            {legacyPrescriptionsAllowed &&
+              raceRunDaysNote(raceDistance, weeklyRunDays) && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {raceRunDaysNote(raceDistance, weeklyRunDays)}
+                </p>
+              )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -1160,7 +1184,12 @@ export default function RunPlanSettings({
             variant="sport"
             fullWidth
             onClick={invalid ? revealInvalidField : handleSave}
-            disabled={!dirty || saving || (!invalid && !programReady)}
+            disabled={
+              !legacyPrescriptionsAllowed ||
+              !dirty ||
+              saving ||
+              (!invalid && !programReady)
+            }
             loading={waitingForProgramme}
             // The spinner replaces the label, so the label stays the name.
             aria-label={waitingForProgramme ? saveLabel : undefined}

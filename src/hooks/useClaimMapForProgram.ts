@@ -64,6 +64,7 @@ function computeFingerprint(
       run.avgPace,
       run.templateId,
       run.activityType,
+      run.legacyPlanClaimExcluded === true,
       run.createdAt instanceof Date
         ? run.createdAt.getTime()
         : typeof run.createdAt === "object"

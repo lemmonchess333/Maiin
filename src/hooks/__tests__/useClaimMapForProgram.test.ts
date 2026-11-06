@@ -899,3 +899,51 @@ describe("useClaimMap - quality bucket honours userOverride", () => {
     expect(r.claimMap.get("rd-down")?.claimedSavedRunId).toBe("saved-b");
   });
 });
+
+it("keeps canonical recordings as logged extras and invalidates old date-only claims when their exclusion marker arrives", async () => {
+  resetFirestore();
+  currentUser = mockUser;
+  mockProgramState = {
+    runDays: [
+      {
+        id: "legacy_slot",
+        date: "2026-05-26",
+        dayIndex: 2,
+        templateId: "easy_30",
+        type: "easy",
+        status: "planned",
+      },
+    ],
+    manualCompletions: {},
+  };
+  const { result } = renderHook(() => useClaimMap("2026-05-26"));
+  const data = {
+    date: "2026-05-26",
+    distance: 1000,
+    avgPace: 360,
+    activityType: "easy",
+    completedAt: Timestamp.fromMillis(1779786000_000),
+  };
+  await act(async () => {
+    seedRuns([{ id: "canonical_run", data }]);
+    await flushSnapshots();
+  });
+  expect(result.current.claimMap.get("legacy_slot")?.claimedSavedRunId).toBe(
+    "canonical_run"
+  );
+  // Same id/time/date/distance/type: only this marker changes, so the memo's
+  // fingerprint must include it. The activity remains visible and counted.
+  await act(async () => {
+    seedRuns([
+      { id: "canonical_run", data: { ...data, legacyPlanClaimExcluded: true } },
+    ]);
+    await flushSnapshots();
+  });
+  expect(
+    result.current.claimMap.get("legacy_slot")?.claimedSavedRunId
+  ).toBeUndefined();
+  expect(
+    result.current.unclaimedByDate.get("2026-05-26")?.map((run) => run.id)
+  ).toEqual(["canonical_run"]);
+  expect(result.current.runs.map((run) => run.id)).toEqual(["canonical_run"]);
+});

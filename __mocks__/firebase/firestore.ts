@@ -98,7 +98,11 @@ export async function getDoc(ref: DocRef) {
 
 /** The fake's normal reads are server reads; cache is a separate store. */
 export async function getDocFromServer(ref: DocRef) {
-  return getDoc(ref);
+  const metadata = firestoreFake.snapshotMetadata.get(ref.path) ?? {
+    fromCache: false,
+    hasPendingWrites: false,
+  };
+  return Object.assign(await getDoc(ref), { metadata });
 }
 
 export async function getDocs(ref: CollectionRef) {

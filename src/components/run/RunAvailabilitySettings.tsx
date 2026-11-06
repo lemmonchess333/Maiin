@@ -11,7 +11,7 @@ export default function RunAvailabilitySettings({
 }: {
   value: RunTimeLimits;
   onChange: (value: RunTimeLimits) => void;
-  preview: RaceGoalPlannerState;
+  preview: RaceGoalPlannerState | null;
   hasConfirmedPace: boolean;
 }) {
   return (
@@ -57,32 +57,36 @@ export default function RunAvailabilitySettings({
           </label>
         ))}
       </div>
-      {(value.sessionMinutes !== null || value.longRunMinutes !== null) && (
-        <div
-          aria-live="polite"
-          className="text-xs text-muted-foreground leading-relaxed space-y-1"
-        >
-          {preview.status !== "empty" && preview.status !== "invalid" && (
+      {preview &&
+        (value.sessionMinutes !== null || value.longRunMinutes !== null) && (
+          <div
+            aria-live="polite"
+            className="text-xs text-muted-foreground leading-relaxed space-y-1"
+          >
+            {preview &&
+              preview.status !== "empty" &&
+              preview.status !== "invalid" && (
+                <p>
+                  First week: about{" "}
+                  <span className="font-mono tabular-nums">
+                    {Math.round(preview.firstWeekMinutes)}
+                  </span>{" "}
+                  min in total.
+                  {preview.timeLimitedRuns > 0
+                    ? " Some sessions in this plan will be shorter to fit your time."
+                    : " The planned sessions already fit your time."}
+                </p>
+              )}
             <p>
-              First week: about{" "}
-              <span className="font-mono tabular-nums">
-                {Math.round(preview.firstWeekMinutes)}
-              </span>{" "}
-              min in total.
-              {preview.timeLimitedRuns > 0
-                ? " Some sessions in this plan will be shorter to fit your time."
-                : " The planned sessions already fit your time."}
+              {hasConfirmedPace
+                ? "Long-run estimates use your confirmed easy pace."
+                : "Estimates use typical session times until you confirm an easy pace."}{" "}
+              Actual duration can vary. If a long run cannot fit, an easy timed
+              run takes its place. Less training time can limit race
+              preparation.
             </p>
-          )}
-          <p>
-            {hasConfirmedPace
-              ? "Long-run estimates use your confirmed easy pace."
-              : "Estimates use typical session times until you confirm an easy pace."}{" "}
-            Actual duration can vary. If a long run cannot fit, an easy timed
-            run takes its place. Less training time can limit race preparation.
-          </p>
-        </div>
-      )}
+          </div>
+        )}
     </section>
   );
 }

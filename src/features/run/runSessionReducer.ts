@@ -41,12 +41,7 @@
  */
 
 export type RunPhase =
-  | "waiting"
-  | "acquiring"
-  | "countdown"
-  | "active"
-  | "paused"
-  | "finished";
+  "waiting" | "acquiring" | "countdown" | "active" | "paused" | "finished";
 
 export type RunSessionAction =
   /* Non-GPS path (treadmill, intervals, strength, manual). Skips
@@ -82,6 +77,7 @@ export type RunSessionAction =
   /* User tapped Cancel on the acquiring screen. Acquiring →
      waiting. */
   | { type: "CANCEL_ACQUIRING" }
+  | { type: "CANONICAL_START_REJECTED" }
   /* Resume-from-snapshot path (interrupted-run recovery). The
      stored phase is either 'active' or 'paused'; restoring to
      waiting/acquiring/countdown/finished would either be
@@ -123,6 +119,8 @@ export function runSessionReducer(
          CANCEL_ACQUIRING; waiting has no run; finished is terminal. */
       if (state !== "active" && state !== "paused") return state;
       return "finished";
+    case "CANONICAL_START_REJECTED":
+      return state === "acquiring" || state === "countdown" ? "waiting" : state;
     case "CANCEL_ACQUIRING":
       if (state !== "acquiring") return state;
       return "waiting";

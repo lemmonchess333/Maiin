@@ -1,0 +1,69 @@
+# Running adaptation review candidate
+
+Status: isolated, review-only domain slice. Not activated, not a UI, not a medical recommendation. No production importer, persistence change, account access, migration, push or deployment.
+
+`previewRunningAdaptation` evaluates a concrete one-week candidate. It does not generate prescriptions from symptoms or body location. It requires explicit capacity and after-effects review, representable restrictions, and no independent active holds. Daily-activity, concerning and uncertain symptoms block the candidate. Symptomatic users need specified supported restrictions; free-text guidance is not interpreted. No-running and unsupported restrictions block. Capacity and clinician limits compose by the most restrictive value.
+
+The result copies actual before/after sessions and reports removed/changed identities, distinct running days, longest durations and a preserved race-goal identity. Race impact remains explicitly `review_required`, not a fabricated readiness estimate. Apply is always unavailable. Only existing sessions can be removed or shortened; no additions, increases, silent rescheduling or quality escalation. Run/walk candidates still require a future real planner to resolve valid supported session templates.
+
+## Release blockers
+
+1. `firestore.rules` permits owner writes to programState without an authoritative revision or training-hold invariant. Profile rules allow scheduling changes without equivalent hold enforcement. A new-client UI guard cannot protect against older client writers.
+2. No server-authoritative independent hold store/transaction composes injury review, post-race recovery and novice readiness. A proposal must never implicitly clear any hold.
+3. No account-bound, revision-checked preview/apply transaction, idempotency key or stale/offline preview invalidation. The account/revision values here are metadata, not authentication or concurrency protection.
+4. No persisted review/adoption state or explicit hold-status review flow. Local UI cannot claim a pause is durably enforced.
+5. The bounded one-week template planner described below is implemented, but a complete authoritative planner and goal-impact assessment for arbitrary durations/run/walk restrictions remain absent. These helpers alone are not sufficient to persist a schedule.
+6. Future implementation needs real before/after UI using existing primitives, Cancel/Back/repeated-submit and account-switch tests, race/history/manual-entry preservation, and light/dark visual QA.
+
+Do not connect this module to app actions until these boundaries are implemented and tested. Keep the user's saved goal and completed/manual history unchanged. No arbitrary percentage reduction, catch-up, automatic stage advancement, inferred comfort from completed runs or claim of medical clearance.
+
+## Template-backed planning slice
+
+`planRunningAdaptation` now creates a candidate from actual catalogue templates, explicit retained session identities and chosen duration limits. It picks the longest eligible easy template within the intersection of original duration, current capacity, clinician limit and user selection. No template fits means a blocked proposal, never an oversized fallback. Run/walk requires the exact chosen structure; the planner cannot advance or convert an existing run/walk stage to continuous running. Distance-based originals require confirmed pace to summarize duration. Race templates and protected entries are rejected. A bounded seven-day window prevents adapting arbitrary history.
+
+This is intentionally limited to one future week and easy/run-walk replacements. It does not produce an entire rehabilitation programme, choose running days, progress stages or determine race feasibility. Race impact still requests a separate review. Unsupported cadence/interval/terrain restrictions must be represented as unsupported rather than omitted. The caller must obtain canonical protected-entry classification and server-local date/window, not trust client flags or time.
+
+## Transaction and authority integration contract
+
+Coordinate with the separate running-authority candidate: `users/{uid}/runningState/current`, schemaVersion 1, server-owned monotonic integer revision. This candidate does not create competing storage or a callable.
+
+1. An authenticated review command stores validated confirmed capacity and supported clinician restrictions and advances the authoritative revision. Holds remain independent. A separate explicit status review is required to change injury holds; applying a schedule never clears one.
+2. A server planner reads the same revision, canonical plan, history/manual entries, constraints and all holds. It evaluates this bounded candidate, overlays only the eligible future generated entries and preserves every other entry and the complete saved race goal. It creates an immutable account-bound proposal with exact plan, baseRevision, unique proposalId and expiry. Client-provided summaries, protected flags and template IDs are never sufficient authority.
+3. Preview shows that exact proposal and race impact. Edit, Cancel and Back do not write. Explicit Apply submits only proposalId, expectedRevision, acceptance and idempotencyKey, not an arbitrary replacement plan.
+4. A single backend transaction reads authenticated account/deletion status, authoritative envelope, immutable proposal and receipt. It rejects mismatch, expiry, changed constraints/holds/history/goal, or absent authority. Any active hold blocks. Exact duplicate acceptance returns its receipt without another revision. Reuse of a key with different input is rejected.
+5. Commit changes only the eligible plan and revision plus receipt; preserve constraints, holds, saved goal, completed/manual history and unrelated fields. An account switch, offline state or stale preview requires a fresh read/preview, never optimistic prescription paint.
+6. Compatibility negotiation must occur before displaying prescriptions. For enrolled accounts, absent/unknown authority fails closed; legacy programState is never a fallback. Deployment/enrollment remains blocked until old-client reads and writes cannot bypass that boundary.
+
+The compatibility worker owns the pure compare/revise/idempotency model and rules. A pure passing model is not proof of an atomic backend transaction or old-client safety. Emulator tests for concurrent holds, review updates, duplicate Apply, account deletion/switch, expired previews and legacy writers remain release gates.
+
+## Disabled preview UI and Apply boundary
+
+`RunningAdaptationPreview` has a hard false gate and no production route/importer. Its internal fixture component shows actual before/after session rows, day/duration comparison, unchanged race goal plus explicit readiness uncertainty, consent, Edit, pause review and Close. It uses existing Button/SectionHeading primitives and theme tokens. Pause review is navigation only, not a claim that a hold was persisted.
+
+The injected Apply transport matches the authority adapter: `{expectedUid,accepted:true,proposalId,expectedRevision,idempotencyKey}`. No replacement plan or clinical answers are sent by Apply. It binds consent to the account/proposal/revision, blocks stale/offline/held/unready/expired previews and synchronously locks duplicate submissions. Account/revision/authority changes remount the view; old completions cannot reconcile or paint. Exact receipts are checked, then canonical reconciliation must succeed before showing confirmation. Unknown network outcomes and mismatched receipts lock further submissions; the proposal owner must preserve the same idempotency key across remounts and reconcile before any retry. Server rules remain the actual authority; these UI guards are not security controls.
+
+Tests cover the disabled production entry, exact consent payload, duplicate Apply, missing readiness, offline/hold/revision/account/expiry blocks, old-account pending completion, uncertain response, receipt mismatch, no optimistic success, and non-writing dismissal/navigation. This is not the full answer-collection flow or a deployed integration. Backend transaction, consent/copy review, deletion/legacy enforcement and browser lifecycle tests remain required. A local Chromium visual check was attempted but launch failed because the sandbox forbids its socket operation; light/dark screenshots and visual QA are not verified.
+
+## Canonical server-domain implementation
+
+`runningAdaptationServerDomain.ts` now accepts transaction-current authority, server time, windowStart and explicit selections. All capacity, symptoms, clinician restrictions, holds, timezone, goal and session metadata come from canonical authority. Client-shaped selection objects containing plan/validation/clinical fields are rejected. Canonical constraints must contain `reviewConfirmation: {version:1, confirmed:true, authorityRevision, raceGoalId}` matching the current authority; missing, stale or wrong-goal confirmation blocks. No review-ingestion command currently creates this state, so this requirement deliberately prevents enrollment from invented defaults.
+
+The domain selects actual catalogue templates through the existing planner, enforces the strict server-local future window, rejects same-day duplicate selections and fails closed on unknown restrictions, protected/manual/completed/moved entries, unsupported templates and malformed context. It returns preview plus bounded plan, never a validation marker. The authority worker owns authenticated immutable proposal storage and generates the marker only after canonical domain success.
+
+Run `node scripts/build-running-adaptation-domain.mjs` to regenerate the checked-in CommonJS functions artifact from actual TypeScript source/catalogue; `--check` fails on byte drift. `runningAdaptationServerDomain.cross.test.ts` checks generated-artifact parity and rejection behavior. `runningAdaptationAuthority.cross.test.ts` tests actual catalogue output through the real acceptance adapter and client receipt check with the shared memory Firestore double. These tests do not simulate real transaction contention or claim an exported callable exists.
+
+## Authenticated canonical review command (disabled)
+
+`saveRunningReviewTransaction` accepts only an authenticated account-bound, revision-bound, race-goal-bound explicit review save. Structured answers include symptom category, explicitly confirmed capacity/after-effects and supported clinician limits; no free-text diagnosis, body location, clinician identity or raw medical notes are stored. Unknown capacity uses null values rather than invented defaults. Canonical constraints and confirmation are saved atomically at the next revision, with a separate private idempotency receipt containing a fingerprint/revisions and no duplicate raw symptom answers.
+
+A new or prior uncertain/unsupported/unsafe review adds `running_review_required`. Existing injury, post-race, enrollment and unknown holds are preserved. Later answers never remove any hold. A separate explicit hold-resolution/status-review capability remains required; saving a review is not medical clearance, adoption or resume permission. The command leaves plan sessions, race goal, completions, history, lifting and unrelated state unchanged. It validates account/deletion/tombstones before replay, rejects changed-payload reuse, and cannot partially commit if receipt creation fails.
+
+The owner-readable/Admin-write `runningReviewReceipts` collection is included in deletion inventory/executor and erasure fixtures. Tests exercise real review save → default generated server-domain proposal creation → acceptance. Memory-store tests do not prove emulator contention or deployed privacy rules; emulator/rules verification remains an activation gate. No callable or production UI is falsely wired to this command. Reachability remains honestly pending the real capability-gated flow rather than being waived.
+
+## Real callable transport and mounted client path (off by default)
+
+The settings surface now lazily mounts `RunningAdaptationFlow` behind both source-time client flags. It uses authenticated Firebase callable transport with pre/post auth-session identity and online checks. The negotiation runtime uses the same real read-only transport. Explicit enrollment, private structured review consent, actual server preview, explicit Apply and canonical reread/render are wired for accounts with an existing canonical plan. Unknown capacity stays null; held accounts cannot request prescriptions; empty-plan accounts are told a separately confirmed initial plan is still needed. Close/edit are not saves. Uncertain writes remain locked until an explicit canonical refresh, never an automatic retry.
+
+The actual Functions exports use App Check, verified auth/account binding, finite instance limits, deletion preflight and rate limits, plus the default-false server source switch and explicit rollout capabilities. The mutation transactions still own revision/account/deletion checks. No deployment or rollout document was changed. Obsolete unwired markers were removed only where the real transport now imports the implementations; no gate policy was loosened.
+
+Release blockers remain: safe initial-plan adoption for empty canonical plans, legacy-history reconciliation for existing accounts, explicit clinical/recovery/unknown hold resolution, canonical launch adapters, emulator contention/privacy rules and browser visual/lifecycle QA. The no-legacy migration command is wired but does not create prescriptions or clear safety holds. The client does not fabricate a pause command: pause guidance remains explicit that no hold was changed. Full aggregate verification belongs to integration; focused source/UI/transport checks do not establish release readiness.

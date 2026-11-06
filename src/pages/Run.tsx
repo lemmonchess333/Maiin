@@ -1,3 +1,14 @@
+import { useCanonicalRunLaunch } from "@/features/run/useCanonicalRunLaunch";
+import { useRunningPrescriptionGate } from "@/features/program/useRunningPrescriptionGate";
+import {
+  isUnprescribedRun,
+  withoutRunningPrescription,
+} from "@/features/run/runningPrescriptionLaunch";
+import RunningPrescriptionUnavailable from "@/components/run/RunningPrescriptionUnavailable";
+import {
+  CANONICAL_RUNNING_LAUNCH_ENABLED,
+  RUNNING_PRESCRIPTION_GATE_ENABLED,
+} from "@/features/program/runningPrescriptionFeature";
 import { localDateString } from "@/lib/dateHelpers";
 import {
   isRecoveryRunDay,
@@ -64,6 +75,7 @@ import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import {
   readStoredRun,
+  readStoredRunSummary,
   writeStoredRun,
   clearStoredRun,
   RUN_RESUME_SCHEMA_VERSION,
@@ -201,6 +213,22 @@ function sessionSegmentsFor(
     : null;
 }
 
+function isExpiredCanonicalStart(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const value = error as {
+    code?: unknown;
+    message?: unknown;
+    details?: { reason?: unknown; errorCode?: unknown };
+  };
+  return (
+    value.code === "canonical-start-expired" ||
+    value.details?.reason === "launch-authorization-expired" ||
+    value.details?.errorCode === "launch-authorization-expired" ||
+    (typeof value.message === "string" &&
+      value.message.includes("launch-authorization-expired"))
+  );
+}
+
 function discardStoredSession(
   uid: string,
   identity: RunSessionIdentity | null | undefined
@@ -246,6 +274,33 @@ export default function Run() {
   const gps = useGPS(timer.elapsed);
   const wakeLock = useWakeLock();
   const { user, profile } = useAuth();
+  const runningAccess = useRunningPrescriptionGate(user);
+  const legacyPrescriptionsAllowed = runningAccess.legacyAllowed;
+  const canonicalLaunch = useCanonicalRunLaunch({
+    user,
+    access: runningAccess,
+    sessionId: searchParams.get("canonicalSessionId"),
+  });
+  const [canonicalStarting, setCanonicalStarting] = useState(false);
+  const [canonicalPreparationFailure, setCanonicalPreparationFailure] =
+    useState<"unconfirmed" | "expired" | null>(null);
+  const [canonicalTreadmillPending, setCanonicalTreadmillPending] =
+    useState(false);
+  const canonicalStartPending = useRef(false);
+  const launchEpoch = useRef(0);
+  // An uncertain registration must never mint a second activity on retry.
+  const preparedCanonical = useRef<{
+    uid: string;
+    runId: string;
+    revision: number;
+    sessionId: string;
+  } | null>(null);
+  useEffect(
+    () => () => {
+      launchEpoch.current += 1;
+    },
+    []
+  );
   const { prefs: connectedPrefs } = useConnectedTrainingPrefs();
   // The account's privacy zones, from the server, before the run starts
   // (usually at home, with a signal). A run is saved only with its zones
@@ -269,6 +324,10 @@ export default function Run() {
   const profileRunMode = (profile?.runMode ?? "freeform") as PlanMode;
   const isFreeformUser = profileRunMode === "freeform";
   const [phase, dispatch] = useReducer(runSessionReducer, initialRunPhase);
+  const preparationPhase = useRef(phase);
+  useLayoutEffect(() => {
+    preparationPhase.current = phase;
+  }, [phase]);
   // The guide's first-run hint (FV1). Knowing there are no runs means
   // reading every saved one, so the read happens only while the hint is
   // owed: an account that has met the guide and not seen this hint.
@@ -562,8 +621,11 @@ export default function Run() {
      built or spoken on this page. */
   const [cueSeed] = useState(() => Math.floor(Date.now() / 1000) % 9973);
 
+  const prescriptionCoachingAllowed = runConfig?.canonicalLaunch
+    ? canonicalLaunch.matches(runConfig)
+    : legacyPrescriptionsAllowed;
   const audioCues = useAudioCues(
-    runConfig?.audioCues ?? true,
+    prescriptionCoachingAllowed && (runConfig?.audioCues ?? true),
     runConfig?.audioCueFrequency ?? "every_km",
     {
       paceAlerts: runConfig?.paceAlerts ?? true,
@@ -576,8 +638,11 @@ export default function Run() {
   // hand-built interval session. Guided runs keep their own player (and
   // overlay) this slice.
   const sessionSegments = useMemo(
-    () => sessionSegmentsFor(runConfig, unit, cueSeed),
-    [runConfig, unit, cueSeed]
+    () =>
+      prescriptionCoachingAllowed
+        ? sessionSegmentsFor(runConfig, unit, cueSeed)
+        : null,
+    [runConfig, unit, cueSeed, prescriptionCoachingAllowed]
   );
   const player = useSessionPlayer(
     sessionSegments,
@@ -618,13 +683,15 @@ export default function Run() {
     player.current
   );
   // The bar's pace: none until the run has one to judge (Run20).
-  const barPace = runConfig ? livePaceTarget(runConfig) : null;
+  const barPace =
+    legacyPrescriptionsAllowed && runConfig ? livePaceTarget(runConfig) : null;
   // A run-walk session (Run20 (5)) is running its steps. A run type picked
   // on a run-walk day leaves the steps playing, so this reads the template
   // as the saved run will, the plan's when none was started from.
   const runWalkSession =
     !!runConfig?.segments?.length &&
-    isRunWalkTemplateId(runTemplateIdOf(runConfig.planMetadata));
+    (runConfig.canonicalLaunch?.session?.kind === "run_walk" ||
+      isRunWalkTemplateId(runTemplateIdOf(runConfig.planMetadata)));
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
   // band-first display rule, now for intervals AND tempo. undefined (no
@@ -662,7 +729,10 @@ export default function Run() {
     // Freeform users skip the programme branches entirely — the
     // memo still runs (hook order) but returns trivially. This keeps
     // freeform users decoupled from useProgram's loading state.
-    if (isFreeformUser && !urlTemplateId && !urlType && !urlScheduledRunId) {
+    if (
+      !legacyPrescriptionsAllowed ||
+      (isFreeformUser && !urlTemplateId && !urlType && !urlScheduledRunId)
+    ) {
       return {
         metadata: freeformPlanMetadata("freeform"),
         prefill: {} as Partial<RunConfig>,
@@ -725,6 +795,7 @@ export default function Run() {
       strip: deriveStrip(result.metadata, programState?.runPlan, unit),
     };
   }, [
+    legacyPrescriptionsAllowed,
     isFreeformUser,
     profileRunMode,
     programState?.runPlan,
@@ -848,10 +919,52 @@ export default function Run() {
   const handleStart = async (config: RunConfig) => {
     const uid = user?.uid ?? profile?.uid;
     if (!uid || (user && auth.currentUser?.uid !== uid)) return;
+    if (canonicalStartPending.current) return;
+    if (config.canonicalLaunch && canonicalPreparationFailure === "expired")
+      return;
+    if (
+      !legacyPrescriptionsAllowed &&
+      !config.canonicalLaunch &&
+      !isUnprescribedRun(config)
+    )
+      return;
+    const epoch = ++launchEpoch.current;
     replaceManualDistanceDraft(null);
     audioCues.prime();
-    await wakeLock.request();
-    if (user && auth.currentUser?.uid !== uid) return;
+    if (config.canonicalLaunch) {
+      canonicalStartPending.current = true;
+      setCanonicalStarting(true);
+      try {
+        config = await canonicalLaunch.authorize(
+          config.canonicalLaunch,
+          config,
+          () => wakeLock.request()
+        );
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Review your plan before starting."
+        );
+        wakeLock.release();
+        return;
+      } finally {
+        canonicalStartPending.current = false;
+        setCanonicalStarting(false);
+      }
+    } else await wakeLock.request();
+    if (config.canonicalLaunch && !canonicalLaunch.canStart(config)) return;
+    if (
+      epoch !== launchEpoch.current ||
+      (user && auth.currentUser?.uid !== uid)
+    )
+      return;
+    if (
+      !legacyPrescriptionsAllowed &&
+      !config.canonicalLaunch &&
+      !isUnprescribedRun(config)
+    )
+      return;
     // Phase B1: finalise plan metadata against the user's actual
     // activityType (chooser may have diverged from the prefill).
     // RunSetupModal carries the prefill snapshot on config.planMetadata;
@@ -863,16 +976,69 @@ export default function Run() {
       config.planMetadata,
       config.activityType
     );
-    const finalConfig: RunConfig = {
+    let finalConfig: RunConfig = {
       ...config,
       planMetadata: finalisedMetadata,
     };
-    setRunConfig(finalConfig);
     // Phase B3: capture the original-start epoch so the periodic
     // write effect persists it in every snapshot. Resume re-uses
     // the stored value (see handleResumeFromPrompt below).
     const startedAt = Date.now();
-    const runId = allocateRunId(uid);
+    const pending = preparedCanonical.current;
+    if (
+      finalConfig.canonicalLaunch &&
+      pending &&
+      (pending.uid !== uid ||
+        pending.revision !== finalConfig.canonicalLaunch.revision ||
+        pending.sessionId !== finalConfig.canonicalLaunch.session.id)
+    ) {
+      setCanonicalPreparationFailure("unconfirmed");
+      toast.error(
+        "The previous start check is unresolved. Review the saved activity before starting another planned session."
+      );
+      return;
+    }
+    const runId =
+      finalConfig.canonicalLaunch && pending
+        ? pending.runId
+        : allocateRunId(uid);
+    if (finalConfig.canonicalLaunch) {
+      preparedCanonical.current = {
+        uid,
+        runId,
+        revision: finalConfig.canonicalLaunch.revision,
+        sessionId: finalConfig.canonicalLaunch.session.id,
+      };
+      if (requiresManualDistance(finalConfig)) {
+        canonicalStartPending.current = true;
+        try {
+          finalConfig = await canonicalLaunch.authorize(
+            finalConfig.canonicalLaunch,
+            finalConfig,
+            undefined,
+            runId
+          );
+          if (
+            epoch !== launchEpoch.current ||
+            !canonicalLaunch.canStart(finalConfig, runId)
+          )
+            return;
+        } catch (error) {
+          if (epoch === launchEpoch.current)
+            setCanonicalPreparationFailure(
+              isExpiredCanonicalStart(error) ? "expired" : "unconfirmed"
+            );
+          wakeLock.release();
+          toast.error(
+            error instanceof Error ? error.message : "Check the session again."
+          );
+          return;
+        } finally {
+          canonicalStartPending.current = false;
+        }
+      }
+    }
+    setRunConfig(finalConfig);
     const identity = createRunSessionIdentity(
       uid,
       runId,
@@ -968,15 +1134,17 @@ export default function Run() {
   const arrivalState = location.state;
   useEffect(() => {
     if (arrival !== "deciding" || phase !== "waiting" || !arrivalUid) return;
-    const decision = startOnArrival({
-      planReady: arrivalPlanReady,
-      // Read here rather than from `resumePrompt`, which the restore
-      // effect sets in this same pass.
-      interruptedRun: readStoredRun(arrivalUid) !== null,
-      routeToFollow: arrivalRouteToFollow,
-      firstRunHint: arrivalFirstRunHint,
-      plannedRun: arrivalPlannedRun,
-    });
+    const decision = !legacyPrescriptionsAllowed
+      ? "show"
+      : startOnArrival({
+          planReady: arrivalPlanReady,
+          // Read here rather than from `resumePrompt`, which the restore
+          // effect sets in this same pass.
+          interruptedRun: readStoredRun(arrivalUid) !== null,
+          routeToFollow: arrivalRouteToFollow,
+          firstRunHint: arrivalFirstRunHint,
+          plannedRun: arrivalPlannedRun,
+        });
     if (decision === "wait") return;
     setSearchParams(
       (params) => {
@@ -992,6 +1160,7 @@ export default function Run() {
   }, [
     arrival,
     phase,
+    legacyPrescriptionsAllowed,
     arrivalUid,
     arrivalPlanReady,
     arrivalRouteToFollow,
@@ -1130,12 +1299,15 @@ export default function Run() {
     if (!uid || (user && auth.currentUser?.uid !== uid)) return;
     audioCues.prime();
     await wakeLock.request();
+    if (user && auth.currentUser?.uid !== uid) return;
     replaceManualDistanceDraft(
       requiresManualDistance(resumePrompt.config)
         ? (resumePrompt.manualDistanceDraft ?? null)
         : null
     );
     const coachingRestored = !!(
+      legacyPrescriptionsAllowed &&
+      !resumePrompt.config.canonicalLaunch &&
       resumeCoaching?.checkpoint &&
       resumeCoaching.segments &&
       player.restore(
@@ -1147,7 +1319,10 @@ export default function Run() {
       )
     );
     resumedRef.current = !coachingRestored;
-    const fallback = !!resumeCoaching?.segments?.length && !coachingRestored;
+    const fallback =
+      !legacyPrescriptionsAllowed ||
+      !!resumePrompt.config.canonicalLaunch ||
+      (!!resumeCoaching?.segments?.length && !coachingRestored);
     setContinuedWithoutCoaching(fallback);
     if (coachingRestored) {
       // Restored state arrives on mount; it must not replay its step cue or
@@ -1160,24 +1335,28 @@ export default function Run() {
         !isTreadmillRun(resumePrompt.config)
           ? "manual"
           : "freerun";
-      setRunConfig({
-        ...resumePrompt.config,
-        activityType,
-        ...(isTreadmillRun(resumePrompt.config)
-          ? { place: "treadmill" as const }
-          : {}),
-        segments: undefined,
-        intervals: undefined,
-        guidedWorkout: undefined,
-        target: { type: "none" },
-        paceAlerts: false,
-        // Preserve the planned slot; the existing boundary records an
-        // uncoached continuation as modified rather than an exact session.
-        planMetadata: finalisePlanMetadata(
-          resumePrompt.config.planMetadata,
-          activityType
-        ),
-      });
+      setRunConfig(
+        !legacyPrescriptionsAllowed || resumePrompt.config.canonicalLaunch
+          ? withoutRunningPrescription(resumePrompt.config)
+          : {
+              ...resumePrompt.config,
+              activityType,
+              ...(isTreadmillRun(resumePrompt.config)
+                ? { place: "treadmill" as const }
+                : {}),
+              segments: undefined,
+              intervals: undefined,
+              guidedWorkout: undefined,
+              target: { type: "none" },
+              paceAlerts: false,
+              // Preserve the planned slot; the existing boundary records an
+              // uncoached continuation as modified rather than an exact session.
+              planMetadata: finalisePlanMetadata(
+                resumePrompt.config.planMetadata,
+                activityType
+              ),
+            }
+      );
     } else {
       setRunConfig(resumePrompt.config);
     }
@@ -1246,6 +1425,7 @@ export default function Run() {
   }, [
     resumePrompt,
     resumeCoaching,
+    legacyPrescriptionsAllowed,
     player,
     timer,
     gps,
@@ -1258,6 +1438,9 @@ export default function Run() {
 
   const profileUid = profile?.uid;
   const handleStartNewFromPrompt = useCallback(() => {
+    launchEpoch.current += 1;
+    preparedCanonical.current = null;
+    setCanonicalPreparationFailure(null);
     if (profileUid) discardStoredSession(profileUid, resumePrompt?.identity);
     replaceManualDistanceDraft(null);
     setResumePrompt(null);
@@ -1301,10 +1484,18 @@ export default function Run() {
     );
     // A one-shot reaction to the address, consumed above so it cannot
     // repeat; the stored run is read outside React.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
-    if (resumePrompt && !resumeCoaching?.fallback) resumeFromStrip();
+    if (
+      legacyPrescriptionsAllowed &&
+      resumePrompt &&
+      !resumePrompt.config.canonicalLaunch &&
+      !resumeCoaching?.fallback
+    ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
+      resumeFromStrip();
+    }
   }, [
     resumeRequested,
+    legacyPrescriptionsAllowed,
     phase,
     profileUid,
     resumePrompt,
@@ -1328,14 +1519,68 @@ export default function Run() {
 
   // Transition from acquiring to countdown when we get a GPS point
   useEffect(() => {
-    if (phase === "acquiring" && gps.points.length > 0) {
+    if (
+      phase === "acquiring" &&
+      gps.points.length > 0 &&
+      !canonicalTreadmillPending
+    ) {
       const transition = () => {
         dispatch({ type: "GPS_ACQUIRED" });
         setCountdown(3);
       };
       transition();
     }
-  }, [phase, gps.points.length]);
+  }, [phase, gps.points.length, canonicalTreadmillPending]);
+
+  const recheckCanonicalPreparation = async (
+    config: RunConfig,
+    expectedPhase: "countdown" | "acquiring"
+  ) => {
+    if (!config.canonicalLaunch) return config;
+    if (canonicalStartPending.current) return null;
+    canonicalStartPending.current = true;
+    const epoch = launchEpoch.current;
+    if (preparationPhase.current !== expectedPhase) {
+      canonicalStartPending.current = false;
+      return null;
+    }
+    try {
+      const activityId = identityRef.current?.runId;
+      if (!activityId) return null;
+      const checked = await canonicalLaunch.authorize(
+        config.canonicalLaunch,
+        config,
+        undefined,
+        activityId
+      );
+      if (
+        epoch !== launchEpoch.current ||
+        preparationPhase.current !== expectedPhase
+      )
+        return null;
+      setRunConfig(checked);
+      return checked;
+    } catch (error) {
+      if (epoch === launchEpoch.current) {
+        gps.stop();
+        wakeLock.release();
+        dispatch({ type: "CANONICAL_START_REJECTED" });
+        setCanonicalPreparationFailure(
+          isExpiredCanonicalStart(error) ? "expired" : "unconfirmed"
+        );
+        setRunConfig(null);
+        setArrival("done");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Review your plan before starting."
+        );
+      }
+      return null;
+    } finally {
+      canonicalStartPending.current = false;
+    }
+  };
 
   // Side-effects at "GO!" — wrapped in an effect event so the countdown
   // effect below can depend ONLY on [phase, countdown]. Previously `timer`
@@ -1351,15 +1596,31 @@ export default function Run() {
     haptic("heavy");
   });
 
+  const onCanonicalCountdownGo = useEffectEvent(async () => {
+    if (!runConfig?.canonicalLaunch) return;
+    const checked = await recheckCanonicalPreparation(runConfig, "countdown");
+    if (
+      checked &&
+      canonicalLaunch.canStart(checked, identityRef.current?.runId)
+    )
+      onCountdownGo();
+  });
+  const hasCanonicalPreparation = !!runConfig?.canonicalLaunch;
   useEffect(() => {
     if (phase !== "countdown") return;
     if (countdown <= 0) {
+      if (hasCanonicalPreparation) {
+        const go = setTimeout(() => {
+          void onCanonicalCountdownGo();
+        }, 0);
+        return () => clearTimeout(go);
+      }
       onCountdownGo();
       return;
     }
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [phase, countdown]);
+  }, [phase, countdown, hasCanonicalPreparation]);
 
   useEffect(() => {
     if (phase !== "active") return;
@@ -1903,7 +2164,11 @@ export default function Run() {
     };
   }, [watchEligible, activeSessionId]);
 
-  const handleSwitchToManual = useCallback(() => {
+  const handleSwitchToManual = () => {
+    if (runConfig?.canonicalLaunch) {
+      launchEpoch.current += 1;
+      // A manual fallback is voluntary recording, not the checked prescription.
+    }
     /* GPS failed, or the user waited 15s+ for a lock that never came. Rather than
        start an outdoor run with zero fixes (the canonical 0km bug),
        transition to manual distance entry: stop the geolocation
@@ -1926,11 +2191,13 @@ export default function Run() {
     setRunConfig((prev) =>
       prev
         ? {
-            ...prev,
+            ...(prev.canonicalLaunch ? withoutRunningPrescription(prev) : prev),
             activityType: "manual",
             // Preserve the displayed ad-hoc/guided structure when its original
             // activity type no longer selects the segment builder.
-            ...(sessionSegments ? { segments: sessionSegments } : {}),
+            ...(!prev.canonicalLaunch && sessionSegments
+              ? { segments: sessionSegments }
+              : {}),
           }
         : prev
     );
@@ -1938,9 +2205,29 @@ export default function Run() {
     recordingStartedAtRef.current ??= Date.now();
     timer.start();
     haptic("heavy");
-  }, [gps, timer, sessionSegments, replaceManualDistanceDraft]);
+  };
 
-  const handleMoveToTreadmill = useCallback(() => {
+  const handleMoveToTreadmill = async () => {
+    if (runConfig?.canonicalLaunch) {
+      if (canonicalStartPending.current) return;
+      // The person chose the treadmill. A late GPS fix must not start a
+      // competing countdown while this server check is pending.
+      gps.stop();
+      setCanonicalTreadmillPending(true);
+      try {
+        const checked = await recheckCanonicalPreparation(
+          { ...runConfig, place: "treadmill" },
+          "acquiring"
+        );
+        if (
+          !checked ||
+          !canonicalLaunch.canStart(checked, identityRef.current?.runId)
+        )
+          return;
+      } finally {
+        setCanonicalTreadmillPending(false);
+      }
+    }
     /* On a treadmill after all. A run from Home's Start never passes the
        setup's "On a treadmill" switch (Pgm8), so the GPS screen offers
        it. Only the place changes, as with the switch: the type, the
@@ -1953,7 +2240,7 @@ export default function Run() {
     recordingStartedAtRef.current ??= Date.now();
     timer.start();
     haptic("heavy");
-  }, [gps, timer, replaceManualDistanceDraft]);
+  };
 
   if (locked && (phase === "active" || phase === "paused")) {
     return (
@@ -2088,7 +2375,95 @@ export default function Run() {
               than this, so the skeleton flash is rare). A start from
               Home waits the same way, with nothing to show until the
               run starts or the page shows itself. */}
-          {arrival !== "done" || (!isFreeformUser && programLoading) ? (
+          {!legacyPrescriptionsAllowed ? (
+            <RunningPrescriptionUnavailable
+              onBack={leaveSetup}
+              canonical={
+                // The hook enforces these too. Keep them visible here so an
+                // inactive build can omit the launch-only setup closures.
+                CANONICAL_RUNNING_LAUNCH_ENABLED &&
+                RUNNING_PRESCRIPTION_GATE_ENABLED &&
+                canonicalLaunch.enabled
+                  ? {
+                      ready: !!canonicalLaunch.candidate,
+                      activityRecorded: canonicalLaunch.activityRecorded,
+                      busy: canonicalStarting,
+                      failed: !!canonicalPreparationFailure,
+                      expired: canonicalPreparationFailure === "expired",
+                      onDiscardUnstarted: () => {
+                        const pending = preparedCanonical.current;
+                        if (
+                          !pending ||
+                          canonicalStartPending.current ||
+                          phase !== "waiting" ||
+                          recordingStartedAtRef.current !== null ||
+                          user?.uid !== pending.uid ||
+                          auth.currentUser !== user
+                        )
+                          return;
+                        if (identityRef.current) {
+                          const stored = readStoredRunSummary(pending.uid);
+                          if (
+                            !stored ||
+                            identityRef.current.runId !== pending.runId ||
+                            stored.identity?.runId !== pending.runId ||
+                            stored.recordingStartedAt !== undefined ||
+                            stored.accumulatedSeconds !== 0 ||
+                            stored.isRunning ||
+                            stored.phase !== "paused"
+                          ) {
+                            toast.error(
+                              "The saved activity changed. Open it before discarding a preparation."
+                            );
+                            return;
+                          }
+                          discardStoredSession(pending.uid, stored.identity);
+                        }
+                        launchEpoch.current += 1;
+                        preparedCanonical.current = null;
+                        setCanonicalPreparationFailure(null);
+                        if (identityRef.current?.runId === pending.runId) {
+                          identityRef.current = null;
+                          setActiveSessionId(null);
+                          startedAtRef.current = null;
+                        }
+                        setRunConfig(null);
+                      },
+                      onReview: () => navigate("/settings/run-plan"),
+                      onStart: () => {
+                        const identity = canonicalLaunch.candidate;
+                        if (!identity) return;
+                        const config = withoutRunningPrescription(
+                          buildTileConfig(
+                            "freerun",
+                            null,
+                            freeformPlanMetadata("freeform"),
+                            profile?.audioCues !== false,
+                            launchShoeId
+                          )
+                        );
+                        config.canonicalLaunch = identity;
+                        void handleStart(config);
+                      },
+                    }
+                  : undefined
+              }
+              onRecord={(mode) => {
+                const config = withoutRunningPrescription(
+                  buildTileConfig(
+                    "freerun",
+                    null,
+                    freeformPlanMetadata("freeform"),
+                    false,
+                    launchShoeId
+                  )
+                );
+                if (mode === "manual") config.activityType = "manual";
+                if (mode === "treadmill") config.place = "treadmill";
+                void handleStart(config);
+              }}
+            />
+          ) : arrival !== "done" || (!isFreeformUser && programLoading) ? (
             showSkeleton ? (
               <RunSetupSkeleton />
             ) : null
@@ -2379,6 +2754,7 @@ export default function Run() {
                 <button
                   type="button"
                   onClick={() => {
+                    launchEpoch.current += 1;
                     gps.stop();
                     // Back to the run's own card, where Customise is.
                     setArrival("done");
@@ -2709,12 +3085,18 @@ export default function Run() {
           startedAt={resumePrompt.startedAt}
           onResume={handleResumeFromPrompt}
           recoveryNote={
+            !legacyPrescriptionsAllowed ||
+            !!resumePrompt.config.canonicalLaunch ||
             resumeCoaching?.fallback
               ? "Your recorded progress is kept. Session guidance couldn't be restored. Continue without coaching."
               : undefined
           }
           resumeLabel={
-            resumeCoaching?.fallback ? "Continue without coaching" : undefined
+            !legacyPrescriptionsAllowed ||
+            !!resumePrompt.config.canonicalLaunch ||
+            resumeCoaching?.fallback
+              ? "Continue without coaching"
+              : undefined
           }
           onStartNew={handleStartNewFromPrompt}
           onDiscard={handleDiscardFromPrompt}

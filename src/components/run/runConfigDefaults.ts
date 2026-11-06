@@ -14,6 +14,7 @@
  * config through the SAME functions, so they can't drift.
  */
 
+import type { CanonicalRunLaunchIdentity } from "@/features/run/canonicalRunLaunchTypes";
 import type { ActivityType, RunPlace } from "@/types/run";
 import type { GuidedRunWorkout } from "@/lib/guidedRun";
 import type { SessionSegment } from "@/lib/runSegments";
@@ -72,6 +73,10 @@ export function resolveRepeatType(
 }
 
 export interface RunConfig {
+  /** Provenance only. Never a completion receipt or legacy slot claim. */
+  canonicalLaunch?: CanonicalRunLaunchIdentity;
+  /** Keep this activity out of legacy date/type completion matching. */
+  legacyPlanClaimExcluded?: boolean;
   /** The session: the plan's type for a planned run, or the one picked. */
   activityType: ActivityType;
   /**
@@ -88,12 +93,7 @@ export interface RunConfig {
   paceAlerts: boolean;
   voiceRate: number;
   displayStats: (
-    | "pace"
-    | "distance"
-    | "time"
-    | "calories"
-    | "elevation"
-    | "avgPace"
+    "pace" | "distance" | "time" | "calories" | "elevation" | "avgPace"
   )[];
   /**
    * Activity target. `value`'s unit depends on `type` — single

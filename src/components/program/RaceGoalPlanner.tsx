@@ -63,7 +63,8 @@ interface RaceGoalPlannerProps {
   eventName: string;
   /** Local "YYYY-MM-DD" min for the date input (today). */
   minDate: string;
-  state: RaceGoalPlannerState;
+  /** Null keeps the editable race fields but suppresses generated guidance. */
+  state: RaceGoalPlannerState | null;
   onDistanceChange: (d: RaceDistance) => void;
   onTargetDateChange: (date: string) => void;
   onEventNameChange: (v: string) => void;
@@ -279,9 +280,10 @@ export default function RaceGoalPlanner({
     (race) => race.event && isTrainableRaceEvent(race.event)
   );
   const showPreview =
-    state.status === "healthy" ||
-    state.status === "compressed" ||
-    state.status === "below-floor";
+    state &&
+    (state.status === "healthy" ||
+      state.status === "compressed" ||
+      state.status === "below-floor");
 
   return (
     // The race's fields sit on the page like the groups below them, each
@@ -370,13 +372,13 @@ export default function RaceGoalPlanner({
       </div>
 
       {/* ── Preview ───────────────────────────────────────────────── */}
-      {state.status === "empty" && (
+      {state?.status === "empty" && (
         <p className="text-xs text-muted-foreground">
           {state.statusDescription}
         </p>
       )}
 
-      {state.status === "invalid" && (
+      {state?.status === "invalid" && (
         <p className="text-xs text-destructive-strong" role="alert">
           {state.statusDescription}
         </p>

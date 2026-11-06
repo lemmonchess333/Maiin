@@ -159,6 +159,7 @@ const DEFAULT_DEPS: CompletionDeps = {
 function toSavedRunDoc(run: SavedRun): SavedRunDoc {
   return {
     id: run.id,
+    ...(run.legacyPlanClaimExcluded ? { legacyPlanClaimExcluded: true } : {}),
     date: run.day,
     distance: run.distance,
     avgPace: run.avgPace,
@@ -181,6 +182,8 @@ const NO_SAVED_RUNS: SavedRunDoc[] = [];
  * The same empty list every time there are none, for a caller's memo.
  */
 export function claimableRuns(runs: readonly SavedRun[]): SavedRunDoc[] {
+  // Preserve excluded recordings for the Home/day-peek extras history. The
+  // shared computeClaims boundary prevents them from filling a legacy slot.
   const counted = runs.filter((run) => isVolumeEligible(run));
   return counted.length ? counted.map(toSavedRunDoc) : NO_SAVED_RUNS;
 }
