@@ -485,16 +485,17 @@ function recordRows<R extends RecordRun>(
  */
 export function runRecordRows<R extends RecordRun>(
   allRuns: readonly R[],
-  range: Pick<HistoryRange, "recentSinceKey" | "newSinceKey">,
+  range: Pick<HistoryRange, "recentSinceKey" | "newSinceKey" | "todayKey">,
   unit: DistanceUnit
 ): RunRecordRows {
-  const outdoor = allRuns.filter((r) => isPaceEligible(r));
+  const completed = allRuns.filter((r) => runEvidenceDate(r) <= range.todayKey);
+  const outdoor = completed.filter((r) => isPaceEligible(r));
   const recent = outdoor.filter(
     (r) => runEvidenceDate(r) >= range.recentSinceKey
   );
   const allTime = selectRunRecords(outdoor, { includeLongest: true });
   const indoor = selectRunRecords(
-    allRuns.filter((r) => isIndoorPaceEligible(r)),
+    completed.filter((r) => isIndoorPaceEligible(r)),
     { includeLongest: false }
   );
   const shared = { newSinceKey: range.newSinceKey, unit };

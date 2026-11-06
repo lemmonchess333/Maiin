@@ -18,12 +18,12 @@ export interface RunPoseCutout {
 export const RUN_POSE_CUTOUTS: Record<RunPose, RunPoseCutout> = {
   "run-easy": {
     src: "form-art/run-easy.webp",
-    width: 395,
+    width: 232,
     height: 480,
     source: "docs/exercise-art/run-poses/run-easy.jpg",
     sourceSha256:
-      "9d2bb32bd87954c48fd89ca850d165c8531a4c84aff8ddbf246120dffa674923",
-    sha256: "aa35e522328ebaac418f0a85d15157f5a566462206eaa45ebd0fd3426b5ebbef",
+      "1d53b5602357810f7b441adff4494cffc5c6a74be1e958306849566f755bb918",
+    sha256: "de9162e75d18446e7a349e228e7d99399090ae098111f111023998380a6a7df0",
   },
   "run-fast": {
     src: "form-art/run-fast.webp",

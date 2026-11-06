@@ -1,7 +1,7 @@
 import Card from "@/components/ui/Card";
 import SectionHeading from "@/components/ui/SectionHeading";
 import type { WeightTrendPoint } from "@/hooks/useBodyweightTrend";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { kgToLb } from "@/lib/weightUnits";
 import {
   currentWeightRate,
@@ -9,7 +9,7 @@ import {
   STEADY_RATE_KG,
   weeklyWeightAverages,
 } from "@/utils/weightTrend";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 
 type WeightUnit = "kg" | "lbs";
 
@@ -88,12 +88,23 @@ export default function WeightRateCard({
   /* The rate starts at the latest weigh-in four or more weeks back, which
      after a gap in weighing can be months ago. It is "the last 4 weeks"
      only when it spans about that; otherwise its start is named. */
+  const endsToday = rate?.toDate === localDateString(today);
   const lastWindow =
-    rate !== null && spanWeeks === Math.round(RATE_WINDOW_DAYS / 7);
+    rate !== null &&
+    endsToday &&
+    spanWeeks === Math.round(RATE_WINDOW_DAYS / 7);
+  const rateDay = (key: string) => {
+    const date = parseLocalDate(key);
+    return date.getFullYear() === today.getFullYear()
+      ? formatDayMonth(date)
+      : formatDayMonthYear(date);
+  };
   const rateSpan = lastWindow
     ? `last ${Math.round(RATE_WINDOW_DAYS / 7)} weeks`
     : rate
-      ? `since ${formatDayMonth(parseLocalDate(rate.fromDate))}`
+      ? endsToday
+        ? `since ${rateDay(rate.fromDate)}`
+        : `${rateDay(rate.fromDate)} to ${rateDay(rate.toDate)}`
       : "";
   const verdict = rate
     ? comparison(rate.kgPerWeek, targetKgPerWeek, lastWindow)

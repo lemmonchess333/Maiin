@@ -395,6 +395,7 @@ function ProgramInner() {
   const isAnimating = useRef(false);
 
   // UI state
+  const [orderHelpRequest, setOrderHelpRequest] = useState(0);
   const [showOverflow, setShowOverflow] = useState(false);
   const [advancing, setAdvancing] = useState(false);
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
@@ -1388,9 +1389,15 @@ function ProgramInner() {
               rotation is the one thing about Train that the screen can't
               say by itself. Not while a session is open over the page. */}
           <GuideHint
+            key={orderHelpRequest}
+            requested={orderHelpRequest > 0}
             id="train-order"
             placement="top"
-            when={liftSelectorCells.length > 1 && sessionDayIndex === null}
+            when={
+              liftSelectorCells.length > 1 &&
+              sessionDayIndex === null &&
+              !showOverflow
+            }
           />
 
           {/* Experience auto-detection: evidence-triggered level suggestion.
@@ -2392,6 +2399,18 @@ function ProgramInner() {
             >
               <div className="max-w-md mx-auto p-5 space-y-1">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto mb-3" />
+                {activeTab === "lift" && liftSelectorCells.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    fullWidth
+                    onClick={() => {
+                      setShowOverflow(false);
+                      setOrderHelpRequest((request) => request + 1);
+                    }}
+                  >
+                    How workout order works
+                  </Button>
+                )}
                 {/* Reorder exercises — enters the drag-to-reorder mode for
                     today's lift session. Moved here from a permanent header
                     icon: it's a low-frequency plan edit, so it lives with the

@@ -5,10 +5,9 @@
  * uncovered is the adapter, and its three interesting rules are all about
  * turning heterogeneous documents into comparable sessions:
  *
- *   - It fetches displayDays + 60 days of WARMUP history, because the
- *     42-day fitness EWMA needs context before the window edge or the curve
- *     fake-ramps from zero. A test that seeded only in-window data would
- *     pass while the warmup contract silently broke.
+ *   - It fetches a consistent history floor across chart ranges, with
+ *     warmup before the longest chart. The 42-day fitness EWMA needs context;
+ *     changing a chart range must not change the current estimate.
  *   - Runs and workouts carry their date DIFFERENTLY — modern runs have a
  *     local `date` key and legacy runs use `completedAt`; workouts have a
  *     local "YYYY-MM-DD" string. The run reader needs both queries.
@@ -16,8 +15,7 @@
  *     set, so an untimed session still contributes load rather than
  *     silently counting as rest.
  *
- * Failure degrades to an empty series so Analytics renders the card's empty
- * state instead of crashing the page — also pinned here.
+ * Failure is distinguished from an empty history so Analytics can offer retry.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
@@ -114,7 +112,7 @@ describe("useTrainingLoadSeries", () => {
 
   it("counts WARMUP history outside the display window", async () => {
     // The 42-day EWMA needs ~60 days of context. Seeding only at day 70
-    // (outside a 30-day window, inside the 90-day fetch) must still lift
+    // (outside a 30-day window, inside the history fetch) must still lift
     // fitness at the window's start — otherwise the curve fake-ramps.
     seedFirestore({
       "users/u1/runs/old1": run(70),
@@ -164,14 +162,21 @@ describe("useTrainingLoadSeries", () => {
     expect(result.current.points.every((p) => p.fatigue === 0)).toBe(true);
   });
 
-  it("degrades to an empty series when a read fails", async () => {
-    // Analytics renders the card's empty state rather than crashing.
+  it("reports a failed read separately and recovers on retry", async () => {
+    // A failed fetch is not evidence that the runner has never trained.
     seedFirestore({ "users/u1/runs/r1": run(2) });
     failNextFirestore("getDocs", { path: "users/u1/runs" });
 
     const { result } = renderHook(() => useTrainingLoadSeries(30));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.points).toEqual([]);
+    expect(result.current.failed).toBe(true);
+    act(() => result.current.refresh());
+    expect(result.current.loading).toBe(true);
+    expect(result.current.failed).toBe(false);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.failed).toBe(false);
+    expect(result.current.points).toHaveLength(30);
   });
 
   it("reads nothing while it is not enabled, and reads once it is", async () => {
@@ -183,7 +188,11 @@ describe("useTrainingLoadSeries", () => {
     );
     await act(async () => {});
     expect(readLog()).toEqual([]);
-    expect(result.current).toEqual({ points: [], loading: false });
+    expect(result.current).toMatchObject({
+      points: [],
+      loading: false,
+      failed: false,
+    });
 
     rerender({ enabled: true });
     expect(result.current.loading).toBe(true);
@@ -248,4 +257,67 @@ describe("useTrainingLoadSeries — account ownership", () => {
     expect(result.current.points).toHaveLength(30);
     expect(result.current.points.at(-1)?.fatigue ?? 0).toBeGreaterThan(0);
   });
+});
+
+it("does not expose a previous account's read failure", async () => {
+  failNextFirestore("getDocs", { path: "users/u1/runs" });
+  const { result, rerender } = renderHook(() => useTrainingLoadSeries(30));
+  await waitFor(() => expect(result.current.failed).toBe(true));
+  deferReads();
+  mockUser = { uid: "u2" };
+  rerender();
+  expect(result.current.failed).toBe(false);
+  expect(result.current.loading).toBe(true);
+  await act(async () => releaseAllReads());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.failed).toBe(false);
+});
+
+it("keeps today's training load unchanged when only the chart range changes", async () => {
+  seedFirestore(
+    Object.fromEntries(
+      Array.from({ length: 365 }, (_, i) => [
+        `users/u1/runs/daily-${i}`,
+        run(i),
+      ])
+    )
+  );
+  const { result, rerender } = renderHook(
+    ({ days }) => useTrainingLoadSeries(days),
+    {
+      initialProps: { days: 7 },
+    }
+  );
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  const latest = result.current.points.at(-1);
+  for (const days of [30, 90, 180, 365]) {
+    rerender({ days });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.points).toHaveLength(days);
+    expect(result.current.points.at(-1)).toEqual(latest);
+  }
+});
+
+it("uses the same 28-day load baseline even when only one week is drawn", async () => {
+  seedFirestore(
+    Object.fromEntries(
+      Array.from({ length: 60 }, (_, i) => [
+        `users/u1/runs/ramp-${i}`,
+        run(i, { duration: i < 7 ? 7200 : 1800 }),
+      ])
+    )
+  );
+  const { result, rerender } = renderHook(
+    ({ days }) => useTrainingLoadSeries(days),
+    {
+      initialProps: { days: 7 },
+    }
+  );
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  const guardrails = result.current.guardrails;
+  expect(guardrails?.advisory?.kind).toBe("ramp_spike");
+  expect(guardrails?.acwr).toBeGreaterThan(1.5);
+  rerender({ days: 30 });
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.guardrails).toEqual(guardrails);
 });

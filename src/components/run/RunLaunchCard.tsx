@@ -50,6 +50,7 @@ interface RunLaunchCardProps {
   onStart: () => void;
   onCustomize: () => void;
   onBack: () => void;
+  onHelp?: () => void;
   purpose?: string | null;
   /** The GPS signal, warmed while this screen is open, at the header's
    *  end. */
@@ -81,6 +82,7 @@ export default function RunLaunchCard({
   onStart,
   onCustomize,
   onBack,
+  onHelp,
   purpose,
   gpsSignal,
 }: RunLaunchCardProps) {
@@ -133,6 +135,11 @@ export default function RunLaunchCard({
         />
         {gpsSignal && <div className="ml-auto">{gpsSignal}</div>}
       </header>
+      {onHelp && (
+        <Button variant="ghost" onClick={onHelp}>
+          How runs work
+        </Button>
+      )}
 
       <div className="flex-1 flex flex-col justify-center gap-4 min-h-0 overflow-y-auto">
         <div className="rounded-2xl bg-running/8 p-5">

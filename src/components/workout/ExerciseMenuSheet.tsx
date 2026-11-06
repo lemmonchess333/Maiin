@@ -48,6 +48,7 @@ interface ExerciseMenuSheetProps {
   onSuperset?: (withNext: boolean) => void;
   /** Present for an exercise added today: takes it out of the workout. */
   onRemove?: () => void;
+  onHelp?: () => void;
 }
 
 export default function ExerciseMenuSheet({
@@ -64,6 +65,7 @@ export default function ExerciseMenuSheet({
   session,
   onSuperset,
   onRemove,
+  onHelp,
 }: ExerciseMenuSheetProps) {
   const supersetNextName =
     session &&
@@ -113,6 +115,8 @@ export default function ExerciseMenuSheet({
           ? [choice("remove", "Remove from workout", onRemove)]
           : []),
       ];
+
+  if (onHelp) choices.push(choice("help", "How to log a workout", onHelp));
 
   return (
     <ChoiceSheet

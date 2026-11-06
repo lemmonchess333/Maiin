@@ -112,6 +112,16 @@ describe("card frames", () => {
     expect(art!.frames[frame - 1]).not.toBe(art!.reference);
   });
 
+  it.each(["dead-bug", "bicycle-crunch"])(
+    "%s shows its distinctive opposite-limb movement on cards",
+    (id) => {
+      const art = getReleasedFormArtwork(id)!;
+      expect(CARD_FRAMES[id]).toBe(2);
+      expect(cardFrameOf(id, art)).toBe(`form-frames/${id}/2.webp`);
+      expect(getFormArtCutout(id)?.source).toBe(`form-frames/${id}/2.webp`);
+    }
+  );
+
   it("binds each reviewed hand-made cut-out to its current card frame", () => {
     /* A prepared transparent source records the exact released frame shown
        on the card, whether that frame is the review reference or a listed

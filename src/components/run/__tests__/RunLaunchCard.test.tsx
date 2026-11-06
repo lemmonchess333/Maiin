@@ -265,3 +265,13 @@ describe("RunLaunchCard", () => {
     });
   });
 });
+
+it("opens run help without starting or customizing the planned run", () => {
+  const onHelp = vi.fn();
+  const { onStart, onCustomize, onBack } = setup({ onHelp });
+  fireEvent.click(screen.getByRole("button", { name: "How runs work" }));
+  expect(onHelp).toHaveBeenCalledTimes(1);
+  expect(onStart).not.toHaveBeenCalled();
+  expect(onCustomize).not.toHaveBeenCalled();
+  expect(onBack).not.toHaveBeenCalled();
+});

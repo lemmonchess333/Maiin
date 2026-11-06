@@ -150,12 +150,12 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   "bicycle-crunch": {
     src: "form-art/bicycle-crunch.webp",
     width: 480,
-    height: 233,
+    height: 205,
     keyed: true,
-    source: "form-frames/bicycle-crunch/3.webp",
+    source: "form-frames/bicycle-crunch/2.webp",
     sourceSha256:
-      "44f1530f3bbbe3aa0054d47736bf39c57fefce16a6a1d530ff10a3a194ab6256",
-    sha256: "0754b36b79cfa413b81c194c38bd79f12e75f01041b3232e1b9aa6b32bd435db",
+      "bb5d22b9faa79574f2ad8407a06d8d2c1deb07750c84d9b0ce0a675d326beaf2",
+    sha256: "0daa6a5882b47695cee9f634f7cafee1a8ac26e3fdc48b65c73912a30da94c60",
   },
   bike: {
     src: "form-art/bike.webp",
@@ -452,10 +452,10 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     width: 480,
     height: 179,
     keyed: true,
-    source: "form-frames/dead-bug/3.webp",
+    source: "form-frames/dead-bug/2.webp",
     sourceSha256:
-      "a4724700049b2233a62439f44366dcc0b312483bd1171a8d93a8bec3963e5f5e",
-    sha256: "a008d93007f511768e47bbc5dc20f3421e0c8082c22822ec4e151cac1a83be20",
+      "1704f12c9b5e345a572dcb6dc5a3cc6cd35c05044e57a8d6c5a455b7a3cdf280",
+    sha256: "31808a65fd05cf7c2d07b1a5cfce3aa7fa83cca9a5856a79bea8990fbce5d031",
   },
   deadlift: {
     src: "form-art/deadlift.webp",

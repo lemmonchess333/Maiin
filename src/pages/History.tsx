@@ -1168,6 +1168,9 @@ export default function History() {
                 <TrainingLoadCard
                   points={trainingLoad.points}
                   loading={trainingLoad.loading}
+                  failed={trainingLoad.failed}
+                  onRetry={trainingLoad.refresh}
+                  guardrails={trainingLoad.guardrails}
                   range={{ selected: timeRange, onChange: setTimeRange }}
                 />
               </SectionErrorBoundary>

@@ -7,6 +7,7 @@ import {
   writeLog,
   readDoc,
   flushSnapshots,
+  failNextFirestore,
 } from "@/test/firestoreHarness";
 
 // The `user` identity must be STABLE across renders. `useFoodFavourites`
@@ -106,9 +107,23 @@ function makeDoc(
 
 describe("useFoodFavourites", () => {
   beforeEach(() => {
+    AUTH.user = { uid: "me" };
     resetFirestore();
     trackedEvents.length = 0;
     onlineState.isOnline = true;
+  });
+
+  it("does not count another account's initial pantry as new graduations", async () => {
+    seedFirestore({
+      "users/me/foodFavourites/shared": makeDoc({ id: "shared", useCount: 1 }).data,
+      "users/other/foodFavourites/shared": makeDoc({ id: "shared", useCount: 9 }).data,
+    });
+    const { result, rerender } = renderHook(() => useFoodFavourites());
+    await waitFor(() => expect(result.current.favourites[0]?.useCount).toBe(1));
+    AUTH.user = { uid: "other" };
+    rerender();
+    await waitFor(() => expect(result.current.favourites[0]?.useCount).toBe(9));
+    expect(trackedEvents.filter((item) => item.event === "food_pantry_graduated")).toEqual([]);
   });
 
   describe("snapshot parsing", () => {
@@ -442,6 +457,24 @@ describe("useFoodFavourites", () => {
         },
       }));
     }
+
+    it("never uses the old pantry to evict from a new account whose read fails", async () => {
+      const { result, rerender } = renderHook(() => useFoodFavourites());
+      await act(async () => {
+        pumpSnapshot(makeManyDocs(51));
+      });
+      expect(result.current.favourites).toHaveLength(51);
+      seedFirestore({ "users/other/foodFavourites/fav-0": makeDoc({ id: "fav-0", name: "Keep me", useCount: 99 }).data });
+      failNextFirestore("onSnapshot", { code: "unavailable" });
+      AUTH.user = { uid: "other" };
+      rerender();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+      expect(readDoc("users/other/foodFavourites/fav-0")).toMatchObject({ name: "Keep me" });
+      expect(result.current.favourites).toEqual([]);
+      expect(writeLog()).toEqual([]);
+    });
 
     it("does NOT evict when length is at or below the cap", async () => {
       const { result } = renderHook(() => useFoodFavourites());

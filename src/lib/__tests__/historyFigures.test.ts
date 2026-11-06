@@ -612,3 +612,16 @@ describe("future-dated entries do not count as completed history", () => {
     ).toEqual(periodSummaryFigures(base));
   });
 });
+
+it("keeps future outdoor and indoor runs out of records", () => {
+  const completed = [run("completed", { daysAgo: 1, km: 5, pace: 300 })];
+  const future = [
+    run("future-outdoor", { daysAgo: -1, km: 20, pace: 200 }),
+    run("future-indoor", { daysAgo: -1, km: 10, pace: 200, type: "treadmill" }),
+  ];
+  expect(runRecordRows([...completed, ...future], range30(), "km")).toEqual(
+    runRecordRows(completed, range30(), "km")
+  );
+  expect(runRecordRows(future, range30(), "km").hasAnyRecent).toBe(false);
+  expect(runRecordRows(future, range30(), "km").hasAnyIndoor).toBe(false);
+});

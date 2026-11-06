@@ -272,6 +272,7 @@ export default function Run() {
   // The guide's first-run hint (FV1). Knowing there are no runs means
   // reading every saved one, so the read happens only while the hint is
   // owed: an account that has met the guide and not seen this hint.
+  const [runHelpRequest, setRunHelpRequest] = useState(0);
   const firstRunHint = useGuideHint("first-run");
   const runHistory = useLifetimeRunStats({ enabled: firstRunHint.owed });
   const firstRunMoment =
@@ -2066,10 +2067,16 @@ export default function Run() {
       style={phase === "waiting" ? undefined : { backgroundColor: THEME.bg }}
     >
       <GuideHint
+        key={runHelpRequest}
+        requested={runHelpRequest > 0}
         id="first-run"
         layer="session"
         placement="top"
-        when={phase === "waiting" && arrival === "done" && firstRunMoment}
+        when={
+          phase === "waiting" &&
+          arrival === "done" &&
+          (firstRunMoment || runHelpRequest > 0)
+        }
       />
       {phase === "waiting" && (
         <>
@@ -2120,6 +2127,7 @@ export default function Run() {
                 )
               }
               onCustomize={() => setForceModal(true)}
+              onHelp={() => setRunHelpRequest((request) => request + 1)}
               onBack={leaveSetup}
               gpsSignal={setupSignal}
             />
@@ -2202,6 +2210,7 @@ export default function Run() {
                 )
               }
               onMoreOptions={() => setForceModal(true)}
+              onHelp={() => setRunHelpRequest((request) => request + 1)}
               onBack={leaveSetup}
               gpsSignal={setupSignal}
             />

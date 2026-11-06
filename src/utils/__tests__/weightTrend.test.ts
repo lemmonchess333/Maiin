@@ -488,3 +488,42 @@ describe("currentWeightRate", () => {
     expect(currentWeightRate(daily(20))).toBeNull();
   });
 });
+
+describe("goal projections stay anchored to the measured weight", () => {
+  const end = new Date(2026, 9, 25, 23, 55);
+  const series = Array.from({ length: 29 }, (_, i) => ({
+    date: localDateString(addLocalDays(end, i - 28)),
+    trend: 82.8 - i * 0.1,
+  }));
+  const project = (now: Date) =>
+    projectGoalDate({
+      trendSeries: series,
+      goalWeight: 76,
+      hasProjection: true,
+      now,
+    });
+
+  it("does not move the goal date without a new measurement", () => {
+    const first = project(end);
+    const nextWeek = project(addLocalDays(end, 7));
+    expect(first).not.toBeNull();
+    expect(nextWeek?.date).toBe(first?.date);
+    expect(nextWeek?.weeks).toBe(first!.weeks - 1);
+  });
+
+  it("suppresses a historical projection after its date has passed", () => {
+    expect(project(addLocalDays(end, 60))).toBeNull();
+  });
+
+  it("does not use a measurement dated after the local current day", () => {
+    expect(project(addLocalDays(end, -1))).toBeNull();
+  });
+
+  it("keeps the calendar estimate stable across local midnight and DST", () => {
+    const midnight = addLocalDays(end, 1);
+    midnight.setHours(0, 5);
+    expect(project(midnight)?.date).toBe(project(end)?.date);
+    // Forty calendar days after 25 October, including the autumn clock change.
+    expect(project(midnight)?.date).toBe("4 Dec");
+  });
+});
