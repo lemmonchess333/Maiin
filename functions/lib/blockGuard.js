@@ -77,4 +77,18 @@ async function isBlockedBetween(db, ownerUid, actorUid) {
    it differs from the one a private or missing activity gets.
    blockRefusalParity.test.js drives each callable both ways. */
 
-module.exports = { isBlockedBetween };
+/** Read both block records in the interaction transaction, so a concurrent
+ * block write causes Firestore to retry rather than committing stale access.
+ * Read errors propagate and abort the transaction without any mutation.
+ */
+async function isBlockedBetweenInTransaction(tx, db, ownerUid, actorUid) {
+  if (!ownerUid || !actorUid || ownerUid === actorUid) return false;
+  const ref = (a, b) => db.collection("blocks").doc(a).collection("users").doc(b);
+  const [incoming, outgoing] = await Promise.all([
+    tx.get(ref(ownerUid, actorUid)),
+    tx.get(ref(actorUid, ownerUid)),
+  ]);
+  return incoming.exists || outgoing.exists;
+}
+
+module.exports = { isBlockedBetween, isBlockedBetweenInTransaction };
