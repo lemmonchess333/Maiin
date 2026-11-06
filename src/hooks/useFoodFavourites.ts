@@ -122,11 +122,19 @@ function parseFavouriteDoc(
   };
 }
 
+const NO_FAVOURITES: FoodFavourite[] = [];
+
 export function useFoodFavourites() {
   const uid = useUid();
   const { isOnline } = useOnlineStatus();
-  const [favourites, setFavourites] = useState<FoodFavourite[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [snapshot, setSnapshot] = useState<{
+    uid: string;
+    favourites: FoodFavourite[];
+  } | null>(null);
+  // A previous account's pantry must never drive quick-add or eviction.
+  const ownsSnapshot = !!uid && snapshot?.uid === uid;
+  const favourites = ownsSnapshot ? snapshot.favourites : NO_FAVOURITES;
+  const loading = !!uid && !ownsSnapshot;
   /** Re-entrancy guard for eviction. The snapshot can re-fire while
    *  a deleteDoc is in flight — without the guard, the effect would
    *  pick the same target (still present in the cached snapshot) and
@@ -144,14 +152,10 @@ export function useFoodFavourites() {
   const initialSnapshotSeenRef = useRef(false);
 
   useEffect(() => {
-    if (!uid) {
-      const reset = () => {
-        setFavourites([]);
-        setLoading(false);
-      };
-      reset();
-      return;
-    }
+    initialSnapshotSeenRef.current = false;
+    previousByIdRef.current = new Map();
+    if (!uid) return;
+    let active = true;
 
     const ref = collection(db, "users", uid, "foodFavourites");
     // Firestore order by useCount desc — coarse sort, cheap, single
@@ -163,6 +167,7 @@ export function useFoodFavourites() {
     const unsub = onSnapshot(
       q,
       (snap) => {
+        if (!active) return;
         const parsed = snap.docs.map((d) =>
           parseFavouriteDoc(d.id, d.data() as Record<string, unknown>)
         );
@@ -206,8 +211,7 @@ export function useFoodFavourites() {
         }
         previousByIdRef.current = new Map(parsed.map((f) => [f.id, f]));
 
-        setFavourites(parsed);
-        setLoading(false);
+        setSnapshot({ uid, favourites: parsed });
       },
       // Favourites are a "nice to have" quick-log surface — if the
       // subscription fails, drop loading so the UI doesn't hang and leave
@@ -215,12 +219,19 @@ export function useFoodFavourites() {
       // / removeFavourite will either succeed against the server or
       // surface their own errors to the caller.
       (err) => {
+        if (!active) return;
         logger.error("[useFoodFavourites] snapshot subscription failed", err);
-        setLoading(false);
+        setSnapshot((previous) => ({
+          uid,
+          favourites: previous?.uid === uid ? previous.favourites : [],
+        }));
       }
     );
 
-    return unsub;
+    return () => {
+      active = false;
+      unsub();
+    };
   }, [uid]);
 
   /** Snapshot-driven eviction. Runs when the favourites snapshot

@@ -274,3 +274,35 @@ describe("GuideHint", () => {
     expect(localStorage.getItem(`anon:${hintSeenKey("first-set")}`)).toBeNull();
   });
 });
+
+describe("requested guidance", () => {
+  it("can reopen a dismissed hint repeatedly without triggering the anchor", async () => {
+    metTheGuide();
+    const activate = vi.fn();
+    anchor(activate);
+    const view = renderHint();
+    await screen.findByRole("dialog");
+    fireEvent.click(screen.getByRole("button", { name: "Got it" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    for (const request of [1, 2]) {
+      view.rerender(<GuideHint key={request} id="first-set" when requested />);
+      await screen.findByRole("dialog");
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(screen.queryByRole("dialog")).toBeNull();
+    }
+    expect(activate).not.toHaveBeenCalled();
+  });
+
+  it("closes guidance before opening existing exercise form help", async () => {
+    metTheGuide();
+    const activate = vi.fn();
+    const form = vi.fn();
+    anchor(activate);
+    renderHint({ action: { label: "Exercise form", onSelect: form } });
+    await screen.findByRole("dialog");
+    fireEvent.click(screen.getByRole("button", { name: "Exercise form" }));
+    expect(form).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(activate).not.toHaveBeenCalled();
+  });
+});

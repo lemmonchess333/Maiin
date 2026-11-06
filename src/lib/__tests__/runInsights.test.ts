@@ -340,3 +340,12 @@ describe("runningPageInsight", () => {
     expect(insight.longest?.runId).toBe(longRun.id);
   });
 });
+
+it("does not let a future-dated run displace an achieved fastest kilometre", () => {
+  const completed = run(1, 1, 300, "easy", { kmSplitSeconds: [300] });
+  const future = run(-1, 1, 240, "easy", { kmSplitSeconds: [240] });
+  expect(bestEfforts([completed, future], WINDOW)).toEqual(
+    bestEfforts([completed], WINDOW)
+  );
+  expect(bestEfforts([future], WINDOW)).toEqual([]);
+});

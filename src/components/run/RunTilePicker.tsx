@@ -51,6 +51,7 @@ interface RunTilePickerProps {
   onPickType: (type: ActivityType) => void;
   onMoreOptions: () => void;
   onBack: () => void;
+  onHelp?: () => void;
   /** RUN-04: the user's recurring launch type (two most recent eligible runs
    *  shared it). Renders a compact "Repeat <type>" recognition row above the
    *  grid — a visible choice through the SAME onPickType gesture path, never
@@ -68,6 +69,7 @@ export default function RunTilePicker({
   onPickType,
   onMoreOptions,
   onBack,
+  onHelp,
   repeatType = null,
   gpsSignal,
 }: RunTilePickerProps) {
@@ -96,6 +98,11 @@ export default function RunTilePicker({
         <h1 className="ml-1 text-lg font-bold">Start a run</h1>
         {gpsSignal && <div className="ml-auto">{gpsSignal}</div>}
       </header>
+      {onHelp && (
+        <Button variant="ghost" onClick={onHelp}>
+          How runs work
+        </Button>
+      )}
 
       {/* From the top, under the heading: centred, the tiles left a blank
           third of the screen above them on a tall phone. */}

@@ -2316,6 +2316,11 @@ export default function Onboarding() {
           cannot wrap: the main button goes on top, Back under it, each the
           full width. Wide-first. */}
       <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
+        {step === 7 && ACTIVATION_JOURNEY_V2_ENABLED && (
+          <p className="text-sm text-muted-foreground">
+            Today shows your plan and what to do next. Start when you’re ready.
+          </p>
+        )}
         <div className="flex gap-3 @max-[15em]:flex-col-reverse">
           {step !== 0 && (
             <Button

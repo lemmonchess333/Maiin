@@ -21,8 +21,13 @@ import {
 } from "./chartStyles";
 import { formatBinLabel } from "@/lib/chartGranularity";
 import ChartAreaGradient from "./ChartAreaGradient";
-import { evaluateLoadGuardrails, type LoadPoint } from "@/lib/trainingLoad";
+import {
+  evaluateLoadGuardrails,
+  type LoadPoint,
+  type LoadGuardrails,
+} from "@/lib/trainingLoad";
 import { Skeleton } from "@/components/LoadingSkeleton";
+import ErrorState from "@/components/ui/ErrorState";
 import EmptyState from "@/components/ui/EmptyState";
 import { formatSigned } from "@/utils/formatters";
 
@@ -68,10 +73,17 @@ const DAY_AXIS = "day";
 export default function TrainingLoadCard({
   points,
   loading,
+  failed = false,
+  onRetry,
+  guardrails: historyGuardrails,
   range,
 }: {
   points: LoadPoint[];
   loading: boolean;
+  failed?: boolean;
+  onRetry?: () => void;
+  /** Computed from history before cropping the chart, including the 28-day base. */
+  guardrails?: LoadGuardrails;
   /** The range the curve covers, as the card's own control: on the
    *  Performance page it scopes this card and nothing else, so it sits
    *  under the card's title rather than across the page. It stays put
@@ -92,6 +104,22 @@ export default function TrainingLoadCard({
         </h3>
         {rangeRow}
         <Skeleton className="h-40 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (failed) {
+    return (
+      <div className="p-4 rounded-2xl bg-card card-shadow">
+        <h3 className="mb-3 text-base font-bold text-foreground">
+          Training load
+        </h3>
+        {rangeRow}
+        <ErrorState
+          title="Could not load your training history"
+          description="Your training load is unavailable until your sessions can be read."
+          retry={onRetry ? { onClick: onRetry } : undefined}
+        />
       </div>
     );
   }
@@ -129,7 +157,7 @@ export default function TrainingLoadCard({
   const last = points[points.length - 1];
   const formFresh = last.form >= 0;
   // B1 guardrails — pure evaluation over the same points the chart draws.
-  const guardrails = evaluateLoadGuardrails(points);
+  const guardrails = historyGuardrails ?? evaluateLoadGuardrails(points);
 
   // Sparse x labels: ~5 ticks across the window.
   const tickEvery = Math.max(1, Math.floor(points.length / 5));

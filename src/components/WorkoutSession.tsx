@@ -497,6 +497,7 @@ export default function WorkoutSession({
   );
   /* The exercise whose menu is open, the one being swapped, and Finish's
      question about today's swaps. */
+  const [setHelpRequest, setSetHelpRequest] = useState(0);
   const [menuFor, setMenuFor] = useState<number | null>(null);
   const [swapFor, setSwapFor] = useState<number | null>(null);
   /* "Add exercise" (Mob1 call 1): the picker, open to add to today. */
@@ -2178,16 +2179,23 @@ export default function WorkoutSession({
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)] safe-area-pb">
       <GuideHint
+        key={setHelpRequest}
+        requested={setHelpRequest > 0}
+        action={{
+          label: "Exercise form",
+          onSelect: () => setShowFormGuide(true),
+        }}
         id="first-set"
         layer="session"
         placement="bottom"
         when={
-          firstWorkout &&
-          currentExIndex === 0 &&
-          !anySetDone &&
+          (setHelpRequest > 0 ||
+            (firstWorkout && currentExIndex === 0 && !anySetDone)) &&
+          menuFor === null &&
+          !showFormGuide &&
           !showResumePrompt &&
           !editingSet &&
-          !rest
+          (!rest || setHelpRequest > 0)
         }
         body={autoRest ? undefined : FIRST_SET_BODY_NO_AUTO_REST}
       />
@@ -2424,7 +2432,12 @@ export default function WorkoutSession({
             the form guide's button off the screen, and the name's two
             buttons drop under it when beside it they would squeeze a word
             ("Bench" at 2x on a 320px phone) out of its box. Wide-first. */}
-        <div ref={headerRef} className="@container flex items-start gap-3 pt-3">
+        <div
+          ref={headerRef}
+          data-guide-anchor={setHelpRequest > 0 ? "first-set" : undefined}
+          tabIndex={-1}
+          className="@container flex items-start gap-3 pt-3"
+        >
           {currentExercise && (
             <ExerciseThumb
               exerciseId={currentExercise.exerciseId}
@@ -2812,6 +2825,7 @@ export default function WorkoutSession({
                           editLabel={`Edit completed ${lowerFirst(name)}`}
                           best={isBest}
                           guideAnchor={
+                            setHelpRequest === 0 &&
                             firstWorkout &&
                             currentExIndex === 0 &&
                             setIdx === currentSetIndex
@@ -3282,6 +3296,7 @@ export default function WorkoutSession({
             open
             onClose={() => setMenuFor(null)}
             exerciseName={day.exercises[menuFor].name}
+            onHelp={() => setSetHelpRequest((request) => request + 1)}
             nothingDone={!(setLogs[menuFor] ?? []).some((set) => set.completed)}
             swappedFor={swapAt(menuFor) ? plannedAt(menuFor)?.name : undefined}
             skipped={skippedRows[menuFor] !== undefined}

@@ -212,7 +212,12 @@ export function bestEfforts(
   window: Window
 ): BestEffortRow[] {
   const eligible = runs
-    .filter((r) => isPaceEligible(r) && (r.kmSplitSeconds?.length ?? 0) > 0)
+    .filter(
+      (r) =>
+        isPaceEligible(r) &&
+        runEvidenceDate(r) <= window.todayKey &&
+        (r.kmSplitSeconds?.length ?? 0) > 0
+    )
     .sort((a, b) => a.completedAt.getTime() - b.completedAt.getTime());
   const rows: BestEffortRow[] = [];
   for (const km of BEST_EFFORT_KM) {

@@ -1,25 +1,22 @@
 {
-  "generator": "scripts/art/gemini-image.py",
-  "model": "gemini-3-pro-image",
-  "aspect": "1:1",
-  "output": "The API returned JPEG (1024 x 1024); each file is kept exactly as it came back.",
+  "generator": "Per-pose generator recorded below; fast pose retains original Gemini provenance.",
+  "output": "Per-pose output and processing recorded below.",
   "poses": {
     "run-easy": {
       "file": "docs/exercise-art/run-poses/run-easy.jpg",
-      "sha256": "9d2bb32bd87954c48fd89ca850d165c8531a4c84aff8ddbf246120dffa674923",
+      "sha256": "1d53b5602357810f7b441adff4494cffc5c6a74be1e958306849566f755bb918",
       "references": [
         {
-          "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
-          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
-          "note": "the canonical athlete"
-        },
-        {
-          "path": "public/form-frames/kettlebell-swing/3.webp",
-          "sha256": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
-          "note": "sent as PNG, converted from the WebP"
+          "path": "public/form-art/run-easy.webp at 83a30ae",
+          "sha256": "aa35e522328ebaac418f0a85d15157f5a566462206eaa45ebd0fd3426b5ebbef",
+          "note": "Original easy-run asset used as illustration identity and palette reference."
         }
       ],
-      "prompt": "Educational running illustration, one single pose (not a sequence or collage). Reference attached canonical athlete for exact identity: faceless bald white/light-grey anatomical athlete, fine dark contours, smooth neutral featureless pelvis, white trainers. Match the second attached image's rendering style exactly. Easy running, mid-stride, fixed side view, athlete facing right. The trailing foot is just leaving the ground behind the body, only its toes near the ground; the other leg's knee comes through in front, its foot below and slightly ahead of the hips, about to land. Arms bent near 90 degrees and relaxed, swinging opposite to the legs, hands loose. Upright torso with a slight forward lean from the ankles. It must read as running at a glance, never walking. Muscle colours: strongest purple on the glutes, quadriceps, hamstrings and calves; pale lilac on the hip flexors and core; every other muscle white-grey. Pure solid black background. Square canvas, the whole figure filling about 80% of the height with even margins, both feet fully inside the frame. One person only. No floor line, track, road, shadow, scenery, labels, text, logos or arrows."
+      "prompt": "Relaxed easy jog with upright torso, compact arm swing and shorter stride, same faceless white-gray fine-contour athlete and purple/lilac highlights. Refinements lifted trailing heel slightly and removed edge artifacts on pure black background. Preserve full body, opposite arm-leg swing, no text/scenery/shadow.",
+      "generator": "Built-in image_gen",
+      "model": "Built-in image generation; model not exposed by tool",
+      "output": "Generated PNG encoded to JPEG quality 98, 4:4:4 for existing black-background cutout pipeline; no anatomy edited by code.",
+      "review": "Owner approved the relaxed direction. Visual full-body and small-card review, not biomechanical certification."
     },
     "run-fast": {
       "file": "docs/exercise-art/run-poses/run-fast.jpg",
@@ -36,7 +33,10 @@
           "note": "sent as PNG, converted from the WebP"
         }
       ],
-      "prompt": "Educational running illustration, one single pose (not a sequence or collage). Reference attached canonical athlete for exact identity: faceless bald white/light-grey anatomical athlete, fine dark contours, smooth neutral featureless pelvis, white trainers. Match the second attached image's rendering style exactly. Fast running for tempo, intervals and races, fixed side view, athlete facing right, in the flight phase with both feet off the ground: a long stride, the front knee driven high with the front thigh rising toward horizontal and the lower leg swinging forward; the rear leg extended behind after push-off, its foot below hip height. Strong arm drive: the front hand rises toward chin height with the elbow bent about 90 degrees, the rear elbow driven back past the torso. Torso tall with a slight forward lean from the ankles, relaxed hands. Same identity, scale and camera as an easy-running pose. Muscle colours: strongest purple on the glutes, quadriceps, hamstrings and calves; pale lilac on the hip flexors and core; every other muscle white-grey. Pure solid black background. Square canvas, the whole figure filling about 80% of the height with even margins, both feet fully inside the frame. One person only. No floor line, track, road, shadow, scenery, motion lines, labels, text, logos or arrows."
+      "prompt": "Educational running illustration, one single pose (not a sequence or collage). Reference attached canonical athlete for exact identity: faceless bald white/light-grey anatomical athlete, fine dark contours, smooth neutral featureless pelvis, white trainers. Match the second attached image's rendering style exactly. Fast running for tempo, intervals and races, fixed side view, athlete facing right, in the flight phase with both feet off the ground: a long stride, the front knee driven high with the front thigh rising toward horizontal and the lower leg swinging forward; the rear leg extended behind after push-off, its foot below hip height. Strong arm drive: the front hand rises toward chin height with the elbow bent about 90 degrees, the rear elbow driven back past the torso. Torso tall with a slight forward lean from the ankles, relaxed hands. Same identity, scale and camera as an easy-running pose. Muscle colours: strongest purple on the glutes, quadriceps, hamstrings and calves; pale lilac on the hip flexors and core; every other muscle white-grey. Pure solid black background. Square canvas, the whole figure filling about 80% of the height with even margins, both feet fully inside the frame. One person only. No floor line, track, road, shadow, scenery, motion lines, labels, text, logos or arrows.",
+      "generator": "scripts/art/gemini-image.py",
+      "model": "gemini-3-pro-image",
+      "output": "Original 1024x1024 API JPEG retained unchanged."
     }
   }
 }

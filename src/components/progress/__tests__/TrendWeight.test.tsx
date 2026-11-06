@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { localDateString } from "@/lib/dateHelpers";
 
 // Recharts' ResponsiveContainer renders nothing at 0x0 in jsdom, and the
 // SVG primitives don't surface their text labels usefully. Mock the chart
@@ -60,7 +61,7 @@ function descendingSeries(): { date: string; weight: number }[] {
     const d = new Date();
     d.setDate(d.getDate() - daysAgo);
     out.push({
-      date: d.toISOString().slice(0, 10),
+      date: localDateString(d),
       weight: 85 - i * 0.4,
     });
   }

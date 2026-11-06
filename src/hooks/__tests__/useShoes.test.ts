@@ -20,11 +20,10 @@ vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn(), info: vi.fn() },
 }));
 
-// Hoisted: useShoes keys its subscription on `user` by identity.
-const mockUser = { uid: "u1" };
+// Mutable auth seam lets account changes occur while the hook stays mounted.
+let mockUid: string | null = "u1";
 vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ user: mockUser, profile: {} }),
-  useUid: () => ({ user: mockUser, profile: {} }).user?.uid ?? null,
+  useUid: () => mockUid,
 }));
 
 import { useShoes } from "../useShoes";
@@ -36,6 +35,10 @@ import {
   failNextFirestore,
   unfiredFailures,
   batchLog,
+  writeLog,
+  deferReads,
+  pendingReads,
+  releaseRead,
 } from "@/test/firestoreHarness";
 import { savedRunDoc } from "@/test/sessionFixtures";
 
@@ -62,6 +65,7 @@ async function mounted() {
 }
 
 beforeEach(() => {
+  mockUid = "u1";
   resetFirestore();
   vi.clearAllMocks();
 });
@@ -356,5 +360,78 @@ describe("reconcileMileageFromRuns", () => {
     });
 
     expect(readDoc("users/u1/shoes/old")).toMatchObject({ totalKm: 742.5 });
+  });
+});
+
+
+describe("account ownership", () => {
+  it("never exposes the previous rack while the next account loads or fails", async () => {
+    seedFirestore({ "users/u1/shoes/a": shoe("Private shoe", { isDefault: true }) });
+    const observations: { ids: string[]; loading: boolean }[] = [];
+    const { result, rerender } = renderHook(() => {
+      const value = useShoes();
+      observations.push({ ids: value.shoes.map((s) => s.id), loading: value.loading });
+      return value;
+    });
+    await waitFor(() => expect(result.current.defaultShoe?.id).toBe("a"));
+    observations.length = 0;
+    failNextFirestore("onSnapshot", { code: "unavailable" });
+    mockUid = "u2";
+    rerender();
+    await waitFor(() => expect(result.current.error).not.toBeNull());
+    expect(observations.every((value) => value.ids.length === 0)).toBe(true);
+    expect(observations[0].loading).toBe(true);
+    expect(result.current.defaultShoe).toBeNull();
+    expect(result.current.activeShoes).toEqual([]);
+  });
+
+  it("clears the old account's error immediately on sign-out", async () => {
+    failNextFirestore("onSnapshot", { code: "unavailable" });
+    const { result, rerender } = renderHook(() => useShoes());
+    await waitFor(() => expect(result.current.error).not.toBeNull());
+    mockUid = null;
+    rerender();
+    expect(result.current.error).toBeNull();
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("does not write a mileage rebuild when its history read outlives the account", async () => {
+    seedFirestore({
+      "users/u1/shoes/a": shoe("A", { isDefault: true, totalKm: 123 }),
+      "users/u1/runs/r1": savedRunDoc(DAY, { distance: 5000, duration: 1500, shoeId: "a" }),
+    });
+    const { result, rerender } = renderHook(() => useShoes());
+    await waitFor(() => expect(result.current.defaultShoe?.id).toBe("a"));
+    deferReads();
+    const rebuilding = result.current.reconcileMileageFromRuns();
+    await waitFor(() => expect(pendingReads()).toHaveLength(1));
+    mockUid = "u2";
+    rerender();
+    await act(async () => {
+      expect(releaseRead()).toBe(true);
+      await rebuilding;
+    });
+    expect(batchLog()).toEqual([]);
+    expect(writeLog()).toEqual([]);
+    expect(readDoc("users/u1/shoes/a")).toMatchObject({ totalKm: 123 });
+  });
+
+  it("ignores mutation callbacks retained from a previous account", async () => {
+    seedFirestore({ "users/u1/shoes/a": shoe("A", { isDefault: true }) });
+    const { result, rerender } = renderHook(() => useShoes());
+    await waitFor(() => expect(result.current.defaultShoe?.id).toBe("a"));
+    const previous = result.current;
+    mockUid = "u2";
+    rerender();
+    await act(async () => {
+      await previous.addShoe("Stale addition", "Brand");
+      await previous.retireShoe("a");
+      await previous.setDefault("a");
+      await previous.updateMileage("a", 10);
+      await previous.reconcileMileageFromRuns();
+    });
+    expect(readDoc("users/u1/shoes/a")).toMatchObject({ retired: false, totalKm: 0 });
+    expect(batchLog()).toEqual([]);
+    expect(writeLog()).toEqual([]);
   });
 });
