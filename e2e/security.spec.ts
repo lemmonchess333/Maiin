@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { isInsecureHttpResource } from "./helpers/resourceSecurity";
 
 test.describe("Security & CSP", () => {
   test("Content-Security-Policy meta tag exists", async ({ page }) => {
@@ -66,11 +67,21 @@ test.describe("Security & CSP", () => {
 
   test("external resources use HTTPS", async ({ page }) => {
     await page.goto("");
-    // All link[href] and script[src] should use https or relative paths
-    const insecureLinks = await page.locator('link[href^="http:"]').count();
-    const insecureScripts = await page.locator('script[src^="http:"]').count();
-    expect(insecureLinks).toBe(0);
-    expect(insecureScripts).toBe(0);
+    // Vite may turn relative module-preload URLs into absolute localhost URLs.
+    // Inspect resolved URLs so protocol-relative and differently cased HTTP
+    // resources cannot bypass the check. Only same-origin loopback HTTP is OK.
+    const resources = await page.locator("link[href], script[src]").evaluateAll(
+      (elements) => elements.map((element) => ({
+        tag: element.tagName.toLowerCase(),
+        url: element instanceof HTMLLinkElement
+          ? element.href
+          : (element as HTMLScriptElement).src,
+      })),
+    );
+    const insecureResources = resources.filter(({ url }) =>
+      isInsecureHttpResource(url, page.url()),
+    );
+    expect(insecureResources, "Insecure resource URLs (tag and URL)").toEqual([]);
   });
 
   test("noscript fallback exists", async ({ page }) => {
@@ -78,4 +89,36 @@ test.describe("Security & CSP", () => {
     const noscript = await page.locator("noscript").count();
     expect(noscript).toBeGreaterThan(0);
   });
+});
+
+
+const local = "http://localhost:4173/Maiin/";
+const production = "https://troposfit.com/";
+
+const cases: [string, string, string, boolean][] = [
+  ["absolute local preload", local, "http://localhost:4173/assets/preload.js", false],
+  ["relative local preload", local, "./assets/preload.js", false],
+  ["protocol-relative local preload", local, "//localhost:4173/assets/preload.js", false],
+  ["external HTTPS", local, "https://cdn.example.com/script.js", false],
+  ["external HTTP", local, "http://cdn.example.com/script.js", true],
+  ["protocol-relative external HTTP", local, "//cdn.example.com/script.js", true],
+  ["uppercase HTTP", local, "HTTP://cdn.example.com/script.js", true],
+  ["different local port", local, "http://localhost:4174/script.js", true],
+  ["different loopback host", local, "http://127.0.0.1:4173/script.js", true],
+  ["IPv4 loopback", "http://127.0.0.1:4173/", "/assets/script.js", false],
+  ["IPv6 loopback", "http://[::1]:4173/", "/assets/script.js", false],
+  ["production relative HTTPS", production, "/assets/script.js", false],
+  ["production same-host HTTP downgrade", production, "http://troposfit.com/script.js", true],
+  ["production localhost HTTP", production, "http://localhost:4173/script.js", true],
+  ["HTTPS localhost downgrade", "https://localhost:4173/", "http://localhost:4173/script.js", true],
+  ["nonlocal HTTP page", "http://troposfit.com/", "/assets/script.js", true],
+  ["localhost lookalike", "http://localhost.example.com/", "/assets/script.js", true],
+];
+
+test.describe("HTTPS resource policy", () => {
+  for (const [name, documentUrl, resourceUrl, insecure] of cases) {
+    test(name, () => {
+      expect(isInsecureHttpResource(resourceUrl, documentUrl)).toBe(insecure);
+    });
+  }
 });
