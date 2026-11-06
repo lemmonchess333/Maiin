@@ -1694,7 +1694,7 @@ describe("WorkoutSession — warm-ups are optional", () => {
     expect(setLine(/^Set 2 of 3 · 1 done$/)).toBeInTheDocument();
   });
 
-  it("finishes the exercise when the working sets are done", () => {
+  it("finishes the exercise when the working sets are done", async () => {
     openSession(writer(), vi.fn(), squat);
     for (let i = 0; i < 3; i++) {
       fireEvent.click(
@@ -1703,8 +1703,10 @@ describe("WorkoutSession — warm-ups are optional", () => {
     }
     // Three warm-ups left unticked do not hold the workout open: it is
     // the only exercise, so its last working set finishes the session.
+    // The finish screen is lazy-loaded. Await it even when this is the
+    // first test to finish a workout (as it is under shuffle seed 5).
     expect(
-      screen.getByRole("button", { name: "Save workout" })
+      await screen.findByRole("button", { name: "Save workout" })
     ).toBeInTheDocument();
   });
 });

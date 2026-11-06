@@ -1,6 +1,5 @@
 import { doc, runTransaction, type Firestore } from "firebase/firestore";
 import { stripUndefined } from "./firestoreGuards";
-import { invalidateLiftRecords } from "./liftRecordsCache";
 import type { SessionProgression } from "@/features/program/sessionCompletion";
 import type { ProgramState, WorkoutDay } from "@/features/program/programTypes";
 import { sameStoredValue } from "@/features/program/stateTransition";
@@ -191,7 +190,10 @@ export async function commitWorkoutCompletion(
   completion?: ProgrammeCompletionContext,
   options: { invalidateRecords?: boolean } = {}
 ): Promise<ProgramState | null> {
+  // Journeys also import this module's pure plan helpers in Node. Keep
+  // services that initialize the browser Firebase app inside the save path.
   const { auth } = await import("./firebase");
+  const { invalidateLiftRecords } = await import("./liftRecordsCache");
   const assertOwner = () => {
     if (auth.currentUser?.uid !== uid)
       throw new Error("Sign in again to save your workout.");
