@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { logger } from "@/lib/logger";
+import { notifyNotificationScheduleChanged } from "./notificationScheduleEvents";
 
 export interface NotificationPayload {
   /** Stable integer ID — lets us cancel or replace a previously scheduled notification */
@@ -268,6 +269,8 @@ export async function scheduleNotification(
   } catch (err) {
     logger.error("scheduleNotification failed", err);
     return false;
+  } finally {
+    notifyNotificationScheduleChanged();
   }
 }
 
@@ -318,6 +321,8 @@ export async function cancelNotification(id: number): Promise<void> {
     await LocalNotifications.cancel({ notifications: [{ id }] });
   } catch (err) {
     logger.error("cancelNotification failed", err);
+  } finally {
+    notifyNotificationScheduleChanged();
   }
 }
 
@@ -335,6 +340,8 @@ export async function cancelAllNotifications(): Promise<void> {
     }
   } catch (err) {
     logger.error("cancelAllNotifications failed", err);
+  } finally {
+    notifyNotificationScheduleChanged();
   }
 }
 

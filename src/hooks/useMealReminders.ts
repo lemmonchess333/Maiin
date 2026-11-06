@@ -1,17 +1,14 @@
 import type { ReminderActivity } from "./useReminderActivity";
 import { localDateString } from "@/lib/dateHelpers";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
-import { db } from "@/lib/firebase";
+import { useEffect, useRef } from "react";
+import { useReminderPreferences } from "./useReminderPreferences";
 import { useUid } from "@/lib/auth";
 import {
   scheduleNotification,
   cancelNotification,
   requestNotificationPermission,
 } from "@/lib/notifications";
-import { logger } from "@/lib/logger";
-import { captureError } from "@/lib/errorReporting";
+import { isReminderLocallyOff } from "@/lib/localReminderChoice";
 
 export interface MealReminders {
   enabled: boolean;
@@ -63,66 +60,19 @@ function computeNextOccurrence(timeHHMM: string): Date | null {
  */
 export function useMealRemindersInternal(activity?: ReminderActivity) {
   const uid = useUid();
-  const [reminders, setReminders] = useState<MealReminders>(
-    DEFAULT_MEAL_REMINDERS
-  );
-  const [loading, setLoading] = useState(true);
-
-  // Load from Firestore
-  useEffect(() => {
-    if (!uid) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clear loading when signed out
-      setLoading(false);
-      return;
-    }
-    const ref = doc(db, "users", uid, "settings", "mealReminders");
-    getDoc(ref)
-      .then((snap) => {
-        if (snap.exists()) {
-          setReminders({
-            ...DEFAULT_MEAL_REMINDERS,
-            ...(snap.data() as MealReminders),
-          });
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        logger.error("[MealReminders] load failed", err);
-        setLoading(false);
-      });
-  }, [uid]);
-
-  // Save to Firestore. Errors are reported via captureError (Firestore
-  // writes are CRITICAL_KEYWORDS-tagged so they persist to users/{uid}/errors)
-  // but not re-thrown — the UI already did an optimistic setReminders, a
-  // background write failure shouldn't crash the toggle flow.
-  const updateReminders = useCallback(
-    async (updates: Partial<MealReminders>) => {
-      if (!uid) return;
-      const updated = { ...reminders, ...updates };
-      setReminders(updated);
-      const ref = doc(db, "users", uid, "settings", "mealReminders");
-      try {
-        await setDocGuarded(ref, updated);
-      } catch (err) {
-        logger.error("[MealReminders] save failed", err);
-        captureError(
-          err instanceof Error ? err : new Error(String(err)),
-          "network",
-          {
-            surface: "mealReminders.save",
-          }
-        );
-      }
-    },
-    [uid, reminders]
-  );
+  const { reminders, loading, failed, saving, retry, updateReminders } =
+    useReminderPreferences(uid, "meal", DEFAULT_MEAL_REMINDERS);
 
   /** Serialises reschedule passes — see useWorkoutReminders.ts. */
   const passChain = useRef<Promise<void>>(Promise.resolve());
 
   // Schedule / reschedule the next occurrence of each enabled meal reminder
   useEffect(() => {
+    // Unknown settings/activity are not an instruction to cancel an
+    // already scheduled reminder. Explicit off still cancels immediately.
+    if (!uid || ((loading || failed) && !isReminderLocallyOff(uid, "meal")))
+      return;
+    if (reminders.enabled && activity && !activity.ready) return;
     let cancelled = false;
 
     const rescheduleAll = async () => {
@@ -192,12 +142,15 @@ export function useMealRemindersInternal(activity?: ReminderActivity) {
     return () => {
       cancelled = true;
     };
-  }, [reminders, loading, activity]);
+  }, [uid, reminders, loading, failed, activity]);
 
   // Permission request is a stable module-level function — no wrapper needed.
   return {
     reminders,
     loading,
+    failed,
+    saving,
+    retry,
     updateReminders,
     requestPermission: requestNotificationPermission,
   };

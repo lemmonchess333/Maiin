@@ -30,7 +30,7 @@ vi.mock("firebase/firestore");
 const { auth } = vi.hoisted(() => ({
   auth: { currentUser: { uid: "user-a" } as { uid: string } | null },
 }));
-vi.mock("@/lib/firebase", () => ({ auth }));
+vi.mock("@/lib/firebase", () => ({ auth, db: {} }));
 const { clearCompletedWorkoutDraft } = vi.hoisted(() => ({
   clearCompletedWorkoutDraft: vi.fn(),
 }));

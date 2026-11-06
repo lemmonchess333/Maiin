@@ -179,15 +179,21 @@ export function workoutCompletionDayIdentity(day: unknown): string | null {
 }
 
 /** One transaction for foreground saves and durable replay. Existing sessions
- * are receipts, never replacement writes; another week's plan is left intact. */
+ * are receipts, never replacement writes; another week's plan is left intact.
+ * Replay invalidates records in this same commit because the finish screen
+ * that would update them may no longer exist. */
 export async function commitWorkoutCompletion(
   db: Firestore,
   uid: string,
   workoutId: string,
   data: Record<string, unknown>,
-  completion?: ProgrammeCompletionContext
+  completion?: ProgrammeCompletionContext,
+  options: { invalidateRecords?: boolean } = {}
 ): Promise<ProgramState | null> {
+  // Journeys also import this module's pure plan helpers in Node. Keep
+  // services that initialize the browser Firebase app inside the save path.
   const { auth } = await import("./firebase");
+  const { invalidateLiftRecords } = await import("./liftRecordsCache");
   const assertOwner = () => {
     if (auth.currentUser?.uid !== uid)
       throw new Error("Sign in again to save your workout.");
@@ -198,7 +204,10 @@ export async function commitWorkoutCompletion(
   return runTransaction(db, async (transaction) => {
     const existing = await transaction.get(workoutRef);
     assertOwner();
-    if (existing.exists()) return null;
+    if (existing.exists()) {
+      if (options.invalidateRecords) invalidateLiftRecords(transaction, uid);
+      return null;
+    }
     let next: ProgramState | null = null;
     let programmeCompletion: SavedProgrammeCompletion | undefined;
     if (completion) {
@@ -255,6 +264,7 @@ export async function commitWorkoutCompletion(
         ...(programmeCompletion ? { programmeCompletion } : {}),
       })
     );
+    if (options.invalidateRecords) invalidateLiftRecords(transaction, uid);
     return next;
   });
 }

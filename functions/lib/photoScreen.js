@@ -91,12 +91,32 @@ async function safeSearch(bytes, accessToken, fetchImpl = fetch) {
  * Screens a stored photo, deleting it when refused.
  * @returns {Promise<{refused: boolean, adult: string}>}
  */
-async function screenStoredPhoto({ bucket, path, accessToken, fetchImpl }) {
-  const file = bucket.file(path);
+async function screenStoredPhoto({
+  bucket, path, generation, accessToken, fetchImpl,
+}) {
+  // Pin the bytes and any deletion to the SAME immutable object generation.
+  // A replacement can arrive while Vision is checking the old image, or a
+  // finalize event can arrive late. Never screen or delete the newer upload.
+  if (generation === undefined) {
+    const [metadata] = await bucket.file(path).getMetadata();
+    generation = metadata.generation;
+  }
+  // The Storage SDK converts the generation selector to a number. Refuse
+  // values it cannot represent exactly instead of selecting other bytes.
+  if (typeof generation !== "string" || !/^[0-9]+$/.test(generation)
+      || !Number.isSafeInteger(Number(generation)) || Number(generation) <= 0) {
+    throw new Error("Photo generation unavailable");
+  }
+  const file = bucket.file(path, {
+    generation,
+    preconditionOpts: { ifGenerationMatch: generation },
+  });
   const [bytes] = await file.download();
   const annotation = await safeSearch(bytes, accessToken, fetchImpl);
   const refused = refusesPhoto(annotation);
-  if (refused) await file.delete({ ignoreNotFound: true });
+  if (refused) {
+    await file.delete({ ignoreNotFound: true });
+  }
   return { refused, adult: annotation.adult };
 }
 

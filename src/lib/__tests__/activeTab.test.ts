@@ -17,6 +17,18 @@ describe("activeTabForPath", () => {
     expect(activeTabForPath("/user/abc123")).toBe("/social");
   });
 
+  it("keeps the Social tab on its league, spaces and space posts", () => {
+    for (const path of [
+      "/league",
+      "/league/",
+      "/space/london-marathon",
+      "/space/london-marathon/",
+      "/space/london-marathon/post/post-123",
+    ]) {
+      expect(activeTabForPath(path)).toBe("/social");
+    }
+  });
+
   it("returns NO tab for routes outside every subtree (the bug)", () => {
     // The exact routes the audit flagged with a false Food highlight.
     expect(activeTabForPath("/upgrade")).toBeNull();
@@ -37,6 +49,11 @@ describe("activeTabForPath", () => {
     expect(activeTabForPath("/foodie")).toBeNull();
     expect(activeTabForPath("/programme-x")).toBeNull();
     expect(activeTabForPath("/historyx")).toBeNull();
+    expect(activeTabForPath("/leagues")).toBeNull();
+    expect(activeTabForPath("/league-table")).toBeNull();
+    expect(activeTabForPath("/spaces")).toBeNull();
+    expect(activeTabForPath("/spacecraft")).toBeNull();
+    expect(activeTabForPath("/space")).toBeNull();
   });
 
   it("tolerates a trailing slash", () => {

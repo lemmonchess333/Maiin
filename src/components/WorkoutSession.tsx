@@ -617,6 +617,20 @@ export default function WorkoutSession({
   );
   const [firedPRs, setFiredPRs] = useState<Map<string, RepBucket[]>>(new Map());
   const [prResults, setPrResults] = useState<Map<string, SetPR>>(new Map());
+  // History may arrive after a resumed set, or after a new set was logged.
+  // Rebuild from the session as it is then, never just the loaded baseline.
+  const currentRecordInputs = useRef({
+    exercises: day.exercises,
+    logs: setLogs,
+    date: sessionDay,
+  });
+  useEffect(() => {
+    currentRecordInputs.current = {
+      exercises: day.exercises,
+      logs: setLogs,
+      date: sessionDay,
+    };
+  }, [day.exercises, setLogs, sessionDay]);
 
   // Pre-fill weights/reps from most recent previous session + build PR map
   useEffect(() => {
@@ -682,7 +696,7 @@ export default function WorkoutSession({
 
       // The best-lift map, as stored or rebuilt from history
       // (liftRecordsStore.ts). If it cannot be read, this session celebrates
-      // no bests and leaves the stored map alone. Read once: the list
+      // no bests and marks the map stale on finish. Read once: the list
       // changing under the session (a swap, an added exercise) read it
       // again, and the bests already set this session went with it.
       if (loadedRecordsRef.current) return;
@@ -690,10 +704,21 @@ export default function WorkoutSession({
         const records = await loadLiftRecords(user.uid, recent);
         loadedRecordsRef.current = records;
         recordBaseline.current = records.map;
-        setPrMap(records.map);
         setSessionCounts(records.sessionCounts);
         volumeBaseline.current = records.volumeBest;
-        setVolumeBest(records.volumeBest);
+        const current = currentRecordInputs.current;
+        const rebuilt = sessionRecords(
+          records.map,
+          records.volumeBest,
+          records.sessionCounts,
+          current.exercises,
+          current.logs,
+          current.date
+        );
+        setPrMap(rebuilt.map);
+        setPrResults(rebuilt.results);
+        setFiredPRs(rebuilt.fired);
+        setVolumeBest(rebuilt.volumeBest);
       } catch (error) {
         logger.warn("[WorkoutSession] best-lift map unavailable", error);
       }
@@ -1845,6 +1870,9 @@ export default function WorkoutSession({
     finishPending.current = true;
     setCompleting(true);
     const completionUid = user?.uid;
+    // Keep the baseline paired with this render's PR map. History arriving
+    // while the save awaits must not make its older map look complete.
+    const loadedRecords = loadedRecordsRef.current;
 
     try {
       completionPendingRef.current = true;
@@ -1941,8 +1969,7 @@ export default function WorkoutSession({
 
       // Persist the best-lift map for history beyond the recent window.
       // Best-effort — the workout already committed above.
-      const loadedRecords = loadedRecordsRef.current;
-      if (user?.uid && loadedRecords && Object.keys(prMap).length > 0) {
+      if (user?.uid) {
         void (async () => {
           try {
             // Saved on this phone, not yet on the server: the commit is a
@@ -1953,7 +1980,7 @@ export default function WorkoutSession({
             // rebuilt from the whole history, which holds the queued
             // workout (`fetchSavedWorkouts` includes this phone's queue).
             if (auth.currentUser?.uid !== user.uid) return;
-            if (queuedReceipt) {
+            if (queuedReceipt || !loadedRecords) {
               await markLiftRecordsStale(user.uid);
               return;
             }

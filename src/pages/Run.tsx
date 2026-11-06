@@ -126,6 +126,7 @@ import { clearWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
 import { CONNECTED_TRAINING_RELEASED } from "@/lib/connectedTrainingRelease";
 import { THEME } from "../lib/theme";
 import { gpsSignalBars } from "../lib/gpsSignal";
+import { runMotionState } from "@/lib/runAutoPause";
 import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
   isOutdoorGpsRun,
@@ -1457,6 +1458,14 @@ export default function Run() {
     []
   );
 
+  const pauseIfStillStationary = useEffectEvent(() => {
+    // Re-read the latest accepted fix when the timer fires. A single low
+    // speed followed by GPS loss must not stop the run's moving clock.
+    if (runMotionState(gps.currentPoint, Date.now()) !== "stationary") return;
+    timerRef.current.pause();
+    setAutoPaused(true);
+  });
+
   useEffect(() => {
     const eligible =
       phase === "active" &&
@@ -1471,9 +1480,9 @@ export default function Run() {
       }
       return;
     }
-    const speed = gps.currentPoint?.speed;
-    const stationary = speed !== null && speed !== undefined && speed < 0.5;
-    const moving = speed !== null && speed !== undefined && speed >= 1;
+    const motion = runMotionState(gps.currentPoint, Date.now());
+    const stationary = motion === "stationary";
+    const moving = motion === "moving";
 
     if (stationary && !autoPaused) {
       // Arm the 5s stationary timer ONCE. This effect re-runs on every GPS fix
@@ -1483,8 +1492,7 @@ export default function Run() {
       if (!autoPauseTimer.current) {
         autoPauseTimer.current = setTimeout(() => {
           autoPauseTimer.current = null;
-          timerRef.current.pause();
-          setAutoPaused(true);
+          pauseIfStillStationary();
         }, 5000);
       }
     } else {

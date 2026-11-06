@@ -12,6 +12,7 @@
  * exists under jsdom, which is what the `@untested:` markers on the
  * reminder hooks were blocked on.
  */
+import { notifyNotificationScheduleChanged } from "@/lib/notificationScheduleEvents";
 import { notificationsFake } from "@/test/notificationsFake";
 import type { NotificationPayload } from "@/lib/notifications";
 
@@ -37,15 +38,27 @@ export async function getNotificationPermissionState() {
 export async function scheduleNotification(
   payload: NotificationPayload
 ): Promise<boolean> {
-  return notificationsFake.schedule_(payload);
+  try {
+    return await notificationsFake.schedule_(payload);
+  } finally {
+    notifyNotificationScheduleChanged();
+  }
 }
 
 export async function cancelNotification(id: number): Promise<void> {
-  return notificationsFake.cancel(id);
+  try {
+    return await notificationsFake.cancel(id);
+  } finally {
+    notifyNotificationScheduleChanged();
+  }
 }
 
 export async function cancelAllNotifications(): Promise<void> {
-  return notificationsFake.cancelAll();
+  try {
+    return await notificationsFake.cancelAll();
+  } finally {
+    notifyNotificationScheduleChanged();
+  }
 }
 
 export async function getPendingNotifications() {

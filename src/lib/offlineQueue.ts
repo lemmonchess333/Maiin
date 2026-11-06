@@ -252,15 +252,13 @@ export function hasPendingProgrammeCompletion(uid: string): boolean {
   );
 }
 
-/** The complete, timestamp-encoded workout survives programme rollover and
- * view teardown. Replays never restore a stale whole programme document. */
-export function queueWorkoutCompletion(
-  db: Firestore,
+/** Retain the first completion payload before any network attempt. */
+function retainWorkoutCompletion(
   uid: string,
   workoutId: string,
   data: Record<string, unknown>,
   programme?: ProgrammeCompletionContext
-): Promise<"synced" | "failed"> {
+): string {
   const queue = getQueue();
   const existing = queue.find(
     (item) =>
@@ -286,6 +284,71 @@ export function queueWorkoutCompletion(
       "Couldn't save on this phone. Free device storage and retry."
     );
   notifyQueue();
+  return id;
+}
+
+/**
+ * An online save needs the same durable retry as an offline one: being
+ * connected does not mean the transaction will succeed. Retain its exact
+ * payload before the first await, so closing the app during that attempt
+ * cannot strand a finished draft outside the app's retry surface.
+ */
+export async function commitRecoverableWorkoutCompletion(
+  db: Firestore,
+  uid: string,
+  workoutId: string,
+  data: Record<string, unknown>,
+  programme?: ProgrammeCompletionContext
+): ReturnType<typeof commitWorkoutCompletion> {
+  let retained: string | undefined;
+  try {
+    retained = retainWorkoutCompletion(uid, workoutId, data, programme);
+  } catch (error) {
+    // A browser that denies local storage can still save to the server.
+    // Nothing is acknowledged until that transaction succeeds.
+    logger.warn("[OfflineQueue] workout recovery storage unavailable", error);
+  }
+  let committed: Awaited<ReturnType<typeof commitWorkoutCompletion>>;
+  try {
+    committed = await commitWorkoutCompletion(
+      db,
+      uid,
+      workoutId,
+      data,
+      programme
+    );
+  } catch (error) {
+    if (retained) {
+      const latest = getQueue().map((item) =>
+        item.uid === uid && item.id === retained
+          ? { ...item, failed: true, refused: refusedForGood(error) }
+          : item
+      );
+      if (writeJson(QUEUE_KEY, latest)) notifyQueue();
+    }
+    throw error;
+  }
+  if (retained) {
+    // Subtract from the latest queue; another save may have arrived while
+    // this transaction was out. A failed cleanup is safe to replay.
+    const latest = getQueue().filter(
+      (item) => item.uid !== uid || item.id !== retained
+    );
+    if (writeJson(QUEUE_KEY, latest)) notifyQueue();
+  }
+  return committed;
+}
+
+/** The complete, timestamp-encoded workout survives programme rollover and
+ * view teardown. Replays never restore a stale whole programme document. */
+export function queueWorkoutCompletion(
+  db: Firestore,
+  uid: string,
+  workoutId: string,
+  data: Record<string, unknown>,
+  programme?: ProgrammeCompletionContext
+): Promise<"synced" | "failed"> {
+  const id = retainWorkoutCompletion(uid, workoutId, data, programme);
   const settled = new Promise<"synced" | "failed">((resolve) => {
     const unsubscribe = subscribeQueuedWrites(() => {
       const pending = getQueue().find(
@@ -482,7 +545,11 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
             uid,
             item.docId,
             payload,
-            item.workoutCompletion.programme
+            item.workoutCompletion.programme,
+            // The finish screen may be gone. Invalidate with the workout
+            // commit, never leave a create queued just for a cache retry:
+            // deleting that saved workout must not let a retry restore it.
+            { invalidateRecords: true }
           );
         } else if (item.durable && !item.merge) {
           await runTransaction(db, async (transaction) => {

@@ -11,6 +11,16 @@ describe("useRunTimer", () => {
     vi.useRealTimers();
   });
 
+  it("recovers wall-clock time when background suspension skips every interval", () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() => result.current.start());
+    const started = Date.now();
+    vi.setSystemTime(started + 90_000);
+    expect(result.current.elapsed).toBe(0);
+    act(() => result.current.recalcNow());
+    expect(result.current.elapsed).toBe(90);
+  });
+
   it("starts at zero", () => {
     const { result } = renderHook(() => useRunTimer());
     expect(result.current.elapsed).toBe(0);

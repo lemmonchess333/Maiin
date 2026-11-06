@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, Bell } from "lucide-react";
+import { Banner } from "@/components/ui/Banner";
+import { subscribeNotificationScheduleChanges } from "@/lib/notificationScheduleEvents";
 import { Toggle } from "@/components/ui/Toggle";
 import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
@@ -44,7 +46,16 @@ const ROW =
   "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted";
 const LABEL = "min-w-[min(100%,8em)] flex-1";
 
+interface ReminderStatus {
+  loading: boolean;
+  failed: boolean;
+  saving: boolean;
+  retry: () => void;
+}
+
 interface NotificationsSectionProps {
+  mealStatus?: ReminderStatus;
+  workoutStatus?: ReminderStatus;
   mealReminders: MealReminders;
   updateMealReminders: (data: Partial<MealReminders>) => Promise<void>;
   workoutReminders: WorkoutReminders;
@@ -58,6 +69,8 @@ interface NotificationsSectionProps {
 }
 
 export default function NotificationsSection({
+  mealStatus,
+  workoutStatus,
   mealReminders,
   updateMealReminders,
   workoutReminders,
@@ -156,41 +169,86 @@ export default function NotificationsSection({
     }
   };
 
-  // Permission state for the inline denied-banner. Re-poll on every toggle
-  // action below so if the user opts in, hits the OS prompt, and denies,
-  // the banner appears without them needing to close/reopen Settings.
   const [permission, setPermission] =
     useState<NotificationPermissionState>("default");
-  useEffect(() => {
-    let alive = true;
-    getNotificationPermissionState().then((state) => {
-      if (alive) setPermission(state);
-    });
-    return () => {
-      alive = false;
-    };
-  }, []);
-  const refreshPermission = () => {
-    getNotificationPermissionState().then(setPermission);
-  };
-
-  // PR I (audit P1 #10): pending-notifications snapshot. Re-polled on
-  // every reminder toggle / time change so the "Next reminder"
-  // display stays in sync with what the OS will actually fire. Empty
-  // array on web (setTimeout fallback isn't queryable).
   const [pending, setPending] = useState<PendingNotification[]>([]);
-  const refreshPending = () => {
-    getPendingNotifications().then(setPending);
-  };
-  useEffect(() => {
-    let alive = true;
-    getPendingNotifications().then((list) => {
-      if (alive) setPending(list);
+  const active = useRef(false);
+  const pendingRead = useRef(0);
+  const permissionRead = useRef(0);
+  const refreshPermission = useCallback(() => {
+    const mine = ++permissionRead.current;
+    void getNotificationPermissionState().then((next) => {
+      if (active.current && mine === permissionRead.current)
+        setPermission(next);
     });
-    return () => {
-      alive = false;
-    };
   }, []);
+  const refreshPending = useCallback(() => {
+    const mine = ++pendingRead.current;
+    void getPendingNotifications().then((next) => {
+      if (active.current && mine === pendingRead.current) setPending(next);
+    });
+  }, [setPending]);
+  useEffect(() => {
+    active.current = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const refresh = () => {
+      refreshPermission();
+      refreshPending();
+    };
+    // Coalesce a cancel/rebuild pass, but listen to completed OS mutations
+    // rather than racing the reminder effects after a preference write.
+    const changed = () => {
+      clearTimeout(timer);
+      timer = setTimeout(refreshPending, 0);
+    };
+    const visible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    const stop = subscribeNotificationScheduleChanges(changed);
+    refresh();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      active.current = false;
+      clearTimeout(timer);
+      stop();
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", visible);
+    };
+  }, [refreshPending, refreshPermission]);
+
+  const saveMeal = async (update: Partial<MealReminders>) => {
+    try {
+      await updateMealReminders(update);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Couldn't save reminder settings. Try again."
+      );
+    }
+  };
+  const saveWorkoutReminders = async (update: Partial<WorkoutReminders>) => {
+    try {
+      await updateWorkoutReminders(update);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Couldn't save reminder settings. Try again."
+      );
+    }
+  };
+  const mealDisabled = !!(
+    mealStatus?.loading ||
+    mealStatus?.failed ||
+    mealStatus?.saving
+  );
+  const workoutDisabled = !!(
+    workoutStatus?.loading ||
+    workoutStatus?.failed ||
+    workoutStatus?.saving
+  );
 
   const handleTestNotification = async (kind: TestNotificationKind) => {
     haptic("light");
@@ -201,7 +259,7 @@ export default function NotificationsSection({
       );
       // Refresh pending so the test notification appears in the list
       // (and disappears once it fires).
-      setTimeout(refreshPending, 500);
+      refreshPending();
     } else {
       toast.error("Couldn't send test. Check notification permission.");
     }
@@ -285,6 +343,24 @@ export default function NotificationsSection({
       title="Notifications"
       subtitle="Meal, workout, review and streak reminders"
     >
+      {(mealStatus?.failed || workoutStatus?.failed) && (
+        <Banner
+          variant="neutral"
+          title="Reminder settings unavailable"
+          description="Try again to change meal or workout reminders."
+          action={
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (mealStatus?.failed) mealStatus.retry();
+                if (workoutStatus?.failed) workoutStatus.retry();
+              }}
+            >
+              Try again
+            </Button>
+          }
+        />
+      )}
       {/* Permission-denied banner — only shown when the user has at least one
           reminder turned on AND the OS is blocking delivery. Silent failure
           is confusing: the toggle says "on" but nothing fires. Surfacing the
@@ -327,6 +403,11 @@ export default function NotificationsSection({
             className="ml-auto"
             checked={mealReminders.enabled}
             label="Toggle meal reminders"
+            disabled={
+              mealStatus?.loading ||
+              mealStatus?.failed ||
+              (mealStatus?.saving && !mealReminders.enabled)
+            }
             onChange={async () => {
               haptic("light");
               const next = !mealReminders.enabled;
@@ -334,15 +415,21 @@ export default function NotificationsSection({
                 toggle: "meal_reminders",
                 value: next,
               });
-              if (next && permission === "default") {
+              if (next) {
                 /* Route via lib/notifications.requestNotificationPermission
                    so iOS Capacitor triggers a native LocalNotifications
                    prompt rather than the WebView Notification API
                    (which doesn't surface an iOS system prompt). */
-                await requestNotificationPermission();
+                const granted = await requestNotificationPermission();
                 refreshPermission();
+                if (!granted) {
+                  toast.error(
+                    "Allow notifications in your device settings to turn this on."
+                  );
+                  return;
+                }
               }
-              await updateMealReminders({ enabled: next });
+              await saveMeal({ enabled: next });
             }}
           />
         </div>
@@ -365,9 +452,10 @@ export default function NotificationsSection({
                   <Toggle
                     checked={mealReminders[meal].enabled}
                     label={`${meal} reminder`}
+                    disabled={mealDisabled}
                     onChange={() => {
                       haptic("light");
-                      updateMealReminders({
+                      saveMeal({
                         [meal]: {
                           ...mealReminders[meal],
                           enabled: !mealReminders[meal].enabled,
@@ -384,12 +472,12 @@ export default function NotificationsSection({
                   aria-label={`${meal} reminder time`}
                   value={mealReminders[meal].time}
                   onChange={(e) =>
-                    updateMealReminders({
+                    saveMeal({
                       [meal]: { ...mealReminders[meal], time: e.target.value },
                     })
                   }
                   className="ds-input ml-auto w-auto min-w-0 max-w-full text-sm"
-                  disabled={!mealReminders[meal].enabled}
+                  disabled={mealDisabled || !mealReminders[meal].enabled}
                 />
               </div>
             ))}
@@ -410,6 +498,11 @@ export default function NotificationsSection({
             className="ml-auto"
             checked={workoutReminders.enabled}
             label="Toggle workout reminders"
+            disabled={
+              workoutStatus?.loading ||
+              workoutStatus?.failed ||
+              (workoutStatus?.saving && !workoutReminders.enabled)
+            }
             onChange={async () => {
               haptic("light");
               const next = !workoutReminders.enabled;
@@ -417,15 +510,21 @@ export default function NotificationsSection({
                 toggle: "workout_reminders",
                 value: next,
               });
-              if (next && permission === "default") {
+              if (next) {
                 /* Route via lib/notifications.requestNotificationPermission
                    so iOS Capacitor triggers a native LocalNotifications
                    prompt rather than the WebView Notification API
                    (which doesn't surface an iOS system prompt). */
-                await requestNotificationPermission();
+                const granted = await requestNotificationPermission();
                 refreshPermission();
+                if (!granted) {
+                  toast.error(
+                    "Allow notifications in your device settings to turn this on."
+                  );
+                  return;
+                }
               }
-              await updateWorkoutReminders({ enabled: next });
+              await saveWorkoutReminders({ enabled: next });
             }}
           />
         </div>
@@ -444,8 +543,9 @@ export default function NotificationsSection({
             <input
               type="time"
               aria-label="Workout reminder time"
+              disabled={workoutDisabled}
               value={workoutReminders.time}
-              onChange={(e) => updateWorkoutReminders({ time: e.target.value })}
+              onChange={(e) => saveWorkoutReminders({ time: e.target.value })}
               className="ds-input ml-auto w-auto min-w-0 max-w-full text-sm"
             />
           </div>
@@ -717,7 +817,11 @@ export function ReminderDiagnostics({
           // Empty pending list on web is the default state — explain
           // the actual behaviour so users don't think the reminder
           // is broken.
-          <span>Reminders fire while this tab is open.</span>
+          <span>
+            {isNativePlatform()
+              ? "No reminder is currently scheduled."
+              : "Reminders fire while this tab is open."}
+          </span>
         )}
       </div>
       <Button

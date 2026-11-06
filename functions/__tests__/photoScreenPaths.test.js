@@ -19,6 +19,7 @@ const originals = new Map(
 );
 const realFirestore = admin.firestore;
 const file = {
+  getMetadata: vi.fn(async () => [{ generation: "123" }]),
   download: vi.fn(async () => [Buffer.from("jpeg")]),
   delete: vi.fn(async () => undefined),
 };
@@ -70,10 +71,17 @@ describe.each(["space-photos", "profile-photos", "route-maps", "post-photos"])(
       "the upload trigger screens and deletes a refused %s",
       async (suffix) => {
         const path = `${prefix}/u1${suffix}`;
-        await screenUploadedPhoto.run({ name: path, bucket: "test-bucket" });
+        await screenUploadedPhoto.run({
+          name: path,
+          bucket: "test-bucket",
+          generation: "123",
+        });
 
         expect(storage.bucket).toHaveBeenCalledWith("test-bucket");
-        expect(bucket.file).toHaveBeenCalledWith(path);
+        expect(bucket.file).toHaveBeenLastCalledWith(path, {
+          generation: "123",
+          preconditionOpts: { ifGenerationMatch: "123" },
+        });
         expect(file.download).toHaveBeenCalledOnce();
         expect(file.delete).toHaveBeenCalledWith({ ignoreNotFound: true });
       }
@@ -84,7 +92,10 @@ describe.each(["space-photos", "profile-photos", "route-maps", "post-photos"])(
       await expect(
         screenPhoto.run({ path }, { auth: { uid: "u1", token: {} } })
       ).resolves.toEqual({ ok: false });
-      expect(bucket.file).toHaveBeenCalledWith(path);
+      expect(bucket.file).toHaveBeenLastCalledWith(path, {
+        generation: "123",
+        preconditionOpts: { ifGenerationMatch: "123" },
+      });
       expect(file.delete).toHaveBeenCalledWith({ ignoreNotFound: true });
     });
 
@@ -104,7 +115,11 @@ describe.each(["space-photos", "profile-photos", "route-maps", "post-photos"])(
 it.each(["progress-photos/u1/nested/a.jpg", "food-photos/u1/a..jpg"])(
   "the upload trigger leaves the private object %s unscreened",
   async (path) => {
-    await screenUploadedPhoto.run({ name: path, bucket: "test-bucket" });
+    await screenUploadedPhoto.run({
+      name: path,
+      bucket: "test-bucket",
+      generation: "123",
+    });
     expect(getAccessToken).not.toHaveBeenCalled();
     expect(bucket.file).not.toHaveBeenCalled();
   }

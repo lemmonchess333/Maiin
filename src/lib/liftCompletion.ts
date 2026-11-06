@@ -23,16 +23,14 @@ import { auth, db } from "@/lib/firebase";
 import { localDateString } from "@/lib/dateHelpers";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import {
+  commitRecoverableWorkoutCompletion,
   hasQueuedWorkoutCompletion,
   queueWorkoutCompletion,
 } from "@/lib/offlineQueue";
 import { workoutTonnageKg, type WorkoutExercise } from "@/lib/savedWorkouts";
 import { createSessionShare, type SessionShareAction } from "@/lib/sessionPost";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
-import {
-  commitWorkoutCompletion,
-  type ProgrammeCompletionContext,
-} from "@/lib/workoutCompletion";
+import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
 import { liftPost, liftPostPreview, type LiftForPost } from "@/lib/liftPost";
 import type { LiftUnit } from "@/lib/liftLoad";
 import type { LiftMomentFacts } from "@/lib/postMoments";
@@ -281,7 +279,7 @@ export async function completeLift(
   let committed: ProgramState | null | undefined;
   let sync: Promise<"synced" | "failed">;
   if (!queued) {
-    committed = await commitWorkoutCompletion(
+    committed = await commitRecoverableWorkoutCompletion(
       db,
       uid,
       workoutId,

@@ -42,6 +42,12 @@ function renderAt(path: string) {
           <Route path="/social" element={<div>social</div>} />
           <Route path="/history" element={<div>history</div>} />
           <Route path="/user/:uid" element={<div>profile</div>} />
+          <Route path="/league" element={<div>league</div>} />
+          <Route path="/space/:spaceId" element={<div>space</div>} />
+          <Route
+            path="/space/:spaceId/post/:postId"
+            element={<div>space post</div>}
+          />
           <Route path="/settings" element={<div>settings</div>} />
           <Route path="/upgrade" element={<div>offer</div>} />
           <Route path="/run" element={<div>run</div>} />
@@ -117,6 +123,47 @@ describe("Layout bottom-nav retap", () => {
       expect(link).not.toHaveAttribute("aria-current");
     }
   });
+
+  it.each([
+    "/league",
+    "/space/london-marathon",
+    "/space/london-marathon/post/post-123",
+  ])(
+    "keeps Social selected on %s and returns to its main page on tap",
+    (path) => {
+      renderAt(path);
+      expect(screen.getByRole("link", { name: "Social" })).toHaveAttribute(
+        "aria-current",
+        "page"
+      );
+      expect(
+        screen
+          .getAllByRole("link")
+          .filter((link) => link.getAttribute("aria-current") === "page")
+      ).toHaveLength(1);
+
+      fireEvent.click(screen.getByRole("link", { name: "Social" }));
+      expect(screen.getByText("social")).toBeInTheDocument();
+      // A selected child route is still navigation, not a root-tab retap.
+      expect(scrollSpy).not.toHaveBeenCalled();
+      expect(
+        dispatchSpy.mock.calls.some(
+          ([event]: [Event]) =>
+            event instanceof CustomEvent &&
+            event.type === "tropos:social-tab-retap"
+        )
+      ).toBe(false);
+
+      fireEvent.click(screen.getByRole("link", { name: "Food" }));
+      expect(screen.getByRole("link", { name: "Food" })).toHaveAttribute(
+        "aria-current",
+        "page"
+      );
+      expect(screen.getByRole("link", { name: "Social" })).not.toHaveAttribute(
+        "aria-current"
+      );
+    }
+  );
 
   it("waits for a destination to be touched or focused before preloading it", () => {
     renderAt("/");

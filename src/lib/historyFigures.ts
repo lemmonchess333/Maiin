@@ -162,13 +162,14 @@ export function liftFigures(
   workouts: readonly RangeWorkout[],
   range: HistoryRange
 ): LiftFigures {
-  const { sinceKey, prevSinceKey } = range;
+  const { sinceKey, prevSinceKey, todayKey } = range;
+  const completedWorkouts = workouts.filter((w) => w.date <= todayKey);
   let liftCount = 0;
   let liftVolume = 0;
   let prevLiftCount = 0;
   let prevLiftVolume = 0;
   const muscleData: Record<string, number> = {};
-  for (const w of workouts) {
+  for (const w of completedWorkouts) {
     if (w.date >= sinceKey) {
       liftCount += 1;
       liftVolume += workoutTonnageKg(w);
@@ -189,12 +190,12 @@ export function liftFigures(
     prevLiftCount,
     prevLiftVolume,
     muscleData,
-    lifetimePRs: bestSetPerExercise(workouts, {
+    lifetimePRs: bestSetPerExercise(completedWorkouts, {
       newSinceKey: range.newSinceKey,
     }),
     // Given every session, not the window's: a window's best is new only
     // when it is also the all-time best.
-    recentLiftPRs: bestSetPerExercise(workouts, {
+    recentLiftPRs: bestSetPerExercise(completedWorkouts, {
       sinceKey: range.recentSinceKey,
       newSinceKey: range.newSinceKey,
     }),
@@ -233,20 +234,21 @@ export function liftingPageFigures(
     bins: readonly SummaryBin[];
   }
 ): LiftingPageFigures {
-  const { now: today, since, sinceKey } = range;
+  const { now: today, since, sinceKey, todayKey } = range;
+  const completedWorkouts = workouts.filter((w) => w.date <= todayKey);
   let firstSessionKey: string | null = null;
   let sets = 0;
-  for (const w of workouts) {
+  for (const w of completedWorkouts) {
     if (!firstSessionKey || w.date < firstSessionKey) firstSessionKey = w.date;
     if (w.date < sinceKey) continue;
     for (const ex of w.exercises ?? []) sets += workingSetCount(ex);
   }
   const weekKeys = volumeWeekKeys({ since, today, firstSessionKey });
   return {
-    progress: liftProgress(workouts, { sinceKey, today }),
+    progress: liftProgress(completedWorkouts, { sinceKey, today }),
     sets,
     muscleWeeks: weekKeys.length,
-    muscles: performedWeeklyVolume(workouts, {
+    muscles: performedWeeklyVolume(completedWorkouts, {
       weekKeys,
       primaryGoal,
       targets,
@@ -327,7 +329,7 @@ export function nutritionFigures(
   /* The meal's own date at local midnight against the window's first day:
      the boundary date is in the window (`analyticsWindowAgreement`). */
   const inWindow = meals.filter(
-    (m) => new Date(m.date + "T00:00:00") >= range.since
+    (m) => m.date >= range.sinceKey && m.date <= range.todayKey
   );
   const inPrevious = meals.filter((m) => {
     const d = new Date(m.date + "T00:00:00");
@@ -560,12 +562,12 @@ export function periodSummaryFigures({
     since,
     today: range.now,
     lifts: workouts
-      .filter((w) => w.date >= firstDayKey)
+      .filter((w) => w.date >= firstDayKey && w.date <= range.todayKey)
       .map((w) => ({ date: w.date, volumeKg: workoutTonnageKg(w) })),
     runs: binRuns
       .filter((r) => isVolumeEligible(r))
       .map((r) => ({ date: runEvidenceDate(r), distanceM: r.distance ?? 0 }))
-      .filter((r) => r.date >= firstDayKey),
+      .filter((r) => r.date >= firstDayKey && r.date <= range.todayKey),
     granularity,
   });
   const previousRuns = allRunsKnown

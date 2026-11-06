@@ -81,6 +81,7 @@ test("a new runner repeats a week, moves on, and finishes the 30-minute goal", a
     );
 
     // Week one: one run of three. The week repeats.
+    await moveDay(page, runDaysOf(plan)[0].date!);
     await fastForwardRun(account, runDaysOf(plan)[0], plan, "starter");
     plan = await advanceTo(page, account, week(1));
     expect(plan.runPlan).toMatchObject({ stage: 1, stageWeekKey: week(1) });
@@ -94,8 +95,12 @@ test("a new runner repeats a week, moves on, and finishes the 30-minute goal", a
     ).toBeVisible();
 
     // Week two: two runs. The stage moves on.
-    for (const run of runDaysOf(plan).slice(0, 2))
+    for (const run of runDaysOf(plan).slice(0, 2)) {
+      // A run belongs to its own day. Keep the phone there too: its
+      // ending-today history must not count a run still in the future.
+      await moveDay(page, run.date!);
       await fastForwardRun(account, run, plan, "starter");
+    }
     // The app has both runs before Monday comes, as a phone that saved
     // them would: the rollover reads through its live view, which a run
     // written from outside the page reaches a moment later.
@@ -118,7 +123,9 @@ test("a new runner repeats a week, moves on, and finishes the 30-minute goal", a
     });
     plan = await programme(account.uid);
     const [first, second] = runDaysOf(plan);
+    await moveDay(page, first.date!);
     await fastForwardRun(account, first, plan, "starter");
+    await moveDay(page, second.date!);
     await fastForwardRun(account, second, plan, "starter");
 
     // The day after the second run, Home says Done and offers a 5K.

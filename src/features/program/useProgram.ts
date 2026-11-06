@@ -987,13 +987,17 @@ export function useProgram() {
       const before = programState;
       setProgramState(optimistic(before));
       try {
-        await sendProgramCommand(command);
+        await sendProgramCommand(command, user.uid);
       } catch (err) {
         if (isTransportFailure(err)) {
           // Durable: it replays on reconnect, and the server dedupes on
           // commandId. Keeping the optimistic state is correct — the intent
           // stands, it just has not landed yet.
-          enqueueCommand(user.uid, command);
+          if (!enqueueCommand(user.uid, command)) {
+            setProgramState(before);
+            toast.error("Couldn't save that change on this device. Try again.");
+            return FAILED;
+          }
           logger.log(`[useProgram] ${command.kind} queued — offline`);
           return QUEUED;
         }
@@ -3191,7 +3195,7 @@ export function useProgram() {
         ...(runSwaps.length > 0 ? { runSwaps } : {}),
       };
       try {
-        await sendProgramCommand(command);
+        await sendProgramCommand(command, user.uid);
         const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
         const snap = await getDoc(ref);
         if (snap.exists()) {
@@ -3212,8 +3216,11 @@ export function useProgram() {
         // flush forever. `failed-precondition` is the live case here — the week
         // may already be deloaded by the time the queue drains.
         if (isTransportFailure(err)) {
-          enqueueCommand(user.uid, command);
-          logger.log(`[useProgram] ${kind} queued — offline`);
+          if (enqueueCommand(user.uid, command)) {
+            logger.log(`[useProgram] ${kind} queued — offline`);
+          } else {
+            toast.error("Couldn't save that change on this device. Try again.");
+          }
         } else {
           logger.error(`[useProgram] ${kind} failed`, err);
         }
@@ -3260,7 +3267,7 @@ export function useProgram() {
         })),
       };
       try {
-        await sendProgramCommand(command);
+        await sendProgramCommand(command, user.uid);
         // The server stores the exact pre-ease days in easeSnapshot, so both
         // sides of this count come from one committed document rather than
         // a possibly stale client render. A read straight after the callable
@@ -3323,7 +3330,7 @@ export function useProgram() {
         kind: "revertEaseWeek" as const,
         commandId: generateInstanceId(),
         expectedWeekNumber: programState.weekNumber,
-      });
+      }, user.uid);
       await refetchProgramState();
       return { ok: true };
     } catch (err) {

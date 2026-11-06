@@ -14,8 +14,8 @@
  *      and it cost a ~25-call-site migration to fix.
  *   2. **Crossing accounts.** PR #820 fixed one account's queued work flushing
  *      under another's auth on a shared device.
- *   3. **Losing work silently.** Shedding on quota is necessary; doing it
- *      quietly is how the offline queue's CORE-01 bug lost everything.
+ *   3. **Losing work silently.** Storage failure must preserve the old
+ *      queue and report failure, not silently shed unsynced commands.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
@@ -85,6 +85,9 @@ describe("live replay feedback", () => {
 describe("isTransportFailure — what may be retried", () => {
   it("treats the network codes as retryable", () => {
     for (const code of [
+      "functions/internal",
+      "internal",
+      "auth/network-request-failed",
       "functions/unavailable",
       "functions/deadline-exceeded",
       "functions/cancelled",
@@ -104,8 +107,7 @@ describe("isTransportFailure — what may be retried", () => {
       "functions/failed-precondition",
       "functions/permission-denied",
       "functions/unauthenticated",
-      // `internal` usually means the handler threw — it will throw again.
-      "functions/internal",
+
     ]) {
       expect(isTransportFailure(callableError(code)), code).toBe(false);
     }
@@ -129,9 +131,9 @@ describe("enqueueCommand", () => {
     expect(outboxLength("alice")).toBe(1);
   });
 
-  it("is bounded, shedding the oldest", () => {
+  it("is bounded, refusing new commands at capacity", () => {
     for (let i = 0; i < MAX_OUTBOX_ENTRIES + 5; i++) {
-      enqueueCommand("alice", cmd(`c${i}`));
+      expect(enqueueCommand("alice", cmd(`c${i}`))).toBe(i < MAX_OUTBOX_ENTRIES);
     }
     expect(outboxLength("alice")).toBe(MAX_OUTBOX_ENTRIES);
   });
@@ -292,19 +294,84 @@ describe("flushCommandOutbox — a command enqueued DURING a flush survives it",
   });
 });
 
-describe("enqueueCommand — shedding on the cap is loud", () => {
-  it("logs what it drops when the queue is full", () => {
+describe("enqueueCommand — full queue preservation", () => {
+  it.each([
+    ["alice", "overflow"],
+    ["bob", "overflow"],
+    ["bob", "c0"],
+  ])("refuses %s/%s without changing any stored bytes", (uid, id) => {
     const spy = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+    for (let i = 0; i < MAX_OUTBOX_ENTRIES; i++) {
+      expect(enqueueCommand("alice", cmd(`c${i}`))).toBe(true);
+    }
+    const before = localStorage.getItem("tropos.program.commandOutbox");
+    const version = commandOutboxVersion();
+    expect(enqueueCommand(uid, cmd(id))).toBe(false);
+    expect(localStorage.getItem("tropos.program.commandOutbox")).toBe(before);
+    expect(commandOutboxVersion()).toBe(version);
+    expect(outboxLength("alice")).toBe(MAX_OUTBOX_ENTRIES);
+    expect(outboxLength("bob")).toBe(0);
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringMatching(/queue full — could not queue command/),
+      "applyDeloadWeek"
+    );
+    spy.mockRestore();
+  });
+
+  it("permits an existing owner's replacement at capacity without growth or reordering", async () => {
     for (let i = 0; i < MAX_OUTBOX_ENTRIES; i++) {
       enqueueCommand("alice", cmd(`c${i}`));
     }
-    expect(spy).not.toHaveBeenCalled();
-    enqueueCommand("alice", cmd("overflow"));
+    expect(enqueueCommand("alice", { ...cmd("c0"), expectedWeekNumber: 4 })).toBe(true);
     expect(outboxLength("alice")).toBe(MAX_OUTBOX_ENTRIES);
-    expect(spy).toHaveBeenCalledWith(
-      expect.stringMatching(/shedding the oldest 1 queued command/),
-      ["applyDeloadWeek"]
+    const sent: Array<{ commandId: string; expectedWeekNumber?: unknown }> = [];
+    await flushCommandOutbox("alice", async (command) => { sent.push(command); });
+    expect(sent.map((command) => command.commandId)).toEqual(
+      Array.from({ length: MAX_OUTBOX_ENTRIES }, (_, i) => `c${i}`)
     );
-    spy.mockRestore();
+    expect(sent[0].expectedWeekNumber).toBe(4);
+  });
+});
+
+describe("durable storage failures", () => {
+  it("leaves the previous queue unchanged and reports a failed enqueue", () => {
+    enqueueCommand("alice", cmd("old"));
+    const before = localStorage.getItem("tropos.program.commandOutbox");
+    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("Full", "QuotaExceededError");
+    });
+    try {
+      expect(enqueueCommand("alice", cmd("new"))).toBe(false);
+      expect(localStorage.getItem("tropos.program.commandOutbox")).toBe(before);
+    } finally { spy.mockRestore(); }
+  });
+
+  it("does not report a drained queue when persisting the settlement fails", async () => {
+    enqueueCommand("alice", cmd("old"));
+    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("Full", "QuotaExceededError");
+    });
+    try {
+      expect(await flushCommandOutbox("alice", async () => {})).toBe(0);
+      expect(outboxLength("alice")).toBe(1);
+      expect(lastCommandSettlement("alice")).toBeNull();
+    } finally { spy.mockRestore(); }
+  });
+
+  it("never overwrites or consumes another account's matching command id", async () => {
+    enqueueCommand("alice", cmd("same"));
+    enqueueCommand("bob", cmd("same"));
+    expect(outboxLength("alice")).toBe(1);
+    await flushCommandOutbox("alice", async () => {});
+    expect(outboxLength("bob")).toBe(1);
+  });
+
+  it("retains the SDK's internal network failure and commands after it", async () => {
+    enqueueCommand("alice", cmd("first"));
+    enqueueCommand("alice", cmd("second"));
+    const send = vi.fn().mockRejectedValue(callableError("functions/internal"));
+    expect(await flushCommandOutbox("alice", send)).toBe(0);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(outboxLength("alice")).toBe(2);
   });
 });

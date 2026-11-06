@@ -1,17 +1,14 @@
 import type { ReminderActivity } from "./useReminderActivity";
 import { localDateString } from "@/lib/dateHelpers";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
-import { db } from "@/lib/firebase";
+import { useEffect, useRef } from "react";
+import { useReminderPreferences } from "./useReminderPreferences";
 import { useAuth } from "@/lib/auth";
 import {
   scheduleNotification,
   cancelNotification,
   requestNotificationPermission,
 } from "@/lib/notifications";
-import { logger } from "@/lib/logger";
-import { captureError } from "@/lib/errorReporting";
+import { isReminderLocallyOff } from "@/lib/localReminderChoice";
 import {
   isReminderDay,
   nextWeekdayOccurrence,
@@ -53,59 +50,9 @@ export function useWorkoutRemindersInternal(
   liftName?: string | null
 ) {
   const { user, profile } = useAuth();
-  const [reminders, setReminders] = useState<WorkoutReminders>(
-    DEFAULT_WORKOUT_REMINDERS
-  );
-  const [loading, setLoading] = useState(true);
-
-  // Load from Firestore
-  useEffect(() => {
-    if (!user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clear loading when signed out
-      setLoading(false);
-      return;
-    }
-    const ref = doc(db, "users", user.uid, "settings", "workoutReminders");
-    getDoc(ref)
-      .then((snap) => {
-        if (snap.exists()) {
-          setReminders({
-            ...DEFAULT_WORKOUT_REMINDERS,
-            ...(snap.data() as WorkoutReminders),
-          });
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        logger.error("[WorkoutReminders] load failed", err);
-        setLoading(false);
-      });
-  }, [user]);
-
-  // Save to Firestore — see useMealReminders.ts for the error-handling
-  // rationale (critical-keyword tagging persists to users/{uid}/errors,
-  // failures don't re-throw into the UI).
-  const updateReminders = useCallback(
-    async (updates: Partial<WorkoutReminders>) => {
-      if (!user) return;
-      const updated = { ...reminders, ...updates };
-      setReminders(updated);
-      const ref = doc(db, "users", user.uid, "settings", "workoutReminders");
-      try {
-        await setDocGuarded(ref, updated);
-      } catch (err) {
-        logger.error("[WorkoutReminders] save failed", err);
-        captureError(
-          err instanceof Error ? err : new Error(String(err)),
-          "network",
-          {
-            surface: "workoutReminders.save",
-          }
-        );
-      }
-    },
-    [user, reminders]
-  );
+  const uid = user?.uid ?? null;
+  const { reminders, loading, failed, saving, retry, updateReminders } =
+    useReminderPreferences(uid, "workout", DEFAULT_WORKOUT_REMINDERS);
 
   /**
    * Serialises reschedule passes for this hook instance.
@@ -134,6 +81,11 @@ export function useWorkoutRemindersInternal(
   // their training schedule and keep firing without the app needing
   // to be open.
   useEffect(() => {
+    // Unknown settings/activity are not an instruction to cancel an
+    // already scheduled reminder. Explicit off still cancels immediately.
+    if (!uid || ((loading || failed) && !isReminderLocallyOff(uid, "workout")))
+      return;
+    if (reminders.enabled && activity && !activity.ready) return;
     let cancelled = false;
 
     const rescheduleWorkout = async () => {
@@ -195,12 +147,15 @@ export function useWorkoutRemindersInternal(
     return () => {
       cancelled = true;
     };
-  }, [reminders, profile, loading, activity, liftName]);
+  }, [uid, reminders, profile, loading, failed, activity, liftName]);
 
   // Permission request is a stable module-level function — no wrapper needed.
   return {
     reminders,
     loading,
+    failed,
+    saving,
+    retry,
     updateReminders,
     requestPermission: requestNotificationPermission,
     /** The programme's next workout, as the reminders name it. */

@@ -2,6 +2,10 @@ import {
   seedFirestore,
   resetFirestore,
   readDoc,
+  deferReads,
+  pendingReads,
+  releaseAllReads,
+  resumeReads,
 } from "@/test/firestoreHarness";
 vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
 /* Every save hands back a share now, as the writers' always did; the row
@@ -150,6 +154,7 @@ function openSession(
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.load.mockReturnValue(null);
   h.user = null;
   h.profile = null;
   h.save.mockReturnValue(true);
@@ -1585,7 +1590,9 @@ describe("WorkoutSession — Previous shows the same set last time", () => {
       )
     );
     expect(
-      screen.getByRole("button", { name: "Last time 85 × 5. Use it for set 2" })
+      screen.getByRole("button", {
+        name: "Last time 85 × 5. Use it for set 2",
+      })
     ).toBeInTheDocument();
     // The plan's step for the sets lifted at 85, the lighter last set as
     // lifted: never the light day's 65 × 9.
@@ -1687,7 +1694,7 @@ describe("WorkoutSession — warm-ups are optional", () => {
     expect(setLine(/^Set 2 of 3 · 1 done$/)).toBeInTheDocument();
   });
 
-  it("finishes the exercise when the working sets are done", () => {
+  it("finishes the exercise when the working sets are done", async () => {
     openSession(writer(), vi.fn(), squat);
     for (let i = 0; i < 3; i++) {
       fireEvent.click(
@@ -1696,8 +1703,10 @@ describe("WorkoutSession — warm-ups are optional", () => {
     }
     // Three warm-ups left unticked do not hold the workout open: it is
     // the only exercise, so its last working set finishes the session.
+    // The finish screen is lazy-loaded. Await it even when this is the
+    // first test to finish a workout (as it is under shuffle seed 5).
     expect(
-      screen.getByRole("button", { name: "Save workout" })
+      await screen.findByRole("button", { name: "Save workout" })
     ).toBeInTheDocument();
   });
 });
@@ -1961,6 +1970,9 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     await vi.waitFor(() =>
       expect(screen.queryByRole("group", { name: "Rest timer" })).toBeNull()
     );
+    // Clearing the announcement is passive cleanup too, after the
+    // animated row has left the DOM.
+    await act(async () => {});
     expect(region).toHaveTextContent(/^$/);
   });
 
@@ -1990,6 +2002,9 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     await vi.waitFor(() =>
       expect(screen.queryByRole("group", { name: "Rest timer" })).toBeNull()
     );
+    // AnimatePresence removes the row before React runs its passive
+    // cleanup, which restores the title. Flush that cleanup as well.
+    await act(async () => {});
     expect(document.title).toBe("Tropos");
   });
 
@@ -2589,5 +2604,204 @@ describe("WorkoutSession — the rest after a warm-up", () => {
     fireEvent.click(screen.getByRole("button", { name: "End rest" }));
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
     expect(restLabel()).toContain("3:00");
+  });
+});
+
+/* Reconstructed regressions for records restored from a draft or loaded
+   after lifting begins. The saved best must include every completed set. */
+describe("records across resume and delayed history", () => {
+  const path = "users/pr-user/stats/prMap";
+  const storedMap = {
+    "Test exercise": {
+      "1rm": null,
+      "3rm": null,
+      "5rm": null,
+      "8rm": { weight: 100, reps: 8, date: "2026-07-01" },
+      "10rm": null,
+    },
+  };
+  function seedBaseline() {
+    h.user = { uid: "pr-user" };
+    seedFirestore({
+      [path]: {
+        map: storedMap,
+        sessionCounts: { "Test exercise": 5 },
+        volumeBest: {},
+        revision: 3,
+        invalidated: false,
+      },
+    });
+  }
+  function setWeight(set: number, weight: number) {
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: `Set ${set} weight` }),
+      { target: { value: String(weight) } }
+    );
+  }
+  function completeNextSet() {
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+  }
+  async function releaseHistory() {
+    expect(pendingReads().length).toBeGreaterThan(0);
+    await act(async () => {
+      resumeReads();
+      releaseAllReads();
+    });
+  }
+
+  it.each([
+    {
+      name: "resumed first-set best",
+      weights: [120, 100, 100],
+      completed: 1,
+      best: 120,
+    },
+    {
+      name: "fresh first-set best",
+      weights: [120, 100, 100],
+      completed: 0,
+      best: 120,
+    },
+    // The draft stores rows, not the order they were lifted. Its strongest
+    // row remains the best even when another completed row follows it.
+    {
+      name: "resumed out-of-row-order best",
+      weights: [140, 120, 100],
+      completed: 2,
+      best: 140,
+    },
+    {
+      name: "fresh later-set best",
+      weights: [120, 140, 100],
+      completed: 0,
+      best: 140,
+    },
+  ])(
+    "preserves the $name in the saved records",
+    async ({ weights, completed, best }) => {
+      seedBaseline();
+      if (completed > 0) {
+        h.load.mockReturnValueOnce({
+          dayIndex: 0,
+          dayName: "Test lift",
+          identity: "test",
+          completionId: "resumed-records",
+          completionCommandId: "resumed-records",
+          startedAt: Date.now() - 120_000,
+          elapsedSeconds: 120,
+          currentExIndex: 0,
+          exerciseNotes: {},
+          setLogs: [
+            weights.map((weight, index) => ({
+              reps: 8,
+              weight,
+              completed: index < completed,
+              type: "working",
+            })),
+          ],
+        } as never);
+      }
+      const complete = writer();
+      await act(async () => {
+        openSession(complete, vi.fn(), {}, { resumeDraft: true });
+      });
+      if (completed > 0) {
+        expect(screen.getAllByText("PR").length).toBeGreaterThan(0);
+      }
+      for (let index = completed; index < weights.length; index++) {
+        setWeight(index + 1, weights[index]);
+        completeNextSet();
+        if (index < weights.length - 1) {
+          expect(screen.getAllByText("PR").length).toBeGreaterThan(0);
+        }
+      }
+      expect(
+        await screen.findByRole("heading", { name: /New bests/ })
+      ).toBeInTheDocument();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Save workout" })
+      );
+      await vi.waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+      expect(
+        complete.mock.calls[0][1]?.setLogs?.[0].map((set) => set.weight)
+      ).toEqual(weights);
+      await vi.waitFor(() =>
+        expect(readDoc(path)).toMatchObject({
+          revision: 4,
+          invalidated: false,
+          map: { "Test exercise": { "8rm": { weight: best } } },
+        })
+      );
+    }
+  );
+
+  it("replays a set logged before the history read finishes", async () => {
+    seedBaseline();
+    deferReads();
+    openSession();
+    setWeight(1, 120);
+    completeNextSet();
+    expect(screen.queryByText("PR")).not.toBeInTheDocument();
+    await releaseHistory();
+    await vi.waitFor(() => expect(screen.getByText("PR")).toBeInTheDocument());
+  });
+
+  it("invalidates the cache when Finish saves before history is loaded", async () => {
+    seedBaseline();
+    deferReads();
+    const complete = openSession();
+    setWeight(1, 120);
+    completeNextSet();
+    expect(pendingReads().length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save workout" })
+    );
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() =>
+      expect(readDoc(path)).toMatchObject({
+        revision: 4,
+        invalidated: true,
+        map: storedMap,
+      })
+    );
+    await releaseHistory();
+  });
+
+  it("keeps the original map stale when history arrives during the Finish save", async () => {
+    seedBaseline();
+    deferReads();
+    let resolveSave!: (saved: LiftCompletionReceipt) => void;
+    const complete = vi.fn<CompleteDay>(
+      () =>
+        new Promise<LiftCompletionReceipt>((resolve) => {
+          resolveSave = resolve;
+        })
+    );
+    openSession(complete);
+    setWeight(1, 120);
+    completeNextSet();
+    fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save workout" })
+    );
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    // History finishes after Finish captured its inputs but before the
+    // writer returns. It must not authorize committing that stale map.
+    await releaseHistory();
+    expect(
+      await screen.findByRole("heading", { name: /New bests/ })
+    ).toBeInTheDocument();
+    expect(readDoc(path)).toMatchObject({ revision: 3, invalidated: false });
+    await act(async () => resolveSave(receipt()));
+    await vi.waitFor(() =>
+      expect(readDoc(path)).toMatchObject({
+        revision: 4,
+        invalidated: true,
+      })
+    );
+    expect(readDoc(path)?.map).toEqual(storedMap);
   });
 });

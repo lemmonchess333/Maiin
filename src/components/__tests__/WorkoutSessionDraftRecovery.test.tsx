@@ -23,6 +23,8 @@ import {
   resetFirestore,
   readDoc,
   seedFirestore,
+  failNextFirestore,
+  allPaths,
 } from "@/test/firestoreHarness";
 
 const h = vi.hoisted(() => ({
@@ -88,6 +90,11 @@ import { completeLift } from "@/lib/liftCompletion";
 import { listWorkoutDrafts } from "@/hooks/useWorkoutDraft";
 import { resumableWorkout, routineInProgress } from "@/lib/sessionsInFlight";
 import { sessionDayContext } from "@/features/program/sessionDay";
+import {
+  flushQueue,
+  getQueueLength,
+  getFailedWorkoutCompletionCount,
+} from "@/lib/offlineQueue";
 
 const day: ComponentProps<typeof WorkoutSession>["day"] = {
   dayName: "Audit strength",
@@ -190,6 +197,68 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+it("can retry a failed online empty workout after leaving its finish screen", async () => {
+  const complete: ComponentProps<
+    typeof WorkoutSession
+  >["onCompleteDay"] = async (_index, done) =>
+    completeLift({
+      uid: h.user.uid,
+      author: {},
+      source: "free",
+      completionId: done.completionId,
+      startedAt: done.startedAt,
+      ran: done.prescription?.exercises ?? day.exercises,
+      setLogs: done.setLogs,
+      exerciseNotes: done.exerciseNotes,
+      durationMinutes: done.durationMinutes,
+      bodyweightKg: 80,
+      title: "Workout",
+      notes: "Workout",
+    });
+  const view = await open({
+    draftScope: "empty:failed-free-session",
+    dayIndex: -2,
+    onCompleteDay: complete,
+  });
+  expect(navigator.onLine).toBe(true);
+  failNextFirestore("commit", { code: "unavailable" });
+  for (let i = 0; i < 3; i++)
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+  const save = await screen.findByRole("button", { name: "Save workout" });
+  await act(async () => {
+    fireEvent.click(save);
+  });
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Retry sync" })).toBeVisible()
+  );
+  const retained = draft();
+  expect(retained.completionPending).toBe(true);
+  expect(getQueueLength(h.user.uid)).toBe(1);
+  expect(getFailedWorkoutCompletionCount(h.user.uid)).toBe(1);
+  view.unmount();
+  // Global retry needs no old URL or mutable plan/routine reconstruction.
+  await act(async () => {
+    await flushQueue({} as never, h.user.uid);
+  });
+  expect(
+    readDoc(`users/${h.user.uid}/workouts/free-${retained.completionId}`)
+  ).toMatchObject({
+    source: "free",
+    completionId: retained.completionId,
+    notes: "Workout",
+    exercises: [{ sets: [{ reps: 8 }, { reps: 8 }, { reps: 8 }] }],
+  });
+  expect(getQueueLength(h.user.uid)).toBe(0);
+  expect(readDoc(`users/${h.user.uid}/stats/prMap`)?.invalidated).toBe(true);
+  expect(draft()).toBeNull();
+  await flushQueue({} as never, h.user.uid);
+  expect(allPaths().filter((path) => path.includes("/workouts/"))).toHaveLength(
+    1
+  );
 });
 
 it("requires an explicit recovery choice and safely leaves the workout on modal dismissal", async () => {
