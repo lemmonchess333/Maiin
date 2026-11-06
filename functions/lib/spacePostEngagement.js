@@ -1,3 +1,4 @@
+const { isBlockedBetweenInTransaction } = require("./blockGuard");
 const { assertTransactionAccountsLive } = require("./deletionTransactionGuard");
 /**
  * Space-post engagement (SOC-P2c) — the server-owned like ("props")
@@ -33,6 +34,14 @@ const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
 const { refusedAddError } = require("./restriction");
 const { MAX_COMMENT_LENGTH } = require("./commentLimit");
 
+async function assertNoPostBlock(tx, firestore, authorId, uid) {
+  if (await isBlockedBetweenInTransaction(tx, firestore, authorId, uid)) {
+    const err = new Error("Post unavailable.");
+    err.code = POST_NOT_ACCESSIBLE;
+    throw err;
+  }
+}
+
 async function toggleSpacePostLike({
   firestore,
   uid,
@@ -63,6 +72,7 @@ async function toggleSpacePostLike({
       throw err;
     }
     await assertTransactionAccountsLive({ firestore, tx: txn, uids: [uid, postSnap.data().authorId] });
+    await assertNoPostBlock(txn, firestore, postSnap.data().authorId, uid);
     const likeSnap = await txn.get(likeRef);
     if (likeSnap.exists) {
       txn.delete(likeRef);
@@ -128,6 +138,7 @@ async function addSpacePostComment({
       throw err;
     }
     postAuthorId = postSnap.data().authorId;
+    await assertNoPostBlock(txn, firestore, postAuthorId, uid);
     const data = {
       authorId: uid,
       authorName: name,

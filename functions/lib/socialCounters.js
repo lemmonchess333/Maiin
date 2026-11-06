@@ -285,6 +285,8 @@ async function deleteComment({
       firestore,
       activityRef,
       uid,
+      // Taking down your own comment remains possible after blocking.
+      allowBlockedRemoval: true,
     });
 
     const commentSnap = await txn.get(commentRef);

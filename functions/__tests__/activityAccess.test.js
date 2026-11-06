@@ -24,6 +24,9 @@ function makeCtx(activity, followers = new Set()) {
       if (name === "accountDeletionRequests" || name === "deletedAccounts") {
         return { doc: () => ({ _kind: "absent" }) };
       }
+      if (name === "blocks") {
+        return { doc: () => ({ collection: () => ({ doc: () => ({ _kind: "absent" }) }) }) };
+      }
       expect(name).toBe("followers");
       return {
         doc: (authorId) => ({

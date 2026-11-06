@@ -16,7 +16,9 @@
 
 const {
   assertCanInteractWithActivity,
+  notAccessible,
 } = require("./activityAccess");
+const { isBlockedBetweenInTransaction } = require("./blockGuard");
 const { refusedAddError } = require("./restriction");
 
 /** The reactions there are. The app offers COMMENT_REACTIONS
@@ -69,6 +71,9 @@ async function toggleCommentReaction({
     const snap = await tx.get(ref);
     if (!snap.exists) throw new Error("comment-not-found");
     const data = snap.data() || {};
+    if (await isBlockedBetweenInTransaction(tx, firestore, data.authorId, uid)) {
+      throw notAccessible();
+    }
     const current =
       data.reactions && Array.isArray(data.reactions[reaction])
         ? data.reactions[reaction]
