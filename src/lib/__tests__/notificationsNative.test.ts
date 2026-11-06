@@ -29,6 +29,8 @@ import {
   scheduleNotification,
 } from "../notifications";
 
+import { subscribeNotificationScheduleChanges } from "../notificationScheduleEvents";
+
 beforeEach(() => {
   vi.clearAllMocks();
   plugin.checkPermissions.mockResolvedValue({ display: "granted" });
@@ -107,4 +109,28 @@ describe("scheduling and cancelling", () => {
     plugin.getPending.mockRejectedValueOnce(new Error("x"));
     await expect(cancelAllNotifications()).resolves.toBeUndefined();
   });
+});
+
+it("refreshes observers only once the native schedule operation settles", async () => {
+  let finish!: (result: { notifications: never[] }) => void;
+  plugin.schedule.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+  );
+  const changed = vi.fn();
+  const stop = subscribeNotificationScheduleChanges(changed);
+  try {
+    const pending = scheduleNotification({ id: 7, title: "Lunch", body: "" });
+    await vi.waitFor(() => expect(plugin.schedule).toHaveBeenCalled());
+    expect(changed).not.toHaveBeenCalled();
+    finish({ notifications: [] });
+    await pending;
+    expect(changed).toHaveBeenCalledTimes(1);
+    await cancelNotification(7);
+    expect(changed).toHaveBeenCalledTimes(2);
+  } finally {
+    stop();
+  }
 });

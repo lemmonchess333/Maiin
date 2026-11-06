@@ -119,6 +119,7 @@ describe("safeSearch", () => {
 describe("screenStoredPhoto", () => {
   const bucketWith = () => {
     const file = {
+      getMetadata: vi.fn(async () => [{ generation: "1700000000000001" }]),
       download: vi.fn(async () => [Buffer.from("jpeg")]),
       delete: vi.fn(async () => undefined),
     };
@@ -136,8 +137,13 @@ describe("screenStoredPhoto", () => {
       }),
     });
     expect(result).toEqual({ refused: true, adult: "VERY_LIKELY" });
-    expect(bucket.file).toHaveBeenCalledWith("space-photos/u1/1.jpg");
-    expect(file.delete).toHaveBeenCalledWith({ ignoreNotFound: true });
+    expect(bucket.file).toHaveBeenLastCalledWith("space-photos/u1/1.jpg", {
+      generation: "1700000000000001",
+      preconditionOpts: { ifGenerationMatch: "1700000000000001" },
+    });
+    expect(file.delete).toHaveBeenCalledWith({
+      ignoreNotFound: true,
+    });
   });
 
   it("keeps a photo that passes", async () => {
@@ -153,4 +159,91 @@ describe("screenStoredPhoto", () => {
     expect(result.refused).toBe(false);
     expect(file.delete).not.toHaveBeenCalled();
   });
+
+  it("uses the finalize event's generation without resolving a newer object", async () => {
+    const { file, bucket } = bucketWith();
+    await screenStoredPhoto({
+      bucket,
+      path: "profile-photos/u1/a.jpg",
+      generation: "123",
+      accessToken: "t",
+      fetchImpl: visionAnswer({
+        responses: [{ safeSearchAnnotation: annotation("LIKELY") }],
+      }),
+    });
+    expect(file.getMetadata).not.toHaveBeenCalled();
+    expect(bucket.file).toHaveBeenCalledExactlyOnceWith(
+      "profile-photos/u1/a.jpg",
+      { generation: "123", preconditionOpts: { ifGenerationMatch: "123" } }
+    );
+    expect(file.delete).toHaveBeenCalledWith({
+      ignoreNotFound: true,
+    });
+  });
+
+  it("cannot delete a newer replacement while Vision checks the old bytes", async () => {
+    let current = "123";
+    const deleted = [];
+    const bucket = {
+      file: vi.fn((_path, options) => ({
+        getMetadata: async () => [{ generation: current }],
+        download: async () => [Buffer.from(options.generation)],
+        delete: async (conditions) => {
+          expect(conditions.ignoreNotFound).toBe(true);
+          expect(options.preconditionOpts.ifGenerationMatch).toBe(
+            options.generation
+          );
+          deleted.push(options.generation);
+        },
+      })),
+    };
+    await screenStoredPhoto({
+      bucket,
+      path: "profile-photos/u1/a.jpg",
+      accessToken: "t",
+      fetchImpl: async (_url, request) => {
+        expect(JSON.parse(request.body).requests[0].image.content).toBe(
+          Buffer.from("123").toString("base64")
+        );
+        current = "124";
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            responses: [{ safeSearchAnnotation: annotation("LIKELY") }],
+          }),
+        };
+      },
+    });
+    expect(deleted).toEqual(["123"]);
+    expect(current).toBe("124");
+  });
+
+  it.each([
+    undefined,
+    null,
+    "",
+    "not-a-generation",
+    123,
+    "0",
+    "9007199254740993",
+  ])(
+    "fails closed for missing or malformed metadata generation %s",
+    async (generation) => {
+      const { file, bucket } = bucketWith();
+      file.getMetadata.mockResolvedValue([{ generation }]);
+      const fetchImpl = vi.fn();
+      await expect(
+        screenStoredPhoto({
+          bucket,
+          path: "profile-photos/u1/a.jpg",
+          accessToken: "t",
+          fetchImpl,
+        })
+      ).rejects.toThrow("Photo generation unavailable");
+      expect(file.download).not.toHaveBeenCalled();
+      expect(fetchImpl).not.toHaveBeenCalled();
+      expect(file.delete).not.toHaveBeenCalled();
+    }
+  );
 });

@@ -1,5 +1,6 @@
 import { doc, runTransaction, type Firestore } from "firebase/firestore";
 import { stripUndefined } from "./firestoreGuards";
+import { invalidateLiftRecords } from "./liftRecordsCache";
 import type { SessionProgression } from "@/features/program/sessionCompletion";
 import type { ProgramState, WorkoutDay } from "@/features/program/programTypes";
 import { sameStoredValue } from "@/features/program/stateTransition";
@@ -179,13 +180,16 @@ export function workoutCompletionDayIdentity(day: unknown): string | null {
 }
 
 /** One transaction for foreground saves and durable replay. Existing sessions
- * are receipts, never replacement writes; another week's plan is left intact. */
+ * are receipts, never replacement writes; another week's plan is left intact.
+ * Replay invalidates records in this same commit because the finish screen
+ * that would update them may no longer exist. */
 export async function commitWorkoutCompletion(
   db: Firestore,
   uid: string,
   workoutId: string,
   data: Record<string, unknown>,
-  completion?: ProgrammeCompletionContext
+  completion?: ProgrammeCompletionContext,
+  options: { invalidateRecords?: boolean } = {}
 ): Promise<ProgramState | null> {
   const { auth } = await import("./firebase");
   const assertOwner = () => {
@@ -198,7 +202,10 @@ export async function commitWorkoutCompletion(
   return runTransaction(db, async (transaction) => {
     const existing = await transaction.get(workoutRef);
     assertOwner();
-    if (existing.exists()) return null;
+    if (existing.exists()) {
+      if (options.invalidateRecords) invalidateLiftRecords(transaction, uid);
+      return null;
+    }
     let next: ProgramState | null = null;
     let programmeCompletion: SavedProgrammeCompletion | undefined;
     if (completion) {
@@ -255,6 +262,7 @@ export async function commitWorkoutCompletion(
         ...(programmeCompletion ? { programmeCompletion } : {}),
       })
     );
+    if (options.invalidateRecords) invalidateLiftRecords(transaction, uid);
     return next;
   });
 }

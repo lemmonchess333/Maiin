@@ -149,7 +149,9 @@ export default function PeriodSummaryCard({
   };
   const chartName =
     metric === "volume"
-      ? "Kilograms lifted"
+      ? liftUnit === "lbs"
+        ? "Pounds lifted"
+        : "Kilograms lifted"
       : metric === "distance"
         ? "Distance run"
         : "Sessions";

@@ -610,6 +610,21 @@ describe("useGPS — standing still is not a weak signal", () => {
   });
   afterEach(() => vi.useRealTimers());
 
+  it("refreshes stationary live speed without adding jitter distance", () => {
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.start());
+    act(() => h.watchOnFix?.(geoPos(north(0), -0.12, 5, Date.now(), 3)));
+    vi.setSystemTime(T0 + 1000);
+    act(() => h.watchOnFix?.(geoPos(north(0.3), -0.12, 5, Date.now(), 0)));
+    expect(result.current.currentPoint).toMatchObject({
+      speed: 0,
+      timestamp: T0 + 1000,
+    });
+    expect(result.current.points).toHaveLength(1);
+    expect(result.current.distance).toBe(0);
+    expect(result.current.getRejectedFixCount()).toBe(0);
+  });
+
   it("adds nothing for a fix that has not moved, and counts it as no fault", () => {
     const { result } = renderHook(() => useGPS());
     act(() => result.current.start());

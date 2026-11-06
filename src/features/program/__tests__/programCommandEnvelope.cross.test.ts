@@ -129,3 +129,12 @@ describe("programme command envelope — client send ↔ server unwrap", () => {
     ).toThrow(/programme command object is required/i);
   });
 });
+
+
+it("an account-bound send preserves the command and its original owner", async () => {
+  const { sendProgramCommand } = await import("../programCommandClient");
+  await sendProgramCommand(SKIP_WORKOUT_DAY_COMMAND, "alice");
+  expect(captured).toEqual([{ command: SKIP_WORKOUT_DAY_COMMAND, expectedUid: "alice" }]);
+  expect(programCommands.assertClientProgramCommand(serverUnwrap(captured[0])).kind)
+    .toBe("skipWorkoutDay");
+});

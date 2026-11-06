@@ -162,3 +162,83 @@ describe("body inputs before the user has answered", () => {
     expect(valid).toHaveBeenLastCalledWith(false);
   });
 });
+
+describe("unit correction recovery", () => {
+  it.each(["", "5"])(
+    "allows correcting height %j to feet without accepting a stale value",
+    (text) => {
+      const { valid, answeredSpy } = setup();
+      fireEvent.change(screen.getByLabelText("Height (cm)"), {
+        target: { value: text },
+      });
+      expect(screen.getByRole("radio", { name: "ft / in" })).toBeEnabled();
+      fireEvent.click(screen.getByRole("radio", { name: "ft / in" }));
+      expect(screen.getByLabelText("Height (ft)")).toHaveValue("");
+      expect(screen.getByLabelText("Inches")).toHaveValue("");
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(valid).toHaveBeenLastCalledWith(false);
+      expect(answeredSpy).toHaveBeenLastCalledWith(false);
+      fireEvent.change(screen.getByLabelText("Height (ft)"), {
+        target: { value: "5" },
+      });
+      fireEvent.change(screen.getByLabelText("Inches"), {
+        target: { value: "9" },
+      });
+      expect(valid).toHaveBeenLastCalledWith(true);
+    }
+  );
+
+  it.each(["", "5"])(
+    "allows correcting weight %j without accepting a stale value",
+    (text) => {
+      const { valid, answeredSpy, changed } = setup();
+      fireEvent.change(screen.getByLabelText("Weight (lb)"), {
+        target: { value: text },
+      });
+      expect(screen.getByRole("radio", { name: "st" })).toBeEnabled();
+      fireEvent.click(screen.getByRole("radio", { name: "st" }));
+      expect(screen.getByLabelText("Weight (st)")).toHaveValue("");
+      expect(screen.getByLabelText("Pounds")).toHaveValue("");
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(valid).toHaveBeenLastCalledWith(false);
+      expect(answeredSpy).toHaveBeenLastCalledWith(false);
+      expect(changed).not.toHaveBeenCalled();
+      fireEvent.change(screen.getByLabelText("Weight (st)"), {
+        target: { value: "12" },
+      });
+      fireEvent.change(screen.getByLabelText("Pounds"), {
+        target: { value: "0" },
+      });
+      expect(valid).toHaveBeenLastCalledWith(true);
+    }
+  );
+
+  it("associates compound measurement errors with both fields", () => {
+    setup();
+    fireEvent.click(screen.getByRole("radio", { name: "st" }));
+    fireEvent.change(screen.getByLabelText("Pounds"), {
+      target: { value: "14" },
+    });
+    const weightError = screen.getByRole("alert");
+    expect(weightError.id).toBeTruthy();
+    for (const label of ["Weight (st)", "Pounds"]) {
+      expect(screen.getByLabelText(label)).toHaveAttribute(
+        "aria-describedby",
+        weightError.id
+      );
+    }
+    fireEvent.click(screen.getByRole("radio", { name: "kg" }));
+    fireEvent.click(screen.getByRole("radio", { name: "ft / in" }));
+    fireEvent.change(screen.getByLabelText("Inches"), {
+      target: { value: "12" },
+    });
+    const heightError = screen.getByRole("alert");
+    expect(heightError.id).toBeTruthy();
+    for (const label of ["Height (ft)", "Inches"]) {
+      expect(screen.getByLabelText(label)).toHaveAttribute(
+        "aria-describedby",
+        heightError.id
+      );
+    }
+  });
+});

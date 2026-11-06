@@ -1689,3 +1689,39 @@ describe("Lose fat and the goal weight", () => {
     expect(complete.mock.calls[0][0].profileData.weeklyRateKg).toBe(0);
   });
 });
+
+describe("body answers through interruptions", () => {
+  it.each(["Back", "restart"])(
+    "does not turn an invalid weight into a confirmed draft after %s",
+    (way) => {
+      saveOnboardingDraft("setup-test", {
+        ...draft,
+        step: 5,
+        weightKg: 75,
+        bodyAnswered: false,
+        ageConfirmed: true,
+      });
+      open();
+      fireEvent.change(screen.getByRole("textbox", { name: "Weight (kg)" }), {
+        target: { value: "999" },
+      });
+      fireEvent.change(screen.getByRole("textbox", { name: "Height (cm)" }), {
+        target: { value: "180" },
+      });
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+      expect(loadOnboardingDraft("setup-test", 7)?.bodyAnswered).toBe(false);
+      if (way === "restart") {
+        cleanup();
+        open();
+      } else {
+        fireEvent.click(screen.getByRole("button", { name: "Back" }));
+        fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      }
+      expect(screen.getByRole("textbox", { name: "Weight (kg)" })).toHaveValue(
+        ""
+      );
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+      expect(complete).not.toHaveBeenCalled();
+    }
+  );
+});

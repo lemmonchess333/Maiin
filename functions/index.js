@@ -1400,6 +1400,15 @@ exports.applyProgramCommand = functions
       throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }
     const uid = context.auth.uid;
+    // A callable obtains its token asynchronously on the client. A queued
+    // command must never execute under an account switched in during that
+    // await. Older clients have no expectedUid and keep their bare payload.
+    if (data && Object.prototype.hasOwnProperty.call(data, "expectedUid") &&
+        data.expectedUid !== uid) {
+      throw new functions.https.HttpsError(
+        "cancelled", "Programme command belongs to another account."
+      );
+    }
     const firestore = admin.firestore();
 
     // R1A-Deletion: callable-actor lock OUTSIDE the try so its structured
@@ -1419,9 +1428,8 @@ exports.applyProgramCommand = functions
     }
 
     try {
-      // The callable payload IS the command — every shipped client sends it
-      // bare (`programCommandClient.ts`: `call(command)`), matching the
-      // sibling callables (configurePlan destructures straight off `data`).
+      // Older clients send the command bare. Account-bound clients wrap it
+      // with expectedUid, checked above before any server state is touched.
       //
       // This read was `data && data.command` from the day the boundary landed
       // (314f9c61), so `data.command` was ALWAYS undefined and every programme
@@ -6817,6 +6825,7 @@ exports.screenUploadedPhoto = functions
       const { refused, adult } = await photoScreen.screenStoredPhoto({
         bucket: admin.storage().bucket(object.bucket),
         path,
+        generation: object.generation,
         accessToken: accessToken.access_token,
       });
       if (refused)

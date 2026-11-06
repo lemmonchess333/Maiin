@@ -3,6 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Firestore } from "firebase/firestore";
 import {
   allPaths,
+  deferReads,
+  pendingReads,
+  releaseAllReads,
+  resumeReads,
   failNextFirestore,
   readDoc,
   resetFirestore,
@@ -40,6 +44,12 @@ import {
   type FinishedLift,
 } from "../liftCompletion";
 import { estimateLiftBurn } from "../workoutBurn";
+import {
+  flushQueue,
+  getFailedWorkoutCompletionCount,
+  getQueueLength,
+  hasQueuedWorkoutCompletion,
+} from "../offlineQueue";
 
 const exercise = (extra: Partial<ProgramExercise>): ProgramExercise =>
   ({
@@ -332,10 +342,64 @@ describe("completeLift", () => {
     });
   });
 
-  it("throws when the save fails, and leaves nothing behind", async () => {
-    failNextFirestore("commit");
+  it("retains a failed online save for the global retry after its screen closes", async () => {
+    failNextFirestore("commit", { code: "unavailable" });
     await expect(completeLift(routineLift())).rejects.toThrow();
     expect(allPaths()).toEqual([]);
+    expect(getQueueLength("lifter")).toBe(1);
+    expect(getFailedWorkoutCompletionCount("lifter")).toBe(1);
+    await flushQueue({} as Firestore, "lifter");
+    expect(readDoc("users/lifter/workouts/routine-c1")).toMatchObject({
+      date: localDateString(STARTED),
+      durationMinutes: 41,
+      notes: "Routine: Bench day (saved from Sam)",
+    });
+    expect(getQueueLength("lifter")).toBe(0);
+    await flushQueue({} as Firestore, "lifter");
+    expect(
+      allPaths().filter((path) => path.includes("/workouts/"))
+    ).toHaveLength(1);
+  });
+
+  it("retains the exact payload before an online transaction can finish", async () => {
+    deferReads();
+    const saving = completeLift(routineLift());
+    await vi.waitFor(() => expect(pendingReads().length).toBeGreaterThan(0));
+    expect(hasQueuedWorkoutCompletion("lifter", "routine-c1")).toBe(true);
+    expect(readDoc("users/lifter/workouts/routine-c1")).toBeUndefined();
+    resumeReads();
+    releaseAllReads();
+    await expect(saving).resolves.toMatchObject({ syncStatus: "synced" });
+    expect(getQueueLength("lifter")).toBe(0);
+  });
+
+  it("still saves online when the browser refuses recovery storage", async () => {
+    const storage = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("Storage is full", "QuotaExceededError");
+      });
+    try {
+      await expect(completeLift(routineLift())).resolves.toMatchObject({
+        syncStatus: "synced",
+      });
+      expect(readDoc("users/lifter/workouts/routine-c1")).toBeDefined();
+    } finally {
+      storage.mockRestore();
+    }
+  });
+
+  it("keeps a failed online completion scoped to its original account", async () => {
+    failNextFirestore("commit", { code: "unavailable" });
+    await expect(completeLift(routineLift())).rejects.toThrow();
+    h.user = { uid: "other-account" };
+    await flushQueue({} as Firestore, "other-account");
+    expect(allPaths()).toEqual([]);
+    expect(getFailedWorkoutCompletionCount("other-account")).toBe(0);
+    expect(getFailedWorkoutCompletionCount("lifter")).toBe(1);
+    h.user = { uid: "lifter" };
+    await flushQueue({} as Firestore, "lifter");
+    expect(readDoc("users/lifter/workouts/routine-c1")).toBeDefined();
   });
 
   it("queues nothing for an account no longer signed in, offline too", async () => {

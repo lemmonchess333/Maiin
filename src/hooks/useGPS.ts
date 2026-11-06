@@ -350,7 +350,11 @@ export function useGPS(elapsedSeconds = 0) {
         if (verdict !== "ok") {
           // A fix that has not moved is not a bad one: route quality reads
           // this count, and a runner standing at a crossing has a signal.
-          if (verdict !== "still") rejectedFixCountRef.current += 1;
+          if (verdict === "still") {
+            // The route must not accumulate jitter, but auto-pause needs the
+            // current speed, not the speed of the last point that moved.
+            setState((s) => ({ ...s, currentPoint: makePoint(false) }));
+          } else rejectedFixCountRef.current += 1;
           return;
         }
         const point = makePoint(true);

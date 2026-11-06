@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import PeriodSummaryCard, { type SummaryFigure } from "../PeriodSummaryCard";
+import { LiftUnitContext } from "@/hooks/useLiftUnit";
 import type { SummaryBin } from "@/lib/periodSummary";
 
 /**
@@ -393,4 +394,26 @@ describe("an account younger than the range", () => {
     expect(screen.queryByText(/Compared with/)).toBeNull();
     expect(screen.queryByText("↑", { exact: false })).toBeNull();
   });
+});
+
+it("announces the volume chart in pounds for a pounds preference", () => {
+  render(
+    <LiftUnitContext value="lbs">
+      <PeriodSummaryCard
+        title="Last 30 days"
+        comparedWith="the 30 days before"
+        figures={FIGURES.map((f) =>
+          f.metric === "volume" ? { ...f, unit: "lb lifted" } : f
+        )}
+        bins={WEEKS}
+        granularity="weekly"
+        plannedThisWeek={0}
+        distanceUnit="km"
+      />
+    </LiftUnitContext>
+  );
+  fireEvent.click(screen.getByRole("radio", { name: /lb lifted/ }));
+  const chart = screen.getByRole("img");
+  expect(chart.getAttribute("aria-label")).toMatch(/^Pounds lifted: /);
+  expect(chart.getAttribute("aria-label")).not.toContain("kg");
 });

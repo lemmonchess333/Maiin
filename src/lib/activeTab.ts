@@ -25,9 +25,16 @@ export function activeTabForPath(pathname: string): TabPath | null {
   if (p === "/program" || p.startsWith("/program/")) return "/program";
   // Analytics owns History + the per-exercise history drill-down.
   if (p === "/history" || p.startsWith("/history/")) return "/history";
-  // Social owns the feed/people surface plus the destinations reached
-  // from it: other users' profiles (/user/:uid).
-  if (p === "/social" || p.startsWith("/social/") || p.startsWith("/user/"))
+  // Social owns profiles, the weekly league, and community/race spaces
+  // (including their posts). A space still belongs to Social when opened
+  // from a training-plan card rather than the Together directory.
+  if (
+    p === "/social" ||
+    p.startsWith("/social/") ||
+    p.startsWith("/user/") ||
+    p === "/league" ||
+    p.startsWith("/space/")
+  )
     return "/social";
 
   // Everything else has no tab home — settings/*, /upgrade, /run, /run/:id,

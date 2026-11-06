@@ -839,6 +839,25 @@ describe("a run-walk's announcements", () => {
 });
 
 describe("the trace's clock follows the run's", () => {
+  it("requires fresh motion evidence when the auto-pause timer fires", async () => {
+    const { view } = await resumeFromSnapshot("active");
+    h.gps.currentPoint = { ...point(3, Date.now()), speed: 0 };
+    view.rerender(tree());
+    act(() => vi.advanceTimersByTime(5000));
+    expect(h.timer.isRunning).toBe(true);
+    expect(h.timerPause).not.toHaveBeenCalled();
+  });
+
+  it("requires accurate motion evidence before auto-pausing", async () => {
+    const { view } = await resumeFromSnapshot("active");
+    for (let s = 0; s < 6; s++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 0, accuracy: 150 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timer.isRunning).toBe(true);
+    expect(h.timerPause).not.toHaveBeenCalled();
+  });
   it("holds a restored moving run's trace from its last write, then releases it", async () => {
     /* Nothing was recorded while the app was gone, and the timer leaves
        that time out. The trace must too, from the same moment — or the
@@ -858,9 +877,11 @@ describe("the trace's clock follows the run's", () => {
 
   it("restores an actual auto-paused snapshot as paused until an explicit Resume", async () => {
     const { view } = await resumeFromSnapshot("active");
-    h.gps.currentPoint = { ...point(3, T0), speed: 0 };
-    view.rerender(tree());
-    act(() => vi.advanceTimersByTime(5000));
+    for (let second = 0; second < 5; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 0 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
     expect(
       screen.getByText(/Auto-paused · start moving to resume/)
     ).toBeInTheDocument();
@@ -938,11 +959,11 @@ describe("the trace's clock follows the run's", () => {
     h.gpsCalls.length = 0;
 
     // Standing at a crossing: auto-pause stops the timer after 5 s.
-    h.gps.currentPoint = { ...point(3, T0), speed: 0 };
-    view.rerender(tree());
-    act(() => {
-      vi.advanceTimersByTime(5000);
-    });
+    for (let second = 0; second < 5; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 0 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
     expect(h.timerPause).toHaveBeenCalledTimes(1);
     expect(h.gpsCalls).toEqual(["pause"]);
 

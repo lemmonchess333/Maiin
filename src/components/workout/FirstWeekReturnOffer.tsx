@@ -57,6 +57,7 @@ export default function FirstWeekReturnOffer({
     day >= 1 &&
     day <= FIRST_WEEK_DAYS &&
     !reminders.loading &&
+    !reminders.failed &&
     !reminders.reminders.enabled &&
     !!preview &&
     !choice.loading &&
