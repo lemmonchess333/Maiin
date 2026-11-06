@@ -54,7 +54,8 @@ export function useDailyNutritionSnapshot(): void {
     // Target not usable yet (profile not set up) — nothing honest to snapshot.
     if (!snapshot) return;
 
-    const sig = snapshotSignature(snapshot);
+    // Dedupe belongs to the account as well as the day and targets.
+    const sig = `${user.uid}:${snapshotSignature(snapshot)}`;
     if (sig === lastSigRef.current) return;
     lastSigRef.current = sig;
 

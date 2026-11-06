@@ -161,3 +161,14 @@ it("writes the new local day's snapshot on resume even at identical targets", as
     targetCalories: 2400,
   });
 });
+
+it("records identical targets for a different account without a signed-out render", async () => {
+  const { rerender } = renderHook(() => useDailyNutritionSnapshot());
+  await Promise.resolve();
+  mockUser = { uid: "u2" };
+  rerender();
+  await Promise.resolve();
+  expect(readDoc(`users/u2/dailyNutrition/${localDateString()}`)).toMatchObject({
+    targetCalories: 2400,
+  });
+});

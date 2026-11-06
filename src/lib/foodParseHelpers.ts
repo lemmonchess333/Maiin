@@ -88,19 +88,24 @@ export function safeNum(val: unknown): number {
 export function parseServingGrams(servingSize?: string): number | null {
   if (!servingSize) return null;
   // A count of a weight, "2 x 25g": the serving is both. Read as the first
-  // weight it found, it logged half the pack at high confidence.
+  // weight it found, it logged half the pack at high confidence. Read
+  // fractional counts in full too: "0.5 x 100g" is 50 g, not 500 g.
+  // Keep the sign so invalid negative quantities cannot become positive.
   const counted = servingSize.match(
-    /(\d+)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*(?:gram\p{L}*|gr|g)(?!\p{L})/iu
+    /([+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+))\s*[x×]\s*([+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+))\s*(?:gram\p{L}*|gr|g)(?!\p{L})/iu
   );
   if (counted) {
-    const grams = Number(counted[1]) * Number(counted[2].replace(",", "."));
+    const count = Number(counted[1].replace(",", "."));
+    const weight = Number(counted[2].replace(",", "."));
+    if (count <= 0 || weight <= 0) return null;
+    const grams = count * weight;
     return Number.isFinite(grams) && grams > 0 ? grams : null;
   }
   // The unit is "g", "gr" or a spelled-out gram word, and no letter may
   // follow it: "2 granola bars (42 g)" is 42 g, not the "2 g" of
   // "granola", and "1 glass (250 ml)" has no gram serving at all.
   const m = servingSize.match(
-    /(\d+(?:[.,]\d+)?)\s*(?:gram\p{L}*|gr|g)(?!\p{L})/iu
+    /([+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+))\s*(?:gram\p{L}*|gr|g)(?!\p{L})/iu
   );
   if (!m) return null;
   const grams = Number(m[1].replace(",", "."));

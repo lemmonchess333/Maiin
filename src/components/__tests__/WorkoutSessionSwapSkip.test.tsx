@@ -3,7 +3,7 @@
  * Finish asks about a swap (Lift4 (11)), through the real session screen.
  * What the plan does with the answer is `sessionSwapCompletion.test.ts`'s.
  */
-import { resetFirestore } from "@/test/firestoreHarness";
+import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
 vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
 vi.mock("@/components/workout/SessionShareRow", () => ({
   default: () => null,
@@ -15,12 +15,13 @@ import type { ComponentProps } from "react";
 import type { LiftCompletionReceipt } from "@/lib/liftCompletion";
 
 const h = vi.hoisted(() => ({
+  user: null as { uid: string } | null,
   load: vi.fn(() => null),
   save: vi.fn(),
   clear: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ user: null, profile: null }),
+  useAuth: () => ({ user: h.user, profile: null }),
   useUidForStorageKey: () => "test",
 }));
 vi.mock("@/lib/firebase", () => ({
@@ -131,6 +132,10 @@ function openSession() {
           }),
         ],
       }}
+      planLifts={[
+        { exerciseId: "bench-press", instanceId: "bench-1" },
+        { exerciseId: "bench-press", instanceId: "bench-light" },
+      ]}
       dayIndex={0}
       onCompleteDay={complete}
       onClose={vi.fn()}
@@ -170,6 +175,7 @@ function completeCurrent() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.user = null;
   h.save.mockReturnValue(true);
   resetFirestore();
   vi.stubGlobal(
@@ -296,6 +302,66 @@ describe("Swap for today", () => {
     await choose(/^Back to Bench Press/);
     expect(heading()).toBe("Bench Press");
   });
+
+  it.each([
+    { own: 50, other: 30 },
+    { own: 30, other: 50 },
+  ])(
+    "restores its $own kg slot after swapping back, not the $other kg day",
+    async ({ own, other }) => {
+      h.user = { uid: "slot-user" };
+      const session = (
+        slot: string,
+        date: string,
+        weight: number,
+        reps: number
+      ) => ({
+        date,
+        exercises: [
+          {
+            exerciseId: "bench-press",
+            exerciseName: "Bench Press",
+            sets: [
+              { weightKg: weight, reps },
+              { weightKg: weight - 5, reps },
+            ],
+          },
+        ],
+        programmeCompletion: {
+          context: {
+            progression: {
+              prescription: {
+                exercises: [{ exerciseId: "bench-press", instanceId: slot }],
+              },
+            },
+          },
+        },
+      });
+      seedFirestore({
+        "users/slot-user/workouts/light": session(
+          "bench-light",
+          "2026-09-03",
+          other,
+          12
+        ),
+        "users/slot-user/workouts/heavy": session(
+          "bench-1",
+          "2026-09-01",
+          own,
+          8
+        ),
+      });
+      openSession();
+      await vi.waitFor(() =>
+        expect(screen.getByLabelText("Set 2 weight")).toHaveValue(own - 5)
+      );
+      await swapBench();
+      await menu("Dumbbell Bench Press");
+      await choose(/^Back to Bench Press/);
+      expect(screen.getByLabelText("Set 2 weight")).toHaveValue(own - 5);
+      expect(screen.getByLabelText("Set 2 reps")).toHaveValue(8);
+    }
+  );
 
   it("is offered only before a set of the exercise is done", async () => {
     openSession();
