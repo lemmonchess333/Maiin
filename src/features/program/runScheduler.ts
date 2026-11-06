@@ -1731,7 +1731,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         // it because there is no base to sharpen. Harder does NOT add
         // taper work — taper is about arriving fresh. The easy days take
         // the medium-long first, stepped down (Run22), in the build's
-        // fill order (Run20).
+        // fill order (Run20). The fitted build must have held quality:
+        // lower taper volume can release a running-baseline fit, but that
+        // must not introduce intensity the build never prescribed.
         if (
           !compressed &&
           !gentler &&
@@ -1746,11 +1748,16 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             count: 1,
             weekSchedule: input.weekSchedule,
           });
+          // Keep the sharpener's slot and the other easy runs' fill order.
+          // The easy replacement is shorter than 8x400's 25 minutes:
+          // dropping into the all-easy branch instead lengthened this run
+          // to 30 minutes and could move the medium-long onto another day.
+          const heldQuality = taperBuild().heldQuality;
           week.push(
             buildRunDayV2({
               dayIndex: taperDay,
-              templateId: "8x400",
-              type: "intervals",
+              templateId: heldQuality ? "8x400" : "easy_20",
+              type: heldQuality ? "intervals" : "easy",
               weekStart,
             })
           );
@@ -1915,6 +1922,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     longestKm: number;
     easyMinutes: number;
     mediumLongMinutes: number;
+    heldQuality: boolean;
   };
   const minutesOf = (run: ScheduledRunDay) => {
     const template = RUN_TEMPLATES.find((t) => t.id === run.templateId);
@@ -1927,12 +1935,16 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       longestKm: 0,
       easyMinutes: lastBuildEasyMinutes,
       mediumLongMinutes: lastBuildMediumLongMinutes,
+      heldQuality: false,
     };
     const firstTaperWeek =
       blockWeeks - 1 - TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance];
     for (let k = 0; k < firstTaperWeek; k++) {
       const planned = blockWeekRuns(k);
       const week = fittedWeek(planned);
+      held.heldQuality ||= week.some(
+        (run) => run.type === "tempo" || run.type === "intervals"
+      );
       for (const run of week)
         if (run.type === "long")
           held.longestKm = Math.max(

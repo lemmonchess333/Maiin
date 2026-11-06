@@ -153,3 +153,30 @@ describe("useDeletedMeals", () => {
     expect(result.current.deletedMeals).toEqual([]);
   });
 });
+
+
+describe("useDeletedMeals account ownership", () => {
+  it.each([false, true])("hides prior meals on account switch (signed out first: %s)", async (signedOutFirst) => {
+    seedFirestore({
+      "users/u1/meals/private": meal({ foodName: "Private deleted meal", deletedAt: ago(MINUTE) }),
+      "users/u2/meals/own": meal({ foodName: "Own deleted meal", deletedAt: ago(MINUTE) }),
+    });
+    const renders: { ids: string[]; loading: boolean }[] = [];
+    const { result, rerender } = renderHook(({ uid }: { uid: string | null }) => {
+      const value = useDeletedMeals(uid);
+      renders.push({ ids: value.deletedMeals.map((item) => item.id), loading: value.loading });
+      return value;
+    }, { initialProps: { uid: "u1" as string | null } });
+    await waitFor(() => expect(result.current.deletedMeals.map((item) => item.id)).toEqual(["private"]));
+    if (signedOutFirst) {
+      rerender({ uid: null });
+      expect(result.current.deletedMeals).toEqual([]);
+      expect(result.current.loading).toBe(false);
+    }
+    renders.length = 0;
+    rerender({ uid: "u2" });
+    await waitFor(() => expect(result.current.deletedMeals.map((item) => item.id)).toEqual(["own"]));
+    expect(renders[0]).toEqual({ ids: [], loading: true });
+    expect(renders.every((value) => !value.ids.includes("private"))).toBe(true);
+  });
+});

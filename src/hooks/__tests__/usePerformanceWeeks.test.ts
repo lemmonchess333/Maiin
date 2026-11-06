@@ -6,16 +6,18 @@
  * daily documents that is only true if the hook steps back seven days.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
-vi.mock("@/lib/auth", () => ({ useUid: () => "u1" }));
+let currentUid: string | null = "u1";
+vi.mock("@/lib/auth", () => ({ useUid: () => currentUid }));
 vi.mock("@/lib/errorReporting", () => ({ captureError: vi.fn() }));
 
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import {
   flushSnapshots,
+  failNextFirestore,
   readLog,
   resetFirestore,
   seedFirestore,
@@ -53,7 +55,10 @@ function seedDaily(days: number) {
 }
 
 describe("usePerformanceWeeks with daily documents", () => {
-  beforeEach(() => resetFirestore());
+  beforeEach(() => {
+    resetFirestore();
+    currentUid = "u1";
+  });
 
   it("returns one score per week, newest last", async () => {
     seedDaily(40);
@@ -104,4 +109,108 @@ describe("usePerformanceWeeks with daily documents", () => {
     expect(result.current.currentWeek).toBeNull();
     expect(result.current.previousWeek).toBeNull();
   });
+});
+
+describe("performance data ownership", () => {
+  beforeEach(() => {
+    resetFirestore();
+    currentUid = "u1";
+  });
+
+  it("hides account A's scores on the first render as account B", async () => {
+    seedDaily(20);
+    seedFirestore({
+      "users/u2/performance/2026-09-27": {
+        ...perfDoc(0),
+        performanceIndex: 81,
+      },
+    });
+    const views: ReturnType<typeof usePerformanceWeeks>[] = [];
+    const { result, rerender } = renderHook(() => {
+      const value = usePerformanceWeeks(3);
+      views.push(value);
+      return value;
+    });
+    await flushSnapshots();
+    expect(result.current.currentWeek?.performanceIndex).toBe(40);
+    const nextRender = views.length;
+    currentUid = "u2";
+    rerender();
+    expect(views[nextRender]).toMatchObject({
+      weeks: [],
+      currentWeek: null,
+      previousWeek: null,
+      docsAvailable: 0,
+      loading: true,
+    });
+    await flushSnapshots();
+    expect(result.current.currentWeek?.performanceIndex).toBe(81);
+  });
+
+  it("clears scores immediately on sign-out", async () => {
+    seedDaily(20);
+    const views: ReturnType<typeof usePerformanceWeeks>[] = [];
+    const { rerender } = renderHook(() => {
+      const value = usePerformanceWeeks(3);
+      views.push(value);
+      return value;
+    });
+    await flushSnapshots();
+    const nextRender = views.length;
+    currentUid = null;
+    rerender();
+    expect(views[nextRender]).toMatchObject({
+      weeks: [],
+      currentWeek: null,
+      previousWeek: null,
+      docsAvailable: 0,
+      loading: false,
+    });
+  });
+});
+
+it("reports a failed score read separately from no scores and retries it", async () => {
+  resetFirestore();
+  currentUid = "u1";
+  seedDaily(20);
+  failNextFirestore("onSnapshot", { path: "users/u1/performance" });
+  const views: ReturnType<typeof usePerformanceWeeks>[] = [];
+  const { result } = renderHook(() => {
+    const value = usePerformanceWeeks(3);
+    views.push(value);
+    return value;
+  });
+  await flushSnapshots();
+  expect(result.current.failed).toBe(true);
+  expect(result.current.loading).toBe(false);
+  expect(result.current.currentWeek).toBeNull();
+  const retryRender = views.length;
+  act(() => result.current.refresh());
+  expect(views[retryRender].loading).toBe(true);
+  expect(views[retryRender].failed).toBe(false);
+  await flushSnapshots();
+  expect(result.current.failed).toBe(false);
+  expect(result.current.currentWeek?.performanceIndex).toBe(40);
+});
+
+it("does not leak a read error across accounts", async () => {
+  resetFirestore();
+  currentUid = "u1";
+  failNextFirestore("onSnapshot", { path: "users/u1/performance" });
+  const views: ReturnType<typeof usePerformanceWeeks>[] = [];
+  const { result, rerender } = renderHook(() => {
+    const value = usePerformanceWeeks(3);
+    views.push(value);
+    return value;
+  });
+  await flushSnapshots();
+  expect(result.current.failed).toBe(true);
+  const nextRender = views.length;
+  currentUid = "u2";
+  rerender();
+  expect(views[nextRender].failed).toBe(false);
+  expect(views[nextRender].loading).toBe(true);
+  await flushSnapshots();
+  expect(result.current.failed).toBe(false);
+  expect(result.current.weeks).toEqual([]);
 });

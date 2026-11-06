@@ -118,3 +118,30 @@ describe("useMealsInRange", () => {
     expect(result.current.meals).toEqual([]);
   });
 });
+
+
+describe("useMealsInRange account ownership", () => {
+  it.each([false, true])("hides prior meals on account switch (signed out first: %s)", async (signedOutFirst) => {
+    seedFirestore({
+      "users/u1/meals/private": meal(dayKey(1), { foodName: "Private meal" }),
+      "users/u2/meals/own": meal(dayKey(1), { foodName: "Own meal" }),
+    });
+    const renders: { ids: string[]; loading: boolean }[] = [];
+    const { result, rerender } = renderHook(({ uid }: { uid: string | null }) => {
+      const value = useMealsInRange(uid, 60);
+      renders.push({ ids: value.meals.map((item) => item.id), loading: value.loading });
+      return value;
+    }, { initialProps: { uid: "u1" as string | null } });
+    await waitFor(() => expect(result.current.meals.map((item) => item.id)).toEqual(["private"]));
+    if (signedOutFirst) {
+      rerender({ uid: null });
+      expect(result.current.meals).toEqual([]);
+      expect(result.current.loading).toBe(false);
+    }
+    renders.length = 0;
+    rerender({ uid: "u2" });
+    await waitFor(() => expect(result.current.meals.map((item) => item.id)).toEqual(["own"]));
+    expect(renders[0]).toEqual({ ids: [], loading: true });
+    expect(renders.every((value) => !value.ids.includes("private"))).toBe(true);
+  });
+});

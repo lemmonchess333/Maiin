@@ -278,6 +278,90 @@ const sessionLimited = {
   runTimeLimits: { sessionMinutes: 45, longRunMinutes: null },
 };
 
+describe("the taper retains quality only when the fitted build held it", () => {
+  const quality = (week: { type: string }[]) =>
+    week.filter((run) => run.type === "tempo" || run.type === "intervals");
+  const startingPoint = (experience: "building" | "returning" | "regular") =>
+    ({
+      version: 1,
+      experience,
+      weeklyMinutes: 60,
+      longestRunMinutes: 20,
+      confirmedAt: START,
+      source: "self_reported",
+    }) as const;
+
+  it.each(["building", "returning"] as const)(
+    "does not introduce intervals after an all-easy %s runner's build",
+    (experience) => {
+      for (const days of [3, 4, 6]) {
+        const more = {
+          ...runDays(days),
+          runningBaseline: startingPoint(experience),
+        };
+        const p = built("marathon", 16, more);
+        const build = p.weeks.slice(0, 12);
+        const taper = p.weeks.slice(12, -1);
+        const curve = new Map(
+          built("marathon", 16, runDays(days))
+            .weeks.flat()
+            .map((run) => [run.date, run])
+        );
+        // The baseline fit removes every build tempo/interval. The lower
+        // taper volume must not unlock a first-ever quality session.
+        expect(quality(build.flat()), `${days} days: build`).toEqual([]);
+        expect(quality(taper.flat()), `${days} days: taper`).toEqual([]);
+        for (const week of taper) {
+          expect(week).toHaveLength(days);
+          expect(week.map((run) => run.dayIndex)).toEqual(
+            build.at(-1)!.map((run) => run.dayIndex)
+          );
+          // Removing quality must not add minutes on that day or move a
+          // longer easy run into another slot. The sharpener is only 25
+          // minutes, so the ordinary easy-30 floor is too long here.
+          for (const run of week) {
+            const original = curve.get(run.date)!;
+            expect(
+              template(run.templateId).estimatedDuration,
+              `${days} days: ${run.date}`
+            ).toBeLessThanOrEqual(
+              template(original.templateId).estimatedDuration
+            );
+            if (original.type === "intervals")
+              expect(run.templateId).toBe("easy_20");
+          }
+        }
+        expect(
+          p.weeks.at(-1)!.filter((run) => run.type === "race")
+        ).toHaveLength(1);
+      }
+    }
+  );
+
+  it("keeps the same easy taper when regenerated after the build has passed", () => {
+    const more = { runningBaseline: startingPoint("building") };
+    const p = built("marathon", 16, more);
+    for (const at of [12, 13, 14]) {
+      const week = built("marathon", 16, more, at).weeks[0];
+      expect(quality(week), `week ${at}`).toEqual([]);
+      expect(week, `week ${at}`).toEqual(p.weeks[at]);
+    }
+  });
+
+  it("keeps the short sharpener when the fitted build did hold quality", () => {
+    for (const more of [
+      {},
+      { runningBaseline: startingPoint("regular") },
+      { ...runDays(2), runningBaseline: startingPoint("building") },
+    ]) {
+      const p = built("marathon", 16, more);
+      expect(quality(p.weeks.slice(0, 12).flat()).length).toBeGreaterThan(0);
+      for (const week of p.weeks.slice(12, -1))
+        expect(quality(week)).toMatchObject([{ templateId: "8x400" }]);
+    }
+  });
+});
+
 /* The build's longest long run is the longest its weeks hold, as the plan
    builds them: a new runner's runs held to the minutes their running has
    built to (Run20 (5)), a time limit. The taper took its shares of the

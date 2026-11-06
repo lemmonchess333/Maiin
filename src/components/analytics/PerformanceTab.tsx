@@ -1,3 +1,4 @@
+import PerformanceReadError from "./PerformanceReadError";
 import { useState } from "react";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import WeeklyReviewRow from "@/components/analytics/WeeklyReviewRow";
@@ -323,8 +324,15 @@ export default function PerformanceTab({
   /** The reader's unit, for the running figures in the breakdown. */
   distanceUnit?: DistanceUnit;
 } = {}) {
-  const { weeks, currentWeek, previousWeek, docsAvailable, loading } =
-    usePerformanceWeeks(12);
+  const {
+    weeks,
+    currentWeek,
+    previousWeek,
+    docsAvailable,
+    loading,
+    failed,
+    refresh,
+  } = usePerformanceWeeks(12);
   const liftUnit = useLiftUnit();
   const [showTechnical, setShowTechnical] = useState(false);
 
@@ -335,6 +343,8 @@ export default function PerformanceTab({
       </div>
     );
   }
+
+  if (failed) return <PerformanceReadError onRetry={refresh} />;
 
   if (!weeks.length || !currentWeek) {
     return (

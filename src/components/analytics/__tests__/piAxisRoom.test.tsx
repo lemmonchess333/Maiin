@@ -26,6 +26,7 @@ import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 const captured: {
   margin?: Record<string, number>;
   yAxis?: Record<string, unknown>;
+  tooltipLabel?: (label: string) => string;
 } = {};
 
 vi.mock("recharts", () => {
@@ -61,7 +62,10 @@ vi.mock("recharts", () => {
        `piBandsAndAverage.test.tsx` is the one that reads their props. */
     ReferenceArea: Noop,
     ReferenceLine: Noop,
-    Tooltip: Noop,
+    Tooltip: (props: { labelFormatter: (label: string) => string }) => {
+      captured.tooltipLabel = props.labelFormatter;
+      return null;
+    },
   };
 });
 
@@ -84,7 +88,7 @@ describe("Performance Index y-axis", () => {
     // The assertions below only matter while the top tick is three
     // digits. Tie them to the promise rather than leaving them floating.
     renderChart();
-    expect(screen.getByText(/^0–100 · last \d+w$/)).toBeInTheDocument();
+    expect(screen.getByText(/^0–100 · \d+ scores$/)).toBeInTheDocument();
     expect(captured.yAxis?.domain).toEqual([0, 100]);
     expect(captured.yAxis?.ticks).toContain(100);
   });
@@ -100,5 +104,31 @@ describe("Performance Index y-axis", () => {
     // is not enough once anything is taken off it.
     renderChart();
     expect(captured.yAxis?.width).toBeGreaterThanOrEqual(32);
+  });
+});
+
+describe("sparse performance periods", () => {
+  it("counts score samples without claiming they cover consecutive weeks", () => {
+    render(
+      <PerformanceIndexChart
+        weeks={[week(0), { ...week(1), weekKey: "2026-09-28" }]}
+      />
+    );
+    expect(screen.getByText("0–100 · 2 scores")).toBeInTheDocument();
+    expect(screen.queryByText(/last 2w/)).toBeNull();
+  });
+
+  it("names the exact seven calendar days across a year boundary", () => {
+    renderChart();
+    expect(captured.tooltipLabel?.("2026-01-03")).toBe(
+      "28 Dec 2025 to 3 Jan 2026"
+    );
+  });
+
+  it("names seven local dates across a daylight-saving boundary", () => {
+    renderChart();
+    expect(captured.tooltipLabel?.("2026-11-03")).toBe(
+      "28 Oct 2026 to 3 Nov 2026"
+    );
   });
 });
