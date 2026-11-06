@@ -31,6 +31,34 @@ import {
 } from "@testing-library/react";
 import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 
+const runningFlags = vi.hoisted(() => ({ enabled: false }));
+vi.mock("@/features/program/runningPrescriptionFeature", () => ({
+  get RUNNING_PRESCRIPTION_GATE_ENABLED() {
+    return runningFlags.enabled;
+  },
+  get CANONICAL_RUNNING_LAUNCH_ENABLED() {
+    return runningFlags.enabled;
+  },
+}));
+vi.mock("@/components/run/CanonicalActivityLink", () => ({
+  default: ({
+    uid,
+    activityId,
+    proof,
+  }: {
+    uid: string;
+    activityId: string;
+    proof: unknown;
+  }) => (
+    <div
+      data-testid="explicit-activity-link"
+      data-uid={uid}
+      data-activity={activityId}
+      data-proof={JSON.stringify(proof)}
+    />
+  ),
+}));
+
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({
   db: {},
@@ -225,6 +253,7 @@ function renderSummary() {
 }
 
 beforeEach(() => {
+  runningFlags.enabled = false;
   resetFirestore();
   localStorage.clear();
   week.pulse = null;
@@ -1255,5 +1284,44 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
       await screen.findByRole("button", { name: RUN.done })
     ).toBeInTheDocument();
     expect(h.paceEnabled.at(-1)).toBe(true);
+  });
+});
+
+describe("inactive canonical linkage mounting", () => {
+  it("does not mount the linkage action in the source-disabled summary", () => {
+    renderSummary();
+    expect(
+      screen.queryByTestId("explicit-activity-link")
+    ).not.toBeInTheDocument();
+  });
+  it("passes the saved activity and canonical proof only in an enabled saved summary", () => {
+    runningFlags.enabled = true;
+    const proof = {
+      accountId: "runner",
+      activityId: "run-1",
+      session: { id: "session1" },
+    };
+    const state = savedRun();
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/run-summary",
+            state: {
+              ...state,
+              runConfig: { ...state.runConfig, canonicalLaunch: proof },
+            },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    const action = screen.getByTestId("explicit-activity-link");
+    expect(action).toHaveAttribute("data-uid", "runner");
+    expect(action).toHaveAttribute("data-activity", "run-1");
+    expect(JSON.parse(action.getAttribute("data-proof")!)).toEqual(proof);
   });
 });

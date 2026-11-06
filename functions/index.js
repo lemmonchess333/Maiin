@@ -9340,3 +9340,49 @@ exports.redeemInvite = functions
       requested: result.requested === true,
     };
   });
+
+// Authenticated running review transport. Both the server source-time switch
+// and explicit rollout capability remain off; no existing client can enable it.
+const runningCallables = require("./lib/runningCallables");
+const runningCallableDependencies = {
+  firestore: () => admin.firestore(),
+  isRateLimited: (uid, action) => isRateLimited(uid, action, 30, 600_000),
+};
+exports.negotiateRunningAuthority = functions
+  .runWith({ maxInstances: 10, enforceAppCheck: true })
+  .https.onCall(runningCallables.makeRunningHandler("negotiateRunningAuthority", runningCallableDependencies));
+exports.enrollRunningAuthority = functions
+  .runWith({ maxInstances: 10, enforceAppCheck: true })
+  .https.onCall(runningCallables.makeRunningHandler("enrollRunningAuthority", runningCallableDependencies));
+exports.saveRunningReview = functions
+  .runWith({ maxInstances: 10, enforceAppCheck: true })
+  .https.onCall(runningCallables.makeRunningHandler("saveRunningReview", runningCallableDependencies));
+exports.createRunningProposal = functions
+  .runWith({ maxInstances: 10, enforceAppCheck: true })
+  .https.onCall(runningCallables.makeRunningHandler("createRunningProposal", runningCallableDependencies));
+exports.acceptRunningProposal = functions
+  .runWith({ maxInstances: 10, enforceAppCheck: true })
+  .https.onCall(runningCallables.makeRunningHandler("acceptRunningProposal", runningCallableDependencies));
+exports.submitOutsideTrainingReport = functions
+  .runWith({ maxInstances: 10, enforceAppCheck: true })
+  .https.onCall(runningCallables.makeRunningHandler("submitOutsideTrainingReport", runningCallableDependencies));
+
+exports.completeRunningMigration = functions
+  .runWith({ maxInstances: 10, enforceAppCheck: true })
+  .https.onCall(runningCallables.makeRunningHandler("completeRunningMigration", runningCallableDependencies));
+
+exports.adoptInitialRunningPlan = functions
+  .runWith({ maxInstances: 10, enforceAppCheck: true })
+  .https.onCall(runningCallables.makeRunningHandler("adoptInitialRunningPlan", runningCallableDependencies));
+
+exports.authorizeRunningLaunch = functions
+  .runWith({ maxInstances: 10, enforceAppCheck: true })
+  .https.onCall(runningCallables.makeRunningHandler("authorizeRunningLaunch", runningCallableDependencies));
+
+exports.registerRunningStart = functions
+  .runWith({ maxInstances: 10, enforceAppCheck: true })
+  .https.onCall(runningCallables.makeRunningHandler("registerRunningStart", runningCallableDependencies));
+
+exports.reconcileRunningActivity = functions
+  .runWith({ maxInstances: 10, enforceAppCheck: true })
+  .https.onCall(runningCallables.makeRunningHandler("reconcileRunningActivity", runningCallableDependencies));

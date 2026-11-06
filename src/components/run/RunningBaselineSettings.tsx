@@ -31,7 +31,7 @@ export default function RunningBaselineSettings({
 }: {
   value: RunningBaseline | null;
   onChange: (value: RunningBaseline | null) => void;
-  preview: RaceGoalPlannerState;
+  preview: RaceGoalPlannerState | null;
   /** `value` is the editor's fill from the recorded runs, untouched. */
   fromRecent?: boolean;
   /** The starting point the recorded runs give, to go back to. */
@@ -84,19 +84,21 @@ export default function RunningBaselineSettings({
           {fromRecent && (
             <p>From the runs recorded here in the last four weeks.</p>
           )}
-          {preview.status !== "empty" && preview.status !== "invalid" && (
-            <p>
-              Previewed week: about{" "}
-              <span className="font-mono tabular-nums">
-                {Math.round(preview.firstWeekMinutes)}
-              </span>{" "}
-              min.
-              {preview.firstWeekMinutes > value.weeklyMinutes &&
-              !preview.runWalkWeeks
-                ? " This is more than your week: even the shortest runs on your run days add up past it. Fewer run days keep it closer."
-                : ""}
-            </p>
-          )}
+          {preview &&
+            preview.status !== "empty" &&
+            preview.status !== "invalid" && (
+              <p>
+                Previewed week: about{" "}
+                <span className="font-mono tabular-nums">
+                  {Math.round(preview.firstWeekMinutes)}
+                </span>{" "}
+                min.
+                {preview.firstWeekMinutes > value.weeklyMinutes &&
+                !preview.runWalkWeeks
+                  ? " This is more than your week: even the shortest runs on your run days add up past it. Fewer run days keep it closer."
+                  : ""}
+              </p>
+            )}
           <Button variant="outline" onClick={() => setEditing(true)}>
             Change
           </Button>

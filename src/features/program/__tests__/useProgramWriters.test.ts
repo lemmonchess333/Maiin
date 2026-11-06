@@ -69,6 +69,19 @@ import {
  * staying green, which this file's own queue entry warns about.
  */
 const PROGRAM = "users/test-user-1/programState/current";
+const prescriptionGate = vi.hoisted(() => ({ legacyAllowed: true }));
+vi.mock("../runningPrescriptionFeature", () => ({
+  get RUNNING_PRESCRIPTION_GATE_ENABLED() {
+    return !prescriptionGate.legacyAllowed;
+  },
+}));
+vi.mock("../useRunningPrescriptionGate", () => ({
+  useRunningPrescriptionGate: () => ({
+    legacyAllowed: prescriptionGate.legacyAllowed,
+    status: prescriptionGate.legacyAllowed ? "inactive" : "pending",
+    authority: null,
+  }),
+}));
 
 /** Seed the IndexedDB cache copy only — invisible to server reads.
  *  `null` means "nothing cached", i.e. leave the cache cold. */
@@ -343,6 +356,7 @@ function expectV2Shape(rd: ScheduledRunDay) {
 import { useProgram } from "../useProgram";
 
 beforeEach(() => {
+  prescriptionGate.legacyAllowed = true;
   // One reset clears documents, the cache, the write log and the batch
   // log together — the four things this suite used to zero by hand.
   resetFirestore();
@@ -4623,5 +4637,50 @@ describe("the rollover waits for the loader's server read", () => {
     await waitFor(() =>
       expect(result.current.programState?.liftWeekKey).toBe(localWeekKey())
     );
+  });
+});
+
+describe("prescription gate on the real cached programme reader", () => {
+  it("keeps lifting visible but suppresses cached running before server negotiation", async () => {
+    prescriptionGate.legacyAllowed = false;
+    mockProfile = raceProfile(raceHalfAYearOut());
+    const cached = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 3,
+      splitType: "full_body",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          id: "old-cache",
+          type: "tempo",
+          dayIndex: new Date().getDay(),
+          date: localDateString(),
+          weekKey: localWeekKey(),
+          status: "planned",
+          templateId: "tempo_20",
+          completed: false,
+        },
+      ],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: mockProfile.raceGoal,
+        currentWeek: 1,
+        totalWeeks: 26,
+      },
+    } as ProgramState;
+    seedCacheDoc(cached);
+    deferReads();
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.programState?.weekNumber).toBe(3);
+    expect(result.current.prescription).not.toBeNull();
+    expect(result.current.programState?.runDays).toEqual([]);
+    expect(result.current.programState?.runPlan).toBeUndefined();
   });
 });

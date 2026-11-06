@@ -191,6 +191,9 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
     target: run.runConfig?.target,
     intervalData: run.intervalData,
     runConfig: run.runConfig,
+    ...(run.runConfig?.canonicalLaunch || run.runConfig?.legacyPlanClaimExcluded
+      ? { legacyPlanClaimExcluded: true }
+      : {}),
     // Top-level, so the shoes' mileage recount has one field to read
     // however the run was started.
     shoeId: run.shoeId,

@@ -824,6 +824,33 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);
     }
+    // Dormant running-authority boundary. No client may forge a migration,
+    // validated proposal, accepted plan or replay receipt. Legacy programme
+    // writes remain unchanged; this does not activate enrollment.
+    match /users/{uid}/runningState/{doc} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+    match /users/{uid}/runningProposals/{doc} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+    match /users/{uid}/runningReviewReceipts/{doc} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+    match /users/{uid}/runningReceipts/{doc} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+    match /users/{uid}/runningTrainingReports/{doc} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+    match /users/{uid}/runningReportReceipts/{doc} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
     match /users/{uid}/programState/{doc} {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);

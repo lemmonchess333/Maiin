@@ -1,3 +1,5 @@
+import { gateLegacyRunningProgram } from "./runningPrescriptionGate";
+import { useRunningPrescriptionGate } from "./useRunningPrescriptionGate";
 import {
   useCallback,
   useEffect,
@@ -35,6 +37,7 @@ type Actions = Pick<
 
 export function useHomeProgram() {
   const { user, profile } = useAuth();
+  const runningAccess = useRunningPrescriptionGate(user);
   const uid = user?.uid;
   /**
    * Today, as the app sees it, moving on while the app stays open and when
@@ -212,7 +215,11 @@ export function useHomeProgram() {
       : null;
   const current = snapshot && snapshot.uid === uid ? snapshot : null;
   return {
-    programState: current ? current.programState : null,
+    programState: gateLegacyRunningProgram(
+      current ? current.programState : null,
+      runningAccess
+    ),
+    runningAccess,
     // A missing programme is built as soon as the server confirms it is
     // missing, so until the built one arrives this is still loading: Home
     // said "Today is a lifting day, but no workout is linked" for the

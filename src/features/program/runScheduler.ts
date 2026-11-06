@@ -1,4 +1,9 @@
 import {
+  resolveNoviceRaceProgression,
+  type NoviceRaceProgressionInput,
+  type NoviceRaceProgressionResult,
+} from "./noviceRaceProgression";
+import {
   fitWeekToRunningBaseline,
   isRunningBaseline,
   runningClimb,
@@ -1150,9 +1155,13 @@ export interface RacePlanV2Input {
    * ahead the outline shows). Absent: `currentDate`.
    */
   recentRunsAsOf?: string;
+  /** Explicit opt-in candidate; existing plans remain unchanged when omitted. */
+  noviceProgression?: NoviceRaceProgressionInput;
 }
 
 export interface RacePlanV2Output {
+  /** Candidate opt-in; never a race readiness clearance. */
+  noviceProgression?: NoviceRaceProgressionResult;
   /** The plan's weeks from the one `weekStart` names, or from its first
    *  week when that one is the lead-in: race week is the last. */
   totalWeeks: number;
@@ -1177,6 +1186,21 @@ export interface RacePlanV2Output {
  *  compressed-plan safety rules, emits v2-shaped runDays. */
 export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const config = RACE_CONFIGS[input.raceGoal.distance];
+  const adoptedRace = input.noviceProgression?.capacityConfirmation?.raceGoal;
+  const sameAdoptedRace =
+    adoptedRace?.distance === input.raceGoal.distance &&
+    adoptedRace?.targetDate === input.raceGoal.targetDate;
+  const noviceProgression = input.noviceProgression
+    ? resolveNoviceRaceProgression(
+        sameAdoptedRace
+          ? input.noviceProgression
+          : {
+              ...input.noviceProgression,
+              holds: [...(input.noviceProgression.holds ?? []), "plan_changed"],
+            },
+        input.currentDate
+      )
+    : undefined;
   const tuning = input.tuning ?? DEFAULT_RUN_TUNING;
   const target = parseLocalDate(input.raceGoal.targetDate);
   // Normalised to the anchor, the way `migrateProgramState` normalises its
@@ -1265,6 +1289,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       compressed,
       belowFloor,
       weeks: [],
+      ...(noviceProgression ? { noviceProgression } : {}),
     };
   }
   // Run22: the sizes the ramp gives the last build week's easy run and
@@ -1310,9 +1335,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   // new 3-to-6-day frequency jump without evidence of readiness. The block
   // origin survives weekly regeneration through planTotalWeeks.
   const beginnerBlock =
-    !!input.newRunnerUntil &&
-    localDateString(addLocalDays(weekStartDate, -Math.max(0, startIndex) * 7)) <
-      input.newRunnerUntil;
+    !!noviceProgression ||
+    (!!input.newRunnerUntil &&
+      localDateString(
+        addLocalDays(weekStartDate, -Math.max(0, startIndex) * 7)
+      ) < input.newRunnerUntil);
   /** Run23: how far up the long-run ladder the block's weeks have climbed. */
   const climb: LongRunClimb = new Map();
   /** Week `w` of the block, before the fits below (`fittedWeek`). A week
@@ -1880,12 +1907,16 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       const next =
         row.type === "race"
           ? null
-          : newRunnerTemplate(
-              row.templateId,
-              row.weekKey ?? "",
-              input.newRunnerUntil,
-              input.easyPaceSPerKm
-            );
+          : noviceProgression
+            ? (RUN_TEMPLATES.find(
+                (template) => template.id === noviceProgression.templateId
+              ) ?? null)
+            : newRunnerTemplate(
+                row.templateId,
+                row.weekKey ?? "",
+                input.newRunnerUntil,
+                input.easyPaceSPerKm
+              );
       return next ? { ...row, templateId: next.id, type: next.type } : row;
     });
     const limited = walked.map((row) =>
@@ -2006,7 +2037,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     leadInWeek: leadIn ? thisWeekKey : null,
     compressed,
     belowFloor,
-    weeks,
+    weeks:
+      noviceProgression && !noviceProgression.prescribe
+        ? weeks.map((week) => week.filter((row) => row.type === "race"))
+        : weeks,
+    ...(noviceProgression ? { noviceProgression } : {}),
   };
 }
 

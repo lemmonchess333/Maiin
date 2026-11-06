@@ -4,6 +4,7 @@ import {
   act,
   fireEvent,
   render,
+  renderHook,
   screen,
   waitFor,
 } from "@testing-library/react";
@@ -28,6 +29,7 @@ import type { ProgramState } from "../programTypes";
 
 const h = vi.hoisted(() => ({
   user: { uid: "alice" },
+  legacyAllowed: true,
   profile: {} as Record<string, unknown>,
   controllerImports: 0,
   controllerMounts: 0,
@@ -36,6 +38,18 @@ const h = vi.hoisted(() => ({
   readiness: "ready" as "pending" | "ready" | "failed",
   publish: null as ((value: unknown) => void) | null,
   layoff: vi.fn(async (_uid: string, _day: string) => "none"),
+}));
+vi.mock("../runningPrescriptionFeature", () => ({
+  get RUNNING_PRESCRIPTION_GATE_ENABLED() {
+    return !h.legacyAllowed;
+  },
+}));
+vi.mock("../useRunningPrescriptionGate", () => ({
+  useRunningPrescriptionGate: () => ({
+    legacyAllowed: h.legacyAllowed,
+    authority: null,
+    status: h.legacyAllowed ? "inactive" : "pending",
+  }),
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: h.user, profile: h.profile }),
@@ -113,6 +127,7 @@ function emit(state: ProgramState | null, fromCache = false) {
 }
 beforeEach(() => {
   resetFirestore();
+  h.legacyAllowed = true;
   h.user = { uid: "alice" };
   h.profile = {
     runMode: "freeform",
@@ -409,5 +424,32 @@ describe("Home, left open into a new week", () => {
     await waitFor(() =>
       expect(screen.getByTestId("layoff")).toHaveTextContent("detrained")
     );
+  });
+});
+
+describe("Home's independent prescription reader", () => {
+  it("suppresses cached prescriptions while preserving lift and history data", async () => {
+    h.legacyAllowed = false;
+    const raw = {
+      ...(h.state as ProgramState),
+      runDays: [
+        {
+          id: "cached",
+          type: "tempo",
+          templateId: "tempo_20",
+          dayIndex: new Date().getDay(),
+          completed: false,
+        },
+      ],
+      runPlan: { mode: "race_prep" },
+      weekHistory: [],
+    } as ProgramState;
+    emit(raw, true);
+    const { result } = renderHook(() => useHomeProgram());
+    await flushSnapshots();
+    expect(result.current.programState?.weekNumber).toBe(3);
+    expect(result.current.programState?.runDays).toEqual([]);
+    expect(result.current.programState?.runPlan).toBeUndefined();
+    expect(result.current.programState?.weekHistory).toEqual([]);
   });
 });

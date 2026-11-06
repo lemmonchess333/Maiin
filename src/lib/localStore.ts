@@ -43,6 +43,18 @@ export function readString(key: string): string | null {
   }
 }
 
+/** Retry identities must distinguish absent storage from a failed read. */
+export function readStringChecked(
+  key: string
+): { ok: true; value: string | null } | { ok: false } {
+  try {
+    const s = store();
+    return s ? { ok: true, value: s.getItem(key) } : { ok: false };
+  } catch {
+    return { ok: false };
+  }
+}
+
 /** True only when the value is now stored. */
 export function writeString(key: string, value: string): boolean {
   try {

@@ -131,6 +131,11 @@ function recoveryWeeksFor(distanceKey) {
  */
 function isStrictRaceRun(savedRun, plannedDistanceMeters) {
   if (!savedRun) return false;
+  // Canonical recording is never evidence for a retired legacy race, even if
+  // its distance/date happen to match. Treat malformed canonical metadata as
+  // excluded too; a missing marker must not create legacy recovery credit.
+  if (savedRun.legacyPlanClaimExcluded === true || savedRun.runConfig?.legacyPlanClaimExcluded === true ||
+      (savedRun.runConfig && Object.prototype.hasOwnProperty.call(savedRun.runConfig, "canonicalLaunch"))) return false;
   if (savedRun.isInvalid === true || savedRun.savedAnyway === true) {
     return false;
   }

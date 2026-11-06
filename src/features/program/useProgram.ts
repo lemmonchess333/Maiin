@@ -1,3 +1,5 @@
+import { gateLegacyRunningProgram } from "./runningPrescriptionGate";
+import { useRunningPrescriptionGate } from "./useRunningPrescriptionGate";
 import { repairRunPrescriptions } from "./runPrescriptionRepair";
 import {
   commitProgramTransition,
@@ -284,6 +286,7 @@ function finishOutstanding(uid: string | undefined): boolean {
 
 export function useProgram() {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
+  const runningAccess = useRunningPrescriptionGate(user);
   const [programState, setProgramState] = useState<ProgramState | null>(null);
   /**
    * Today, as the app sees it: it moves on while the app is open, and when
@@ -3703,10 +3706,13 @@ export function useProgram() {
     : null;
 
   return {
-    programState:
+    programState: gateLegacyRunningProgram(
       programState && profile
         ? repairRunPrescriptions(programState, profile, today)
         : programState,
+      runningAccess
+    ),
+    runningAccess,
     prescription,
     loading,
     /** Refresh canonical state after a queued command is replayed. */

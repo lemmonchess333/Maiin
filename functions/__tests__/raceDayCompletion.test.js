@@ -82,6 +82,10 @@ describe("constants", () => {
 });
 
 describe("isStrictRaceRun", () => {
+  it.each([{ legacyPlanClaimExcluded: true }, { runConfig: { legacyPlanClaimExcluded: true } }, { runConfig: { canonicalLaunch: { session: { kind: "easy" } } } }, { runConfig: { canonicalLaunch: null } }])("never credits canonical/excluded activity to a legacy race %j", metadata => {
+    expect(isStrictRaceRun(rawRun({ distance: 50000, actualTemplateId: "marathon_race", ...metadata }), 42195)).toBe(false);
+    expect(isStrictRaceRun(rawRun({ distance: 50000, actualTemplateId: "marathon_race", ...metadata }), 0)).toBe(false);
+  });
   it("accepts a race-templated run at or above 95% of planned", () => {
     expect(isStrictRaceRun(rawRun({ distance: 10000 }), 10000)).toBe(true);
     expect(isStrictRaceRun(rawRun({ distance: 9500 }), 10000)).toBe(true);

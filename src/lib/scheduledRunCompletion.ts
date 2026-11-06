@@ -33,6 +33,7 @@ export interface ClaimState {
 }
 
 export interface SavedRunLike {
+  legacyPlanClaimExcluded?: boolean;
   id: string;
   date?: string;
   distance?: number;
@@ -256,7 +257,9 @@ export function computeClaims(
   );
 
   const sortedRunDays = eligible.slice().sort(compareRunDays);
-  const sortedSavedRuns = savedRuns.slice().sort(compareSavedRuns);
+  const sortedSavedRuns = savedRuns
+    .filter((run) => !run.legacyPlanClaimExcluded)
+    .sort(compareSavedRuns);
 
   const claimedSavedRunIds = new Set<string>();
 

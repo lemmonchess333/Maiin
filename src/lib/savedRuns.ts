@@ -47,6 +47,8 @@ import { isTreadmillRun } from "./runGuards";
 import type { RunPlace } from "@/types/run";
 
 export interface RunSummaryItem {
+  /** Canonical/unprescribed recording is history, never a legacy slot claim. */
+  legacyPlanClaimExcluded?: boolean;
   id: string;
   distance: number; // metres
   duration: number; // seconds
@@ -221,6 +223,14 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
 
   return {
     id,
+    ...(data.legacyPlanClaimExcluded === true ||
+    data.runConfig?.legacyPlanClaimExcluded === true ||
+    Object.prototype.hasOwnProperty.call(
+      data.runConfig ?? {},
+      "canonicalLaunch"
+    )
+      ? { legacyPlanClaimExcluded: true }
+      : {}),
     distance: finite(data.distance),
     duration: finite(data.duration),
     avgPace: finite(data.avgPace),

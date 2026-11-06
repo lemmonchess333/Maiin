@@ -14,15 +14,20 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import Run from "../Run";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import {
+  readStoredRun,
+  runResumeKey,
   writeStoredRun,
   RUN_RESUME_SCHEMA_VERSION,
   type StoredRun,
 } from "@/lib/runResumeStorage";
+import { createRunSessionIdentity } from "@/lib/runSessionIdentity";
+import { canonicalRunConfig } from "@/features/run/canonicalRunLaunch";
 import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
 import type { ProgramState } from "@/features/program/programTypes";
 import { FIRST_RUN_CHECK_MS } from "@/features/run/startOnArrival";
@@ -33,6 +38,7 @@ const HOME_START = "/run?template=easy_30&scheduledRunId=runday_today&start=1";
 
 const h = vi.hoisted(() => ({
   runMode: "race_prep",
+  legacyAllowed: true,
   programState: null as unknown,
   gpsCalls: [] as string[],
   hint: { owed: false, loading: false, runCount: 0 },
@@ -42,6 +48,13 @@ const h = vi.hoisted(() => ({
   gpsError: null as string | null,
   native: false,
   openedSettings: 0,
+  user: undefined as { uid: string } | undefined,
+  authority: null as Record<string, unknown> | null,
+  launch: vi.fn(),
+  wake: vi.fn(async () => {}),
+  timerStarts: 0,
+  genericCueCalls: 0,
+  points: [] as { lat: number; lon: number; timestamp: number }[],
 }));
 
 const visibility = vi.hoisted(() => ({
@@ -79,10 +92,41 @@ const gpsControls = {
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
+    user: h.user,
     profile: { uid: "arrival-test", runMode: h.runMode, raceGoal: RACE_GOAL },
   }),
   useUidForStorageKey: () => "arrival-test",
   useUid: () => "arrival-test",
+}));
+vi.mock("@/features/program/useRunningPrescriptionGate", () => ({
+  useRunningPrescriptionGate: () => ({
+    legacyAllowed: h.legacyAllowed,
+    authority: h.authority,
+    status: h.legacyAllowed ? "inactive" : h.authority ? "ready" : "pending",
+  }),
+}));
+vi.mock("@/features/program/runningPrescriptionFeature", () => ({
+  RUNNING_PRESCRIPTION_GATE_ENABLED: true,
+  CANONICAL_RUNNING_LAUNCH_ENABLED: true,
+}));
+vi.mock("firebase/firestore");
+vi.mock("@/lib/firebase", () => ({
+  auth: {
+    get currentUser() {
+      return h.user ?? null;
+    },
+  },
+  db: {},
+  functions: {},
+}));
+vi.mock("@/hooks/usePrivacyZones", () => ({
+  warmPrivacyZones: async () => {},
+}));
+vi.mock("firebase/functions", () => ({
+  httpsCallable:
+    (_functions: unknown, name: string) => async (request: unknown) => ({
+      data: await h.launch(request, name),
+    }),
 }));
 vi.mock("@/features/program/useProgram", () => ({
   useProgram: () => ({ programState: h.programState, loading: false }),
@@ -115,7 +159,7 @@ vi.mock("@/lib/weather", async (importOriginal) => ({
 }));
 vi.mock("@/hooks/useGPS", () => ({
   useGPS: () => ({
-    points: [],
+    points: h.points,
     currentPoint: null,
     distance: 0,
     isTracking: false,
@@ -131,7 +175,9 @@ vi.mock("@/hooks/useRunTimer", () => ({
   useRunTimer: () => ({
     elapsed: 1800,
     isRunning: false,
-    start: () => {},
+    start: () => {
+      h.timerStarts++;
+    },
     pause: () => {},
     resume: () => {},
     reset: () => {},
@@ -142,7 +188,7 @@ vi.mock("@/hooks/useRunTimer", () => ({
   }),
 }));
 vi.mock("@/hooks/useWakeLock", () => ({
-  useWakeLock: () => ({ request: async () => {}, release: async () => {} }),
+  useWakeLock: () => ({ request: () => h.wake(), release: async () => {} }),
 }));
 vi.mock("@/hooks/useHeartRate", () => ({
   useHeartRate: () => ({ bpm: null }),
@@ -151,8 +197,12 @@ vi.mock("@/hooks/useAudioCues", () => ({
   useAudioCues: () => ({
     prime: () => {},
     speak: () => {},
-    checkDistanceCue: () => {},
-    checkTimeCue: () => {},
+    checkDistanceCue: () => {
+      h.genericCueCalls++;
+    },
+    checkTimeCue: () => {
+      h.genericCueCalls++;
+    },
     checkPaceAlert: () => {},
     checkHalfway: () => {},
     checkFinal500: () => {},
@@ -276,6 +326,7 @@ async function saveOnTheTreadmill(km: string) {
 
 beforeEach(() => {
   localStorage.clear();
+  h.legacyAllowed = true;
   h.runMode = "race_prep";
   h.programState = null;
   h.gpsCalls = [];
@@ -286,10 +337,22 @@ beforeEach(() => {
   h.gpsError = null;
   h.native = false;
   h.openedSettings = 0;
+  h.user = undefined;
+  h.authority = null;
+  h.launch.mockReset();
+  h.wake.mockReset().mockResolvedValue(undefined);
+  h.timerStarts = 0;
+  h.genericCueCalls = 0;
+  h.points = [];
+  Object.defineProperty(navigator, "onLine", {
+    configurable: true,
+    value: true,
+  });
 });
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  vi.useRealTimers();
 });
 
 describe("a run started from Home", () => {
@@ -423,22 +486,23 @@ describe("the note about time in the background", () => {
     const pending = new Set<unknown>();
     const realSet = globalThis.setTimeout;
     const realClear = globalThis.clearTimeout;
-    const setSpy = vi
-      .spyOn(globalThis, "setTimeout")
-      .mockImplementation(((fn: () => void, ms?: number) => {
-        const id = realSet(() => {
-          pending.delete(id);
-          fn();
-        }, ms);
-        if (ms === 6000) pending.add(id);
-        return id;
-      }) as typeof setTimeout);
-    const clearSpy = vi
-      .spyOn(globalThis, "clearTimeout")
-      .mockImplementation(((id: unknown) => {
+    const setSpy = vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+      fn: () => void,
+      ms?: number
+    ) => {
+      const id = realSet(() => {
         pending.delete(id);
-        realClear(id as ReturnType<typeof setTimeout>);
-      }) as typeof clearTimeout);
+        fn();
+      }, ms);
+      if (ms === 6000) pending.add(id);
+      return id;
+    }) as typeof setTimeout);
+    const clearSpy = vi.spyOn(globalThis, "clearTimeout").mockImplementation(((
+      id: unknown
+    ) => {
+      pending.delete(id);
+      realClear(id as ReturnType<typeof setTimeout>);
+    }) as typeof clearTimeout);
     try {
       await open("/run?start=1");
       act(() => visibility.onVisible?.({ hiddenDuration: 30 }));
@@ -462,4 +526,510 @@ describe("a run opened from Train", () => {
     });
     expect(screen.getByText("Acquiring GPS...")).toBeInTheDocument();
   });
+});
+
+describe("prescription compatibility on the real Run entrypoint", () => {
+  it.each([
+    HOME_START,
+    "/run?type=tempo&start=1",
+    "/run?scheduledRunId=runday_today&start=1",
+    "/run?template=tempo_20",
+  ])("blocks cached prescribed launch via %s", async (url) => {
+    h.legacyAllowed = false;
+    planTodaysEasyRun();
+    await open(url);
+    expect(screen.getByText("Run guidance is unavailable")).toBeInTheDocument();
+    expect(h.gpsCalls).not.toContain("start");
+    expect(h.launchCardRenders).toBe(0);
+    expect(h.pickerRenders).toBe(0);
+  });
+  it("still records and saves a voluntary treadmill activity without the old plan claim", async () => {
+    h.legacyAllowed = false;
+    planTodaysEasyRun();
+    await open(HOME_START);
+    await act(async () =>
+      fireEvent.click(
+        screen.getByRole("button", { name: "Record on a treadmill" })
+      )
+    );
+    await saveOnTheTreadmill("5");
+    expect(
+      screen.getByText("freerun · treadmill · no plan · 5000 m")
+    ).toBeInTheDocument();
+  });
+  it("does not automatically resume stored prescribed guidance", async () => {
+    h.legacyAllowed = false;
+    saveInterruptedRun();
+    await open("/run?resume=1");
+    expect(h.gpsCalls).not.toContain("start");
+    expect(
+      screen.getByRole("button", { name: "Continue without coaching" })
+    ).toBeInTheDocument();
+  });
+});
+
+function canonicalToday() {
+  h.user = { uid: "arrival-test" };
+  h.legacyAllowed = false;
+  const session = {
+    id: "canonical_today",
+    date: new Date().toISOString().slice(0, 10),
+    templateId: "run_walk_1",
+    minutes: 29,
+    kind: "run_walk" as const,
+  };
+  const authority = {
+    schemaVersion: 1,
+    accountId: h.user.uid,
+    revision: 4,
+    timeZone: "UTC",
+    holds: [] as string[],
+    migration: { version: 1, status: "complete" },
+    constraints: {
+      reviewConfirmation: {
+        version: 1,
+        confirmed: true,
+        authorityRevision: 4,
+        raceGoalId: null,
+      },
+    },
+    plan: { raceGoalId: null, sessions: [session] },
+  };
+  h.authority = authority;
+  const response = () => ({
+    schemaVersion: 1 as const,
+    accountId: authority.accountId,
+    revision: authority.revision,
+    raceGoalId: null,
+    timeZone: "UTC",
+    session,
+    authorizedAtMs: Date.now(),
+    expiresAtMs: Date.now() + 15000,
+  });
+  h.launch.mockImplementation(async (request: { activityId?: string }) => ({
+    ...response(),
+    ...(request.activityId
+      ? { activityId: request.activityId, launchId: `launch_${"a".repeat(64)}` }
+      : {}),
+  }));
+  return { authority, response };
+}
+describe("canonical launch through the mounted Run route", () => {
+  it.each(["other run", "recorded", "stale recorded", "corrupt"])(
+    "preserves %s storage when discarding failed preparation",
+    async (replacement) => {
+      const { response } = canonicalToday();
+      h.launch.mockImplementation(async (request: { activityId?: string }) => {
+        if (request.activityId) throw Error("Start could not be confirmed.");
+        return response();
+      });
+      await open("/run?canonicalSessionId=canonical_today");
+      fireEvent.click(
+        await screen.findByRole("button", {
+          name: "Check and start today's session",
+        })
+      );
+      await screen.findByText("Acquiring GPS...");
+      fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+      await screen.findByRole("button", { name: "Discard unstarted session" });
+      const saved = readStoredRun("arrival-test")!;
+      if (replacement === "other run" || replacement === "stale recorded")
+        saved.identity = createRunSessionIdentity(
+          "arrival-test",
+          "other_activity",
+          saved.config,
+          saved.startedAt
+        );
+      if (replacement === "recorded" || replacement === "stale recorded") {
+        saved.recordingStartedAt = saved.startedAt;
+        saved.accumulatedSeconds = 30;
+      }
+      if (replacement === "stale recorded")
+        saved.lastWriteAt = Date.now() - 7 * 60 * 60 * 1000;
+      writeStoredRun("arrival-test", saved);
+      if (replacement === "corrupt")
+        localStorage.setItem(runResumeKey("arrival-test"), "{broken");
+      const before = { ...localStorage };
+      fireEvent.click(
+        screen.getByRole("button", { name: "Discard unstarted session" })
+      );
+      expect({ ...localStorage }).toEqual(before);
+      expect(h.timerStarts).toBe(0);
+      expect(h.launch).toHaveBeenCalledTimes(2);
+    }
+  );
+
+  it("shows Activity recorded and never offers another Start for a linked canonical session", async () => {
+    const { authority } = canonicalToday();
+    Object.assign(authority, {
+      recordedActivityLinks: {
+        canonical_today: { activityId: "saved_activity" },
+      },
+    });
+    authority.constraints.reviewConfirmation.authorityRevision--; // Link bumps revision and requires re-review elsewhere.
+    await open("/run?canonicalSessionId=canonical_today");
+    await screen.findByText("Activity recorded");
+    expect(
+      screen.queryByRole("button", { name: "Check and start today's session" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Record without guidance" })
+    ).toBeEnabled();
+    expect(h.launch).not.toHaveBeenCalled();
+  });
+
+  it("asks for a current review after adoption rather than showing a dead Start", async () => {
+    const { authority } = canonicalToday();
+    authority.constraints.reviewConfirmation.authorityRevision--;
+    await open("/run?canonicalSessionId=canonical_today");
+    expect(
+      await screen.findByRole("button", { name: "Review plan before starting" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Check and start today's session" })
+    ).not.toBeInTheDocument();
+    expect(h.launch).not.toHaveBeenCalled();
+  });
+  it("blocks a hold that arrives during wake-lock setup before calling the server", async () => {
+    const { authority } = canonicalToday();
+    let ready!: () => void;
+    h.wake.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          ready = resolve;
+        })
+    );
+    await open(
+      "/run?canonicalSessionId=canonical_today&template=tempo_20&start=1"
+    );
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Check and start today's session",
+      })
+    );
+    await waitFor(() => expect(h.wake).toHaveBeenCalledOnce());
+    authority.holds.push("review_required");
+    await act(async () => ready());
+    expect(h.launch).not.toHaveBeenCalled();
+    expect(h.gpsCalls).not.toContain("start");
+    expect(h.timerStarts).toBe(0);
+  });
+  it("rechecks after GPS preparation, preserves provenance, and does not claim a legacy completion", async () => {
+    canonicalToday();
+    await open(
+      "/run?canonicalSessionId=canonical_today&scheduledRunId=legacy_old"
+    );
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Check and start today's session",
+      })
+    );
+    await screen.findByText("Acquiring GPS...");
+    expect(h.launch).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+    await waitFor(() => expect(h.timerStarts).toBe(1));
+    expect(h.launch).toHaveBeenCalledTimes(2);
+    expect(h.genericCueCalls).toBe(0); // Run-walk uses its steps, never generic pace announcements.
+    const saved = readStoredRun("arrival-test");
+    expect(saved?.config.canonicalLaunch?.session.id).toBe("canonical_today");
+    expect(saved?.config.planMetadata.scheduledRunId).toBeNull();
+    await saveOnTheTreadmill("3");
+    expect(
+      screen.getByText("easy · treadmill · no plan · 3000 m")
+    ).toBeInTheDocument();
+  });
+  it("does not start the timer when authority changes during the final treadmill recheck", async () => {
+    const { authority, response } = canonicalToday();
+    let resolve!: (value: unknown) => void;
+    h.launch.mockResolvedValueOnce(response()).mockImplementationOnce(
+      () =>
+        new Promise((yes) => {
+          resolve = yes;
+        })
+    );
+    await open("/run?canonicalSessionId=canonical_today");
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Check and start today's session",
+      })
+    );
+    await screen.findByText("Acquiring GPS...");
+    fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+    await waitFor(() => expect(h.launch).toHaveBeenCalledTimes(2));
+    authority.revision++;
+    await act(async () =>
+      resolve({
+        ...response(),
+        activityId: h.launch.mock.calls[1][0].activityId,
+        launchId: `launch_${"a".repeat(64)}`,
+      })
+    );
+    expect(h.timerStarts).toBe(0);
+    expect(
+      await screen.findByRole("button", { name: "Review plan before starting" })
+    ).toBeInTheDocument();
+  });
+  it("requires a fresh server check after the GPS countdown and blocks a late hold", async () => {
+    const { authority, response } = canonicalToday();
+    h.points = [{ lat: 51.5, lon: -0.12, timestamp: Date.now() }];
+    let resolve!: (value: unknown) => void;
+    h.launch.mockResolvedValueOnce(response()).mockImplementationOnce(
+      () =>
+        new Promise((yes) => {
+          resolve = yes;
+        })
+    );
+    await open("/run?canonicalSessionId=canonical_today");
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Check and start today's session",
+      })
+    );
+    await waitFor(() => expect(h.gpsCalls).toContain("start"));
+    // Keep real timers here: the countdown owns three one-second transitions.
+    await waitFor(() => expect(h.launch).toHaveBeenCalledTimes(2), {
+      timeout: 6000,
+    });
+    expect(h.timerStarts).toBe(0);
+    authority.holds.push("review_required");
+    await act(async () =>
+      resolve({
+        ...response(),
+        activityId: h.launch.mock.calls[1][0].activityId,
+        launchId: `launch_${"a".repeat(64)}`,
+      })
+    );
+    expect(h.timerStarts).toBe(0);
+    expect(
+      await screen.findByRole("button", { name: "Review plan before starting" })
+    ).toBeInTheDocument();
+  });
+  it("ignores a delayed final authorization after Cancel", async () => {
+    const { response } = canonicalToday();
+    let resolve!: (value: unknown) => void;
+    h.launch.mockResolvedValueOnce(response()).mockImplementationOnce(
+      () =>
+        new Promise((yes) => {
+          resolve = yes;
+        })
+    );
+    await open("/run?canonicalSessionId=canonical_today");
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Check and start today's session",
+      })
+    );
+    await screen.findByText("Acquiring GPS...");
+    fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+    await waitFor(() => expect(h.launch).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await act(async () =>
+      resolve({
+        ...response(),
+        activityId: h.launch.mock.calls[1][0].activityId,
+        launchId: `launch_${"a".repeat(64)}`,
+      })
+    );
+    expect(h.timerStarts).toBe(0);
+    expect(
+      await screen.findByRole("button", {
+        name: "Check and start today's session",
+      })
+    ).toBeInTheDocument();
+  });
+  it("serializes a treadmill choice against a late GPS fix instead of stranding countdown", async () => {
+    const { response } = canonicalToday();
+    let resolve!: (value: unknown) => void;
+    h.launch.mockResolvedValueOnce(response()).mockImplementationOnce(
+      () =>
+        new Promise((yes) => {
+          resolve = yes;
+        })
+    );
+    await open("/run?canonicalSessionId=canonical_today");
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Check and start today's session",
+      })
+    );
+    await screen.findByText("Acquiring GPS...");
+    fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+    await waitFor(() => expect(h.launch).toHaveBeenCalledTimes(2));
+    h.points = [{ lat: 51.5, lon: -0.12, timestamp: Date.now() }];
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+    });
+    expect(screen.getByText("Acquiring GPS...")).toBeInTheDocument();
+    expect(h.timerStarts).toBe(0);
+    await act(async () =>
+      resolve({
+        ...response(),
+        activityId: h.launch.mock.calls[1][0].activityId,
+        launchId: `launch_${"a".repeat(64)}`,
+      })
+    );
+    await waitFor(() => expect(h.timerStarts).toBe(1));
+    expect(h.launch).toHaveBeenCalledTimes(2);
+  });
+  it("does not restore cached canonical coaching when legacy access is re-enabled", async () => {
+    const { response } = canonicalToday();
+    const config = canonicalRunConfig(response(), {
+      audioCues: true,
+      place: "treadmill",
+    });
+    h.legacyAllowed = true; // Rollback/default-off legacy path.
+    h.authority = null;
+    saveInterruptedRun();
+    const stored = readStoredRun("arrival-test")!;
+    expect(writeStoredRun("arrival-test", { ...stored, config })).toBe(true);
+    await open("/run?resume=1");
+    expect(h.launch).not.toHaveBeenCalled();
+    expect(h.timerStarts).toBe(0);
+    const resume = screen.getByRole("button", {
+      name: "Continue without coaching",
+    });
+    await act(async () => fireEvent.click(resume));
+    await saveOnTheTreadmill("2");
+    expect(
+      screen.getByText("freerun · treadmill · no plan · 2000 m")
+    ).toBeInTheDocument();
+    expect(h.launch).not.toHaveBeenCalled();
+  });
+  it("retries an uncertain registration with the same allocated activity, never a second run id", async () => {
+    const { response } = canonicalToday();
+    let registrations = 0;
+    let originalProof: ReturnType<typeof response> | null = null;
+    const activityIds: string[] = [];
+    h.launch.mockImplementation(async (request: { activityId?: string }) => {
+      if (request.activityId) {
+        activityIds.push(request.activityId);
+        if (++registrations === 1) {
+          originalProof = response();
+          throw Error("The start check could not be confirmed. Try again.");
+        }
+      }
+      return {
+        ...(request.activityId ? originalProof! : response()),
+        ...(request.activityId
+          ? {
+              activityId: request.activityId,
+              launchId: `launch_${"a".repeat(64)}`,
+            }
+          : {}),
+      };
+    });
+    await open("/run?canonicalSessionId=canonical_today");
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Check and start today's session",
+      })
+    );
+    await screen.findByText("Acquiring GPS...");
+    fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+    await screen.findByRole("button", {
+      name: "Check and start today's session",
+    });
+    expect(h.timerStarts).toBe(0);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Check and start today's session" })
+    );
+    await screen.findByText("Acquiring GPS...");
+    fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+    await waitFor(() => expect(h.timerStarts).toBe(1));
+    expect(activityIds).toHaveLength(2);
+    expect(activityIds[1]).toBe(activityIds[0]);
+    const persisted = readStoredRun("arrival-test")!;
+    expect(persisted.config.canonicalLaunch).toMatchObject({
+      activityId: activityIds[0],
+      launchId: `launch_${"a".repeat(64)}`,
+    });
+    expect(persisted.recordingStartedAt).toBeGreaterThanOrEqual(
+      persisted.startedAt
+    );
+  });
+  it.each(["expired response", "server expiry error"])(
+    "makes %s terminal until explicit discard of unstarted preparation",
+    async (failure) => {
+      let clock = Date.now();
+      const dateNow = vi.spyOn(Date, "now").mockImplementation(() => clock);
+      try {
+        const { response } = canonicalToday();
+        let original: ReturnType<typeof response> | null = null;
+        const ids: string[] = [];
+        h.launch.mockImplementation(
+          async (request: { activityId?: string }) => {
+            if (!request.activityId) return response();
+            ids.push(request.activityId);
+            if (!original) {
+              original = response();
+              throw Error("The start check could not be confirmed.");
+            }
+            if (failure === "server expiry error")
+              throw Object.assign(
+                Error("Running session needs to be refreshed."),
+                {
+                  code: "functions/failed-precondition",
+                  details: { errorCode: "launch-authorization-expired" },
+                }
+              );
+            return {
+              ...original,
+              activityId: request.activityId,
+              launchId: `launch_${"a".repeat(64)}`,
+            };
+          }
+        );
+        await open("/run?canonicalSessionId=canonical_today");
+        fireEvent.click(
+          await screen.findByRole("button", {
+            name: "Check and start today's session",
+          })
+        );
+        await screen.findByText("Acquiring GPS...");
+        fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+        await screen.findByRole("button", {
+          name: "Discard unstarted session",
+        });
+        clock += 16_000; // The server receipt is immutable, including its original expiry.
+        fireEvent.click(
+          screen.getByRole("button", {
+            name: "Check and start today's session",
+          })
+        );
+        await screen.findByText("Acquiring GPS...");
+        fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+        await screen.findByText(
+          /This start check expired before recording began/
+        );
+        expect(ids).toHaveLength(2);
+        expect(ids[1]).toBe(ids[0]);
+        expect(h.timerStarts).toBe(0);
+        expect(
+          screen.queryByRole("button", {
+            name: "Check and start today's session",
+          })
+        ).not.toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: "Record without guidance" })
+        ).toBeEnabled();
+        expect(readStoredRun("arrival-test")?.identity?.runId).toBe(ids[0]);
+        const calls = h.launch.mock.calls.length;
+        fireEvent.click(
+          screen.getByRole("button", { name: "Discard unstarted session" })
+        );
+        expect(h.launch).toHaveBeenCalledTimes(calls); // No cancellation/renewal server mutation.
+        expect(readStoredRun("arrival-test")).toBeNull();
+        fireEvent.click(
+          await screen.findByRole("button", {
+            name: "Check and start today's session",
+          })
+        );
+        await screen.findByText("Acquiring GPS...");
+        expect(readStoredRun("arrival-test")?.identity?.runId).not.toBe(ids[0]);
+        expect(h.timerStarts).toBe(0); // Explicit new preparation still needs new registration.
+      } finally {
+        dateNow.mockRestore();
+      }
+    }
+  );
 });

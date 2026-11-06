@@ -17,6 +17,13 @@ function setup(extra = {}) {
   const firestore = memoryFirestore({
     "users/alice": { displayName: "Alice" },
     "users/alice/meals/lunch": { name: "Meal" },
+    "users/alice/runningState/current": { revision: 1 },
+    "users/alice/runningState/legacySnapshot": { programState: { runDays: [{ id: "legacy-completed", completed: true }] } },
+    "users/alice/runningProposals/review": { baseRevision: 1 },
+    "users/alice/runningReceipts/accepted": { appliedRevision: 2 },
+    "users/alice/runningReviewReceipts/review1": { appliedRevision: 3 },
+    "users/alice/runningTrainingReports/outside:one": { reportRevision: 1 },
+    "users/alice/runningReportReceipts/report1": { authorityRevision: 3 },
     "users/alice/_engine/old/receipts/nested": { marker: true },
     "users/bob/meals/lunch": { name: "Bob's meal" },
     "activities/own": { authorId: "alice" },
@@ -237,6 +244,12 @@ function setup(extra = {}) {
 // smoke::topLevelQuery::leagueGroups
 // smoke::leagueStandings
 // smoke::userSubcollections::leagueResults
+// smoke::userSubcollections::runningState
+// smoke::userSubcollections::runningProposals
+// smoke::userSubcollections::runningReviewReceipts
+// smoke::userSubcollections::runningReceipts
+// smoke::userSubcollections::runningTrainingReports
+// smoke::userSubcollections::runningReportReceipts
 // smoke::userSubcollections::pulseCredits
 /* The billing tombstone's secret, which a restricted account's kept
    identities are hashed with. */
@@ -257,6 +270,13 @@ describe("complete account erasure", () => {
     const { data } = ctx.firestore;
     for (const path of [
       "users/alice",
+      "users/alice/runningState/current",
+      "users/alice/runningState/legacySnapshot",
+      "users/alice/runningProposals/review",
+      "users/alice/runningReceipts/accepted",
+      "users/alice/runningReviewReceipts/review1",
+      "users/alice/runningTrainingReports/outside:one",
+      "users/alice/runningReportReceipts/report1",
       "users/alice/_engine/old/receipts/nested",
       "activities/own",
       "comments/own/items/bobs-reply",

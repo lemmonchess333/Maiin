@@ -149,6 +149,15 @@ const EXPLICITLY_EXEMPT = [
  * match block.
  */
 const INFRASTRUCTURE_AND_READ_ONLY = [
+  // Dormant running authority: owner reads only, every client write denied.
+  // The future Admin writer checks deletion inside its transaction; all three
+  // sibling collections are in the account-erasure inventory and executor.
+  "match /users/{uid}/runningState/{doc}",
+  "match /users/{uid}/runningProposals/{doc}",
+  "match /users/{uid}/runningReceipts/{doc}",
+  "match /users/{uid}/runningReviewReceipts/{doc}",
+  "match /users/{uid}/runningTrainingReports/{doc}",
+  "match /users/{uid}/runningReportReceipts/{doc}",
   // Push packets 17+19 (rules lock re-cut 2026-08-03 from stale #1635):
   // device tokens + the claim ledger are fully client-locked
   // (`allow read, write: if false`). Registration/revocation are the
