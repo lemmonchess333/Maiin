@@ -1614,6 +1614,69 @@ describe("PR-L L5 — useProgram does NOT write race_no_show client-side", () =>
   });
 });
 
+describe("current-week running prescription compatibility on open", () => {
+  const rows = () =>
+    Array.from({ length: 7 }, (_, i) => ({
+      id: `legacy-run-${i}`,
+      date: localDateString(addLocalDays(parseLocalDate("2026-11-09"), i)),
+      weekKey: "2026-11-09",
+      dayIndex: (i + 1) % 7,
+      templateId: "easy_30",
+      type: "easy",
+      status: "planned",
+    }));
+  const stored = (runPlan: object) => ({
+    goal: "recomp",
+    currentPhase: "base",
+    weekNumber: 1,
+    splitType: "ppl",
+    workouts: [],
+    fatigueScore: 0,
+    updatedAt: Date.now(),
+    settings: { autoProgression: true, smallPlates: false },
+    weekHistory: [],
+    programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    liftWeekKey: "2026-11-09",
+    runDays: rows(),
+    runPlan,
+  });
+  it("prunes an already-current seven-day beginner plan without waiting for rollover", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-09T12:00:00"));
+    try {
+      mockProfile = raceProfile("2027-01-31", {
+        runFrequency: "new",
+        onboardingCompletedAt: {
+          toMillis: () => new Date("2026-11-09T12:00:00").getTime(),
+        },
+        weekSchedule: Array.from({ length: 7 }, (_, day) => ({
+          day,
+          type: "run" as const,
+        })),
+      } as Partial<MockProfile>);
+      seedProgram(
+        stored({
+          mode: "race_prep",
+          raceGoal: mockProfile.raceGoal,
+          currentWeek: 0,
+          totalWeeks: 12,
+        })
+      );
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.readiness).toBe("ready"));
+      expect(
+        result.current.programState?.runDays?.map((row) => row.dayIndex)
+      ).toEqual([1, 3, 5]);
+      expect(
+        (readDoc(PROGRAM) as unknown as ProgramState).runDays
+      ).toHaveLength(3);
+      expect(result.current.programState?.runPlan?.totalWeeks).toBe(12);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 // ─── PR-E — recovery phase generation + exit ────────────────────────
 
 describe("PR-E — recovery phase emits all easy_30 templates", () => {

@@ -58,7 +58,8 @@ import {
 import {
   clampStarterStage,
   nextStarterStage,
-  starterWeekDoneOn,
+  starterStageRunDays,
+  STARTER_RUNS_FOR_A_DONE_WEEK,
 } from "./starterPlan";
 import { starterRunPlan, starterWeekFrom } from "./starterWeek";
 import { raceBlockWeek, type RaceBlockWeek } from "./weekPrescription";
@@ -272,6 +273,7 @@ export function regenerateRacePlan({
     }
   }
   const runPlan = makeRunPlanRecord(v2, raceGoal, carry);
+  if (runDays.length === 0) runPlan.emptyRunWeekKey = weekStart;
   if (carry?.completedRaces) {
     runPlan.completedRaces = carry.completedRaces;
   }
@@ -326,8 +328,9 @@ function nextStarterWeek(
 ): NextRunWeek {
   const stage = current.runPlan?.stage ?? 1;
   const weekLeft = runWeekKeyOf(current);
+  const startedWeek = current.runPlan?.stageStartedWeek ?? weekLeft;
   const step = weekLeft
-    ? nextStarterStage(stage, weekLeft, recentRunDays)
+    ? nextStarterStage(stage, weekLeft, recentRunDays, startedWeek ?? weekLeft)
     : { finished: false, stage: clampStarterStage(stage) };
   if (step.finished && weekLeft && recentRunDays) {
     return {
@@ -335,13 +338,18 @@ function nextStarterWeek(
       runPlan: undefined,
       raceBlock: null,
       starterFinishedOn:
-        starterWeekDoneOn(recentRunDays, weekLeft) ?? next.date,
+        starterStageRunDays(recentRunDays, weekLeft, startedWeek ?? weekLeft)[
+          STARTER_RUNS_FOR_A_DONE_WEEK - 1
+        ] ?? next.date,
     };
   }
+  const stageStartedWeek =
+    step.stage === stage ? (startedWeek ?? undefined) : undefined;
   const week = next.plannedFrom
     ? starterWeekFrom({
         weekSchedule,
         stage: step.stage,
+        stageStartedWeek,
         today: next.plannedFrom,
       })
     : {
@@ -350,7 +358,7 @@ function nextStarterWeek(
           weekStart: next.weekStart,
           stage: step.stage,
         }),
-        runPlan: starterRunPlan(step.stage, next.weekStart),
+        runPlan: starterRunPlan(step.stage, next.weekStart, stageStartedWeek),
       };
   return { ...week, raceBlock: null };
 }

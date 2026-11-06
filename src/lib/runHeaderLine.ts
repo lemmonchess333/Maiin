@@ -83,7 +83,7 @@ export function runHeaderLine({
   if (runMode === "starter") {
     // In weeks of the nine, as the goal's card says; the end moves.
     return starterStage
-      ? `${STARTER_GOAL_NAME} · Week ${starterStage} of ${STARTER_STAGES}`
+      ? `${STARTER_GOAL_NAME} · Stage ${starterStage} of ${STARTER_STAGES}`
       : STARTER_GOAL_NAME;
   }
   if (runMode === "race_prep") {

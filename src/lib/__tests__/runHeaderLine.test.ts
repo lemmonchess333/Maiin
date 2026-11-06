@@ -26,7 +26,7 @@ describe("runHeaderLine", () => {
         runsTarget: 3,
         starterStage: 3,
       })
-    ).toBe("30 minutes without stopping · Week 3 of 9");
+    ).toBe("30 minutes without stopping · Stage 3 of 9");
     // Before its plan is built, the goal alone.
     expect(
       runHeaderLine({

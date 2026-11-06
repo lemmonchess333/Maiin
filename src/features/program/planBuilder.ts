@@ -749,6 +749,10 @@ function buildRunPlan(
     return starterWeekFrom({
       weekSchedule,
       stage: existing?.mode === "starter" ? (existing.stage ?? 1) : 1,
+      stageStartedWeek:
+        existing?.mode === "starter"
+          ? (existing.stageStartedWeek ?? existing.stageWeekKey)
+          : undefined,
       today: input.currentDate,
       prior:
         existing?.mode === "starter" ? input.existingState?.runDays : undefined,

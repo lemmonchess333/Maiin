@@ -150,7 +150,7 @@ describe("a starter week moving on", () => {
         "none",
         unread
       );
-      expect(next.runPlan).toEqual(starterRunPlan(6, week(1)));
+      expect(next.runPlan).toEqual(starterRunPlan(6, week(1), W0));
     }
   });
 
@@ -202,7 +202,7 @@ describe("rolling a starter plan over", () => {
       rollRunWeeks(starterState(5, W0), profile, today, "none", before)
     );
     expect(rolled.weeks).toBe(4);
-    expect(rolled.state.runPlan).toEqual(starterRunPlan(4, week(4)));
+    expect(rolled.state.runPlan).toEqual(starterRunPlan(4, week(4), week(3)));
     expect(rolled.state.runDays?.[0]?.templateId).toBe("run_walk_4");
   });
 

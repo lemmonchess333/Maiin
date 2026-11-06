@@ -6,6 +6,7 @@ import {
   STARTER_RUNS_FOR_A_DONE_WEEK,
   STARTER_STAGES,
   starterWeekDone,
+  starterStageRunDays,
   weekKeyAfter,
 } from "./starterPlan";
 
@@ -22,13 +23,14 @@ export const STARTER_GOAL_NAME = "30 minutes without stopping";
 /** Where a running starter goal stands this week, as Train shows it. */
 export interface StarterProgress {
   stage: number;
-  /** "Week 3 of 9". */
+  /** "Stage 3 of 9". */
   weekLabel: string;
-  /** "about 7 weeks to go", or "the last week". The end moves when a
-   *  week repeats, so it is said in weeks, never as a date. */
+  /** Remaining stages, never a promised completion date or duration. */
   toGoLabel: string;
   /** Saved runs in the plan's week so far, and how many make it done. */
   runsThisWeek: number;
+  /** Distinct days completed at this stage, including earlier repeated weeks. */
+  runsThisStage?: number;
   runsForTheWeek: number;
   /** The stage is last week's again: last week was not done. */
   repeated: boolean;
@@ -57,15 +59,23 @@ export function starterProgress(
   // A week repeats when the one before it was in the goal and not done.
   const goalLastWeek =
     !!starterGoal?.startedOn && starterGoal.startedOn < weekKey;
+  const stageDays = starterStageRunDays(
+    runDays,
+    weekKey,
+    plan.stageStartedWeek ?? weekKey
+  );
   return {
     stage,
-    weekLabel: `Week ${stage} of ${STARTER_STAGES}`,
+    weekLabel: `Stage ${stage} of ${STARTER_STAGES}`,
     toGoLabel:
-      weeksToGo <= 1 ? "the last week" : `about ${weeksToGo} weeks to go`,
+      weeksToGo <= 1 ? "the last stage" : `${weeksToGo} stages to go`,
     runsThisWeek: runsInWeek(runDays, weekKey),
+    runsThisStage: stageDays.length,
     runsForTheWeek: STARTER_RUNS_FOR_A_DONE_WEEK,
     repeated: goalLastWeek && !starterWeekDone(runDays, lastWeek),
-    reached: stage >= STARTER_STAGES && starterWeekDone(runDays, weekKey),
+    reached:
+      stage >= STARTER_STAGES &&
+      stageDays.length >= STARTER_RUNS_FOR_A_DONE_WEEK,
   };
 }
 

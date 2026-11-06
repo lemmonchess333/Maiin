@@ -1,3 +1,4 @@
+import { repairRunPrescriptions } from "./runPrescriptionRepair";
 import {
   commitProgramTransition,
   commitProgramUpdate,
@@ -534,6 +535,7 @@ export function useProgram() {
               : {}),
           };
         }
+        next = repairRunPrescriptions(next, profile, today);
         if (cancelled || auth.currentUser?.uid !== user.uid) return;
         if (!sameStoredValue(next, raw) || profile.runMode === "structured") {
           try {
@@ -850,6 +852,38 @@ export function useProgram() {
     },
     [user, profile, programState, refreshProfile]
   );
+
+  // A cached beginner schedule can arrive while the page stays open. Repair it from
+  // the live transaction snapshot, never mutate the raw mirror/base.
+  const repairAttempt = useRef<{ state: ProgramState; date: string } | null>(
+    null
+  );
+  useEffect(() => {
+    if (
+      !mirrorReady ||
+      !programState ||
+      !profile ||
+      (repairAttempt.current?.state === programState &&
+        repairAttempt.current.date === today)
+    )
+      return;
+    const repaired = repairRunPrescriptions(programState, profile, today);
+    if (sameStoredValue(repaired, programState)) return;
+    repairAttempt.current = { state: programState, date: today };
+    // Quiet persistence updates state only after the awaited transaction, as
+    // with the existing rollover effects below, never synchronously here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void saveProgram(
+      (base) => {
+        const next = repairRunPrescriptions(base, profile, today);
+        return sameStoredValue(next, base) ? null : next;
+      },
+      undefined,
+      { quiet: true }
+    ).catch((error) => {
+      logger.warn("[useProgram] run prescription repair deferred", error);
+    });
+  }, [mirrorReady, programState, profile, today, saveProgram]);
 
   /**
    * Re-read the authoritative programme document.
@@ -2435,6 +2469,9 @@ export function useProgram() {
             ({ runDays, runPlan } = starterWeekFrom({
               weekSchedule: effectiveSchedule,
               stage: starter?.runPlan?.stage ?? 1,
+              stageStartedWeek:
+                starter?.runPlan?.stageStartedWeek ??
+                starter?.runPlan?.stageWeekKey,
               today: localDateString(),
               prior: starter?.runDays,
             }));
@@ -2633,6 +2670,9 @@ export function useProgram() {
           ({ runDays, runPlan } = starterWeekFrom({
             weekSchedule,
             stage: starter?.runPlan?.stage ?? 1,
+            stageStartedWeek:
+              starter?.runPlan?.stageStartedWeek ??
+              starter?.runPlan?.stageWeekKey,
             today: localDateString(),
             prior: starter?.runDays,
           }));
@@ -3326,11 +3366,14 @@ export function useProgram() {
   }> => {
     if (!user || !programState) return { ok: false };
     try {
-      await sendProgramCommand({
-        kind: "revertEaseWeek" as const,
-        commandId: generateInstanceId(),
-        expectedWeekNumber: programState.weekNumber,
-      }, user.uid);
+      await sendProgramCommand(
+        {
+          kind: "revertEaseWeek" as const,
+          commandId: generateInstanceId(),
+          expectedWeekNumber: programState.weekNumber,
+        },
+        user.uid
+      );
       await refetchProgramState();
       return { ok: true };
     } catch (err) {
@@ -3660,7 +3703,10 @@ export function useProgram() {
     : null;
 
   return {
-    programState,
+    programState:
+      programState && profile
+        ? repairRunPrescriptions(programState, profile, today)
+        : programState,
     prescription,
     loading,
     /** Refresh canonical state after a queued command is replayed. */

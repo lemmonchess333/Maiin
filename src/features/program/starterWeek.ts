@@ -6,11 +6,18 @@ import { scheduleStarterWeek } from "./runScheduler";
 import { clampStarterStage, weekKeyAfter } from "./starterPlan";
 
 /** A starter plan at `stage` for the week starting `weekKey`. */
-export function starterRunPlan(stage: number, weekKey: string): RunPlan {
+export function starterRunPlan(
+  stage: number,
+  weekKey: string,
+  stageStartedWeek?: string
+): RunPlan {
   return {
     mode: "starter",
     stage: clampStarterStage(stage),
     stageWeekKey: weekKey,
+    ...(stageStartedWeek && stageStartedWeek < weekKey
+      ? { stageStartedWeek }
+      : {}),
   };
 }
 
@@ -25,6 +32,7 @@ export function starterRunPlan(stage: number, weekKey: string): RunPlan {
 export function starterWeekFrom(input: {
   weekSchedule: ScheduleDay[];
   stage: number;
+  stageStartedWeek?: string;
   today: string;
   prior?: readonly ScheduledRunDay[];
 }): { runDays: ScheduledRunDay[]; runPlan: RunPlan } {
@@ -40,7 +48,10 @@ export function starterWeekFrom(input: {
     weekKey
   );
   if (runDays.length > 0)
-    return { runDays, runPlan: starterRunPlan(input.stage, weekKey) };
+    return {
+      runDays,
+      runPlan: starterRunPlan(input.stage, weekKey, input.stageStartedWeek),
+    };
   const next = weekKeyAfter(weekKey, 1);
   return {
     runDays: scheduleStarterWeek({
@@ -48,6 +59,6 @@ export function starterWeekFrom(input: {
       weekStart: next,
       stage: input.stage,
     }),
-    runPlan: starterRunPlan(input.stage, next),
+    runPlan: starterRunPlan(input.stage, next, input.stageStartedWeek),
   };
 }

@@ -617,6 +617,11 @@ export interface RunPlan {
   /** A starter plan's week: the Monday key of the week `stage` is for,
    *  which the next rollover weighs. */
   stageWeekKey?: string;
+  /** First week at this starter stage, retained while it repeats. Legacy
+   * plans begin counting at their existing stageWeekKey, never signup age. */
+  stageStartedWeek?: string;
+  /** Calendar anchor for an intentionally empty race-training week. */
+  emptyRunWeekKey?: string;
   raceGoal?: { distance: string; targetDate: string; eventName?: string };
   totalWeeks?: number;
   currentWeek?: number;
