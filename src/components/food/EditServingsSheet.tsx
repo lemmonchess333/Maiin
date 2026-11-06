@@ -1,4 +1,5 @@
 import { memo, useState } from "react";
+import { useInFlightGuard } from "@/hooks/useInFlightGuard";
 import { CopyPlus, RotateCcw, Trash2, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
@@ -274,6 +275,7 @@ function EditServingsSheet({
   const [pickedCar, setPickedCar] = useState<string | null>(null);
   const [pickedFat, setPickedFat] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const saveGuard = useInFlightGuard();
 
   if (!source) return null;
 
@@ -447,7 +449,7 @@ function EditServingsSheet({
     saving;
 
   const handleSave = async () => {
-    if (cannotSave) return;
+    if (cannotSave || !saveGuard.begin()) return;
     setSaving(true);
     try {
       await onSave({
@@ -459,6 +461,7 @@ function EditServingsSheet({
         targetItems: itemsChanged ? keptItems : null,
       });
     } finally {
+      saveGuard.end();
       setSaving(false);
     }
   };

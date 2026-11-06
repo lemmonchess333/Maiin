@@ -257,3 +257,40 @@ describe("serving preview and saved portion", () => {
     expect(api.createMealEntry.mock.calls[0][1].totalCalories).toBe(250);
   });
 });
+
+
+it("adds a requested serving only once when Save is tapped twice in one frame", async () => {
+  api.meals = [meal("one", 200), meal("two", 200)];
+  let finish!: (value: { id: string }) => void;
+  api.createMealEntry.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+  render(<MemoryRouter><Food /></MemoryRouter>);
+  openPortion(400);
+  fireEvent.click(screen.getByLabelText("Increase servings"));
+  const save = screen.getByRole("button", { name: "Save" });
+  act(() => {
+    save.click();
+    save.click();
+  });
+  expect(api.createMealEntry).toHaveBeenCalledTimes(1);
+  await act(async () => { finish({ id: "third" }); });
+  expect(api.notifyMealsLogged).toHaveBeenCalledTimes(1);
+  expect(api.notifyMealsLogged.mock.calls[0][1]).toEqual(["third"]);
+});
+
+it("keeps an unsaved portion correction after failure and saves it on retry", async () => {
+  api.meals = [meal("one", 200)];
+  api.editMeal.mockRejectedValueOnce(new Error("unavailable"));
+  render(<MemoryRouter><Food /></MemoryRouter>);
+  openPortion(200);
+  fireEvent.change(screen.getByLabelText("Servings"), { target: { value: "2" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(api.editMeal).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Save" })).toBeEnabled());
+  expect(screen.getByLabelText("Servings")).toHaveValue("2");
+  expect(api.createMealEntry).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(api.editMeal).toHaveBeenCalledTimes(2));
+  expect(api.editMeal.mock.calls[1]).toEqual(api.editMeal.mock.calls[0]);
+  expect(api.editMeal.mock.calls[1]).toEqual(["one", expect.objectContaining({ totalCalories: 400 })]);
+  await waitFor(() => expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument());
+});
