@@ -1970,6 +1970,9 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     await vi.waitFor(() =>
       expect(screen.queryByRole("group", { name: "Rest timer" })).toBeNull()
     );
+    // Clearing the announcement is passive cleanup too, after the
+    // animated row has left the DOM.
+    await act(async () => {});
     expect(region).toHaveTextContent(/^$/);
   });
 
@@ -1999,6 +2002,9 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     await vi.waitFor(() =>
       expect(screen.queryByRole("group", { name: "Rest timer" })).toBeNull()
     );
+    // AnimatePresence removes the row before React runs its passive
+    // cleanup, which restores the title. Flush that cleanup as well.
+    await act(async () => {});
     expect(document.title).toBe("Tropos");
   });
 
