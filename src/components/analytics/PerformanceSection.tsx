@@ -1,3 +1,4 @@
+import PerformanceReadError from "./PerformanceReadError";
 import { useEffect, useRef, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -46,7 +47,7 @@ export default function PerformanceSection({
 }: PerformanceSectionProps = {}) {
   /* usePerformanceWeeks here only gates loading / empty — PerformanceTab
      fetches its own 12-week window for the gauge, trend, and breakdown. */
-  const { currentWeek, loading } = usePerformanceWeeks(4);
+  const { currentWeek, loading, failed, refresh } = usePerformanceWeeks(4);
   const prefersReducedMotion = useReducedMotion();
   const sectionRef = useRef<HTMLDivElement>(null);
 
@@ -91,6 +92,22 @@ export default function PerformanceSection({
         <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse">
           <div className="h-8 w-20 bg-muted rounded" />
         </div>
+      </section>
+    );
+  }
+
+  if (failed) {
+    return (
+      <section
+        id="analytics-performance"
+        ref={sectionRef}
+        aria-label="Performance Index"
+        className="space-y-2"
+      >
+        <SectionHeading className="text-lifting-strong">
+          Performance
+        </SectionHeading>
+        <PerformanceReadError onRetry={refresh} />
       </section>
     );
   }

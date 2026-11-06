@@ -309,11 +309,28 @@ describe("a new runner's runs after the run-walk weeks", () => {
   it("are the plan's own wherever the plan's run fits, and the race is the race", () => {
     for (const [distance, weeks] of races) {
       const regular = plan(distance, weeks, null);
-      plan(distance, weeks, until).weeks.forEach((week, i) => {
+      const fresh = plan(distance, weeks, until);
+      const firstTaper = weeks - 1 - TAPER_WEEKS_BY_DISTANCE[distance];
+      const buildHeldQuality = fresh.weeks
+        .slice(0, firstTaper)
+        .flat()
+        .some((run) => run.type === "tempo" || run.type === "intervals");
+      fresh.weeks.forEach((week, i) => {
         if (i < NEW_RUNNER_WEEKS) return;
         const most = 20 + 5 * (i - NEW_RUNNER_WEEKS + 1);
         week.forEach((run, j) => {
           const own = regular.weeks[i][j];
+          // A new runner whose build never reached quality keeps the
+          // taper easy, even when the sharpener now fits their minutes.
+          if (
+            !buildHeldQuality &&
+            (own.type === "tempo" || own.type === "intervals") &&
+            i >= firstTaper &&
+            i < weeks - 1
+          ) {
+            expect(run.type).toBe("easy");
+            return;
+          }
           // Run22: a taper week's long run and easy runs are its shares of
           // what the build held, and a new runner's build held shorter runs
           // than the plan's own (`taperInSteps.test.ts`).
@@ -340,6 +357,24 @@ describe("a new runner's runs after the run-walk weeks", () => {
     expect(plan("5k", 14, until).weeks.slice(10)).toEqual(
       regular.weeks.slice(10)
     );
+  });
+
+  it("does not make taper the first quality week after run-walk", () => {
+    // Six run-walk weeks, then a 25-minute ceiling that fits no quality.
+    // The next week's 30-minute ceiling used to unlock the taper's 8×400.
+    const fresh = plan("5k", 9, until);
+    expect(
+      fresh.weeks
+        .slice(0, 7)
+        .flat()
+        .every((run) => run.type === "easy")
+    ).toBe(true);
+    expect(fresh.weeks[7].map((run) => run.templateId)).toEqual([
+      "easy_30",
+      "easy_30",
+      "easy_20",
+    ]);
+    expect(fresh.weeks.at(-1)!.some((run) => run.type === "race")).toBe(true);
   });
 
   /* A tempo or intervals session that doesn't fit shortens to a smaller

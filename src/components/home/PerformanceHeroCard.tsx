@@ -1,3 +1,4 @@
+import PerformanceReadError from "@/components/analytics/PerformanceReadError";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronRight, TrendingDown, TrendingUp } from "lucide-react";
@@ -35,6 +36,8 @@ interface PerformanceHeroCardProps {
   weeksAvailable: number;
   /** True until the perf snapshot's initial delivery. */
   loading: boolean;
+  failed?: boolean;
+  onRetry?: () => void;
   /** Whether the user has any logged session at all. Distinguishes the
    *  cold-start empty state from the short window after a first session is
    *  saved but before the server has written its performance doc — see
@@ -70,12 +73,16 @@ export default function PerformanceHeroCard({
   previousWeek,
   weeksAvailable,
   loading,
+  failed = false,
+  onRetry,
   hasLoggedSession = false,
 }: PerformanceHeroCardProps) {
   const pi = currentWeek ? Math.round(currentWeek.performanceIndex ?? 0) : 0;
   /* Called unconditionally for the Rules of Hooks; the loading and empty
      branches do not render it. */
   const piDisplay = useCountUp(pi, { sessionKey: "perf", duration: 1 });
+
+  if (failed && !loading) return <PerformanceReadError onRetry={onRetry} />;
 
   if (!currentWeek) {
     /* Loading has its own row so the copy never says "your Performance

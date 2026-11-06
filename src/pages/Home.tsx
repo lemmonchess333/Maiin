@@ -448,6 +448,8 @@ export default function Home() {
     previousWeek: perfPrevWeek,
     docsAvailable: perfDocsAvailable,
     loading: perfLoading,
+    failed: perfFailed,
+    refresh: refreshPerformance,
   } = usePerformanceWeeks(2);
 
   // Meal history for the energy row's cold-start state. TodayEnergy gets
@@ -1445,6 +1447,8 @@ export default function Home() {
                     previousWeek={perfPrevWeek}
                     weeksAvailable={perfDocsAvailable}
                     loading={perfLoading}
+                    failed={perfFailed}
+                    onRetry={refreshPerformance}
                     /* The perf doc is written by the server, so "no doc" is
                        not "no session" — this keeps the row from telling
                        someone who has just logged their first workout that

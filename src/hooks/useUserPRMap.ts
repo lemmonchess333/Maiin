@@ -28,11 +28,16 @@ async function fetchPRMap(uid: string): Promise<PRMap> {
   if (existing) return existing;
 
   const promise = (async () => {
-    const workouts = await fetchSavedWorkouts(uid, { latest: FETCH_LIMIT });
-    const map = buildPRMap(workouts);
-    cache.set(uid, map);
-    inflight.delete(uid);
-    return map;
+    try {
+      const workouts = await fetchSavedWorkouts(uid, { latest: FETCH_LIMIT });
+      const map = buildPRMap(workouts);
+      cache.set(uid, map);
+      return map;
+    } finally {
+      // A rejected request is no longer in flight. Reopening compare after
+      // reconnecting must be able to read again, not reuse its rejection.
+      inflight.delete(uid);
+    }
   })();
   inflight.set(uid, promise);
   return promise;

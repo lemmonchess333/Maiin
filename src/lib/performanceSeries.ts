@@ -75,7 +75,15 @@ export function weeklyPerformanceSeries<T extends { weekKey: string }>(
   for (let k = 1; k < maxWeeks && cursor >= 0; k++) {
     const end = shiftKey(newest.weekKey, -DAYS_PER_WEEK * k);
     const start = shiftKey(end, -DAYS_PER_WEEK);
-    while (cursor >= 0 && docs[cursor].weekKey > end) cursor--;
+    // Missing daily snapshots can push the prior pick toward this slot.
+    // A candidate still needs seven days of separation from that pick,
+    // otherwise its seven-day score double-counts some of the same days.
+    const nonOverlappingEnd = shiftKey(
+      picked[picked.length - 1].weekKey,
+      -DAYS_PER_WEEK
+    );
+    const cutoff = end < nonOverlappingEnd ? end : nonOverlappingEnd;
+    while (cursor >= 0 && docs[cursor].weekKey > cutoff) cursor--;
     if (cursor < 0) break;
     const candidate = docs[cursor];
     if (candidate.weekKey > start) {

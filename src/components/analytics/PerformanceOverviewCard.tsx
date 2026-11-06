@@ -1,3 +1,4 @@
+import PerformanceReadError from "./PerformanceReadError";
 import { Activity, TrendingDown, TrendingUp } from "lucide-react";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
@@ -45,8 +46,15 @@ export default function PerformanceOverviewCard({
   hasLoggedSession: boolean;
   onOpenDetails: () => void;
 }) {
-  const { weeks, currentWeek, previousWeek, docsAvailable, loading } =
-    usePerformanceWeeks(WEEKS_SHOWN);
+  const {
+    weeks,
+    currentWeek,
+    previousWeek,
+    docsAvailable,
+    loading,
+    failed,
+    refresh,
+  } = usePerformanceWeeks(WEEKS_SHOWN);
   const arrival = useArrivedAfterLoading(loading);
 
   const details = (
@@ -71,6 +79,15 @@ export default function PerformanceOverviewCard({
       <section aria-label="Performance" className="space-y-2">
         <SectionHeading action={details}>Performance</SectionHeading>
         <PerformanceCardSkeleton />
+      </section>
+    );
+  }
+
+  if (failed) {
+    return (
+      <section aria-label="Performance" className="space-y-2">
+        <SectionHeading>Performance</SectionHeading>
+        <PerformanceReadError onRetry={refresh} />
       </section>
     );
   }
