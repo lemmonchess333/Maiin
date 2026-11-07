@@ -21,7 +21,7 @@ import type { RunTemplate } from "@/lib/workoutTemplates";
 import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
 import { blockWeekOf } from "@/features/program/trainingBlock";
 import { racePlanWeek, racePlanWeekLabel } from "@/lib/racePlanWeek";
-import { getFormArtCutout } from "@/lib/formArtCutouts";
+import { sessionLeadIndex } from "@/lib/formArtCutouts";
 import { paceLabel } from "@/lib/runLabels";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -116,17 +116,14 @@ export type HeroExercise = Partial<
 > & { name: string };
 
 /**
- * The exercise the hero pictures and talks about: the first with released
- * art, as the drawing is chosen (`sessionLeadArt`), so the picture and the
- * line are about one lift; the first exercise when none has art.
+ * The exercise the hero pictures and talks about: the day's main lift, as
+ * the drawing is chosen (`sessionLeadIndex`), so the picture and the line
+ * are about one lift; the first exercise when none has art.
  */
 export function heroLeadExercise<T extends HeroExercise>(
   exercises: readonly T[]
 ): T | null {
-  for (const ex of exercises) {
-    if (ex.exerciseId && getFormArtCutout(ex.exerciseId)) return ex;
-  }
-  return exercises[0] ?? null;
+  return exercises[sessionLeadIndex(exercises)] ?? exercises[0] ?? null;
 }
 
 /** The step a lift with no last time takes: the weight is the person's to

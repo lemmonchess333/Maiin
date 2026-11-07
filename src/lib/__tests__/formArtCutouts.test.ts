@@ -15,7 +15,11 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FORM_ARTWORK, getReleasedFormArtwork } from "../formArtwork";
 import { FORM_ART_CUTOUTS } from "../formArtCutouts.data";
-import { getFormArtCutout, sessionLeadArt } from "../formArtCutouts";
+import {
+  getFormArtCutout,
+  sessionLeadArt,
+  sessionLeadIndex,
+} from "../formArtCutouts";
 import { CARD_FRAMES, cardFrameOf } from "../formArtCardFrames";
 
 const sha = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
@@ -137,7 +141,11 @@ describe("card frames", () => {
       expect(art, `${id} has no released art`).not.toBeNull();
       const record = JSON.parse(
         readFileSync(
-          resolve(process.cwd(), "docs/exercise-art/cutout-sources", `${id}.json`),
+          resolve(
+            process.cwd(),
+            "docs/exercise-art/cutout-sources",
+            `${id}.json`
+          ),
           "utf8"
         )
       );
@@ -161,7 +169,28 @@ describe("sessionLeadArt", () => {
     expect(art?.cutout.source).toBe("form-frames/squat/4.webp");
   });
 
+  it("pictures the day's main lift, not whatever is drawn first", () => {
+    // A beginner's pull day: the floor gate puts the straight-arm pulldown
+    // in the pull-up's place, first; the barbell row is the main lift.
+    const pullA = [
+      { exerciseId: "straight-arm-pulldown", name: "Straight-Arm Pulldown" },
+      { exerciseId: "barbell-row", name: "Barbell Row" },
+      { exerciseId: "lat-pulldown", name: "Lat Pulldown" },
+    ];
+    expect(getFormArtCutout("straight-arm-pulldown")).not.toBeNull();
+    expect(sessionLeadIndex(pullA)).toBe(1);
+    expect(sessionLeadArt(pullA)?.exerciseName).toBe("Barbell Row");
+    // An arm or core primary never stands for the day.
+    expect(
+      sessionLeadArt([
+        { exerciseId: "incline-db-press", name: "Incline DB Press" },
+        { exerciseId: "barbell-curl", name: "Barbell Curl" },
+      ])?.exerciseName
+    ).toBe("Incline DB Press");
+  });
+
   it("is null for a day with no drawn exercise", () => {
+    expect(sessionLeadIndex([{ exerciseId: "not-in-the-library" }])).toBe(-1);
     expect(sessionLeadArt([{ name: "Custom finisher" }])).toBeNull();
     expect(sessionLeadArt([])).toBeNull();
   });

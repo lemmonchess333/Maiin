@@ -353,6 +353,17 @@ describe("the lift line: today's lead lift against last time", () => {
     );
     expect(heroLeadExercise([{ name: "Only one" }])?.name).toBe("Only one");
   });
+
+  it("is about the day's main lift when an accessory is drawn first", () => {
+    const pullA: HeroExercise[] = [
+      { name: "Straight-Arm Pulldown", exerciseId: "straight-arm-pulldown" },
+      row(),
+    ];
+    expect(heroLeadExercise(pullA)?.exerciseId).toBe("barbell-row");
+    expect(sessionLeadArt(pullA)?.exerciseName).toBe(
+      heroLeadExercise(pullA)?.name
+    );
+  });
 });
 
 describe("the run line: the run in its own numbers", () => {
