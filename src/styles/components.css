@@ -532,6 +532,54 @@ html.guiding [data-brand-mark] {
   filter: none;
 }
 
+/* Home's hero glow (SessionHero): the session's own colour behind its
+   picture, one hue fading into the page (DS4 §14m rule 13). The themes
+   carry the same measured colour (rule 15, C9: no glow that only dark
+   has): on a pale page a tint reads as colour (S > 0.35) only from about
+   0.7 alpha, so light's stops sit higher than dark's for the same weight.
+   With dark's stops in both, light Home's leading hue fell to 43% purple
+   (rule 11) and dark carried twice light's colour. A lift and a rest day
+   glow purple, as their drawings' lit muscles are. A run's coral glow
+   stays below what counts in both themes: the runner's lit muscles are
+   purple, and a coral glow that counts split the hero between two hues
+   (41% purple, 40% coral on a light free run). */
+.hero-glow {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--lifting) / 0.9),
+    hsl(var(--lifting) / 0.6) 45%,
+    hsl(var(--lifting) / 0.2) 75%,
+    transparent
+  );
+}
+.dark .hero-glow {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--lifting) / 0.3),
+    hsl(var(--lifting) / 0.14) 45%,
+    hsl(var(--lifting) / 0.04) 75%,
+    transparent
+  );
+}
+.hero-glow-run {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--running) / 0.26),
+    hsl(var(--running) / 0.12) 45%,
+    hsl(var(--running) / 0.04) 75%,
+    transparent
+  );
+}
+.dark .hero-glow-run {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--running) / 0.22),
+    hsl(var(--running) / 0.1) 45%,
+    hsl(var(--running) / 0.03) 75%,
+    transparent
+  );
+}
+
 /* Reduced-motion safety net for the shared primitives. The
    Framer Motion components in Layout.tsx already gate via the
    useReducedMotion hook; this CSS belt-and-braces the primitives

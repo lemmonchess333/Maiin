@@ -314,6 +314,17 @@ describe("StackedCTACards", function () {
       ).toBeInTheDocument();
       expect(screen.queryByText("Log your first meal")).not.toBeInTheDocument();
     });
+
+    it("pictures a rest day with the walker, Tropos's own art", function () {
+      // DS4 §14m rules 24 and 26: Home's hero carries one picture of at
+      // least a tenth of the screen, from our own art; the leaf icon the
+      // rest day drew was neither.
+      const { container } = renderCards(restDay());
+      const picture = container.querySelector("img");
+      expect(picture?.getAttribute("src")).toMatch(
+        /\/form-art\/rest-walk\.webp$/
+      );
+    });
   });
 });
 
@@ -650,6 +661,31 @@ describe("rest day — what else it can offer", function () {
       screen.getByRole("heading", { name: "Free run" })
     ).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Rest day" })).toBeNull();
+  });
+
+  it("gives a free run the week's distance as its line", function () {
+    // DS4's words rules: one number and what it is compared with. A free
+    // run has no plan to describe, so Home words the week instead.
+    const { container } = render(
+      <MemoryRouter>
+        <StackedCTACards
+          unit="km"
+          session={restDay({
+            kind: "free-run",
+            startTarget: runStartTarget(null),
+          })}
+          navigate={vi.fn()}
+          freeRunLine={{
+            title: "12.4 km this week",
+            detail: "18.2 km last week",
+            mark: "run",
+          }}
+        />
+      </MemoryRouter>
+    );
+    // The figures are set in their own spans (`InlineNumerals`).
+    expect(container.textContent).toContain("12.4 km this week");
+    expect(container.textContent).toContain("18.2 km last week");
   });
 
   it("offers a new lifter their first workout, opening at its day", function () {

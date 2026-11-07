@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   FIRST_LIFT_STEP,
   focusPhrase,
+  freeRunHeroLine,
+  heroIsFreeRun,
   heroKicker,
   heroLead,
   heroLeadExercise,
@@ -397,6 +399,129 @@ describe("the run line: the run in its own numbers", () => {
   it("a run-walk's runs", () => {
     const runWalk = template("run_walk_1");
     expect(runHeroLine(runWalk, null, "km")?.title).toMatch(/running|runs/);
+  });
+});
+
+describe("a free run, with no planned run to describe", () => {
+  it("is the free runner's rest-day offer, or a run day with nothing written", () => {
+    expect(
+      heroIsFreeRun(
+        day({ rest: { kind: "free-run", startTarget: runStartTarget(null) } })
+      )
+    ).toBe(true);
+    expect(heroIsFreeRun(day({ type: "run", run: run({ name: null }) }))).toBe(
+      true
+    );
+  });
+
+  it("is not a planned run, nor a run under a lift that leads", () => {
+    expect(
+      heroIsFreeRun(day({ type: "run", run: run({ name: "Easy 30" }) }))
+    ).toBe(false);
+    expect(
+      heroIsFreeRun(
+        day({ type: "both", lift: lift(), run: run({ name: null }) })
+      )
+    ).toBe(false);
+    expect(heroIsFreeRun(day({ rest: { kind: "rest", tomorrow: null } }))).toBe(
+      false
+    );
+  });
+});
+
+describe("the free run line: this week's distance against last week's", () => {
+  // TODAY is Sunday 27 September: this week runs from Monday the 21st,
+  // last week from the 14th to the 20th.
+  const runs = [
+    { day: "2026-09-12", distance: 9_000 }, // the week before: not counted
+    { day: "2026-09-15", distance: 10_000 },
+    { day: "2026-09-19", distance: 8_200 },
+    { day: "2026-09-22", distance: 5_000 },
+    { day: "2026-09-26", distance: 7_400 },
+  ];
+
+  it("gives this week's distance and last week's beside it", () => {
+    expect(
+      freeRunHeroLine({ runs, todayKey: TODAY, unit: "km", first: false })
+    ).toEqual({
+      title: "12.4 km this week",
+      detail: "18.2 km last week",
+      mark: "run",
+    });
+  });
+
+  it("draws an empty week at zero, against last week", () => {
+    expect(
+      freeRunHeroLine({
+        runs: runs.filter((r) => r.day < "2026-09-21"),
+        todayKey: TODAY,
+        unit: "km",
+        first: false,
+      })
+    ).toEqual({
+      title: "0 km this week",
+      detail: "18.2 km last week",
+      mark: "run",
+    });
+  });
+
+  it("counts the runs when last week had none to compare with", () => {
+    expect(
+      freeRunHeroLine({
+        runs: runs.filter((r) => r.day >= "2026-09-21"),
+        todayKey: TODAY,
+        unit: "km",
+        first: false,
+      })
+    ).toEqual({
+      title: "12.4 km this week",
+      detail: "2 runs so far",
+      mark: "run",
+    });
+    expect(
+      freeRunHeroLine({
+        runs: [{ day: "2026-09-27", distance: 5_000 }],
+        todayKey: TODAY,
+        unit: "km",
+        first: false,
+      })?.detail
+    ).toBe("1 run so far");
+  });
+
+  it("is a first step, with the week at zero, before the first run", () => {
+    expect(
+      freeRunHeroLine({ runs: [], todayKey: TODAY, unit: "km", first: true })
+    ).toEqual({
+      title: "0 km this week",
+      detail: "Finish your first run and it counts here",
+      mark: "run",
+    });
+    // Back after a fortnight away: the same step, without "first".
+    expect(
+      freeRunHeroLine({
+        runs: [{ day: "2026-09-12", distance: 9_000 }],
+        todayKey: TODAY,
+        unit: "km",
+        first: false,
+      })?.detail
+    ).toBe("Finish a run and it counts here");
+  });
+
+  it("speaks the reader's unit", () => {
+    expect(
+      freeRunHeroLine({
+        runs: [{ day: "2026-09-22", distance: 8_046.72 }],
+        todayKey: TODAY,
+        unit: "mi",
+        first: false,
+      })?.title
+    ).toBe("5.0 mi this week");
+  });
+
+  it("says nothing while the runs are read", () => {
+    expect(
+      freeRunHeroLine({ runs: null, todayKey: TODAY, unit: "km", first: false })
+    ).toBeNull();
   });
 });
 

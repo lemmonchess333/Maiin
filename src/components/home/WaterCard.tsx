@@ -528,12 +528,12 @@ export default function WaterCard({
 
   return (
     <div
-      className="relative overflow-hidden p-4 rounded-2xl bg-card"
+      className="relative overflow-hidden p-4 rounded-xl bg-card"
       style={{ boxShadow: iconBoxShadow }}
     >
       {heading}
       <motion.div
-        className="absolute inset-x-0 bottom-0 pointer-events-none rounded-2xl"
+        className="absolute inset-x-0 bottom-0 pointer-events-none rounded-xl"
         style={{ background: fillBg }}
         initial={{ height: 0 }}
         animate={{ height: fillPercent + "%" }}
@@ -551,7 +551,7 @@ export default function WaterCard({
           className="flex items-center gap-4 flex-1 min-w-0 text-left motion-safe:active:scale-[0.99] transition-transform"
         >
           <div
-            className="size-12 rounded-xl flex items-center justify-center flex-shrink-0"
+            className="size-12 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: "rgba(82, 163, 189, 0.10)" }}
           >
             <Droplets

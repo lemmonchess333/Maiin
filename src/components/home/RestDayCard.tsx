@@ -1,10 +1,10 @@
-import { Leaf } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import SessionHero from "@/components/home/SessionHero";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatShortWeekdayDayMonth } from "@/utils/formatters";
+import { runPoseUrl } from "@/lib/runPoses";
 
 /**
  * Home's hero on a rest day (DS4; `SessionHero` draws it).
@@ -15,6 +15,10 @@ import { formatShortWeekdayDayMonth } from "@/utils/formatters";
  * session is coming, names it with a way to look at it. There is no
  * Start: rest days have nothing to begin, and a hero with a dead button
  * would say otherwise.
+ *
+ * Its picture is the suggestion drawn: the canonical athlete on an easy
+ * walk (`rest-walk`, DS4 §14m rules 24 and 26), with one soft highlight,
+ * because a rest day is calm, not a reward.
  */
 export default function RestDayCard({
   tomorrow = null,
@@ -32,14 +36,7 @@ export default function RestDayCard({
       sport="rest"
       title="Rest day"
       description="A walk or some mobility helps."
-      emblem={
-        <div className="flex size-[120px] items-center justify-center rounded-full bg-lifting/10">
-          <Leaf
-            className="size-[52px] text-lifting-strong"
-            aria-hidden="true"
-          />
-        </div>
-      }
+      picture={{ src: runPoseUrl("rest-walk"), className: "exercise-drawing" }}
       line={
         tomorrow
           ? {

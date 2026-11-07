@@ -11,6 +11,7 @@ import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { LiftUnit } from "@/lib/liftLoad";
+import type { HeroLine } from "@/lib/homeHero";
 
 const stagger = {
   hidden: {},
@@ -44,6 +45,7 @@ export default function StackedCTACards({
   navigate,
   unit,
   liftUnit = "kg",
+  freeRunLine = null,
 }: {
   /** Today's session, as `todaySession` decided it. */
   session: TodaySession;
@@ -52,6 +54,9 @@ export default function StackedCTACards({
   unit: DistanceUnit;
   /** The lifter's unit, for the hero line's loads. */
   liftUnit?: LiftUnit;
+  /** A free run's line, the week's distance (`freeRunHeroLine`), drawn
+   *  when the hero is a run with no plan behind it. */
+  freeRunLine?: HeroLine | null;
 }) {
   const { lift, run, rest } = session;
   // On a day with both, the run leads when running is the person's aim
@@ -69,6 +74,7 @@ export default function StackedCTACards({
         inProgress={run.inProgress}
         startTarget={run.startTarget}
         easyPaceSPerKm={run.easyPaceSPerKm}
+        freeLine={freeRunLine}
         variant={runLeads ? "hero" : "compact"}
       />
     </motion.div>
@@ -186,6 +192,7 @@ export default function StackedCTACards({
               unit={unit}
               inProgress={rest.inProgress}
               startTarget={rest.startTarget}
+              freeLine={freeRunLine}
             />
           ) : rest.kind === "first-meal" ? (
             <FirstMealCard navigate={navigate} />
