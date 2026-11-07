@@ -20,6 +20,7 @@ import {
   type TodaySession,
 } from "../todaySession";
 import { sessionLeadArt } from "../formArtCutouts";
+import { liftPlanWeek } from "../liftWeekLabel";
 import { RUN_TEMPLATES } from "../workoutTemplates";
 import type { ProgramState } from "@/features/program/programTypes";
 
@@ -122,6 +123,7 @@ describe("the plan's position, beside the date", () => {
       trainingBlock: { startDate: "2026-09-07", durationWeeks: 12 },
     } as unknown as ProgramState;
     expect(planPosition(state, TODAY)).toBe("Week 3 of 12");
+    expect(liftPlanWeek(state, TODAY)).toMatchObject({ week: 3, weeks: 12 });
   });
 
   it("a race plan's week", () => {
@@ -134,6 +136,13 @@ describe("the plan's position, beside the date", () => {
       },
     } as unknown as ProgramState;
     expect(planPosition(state, TODAY)).toBe("Week 9 of 12");
+    // The week Train's lifting counts during the race plan, so the two
+    // screens say one number.
+    const lifting = liftPlanWeek(state, TODAY);
+    expect(lifting).not.toBeNull();
+    expect(planPosition(state, TODAY)).toBe(
+      `Week ${lifting!.week} of ${lifting!.weeks}`
+    );
   });
 
   it("nothing for a plan with no length, or no plan", () => {

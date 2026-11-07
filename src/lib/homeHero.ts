@@ -19,7 +19,7 @@ import type { TodaySession, NextSession } from "@/lib/todaySession";
 import type { WeekSummaryCounts } from "@/lib/weekSummary";
 import type { RunTemplate } from "@/lib/workoutTemplates";
 import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
-import { liftPlanWeek } from "@/lib/liftWeekLabel";
+import { blockWeekOf } from "@/features/program/trainingBlock";
 import { racePlanWeek, racePlanWeekLabel } from "@/lib/racePlanWeek";
 import { getFormArtCutout } from "@/lib/formArtCutouts";
 import { paceLabel } from "@/lib/runLabels";
@@ -60,19 +60,21 @@ export function heroLead(session: TodaySession): HeroLead {
 }
 
 /**
- * Where the plan stands today, for the kicker beside the date: a lifting
- * block's or a race block's week ("Week 9 of 12", `liftPlanWeek`), else a
- * race plan's or its recovery's (`racePlanWeek`). Null for a plan with no
- * length to count against: "Week 7" on its own says nothing about where
- * the plan ends.
+ * Where the plan stands today, for the kicker beside the date: a training
+ * block's week ("Week 9 of 12"), else a race plan's or its recovery's
+ * (`racePlanWeek`), the count Train's lifting week takes during a race
+ * plan too (`liftPlanWeek`, read here from its two sources so Home does
+ * not carry Train's week labels). Null for a plan with no length to count
+ * against: "Week 7" on its own says nothing about where the plan ends.
  */
 export function planPosition(
   state: ProgramState | null | undefined,
   /** Local "yyyy-MM-dd". */
   todayKey: string
 ): string | null {
-  const lift = liftPlanWeek(state, todayKey);
-  if (lift) return `Week ${lift.week} of ${lift.weeks}`;
+  const block = state?.trainingBlock;
+  const week = block ? blockWeekOf(block, todayKey) : null;
+  if (block && week !== null) return `Week ${week} of ${block.durationWeeks}`;
   const runPlan = state?.runPlan;
   const race = racePlanWeek({
     raceGoal: runPlan?.raceGoal ?? null,
