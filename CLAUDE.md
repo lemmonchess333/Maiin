@@ -553,7 +553,7 @@ gstack (`.claude/skills/gstack`, a git submodule) is checked out only in local s
 
 ## Tropos Design System
 
-Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the accessibility floors, and §14 the owner's dated design decisions, the training-plan primitives and the button-variant mapping. Screenshot capture and the emulator rig are in `docs/agents/capture-rig.md`.
+Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the accessibility floors, and §14 the owner's dated design decisions, the training-plan primitives and the button-variant mapping. Since DS4 (2026-11-07) its rules are measured from the apps people come back to (§14m, evidence in `docs/design-rules-2026-11/`): one hero per screen holding its largest text, colour on the person's data within a budget, our own art as the pictures, full-screen rewards for firsts, bests, streaks and finished plans, and a full day 1. CODING_STANDARDS' house voice carries the measured words rules. A visual change starts as a mockup with before-and-after captures; a pass that only removes things has not done the job. Screenshot capture and the emulator rig are in `docs/agents/capture-rig.md`.
 
 ### Component Architecture
 

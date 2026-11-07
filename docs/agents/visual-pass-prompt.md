@@ -29,6 +29,14 @@ HOLD IT AGAINST:
 - Consistency: one treatment per element kind — dates (en-GB), units
   (spaced: "60 kg"), sentence-case labels (SectionLabel), page titles
   (PageShell's text-h1).
+- DESIGN_GUIDE §0 and §14m (DS4, measured from the apps people come back
+  to) and CODING_STANDARDS' measured words rules. Measure each screen in
+  scope against their numbers: one hero holding the largest text, no large
+  title above it, the size ladder, colour within the budget and on data
+  rather than buttons, one filled button, the chrome budget, a picture
+  where the rules ask for one, a full day-1 state. A screen that fails the
+  "blank" test (§1) is a finding, the same as a contrast failure; propose
+  its fix as a mockup next to its current frame.
 
 METHOD — non-negotiable:
 - Evidence is the capture channel (push to claude/screenshot-app, read the
@@ -67,8 +75,10 @@ must change one):
 DONE MEANS: every in-scope surface audited against frames; everything
 fixable under the standing calls SHIPPED and frame-verified (before/after
 measurements in the PR); tests+lint+tsc green with new invariants pinned
-as ratchets or bans; and a list of at most the GENUINELY open questions —
-each with both options measured, never "someone should decide".
+as ratchets or bans; every in-scope screen measured against §14m, with a
+mockup for each that fails; and a list of at most the GENUINELY open
+questions — each with both options measured, never "someone should
+decide". A pass that only removed things has not finished.
 ```
 
 ---
