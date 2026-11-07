@@ -2,13 +2,14 @@
  * Food's hero (DS4, DESIGN_GUIDE §14m): the words around the day's figure,
  * and the picture a diary row carries when its meal has no photo.
  *
- * The hero is one figure, the day's calories against its target ("1,240"
- * over "of 2,350 kcal"), inside the calorie ring. It reads what was eaten
- * by default, so a new day starts at 0 on a grey track and the colour
- * arrives with the first meal (§14m rules 16 and 33); the ring's one
- * switch still turns it to what is left (Food10 call 1: the breakdown
- * sheet follows it). Pure, so the words are tested without rendering the
- * page; `FoodHeroCard` and `FoodTimeline` only draw the answers.
+ * The hero is one figure, the day's calories against its target, inside
+ * the calorie ring: "1,110" over "left of 2,350 kcal" (the default), or
+ * "1,240" over "of 2,350 kcal" once the ring is turned to what was logged
+ * (Food10 call 1: the breakdown sheet follows it). The ring fills with what
+ * was eaten in both (`calorieRingFill.ts`), so a new day is a grey track and
+ * the colour arrives with the first meal (§14m rules 16 and 33). Pure, so
+ * the words are tested without rendering the page; `FoodHeroCard` and
+ * `FoodTimeline` only draw the answers.
  */
 import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
 import { FOOD_ART, type FoodArtKind } from "@/lib/foodArt.data";
@@ -44,6 +45,10 @@ export function foodHeroFigure({
     isLeftMode: mode === "left",
   });
   const of = `${formatCalories(target)} ${CALORIE_UNIT}`;
+  /* Nothing eaten yet: the figure IS the target, so "2,108 left of 2,108
+     kcal" would say it twice. */
+  if (labelMode === "left" && consumed <= 0)
+    return { value: displayValue, caption: `${CALORIE_UNIT} left` };
   return {
     value: displayValue,
     caption:
@@ -58,8 +63,11 @@ export function foodHeroFigure({
 /**
  * The hero's one line, or nothing. Only an empty diary has one: today,
  * with no meal on any day the diary has loaded, it gives the first step
- * and the number it fills (the house voice's "day one is a starting
- * line"). A new account's step is its first meal; someone back after a
+ * and when the screen fills (the house voice's "day one is a starting
+ * line"). Read as what was logged, the figure is 0 and the line names the
+ * target it starts on; read as what is left, the figure already is the
+ * target, so the line says the ring fills instead of naming it a third
+ * time. A new account's step is its first meal; someone back after a
  * month away is not on their first. Once anything is logged the figure
  * says it all, and a day in the past has no step to offer.
  */
@@ -68,6 +76,7 @@ export function foodHeroLine({
   beforeJoined,
   hasAnyMeal,
   isNew,
+  mode = "left",
   target,
 }: {
   isToday: boolean;
@@ -78,10 +87,13 @@ export function foodHeroLine({
    *  logged a meal at all. */
   isNew: boolean;
   target: number;
+  /** The ring's mode: "left" (the default) or "eaten". */
+  mode?: "left" | "eaten";
 }): string | null {
   if (!isToday || beforeJoined || hasAnyMeal) return null;
   const step = isNew ? "Log your first meal" : "Log a meal";
   if (!(target > 0)) return `${step} and it shows here.`;
+  if (mode === "left") return `${step} and the ring starts to fill.`;
   return `${step} to start today's ${formatCalories(target)} ${CALORIE_UNIT}.`;
 }
 

@@ -24,12 +24,13 @@ const STORAGE_KEY = "tropos.food.calorieRingMode";
  * it is for, and it gives a server snapshot for free.
  */
 
-/* Eaten until the person turns the ring to "left" (DS4, 7 November 2026).
-   Food's hero is the day's calories against its target, so a new day
-   starts at 0 on a grey track and the orange arrives with the first meal
-   (DESIGN_GUIDE §14m rules 16 and 33). Read as "left" by default it was a
-   full orange ring on every empty morning, colour before any data. */
-const DEFAULT_MODE: CalorieRingMode = "eaten";
+/* "Left" until the person turns the ring to what they logged, so existing
+   accounts and Home's food card keep reading "kcal left". The mode moves
+   only the number and its words: every ring and bar fills with what was
+   eaten in both (`calorieRingFill.ts`, DS4, 7 November 2026), so an empty
+   morning is a grey track whichever mode is on (DESIGN_GUIDE §14m rules 16
+   and 33). */
+const DEFAULT_MODE: CalorieRingMode = "left";
 
 function read(): CalorieRingMode {
   if (typeof window === "undefined") return DEFAULT_MODE;

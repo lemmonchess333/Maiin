@@ -94,17 +94,14 @@ describe("FoodHeroCard — single shared display mode", () => {
     setCalorieRingMode("left");
   });
 
-  it("defaults to what was eaten for the ring and all three macros (DS4)", async () => {
-    /* The hero is the day's calories against its target, so an empty
-       morning is 0 on a grey track, not a full orange ring (§14m rules
-       16 and 33). */
+  it("defaults to 'left' for the ring and all three macros", () => {
+    /* Existing accounts and Home's food card keep reading "kcal left";
+       the fill is what was eaten either way (calorieRingFill.ts). */
     window.localStorage.clear();
     const { container } = renderHero();
-    expect(tileModes(container)).toEqual(["logged", "logged", "logged"]);
-    expect(ringButton().getAttribute("aria-label")).not.toMatch(/remaining/i);
-    // The store read the empty storage on mounting: the ring's words
-    // settle on the eaten view (the left view's fade out comes first).
-    expect(await screen.findByText(/^of [\d.,\s]+ kcal$/)).toBeInTheDocument();
+    expect(tileModes(container)).toEqual(["left", "left", "left"]);
+    expect(ringButton().getAttribute("aria-label")).toMatch(/remaining/i);
+    expect(screen.getByText(/^left of [\d.,\s]+ kcal$/)).toBeInTheDocument();
   });
 
   it("tapping a macro tile flips the ring AND all three tiles to 'logged'", () => {
@@ -243,7 +240,8 @@ describe("FoodHeroCard — the hero, open on the page (DS4)", () => {
     ).toHaveTextContent("See nutrients");
   });
 
-  it("gives a new account's empty today its first step and number", () => {
+  it("gives a new account's empty today its first step, in the left view", () => {
+    setCalorieRingMode("left");
     render(
       <MemoryRouter>
         <FoodHeroCard
@@ -257,7 +255,7 @@ describe("FoodHeroCard — the hero, open on the page (DS4)", () => {
       </MemoryRouter>
     );
     expect(
-      screen.getByText(/^Log your first meal to start today's/)
+      screen.getByText("Log your first meal and the ring starts to fill.")
     ).toBeInTheDocument();
   });
 });

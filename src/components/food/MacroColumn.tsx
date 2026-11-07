@@ -9,6 +9,7 @@ import {
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
+import { barFillPct } from "@/lib/calorieRingFill";
 import type { CalorieRingMode } from "./CalorieRing";
 
 export type MacroColumnKey = "protein" | "carbs" | "fat";
@@ -84,17 +85,9 @@ export default function MacroColumn({
   const isOver = consumed > target && hasTarget;
   const isLeftMode = mode === "left";
 
-  // Bar fill direction is mode-locked to the big number's direction so
-  // both signals move in lockstep:
-  //   LEFT mode → fill = remaining %   (drains as you log; matches the
-  //                                    big number which counts down)
-  //   LOGGED mode → fill = consumed %  (grows as you log; matches the
-  //                                    big number which counts up)
-  // Over-target in LEFT mode pins to 100% (a full bar reads as
-  // "maxed out + over by N" combined with the big number; an empty
-  // bar would falsely read as "nothing left to eat").
-  // Mirrors the calorie ring's fill direction in CalorieRing.tsx.
-  const barFillPct = !hasTarget ? 0 : isLeftMode ? (isOver ? 1 : 1 - pct) : pct;
+  // The bar is what was eaten in both modes, as the calorie ring's arc is;
+  // the number and its word follow the mode (calorieRingFill.ts).
+  const fillShare = !hasTarget ? 0 : barFillPct(pct * 100, isOver) / 100;
 
   // Overshoot — only when consumed exceeds target. Capped at one full
   // extra lap; going 3× over wouldn't read any differently than 2×.
@@ -348,14 +341,14 @@ export default function MacroColumn({
             ? "hsl(var(--muted-foreground) / 0.2)"
             : "hsl(var(--muted))",
           boxShadow: "inset 0 1px 2px rgb(0 0 0 / 0.06)",
-          opacity: barFillPct === 0 ? 0.4 : 1,
+          opacity: fillShare === 0 ? 0.4 : 1,
         }}
       >
         <motion.div
           className="h-full rounded-full"
           style={{ background: overColor, opacity: pulseOpacity }}
-          initial={{ width: settled ? `${barFillPct * 100}%` : "0%" }}
-          animate={{ width: `${barFillPct * 100}%` }}
+          initial={{ width: settled ? `${fillShare * 100}%` : "0%" }}
+          animate={{ width: `${fillShare * 100}%` }}
           transition={{
             width: { duration: reduce ? 0 : barDurationSec, ease: RING_EASE },
           }}

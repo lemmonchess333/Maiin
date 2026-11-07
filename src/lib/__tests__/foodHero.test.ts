@@ -39,6 +39,12 @@ describe("foodHeroFigure", () => {
     ).toEqual({ value: 1110, caption: `left of ${groupedNumber(2350)} kcal` });
   });
 
+  it("with nothing eaten, names the target once", () => {
+    expect(foodHeroFigure({ consumed: 0, target: 2108, mode: "left" })).toEqual(
+      { value: 2108, caption: "kcal left" }
+    );
+  });
+
   it("past the target, says how far in numbers and nothing else", () => {
     expect(
       foodHeroFigure({ consumed: 2600, target: 2350, mode: "left" })
@@ -63,11 +69,21 @@ describe("foodHeroLine", () => {
     hasAnyMeal: false,
     isNew: true,
     target: 2350,
+    mode: "eaten" as const,
   };
 
   it("gives a first use its first step and the number it fills", () => {
     expect(foodHeroLine(base)).toBe(
       `Log your first meal to start today's ${groupedNumber(2350)} kcal.`
+    );
+  });
+
+  it("read as what is left, says the ring fills rather than naming the target again", () => {
+    expect(foodHeroLine({ ...base, mode: "left" })).toBe(
+      "Log your first meal and the ring starts to fill."
+    );
+    expect(foodHeroLine({ ...base, mode: "left", isNew: false })).toBe(
+      "Log a meal and the ring starts to fill."
     );
   });
 

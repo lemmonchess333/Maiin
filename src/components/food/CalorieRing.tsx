@@ -5,6 +5,7 @@ import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
 import { THEME } from "@/lib/theme";
+import { barFillPct } from "@/lib/calorieRingFill";
 
 export type CalorieRingMode = "left" | "eaten";
 
@@ -98,10 +99,10 @@ export default function CalorieRing({
     isLeftMode,
   });
 
-  // Ring fill direction:
-  // LEFT mode = drains from full as consumed grows (1 - progress)
-  // LOGGED mode = fills from empty as consumed grows (progress)
-  const fillRatio = isLeftMode ? 1 - progress : progress;
+  // The arc is what was eaten in both modes; only the number and its
+  // words follow the mode (calorieRingFill.ts). An empty day is the grey
+  // track whichever way it is read.
+  const fillRatio = barFillPct(progress * 100) / 100;
   const strokeDashoffset = CIRCUMFERENCE * (1 - fillRatio);
 
   // Overshoot lap, in both modes, capped at one extra lap.

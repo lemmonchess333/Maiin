@@ -265,6 +265,7 @@ export default function FoodHeroCard({
     hasAnyMeal,
     isNew,
     target: dailyTargets.finalTarget,
+    mode,
   });
 
   /* Food's hero (DS4, DESIGN_GUIDE §14m): open on the page, not a card,
