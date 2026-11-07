@@ -1149,6 +1149,16 @@ words; these need the operator, a device, or a real trial.
       STATUS 2026-11-07: half done. troposfit.com, send.troposfit.com and
       no-reply@troposfit.com registered, each passing Apple's SPF check.
       The Hide My Email reset itself is not yet tried.
+- [ ] **The subscriptions' review screenshot shows today's paywall.**
+      App Store Connect → Tropos → Subscriptions → Tropos Pro → each of
+      Tropos Pro Yearly and Tropos Pro Monthly → Review Information →
+      Screenshot. Apple's reviewer compares it with the paywall in the
+      build, so replace it whenever the Upgrade sheet changes, and before
+      the build that first submits the subscriptions. As of 2026-11-07 it
+      is an older Food-tab paywall ("Unlock AI food logging", Monthly
+      £3.99, Yearly £34.99, "Start your 7-day free trial"). A capture of
+      the current sheet comes from the capture rig
+      (`docs/agents/capture-rig.md`).
 - [ ] **The Upgrade page on the iOS app.** After a sandbox trial purchase
       (TestFlight, a uid on `REVENUECAT_SANDBOX_UIDS`), the Pro card shows
       "Free trial until …", the price line with the last moment to cancel,
@@ -3745,7 +3755,7 @@ release, the console and a phone.
 - [ ] **The count matches the console.** For one race people are training
       for: in the console, Firestore → `users`, filter
       `raceGoal.eventSpaceId == <id>` and `raceGoal.targetDate >=
-  <yesterday's date, UTC>`. Passing: the number of documents equals
+<yesterday's date, UTC>`. Passing: the number of documents equals
       `raceCohorts/<id>.count`. Then, on a test account bound to that race,
       choose another listed race in the run-plan editor and save. Passing:
       within a minute the first race's count is one lower and the second's
