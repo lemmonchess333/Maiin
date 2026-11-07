@@ -596,8 +596,8 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument();
   });
 
-  /* An iPhone build without the store (deploy-ios.yml leaves RevenueCat's
-     key out until its activation order is done) can only refuse a
+  /* An iPhone build without the store (one made without RevenueCat's
+     VITE_REVENUECAT_IOS_KEY secret) can only refuse a
      purchase. Showing prices and a button there is a Guideline 2.1
      rejection, so the page shows neither, and no Restore. */
   it("in a build that cannot sell, shows no price, checkout or Restore", () => {
