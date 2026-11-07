@@ -301,6 +301,7 @@ const BUTTON_VARIANTS = [
   "sport-tinted",
   "nutrition",
   "nutrition-tinted",
+  "neutral",
 ] as const;
 
 /**

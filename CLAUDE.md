@@ -558,8 +558,15 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
 ### Component Architecture
 
 - **Pages:** src/pages/ — route-level, lazy-loaded
-- **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards
-  (LiftCTACard / RunCTACard / RestDayCard — Start on the card, no pills) →
+- **Home screen built from:** the header (the date as a kicker, with the
+  plan's position or a first session beside it, then the streak chip and
+  the avatar; "Today" is the h1 for screen readers only, DS4) →
+  StackedCTACards, the hero (LiftCTACard / RunCTACard / RestDayCard drawn
+  by SessionHero: the session's name, its focus and minutes, its picture,
+  one line against last time, one neutral Start; a day's second session
+  is a compact card under it; the words are `homeHero.ts`'s) → the week
+  card: WeekSessions over WeekStrip's seven segments → DayPeekCard (the
+  tapped day) →
   StarterDoneCard (the starter goal reached: Done, and a 5K offered once) →
   FirstWeekCard (a new account's first seven days; for a v2 account one
   or two rows, the first workout and the first run) → NewBadgeRow (a

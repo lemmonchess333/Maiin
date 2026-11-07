@@ -83,6 +83,9 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   // under white; the tint carries the theme-aware text step.
   nutrition: "bg-nutrition-fill text-white",
   "nutrition-tinted": "bg-nutrition/10 text-nutrition-strong",
+  // Mirrors Button.tsx — the foreground fill, white on dark and ink on
+  // light.
+  neutral: "bg-foreground text-background hover:bg-foreground/90",
 };
 
 /**

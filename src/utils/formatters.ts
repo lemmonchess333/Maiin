@@ -80,13 +80,11 @@ export function formatDayMonthYear(d: Date): string {
   });
 }
 
-/** "Sat 11 Oct" — the short weekday form (a session's day in a list). */
+/** "Sat 11 Oct" — the short weekday form (a session's day in a list, Home's
+ *  kicker). Built from its two parts because engines disagree on the
+ *  whole: Chromium's ICU writes "Sat, 11 Oct", Node's "Sat 11 Oct". */
 export function formatShortWeekdayDayMonth(d: Date): string {
-  return d.toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
+  return `${d.toLocaleDateString("en-GB", { weekday: "short" })} ${formatDayMonth(d)}`;
 }
 
 /** "Saturday 22 August" — the long weekday form (sheet subtitles). The

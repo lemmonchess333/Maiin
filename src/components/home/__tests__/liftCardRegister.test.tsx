@@ -2,7 +2,7 @@
  * Home's lift card and run card are twins, and that symmetry was the bug.
  *
  * ADR-0002: runs are date-pinned and lifts are split-ordered. Naming the
- * day IS a run's identity, so "Today · Run day" is correct. A lift's next
+ * day IS a run's identity, so "Today · Run day" was correct. A lift's next
  * session is the Programme cursor's call, and Home resolves lifts by
  * weekday (`liftIndexForDayOfWeek`) — right for a calendar surface to
  * draw, wrong to assert as "the next session". The card deep-links to
@@ -14,12 +14,17 @@
  * weekday-pinned lift session identity as authoritative. Fixed as the ADR
  * says to fix it — language, not resolution. Neither surface changed which
  * workout it picks.
+ *
+ * DS4 (Home's hero) moved the day into the kicker beside the date, where
+ * it is the page's, not the session's: neither hero carries an eyebrow, so
+ * the lift hero names its session and claims nothing about the day, and
+ * the run hero's date-pinned identity is the date it opens in Train.
  */
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
-vi.mock("@/lib/homeAnalytics", () => ({ trackHomeEvent: vi.fn() }));
+vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
 
 import LiftCTACard from "@/components/home/LiftCTACard";
 import RunCTACard from "@/components/home/RunCTACard";
@@ -47,9 +52,10 @@ function renderLift(over: Record<string, unknown> = {}) {
 }
 
 describe("the lift card does not claim the cursor's session", () => {
-  it("says what it knows — the lift planned for today", () => {
+  it("names the workout it resolved, and claims nothing about the day", () => {
     renderLift();
-    expect(screen.getByText("Planned for today")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Push A" })).toBeInTheDocument();
+    expect(screen.queryByText(/today/i)).not.toBeInTheDocument();
   });
 
   it("no longer asserts the session is today's", () => {
@@ -59,44 +65,74 @@ describe("the lift card does not claim the cursor's session", () => {
   });
 
   it("does not call a later calendar session the first workout for a fresh account", () => {
+    // `heroKicker` names a first workout only for a rest day's offer
+    // (homeHero.test.ts); the card itself never does.
     renderLift({ isFirst: true });
-    expect(screen.getByText("Planned for today")).toBeInTheDocument();
     expect(screen.queryByText("Your first workout")).not.toBeInTheDocument();
-  });
-
-  it("still names the workout it resolved", () => {
-    // Guards against "fixing" the contradiction by removing the session.
-    renderLift();
-    expect(screen.getByText("Push A")).toBeInTheDocument();
   });
 });
 
 describe("the run card keeps its date-pinned register", () => {
-  it("still says Today · Run day", () => {
+  /* The run hero opens today's date in Train, so the date is pinned. Only
+     Date is faked; no timers move. */
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 8, 27, 12, 0, 0));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("opens the run by its date, as a run's identity is", () => {
     // NOT collateral damage from the lift fix: a run's identity IS its
-    // date, so this line is correct and the asymmetry is the point.
+    // date, so the run hero opens its day, and the asymmetry is the point.
+    const navigate = vi.fn();
     render(
       <RunCTACard
         unit="km"
         todayRun={{ templateId: "easy_30" } as never}
         startTarget={runStartTarget({ templateId: "easy_30" } as never)}
-        navigate={vi.fn()}
+        navigate={navigate}
       />
     );
-    expect(screen.getByText("Today · Run day")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open Easy 30 in Train" })
+    );
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(
+      "/program?tab=run&rday=2026-09-27"
+    );
   });
 });
 
 describe("the lift card's muscle line", () => {
-  it("keeps each group whole, so a narrow card breaks between groups", () => {
-    renderLift({ muscleGroups: "Back · Shoulders · Legs + more" });
+  it("says the muscles as words that wrap, and keeps the minutes whole", () => {
+    renderLift({
+      muscleGroups: "Back · Shoulders · Legs + more",
+      nextWorkout: {
+        ...workout,
+        exercises: workout.exercises.map((ex) => ({
+          ...ex,
+          sets: 3,
+          restSeconds: 90,
+        })),
+      },
+    });
     const line = screen.getByText(
       (_, el) =>
         el?.tagName === "P" &&
-        el.textContent === "Back · Shoulders · Legs + more"
+        /^Back, shoulders, legs and more · about \d+ min$/.test(
+          el.textContent ?? ""
+        )
     );
-    const last = screen.getByText("more").closest(".whitespace-nowrap");
-    expect(line).toContainElement(last as HTMLElement);
-    expect(last).toHaveTextContent("Legs + more");
+    // The words have no nowrap box of their own, so a narrow hero breaks
+    // between them at large text rather than running past the screen; the
+    // minutes are one fact and stay together.
+    const words = screen.getByText("Back, shoulders, legs and more");
+    expect(line).toContainElement(words);
+    expect(words.closest(".whitespace-nowrap")).toBeNull();
+    const minutes = screen.getByText((_, el) =>
+      /^about \d+ min$/.test(el?.textContent ?? "")
+    );
+    expect(minutes).toHaveClass("whitespace-nowrap");
   });
 });

@@ -71,6 +71,7 @@ import type {
   TodaySession,
 } from "@/lib/todaySession";
 import { liftTargets, runStartTarget } from "@/lib/todaySession";
+import { heroKicker } from "@/lib/homeHero";
 
 /* The cards draw what `todaySession` decided; which card a day gets, and
    in what order a rest day's offers win, is tested there
@@ -151,24 +152,48 @@ describe("StackedCTACards", function () {
   });
 
   describe("card ordering", function () {
-    it("LiftCTA appears before RunCTA on both days", function () {
+    /* DS4: one hero, the session's name as its heading, and the day's
+       second session as a compact card under it ("Also today"). */
+    const alsoToday = () => screen.getByText("Also today").parentElement!;
+
+    it("the lift is the hero on a day with both, the run under it", function () {
       const { container } = renderCards();
+      expect(
+        screen.getByRole("heading", { name: "Push Day" })
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Free run" })).toBeNull();
+      expect(alsoToday()).toHaveTextContent("Free run");
       const allText = container.textContent || "";
-      const liftIdx = allText.indexOf("Planned for today");
-      const runIdx = allText.indexOf("Today · Run day");
-      expect(liftIdx).toBeGreaterThan(-1);
-      expect(runIdx).toBeGreaterThan(-1);
-      expect(liftIdx).toBeLessThan(runIdx);
+      expect(allText.indexOf("Push Day")).toBeLessThan(
+        allText.indexOf("Free run")
+      );
     });
 
-    it("RunCTA appears first when running is the person's aim", function () {
+    it("the run is the hero when running is the person's aim", function () {
       const { container } = renderCards({ ...bothDay(), runFirst: true });
+      expect(
+        screen.getByRole("heading", { name: "Free run" })
+      ).toBeInTheDocument();
+      expect(alsoToday()).toHaveTextContent("Push Day");
       const allText = container.textContent || "";
-      const liftIdx = allText.indexOf("Planned for today");
-      const runIdx = allText.indexOf("Today · Run day");
-      expect(liftIdx).toBeGreaterThan(-1);
-      expect(runIdx).toBeGreaterThan(-1);
-      expect(runIdx).toBeLessThan(liftIdx);
+      expect(allText.indexOf("Free run")).toBeLessThan(
+        allText.indexOf("Push Day")
+      );
+    });
+
+    it("the screen's one full-width filled button is the hero's", function () {
+      /* DS4 (§14i): the hero's Start is neutral; the compact card's Start
+         keeps its sport's colour at its own size. */
+      renderCards();
+      const [hero, compact] = screen.getAllByRole("button", {
+        name: /^Start (workout|run)$/,
+      });
+      expect(hero).toHaveTextContent("Start workout");
+      expect(hero.className).toContain("bg-foreground");
+      expect(hero.className).toContain("w-full");
+      expect(compact).toHaveTextContent("Start run");
+      expect(compact.className).toContain("bg-running-fill");
+      expect(compact.className).not.toContain("w-full");
     });
   });
 
@@ -205,7 +230,9 @@ describe("StackedCTACards", function () {
 
     it("keeps the run available alongside recovery for a missing lift on a both day", function () {
       renderCards(bothDay({ workout: null }));
-      expect(screen.getByText("Today · Run day")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Free run" })
+      ).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: "Open programme" })
       ).toBeInTheDocument();
@@ -230,46 +257,59 @@ describe("StackedCTACards", function () {
 
     it("shows RunCTA on a run day", function () {
       renderCards(runDay());
-      expect(screen.getByText(/Run day/)).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Free run" })
+      ).toBeInTheDocument();
     });
 
     it("shows no run on a rest day", function () {
       renderCards(restDay());
-      expect(screen.queryByText("Today · Run day")).not.toBeInTheDocument();
+      expect(screen.queryByText("Free run")).not.toBeInTheDocument();
     });
 
     it("shows both CTAs on a lift and run day", function () {
       renderCards(bothDay());
       expect(screen.getByText("Push Day")).toBeInTheDocument();
-      expect(screen.getByText(/Run day/)).toBeInTheDocument();
+      expect(screen.getByText("Free run")).toBeInTheDocument();
     });
   });
 
   describe("#972 cold-start framing", function () {
-    it("frames the run card as 'Your first run' for a new person's first", function () {
-      renderCards(runDay({ isFirst: true }));
-      expect(screen.getByText("Your first run")).toBeInTheDocument();
+    /* DS4: the cards carry no eyebrow. A first session is named in the
+       kicker beside the date (`heroKicker`, pinned in homeHero.test.ts),
+       so the hero says it once. */
+    it("frames a new person's first run in the kicker, not on the card", function () {
+      const session = runDay({ isFirst: true });
+      renderCards(session);
+      expect(heroKicker(session, null)).toBe("Your first run");
+      expect(screen.queryByText("Your first run")).toBeNull();
     });
 
-    it("keeps the standard lift eyebrow", function () {
-      /* "Planned for today", not the run card's "Today · Run day": ADR-0002
-         makes a run's identity its date and a lift's the cursor's call, so
-         the lift card describes the plan rather than naming the session as
-         today's. The register split is pinned in liftCardRegister.test.tsx. */
-      renderCards(liftDay({ index: 2 }));
-      expect(screen.getByText("Planned for today")).toBeInTheDocument();
+    it("never calls a lifting day's workout the first", function () {
+      /* ADR-0002 makes a run's identity its date and a lift's the
+         cursor's call, so a lifting day's hero names the session and
+         claims neither "today" nor "first". The register split is pinned
+         in liftCardRegister.test.tsx. */
+      const session = liftDay({ index: 2 });
+      renderCards(session);
+      expect(heroKicker(session, null)).toBeNull();
       expect(screen.queryByText("Your first workout")).not.toBeInTheDocument();
+      expect(screen.queryByText("Planned for today")).not.toBeInTheDocument();
     });
 
     it("shows the FirstMealCard on a new person's rest day", function () {
       renderCards(restDay({ kind: "first-meal" }));
       expect(screen.getByText("Log your first meal")).toBeInTheDocument();
-      expect(screen.queryByText("Recover today")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { name: "Rest day" })
+      ).not.toBeInTheDocument();
     });
 
     it("shows the normal RestDayCard on any other rest day", function () {
       renderCards(restDay());
-      expect(screen.getByText("Recover today")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Rest day" })
+      ).toBeInTheDocument();
       expect(screen.queryByText("Log your first meal")).not.toBeInTheDocument();
     });
   });
@@ -560,47 +600,74 @@ describe("rest day — tomorrow's session", function () {
       }),
       navigate
     );
-    expect(screen.getByText(/Tomorrow:/)).toHaveTextContent(
-      "Tomorrow: Pull B."
-    );
+    expect(
+      screen.getByText("Tomorrow").previousElementSibling
+    ).toHaveTextContent("Pull B");
     fireEvent.click(screen.getByRole("button", { name: "See tomorrow" }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=3");
   });
 
   it("offers nothing to open when tomorrow is rest too", function () {
     renderCards(restDay({ kind: "rest", tomorrow: null }));
-    expect(screen.getByText("Recover today")).toBeInTheDocument();
-    expect(screen.queryByText(/Tomorrow:/)).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Rest day" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Tomorrow")).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("names a race plan's next session beyond tomorrow by its day", function () {
+    renderCards(
+      restDay({
+        kind: "rest",
+        tomorrow: {
+          label: "Easy 30",
+          target: "/program?tab=run&rday=2026-10-01",
+          dateKey: "2026-10-01",
+        },
+      })
+    );
+    expect(
+      screen.getByText(/^Next session, /).previousElementSibling
+    ).toHaveTextContent("Easy 30");
+    expect(
+      screen.getByRole("button", { name: "See next session" })
+    ).toBeInTheDocument();
   });
 });
 
 describe("rest day — what else it can offer", function () {
   it("offers someone who runs freely a run instead of a rest day", function () {
-    renderCards(
-      restDay({ kind: "free-run", startTarget: runStartTarget(null) })
-    );
-    expect(screen.getByText("Run when it suits you")).toBeInTheDocument();
-    expect(screen.queryByText(/Recover today/)).toBeNull();
+    const session = restDay({
+      kind: "free-run",
+      startTarget: runStartTarget(null),
+    });
+    renderCards(session);
+    expect(heroKicker(session, null)).toBe("Run when it suits you");
+    expect(
+      screen.getByRole("heading", { name: "Free run" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Rest day" })).toBeNull();
   });
 
   it("offers a new lifter their first workout, opening at its day", function () {
     const navigate = vi.fn();
-    renderCards(
-      restDay({
-        kind: "first-workout",
-        workout: {
-          dayName: "Full Body A",
-          dayType: "full",
-          exercises: [{ name: "Squat" }],
-        } as any,
-        index: 0,
-        ...liftTargets(0),
-      }),
-      navigate
-    );
-    expect(screen.getByText("Your first workout")).toBeInTheDocument();
-    expect(screen.queryByText("Run when it suits you")).toBeNull();
+    const session = restDay({
+      kind: "first-workout",
+      workout: {
+        dayName: "Full Body A",
+        dayType: "full",
+        exercises: [{ name: "Squat" }],
+      } as any,
+      index: 0,
+      ...liftTargets(0),
+    });
+    renderCards(session, navigate);
+    // The kicker names it the first, in place of the plan's position.
+    expect(heroKicker(session, "Week 1 of 8")).toBe("Your first workout");
+    expect(
+      screen.getByRole("heading", { name: "Full Body A" })
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Start workout" }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=0&start=1");
   });
@@ -653,7 +720,7 @@ describe("today's run card names a race-pace finish (Run21 (2))", function () {
   // The title sets its numerals apart (InlineNumerals), so read it whole.
   const title = (name: string) =>
     screen.getByText(function (_content, el) {
-      return el?.tagName === "P" && el.textContent === name;
+      return el?.tagName === "H2" && el.textContent === name;
     });
 
   it("says 'with race pace' when the long run finishes at it", function () {
