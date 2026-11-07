@@ -103,6 +103,20 @@ describe("PageShell header", () => {
     expect(shown.parentElement!.className).not.toMatch(/line-clamp|truncate/);
   });
 
+  it("keeps a hidden title as the page's h1 for screen readers", () => {
+    // DS4: a screen whose hero names it draws no large title above it
+    // (Home), and a reader landing on the page still meets its name.
+    render(
+      <PageShell title="Today" titleHidden eyebrow="Sat 7 Nov">
+        x
+      </PageShell>
+    );
+    const h1 = screen.getByRole("heading", { level: 1, name: "Today" });
+    expect(h1.className).toBe("sr-only");
+    expect(h1.className).not.toMatch(/text-h1/);
+    expect(screen.getByText("Sat 7 Nov")).toBeInTheDocument();
+  });
+
   it("draws every header the same plain way", () => {
     // DS3 retired Train's sport-tinted header zone: no page's header is
     // a tinted, padded block any more.

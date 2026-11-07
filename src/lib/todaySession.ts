@@ -73,7 +73,12 @@ import type { StoredRunSummary } from "@/lib/runResumeStorage";
  *    or tomorrow's session;
  *  - a session under way on this phone (`sessionsInFlight.ts`): on its own
  *    card, in Start's place, when the card is that session, and otherwise
- *    on a strip of its own above the cards.
+ *    on a strip of its own above the cards;
+ *  - the next session in the days ahead, for the week's line under the
+ *    hero ("Long run tomorrow").
+ *
+ * How the hero words it (the kicker, the line under its picture) is
+ * `homeHero.ts`'s.
  */
 export interface TodaySessionInput {
   /** The day, "yyyy-MM-dd". Every rule here reads this one day. */
@@ -189,6 +194,10 @@ export interface TodayRun {
   /** A run is under way: the card offers Resume in Start's place. Absent
    *  reads as not. */
   inProgress?: SessionInProgress | null;
+  /** The easy pace a confirmed benchmark gives (`planningEasyPaceSPerKm`),
+   *  s/km, which the hero's line states for an easy or long run. Absent
+   *  reads as none. */
+  easyPaceSPerKm?: number | null;
 }
 
 /** Next session, as the rest-day card names it. `dateKey` appears only when
@@ -198,6 +207,17 @@ export interface TomorrowSession {
   /** Where it opens in Train. */
   target: string;
   dateKey?: string;
+}
+
+/** The next session after today, for the week's line on Home ("Long run
+ *  tomorrow", "Lower A on Monday"): its name, where it opens, its day, and
+ *  how many days ahead it is. */
+export interface NextSession {
+  label: string;
+  /** Where it opens in Train. */
+  target: string;
+  dateKey: string;
+  daysAhead: number;
 }
 
 export type RestDayOffer =
@@ -213,6 +233,9 @@ export type RestDayOffer =
       /** As Train names it in its week. Absent reads as the day's name
        *  without its week. */
       name?: string;
+      /** As a lifting day's: up to three muscle groups. Absent reads as
+       *  none named. */
+      muscleGroups?: string;
       /** Already under way. Absent reads as not. */
       inProgress?: SessionInProgress | null;
     }
@@ -245,6 +268,9 @@ export interface TodaySession {
   /** Sessions under way that are not today's card: each gets a strip of
    *  its own above the cards. Absent reads as none. */
   inProgressElsewhere?: SessionInProgress[];
+  /** The next session in the six days after today, whatever today is.
+   *  Absent reads as none. */
+  next?: NextSession | null;
 }
 
 export function todaySession(input: TodaySessionInput): TodaySession {
@@ -317,6 +343,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
           completed: resolved.run.isCompleted,
           isFirst: framing.firstRun,
           dose: runDose(resolved.run.runDay, profile),
+          easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
           ...runNameAndPace(resolved.run.runDay, profile, programState),
         }
       : null,
@@ -335,7 +362,40 @@ export function todaySession(input: TodaySessionInput): TodaySession {
           })
         : null,
     ...(profile?.primaryGoal === "running" && { runFirst: true }),
+    next: nextSessionAhead(input, currentWeekKey, homeLift, NEXT_SESSION_DAYS),
   });
+}
+
+/** How far ahead the week's line looks for the next session: six days, so
+ *  a weekday it names ("on Monday") is never today's own. */
+const NEXT_SESSION_DAYS = 6;
+
+/** The first day after today, within `maxDaysAhead`, that holds a session,
+ *  named as the rest day's card names tomorrow's (`sessionDaysAhead`). */
+function nextSessionAhead(
+  input: TodaySessionInput,
+  currentWeekKey: string,
+  homeLift: ResolvedLift,
+  maxDaysAhead: number
+): NextSession | null {
+  for (let daysAhead = 1; daysAhead <= maxDaysAhead; daysAhead += 1) {
+    const session = sessionDaysAhead(
+      input,
+      currentWeekKey,
+      homeLift,
+      daysAhead
+    );
+    if (session)
+      return {
+        label: session.label,
+        target: session.target,
+        dateKey: localDateString(
+          addLocalDays(parseLocalDate(input.today), daysAhead)
+        ),
+        daysAhead,
+      };
+  }
+  return null;
 }
 
 /**
@@ -428,6 +488,7 @@ function restDayOffer(
         index,
         ...liftTargets(index),
         name: weekDayName(programState, index, workout),
+        muscleGroups: muscleGroupsOf(workout),
       };
   }
   if (

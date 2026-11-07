@@ -3278,10 +3278,13 @@ rules and emulator tests cover each; these need the consoles or a phone.
       run carrying this work, its "Deploy functions" log shows
       `restoreApplePurchases`, `verifyApplePurchase` and `appleIAPWebhook`
       each with "Successful delete operation".
-- [ ] **App Store notifications go to RevenueCat.** App Store Connect →
+- [x] **App Store notifications go to RevenueCat.** App Store Connect →
       the app → App Information → App Store Server Notifications: the
       Production and Sandbox URLs are both RevenueCat's (Version 2), not a
       `cloudfunctions.net` address.
+      STATUS 2026-11-07: both set to RevenueCat's Apple Server Notification
+      URL; both were empty before. App Store Connect no longer offers a
+      version choice, as Version 2 is the only one.
 - [ ] **The Apple secrets are deleted.** Once the functions are gone,
       delete `APPLE_KEY_ID`, `APPLE_ISSUER_ID` and `APPLE_PRIVATE_KEY` in
       Secret Manager (`npm run secrets:check` in `functions/` lists none of

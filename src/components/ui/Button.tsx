@@ -36,6 +36,11 @@
  *                   analogue of `sport-tinted`. Soft orange pill for
  *                   secondary/low-emphasis nutrition actions. Text uses the
  *                   AA-clearing nutrition-strong step.
+ *   - neutral       filled in the foreground colour: white on dark, ink on
+ *                   light. A screen's one full-width filled button (DS4,
+ *                   DESIGN_GUIDE §14i), Home's Start workout and Start run
+ *                   included: the domain keeps its colour on the button's
+ *                   icon and on the data around it.
  *
  * Sizes:
  *   - sm   36px tall — used for inline / compact contexts (chips,

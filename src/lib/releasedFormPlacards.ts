@@ -213,9 +213,9 @@ export const RELEASED_FORM_PLACARDS = {
     [
       [0, "Reach", "Start with handles around shoulder height."],
       [0, "Brace", "Brace your torso; keep elbows softly fixed."],
-      [1, "Pull to thighs", "Sweep your upper arms toward your sides."],
+      [0.5, "Pull to thighs", "Sweep your upper arms toward your sides."],
       [1, "Squeeze", "Finish near thighs without leaning back."],
-      [0, "Control return", "Let the handles rise under control."],
+      [0.5, "Control return", "Let the handles rise under control."],
       [0, "Reset", "Keep your stance steady before repeating."],
     ],
     [

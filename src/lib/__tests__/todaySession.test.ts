@@ -479,6 +479,15 @@ describe("todaySession — what a rest day offers", () => {
     });
   });
 
+  it("names its muscles, as a lifting day's workout does", () => {
+    // The hero says them as words ("Back and biceps", homeHero.ts).
+    const session = todaySession(newAccount(firstWorkoutReady));
+    expect(session.rest).toMatchObject({
+      kind: "first-workout",
+      muscleGroups: expect.stringMatching(/\S/),
+    });
+  });
+
   it("the workout chosen to go next, when one was", () => {
     const session = todaySession(
       newAccount({
@@ -1346,5 +1355,72 @@ describe("todaySession — an empty workout under way", () => {
     expect(
       offered([emptyDraft({ completionPending: true })]).inProgressElsewhere
     ).toEqual([]);
+  });
+});
+
+/* The next session, for the week's line under Home's hero ("Long run
+   tomorrow"): looked for in the six days after today, whatever today is,
+   and named as the rest day's card names tomorrow's. */
+describe("the next session after today", () => {
+  it("names tomorrow's run on a lifting day", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "lift", 4: "run" }),
+        programState: programStateWith({
+          workouts: [PUSH, PULL],
+          runDays: [runDay(THURSDAY)],
+        }),
+      })
+    );
+    expect(session.lift?.workout).toBeTruthy();
+    expect(session.next).toEqual({
+      label: "Easy 30",
+      target: `/program?tab=run&rday=${THURSDAY}`,
+      dateKey: THURSDAY,
+      daysAhead: 1,
+    });
+  });
+
+  it("names the lift after today's, as Train's order will have it", () => {
+    // Wednesday lifts and Friday lifts: Friday's is the one after today's.
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "lift", 5: "lift" }),
+        programState: programStateWith({ workouts: [PUSH, PULL, LEGS] }),
+      })
+    );
+    expect(session.next?.daysAhead).toBe(2);
+    expect(session.next?.dateKey).toBe(FRIDAY);
+    expect(session.next?.label).toBeTruthy();
+    expect(session.next?.label).not.toBe(session.lift?.name);
+  });
+
+  it("looks up to six days ahead, so it never names today's weekday", () => {
+    const programState = programStateWith({ workouts: [PUSH] });
+    // Tuesday is six days after a Wednesday: named.
+    const tuesday = todaySession(
+      input({ profile: profileWith({ 2: "lift" }), programState })
+    );
+    expect(tuesday.next?.daysAhead).toBe(6);
+    expect(tuesday.next?.dateKey).toBe("2026-10-06");
+    // Next Wednesday is seven: not looked for.
+    const wednesday = todaySession(
+      input({ profile: profileWith({ 3: "lift" }), programState })
+    );
+    expect(wednesday.next).toBeNull();
+  });
+
+  it("is the same answer on a rest day as the rest card's tomorrow", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 4: "lift" }),
+        programState: programStateWith({ workouts: [PUSH] }),
+      })
+    );
+    expect(session.next?.daysAhead).toBe(1);
+    expect(session.rest).toEqual({
+      kind: "rest",
+      tomorrow: { label: session.next!.label, target: session.next!.target },
+    });
   });
 });

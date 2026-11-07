@@ -271,7 +271,7 @@ vi.mock("@/components/home/TrackSectionView", () => ({
 
 import Home from "../Home";
 import { addLocalDays, localDateString, localWeekKey } from "@/lib/dateHelpers";
-import { formatWeekdayDayMonth } from "@/utils/formatters";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 
 type DayType = "lift" | "run" | "both" | "rest";
 
@@ -366,9 +366,13 @@ function column(label: string): string {
   return group.getAttribute("aria-label") ?? "";
 }
 
-/** The text of the rest card's supporting line. */
-function restCardLine(): string {
-  return screen.getByText(/A walk or some mobility helps\./).textContent ?? "";
+/** The rest hero's next session, as "Pull A · Tomorrow": its name, then
+ *  when. Null when it names none; its suggestion is there either way. */
+function restCardNext(): string | null {
+  expect(screen.getByText("A walk or some mobility helps.")).toBeTruthy();
+  const when = screen.queryByText(/^(Tomorrow|Next session, .+)$/);
+  if (!when) return null;
+  return `${when.previousElementSibling?.textContent ?? ""} · ${when.textContent}`;
 }
 
 /* 2026 dates, chosen for their weekday: 27 September is a Sunday and
@@ -424,7 +428,9 @@ describe("Home — the date follows the clock", () => {
     const lateSunday = new Date(2026, 8, 27, 23, 59, 30);
     pinClock(lateSunday);
     renderHome();
-    expect(screen.getByText(formatWeekdayDayMonth(lateSunday))).toBeTruthy();
+    expect(
+      screen.getByText(formatShortWeekdayDayMonth(lateSunday))
+    ).toBeTruthy();
 
     const earlyMonday = new Date(2026, 8, 28, 0, 0, 30);
     act(() => {
@@ -432,8 +438,12 @@ describe("Home — the date follows the clock", () => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
 
-    expect(screen.getByText(formatWeekdayDayMonth(earlyMonday))).toBeTruthy();
-    expect(screen.queryByText(formatWeekdayDayMonth(lateSunday))).toBeNull();
+    expect(
+      screen.getByText(formatShortWeekdayDayMonth(earlyMonday))
+    ).toBeTruthy();
+    expect(
+      screen.queryByText(formatShortWeekdayDayMonth(lateSunday))
+    ).toBeNull();
   });
 
   it("shows the new day's food once the app comes back after midnight", () => {
@@ -584,8 +594,8 @@ describe("Home — the rest-day card names tomorrow", () => {
     });
     renderHome();
 
-    expect(screen.getByText("Recover today")).toBeTruthy();
-    expect(restCardLine()).toContain("Tomorrow: Run.");
+    expect(screen.getByRole("heading", { name: "Rest day" })).toBeTruthy();
+    expect(restCardNext()).toBe("Run · Tomorrow");
     fireEvent.click(screen.getByRole("button", { name: "See tomorrow" }));
     // Runs are pinned to dates (ADR-0002), so the day opens by its date.
     expect(screen.getByTestId("location").textContent).toBe(
@@ -605,15 +615,15 @@ describe("Home — the rest-day card names tomorrow", () => {
     // Anchor: with the run still on Thursday, the card names it.
     h.programState = programStateWith({ runDays: [runDay(thursday)] });
     const kept = renderHome();
-    expect(restCardLine()).toContain("Tomorrow: Easy 30.");
+    expect(restCardNext()).toBe("Easy 30 · Tomorrow");
     kept.unmount();
 
     h.programState = programStateWith({
       runDays: [runDay(friday, { movedFromDate: localDateString(thursday) })],
     });
     renderHome();
-    expect(screen.getByText("Recover today")).toBeTruthy();
-    expect(restCardLine()).not.toContain("Tomorrow:");
+    expect(screen.getByRole("heading", { name: "Rest day" })).toBeTruthy();
+    expect(restCardNext()).toBeNull();
   });
 
   it("reads a run with no date or week as this week's, as the resolver does", () => {
@@ -633,13 +643,13 @@ describe("Home — the rest-day card names tomorrow", () => {
     // Anchor: the same plan with a Thursday run names it.
     h.programState = programStateWith({ runDays: [undated(1), undated(4)] });
     const withThursday = renderHome();
-    expect(restCardLine()).toContain("Tomorrow: Easy 30.");
+    expect(restCardNext()).toBe("Easy 30 · Tomorrow");
     withThursday.unmount();
 
     h.programState = programStateWith({ runDays: [undated(1)] });
     renderHome();
-    expect(screen.getByText("Recover today")).toBeTruthy();
-    expect(restCardLine()).not.toContain("Tomorrow:");
+    expect(screen.getByRole("heading", { name: "Rest day" })).toBeTruthy();
+    expect(restCardNext()).toBeNull();
   });
 
   it("names a lift day as Train names it in its week", () => {
@@ -653,7 +663,7 @@ describe("Home — the rest-day card names tomorrow", () => {
       ],
     });
     renderHome();
-    expect(restCardLine()).toContain("Tomorrow: Pull A.");
+    expect(restCardNext()).toBe("Pull A · Tomorrow");
   });
 });
 

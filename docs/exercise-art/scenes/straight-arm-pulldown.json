@@ -1,0 +1,63 @@
+{
+  "exerciseId": "straight-arm-pulldown",
+  "status": "reviewed",
+  "reference": "public/form-frames/face-pulls/1.webp",
+  "variation": "Standing bilateral straight-arm pulldown facing a single-column dual high-pulley cable station, one D-handle in each hand",
+  "camera": "Fixed rear three-quarter view from the athlete's left, at chest height, athlete facing right toward the station at the right of the frame. The top of the station is cut off by the frame; the athlete fills about 94% of the canvas height.",
+  "anchors": "Shoes, feet, legs, hips and head stay fixed; the shoulders are the pivot. Station column, both high pulleys, guide rods and the twelve resting plates do not move.",
+  "equipment": "One single-column dual-pulley cable station: two high pulleys just above head height, two taut cables, two identical grey D-handles on carabiners. Seventeen identical plates; exactly five are selected and rise together as one block, twelve stay on the base.",
+  "primary": "Latissimus dorsi",
+  "secondary": "Triceps and core (abdominals and obliques)",
+  "stabilisers": "None highlighted; legs, chest, shoulders and forearms stay white-grey.",
+  "techniqueSources": [
+    "https://www.strengthlog.com/straight-arm-lat-pulldown/"
+  ],
+  "states": [
+    {
+      "body": "Stand tall facing the station with a small forward lean; both arms straight forward at shoulder height, elbows softly bent.",
+      "equipment": "Both cables taut from the high pulleys to the handles; column, pulleys and guide rods fixed.",
+      "cableAndStack": "Five selected plates rigid as one block: payout 0 mm, stack gap 100 mm. Twelve unselected plates stay on the base."
+    },
+    {
+      "body": "The same start position, torso braced before the pull.",
+      "equipment": "Both cables taut from the high pulleys to the handles; column, pulleys and guide rods fixed.",
+      "cableAndStack": "Five selected plates rigid as one block: payout 0 mm, stack gap 100 mm. Twelve unselected plates stay on the base."
+    },
+    {
+      "body": "Mid-sweep: arms straight, about halfway down the arc, hands in front of the body below chest height; torso unchanged.",
+      "equipment": "Both cables taut from the high pulleys to the handles; column, pulleys and guide rods fixed.",
+      "cableAndStack": "Five selected plates rigid as one block: payout 490 mm, stack gap 345 mm. Twelve unselected plates stay on the base."
+    },
+    {
+      "body": "Arms straight down beside the body, handles at the hips and upper thighs; torso upright, no lean back.",
+      "equipment": "Both cables taut from the high pulleys to the handles; column, pulleys and guide rods fixed.",
+      "cableAndStack": "Five selected plates rigid as one block: payout 880 mm, stack gap 540 mm. Twelve unselected plates stay on the base."
+    },
+    {
+      "body": "Controlled return through mid-sweep (the frame 3 position).",
+      "equipment": "Both cables taut from the high pulleys to the handles; column, pulleys and guide rods fixed.",
+      "cableAndStack": "Five selected plates rigid as one block: payout 490 mm, stack gap 345 mm. Twelve unselected plates stay on the base."
+    },
+    {
+      "body": "Back at the start position (the frame 1 position), stance steady before the next rep.",
+      "equipment": "Both cables taut from the high pulleys to the handles; column, pulleys and guide rods fixed.",
+      "cableAndStack": "Five selected plates rigid as one block: payout 0 mm, stack gap 100 mm. Twelve unselected plates stay on the base."
+    }
+  ],
+  "loopBoundary": "Frame 6 is the start position again, so 6 to 1 holds; stance, torso and elbow bend unchanged, cables never slack.",
+  "cable": {
+    "routing": "Both handle cables run over their own high pulley and down the column to the one selected block through a 2:1 compound pulley. Payout is measured along the cable.",
+    "payoutPerStackRise": 2,
+    "initialStackLiftMm": 100,
+    "totalPlates": 17,
+    "selectedPlates": 5,
+    "states": [
+      { "payoutMm": 0, "stackLiftMm": 100 },
+      { "payoutMm": 0, "stackLiftMm": 100 },
+      { "payoutMm": 490, "stackLiftMm": 345 },
+      { "payoutMm": 880, "stackLiftMm": 540 },
+      { "payoutMm": 490, "stackLiftMm": 345 },
+      { "payoutMm": 0, "stackLiftMm": 100 }
+    ]
+  }
+}

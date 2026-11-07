@@ -112,8 +112,9 @@ If you only remember thirteen things:
   These two colours recur in calendar dots, section headings, icon tints, and
   contextual cards.
 - **Logo:** Purple gradient hexagon with an upward chevron cutout — the app
-  icon and the sign-in screens. Home carries no wordmark since DS3: it is
-  titled with the date and "Today", like every other page names itself.
+  icon and the sign-in screens. Home carries no wordmark since DS3, and no
+  large title since DS4: its hero names it, with the date as the kicker
+  and the mark beside it; "Today" stays its h1 for screen readers.
 
 **The "calm" test:** if a screenshot of your change looks like it belongs in a
 crypto trading app or a generic SaaS dashboard, it's wrong. It should look like
@@ -393,7 +394,7 @@ has one treatment across the app, so a screen reads as one system:
 | Role                             | Treatment                                                                                                                   | Where it comes from                                 |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | Page title                       | `text-h1` (31px) 800, tight tracking                                                                                        | `PageShell`, `SettingsSection`                      |
-| Hero title                       | `text-h2` (25px) 800 — the day's session on the Today and Up next cards, one a screen                                       | `LiftCTACard`, `RunCTACard`, `SessionCommandCard`   |
+| Hero title                       | `text-hero` (36px) 800 on Home's hero (DS4); `text-h2` (25px) 800 on Train's Up next card; one a screen                     | `SessionHero`, `SessionCommandCard`                 |
 | Section heading                  | 20px 700 on a page or tab; 16px 700 inside a sheet, card or form                                                            | `SectionHeading` (`page` / `compact`)               |
 | Card title                       | 16px 700 (`text-base font-bold`), one step under the section heading above the card                                         | the `compact` step, or the same classes on the card |
 | Eyebrow on a hero card           | 14px 700 in the sport's `-strong` colour ("Planned for today", "Up next")                                                   | the session cards                                   |
@@ -401,7 +402,7 @@ has one treatment across the app, so a screen reads as one system:
 | Meta line                        | 14px muted, facts joined by " · ", each fact whole; 12px in dense lists; 500 and the foreground on a hero card's sport wash | `MetaLine`                                          |
 | Caption, helper                  | 12px muted (14px for a description under a title)                                                                           | `text-xs` / `text-sm text-muted-foreground`         |
 | Button label                     | 600, sized by the button                                                                                                    | `Button`                                            |
-| Chip, segment                    | 14px 600; a day's number in a strip of days 14px 600                                                                        | `SegmentedControl`, `WeekStrip`, `FoodWeekStrip`    |
+| Chip, segment                    | 14px 600; a day's number in a strip of days 14px 600 (Home's week is segments and letters since DS4)                        | `SegmentedControl`, `FoodWeekStrip`                 |
 | Figure caption on the run screen | 12px, sentence case, no letter-spacing ("Time", "km", "/km · live", "Pause")                                                | `HUD_CAPTION`                                       |
 
 **Capitals.** Text is written in sentence case, units in their symbols'
@@ -467,12 +468,12 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
 
 ## 6. Card patterns
 
-| Pattern                                       | Recipe                                                                                                                                                                       |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Standard card**                             | `bg-card` white, `rounded-xl` (12px), `p-3`–`p-4`, `shadow-card` (very subtle). Or use `.ds-card`.                                                                           |
-| **Hero card** (Health Score, Water)           | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square. DS4: a screen's hero is not just another card (§14m).                                            |
-| **Compact tile** (Weight, Steps)              | `rounded-xl`, `p-3`, `bg-card card-shadow`, 2-col grid (the card surface since DS3; it was `bg-muted`).                                                                      |
-| **Today card** (`LiftCTACard` / `RunCTACard`) | Hero radius, sport wash at 12%, the session as a 25px title, its dose, a full-width Start (`primary` / `sport`); the rest of the card opens the day in Train. See CLAUDE.md. |
+| Pattern                             | Recipe                                                                                                                                                                                       |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Standard card**                   | `bg-card` white, `rounded-xl` (12px), `p-3`–`p-4`, `shadow-card` (very subtle). Or use `.ds-card`.                                                                                           |
+| **Hero card** (Health Score, Water) | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square. DS4: a screen's hero is not just another card (§14m).                                                            |
+| **Compact tile** (Weight, Steps)    | `rounded-xl`, `p-3`, `bg-card card-shadow`, 2-col grid (the card surface since DS3; it was `bg-muted`).                                                                                      |
+| **Home hero** (`SessionHero`, DS4)  | Open on the page, no card: the session as a 36px title, its focus and minutes, its picture, one line against last time, a full-width `neutral` Start; the rest opens the day in Train. §14d. |
 
 - Use `.ds-card` for static grouped surfaces and `.ds-card-interactive` **only**
   on a real `<button>`/`<a>` (never a wrapped `div`) for pressable cards.
@@ -943,7 +944,7 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
   The elevation utility is `card-shadow`.
 - **Hero card (Health Score, Water):** `Card` (hero), larger icon (48px container), icon in purple-tinted bg square
 - **Compact tile (Weight, Steps):** the compact pairing on the card surface (`bg-card card-shadow`), 2-col grid. It sat one step darker than the page (`tone="muted"`) until DS3 deepened the dark surfaces, where a muted tile read as a hole beside the cards around it.
-- **Today card (`LiftCTACard` / `RunCTACard`, DS3):** the hero radius with the sport's 12% wash (`bg-lifting/12`, `bg-running/12`), the session as a 25px title, its dose ("5 exercises · about 50 min", "5 km · about 30 min") and a full-width Start (`primary` for a lift, `sport` for a run). Start begins the session (`/program?day=N&start=1`, `/run?template=…`); the rest of the card is a sibling button that opens the day in Train to look it over, because a button cannot sit inside a button. A lift shows the cut-out drawing of its first exercise that has one (`formArtCutouts`). A finished or skipped day shows its status instead of Start. A session under way on the phone (a workout closed with its sets kept, a run left before it was saved) shows the In progress strip in Start's place, "In progress · 5 sets · 18:40" and Resume (`InProgressStrip`, Hevy and Strong's pattern); a session under way that is not the card's leads the stack on a strip of its own, and Train's day card draws the same primitive. Which card it goes on is `todaySession.ts`'s rule, and only a session Resume will actually open is offered (`sessionsInFlight.ts`). No rationale and no plan position ("Base · week 3 of 16") on Home: owner direction 2026-09-09, pinned in `SessionPurpose.test.tsx`. DS4 call 5 (2026-11-07) lets Home's hero show the plan position and today's main lift against last time ("Week 9 of 12"; "35 kg × 8 · last time 32.5 kg"); reasons stay behind "Why this session". It lands with the Home hero, which changes that test. `RestDayCard` is a plain hero card naming tomorrow's session.
+- **Home hero (`LiftCTACard` / `RunCTACard` / `RestDayCard`, drawn by `SessionHero`; DS4, the Today card of DS3):** open on the page rather than in a card, over a soft glow of the sport's colour: the session as a 36px title (`text-hero`), its focus and minutes ("Back and biceps · about 26 min", "5 km · about 30 min"), its picture (the lead lift's drawing, a runner for a run), one line with a number and its comparison (`homeHero.ts`: "Barbell row 35 kg × 8", "2.5 kg more than last time"; a lift with no last time, the day's size and "Pick a weight you could lift 3 more times than the reps ask."), and a full-width `neutral` Start. The kicker beside the date gives the plan's position ("Week 9 of 12") or a first session ("Your first workout"). A rest day's hero is "Rest day" and the next session, with no Start. A day with two sessions draws the second as a compact card under the hero, its Start in its sport's colour. The week sits in the card under it: the sessions done of the plan's, the next session, and seven segments (done lifts purple, done runs coral, planned outlined in their sport's colour, today outlined in the foreground), each opening its day's peek. Start begins the session (`/program?day=N&start=1`, `/run?template=…`); the rest of the card is a sibling button that opens the day in Train to look it over, because a button cannot sit inside a button. A lift shows the cut-out drawing of its first exercise that has one (`formArtCutouts`). A finished or skipped day shows its status instead of Start. A session under way on the phone (a workout closed with its sets kept, a run left before it was saved) shows the In progress strip in Start's place, "In progress · 5 sets · 18:40" and Resume (`InProgressStrip`, Hevy and Strong's pattern); a session under way that is not the card's leads the stack on a strip of its own, and Train's day card draws the same primitive. Which card it goes on is `todaySession.ts`'s rule, and only a session Resume will actually open is offered (`sessionsInFlight.ts`). No rationale and no plan position ("Base · week 3 of 16") on Home: owner direction 2026-09-09, pinned in `SessionPurpose.test.tsx`. DS4 call 5 (2026-11-07) lets Home's hero show the plan position and today's main lift against last time ("Week 9 of 12"; "35 kg × 8 · last time 32.5 kg"); reasons stay behind "Why this session". It landed with the Home hero, and `SessionPurpose.test.tsx` now pins the position on the kicker and the reasons off the hero.
 - **Quick actions:** there is no pill row. Today's actions are the Start
   buttons on the Today cards, and food logging is the "Log food" button in
   `TodayEnergy`'s header.
@@ -1187,15 +1188,18 @@ measured rule is that the largest colour is the person's data (§14m rule
 actions ("Log food" in orange on Home's food card), and on the data around
 it. The table below still names each domain's variants for those smaller
 controls; the filled column applies where a domain button is not the
-screen's one full-width main action. The change to the buttons and to
-`designSystemInvariants.test.ts`, which pins the variants, lands with the
-Home hero build.
+screen's one full-width main action. It landed with the Home hero build:
+the `neutral` variant (`bg-foreground text-background`), and
+`designSystemInvariants.test.ts`, which pins the variants and names the
+screens' one full-width neutral button (`NEUTRAL_MAIN_ACTIONS`: Home's
+Start workout and Start run). A day's second session, on its compact card
+under the hero, keeps its sport's filled Start at its own size.
 
 | The action                          | Filled      | Tinted             |
 | ----------------------------------- | ----------- | ------------------ |
 | Logging food, on any page           | `nutrition` | `nutrition-tinted` |
 | Starting, logging or planning a run | `sport`     | `sport-tinted`     |
-| Starting a lift; a brand action     | `primary`   | (none)             |
+| Starting a lift; a brand action     | `primary`   | `lifting-tinted`   |
 
 So "Log meal" is orange on Analytics' empty state and in the manual logger,
 "Log food" is orange on Home's food card and in a search result's serving sheet,
@@ -1210,9 +1214,10 @@ purple), Cancel, and the Save that corrects an entry already in the diary.
 An action that belongs to no domain (a settings form's Save, account
 actions, Retry, Follow, Edit profile, Start a circle, Done) is neutral:
 `secondary`, `outline` or `ghost` (DS4 call 1: purple means lifting and the
-brand, and a colour on every button means nothing). A neutral filled
-variant (white on dark, ink on light) arrives with the Home hero build, the
-first screen that needs one. A screen has one filled button (DS4, §14m). Water has no Button variant: its
+brand, and a colour on every button means nothing). The neutral filled
+variant (`neutral`, white on dark, ink on light) arrived with the Home hero
+build, the first screen that needs one. A screen has one filled button
+(DS4, §14m). Water has no Button variant: its
 one filled control, the tile's +, is the hydration teal.
 
 `designSystemInvariants.test.ts` holds the rule for the actions it can name
