@@ -78,6 +78,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   // tokens: --running-fill under white, --running/10 as the tint, and
   // --running-strong as the icon colour ON that tint.
   "sport-tinted": "bg-running/10 text-running-strong",
+  "lifting-tinted": "bg-lifting/10 text-lifting-strong",
   // Mirrors Button.tsx — nutrition variants resolve via --nutrition /
   // --nutrition-fill / --nutrition-strong. Filled uses the fill step
   // under white; the tint carries the theme-aware text step.

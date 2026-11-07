@@ -182,8 +182,9 @@ describe("StackedCTACards", function () {
     });
 
     it("the screen's one full-width filled button is the hero's", function () {
-      /* DS4 (§14i): the hero's Start is neutral; the compact card's Start
-         keeps its sport's colour at its own size. */
+      /* DS4 (§14i, §14m rule 21): the hero's Start is the one filled
+         button and is neutral; the compact card's Start keeps its sport's
+         colour as a tint. */
       renderCards();
       const [hero, compact] = screen.getAllByRole("button", {
         name: /^Start (workout|run)$/,
@@ -192,7 +193,8 @@ describe("StackedCTACards", function () {
       expect(hero.className).toContain("bg-foreground");
       expect(hero.className).toContain("w-full");
       expect(compact).toHaveTextContent("Start run");
-      expect(compact.className).toContain("bg-running-fill");
+      expect(compact.className).toContain("bg-running/10");
+      expect(compact.className).not.toContain("bg-running-fill");
       expect(compact.className).not.toContain("w-full");
     });
   });

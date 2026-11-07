@@ -131,8 +131,10 @@ export default function RunCTACard({
           Start run
         </Button>
       ) : (
+        /* The compact card under the hero keeps the screen to one filled
+           button (DESIGN_GUIDE §14m rule 21): coral, but tinted. */
         <Button
-          variant="sport"
+          variant="sport-tinted"
           className="pointer-events-auto shrink-0"
           onClick={start}
         >

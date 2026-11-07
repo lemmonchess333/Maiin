@@ -1199,7 +1199,7 @@ under the hero, keeps its sport's filled Start at its own size.
 | ----------------------------------- | ----------- | ------------------ |
 | Logging food, on any page           | `nutrition` | `nutrition-tinted` |
 | Starting, logging or planning a run | `sport`     | `sport-tinted`     |
-| Starting a lift; a brand action     | `primary`   | (none)             |
+| Starting a lift; a brand action     | `primary`   | `lifting-tinted`   |
 
 So "Log meal" is orange on Analytics' empty state and in the manual logger,
 "Log food" is orange on Home's food card and in a search result's serving sheet,

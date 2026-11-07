@@ -170,8 +170,10 @@ export default function LiftCTACard({
           Start workout
         </Button>
       ) : (
+        /* The compact card under the hero keeps the screen to one filled
+           button (DESIGN_GUIDE §14m rule 21): purple, but tinted. */
         <Button
-          variant="primary"
+          variant="lifting-tinted"
           className="pointer-events-auto shrink-0"
           onClick={start}
         >

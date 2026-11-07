@@ -1178,7 +1178,7 @@ describe("an action takes its domain's colour wherever it appears", () => {
         ? "food"
         : variant.startsWith("sport")
           ? "running"
-          : variant === "primary"
+          : variant === "primary" || variant === "lifting-tinted"
             ? "lifting"
             : variant === "neutral"
               ? "neutral"

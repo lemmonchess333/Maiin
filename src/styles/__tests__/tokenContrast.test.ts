@@ -299,6 +299,7 @@ const BUTTON_VARIANTS = [
   "outline",
   "sport",
   "sport-tinted",
+  "lifting-tinted",
   "nutrition",
   "nutrition-tinted",
   "neutral",
