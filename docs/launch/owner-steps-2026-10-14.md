@@ -70,18 +70,32 @@ report alerts reach **only the Resend account owner's address**.
 
 ### 2.1 Verify troposfit.com in Resend
 
-1. resend.com → Domains → **Add Domain** → enter `troposfit.com` and pick the
-   region nearest you.
-2. Resend shows about 3–4 DNS records: an MX and a TXT (SPF) on
-   `send.troposfit.com`, a TXT `resend._domainkey` (DKIM), and an optional
-   DMARC TXT.
-3. In Cloudflare → troposfit.com → DNS → add each record **exactly** as shown.
-   Set them to **DNS only (grey cloud)**. For a name like
-   `send.troposfit.com`, type only `send`.
-4. Back in Resend, click **Verify**. It usually turns green within minutes,
-   occasionally up to an hour.
-5. Once it says **Verified**, set `RESEND_FROM` as in step 1.2 and run Deploy
-   production.
+Done 2026-11-07. These are the steps that worked, for a redo.
+
+1. resend.com → Domains → **Add Domain** → `troposfit.com`, region Ireland
+   (eu-west-1), Custom Return-Path `send`. Leave the tracking subdomain empty
+   and click and open tracking off: link tracking rewrites the password-reset
+   and verification links.
+2. If Resend says the domain **is in use by another Resend team**, claim it:
+   add the one TXT it shows on `@` (Auto configure does it), then
+   "I've added the records". The other team loses the domain.
+3. **DNS records → Auto configure** (signs in to Cloudflare and adds them).
+   Resend's current setup ("Forge") is three records, all DNS only (grey
+   cloud):
+   - TXT `resend._domainkey` (DKIM)
+   - CNAME `rsend`
+   - CNAME `send` → `send.forge.rmta.net`
+4. A CNAME must be the only record on its name. The older setup put an
+   **MX and a TXT (SPF) on `send`**: if Cloudflare still has them, delete
+   both, or `send` stays "Action needed". An old second
+   `resend._domainkey` TXT can go too; keep the one whose value Resend shows.
+5. Leave Cloudflare's own records alone: the three `route*.mx.cloudflare`
+   MX on `troposfit.com` (Email Routing, which forwards `support@` and
+   `applereview@` to the Gmail inbox), `cf2024-1._domainkey`, `_dmarc`, the
+   root SPF and the `hosting-site` TXT. Leave Resend's **Enable receiving**
+   off: it would take incoming mail from Email Routing.
+6. Once every row says **Verified**, set `RESEND_FROM` as in step 1.2 and run
+   Deploy production.
 
 ### 2.2 Let mail reach "Hide My Email" users (Sign in with Apple)
 
@@ -89,7 +103,7 @@ report alerts reach **only the Resend account owner's address**.
    _Sign in with Apple for Email Communication_ → Configure.
 2. Add the domains `troposfit.com` and `send.troposfit.com`. Also add the
    address `no-reply@troposfit.com` if it asks for email sources. Register.
-   Apple checks the domain's SPF, which step 2.1 added.
+   Apple checks the domain's SPF, which the `send` CNAME in step 2.1 provides.
 
 ### 2.3 Check it works
 
