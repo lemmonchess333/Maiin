@@ -22,13 +22,20 @@ type IconComponent = ComponentType<
 
 interface MacroColumnProps {
   macroKey: MacroColumnKey;
-  Icon: IconComponent;
+  /** Left out on Food's hero, where the word under the bar names the
+   *  macro and the hero's height keeps the composer on the first screen. */
+  Icon?: IconComponent;
   consumed: number;
   target: number;
   /** The macro's name, as said: "Protein". */
   label: string;
   /** Saturated brand colour for this macro */
   color: string;
+  /** The icon's colour, where it is not the bar's: Food's hero draws
+   *  every bar in the food orange and the icons in the text's grey, so
+   *  the macros keep their meaning in the word and the icon without
+   *  three more hues on the screen (DS4, §14m rule 11). */
+  iconColor?: string;
   /** Display mode — "left" shows remaining, "eaten" shows what's logged */
   mode: CalorieRingMode;
   /** Forward-compat tap hook (no-op for phase 1) */
@@ -58,6 +65,7 @@ export default function MacroColumn({
   target,
   label,
   color,
+  iconColor = color,
   mode,
   onTap = () => {},
   numberDurationSec = 0.6,
@@ -251,17 +259,19 @@ export default function MacroColumn({
           screen readers. Only the decorative mark is gone.
 
           Keep the scale pop — that is per-log feedback, not a state. */}
-      <motion.span
-        className="relative inline-flex items-center justify-center"
-        style={{ scale: iconScale }}
-      >
-        <Icon
-          className={cn("relative", compact ? "size-5" : "size-6")}
-          style={{ color }}
-          strokeWidth={2}
-          aria-hidden="true"
-        />
-      </motion.span>
+      {Icon && (
+        <motion.span
+          className="relative inline-flex items-center justify-center"
+          style={{ scale: iconScale }}
+        >
+          <Icon
+            className={cn("relative", compact ? "size-5" : "size-6")}
+            style={{ color: iconColor }}
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+        </motion.span>
+      )}
 
       {/* Big number — Food7: neutral foreground (not the macro hue). The
           macro identity is carried by the icon + progress bar; a neutral
@@ -319,8 +329,8 @@ export default function MacroColumn({
           causing a layout jump on first log.
 
           Empty means the fill, not the intake: `consumed === 0` is an
-          empty bar only in the logged view. In LEFT mode — the default —
-          nothing logged is a FULL bar, and fading on intake would dim
+          empty bar only in the logged view. In LEFT mode nothing logged
+          is a FULL bar, and fading on intake would dim
           three full macro-coloured bars to 40% every morning (maroon,
           olive, dark green on the dark card), then brighten them as the
           first log drained them. */}

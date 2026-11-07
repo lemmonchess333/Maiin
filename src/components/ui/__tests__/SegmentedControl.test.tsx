@@ -354,7 +354,9 @@ describe("SegmentedControl", () => {
     );
   });
 
-  it("the solid emphasis keeps the filled nutrition pill", () => {
+  it("the solid emphasis marks the nutrition pill with its edge and tint, not a fill", () => {
+    // DS4 (DESIGN_GUIDE §14m rule 21): a filled chip read as a second
+    // filled button beside Scan.
     render(
       <SegmentedControl
         options={DAYS}
@@ -366,7 +368,10 @@ describe("SegmentedControl", () => {
       />
     );
     const selected = screen.getByRole("radio", { name: "4" }).className;
-    expect(selected).toContain("bg-nutrition-fill");
+    expect(selected).toContain("border-nutrition");
+    expect(selected).toContain("bg-nutrition/10");
+    expect(selected).toContain("text-nutrition-strong");
+    expect(selected).not.toContain("bg-nutrition-fill");
     expect(selected).not.toContain("bg-segment-selected");
   });
 

@@ -196,7 +196,9 @@ function FoodComposerCard({
     >
       {/* Meal-slot picker — SegmentedControl (ADR-0003) for the radiogroup
           semantics, keyboard handling and 44px targets, in its `solid`
-          emphasis so the selected slot is a filled orange pill. The orange
+          emphasis so the selected slot is an orange pill: its edge, a tint
+          and the orange's text step, not a fill, since the Scan button
+          beside it is the page's one filled control (DS4). The orange
           is load-bearing: it is the food domain's identity, it matches the
           meal-section add button, and "which meal" therefore reads as one
           colour across the surface. The neutral track that briefly replaced

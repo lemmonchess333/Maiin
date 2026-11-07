@@ -646,6 +646,27 @@ html.guiding [data-brand-mark] {
   --glow-c: 0.045;
 }
 
+/* Food's hero (DS4): the food orange behind the calorie ring, fading into
+   the page (§14m rule 13). Weak enough that it counts as colour in neither
+   theme (rule 15): the colour on Food's first screen is the person's data,
+   the ring's arc, the macro bars and the week's rings. */
+.food-hero-glow {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--nutrition) / 0.2),
+    hsl(var(--nutrition) / 0.09) 50%,
+    transparent
+  );
+}
+.dark .food-hero-glow {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--nutrition) / 0.13),
+    hsl(var(--nutrition) / 0.05) 50%,
+    transparent
+  );
+}
+
 /* Reduced-motion safety net for the shared primitives. The
    Framer Motion components in Layout.tsx already gate via the
    useReducedMotion hook; this CSS belt-and-braces the primitives

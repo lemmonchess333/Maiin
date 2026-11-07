@@ -468,12 +468,13 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
 
 ## 6. Card patterns
 
-| Pattern                             | Recipe                                                                                                                                                                                       |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Standard card**                   | `bg-card` white, `rounded-xl` (12px), `p-3`–`p-4`, `shadow-card` (very subtle). Or use `.ds-card`.                                                                                           |
-| **Hero card** (Health Score, Water) | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square. DS4: a screen's hero is not just another card (§14m).                                                            |
-| **Compact tile** (Weight, Steps)    | `rounded-xl`, `p-3`, `bg-card card-shadow`, 2-col grid (the card surface since DS3; it was `bg-muted`).                                                                                      |
-| **Home hero** (`SessionHero`, DS4)  | Open on the page, no card: the session as a 36px title, its focus and minutes, its picture, one line against last time, a full-width `neutral` Start; the rest opens the day in Train. §14d. |
+| Pattern                             | Recipe                                                                                                                                                                                                                                             |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Standard card**                   | `bg-card` white, `rounded-xl` (12px), `p-3`–`p-4`, `shadow-card` (very subtle). Or use `.ds-card`.                                                                                                                                                 |
+| **Hero card** (Health Score, Water) | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square. DS4: a screen's hero is not just another card (§14m).                                                                                                                  |
+| **Compact tile** (Weight, Steps)    | `rounded-xl`, `p-3`, `bg-card card-shadow`, 2-col grid (the card surface since DS3; it was `bg-muted`).                                                                                                                                            |
+| **Home hero** (`SessionHero`, DS4)  | Open on the page, no card: the session as a 36px title, its focus and minutes, its picture, one line against last time, a full-width `neutral` Start; the rest opens the day in Train. §14d.                                                       |
+| **Food hero** (`FoodHeroCard`, DS4) | Open on the page, no card: the calorie ring at 184 pt over a one-hue orange glow, the day's figure inside it (42 px, "of 2,350 kcal" under it), the three macros as orange bars named in words, the week's rings at its foot. §14m, `foodHero.ts`. |
 
 - Use `.ds-card` for static grouped surfaces and `.ds-card-interactive` **only**
   on a real `<button>`/`<a>` (never a wrapped `div`) for pressable cards.
@@ -1248,6 +1249,13 @@ record of what each button was for:
 - **2026-10-13 — Copy yesterday's "Log selected meals"** (Food10 (2),
   decided under the owner's delegation). The page's third way to log food
   says it in the same colour as the other two.
+- **DS4, 7 November 2026 — one filled control on Food.** Food has no
+  full-width button, so its one filled control is Scan, the composer's
+  56 pt orange camera square. The usual row's Log is `nutrition-tinted`
+  and the selected meal pill an orange edge and tint (the `solid`
+  emphasis of `SegmentedControl`, in both meal pickers): every Log is
+  still orange (Food10), and none is a second filled button (§14m rule
+  21).
 
 Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
 mandate to wrap every `<button>` element: pressable cards, list/table rows,

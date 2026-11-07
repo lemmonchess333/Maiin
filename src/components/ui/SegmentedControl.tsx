@@ -79,7 +79,9 @@ export interface SegmentedControlProps<T extends string | number> {
    *  against the dark track. */
   tone?: "brand" | "running" | "lifting" | "nutrition";
   /** `track` = the iOS track look (default). `solid` = rounded-full pills
-   *  with the SELECTED one filled in the tone colour. Solid is for a
+   *  with the SELECTED one in the tone colour: its edge, a tint and the
+   *  colour's AA text step, not a fill (DS4: a screen has one filled
+   *  button, and a filled chip read as a second). Solid is for a
    *  domain whose colour IS the meaning — today that is the Food
    *  surface's meal slot, and `mealSlotPickerIdentity.test.tsx` pins it
    *  there. Reach for `track` everywhere else; a second solid group on a
@@ -238,12 +240,9 @@ function SegmentedControl<T extends string | number>({
                   : "text-muted-foreground hover:text-foreground"
                 : emphasis === "solid"
                   ? selected
-                    ? cn(
-                        "border-transparent text-white",
-                        tone === "nutrition"
-                          ? "bg-nutrition-fill"
-                          : "bg-primary"
-                      )
+                    ? tone === "nutrition"
+                      ? "border-nutrition bg-nutrition/10 text-nutrition-strong"
+                      : "border-primary bg-primary/10 text-foreground"
                     : "border-border/80 bg-card text-muted-foreground hover:bg-muted/60"
                   : selected
                     ? cn(

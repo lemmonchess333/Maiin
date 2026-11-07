@@ -31,6 +31,10 @@ interface CalorieRingProps {
    * 12px text so it stays readable.
    */
   size?: "hero" | "compact";
+  /** The words under the hero's figure ("of 2,350 kcal", from
+   *  `foodHeroFigure`). Without it the ring names its unit and mode
+   *  ("kcal left"), as Home's compact ring does. */
+  caption?: string;
 }
 
 /* Drawn on a 160 box. Nothing may paint past r + stroke / 2 = SIZE / 2:
@@ -71,6 +75,7 @@ export default function CalorieRing({
   ringDurationMs = 1500,
   drawIn = true,
   size = "hero",
+  caption,
 }: CalorieRingProps) {
   const compact = size === "compact";
   const reduce = useReducedMotion();
@@ -126,7 +131,12 @@ export default function CalorieRing({
         "relative aspect-square block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full",
         // Never wider than its card: at larger text on the phone the
         // ring's rem size outgrew it.
-        compact ? "w-26 max-w-full shrink-0" : "w-40 max-w-full mx-auto"
+        /* The hero size is Food's hero (DS4, §14m): 184 pt, its figure
+           the screen's largest text. A container, so the figure sizes
+           from the ring and never outgrows it at larger text. */
+        compact
+          ? "w-26 max-w-full shrink-0"
+          : "@container w-46 max-w-full mx-auto"
       )}
       style={{
         // Celebration glow — the ring's own orange, for the moment a day's
@@ -216,7 +226,9 @@ export default function CalorieRing({
               <p
                 className={cn(
                   "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground",
-                  compact ? "text-2xl" : "text-4xl"
+                  compact
+                    ? "text-2xl"
+                    : "text-[clamp(1.75rem,23cqw,var(--text-display))]"
                 )}
               >
                 <AnimatedNumber
@@ -232,11 +244,11 @@ export default function CalorieRing({
                   tiles switch the same way. */}
               <p
                 className={cn(
-                  "text-xs font-medium text-muted-foreground",
-                  compact ? "mt-1" : "mt-1.5"
+                  "font-medium text-muted-foreground",
+                  compact ? "mt-1 text-xs" : "mt-1.5 text-sm"
                 )}
               >
-                {CALORIE_UNIT} {labelMode}
+                {caption ?? `${CALORIE_UNIT} ${labelMode}`}
               </p>
               {trajectoryLabel && (
                 <p className="text-caption mt-1 text-muted-foreground font-mono tabular-nums">

@@ -723,10 +723,12 @@ describe("DS ratchets — surface-level drift", () => {
     expectRatchet("half-step space-y", total, HALF_STEP_STACK_BASELINE, byFile);
   });
 
-  it("the route pages and PageShell stack only on space-y-1 / 2 / 3 / 4 (positive pin)", () => {
+  it("the route pages and PageShell stack only on space-y-1 / 2 / 3 / 4 / 8 (positive pin)", () => {
     // 1 is the text rhythm inside a single card (a caption under its
-    // figure); 2 / 3 / 4 are the three layout steps. Nothing else.
-    const ON_SCALE = new Set(["1", "2", "3", "4"]);
+    // figure); 2 / 3 / 4 are the three layout steps; 8 is DS4's 32 pt
+    // between a screen's sections, with 8-12 pt inside each (DESIGN_GUIDE
+    // §14m rule 20; Food's hero, logging and diary). Nothing else.
+    const ON_SCALE = new Set(["1", "2", "3", "4", "8"]);
     for (const rel of [
       "src/pages/Home.tsx",
       "src/pages/Program.tsx",

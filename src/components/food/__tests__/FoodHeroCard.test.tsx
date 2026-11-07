@@ -90,12 +90,21 @@ describe("FoodHeroCard — adjust-targets gear", () => {
 describe("FoodHeroCard — single shared display mode", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    window.localStorage.setItem(MODE_STORAGE_KEY, "left");
+    setCalorieRingMode("left");
   });
 
-  it("defaults to 'left' for the ring and all three tiles", () => {
+  it("defaults to what was eaten for the ring and all three macros (DS4)", async () => {
+    /* The hero is the day's calories against its target, so an empty
+       morning is 0 on a grey track, not a full orange ring (§14m rules
+       16 and 33). */
+    window.localStorage.clear();
     const { container } = renderHero();
-    expect(tileModes(container)).toEqual(["left", "left", "left"]);
-    expect(ringButton().getAttribute("aria-label")).toMatch(/remaining/i);
+    expect(tileModes(container)).toEqual(["logged", "logged", "logged"]);
+    expect(ringButton().getAttribute("aria-label")).not.toMatch(/remaining/i);
+    // The store read the empty storage on mounting: the ring's words
+    // settle on the eaten view (the left view's fade out comes first).
+    expect(await screen.findByText(/^of [\d.,\s]+ kcal$/)).toBeInTheDocument();
   });
 
   it("tapping a macro tile flips the ring AND all three tiles to 'logged'", () => {
@@ -179,15 +188,9 @@ describe("FoodHeroCard — no day-type caption on the card", () => {
   });
 });
 
-describe("FoodHeroCard — the wash behind the ring", () => {
-  it("the two corner colours reach far enough to meet, in both themes", () => {
-    /* Two ellipses, the food surface's orange top-left and the brand
-       purple bottom-right, each spanning most of the card with a
-       three-stop falloff. Pinned on the recipe's shape rather than its
-       exact alphas: both hue tokens present, each with a mid stop and a
-       far edge (past 70% of the card), and the light theme no longer
-       dimmed to 70% — that dim is what made the last version invisible. */
-    const { container } = render(
+describe("FoodHeroCard — the hero, open on the page (DS4)", () => {
+  function renderOpen() {
+    return render(
       <MemoryRouter>
         <FoodHeroCard
           selectedDate="2026-06-09"
@@ -197,17 +200,65 @@ describe("FoodHeroCard — the wash behind the ring", () => {
         />
       </MemoryRouter>
     );
-    const wash = container.querySelector(
-      '[aria-hidden="true"].absolute.inset-0'
-    ) as HTMLElement;
-    expect(wash, "the wash layer").toBeTruthy();
-    const bg = wash.style.background;
-    expect(bg).toContain("--nutrition");
-    expect(bg).toContain("--primary");
-    expect(bg.match(/transparent (7[5-9]|8\d)%/g)?.length).toBe(2);
-    expect(bg.match(/radial-gradient/g)?.length).toBe(2);
-    expect(wash).toHaveClass("opacity-85", "dark:opacity-100");
-    expect(wash).not.toHaveClass("opacity-70");
+  }
+
+  it("glows in the food orange alone: no purple, no card", () => {
+    /* The card was washed from orange into the brand purple, the only
+       two-hue gradient on an everyday screen in 178 measured (§14m rule
+       13). The glow is one hue, drawn by its class, and the hero stands
+       on the page rather than in a card (rule 4). */
+    const { container } = renderOpen();
+    const glow = container.querySelector(".food-hero-glow");
+    expect(glow, "the glow behind the ring").toBeTruthy();
+    expect(glow).toHaveAttribute("aria-hidden", "true");
+    expect(container.innerHTML).not.toContain("--primary");
+    expect(container.querySelector(".card-shadow")).toBeNull();
+    expect(container.querySelector(".rounded-2xl")).toBeNull();
+  });
+
+  it("names each macro in words, with no icon in a macro's own hue", () => {
+    // DS4 rule 11: the first screen keeps to one hue; the word under the
+    // bar names the macro (the breakdown sheet keeps the macro colours).
+    const { container } = renderOpen();
+    expect(container.querySelectorAll("[data-macro]")).toHaveLength(3);
+    expect(container.querySelectorAll("[data-macro] svg")).toHaveLength(0);
+    for (const word of ["Protein", "Carbs", "Fat"])
+      expect(screen.getByText(word)).toBeInTheDocument();
+  });
+
+  it("names the breakdown with a verb and its object", () => {
+    render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday
+          dailyTargets={dailyTargets}
+          dailyTotals={dailyTotals}
+          onTapDrillDown={() => {}}
+        />
+      </MemoryRouter>
+    );
+    expect(
+      screen.getByRole("button", { name: "View nutrition breakdown" })
+    ).toHaveTextContent("See nutrients");
+  });
+
+  it("gives a new account's empty today its first step and number", () => {
+    render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday
+          dailyTargets={dailyTargets}
+          dailyTotals={{ calories: 0, protein: 0, carbs: 0, fat: 0 }}
+          hasAnyMeal={false}
+          isNew
+        />
+      </MemoryRouter>
+    );
+    expect(
+      screen.getByText(/^Log your first meal to start today's/)
+    ).toBeInTheDocument();
   });
 });
 

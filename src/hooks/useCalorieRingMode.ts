@@ -24,9 +24,17 @@ const STORAGE_KEY = "tropos.food.calorieRingMode";
  * it is for, and it gives a server snapshot for free.
  */
 
+/* Eaten until the person turns the ring to "left" (DS4, 7 November 2026).
+   Food's hero is the day's calories against its target, so a new day
+   starts at 0 on a grey track and the orange arrives with the first meal
+   (DESIGN_GUIDE §14m rules 16 and 33). Read as "left" by default it was a
+   full orange ring on every empty morning, colour before any data. */
+const DEFAULT_MODE: CalorieRingMode = "eaten";
+
 function read(): CalorieRingMode {
-  if (typeof window === "undefined") return "left";
-  return readString(STORAGE_KEY) === "eaten" ? "eaten" : "left";
+  if (typeof window === "undefined") return DEFAULT_MODE;
+  const stored = readString(STORAGE_KEY);
+  return stored === "left" || stored === "eaten" ? stored : DEFAULT_MODE;
 }
 
 let current: CalorieRingMode = read();
@@ -53,7 +61,7 @@ function getSnapshot(): CalorieRingMode {
 
 /** SSR / prerender: no storage, so the documented default. */
 function getServerSnapshot(): CalorieRingMode {
-  return "left";
+  return DEFAULT_MODE;
 }
 
 export function setCalorieRingMode(next: CalorieRingMode): void {

@@ -190,3 +190,74 @@ coral (`postMomentLines`' `sport` tone).
 
 Dark's other hues are the header's brand mark and streak, the tab bar's
 active pill and the avatar, which are not the hero's.
+
+## Built: Food
+
+`current-food-*` are Food on main and `built-food-*` Food as built,
+captured on the emulator rig on 7 November 2026: the rich seeded account
+(`rich`, today's four meals) and a new account straight from setup (`new`),
+at 393 × 852 and 320 × 693 in both themes. Measured as above, with the text
+sizes, boxes and filled controls read from the page; chrome is the first
+content's top plus the tab bar (the frames have no status bar).
+
+| Measure (393, rich)  | Before                                          | After                                             |
+| -------------------- | ----------------------------------------------- | ------------------------------------------------- |
+| Colour, dark / light | 9.17% / 2.91% (dark 3.2× louder)                | 4.14% / 3.84%                                     |
+| Leading hue, dark    | orange 54%, purple 43% (the wash)               | orange 94%, purple 5% (tab bar, "Try Pro free")   |
+| Hero                 | the calorie card, 192 pt, 22.5%, top 170        | ring, macros and week, 366 pt, 43.0%, top 92      |
+| Largest text         | "410", 36 px, 1.15× the "Food" title (31 px)    | "1,790", 42 px, 2.11× the next (20 px); no title  |
+| Text sizes           | 7                                               | 5                                                 |
+| Filled controls      | 2: the selected meal pill and Scan (3 with Log) | 1: Scan                                           |
+| Chrome               | 242 pt, 28.4% (title row and the week strip)    | 164 pt, 19.2% (the kicker and date switcher only) |
+| Card radius          | 22 (hero), 16                                   | 16; 10 inside a card; the hero has no card        |
+| Gaps                 | 16 between everything                           | 32 between sections, 12 inside, 16 under header   |
+| Rows with a picture  | photo meals only                                | every row: its photo, or one of ten drawings      |
+
+| Frame (after)               | Colour | Leading hue | Hero                 |
+| --------------------------- | ------ | ----------- | -------------------- |
+| `built-food-rich-320-dark`  | 5.38%  | orange 96%  | 52.8% (before 27.7%) |
+| `built-food-rich-320-light` | 4.98%  | orange 98%  | 52.8%                |
+| `built-food-new-393-dark`   | 1.19%  | orange 80%  | 46.2%, "0", 2.11×    |
+| `built-food-new-393-light`  | 1.04%  | orange 88%  | 46.2%                |
+| `built-food-new-320-dark`   | 0.75%  | orange 72%  | 59.7% (before 27.7%) |
+| `built-food-new-320-light`  | 0.58%  | orange 83%  | 59.7%                |
+
+Before, the new account was 10.47% / 4.19% at 393 and 13.36% / 6.17% at
+320, its ring a full orange "2,108 kcal left" over a hexagon "Nothing logged
+yet".
+
+- **The hero (rules 1-4, 9-16).** The orange-into-purple card is gone. The
+  ring (184 pt) stands on the page over a glow of the food orange that
+  counts as colour in neither theme, its figure the day's calories against
+  the target ("1,790" over "of 2,200 kcal", `foodHeroFigure`). The macros
+  are three orange bars named in words (pink, yellow and green stay in the
+  breakdown sheet), and the week's rings sit at its foot. The ring reads
+  what was eaten by default, so an empty day is 0 on a grey track; its tap
+  still turns it, the macros and the breakdown sheet to what is left
+  (Food10 call 1).
+- **One filled control (rule 21).** Scan stays the orange camera square;
+  the usual row's Log is `nutrition-tinted` and the selected meal pill an
+  orange edge and tint.
+- **Chrome (rules 17-18).** "Food" is the h1 for a screen reader; the
+  header row is the day ("Sat 7 Nov · Today") beside the date switcher,
+  now ‹ calendar ›. The week strip, a 62 pt row of its own, is in the hero.
+  Scan's bottom stays at or above 656 pt on a 375 pt screen with the usual
+  row showing (`companion-food.capture.spec.ts`).
+- **Pictures (rules 24-26).** Every diary row has a 48 pt picture: the
+  meal's own photo, read from the device (Food9), or one of ten drawings
+  chosen from its name (`foodArtKindFor`: bowl, eggs, bread, salad, fruit,
+  protein, grains, drink, sweet, and the plate when the name says nothing).
+  They were drawn for this with `scripts/art/gemini-image.py` in the art's
+  own style, off-white forms with fine contours and one orange accent, and
+  are cut out by `npm run art:food`; prompts and hashes are in
+  `docs/food-art/provenance.json`, and `foodHero.test.ts` binds each
+  cut-out to its source.
+- **Day 1 (rules 33, 41).** The hero is drawn full size at 0, with "Log
+  your first meal to start today's 2,108 kcal." under the ring; an empty
+  diary is a row with the greyed plate ("Meals you log today show here.")
+  in place of the hexagon.
+- **Left open.** Dark is 0.30 points louder than light on the rich frame
+  (0.15 on the new one): the anti-aliased edges of the ring, bars and week
+  rings count more on dark, and the tab bar's active pill. At 320 × 693 the
+  chrome is 23.7% (34.9% before), and Scan is partly under the tab bar
+  until the page moves (wholly, before); the meal pills take two rows there.

@@ -6,7 +6,7 @@ import {
   type PanInfo,
 } from "framer-motion";
 import { Pencil, Trash2 } from "lucide-react";
-import { MEAL_SLOT_ICONS, type MealKey } from "./mealConstants";
+import { foodArtKindFor, foodArtUrl } from "@/lib/foodHero";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,7 @@ export interface FoodRowGroup {
   /** Stable id for the row — we key/open-state against this. */
   id: string;
   foodName: string;
-  items: { portionSize?: string }[];
+  items: { portionSize?: string; name?: string }[];
   count: number;
   totalCal: number;
   totalPro: number;
@@ -52,22 +52,12 @@ interface FoodRowProps {
   /** Identifies a portion when the diary has several rows with the same name. */
   accessibleFoodName?: string;
   /**
-   * Optional captured-meal photo, as a 52 px thumbnail at the start of
-   * the row (Pol1), inside the swipeable surface, so a photo meal keeps
-   * the same tap-to-edit and swipe-to-delete as any other. Only scanned
-   * meals carry one.
+   * Optional captured-meal photo, the row's picture (Pol1), inside the
+   * swipeable surface, so a photo meal keeps the same tap-to-edit and
+   * swipe-to-delete as any other. Only scanned meals carry one, and it is
+   * read from the device (Food9).
    */
   photoUrl?: string;
-  /** The row's meal slot, drawn in a tile the thumbnail's size when the
-   *  day has photos and this row has none. */
-  slot?: MealKey;
-  /**
-   * The day has a photo somewhere, so every row keeps the thumbnail's
-   * column (its photo, or its slot's tile) and every name starts in the
-   * same place. A day without photos keeps the compact rows: most logs
-   * have no photo, and a tile on each would only make them taller.
-   */
-  thumbnailColumn?: boolean;
 }
 
 // Single destructive swipe action (Delete only). Editing is reached by
@@ -130,8 +120,6 @@ export default function FoodRow({
   subLabel,
   accessibleFoodName,
   photoUrl,
-  slot,
-  thumbnailColumn = false,
 }: FoodRowProps) {
   const reduce = useReducedMotion() === true;
   const hasFiredHapticRef = useRef(false);
@@ -262,19 +250,26 @@ export default function FoodRow({
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const photoFailed = !!photoUrl && failedSrc === photoUrl;
   const hasPhoto = !!photoUrl && !photoFailed;
-  const SlotIcon = slot ? MEAL_SLOT_ICONS[slot] : null;
+  const artKind = foodArtKindFor([
+    group.foodName,
+    ...group.items.map((item) => item.name ?? ""),
+  ]);
 
-  /* The thumbnail column (Pol1): the photo, 52 px and rounded, or on a
-     day with photos the slot's tile in its place. A 176 px photo card
-     above each row makes a day of photographed meals a screen and a half
-     long. pointer-events-none keeps the browser's native image
-     drag and long-press callout from fighting the row's swipe. The name
-     is beside it, so the picture says nothing a reader needs. */
+  /* Every row carries a picture (DS4, DESIGN_GUIDE §14m rule 25): the
+     meal's own photo where it has one, kept on the device (Food9), and
+     otherwise our drawing of what the name says it is (`foodArtKindFor`,
+     the plate when it says nothing). 48 pt, the inner radius of a card.
+     It was the photo or nothing, and a slot's icon only on a day with a
+     photo, so most days' diaries were a list of words. pointer-events-none
+     keeps the browser's native image drag and long-press callout from
+     fighting the row's swipe. The name is beside it, so the picture says
+     nothing a reader needs. */
   const leading = hasPhoto ? (
     <img
       src={photoUrl}
       alt=""
-      className="size-[52px] shrink-0 rounded-xl object-cover pointer-events-none select-none"
+      data-food-photo=""
+      className="size-12 shrink-0 rounded-lg object-cover pointer-events-none select-none"
       loading="lazy"
       decoding="async"
       draggable={false}
@@ -284,19 +279,20 @@ export default function FoodRow({
          back to the shape a row without a photo has on this day. */
       onError={() => setFailedSrc(photoUrl ?? null)}
     />
-  ) : thumbnailColumn && SlotIcon ? (
-    <span
+  ) : (
+    <img
+      src={foodArtUrl(artKind)}
+      alt=""
       aria-hidden="true"
-      data-slot-tile={slot}
-      className="flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground @max-[11em]:hidden"
-    >
-      <SlotIcon className="size-5" strokeWidth={1.75} />
-    </span>
-  ) : null;
+      data-food-art={artKind}
+      decoding="async"
+      draggable={false}
+      className="size-12 shrink-0 rounded-lg bg-muted object-contain p-0.5 pointer-events-none select-none"
+    />
+  );
 
-  /* Under 11em of row (larger text, a narrow phone) the column takes the
-     name's room: the photo goes above the name, and the slot's tile, which
-     is only there to line names up, gives way. Beside it, the names broke
+  /* Under 11em of row (larger text, a narrow phone) the picture takes the
+     name's room, so it goes above the name. Beside it, the names broke
      mid-word at double text on a 320 px phone. */
   const rowInner = leading ? (
     <div className="@container flex-1 min-w-0">

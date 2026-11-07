@@ -141,7 +141,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // on white, under the 3:1 a graphic needs, so the Settings row's and
   // the Go deeper tile's icons, and the food consistency card's two,
   // take `text-nutrition-strong`.
-  nutrition: 2,
+  // 2026-11-07: 2 -> 1. DS4's Food hero: its Share icon (a goal-hit day)
+  // takes the strong step, for the same 3:1 on a light page.
+  nutrition: 1,
   destructive: 0,
   success: 0,
   warning: 0,
