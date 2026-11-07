@@ -377,7 +377,9 @@ export default function SessionCompleteScreen({
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
+      /* No fade under Reduce Motion: the screen is there at once, as every
+         entrance inside it already is. */
+      initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       role="region"
       aria-label="Session completion"
