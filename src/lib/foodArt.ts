@@ -1,101 +1,11 @@
 /**
- * Food's hero (DS4, DESIGN_GUIDE §14m): the words around the day's figure,
- * and the picture a diary row carries when its meal has no photo.
- *
- * The hero is one figure, the day's calories against its target, inside
- * the calorie ring: "1,110" over "left of 2,350 kcal" (the default), or
- * "1,240" over "of 2,350 kcal" once the ring is turned to what was logged
- * (Food10 call 1: the breakdown sheet follows it). The ring fills with what
- * was eaten in both (`calorieRingFill.ts`), so a new day is a grey track and
- * the colour arrives with the first meal (§14m rules 16 and 33). Pure, so
- * the words are tested without rendering the page; `FoodHeroCard` and
- * `FoodTimeline` only draw the answers.
+ * The Food diary's pictures (DS4, DESIGN_GUIDE §14m rule 25): every row
+ * that stands for a meal carries one. A meal's own photo, read from the
+ * device (Food9), comes first; this file picks our drawing for a meal
+ * without one, from the names it was logged under, and words the diary's
+ * empty day. Pure, so it is tested without rendering the diary.
  */
-import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
 import { FOOD_ART, type FoodArtKind } from "@/lib/foodArt.data";
-import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
-
-export interface FoodHeroFigure {
-  /** The figure, at the hero's size. */
-  value: number;
-  /** What the figure is against, under it: "of 2,350 kcal". */
-  caption: string;
-}
-
-/**
- * The hero's figure and the words under it, for the ring's mode. In the
- * eaten mode it is what was logged against the target; in the left mode,
- * what is left of it, or how far past it the day went (the numbers and
- * nothing else, as the house voice asks of a day over target).
- */
-export function foodHeroFigure({
-  consumed,
-  target,
-  mode,
-}: {
-  consumed: number;
-  target: number;
-  mode: "left" | "eaten";
-}): FoodHeroFigure {
-  if (!(target > 0))
-    return { value: Math.max(0, consumed), caption: `${CALORIE_UNIT} logged` };
-  const { displayValue, labelMode } = getCalorieRingDisplay({
-    consumed,
-    target,
-    isLeftMode: mode === "left",
-  });
-  const of = `${formatCalories(target)} ${CALORIE_UNIT}`;
-  /* Nothing eaten yet: the figure IS the target, so "2,108 left of 2,108
-     kcal" would say it twice. */
-  if (labelMode === "left" && consumed <= 0)
-    return { value: displayValue, caption: `${CALORIE_UNIT} left` };
-  return {
-    value: displayValue,
-    caption:
-      labelMode === "left"
-        ? `left of ${of}`
-        : labelMode === "over"
-          ? `over ${of}`
-          : `of ${of}`,
-  };
-}
-
-/**
- * The hero's one line, or nothing. Only an empty diary has one: today,
- * with no meal on any day the diary has loaded, it gives the first step
- * and when the screen fills (the house voice's "day one is a starting
- * line"). Read as what was logged, the figure is 0 and the line names the
- * target it starts on; read as what is left, the figure already is the
- * target, so the line says the ring fills instead of naming it a third
- * time. A new account's step is its first meal; someone back after a
- * month away is not on their first. Once anything is logged the figure
- * says it all, and a day in the past has no step to offer.
- */
-export function foodHeroLine({
-  isToday,
-  beforeJoined,
-  hasAnyMeal,
-  isNew,
-  mode = "left",
-  target,
-}: {
-  isToday: boolean;
-  beforeJoined: boolean;
-  /** Whether the diary holds a meal on any day it has loaded. */
-  hasAnyMeal: boolean;
-  /** The account began within the diary's window, so it has never
-   *  logged a meal at all. */
-  isNew: boolean;
-  target: number;
-  /** The ring's mode: "left" (the default) or "eaten". */
-  mode?: "left" | "eaten";
-}): string | null {
-  if (!isToday || beforeJoined || hasAnyMeal) return null;
-  const step = isNew ? "Log your first meal" : "Log a meal";
-  if (!(target > 0)) return `${step} and it shows here.`;
-  if (mode === "left") return `${step} and the ring starts to fill.`;
-  return `${step} to start today's ${formatCalories(target)} ${CALORIE_UNIT}.`;
-}
 
 /** The diary's line on a day with nothing logged. Never "No … yet". */
 export function emptyDiaryLine(isToday: boolean): string {

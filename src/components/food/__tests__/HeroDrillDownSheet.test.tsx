@@ -204,13 +204,15 @@ describe("HeroDrillDownSheet — training-aware fuel", () => {
 });
 
 /**
- * The macro bars must fill the way the tile that opened this sheet does.
+ * The macro bars must move the same direction as the tile that opened this
+ * sheet.
  *
- * Since DS4 every calorie and macro bar fills with what was eaten in both
- * modes (calorieRingFill.ts); only the words follow the mode. The sheet
- * once drew a 9.2%-full bar here beside an 88.7%-full tile for the same
- * protein, one tap apart: the sheet must agree with the card, so it fills
- * the same in both modes, as the card does.
+ * `MacroColumn` documents the property — the bar is "mode-locked to the big
+ * number's direction so both signals move in lockstep" — and this sheet was
+ * the one surface that never received the mode. It drew consumed%
+ * unconditionally, so the SAME protein data rendered as a 9.2%-full bar on
+ * the tile and an 88.7%-full bar here, one tap apart, measured off the Food
+ * capture frames.
  *
  * Rendered rather than unit-tested on the helper, because the helper's own
  * suite already passes when this component ignores it: reverting the sheet
@@ -276,7 +278,7 @@ describe("HeroDrillDownSheet — bars follow the hero's display mode", () => {
     );
   }
 
-  it("fills the same in both modes, with what was eaten", () => {
+  it("drains in LEFT mode and fills in EATEN mode — opposite, not offset", () => {
     const { unmount } = renderAt("left");
     const left = barWidths();
     expect(left.length, "no macro bars rendered").toBeGreaterThanOrEqual(3);
@@ -285,16 +287,17 @@ describe("HeroDrillDownSheet — bars follow the hero's display mode", () => {
     renderAt("eaten");
     const eaten = barWidths();
 
-    expect(eaten).toEqual(left);
-    // Protein: 56 of 140g eaten is a 40% bar, as the tile draws it.
-    expect(Number.parseFloat(left[0])).toBeCloseTo(40, 0);
-  });
-
-  it("prints the eaten share beside each bar, never a left share", () => {
-    renderAt("left");
-    const text = document.body.textContent ?? "";
-    expect(text).toMatch(/40% eaten/);
-    expect(text).not.toMatch(/60%/);
+    expect(eaten).toHaveLength(left.length);
+    left.forEach((w, i) => {
+      const l = Number.parseFloat(w);
+      const e = Number.parseFloat(eaten[i]);
+      expect(
+        l + e,
+        `macro bar ${i}: LEFT ${w} + EATEN ${eaten[i]} should be one full ` +
+          `bar. If they are EQUAL the sheet is ignoring the mode, which is ` +
+          `the defect that put a 9% bar on the tile and an 89% bar here.`
+      ).toBeCloseTo(100, 4);
+    });
   });
 });
 

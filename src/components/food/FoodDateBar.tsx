@@ -15,9 +15,6 @@ interface FoodDateBarProps {
   /** Native picker bounds (YYYY-MM-DD); also gates the controlled value. */
   minDate?: string;
   maxDate?: string;
-  /** The calendar alone in the middle, no day named: Food's header names
-   *  the day in its kicker (DS4), so the switcher only steps and picks. */
-  compact?: boolean;
 }
 
 /**
@@ -46,7 +43,6 @@ function FoodDateBar({
   canGoForward = true,
   minDate,
   maxDate,
-  compact = false,
 }: FoodDateBarProps) {
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,33 +66,21 @@ function FoodDateBar({
         type="button"
         onClick={() => dateInputRef.current?.showPicker?.()}
         aria-label="Select date"
-        className={
-          compact
-            ? "size-[44px] flex items-center justify-center rounded-full hover:bg-muted active:scale-[0.95] transition-all"
-            : "flex items-center justify-center gap-1.5 min-h-[44px] px-1 active:scale-[0.97] transition-transform"
-        }
+        className="flex items-center justify-center gap-1.5 min-h-[44px] px-1 active:scale-[0.97] transition-transform"
       >
         <CalendarDays
           aria-hidden="true"
-          className={
-            compact
-              ? "size-4 text-foreground"
-              : "size-3.5 text-muted-foreground"
-          }
+          className="size-3.5 text-muted-foreground"
         />
         {/* Semibold at text-sm: it is a control's label now, not a
             caption. The short weekday form, day before month, the app's
             one date treatment, short enough to share the row with the
             title. */}
-        {!compact && (
-          <p className="text-sm font-semibold text-foreground whitespace-nowrap">
-            {isToday
-              ? "Today"
-              : formatShortWeekdayDayMonth(
-                  new Date(selectedDate + "T12:00:00")
-                )}
-          </p>
-        )}
+        <p className="text-sm font-semibold text-foreground whitespace-nowrap">
+          {isToday
+            ? "Today"
+            : formatShortWeekdayDayMonth(new Date(selectedDate + "T12:00:00"))}
+        </p>
       </button>
       <input
         ref={dateInputRef}

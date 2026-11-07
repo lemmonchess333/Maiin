@@ -323,12 +323,14 @@ describe("MacroColumn — the goal-reached state stays in the accessible name", 
 });
 
 /**
- * The bar is what was eaten in BOTH modes (DS4, calorieRingFill.ts): only
- * the number and its word follow the mode. So a day with nothing eaten is
- * an empty, faded track whichever mode is on — an empty metric is a grey
- * track, and colour arrives with data (DESIGN_GUIDE §14m rules 16, 33). It
- * drained in the left mode, which put three full bars on every empty
- * morning.
+ * The bar fades when it is EMPTY — not when nothing has been eaten.
+ *
+ * Those are the same state only in EATEN mode. LEFT mode (the default)
+ * draws what is left, so a day with nothing eaten is a FULL bar. The fade
+ * keyed on `consumed === 0`, which dimmed three full bars to 40% every
+ * morning — on the dark card, the maroon, olive and dark-green bars under
+ * the macro tiles — and made the first log of the day BRIGHTEN the bars as
+ * they drained.
  *
  * Each case anchors on the accessible name first, so the opacity is read
  * from the state the test claims to be in.
@@ -351,14 +353,14 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     return bar!;
   }
 
-  it("LEFT mode with nothing eaten is the empty, faded track too", () => {
+  it("LEFT mode with nothing eaten draws the full bar at full strength", () => {
     const bar = renderAt("left", 0);
     expect(
       screen.getByRole("button", {
         name: "Show protein logged. 0g logged of 150g",
       })
     ).toBeInTheDocument();
-    expect(bar.style.opacity).toBe("0.4");
+    expect(bar.style.opacity).toBe("1");
   });
 
   it("EATEN mode with nothing eaten fades the empty track", () => {
@@ -371,26 +373,23 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     expect(bar.style.opacity).toBe("0.4");
   });
 
-  it("LEFT mode with the target used up draws the full bar", () => {
+  it("LEFT mode with the target used up fades the now-empty bar", () => {
     const bar = renderAt("left", 150);
     expect(
       screen.getByRole("button", { name: /150g logged of 150g$/ })
     ).toBeInTheDocument();
-    expect(bar.style.opacity).toBe("1");
+    expect(bar.style.opacity).toBe("0.4");
   });
 
-  it("a part-eaten bar is at full strength, and as full, in both modes", () => {
-    const widths: string[] = [];
+  it("a part-eaten bar is at full strength in both modes", () => {
     for (const mode of ["left", "eaten"] as const) {
       const bar = renderAt(mode, 60);
       expect(
         screen.getByRole("button", { name: /60g logged of 150g$/ })
       ).toBeInTheDocument();
       expect(bar.style.opacity).toBe("1");
-      widths.push((bar.firstElementChild as HTMLElement).style.width);
       cleanup();
     }
-    expect(widths[0]).toBe(widths[1]);
   });
 });
 

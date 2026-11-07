@@ -70,11 +70,13 @@ interface MacroRowProps {
 function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
   const pct = clampPct(consumed, target);
   const remaining = Math.max(0, Math.round(target - consumed));
-  /* Filled with what was eaten in both modes, as the tile that opened
-     this sheet is (calorieRingFill.ts): the words follow the mode, the
-     bar and its percentage do not. */
-  const fillPct = barFillPct(pct, consumed > target && target > 0);
-  const shownPct = barLabelPct(pct);
+  /* Lockstep with the tile that opened this sheet. `MacroColumn` documents
+     the bar as moving the same direction as the big number beside it; this
+     row never received the mode, so it drew consumed% unconditionally and
+     the same protein data read as a 9%-full bar on the tile and an
+     89%-full bar here, one tap apart. */
+  const fillPct = barFillPct(pct, mode, consumed > target && target > 0);
+  const shownPct = barLabelPct(pct, mode);
   /* The headline counts the way the bar and the percentage do (Food10
      (1)): what is left in left mode, what is logged in logged mode. It
      led with the logged grams in both, so "64%" of what was left sat
@@ -111,7 +113,7 @@ function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
             ? `${formatMacro(remaining)}g left`
             : `${formatMacro(consumed - target)}g over`}
         {" · "}
-        {shownPct}% eaten
+        {shownPct}%
       </p>
     </div>
   );
@@ -149,10 +151,10 @@ function MicroRow({
   const note = isLimit
     ? over
       ? `${amount(overBy)} over limit`
-      : `${amount(remaining)} left · ${pct}% eaten`
+      : `${amount(remaining)} left · ${pct}%`
     : consumed >= target
       ? `Goal reached · ${amount(consumed)}`
-      : `${amount(remaining)} to goal · ${pct}% eaten`;
+      : `${amount(remaining)} to goal · ${pct}%`;
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
@@ -276,14 +278,14 @@ export default function HeroDrillDownSheet({
                 </span>
               </div>
               <span className="font-mono tabular-nums text-xs text-muted-foreground">
-                {barLabelPct(consumedPct)}% eaten
+                {barLabelPct(consumedPct, mode)}%
               </span>
             </div>
             <div className="h-2 rounded-full overflow-hidden bg-muted">
               <div
                 className="h-full rounded-full transition-all"
                 style={{
-                  width: `${barFillPct(consumedPct, remaining < 0)}%`,
+                  width: `${barFillPct(consumedPct, mode, remaining < 0)}%`,
                   /* The calorie ring's colours: orange, and its deeper
                      overshoot orange once the day is over its target. */
                   background:

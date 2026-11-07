@@ -9,7 +9,6 @@ import {
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
-import { barFillPct } from "@/lib/calorieRingFill";
 import type { CalorieRingMode } from "./CalorieRing";
 
 export type MacroColumnKey = "protein" | "carbs" | "fat";
@@ -23,20 +22,13 @@ type IconComponent = ComponentType<
 
 interface MacroColumnProps {
   macroKey: MacroColumnKey;
-  /** Left out on Food's hero, where the word under the bar names the
-   *  macro and the hero's height keeps the composer on the first screen. */
-  Icon?: IconComponent;
+  Icon: IconComponent;
   consumed: number;
   target: number;
   /** The macro's name, as said: "Protein". */
   label: string;
   /** Saturated brand colour for this macro */
   color: string;
-  /** The icon's colour, where it is not the bar's: Food's hero draws
-   *  every bar in the food orange and the icons in the text's grey, so
-   *  the macros keep their meaning in the word and the icon without
-   *  three more hues on the screen (DS4, §14m rule 11). */
-  iconColor?: string;
   /** Display mode — "left" shows remaining, "eaten" shows what's logged */
   mode: CalorieRingMode;
   /** Forward-compat tap hook (no-op for phase 1) */
@@ -66,7 +58,6 @@ export default function MacroColumn({
   target,
   label,
   color,
-  iconColor = color,
   mode,
   onTap = () => {},
   numberDurationSec = 0.6,
@@ -85,9 +76,17 @@ export default function MacroColumn({
   const isOver = consumed > target && hasTarget;
   const isLeftMode = mode === "left";
 
-  // The bar is what was eaten in both modes, as the calorie ring's arc is;
-  // the number and its word follow the mode (calorieRingFill.ts).
-  const fillShare = !hasTarget ? 0 : barFillPct(pct * 100, isOver) / 100;
+  // Bar fill direction is mode-locked to the big number's direction so
+  // both signals move in lockstep:
+  //   LEFT mode → fill = remaining %   (drains as you log; matches the
+  //                                    big number which counts down)
+  //   LOGGED mode → fill = consumed %  (grows as you log; matches the
+  //                                    big number which counts up)
+  // Over-target in LEFT mode pins to 100% (a full bar reads as
+  // "maxed out + over by N" combined with the big number; an empty
+  // bar would falsely read as "nothing left to eat").
+  // Mirrors the calorie ring's fill direction in CalorieRing.tsx.
+  const barFillPct = !hasTarget ? 0 : isLeftMode ? (isOver ? 1 : 1 - pct) : pct;
 
   // Overshoot — only when consumed exceeds target. Capped at one full
   // extra lap; going 3× over wouldn't read any differently than 2×.
@@ -252,19 +251,17 @@ export default function MacroColumn({
           screen readers. Only the decorative mark is gone.
 
           Keep the scale pop — that is per-log feedback, not a state. */}
-      {Icon && (
-        <motion.span
-          className="relative inline-flex items-center justify-center"
-          style={{ scale: iconScale }}
-        >
-          <Icon
-            className={cn("relative", compact ? "size-5" : "size-6")}
-            style={{ color: iconColor }}
-            strokeWidth={2}
-            aria-hidden="true"
-          />
-        </motion.span>
-      )}
+      <motion.span
+        className="relative inline-flex items-center justify-center"
+        style={{ scale: iconScale }}
+      >
+        <Icon
+          className={cn("relative", compact ? "size-5" : "size-6")}
+          style={{ color }}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
+      </motion.span>
 
       {/* Big number — Food7: neutral foreground (not the macro hue). The
           macro identity is carried by the icon + progress bar; a neutral
@@ -322,8 +319,8 @@ export default function MacroColumn({
           causing a layout jump on first log.
 
           Empty means the fill, not the intake: `consumed === 0` is an
-          empty bar only in the logged view. In LEFT mode nothing logged
-          is a FULL bar, and fading on intake would dim
+          empty bar only in the logged view. In LEFT mode — the default —
+          nothing logged is a FULL bar, and fading on intake would dim
           three full macro-coloured bars to 40% every morning (maroon,
           olive, dark green on the dark card), then brighten them as the
           first log drained them. */}
@@ -341,14 +338,14 @@ export default function MacroColumn({
             ? "hsl(var(--muted-foreground) / 0.2)"
             : "hsl(var(--muted))",
           boxShadow: "inset 0 1px 2px rgb(0 0 0 / 0.06)",
-          opacity: fillShare === 0 ? 0.4 : 1,
+          opacity: barFillPct === 0 ? 0.4 : 1,
         }}
       >
         <motion.div
           className="h-full rounded-full"
           style={{ background: overColor, opacity: pulseOpacity }}
-          initial={{ width: settled ? `${fillShare * 100}%` : "0%" }}
-          animate={{ width: `${fillShare * 100}%` }}
+          initial={{ width: settled ? `${barFillPct * 100}%` : "0%" }}
+          animate={{ width: `${barFillPct * 100}%` }}
           transition={{
             width: { duration: reduce ? 0 : barDurationSec, ease: RING_EASE },
           }}

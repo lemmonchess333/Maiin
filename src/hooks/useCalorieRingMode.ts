@@ -24,18 +24,9 @@ const STORAGE_KEY = "tropos.food.calorieRingMode";
  * it is for, and it gives a server snapshot for free.
  */
 
-/* "Left" until the person turns the ring to what they logged, so existing
-   accounts and Home's food card keep reading "kcal left". The mode moves
-   only the number and its words: every ring and bar fills with what was
-   eaten in both (`calorieRingFill.ts`, DS4, 7 November 2026), so an empty
-   morning is a grey track whichever mode is on (DESIGN_GUIDE §14m rules 16
-   and 33). */
-const DEFAULT_MODE: CalorieRingMode = "left";
-
 function read(): CalorieRingMode {
-  if (typeof window === "undefined") return DEFAULT_MODE;
-  const stored = readString(STORAGE_KEY);
-  return stored === "left" || stored === "eaten" ? stored : DEFAULT_MODE;
+  if (typeof window === "undefined") return "left";
+  return readString(STORAGE_KEY) === "eaten" ? "eaten" : "left";
 }
 
 let current: CalorieRingMode = read();
@@ -62,7 +53,7 @@ function getSnapshot(): CalorieRingMode {
 
 /** SSR / prerender: no storage, so the documented default. */
 function getServerSnapshot(): CalorieRingMode {
-  return DEFAULT_MODE;
+  return "left";
 }
 
 export function setCalorieRingMode(next: CalorieRingMode): void {

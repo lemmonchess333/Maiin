@@ -48,19 +48,17 @@ describe("meal slot picker keeps the food surface's orange", () => {
     }
   });
 
-  it("the selected solid pill is the orange tint with its AA text step, not a fill", () => {
-    // DS4 (DESIGN_GUIDE §14m rule 21): the page's one filled control is
-    // Scan, and a filled orange chip beside it read as a second. The pill
-    // keeps the food orange as its edge and a tint, and its label takes
-    // the AA text step (--nutrition-strong): #D9884E text is under 3:1.
+  it("the selected solid pill is the AA nutrition fill, not the identity orange", () => {
+    // #D9884E under white text is ~2.8:1. The fill step (--nutrition-fill,
+    // amber-700 #B45309) is the AA-passing one, and it is what the pills
+    // used before the cohesion pass — restoring the look must not restore
+    // a contrast problem with it.
     const src = readFileSync(
       join(SRC, "components/ui/SegmentedControl.tsx"),
       "utf8"
     );
-    expect(src).toContain(
-      "border-nutrition bg-nutrition/10 text-nutrition-strong"
-    );
-    expect(src).not.toContain("bg-nutrition-fill");
+    expect(src).toContain("bg-nutrition-fill");
+    expect(src).not.toContain("bg-nutrition-fill/");
   });
 
   it("no other component reaches for the solid emphasis", () => {
@@ -83,7 +81,7 @@ describe("meal slot picker keeps the food surface's orange", () => {
    Food CTAs default to primary, and records this row as the exception — so
    a sweep that follows the default would revert it without this pin. */
 describe("the usual row's Log is the food orange", () => {
-  it("renders the tinted nutrition variant: orange, and not a second filled button", () => {
+  it("renders the nutrition variant, not primary", () => {
     const src = readFileSync(join(SRC, "pages/Food.tsx"), "utf8");
     const start = src.indexOf("aria-labelledby={usualHeadingId}");
     expect(
@@ -93,9 +91,7 @@ describe("the usual row's Log is the food orange", () => {
     const row = src.slice(start, src.indexOf("</Card>", start));
     const log = row.slice(row.lastIndexOf("<Button"));
     expect(log).toMatch(/>\s*Log\s*<\/Button>/);
-    // DS4: Scan is the page's one filled control; every Log stays orange
-    // (Food10), here in its tinted form.
-    expect(log).toContain('variant="nutrition-tinted"');
+    expect(log).toContain('variant="nutrition"');
   });
 
   it("comes after the composer, so the text box and Scan are on screen when the page opens", () => {

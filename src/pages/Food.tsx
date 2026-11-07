@@ -2020,19 +2020,7 @@ export default function Food() {
       canGoForward={canGoForward}
       minDate={minDateStr}
       maxDate={todayStr}
-      compact
     />
-  );
-  /* DS4 (DESIGN_GUIDE §14m rules 1-2): no large title above the hero,
-     which names the screen; "Food" stays the page's h1 for a screen
-     reader, and the day is the header's kicker, as Home's date is. */
-  const dayKicker = (
-    <span className="inline-flex flex-wrap items-center gap-x-1.5">
-      <span className="font-bold text-foreground">
-        {formatShortWeekdayDayMonth(parseLocalDate(selectedDate))}
-      </span>
-      {isToday && <span>· Today</span>}
-    </span>
   );
   const readError = mealsError ? (
     <div
@@ -2063,8 +2051,6 @@ export default function Food() {
       <PageShell
         {...pullBindProps}
         title="Food"
-        titleHidden
-        eyebrow={dayKicker}
         actions={dateBar}
         banner={<FoodOfflineBanner />}
         style={{ paddingBottom: "var(--page-bottom-pad)" }}
@@ -2078,15 +2064,10 @@ export default function Food() {
     <PageShell
       {...pullBindProps}
       title="Food"
-      titleHidden
-      eyebrow={dayKicker}
-      /* The date switcher shares the kicker's row (the shell's action
+      /* The date switcher shares the title row (the shell's action
          slot) instead of taking a sticky row of its own beneath it —
          two header rows were 90px spent before the day's number. */
       actions={dateBar}
-      /* Three sections (the hero, logging, the diary) about 32 pt apart;
-         8-12 pt inside each (DS4, §14m rule 20). */
-      className="space-y-8"
       banner={<FoodOfflineBanner />}
       /* Bottom padding hooks into the canonical --page-bottom-pad token
          (tab-bar height + env(safe-area-inset-bottom) + 1rem) so the last
@@ -2108,19 +2089,14 @@ export default function Food() {
       )}
       {readError}
 
-      {/* Food's hero (DS4, DESIGN_GUIDE §14m): the day's figure in its
-          ring, the macros, and the week folded in at its foot, as Home's
-          week sits in its hero. The week was a control row of its own
-          between the title and the ring, and the two header rows took 28%
-          of the screen before the day's number. */}
-      <motion.section
-        variants={pageItemVariant}
-        data-food-hero=""
-        aria-label="Your food"
-        /* 16 pt under the header, not the 32 between sections: the
-           header is the hero's kicker. */
-        className="-mt-4"
-      >
+      <motion.div variants={pageItemVariant}>
+        {/* Isolated as Home's strip is: a bad day's data costs the strip,
+            not the diary under it. */}
+        <SectionErrorBoundary sectionName="food-week-strip">
+          <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
+        </SectionErrorBoundary>
+      </motion.div>
+      <motion.div variants={pageItemVariant}>
         <FoodHeroCard
           key={selectedDate}
           drawIn={heroDrawIn}
@@ -2133,21 +2109,12 @@ export default function Food() {
             carbs: dailyTotals.carbs,
             fat: dailyTotals.fat,
           }}
-          hasAnyMeal={meals.length > 0}
-          isNew={!!accountStartKey && accountStartKey >= mealsFrom}
           onTapDrillDown={() => {
             setHeroSheetUsed(true);
             setHeroSheetOpen(true);
           }}
         />
-        {/* Isolated as Home's strip is: a bad day's data costs the strip,
-            not the diary under it. */}
-        <SectionErrorBoundary sectionName="food-week-strip">
-          <div className="mt-3">
-            <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
-          </div>
-        </SectionErrorBoundary>
-      </motion.section>
+      </motion.div>
       {/* Mounted from the first open on, so it closes with its animation
           and its queued Pro sheet opens after it has gone. */}
       {heroSheetUsed && (
@@ -2181,58 +2148,57 @@ export default function Food() {
           new structural section (Food6 IA untouched). Frames the existing
           composer with one calm data-derived line; no separate flow, no
           prescription, finalTarget unchanged. */}
-      <motion.div variants={pageItemVariant} className="space-y-3">
-        {searchParams.get("context") === "post-run" && isToday && (
-          <div>
-            <div className="flex items-center gap-3 rounded-xl bg-running/10 px-4 py-3">
-              <p className="flex-1 text-sm text-foreground">
-                Nice run — refuel with carbs and protein.
-                {(() => {
-                  const proteinLeft = Math.max(
-                    0,
-                    Math.round(dailyTargets.protein - dailyTotals.protein)
-                  );
-                  const carbsLeft = Math.max(
-                    0,
-                    Math.round(dailyTargets.carbs - dailyTotals.carbs)
-                  );
-                  if (proteinLeft === 0 && carbsLeft === 0) return null;
-                  return (
-                    <span className="text-muted-foreground">
-                      {" "}
-                      You have{" "}
-                      <span className="font-mono tabular-nums font-semibold text-foreground">
-                        {proteinLeft}g
-                      </span>{" "}
-                      protein and{" "}
-                      <span className="font-mono tabular-nums font-semibold text-foreground">
-                        {carbsLeft}g
-                      </span>{" "}
-                      carbs left today.
-                    </span>
-                  );
-                })()}
-              </p>
-              <IconButton
-                aria-label="Dismiss refuel reminder"
-                icon={<X className="w-4 h-4" aria-hidden="true" />}
-                size="sm"
-                onClick={() =>
-                  setSearchParams(
-                    (params) => {
-                      const updated = new URLSearchParams(params);
-                      updated.delete("context");
-                      return updated;
-                    },
-                    { replace: true }
-                  )
-                }
-              />
-            </div>
+      {searchParams.get("context") === "post-run" && isToday && (
+        <motion.div variants={pageItemVariant}>
+          <div className="flex items-center gap-3 rounded-xl bg-running/10 px-4 py-3">
+            <p className="flex-1 text-sm text-foreground">
+              Nice run — refuel with carbs and protein.
+              {(() => {
+                const proteinLeft = Math.max(
+                  0,
+                  Math.round(dailyTargets.protein - dailyTotals.protein)
+                );
+                const carbsLeft = Math.max(
+                  0,
+                  Math.round(dailyTargets.carbs - dailyTotals.carbs)
+                );
+                if (proteinLeft === 0 && carbsLeft === 0) return null;
+                return (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    You have{" "}
+                    <span className="font-mono tabular-nums font-semibold text-foreground">
+                      {proteinLeft}g
+                    </span>{" "}
+                    protein and{" "}
+                    <span className="font-mono tabular-nums font-semibold text-foreground">
+                      {carbsLeft}g
+                    </span>{" "}
+                    carbs left today.
+                  </span>
+                );
+              })()}
+            </p>
+            <IconButton
+              aria-label="Dismiss refuel reminder"
+              icon={<X className="w-4 h-4" aria-hidden="true" />}
+              size="sm"
+              onClick={() =>
+                setSearchParams(
+                  (params) => {
+                    const updated = new URLSearchParams(params);
+                    updated.delete("context");
+                    return updated;
+                  },
+                  { replace: true }
+                )
+              }
+            />
           </div>
-        )}
+        </motion.div>
+      )}
 
-        {/* Logging group: the composer and slot, then the eligible usual.
+      {/* Logging group: the composer and slot, then the eligible usual.
           The composer leads so the page's main input, and its Scan button,
           are on screen when the page opens (owner call). With the usual row
           above it, the text box sat under the tab bar for a habitual user
@@ -2240,88 +2206,88 @@ export default function Food() {
           one-tap repeat; `companion-food.capture.spec.ts` checks, at 375px
           wide, that the Scan button clears the tab bar and that the usual
           row's Log comes after it. */}
-        <div>
-          <FoodComposerCard
-            /* Photo logging gated for this tier: one line under the field
+      <motion.div variants={pageItemVariant}>
+        <FoodComposerCard
+          /* Photo logging gated for this tier: one line under the field
              says why the camera is locked and where Pro is. Mounted only
              when it has something to say, so the ungated tiers never
              run its hooks and never carry an empty step in the rhythm. */
-            proHint={
-              !proLineWaits &&
-              !scanUsage.loading &&
-              !scanUsage.isUnlimited &&
-              scanUsage.limit === 0 ? (
-                <FoodProHint
-                  limit={scanUsage.limit}
-                  isUnlimited={scanUsage.isUnlimited}
-                  loading={scanUsage.loading}
-                />
-              ) : null
+          proHint={
+            !proLineWaits &&
+            !scanUsage.loading &&
+            !scanUsage.isUnlimited &&
+            scanUsage.limit === 0 ? (
+              <FoodProHint
+                limit={scanUsage.limit}
+                isUnlimited={scanUsage.isUnlimited}
+                loading={scanUsage.loading}
+              />
+            ) : null
+          }
+          ref={suggestionsRef}
+          nlInput={nlInput}
+          setNlInput={setNlInput}
+          nlParsing={nlParsing}
+          inputFocused={inputFocused}
+          setInputFocused={(v) => {
+            if (v && !inputFocused) {
+              trackFoodEvent("food_composer_focused");
+              // Opens a logging attempt, to be paired with `food_log_saved`
+              // so an abandoned attempt is visible as an unmatched start.
+              // `slot` is the targeted slot when the user picked one, and
+              // the slot the clock implies otherwise.
+              trackFoodEvent("food_log_start", {
+                slot: targetMeal ?? mealSlotFor(undefined),
+              });
             }
-            ref={suggestionsRef}
-            nlInput={nlInput}
-            setNlInput={setNlInput}
-            nlParsing={nlParsing}
-            inputFocused={inputFocused}
-            setInputFocused={(v) => {
-              if (v && !inputFocused) {
-                trackFoodEvent("food_composer_focused");
-                // Opens a logging attempt, to be paired with `food_log_saved`
-                // so an abandoned attempt is visible as an unmatched start.
-                // `slot` is the targeted slot when the user picked one, and
-                // the slot the clock implies otherwise.
-                trackFoodEvent("food_log_start", {
-                  slot: targetMeal ?? mealSlotFor(undefined),
-                });
-              }
-              // The no-match prompt is for the moment after the scan.
-              if (!v) setDescribeHint(false);
-              setInputFocused(v);
-            }}
-            setSuggestionsActive={setSuggestionsActive}
-            placeholderPrompt={
-              describeHint
-                ? "What is this product?"
-                : NL_EXAMPLE_PROMPTS[placeholderIdx]
-            }
-            onParse={handleNLParse}
-            inputRef={inputRef}
-            targetMeal={targetMeal}
-            onTargetMeal={handleTargetMeal}
-            showSuggestions={showSuggestions || showQuickAdd}
-            suggestions={suggestions}
-            offResults={offResults}
-            pantryResults={pantrySuggestions}
-            quickAdd={quickAddSection}
-            offEmpty={offEmpty}
-            offSearchQuery={offSearchQuery}
-            onSelectSuggestion={handleSuggestionSelect}
-            onSelectOff={handleOFFSelect}
-            onSelectPantry={handlePantrySelect}
-            scanUsage={scanUsage}
-            scanOverrides={scanOverrides}
-            onUpgrade={handleUpgrade}
-            onManualOpen={() => setManualOpen(true)}
-          />
-          {/* The guide's hint on a first visit (FV1), and the step the
+            // The no-match prompt is for the moment after the scan.
+            if (!v) setDescribeHint(false);
+            setInputFocused(v);
+          }}
+          setSuggestionsActive={setSuggestionsActive}
+          placeholderPrompt={
+            describeHint
+              ? "What is this product?"
+              : NL_EXAMPLE_PROMPTS[placeholderIdx]
+          }
+          onParse={handleNLParse}
+          inputRef={inputRef}
+          targetMeal={targetMeal}
+          onTargetMeal={handleTargetMeal}
+          showSuggestions={showSuggestions || showQuickAdd}
+          suggestions={suggestions}
+          offResults={offResults}
+          pantryResults={pantrySuggestions}
+          quickAdd={quickAddSection}
+          offEmpty={offEmpty}
+          offSearchQuery={offSearchQuery}
+          onSelectSuggestion={handleSuggestionSelect}
+          onSelectOff={handleOFFSelect}
+          onSelectPantry={handlePantrySelect}
+          scanUsage={scanUsage}
+          scanOverrides={scanOverrides}
+          onUpgrade={handleUpgrade}
+          onManualOpen={() => setManualOpen(true)}
+        />
+        {/* The guide's hint on a first visit (FV1), and the step the
             first-week card's "Log your first meal" opens. The request
             rides in the router state and is cleared when it closes. */}
-          <GuideHint
-            id="food-composer"
-            when
-            requested={guideAsked === "food-composer"}
-            onClose={() => {
-              setComposerHintClosed(true);
-              if (guideAsked)
-                navigate(location.pathname + location.search, {
-                  replace: true,
-                  state: null,
-                });
-            }}
-          />
-        </div>
-        {usual && (
-          /* One row: what and how much on the left, Edit and Log on the
+        <GuideHint
+          id="food-composer"
+          when
+          requested={guideAsked === "food-composer"}
+          onClose={() => {
+            setComposerHintClosed(true);
+            if (guideAsked)
+              navigate(location.pathname + location.search, {
+                replace: true,
+                state: null,
+              });
+          }}
+        />
+      </motion.div>
+      {usual && (
+        /* One row: what and how much on the left, Edit and Log on the
            right. It sits under the composer, where on a 390x844 phone it
            decides whether the one-tap Log clears the tab bar, so it takes
            the least height that keeps the name whole: the name gets its
@@ -2342,53 +2308,50 @@ export default function Food() {
            at the right, once the words would have less than 7em beside
            them: at double size on a 320px screen, "Your usual at
            breakfast" ran 74px past the card. */
-          <Card
-            size="compact"
-            className="flex flex-wrap items-center gap-2"
-            role="group"
-            aria-labelledby={usualHeadingId}
-          >
-            <div className="min-w-0 grow basis-[7em]">
-              <p
-                id={usualHeadingId}
-                className="text-micro leading-tight text-muted-foreground"
-              >
-                {usualMealHeading(usualSlot)}
-              </p>
-              <p className="text-base font-semibold leading-snug truncate">
-                {usual.name}
-              </p>
-              <p className="text-xs leading-tight text-muted-foreground truncate">
-                <span className="font-mono tabular-nums">
-                  {formatCalories(usual.cal)}
-                </span>{" "}
-                {CALORIE_UNIT}
-                {usualPortion && ` · ${usualPortion}`}
-              </p>
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              <IconButton
-                aria-label="Adjust portion or meal"
-                disabled={quickAdding !== null}
-                onClick={() => setPortionMeal(usual)}
-                icon={<Pencil className="size-4" />}
-              />
-              {/* Logs to the slot the heading names. With no slot selected
+        <Card
+          size="compact"
+          className="flex flex-wrap items-center gap-2"
+          role="group"
+          aria-labelledby={usualHeadingId}
+        >
+          <div className="min-w-0 grow basis-[7em]">
+            <p
+              id={usualHeadingId}
+              className="text-micro leading-tight text-muted-foreground"
+            >
+              {usualMealHeading(usualSlot)}
+            </p>
+            <p className="text-base font-semibold leading-snug truncate">
+              {usual.name}
+            </p>
+            <p className="text-xs leading-tight text-muted-foreground truncate">
+              <span className="font-mono tabular-nums">
+                {formatCalories(usual.cal)}
+              </span>{" "}
+              {CALORIE_UNIT}
+              {usualPortion && ` · ${usualPortion}`}
+            </p>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <IconButton
+              aria-label="Adjust portion or meal"
+              disabled={quickAdding !== null}
+              onClick={() => setPortionMeal(usual)}
+              icon={<Pencil className="size-4" />}
+            />
+            {/* Logs to the slot the heading names. With no slot selected
                 the heading names the hour's slot, and a meal saved without
                 one is filed by the diary's own hour rule, which differs. */}
-              {/* Tinted: Scan is the page's one filled control (DS4,
-                §14m rule 21), and the Log keeps the food orange (Food10). */}
-              <Button
-                variant="nutrition-tinted"
-                disabled={quickAdding !== null}
-                onClick={() => void handleQuickMealAdd(usual, usualSlot)}
-              >
-                Log
-              </Button>
-            </div>
-          </Card>
-        )}
-      </motion.div>
+            <Button
+              variant="nutrition"
+              disabled={quickAdding !== null}
+              onClick={() => void handleQuickMealAdd(usual, usualSlot)}
+            >
+              Log
+            </Button>
+          </div>
+        </Card>
+      )}
       {copyPreviewOpen && (
         <Suspense fallback={null}>
           <CopyMealsSheet

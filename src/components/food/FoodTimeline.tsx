@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import FoodRow, { type FoodRowGroup } from "./FoodRow";
 import { MEAL_LABELS } from "./mealConstants";
 import { mealSlotFor, mealLoggedAt } from "@/lib/mealSlots";
-import { emptyDiaryLine, foodArtUrl } from "@/lib/foodHero";
+import { emptyDiaryLine, foodArtUrl } from "@/lib/foodArt";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import type { Meal } from "@/hooks/useMeals";
 import { useFoodPhotoUrls } from "@/hooks/useFoodPhotoUrls";

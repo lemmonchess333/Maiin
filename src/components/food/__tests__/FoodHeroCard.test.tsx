@@ -90,18 +90,12 @@ describe("FoodHeroCard — adjust-targets gear", () => {
 describe("FoodHeroCard — single shared display mode", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    window.localStorage.setItem(MODE_STORAGE_KEY, "left");
-    setCalorieRingMode("left");
   });
 
-  it("defaults to 'left' for the ring and all three macros", () => {
-    /* Existing accounts and Home's food card keep reading "kcal left";
-       the fill is what was eaten either way (calorieRingFill.ts). */
-    window.localStorage.clear();
+  it("defaults to 'left' for the ring and all three tiles", () => {
     const { container } = renderHero();
     expect(tileModes(container)).toEqual(["left", "left", "left"]);
     expect(ringButton().getAttribute("aria-label")).toMatch(/remaining/i);
-    expect(screen.getByText(/^left of [\d.,\s]+ kcal$/)).toBeInTheDocument();
   });
 
   it("tapping a macro tile flips the ring AND all three tiles to 'logged'", () => {
@@ -185,9 +179,13 @@ describe("FoodHeroCard — no day-type caption on the card", () => {
   });
 });
 
-describe("FoodHeroCard — the hero, open on the page (DS4)", () => {
-  function renderOpen() {
-    return render(
+describe("FoodHeroCard — the glow behind the ring", () => {
+  it("is the food orange alone, with no purple (owner, 7 November 2026)", () => {
+    /* It was a wash from orange into the brand purple, the only two-hue
+       gradient on an everyday screen in 178 measured (DS4 §14m rule 13),
+       and dark was 2.5x louder than light. One hue now, drawn by its
+       class (components.css), faint enough to count in neither theme. */
+    const { container } = render(
       <MemoryRouter>
         <FoodHeroCard
           selectedDate="2026-06-09"
@@ -197,66 +195,11 @@ describe("FoodHeroCard — the hero, open on the page (DS4)", () => {
         />
       </MemoryRouter>
     );
-  }
-
-  it("glows in the food orange alone: no purple, no card", () => {
-    /* The card was washed from orange into the brand purple, the only
-       two-hue gradient on an everyday screen in 178 measured (§14m rule
-       13). The glow is one hue, drawn by its class, and the hero stands
-       on the page rather than in a card (rule 4). */
-    const { container } = renderOpen();
-    const glow = container.querySelector(".food-hero-glow");
-    expect(glow, "the glow behind the ring").toBeTruthy();
+    const glow = container.querySelector(".food-hero-glow") as HTMLElement;
+    expect(glow, "the glow layer").toBeTruthy();
     expect(glow).toHaveAttribute("aria-hidden", "true");
+    expect(glow).toHaveClass("absolute", "inset-0");
     expect(container.innerHTML).not.toContain("--primary");
-    expect(container.querySelector(".card-shadow")).toBeNull();
-    expect(container.querySelector(".rounded-2xl")).toBeNull();
-  });
-
-  it("names each macro in words, with no icon in a macro's own hue", () => {
-    // DS4 rule 11: the first screen keeps to one hue; the word under the
-    // bar names the macro (the breakdown sheet keeps the macro colours).
-    const { container } = renderOpen();
-    expect(container.querySelectorAll("[data-macro]")).toHaveLength(3);
-    expect(container.querySelectorAll("[data-macro] svg")).toHaveLength(0);
-    for (const word of ["Protein", "Carbs", "Fat"])
-      expect(screen.getByText(word)).toBeInTheDocument();
-  });
-
-  it("names the breakdown with a verb and its object", () => {
-    render(
-      <MemoryRouter>
-        <FoodHeroCard
-          selectedDate="2026-06-09"
-          isToday
-          dailyTargets={dailyTargets}
-          dailyTotals={dailyTotals}
-          onTapDrillDown={() => {}}
-        />
-      </MemoryRouter>
-    );
-    expect(
-      screen.getByRole("button", { name: "View nutrition breakdown" })
-    ).toHaveTextContent("See nutrients");
-  });
-
-  it("gives a new account's empty today its first step, in the left view", () => {
-    setCalorieRingMode("left");
-    render(
-      <MemoryRouter>
-        <FoodHeroCard
-          selectedDate="2026-06-09"
-          isToday
-          dailyTargets={dailyTargets}
-          dailyTotals={{ calories: 0, protein: 0, carbs: 0, fat: 0 }}
-          hasAnyMeal={false}
-          isNew
-        />
-      </MemoryRouter>
-    );
-    expect(
-      screen.getByText("Log your first meal and the ring starts to fill.")
-    ).toBeInTheDocument();
   });
 });
 

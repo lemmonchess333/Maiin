@@ -74,10 +74,6 @@ beforeEach(function () {
      the next assertion is looking: reset the store itself, then storage. */
   setCalorieRingMode("left");
   localStorage.clear();
-  /* These describe the ring turned to "left", the view they were written
-     for; the default is "eaten" since DS4 (FoodHeroCard.test.tsx pins it).
-     Stored, so the store's first subscriber reads it back. */
-  localStorage.setItem("tropos.food.calorieRingMode", "left");
   hapticMock.mockClear();
 });
 

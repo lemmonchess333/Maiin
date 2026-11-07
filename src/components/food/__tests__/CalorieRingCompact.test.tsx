@@ -32,19 +32,19 @@ describe("CalorieRing — compact size", () => {
     };
   }
 
-  it("keeps the Food page's ring as the default: the hero's 184 pt ring", () => {
-    // DS4: the figure is the screen's largest text, up to the display
-    // size, sized from the ring so it never outgrows it.
+  it("keeps the Food page's ring as the default, its figure the largest text", () => {
+    // 176 pt, the figure sized from the ring up to the display size
+    // (owner, 7 November 2026: at least 1.2x the "Food" title).
     const hero = draw();
-    expect(hero.ring).toContain("w-46");
+    expect(hero.ring).toContain("w-44");
     expect(hero.number).toContain("var(--text-display)");
-    expect(hero.label).toContain("text-sm");
+    expect(hero.label).toContain("text-xs");
   });
 
   it("draws Home's ring smaller, with the label still at 12px", () => {
     const compact = draw("compact");
     expect(compact.ring).toContain("w-26");
-    expect(compact.ring).not.toContain("w-46");
+    expect(compact.ring).not.toContain("w-44");
     expect(compact.number).toContain("text-2xl");
     expect(compact.label).toContain("text-xs");
   });

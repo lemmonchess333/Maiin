@@ -6,7 +6,7 @@ import {
   type PanInfo,
 } from "framer-motion";
 import { Pencil, Trash2 } from "lucide-react";
-import { foodArtKindFor, foodArtUrl } from "@/lib/foodHero";
+import { foodArtKindFor, foodArtUrl } from "@/lib/foodArt";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";

@@ -6,7 +6,14 @@ import {
 } from "@/hooks/useCalorieRingMode";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Settings as SettingsIcon, ChevronRight, Share2 } from "lucide-react";
+import {
+  Beef,
+  Wheat,
+  Settings as SettingsIcon,
+  ChevronRight,
+  Share2,
+} from "lucide-react";
+import { Avocado } from "@/components/icons/Avocado";
 import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useAuth, useUidForStorageKey } from "@/lib/auth";
@@ -18,11 +25,11 @@ import {
 } from "@/lib/foodCelebration";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { buildGlanceLine } from "@/lib/foodDailySummary";
-import { foodHeroFigure, foodHeroLine } from "@/lib/foodHero";
 import CalorieRing from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
+import Card from "@/components/ui/Card";
 import { beforeStart, startDayKey } from "@/lib/startDay";
 
 interface DailyTotals {
@@ -47,19 +54,8 @@ interface FoodHeroCardProps {
    *  Food passes false once the person has switched day: the card is
    *  remounted per day, and a remount is a browse, not a log. */
   drawIn?: boolean;
-  /** Whether the diary holds any meal at all, on any day it has loaded.
-   *  Without one, today's hero carries the first use's line (DS4). */
-  hasAnyMeal?: boolean;
-  /** The account began inside the diary's window, so an empty diary is
-   *  a first use ("Log your first meal …") rather than a return. */
-  isNew?: boolean;
+  /** Task-first Food entry: full nutrition stays one tap away in Details. */
 }
-
-const MACROS = [
-  { key: "protein", label: "Protein" },
-  { key: "carbs", label: "Carbs" },
-  { key: "fat", label: "Fat" },
-] as const;
 
 /* The ring MODE stays flat on purpose: "left vs eaten" is a display
    preference of this DEVICE, not a fact about an account. The celebrated
@@ -79,8 +75,6 @@ export default function FoodHeroCard({
   dailyTotals,
   onTapDrillDown,
   drawIn = true,
-  hasAnyMeal = true,
-  isNew = false,
 }: FoodHeroCardProps) {
   /* Targets-set detection. When a user hasn't customised
      `profile.targetCalories`, useDailyTargets falls back to a
@@ -254,206 +248,227 @@ export default function FoodHeroCard({
       ? buildGlanceLine(dailyTotals, dailyTargets, { targetsAreDefault })
       : null;
 
-  const figure = foodHeroFigure({
-    consumed: dailyTotals.calories,
-    target: dailyTargets.finalTarget,
-    mode,
-  });
-  const heroLine = foodHeroLine({
-    isToday,
-    beforeJoined,
-    hasAnyMeal,
-    isNew,
-    target: dailyTargets.finalTarget,
-    mode,
-  });
-
-  /* Food's hero (DS4, DESIGN_GUIDE §14m): open on the page, not a card,
-     so it is dressed differently from the cards under it (rule 4). The
-     ring is the screen's one picture of the person's data and holds its
-     largest text, the day's figure. Its colour is the food orange alone,
-     on the arc, the macro bars and the week's rings (rule 11), over a
-     glow of the same orange that fades into the page (rule 13) and stays
-     under what counts as colour in both themes (rule 15). It replaced a
-     card washed from orange into purple, the only two-hue gradient on an
-     everyday screen in 178 measured, and 7.2% colour in dark against
-     2.9% in light. */
+  // Dark-aware surface via `bg-card` + `var(--ds-shadow-card)` — the token
+  // swaps to a deeper shadow under `.dark` (see tokens.css), so the same
+  // markup renders correctly in both themes.
   return (
     <>
-      <div className="relative">
+      {/* ── CALORIE CARD — caption, ring, glance line ──────────────────── */}
+      {/* py-2, not p-4's 16: the ring grew by those 16 pt (owner, 7
+          November 2026), and the card keeps its height so Scan stays above
+          the tab bar on a 13 mini (companion-food's pin). */}
+      <div className="relative overflow-hidden px-4 py-2 rounded-2xl bg-card card-shadow">
         <div
           aria-hidden="true"
-          className="food-hero-glow pointer-events-none absolute left-1/2 top-1/2 aspect-square w-full max-w-[20rem] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          className="food-hero-glow pointer-events-none absolute inset-0"
         />
-        {/* The ring and its three small controls, in its corners: the
-            goal-hit caption top left, share and the targets' gear top
-            right, the breakdown bottom right. The ring's round shape
-            leaves each corner free. */}
+        {/* A faint glow of the food orange behind the ring, one hue fading
+            into the card (owner, 7 November 2026; DS4 §14m rule 13). It was
+            a wash from orange into the brand purple (DS3's V2), the only
+            two-hue gradient on an everyday screen in 178 measured, and it
+            made dark 2.5x louder than light (rule 15). The glow counts as
+            colour in neither theme (`.food-hero-glow`, components.css). */}
         <div className="relative">
-          <div className="absolute left-0 top-0 max-w-[40%]">
-            <AnimatePresence mode="wait">
-              {showCelebrationCaption ? (
-                <motion.p
-                  key="celebration"
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-micro font-semibold"
-                  style={{
-                    color: "hsl(var(--success-strong))",
+          {/* The ring and the card's three small controls. The controls sit
+          in the ring's corners rather than in rows of their own above and
+          below it: the week strip above this card took about 80px of the
+          page, and those two rows gave it back, so the composer is on
+          screen when the page opens on a phone (Food6's pin). The ring's
+          round shape leaves each corner free. */}
+          <div className="relative">
+            {/* Top left: the goal-hit caption, for the two seconds after the
+            day's last goal is met. */}
+            <div className="absolute left-0 top-0 max-w-[40%]">
+              <AnimatePresence mode="wait">
+                {showCelebrationCaption ? (
+                  <motion.p
+                    key="celebration"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-micro font-semibold"
+                    style={{
+                      color: "hsl(var(--success-strong))",
+                    }}
+                  >
+                    {celebrationCaptionText}
+                  </motion.p>
+                ) : null}
+              </AnimatePresence>
+            </div>
+            {/* Top right: share on a goal-hit day, and the targets gear.
+            The gear deep-links straight to the focused Nutrition editor
+            (/settings/nutrition: goal weight, calorie targets, macros,
+            activity), so a wrong target is one tap from being fixed, as
+            each Train tab's plan edit goes to its own editor. Muted so it
+            doesn't compete with the ring for attention. */}
+            <div className="absolute -right-2 -top-2 z-10 flex items-center">
+              {goalHit && (
+                <button
+                  type="button"
+                  aria-label="Share your day"
+                  onClick={() => {
+                    haptic("light");
+                    setShareOpen(true);
                   }}
+                  className="size-11 flex items-center justify-center rounded-lg text-nutrition hover:bg-muted/60 active:scale-95 transition-all"
                 >
-                  {celebrationCaptionText}
-                </motion.p>
-              ) : null}
-            </AnimatePresence>
-          </div>
-          {/* Share on a goal-hit day, and the targets gear, which goes
-              straight to the Nutrition editor so a wrong target is one tap
-              from being fixed. Muted, so they don't compete with the
-              figure. */}
-          <div className="absolute -right-2 -top-2 z-10 flex items-center">
-            {goalHit && (
+                  <Share2 className="size-4" aria-hidden="true" />
+                </button>
+              )}
+              <Link
+                to="/settings/nutrition"
+                aria-label="Adjust nutrition targets"
+                onClick={() => haptic("light")}
+                className="size-11 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
+              >
+                <SettingsIcon className="size-4" aria-hidden="true" />
+              </Link>
+            </div>
+
+            {beforeJoined ? (
+              <div className="flex flex-col items-center justify-center gap-1 px-10 py-12 text-center">
+                <p className="text-base font-semibold text-foreground">
+                  Before you joined
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Your days count from the day you joined.
+                </p>
+              </div>
+            ) : (
+              <CalorieRing
+                consumed={dailyTotals.calories}
+                target={dailyTargets.finalTarget}
+                mode={mode}
+                onToggleMode={toggleMode}
+                trajectoryLabel={trajectoryLabel}
+                glowing={celebrating}
+                ringDurationMs={LOG_MOMENT_MS}
+                drawIn={drawIn}
+              />
+            )}
+
+            {/* Food6 a2: the drill-down, at the bottom right. "Details" and
+            a chevron open the breakdown sheet, in the same register as the
+            Home and Analytics disclosures (sentence case, text-xs, muted).
+            Its own tap target, clear of the ring's mode toggle and the
+            gear. */}
+            {onTapDrillDown && !beforeJoined && (
               <button
                 type="button"
-                aria-label="Share your day"
                 onClick={() => {
                   haptic("light");
-                  setShareOpen(true);
+                  onTapDrillDown();
                 }}
-                className="size-11 flex items-center justify-center rounded-lg text-nutrition-strong hover:bg-muted/60 active:scale-95 transition-all"
+                aria-label="View nutrition breakdown"
+                className="absolute -right-2 -bottom-2 z-10 flex items-center gap-1 px-2.5 min-h-[44px] rounded-full text-xs hover:bg-muted/60 active:scale-95 transition-all text-foreground"
               >
-                <Share2 className="size-4" aria-hidden="true" />
+                <span>Details</span>
+                <ChevronRight aria-hidden="true" className="size-3" />
               </button>
             )}
-            <Link
-              to="/settings/nutrition"
-              aria-label="Adjust nutrition targets"
-              onClick={() => haptic("light")}
-              className="size-11 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
-            >
-              <SettingsIcon className="size-4" aria-hidden="true" />
-            </Link>
           </div>
 
-          {beforeJoined ? (
-            <div className="flex flex-col items-center justify-center gap-1 px-10 py-12 text-center">
-              <p className="text-base font-semibold text-foreground">
-                Before you joined
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Your days count from the day you joined.
-              </p>
-            </div>
-          ) : (
-            <CalorieRing
-              consumed={dailyTotals.calories}
-              target={dailyTargets.finalTarget}
-              mode={mode}
-              onToggleMode={toggleMode}
-              trajectoryLabel={trajectoryLabel}
-              glowing={celebrating}
-              ringDurationMs={LOG_MOMENT_MS}
-              drawIn={drawIn}
-              caption={figure.caption}
-            />
-          )}
-
-          {/* Food6 a2: the breakdown, at the bottom right. Its own tap
-              target, clear of the ring's mode switch and the gear. A verb
-              and its object (DS4's words rules). */}
-          {onTapDrillDown && !beforeJoined && (
-            <button
-              type="button"
-              onClick={() => {
-                haptic("light");
-                onTapDrillDown();
-              }}
-              aria-label="View nutrition breakdown"
-              className="absolute -right-2 -bottom-4 z-10 flex items-center gap-1 px-2.5 min-h-[44px] rounded-full text-xs hover:bg-muted/60 active:scale-95 transition-all text-foreground"
-            >
-              <span>See nutrients</span>
-              <ChevronRight aria-hidden="true" className="size-3" />
-            </button>
-          )}
-        </div>
-
-        {/* The first use's one line: the first step, and the number it
-            fills (DS4, rule 41). */}
-        {heroLine && (
-          <p className="relative mt-2 px-4 text-center text-sm font-medium text-muted-foreground text-balance">
-            {heroLine}
-          </p>
-        )}
-
-        {/* Nutr2 / #981 — adaptive warmup bar, today-only, ambient under the
-            ring. Reads from the single source of truth (useEffectiveTargets).
-            Hidden once the gate clears (learned takeover, #982). */}
-        {isToday && dailyTargets.showWarmup && (
-          <div className="relative">
+          {/* Nutr2 / #981 — adaptive warmup bar, today-only, ambient under the
+          ring. Reads from the single source of truth (useEffectiveTargets).
+          Hidden once the gate clears (learned takeover, #982). */}
+          {isToday && dailyTargets.showWarmup && (
             <AdaptiveWarmupBar
               fraction={dailyTargets.warmupFraction}
               stalled={dailyTargets.adaptiveStalled}
             />
-          </div>
-        )}
+          )}
 
-        {/* Only actionable setup guidance belongs here; the ring and
-            the macros already show the day's numbers. */}
-        {glanceLine && (
-          <p className="relative text-center text-xs font-medium mt-3 px-2 text-muted-foreground">
-            {glanceLine}
-          </p>
-        )}
-        {/* A target below the essential-fat floor's own cost: the macros
-            below would otherwise present "0g" as the goal. Same sentence
-            as Settings and Home (macroInfeasibility.ts). */}
-        {dailyTargets.targetInfeasible && (
-          <p
-            role="status"
-            className="relative text-center text-xs font-medium mt-3 px-2"
-            style={{ color: "hsl(var(--warning-strong))" }}
-          >
-            {macroInfeasibilityMessage(dailyTargets.minFeasibleKcal)}
-          </p>
-        )}
+          {/* Only actionable setup guidance belongs here; the ring and
+              macro cards already show the day's numbers. */}
+          {glanceLine && (
+            <p
+              className={`text-center text-xs font-medium mt-3 px-2 text-muted-foreground`}
+            >
+              {glanceLine}
+            </p>
+          )}
+          {/* A target below the essential-fat floor's own cost: the macro
+            tiles below would otherwise present "0g" as the goal. Same
+            sentence as Settings and Home (macroInfeasibility.ts). */}
+          {dailyTargets.targetInfeasible && (
+            <p
+              role="status"
+              className="text-center text-xs font-medium mt-3 px-2"
+              style={{ color: "hsl(var(--warning-strong))" }}
+            >
+              {macroInfeasibilityMessage(dailyTargets.minFeasibleKcal)}
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* The three macros, in the hero rather than in three cards under
-          it. Each reads the SAME shared `mode` as the ring, and tapping
-          any flips that one mode, so the ring and the macros stay in
-          lockstep. Every bar is the food orange and the word under it
-          names the macro, so the first screen holds one hue where it
-          held four (DS4, rule 11); the breakdown sheet keeps each macro's
-          own colour. No icons: they cost the hero the height that keeps
-          Scan above the tab bar on a 13 mini (companion-food's pin).
-          Equal columns by construction (grid-cols-3, min-w-0), stacked
-          under 10em (double text on a 320px phone). */}
+      {/* Macro tile row — three floating tiles. Each reads the SAME shared
+        `mode` as the calorie ring, and tapping any tile flips that one
+        shared mode (via toggleMode) so the ring + all three tiles stay in
+        lockstep. mt-4 = 16px gap to the calorie card above.
+
+        An explicit 3-column GRID rather than flex-1 children: flex-1
+        sizes from content, so the widest macro number could take space
+        from its neighbours and the three tiles stopped being the same
+        width exactly when the numbers got long. grid-cols-3 makes the
+        columns equal by construction, and `min-w-0` on each cell lets a
+        long number shrink inside its own tile instead of pushing the
+        row wider. gap-2 matches the compact-grid rule in the design
+        system and the Analytics period summary's figures. Under 10em
+        (double text on a 320px phone) they stack: three across, "101g"
+        ran into its neighbours. */}
       {!beforeJoined && (
-        <div className="@container mt-5">
+        <div className="@container mt-4">
           <div className="grid grid-cols-3 @max-[10em]:grid-cols-1 gap-2">
-            {MACROS.map(({ key, label }) => (
-              <div key={key} className="min-w-0 flex">
-                <MacroColumn
-                  macroKey={key}
-                  consumed={dailyTotals[key]}
-                  target={
-                    key !== "fat" && dailyTargets.targetInfeasible
-                      ? 0
-                      : dailyTargets[key]
-                  }
-                  label={label}
-                  color={THEME.semantic.nutrition}
-                  mode={mode}
-                  onTap={toggleMode}
-                  numberDurationSec={LOG_MOMENT_SEC}
-                  barDurationSec={LOG_MOMENT_SEC}
-                  drawIn={drawIn}
-                  size="compact"
-                />
-              </div>
-            ))}
+            <Card size="compact" className="min-w-0 flex">
+              <MacroColumn
+                macroKey="protein"
+                Icon={Beef}
+                consumed={dailyTotals.protein}
+                target={
+                  dailyTargets.targetInfeasible ? 0 : dailyTargets.protein
+                }
+                label="Protein"
+                color={THEME.macros.protein}
+                mode={mode}
+                onTap={toggleMode}
+                numberDurationSec={LOG_MOMENT_SEC}
+                barDurationSec={LOG_MOMENT_SEC}
+                drawIn={drawIn}
+              />
+            </Card>
+            <Card size="compact" className="min-w-0 flex">
+              <MacroColumn
+                macroKey="carbs"
+                Icon={Wheat}
+                consumed={dailyTotals.carbs}
+                target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
+                label="Carbs"
+                color={THEME.macros.carbs}
+                mode={mode}
+                onTap={toggleMode}
+                numberDurationSec={LOG_MOMENT_SEC}
+                barDurationSec={LOG_MOMENT_SEC}
+                drawIn={drawIn}
+              />
+            </Card>
+            <Card size="compact" className="min-w-0 flex">
+              <MacroColumn
+                macroKey="fat"
+                Icon={Avocado}
+                consumed={dailyTotals.fat}
+                target={dailyTargets.fat}
+                label="Fat"
+                color={THEME.macros.fat}
+                mode={mode}
+                onTap={toggleMode}
+                numberDurationSec={LOG_MOMENT_SEC}
+                barDurationSec={LOG_MOMENT_SEC}
+                drawIn={drawIn}
+              />
+            </Card>
           </div>
         </div>
       )}
