@@ -1156,7 +1156,10 @@ words; these need the operator, a device, or a real trial.
       build, so replace it whenever the Upgrade sheet changes, and before
       the build that first submits the subscriptions. As of 2026-11-07 it
       is an older Food-tab paywall ("Unlock AI food logging", Monthly
-      £3.99, Yearly £34.99, "Start your 7-day free trial"). A capture of
+      £3.99, Yearly £34.99, "Start your 7-day free trial"), on both
+      subscriptions. It still says "Unlimited AI food photo logging",
+      which the app no longer claims (Pro caps scans at 100 a day,
+      `DAILY_AI_LIMITS`), so a reviewer could read it as a mismatch. A capture of
       the current sheet comes from the capture rig
       (`docs/agents/capture-rig.md`).
 - [ ] **The Upgrade page on the iOS app.** After a sandbox trial purchase
