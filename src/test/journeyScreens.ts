@@ -149,7 +149,8 @@ export const STRIP = {
   runDone: "completed run",
 } as const;
 
-/** Home, where a saved version 2 plan lands (`Home`'s page title). */
+/** Home, where a saved version 2 plan lands (`Home`'s page h1: for screen
+ *  readers only since DS4, where the hero names the screen). */
 export const HOME = {
   heading: "Today",
 } as const;

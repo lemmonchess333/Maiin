@@ -397,7 +397,7 @@ describe("DS ratchets — surface-level drift", () => {
   // Raw <button> elements. CTAs belong on the Button / IconButton
   // primitives (44px floor, focus ring, press feedback come with them);
   // pressable cards, rows, chips and day-cells are legitimately bare.
-  const RAW_BUTTON_BASELINE = 293;
+  const RAW_BUTTON_BASELINE = 291;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
@@ -832,6 +832,7 @@ describe("type tiers", () => {
   const SINGLE_WEIGHT_TIERS = [
     "text-display num",
     "text-3xl num",
+    "text-hero word",
     "text-h1 word",
     "text-h2 word",
     "text-h2 num",
@@ -849,7 +850,7 @@ describe("type tiers", () => {
         );
         if (weights.length !== 1) continue;
         const size = tokens.find((t) =>
-          /^text-(?:lg|xl|2xl|3xl|h1|h2|h3|display)$/.test(t)
+          /^text-(?:lg|xl|2xl|3xl|h1|h2|h3|hero|display)$/.test(t)
         );
         if (!size) continue;
         const register = tokens.some(
@@ -1070,12 +1071,33 @@ describe("form controls share the field primitive", () => {
    a lift. A label built at run time is not seen, which is why the test
    also names the controls it must find. */
 describe("an action takes its domain's colour wherever it appears", () => {
-  type Hue = "food" | "running" | "lifting" | "other";
+  type Hue = "food" | "running" | "lifting" | "neutral" | "other";
   interface Control {
     file: string;
     line: number;
     label: string;
     hue: Hue;
+    /** The control spans its row (`w-full` or `fullWidth`). */
+    fullWidth: boolean;
+  }
+
+  /* DS4 (owner, 7 November 2026; DESIGN_GUIDE §14i): a screen's one
+     full-width filled button is neutral, white on dark and ink on light,
+     whatever its domain. Filled in a domain colour it was the largest
+     patch of colour on Home, where the largest colour is the person's
+     data. Named, so a neutral domain action anywhere else still fails;
+     the domain keeps its colour on these screens' smaller controls (the
+     compact card's Start, "Log food"). */
+  const NEUTRAL_MAIN_ACTIONS = new Set([
+    "src/components/home/LiftCTACard.tsx Start workout",
+    "src/components/home/RunCTACard.tsx Start run",
+  ]);
+  function neutralMain(c: Control): boolean {
+    return (
+      c.hue === "neutral" &&
+      c.fullWidth &&
+      NEUTRAL_MAIN_ACTIONS.has(`${c.file} ${c.label}`)
+    );
   }
 
   /** Comments blanked to spaces, so offsets and line numbers still hold
@@ -1156,9 +1178,11 @@ describe("an action takes its domain's colour wherever it appears", () => {
         ? "food"
         : variant.startsWith("sport")
           ? "running"
-          : variant === "primary"
+          : variant === "primary" || variant === "lifting-tinted"
             ? "lifting"
-            : "other";
+            : variant === "neutral"
+              ? "neutral"
+              : "other";
     if (
       /\b(bg|text)-nutrition(-fill|-strong|\/)|THEME\.semantic\.nutrition/.test(
         open
@@ -1209,7 +1233,14 @@ describe("an action takes its domain's colour wherever it appears", () => {
         for (const label of labelsOf(open, body)) {
           const domain = domainOf(label, file, tag);
           if (!domain) continue;
-          found.push({ file, line, label, hue: hueOf(tag, open), domain });
+          found.push({
+            file,
+            line,
+            label,
+            hue: hueOf(tag, open),
+            fullWidth: /\bw-full\b|\bfullWidth\b/.test(open),
+            domain,
+          });
           break;
         }
       }
@@ -1250,7 +1281,7 @@ describe("an action takes its domain's colour wherever it appears", () => {
 
   it("every one of them wears its domain's colour", () => {
     const wrong = domainControls()
-      .filter((c) => c.hue !== c.domain)
+      .filter((c) => c.hue !== c.domain && !neutralMain(c))
       .map(
         (c) =>
           `${c.file}:${c.line} "${c.label}" is ${c.hue}, should be ${c.domain}`
@@ -1259,8 +1290,34 @@ describe("an action takes its domain's colour wherever it appears", () => {
       wrong,
       `An action takes its domain's colour on every page (DESIGN_GUIDE ` +
         `§14i): logging food is \`nutrition\` / \`nutrition-tinted\`, a ` +
-        `run is \`sport\` / \`sport-tinted\`, a lift is \`primary\`.\n` +
+        `run is \`sport\` / \`sport-tinted\`, a lift is \`primary\`, and ` +
+        `a screen's one full-width filled button is \`neutral\` only ` +
+        `where NEUTRAL_MAIN_ACTIONS names it.\n` +
         wrong.join("\n")
     ).toEqual([]);
+  });
+
+  it("Home's hero starts its session on the neutral full-width button (positive pin)", () => {
+    const controls = domainControls();
+    for (const known of NEUTRAL_MAIN_ACTIONS) {
+      expect(
+        controls.some(
+          (c) => `${c.file} ${c.label}` === known && neutralMain(c)
+        ),
+        `${known} is no longer the neutral full-width button`
+      ).toBe(true);
+    }
+  });
+
+  it("logging food keeps its colour beside a neutral main action (positive pin)", () => {
+    // The rule moved the screen's one full-width button off the domain
+    // colours, not the domain's other actions: Home's "Log food" is orange.
+    const log = domainControls().filter(
+      (c) =>
+        c.file === "src/components/home/TodayEnergy.tsx" &&
+        c.label === "Log food"
+    );
+    expect(log.length).toBeGreaterThan(0);
+    for (const c of log) expect(c.hue).toBe("food");
   });
 });

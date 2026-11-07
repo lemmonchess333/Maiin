@@ -1,13 +1,14 @@
 /**
- * The week strip is two stacked rows — letter and date (DS3 dropped the
- * indicator row) — and they only read as a row while every cell shares
- * their baselines.
+ * The week strip is two stacked rows — the day's segment and its letter
+ * (DS4 drew segments where DS3 drew circles) — and they only read as a row
+ * while every cell shares their baselines.
  *
  * Today used to render at `size-12` against its neighbours' `size-10`. In a
  * `flex-col items-center` cell, a circle 8px taller pushes its own weekday
  * letter up and its indicator dot down, so the one day a user looks at most
  * was the one day that broke all three lines. iOS marks today with colour
- * and never with geometry, which is why its week rows stay ruled.
+ * and never with geometry, which is why its week rows stay ruled. The
+ * segments keep the rule: one height for every day.
  *
  * The second defect is in the same family: selection and today were an
  * if/else, so selecting today — the likeliest day to select — erased the
@@ -38,60 +39,64 @@ function renderStrip(selectedDate: string | null = null) {
   );
 }
 
-/** The date circle inside each of the seven day buttons. */
-function circles(container: HTMLElement) {
+/** The day segment inside each of the seven day buttons. */
+function segments(container: HTMLElement) {
   return Array.from(container.querySelectorAll("button")).map(
-    (b) => b.querySelector("div.rounded-full") as HTMLElement
+    (b) => b.querySelector("div[data-state]") as HTMLElement
   );
 }
 
 describe("week strip geometry", () => {
-  it("gives every day the same circle size", () => {
+  it("gives every day the same segment height", () => {
     const { container } = renderStrip();
-    const sizes = circles(container).map((c) =>
-      Array.from(c.classList).find((n) => n.startsWith("size-"))
+    const heights = segments(container).map((c) =>
+      Array.from(c.classList).find((n) => /^h-/.test(n))
     );
-    expect(sizes).toHaveLength(7);
-    expect(new Set(sizes).size).toBe(1);
+    expect(heights).toHaveLength(7);
+    expect(heights.every(Boolean)).toBe(true);
+    expect(new Set(heights).size).toBe(1);
   });
 
   it("marks today without resizing it", () => {
     const { container } = renderStrip();
-    const today = circles(container).find((c) => c.hasAttribute("data-today"));
+    const all = segments(container);
+    const today = all.find((c) => c.hasAttribute("data-today"));
     expect(today).toBeTruthy();
-    expect(today!.className).not.toMatch(/size-12/);
+    const height = (c: HTMLElement) =>
+      Array.from(c.classList).find((n) => /^h-/.test(n));
+    for (const c of all) expect(height(c)).toBe(height(today!));
   });
 });
 
 describe("today and selected compose", () => {
-  it("keeps the today ring when today is the selected day", () => {
+  it("keeps the today outline when today is the selected day", () => {
     const { container } = renderStrip(todayKey);
-    const selected = circles(container).find((c) =>
+    const selected = segments(container).find((c) =>
       c.className.includes("ring-foreground")
     );
     expect(selected).toBeTruthy();
-    // The outer ring says selected; today's own ring has to survive it or
-    // the strip stops saying which day is today exactly when you are
+    // The outer ring says selected; today's own outline has to survive it
+    // or the strip stops saying which day is today exactly when you are
     // standing on it.
-    expect(selected!.className).toMatch(/border-primary/);
+    expect(selected!.className).toMatch(/\bborder-foreground\b(?!\/)/);
   });
 
-  it("does not ring a selected day that is not today", () => {
-    // The other half — otherwise "always ring the selection" would pass
+  it("does not outline a selected day that is not today", () => {
+    // The other half — otherwise "always outline the selection" would pass
     // the test above while meaning nothing.
     //
     // The neighbour has to stay INSIDE the rendered week or there is no
-    // selected circle to find. The week is Monday-anchored, so yesterday
+    // selected segment to find. The week is Monday-anchored, so yesterday
     // leaves it only on a Monday (getDay() === 1) — that is the one day
     // that has to reach forward instead.
     const other = new Date();
     other.setDate(other.getDate() + (other.getDay() === 1 ? 1 : -1));
     const { container } = renderStrip(localDateString(other));
-    const selected = circles(container).find((c) =>
+    const selected = segments(container).find((c) =>
       c.className.includes("ring-foreground")
     );
     expect(selected).toBeTruthy();
-    expect(selected!.className).not.toMatch(/border-primary/);
+    expect(selected!.className).not.toMatch(/\bborder-foreground\b(?!\/)/);
   });
 });
 

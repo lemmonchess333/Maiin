@@ -52,6 +52,10 @@ type RootProps = Omit<
 export interface PageShellProps extends RootProps {
   /** The page name. */
   title: ReactNode;
+  /** The page name for screen readers only: a screen whose hero names it
+   *  draws no large title above the hero (DS4, DESIGN_GUIDE §14m) and
+   *  keeps its h1 for a reader landing on the page. Home's. */
+  titleHidden?: boolean;
   /** A short line above the title — Home's date. */
   eyebrow?: ReactNode;
   /** A line beneath the title. It wraps rather than truncating. */
@@ -76,6 +80,7 @@ export interface PageShellProps extends RootProps {
 
 export default function PageShell({
   title,
+  titleHidden = false,
   eyebrow,
   subtitle,
   subtitleAlternates,
@@ -103,14 +108,21 @@ export default function PageShell({
             and the row wraps: at large text, actions that no longer fit
             beside the title (Food's date switcher) move under it rather
             than being drawn over it. */}
-        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 pt-1 pb-1">
+        <div
+          className={cn(
+            "flex flex-wrap justify-between gap-x-3 gap-y-2 pt-1 pb-1",
+            /* With no title the row is the eyebrow beside the actions, so
+               the two share a centre line. */
+            titleHidden ? "items-center" : "items-start"
+          )}
+        >
           <div className="min-w-min flex-1">
             {eyebrow !== undefined && (
               <p className="text-sm font-semibold text-muted-foreground">
                 {eyebrow}
               </p>
             )}
-            <h1 className={titleClass}>{title}</h1>
+            <h1 className={titleHidden ? "sr-only" : titleClass}>{title}</h1>
             {subtitle !== undefined &&
               (subtitleAlternates?.length ? (
                 /* One grid cell holds every line: the shown one, and the

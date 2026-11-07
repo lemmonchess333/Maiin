@@ -14,6 +14,7 @@
 import { getReleasedFormArtwork } from "./formArtwork";
 import { isFormArtQuarantined } from "./formArtQuarantine";
 import { cardFrameOf } from "./formArtCardFrames";
+import { isCompoundPrimary } from "@/features/program/variationBank";
 import { FORM_ART_CUTOUTS, type FormArtCutout } from "./formArtCutouts.data";
 
 export type { FormArtCutout };
@@ -43,17 +44,33 @@ export function formArtCutoutUrl(cutout: FormArtCutout): string {
 }
 
 /**
- * The drawing that pictures a lift day: its first exercise with released
- * art, which is the day's main lift wherever that one has a drawing. Home's
- * Today card and Train's session card both show it, so the two pictures of
- * one day agree. Null when no exercise in the day has art.
+ * Which exercise pictures a lift day: its main lift, drawn. That is the
+ * first compound primary with released art (the squat, the bench, the
+ * row: `isCompoundPrimary`), else the first exercise with art, else -1.
+ * Position alone picked a beginner's pull day by its straight-arm
+ * pulldown, a cable tower with a small figure, over the barbell row that
+ * is the day's main lift (owner, 2026-11-07). Home's hero, Train's session
+ * card and the finish screen all use it, so the pictures of one day agree.
  */
+export function sessionLeadIndex(
+  exercises: readonly { exerciseId?: string }[]
+): number {
+  let firstDrawn = -1;
+  for (let i = 0; i < exercises.length; i++) {
+    const id = exercises[i].exerciseId;
+    if (!id || !getFormArtCutout(id)) continue;
+    if (isCompoundPrimary(id)) return i;
+    if (firstDrawn < 0) firstDrawn = i;
+  }
+  return firstDrawn;
+}
+
+/** The drawing that pictures a lift day (`sessionLeadIndex`), with its
+ *  exercise's name. Null when no exercise in the day has art. */
 export function sessionLeadArt(
   exercises: readonly { exerciseId?: string; name: string }[]
 ): { cutout: FormArtCutout; exerciseName: string } | null {
-  for (const ex of exercises) {
-    const cutout = ex.exerciseId ? getFormArtCutout(ex.exerciseId) : null;
-    if (cutout) return { cutout, exerciseName: ex.name };
-  }
-  return null;
+  const lead = exercises[sessionLeadIndex(exercises)];
+  const cutout = lead?.exerciseId ? getFormArtCutout(lead.exerciseId) : null;
+  return lead && cutout ? { cutout, exerciseName: lead.name } : null;
 }

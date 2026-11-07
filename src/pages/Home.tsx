@@ -64,6 +64,13 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { summariseWeek } from "@/lib/weekSummary";
 import { trainingWeek, weekDays } from "@/lib/trainingWeek";
 import { todaySession } from "@/lib/todaySession";
+import {
+  heroKicker,
+  nextSessionLine,
+  planPosition,
+  weekSessions,
+} from "@/lib/homeHero";
+import { resolveLiftUnit } from "@/lib/liftLoad";
 import { startDayKey } from "@/lib/startDay";
 import { loggedAgo } from "@/lib/loggedAgo";
 import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
@@ -77,9 +84,12 @@ import { useSessionsInFlight } from "@/hooks/useSessionsInFlight";
 
 import { StreakFlame } from "@/components/StreakFlame";
 import Avatar from "@/components/Avatar";
-import { formatWeekdayDayMonth } from "@/utils/formatters";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import SectionHeading from "@/components/ui/SectionHeading";
 import WeekStrip from "@/components/home/WeekStrip";
+import WeekSessions from "@/components/home/WeekSessions";
+import InlineNumerals from "@/components/ui/InlineNumerals";
+import { cardClasses } from "@/components/ui/cardClasses";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
@@ -560,6 +570,15 @@ export default function Home() {
       routinesInFlight,
     ]
   );
+  // The hero's words around the session (homeHero.ts): the kicker beside
+  // the date, the week's count and the next session beside the segments.
+  const heroPositionLabel = useMemo(
+    () => planPosition(programState, todayKey),
+    [programState, todayKey]
+  );
+  const kicker = heroKicker(session, heroPositionLabel);
+  const weekSessionCount = weekSessions(weekCounts);
+  const nextSession = nextSessionLine(session.next, session);
 
   // Relative time string for weight tile
   const weightRelativeTime = useMemo(
@@ -1059,18 +1078,28 @@ export default function Home() {
          down (homeSettled) came in about 0.7 s after them when the launch
          was filmed on the emulator, and are not waited for. */
       data-page-ready={!mealsLoading && !programLoading ? "" : undefined}
-      /* DS3: Home names the day, as every other page names itself. The
-         TROPOS wordmark it replaced is already on the launch icon and the
-         splash; here the date and "Today" say what the page is about.
-         The mark before the date signs the app's first page, small, so
-         "Today" keeps the left edge every card below it starts on. */
+      /* DS4 call 2: no large title above the hero, which names the
+         screen; the date is its kicker, with the plan's position or a new
+         person's first session beside it (`heroKicker`). "Today" stays the
+         page's h1 for a screen reader. The mark before the date signs the
+         app's first page, small, and is where the launch animation and
+         the first-visit walk set their mark down. */
       eyebrow={
-        <span className="inline-flex items-center gap-1.5">
+        <span className="inline-flex flex-wrap items-center gap-x-1.5">
           <BrandMark />
-          {formatWeekdayDayMonth(today)}
+          <span className="font-bold text-foreground">
+            {formatShortWeekdayDayMonth(today)}
+          </span>
+          {kicker && (
+            <span>
+              <span aria-hidden="true">· </span>
+              <InlineNumerals>{kicker}</InlineNumerals>
+            </span>
+          )}
         </span>
       }
       title="Today"
+      titleHidden
       actions={
         <>
           {/* The flame opens the streak's days (Mob1 call 4): a month of
@@ -1197,10 +1226,59 @@ export default function Home() {
       {/* Streak count stays in the header. Recovery remains available through
           Food's date picker; native reminders are deferred in POST_LAUNCH.md. */}
 
-      {/* DS3 Home: the week, then today's session, food, water and weight,
-          then how the week is going. The page title already says "Today",
-          so the week strip and today's cards carry no section heading of
-          their own; "This week" heads the summary at the foot. */}
+      {/* DS4 Home: today's session as the hero, then the week under it,
+          then food, water and weight, then how the week is going. The hero
+          names the screen, so nothing above it carries a title; "This
+          week" heads the summary at the foot.
+
+          home-declutter 4a — sessions FIRST. Today's lift, run or rest is
+          the page's primary action and leads. A group, so its name is
+          one a screen reader can use: a name on a roleless div is not. */}
+      <motion.div
+        role="group"
+        aria-label="Today’s training"
+        variants={{
+          hidden: { opacity: 0, y: 12 },
+          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+        }}
+      >
+        {programLoading ||
+        v2RaceWeekBuilding ||
+        (activationJourneyV2 && firstWeekLifts && workoutsLoading) ? (
+          // The hero's own height, so the week below it does not jump
+          // when the session lands.
+          <div className="h-[420px] rounded-2xl bg-muted motion-safe:animate-pulse" />
+        ) : v2TrainingUnavailable ? (
+          <Banner
+            variant="neutral"
+            title="Training isn't ready"
+            description="We couldn't load today's training yet. Open your training plan to try again."
+            action={
+              <Button variant="secondary" onClick={() => navigate("/program")}>
+                Open training plan
+              </Button>
+            }
+          />
+        ) : (
+          <TrackSectionView section="stacked_cta">
+            <SectionErrorBoundary sectionName="quick-actions">
+              <StackedCTACards
+                session={session}
+                unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
+                liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
+                navigate={function (p: string) {
+                  closePeek();
+                  navigate(p);
+                }}
+              />
+            </SectionErrorBoundary>
+          </TrackSectionView>
+        )}
+      </motion.div>
+
+      {/* The week folds into the hero (DS4 call 5): a card one step down
+          from it, the week's sessions done and the next one over seven
+          segments, each a day that opens its peek. */}
       {showWeekStrip && (
         <motion.div
           ref={weekStripRef}
@@ -1216,18 +1294,31 @@ export default function Home() {
             captureError) instead of taking the whole Home page into
             RouteErrorBoundary. */}
           <SectionErrorBoundary sectionName="week-strip">
-            <WeekStrip
-              todayKey={todayKey}
-              dayMap={weeklyDayMap}
-              profile={profile}
-              programState={programState}
-              claimMap={claimMap}
-              selectedDate={peekDate}
-              onDayTap={handleDayTap}
-              loggedLiftDates={loggedLiftDates}
-              extraRunDates={extraRunDates}
-              startKey={startKey}
-            />
+            <div
+              className={cardClasses({
+                size: "compact",
+                padded: false,
+                className: "space-y-2 px-4 pt-3.5 pb-1.5",
+              })}
+            >
+              <WeekSessions
+                done={weekSessionCount.done}
+                of={weekSessionCount.of}
+                next={nextSession}
+              />
+              <WeekStrip
+                todayKey={todayKey}
+                dayMap={weeklyDayMap}
+                profile={profile}
+                programState={programState}
+                claimMap={claimMap}
+                selectedDate={peekDate}
+                onDayTap={handleDayTap}
+                loggedLiftDates={loggedLiftDates}
+                extraRunDates={extraRunDates}
+                startKey={startKey}
+              />
+            </div>
             <AnimatePresence>
               {peekDate && (
                 <DayPeekCard
@@ -1252,48 +1343,6 @@ export default function Home() {
           </SectionErrorBoundary>
         </motion.div>
       )}
-
-      {/* home-declutter 4a — sessions FIRST. Today's lift, run or rest is
-          the page's primary action and leads. A group, so its name is
-          one a screen reader can use: a name on a roleless div is not. */}
-      <motion.div
-        role="group"
-        aria-label="Today’s training"
-        variants={{
-          hidden: { opacity: 0, y: 12 },
-          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-        }}
-      >
-        {programLoading ||
-        v2RaceWeekBuilding ||
-        (activationJourneyV2 && firstWeekLifts && workoutsLoading) ? (
-          <div className="h-48 rounded-2xl bg-muted motion-safe:animate-pulse" />
-        ) : v2TrainingUnavailable ? (
-          <Banner
-            variant="neutral"
-            title="Training isn't ready"
-            description="We couldn't load today's training yet. Open your training plan to try again."
-            action={
-              <Button variant="secondary" onClick={() => navigate("/program")}>
-                Open training plan
-              </Button>
-            }
-          />
-        ) : (
-          <TrackSectionView section="stacked_cta">
-            <SectionErrorBoundary sectionName="quick-actions">
-              <StackedCTACards
-                session={session}
-                unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
-                navigate={function (p: string) {
-                  closePeek();
-                  navigate(p);
-                }}
-              />
-            </SectionErrorBoundary>
-          </TrackSectionView>
-        )}
-      </motion.div>
 
       {/* Run9's starter goal reached: a plain Done under today's session,
           with the next goal offered once (dismissed here or on Train). */}

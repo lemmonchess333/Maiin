@@ -56,6 +56,9 @@
      wider than a 320pt screen. At the designed size every value is the
      one it always was. */
   --ds-text-display: calc(1rem + 32px); /* 48px — hero stats */
+  /* 36px — a Home or detail hero's headline (DS4, §14m: 25-38 px), the
+     screen's largest words. */
+  --ds-text-hero: calc(1rem + 20px);
   --ds-text-h1: calc(1rem + 15.25px); /* ~31px — page titles */
   --ds-text-h2: calc(1rem + 9px); /* 25px — section headers */
   --ds-text-h3: calc(1rem + 4px); /* 20px — card titles */
