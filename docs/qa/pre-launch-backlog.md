@@ -1132,9 +1132,12 @@ before the last moment to cancel (a day before the trial ends).
 Unit tests cover the timing in every zone, the record and the email's
 words; these need the operator, a device, or a real trial.
 
-- [ ] **The sender.** troposfit.com verified in Resend and `RESEND_FROM`
+- [x] **The sender.** troposfit.com verified in Resend and `RESEND_FROM`
       set (owner steps 2.1, `docs/launch/owner-steps-2026-10-14.md`; until
       then every email reaches only the Resend account's owner).
+      STATUS 2026-11-07: done. Every Resend record Verified, `RESEND_FROM`
+      deployed, and a Forgot password email arrived in a Gmail inbox (not
+      spam) from Tropos <no-reply@troposfit.com>.
 - [ ] **Apple's relay.** troposfit.com and Resend's `send.troposfit.com`
       registered under Certificates, Identifiers & Profiles → Services →
       Sign in with Apple for Email Communication. Then, from the sign-in
@@ -1143,6 +1146,22 @@ words; these need the operator, a device, or a real trial.
       Same sender as the reminder; a bounce there is a bounce here.
       Passing this unlocks the paywall's reminder step (Sub1, the PR after
       this one).
+      STATUS 2026-11-07: half done. troposfit.com, send.troposfit.com and
+      no-reply@troposfit.com registered, each passing Apple's SPF check.
+      The Hide My Email reset itself is not yet tried.
+- [ ] **The subscriptions' review screenshot shows today's paywall.**
+      App Store Connect → Tropos → Subscriptions → Tropos Pro → each of
+      Tropos Pro Yearly and Tropos Pro Monthly → Review Information →
+      Screenshot. Apple's reviewer compares it with the paywall in the
+      build, so replace it whenever the Upgrade sheet changes, and before
+      the build that first submits the subscriptions. As of 2026-11-07 it
+      is an older Food-tab paywall ("Unlock AI food logging", Monthly
+      £3.99, Yearly £34.99, "Start your 7-day free trial"), on both
+      subscriptions. It still says "Unlimited AI food photo logging",
+      which the app no longer claims (Pro caps scans at 100 a day,
+      `DAILY_AI_LIMITS`), so a reviewer could read it as a mismatch. A capture of
+      the current sheet comes from the capture rig
+      (`docs/agents/capture-rig.md`).
 - [ ] **The Upgrade page on the iOS app.** After a sandbox trial purchase
       (TestFlight, a uid on `REVENUECAT_SANDBOX_UIDS`), the Pro card shows
       "Free trial until …", the price line with the last moment to cancel,
@@ -3739,7 +3758,7 @@ release, the console and a phone.
 - [ ] **The count matches the console.** For one race people are training
       for: in the console, Firestore → `users`, filter
       `raceGoal.eventSpaceId == <id>` and `raceGoal.targetDate >=
-    <yesterday's date, UTC>`. Passing: the number of documents equals
+<yesterday's date, UTC>`. Passing: the number of documents equals
       `raceCohorts/<id>.count`. Then, on a test account bound to that race,
       choose another listed race in the run-plan editor and save. Passing:
       within a minute the first race's count is one lower and the second's
