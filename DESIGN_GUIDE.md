@@ -5,21 +5,32 @@
 > Read it before you touch anything visual. If your change conflicts with
 > something here, the rule here wins — or you ask first.
 >
-> **The single most important sentence:** Tropos is a _calm, warm, iOS-style
-> fitness app, dark by default with a fully supported warm light theme, two
-> semantic sport colours, and a strict two-font / token-driven system._ It is
-> **not** a neon, glassy, gradient-heavy "AI dashboard." Most generic UI
-> instincts will pull you the wrong direction. Resist them.
+> **The single most important sentence:** Tropos is a _warm, iOS-style
+> fitness app, dark by default with a fully supported warm light theme, five
+> colours that each mean one thing, and a strict two-font / token-driven
+> system_, in which every screen leads with one hero about the person, colour
+> sits on the person's own data, and the moments worth celebrating get the
+> whole screen (DS4, 7 November 2026, measured from the apps people come back
+> to: §14m). It is **not** a neon, glassy, rainbow-gradient "AI dashboard",
+> and it is **not** a column of grey cards of the same weight either. The
+> second is the failure this app fell into before DS4.
 
 ---
 
 ## 0. The non-negotiables (memorise these first)
 
-If you only remember ten things:
+If you only remember thirteen things:
 
-1. **Don't introduce new colours, gradients, or decorative elements.** The
-   palette is closed and intentional. Adding a "nice blue" or a hero gradient
-   is a regression, not an improvement.
+1. **Five colours, one meaning each, and colour goes on the person's data
+   (DS4).** Purple is lifting and the brand, coral running, orange food, teal
+   water, gold a new best. An everyday screen carries at most 8% colour on
+   dark and 15% on light, in at most three hues with one leading, and its
+   biggest patch of colour is data (a ring, week segments, a route, a
+   figure's lit muscles), never a button. A generic action (Follow, Edit
+   profile, Done, Save) is neutral, and so is a screen's one full-width
+   filled button (Start workout is white on dark). A gradient stays within one hue and fades
+   into its surface. Adding a "nice blue", neon or glass is a regression.
+   §14m.
 2. **Purple = lifting/brand. Coral = running.** This sport-coding is everywhere
    (dots, labels, icons, CTAs). Never cross the wires.
 3. **Numbers come in two tiers, both with tabular figures.** A figure that
@@ -27,7 +38,10 @@ If you only remember ten things:
    81.7, a hero stat, a timer, a set log's inputs) is Archivo:
    `font-figure tabular-nums`. A number inside a line of text ("3 sets ×
    8 reps · 52.5 kg", "about 59 min", "Last: 105 kg × 5") is the text
-   face at the words' own weight: `font-mono tabular-nums`. See §4.
+   face at the words' own weight: `font-mono tabular-nums`. See §4. A
+   screen's hero sets its headline at 25-38 px or its figure at 40-48 px;
+   display type (64-120 px, Archivo's wide heavy cut) is for finish,
+   new-best, streak and live screens only (§4, §14m).
 4. **All other text is Plus Jakarta Sans.** Two fonts total. No third font, ever
    (not even for one decorative glyph).
 5. **44px minimum touch target.** This is an iOS app shell. Buttons default to
@@ -38,32 +52,62 @@ If you only remember ten things:
 7. **Colours come from tokens, not hardcoded hex.** Use `bg-primary`,
    `text-muted-foreground`, or `THEME.*` — never paste `#7B72E9` inline.
 8. **Light AND dark mode both have to work.** Every change is reviewed in both.
-9. **Calm over flashy. Breathing room over density.** Subtle shadows, soft
-   tinted backgrounds, generous padding. When in doubt, do less — except
-   Social and rewards: §14 (Soc15).
+9. **One hero per screen, and everything else steps down (DS4).** The
+   hero is the thing about the person right now: 30-60% of the first screen,
+   its top in the first 260 pt, holding the screen's largest text. No large
+   page title sits above it; the hero names the screen. The next block is at
+   most 0.8x its height (0.65x on Home), and navigation and controls take at
+   most 20% of a tab's main screen. Calm (subtle shadows, generous padding,
+   the colour budget) belongs to the chrome and to everyday screens, never
+   to the hierarchy. When in doubt, ask what the screen's hero is, not what
+   to remove. §14m.
 10. **Design for 1000+ users, not "the one current user."** Cold-start states,
     light-trainers, lapsed users, vacation gaps are all real segments. A design
     that breaks for them is a bug, not an edge case.
+11. **Day 1 is full.** A first-use screen leads with the first action,
+    draws a metric at zero at full size and keeps its hero at least 75% of
+    its usual size. The hexagon `EmptyState` is for no results and errors,
+    not a first use (DS4, §14m).
+12. **The moments that matter get the whole screen.** A first, a new best,
+    a streak milestone and a finished plan get a full-screen reward: one
+    object in the achievement's own colour, about half the screen's width
+    in its top 40%, one display figure, one sentence, one button, on the
+    plain page. A routine session gets a calm summary with its picture.
+    Rewards never open over Home (DS4, §14l, §14m).
+13. **Pictures before code.** A visual change starts as a mockup or a
+    capture, and its PR shows before and after at 393 and 320 px in both
+    themes. A change nobody can see in a screenshot is not a design
+    improvement, however correct.
 
 ---
 
 ## 1. Visual identity
 
-- **Aesthetic:** Calm iOS-inspired grouped surfaces in both themes. Dark is the
-  first-run/runtime default; light remains a fully supported user choice.
+- **Aesthetic:** Calm iOS-inspired grouped surfaces for the chrome in both
+  themes, one hero per screen, colour on the person's data, and our own art
+  as the pictures (DS4, §14m). Dark is the first-run/runtime default; light
+  remains a fully supported user choice.
 - **Dark mode:** A deep, cool neutral (DS3, 2026-09-27): page `#0E0E11`,
   cards `#17171B`, raised surfaces `#212127`, text `#F4F4F6`. The page is a
   plain canvas — the brand-purple glow that used to sit at the top of every
-  signed-in page is retired, so colour belongs to content. Light uses the
+  signed-in page is retired, so colour belongs to content: the person's
+  data and the screen's hero carry it (DS4). Light uses the
   warm grouped-background/card treatment. Every visual change must be
   reviewed in both.
 - **One colour per job (DS3):** purple is lifting and the brand, coral is
   running, orange is food, teal is water, gold is a new best — and nothing
   else. A colour that means a sport or a domain is not decoration.
-- **Brand colour:** Purple `#7B72E9`. Used **sparingly** — active tab
-  indicators, CTAs, progress bars, accents. Never as a full-page background
-  (the only purple fills are the primary button and the auth logo; no
-  button carries a gradient).
+- **Brand colour:** Purple `#7B72E9` means lifting and the brand (DS4 call
+  1). It colours lifting data (week segments, a figure's lit muscles,
+  progress on a lifting goal), a brand moment and the smaller lifting
+  controls; a generic action (Follow, Edit profile, Start a circle, Done,
+  Save) is neutral, because a colour that is on every button means nothing.
+  A screen's one full-width filled button is neutral too, white on dark and
+  ink on light, Start workout included (owner, 7 November 2026): filled in
+  purple it became the largest patch of colour on Home and took the screen
+  to the 8% ceiling, where the rule is that the largest colour is the
+  person's data (§14m rule 10). Never a full-page background, and no button
+  carries a gradient.
 - **Sport-coding:** Lifting = purple `#7B72E9`, Running = coral `#D4637A`.
   These two colours recur in calendar dots, section headings, icon tints, and
   contextual cards.
@@ -74,6 +118,12 @@ If you only remember ten things:
 **The "calm" test:** if a screenshot of your change looks like it belongs in a
 crypto trading app or a generic SaaS dashboard, it's wrong. It should look like
 it belongs next to Apple Fitness / Strava / a well-made iOS health app.
+
+**The "blank" test (DS4):** if a screenshot could pass for a settings page or
+a form (every card the same weight, the biggest type a page title, no
+picture, the same empty-state icon as the last screen), it's also wrong. The
+one thing that matters on the screen should be obvious from across a room. A
+screen passes both tests or neither; §14m has the numbers to check it with.
 
 ---
 
@@ -251,6 +301,18 @@ the count can only fall.
   above. Inline numbers never carry a weight of their own: "3 sets" is one
   run of text, not a bold 3 beside a regular "sets".
 
+- **Hero sizes and the display register (DS4, §14m).** A screen's hero holds
+  its largest text, at least 1.2x the next size, page titles included. On
+  Home and detail screens that is a headline at 25-38 px or a figure at
+  40-48 px, and nothing on those screens goes above 48 px. Type at 64-120 px
+  (the display register) appears only on finish, new-best, streak and live
+  screens: one element per screen, in the hero, in Archivo's wide heavy cut
+  (width 110-125%, weight 850-900, italic, capitals), loaded from the
+  installed package's `wdth.css` / `wdth-italic.css`, so the two-family rule
+  holds. Its kicker is Archivo at width 75-80%, weight 800, capitals, 13 px,
+  0.14em tracking. A screen uses at most six text sizes. Display words wrap
+  at 320 px and at double text; they never clip.
+
 - Both faces are proportional, so digit alignment comes from tabular
   figures: the `.font-mono, .font-figure` rule in `index.css` forces `tnum`
   on both. **`font-mono` means "a number", not a monospace face**; it
@@ -408,7 +470,7 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
 | Pattern                                       | Recipe                                                                                                                                                                       |
 | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Standard card**                             | `bg-card` white, `rounded-xl` (12px), `p-3`–`p-4`, `shadow-card` (very subtle). Or use `.ds-card`.                                                                           |
-| **Hero card** (Health Score, Water)           | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square.                                                                                                  |
+| **Hero card** (Health Score, Water)           | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square. DS4: a screen's hero is not just another card (§14m).                                            |
 | **Compact tile** (Weight, Steps)              | `rounded-xl`, `p-3`, `bg-card card-shadow`, 2-col grid (the card surface since DS3; it was `bg-muted`).                                                                      |
 | **Today card** (`LiftCTACard` / `RunCTACard`) | Hero radius, sport wash at 12%, the session as a 25px title, its dose, a full-width Start (`primary` / `sport`); the rest of the card opens the day in Train. See CLAUDE.md. |
 
@@ -416,6 +478,13 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   on a real `<button>`/`<a>` (never a wrapped `div`) for pressable cards.
 - Shadows live as tokens (`--ds-shadow-card`, `-hover`, `-elevated`). Don't write
   ad-hoc `box-shadow`.
+- **DS4 (§14m):** one card radius of 16 pt across the app, 10-12 for what sits
+  inside a card; no larger "hero" radius, because a detail or reward hero
+  leaves the card and a Home hero is dressed differently from its siblings.
+  8-12 pt between cards in a group, about 32 pt between sections. A row that
+  stands for a session, a person or an award carries its own picture
+  (36-80 pt); rows are 56-64 pt unless they hold a thumbnail or a big
+  number.
 
 ---
 
@@ -606,12 +675,12 @@ true, which is the whole point of separating them.
 
 | State                    | What it must tell the person                                                                                                                                                                                                                                                         |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **First use**            | What this is for, and one useful first step. Reach for the `EmptyState` primitive (§7); do not hand-roll a centred icon block.                                                                                                                                                       |
+| **First use**            | The first step, as the screen's hero, and when the screen fills ("Lower A on Monday"). Draw the goal at full size: a metric at zero, the week outlined, the next badge dimmed. The `EmptyState` primitive is for no results and errors, not a first use (DS4, §14m).                 |
 | **No results**           | What did not match, and how to recover — broaden, clear a filter, or add it manually. An illustration alone is not recovery.                                                                                                                                                         |
 | **Loading / saving**     | That something is in progress. **A zero is a claim, not a placeholder**: "0 eaten" is byte-identical to the display for someone who has genuinely eaten nothing. Show a `Skeleton` while a figure is unknown, and keep a figure you already have rather than flickering back to one. |
 | **Offline / queued**     | Whether the entry is saved on this device and waiting to sync — and say this ONLY where the app actually provides that guarantee. Claiming a durability we do not have is worse than saying nothing.                                                                                 |
 | **Error / interruption** | What failed, what was preserved, and the next safe action. A failed map must not take the run controls with it.                                                                                                                                                                      |
-| **Success / correction** | What changed, in neutral specific copy, plus Undo or an edit route. No automatic sharing, no extra celebration dialog.                                                                                                                                                               |
+| **Success / correction** | What changed, in neutral specific copy, plus Undo or an edit route. No automatic sharing, and no extra celebration dialog for a routine save. A first, a new best, a streak milestone and a finished plan are rewards and get the full screen (§0 rule 12).                          |
 
 A placeholder holds the loaded content's shape, at every text size: set
 a line of text's placeholder in that line's own classes (`LineBar` in
@@ -635,8 +704,12 @@ When you're unsure, run the decision through these, in order:
 1. **Does a token / primitive already cover this?** If yes, use it. Stop.
 2. **Does it keep the sport-coding + semantic-colour meanings intact?** If your
    change uses purple for a run thing or invents a new accent, it's wrong.
-3. **Is it calmer than what I first reached for?** Remove a gradient, soften a
-   shadow, widen the padding, drop a decorative flourish.
+3. **What is this screen's hero, and does everything else step down?** One
+   thing about the person, holding the largest text, in its domain's colour,
+   with a picture, true on day 1. A screen with no hero needs one before it
+   needs polish; if two things compete, demote one. Then calm the chrome
+   around it: within the colour budget, one filled button, no ornament that
+   is not the person's data or our art (DS4, §14m).
 4. **Does it hold up at the user-base scale?** Cold-start (empty data),
    light-trainer (2–3 days/week), lapsed/returning, vacation/illness gaps. If it
    only looks right for a fully-populated power user, redesign the empty/sparse
@@ -697,7 +770,10 @@ no new colours, no gradient, no emoji.
 
 ## 13. Pre-flight checklist (run before you submit)
 
-- [ ] No new colours / gradients / decorative elements introduced.
+- [ ] No new hues; colour within the budget (8% dark, 15% light) and on data, not buttons; any gradient within one hue (§0 rule 1).
+- [ ] One hero, holding the largest text; no large title above it; one filled button (§0 rule 9).
+- [ ] The day-1 state is drawn full, not an icon block (§0 rule 11).
+- [ ] Before and after captures at 393 and 320 px, light and dark, in the PR (§0 rule 13).
 - [ ] No hardcoded hex — everything via tokens (`bg-*`) or `THEME.*`.
 - [ ] Sport-coding correct (purple = lift, coral = run) and semantic colours intact.
 - [ ] A figure that stands on its own uses Archivo (`font-figure`); a number inside a line of text uses the text face at the words' weight (`font-mono`); both `tabular-nums` (§4). Words use Plus Jakarta Sans.
@@ -754,7 +830,7 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
 - **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page had its own pass. The owner kept Food's layout and its one timeline (Food8) on 2026-09-28, and chose two changes from the mockups: a week strip above the calorie card (`FoodWeekStrip`, Home's strip with each day a ring of calories eaten against that day's target), and the calorie ring in the food orange instead of purple. On 2026-09-29 Home's food card took the Food page's own ring and macro tiles, smaller and side by side (`size="compact"` on `CalorieRing` and `MacroColumn`), with the one left/logged switch shared: the two screens draw the same object, so change it in one place. The same day the ring went quiet: its number is the text colour, "kcal left" / "kcal logged" is plain grey text under it (no tag, no swap arrow), and the arc is one solid orange on a grey groove with no gradient, track shadow or pulsing glow; Home's macros sit on the card with no box of their own. The second view says "logged", not "eaten": the number counts what is in the diary, not what the person ate. The stored mode key is still `"eaten"`. Read the DS3 row before re-deciding any of it.
 - **The Food hero keeps its wash and three macro cards (owner, 1 November 2026).** A 31 October pass put the ring and the macros on one plain card to calm the page; the owner compared the two on a phone and kept the earlier look, which was restored. Don't flatten the Food hero again without asking. The same day the welcome screen got back its three rows (Lifting, Running, Food, each with its drawing) in place of the pass's single photo.
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
-- **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as a full background: its only fills are the primary button, the auth logo and, as `--lifting-fill` under a white label, the selected segment of a lifting `SegmentedControl` (§7), and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
+- **Brand colour:** Purple #7B72E9 — lifting and the brand (DS4 call 1): lifting actions and data, active tab indicators, progress on a lifting goal. Generic actions are neutral. Never as a full background: its only fills are the primary button on a lifting or brand action, the auth logo and, as `--lifting-fill` under a white label, the selected segment of a lifting `SegmentedControl` (§7), and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
 - **Logo:** a hexagon with rounded corners and an upward chevron cut out of it, white on a purple field that lightens toward the top on the app icon, and brand purple in the app. The owner chose this refinement of the bake-off mark on 2026-10-01 (`docs/visual-audit/bakeoff/DECISION.md`, decision 4). It is the app icon (with dark and tinted versions for iOS's home-screen modes), the sign-in screen's logo (the icon itself), and the launch image (the hexagon alone). Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`), so "Today" keeps the left edge the cards below it start on. The geometry lives in `src/lib/brandMark.ts` and `src/assets/brand/app-icon.svg`, held together by `BrandMark.test.tsx`; after changing it, run `node scripts/art/gen-app-icon.mjs` (every app and web icon) and `node scripts/art/gen-splash.mjs` (the launch image).
 - **Launch animation:** `LaunchSplash` takes over from the launch image (index.html paints the same hexagon, `#boot-splash`, until the bundle runs). Once its first frame is up it takes the native launch image down (`nativeLaunchImage.ts`; the two frames are the same), so the rise is seen and not played underneath it. The chevron rises into the hexagon, cut out so it shows whatever is behind it; if the app is still loading a beat later, the mark breathes until it leaves. Once the app is ready (on Home, once Home's header mark holds still and Home has drawn today's session and food, `data-page-ready`, waited for at most a second) the mark flies into Home's header mark on a soft arc that leaves upward, on a spring with no bounce, as the page shows; anywhere but Home it lifts a little as the overlay fades. Every movement is a transform or an opacity, played by the Web Animations API on a layer of its own, so it keeps its frames while the app starts underneath. Reduce Motion: the chevron fades in where it stays, nothing breathes, and the overlay fades. Its ground is the launch colour in both themes (`--launch`, the dark page), as the launch image is, so a light-mode user's page turns light only as it is revealed, never under the logo. It never shows under automation (`navigator.webdriver`), so specs and captures see the app as before. The four copies of the first frame (launch PNG, index.html, the overlay's CSS size, `brandMark.ts`) are pinned together by `launchSplash.test.ts`.
@@ -867,7 +943,7 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
   The elevation utility is `card-shadow`.
 - **Hero card (Health Score, Water):** `Card` (hero), larger icon (48px container), icon in purple-tinted bg square
 - **Compact tile (Weight, Steps):** the compact pairing on the card surface (`bg-card card-shadow`), 2-col grid. It sat one step darker than the page (`tone="muted"`) until DS3 deepened the dark surfaces, where a muted tile read as a hole beside the cards around it.
-- **Today card (`LiftCTACard` / `RunCTACard`, DS3):** the hero radius with the sport's 12% wash (`bg-lifting/12`, `bg-running/12`), the session as a 25px title, its dose ("5 exercises · about 50 min", "5 km · about 30 min") and a full-width Start (`primary` for a lift, `sport` for a run). Start begins the session (`/program?day=N&start=1`, `/run?template=…`); the rest of the card is a sibling button that opens the day in Train to look it over, because a button cannot sit inside a button. A lift shows the cut-out drawing of its first exercise that has one (`formArtCutouts`). A finished or skipped day shows its status instead of Start. A session under way on the phone (a workout closed with its sets kept, a run left before it was saved) shows the In progress strip in Start's place, "In progress · 5 sets · 18:40" and Resume (`InProgressStrip`, Hevy and Strong's pattern); a session under way that is not the card's leads the stack on a strip of its own, and Train's day card draws the same primitive. Which card it goes on is `todaySession.ts`'s rule, and only a session Resume will actually open is offered (`sessionsInFlight.ts`). No rationale and no plan position ("Base · week 3 of 16") on Home: owner direction 2026-09-09, pinned in `SessionPurpose.test.tsx`. `RestDayCard` is a plain hero card naming tomorrow's session.
+- **Today card (`LiftCTACard` / `RunCTACard`, DS3):** the hero radius with the sport's 12% wash (`bg-lifting/12`, `bg-running/12`), the session as a 25px title, its dose ("5 exercises · about 50 min", "5 km · about 30 min") and a full-width Start (`primary` for a lift, `sport` for a run). Start begins the session (`/program?day=N&start=1`, `/run?template=…`); the rest of the card is a sibling button that opens the day in Train to look it over, because a button cannot sit inside a button. A lift shows the cut-out drawing of its first exercise that has one (`formArtCutouts`). A finished or skipped day shows its status instead of Start. A session under way on the phone (a workout closed with its sets kept, a run left before it was saved) shows the In progress strip in Start's place, "In progress · 5 sets · 18:40" and Resume (`InProgressStrip`, Hevy and Strong's pattern); a session under way that is not the card's leads the stack on a strip of its own, and Train's day card draws the same primitive. Which card it goes on is `todaySession.ts`'s rule, and only a session Resume will actually open is offered (`sessionsInFlight.ts`). No rationale and no plan position ("Base · week 3 of 16") on Home: owner direction 2026-09-09, pinned in `SessionPurpose.test.tsx`. DS4 call 5 (2026-11-07) lets Home's hero show the plan position and today's main lift against last time ("Week 9 of 12"; "35 kg × 8 · last time 32.5 kg"); reasons stay behind "Why this session". It lands with the Home hero, which changes that test. `RestDayCard` is a plain hero card naming tomorrow's session.
 - **Quick actions:** there is no pill row. Today's actions are the Start
   buttons on the Today cards, and food logging is the "Log food" button in
   `TodayEnergy`'s header.
@@ -991,7 +1067,8 @@ Constraints these primitives must keep:
 
 - Closed palette: **coral = running, purple = lifting**; existing semantic
   tokens for success/warning/destructive. No new colours unless added as
-  tokens. No decorative gradients.
+  tokens. No decorative gradients; a gradient within one hue that fades into
+  its surface is allowed (DS4, §14m).
 - 44px+ touch targets (use the `Button` / `IconButton` primitives).
 - Light + dark mode; reduced-motion respected (`motion-safe:` prefixes).
 - Active plan editing deep-links to `/settings/run-plan` — the focused
@@ -1061,10 +1138,13 @@ reduced-motion` always gets the settled static state — no entrance, no
   prefix all the same, saying so where the class is written; the
   spinners stay unprefixed (`UNGUARDED_ANIMATION_BASELINE = 8` in
   `designSystemInvariants.test.ts` is exactly the spinner set).
-- **Empty states go through the `EmptyState` primitive**
+- **No-results and error states go through the `EmptyState` primitive**
   (`src/components/ui/EmptyState.tsx`; `compact` for in-card use) — no
   hand-rolled centered-icon-tile blocks. The primitive owns the brand
-  hexagon, accent tinting, and reduced-motion handling.
+  hexagon, accent tinting, and reduced-motion handling. A first use is not
+  an empty state (DS4, §0 rule 11): it leads with the first action and draws
+  the goal at full size, so a new account's screens do not all end in the
+  same hexagon (8 of 27 captured screens did, before DS4).
 
 ### 14i. Button variants (canonical CTA mapping)
 
@@ -1096,7 +1176,20 @@ leaking one-off hex orange past the hex guardrail.
 **An action takes its domain's colour wherever it appears** (Polish3, call 3).
 The colour says what the button does, not which page it sits on. The role
 picks the emphasis (filled for the main action, tinted for a secondary one,
-neutral for a low one) and the domain picks the hue:
+neutral for a low one) and the domain picks the hue.
+
+**DS4 (owner, 7 November 2026): a screen's one full-width filled button is
+neutral** (white on dark, ink on light), whatever its domain: Start workout,
+Start run and Food's main Log button included. A full-width filled button in
+a domain colour was the largest patch of colour on the screen, and the
+measured rule is that the largest colour is the person's data (§14m rule
+10). The domain keeps its colour on the button's icon, on tinted and text
+actions ("Log food" in orange on Home's food card), and on the data around
+it. The table below still names each domain's variants for those smaller
+controls; the filled column applies where a domain button is not the
+screen's one full-width main action. The change to the buttons and to
+`designSystemInvariants.test.ts`, which pins the variants, lands with the
+Home hero build.
 
 | The action                          | Filled      | Tinted             |
 | ----------------------------------- | ----------- | ------------------ |
@@ -1115,7 +1208,11 @@ keeps its role's variant wherever it sits, the Food page included: Try
 again, Turn on (AI analysis), Set focus, Pro ("Try Pro free" stays brand
 purple), Cancel, and the Save that corrects an entry already in the diary.
 An action that belongs to no domain (a settings form's Save, account
-actions, Retry) is `primary` or neutral. Water has no Button variant: its
+actions, Retry, Follow, Edit profile, Start a circle, Done) is neutral:
+`secondary`, `outline` or `ghost` (DS4 call 1: purple means lifting and the
+brand, and a colour on every button means nothing). A neutral filled
+variant (white on dark, ink on light) arrives with the Home hero build, the
+first screen that needs one. A screen has one filled button (DS4, §14m). Water has no Button variant: its
 one filled control, the tile's +, is the hydration teal.
 
 `designSystemInvariants.test.ts` holds the rule for the actions it can name
@@ -1157,15 +1254,15 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 ### 14j. Design Principles (for Claude Code when improving UI)
 
-- **Keep the existing colour scheme** — the purple/coral/orange/teal semantic system is intentional and should not be changed
-- **Calm over flashy** — subtle shadows, soft tinted backgrounds, no harsh contrasts
+- **Keep the existing colour scheme** — the purple/coral/orange/teal/gold semantic system is intentional and should not be changed; DS4 keeps each colour to its one meaning and puts it on the person's data
+- **One hero, calm chrome (DS4)** — each screen leads with one hero holding its largest text; the chrome around it keeps subtle shadows, soft tinted backgrounds and no harsh contrasts
 - **Breathing room over density** — generous padding, clear visual hierarchy
 - **iOS conventions** — grouped background, card-based layout, safe area padding, 44px minimum touch targets
 - **Consistent numeric treatment** — stand-alone figures in Archivo (`font-figure`), numbers inside text in the text face (`font-mono`), all with tabular-nums
 - **Sport-coding everywhere** — lift content uses purple tints, run content uses coral tints
 - **Semantic colour consistency** — orange always = nutrition, teal always = hydration, coral always = vitals/running, purple always = brand/lifting
 - **Progressive disclosure** — cards link to detail views, sheets for editing, don't overload screens
-- **When polishing:** Focus on typography weight consistency, spacing regularity, shadow subtlety, and icon container sizing. Don't introduce new colours, gradients, or decorative elements.
+- **When improving a screen:** start with its hero (§0 rule 9): what it is, its size and rank, its colour on data, its picture, its one sentence with a number, and how it looks on day 1. Then check the screen against §14m's numbers. Only then polish the chrome: typography weight, spacing, shadows, icon containers. A pass that only removes things has not done the job (DS4).
 
 ### 14k. Current Known Design Considerations
 
@@ -1178,6 +1275,8 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 ### 14l. Social and rewards may be loud (Soc15 call 1, 3 November 2026)
 
+- **DS4 (7 November 2026) refines this.** Measured on 29 reward screens, a reward is loud through one object in the achievement's own colour on the plain page (about 5-15% of the screen), not a full-screen flood: 5 of 29 flood, and Nike Run Club's flood fails contrast. The full-screen reward is for a first, a new best, a streak milestone and a finished plan (§0 rule 12, §14m).
+
 - **The owner's call.** Calm stays for logging and Home. Social and rewards may be loud: colour, motion, a full-screen reveal for a medal. Social has to pull people back the way Strava, Hevy and Nike Run Club do, and it starts with the moments that happen to you ("Kudos on your first activity!", a streak slide). §0's calm rule still holds everywhere else.
 - **Moments on posts come from real data, never free text.** A moment is a kind and its numbers (`src/lib/postMoments.ts`): a new PR, the longest run yet, a first 5K, 10K, half or marathon, a fastest 1K, 5K or 10K, a streak reaching 7, 14, 30, 50, 100, 200 or 365 days, a plan's week done or the programme complete, a first session. The finish screens work them out from what they already hold, a post carries at most three (most significant first), and firestore.rules refuses any other shape. The card words them in the reader's units (`postMomentLines.ts`), so nothing a person types becomes a moment.
 - **Medals and their reveal are the loud register call 1 allows.** A medal is a person's highest tier in one challenge edition, kept in the trophy case on their profile after ChallengeFinaleCard has gone (`functions/lib/medals.js` is its one writer; `src/features/challenges/medals.ts` reads it). It is drawn, not iconised (`MedalArt`): a round medal in the tier's metal from the badges' own `TIER_PALETTES`, on a ribbon in the challenge's sport colour, with the sport's icon, the tier's goal and the edition. It is to be illustrated with Gemini like the badges, one image per challenge definition and tier, round with the badges' black enamel and metal relief (`docs/badges/MEDAL_ART_BRIEF.md`, `MEDAL_ART`); the drawn medal stays as the fallback, and the ribbon, the goal and the edition are always drawn in code over the art. A new medal or tier is revealed once, full screen on the dark stage, with the tier's light, rays, confetti and the medal swinging in on its ribbon, Share and Done; Reduce Motion fades it in where it stays and throws nothing. The reveal is a coordinator surface (ADR-0004) on Social only: rewards still never open over Home.
@@ -1189,3 +1288,17 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **Weekly leagues** (Soc15 call 3, owner, 3 November 2026; built 5 November 2026). Duolingo's league gives a week a stake: a group of strangers, a countdown, a promotion zone and a result. Tropos's is opt-in and scored against each person's own plan. **Opt-in:** a league shows a first name, a photo and a week's points to about twenty people who may be strangers, so nobody is in one until they tap Join, under a line that says exactly that ("Your first name, photo and weekly points show to the people in your group. Nobody else sees them, and you can leave at any time."). A restricted account sees why it cannot join in Join's place; Leave the league, behind a confirmation, takes the person's row out of the group at once. **Scoring:** points are the share of your own plan done this week, out of 100 (`functions/lib/leagueRules.js`, the planned count `functions/lib/leaguePlanned.js` pinned to `trainingWeek.ts`), so a three-day week done beats six runs half done, and sessions beyond the plan add nothing. **The card** sits in Together's This week, under the weekly challenge, both being this week's and ending on Sunday; it keeps the page's one filled button for the challenge, so Join is the quiet secondary pill. Its four states: not joined (the line above and Join), locked ("Leagues open when 10 people have joined. 3 so far." over a bar of the count), waiting ("Your group starts on Monday."), and in a group, where the card wears its tier's light: the drawn badge, "4th of 18" and the points as figures, a bar of the points in the tier's metal, "3 of 4 sessions" and "Ends Sunday". The whole card opens `/league`. **The page:** the badge large in its light, the countdown to the end of your own week ("Ends in 2 days 4 h"), every row (rank, face, first name, "3 of 4 sessions", tier, points), your row picked out as the friends board picks it out, a line under the places that move up ("Top 5 move up a tier", in the success green) and one above those that move down, and Leave the league. Someone blocked either way is left out of your view; the places still count them, so the numbers can skip. **The tiers are drawn, not iconised** (`TierBadge`): a shield in the tier's metal with the tier's mark, one, two and three chevrons for Bronze, Silver and Gold, a star for Platinum and a cut stone for Diamond, so shape as well as colour tells them apart. The first four metals are the badges' own; Diamond's is the brand's purple ramp, pale like the others, as the streak flame's tiers rise through it, so the closed palette gains no colour (`leaguePalettes.ts`). **The result** is revealed once per result per device, full screen on the dark stage, the first time Social opens after Monday's turn (`league-result`, ADR-0004): the new tier's badge in its light, "You moved up to Silver", the place and points, See your league and Done. A rise gets the rays, a spring and confetti; a week held gets the light; a fall gets a softer light, the badge settling in and "A new week has started", and never more than the facts. Reduce Motion fades the badge in and throws nothing. No mid-week nudges: the one notification is Monday's result, under its own switch (Leagues, on by default).
 - **Plan groups** (Soc15, built 5 November 2026). Strava's clubs and Runna's race spaces tell you who else is running your race; Tropos knows which race each plan is for. A plan group is the people on Tropos whose race goal is bound to the same race's space while that race is ahead. They share its date, so they are the same number of weeks out. Only someone in one sees anything of it, and only until their race day. **The card** sits last in Together's This week, under the league: the race's own photo in a 56px rounded tile (the coral flag tile when it has none), "You and 11 others are training for Manchester Marathon" in bold, and "9 weeks to go" under it in the running coral's strong ink ("1 week to go", then "Race week" inside the last seven days), all over the running coral's light, as the league card wears its tier's. The whole card opens the race's space. With fewer than two others (a count under 3, the viewer included), or with no count to read, it says "You're training for Manchester Marathon": a small group is not shown as a number, and a missing count is never a zero. While the count is read, a placeholder holds the card's height. At large text the words drop under the photo rather than stand a word a line beside it. **The hero** of the race's space, for the same person, gains a line under the space's size: "12 people on Tropos are training for this race", and nothing under 3. The hero is 176px and grows when its words need more (larger text, this second line), so they never run up under Back. **The count** is `raceCohorts/{spaceId}`, a number the server recounts and never increments; it names no one, so nobody is left out of it. The weeks are whole weeks from the viewer's own today to their race day (their day of a two-day race), as the "Training for" chip counts them (`planGroup.ts`). **No faces yet.** The people who chose to show "Training for this race" on their profile could stand beside the hero's count, but the app cannot tell a restricted account or the hidden App Review account from anyone else without new rules, and the query needs a collection-group index the emulator cannot check, so the hero shows the number alone.
 - **The live pulse** (Soc15, built 5 November 2026). One line that says other people are training today, the last of the lock's list before plan groups. It sits on Social's Feed, the first line under the source control whichever source is on screen, so the control never moves under a thumb when it arrives: "Today: 14 sessions on Tropos" in the small muted line the Feed's other notes use, the figure `font-mono tabular-nums` and semibold, grouped as the reader's locale groups (`toLocaleString`). Before it a brand-purple dot, and a ring of the same purple that grows out of it and fades every 2.4 s (`ds-live-pulse`: transform and opacity only, §14h, and the Feed's one ambient loop); under Reduce Motion the ring is not drawn and the dot stays still. The count is every saved session the challenges would credit, on its own local day, across Tropos (`functions/lib/pulse.js`); the line reads the viewer's own local today live and moves as sessions are saved. Below 10 sessions, while the day's first answer is coming and when it cannot be read, nothing is drawn, not a zero: "Today: 1 session" reads as an empty room, and every new Tropos lives there first. It is not a live region, so a screen reader is not told of every session. Social only: Home stays calm (call 1).
+
+### 14m. The measured rules (DS4, 7 November 2026)
+
+- **Why.** The owner said Tropos looked "vibe coded blank" next to Strava, Hevy and Duolingo and asked for rules derived from the apps people come back to before any were written. Five passes on Mobbin measured screens with code: hierarchy and type (80 reference screens, 18 apps), colour (145, 21), layout (68, 17), imagery, rewards and first use (74, 16), and words (322 lines, 82 screens, 16 apps), each against Tropos's own frames of main captured on the emulator rig. The rules below carry the number to check on a screenshot; the evidence, cited screens and method are in `docs/design-rules-2026-11/`, and the words rules are in CODING_STANDARDS' house voice. DS4 in the plan file is the decision.
+- **What it found.** Tropos was not short of colour (3.1% of an everyday screen against 2.4%) but its biggest colour was a button on 17 of 32 frames, where the apps' is the person's data (6 of 85). Its hierarchy was upside down: the "Today" title out-ranked the session, large titles sat on 78% of its screens against 13%, and chrome took 31% of the screen against 14%. Home had no hero picture, 7 of 12 lists had no picture per row, and all 30 badges shared one silhouette. The finish screen was 2.1% colour in about 9 blocks where a reward is about 13% in one object. The research also overturned a first round of mockups: a purple flood on Home (35% colour against the 8% ceiling), 76 px type on Home (against 48), and a flooded nine-block finish screen.
+- **Hierarchy.** (1) Every main screen and every finish or reward screen has one hero: 30-60% of the first 852 pt, its top within the first 260 pt (63 of 80 reference screens). (2) The hero holds the largest text, at least 1.2x the next size; no large page title sits above a hero, which names the screen itself, with the date as a small kicker (DS4 call 2 for Home). (3) The next block is at most 0.8x the hero's height, 0.65x on Home (reference median 0.60; Tropos Home was 0.97). (4) A detail or reward hero leaves the card (in a card: 3 of 18 detail and 2 of 12 reward heroes); a Home hero is dressed differently from the cards under it.
+- **Type.** (5) Home and detail heroes: a headline at 25-38 px or a figure at 40-48 px, nothing above 48 px on those screens (no reference Home exceeds about 50 pt). (6) The display register, 64-120 px, only on finish, new-best, streak and live screens (10 of 79 reference screens; 0 of 30 Home screens), one element, in the hero, Archivo's wide heavy cut, capitals. (7) At most six text sizes per screen (median 5). (8) A unit on a big figure is a caption or sits on its baseline at 0.4-0.7 of the figure's height, as Tropos already does.
+- **Colour.** (9) An everyday screen carries at most 8% colour on dark and 15% on light (saturated pixels; 80 of 86 reference screens). (10) The biggest patch of colour is data: a ring, week segments, a route, a figure's lit muscles; never a button. (11) At most three hues per screen, one holding at least 60% of the colour (leading hue median 92%). (12) One meaning per colour, generic actions neutral (8 of 8 apps that give colours meanings); a domain action keeps its domain's colour on its icon and its tinted or text form (§14i), and the screen's one full-width filled button is neutral, Start workout included (owner, 7 November 2026). (13) A gradient stays within one hue (30° or less) and fades into its page or card (15 of 15 everyday reference gradients; Food's orange-into-purple hero wash was the only multi-hue one in 178 screens). (14) On dark, colour is strokes and glows on a near-neutral ground; filled areas stay small (median 0.4% of a dark reference screen; 0 of 31 flood). (15) Each colour keeps its hue in both themes, and dark is never louder than light. (16) An empty metric is a full-size grey track; colour arrives with data.
+- **Layout.** (17) Chrome (title, control rows, tab bar) takes at most 20% of a tab's main screen and 12% of a pushed one (reference median 14.4%; Tropos 31%). (18) At most one control row under the title, its track 32-40 pt with the 44 pt hit area from padding. (19) The tab bar sits on the home indicator, its bottom chrome within 90 pt of the screen edge (reference about 82; Tropos 106). (20) One card radius, 16 pt; 10-12 inside a card; 8-12 pt between cards in a group and about 32 between sections. (21) One filled button per screen, about 45 pt tall (63 of 65). (22) List rows 56-64 pt, taller only with a thumbnail or a big number. (23) A screen about one session or place opens on a full-bleed band 25-75% tall: a run's map, a Space's photo, the finish screen (19 of 65 reference screens; Tropos had none).
+- **Imagery and badges.** (24) Home, a session's detail and the finish screen each carry one picture of at least 10% of the first screen (9 of 15 reference home screens; 9 of 9 detail screens). (25) Every row that stands for a session, a person or an award has its own picture, 36-80 pt. (26) At least 80% of the imagery is the person's own (data, routes, photos) or Tropos's own art (the rendered form figures, the body map, badges, medals); no stock photography anywhere. (27) A badge collection has at least three silhouettes (reference median 4); a badge for a count or a distance carries its number in the art (72% of 103); a locked badge is the same art greyed with its progress, as Tropos already draws it. All 30 badges are redrawn this way (DS4 call 4) in four families (lifting, running, food and water, consistency), through the Gemini pipeline that made them. (28) Tab icons are drawn at 20-24 pt.
+- **Rewards.** (29) A full-screen reward is for a first, a new best, a streak milestone and a finished plan (firsts in 6 apps, streaks in 7); a routine session gets a calm summary with its picture (DS4 call 3). (30) A reward screen holds one object about half the screen's width in its top 40%, one display figure, at most one sentence, one main button and at most six blocks. (31) Its colour is the achievement's own, on the object over the plain page, about 5-15% of the screen (reference median 13%). (32) Confetti only for a first, a new best and a finished plan.
+- **First use.** (33) Day 1 leads with the first action (7 of 8 reference home screens); a metric at zero is drawn full size at zero (15 of 18); the hero keeps at least 75% of its size; the icon-only "nothing yet" block stays for no results and errors.
+- **Mockups.** `docs/visual-audit/ds4-2026-11-07/` holds the current frames and mockups that pass these numbers, each with its measured colour share, hero share and largest text.
+- **Order of work.** Home's hero in its four states (lift, run, rest, first day), the week strip folded into it; the lift and run finish screens and the share card; Food; the profile, the streak and the badges; the plan on Train; a reading under every History chart. One PR each, with before and after captures (§0 rule 13).

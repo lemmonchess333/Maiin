@@ -124,3 +124,53 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - Reference register when unsure: Strava (data-forward, terse), Hevy
   (minimal utility), MyFitnessPal (plain), MacroFactor (never shames a
   high day), Happy Scale (a stall reads as "expected", not failure).
+
+### The measured rules (DS4, 2026-11-07)
+
+Measured from 322 lines on 82 screens of 16 apps (WHOOP, Oura, Apple
+Fitness, Strava, Nike Run Club, Hevy, Runna, Ladder, Duolingo, MacroFactor,
+Cal AI and others) against Tropos's own frames, which were not too long or
+too loud but too abstract: 5% of Tropos lines carried a number against 26%,
+and 45% were about a thing ("load", "the week") against 18%. Evidence and
+the rewrites of Tropos's lines are in
+`docs/design-rules-2026-11/rules-words.md`. These sit under the house voice
+above; where they say more, they win.
+
+- **The person does the training.** When a sentence reports something done
+  (ran, lifted, logged, finished, missed), its subject is you, or it is an
+  instruction to you. A body part may recover, rest or be fresh; it never
+  runs or lifts ("You ran 18.4 km", never "your legs ran"). A metric is
+  never the actor ("Load has run high" becomes "You trained more than your
+  usual week").
+- **One number, and what it's compared with.** A coach line, verdict or
+  bad-day line carries one of the person's own numbers and its comparison:
+  than your usual week, of 6 planned, since week 1, last Saturday.
+- **Verdict, reason, step.** One or two sentences of 15 words or fewer:
+  the verdict in plain words, then the number that earns it, then one step
+  only if the screen offers it as a button. The figure, its colour and the
+  words say the same thing (never "92 +2" beside "Backing off").
+- **The hero names today in four words or fewer:** the session ("Pull A")
+  or the day ("Rest day", "Race week"). The kicker gives time and position
+  with a number ("Week 9 of 12"); the line below gives the figure.
+- **Say sessions, kilos and kilometres.** No load, volume, adherence,
+  baseline, signals or index unless the screen explains it the first time.
+- **Buttons are a verb and its object:** 1-3 words, 20 characters or fewer,
+  sentence case ("Start workout", "Log food"). The session's name is the
+  heading above the button, never inside it.
+- **A reward says what, how much and what's next:** the achievement with
+  its number in five words or fewer; then you, what you did, the number and
+  its comparison; then the next milestone and how far off it is. The
+  person's first name may lead a reward or first-use line (DS4).
+- **Day one is a starting line, not an empty room:** the goal at full size
+  with zero in it, and one sentence with the first step and when the screen
+  fills ("Finish Upper A and your first score appears"). Never head a
+  screen with "No ... yet".
+- **A bad day is your number, not a grade:** the person's number against
+  their usual or their plan, 15 words or fewer, with no judgement word
+  (fail, bad, poor, behind, over, too much, only). Food over target shows
+  the numbers and nothing else.
+- **Exclamation marks:** none in everyday text; a reward or first-ever
+  screen may carry one, on its headline or its line, never both.
+- **Name or number first** in a notification, 12 words or fewer ("Maya gave
+  your 8.2 km run props"). A live activity or widget is figures and labels
+  only. Never send a countdown to losing something.

@@ -141,6 +141,11 @@ WORKSTREAM 5 — DESIGN (choices, not pixels)
 - Every cold-start state is a first act, not a void (CLAUDE.md
   design-for-the-user-base). Audit the zero-data render of Home, Program,
   Food, Social and History in BOTH themes on the capture channel.
+- Hold every screen to DESIGN_GUIDE §0 and §14m (DS4's measured rules: one
+  hero, colour on data, the chrome and colour budgets, pictures, rewards,
+  day 1) and to CODING_STANDARDS' measured words rules. Propose what a
+  screen lacks as a mockup beside its current frame; do not stop at
+  removing things.
 - Write design-system amendments into CLAUDE.md, not into code comments.
 - Close with a memo of AT MOST five genuinely open design questions, each
   with both options built or mocked and MEASURED (frames, counts), never
