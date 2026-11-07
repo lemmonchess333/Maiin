@@ -1359,13 +1359,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "straight-arm-pulldown": {
     src: "form-art/straight-arm-pulldown.webp",
-    width: 283,
+    width: 400,
     height: 480,
     keyed: true,
-    source: "form-frames/straight-arm-pulldown/1.webp",
+    source: "form-frames/straight-arm-pulldown/2026-11-07/3.webp",
     sourceSha256:
-      "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
-    sha256: "83a48fa98122ce78b2741546e3534785df3889043798beb941a78d1c64996434",
+      "f80a94dffa61939164cb2db0b34464f3d03180fd192949db45d8296444ee36cc",
+    sha256: "e9170e44ef1cf8e1e57dcb0385106dde335200b400316d3d46d1ebaefe5dd50d",
   },
   "sumo-deadlift": {
     src: "form-art/sumo-deadlift.webp",

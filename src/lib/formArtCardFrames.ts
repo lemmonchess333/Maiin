@@ -77,6 +77,7 @@ export const CARD_FRAMES: Readonly<Record<string, number>> = {
   "smith-shoulder-press": 4,
   "spider-db-curl": 3,
   squat: 4,
+  "straight-arm-pulldown": 3,
   "superman-hold": 3,
   "t-bar-row": 3,
   "tricep-kickback": 3,

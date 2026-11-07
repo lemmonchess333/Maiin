@@ -1,0 +1,107 @@
+{
+  "exerciseId": "straight-arm-pulldown",
+  "date": "2026-11-07",
+  "generator": "gemini-3-pro-image through scripts/art/gemini-image.py, --aspect 1:1 --size 2K; every call attached the canonical athlete",
+  "canonical": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "scene": "docs/exercise-art/scenes/straight-arm-pulldown.json",
+  "note": "The API returned JPEG bytes for every call. The three used outputs are kept byte for byte under generated/ with a .jpg name; build.py turns them into the six pilot PNGs.",
+  "calls": [
+    {
+      "call": "master",
+      "prompt": "Draw one new anatomical exercise illustration: the STANDING STRAIGHT-ARM CABLE PULLDOWN, start position (arms forward at shoulder height).\n\nIMAGE 1 is the canonical athlete. Copy him exactly: the same bald, faceless, muscular anatomical male; white and light-grey skin, crisp muscle separation, fine dark-grey contour lines, soft grey shading; smooth featureless pelvis with no genital detail, no shorts, no underwear, no clothing of any kind; the same plain white trainers. Same proportions, head, hands, feet, limb thickness and line weight. Polished flat 2D anatomical illustration.\n\nIMAGE 2 is a different exercise from the same library. Use it ONLY for the drawing style of the cable machine (dark charcoal-grey steel, grey plates, thin steel cable) and for the violet highlight colour on a pure black background. Do not copy its pose, its rope or its tall tower.\n\nSCENE: pure black background. Nothing under the athlete: no floor line, no mat, no platform, no shadow, no reflection. No text, labels, arrows, numbers or logos. Exactly one person.\n\nCAMERA: side view from the athlete's LEFT, turned a little toward his back (rear three-quarter, about 25 degrees off a pure profile), camera at chest height. The athlete faces RIGHT. Both arms are visible, and the left side of his back with the large latissimus dorsi muscle under the armpit is clearly visible.\n\nEQUIPMENT: a compact dual-pulley cable station stands at the RIGHT side of the picture, close to the athlete, drawn side-on. Its column is partly cut off by the right edge of the image and its top is cut off by the top edge. Two pulleys are mounted high on the column, a little above the athlete's head. Two thin taut steel cables run from the two pulleys diagonally down to two grey D-handles, one D-handle in each of the athlete's hands. Low on the column, a weight stack of identical dark-grey rectangular plates on two guide rods; the top four plates are lifted only a finger's width above the rest. The station is short and simple; it must not dominate the picture.\n\nPOSE (start): the athlete stands tall about one long step from the station, feet hip-width apart and flat, knees softly bent, a slight forward lean from the hips (about 10 degrees), braced core, neutral head. BOTH ARMS ARE STRAIGHT AND REACH FORWARD AT SHOULDER HEIGHT toward the station, parallel to the floor, with only a small fixed bend in the elbows. Each hand grips its D-handle; the cables angle up and forward from the hands to the pulleys.\n\nMUSCLE COLOURS: the latissimus dorsi (the broad back and side muscle below the armpit) is filled solid medium violet #7B72E9. The triceps (back of both upper arms) and the abdominals and obliques are filled a lighter lilac #9590E0. Every other muscle stays white-grey. The colour never changes muscle size or hides the contour lines.\n\nFRAMING: square image. The athlete is LARGE: from the top of his head to the soles of his trainers he fills about 88 percent of the image height, with the trainers close to the bottom edge. The athlete, his outstretched arms, the cables and the station fill the frame, with little empty black space. Nothing is cut off the athlete.",
+      "references": [
+        "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "public/form-frames/face-pulls/1.webp (converted to PNG)"
+      ],
+      "outputSha256": "63af0e67f2a58e6cb3e25eba8c7c18adf990e3876474cf34d92eeb9abb6ed905",
+      "status": "used",
+      "outcome": "Start position. Arms forward at shoulder height; full station drawn although the prompt asked for it cropped.",
+      "kept": "docs/exercise-art/sources/straight-arm-pulldown/2026-11-07/generated/start.jpg"
+    },
+    {
+      "call": "finish",
+      "prompt": "Edit IMAGE 2. IMAGE 2 is the start position of a straight-arm cable pulldown; draw the FINISH position of the same rep. IMAGE 1 is the canonical athlete: keep his identity, white trainers, smooth featureless pelvis, no clothing, and his line and shading style exactly.\n\nKeep EXACTLY the same as IMAGE 2: the square canvas, the camera (rear three-quarter view from the athlete's left), the scale, the pure black background with nothing under the athlete, the athlete's feet, trainers, legs, hips, glutes, torso angle and head, and the whole cable station (its frame, base, column, both pulleys, guide rods and the twelve resting plates) at exactly the same place and size. Same violet colours.\n\nChange only the arms, the two D-handles, the two cables and the raised block:\n- ARMS: both arms have swept down in an arc and now hang straight down by his sides, just in front of the body, with the same small fixed bend in the elbows. Each hand still grips its D-handle; the handles touch the front of the thighs. The shoulders stay down; the torso does NOT lean back.\n- CABLES: the two thin steel cables stay taut and straight, running from the same two high pulleys diagonally down and back to the two handles at the thighs.\n- WEIGHT STACK: the raised block of five plates stays one rigid block and has slid UP the guide rods: its top is now level with the athlete's mid-back, halfway between his armpit and his waist. The twelve plates below stay resting on the base.\n- MUSCLES: the latissimus dorsi stays filled violet #7B72E9 at the same size; the triceps on the back of the upper arms are lighter lilac #9590E0. Every other muscle stays white-grey.\n\nExactly one person. No text, no arrows, no floor, no shadow.",
+      "references": [
+        "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "generated/start.jpg"
+      ],
+      "outputSha256": "da1c3f09e99b73855051dc730f84ec558644a1ca8353a36632d0351897961dec",
+      "status": "used",
+      "outcome": "Arms down by the sides, handles at the hips and upper thighs. Torso drawn a little more square-on than the start; the generator also redrew the stack's top fitting, replaced in the build.",
+      "kept": "docs/exercise-art/sources/straight-arm-pulldown/2026-11-07/generated/finish.jpg"
+    },
+    {
+      "call": "mid, attempt 1",
+      "prompt": "Edit IMAGE 2. IMAGE 2 is the finish of a straight-arm cable pulldown (hands at the thighs) and IMAGE 3 is the start of the same rep (arms forward at shoulder height). Draw the position in between, two-thirds of the way down the sweep. IMAGE 1 is the canonical athlete: keep his identity, white trainers, smooth featureless pelvis, no clothing, and his line and shading style exactly.\n\nKeep EXACTLY the same as IMAGE 2: the square canvas, the camera (rear three-quarter view from the athlete's left), the scale, the pure black background with nothing under the athlete, the athlete's feet, trainers, legs, hips, glutes, torso and head, and the whole cable station (frame, base, column, both high pulleys, guide rods, the selector stem and the twelve resting plates) at exactly the same place and size. Same violet colours.\n\nChange only the arms, the two D-handles, the two cables and the raised block:\n- ARMS: both arms are straight with the same small fixed elbow bend and point forward and down at about 60 degrees below shoulder height, so the hands are in front of the body at hip height, about a forearm's length in front of the hips, reaching toward the station. Each hand grips its D-handle. The torso stays upright; no lean back.\n- CABLES: the two thin steel cables stay taut and straight from the same two high pulleys down to the two handles.\n- WEIGHT STACK: the raised block of five plates stays one rigid block with the same top fitting as IMAGE 2. It sits a little LOWER on the guide rods than in IMAGE 2: its top is level with the athlete's waist. The twelve plates below stay resting on the base.\n- MUSCLES: the latissimus dorsi stays violet #7B72E9 at the same size; the triceps stay lighter lilac #9590E0. Every other muscle stays white-grey.\n\nExactly one person. No text, no arrows, no floor, no shadow.",
+      "references": [
+        "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "generated/finish.jpg",
+        "generated/start.jpg"
+      ],
+      "outputSha256": "75add41ff1fd8d632892fa0289a21295d7b407ed62929920ed4d79fd3197cccf",
+      "status": "rejected",
+      "outcome": "Edited from the finish: the arms did not move; only the stack moved."
+    },
+    {
+      "call": "mid, attempt 2",
+      "prompt": "Edit IMAGE 2. IMAGE 2 is the start of a straight-arm cable pulldown, arms forward at shoulder height. Draw the same rep two-thirds of the way through the downward sweep. IMAGE 1 is the canonical athlete: keep his identity, white trainers, smooth featureless pelvis, no clothing, and his line and shading style exactly.\n\nKeep EXACTLY the same as IMAGE 2: the square canvas, the camera (rear three-quarter view from the athlete's left), the scale, the pure black background with nothing under the athlete, the athlete's feet, trainers, legs, hips, glutes and head, and the whole cable station (frame, base, column, both high pulleys, guide rods and the twelve resting plates) at exactly the same place and size. Same violet colours.\n\nChange only the arms, the two D-handles, the two cables and the raised block:\n- ARMS: both arms swing DOWN from the shoulders, staying straight with the same small fixed elbow bend. They now point forward and steeply down, about 60 degrees below horizontal: the hands are at hip height, roughly 40 cm in front of the hips, still reaching toward the station. Each hand grips its D-handle. The torso stays upright; no lean back.\n- CABLES: the two thin steel cables stay taut and straight from the same two high pulleys, now running more steeply down to the two handles at hip height.\n- WEIGHT STACK: the raised block of five plates stays one rigid block and slides UP the guide rods: its top is now level with the athlete's waist. The twelve plates below stay resting on the base.\n- MUSCLES: the latissimus dorsi stays violet #7B72E9 at the same size; the triceps on the back of the upper arms are lighter lilac #9590E0. Every other muscle stays white-grey.\n\nExactly one person. No text, no arrows, no floor, no shadow.",
+      "references": [
+        "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "generated/start.jpg"
+      ],
+      "outputSha256": "a895adb88191a47bbefd63c3e041f9d9e5854875f84868344489e4d48e3ccd46",
+      "status": "not used",
+      "outcome": "Hands at hip height, about 60 degrees down. Acceptable, but attempt 3 of the early sweep came closer to the true halfway height and was used for the mid position instead."
+    },
+    {
+      "call": "early sweep, attempt 1",
+      "prompt": "Edit IMAGE 2. IMAGE 2 is the start of a straight-arm cable pulldown, arms forward at shoulder height. Draw the same rep one-third of the way through the downward sweep. IMAGE 1 is the canonical athlete: keep his identity, white trainers, smooth featureless pelvis, no clothing, and his line and shading style exactly.\n\nKeep EXACTLY the same as IMAGE 2: the square canvas, the camera (rear three-quarter view from the athlete's left), the scale, the pure black background with nothing under the athlete, the athlete's feet, trainers, legs, hips, glutes and head, and the whole cable station (frame, base, column, both high pulleys, guide rods and the weight stack) at exactly the same place and size. Same violet colours.\n\nChange only the arms, the two D-handles and the two cables:\n- ARMS: both arms swing a little DOWN from the shoulders, staying straight with the same small fixed elbow bend. They now point forward and slightly down, about 30 degrees below horizontal: the hands are at the height of his lower ribs, still far out in front of the body and reaching toward the station. Each hand grips its D-handle. The torso stays upright and braced; no lean back.\n- CABLES: the two thin steel cables stay taut and straight from the same two high pulleys down to the two handles.\n- MUSCLES: the latissimus dorsi stays violet #7B72E9 at the same size; the triceps on the back of the upper arms are lighter lilac #9590E0. Every other muscle stays white-grey.\n\nExactly one person. No text, no arrows, no floor, no shadow.",
+      "references": [
+        "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "generated/start.jpg"
+      ],
+      "outputSha256": "d8872edcf2c5449446ea9ec7ca333b38062bea350aec470441606404bd805fee",
+      "status": "rejected",
+      "outcome": "Asked for about 30 degrees below horizontal; the hands came back at hip height, the same as the mid position."
+    },
+    {
+      "call": "early sweep, attempt 2",
+      "prompt": "Edit IMAGE 2. IMAGE 2 and IMAGE 3 are two positions of the same straight-arm cable pulldown: in IMAGE 2 the arms point straight forward at shoulder height; in IMAGE 3 the arms have swept down until the hands are at hip height. Draw the position EXACTLY HALFWAY BETWEEN them. IMAGE 1 is the canonical athlete: keep his identity, white trainers, smooth featureless pelvis, no clothing, and his line and shading style exactly.\n\nKeep EXACTLY the same as IMAGE 2: the square canvas, the camera (rear three-quarter view from the athlete's left), the scale, the pure black background with nothing under the athlete, the athlete's feet, trainers, legs, hips, glutes and head, and the whole cable station (frame, base, column, both high pulleys, guide rods and the weight stack) at exactly the same place and size. Same violet colours.\n\nChange only the arms, the two D-handles and the two cables:\n- ARMS: straight, with the same small fixed elbow bend, pointing forward and down at about 30 degrees below horizontal. The hands are HIGHER than in IMAGE 3 and LOWER than in IMAGE 2: level with the bottom of his chest, at the height of the lower tip of his shoulder blades, and still far out in front of the body, further forward than in IMAGE 3. Each hand grips its D-handle. The torso stays upright and braced.\n- CABLES: the two thin steel cables stay taut and straight from the same two high pulleys down to the two handles.\n- MUSCLES: the latissimus dorsi stays violet #7B72E9 at the same size; the triceps on the back of the upper arms are lighter lilac #9590E0. Every other muscle stays white-grey.\n\nExactly one person. No text, no arrows, no floor, no shadow.",
+      "references": [
+        "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "generated/start.jpg",
+        "mid attempt 2"
+      ],
+      "outputSha256": "d96c313512136ab36ff4ee1fc2fda9c440c36ffcae07f9cb13747b01d827ba92",
+      "status": "rejected",
+      "outcome": "Asked for halfway between start and mid; the hands came back at hip height again."
+    },
+    {
+      "call": "early sweep, attempt 3",
+      "prompt": "Edit IMAGE 2 with ONE SMALL CHANGE. IMAGE 1 is the canonical athlete: keep his identity, white trainers, smooth featureless pelvis, no clothing, and his line and shading style exactly.\n\nIMAGE 2 shows a straight-arm cable pulldown with the arms straight out in front at shoulder height. Lower both arms only a little: rotate them down at the shoulders by about 25 degrees, keeping them straight with the same small elbow bend. The hands drop only about 25 cm, from shoulder height to CHEST height (level with the athlete's armpits), and stay far out in front of the body, almost as far forward as in IMAGE 2. The hands must be well ABOVE the waist. Each hand keeps gripping its D-handle, and the two thin steel cables stay taut and straight from the same two high pulleys to the handles.\n\nEverything else stays exactly as in IMAGE 2: the square canvas, the rear three-quarter camera, the scale, the pure black background with nothing under the athlete, his head, torso, hips, glutes, legs and trainers, and the whole cable station (frame, base, column, pulleys, guide rods and weight stack) at the same place and size. The latissimus dorsi stays violet #7B72E9; the triceps lighter lilac #9590E0; every other muscle white-grey.\n\nExactly one person. No text, no arrows, no floor, no shadow.",
+      "references": [
+        "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "generated/start.jpg"
+      ],
+      "outputSha256": "835d9dfb68946d67870e5d2d3163ef1fed14ca470d7baf5c5b5dafaf860de0f4",
+      "status": "used",
+      "outcome": "Hands came back in front of the body below chest height, about halfway down the arc: used as the mid-sweep position (frames 3 and 5).",
+      "kept": "docs/exercise-art/sources/straight-arm-pulldown/2026-11-07/generated/mid.jpg"
+    }
+  ],
+  "build": {
+    "script": "docs/exercise-art/sources/straight-arm-pulldown/2026-11-07/build.py",
+    "sha256": "3b71ab8043de115448e2c68b0e64388ca0c06ef2d0158011d4866429353f1a68"
+  },
+  "frames": {
+    "1": "start",
+    "2": "start",
+    "3": "mid",
+    "4": "finish",
+    "5": "mid",
+    "6": "start"
+  }
+}
