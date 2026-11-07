@@ -199,16 +199,24 @@ Functions → the function → Variables) before relying on it.
 
 ## Acceptance checklist (#1097)
 
-- [ ] Paid Apps agreement active; banking/tax done
-- [ ] Subscription group + both Pro products live with the exact product IDs
-- [ ] 7-day free-trial introductory offer on each product (per-product, recorded)
-- [ ] RC project linked to App Store Connect via the `.p8` key
-- [ ] Entitlement `pro` + an Offering mapping both products as packages
-- [ ] Transfer behaviour set to "keep with original App User ID" (recorded)
+- [x] Paid Apps agreement active; banking/tax done
+- [x] Subscription group + both Pro products live with the exact product IDs
+- [x] 7-day free-trial introductory offer on each product (per-product, recorded)
+- [x] RC project linked to App Store Connect via the `.p8` key
+- [x] Entitlement `pro` + an Offering mapping both products as packages
+- [x] Transfer behaviour set to "keep with original App User ID" (recorded)
 - [ ] Public SDK key in Vite env; webhook auth secret + REST key in Secret Manager
 - [x] (after slice 3) Webhook configured with the `Authorization` secret
-- [ ] (after slice 3, before submission) `REVENUECAT_SANDBOX_UIDS` on both
+- [x] (after slice 3, before submission) `REVENUECAT_SANDBOX_UIDS` on both
       functions holds your uid and App Review's demo account uid
+
+STATUS 2026-11-07: everything above is done except the public SDK key,
+which the owner adds as the GitHub secret `VITE_REVENUECAT_IOS_KEY`;
+`deploy-ios.yml` now passes it to the build. The App Store app was added
+to RevenueCat with a new In-App Purchase key named RevenueCat, the
+webhook was checked (All apps, production and sandbox), and App Store
+Connect's App Store Server Notifications point at RevenueCat's URL for
+both production and sandbox. The EU trader status was still pending.
 
 ---
 
