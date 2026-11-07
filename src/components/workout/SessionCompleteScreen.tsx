@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import StartTimeSheet from "@/components/workout/StartTimeSheet";
 import RenameWorkoutSheet from "@/components/workout/RenameWorkoutSheet";
 import { startLabel } from "@/features/program/sessionStart";
@@ -8,7 +8,6 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import SessionBadge from "@/components/workout/SessionBadge";
 import SectionHeading from "@/components/ui/SectionHeading";
-import StatFigure from "@/components/ui/StatFigure";
 import { Card } from "@/components/ui/Card";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { formArtCutoutUrl, sessionLeadArt } from "@/lib/formArtCutouts";
@@ -18,17 +17,36 @@ import MiniMuscleFigure, {
 import { CATEGORY_DISPLAY } from "@/components/analytics/muscleGroupTaxonomy";
 import { movementCategoryLabel } from "@/lib/exerciseMovementCategory";
 import { liftDayLine } from "@/lib/liftDayLabel";
-import { durationFigure, setsFigure, workFigure } from "@/lib/liftFigures";
-import { ChevronDown, ChevronRight, Trophy } from "lucide-react";
+import { setsFigure, workFigure } from "@/lib/liftFigures";
+import { ChevronDown, ChevronRight, Share, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
-import { formatKitLoad } from "@/features/program/loadSteps";
+import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
+import { getFormArtCutout } from "@/lib/formArtCutouts";
+import FinishHero from "@/components/workout/FinishHero";
+import {
+  finishKicker,
+  finishRegister,
+  rewardLine,
+  summaryLine,
+} from "@/lib/finishMoment";
+import type { PostMoment } from "@/lib/postMoments";
+import { liftUnitLabel } from "@/lib/liftLoad";
+import { formatDuration } from "@/utils/formatters";
+import { useAuth } from "@/lib/auth";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { SessionShareAction } from "@/lib/sessionPost";
+
+/* The share card's sheet loads when Share is tapped, never with the
+   screen. */
+const ShareCardSheet = lazyRetry(
+  () => import("@/components/share/ShareCardSheet")
+);
 
 type SetType = "working" | "warmup" | "dropset" | "failure";
 
@@ -74,6 +92,13 @@ interface SessionCompleteScreenProps {
   /** Names an empty workout (Mob2 call 11). Absent for every other
    *  session, and once the save is under way. */
   onRename?: (name: string) => void;
+  /** What the saved session's post says happened (`liftPostMoments`): a
+   *  first, a new best, a streak milestone or a finished plan makes the
+   *  saved screen the full-screen reward (DS4 call 3). Null until saved. */
+  moments?: readonly PostMoment[] | null;
+  /** The account's first workout though it has run before
+   *  (`isFirstOfSport`): rewarded as a first. */
+  firstOfSport?: boolean;
 }
 
 export default function SessionCompleteScreen({
@@ -98,21 +123,25 @@ export default function SessionCompleteScreen({
   planWeek = false,
   accountStart = null,
   onRename,
+  moments = null,
+  firstOfSport = false,
 }: SessionCompleteScreenProps) {
   const today = useLocalDateKey();
   /* The detail being changed: when it started, or its name. */
   const [changing, setChanging] = useState<"start" | "name" | null>(null);
   const liftUnit = useLiftUnit();
-  const heading =
-    saveStatus === "queued"
-      ? "Saved on this phone"
-      : saved
-        ? "Workout saved"
-        : "Review workout";
+  const { profile } = useAuth();
+  const [shareOpen, setShareOpen] = useState(false);
   // The day as Train and the workout screen name it ("Legs B"), handed
   // down by the workout screen. A routine's own name is itself.
   const dayLabel = liftDayLine(dayName);
+  /* Saved, the screen is the session done ("Pull A done"): a save's
+     confirmation never heads it (CODING_STANDARDS' words rules); the
+     save's state is the line under Done. */
+  const heading = saved ? `${dayLabel} done` : "Review workout";
   const reduce = useReducedMotion();
+  /* When the screen opened: the end of the kicker's time range. */
+  const [openedAt] = useState(() => Date.now());
 
   const status = completing
     ? "Saving workout…"
@@ -139,7 +168,7 @@ export default function SessionCompleteScreen({
   /* The three figures are written by `liftFigures`, the rule the saved
      session's page uses too, so the page you come back to says what the
      finish said. */
-  const duration = durationFigure(sessionDurationMinutes);
+  const durationWords = formatDuration(sessionDurationMinutes * 60);
 
   /* Timed exercises contribute no tonnage — a hold's `reps` is a
      DURATION, so weight × reps is not a weight moved. Every writer
@@ -267,9 +296,90 @@ export default function SessionCompleteScreen({
     })
     .filter((e) => e.setsCompleted > 0);
 
+  /* DS4 call 3: a first, a new best, a streak milestone or a finished
+     plan makes the saved screen the reward; anything else, and the review
+     before the save, is the calm summary (`finishRegister`). */
+  const register = saved
+    ? finishRegister(moments, "lift", { firstOfSport })
+    : ({ register: "summary" } as const);
+  const reward = register.register === "reward" ? register : null;
+  const rewardPr = reward?.moment.kind === "pr" ? reward.moment : null;
+  const rewardPrRow = rewardPr
+    ? prRows.find(
+        ({ name, result }) =>
+          name === rewardPr.exercise &&
+          result.kind === "best" &&
+          result.weight === rewardPr.weightKg &&
+          result.reps === rewardPr.reps
+      )
+    : undefined;
+  const rewardExerciseId = rewardPrRow?.exerciseId;
+  const bestBefore = rewardPrRow?.result.bestBeforeSession;
+  const line = reward
+    ? rewardLine(reward.moment, {
+        sport: "lift",
+        distanceUnit: "km",
+        loadIn: (kg) => kitLoadIn(kg, liftUnit, rewardExerciseId),
+        loadUnit: liftUnitLabel(liftUnit),
+        prBefore: bestBefore
+          ? { weightKg: bestBefore.weight, reps: bestBefore.reps }
+          : null,
+      })
+    : null;
+  /* The routine session's one line: a plan's week done, else what comes
+     next. Either way it is said once on the screen. */
+  const quietLine = saved
+    ? (summaryLine(moments) ?? planContext?.next ?? null)
+    : null;
+  const variantNote =
+    sessionVariant === "easier_today"
+      ? "Easier session. Your regular plan stays in place."
+      : sessionVariant === "time_budget"
+        ? "Session prepared for your usual time. Your full programme stays in place."
+        : sessionVariant
+          ? `Express ${sessionVariant === "express45" ? "45" : "30"}: the essentials, done.`
+          : null;
+
+  /* The object: a new best's own lift when it is drawn, else the day's
+     main lift (`sessionLeadArt`), else the muscles it worked. */
+  const prCutout =
+    rewardPr && rewardExerciseId ? getFormArtCutout(rewardExerciseId) : null;
+  const object =
+    prCutout && rewardPr
+      ? { cutout: prCutout, exerciseName: rewardPr.exercise }
+      : leadArt;
+  const picture = object ? (
+    <img
+      src={formArtCutoutUrl(object.cutout)}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      decoding="async"
+      data-lead-drawing={object.exerciseName}
+      className="exercise-drawing h-full max-h-80 w-[min(70%,17rem)] object-contain"
+    />
+  ) : hasMuscleFigure(muscleCategories) ? (
+    <MiniMuscleFigure
+      categories={muscleCategories}
+      className="h-[85%] max-h-72 w-auto"
+    />
+  ) : null;
+
+  /* Its end is its start and the time it took, as the caption counts it;
+     without a start, the day the screen opened. */
+  const endedAt =
+    startedAt !== undefined
+      ? startedAt + Math.round(sessionDurationMinutes * 60_000)
+      : openedAt;
+  const kicker = saved
+    ? finishKicker(startedAt, endedAt)
+    : `${dayLabel} · ${finishKicker(startedAt, endedAt)}`;
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
+      /* No fade under Reduce Motion: the screen is there at once, as every
+         entrance inside it already is. */
+      initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       role="region"
       aria-label="Session completion"
@@ -280,379 +390,390 @@ export default function SessionCompleteScreen({
           on a long one. The footer owns the safe area once it shows. */}
       <div
         className={cn(
-          "max-w-md mx-auto px-5 pt-8 min-h-full flex flex-col space-y-6",
+          "max-w-md mx-auto px-5 min-h-full flex flex-col",
           !saved && "pb-[calc(2rem+var(--safe-bottom))]"
         )}
       >
-        {/* Hero Section */}
-        <motion.div
-          className="text-center space-y-2"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+        {/* The first screen (DS4, §14m rule 30): the kicker, the object,
+            the session done, one figure and one line, then Share and Done
+            pinned under them. Saved, it fills the screen above the footer
+            (5.75rem) less 4.5rem, so the next section's heading and the top
+            of its card peek above Share and Done as the cue that there is
+            more (owner, 7 November 2026: no empty band, no seventh block).
+            The object's area takes the height the rest leaves. */}
+        <div
+          className={cn(
+            "flex flex-col pt-6",
+            saved &&
+              "min-h-[calc(100svh-var(--safe-top)-var(--safe-bottom)-10.25rem)]"
+          )}
         >
-          {/* A display heading (text-h2, bold), under the figures' weight:
-              at the page-title size, centred over three hero figures, it
-              outshouted them. */}
-          <h2 className="text-h2 font-extrabold tracking-tight text-foreground text-balance">
-            {heading}
-          </h2>
-          <p className="text-base text-muted-foreground">{dayLabel}</p>
-          {sessionVariant === "easier_today" ? (
-            <p className="text-sm text-muted-foreground">
-              Easier session. Your regular plan stays in place.
-            </p>
-          ) : sessionVariant === "time_budget" ? (
-            <p className="text-sm text-muted-foreground">
-              Session prepared for your usual time. Your full programme stays in
-              place.
-            </p>
-          ) : sessionVariant ? (
-            <p className="text-sm text-muted-foreground">
-              Express {sessionVariant === "express45" ? "45" : "30"} — the
-              essentials, done.
-            </p>
-          ) : null}
-        </motion.div>
-
-        {/* The result stays visible; only the exercise breakdown is optional. */}
-        <div className="@container">
-          <motion.div
-            className="grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <StatFigure size="lg" count={duration} unit={duration.unit} />
-            <StatFigure size="lg" count={work} unit={work.unit} />
-            <StatFigure size="lg" count={sets} unit={sets.unit} />
-          </motion.div>
+          <FinishHero
+            fill={saved}
+            kicker={kicker}
+            tone={reward?.tone ?? null}
+            confetti={reward?.confetti ?? false}
+            picture={picture}
+            title={heading}
+            figure={{ to: work.to, format: work.format }}
+            caption={`${work.unit} in ${durationWords}`}
+            line={line ?? quietLine ?? (saved ? null : variantNote)}
+            lineIcon={
+              reward?.tone === "achievement"
+                ? "trophy"
+                : reward?.moment.kind === "streak"
+                  ? "flame"
+                  : null
+            }
+          />
         </div>
 
-        {/* The session's best moment lands a beat after the screen, a
-            little large and settling, and its trophy after it (Pol1). */}
-        {bests.length > 0 && (
-          <motion.section
-            aria-labelledby="session-new-bests"
-            className="space-y-2 origin-top"
-            initial={reduce ? false : { opacity: 0, scale: 0.94 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{
-              delay: 0.45,
-              duration: 0.46,
-              ease: [0.34, 1.56, 0.64, 1],
-            }}
-          >
-            <SectionHeading
-              size="compact"
-              id="session-new-bests"
-              className="flex items-center gap-2"
-            >
-              New bests
-              <span className="rounded-full bg-achievement/15 px-2 text-sm font-bold font-mono tabular-nums text-achievement-strong">
-                {bests.length}
-              </span>
-            </SectionHeading>
+        <div className="space-y-6 pt-6 pb-6">
+          {/* Before saving, the decision comes before the session's
+              detail. First what the save says about the session that can
+              still be changed: when it started, and an empty workout's
+              name. */}
+          {!saved && (onChangeStart || onRename) && (
             <Card padded={false} className="divide-y divide-border">
-              {bests.map(({ key, name, exerciseId, result }) => (
-                <div key={key} className="flex items-center gap-3 p-3">
-                  <ExerciseThumb exerciseId={exerciseId ?? ""} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {name}
-                    </p>
-                    <p className="text-lg font-extrabold font-figure tabular-nums text-achievement-strong">
-                      {formatKitLoad(result.weight, liftUnit, exerciseId)} ×{" "}
-                      {result.reps}
-                    </p>
-                    {result.bestBeforeSession && (
-                      <p className="text-xs text-muted-foreground">
-                        Was{" "}
-                        <span className="font-mono tabular-nums">
-                          {formatKitLoad(
-                            result.bestBeforeSession.weight,
-                            liftUnit,
-                            exerciseId
-                          )}{" "}
-                          × {result.bestBeforeSession.reps}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                  <motion.span
-                    className="shrink-0"
-                    initial={
-                      reduce ? false : { opacity: 0, scale: 0.4, rotate: -18 }
-                    }
-                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                    transition={{
-                      delay: 0.7,
-                      duration: 0.52,
-                      ease: [0.34, 1.56, 0.64, 1],
-                    }}
-                  >
-                    <Trophy
-                      className="size-5 text-achievement"
-                      aria-hidden="true"
-                    />
-                  </motion.span>
-                </div>
-              ))}
-            </Card>
-          </motion.section>
-        )}
-
-        {/* The badge this session earned sits with its new bests, on the
-            first screen (Pol1). Below Done, tapping Done (the obvious
-            move) would send it to Home unopened. */}
-        {saved && <SessionBadge />}
-
-        {firsts.length > 0 && (
-          <Card size="compact" tone="muted" className="space-y-1">
-            {firsts.map(({ key, name, exerciseId, result }) => (
-              <p key={key} className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{name}</span>
-                {" · "}
-                <InlineNumerals>
-                  {setPRDescription(result, liftUnit, exerciseId)}
-                </InlineNumerals>
-              </p>
-            ))}
-          </Card>
-        )}
-
-        {hasMuscleFigure(muscleCategories) && (
-          <Card className="@container">
-            {/* At larger text sizes, keep the drawing above the list so
-                it cannot squeeze the muscle names or set counts out. */}
-            <div className="flex items-center gap-4 @max-[16em]:flex-col @max-[16em]:items-stretch">
-              {leadArt ? (
-                <img
-                  src={formArtCutoutUrl(leadArt.cutout)}
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                  decoding="async"
-                  data-lead-drawing={leadArt.exerciseName}
-                  className="exercise-drawing h-32 w-28 shrink-0 self-center object-contain"
-                />
-              ) : (
-                <MiniMuscleFigure
-                  categories={muscleCategories}
-                  className="h-32 w-auto shrink-0 self-center"
+              {onRename && (
+                <DetailRow
+                  label="Name"
+                  value={dayLabel}
+                  action="Rename"
+                  disabled={completing}
+                  onClick={() => setChanging("name")}
                 />
               )}
-              <div className="min-w-0 flex-1">
-                <SectionHeading size="compact" as="h3">
-                  Muscles worked
-                </SectionHeading>
-                <ul className="mt-2 space-y-1">
-                  {muscleRows.slice(0, 4).map(([category, sets]) => (
-                    <li
-                      key={category}
-                      className="flex items-baseline justify-between gap-3 text-sm"
-                    >
-                      <span className="min-w-0 break-words text-foreground">
-                        {CATEGORY_DISPLAY[category] ??
-                          movementCategoryLabel(category)}
-                      </span>
-                      <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
-                        {sets} {sets === 1 ? "set" : "sets"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Before saving, the decision comes before the session's detail.
-            First what the save says about the session that can still be
-            changed: when it started, and an empty workout's name. */}
-        {!saved && (onChangeStart || onRename) && (
-          <Card padded={false} className="divide-y divide-border">
-            {onRename && (
-              <DetailRow
-                label="Name"
-                value={dayLabel}
-                action="Rename"
-                disabled={completing}
-                onClick={() => setChanging("name")}
-              />
-            )}
-            {onChangeStart && startedAt !== undefined && (
-              <DetailRow
-                label="Started"
-                value={startLabel(startedAt, today)}
-                action="Change"
-                numeric
-                disabled={completing}
-                onClick={() => setChanging("start")}
-              />
-            )}
-          </Card>
-        )}
-        {changing === "start" && onChangeStart && startedAt !== undefined && (
-          <StartTimeSheet
-            startedAt={startedAt}
-            accountStart={accountStart}
-            planWeek={planWeek}
-            onSave={(at) => {
-              onChangeStart(at);
-              setChanging(null);
-            }}
-            onClose={() => setChanging(null)}
-          />
-        )}
-        {changing === "name" && onRename && (
-          <RenameWorkoutSheet
-            name={dayName}
-            onSave={(name) => {
-              onRename(name);
-              setChanging(null);
-            }}
-            onClose={() => setChanging(null)}
-          />
-        )}
-        {!saved && (
-          <div className="space-y-2">
-            <p
-              role="status"
-              className="text-center text-sm text-muted-foreground"
-            >
-              {status}
-            </p>
-            {onEdit && unticked > 0 && (
-              <p className="text-center text-sm text-muted-foreground">
-                <InlineNumerals>
-                  {`${unticked} ${unticked === 1 ? "set" : "sets"} you haven't ticked won't be saved.`}
-                </InlineNumerals>
-              </p>
-            )}
-            <Button
-              fullWidth
-              size="lg"
-              aria-label={
-                saveStatus === "needs-attention" ? "Retry sync" : "Save workout"
-              }
-              onClick={onFinish}
-              loading={completing}
-            >
-              {saveStatus === "needs-attention" ? "Retry sync" : "Save workout"}
-            </Button>
-            {onEdit && (
-              <Button
-                fullWidth
-                variant="secondary"
-                onClick={onEdit}
-                disabled={completing}
-              >
-                Edit workout
-              </Button>
-            )}
-            <Button
-              fullWidth
-              variant="ghost"
-              onClick={onClose}
-              disabled={completing}
-            >
-              {saveStatus === "needs-attention"
-                ? "Close"
-                : "Close without saving"}
-            </Button>
-          </div>
-        )}
-        {/* Only what comes next: the week's count is the card under it. */}
-        {saved && planContext && (
-          <p className="text-sm text-muted-foreground">
-            <InlineNumerals>{planContext.next}</InlineNumerals>
-          </p>
-        )}
-        {saved && <WeekPulseCard />}
-        {saved && (
-          <CompletionExtras
-            share={share}
-            badge={false}
-            kind="lift"
-            activationJourneyV2={activationJourneyV2}
-          />
-        )}
-        <details className="group space-y-4">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 [&::-webkit-details-marker]:hidden">
-            Session details
-            <ChevronDown
-              className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
-              aria-hidden="true"
+              {onChangeStart && startedAt !== undefined && (
+                <DetailRow
+                  label="Started"
+                  value={startLabel(startedAt, today)}
+                  action="Change"
+                  numeric
+                  disabled={completing}
+                  onClick={() => setChanging("start")}
+                />
+              )}
+            </Card>
+          )}
+          {changing === "start" && onChangeStart && startedAt !== undefined && (
+            <StartTimeSheet
+              startedAt={startedAt}
+              accountStart={accountStart}
+              planWeek={planWeek}
+              onSave={(at) => {
+                onChangeStart(at);
+                setChanging(null);
+              }}
+              onClose={() => setChanging(null)}
             />
-          </summary>
-          {/* Exercise Breakdown */}
-          <motion.div
-            className="rounded-2xl bg-card overflow-hidden"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="px-4 pt-4 pb-2">
-              <SectionHeading size="compact">Exercises</SectionHeading>
-            </div>
-            <div className="divide-y divide-border/30">
-              {exerciseSummary.map((ex, i) => (
-                <motion.div
-                  key={ex.name}
-                  className="flex items-center justify-between px-4 py-3"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + i * 0.05 }}
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <p className="text-sm text-foreground truncate">
-                      {ex.name}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0 ml-3">
-                    <p className="text-sm font-mono tabular-nums font-semibold text-lifting-strong">
-                      {ex.bestWeight > 0
-                        ? `${formatKitLoad(ex.bestWeight, liftUnit, ex.exerciseId)} × ${ex.bestReps}${ex.repUnit === "seconds" ? " s" : ""}`
-                        : `${ex.bestReps} ${ex.repUnit === "seconds" ? "s" : "reps"}`}
-                    </p>
-                    <p
-                      className="text-xs"
-                      style={{ color: "hsl(var(--muted-foreground))" }}
-                    >
-                      {ex.setsCompleted}/{ex.totalSets} sets
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </details>
-
-        {/* Saved, Done comes last and stays in thumb reach (Pol1): at the
-            bottom of a short screen, pinned to the bottom of a long one,
-            with the save's state under it. */}
-        {saved && (
-          <div className="sticky bottom-0 z-10 -mx-5 mt-auto border-t border-border/50 bg-background px-5 pt-3 pb-[calc(1rem+var(--safe-bottom))]">
-            {onViewWorkout && (
+          )}
+          {changing === "name" && onRename && (
+            <RenameWorkoutSheet
+              name={dayName}
+              onSave={(name) => {
+                onRename(name);
+                setChanging(null);
+              }}
+              onClose={() => setChanging(null)}
+            />
+          )}
+          {!saved && (
+            <div className="space-y-2">
+              <p
+                role="status"
+                className="text-center text-sm text-muted-foreground"
+              >
+                {status}
+              </p>
+              {onEdit && unticked > 0 && (
+                <p className="text-center text-sm text-muted-foreground">
+                  <InlineNumerals>
+                    {`${unticked} ${unticked === 1 ? "set" : "sets"} you haven't ticked won't be saved.`}
+                  </InlineNumerals>
+                </p>
+              )}
               <Button
                 fullWidth
-                variant="secondary"
-                className="mb-2"
-                onClick={onViewWorkout}
+                variant="neutral"
+                aria-label={
+                  saveStatus === "needs-attention"
+                    ? "Retry sync"
+                    : "Save workout"
+                }
+                onClick={onFinish}
+                loading={completing}
               >
-                View workout
+                {saveStatus === "needs-attention"
+                  ? "Retry sync"
+                  : "Save workout"}
               </Button>
-            )}
-            <Button
-              ref={doneRef}
-              fullWidth
-              size="lg"
-              aria-label="Done"
-              onClick={onClose}
+              {onEdit && (
+                <Button
+                  fullWidth
+                  variant="secondary"
+                  onClick={onEdit}
+                  disabled={completing}
+                >
+                  Edit workout
+                </Button>
+              )}
+              <Button
+                fullWidth
+                variant="ghost"
+                onClick={onClose}
+                disabled={completing}
+              >
+                {saveStatus === "needs-attention"
+                  ? "Close"
+                  : "Close without saving"}
+              </Button>
+            </div>
+          )}
+
+          {/* Below the first screen: the session's new bests in full, the
+              badge it earned, what comes next, the week, sharing, and the
+              muscles it worked. The bests land a beat after the screen, a
+              little large and settling, and their trophy after them
+              (Pol1). */}
+          {bests.length > 0 && (
+            <motion.section
+              aria-labelledby="session-new-bests"
+              className="space-y-2 origin-top"
+              initial={reduce ? false : { opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                delay: 0.45,
+                duration: 0.46,
+                ease: [0.34, 1.56, 0.64, 1],
+              }}
             >
-              Done
+              <SectionHeading
+                size="compact"
+                id="session-new-bests"
+                className="flex items-center gap-2"
+              >
+                New bests
+                <span className="rounded-full bg-achievement/15 px-2 text-sm font-bold font-mono tabular-nums text-achievement-strong">
+                  {bests.length}
+                </span>
+              </SectionHeading>
+              <Card padded={false} className="divide-y divide-border">
+                {bests.map(({ key, name, exerciseId, result }) => (
+                  <div key={key} className="flex items-center gap-3 p-3">
+                    <ExerciseThumb exerciseId={exerciseId ?? ""} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {name}
+                      </p>
+                      <p className="text-lg font-extrabold font-figure tabular-nums text-achievement-strong">
+                        {formatKitLoad(result.weight, liftUnit, exerciseId)} ×{" "}
+                        {result.reps}
+                      </p>
+                      {result.bestBeforeSession && (
+                        <p className="text-xs text-muted-foreground">
+                          Was{" "}
+                          <span className="font-mono tabular-nums">
+                            {formatKitLoad(
+                              result.bestBeforeSession.weight,
+                              liftUnit,
+                              exerciseId
+                            )}{" "}
+                            × {result.bestBeforeSession.reps}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                    <motion.span
+                      className="shrink-0"
+                      initial={
+                        reduce ? false : { opacity: 0, scale: 0.4, rotate: -18 }
+                      }
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      transition={{
+                        delay: 0.7,
+                        duration: 0.52,
+                        ease: [0.34, 1.56, 0.64, 1],
+                      }}
+                    >
+                      <Trophy
+                        className="size-5 text-achievement"
+                        aria-hidden="true"
+                      />
+                    </motion.span>
+                  </div>
+                ))}
+              </Card>
+            </motion.section>
+          )}
+
+          {/* The badge this session earned sits with its new bests, the
+              first thing under the first screen (Pol1, DS4). */}
+          {saved && <SessionBadge />}
+
+          {firsts.length > 0 && (
+            <Card size="compact" tone="muted" className="space-y-1">
+              {firsts.map(({ key, name, exerciseId, result }) => (
+                <p key={key} className="text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground">{name}</span>
+                  {" · "}
+                  <InlineNumerals>
+                    {setPRDescription(result, liftUnit, exerciseId)}
+                  </InlineNumerals>
+                </p>
+              ))}
+            </Card>
+          )}
+
+          {/* What comes next, when the first screen's line said something
+              else; and a shorter session's note, said once. */}
+          {saved && planContext && quietLine !== planContext.next && (
+            <p className="text-sm text-muted-foreground">
+              <InlineNumerals>{planContext.next}</InlineNumerals>
+            </p>
+          )}
+          {saved && variantNote && (
+            <p className="text-sm text-muted-foreground">{variantNote}</p>
+          )}
+          {saved && <WeekPulseCard />}
+          {saved && (
+            <CompletionExtras
+              share={share}
+              badge={false}
+              kind="lift"
+              activationJourneyV2={activationJourneyV2}
+            />
+          )}
+
+          {hasMuscleFigure(muscleCategories) && (
+            <Card className="@container">
+              {/* The session's drawing is the first screen's, so the
+                  muscles figure stands here, unless it already stands up
+                  there. At larger text sizes it goes above the list, so it
+                  cannot squeeze the names or set counts out. */}
+              <div className="flex items-center gap-4 @max-[16em]:flex-col @max-[16em]:items-stretch">
+                {object && (
+                  <MiniMuscleFigure
+                    categories={muscleCategories}
+                    className="h-32 w-auto shrink-0 self-center"
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <SectionHeading size="compact" as="h3">
+                    Muscles worked
+                  </SectionHeading>
+                  <ul className="mt-2 space-y-1">
+                    {muscleRows.slice(0, 4).map(([category, count]) => (
+                      <li
+                        key={category}
+                        className="flex items-baseline justify-between gap-3 text-sm"
+                      >
+                        <span className="min-w-0 break-words text-foreground">
+                          {CATEGORY_DISPLAY[category] ??
+                            movementCategoryLabel(category)}
+                        </span>
+                        <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+                          {count} {count === 1 ? "set" : "sets"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          <details className="group space-y-4">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 [&::-webkit-details-marker]:hidden">
+              Session details
+              <ChevronDown
+                className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+                aria-hidden="true"
+              />
+            </summary>
+            {/* Exercise Breakdown */}
+            <motion.div
+              className="rounded-2xl bg-card overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <div className="flex items-baseline justify-between gap-3 px-4 pt-4 pb-2">
+                <SectionHeading size="compact">Exercises</SectionHeading>
+                {/* Working sets only, as every set count here. */}
+                <span
+                  data-session-sets
+                  className="text-sm font-mono tabular-nums text-muted-foreground"
+                >
+                  {sets.format(sets.to)} {sets.unit}
+                </span>
+              </div>
+              <div className="divide-y divide-border/30">
+                {exerciseSummary.map((ex, i) => (
+                  <motion.div
+                    key={ex.name}
+                    className="flex items-center justify-between px-4 py-3"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 + i * 0.05 }}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <p className="text-sm text-foreground truncate">
+                        {ex.name}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <p className="text-sm font-mono tabular-nums font-semibold text-lifting-strong">
+                        {ex.bestWeight > 0
+                          ? `${formatKitLoad(ex.bestWeight, liftUnit, ex.exerciseId)} × ${ex.bestReps}${ex.repUnit === "seconds" ? " s" : ""}`
+                          : `${ex.bestReps} ${ex.repUnit === "seconds" ? "s" : "reps"}`}
+                      </p>
+                      <p
+                        className="text-xs"
+                        style={{ color: "hsl(var(--muted-foreground))" }}
+                      >
+                        {ex.setsCompleted}/{ex.totalSets} sets
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </details>
+          {/* The saved workout, where it can be changed or deleted. */}
+          {saved && onViewWorkout && (
+            <Button fullWidth variant="secondary" onClick={onViewWorkout}>
+              View workout
             </Button>
+          )}
+        </div>
+
+        {/* Saved, Share and Done come last and stay in thumb reach (Pol1):
+            at the bottom of a short screen, pinned to the bottom of a long
+            one, with the save's state under them. Done is the screen's one
+            filled button, neutral (DS4 call 1a); Share is its outline, and
+            opens the session's card. */}
+        {saved && (
+          <div className="sticky bottom-0 z-10 -mx-5 mt-auto bg-background px-5 pt-3 pb-[calc(0.5rem+var(--safe-bottom))]">
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShareOpen(true)}
+                leftIcon={<Share className="size-4" aria-hidden="true" />}
+              >
+                Share
+              </Button>
+              <Button
+                ref={doneRef}
+                variant="neutral"
+                className="flex-[1.4]"
+                aria-label="Done"
+                onClick={onClose}
+              >
+                Done
+              </Button>
+            </div>
             <p
               role="status"
               className="mt-2 text-center text-sm text-muted-foreground"
@@ -662,6 +783,30 @@ export default function SessionCompleteScreen({
           </div>
         )}
       </div>
+      {shareOpen && (
+        <Suspense fallback={null}>
+          <ShareCardSheet
+            open
+            onOpenChange={setShareOpen}
+            data={{
+              template: "lift",
+              handle: profile?.displayName || "Athlete",
+              date: finishKicker(undefined, openedAt),
+              totalVolumeKg: totalVolume,
+              exerciseCount: exerciseSummary.length,
+              prCount: bests.length,
+              prExercise: bests[0]?.name,
+              durationSec: Math.round(sessionDurationMinutes * 60),
+              headline: heading,
+              line: line
+                ? `${line.before}${line.figure}${line.after}`
+                : undefined,
+              tone: reward?.tone,
+              artSrc: object ? formArtCutoutUrl(object.cutout) : undefined,
+            }}
+          />
+        </Suspense>
+      )}
     </motion.div>
   );
 }

@@ -123,3 +123,25 @@ it("starts the count over when the unit changes", () => {
   act(() => state.load.forEach((fn) => fn()));
   expect(lapMarkers()).toEqual(["1", "2"]);
 });
+
+it("draws the route again on the map a theme change builds", () => {
+  const { rerender } = render(
+    <RunMap
+      points={route}
+      currentPoint={null}
+      distanceMarkers
+      darkMode={false}
+    />
+  );
+  act(() => state.load.forEach((fn) => fn()));
+  expect(lapMarkers()).toEqual(["1", "2", "3"]);
+  // What the old map drew went with it.
+  state.load = [];
+  state.markers = [];
+  rerender(
+    <RunMap points={route} currentPoint={null} distanceMarkers darkMode />
+  );
+  // The new map's load draws the route and its markers afresh.
+  act(() => state.load.forEach((fn) => fn()));
+  expect(lapMarkers()).toEqual(["1", "2", "3"]);
+});

@@ -3816,3 +3816,26 @@ the release, the console and a phone.
       deletes within about a day of `expiresAt`). Passing: that day's
       `pulse` document is gone, and so is every `pulseCredits` document
       whose `dateKey` is that day.
+
+## The finish screens' reward and summary (DS4 call 3, 2026-11-07)
+
+After a lift or a run, a first, a new best, a streak milestone or a
+finished plan makes the finish screen the full-screen reward: the
+session's drawing (or the run's map) in a light of the achievement's
+colour, the session done, one figure in Archivo's wide heavy italic,
+one sentence, Share and Done; confetti for a first, a best and a plan.
+Every other session gets the same screen calm. The register is
+`finishRegister` (`src/lib/finishMoment.ts`, unit-tested); the frames
+are `finish-screens.capture.spec.ts`. These need a phone.
+
+- [ ] **The display figure draws in the wide italic cut on the iPhone.**
+      Finish a workout on a TestFlight build. Passing: the kg figure is
+      the slanted wide Archivo of `built-finish-lift-*` in
+      `docs/visual-audit/ds4-2026-11-07/`, not an upright or synthesised
+      slant, and a five-figure total fits a 320 pt screen.
+- [ ] **Confetti on a first and a best, none under Reduce Motion.** On a
+      new account's first workout, and on a set heavier than a lift's
+      best. Passing: confetti falls once as the screen opens, in purple
+      for the first and gold for the best, and nothing falls with
+      Settings → Accessibility → Motion → Reduce Motion on, or on a
+      routine session.

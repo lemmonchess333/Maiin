@@ -6,7 +6,7 @@
  * opening it where FW1 says a session's badge opens.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { SetPR } from "@/lib/prTracking";
 import { LiftUnitContext } from "@/hooks/useLiftUnit";
@@ -50,6 +50,9 @@ vi.mock("@/features/streaks/BadgeEarnedModal", () => ({
     <div data-testid="session-badge">{badge.name}</div>
   ),
 }));
+
+const confetti = vi.hoisted(() => vi.fn());
+vi.mock("canvas-confetti", () => ({ default: confetti }));
 
 import SessionCompleteScreen from "../SessionCompleteScreen";
 
@@ -173,17 +176,23 @@ describe("SessionCompleteScreen — saved (Pol1)", () => {
     const badge = screen.getByTestId("session-badge");
     const bests = screen.getByRole("heading", { name: /New bests/ });
     expect(follows(bests, badge)).toBe(true);
-    expect(follows(badge, screen.getByText("Next: Legs · Squat focus"))).toBe(
-      true
-    );
+    // What comes next is the routine first screen's line, said once.
+    const next = screen.getByText("Next: Legs · Squat focus");
+    expect(next.closest("[data-finish-line]")).not.toBeNull();
+    expect(follows(next, bests)).toBe(true);
+    expect(screen.getAllByText("Next: Legs · Squat focus")).toHaveLength(1);
     // The week's count is the week card's; the plan line does not repeat it.
     expect(screen.queryByText(/planned lifts complete/)).toBeNull();
     expect(
       follows(
         badge,
-        await screen.findByRole("switch", {
-          name: "Evening reminder if you haven't logged",
-        }, { timeout: 5_000 })
+        await screen.findByRole(
+          "switch",
+          {
+            name: "Evening reminder if you haven't logged",
+          },
+          { timeout: 5_000 }
+        )
       )
     ).toBe(true);
     // Once: the extras below no longer carry a second copy.
@@ -191,14 +200,24 @@ describe("SessionCompleteScreen — saved (Pol1)", () => {
   });
 
   it("puts Done last, pinned to the bottom, with the save's state under it", () => {
-    render(<SessionCompleteScreen {...screenProps({ saved: true })} />);
+    render(
+      <SessionCompleteScreen
+        {...screenProps({ saved: true, onViewWorkout: () => {} })}
+      />
+    );
     const done = screen.getByRole("button", { name: "Done" });
     const buttons = screen.getAllByRole("button");
     expect(buttons[buttons.length - 1]).toBe(done);
     expect(follows(screen.getByText("Session details"), done)).toBe(true);
+    expect(
+      follows(screen.getByRole("button", { name: "View workout" }), done)
+    ).toBe(true);
     expect(follows(done, screen.getByRole("status"))).toBe(true);
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
-    expect(done.parentElement).toHaveClass("sticky", "bottom-0");
+    // Share beside it, its outline; Done the one filled button (DS4 1a).
+    const share = screen.getByRole("button", { name: "Share" });
+    expect(share.parentElement).toBe(done.parentElement);
+    expect(done.parentElement!.parentElement).toHaveClass("sticky", "bottom-0");
   });
 
   it("opens Session details on the app's chevron, not the browser's triangle", () => {
@@ -256,5 +275,127 @@ describe("SessionCompleteScreen — saved (Pol1)", () => {
       screen.getByRole("heading", { name: /New bests/ })
     ).toBeInTheDocument();
     expect(landing()).toBe(false);
+  });
+});
+
+/* DS4 call 3: the saved screen is the full-screen reward for a first, a
+   new best, a streak milestone or a finished plan, and the calm summary
+   for anything else. */
+describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
+  const register = () =>
+    document
+      .querySelector("[data-finish-register]")!
+      .getAttribute("data-finish-register");
+  const line = () => document.querySelector("[data-finish-line]");
+
+  it("heads the saved session with what was done, never the save", () => {
+    render(<SessionCompleteScreen {...screenProps({ saved: true })} />);
+    expect(
+      screen.getByRole("heading", { name: "Push done" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /saved/i })).toBeNull();
+  });
+
+  it("makes a new best the reward: its lift in a gold light, and the sentence", () => {
+    render(
+      <SessionCompleteScreen
+        {...screenProps({
+          saved: true,
+          moments: [
+            { kind: "pr", exercise: "Bench Press", weightKg: 80, reps: 8 },
+          ],
+        })}
+      />
+    );
+    expect(register()).toBe("reward");
+    expect(document.querySelector("[data-finish-glow]")).toHaveAttribute(
+      "data-finish-glow",
+      "achievement"
+    );
+    expect(line()).toHaveTextContent(
+      "You benched 80 kg × 8, a new best by 2.5 kg."
+    );
+    expect(
+      line()!.querySelector("span.text-achievement-strong")
+    ).toHaveTextContent("80 kg × 8");
+    expect(
+      document.querySelector("[data-finish-object] [data-lead-drawing]")
+    ).toHaveAttribute("data-lead-drawing", "Bench Press");
+  });
+
+  it("keeps a routine session calm: no light, no confetti, its next session", async () => {
+    motionPref.reduce = false;
+    render(
+      <SessionCompleteScreen {...screenProps({ saved: true, moments: [] })} />
+    );
+    expect(register()).toBe("summary");
+    expect(document.querySelector("[data-finish-glow]")).toBeNull();
+    expect(line()).toHaveTextContent("Next: Legs · Squat focus");
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(confetti).not.toHaveBeenCalled();
+  });
+
+  it("throws confetti for a first, once, and none under Reduce Motion", async () => {
+    confetti.mockClear();
+    motionPref.reduce = true;
+    const view = render(
+      <SessionCompleteScreen
+        {...screenProps({ saved: true, moments: [{ kind: "firstSession" }] })}
+      />
+    );
+    expect(line()).toHaveTextContent("You finished your first workout!");
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(confetti).not.toHaveBeenCalled();
+    view.unmount();
+
+    motionPref.reduce = false;
+    render(
+      <SessionCompleteScreen
+        {...screenProps({ saved: true, moments: [{ kind: "firstSession" }] })}
+      />
+    );
+    await waitFor(() => expect(confetti).toHaveBeenCalledTimes(1));
+  });
+
+  it("rewards a runner's first workout as a first, though its post claims none", () => {
+    render(
+      <SessionCompleteScreen
+        {...screenProps({ saved: true, moments: [], firstOfSport: true })}
+      />
+    );
+    expect(register()).toBe("reward");
+    expect(line()).toHaveTextContent("You finished your first workout!");
+  });
+
+  it("gives a streak milestone the flame's purple and no confetti", async () => {
+    confetti.mockClear();
+    motionPref.reduce = false;
+    render(
+      <SessionCompleteScreen
+        {...screenProps({
+          saved: true,
+          moments: [{ kind: "streak", days: 7 }],
+        })}
+      />
+    );
+    expect(document.querySelector("[data-finish-glow]")).toHaveAttribute(
+      "data-finish-glow",
+      "lifting"
+    );
+    expect(line()).toHaveTextContent(
+      "You've trained 7 days in a row. 14 is next."
+    );
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(confetti).not.toHaveBeenCalled();
+  });
+
+  it("offers no reward before the save", () => {
+    render(
+      <SessionCompleteScreen
+        {...screenProps({ moments: [{ kind: "firstSession" }] })}
+      />
+    );
+    expect(register()).toBe("summary");
+    expect(screen.queryByRole("button", { name: "Share" })).toBeNull();
   });
 });

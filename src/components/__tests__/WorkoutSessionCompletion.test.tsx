@@ -864,9 +864,7 @@ describe("workout save acknowledgement", () => {
     expect(h.success).not.toHaveBeenCalled();
     expect(close).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Workout saved" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: / done$/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(close).toHaveBeenCalledOnce();
     expect(h.clear).toHaveBeenCalledOnce();
@@ -944,18 +942,14 @@ it("keeps the recovery draft while queued, then clears it only when synced", asy
   await vi.waitFor(() =>
     expect(screen.getByText("Waiting to sync")).toBeVisible()
   );
-  expect(
-    screen.getByRole("heading", { name: "Saved on this phone" })
-  ).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: / done$/ })).toBeInTheDocument();
   expect(h.clear).not.toHaveBeenCalled();
   expect(h.save).toHaveBeenCalledWith(
     expect.objectContaining({ completionPending: true, completionId: "test" })
   );
   await act(async () => settle("synced"));
   expect(screen.getByText("Saved")).toBeVisible();
-  expect(
-    screen.getByRole("heading", { name: "Workout saved" })
-  ).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: / done$/ })).toBeInTheDocument();
   expect(h.clear).toHaveBeenCalledWith("test");
 });
 

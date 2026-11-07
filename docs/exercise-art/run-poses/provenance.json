@@ -16,7 +16,8 @@
       "generator": "Built-in image_gen",
       "model": "Built-in image generation; model not exposed by tool",
       "output": "Generated PNG encoded to JPEG quality 98, 4:4:4 for existing black-background cutout pipeline; no anatomy edited by code.",
-      "review": "Owner approved the relaxed direction. Visual full-body and small-card review, not biomechanical certification."
+      "review": "Owner approved the relaxed direction. Visual full-body and small-card review, not biomechanical certification.",
+      "cutout": "public/form-art/run-easy.webp: the lit muscles moved from the drawn purple to running's coral (hue 348, saturation and lightness kept) by npm run art:run-poses (scripts/art/recolour.ts), 7 November 2026. The source above is unchanged."
     },
     "run-fast": {
       "file": "docs/exercise-art/run-poses/run-fast.jpg",
@@ -36,7 +37,8 @@
       "prompt": "Educational running illustration, one single pose (not a sequence or collage). Reference attached canonical athlete for exact identity: faceless bald white/light-grey anatomical athlete, fine dark contours, smooth neutral featureless pelvis, white trainers. Match the second attached image's rendering style exactly. Fast running for tempo, intervals and races, fixed side view, athlete facing right, in the flight phase with both feet off the ground: a long stride, the front knee driven high with the front thigh rising toward horizontal and the lower leg swinging forward; the rear leg extended behind after push-off, its foot below hip height. Strong arm drive: the front hand rises toward chin height with the elbow bent about 90 degrees, the rear elbow driven back past the torso. Torso tall with a slight forward lean from the ankles, relaxed hands. Same identity, scale and camera as an easy-running pose. Muscle colours: strongest purple on the glutes, quadriceps, hamstrings and calves; pale lilac on the hip flexors and core; every other muscle white-grey. Pure solid black background. Square canvas, the whole figure filling about 80% of the height with even margins, both feet fully inside the frame. One person only. No floor line, track, road, shadow, scenery, motion lines, labels, text, logos or arrows.",
       "generator": "scripts/art/gemini-image.py",
       "model": "gemini-3-pro-image",
-      "output": "Original 1024x1024 API JPEG retained unchanged."
+      "output": "Original 1024x1024 API JPEG retained unchanged.",
+      "cutout": "public/form-art/run-fast.webp: the lit muscles moved from the drawn purple to running's coral (hue 348, saturation and lightness kept) by npm run art:run-poses (scripts/art/recolour.ts), 7 November 2026. The source above is unchanged."
     },
     "rest-walk": {
       "file": "docs/exercise-art/run-poses/rest-walk.jpg",
@@ -57,7 +59,8 @@
       "generator": "scripts/art/gemini-image.py",
       "model": "gemini-3-pro-image",
       "output": "Original 1024x1024 API JPEG retained unchanged; the first and only generation.",
-      "review": "Drawn for Home's rest-day hero (DS4 §14m rules 24 and 26), 7 November 2026. Visual full-body and hero-size review in both themes; awaiting the owner's release."
+      "review": "Drawn for Home's rest-day hero (DS4 §14m rules 24 and 26), 7 November 2026. Visual full-body and hero-size review in both themes; awaiting the owner's release.",
+      "cutout": "public/form-art/rest-walk.webp keeps the drawn purple: a rest day belongs to the plan, not to a run."
     }
   }
 }

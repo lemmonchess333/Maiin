@@ -252,7 +252,9 @@ for (const budget of [null, 30] as const) {
       page.getByRole("button", { name: "Done", exact: true })
     ).toBeVisible({ timeout: 20_000 });
     await expect(
-      page.getByRole("heading", { name: "Workout saved", exact: true })
+      // DS4: the saved session heads the screen ("Upper A done"), never
+      // the save.
+      page.getByRole("heading", { name: / done$/ })
     ).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("dialog")).toHaveCount(0);
     // A first finish asks once, inline, with three equal answers. Nothing
