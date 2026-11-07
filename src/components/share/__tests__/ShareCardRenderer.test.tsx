@@ -113,27 +113,63 @@ describe("ShareCardRenderer", () => {
     expect(screen.queryByText("TROPOS")).toBeNull();
   });
 
-  it("a run card wears the brand purple, as a lift card does", () => {
-    /* Its maroon background and coral route read as another running
-       app's red once the card left the app. */
-    const card = (template: ShareTemplate) => {
+  /* DS4 (§0 rules 1 and 2, §14m rules 12-14 and 31): the card wears the
+     session's meaning colour on the app's dark stage, as the finish screen
+     does. A run's route is running's coral and a new best's is gold;
+     never the lifting purple on a run, and never a field of colour. */
+  it("draws a run in running's coral and a new best in gold, on the dark stage", () => {
+    const card = (data: Partial<ShareCardRenderData>) => {
       const { container, unmount } = render(
         <ShareCardRenderer
-          data={{ ...base, template, background: "brand" }}
+          data={{ ...base, background: "brand", ...data }}
           offscreen={false}
         />
       );
       const root = container.firstElementChild as HTMLElement;
       const look = {
-        background: root.style.backgroundImage,
+        stage: root.style.backgroundColor,
+        light: root.style.backgroundImage,
         route: document.querySelector("path[d]")?.getAttribute("stroke"),
       };
       unmount();
       return look;
     };
-    const run = card("run");
-    expect(run.background).toBe(card("lift").background);
-    expect(run.route?.toLowerCase()).toBe("#7b72e9");
+    const run = card({ template: "run" });
+    expect(run.route?.toLowerCase()).toBe("#d4637a");
+    expect(run.stage).not.toBe("");
+    // One hue, fading out: a radial light of the route's own colour.
+    expect(run.light).toMatch(/^radial-gradient/);
+    expect(run.light.toLowerCase()).not.toContain("7b72e9");
+    const best = card({ template: "run", tone: "achievement" });
+    expect(best.route?.toLowerCase()).toBe("#ffd700");
+    expect(card({ template: "lift" }).light.toLowerCase()).not.toContain(
+      "d4637a"
+    );
+  });
+
+  it("LIFT heads the card with the session done, its drawing and the reward's sentence", () => {
+    render(
+      <ShareCardRenderer
+        data={{
+          ...base,
+          template: "lift",
+          headline: "Pull A done",
+          line: "You rowed 35 kg × 8, a new best by 2.5 kg.",
+          tone: "achievement",
+          artSrc: "/form-art/barbell-row.webp",
+        }}
+        offscreen={false}
+      />
+    );
+    expect(screen.getByText("Pull A done")).toBeTruthy();
+    expect(
+      screen.getByText("You rowed 35 kg × 8, a new best by 2.5 kg.")
+    ).toBeTruthy();
+    expect(document.querySelector("img")?.getAttribute("src")).toBe(
+      "/form-art/barbell-row.webp"
+    );
+    // The sentence says the best, so the PR pill does not say it twice.
+    expect(screen.queryByText(/2 PRs/)).toBeNull();
   });
 
   it("RUN draws the abstract route polyline from the supplied path", () => {
@@ -175,7 +211,7 @@ describe("ShareCardRenderer", () => {
       />
     );
     expect(screen.getByText(/Back Squat/)).toBeTruthy();
-    expect(screen.getByText("total volume")).toBeTruthy();
+    expect(screen.getByText(/^kg lifted/)).toBeTruthy();
     unmount();
 
     render(
@@ -196,7 +232,8 @@ describe("ShareCardRenderer", () => {
         offscreen={false}
       />
     );
-    expect(container.textContent).toContain("12.4t");
+    // The hero figure in full, grouped, as the finish screen writes it.
+    expect(container.textContent).toMatch(/12\D400kg lifted/);
     unmount();
     const lb = render(
       <ShareCardRenderer
@@ -204,8 +241,8 @@ describe("ShareCardRenderer", () => {
         offscreen={false}
       />
     );
-    expect(lb.container.textContent).toContain("27.3k lb");
-    expect(lb.container.textContent).not.toContain("12.4t");
+    expect(lb.container.textContent).toMatch(/27\D337lb lifted/);
+    expect(lb.container.textContent).not.toMatch(/12\D400/);
     lb.unmount();
     const small = render(
       <ShareCardRenderer
@@ -218,7 +255,7 @@ describe("ShareCardRenderer", () => {
         offscreen={false}
       />
     );
-    expect(small.container.textContent).toContain("882 lb");
+    expect(small.container.textContent).toContain("882lb lifted");
   });
 
   it("HYBRID surfaces the combined lift + run rhythm (the differentiator)", () => {

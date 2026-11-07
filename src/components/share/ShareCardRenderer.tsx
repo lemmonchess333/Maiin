@@ -1,5 +1,8 @@
 import type { CSSProperties, Ref } from "react";
-import { formatClock } from "@/utils/formatters";
+// The display register's wide heavy italic (DESIGN_GUIDE §4): the card's
+// hero figure is set in it, as the finish screen sets its one figure.
+import "@fontsource-variable/archivo/wdth-italic.css";
+import { formatClock, formatDuration } from "@/utils/formatters";
 import {
   distanceUnitLabel,
   elevationUnitLabel,
@@ -9,7 +12,9 @@ import {
 } from "@/lib/distanceUnits";
 import { paceMinSec, distanceValue, elevationLabel } from "@/lib/runLabels";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
-import { liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
+import { THEME } from "@/lib/theme";
+import type { FinishTone } from "@/lib/finishMoment";
 
 /** `12.3km` — the compact no-space form this card's small stats use. */
 function distanceLabel2Compact(km: number | undefined, unit: DistanceUnit) {
@@ -55,6 +60,14 @@ export type ShareBackground = "brand" | "dark" | "transparent" | "photo";
 const RUN_CORAL = "#D4637A";
 const LIFT_PURPLE = "#7B72E9";
 const NUTRITION_ORANGE = "#D9884E";
+/** Gold means a new best and nothing else (§14b): the tier gold, as the
+ *  recap's streak already draws it. */
+const ACHIEVEMENT_GOLD = THEME.tier.gold;
+/** The card's stage: the app's own dark page (§14m rule 31), never a
+ *  field of colour. */
+const STAGE = THEME.bg;
+/** The card's words, white on its dark stage. */
+const INK = "#ffffff";
 const ARCHIVO = "'Archivo Variable', ui-sans-serif, system-ui, sans-serif";
 const JAKARTA =
   "'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif";
@@ -101,6 +114,18 @@ export interface ShareCardRenderData {
    *  the rows are miles. */
   splits?: { lap: number; paceSecPerKm: number }[];
 
+  // ── THE FINISH (DS4) ──
+  /** The session done, as the finish screen heads it ("Pull A done"). */
+  headline?: string;
+  /** The reward's one sentence (`rewardLine`), when the session earned
+   *  one. */
+  line?: string;
+  /** The achievement's colour: gold for a new best, the sport's for a
+   *  first, the flame's purple for a streak. Absent, the sport's. */
+  tone?: FinishTone;
+  /** The session's drawing (a lift's main lift), same-origin. */
+  artSrc?: string;
+
   // ── LIFT ──
   totalVolumeKg?: number;
   exerciseCount?: number;
@@ -129,22 +154,26 @@ const DIMS: Record<ShareFormat, { w: number; h: number }> = {
 
 function bgStyle(
   background: ShareBackground,
-  template: ShareTemplate
+  template: ShareTemplate,
+  meaning: string
 ): CSSProperties {
   switch (background) {
     case "brand":
-      // Token gradient on a dark base, so the Archivo numerals pop and white
-      // numerals + footer stay legible at every stop. A run wears the brand
-      // purple, as a lift does: its own maroon and coral read as another
-      // running app's red once the card left the app. HYBRID keeps the
-      // purple→coral signature.
+      // DS4 (§14m rules 13, 14, 31): the app's dark stage with one soft
+      // light of the session's meaning colour behind its picture, fading
+      // into the page. A run is coral and a lift purple, as everywhere in
+      // the app; a new best is gold. Nutrition and the hybrid and recap
+      // cards keep their own washes.
+      if (template === "run" || template === "lift")
+        return {
+          backgroundColor: STAGE,
+          backgroundImage: `radial-gradient(ellipse 72% 40% at 50% ${template === "lift" ? 30 : 32}%, ${meaning}5c 0%, ${meaning}24 45%, ${meaning}00 100%)`,
+        };
       return {
         backgroundImage:
-          template === "run" || template === "lift"
-            ? `linear-gradient(155deg, #100e1a 0%, #181428 55%, #221c38 100%)`
-            : template === "nutrition"
-              ? `linear-gradient(155deg, #15100a 0%, #221a10 55%, #33260f 100%)`
-              : `linear-gradient(155deg, #130f1a 0%, #1b1430 55%, #2a1a26 100%)`,
+          template === "nutrition"
+            ? `linear-gradient(155deg, #15100a 0%, #221a10 55%, #33260f 100%)`
+            : `linear-gradient(155deg, #130f1a 0%, #1b1430 55%, #2a1a26 100%)`,
       };
     case "dark":
       return { backgroundColor: "#0a0a0f" };
@@ -153,6 +182,17 @@ function bgStyle(
     case "photo":
       return { backgroundColor: "#0a0a0f" };
   }
+}
+
+/** The colour the card's data wears: the achievement's, else the sport's
+ *  (purple lifting, coral running; never crossed). */
+function meaningFor(data: ShareCardRenderData): string {
+  if (data.tone === "achievement") return ACHIEVEMENT_GOLD;
+  if (data.tone === "running") return RUN_CORAL;
+  if (data.tone === "lifting") return LIFT_PURPLE;
+  if (data.template === "run") return RUN_CORAL;
+  if (data.template === "nutrition") return NUTRITION_ORANGE;
+  return LIFT_PURPLE;
 }
 
 function accentFor(template: ShareTemplate): string {
@@ -206,28 +246,33 @@ function HexMark({ size, color }: { size: number; color: string }) {
   );
 }
 
-/** Hero stat: a big Archivo number + small uppercase label. */
+/** Hero stat: a big Archivo number + small uppercase label. `display`
+ *  sets it in the display register's wide heavy italic, its label in
+ *  sentence case, as the finish screen sets its one figure. */
 function Hero({
   value,
   unit,
   label,
   color,
   scale,
+  display = false,
 }: {
   value: string;
   unit?: string;
   label: string;
   color: string;
   scale: number;
+  display?: boolean;
 }) {
   return (
     <div style={{ textAlign: "center" }}>
       <div
         style={{
           fontFamily: ARCHIVO,
-          fontWeight: 800,
+          fontWeight: display ? 900 : 800,
+          ...(display ? { fontStyle: "italic", fontStretch: "125%" } : {}),
           fontVariantNumeric: "tabular-nums",
-          fontSize: 220 * scale,
+          fontSize: (display && value.length > 5 ? 180 : 220) * scale,
           lineHeight: 0.92,
           color,
           display: "flex",
@@ -247,15 +292,68 @@ function Hero({
         style={{
           fontFamily: JAKARTA,
           fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: 4 * scale,
-          fontSize: 30 * scale,
-          color: "rgba(255,255,255,0.55)",
+          ...(display
+            ? { fontSize: 40 * scale }
+            : {
+                textTransform: "uppercase" as const,
+                letterSpacing: 4 * scale,
+                fontSize: 30 * scale,
+              }),
+          color: "rgba(255,255,255,0.6)",
           marginTop: 12 * scale,
         }}
       >
         {label}
       </div>
+    </div>
+  );
+}
+
+/** The session done ("Pull A done"), over the hero figure. */
+function Headline({ text, scale }: { text: string; scale: number }) {
+  return (
+    <div
+      style={{
+        alignSelf: "center",
+        textAlign: "center",
+        fontFamily: JAKARTA,
+        fontWeight: 700,
+        fontSize: 58 * scale,
+        lineHeight: 1.15,
+        color: INK,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+/** The reward's one sentence, under the figure, ruled in its colour. */
+function RewardSentence({
+  text,
+  color,
+  scale,
+}: {
+  text: string;
+  color: string;
+  scale: number;
+}) {
+  return (
+    <div
+      style={{
+        alignSelf: "center",
+        textAlign: "center",
+        maxWidth: 840 * scale,
+        fontFamily: JAKARTA,
+        fontWeight: 700,
+        fontSize: 44 * scale,
+        lineHeight: 1.3,
+        color: INK,
+        borderTop: `${4 * scale}px solid ${color}`,
+        paddingTop: 28 * scale,
+      }}
+    >
+      {text}
     </div>
   );
 }
@@ -318,6 +416,7 @@ function ShareCardRenderer({
   // Square is tighter than story; scale type down a touch.
   const scale = data.format === "story" ? 1 : 0.82;
   const accent = accentFor(data.template);
+  const meaning = meaningFor(data);
   const hidden = data.hiddenStats ?? new Set<string>();
   const show = (k: string) => !hidden.has(k);
 
@@ -333,7 +432,7 @@ function ShareCardRenderer({
     padding: 80 * scale,
     color: "#ffffff",
     fontFamily: JAKARTA,
-    ...bgStyle(data.background, data.template),
+    ...bgStyle(data.background, data.template, meaning),
   };
 
   return (
@@ -375,11 +474,16 @@ function ShareCardRenderer({
       >
         {/* RUN */}
         {data.template === "run" && (
-          <RunTemplate data={data} accent={accent} scale={scale} show={show} />
+          <RunTemplate data={data} accent={meaning} scale={scale} show={show} />
         )}
         {/* LIFT */}
         {data.template === "lift" && (
-          <LiftTemplate data={data} accent={accent} scale={scale} show={show} />
+          <LiftTemplate
+            data={data}
+            accent={meaning}
+            scale={scale}
+            show={show}
+          />
         )}
         {/* HYBRID */}
         {data.template === "hybrid" && (
@@ -567,13 +671,18 @@ function RunTemplate({
       <div
         style={{ display: "flex", flexDirection: "column", gap: 40 * scale }}
       >
+        {data.headline && <Headline text={data.headline} scale={scale} />}
         {show("distance") && (
           <Hero
             value={distanceValue((data.distanceKm ?? 0) * 1000, data.unit, 2)}
             label={spokenDistanceUnit(data.unit, 2)}
             color="#ffffff"
             scale={scale}
+            display
           />
+        )}
+        {data.line && (
+          <RewardSentence text={data.line} color={accent} scale={scale} />
         )}
         <div style={{ display: "flex", gap: 24 * scale }}>
           {show("pace") && (
@@ -585,7 +694,6 @@ function RunTemplate({
               }
               label={`${paceUnitLabel(data.unit)} pace`}
               scale={scale}
-              color={accent}
             />
           )}
           {show("duration") && (
@@ -645,6 +753,16 @@ function LiftTemplate({
   scale: number;
   show: (k: string) => boolean;
 }) {
+  // DS4: the session's drawing in its light, the session done, one hero
+  // figure in the display register, and the reward's sentence when it
+  // earned one. Without a sentence, a new best still says so in gold.
+  const liftUnit = data.liftUnit ?? "kg";
+  const volume = Math.round(liftVolumeIn(data.totalVolumeKg ?? 0, liftUnit));
+  // "in 41 min", as the finish screen's caption says it.
+  const time =
+    show("duration") && data.durationSec
+      ? ` in ${formatDuration(data.durationSec)}`
+      : "";
   return (
     <div
       style={{
@@ -652,53 +770,84 @@ function LiftTemplate({
         flexDirection: "column",
         flex: 1,
         justifyContent: "center",
-        gap: 56 * scale,
+        gap: 44 * scale,
       }}
     >
-      {show("prs") && (data.prCount ?? 0) > 0 && (
+      {data.artSrc && (
         <div
           style={{
-            alignSelf: "center",
-            display: "flex",
-            alignItems: "center",
-            gap: 12 * scale,
-            padding: `${12 * scale}px ${28 * scale}px`,
-            borderRadius: 999,
-            backgroundColor: `${accent}26`,
-            color: accent,
-            fontWeight: 700,
-            fontSize: 32 * scale,
+            flex: data.format === "story" ? 1 : 0.8,
+            position: "relative",
+            minHeight: 220 * scale,
           }}
         >
-          {data.prCount} PR{(data.prCount ?? 0) > 1 ? "s" : ""}
-          {data.prExercise ? ` · ${data.prExercise}` : ""}
+          <img
+            src={data.artSrc}
+            alt=""
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+          />
         </div>
       )}
+      {data.headline && <Headline text={data.headline} scale={scale} />}
       {show("volume") && (
         <Hero
-          value={fmtVolume(data.totalVolumeKg, data.liftUnit)}
-          label="total volume"
+          value={volume.toLocaleString("en-GB")}
+          label={`${liftUnitLabel(liftUnit)} lifted${time}`}
           color="#ffffff"
           scale={scale}
+          display
         />
       )}
-      <div style={{ display: "flex", gap: 24 * scale }}>
-        {show("exercises") && (
-          <Stat
-            value={String(data.exerciseCount ?? 0)}
-            label="exercises"
-            scale={scale}
-            color={accent}
-          />
-        )}
-        {show("duration") && (
-          <Stat
-            value={fmtDuration(data.durationSec)}
-            label="time"
-            scale={scale}
-          />
-        )}
-      </div>
+      {data.line ? (
+        <RewardSentence text={data.line} color={accent} scale={scale} />
+      ) : (
+        show("prs") &&
+        (data.prCount ?? 0) > 0 && (
+          <div
+            style={{
+              alignSelf: "center",
+              display: "flex",
+              alignItems: "center",
+              gap: 12 * scale,
+              padding: `${12 * scale}px ${28 * scale}px`,
+              borderRadius: 999,
+              backgroundColor: `${ACHIEVEMENT_GOLD}26`,
+              color: ACHIEVEMENT_GOLD,
+              fontWeight: 700,
+              fontSize: 32 * scale,
+            }}
+          >
+            {data.prCount} PR{(data.prCount ?? 0) > 1 ? "s" : ""}
+            {data.prExercise ? ` · ${data.prExercise}` : ""}
+          </div>
+        )
+      )}
+      {/* The steps down from the figure: the exercises, and the time when
+          the figure that carries it is hidden. */}
+      {(show("exercises") || (show("duration") && !show("volume"))) && (
+        <div style={{ display: "flex", gap: 24 * scale }}>
+          {show("exercises") && (
+            <Stat
+              value={String(data.exerciseCount ?? 0)}
+              label="exercises"
+              scale={scale}
+            />
+          )}
+          {show("duration") && !show("volume") && (
+            <Stat
+              value={fmtDuration(data.durationSec)}
+              label="time"
+              scale={scale}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

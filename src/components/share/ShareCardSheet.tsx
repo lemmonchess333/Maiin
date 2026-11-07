@@ -21,6 +21,7 @@ import ShareCardRenderer, {
   type ShareCardRenderData,
 } from "@/components/share/ShareCardRenderer";
 import type { GPSPoint } from "@/lib/gps";
+import type { FinishTone } from "@/lib/finishMoment";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 
@@ -57,6 +58,12 @@ export interface ShareCardSheetData {
   elevationM?: number;
   /** `lap` is the ordinal; the pace is sec/km. */
   splits?: { lap: number; paceSecPerKm: number }[];
+  // THE FINISH (DS4): the session done, the reward's sentence, its
+  // colour and the session's drawing, as the finish screen draws them.
+  headline?: string;
+  line?: string;
+  tone?: FinishTone;
+  artSrc?: string;
   // LIFT
   totalVolumeKg?: number;
   exerciseCount?: number;
@@ -189,6 +196,10 @@ export function ShareCardSheet({
     paceSecPerKm: data.paceSecPerKm,
     elevationM: data.elevationM,
     splits: data.splits,
+    headline: data.headline,
+    line: data.line,
+    tone: data.tone,
+    artSrc: data.artSrc,
     totalVolumeKg: data.totalVolumeKg,
     exerciseCount: data.exerciseCount,
     prCount: data.prCount,
