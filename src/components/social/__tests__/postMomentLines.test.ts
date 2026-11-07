@@ -88,7 +88,6 @@ describe("postMomentLines", () => {
       [{ kind: "streak", days: 30 }, "30-day streak", "flame"],
       [{ kind: "planWeek", week: 4, weeks: 12 }, "Week 4 of 12 done", "flag"],
       [{ kind: "planComplete" }, "Programme complete", "medal"],
-      [{ kind: "firstSession" }, "First session on Tropos", "flag"],
     ] as const) {
       expect(lines(moment, KM_KG)).toEqual({
         headline,
@@ -96,5 +95,13 @@ describe("postMomentLines", () => {
         icon,
       });
     }
+  });
+
+  it("a first session in its sport's colour, as the finish screen draws it", () => {
+    expect(lines({ kind: "firstSession" }, KM_KG)).toEqual({
+      headline: "First session on Tropos",
+      tone: "sport",
+      icon: "flag",
+    });
   });
 });

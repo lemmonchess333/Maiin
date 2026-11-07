@@ -109,6 +109,25 @@ describe("moments on the feed card", () => {
     expect(tiles).toEqual(["milestone", "best", "milestone"]);
   });
 
+  it("draws a first session in its sport's colour: coral on a run", () => {
+    const tile = (type: "run" | "workout") => {
+      const { container, unmount } = render(
+        <MemoryRouter>
+          <ActivityCard
+            feedItem={post(type, { moments: [{ kind: "firstSession" }] })}
+          />
+        </MemoryRouter>
+      );
+      const cls =
+        container.querySelector("[data-moment-tone]")?.className ?? "";
+      unmount();
+      return cls;
+    };
+    expect(tile("run")).toContain("text-running-strong");
+    expect(tile("run")).not.toContain("text-primary");
+    expect(tile("workout")).toContain("text-primary");
+  });
+
   it("reads a lift's PR in the reader's load unit", () => {
     const { text } = draw(
       post("workout", {

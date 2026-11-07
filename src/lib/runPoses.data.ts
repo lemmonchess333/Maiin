@@ -12,6 +12,9 @@ export interface RunPoseCutout {
   /** The released pose it was cut from. */
   source: string;
   sourceSha256: string;
+  /** The meaning colour its lit muscles are drawn in: running's coral for
+   *  a run, the plan's purple for the rest day's walk. */
+  highlight: "running" | "lifting";
   sha256: string;
 }
 
@@ -23,7 +26,8 @@ export const RUN_POSE_CUTOUTS: Record<RunPose, RunPoseCutout> = {
     source: "docs/exercise-art/run-poses/run-easy.jpg",
     sourceSha256:
       "1d53b5602357810f7b441adff4494cffc5c6a74be1e958306849566f755bb918",
-    sha256: "de9162e75d18446e7a349e228e7d99399090ae098111f111023998380a6a7df0",
+    highlight: "running",
+    sha256: "8481eaa46f8379acb9a6011a8f6427d4b8125861b19b19156057dd6cb7af492a",
   },
   "run-fast": {
     src: "form-art/run-fast.webp",
@@ -32,7 +36,8 @@ export const RUN_POSE_CUTOUTS: Record<RunPose, RunPoseCutout> = {
     source: "docs/exercise-art/run-poses/run-fast.jpg",
     sourceSha256:
       "57311f7fd24d113bc6f164e6135ed16ad7f4086a52237e51ae6b3c9336344ab4",
-    sha256: "bb440c49ccf2dd299c3906aa876f425f97195b3461bb75408c0ba3a78670ea5c",
+    highlight: "running",
+    sha256: "c679a476d0c74a2a5063afb0e3e87f0dc9de616c394759235df87c3a5b96eec8",
   },
   "rest-walk": {
     src: "form-art/rest-walk.webp",
@@ -41,6 +46,7 @@ export const RUN_POSE_CUTOUTS: Record<RunPose, RunPoseCutout> = {
     source: "docs/exercise-art/run-poses/rest-walk.jpg",
     sourceSha256:
       "e6d7d3c05c92563137bd66ba9f59965af9175ef85ebbf4dadfae655eae8263eb",
+    highlight: "lifting",
     sha256: "1586a3a02ab895da3ddf1bf9030bbacf583f46fad476d217770be032a21aab44",
   },
 };

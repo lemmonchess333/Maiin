@@ -961,7 +961,8 @@ function ActivityCard({
 
         {/* Moments (Soc15), Strava's way: a tile, a bold line and the
             figures under it, each from the post's own numbers in the
-            reader's units. Gold for a best, the brand purple for the rest
+            reader's units. Gold for a best, the brand purple for the rest,
+            and a first session in its sport's colour, coral on a run
             (`postMomentLines`). At large text the tile stands above the
             words, as the PR line's icon does below. */}
         {moments.length > 0 && (
@@ -984,7 +985,9 @@ function ActivityCard({
                     className={`grid size-10 shrink-0 place-items-center rounded-xl ${
                       lines.tone === "best"
                         ? "bg-achievement/15 text-achievement"
-                        : "bg-primary/15 text-primary"
+                        : lines.tone === "sport" && isRun
+                          ? "bg-running/15 text-running-strong"
+                          : "bg-primary/15 text-primary"
                     }`}
                   >
                     <Icon className="size-5" />

@@ -189,13 +189,19 @@ function contentBox(rgba: Buffer, w: number, h: number) {
 }
 
 /** The card cut-out of one drawing, as a transparent WebP. */
-export async function cutoutWebp(file: string): Promise<{
+export async function cutoutWebp(
+  file: string,
+  /** Run over the keyed RGBA before it is cropped and encoded: the run
+   *  poses' recolour (recolour.ts). */
+  transform?: (rgba: Buffer) => void
+): Promise<{
   webp: Buffer;
   width: number;
   height: number;
   keyed: boolean;
 }> {
   const { rgba, width, height, keyed } = await cutOut(file);
+  transform?.(rgba);
   const box = contentBox(rgba, width, height);
   const scale = Math.min(1, LONG_SIDE / Math.max(box.width, box.height));
   const outW = Math.round(box.width * scale);

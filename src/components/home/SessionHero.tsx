@@ -25,8 +25,8 @@ export interface HeroPicture {
 /** A soft glow of the sport's own colour behind the picture, fading into
  *  the page (§14m rule 13: one hue, into its surface). Its strength is per
  *  theme, so light and dark carry the same colour (rule 15): `.hero-glow`
- *  in components.css. A rest day shares the lift's purple; a run's coral
- *  stays quiet, under the runner's purple muscles. */
+ *  in components.css. A rest day shares the lift's purple; a run glows in
+ *  coral, the colour of its runner's lit muscles. */
 const GLOW: Record<HeroSport, string> = {
   lift: "hero-glow",
   run: "hero-glow-run",

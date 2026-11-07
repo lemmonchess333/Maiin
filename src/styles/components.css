@@ -539,10 +539,10 @@ html.guiding [data-brand-mark] {
    0.7 alpha, so light's stops sit higher than dark's for the same weight.
    With dark's stops in both, light Home's leading hue fell to 43% purple
    (rule 11) and dark carried twice light's colour. A lift and a rest day
-   glow purple, as their drawings' lit muscles are. A run's coral glow
-   stays below what counts in both themes: the runner's lit muscles are
-   purple, and a coral glow that counts split the hero between two hues
-   (41% purple, 40% coral on a light free run). */
+   glow purple, as their drawings' lit muscles are. A run glows coral at
+   the same weight: the runner's lit muscles are coral too since the run
+   poses were recoloured (owner, 7 November 2026), so the hero has one hue
+   and a coral glow that counts no longer splits it. */
 .hero-glow {
   background: radial-gradient(
     closest-side,
@@ -564,18 +564,18 @@ html.guiding [data-brand-mark] {
 .hero-glow-run {
   background: radial-gradient(
     closest-side,
-    hsl(var(--running) / 0.26),
-    hsl(var(--running) / 0.12) 45%,
-    hsl(var(--running) / 0.04) 75%,
+    hsl(var(--running) / 0.9),
+    hsl(var(--running) / 0.6) 45%,
+    hsl(var(--running) / 0.2) 75%,
     transparent
   );
 }
 .dark .hero-glow-run {
   background: radial-gradient(
     closest-side,
-    hsl(var(--running) / 0.22),
-    hsl(var(--running) / 0.1) 45%,
-    hsl(var(--running) / 0.03) 75%,
+    hsl(var(--running) / 0.3),
+    hsl(var(--running) / 0.14) 45%,
+    hsl(var(--running) / 0.04) 75%,
     transparent
   );
 }
