@@ -96,6 +96,9 @@ interface SessionCompleteScreenProps {
    *  first, a new best, a streak milestone or a finished plan makes the
    *  saved screen the full-screen reward (DS4 call 3). Null until saved. */
   moments?: readonly PostMoment[] | null;
+  /** The account's first workout though it has run before
+   *  (`isFirstOfSport`): rewarded as a first. */
+  firstOfSport?: boolean;
 }
 
 export default function SessionCompleteScreen({
@@ -121,6 +124,7 @@ export default function SessionCompleteScreen({
   accountStart = null,
   onRename,
   moments = null,
+  firstOfSport = false,
 }: SessionCompleteScreenProps) {
   const today = useLocalDateKey();
   /* The detail being changed: when it started, or its name. */
@@ -296,7 +300,7 @@ export default function SessionCompleteScreen({
      plan makes the saved screen the reward; anything else, and the review
      before the save, is the calm summary (`finishRegister`). */
   const register = saved
-    ? finishRegister(moments, "lift")
+    ? finishRegister(moments, "lift", { firstOfSport })
     : ({ register: "summary" } as const);
   const reward = register.register === "reward" ? register : null;
   const rewardPr = reward?.moment.kind === "pr" ? reward.moment : null;
@@ -352,12 +356,12 @@ export default function SessionCompleteScreen({
       draggable={false}
       decoding="async"
       data-lead-drawing={object.exerciseName}
-      className="exercise-drawing h-full w-[min(56%,15rem)] object-contain"
+      className="exercise-drawing h-full max-h-80 w-[min(70%,17rem)] object-contain"
     />
   ) : hasMuscleFigure(muscleCategories) ? (
     <MiniMuscleFigure
       categories={muscleCategories}
-      className="h-[85%] w-auto"
+      className="h-[85%] max-h-72 w-auto"
     />
   ) : null;
 
@@ -390,16 +394,20 @@ export default function SessionCompleteScreen({
       >
         {/* The first screen (DS4, §14m rule 30): the kicker, the object,
             the session done, one figure and one line, then Share and Done
-            pinned under them. Saved, it fills the screen above the footer,
-            and everything else waits below it. */}
+            pinned under them. Saved, it fills the screen above the footer
+            (5.75rem) less 4.5rem, so the next section's heading and the top
+            of its card peek above Share and Done as the cue that there is
+            more (owner, 7 November 2026: no empty band, no seventh block).
+            The object's area takes the height the rest leaves. */}
         <div
           className={cn(
             "flex flex-col pt-6",
             saved &&
-              "min-h-[calc(100svh-var(--safe-top)-var(--safe-bottom)-6.75rem)]"
+              "min-h-[calc(100svh-var(--safe-top)-var(--safe-bottom)-10.25rem)]"
           )}
         >
           <FinishHero
+            fill={saved}
             kicker={kicker}
             tone={reward?.tone ?? null}
             confetti={reward?.confetti ?? false}

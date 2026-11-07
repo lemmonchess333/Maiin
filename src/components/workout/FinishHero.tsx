@@ -94,14 +94,16 @@ export default function FinishHero({
   caption,
   line,
   lineIcon,
+  fill = false,
 }: {
   kicker: string;
   tone: FinishTone | null;
   confetti?: boolean;
-  /** The object: the session's drawing, centred, about half the screen's
-   *  width. */
+  /** The object: the session's drawing, centred, about two thirds of the
+   *  screen's width. */
   picture?: ReactNode;
-  /** A full-bleed band in the picture's place: a run's map (rule 23). */
+  /** A full-bleed band in the picture's place: a run's map (rule 23). It
+   *  is drawn to fill its area (`absolute inset-0`, wider for full bleed). */
   band?: ReactNode;
   title: string;
   titleLevel?: 1 | 2;
@@ -111,6 +113,11 @@ export default function FinishHero({
    *  on the summary. */
   line?: RewardLine | string | null;
   lineIcon?: "trophy" | "flame" | null;
+  /** Fill the height the page gives it: the object's area grows into the
+   *  space, so the first screen has no empty band under its line (DS4,
+   *  owner 7 November 2026). The page sizes it to leave the next section
+   *  peeking above the pinned buttons. */
+  fill?: boolean;
 }) {
   const reduce = useReducedMotion();
   const titleId = useId();
@@ -136,20 +143,37 @@ export default function FinishHero({
     <section
       aria-labelledby={titleId}
       data-finish-register={tone ? "reward" : "summary"}
-      className="relative flex flex-col items-center text-center"
+      className={cn(
+        "relative flex flex-col items-center text-center",
+        fill && "flex-1"
+      )}
     >
-      {band}
+      {band && (
+        <div
+          className={cn(
+            "relative w-full",
+            fill ? "min-h-[38svh] flex-1" : "h-[38svh]"
+          )}
+        >
+          {band}
+        </div>
+      )}
       <p className={cn("text-sm text-muted-foreground", band ? "mt-4" : "")}>
         <InlineNumerals>{kicker}</InlineNumerals>
       </p>
       {picture && (
         <div
           data-finish-object
-          className="relative mt-2 flex h-[clamp(190px,34svh,300px)] w-full items-center justify-center"
+          className={cn(
+            "relative mt-2 flex w-full items-center justify-center",
+            fill
+              ? "min-h-[clamp(200px,34svh,300px)] flex-1"
+              : "h-[clamp(200px,34svh,300px)]"
+          )}
         >
           {glow}
           <motion.div
-            className="relative flex size-full items-center justify-center"
+            className="absolute inset-0 flex items-center justify-center"
             initial={reduce ? false : { opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: [0.34, 1.4, 0.64, 1] }}

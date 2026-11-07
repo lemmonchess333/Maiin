@@ -637,6 +637,14 @@ html.guiding [data-brand-mark] {
   --glow-b: 0.21;
   --glow-c: 0.05;
 }
+/* The purple is the lightest of the three on dark: at the coral's stops a
+   first workout measured 5.9% colour on dark against 4.5% on light; at
+   these, 4.1% (7 November 2026). */
+.dark .ds-finish-glow[data-finish-glow="lifting"] {
+  --glow-a: 0.31;
+  --glow-b: 0.18;
+  --glow-c: 0.045;
+}
 
 /* Reduced-motion safety net for the shared primitives. The
    Framer Motion components in Layout.tsx already gate via the

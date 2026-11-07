@@ -91,7 +91,12 @@ import {
   runPostRoute,
   type FinishedRun,
 } from "@/lib/runCompletion";
-import { hasEarlierSession } from "@/lib/firstSession";
+import {
+  earlierSessions,
+  isFirstOfSport,
+  isFirstSession,
+  type EarlierSessions,
+} from "@/lib/firstSession";
 import {
   runPostMoments,
   type PostMoment,
@@ -520,6 +525,8 @@ export default function RunSummary() {
   const [finishFacts, setFinishFacts] = useState<{
     moments: PostMoment[];
     history: RunHistory | null;
+    /** The account's first run though it has lifted before. */
+    firstOfSport: boolean;
   } | null>(null);
   const atFirstSave = useRef<{
     streak: StreakChange | null;
@@ -689,12 +696,12 @@ export default function RunSummary() {
   /* Whether the account had a session before this run, for its post's
      "First session on Tropos" (Soc15): two documents a kind, read once as
      the screen opens. Null until known, and whenever it can't be. */
-  const earlierSessionRef = useRef<boolean | null>(null);
+  const earlierSessionRef = useRef<EarlierSessions | null>(null);
   const ownRunId = state?.identity?.runId ?? receipt?.id ?? null;
   useEffect(() => {
     if (!uid || !hasRun) return;
     let cancelled = false;
-    void hasEarlierSession(uid, { runId: ownRunId }).then((earlier) => {
+    void earlierSessions(uid, { runId: ownRunId }).then((earlier) => {
       if (!cancelled) earlierSessionRef.current = earlier;
     });
     return () => {
@@ -978,7 +985,9 @@ export default function RunSummary() {
      post says happened. Before the save, and on a return to a run saved
      earlier, it is the summary. */
   const finishRegistered = finishFacts
-    ? finishRegister(finishFacts.moments, "run")
+    ? finishRegister(finishFacts.moments, "run", {
+        firstOfSport: finishFacts.firstOfSport,
+      })
     : null;
   const finishReward =
     finishRegistered?.register === "reward" ? finishRegistered : null;
@@ -1299,7 +1308,7 @@ export default function RunSummary() {
         }
         atFirstSave.current = {
           streak,
-          firstSession: earlierSessionRef.current === false,
+          firstSession: isFirstSession(earlierSessionRef.current),
         };
       }
       finishedRun.moments = {
@@ -1412,6 +1421,7 @@ export default function RunSummary() {
           finishedRun.moments ?? undefined
         ),
         history: finishedRun.moments?.history ?? null,
+        firstOfSport: isFirstOfSport(earlierSessionRef.current, "run"),
       });
       setSaveStatus("saved");
       setSaveError(null);
@@ -1602,16 +1612,20 @@ export default function RunSummary() {
               the date and time, the run done, the distance as the one
               display figure, and one line. A first, a new best or a streak
               milestone is the reward, in its own colour; any other run is
-              the calm summary. The route is the run's coral. */}
+              the calm summary. The route is the run's coral. Saved, the
+              map's band grows to fill the screen above the footer (6rem)
+              less 4.5rem, so the top of the stats card peeks above Share
+              and Done as the cue that there is more. */}
           <div
             className={cn(
               "flex flex-col",
               doneShown &&
-                "min-h-[calc(100svh-var(--safe-top)-var(--safe-bottom)-6.75rem)]"
+                "min-h-[calc(100svh-var(--safe-top)-var(--safe-bottom)-10.5rem)]"
             )}
           >
-            <div className="px-4">
+            <div className="flex flex-1 flex-col px-4">
               <FinishHero
+                fill={doneShown}
                 kicker={finishKicker(
                   startedAt,
                   state.finishedAt ??
@@ -1625,7 +1639,7 @@ export default function RunSummary() {
                   points.length > 1 ? (
                     <div
                       data-finish-band
-                      className="-mx-4 w-[calc(100%+2rem)] overflow-hidden"
+                      className="absolute inset-y-0 -inset-x-4 overflow-hidden"
                     >
                       <RunMap
                         points={points}
@@ -1633,7 +1647,7 @@ export default function RunSummary() {
                         interactive={true}
                         distanceMarkers={true}
                         markerUnit={unit}
-                        height="h-[38svh]"
+                        height="h-full"
                         darkMode={darkTheme}
                       />
                     </div>
@@ -1655,7 +1669,7 @@ export default function RunSummary() {
                       aria-hidden="true"
                       draggable={false}
                       decoding="async"
-                      className="h-full w-[min(56%,15rem)] object-contain"
+                      className="h-full max-h-80 w-[min(70%,17rem)] object-contain"
                     />
                   )
                 }
@@ -1679,15 +1693,6 @@ export default function RunSummary() {
           {/* Below the first screen: the week, the run's numbers, its
               splits and climb, and what the runner adds to it. */}
           <div className="h-6" aria-hidden="true" />
-          {/* The run half of the completion delight beat (the lift side
-              has `getVolumeComparison`). Lives in the VALID branch, so a
-              sub-threshold GPS glitch never claims "40 Olympic pool
-              lengths". */}
-          {funComparison && (
-            <p className="px-4 mb-4 text-sm text-muted-foreground">
-              {funComparison}
-            </p>
-          )}
 
           {/* Offline notice */}
           {!isOnline && !saved && (
@@ -1947,6 +1952,16 @@ export default function RunSummary() {
               ]}
             />
           </div>
+          {/* The run half of the completion delight beat (the lift side
+              has `getVolumeComparison`), under the stats card, which peeks
+              above the footer. Lives in the VALID branch, so a
+              sub-threshold GPS glitch never claims "40 Olympic pool
+              lengths". */}
+          {funComparison && (
+            <p className="px-4 -mt-2 mb-4 text-sm text-muted-foreground">
+              {funComparison}
+            </p>
+          )}
           {heartRatePreview && (
             <div className="px-4 mb-4">
               <HeartRateSummaryCard summary={heartRatePreview} />

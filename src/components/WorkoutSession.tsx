@@ -178,7 +178,12 @@ import {
   liftWorkoutId,
   type LiftCompletionReceipt,
 } from "@/lib/liftCompletion";
-import { hasEarlierSession } from "@/lib/firstSession";
+import {
+  earlierSessions,
+  isFirstOfSport,
+  isFirstSession,
+  type EarlierSessions,
+} from "@/lib/firstSession";
 import type { LiftMomentFacts, PostMoment } from "@/lib/postMoments";
 import GuideHint from "@/components/guide/GuideHint";
 import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
@@ -436,12 +441,12 @@ export default function WorkoutSession({
   /* Whether the account had a session before this one, for the post's
      "First session on Tropos" (Soc15): read once as the session opens, two
      documents a kind, long before Finish. Null until known. */
-  const earlierSessionRef = useRef<boolean | null>(null);
+  const earlierSessionRef = useRef<EarlierSessions | null>(null);
   const firstSessionUid = user?.uid;
   useEffect(() => {
     if (!firstSessionUid) return;
     let current = true;
-    void hasEarlierSession(firstSessionUid, {
+    void earlierSessions(firstSessionUid, {
       workoutId: liftWorkoutId(source, completionIdRef.current),
     }).then((earlier) => {
       if (current) earlierSessionRef.current = earlier;
@@ -914,6 +919,9 @@ export default function WorkoutSession({
   /* What the saved session's post says happened: the finish screen's
      reward or summary is picked from it (DS4 call 3). */
   const [finishMoments, setFinishMoments] = useState<PostMoment[] | null>(null);
+  /* The first workout on an account that has run before: a first on the
+     finish screen, though its post claims none. */
+  const [finishFirstOfSport, setFinishFirstOfSport] = useState(false);
   const [saveStatus, setSaveStatus] = useState<
     "queued" | "synced" | "needs-attention" | undefined
   >(initialDraft?.completionPending ? "needs-attention" : undefined);
@@ -1840,7 +1848,7 @@ export default function WorkoutSession({
       }
       atFirstFinish.current = {
         streak,
-        firstSession: earlierSessionRef.current === false,
+        firstSession: isFirstSession(earlierSessionRef.current),
       };
     }
     return {
@@ -1936,6 +1944,7 @@ export default function WorkoutSession({
       if (completionUid && auth.currentUser?.uid !== completionUid) return;
       setSavedWorkoutId(receipt.workoutId);
       setFinishMoments(receipt.moments ?? null);
+      setFinishFirstOfSport(isFirstOfSport(earlierSessionRef.current, "lift"));
       const queuedReceipt =
         receipt.syncStatus === "queued" ? receipt.sync : null;
       const acknowledge = () => {
@@ -2130,6 +2139,7 @@ export default function WorkoutSession({
           firedPRs={firedPRs}
           prResults={prResults}
           moments={finishMoments}
+          firstOfSport={finishFirstOfSport}
           sessionDurationMinutes={sessionDurationMinutes}
           sessionVariant={sessionVariant}
           completing={completing}

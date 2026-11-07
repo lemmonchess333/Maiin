@@ -357,6 +357,16 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
     await waitFor(() => expect(confetti).toHaveBeenCalledTimes(1));
   });
 
+  it("rewards a runner's first workout as a first, though its post claims none", () => {
+    render(
+      <SessionCompleteScreen
+        {...screenProps({ saved: true, moments: [], firstOfSport: true })}
+      />
+    );
+    expect(register()).toBe("reward");
+    expect(line()).toHaveTextContent("You finished your first workout!");
+  });
+
   it("gives a streak milestone the flame's purple and no confetti", async () => {
     confetti.mockClear();
     motionPref.reduce = false;

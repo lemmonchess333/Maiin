@@ -122,11 +122,16 @@ async function measure(page: Page) {
   });
 }
 
-/** The first screen, as the person sees it on opening, and its numbers.
- *  A tap on the page first, as a finger reaches Done: the focus the save
- *  hands Done draws its ring only for a keyboard. */
+/** Focus off Done. The lab opens the screen saved, with no tap before
+ *  it, so the focus the save hands Done draws the keyboard's ring; on a
+ *  phone the save is a tap and draws none. */
+async function unfocus(page: Page) {
+  await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+}
+
+/** The first screen, as the person sees it on opening, and its numbers. */
 async function shoot(page: Page, name: string) {
-  await page.mouse.click(4, 700);
+  await unfocus(page);
   await settleImages(page);
   await page.screenshot({
     path: `screenshots/${name}.png`,
@@ -171,7 +176,7 @@ test("the lift's reward and summary, and the share card", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Pull A done", exact: true })
   ).toBeVisible({ timeout: 20_000 });
-  await page.mouse.click(4, 700);
+  await unfocus(page);
   await page.waitForTimeout(900);
   await page.screenshot({
     path: "screenshots/finish-lift-best-confetti-393.png",
@@ -226,6 +231,20 @@ test("the run's reward for a first, its summary, and its reward for a new best",
   const { fields } = await sourceDoc.json();
   fields.uid = { stringValue: uid };
   fields.runMode = { stringValue: "freeform" };
+  // A free runner: Home's hero is the free run, captured after the runs.
+  fields.athleteType = { stringValue: "Runner" };
+  fields.weekSchedule = {
+    arrayValue: {
+      values: Array.from({ length: 7 }, (_, day) => ({
+        mapValue: {
+          fields: {
+            day: { integerValue: String(day) },
+            type: { stringValue: "rest" },
+          },
+        },
+      })),
+    },
+  };
   const copy = await request.patch(`${DOCS}/users/${uid}`, {
     headers,
     data: { fields },
@@ -333,6 +352,22 @@ test("the run's reward for a first, its summary, and its reward for a new best",
     // The summary gone, not only its address: the next run mounts afresh.
     await expect(page.locator("[data-finish-register]")).toHaveCount(0, {
       timeout: 20_000,
+    });
+  }
+
+  // Home's free-run hero, the runner and its coral glow, with this week's
+  // three runs on its line.
+  await page.goto("");
+  await expect(
+    page.getByRole("heading", { name: "Free run", exact: true })
+  ).toBeVisible({ timeout: 20_000 });
+  await page.waitForTimeout(800);
+  for (const dark of [false, true]) {
+    await theme(page, dark);
+    await settleImages(page);
+    await page.screenshot({
+      path: `screenshots/home-free-run-393-${dark ? "dark" : "light"}.png`,
+      animations: "disabled",
     });
   }
 });

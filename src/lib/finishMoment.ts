@@ -60,11 +60,17 @@ const BESTS = new Set<PostMoment["kind"]>([
  */
 export function finishRegister(
   moments: readonly PostMoment[] | null | undefined,
-  sport: FinishSport
+  sport: FinishSport,
+  /** The first session of its sport (`isFirstOfSport`): a lifter's first
+   *  run is a first here, though its post claims none, since the post's
+   *  first is the account's. */
+  { firstOfSport = false }: { firstOfSport?: boolean } = {}
 ): FinishRegister {
-  const lead = pickMoments(moments ?? []).find(
-    (moment) => moment.kind !== "planWeek"
-  );
+  const all =
+    firstOfSport && !(moments ?? []).some((m) => m.kind === "firstSession")
+      ? [...(moments ?? []), { kind: "firstSession" } as const]
+      : (moments ?? []);
+  const lead = pickMoments(all).find((moment) => moment.kind !== "planWeek");
   if (!lead) return { register: "summary" };
   const sportTone: FinishTone = sport === "run" ? "running" : "lifting";
   if (BESTS.has(lead.kind))

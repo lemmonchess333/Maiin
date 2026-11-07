@@ -82,6 +82,27 @@ describe("finishRegister: which sessions get the full-screen reward (§14m rule 
     });
   });
 
+  it("rewards the first of a sport the post doesn't claim", () => {
+    // A lifter's first run: the post's moments say nothing of a first.
+    expect(finishRegister([], "run", { firstOfSport: true })).toMatchObject({
+      register: "reward",
+      moment: { kind: "firstSession" },
+      tone: "running",
+      confetti: true,
+    });
+    // The first leads a new best, as the post orders them.
+    expect(
+      finishRegister(
+        [{ kind: "fastestEffort", meters: 5000, seconds: 1500 }],
+        "run",
+        { firstOfSport: true }
+      )
+    ).toMatchObject({ moment: { kind: "firstSession" } });
+    expect(finishRegister([], "lift", { firstOfSport: false })).toEqual({
+      register: "summary",
+    });
+  });
+
   it("leads with the most significant moment, as the post orders them", () => {
     expect(
       finishRegister(

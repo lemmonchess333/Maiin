@@ -89,7 +89,8 @@ is the drawing's box as a share of the screen.
   last week" (`freeRunHeroLine`); with nothing last week, the week's runs
   ("2 runs so far"); with no run in either week, "0 km this week" over
   "Finish your first run and it counts here".
-- **Left open: the run day's hue.** The runner's lit muscles are purple and
+- **Left open: the run day's hue** (settled in v3, below: the runner and its
+  glow are coral). The runner's lit muscles are purple and
   its glow coral. A coral glow strong enough to count split the light free
   run 41% purple, 40% coral, so a run's glow stays below what counts in both
   themes, and the free run leads with purple at 59%, under the 60% rule.
@@ -106,7 +107,7 @@ are the real `SessionCompleteScreen` in the finish lab (`/dev/finish`, a
 pull day of 2,295 kg in 41 min: `best` with a new best on the row,
 `routine` with none); `lift-first` is a real first workout on a fresh
 account (`companion-finish.capture.spec.ts`, 375 px). The run's are real
-saves on a fresh account: its first run (`first`, 5 km), a slower 3 km
+saves on a fresh free runner: its first run (`first`, 5 km), a slower 3 km
 (`routine`) and the 5 km loop faster (`best`: its fastest 1K and 5K). The
 share cards are drawn at half size (540 × 960). Under Reduce Motion, so no
 confetti is in a measured frame; `lift-best-confetti` is the one taken
@@ -115,37 +116,77 @@ with motion on.
 Measured at 393 × 852 unless named: colour as pixels with S > 0.35 and
 V > 0.25 (`python3 -I`, PIL and numpy), with its leading hue; the object's
 drawn width (an `object-fit: contain` drawing's own pixels, a map band's
-box) and top; the largest text against the next size. Blocks on the first
-screen: the kicker, the object, the session done, the figure with its
-caption, one line, and Share with Done.
+box) and top, and its height as a share of the screen; the largest text
+against the next size. The first screen holds six blocks: the kicker, the
+object, the session done, the figure with its caption, one line, and Share
+with Done. Above Share and Done, the top of the next section peeks (its
+heading and the top edge of its card, about 50 pt) as the cue that there
+is more: "New bests" on a lift reward, "Your week so far" on a routine
+lift, the stats card on a run. It is counted as a cue, not a block.
 
-| Frame                        | Register         | Colour                       | Object                                | Largest text            | Blocks |
-| ---------------------------- | ---------------- | ---------------------------- | ------------------------------------- | ----------------------- | ------ |
-| `lift-best-393-dark`         | reward, new best | 6.5% (band 5-15%), gold 99%  | 50% wide, top at 106 pt, 21% tall     | "2,295", 94 px, 4.7x    | 6      |
-| `lift-best-393-light`        | reward, new best | 7.1%, gold 99%               | as above                              | as above                | 6      |
-| `lift-best-320-dark`         | reward, new best | 5.1%, gold 99%               | 49% wide, top at 125 pt               | "2,295", 77 px, 3.9x    | 6      |
-| `lift-first-375-dark`        | reward, first    | 5.2%, purple 89%             | the session's own drawing             | "90", 94 px             | 6      |
-| `lift-routine-393-dark`      | summary          | 0.1% (the drawing's muscles) | 50% wide, top at 106 pt               | "2,295", 94 px, 4.7x    | 6      |
-| `run-best-393-dark`          | reward, new best | 8.3%, gold 86% (route 13%)   | map band, full width, 38% tall, top 0 | "5.00", 94 px, 4.7x     | 6      |
-| `run-best-393-light`         | reward, new best | 9.4%, gold 89%               | as above                              | as above                | 6      |
-| `run-first-393-dark` / light | reward, first    | 3.9% / 7.1%, coral 99%       | as above                              | as above                | 6      |
-| `run-routine-393-dark` / lt  | summary          | 1.2% / 1.0%, coral (route)   | as above                              | "3.00", 94 px, 4.7x     | 6      |
-| `share-lift-best`            | card, new best   | 5.4%, gold 94%               | the row drawing, 78% of the card wide | "2,295" in the wide cut | -      |
-| `share-run-best`             | card, new best   | 10.9%, gold 100%             | the route, gold                       | "5.02" in the wide cut  | -      |
-| `share-lift-routine`         | card             | 3.3%, purple 100%            | the row drawing                       | "2,295"                 | -      |
+| Frame                           | Register         | Colour, lead               | Object                                  | Largest text         |
+| ------------------------------- | ---------------- | -------------------------- | --------------------------------------- | -------------------- |
+| `lift-best-393-dark` / light    | reward, new best | 5.4% / 5.9%, gold 98%      | 63% wide, top at 157 pt (18%), 27% tall | "2,295", 94 px, 4.7x |
+| `lift-best-320-dark`            | reward, new best | 4.2%, gold 98%             | 61% wide, top at 177 pt (21%)           | "2,295", 77 px, 3.9x |
+| `lift-first-375-dark` / light   | reward, first    | 4.1% / 4.5%, purple 86%    | the session's own drawing               | "90", 94 px          |
+| `lift-routine-393-dark` / light | summary          | 0.2% / 0.1% (the muscles)  | 63% wide, top at 157 pt (18%)           | "2,295", 94 px, 4.7x |
+| `run-best-393-dark` / light     | reward, new best | 8.7% / 9.3%, gold 83%      | map band, full width, top 0, 53% tall   | "5.00", 94 px, 4.7x  |
+| `run-first-393-dark` / light    | reward, first    | 4.2% / 7.4%, coral 99%     | as above                                | as above             |
+| `run-routine-393-dark` / light  | summary          | 1.6% / 1.1%, coral (route) | map band, 57% tall                      | "3.00", 94 px, 4.7x  |
+| `share-lift-best`               | card, new best   | 5.4%, gold 94%             | the row drawing, 78% of the card wide   | "2,295", wide cut    |
+| `share-run-best`                | card, new best   | 10.9%, gold 100%           | the route, gold                         | "5.02", wide cut     |
+| `share-lift-routine`            | card             | 3.3%, purple 100%          | the row drawing                         | "2,295"              |
 
-Five text sizes on every finish frame (94 and 20 px, then 18 to 10 px:
-the line, the caption, the kicker and status, and the map's marker
-numbers on a run), the display figure in Archivo's wide heavy italic, and one filled button,
-Done, neutral (DS4 call 1a). Dark is the quieter theme in every pair
-except the lift's first (5.2% on dark at 375 px against 4.0% on light), and
-a sport-coloured first on dark sits at 3.9-5.2%, at the bottom of the
-reward band: the light behind it is kept softer there, where the same
-light reads as a heavier stain than the gold.
+Before this pass (the first build, frames of the same names in its
+commit): the drawing was 50% wide with its top at 106 pt and 21% tall, the
+map band 38% tall, and a third of the first screen (about 180 pt on the
+lift, 140 pt on the run) stood empty between the line and Share and Done.
+The object's area now takes that height, the drawing is 63% wide (61% at
+320), and the next section peeks. Colour at 393 dark went from 6.5% to
+5.4% on the lift's best, since the same light now spreads over a taller
+area, and from 8.3% to 8.7% on the run's.
 
-Before: `current-finish-lift` (2.1% colour, about 9 blocks, 6 numbers, 4
-buttons, a figure 23% wide inside a card). The run's finish before this
-was DS3's: the map in a card at 256 px, the distance at 48 px under a
-coral "Nice run", a green "Run saved" banner, and a coral Done; its
-pre-save frame is `run-finish-*` in `app-screenshots`, not re-captured
-here.
+Six text sizes on the lift reward (94, 20, 18, 16, 14 px and the peeking
+heading), five elsewhere; the display figure in Archivo's wide heavy
+italic, and one filled button, Done, neutral (DS4 call 1a). Dark is the
+quieter theme in every pair but the lift's routine and the run's routine,
+where both carry under 2% and the difference is the drawing's muscles and
+the route. The purple light on dark is the softest of the three: at the
+coral's stops the real first workout measured 5.9% on dark against 4.5% on
+light, and at its own 4.1%.
+
+A first of each sport is a first (owner, 7 November 2026): a lifter's
+first run is rewarded as "You finished your first run!", and a runner's
+first lift as a first workout (`earlierSessions`, `isFirstOfSport`). The
+post keeps the account's first ("First session on Tropos"): a first of its
+sport on the post would need a new moment, which `validPostMoment` in
+`firestore.rules` refuses, so that waits for a rules release.
+
+Before DS4: `current-finish-lift` (2.1% colour, about 9 blocks, 6 numbers,
+4 buttons, a figure 23% wide inside a card). The run's finish before was
+DS3's: the map in a card at 256 px, the distance at 48 px under a coral
+"Nice run", a green "Run saved" banner, and a coral Done.
+
+## Built: running in coral (v3)
+
+The runner's lit muscles were drawn in the lifting purple. They are now
+running's coral, recoloured as the poses are cut (`npm run art:run-poses`,
+`scripts/art/recolour.ts`: hue to 348, saturation and lightness kept),
+so every runner in the app changes with them: Home's run hero, Train's
+two run cards (`ProgrammeRunSection`) and the run finish's runner without
+a route. The cut-outs measure
+hue 348, saturation 0.57, lightness 0.63 against the token's 348, 0.57,
+0.61. The rest day's walker keeps its purple: a rest day belongs to the
+plan, not to a run. `runPoses.test.ts` measures each cut-out's highlight.
+
+With the runner coral, the run hero's glow is coral at the lift glow's
+weight (`.hero-glow-run`), and a first session's tile on a run post is
+coral (`postMomentLines`' `sport` tone).
+
+| Frame                              | Colour | Leading hue | Before (v2)       |
+| ---------------------------------- | ------ | ----------- | ----------------- |
+| `built-home-free-run-v3-393-light` | 2.5%   | coral 94%   | 1.88%, purple 59% |
+| `built-home-free-run-v3-393-dark`  | 1.2%   | coral 78%   | 1.72%, purple 59% |
+
+Dark's other hues are the header's brand mark and streak, the tab bar's
+active pill and the avatar, which are not the hero's.
