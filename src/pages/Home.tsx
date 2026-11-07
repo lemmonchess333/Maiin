@@ -65,17 +65,27 @@ import { summariseWeek } from "@/lib/weekSummary";
 import { trainingWeek, weekDays } from "@/lib/trainingWeek";
 import { todaySession } from "@/lib/todaySession";
 import {
+  freeRunHeroLine,
+  heroIsFreeRun,
   heroKicker,
   nextSessionLine,
   planPosition,
   weekSessions,
 } from "@/lib/homeHero";
+import { useSavedRuns } from "@/hooks/useSavedRuns";
+import type { RunWindow } from "@/lib/savedRuns";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { resolveLiftUnit } from "@/lib/liftLoad";
 import { startDayKey } from "@/lib/startDay";
 import { loggedAgo } from "@/lib/loggedAgo";
 import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { goalReachedOffer } from "@/lib/goalWeightPlan";
-import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -577,6 +587,60 @@ export default function Home() {
     [programState, todayKey]
   );
   const kicker = heroKicker(session, heroPositionLabel);
+  /* A free run's line is the week's distance against last week's
+     (`freeRunHeroLine`), so the runs from last week's Monday on are read,
+     and only while the hero is a free run. A day early, as the claim
+     window reads, for a run recorded east of here before this midnight. */
+  const freeRunHero = heroIsFreeRun(session);
+  const freeRunWindow = useMemo<RunWindow | null>(
+    () =>
+      freeRunHero
+        ? {
+            since: localDateString(
+              addLocalDays(
+                parseLocalDate(localWeekKey(parseLocalDate(todayKey))),
+                -8
+              )
+            ),
+          }
+        : null,
+    [freeRunHero, todayKey]
+  );
+  const freeRunRead = useSavedRuns(freeRunWindow);
+  const freeRunLine = useMemo(
+    () =>
+      freeRunHero
+        ? freeRunHeroLine({
+            // No line while the runs are read, or when they could not be:
+            // an empty list would say no run was ever saved.
+            runs:
+              freeRunRead.loading || freeRunRead.failed
+                ? null
+                : freeRunRead.runs
+                    .filter((r) => isVolumeEligible(r))
+                    .map((r) => ({ day: r.day, distance: r.distance })),
+            todayKey,
+            unit: resolveDistanceUnit(profile?.preferredDistanceUnit),
+            first:
+              session.run?.isFirst ??
+              (inActivationWindow &&
+                !runStatsLoading &&
+                lifetimeRunCount === 0),
+          })
+        : null,
+    [
+      freeRunHero,
+      freeRunRead.loading,
+      freeRunRead.failed,
+      freeRunRead.runs,
+      todayKey,
+      profile?.preferredDistanceUnit,
+      session.run?.isFirst,
+      inActivationWindow,
+      runStatsLoading,
+      lifetimeRunCount,
+    ]
+  );
   const weekSessionCount = weekSessions(weekCounts);
   const nextSession = nextSessionLine(session.next, session);
 
@@ -1266,6 +1330,7 @@ export default function Home() {
                 session={session}
                 unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
                 liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
+                freeRunLine={freeRunLine}
                 navigate={function (p: string) {
                   closePeek();
                   navigate(p);
@@ -1479,7 +1544,7 @@ export default function Home() {
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
           }}
         >
-          <Card className="space-y-4">
+          <Card className="space-y-4 rounded-xl">
             <SectionErrorBoundary sectionName="week-summary">
               <WeekSummary
                 counts={weekCounts}

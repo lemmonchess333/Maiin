@@ -42,3 +42,57 @@ Before (the same accounts on main, `current-home` and `current-home-new`):
 the rich account
 at 7.1% colour with the purple Start the largest patch, the new account at
 6.7%, and "Today" at 31 px over a 25 px session title.
+
+## Built: the hero's four follow-ups (v2)
+
+`built-home-*-v2-*` are Home after the four follow-ups the hero left open,
+captured on the emulator rig on 7 November 2026: the rich account today (a
+lifting day), on Sunday (its rest day), and on Sunday as a free runner
+(`runMode: "freeform"`), at 393 × 852 and 320 × 693 in both themes. The
+measures are the ones above. Colour leads with its hue's share. The picture
+is the drawing's box as a share of the screen.
+
+| Frame                          | Colour            | Leading hue | Picture         | Card radius             |
+| ------------------------------ | ----------------- | ----------- | --------------- | ----------------------- |
+| `built-home-rich-v2-393-light` | 1.99% (limit 15%) | purple 89%  | unchanged       | 16 pt (measured 15.4)   |
+| `built-home-rich-v2-393-dark`  | 1.36% (limit 8%)  | purple 84%  | unchanged       | 16 pt                   |
+| `built-home-rich-v2-320-light` | 1.62%             | purple 100% | unchanged       | 16 pt                   |
+| `built-home-rich-v2-320-dark`  | 1.05%             | purple 100% | unchanged       | 16 pt                   |
+| `built-home-rest-v2-393-light` | 2.04%             | purple 82%  | the walker, 12% | 16 pt                   |
+| `built-home-rest-v2-393-dark`  | 1.27%             | purple 67%  | the walker, 12% | 16 pt                   |
+| `built-home-free-run-v2-393-*` | 1.72% / 1.88%     | purple 59%  | the runner      | 16 pt; line "11.0 km …" |
+
+- **Rest-day picture (rule 24, 26).** The leaf icon on a 120 pt tile (4.3%
+  of the screen, and an icon, not art) is now the canonical athlete on an
+  easy walk, one soft purple highlight on the calves, drawn for it
+  (`docs/exercise-art/run-poses/rest-walk.jpg`, cut as the runners are). Its
+  box is 147 × 280 pt, 12.3% of the screen at 393 and 18.6% at 320.
+- **Light's leading hue (rule 11, 15).** The hero's glow had dark's stops
+  in both themes, and on a pale page a tint counts as colour only from about
+  0.7 alpha. Light's hero carried no counted colour, so the week's run
+  segments and the Food card split it: the hero PR's light frame measured
+  0.8% colour, purple 43%, against 2.3% on dark. Light now has its own
+  stronger stops (`.hero-glow`), and the line's mark ring is full strength
+  on light, since at half strength only dark showed it. On today's state
+  (the main lift pictured, the badge row in view), `before-home-rich-v2-393-light`
+  is 0.71% colour, purple 69%, against dark's 1.36%. After: 1.99%, purple
+  89%, and dark is no longer louder than light on any state captured but the
+  free run. The new stops on the hero PR's frame, simulated: purple 80%.
+- **Card radius (rule 20).** Home's cards were 22 pt (`rounded-2xl`, the
+  `hero` card size): Today's energy, Water, the first-week card, the
+  starter goal's card, the day peek, "This week" and the first-meal card.
+  They are now 16 pt, and what sits inside them (the first-week rows, the
+  performance row, Water's icon tile) is 10 pt. The shared `cardClasses`
+  and `Card` are unchanged; `StarterDoneCard` is shared with Train and
+  changes there too.
+- **A free run's line (rules 35, 41).** "11.0 km this week" over "7.0 km
+  last week" (`freeRunHeroLine`); with nothing last week, the week's runs
+  ("2 runs so far"); with no run in either week, "0 km this week" over
+  "Finish your first run and it counts here".
+- **Left open: the run day's hue.** The runner's lit muscles are purple and
+  its glow coral. A coral glow strong enough to count split the light free
+  run 41% purple, 40% coral, so a run's glow stays below what counts in both
+  themes, and the free run leads with purple at 59%, under the 60% rule.
+  Dark is 0.16 points louder there, from the tab bar's active pill, the Food
+  card and the header, which are not the hero's. Choosing the run hero's
+  one hue is an owner call.

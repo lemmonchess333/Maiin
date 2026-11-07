@@ -30,7 +30,7 @@ export default function FirstMealCard({
       }}
       className={cardClasses({
         tone: "tinted",
-        className: "w-full text-left",
+        className: "w-full rounded-xl text-left",
       })}
       style={{ backgroundColor: THEME.semantic.nutrition + "14" }}
     >

@@ -423,7 +423,7 @@ export default function DayPeekCard({
           aria-hidden="true"
           className="mx-auto size-2.5 rotate-45 rounded-[2px] bg-card -mb-1.5"
         />
-        <div className="relative rounded-2xl bg-card px-3 py-3 space-y-2 card-shadow">
+        <div className="relative rounded-xl bg-card px-3 py-3 space-y-2 card-shadow">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-foreground">

@@ -22,9 +22,14 @@ import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
 import { blockWeekOf } from "@/features/program/trainingBlock";
 import { racePlanWeek, racePlanWeekLabel } from "@/lib/racePlanWeek";
 import { sessionLeadIndex } from "@/lib/formArtCutouts";
-import { paceLabel } from "@/lib/runLabels";
-import type { DistanceUnit } from "@/lib/distanceUnits";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import { distanceValue, paceLabel } from "@/lib/runLabels";
+import { distanceUnitLabel, type DistanceUnit } from "@/lib/distanceUnits";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { formatWeekday } from "@/utils/formatters";
 
 /** The hero's one line under its picture: a figure, and what it is
@@ -282,6 +287,77 @@ export function runHeroLine(
     };
   }
   return null;
+}
+
+/**
+ * The hero is a free run: the free runner's rest-day offer, or a run day
+ * with no planned run written (the run its card names "Free run"). Its
+ * line is the week's distance (`freeRunHeroLine`), since there is no plan
+ * to describe. A run drawn under a lift that leads is not the hero.
+ */
+export function heroIsFreeRun(session: TodaySession): boolean {
+  if (session.rest?.kind === "free-run") return true;
+  return heroLead(session) === "run" && !!session.run && !session.run.name;
+}
+
+/** A saved run, as much of one as the free run line reads. */
+export interface HeroRun {
+  /** Its local day, "yyyy-MM-dd". */
+  day: string;
+  /** Metres. */
+  distance: number;
+}
+
+/**
+ * A free run's line: this week's distance, and last week's beside it
+ * ("12.4 km this week", "18.2 km last week"), the one number and what it
+ * is compared with. With nothing last week it counts the week's runs
+ * instead ("2 runs so far"), so a new account is not compared with a week
+ * it did not have. With no run in either week it is a first step, the
+ * week drawn at zero ("0 km this week", "Finish your first run and it
+ * counts here"). Null while the runs are read.
+ */
+export function freeRunHeroLine(input: {
+  /** Saved runs that count, from last week's Monday on; null while read. */
+  runs: readonly HeroRun[] | null;
+  /** Local "yyyy-MM-dd". */
+  todayKey: string;
+  unit: DistanceUnit;
+  /** A new person who has not run yet. */
+  first: boolean;
+}): HeroLine | null {
+  const { runs, todayKey, unit } = input;
+  if (!runs) return null;
+  const monday = localWeekKey(parseLocalDate(todayKey));
+  const lastMonday = localDateString(addLocalDays(parseLocalDate(monday), -7));
+  const sum = (list: readonly HeroRun[]) =>
+    list.reduce(
+      (m, r) => m + (finite(r.distance) && r.distance > 0 ? r.distance : 0),
+      0
+    );
+  const thisWeek = runs.filter((r) => r.day >= monday && r.day <= todayKey);
+  const lastWeek = runs.filter((r) => r.day >= lastMonday && r.day < monday);
+  const label = distanceUnitLabel(unit);
+  const amount = (metres: number) =>
+    metres > 0 ? `${distanceValue(metres, unit, 1)} ${label}` : `0 ${label}`;
+  const thisMetres = sum(thisWeek);
+  const lastMetres = sum(lastWeek);
+  const title = `${amount(thisMetres)} this week`;
+  if (lastMetres > 0)
+    return { title, detail: `${amount(lastMetres)} last week`, mark: "run" };
+  if (thisMetres > 0)
+    return {
+      title,
+      detail: `${plural(thisWeek.length, "run", "runs")} so far`,
+      mark: "run",
+    };
+  return {
+    title,
+    detail: input.first
+      ? "Finish your first run and it counts here"
+      : "Finish a run and it counts here",
+    mark: "run",
+  };
 }
 
 /**

@@ -101,3 +101,20 @@ nothing else, so swimming and stairmaster stay drafts.
   difference: the large-text capture spec does not reach a run card, and
   no capture was added for one. The run card uses the lift card's classes,
   so it gives way under 14em of card in the same way.
+
+## The rest day's walker, 7 November 2026
+
+Home's rest-day hero drew a leaf icon, where DS4 asks for a picture of at
+least a tenth of the first screen from Tropos's own art (DESIGN_GUIDE §14m
+rules 24 and 26). No released drawing was a calm one: the treadmill walk is
+on its machine, and the floor poses are core work.
+
+- **Made with** `scripts/art/gemini-image.py` (gemini-3-pro-image), one
+  generation, with the canonical athlete and `run-easy` attached: an easy
+  walk, side view facing right, arms loose, and one highlight, the calves
+  in a soft purple. The prompt and hashes are in `run-poses/provenance.json`.
+- **Cut-out:** `rest-walk` is the third pose `npm run art:run-poses` keys,
+  so `public/form-art/rest-walk.webp` is cut as the runners are, and
+  `runPoses.test.ts` binds it to its source.
+- **Status:** drawn for the DS4 Home follow-ups and shown in that work's
+  captures; not yet an owner release.

@@ -69,7 +69,11 @@ export default function FirstWeekCard({
   onOpen?: (key: FirstWeekItemKey) => void;
 }) {
   return (
-    <Card as="section" aria-labelledby="first-week-title" className="space-y-3">
+    <Card
+      as="section"
+      aria-labelledby="first-week-title"
+      className="space-y-3 rounded-xl"
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
           <h2
@@ -110,7 +114,7 @@ export default function FirstWeekCard({
                   haptic();
                   onOpen(item.key);
                 }}
-                className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
                 <ItemRow item={item} />
                 <ChevronRight

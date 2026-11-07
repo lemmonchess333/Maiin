@@ -23,11 +23,14 @@ export interface HeroPicture {
 }
 
 /** A soft glow of the sport's own colour behind the picture, fading into
- *  the page (§14m rule 13: one hue, into its surface). */
+ *  the page (§14m rule 13: one hue, into its surface). Its strength is per
+ *  theme, so light and dark carry the same colour (rule 15): `.hero-glow`
+ *  in components.css. A rest day shares the lift's purple; a run's coral
+ *  stays quiet, under the runner's purple muscles. */
 const GLOW: Record<HeroSport, string> = {
-  lift: "radial-gradient(closest-side, hsl(var(--lifting) / 0.3), hsl(var(--lifting) / 0.14) 45%, hsl(var(--lifting) / 0.04) 75%, transparent)",
-  run: "radial-gradient(closest-side, hsl(var(--running) / 0.26), hsl(var(--running) / 0.12) 45%, hsl(var(--running) / 0.04) 75%, transparent)",
-  rest: "radial-gradient(closest-side, hsl(var(--lifting) / 0.18), hsl(var(--lifting) / 0.08) 50%, transparent)",
+  lift: "hero-glow",
+  run: "hero-glow-run",
+  rest: "hero-glow",
 };
 
 const STRONG: Record<HeroSport, string> = {
@@ -36,10 +39,13 @@ const STRONG: Record<HeroSport, string> = {
   rest: "text-lifting-strong",
 };
 
+/* The mark's ring at full strength on light and half on dark, so it
+   reads as the same colour in both (§14m rule 15): at half strength on a
+   light page it fell below what counts as colour, and only dark had it. */
 const EDGE: Record<HeroSport, string> = {
-  lift: "border-lifting/50",
-  run: "border-running/50",
-  rest: "border-lifting/50",
+  lift: "border-lifting dark:border-lifting/50",
+  run: "border-running dark:border-running/50",
+  rest: "border-lifting dark:border-lifting/50",
 };
 
 /** The mark beside the line: which way the number moved, or the sport. */
@@ -95,7 +101,6 @@ export default function SessionHero({
   meta = [],
   description,
   picture,
-  emblem,
   line,
   action,
   preview,
@@ -112,8 +117,6 @@ export default function SessionHero({
   /** A sentence under the title, where the day has no facts to list. */
   description?: string;
   picture?: HeroPicture | null;
-  /** Drawn where a picture would be, for a day with no art of its own. */
-  emblem?: ReactNode;
   line?: HeroLine | null;
   /** The action row: Start, Resume, or the day's status. */
   action?: ReactNode;
@@ -193,36 +196,34 @@ export default function SessionHero({
             {description}
           </p>
         )}
-        {(picture || emblem) && (
-          /* A runner is a tall, narrow drawing, so its box is taller: at
-             the lift's height the easy stride covered under a tenth of the
-             screen (§14m rule 24). */
+        {picture && (
+          /* A runner and the rest day's walker are tall, narrow drawings,
+             so their box is taller: at the lift's height the easy stride
+             covered under a tenth of the screen (§14m rule 24). */
           <div
             className={cn(
               "relative mt-3 flex items-center justify-center",
-              sport === "run" ? "h-[280px]" : "h-[240px]"
+              sport === "lift" ? "h-[240px]" : "h-[280px]"
             )}
           >
             <div
               aria-hidden="true"
-              className="absolute left-1/2 top-1/2 aspect-square w-full max-w-[22rem] -translate-x-1/2 -translate-y-1/2 rounded-full"
-              style={{ background: GLOW[sport] }}
+              className={cn(
+                "absolute left-1/2 top-1/2 aspect-square w-full max-w-[22rem] -translate-x-1/2 -translate-y-1/2 rounded-full",
+                GLOW[sport]
+              )}
             />
-            {picture ? (
-              <img
-                src={picture.src}
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-                decoding="async"
-                className={cn(
-                  "relative size-full object-contain",
-                  picture.className
-                )}
-              />
-            ) : (
-              <div className="relative">{emblem}</div>
-            )}
+            <img
+              src={picture.src}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              decoding="async"
+              className={cn(
+                "relative size-full object-contain",
+                picture.className
+              )}
+            />
           </div>
         )}
         {line && (

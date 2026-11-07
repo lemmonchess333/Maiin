@@ -1,8 +1,9 @@
 /**
- * Cut out the run cards' runner: the two released poses in
- * docs/exercise-art/run-poses, keyed out of their black backdrop by the same
- * keying as the exercise cut-outs (keying.ts), so Home's run card and its
- * lift card draw alike. RUN_CARD_RUNNER_BRIEF.md says what each pose is for.
+ * Cut out the run cards' runner and the rest day's walker: the released
+ * poses in docs/exercise-art/run-poses, keyed out of their black backdrop by
+ * the same keying as the exercise cut-outs (keying.ts), so Home's run, lift
+ * and rest heroes draw alike. RUN_CARD_RUNNER_BRIEF.md says what each pose
+ * is for.
  *
  * Writes public/form-art/<pose>.webp and src/lib/runPoses.data.ts, which
  * records each source's and output's hash; runPoses.test.ts fails when a
@@ -18,7 +19,7 @@ import { cutoutWebp } from "./keying";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const MANIFEST = resolve(ROOT, "src/lib/runPoses.data.ts");
-const POSES = ["run-easy", "run-fast"] as const;
+const POSES = ["run-easy", "run-fast", "rest-walk"] as const;
 
 const sha256 = (bytes: Buffer) =>
   createHash("sha256").update(bytes).digest("hex");

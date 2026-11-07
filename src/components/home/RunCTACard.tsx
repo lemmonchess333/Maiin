@@ -8,7 +8,7 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { runPoseFor, runPoseUrl } from "@/lib/runPoses";
 import type { RacePaceWork } from "@/lib/racePace";
 import { runSessionName } from "@/lib/runSessionAbout";
-import { runHeroLine } from "@/lib/homeHero";
+import { runHeroLine, type HeroLine } from "@/lib/homeHero";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import {
@@ -29,7 +29,9 @@ import type { SessionInProgress } from "@/lib/sessionsInFlight";
  * dose, and its line is the run in its own numbers (`runHeroLine`); why
  * this run matters lives in Train's day details ("Why this run"). A
  * runner is its picture, as the lift hero draws its lead lift: the fast
- * stride for a tempo, intervals or a race (`runPoseFor`).
+ * stride for a tempo, intervals or a race (`runPoseFor`). A free run has
+ * no plan to put in numbers, so its line is the week's distance, which
+ * Home reads and words (`freeRunHeroLine`).
  */
 export default function RunCTACard({
   todayRun,
@@ -41,6 +43,7 @@ export default function RunCTACard({
   inProgress = null,
   startTarget,
   easyPaceSPerKm = null,
+  freeLine = null,
   variant = "hero",
 }: {
   todayRun: ScheduledRunDay | null;
@@ -60,6 +63,9 @@ export default function RunCTACard({
   /** The confirmed easy pace, s/km (`planningEasyPaceSPerKm`), for the
    *  line of an easy or long run. */
   easyPaceSPerKm?: number | null;
+  /** A free run's line (`freeRunHeroLine`): this week's distance against
+   *  last week's. Drawn only where no planned run is named. */
+  freeLine?: HeroLine | null;
   /** `compact`: the second session of a day with two, under the hero. */
   variant?: "hero" | "compact";
 }) {
@@ -91,7 +97,7 @@ export default function RunCTACard({
      kicker's beside the date, and the reasons are Train's ("Why this
      run"). */
   const meta = tmpl && dose ? dose.split(" · ") : [];
-  const line = tmpl ? runHeroLine(tmpl, easyPaceSPerKm, unit) : null;
+  const line = tmpl ? runHeroLine(tmpl, easyPaceSPerKm, unit) : freeLine;
 
   const start = function () {
     // The run starts as the Run page opens, so the voice cues are

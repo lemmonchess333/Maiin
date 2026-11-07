@@ -37,6 +37,27 @@
       "generator": "scripts/art/gemini-image.py",
       "model": "gemini-3-pro-image",
       "output": "Original 1024x1024 API JPEG retained unchanged."
+    },
+    "rest-walk": {
+      "file": "docs/exercise-art/run-poses/rest-walk.jpg",
+      "sha256": "e6d7d3c05c92563137bd66ba9f59965af9175ef85ebbf4dadfae655eae8263eb",
+      "references": [
+        {
+          "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+          "note": "the canonical athlete"
+        },
+        {
+          "path": "docs/exercise-art/run-poses/run-easy.jpg",
+          "sha256": "1d53b5602357810f7b441adff4494cffc5c6a74be1e958306849566f755bb918",
+          "note": "sent as PNG, converted from the JPEG, for style, scale and camera"
+        }
+      ],
+      "prompt": "Educational fitness illustration, one single pose (not a sequence or collage). Reference attached canonical athlete for exact identity: faceless bald white/light-grey anatomical athlete, fine dark contours, smooth neutral featureless pelvis with no shorts or clothing, white trainers. Match the second attached image's rendering style, scale and camera exactly. An easy, relaxed recovery walk on a rest day: fixed side view, athlete facing right, mid-step at an unhurried pace, the front heel just touching down and the rear foot rolling onto its toes, a short natural stride, both feet close to the ground. Arms hanging relaxed and loose at the sides with a small natural swing, elbows only slightly bent, open relaxed hands. Torso tall and upright, shoulders down and relaxed, head level. Calm and unhurried; it must read as walking, never running. Muscle colours: one highlight only, a soft purple on the calves; every other muscle white-grey. Pure solid black background. Square canvas, the whole figure filling about 80% of the height with even margins, both feet fully inside the frame. One person only. No floor line, road, path, shadow, scenery, motion lines, labels, text, logos or arrows.",
+      "generator": "scripts/art/gemini-image.py",
+      "model": "gemini-3-pro-image",
+      "output": "Original 1024x1024 API JPEG retained unchanged; the first and only generation.",
+      "review": "Drawn for Home's rest-day hero (DS4 §14m rules 24 and 26), 7 November 2026. Visual full-body and hero-size review in both themes; awaiting the owner's release."
     }
   }
 }
