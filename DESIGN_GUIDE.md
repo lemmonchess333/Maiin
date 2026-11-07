@@ -27,7 +27,8 @@ If you only remember thirteen things:
    dark and 15% on light, in at most three hues with one leading, and its
    biggest patch of colour is data (a ring, week segments, a route, a
    figure's lit muscles), never a button. A generic action (Follow, Edit
-   profile, Done, Save) is neutral. A gradient stays within one hue and fades
+   profile, Done, Save) is neutral, and so is a screen's one full-width
+   filled button (Start workout is white on dark). A gradient stays within one hue and fades
    into its surface. Adding a "nice blue", neon or glass is a regression.
    §14m.
 2. **Purple = lifting/brand. Coral = running.** This sport-coding is everywhere
@@ -97,10 +98,16 @@ If you only remember thirteen things:
   running, orange is food, teal is water, gold is a new best — and nothing
   else. A colour that means a sport or a domain is not decoration.
 - **Brand colour:** Purple `#7B72E9` means lifting and the brand (DS4 call
-  1). It fills a lifting action (Start workout), a brand moment and lifting
-  data; a generic action (Follow, Edit profile, Start a circle, Done, Save)
-  is neutral, because a colour that is on every button means nothing. Never
-  a full-page background, and no button carries a gradient.
+  1). It colours lifting data (week segments, a figure's lit muscles,
+  progress on a lifting goal), a brand moment and the smaller lifting
+  controls; a generic action (Follow, Edit profile, Start a circle, Done,
+  Save) is neutral, because a colour that is on every button means nothing.
+  A screen's one full-width filled button is neutral too, white on dark and
+  ink on light, Start workout included (owner, 7 November 2026): filled in
+  purple it became the largest patch of colour on Home and took the screen
+  to the 8% ceiling, where the rule is that the largest colour is the
+  person's data (§14m rule 10). Never a full-page background, and no button
+  carries a gradient.
 - **Sport-coding:** Lifting = purple `#7B72E9`, Running = coral `#D4637A`.
   These two colours recur in calendar dots, section headings, icon tints, and
   contextual cards.
@@ -1169,7 +1176,20 @@ leaking one-off hex orange past the hex guardrail.
 **An action takes its domain's colour wherever it appears** (Polish3, call 3).
 The colour says what the button does, not which page it sits on. The role
 picks the emphasis (filled for the main action, tinted for a secondary one,
-neutral for a low one) and the domain picks the hue:
+neutral for a low one) and the domain picks the hue.
+
+**DS4 (owner, 7 November 2026): a screen's one full-width filled button is
+neutral** (white on dark, ink on light), whatever its domain: Start workout,
+Start run and Food's main Log button included. A full-width filled button in
+a domain colour was the largest patch of colour on the screen, and the
+measured rule is that the largest colour is the person's data (§14m rule
+10). The domain keeps its colour on the button's icon, on tinted and text
+actions ("Log food" in orange on Home's food card), and on the data around
+it. The table below still names each domain's variants for those smaller
+controls; the filled column applies where a domain button is not the
+screen's one full-width main action. The change to the buttons and to
+`designSystemInvariants.test.ts`, which pins the variants, lands with the
+Home hero build.
 
 | The action                          | Filled      | Tinted             |
 | ----------------------------------- | ----------- | ------------------ |
@@ -1191,8 +1211,8 @@ An action that belongs to no domain (a settings form's Save, account
 actions, Retry, Follow, Edit profile, Start a circle, Done) is neutral:
 `secondary`, `outline` or `ghost` (DS4 call 1: purple means lifting and the
 brand, and a colour on every button means nothing). A neutral filled
-variant for a generic main action (white on dark, ink on light) arrives with
-the first screen that needs one. A screen has one filled button (DS4, §14m). Water has no Button variant: its
+variant (white on dark, ink on light) arrives with the Home hero build, the
+first screen that needs one. A screen has one filled button (DS4, §14m). Water has no Button variant: its
 one filled control, the tile's +, is the hydration teal.
 
 `designSystemInvariants.test.ts` holds the rule for the actions it can name
@@ -1275,7 +1295,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **What it found.** Tropos was not short of colour (3.1% of an everyday screen against 2.4%) but its biggest colour was a button on 17 of 32 frames, where the apps' is the person's data (6 of 85). Its hierarchy was upside down: the "Today" title out-ranked the session, large titles sat on 78% of its screens against 13%, and chrome took 31% of the screen against 14%. Home had no hero picture, 7 of 12 lists had no picture per row, and all 30 badges shared one silhouette. The finish screen was 2.1% colour in about 9 blocks where a reward is about 13% in one object. The research also overturned a first round of mockups: a purple flood on Home (35% colour against the 8% ceiling), 76 px type on Home (against 48), and a flooded nine-block finish screen.
 - **Hierarchy.** (1) Every main screen and every finish or reward screen has one hero: 30-60% of the first 852 pt, its top within the first 260 pt (63 of 80 reference screens). (2) The hero holds the largest text, at least 1.2x the next size; no large page title sits above a hero, which names the screen itself, with the date as a small kicker (DS4 call 2 for Home). (3) The next block is at most 0.8x the hero's height, 0.65x on Home (reference median 0.60; Tropos Home was 0.97). (4) A detail or reward hero leaves the card (in a card: 3 of 18 detail and 2 of 12 reward heroes); a Home hero is dressed differently from the cards under it.
 - **Type.** (5) Home and detail heroes: a headline at 25-38 px or a figure at 40-48 px, nothing above 48 px on those screens (no reference Home exceeds about 50 pt). (6) The display register, 64-120 px, only on finish, new-best, streak and live screens (10 of 79 reference screens; 0 of 30 Home screens), one element, in the hero, Archivo's wide heavy cut, capitals. (7) At most six text sizes per screen (median 5). (8) A unit on a big figure is a caption or sits on its baseline at 0.4-0.7 of the figure's height, as Tropos already does.
-- **Colour.** (9) An everyday screen carries at most 8% colour on dark and 15% on light (saturated pixels; 80 of 86 reference screens). (10) The biggest patch of colour is data: a ring, week segments, a route, a figure's lit muscles; never a button. (11) At most three hues per screen, one holding at least 60% of the colour (leading hue median 92%). (12) One meaning per colour, generic actions neutral (8 of 8 apps that give colours meanings); a domain action keeps its domain's colour (§14i). (13) A gradient stays within one hue (30° or less) and fades into its page or card (15 of 15 everyday reference gradients; Food's orange-into-purple hero wash was the only multi-hue one in 178 screens). (14) On dark, colour is strokes and glows on a near-neutral ground; filled areas stay small (median 0.4% of a dark reference screen; 0 of 31 flood). (15) Each colour keeps its hue in both themes, and dark is never louder than light. (16) An empty metric is a full-size grey track; colour arrives with data.
+- **Colour.** (9) An everyday screen carries at most 8% colour on dark and 15% on light (saturated pixels; 80 of 86 reference screens). (10) The biggest patch of colour is data: a ring, week segments, a route, a figure's lit muscles; never a button. (11) At most three hues per screen, one holding at least 60% of the colour (leading hue median 92%). (12) One meaning per colour, generic actions neutral (8 of 8 apps that give colours meanings); a domain action keeps its domain's colour on its icon and its tinted or text form (§14i), and the screen's one full-width filled button is neutral, Start workout included (owner, 7 November 2026). (13) A gradient stays within one hue (30° or less) and fades into its page or card (15 of 15 everyday reference gradients; Food's orange-into-purple hero wash was the only multi-hue one in 178 screens). (14) On dark, colour is strokes and glows on a near-neutral ground; filled areas stay small (median 0.4% of a dark reference screen; 0 of 31 flood). (15) Each colour keeps its hue in both themes, and dark is never louder than light. (16) An empty metric is a full-size grey track; colour arrives with data.
 - **Layout.** (17) Chrome (title, control rows, tab bar) takes at most 20% of a tab's main screen and 12% of a pushed one (reference median 14.4%; Tropos 31%). (18) At most one control row under the title, its track 32-40 pt with the 44 pt hit area from padding. (19) The tab bar sits on the home indicator, its bottom chrome within 90 pt of the screen edge (reference about 82; Tropos 106). (20) One card radius, 16 pt; 10-12 inside a card; 8-12 pt between cards in a group and about 32 between sections. (21) One filled button per screen, about 45 pt tall (63 of 65). (22) List rows 56-64 pt, taller only with a thumbnail or a big number. (23) A screen about one session or place opens on a full-bleed band 25-75% tall: a run's map, a Space's photo, the finish screen (19 of 65 reference screens; Tropos had none).
 - **Imagery and badges.** (24) Home, a session's detail and the finish screen each carry one picture of at least 10% of the first screen (9 of 15 reference home screens; 9 of 9 detail screens). (25) Every row that stands for a session, a person or an award has its own picture, 36-80 pt. (26) At least 80% of the imagery is the person's own (data, routes, photos) or Tropos's own art (the rendered form figures, the body map, badges, medals); no stock photography anywhere. (27) A badge collection has at least three silhouettes (reference median 4); a badge for a count or a distance carries its number in the art (72% of 103); a locked badge is the same art greyed with its progress, as Tropos already draws it. All 30 badges are redrawn this way (DS4 call 4) in four families (lifting, running, food and water, consistency), through the Gemini pipeline that made them. (28) Tab icons are drawn at 20-24 pt.
 - **Rewards.** (29) A full-screen reward is for a first, a new best, a streak milestone and a finished plan (firsts in 6 apps, streaks in 7); a routine session gets a calm summary with its picture (DS4 call 3). (30) A reward screen holds one object about half the screen's width in its top 40%, one display figure, at most one sentence, one main button and at most six blocks. (31) Its colour is the achievement's own, on the object over the plain page, about 5-15% of the screen (reference median 13%). (32) Confetti only for a first, a new best and a finished plan.
