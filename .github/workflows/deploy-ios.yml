@@ -345,6 +345,13 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          # RevenueCat's public iOS key (`appl_…`). Wired once the activation
+          # order in docs/iap/revenuecat-setup.md was done (2026-11-07): the
+          # App Store app with its In-App Purchase key, the `pro` entitlement,
+          # the `default` offering, the transfer behaviour, the webhook and
+          # Apple's notifications. A build made without the secret cannot
+          # sell, and its paywalls show no price (canSellInThisBuild).
+          VITE_REVENUECAT_IOS_KEY: ${{ secrets.VITE_REVENUECAT_IOS_KEY }}
           #
           # Absent on purpose, so nobody has to re-derive why:
           #
@@ -355,12 +362,6 @@ jobs:
           #     appCheck.ts takes its isNativePlatform() branch before it ever
           #     reads the key, so passing it here would do nothing and imply
           #     native attestation is configured when it is not.
-          #   VITE_REVENUECAT_IOS_KEY — NOT wired, deliberately. Adding the
-          #     line arms RevenueCat the instant the GitHub secret exists, and
-          #     purchaseProvider routes iOS through it with no further gate.
-          #     Add it only after the activation order in
-          #     docs/iap/revenuecat-setup.md is complete, or a purchase is
-          #     taken by Apple and no entitlement is written.
 
       # Both failures above are invisible in a green build: the bundle
       # compiles either way and only misbehaves on a device, by which point

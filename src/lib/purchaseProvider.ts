@@ -96,8 +96,9 @@ export function isNativeIOS(): boolean {
 
 /**
  * Whether this build can take a purchase. On the iPhone that needs
- * RevenueCat, whose key `deploy-ios.yml` leaves out until its activation
- * order is done; without it `purchase()` can only refuse. A paywall that
+ * RevenueCat, whose key `deploy-ios.yml` passes from the
+ * `VITE_REVENUECAT_IOS_KEY` secret; a build made without it can only
+ * refuse in `purchase()`. A paywall that
  * shows prices and a button which cannot work is what App Review rejects
  * (Guideline 2.1), so the paywalls show neither in that build.
  */
