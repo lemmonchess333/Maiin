@@ -1079,13 +1079,6 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1536,
     reference: 3,
   },
-  "straight-arm-pulldown": {
-    folder: "2026-10-20-strict-review",
-    version: "anatomy-v3-2026-10-16-native-local-repair-v1",
-    width: 1152,
-    height: 1728,
-    reference: 1,
-  },
   "sumo-deadlift": {
     folder: "2026-10-11",
     version: "anatomy-v3-2026-10-11-three-pose-v1",

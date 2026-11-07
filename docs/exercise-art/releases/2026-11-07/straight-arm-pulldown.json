@@ -1,0 +1,163 @@
+{
+  "exerciseId": "straight-arm-pulldown",
+  "version": "anatomy-v3-2026-11-07-gemini-rear-three-quarter-v1",
+  "width": 1000,
+  "height": 1200,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Claude Code subagent, session_01JCpmQs5HEERxQGJHPyJjgn",
+  "reviewedAt": "2026-11-07T15:58:00+00:00",
+  "reference": {
+    "path": "form-frames/straight-arm-pulldown/2026-11-07/1.webp",
+    "sha256": "294782cafc67460941d3d3aaa11e160be33ff28b0621b8d87dc4ca93e7adc6aa"
+  },
+  "cueSha256": "e665f569e7f76c1807763a0cfd34c53f0aebb2f0c067d39563046e10ed5c8c0c",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Unverified. Observed: the canonical bald, faceless anatomy-v3 athlete with white trainers and a smooth, featureless pelvis, no shorts, in all three drawings, seen from behind at native size and on the contact sheet."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Unverified. Observed: one rear three-quarter camera from the athlete's left for all six frames, one 1000x1200 canvas and one crop. Head, legs and trainers register at 0 px between the three generated drawings (2 px search step at 2048 px). The torso of frame 4 is turned more square-on than frames 1 and 3. Nothing is drawn under the athlete; the station's crossbar is cut by the top edge."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Unverified. Observed: no extra or missing limbs at native size. Straight arms with a small elbow bend in every position; in frame 4 the left handle is mostly hidden behind the hip."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Unverified. Observed: one single-column dual-pulley station, two pulleys, two cables, two grey D-handles, seventeen plates with five selected. Below the pulleys the station is the start drawing's in every frame (built by build.py), so it cannot drift; the pulleys and cables are each drawing's own."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Unverified. Observed: both hands hold their handles in every frame; no anchors were measured."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Unverified. Observed: the selected block is moved rigidly to the scene ladder's gaps (100, 100, 345, 540, 345, 100 mm: 100 mm plus half the payout, 2:1), at 0.92 px per mm of the 2048 px drawing, the start drawing's own 92 px gap taken as 100 mm. The scale is not calibrated against the athlete, and the 2:1 compound pulley is in the ladder, not drawn."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Unverified. Observed: the lats are one violet, shifted to the library's #7B72E9 (the drawings' median was #7C72DC). The near upper arm is that same violet in frames 1 and 3 but lilac in frame 4; the abdominals are hidden by the rear view."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Unverified. Observed: the six cue labels and lines are unchanged (same cue hash as the 2026-10-20 record). Frames 3 and 5 now show mid-sweep, so their placard t values moved from 1 and 0 to 0.5; the words still fit: Pull to thighs / Sweep your upper arms toward your sides, and Control return / Let the handles rise under control."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Unverified. Observed: three positions in six frames: start (1, 2, 6), mid-sweep (3, 5) and finish (4). 6 to 1 holds at the start. Reviewed as a contact sheet and stepped frame by frame in the player; not watched as an animated loop."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Unverified. Observed: scripts/art/check-redraw-release.mjs --date=2026-11-07 stepped all six frames and the 6-to-1 loop in the real player at 393x852 in the light theme with no console errors or page overflow, and Claude looked at phone screenshots of frames 1, 3 and 4. No person has played it in the app."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Unverified. Observed: scripts/art/check-redraw-release.mjs --date=2026-11-07 stepped all six frames and the 6-to-1 loop in the real player at 393x852 in the dark theme with no console errors or page overflow, and Claude looked at phone screenshots of frames 1, 3 and 4. No person has played it in the app."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/straight-arm-pulldown/2026-11-07/1.webp",
+      "sha256": "294782cafc67460941d3d3aaa11e160be33ff28b0621b8d87dc4ca93e7adc6aa",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261107/straight-arm-pulldown/1.png",
+        "sha256": "3b7642c8ecfb322a17662c62bf627b55a01cbed692e82cd0f8b8c65d826bf4d0",
+        "generated": "docs/exercise-art/sources/straight-arm-pulldown/2026-11-07/generated/start.jpg",
+        "generatedSha256": "63af0e67f2a58e6cb3e25eba8c7c18adf990e3876474cf34d92eeb9abb6ed905"
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/2026-11-07/2.webp",
+      "sha256": "294782cafc67460941d3d3aaa11e160be33ff28b0621b8d87dc4ca93e7adc6aa",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261107/straight-arm-pulldown/2.png",
+        "sha256": "3b7642c8ecfb322a17662c62bf627b55a01cbed692e82cd0f8b8c65d826bf4d0",
+        "generated": "docs/exercise-art/sources/straight-arm-pulldown/2026-11-07/generated/start.jpg",
+        "generatedSha256": "63af0e67f2a58e6cb3e25eba8c7c18adf990e3876474cf34d92eeb9abb6ed905"
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/2026-11-07/3.webp",
+      "sha256": "f80a94dffa61939164cb2db0b34464f3d03180fd192949db45d8296444ee36cc",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261107/straight-arm-pulldown/3.png",
+        "sha256": "f70792785028814a32299721153e264de5ce0344d71e69894d9b0a3778619200",
+        "generated": "docs/exercise-art/sources/straight-arm-pulldown/2026-11-07/generated/mid.jpg",
+        "generatedSha256": "835d9dfb68946d67870e5d2d3163ef1fed14ca470d7baf5c5b5dafaf860de0f4"
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/2026-11-07/4.webp",
+      "sha256": "6edaf5c04c267d0785f83166d01cd7ad78426bfa13800d9e9ddef17490f3d679",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261107/straight-arm-pulldown/4.png",
+        "sha256": "d72ff04a7c4ff2a3496da67862fb84e19b6d7ad3c795c9adbaa540d5cfe81b9f",
+        "generated": "docs/exercise-art/sources/straight-arm-pulldown/2026-11-07/generated/finish.jpg",
+        "generatedSha256": "da1c3f09e99b73855051dc730f84ec558644a1ca8353a36632d0351897961dec"
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/2026-11-07/5.webp",
+      "sha256": "f80a94dffa61939164cb2db0b34464f3d03180fd192949db45d8296444ee36cc",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261107/straight-arm-pulldown/5.png",
+        "sha256": "f70792785028814a32299721153e264de5ce0344d71e69894d9b0a3778619200",
+        "generated": "docs/exercise-art/sources/straight-arm-pulldown/2026-11-07/generated/mid.jpg",
+        "generatedSha256": "835d9dfb68946d67870e5d2d3163ef1fed14ca470d7baf5c5b5dafaf860de0f4"
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/2026-11-07/6.webp",
+      "sha256": "294782cafc67460941d3d3aaa11e160be33ff28b0621b8d87dc4ca93e7adc6aa",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261107/straight-arm-pulldown/6.png",
+        "sha256": "3b7642c8ecfb322a17662c62bf627b55a01cbed692e82cd0f8b8c65d826bf4d0",
+        "generated": "docs/exercise-art/sources/straight-arm-pulldown/2026-11-07/generated/start.jpg",
+        "generatedSha256": "63af0e67f2a58e6cb3e25eba8c7c18adf990e3876474cf34d92eeb9abb6ed905"
+      }
+    }
+  ],
+  "recordStage": "Owner release recorded; the owner has not yet seen these frames. Project verification, the owner's look, CI and merge remain separate gates.",
+  "approval": {
+    "actor": "The owner, relayed by the session that started this redraw (session_01JCpmQs5HEERxQGJHPyJjgn)",
+    "instruction": "The owner looked at the released straight-arm pulldown on 2026-11-07 and said it \"looks bad\" and \"needs redoing\". The session's brief: \"The owner's instruction makes this an owner release that replaces the current approval.\"",
+    "context": "The released set was a slim front three-quarter figure beside two thin towers cut off at the left edge, in two positions. This redraw replaces it in the house style (same athlete, same violet, no shorts, dark stage) and keeps every finding below; it certifies none of the eleven strict checks."
+  },
+  "supersedesApprovedRelease": "docs/exercise-art/releases/2026-10-20-strict-review/straight-arm-pulldown.json",
+  "provenance": {
+    "method": "gemini-3-pro-image through scripts/art/gemini-image.py at 2048 px square, with the canonical athlete attached to every call. A master (start), then the finish and the mid-sweep as edits of the master; seven calls in all, three used. build.py then sets the start drawing's station below the pulleys into every frame with the selected block moved to the ladder heights, shifts the violet to #7B72E9, clamps near-black to black, crops all three drawings the same and resamples them once to 1000x1200. Nothing was redrawn by hand.",
+    "record": "docs/exercise-art/sources/straight-arm-pulldown/2026-11-07/provenance.json",
+    "recordSha256": "f8ac1e114b9c24a222170014d753e476183666e309f9eb880ef13d4756b13a9e",
+    "scene": "docs/exercise-art/scenes/straight-arm-pulldown.json",
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "priorRelease": "docs/exercise-art/releases/2026-10-20-strict-review/straight-arm-pulldown.json",
+    "priorReleaseSha256": "db4c7c832dc6802c8c21ced98122d244b2c9282db7a95f93116a516b41c394e9"
+  },
+  "findings": [
+    "Three positions, not six: start (frames 1, 2, 6), mid-sweep (3, 5) and finish (4). A separate early sweep at about 30 degrees was asked for three times and came back at hip height each time, so it is not drawn.",
+    "The torso of frame 4 is turned more square-on to the camera than in frames 1 and 3, so the back widens as the arms come down.",
+    "The near upper arm is painted the lats' violet in frames 1 and 3 and lilac in frame 4; the triceps are not one consistent secondary colour. The core is not visible from behind.",
+    "The station below the pulleys is the start drawing's in every frame and the five-plate block is moved by script to the ladder's gaps; the 0.92 px per mm scale is the start drawing's own gap read as 100 mm, not a calibration.",
+    "The 2:1 compound pulley in the ladder is not drawn; one cable runs from the top of the block up the column.",
+    "In frame 4 the left handle is mostly hidden behind the hip and its cable runs in front of the body, out of sight; the handles finish at the hips and upper thighs rather than the front of the thighs.",
+    "The station's crossbar is cut off by the top edge of the frame; the pulleys are whole.",
+    "Frames 3 and 5 show mid-sweep, so their placard t values changed from 1 and 0 to 0.5; the cue words are unchanged.",
+    "No anchors or contacts were measured beyond the 0 px registration of the head, legs and trainers between the generated drawings.",
+    "No person has played the set in the app at phone size: only the automated six-frame player check and screenshots."
+  ]
+}

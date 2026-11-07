@@ -1,21 +1,20 @@
 import { Leaf } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import InlineNumerals from "@/components/ui/InlineNumerals";
-import { cardClasses } from "@/components/ui/cardClasses";
+import SessionHero from "@/components/home/SessionHero";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 
 /**
- * Home's lead card on a rest day (DS3).
+ * Home's hero on a rest day (DS4; `SessionHero` draws it).
  *
  * Without it, a rest day showed no lead card at all and users could not
- * tell scheduled rest from a broken programme. It says the day is rest,
- * offers the one suggestion that fits a rest day, and, when tomorrow has
- * a session, names it with a way to look at it. There is no Start: rest
- * days have nothing to begin, and a card with a dead button would say
- * otherwise.
+ * tell scheduled rest from a broken programme. It names the day ("Rest
+ * day"), offers the one suggestion that fits a rest day, and, when a
+ * session is coming, names it with a way to look at it. There is no
+ * Start: rest days have nothing to begin, and a hero with a dead button
+ * would say otherwise.
  */
 export default function RestDayCard({
   tomorrow = null,
@@ -29,54 +28,45 @@ export default function RestDayCard({
     ? formatShortWeekdayDayMonth(parseLocalDate(tomorrow.dateKey))
     : null;
   return (
-    <div
-      className={cardClasses({
-        className: "@container space-y-3",
-      })}
-    >
-      <div className="flex items-start gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-lifting-strong">
-            Today · Rest day
-          </p>
-          <p className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground">
-            Recover today
-          </p>
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
-            A walk or some mobility helps.
-            {tomorrow && (
-              <>
-                {" "}
-                {upcomingDay ? `Next session, ${upcomingDay}: ` : "Tomorrow: "}
-                <InlineNumerals>{tomorrow.label}</InlineNumerals>.
-              </>
-            )}
-          </p>
+    <SessionHero
+      sport="rest"
+      title="Rest day"
+      description="A walk or some mobility helps."
+      emblem={
+        <div className="flex size-[120px] items-center justify-center rounded-full bg-lifting/10">
+          <Leaf
+            className="size-[52px] text-lifting-strong"
+            aria-hidden="true"
+          />
         </div>
-        {/* The leaf gives the words the card's width once the card is under
-            10em (larger text on the phone): beside it, "Recover today" and
-            tomorrow's session ran past the card at double size on a 320px
-            screen. */}
-        <div className="size-12 shrink-0 rounded-2xl flex @max-[10em]:hidden items-center justify-center bg-lifting/10">
-          <Leaf className="size-6 text-lifting-strong" aria-hidden="true" />
-        </div>
-      </div>
-      {tomorrow && navigate && (
-        <Button
-          variant="secondary"
-          className="w-full"
-          onClick={function () {
-            haptic();
-            trackHomeEvent("home_card_tapped", {
-              card: upcomingDay ? "rest_upcoming" : "rest_tomorrow",
-              action: "details",
-            });
-            navigate(tomorrow.target);
-          }}
-        >
-          {upcomingDay ? "See next session" : "See tomorrow"}
-        </Button>
-      )}
-    </div>
+      }
+      line={
+        tomorrow
+          ? {
+              title: tomorrow.label,
+              detail: upcomingDay ? `Next session, ${upcomingDay}` : "Tomorrow",
+              mark: "lift",
+            }
+          : null
+      }
+      action={
+        tomorrow && navigate ? (
+          <Button
+            variant="secondary"
+            className="pointer-events-auto w-full"
+            onClick={function () {
+              haptic();
+              trackHomeEvent("home_card_tapped", {
+                card: upcomingDay ? "rest_upcoming" : "rest_tomorrow",
+                action: "details",
+              });
+              navigate(tomorrow.target);
+            }}
+          >
+            {upcomingDay ? "See next session" : "See tomorrow"}
+          </Button>
+        ) : null
+      }
+    />
   );
 }

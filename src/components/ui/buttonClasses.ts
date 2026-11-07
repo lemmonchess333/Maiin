@@ -17,8 +17,10 @@ export type ButtonVariant =
   | "outline"
   | "sport"
   | "sport-tinted"
+  | "lifting-tinted"
   | "nutrition"
-  | "nutrition-tinted";
+  | "nutrition-tinted"
+  | "neutral";
 
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -106,6 +108,16 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   // `--nutrition-strong` text step on top.
   nutrition: "bg-nutrition-fill text-white",
   "nutrition-tinted": "bg-nutrition/10 text-nutrition-strong",
+  // The lifting analogue: a lift's quieter Start (the compact card under
+  // Home's hero), so a screen keeps one filled button and the lift keeps
+  // its colour. `--lifting-strong` is the AA text step for a 12% tint.
+  "lifting-tinted": "bg-lifting/10 text-lifting-strong",
+  // A screen's one full-width filled button (DS4, DESIGN_GUIDE §14i):
+  // white on dark and ink on light, whatever its domain. Filled in a
+  // domain colour it was the largest patch of colour on the screen, where
+  // the largest colour is the person's data. The foreground and page
+  // tokens swap with the theme, so one class pair is both.
+  neutral: "bg-foreground text-background hover:bg-foreground/90",
 };
 
 /**

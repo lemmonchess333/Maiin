@@ -19,3 +19,26 @@ An earlier round (a purple flood across Home, 76 px type on Home, a flooded
 finish screen with nine blocks) was measured against the research and
 dropped: 35% colour against the 8% ceiling, and type above the 48 px a Home
 screen reaches in the reference apps.
+
+## Built: Home's hero
+
+`built-home-*` are the Home hero as built, captured on the emulator rig on
+7 November 2026 (a Saturday): the rich seeded account (`rich`, a lifting
+day) and a new account straight from setup (`new`), at 393 and 320 px in
+both themes. `lift-last-time` is the rich account with a last time written
+on its lifts (its seed carries none), to show the comparison line; `run`
+is the season athlete on a run day; `rest` is the rich account on Sunday.
+Measured at 393 × 852: colour as pixels with S > 0.35 and V > 0.25; the
+hero is today's session, from the top of its headline to its Start.
+
+| Frame                       | Colour                      | Hero                | Next block | Largest text            |
+| --------------------------- | --------------------------- | ------------------- | ---------- | ----------------------- |
+| `built-home-rich-393-dark`  | 2.3% (limit 8%), purple 78% | 53.5%, top at 92 pt | 0.21x      | "Pull A", 36 px, 1.5x   |
+| `built-home-rich-393-light` | 0.8% (limit 15%)            | 53.5%               | 0.21x      | as above                |
+| `built-home-new-393-dark`   | 0.9%, purple 79%            | 53.5%               | 0.21x      | "Upper A", 36 px, 1.5x  |
+| `built-home-run-393-dark`   | 2.3%, purple 55%            | 45.8%               | 0.25x      | "Free run", 36 px, 1.5x |
+
+Before (the same accounts on main, `current-home` and `current-home-new`):
+the rich account
+at 7.1% colour with the purple Start the largest patch, the new account at
+6.7%, and "Today" at 31 px over a 25 px session title.

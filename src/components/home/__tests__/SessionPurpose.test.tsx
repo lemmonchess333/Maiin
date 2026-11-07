@@ -8,10 +8,31 @@ import {
   runSessionExplainer,
 } from "@/lib/runSessionExplainer";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
-import { liftTargets, runStartTarget } from "@/lib/todaySession";
+import {
+  liftTargets,
+  runStartTarget,
+  type TodaySession,
+} from "@/lib/todaySession";
+import { heroKicker, planPosition } from "@/lib/homeHero";
+import type { ProgramState } from "@/features/program/programTypes";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
+
+/** A run day as `todaySession` decides one, for the hero's kicker. */
+const runHeroDay: TodaySession = {
+  type: "run",
+  restContext: {},
+  lift: null,
+  run: {
+    runDay: null,
+    startTarget: runStartTarget(null),
+    completed: false,
+    isFirst: false,
+    dose: null,
+  },
+  rest: null,
+};
 
 describe("session purpose command surfaces", () => {
   it("keeps lift rationale off Home while preserving the muscle meta", () => {
@@ -31,7 +52,8 @@ describe("session purpose command surfaces", () => {
       />
     );
     expect(container).not.toHaveTextContent(purpose);
-    expect(container).toHaveTextContent("Back · Biceps");
+    // The hero says the muscles as words (`focusPhrase`).
+    expect(container).toHaveTextContent("Back and biceps");
     cleanup();
     render(
       <SessionCommandCard
@@ -61,13 +83,28 @@ describe("session purpose command surfaces", () => {
         todayRun={run}
         startTarget={runStartTarget(run)}
         navigate={vi.fn()}
-        // @ts-expect-error -- no rationale or plan week on Home (owner, 2026-09-09)
+        // @ts-expect-error -- no rationale on Home (owner, 2026-09-09; DS4 call 5)
         purpose={purpose}
         weekLabel={weekLabel}
       />
     );
     expect(container).not.toHaveTextContent(runSessionExplainer(input)!);
+    /* DS4 call 5: the plan's position may sit on Home's hero, as the
+       kicker beside the date ("Week 3 of 16", `planPosition`), not as the
+       phase line Train's detail carries. The reasons stay off it. */
     expect(container).not.toHaveTextContent("Base · week 3 of 16");
+    const today = "2026-09-27";
+    const state = {
+      runPlan: {
+        mode: "race_prep",
+        currentWeek: 2,
+        totalWeeks: 16,
+        raceGoal: { distance: "marathon", targetDate: "2027-01-10" },
+      },
+    } as unknown as ProgramState;
+    expect(heroKicker(runHeroDay, planPosition(state, today))).toBe(
+      "Week 3 of 16"
+    );
     expect(
       screen.getByRole("button", { name: "Start run" })
     ).toBeInTheDocument();
@@ -119,7 +156,7 @@ describe("Home session actions and metadata", () => {
     vi.useRealTimers();
   });
 
-  it("shows an exercise count with muscle groups and preserves the selected lift day", () => {
+  it("shows the day's muscles and size, and preserves the selected lift day", () => {
     const navigate = vi.fn();
     const { container } = render(
       <LiftCTACard
@@ -133,14 +170,48 @@ describe("Home session actions and metadata", () => {
         navigate={navigate}
       />
     );
+    // With no last time to compare, the line under the picture is the
+    // day's size and the first session's step (`liftHeroLine`).
     expect(container).toHaveTextContent("2 exercises");
-    expect(container).toHaveTextContent("Chest · Back");
+    expect(container).toHaveTextContent("Chest and back");
     fireEvent.click(
       screen.getByRole("button", { name: "Open Upper body in Train" })
     );
     expect(navigate).toHaveBeenLastCalledWith("/program?day=2");
     fireEvent.click(screen.getByRole("button", { name: "Start workout" }));
     expect(navigate).toHaveBeenLastCalledWith("/program?day=2&start=1");
+  });
+
+  it("shows today's lead lift against the last time it was done", () => {
+    // DS4 call 5: one number and its comparison, in the lifter's unit.
+    const { container } = render(
+      <LiftCTACard
+        {...liftTargets(0)}
+        nextWorkout={{
+          dayName: "Pull A",
+          dayType: "pull",
+          exercises: [
+            {
+              name: "Barbell row",
+              exerciseId: "barbell-row",
+              sets: 3,
+              reps: 8,
+              weight: 35,
+              lastPerformance: {
+                sets: 3,
+                reps: 8,
+                weight: 32.5,
+                completed: true,
+              },
+            },
+          ],
+        }}
+        navigate={vi.fn()}
+      />
+    );
+    expect(container).toHaveTextContent("Barbell row 35 kg × 8");
+    expect(container).toHaveTextContent("2.5 kg more than last time");
+    expect(container).not.toHaveTextContent(/Pick a weight/);
   });
 
   it("prices the session only when every exercise carries its sets", () => {
@@ -188,11 +259,11 @@ describe("Home session actions and metadata", () => {
       />
     );
     /* The stored name never shows: whole, it broke at the dash on a phone
-       ("Pull —" over "Lat Focus"). No rotation position rides the
-       eyebrow: Home shows the session and its dose (owner direction,
-       2026-09-09). */
-    expect(screen.getByText("Pull B")).toBeInTheDocument();
-    expect(screen.getByText("Planned for today")).toBeInTheDocument();
+       ("Pull —" over "Lat Focus"). No rotation position rides the hero:
+       the kicker beside the date gives the plan's week, and only a plan
+       with a length (`planPosition`). */
+    expect(screen.getByRole("heading", { name: "Pull B" })).toBeInTheDocument();
+    expect(screen.queryByText("Planned for today")).toBeNull();
     expect(container).not.toHaveTextContent("Pull —");
     expect(container).not.toHaveTextContent(/Lat focus/i);
     expect(container).not.toHaveTextContent(/Session \d/);

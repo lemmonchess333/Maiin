@@ -34,8 +34,15 @@ describe("the artwork registry", () => {
     ).toEqual([]);
   });
 
-  it("has no owner-only sets left after the final two strict reviews", () => {
-    expect(HAND_LISTED_FORM_ARTWORK).toEqual({});
+  it("lists only the owner-released straight-arm pulldown redraw by hand", () => {
+    // The owner had the set redrawn on 2026-11-07; its owner record
+    // supersedes the 2026-10-20 strict approval until a strict review.
+    expect(Object.keys(HAND_LISTED_FORM_ARTWORK)).toEqual([
+      "straight-arm-pulldown",
+    ]);
+    expect(HAND_LISTED_FORM_ARTWORK["straight-arm-pulldown"].status).toBe(
+      "owner-released-with-findings"
+    );
   });
 
   it("builds every approved set from its record", () => {
