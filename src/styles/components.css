@@ -580,6 +580,64 @@ html.guiding [data-brand-mark] {
   );
 }
 
+/* The display register (DS4, DESIGN_GUIDE §4, §14m rule 6): one figure on
+   a finish, new-best, streak or live screen, in Archivo's wide heavy
+   italic cut (the installed package's wdth-italic.css, imported by the one
+   component that sets it, FinishHero). 64-96 px, sized by the screen's
+   width rather than the text size, so a six-figure number still fits a
+   320 px screen at double text; a longer figure steps down
+   (`--display-scale`). Never above the 120 px the register allows. */
+.ds-display-figure {
+  font-family: var(--font-figure);
+  font-style: italic;
+  font-stretch: 125%;
+  font-weight: 900;
+  font-size: calc(clamp(56px, 24vw, 96px) * var(--display-scale, 1));
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The finish screen's reward light (DS4 §14m rules 13, 14, 31): one hue,
+   the achievement's (`--glow`, by its `data-finish-glow`), from the object out
+   into the plain page. A light page needs more of it to read as colour at
+   all, so dark is never the louder of the two (rule 15): measured at about
+   7% of a 393 x 852 screen in both themes. */
+.ds-finish-glow {
+  --glow-a: 0.75;
+  --glow-b: 0.5;
+  --glow-c: 0.15;
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--glow) / var(--glow-a)),
+    hsl(var(--glow) / var(--glow-b)) 50%,
+    hsl(var(--glow) / var(--glow-c)) 80%,
+    hsl(var(--glow) / 0)
+  );
+}
+.ds-finish-glow[data-finish-glow="achievement"] {
+  --glow: var(--achievement-glow);
+}
+.ds-finish-glow[data-finish-glow="lifting"] {
+  --glow: var(--lifting-glow);
+}
+.ds-finish-glow[data-finish-glow="running"] {
+  --glow: var(--running-glow);
+}
+.dark .ds-finish-glow {
+  --glow-a: 0.42;
+  --glow-b: 0.25;
+  --glow-c: 0.07;
+}
+/* A sport's colour is darker than the gold, so on dark the same light
+   reads as a heavier stain; it is kept softer there. */
+.dark .ds-finish-glow[data-finish-glow="lifting"],
+.dark .ds-finish-glow[data-finish-glow="running"] {
+  --glow-a: 0.36;
+  --glow-b: 0.21;
+  --glow-c: 0.05;
+}
+
 /* Reduced-motion safety net for the shared primitives. The
    Framer Motion components in Layout.tsx already gate via the
    useReducedMotion hook; this CSS belt-and-braces the primitives

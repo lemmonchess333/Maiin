@@ -507,6 +507,9 @@ export default function RunMap({
     return () => {
       map.off("load", updateRoute);
     };
+    // The map's own settings are here too: changing one (the theme, above
+    // all) builds a new map, and without them the new map drew no route
+    // and kept the style's default view, a few streets of London.
   }, [
     points,
     currentPoint,
@@ -515,6 +518,9 @@ export default function RunMap({
     replayIndex,
     distanceMarkers,
     markerUnit,
+    interactive,
+    darkMode,
+    liveControls,
   ]);
 
   // Target route (static) — drawn independently of the live track so it shows

@@ -179,7 +179,7 @@ import {
   type LiftCompletionReceipt,
 } from "@/lib/liftCompletion";
 import { hasEarlierSession } from "@/lib/firstSession";
-import type { LiftMomentFacts } from "@/lib/postMoments";
+import type { LiftMomentFacts, PostMoment } from "@/lib/postMoments";
 import GuideHint from "@/components/guide/GuideHint";
 import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
 import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
@@ -911,6 +911,9 @@ export default function WorkoutSession({
   const [completing, setCompleting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [savedWorkoutId, setSavedWorkoutId] = useState<string | null>(null);
+  /* What the saved session's post says happened: the finish screen's
+     reward or summary is picked from it (DS4 call 3). */
+  const [finishMoments, setFinishMoments] = useState<PostMoment[] | null>(null);
   const [saveStatus, setSaveStatus] = useState<
     "queued" | "synced" | "needs-attention" | undefined
   >(initialDraft?.completionPending ? "needs-attention" : undefined);
@@ -1932,6 +1935,7 @@ export default function WorkoutSession({
       // after sign-out, mark the next user's session saved, or award a badge.
       if (completionUid && auth.currentUser?.uid !== completionUid) return;
       setSavedWorkoutId(receipt.workoutId);
+      setFinishMoments(receipt.moments ?? null);
       const queuedReceipt =
         receipt.syncStatus === "queued" ? receipt.sync : null;
       const acknowledge = () => {
@@ -2125,6 +2129,7 @@ export default function WorkoutSession({
           setLogs={setLogs}
           firedPRs={firedPRs}
           prResults={prResults}
+          moments={finishMoments}
           sessionDurationMinutes={sessionDurationMinutes}
           sessionVariant={sessionVariant}
           completing={completing}

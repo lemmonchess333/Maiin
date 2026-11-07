@@ -1,6 +1,6 @@
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import SectionHeading from "@/components/ui/SectionHeading";
-import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { cn } from "@/lib/utils";
 import {
   useState,
   useEffect,
@@ -38,7 +38,11 @@ import type { SessionShareAction } from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
-import PaceLegend from "../components/run/PaceLegend";
+import FinishHero from "@/components/workout/FinishHero";
+import { IconButton } from "@/components/ui/IconButton";
+import { finishKicker, finishRegister, rewardLine } from "@/lib/finishMoment";
+import { runPoseFor, runPoseUrl } from "@/lib/runPoses";
+import { formatClock } from "@/utils/formatters";
 import SegmentedControl from "../components/ui/SegmentedControl";
 import SplitsTable from "../components/run/SplitsTable";
 import BestEffortsCard from "../components/run/BestEffortsCard";
@@ -88,7 +92,12 @@ import {
   type FinishedRun,
 } from "@/lib/runCompletion";
 import { hasEarlierSession } from "@/lib/firstSession";
-import type { StreakChange } from "@/lib/postMoments";
+import {
+  runPostMoments,
+  type PostMoment,
+  type RunHistory,
+  type StreakChange,
+} from "@/lib/postMoments";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import {
   RUN_NAME_MAX,
@@ -120,6 +129,7 @@ import {
   ChevronLeft,
   AlertCircle,
   Pencil,
+  Share,
 } from "lucide-react";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import {
@@ -501,6 +511,16 @@ export default function RunSummary() {
      the first session, as the first Save found them: a retry finds the run
      already in the streak. Null until then. */
   const { streakWithDay } = useStreaks();
+  /* What the saved run's post says happened, and the earlier runs it was
+     measured against: the finish's reward or summary is picked from them
+     (DS4 call 3). Null until this screen saves the run. */
+  /* When the screen opened: the kicker's end time for a run that kept
+     no finish time. */
+  const [openedAt] = useState(() => Date.now());
+  const [finishFacts, setFinishFacts] = useState<{
+    moments: PostMoment[];
+    history: RunHistory | null;
+  } | null>(null);
   const atFirstSave = useRef<{
     streak: StreakChange | null;
     firstSession: boolean;
@@ -954,18 +974,43 @@ export default function RunSummary() {
   /* What Save writes: the field's name, trimmed, else the given one. */
   const nameToSave = runName.trim() ? runNameOf({ name: runName }) : givenName;
 
+  /* DS4 call 3: the reward or the calm summary, from what the saved run's
+     post says happened. Before the save, and on a return to a run saved
+     earlier, it is the summary. */
+  const finishRegistered = finishFacts
+    ? finishRegister(finishFacts.moments, "run")
+    : null;
+  const finishReward =
+    finishRegistered?.register === "reward" ? finishRegistered : null;
+  const finishLine = finishReward
+    ? rewardLine(finishReward.moment, {
+        sport: "run",
+        distanceUnit: unit,
+        loadIn: (kg) => kg,
+        loadUnit: "kg",
+        fastestBefore:
+          finishReward.moment.kind === "fastestEffort"
+            ? (finishFacts?.history?.fastestSeconds[
+                finishReward.moment.meters
+              ] ?? null)
+            : null,
+      })
+    : null;
+
   const heroCopy = (() => {
     const sized = (distance || 0) > 200 && (elapsed || 0) > 60;
     /* "Run saved" is a claim about the WRITE, so it waits for one — see
        `unsizedRunHeading`, which owns the rule and its reasoning. */
     if (!sized) return unsizedRunHeading({ saveStatus });
+    /* The session done, as the lift's finish names it ("Pull A done"),
+       never a cheer or a save's confirmation (DS4 words rules). */
     if (heroTemplateName && adherenceLabel === "Planned") {
-      return `${heroTemplateName} complete ✓`;
+      return `${heroTemplateName} done`;
     }
     if (heroTemplateName && adherenceLabel === "Custom") {
       return `${heroTemplateName} · custom`;
     }
-    return "Nice run";
+    return "Run done";
   })();
 
   // Runna-style plan-vs-actual verdict (running competitive doc P0 #3): how a
@@ -1361,6 +1406,13 @@ export default function RunSummary() {
           );
       }
 
+      setFinishFacts({
+        moments: runPostMoments(
+          { distance, bestEfforts },
+          finishedRun.moments ?? undefined
+        ),
+        history: finishedRun.moments?.history ?? null,
+      });
       setSaveStatus("saved");
       setSaveError(null);
 
@@ -1499,15 +1551,20 @@ export default function RunSummary() {
         paddingBottom: "var(--page-bottom-pad)",
       }}
     >
-      <div className="px-4 pt-4">
-        <button
-          type="button"
+      {/* Back sits over the run's band, out of the way of its map. */}
+      <div
+        className={cn(
+          "px-4",
+          isInvalid || points.length < 2 ? "pt-4" : "absolute z-20 pt-3"
+        )}
+      >
+        <IconButton
+          aria-label="Back"
+          variant="secondary"
+          className="bg-background/85 backdrop-blur-sm"
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 min-h-[44px]"
-        >
-          <ChevronLeft className="size-4" />
-          Back
-        </button>
+          icon={<ChevronLeft className="size-5" aria-hidden="true" />}
+        />
       </div>
 
       {isInvalid ? (
@@ -1540,81 +1597,97 @@ export default function RunSummary() {
         />
       ) : (
         <>
-          {/* DS3: the finish leads with the map and the distance, the way
-              the run detail does. The route map comes first, coloured by
-              pace when there is an average to colour it against, and its
-              key sits under it, outside the map's rounded frame. Without
-              an average the map draws a plain line and there is nothing
-              for a key to explain. */}
-          {points.length > 1 && (
-            <div className="mx-4 mb-4">
-              <div className="rounded-2xl overflow-hidden">
-                <RunMap
-                  points={points}
-                  currentPoint={null}
-                  interactive={true}
-                  distanceMarkers={true}
-                  markerUnit={unit}
-                  height="h-64"
-                  paceColored={avgPaceSeconds > 0}
-                  avgPaceSecPerKm={avgPaceSeconds}
-                  darkMode={darkTheme}
-                />
-              </div>
-              {avgPaceSeconds > 0 && <PaceLegend className="px-1" />}
+          {/* DS4 (§14m rules 23 and 29-31): the finish opens on the run's
+              map as a full-bleed band, or on the runner without one; then
+              the date and time, the run done, the distance as the one
+              display figure, and one line. A first, a new best or a streak
+              milestone is the reward, in its own colour; any other run is
+              the calm summary. The route is the run's coral. */}
+          <div
+            className={cn(
+              "flex flex-col",
+              doneShown &&
+                "min-h-[calc(100svh-var(--safe-top)-var(--safe-bottom)-6.75rem)]"
+            )}
+          >
+            <div className="px-4">
+              <FinishHero
+                kicker={finishKicker(
+                  startedAt,
+                  state.finishedAt ??
+                    (startedAt !== undefined
+                      ? startedAt + elapsed * 1000
+                      : openedAt)
+                )}
+                tone={finishReward?.tone ?? null}
+                confetti={finishReward?.confetti ?? false}
+                band={
+                  points.length > 1 ? (
+                    <div
+                      data-finish-band
+                      className="-mx-4 w-[calc(100%+2rem)] overflow-hidden"
+                    >
+                      <RunMap
+                        points={points}
+                        currentPoint={null}
+                        interactive={true}
+                        distanceMarkers={true}
+                        markerUnit={unit}
+                        height="h-[38svh]"
+                        darkMode={darkTheme}
+                      />
+                    </div>
+                  ) : undefined
+                }
+                picture={
+                  points.length > 1 ? undefined : (
+                    <img
+                      src={runPoseUrl(
+                        runPoseFor(
+                          activityType === "tempo" ||
+                            activityType === "intervals" ||
+                            activityType === "race"
+                            ? activityType
+                            : undefined
+                        )
+                      )}
+                      alt=""
+                      aria-hidden="true"
+                      draggable={false}
+                      decoding="async"
+                      className="h-full w-[min(56%,15rem)] object-contain"
+                    />
+                  )
+                }
+                title={heroCopy}
+                titleLevel={1}
+                figure={{
+                  to: distance,
+                  format: (metres) => distanceValue(metres, unit, 2),
+                }}
+                caption={`${distanceUnitLabel(unit)} in ${formatClock(elapsed)}`}
+                line={
+                  finishLine ?? (paceVerdict?.speaks ? paceVerdict.line : null)
+                }
+                lineIcon={
+                  finishReward?.tone === "achievement" ? "trophy" : null
+                }
+              />
             </div>
-          )}
-
-          <div className="pb-4 px-4">
-            <h1 className="text-base font-bold text-running-strong">
-              {heroCopy}
-            </h1>
-            {/* The distance is the page's one big number, in the reader's
-                unit. It was a tile reading km whatever the unit setting
-                said, beside a pace that also ignored it. It counts up as
-                the finish screen's figures do on a lift (StatFigure's
-                0.6s); a corrected distance counts from the one shown. */}
-            <p className="mt-1 text-display font-extrabold font-figure tabular-nums leading-none text-foreground">
-              <AnimatedNumber
-                value={distance}
-                format={(metres) => distanceValue(metres, unit, 2)}
-                duration={0.6}
-              />{" "}
-              <span className="font-sans text-h3 font-bold text-muted-foreground">
-                {distanceUnitLabel(unit)}
-              </span>
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {/* en-GB, like every other dated surface in the app. This
-                  was one of two rendered dates still pinned to en-US. */}
-              {new Date().toLocaleDateString("en-GB", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
-            {/* Plan-vs-actual pace verdict — coral for the running domain,
-                calm register (never shames a slow day). It speaks only
-                when the run didn't match its type (Run21 (6)). */}
-            {paceVerdict?.speaks && (
-              <p className="mt-3 text-sm leading-relaxed rounded-xl px-3 py-2 bg-running/6 border border-running/15 text-foreground">
-                {paceVerdict.line}
-              </p>
-            )}
-
-            {/* The run half of the completion delight beat. The lift side
-                (SessionCompleteScreen) has shipped `getVolumeComparison`
-                since the module landed; the distance twin was written at
-                the same time and never wired, so only lifters got it —
-                an odd gap in an app whose identity is hybrid. Lives in
-                the VALID branch, so a sub-threshold GPS glitch never
-                claims "40 Olympic pool lengths". */}
-            {funComparison && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                {funComparison}
-              </p>
-            )}
           </div>
+
+          {/* Below the first screen: the week, the run's numbers, its
+              splits and climb, and what the runner adds to it. */}
+          <div className="h-6" aria-hidden="true" />
+          {/* The run half of the completion delight beat (the lift side
+              has `getVolumeComparison`). Lives in the VALID branch, so a
+              sub-threshold GPS glitch never claims "40 Olympic pool
+              lengths". */}
+          {funComparison && (
+            <p className="px-4 mb-4 text-sm text-muted-foreground">
+              {funComparison}
+            </p>
+          )}
 
           {/* Offline notice */}
           {!isOnline && !saved && (
@@ -1636,30 +1709,6 @@ export default function RunSummary() {
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Run will sync automatically when you reconnect
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Saved confirmation */}
-          {saved && (
-            <div
-              className="mx-4 mb-4 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm"
-              /* Was emerald-400 (#34D399) — stock Tailwind, never a
-                 Tropos green — under a text-success-strong label. */
-              style={{
-                background: "hsl(var(--success) / 0.12)",
-                border: "1px solid hsl(var(--success) / 0.25)",
-              }}
-            >
-              <CheckCircle size={20} className="text-success-strong" />
-              <div>
-                <p className="font-medium text-success-strong text-xs">
-                  {pendingSync
-                    ? isOnline
-                      ? "Saved on this phone · waiting to sync"
-                      : "Saved locally — will sync when online"
-                    : "Run saved"}
                 </p>
               </div>
             </div>
@@ -2202,18 +2251,6 @@ export default function RunSummary() {
               </Button>
             )}
 
-            {/* One Share: the card, and under it the run's other ways out
-                (its Circle, its race's community, its GPX file), which
-                were three more buttons here. */}
-            {canShowShare({ isInvalid: false, saveStatus }) && (
-              <button
-                type="button"
-                onClick={handleShare}
-                className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
-              >
-                Share
-              </button>
-            )}
             {canShowDiscard({ saveStatus }) && (
               <Button
                 variant="destructive-tinted"
@@ -2234,7 +2271,7 @@ export default function RunSummary() {
             doneShown) && (
             <div
               data-testid="summary-footer"
-              className="sticky bottom-0 z-10 mt-4 border-t border-border/50 bg-background px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))]"
+              className="sticky bottom-0 z-10 mt-4 bg-background px-4 pt-3 pb-[calc(0.75rem+var(--safe-bottom))]"
             >
               {canShowRetrySave({ saveStatus }) ? (
                 /* A failed save keeps its answer where Save run was: the
@@ -2242,19 +2279,51 @@ export default function RunSummary() {
                    too, but Safari's bottom chrome can hide it. */
                 <RetryBanner error={saveError} onRetry={handleSave} />
               ) : doneShown ? (
-                <Button
-                  ref={doneRef}
-                  variant="sport"
-                  size="lg"
-                  fullWidth
-                  onClick={() => navigate("/program?tab=run")}
-                >
-                  Done
-                </Button>
+                /* One Share: the card, and under it the run's other ways
+                   out (its Circle, its race's community, its GPX file).
+                   Done is the screen's one filled button, neutral (DS4
+                   call 1a); under them, the save's state. */
+                <>
+                  <div className="flex gap-3">
+                    {canShowShare({ isInvalid: false, saveStatus }) && (
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={handleShare}
+                        leftIcon={
+                          <Share className="size-4" aria-hidden="true" />
+                        }
+                      >
+                        Share
+                      </Button>
+                    )}
+                    <Button
+                      ref={doneRef}
+                      variant="neutral"
+                      className="flex-[1.4]"
+                      onClick={() => navigate("/program?tab=run")}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                  <p
+                    role="status"
+                    className="mt-2 flex items-center justify-center gap-1.5 text-sm text-muted-foreground"
+                  >
+                    <CheckCircle
+                      className="size-4 text-success-strong"
+                      aria-hidden="true"
+                    />
+                    {pendingSync
+                      ? isOnline
+                        ? "Saved on this phone · waiting to sync"
+                        : "Saved locally — will sync when online"
+                      : "Run saved"}
+                  </p>
+                </>
               ) : (
                 <Button
-                  variant="sport"
-                  size="lg"
+                  variant="neutral"
                   fullWidth
                   onClick={handleSave}
                   loading={saveStatus === "saving"}
@@ -2285,6 +2354,12 @@ export default function RunSummary() {
         data={{
           template: "run",
           handle: profile?.displayName || "Athlete",
+          // The finish screen's words and colour, on the card (DS4).
+          headline: heroCopy,
+          line: finishLine
+            ? `${finishLine.before}${finishLine.figure}${finishLine.after}`
+            : undefined,
+          tone: finishReward?.tone,
           date: new Date().toLocaleDateString("en-GB", {
             day: "numeric",
             month: "short",

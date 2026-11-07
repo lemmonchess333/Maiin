@@ -96,3 +96,56 @@ is the drawing's box as a share of the screen.
   Dark is 0.16 points louder there, from the tab bar's active pill, the Food
   card and the header, which are not the hero's. Choosing the run hero's
   one hue is an owner call.
+
+## Built: finish screens
+
+`built-finish-*` are the lift and run finish screens and the share card as
+built, captured on the emulator rig on 7 November 2026 by
+`e2e/screenshots/finish-screens.capture.spec.ts`. The lift's two registers
+are the real `SessionCompleteScreen` in the finish lab (`/dev/finish`, a
+pull day of 2,295 kg in 41 min: `best` with a new best on the row,
+`routine` with none); `lift-first` is a real first workout on a fresh
+account (`companion-finish.capture.spec.ts`, 375 px). The run's are real
+saves on a fresh account: its first run (`first`, 5 km), a slower 3 km
+(`routine`) and the 5 km loop faster (`best`: its fastest 1K and 5K). The
+share cards are drawn at half size (540 × 960). Under Reduce Motion, so no
+confetti is in a measured frame; `lift-best-confetti` is the one taken
+with motion on.
+
+Measured at 393 × 852 unless named: colour as pixels with S > 0.35 and
+V > 0.25 (`python3 -I`, PIL and numpy), with its leading hue; the object's
+drawn width (an `object-fit: contain` drawing's own pixels, a map band's
+box) and top; the largest text against the next size. Blocks on the first
+screen: the kicker, the object, the session done, the figure with its
+caption, one line, and Share with Done.
+
+| Frame                        | Register         | Colour                       | Object                                | Largest text            | Blocks |
+| ---------------------------- | ---------------- | ---------------------------- | ------------------------------------- | ----------------------- | ------ |
+| `lift-best-393-dark`         | reward, new best | 6.5% (band 5-15%), gold 99%  | 50% wide, top at 106 pt, 21% tall     | "2,295", 94 px, 4.7x    | 6      |
+| `lift-best-393-light`        | reward, new best | 7.1%, gold 99%               | as above                              | as above                | 6      |
+| `lift-best-320-dark`         | reward, new best | 5.1%, gold 99%               | 49% wide, top at 125 pt               | "2,295", 77 px, 3.9x    | 6      |
+| `lift-first-375-dark`        | reward, first    | 5.2%, purple 89%             | the session's own drawing             | "90", 94 px             | 6      |
+| `lift-routine-393-dark`      | summary          | 0.1% (the drawing's muscles) | 50% wide, top at 106 pt               | "2,295", 94 px, 4.7x    | 6      |
+| `run-best-393-dark`          | reward, new best | 8.3%, gold 86% (route 13%)   | map band, full width, 38% tall, top 0 | "5.00", 94 px, 4.7x     | 6      |
+| `run-best-393-light`         | reward, new best | 9.4%, gold 89%               | as above                              | as above                | 6      |
+| `run-first-393-dark` / light | reward, first    | 3.9% / 7.1%, coral 99%       | as above                              | as above                | 6      |
+| `run-routine-393-dark` / lt  | summary          | 1.2% / 1.0%, coral (route)   | as above                              | "3.00", 94 px, 4.7x     | 6      |
+| `share-lift-best`            | card, new best   | 5.4%, gold 94%               | the row drawing, 78% of the card wide | "2,295" in the wide cut | -      |
+| `share-run-best`             | card, new best   | 10.9%, gold 100%             | the route, gold                       | "5.02" in the wide cut  | -      |
+| `share-lift-routine`         | card             | 3.3%, purple 100%            | the row drawing                       | "2,295"                 | -      |
+
+Five text sizes on every finish frame (94 and 20 px, then 18 to 10 px:
+the line, the caption, the kicker and status, and the map's marker
+numbers on a run), the display figure in Archivo's wide heavy italic, and one filled button,
+Done, neutral (DS4 call 1a). Dark is the quieter theme in every pair
+except the lift's first (5.2% on dark at 375 px against 4.0% on light), and
+a sport-coloured first on dark sits at 3.9-5.2%, at the bottom of the
+reward band: the light behind it is kept softer there, where the same
+light reads as a heavier stain than the gold.
+
+Before: `current-finish-lift` (2.1% colour, about 9 blocks, 6 numbers, 4
+buttons, a figure 23% wide inside a card). The run's finish before this
+was DS3's: the map in a card at 256 px, the distance at 48 px under a
+coral "Nice run", a green "Run saved" banner, and a coral Done; its
+pre-save frame is `run-finish-*` in `app-screenshots`, not re-captured
+here.

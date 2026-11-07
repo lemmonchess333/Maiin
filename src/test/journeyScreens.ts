@@ -122,7 +122,7 @@ export const RUN = {
   distance: "Distance from treadmill",
   saveTreadmill: "Save treadmill run",
   /** The summary's heading, by the planned session's name ("Easy 30"). */
-  summary: (sessionName: string) => `${sessionName} complete ✓`,
+  summary: (sessionName: string) => `${sessionName} done`,
   save: "Save run",
   markPlannedDone: "Mark scheduled run complete",
   done: "Done",

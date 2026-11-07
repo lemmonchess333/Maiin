@@ -255,6 +255,13 @@ const BreakFoodLab =
     ? lazyRetry(() => import("@/pages/dev/BreakFoodLab"))
     : null;
 
+// Dev-only finish lab: the lift's finish screen as a reward and as a
+// summary, and the share card, with fixtures. Same build-time stripping.
+const FinishLab =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/FinishLab"))
+    : null;
+
 // The ambient-emission bake-off (#1252) shipped a single brand-purple
 // glow behind every signed-in page as <AmbientGlow>. DS3 (2026-09-27)
 // retired it: the page is a plain canvas and colour belongs to content.
@@ -1077,6 +1084,16 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <BreakFoodLab />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                      )}
+                      {FinishLab && (
+                        <Route
+                          path="/dev/finish"
+                          element={
+                            <RouteErrorBoundary>
+                              <FinishLab />
                             </RouteErrorBoundary>
                           }
                         />

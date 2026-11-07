@@ -119,6 +119,7 @@ const ROUTE_WORDS = new Set([
   "brand-bakeoff",
   "break-food",
   "break-social",
+  "finish",
   "form-motion-lab",
   "weight-picker",
   "diagnostics",

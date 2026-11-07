@@ -500,7 +500,7 @@ describe("RunSummary — Save", () => {
   it("queues the run, then shows it saved", async () => {
     renderUnsaved();
     expect(
-      await screen.findByRole("heading", { name: "Nice run", level: 1 })
+      await screen.findByRole("heading", { name: "Run done", level: 1 })
     ).toBeInTheDocument();
     // The E2E journeys save and leave by these (src/test/journeyScreens.ts).
     fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
@@ -590,9 +590,12 @@ describe("RunSummary — Save", () => {
     const done = await screen.findByRole("button", { name: RUN.done });
     const pinned = done.closest("[data-testid='summary-footer']");
     expect(pinned).not.toBeNull();
+    // Share beside Done, its outline; Done the one filled button (DS4).
     expect(within(pinned as HTMLElement).getAllByRole("button")).toEqual([
+      screen.getByRole("button", { name: "Share" }),
       done,
     ]);
+    expect(screen.getAllByRole("button", { name: "Share" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: RUN.save })).toBeNull();
   });
 
@@ -816,7 +819,9 @@ describe("RunSummary — splits, best efforts and the route key", () => {
       splits: [lap(1, 372), lap(2, 364), lap(3, 352)],
     });
     // Every figure it shows from the first paint, however fast the machine.
-    const figure = document.querySelector(".text-display") as HTMLElement;
+    const figure = document.querySelector(
+      "[data-finish-figure]"
+    ) as HTMLElement;
     expect(figure).not.toBeNull();
     const shown = [figure.textContent ?? ""];
     const observer = new MutationObserver(() =>
@@ -827,13 +832,16 @@ describe("RunSummary — splits, best efforts and the route key", () => {
       childList: true,
       subtree: true,
     });
-    await waitFor(() => expect(figure.textContent).toMatch(/^3\.20\s*km$/));
+    await waitFor(() => expect(figure.textContent).toBe("3.20"));
+    expect(document.querySelector("[data-finish-caption]")).toHaveTextContent(
+      "km in 19:10"
+    );
     observer.disconnect();
     const values = shown.map((text) => Number.parseFloat(text));
     expect(Math.min(...values)).toBeLessThan(3.2);
   });
 
-  it("lists best efforts from the track and keys the pace-coloured route", async () => {
+  it("lists best efforts from the track, and opens on the route in the run's coral", async () => {
     const points = track(13, 30);
     renderFinished({
       points,
@@ -845,8 +853,12 @@ describe("RunSummary — splits, best efforts and the route key", () => {
     expect(
       within(efforts).getByText("1K").nextElementSibling?.textContent
     ).toBe("4:30");
-    expect(screen.getByRole("img", { name: /^Route pace/ })).toBeVisible();
-    expect(h.mapProps.at(-1)?.paceColored).toBe(true);
+    /* DS4 (§14m rules 11 and 23): the finish opens on the map as a
+       full-bleed band, its route the run's one colour. The pace-coloured
+       route and its key are the saved run's page's (RunDetail). */
+    expect(h.mapProps.at(-1)?.paceColored).toBeFalsy();
+    expect(screen.queryByRole("img", { name: /^Route pace/ })).toBeNull();
+    expect(document.querySelector("[data-finish-band]")).not.toBeNull();
   });
 });
 
@@ -924,7 +936,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
 
     renderPlanned("run_walk_1");
     expect(
-      await screen.findByText("Run-walk 1 complete ✓")
+      await screen.findByRole("heading", { name: "Run-walk 1 done" })
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/on target|Faster than|Slower than|Quicker than/)
@@ -937,7 +949,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
   it("hands Pace Insight a run-walk as the easy run it is, so it sets no benchmark", async () => {
     renderPlanned("run_walk_1");
     expect(
-      await screen.findByText("Run-walk 1 complete ✓")
+      await screen.findByRole("heading", { name: "Run-walk 1 done" })
     ).toBeInTheDocument();
     const handed = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
     expect(handed).toMatchObject({ activityType: "easy" });
@@ -953,7 +965,9 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       },
     };
     renderPlanned("easy_30", { activityType: "manual" });
-    expect(await screen.findByText("Easy 30 complete ✓")).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Easy 30 done" })
+    ).toBeVisible();
     expect(
       screen.queryByText(/on target|Faster than|Slower than|Quicker than/)
     ).toBeNull();
@@ -978,7 +992,9 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       segments: block(false),
       workPortion,
     });
-    expect(await screen.findByText("20 Min Tempo complete ✓")).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "20 Min Tempo done" })
+    ).toBeVisible();
     const handed = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
     expect(handed).toMatchObject({ workPortion, workPacePinned: false });
     expect(benchmarkEffortOf(handed)).toMatchObject({
@@ -995,7 +1011,9 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       segments: block(true),
       workPortion,
     });
-    expect(await screen.findByText("20 Min Tempo complete ✓")).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "20 Min Tempo done" })
+    ).toBeVisible();
     const pinned = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
     expect(pinned.workPacePinned).toBe(true);
     expect(benchmarkEffortOf(pinned)).toBeNull();
@@ -1026,7 +1044,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
 
     renderPlanned("run_walk_1");
     expect(
-      await screen.findByText("Run-walk 1 complete ✓")
+      await screen.findByRole("heading", { name: "Run-walk 1 done" })
     ).toBeInTheDocument();
     // The history has been read and judged by the time the insight settles.
     await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
@@ -1085,13 +1103,17 @@ describe("RunSummary — the pace line speaks only when the run didn't match", (
     };
     // 5 km in 32 minutes: 6:24 /km, inside the window.
     const easy = renderPlannedEasy(32 * 60);
-    expect(await screen.findByText("Easy 30 complete ✓")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Easy 30 done" })
+    ).toBeInTheDocument();
     expect(screen.queryByText(/on target|Faster than easy/)).toBeNull();
     easy.unmount();
 
     // 5 km in 25 minutes: 5:00 /km, an easy run run hard.
     renderPlannedEasy(25 * 60);
-    expect(await screen.findByText("Easy 30 complete ✓")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Easy 30 done" })
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/^Faster than easy today: 5:00 \/km/)
     ).toBeInTheDocument();

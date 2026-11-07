@@ -333,6 +333,15 @@
      4.04:1 even on a plain card. Icons and the large PR numeral stay on
      the identity; the badge label and the "new PR" line move here. */
   --achievement-strong: 40 90% 26.5%; /* #805807 */
+  /* The light a new best stands in on the finish screen (DS4 §14m rule
+     31): the gold itself, not the deep text step above, which over a
+     light page turned the light into a beige wash. A fill, never text. */
+  --achievement-glow: 45 92% 55%;
+  /* The same light for a first or a finished plan, in its sport's hue: a
+     step deeper than the identity on a light page, where the identity's
+     light washed out to a tint that read as no colour at all. */
+  --lifting-glow: 245 75% 62%;
+  --running-glow: 348 70% 55%;
   /* Skeleton shimmer sweep. Must DARKEN in light mode: `LoadingSkeleton`
      sits on `bg-muted`, which here is hsl(240 6% 97.5%) = rgb(248,248,249),
      and the white-alpha sweep it used to hardcode inline moved that by
@@ -434,6 +443,9 @@
   --achievement: 45 92% 58%;
   --achievement-bg: 42 50% 14%;
   --achievement-strong: 45 92% 58%;
+  --achievement-glow: 45 92% 58%;
+  --lifting-glow: 245 73% 68%;
+  --running-glow: 348 57% 61%;
 }
 
 /* Default border colour. Must live in @layer base so explicit
