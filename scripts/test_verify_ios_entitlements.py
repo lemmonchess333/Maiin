@@ -29,8 +29,22 @@ class IosEntitlementSigningTest(unittest.TestCase):
         self.assertEqual(requested, {ASSOCIATED_DOMAINS: [DOMAIN]})
         self.assertEqual(allowed, {ASSOCIATED_DOMAINS: ["*"]})
 
+    def test_apple_profile_string_wildcard_authorizes_the_explicit_app_domain(self):
+        # The shape Apple's App Store profiles carry (deploy-ios run, 2026-11-08).
+        self.assertEqual(mismatched_entitlements({ASSOCIATED_DOMAINS: [DOMAIN]}, {ASSOCIATED_DOMAINS: "*"}), [])
+
+    def test_profile_list_allows_the_one_value_the_app_asks(self):
+        # App Attest as Apple writes it into an App Store profile (2026-11-08).
+        key = "com.apple.developer.devicecheck.appattest-environment"
+        both = {key: ["development", "production"]}
+        self.assertEqual(mismatched_entitlements({key: "production"}, both), [])
+        for requested in ("staging", "", ["production"], None):
+            with self.subTest(requested=requested):
+                self.assertEqual(mismatched_entitlements({key: requested}, both), [key])
+        self.assertEqual(mismatched_entitlements({key: "production"}, {key: ["development"]}), [key])
+
     def test_missing_malformed_or_different_domain_permission_fails(self):
-        for allowed in (None, [], "*", True, ["applinks:other.example"], ["applinks:*"]):
+        for allowed in (None, [], "", True, ["applinks:other.example"], ["applinks:*"], "applinks:*"):
             with self.subTest(allowed=allowed):
                 self.assertEqual(
                     mismatched_entitlements({ASSOCIATED_DOMAINS: [DOMAIN]}, {ASSOCIATED_DOMAINS: allowed}),
@@ -78,9 +92,14 @@ class IosEntitlementSigningTest(unittest.TestCase):
             (temporary / "signed-targets.json").write_text(json.dumps([
                 {"bundle_id": bundle, "entitlements": str(source)},
             ]))
-            for capability, expected_status in ((["*"], 0), (None, 1)):
+            for capability, expected_status in ((["*"], 0), ("*", 0), (None, 1)):
                 with self.subTest(capability=capability):
-                    allowed = {**requested, "application-identifier": f"{team}.{bundle}"}
+                    allowed = {
+                        **requested,
+                        "application-identifier": f"{team}.{bundle}",
+                        # Apple lists both environments where the app names one.
+                        "com.apple.developer.devicecheck.appattest-environment": ["development", "production"],
+                    }
                     if capability is None:
                         del allowed[ASSOCIATED_DOMAINS]
                     else:

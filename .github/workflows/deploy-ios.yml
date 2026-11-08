@@ -509,6 +509,11 @@ jobs:
                   problems.append(f"{bundle}: profile expired on {profile['ExpirationDate']:%Y-%m-%d}")
               mismatched = mismatched_entitlements(wanted, have)
               if mismatched:
+                  # Name what the profile holds for each, so a format Apple
+                  # writes differently from the app's file is told apart from
+                  # a capability that is really off.
+                  for key in mismatched:
+                      print(f"{bundle}: app asks {key} = {wanted.get(key)!r}; profile has {have.get(key)!r}")
                   problems.append(
                       f"{bundle}: profile lacks matching " + ", ".join(mismatched)
                       + ". Turn on those App ID capabilities in Apple Developer → Identifiers and regenerate the profile"
