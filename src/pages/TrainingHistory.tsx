@@ -263,6 +263,9 @@ export default function TrainingHistory() {
             ariaLabel="Session type"
             value={filters.sport}
             onChange={(sport) => change({ sport })}
+            /* 44pt, the dates button's height beside it, with the 36pt
+               track History's other rows take. */
+            size="sm"
             className="flex-1 basis-[11rem]"
             options={[
               { value: "all", label: "All" },

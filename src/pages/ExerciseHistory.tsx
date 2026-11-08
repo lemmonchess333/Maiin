@@ -430,6 +430,8 @@ export default function ExerciseHistory() {
             and the same switch treatment as the Programme tabs). */}
       <SegmentedControl
         ariaLabel="Exercise view"
+        /* The 36pt track History's control rows take, 44pt to tap. */
+        size="sm"
         value={tab}
         onChange={(value) => {
           haptic("light");

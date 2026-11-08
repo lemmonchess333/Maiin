@@ -24,6 +24,9 @@ export default function TimeRangePills({
       ariaLabel="Time range"
       value={selected}
       onChange={onChange}
+      /* The 36pt track every History control row takes (§14m rule 18),
+         each option still 44pt to tap. */
+      size="sm"
       options={options.map((opt) => ({ value: opt, label: opt }))}
     />
   );

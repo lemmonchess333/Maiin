@@ -278,6 +278,9 @@ function FilterPills({
       ariaLabel="History view"
       value={filter}
       onChange={setFilter}
+      /* A 36pt track with 44pt options, as Train's Lift/Run switch
+         (§14m rule 18): the row was 52pt. */
+      size="sm"
       options={VALID_TABS.map((f) => ({
         value: f,
         label: f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : "Badges",
