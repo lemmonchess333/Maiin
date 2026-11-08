@@ -3260,12 +3260,18 @@ export default function WorkoutSession({
           const next = nextIncompleteSet(setLogs, currentExIndex);
 
           /* DS3: the bar's three states through the Button primitive, in
-             sentence case. Finish is the lifting CTA like the other two:
-             green is for status (a done set's check), not for actions. */
+             sentence case. Green is for status (a done set's check), not
+             for actions. DS4 call 1a: the screen's one full-width filled
+             button is neutral, white on dark and ink on light, at Home's
+             and Train's Start height (44, rule 21): filled in purple it
+             was 97% of the screen's colour, where the largest colour is
+             the person's data (rule 10). The purple stays on the data: the
+             progress bar, the current exercise's ring, the rest's arc. */
           if (allSetsComplete && !next) {
             return (
               <Button
-                size="lg"
+                variant="neutral"
+                className="text-base"
                 fullWidth
                 // Everything skipped with nothing done leaves nothing to save.
                 disabled={
@@ -3283,7 +3289,8 @@ export default function WorkoutSession({
           if (allSetsComplete) {
             return (
               <Button
-                size="lg"
+                variant="neutral"
+                className="text-base"
                 fullWidth
                 onClick={() => {
                   if (next) {
@@ -3299,7 +3306,8 @@ export default function WorkoutSession({
           }
           return (
             <Button
-              size="lg"
+              variant="neutral"
+              className="text-base"
               fullWidth
               onClick={() => {
                 stopRest();

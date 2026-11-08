@@ -1210,7 +1210,10 @@ the `neutral` variant (`bg-foreground text-background`), and
 `designSystemInvariants.test.ts`, which pins the variants and names the
 screens' one full-width neutral button (`NEUTRAL_MAIN_ACTIONS`: Home's
 Start workout and Start run). A day's second session, on its compact card
-under the hero, keeps its sport's filled Start at its own size.
+under the hero, keeps its sport's filled Start at its own size. The live
+workout's bar (Complete set, Next exercise, Finish workout) is the same
+neutral button at Start's 44 pt (8 November 2026); its purple is on the
+progress bar, the current exercise's ring and the rest's arc.
 
 | The action                          | Filled      | Tinted             |
 | ----------------------------------- | ----------- | ------------------ |

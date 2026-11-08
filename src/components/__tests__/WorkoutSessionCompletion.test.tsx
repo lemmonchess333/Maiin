@@ -268,6 +268,15 @@ describe("set completion through row controls", () => {
     ).toBeInTheDocument();
   });
 
+  it("completes a set on the neutral full-width button (DS4 call 1a)", () => {
+    // White on dark, ink on light, as Home's and Train's Start: in purple
+    // it was nearly all of the screen's colour.
+    openSession();
+    const complete = screen.getByRole("button", { name: "Complete set 1" });
+    expect(complete).toHaveClass("bg-foreground", "text-background", "w-full");
+    expect(complete).not.toHaveClass("bg-primary-strong");
+  });
+
   it("draws Previous in grey, still a tap to fill", () => {
     openSession(writer(), vi.fn(), {
       weight: 60,
