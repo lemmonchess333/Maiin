@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { capacitorPlugin } from "@/test/capacitorPlugin";
 import {
   isNativePushAvailable,
   nativePushPermission,
@@ -30,17 +31,19 @@ const add = async (
   h.stops.push(remove);
   return { remove };
 };
-vi.mock("@capacitor-firebase/messaging", () => ({
-  FirebaseMessaging: {
-    checkPermissions: () => h.permission(),
-    requestPermissions: () => h.request(),
-    getToken: () => h.getToken(),
-    addListener: (
-      name: string,
-      callback: (event: Record<string, unknown>) => void
-    ) => add(name, callback),
-  },
-}));
+vi.mock("@capacitor-firebase/messaging", () => {
+  return {
+    FirebaseMessaging: capacitorPlugin({
+      checkPermissions: () => h.permission(),
+      requestPermissions: () => h.request(),
+      getToken: () => h.getToken(),
+      addListener: (
+        name: string,
+        callback: (event: Record<string, unknown>) => void
+      ) => add(name, callback),
+    }),
+  };
+});
 vi.mock("@capacitor/app", () => ({
   App: {
     addListener: (
