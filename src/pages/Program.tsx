@@ -98,6 +98,8 @@ import {
 } from "@/features/program/represcribe";
 import { liftWeekLabel } from "@/lib/liftWeekLabel";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
+import { aboutMinutes, liftHeroLine } from "@/lib/homeHero";
+import { resolveLiftUnit } from "@/lib/liftLoad";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
 import {
@@ -1210,20 +1212,70 @@ function ProgramInner() {
   /* DS3: Train's header is the plain one every page has. The sport-tinted
      header zone and the icon tile beside the title are gone: the Lift/Run
      switch and everything beneath it already say which mode is on. */
+  // The Lift tab's header line (DS4, §14m rules 17-18): the week, its
+  // focus and the day count, one line the header's full width. The week
+  // was a row of its own over the day circles; its chevrons to earlier
+  // weeks come with it. The split's name gave way: the circles under the
+  // line name each of its sessions, and Your plan names the split.
+  const liftWeekText =
+    liftWeekLabel(
+      isViewingHistory
+        ? {
+            weekNumber: displayWeekNumber,
+            primaryGoal: programState.primaryGoal,
+            currentPhase: viewedWeekLighter ? "deload" : "progression",
+            archived: true,
+          }
+        : programState,
+      todayKey,
+      profile?.experience
+    ) ?? `Week ${displayWeekNumber}`;
+  const liftDayCount = programState.workouts?.length ?? 0;
+  // The session card's line, Home's (`liftHeroLine`), for a day still to
+  // train; a done or missed day is its record, not a prescription.
+  const sessionLine =
+    selectedWorkout && status !== "completed" && !missed
+      ? liftHeroLine(
+          selectedWorkout.exercises,
+          resolveLiftUnit(profile?.liftingWeightUnit)
+        )
+      : null;
+  // A no-break space, so "6" never ends a line with "days/week" on the next.
+  const liftDaysText =
+    liftDayCount === 1 ? "1\u00a0day/week" : `${liftDayCount}\u00a0days/week`;
+  const liftHeaderText =
+    liftDayCount === 0
+      ? programHeaderLine
+      : `${liftWeekText} · ${liftDaysText}`;
+  const liftHeaderLine =
+    liftDayCount === 0 ? (
+      programHeaderLine
+    ) : (
+      <WeekPhaseRow
+        weekNumber={displayWeekNumber}
+        label={liftWeekText}
+        suffix={` · ${liftDaysText}`}
+        onPrevWeek={goBack}
+        onNextWeek={goForward}
+        canGoPrev={canGoBack}
+        canGoNext={canGoForward}
+      />
+    );
+
   return (
     <PageShell
       title="Train"
       banner={<ProgramOfflineBanner />}
       /* Tab-aware, so the Run tab does not read as an add-on under a
-         lifting-only header. It wraps rather than truncating: a five-day
-         split ("Push / Pull / Legs + Upper / Lower · 5 days/week") is two
-         lines on a phone. The other tab's line holds its place unseen, so
-         the header is as tall as the longer of the two and nothing below
-         moves on Lift↔Run. */
-      subtitle={activeTab === "run" ? programRunHeaderLine : programHeaderLine}
+         lifting-only header. One line the header's full width at 393 and
+         320pt; it wraps rather than truncating at larger text. The other
+         tab's line holds its place unseen, so the header is as tall as the
+         longer of the two and nothing below moves on Lift↔Run. */
+      subtitle={activeTab === "run" ? programRunHeaderLine : liftHeaderLine}
       subtitleAlternates={[
-        activeTab === "run" ? programHeaderLine : programRunHeaderLine,
+        activeTab === "run" ? liftHeaderText : programRunHeaderLine,
       ]}
+      subtitleBelow
       /* Overflow, plus a "Done" exit only while reordering. */
       actions={
         <>
@@ -1270,7 +1322,10 @@ function ProgramInner() {
           value={activeTab}
           onChange={(value) => selectTab(value)}
           tone={activeTab === "run" ? "running" : "lifting"}
-          className="rounded-2xl bg-muted/50 p-1.5"
+          /* A 36pt track with 44pt options (§14m rule 18), its 4pt bands
+             above and below laid over the gaps rather than adding to them. */
+          size="sm"
+          className="-my-1 before:bg-muted/50"
           options={
             [
               {
@@ -1318,56 +1373,6 @@ function ProgramInner() {
               }
             />
           )}
-          {/* Pgm3: deload banner. Sits ABOVE the week-phase row so
-                it's visible regardless of which day the user is
-                inspecting — deload is a week-level signal. Per-week
-                dismissal lives in localStorage; the banner stays
-                shown across day navigation within the same week, and
-                reopens on a new week if the signal still applies. */}
-          <TrackProgrammeSectionView section="deload_banner">
-            <DeloadBanner
-              /* An active lighter week is state and shows regardless. */
-              visible={showDeloadSuggest}
-              dismissed={deloadNotice.dismissed}
-              onDismiss={deloadNotice.dismiss}
-              weekKey={`w${displayWeekNumber}`}
-              deloadActive={programState.currentPhase === "deload"}
-              // The run half of the deload, named in the copy. Derived from
-              // the snapshot rather than stored — see deloadChangeSummary.
-              runsEased={deloadRunSwapCount(programState)}
-              raceWeek={programState.raceWeek}
-              raceRest={isRaceRestDay(programState.runPlan, todayKey)}
-              onApply={handleApplyDeload}
-            />
-          </TrackProgrammeSectionView>
-
-          <TrackProgrammeSectionView section="week_phase_row">
-            <div>
-              <WeekPhaseRow
-                weekNumber={displayWeekNumber}
-                label={
-                  liftWeekLabel(
-                    isViewingHistory
-                      ? {
-                          weekNumber: displayWeekNumber,
-                          primaryGoal: programState.primaryGoal,
-                          currentPhase: viewedWeekLighter
-                            ? "deload"
-                            : "progression",
-                          archived: true,
-                        }
-                      : programState,
-                    todayKey,
-                    profile?.experience
-                  ) ?? undefined
-                }
-                onPrevWeek={goBack}
-                onNextWeek={goForward}
-                canGoPrev={canGoBack}
-                canGoNext={canGoForward}
-              />
-            </div>
-          </TrackProgrammeSectionView>
 
           {/* Single Lift day-selector (ADR-0002 split-ordered rotation).
                 The duplicate "this week" HybridWeekRail that used to sit
@@ -1398,26 +1403,6 @@ function ProgramInner() {
               sessionDayIndex === null &&
               !showOverflow
             }
-          />
-
-          {/* Experience auto-detection: evidence-triggered level suggestion.
-                Renders null almost always — only when the v2 exhaustion
-                criteria hold (misses + survived reset, mature programme,
-                not cutting), and never after a dismissal. Spacing lives
-                INSIDE the card so the null render leaves no phantom gap.
-                BELOW the day selector (DS2, 2026-08-22): it used to sit
-                between WeekPhaseRow and the selector, so on the rare render
-                a ~434px card split the week header from the day circles it
-                governs and the circles read as belonging to the suggestion.
-                Below keeps navigator adjacency without burying the
-                navigator, which moving the card ABOVE the header would. */}
-          <ExperienceSuggestionCard
-            suppressed={liftAdvice === "deload"}
-            workouts={programState?.workouts}
-            context={{
-              weekNumber: programState?.weekNumber,
-              nutritionGoal: programState?.goal,
-            }}
           />
         </>
       )}
@@ -1454,7 +1439,7 @@ function ProgramInner() {
         // Lift selector lacks, so a little more top padding here lands the
         // circles — not the container — at the same Y, which is what the eye
         // tracks when toggling tabs.
-        <div className="pt-4 space-y-4">
+        <div className="space-y-4">
           {/* A run left before it was saved: Resume picks it up where it
               stopped. */}
           {runStrip && (
@@ -1490,20 +1475,14 @@ function ProgramInner() {
         <>
           <TrackProgrammeSectionView section="session_card">
             <div
-              className="pt-4"
+              className="space-y-3"
               data-swipe-pager
               data-swipe-at-start={idx <= 0}
               data-swipe-at-end={idx >= displayWorkouts.length - 1}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
-              <AnimatePresence
-                mode="wait"
-                custom={direction}
-                onExitComplete={() => {
-                  isAnimating.current = false;
-                }}
-              >
+              <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                   key={idx}
                   custom={direction}
@@ -1543,7 +1522,7 @@ function ProgramInner() {
                               draggable={false}
                               decoding="async"
                               data-session-art={sessionArt.exerciseName}
-                              className="h-24 w-28 object-contain object-right"
+                              className="h-24 w-28 object-contain object-right @max-[19em]:h-20 @max-[19em]:w-20"
                             />
                           ) : hasMuscleFigure(sessionMuscleCategories) ? (
                             <MiniMuscleFigure
@@ -1568,19 +1547,26 @@ function ProgramInner() {
                             ? `How to do ${sessionArt.exerciseName}`
                             : undefined
                         }
-                        /* The lift the day opens with, on a line of its own
-                           that wraps: a meta item holds together, and a long
-                           lift's name would run past the card at the
-                           largest text. */
+                        /* Home's numbers line for the same session: the
+                           main lift's weight and reps against last time,
+                           or a first session's step (DS4). It takes the
+                           place "Starts with …" had: the first lift is the
+                           list's first row, and the line is the reading
+                           Home gives. A day without the line (no
+                           exercises) still names its first lift. */
+                        line={sessionLine}
                         description={
-                          sessionFirstLift && status !== "completed" && !missed
+                          !sessionLine &&
+                          sessionFirstLift &&
+                          status !== "completed" &&
+                          !missed
                             ? `Starts with ${sessionFirstLift}`
                             : undefined
                         }
                         meta={
                           status === "completed" || missed
                             ? []
-                            : [`~${estimatedMinutes} min`]
+                            : [aboutMinutes(estimatedMinutes)]
                         }
                         /* The card always carries the day's ONE action.
                            Start on the startable day; on an upcoming one
@@ -1673,7 +1659,63 @@ function ProgramInner() {
                           className="px-3"
                         />
                       )}
-
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+              {/* The week's notices sit under the day's session, as Home's banners
+                  sit under its hero (DS4, §14m rule 1: the session's top within
+                  260pt). The lighter-week offer is still on every day of the week,
+                  and its dismissal per week. Outside the day's animation, so they
+                  hold still while the days are swiped, and are counted once. The
+                  level suggestion is suppressed while the lighter week shows. */}
+              <TrackProgrammeSectionView section="deload_banner">
+                <DeloadBanner
+                  /* An active lighter week is state and shows regardless. */
+                  visible={showDeloadSuggest}
+                  dismissed={deloadNotice.dismissed}
+                  onDismiss={deloadNotice.dismiss}
+                  weekKey={`w${displayWeekNumber}`}
+                  deloadActive={programState.currentPhase === "deload"}
+                  // The run half of the deload, named in the copy. Derived from
+                  // the snapshot rather than stored — see deloadChangeSummary.
+                  runsEased={deloadRunSwapCount(programState)}
+                  raceWeek={programState.raceWeek}
+                  raceRest={isRaceRestDay(programState.runPlan, todayKey)}
+                  onApply={handleApplyDeload}
+                />
+              </TrackProgrammeSectionView>
+              <ExperienceSuggestionCard
+                suppressed={liftAdvice === "deload"}
+                workouts={programState?.workouts}
+                context={{
+                  weekNumber: programState?.weekNumber,
+                  nutritionGoal: programState?.goal,
+                }}
+              />
+              <AnimatePresence
+                mode="wait"
+                custom={direction}
+                onExitComplete={() => {
+                  isAnimating.current = false;
+                }}
+              >
+                <motion.div
+                  key={idx}
+                  custom={direction}
+                  variants={motionSafe.variants({
+                    enter: (dir: number) => ({ opacity: 0, x: dir * 50 }),
+                    center: { opacity: 1, x: 0 },
+                    exit: (dir: number) => ({ opacity: 0, x: dir * -50 }),
+                  })}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  style={{ willChange: "transform" }}
+                >
+                  {selectedWorkout && (
+                    <div className="space-y-3">
                       {/* PROGRAM-ADAPT-01, post-de-interception home: the
                           recommendation is VISIBLE before any tap, instead of
                           hiding inside an interstitial everyone paid for.
@@ -1773,7 +1815,7 @@ function ProgramInner() {
                              swipes and long-presses to its manage menu,
                              and still has the "…" that opens that menu
                              visibly. */
-                          <div className="rounded-2xl bg-card card-shadow overflow-hidden divide-y divide-border">
+                          <div className="rounded-xl bg-card card-shadow overflow-hidden divide-y divide-border">
                             {selectedWorkout.exercises.map((ex, i) => (
                               <div
                                 key={rowId(ex, idx, i)}

@@ -109,7 +109,7 @@ describe("a run's name on the strip (Run21 (2))", () => {
     const lift = labelFor("lift", "Deadlift");
     expect(lift.className).toMatch(/\btruncate\b/);
     expect(lift.className).toMatch(/\bblock\b/);
-    expect(lift.className).toMatch(/\bmin-h-4\b/);
+    expect(lift.className).toMatch(/\bmin-h-3\.5\b/);
     expect(lift.text).toBe("Deadlift");
     expect(lift.lines).toEqual([]);
   });

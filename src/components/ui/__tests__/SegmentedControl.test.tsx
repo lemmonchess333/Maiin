@@ -448,3 +448,63 @@ describe("SegmentedControl", () => {
     }
   );
 });
+
+describe("SegmentedControl — the 36pt track (size sm, §14m rule 18)", () => {
+  function renderSlim() {
+    render(
+      <SegmentedControl
+        ariaLabel="Train mode"
+        value="lift"
+        onChange={() => {}}
+        tone="lifting"
+        size="sm"
+        options={[
+          { value: "lift", label: "Lift" },
+          { value: "run", label: "Run" },
+        ]}
+      />
+    );
+    return {
+      group: screen.getByRole("radiogroup", { name: "Train mode" }),
+      lift: screen.getByRole("radio", { name: "Lift" }),
+      run: screen.getByRole("radio", { name: "Run" }),
+    };
+  }
+
+  it("keeps each option's 44pt hit area and draws a 36pt track inside it", () => {
+    const { group, lift } = renderSlim();
+    expect(lift.className).toMatch(/min-h-\[44px\]/);
+    // The track is the group's backdrop, 4pt in from the 44pt row.
+    expect(group.className).toMatch(/before:inset-y-1\b/);
+    expect(group.className).not.toMatch(/(^|\s)bg-muted(\s|$)/);
+  });
+
+  it("puts the selected fill on a 32pt pill inside the option, in its tone", () => {
+    const { lift, run } = renderSlim();
+    const pill = lift.firstElementChild as HTMLElement;
+    expect(pill.className).toMatch(/\bh-8\b/);
+    expect(pill.className).toContain("bg-lifting-fill");
+    expect(lift.className).not.toContain("bg-lifting-fill");
+    expect((run.firstElementChild as HTMLElement).className).not.toMatch(
+      /bg-(lifting|running)-fill/
+    );
+  });
+
+  it("is the md track for anything but a filled track row", () => {
+    render(
+      <SegmentedControl
+        ariaLabel="Meal"
+        value="a"
+        onChange={() => {}}
+        size="sm"
+        layout="wrap"
+        options={[
+          { value: "a", label: "A" },
+          { value: "b", label: "B" },
+        ]}
+      />
+    );
+    const a = screen.getByRole("radio", { name: "A" });
+    expect(a.firstElementChild).toBeNull();
+  });
+});

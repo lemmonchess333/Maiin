@@ -91,6 +91,12 @@ export interface SegmentedControlProps<T extends string | number> {
    *  `fill-wrap` = the equal-width row, wrapping onto more rows rather
    *  than cutting a label short. */
   layout?: "fill" | "wrap" | "fill-wrap";
+  /** `sm` draws the track 36pt tall with a 32pt selected pill, as §14m
+   *  rule 18 asks of a control row under a title (32-40pt), while each
+   *  option keeps its 44pt hit area: the button stays 44 tall and the
+   *  track and pill are drawn inside it. Track emphasis, fill layout only
+   *  (Train's Lift/Run switch); anything else draws the `md` track. */
+  size?: "md" | "sm";
   /** Disable the whole group (e.g. a write in progress). */
   disabled?: boolean;
   className?: string;
@@ -116,10 +122,12 @@ function SegmentedControl<T extends string | number>({
   tone = "brand",
   emphasis = "track",
   layout = "fill",
+  size = "md",
   disabled = false,
   className,
   ref,
 }: SegmentedControlProps<T>) {
+  const slim = size === "sm" && emphasis === "track" && layout === "fill";
   const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const isOptionEnabled = (i: number) => !disabled && !options[i]?.disabled;
@@ -190,10 +198,15 @@ function SegmentedControl<T extends string | number>({
             ? cn("border-b border-border/60", layout !== "fill" && "flex-wrap")
             : layout === "wrap"
               ? "flex-wrap gap-1.5"
-              : cn(
-                  "gap-1 p-1 rounded-xl bg-muted",
-                  layout === "fill-wrap" && "flex-wrap"
-                ),
+              : slim
+                ? /* The track is the group's own backdrop, inset 4px top
+                     and bottom of the 44pt row: 36pt, 12pt corners, so
+                     the 10pt pill 2px inside it is concentric. */
+                  "relative isolate gap-0.5 px-0.5 before:absolute before:inset-x-0 before:inset-y-1 before:-z-10 before:rounded-[12px] before:bg-muted before:content-['']"
+                : cn(
+                    "gap-1 p-1 rounded-xl bg-muted",
+                    layout === "fill-wrap" && "flex-wrap"
+                  ),
         className
       )}
     >
@@ -214,56 +227,79 @@ function SegmentedControl<T extends string | number>({
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
               OPTION_BASE,
+              slim && "flex-1 min-w-0 rounded-[10px]",
               emphasis === "tabs"
                 ? "flex-1 min-w-max rounded-none px-[8px]"
                 : emphasis === "solid"
                   ? "rounded-full border px-4"
-                  : layout === "fill"
-                    ? // Equal parts end a label in "…" when it no longer
-                      // fits, as iOS's own segmented control does, rather
-                      // than pushing the row off the screen at larger text
-                      // ("Analytics PRs Badges" on a 320px phone).
-                      "flex-1 min-w-0 truncate"
-                    : layout === "fill-wrap"
-                      ? // Equal parts from a zero basis, none narrower than
-                        // its label: the row wraps where they can't share
-                        // it. The inset is px so it doesn't grow with text.
-                        "flex-1 min-w-max px-[8px]"
-                      : "px-4",
+                  : slim
+                    ? ""
+                    : layout === "fill"
+                      ? // Equal parts end a label in "…" when it no longer
+                        // fits, as iOS's own segmented control does, rather
+                        // than pushing the row off the screen at larger text
+                        // ("Analytics PRs Badges" on a 320px phone).
+                        "flex-1 min-w-0 truncate"
+                      : layout === "fill-wrap"
+                        ? // Equal parts from a zero basis, none narrower than
+                          // its label: the row wraps where they can't share
+                          // it. The inset is px so it doesn't grow with text.
+                          "flex-1 min-w-max px-[8px]"
+                        : "px-4",
               emphasis === "tabs"
                 ? selected
                   ? // The underline is the selected state: primary is over
                     // 3:1 on the page in both themes.
                     "text-foreground shadow-[inset_0_-2px_0_0_hsl(var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
-                : emphasis === "solid"
-                  ? selected
-                    ? cn(
-                        "border-transparent text-white",
-                        tone === "nutrition"
-                          ? "bg-nutrition-fill"
-                          : "bg-primary"
-                      )
-                    : "border-border/80 bg-card text-muted-foreground hover:bg-muted/60"
-                  : selected
-                    ? cn(
-                        // The fill is the selected state: 3:1 or more
-                        // against the track, white 4.5:1 or more on it.
-                        "text-white",
-                        tone === "running"
-                          ? "bg-running-fill"
-                          : tone === "lifting"
-                            ? "bg-lifting-fill"
-                            : "bg-segment-selected"
-                      )
-                    : // Unselected: transparent on the shared track (fill), or
-                      // an individual muted pill when wrapped (no track behind).
-                      layout === "wrap"
-                      ? "bg-muted text-muted-foreground"
-                      : "text-muted-foreground"
+                : slim
+                  ? "text-muted-foreground aria-checked:text-white"
+                  : emphasis === "solid"
+                    ? selected
+                      ? cn(
+                          "border-transparent text-white",
+                          tone === "nutrition"
+                            ? "bg-nutrition-fill"
+                            : "bg-primary"
+                        )
+                      : "border-border/80 bg-card text-muted-foreground hover:bg-muted/60"
+                    : selected
+                      ? cn(
+                          // The fill is the selected state: 3:1 or more
+                          // against the track, white 4.5:1 or more on it.
+                          "text-white",
+                          tone === "running"
+                            ? "bg-running-fill"
+                            : tone === "lifting"
+                              ? "bg-lifting-fill"
+                              : "bg-segment-selected"
+                        )
+                      : // Unselected: transparent on the shared track (fill), or
+                        // an individual muted pill when wrapped (no track behind).
+                        layout === "wrap"
+                        ? "bg-muted text-muted-foreground"
+                        : "text-muted-foreground"
             )}
           >
-            {opt.label}
+            {slim ? (
+              /* The pill: 32pt, its fill the selected state as on the
+                 md track. Equal parts end a label in "…" as there. */
+              <span
+                className={cn(
+                  "flex h-8 w-full min-w-0 items-center justify-center truncate rounded-[10px] px-2",
+                  selected &&
+                    (tone === "running"
+                      ? "bg-running-fill"
+                      : tone === "lifting"
+                        ? "bg-lifting-fill"
+                        : "bg-segment-selected")
+                )}
+              >
+                {opt.label}
+              </span>
+            ) : (
+              opt.label
+            )}
           </button>
         );
       })}

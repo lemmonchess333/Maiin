@@ -19,7 +19,7 @@ export default function StarterGoalCard({
   const completed = progress.runsThisStage ?? progress.runsThisWeek;
   const weekDone = completed >= progress.runsForTheWeek;
   return (
-    <Card className="space-y-1">
+    <Card className="space-y-1 rounded-xl">
       <p className="text-sm font-bold text-running-strong">
         {STARTER_GOAL_NAME}
       </p>

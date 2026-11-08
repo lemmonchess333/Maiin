@@ -428,14 +428,16 @@ describe("ProgrammeRunSection — the no-run card names the day it is on", () =>
       makeProgramState([])
     );
     const title = screen.getByRole("heading", { name: "Lift day" });
-    expect(title.className).toContain("text-h2");
+    // Home's hero size for a session's name (DS4).
+    expect(title.className).toContain("text-hero");
     expect(
       screen.getByText("Head out for a free run if you like.")
     ).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Rest day" })).toBeNull();
     expect(screen.queryByText("No run scheduled")).toBeNull();
     const start = screen.getByRole("button", { name: "Start free run" });
-    expect(start.className).toContain("min-h-[52px]");
+    // Home's Start height, 44 (§14m rule 21: about 45 pt).
+    expect(start.className).toContain("min-h-[44px]");
   });
 
   it("still says rest day on a day with nothing on it", () => {

@@ -93,6 +93,44 @@ function LineMark({ line, sport }: { line: HeroLine; sport: HeroSport }) {
  * of the content, not its parent, because a button cannot hold a button;
  * the content lets taps through, and only the action takes its own.
  */
+/**
+ * The hero's numbers line: its mark, then the figure and what it is
+ * compared with. Exported so Train's session card draws the same line for
+ * the same session (DS4 uniformity). `onWash` takes the comparison to the
+ * foreground: on a sport-tinted card the muted grey misses AA, as
+ * SessionCommandCard's own description notes.
+ */
+export function HeroLineRow({
+  line,
+  sport,
+  onWash = false,
+  className,
+}: {
+  line: HeroLine;
+  sport: HeroSport;
+  onWash?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex items-center gap-3", className)}>
+      <LineMark line={line} sport={sport} />
+      <div className="min-w-0 flex-1">
+        <p className="text-base font-bold leading-snug text-foreground">
+          <InlineNumerals>{line.title}</InlineNumerals>
+        </p>
+        <p
+          className={cn(
+            "text-sm",
+            onWash ? "font-medium text-foreground" : "text-muted-foreground"
+          )}
+        >
+          <InlineNumerals>{line.detail}</InlineNumerals>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function SessionHero({
   sport,
   variant = "hero",
@@ -199,11 +237,16 @@ export default function SessionHero({
         {picture && (
           /* A runner and the rest day's walker are tall, narrow drawings,
              so their box is taller: at the lift's height the easy stride
-             covered under a tenth of the screen (§14m rule 24). */
+             covered under a tenth of the screen (§14m rule 24). Under 20em
+             of hero (a 320pt phone, or larger text) both give a third
+             back, so Start stays above the tab bar on a 568pt screen; the
+             drawing is still a quarter of that screen. */
           <div
             className={cn(
               "relative mt-3 flex items-center justify-center",
-              sport === "lift" ? "h-[240px]" : "h-[280px]"
+              sport === "lift"
+                ? "h-[240px] @max-[20em]:h-[160px]"
+                : "h-[280px] @max-[20em]:h-[188px]"
             )}
           >
             <div
@@ -226,19 +269,7 @@ export default function SessionHero({
             />
           </div>
         )}
-        {line && (
-          <div className="mt-3 flex items-center gap-3">
-            <LineMark line={line} sport={sport} />
-            <div className="min-w-0 flex-1">
-              <p className="text-base font-bold leading-snug text-foreground">
-                <InlineNumerals>{line.title}</InlineNumerals>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                <InlineNumerals>{line.detail}</InlineNumerals>
-              </p>
-            </div>
-          </div>
-        )}
+        {line && <HeroLineRow line={line} sport={sport} className="mt-3" />}
         {action && <div className="mt-4">{action}</div>}
       </div>
     </div>

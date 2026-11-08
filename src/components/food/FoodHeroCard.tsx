@@ -256,8 +256,9 @@ export default function FoodHeroCard({
       {/* ── CALORIE CARD — caption, ring, glance line ──────────────────── */}
       {/* py-2, not p-4's 16: the ring grew by those 16 pt (owner, 7
           November 2026), and the card keeps its height so Scan stays above
-          the tab bar on a 13 mini (companion-food's pin). */}
-      <div className="relative overflow-hidden px-4 py-2 rounded-2xl bg-card card-shadow">
+          the tab bar on a 13 mini (companion-food's pin). The one 16 pt
+          card radius (§14m rule 20), as Home's and Train's cards. */}
+      <div className="relative overflow-hidden px-4 py-2 rounded-xl bg-card card-shadow">
         <div
           aria-hidden="true"
           className="food-hero-glow pointer-events-none absolute inset-0"

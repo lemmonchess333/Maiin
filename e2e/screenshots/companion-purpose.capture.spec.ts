@@ -22,7 +22,8 @@ test("companion purpose — narrow light and dark", async ({ page }) => {
   // beneath it. Not a count of the exercises and not their names — the
   // list itself is the next thing on the page — but the one fact you
   // decide on before tapping Start.
-  await expect(card).toContainText(/~\d+\s*min/);
+  // In Home's words for the same session (`aboutMinutes`).
+  await expect(card).toContainText(/about \d+\s*min/);
   await expect(card).not.toContainText(/Week \d+ of \d+/);
   for (const dark of [false, true]) {
     await page.evaluate(
