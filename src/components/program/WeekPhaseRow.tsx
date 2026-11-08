@@ -48,7 +48,13 @@ export default function WeekPhaseRow({
         </button>
       )}
       <span className="min-w-0">
-        <InlineNumerals>{label ?? `Week ${weekNumber}`}</InlineNumerals>
+        {/* The label is its own element: InlineNumerals is a fragment, so
+            beside the suffix it would join one run of text, and the week's
+            label ("Week 21 of 53 · Build") would no longer be findable on
+            its own, by a journey or anything else that reads it. */}
+        <span>
+          <InlineNumerals>{label ?? `Week ${weekNumber}`}</InlineNumerals>
+        </span>
         {suffix && <InlineNumerals>{suffix}</InlineNumerals>}
       </span>
       {canGoNext && (

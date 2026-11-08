@@ -27,6 +27,31 @@ describe("WeekPhaseRow — the week on the header's line", () => {
     expect((container.firstElementChild as HTMLElement).tagName).toBe("SPAN");
   });
 
+  it("keeps the week's label findable on its own beside the suffix", () => {
+    /* The marathon-with-lifting journey finds Train's week by its exact
+       label ("Week 21 of 53 · Build"). InlineNumerals is a fragment, so a
+       label and suffix sharing one parent read as a single run of text
+       and no element carried the label alone. */
+    render(
+      <WeekPhaseRow
+        weekNumber={21}
+        label="Week 21 of 53 · Build"
+        suffix=" · 6 days/week"
+        onPrevWeek={() => {}}
+        onNextWeek={() => {}}
+        canGoPrev
+        canGoNext={false}
+      />
+    );
+    // Matched as Playwright's getByText({ exact: true }) matches: on an
+    // element's whole text, numerals included (InlineNumerals puts them in
+    // child spans, which RTL's default own-text matcher would not read).
+    const label = "Week 21 of 53 · Build";
+    expect(
+      screen.getByText((_, el) => el?.textContent === label)
+    ).toBeInTheDocument();
+  });
+
   it("moves between weeks from chevrons with a 44pt hit area", () => {
     const prev = vi.fn();
     const next = vi.fn();
