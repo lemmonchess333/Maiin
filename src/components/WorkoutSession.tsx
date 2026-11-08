@@ -188,6 +188,7 @@ import type { LiftMomentFacts, PostMoment } from "@/lib/postMoments";
 import GuideHint from "@/components/guide/GuideHint";
 import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
 import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
+import { sessionWork, workFigure } from "@/lib/liftFigures";
 import {
   formatKitLoad,
   kitLoadIn,
@@ -1074,6 +1075,12 @@ export default function WorkoutSession({
   const countedInSession = countedSets(setLogs.flat());
   const totalSetsCompleted = countedInSession.filter((s) => s.completed).length;
   const totalSetsTotal = countedInSession.length;
+  // The header's kg lifted: the finish screen's sum of the same sets.
+  const { volumeKg: workKg, reps: workReps } = sessionWork(
+    setLogs,
+    day.exercises
+  );
+  const sessionWorkFigure = workFigure(workKg, workReps, liftUnit);
   // Finishing early: once a working set is done, while sets remain.
   const finishEarlyOffered =
     nextIncompleteSet(setLogs) !== null &&
@@ -2276,9 +2283,12 @@ export default function WorkoutSession({
       )}
 
       {/* Top Bar — the day named as Train names it ("Pull B"), never its
-          stored name. A routine's own name reads as written. */}
-      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/50">
-        <div className="min-w-0">
+          stored name. A routine's own name reads as written. Under it,
+          the session as figures (DS4): time, sets and kg lifted, where a
+          12 px grey line said them, so the session has a number to look
+          at between sets. */}
+      <div className="border-b border-border/50 px-4 pb-2.5 pt-1.5">
+        <div className="flex min-h-11 items-center justify-between gap-3">
           {/* The session's title is the screen's heading, so a screen
               reader finds where it is from. A heading by role rather than
               an h1 element: the global h1 rule in index.css is unlayered,
@@ -2286,44 +2296,45 @@ export default function WorkoutSession({
           <p
             role="heading"
             aria-level={1}
-            className="truncate text-base font-bold text-foreground"
+            className="min-w-0 truncate text-base font-bold text-foreground"
           >
             {dayLabel ?? liftDayLine(sessionName)}
           </p>
-          <WorkoutProgress
-            key={sessionStartedAt}
-            startedAt={sessionStartedAt}
-            completed={totalSetsCompleted}
-            total={totalSetsTotal}
-          />
+          {/* Finish sits by Close, as Hevy and Strong put it (an owner
+              call, DESIGN_GUIDE §8): under the set action it took a row
+              from the list on every set after the first. Offered once a working set is
+              done and while sets remain; when none remain, the bar's own
+              "Finish workout" takes over, so there is one Finish at a
+              time. It goes straight to the review, which is the check: the
+              review counts the sets left unticked and has Edit workout to go
+              back for them, so a dialog asking first was a second check on a
+              step that can be undone. */}
+          <div className="flex shrink-0 items-center gap-1">
+            {finishEarlyOffered && (
+              <Button
+                variant="secondary"
+                className={SECONDARY_ON_CARD_EDGE}
+                aria-label="Finish workout"
+                onClick={completeSession}
+              >
+                Finish
+              </Button>
+            )}
+            <IconButton
+              variant="ghost"
+              aria-label="Close workout"
+              onClick={onClose}
+              icon={<X className="size-5 text-muted-foreground" />}
+            />
+          </div>
         </div>
-        {/* Finish sits by Close, as Hevy and Strong put it (an owner
-            call, DESIGN_GUIDE §8): under the set action it took a row
-            from the list on every set after the first. Offered once a working set is
-            done and while sets remain; when none remain, the bar's own
-            "Finish workout" takes over, so there is one Finish at a
-            time. It goes straight to the review, which is the check: the
-            review counts the sets left unticked and has Edit workout to go
-            back for them, so a dialog asking first was a second check on a
-            step that can be undone. */}
-        <div className="flex shrink-0 items-center gap-1">
-          {finishEarlyOffered && (
-            <Button
-              variant="secondary"
-              className={SECONDARY_ON_CARD_EDGE}
-              aria-label="Finish workout"
-              onClick={completeSession}
-            >
-              Finish
-            </Button>
-          )}
-          <IconButton
-            variant="ghost"
-            aria-label="Close workout"
-            onClick={onClose}
-            icon={<X className="size-5 text-muted-foreground" />}
-          />
-        </div>
+        <WorkoutProgress
+          key={sessionStartedAt}
+          startedAt={sessionStartedAt}
+          completed={totalSetsCompleted}
+          total={totalSetsTotal}
+          work={sessionWorkFigure}
+        />
       </div>
 
       {/* Progress bar */}

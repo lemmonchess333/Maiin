@@ -17,7 +17,7 @@ import MiniMuscleFigure, {
 import { CATEGORY_DISPLAY } from "@/components/analytics/muscleGroupTaxonomy";
 import { movementCategoryLabel } from "@/lib/exerciseMovementCategory";
 import { liftDayLine } from "@/lib/liftDayLabel";
-import { setsFigure, workFigure } from "@/lib/liftFigures";
+import { sessionWork, setsFigure, workFigure } from "@/lib/liftFigures";
 import { ChevronDown, ChevronRight, Share, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
@@ -182,28 +182,16 @@ export default function SessionCompleteScreen({
      The number is the VOLUME headline the user sees the moment they
      finish, and moments later the writer persists a `totalVolume` that
      DOES exclude holds. One session, two figures: a 20 kg / 60 s plank
-     put 1,200 kg between them. */
-  const totalVolume = setLogs.reduce((sum, logs, exIdx) => {
-    if (exercises[exIdx]?.repUnit === "seconds") return sum;
-    return (
-      sum +
-      logs
-        .filter((s) => s.completed && s.type !== "warmup")
-        .reduce((t, s) => t + s.weight * s.reps, 0)
-    );
-  }, 0);
+     put 1,200 kg between them.
 
-  /* A bodyweight session's reps take the middle number (`workFigure`).
-     Holds count for neither: their `reps` are seconds. */
-  const totalReps = setLogs.reduce((sum, logs, exIdx) => {
-    if (exercises[exIdx]?.repUnit === "seconds") return sum;
-    return (
-      sum +
-      logs
-        .filter((s) => s.completed && s.type !== "warmup")
-        .reduce((t, s) => t + s.reps, 0)
-    );
-  }, 0);
+     A bodyweight session's reps take the middle number (`workFigure`).
+     Holds count for neither. The live workout's header adds up the same
+     sets through the same `sessionWork`, so the figure it grew is this
+     one. */
+  const { volumeKg: totalVolume, reps: totalReps } = sessionWork(
+    setLogs,
+    exercises
+  );
   const work = workFigure(totalVolume, totalReps, liftUnit);
 
   // WORKING sets only. This was the one header stat that did not exclude
