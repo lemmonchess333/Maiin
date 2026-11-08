@@ -109,7 +109,7 @@ describe("a past week's open day reads as missed", () => {
 
   it("gives a missed day no time estimate and no Add exercise", () => {
     // Anchored: the estimate and the button are still on the page.
-    expect(code).toMatch(/~\$\{estimatedMinutes\} min/);
+    expect(code).toMatch(/aboutMinutes\(estimatedMinutes\)/);
     expect(code).toContain("Add exercise");
     expect(code).toMatch(/status === "completed" \|\| missed\s*\?\s*\[\]/);
     expect(code).toMatch(

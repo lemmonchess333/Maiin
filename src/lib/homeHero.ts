@@ -131,6 +131,13 @@ export function heroLeadExercise<T extends HeroExercise>(
   return exercises[sessionLeadIndex(exercises)] ?? exercises[0] ?? null;
 }
 
+/** A session's length as Home's hero and Train's card say it: "about 26
+ *  min". One string, so the two places that name the same session use
+ *  the same words. */
+export function aboutMinutes(minutes: number): string {
+  return `about ${minutes} min`;
+}
+
 /** The step a lift with no last time takes: the weight is the person's to
  *  pick, with reps in reserve (the plan starts at RIR 3). */
 export const FIRST_LIFT_STEP =

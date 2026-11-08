@@ -11,7 +11,7 @@ import {
 import type { RestContext } from "@/features/program/restTime";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { liftCardTitle, liftDayLine, liftDayTitle } from "@/lib/liftDayLabel";
-import { focusPhrase, liftHeroLine } from "@/lib/homeHero";
+import { aboutMinutes, focusPhrase, liftHeroLine } from "@/lib/homeHero";
 import type { LiftUnit } from "@/lib/liftLoad";
 import InProgressStrip from "@/components/session/InProgressStrip";
 import SessionHero from "@/components/home/SessionHero";
@@ -124,7 +124,7 @@ export default function LiftCTACard({
      name, the exercise count stands in. */
   const meta = [
     focus || `${count} ${count === 1 ? "exercise" : "exercises"}`,
-    ...(minutes !== null ? [`about ${minutes} min`] : []),
+    ...(minutes !== null ? [aboutMinutes(minutes)] : []),
   ];
 
   const openDay = function () {

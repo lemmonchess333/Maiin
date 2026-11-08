@@ -98,7 +98,7 @@ import {
 } from "@/features/program/represcribe";
 import { liftWeekLabel } from "@/lib/liftWeekLabel";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
-import { liftHeroLine } from "@/lib/homeHero";
+import { aboutMinutes, liftHeroLine } from "@/lib/homeHero";
 import { resolveLiftUnit } from "@/lib/liftLoad";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
@@ -1566,7 +1566,7 @@ function ProgramInner() {
                         meta={
                           status === "completed" || missed
                             ? []
-                            : [`~${estimatedMinutes} min`]
+                            : [aboutMinutes(estimatedMinutes)]
                         }
                         /* The card always carries the day's ONE action.
                            Start on the startable day; on an upcoming one

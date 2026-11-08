@@ -95,3 +95,18 @@ describe("the fell-behind banner", () => {
     );
   });
 });
+
+describe("a session's minutes", () => {
+  it("are one string on Home's hero and Train's card", () => {
+    const home = strip(
+      readFileSync(
+        resolve(repoRoot, "src/components/home/LiftCTACard.tsx"),
+        "utf8"
+      )
+    );
+    expect(home).toMatch(/aboutMinutes\(minutes\)/);
+    expect(program).toMatch(/aboutMinutes\(estimatedMinutes\)/);
+    expect(home + program).not.toMatch(/`about \$\{/);
+    expect(program).not.toMatch(/`~\$\{estimatedMinutes\} min`/);
+  });
+});

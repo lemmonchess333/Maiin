@@ -202,7 +202,7 @@ describe("the day cells name the day, not the programme", () => {
 
 describe("the two repeats the card no longer carries", () => {
   it("does not count the exercises above a list of them", () => {
-    expect(code).toMatch(/~\$\{estimatedMinutes\} min/);
+    expect(code).toMatch(/aboutMinutes\(estimatedMinutes\)/);
     expect(code).not.toMatch(/\$\{exerciseCount\} exercises/);
     expect(code).not.toMatch(/\bexerciseCount\b/);
   });
