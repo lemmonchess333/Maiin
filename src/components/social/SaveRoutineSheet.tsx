@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/lib/toast";
 import { Check } from "lucide-react";
@@ -87,6 +87,15 @@ export default function SaveRoutineSheet({
      and the only confirmation was a toast that's easy to miss when the
      user has already moved on. */
   const [saved, setSaved] = useState(false);
+  /* The "Saved" hold before closing. Cancelled when the sheet goes, so
+     it never sets state on, or closes, a sheet that is no longer there. */
+  const closeTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    },
+    []
+  );
 
   const handleSave = async () => {
     if (!uid || saving || saved) return;
@@ -122,7 +131,8 @@ export default function SaveRoutineSheet({
         },
         duration: 5000,
       });
-      window.setTimeout(() => {
+      closeTimer.current = window.setTimeout(() => {
+        closeTimer.current = null;
         setSaved(false);
         onClose();
       }, 650);
