@@ -113,6 +113,19 @@ describe("the overview's compact map", () => {
     expect(screen.queryByText("Arms")).toBeNull();
   });
 
+  it("reads where the sets went, out of all of them, on both maps", () => {
+    const data = { Chest: 32, Back: 30, Legs: 28, Shoulders: 18, Arms: 6 };
+    const { unmount } = render(<MuscleHeatMap variant="compact" data={data} />);
+    expect(screen.getByTestId("chart-reading")).toHaveTextContent(
+      "Most sets went to chest: 32 of 114."
+    );
+    unmount();
+    render(<MuscleHeatMap data={data} />);
+    expect(screen.getByTestId("chart-reading")).toHaveTextContent(
+      "Most sets went to chest: 32 of 114."
+    );
+  });
+
   it("says set, not sets, for a group trained once", () => {
     render(<MuscleHeatMap variant="compact" data={{ Chest: 1 }} />);
     expect(screen.getByRole("listitem").textContent).toMatch(/1\s*set$/);

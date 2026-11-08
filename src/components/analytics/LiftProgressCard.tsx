@@ -5,6 +5,8 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import Sparkline from "./Sparkline";
+import ChartReading from "./ChartReading";
+import { liftProgressReading } from "@/lib/historyReadings";
 import { NewRecordChip } from "./PRCard";
 import { LIFT_PROGRESS_SHOWN, type LiftProgressRow } from "@/lib/liftProgress";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -66,6 +68,8 @@ export default function LiftProgressCard({
   if (rows.length === 0 && !hasSessions) return null;
   const shown = showAll ? rows : rows.slice(0, LIFT_PROGRESS_SHOWN);
   const hidden = rows.length - LIFT_PROGRESS_SHOWN;
+  const readingText = liftProgressReading(rows, subtitle);
+  const reading = readingText ? { text: readingText, waiting: false } : null;
 
   return (
     <Card as="section" aria-label="Your lifts" className="space-y-3">
@@ -74,6 +78,10 @@ export default function LiftProgressCard({
         <p className="text-sm text-muted-foreground">
           Each session&apos;s top set · {subtitle}
         </p>
+        {/* Every lift in the range, the ones under "Show all" too, in one
+            line: "Your top set went up on 4 of 14 lifts in the last 30
+            days." */}
+        <ChartReading line={reading} className="mt-1" />
       </div>
       {rows.length === 0 && (
         <p className="text-sm text-muted-foreground">

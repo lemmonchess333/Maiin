@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { chartWaitLine } from "@/lib/historyReadings";
 import UITooltip from "@/components/ui/Tooltip";
 
 /* The metric's definition and the gaps legend, moved off the surface.
@@ -272,7 +273,10 @@ export default function CalorieBalanceChart({
                   so the line is written here and held to the same budget
                   by this card's own test. */}
               <p className="text-xs text-muted-foreground pt-2">
-                {`Log ${T5_BARS_MIN_COUNT} days to see the chart`}
+                {chartWaitLine(loggedDays.length, T5_BARS_MIN_COUNT, {
+                  one: "day",
+                  many: "days",
+                })}
               </p>
             </motion.div>
           )}

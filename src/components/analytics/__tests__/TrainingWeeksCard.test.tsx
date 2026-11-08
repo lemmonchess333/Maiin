@@ -362,7 +362,8 @@ describe("too few sessions for a chart", () => {
         averageText=""
       />
     );
-    expect(screen.getByText("Log 3 lifts to see the chart")).toBeVisible();
+    // Two lifts in the range: one more draws the chart.
+    expect(screen.getByText("Log 1 more lift for the chart")).toBeVisible();
     expect(bars(container)).toEqual([]);
     // The figures stand: a raw value is always shown.
     expect(screen.getByText("8.2k")).toBeInTheDocument();

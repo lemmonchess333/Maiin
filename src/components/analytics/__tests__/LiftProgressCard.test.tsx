@@ -142,3 +142,26 @@ describe("how many it lists", () => {
     expect(screen.getByText("Repeat a lift to see progress")).toBeVisible();
   });
 });
+
+describe("the card's reading", () => {
+  it("counts every lift whose top set went up, the hidden ones too", () => {
+    renderCard([
+      ...Array.from({ length: 6 }, (_, i) =>
+        row({ name: `Lift ${i}`, exerciseId: `lift-${i}` })
+      ),
+      row({ name: "Row", exerciseId: "row", direction: "level" }),
+    ]);
+    expect(screen.getByTestId("chart-reading")).toHaveTextContent(
+      "Your top set went up on 6 of 7 lifts in the last 30 days."
+    );
+  });
+
+  it("is absent while no lift has a second session", () => {
+    render(
+      <MemoryRouter>
+        <LiftProgressCard rows={[]} subtitle="Last 7 days" hasSessions />
+      </MemoryRouter>
+    );
+    expect(screen.queryByTestId("chart-reading")).not.toBeInTheDocument();
+  });
+});

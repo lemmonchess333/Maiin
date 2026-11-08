@@ -35,7 +35,7 @@ describe("MuscleVolumeCard", () => {
       />
     );
     expect(
-      screen.getByText("Below range: side delts, calves")
+      screen.getByText("2 of 3 muscles below their range: side delts, calves")
     ).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -57,7 +57,9 @@ describe("MuscleVolumeCard", () => {
         focus="Build muscle"
       />
     );
-    expect(screen.getByText("4 muscles below their range")).toBeInTheDocument();
+    expect(
+      screen.getByText("4 of 4 muscles below their range")
+    ).toBeInTheDocument();
   });
 
   it("says so when every muscle is in its range", () => {
@@ -68,9 +70,7 @@ describe("MuscleVolumeCard", () => {
         focus="Build muscle"
       />
     );
-    expect(
-      screen.getByText("Every muscle is in its range")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Both muscles in their range")).toBeInTheDocument();
   });
 
   it("marks below and above in words, and in range with none", () => {

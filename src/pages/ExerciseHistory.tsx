@@ -30,6 +30,9 @@ import {
 } from "@/lib/dateHelpers";
 import { isTimedExerciseId } from "@/features/program/repUnits";
 import { bestSetsByReps } from "@/lib/repBuckets";
+import { ONE_CARD_RADIUS } from "@/components/ui/cardClasses";
+import { exerciseProgressReading } from "@/lib/historyReadings";
+import ChartReading from "@/components/analytics/ChartReading";
 
 const ExerciseProgressChart = lazyRetry(
   () => import("@/components/analytics/ExerciseProgressChart")
@@ -327,6 +330,18 @@ export default function ExerciseHistory() {
     exercise?.id,
   ]);
 
+  /* The chart's first point in the range against its latest, under the
+     chart's label and metric switch, which name what is measured: "Up
+     15 kg since 19 Aug." */
+  const progressText = exerciseProgressReading(
+    chartData,
+    chartUnit,
+    new Date()
+  );
+  const progressReading = progressText
+    ? { text: progressText, waiting: false }
+    : null;
+
   const goBack = useCallback(() => {
     haptic("light");
     navigate(-1);
@@ -334,7 +349,7 @@ export default function ExerciseHistory() {
 
   if (loading && (tab !== "form" || !exercise)) {
     return (
-      <div className="space-y-4 pt-2">
+      <div className={`space-y-4 pt-2 ${ONE_CARD_RADIUS}`}>
         <div className="h-8 bg-muted/50 rounded motion-safe:animate-pulse" />
         <div className="h-24 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
         <div className="h-48 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
@@ -376,7 +391,7 @@ export default function ExerciseHistory() {
 
   return (
     <motion.div
-      className="space-y-4 pt-2 pb-8"
+      className={`space-y-4 pt-2 pb-8 ${ONE_CARD_RADIUS}`}
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
@@ -416,6 +431,8 @@ export default function ExerciseHistory() {
             and the same switch treatment as the Programme tabs). */}
       <SegmentedControl
         ariaLabel="Exercise view"
+        /* The 36pt track History's control rows take, 44pt to tap. */
+        size="sm"
         value={tab}
         onChange={(value) => {
           haptic("light");
@@ -594,6 +611,7 @@ export default function ExerciseHistory() {
                   className="p-0.5 rounded-full [&_button]:flex-none [&_button]:min-w-[44px] [&_button]:rounded-full [&_button]:px-2 [&_button]:text-micro @max-[12em]:w-full @max-[12em]:flex-col @max-[12em]:rounded-2xl"
                 />
               </div>
+              <ChartReading line={progressReading} />
               <Suspense
                 fallback={
                   <div className="h-40 bg-muted/30 rounded motion-safe:animate-pulse" />
