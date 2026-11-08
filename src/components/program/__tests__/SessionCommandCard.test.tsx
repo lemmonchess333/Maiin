@@ -76,7 +76,9 @@ describe("SessionCommandCard", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("sport-codes the primary action: coral for run, purple for lift", () => {
+  it("draws Start as the one neutral filled button for both sports", () => {
+    // DS4 (§14m rule 12): the sport's colour stays on the card, not the
+    // button, as on Home's Start workout and Start run.
     const { rerender } = render(
       <SessionCommandCard
         sport="run"
@@ -87,9 +89,9 @@ describe("SessionCommandCard", () => {
         onPrimaryAction={() => {}}
       />
     );
-    // Run → coral `sport` Button variant (DS1b --running token class).
     const runBtn = screen.getByRole("button", { name: /Start run/i });
-    expect(runBtn.className).toContain("bg-running");
+    expect(runBtn.className).toContain("bg-foreground");
+    expect(runBtn.className).not.toContain("bg-running");
 
     rerender(
       <SessionCommandCard
@@ -101,10 +103,9 @@ describe("SessionCommandCard", () => {
         onPrimaryAction={() => {}}
       />
     );
-    // Lift → brand-purple `primary` Button variant (Tailwind class, no
-    // inline coral background).
     const liftBtn = screen.getByRole("button", { name: /Start lift/i });
-    expect(liftBtn.className).toContain("bg-primary-strong");
+    expect(liftBtn.className).toContain("bg-foreground");
+    expect(liftBtn.className).not.toContain("bg-primary-strong");
   });
 });
 

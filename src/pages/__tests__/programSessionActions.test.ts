@@ -67,14 +67,14 @@ describe("the card carries the day's action", () => {
     expect(code).toMatch(/primaryActionVariant=\{[\s\S]{0,120}"secondary"/);
   });
 
-  it("leaves Run's card exactly as it was", () => {
+  it("leaves Run's card on the defaults", () => {
     /* Both overrides are optional and Run passes neither, so its Start
-       keeps the coral `sport` fill and the Play icon. */
+       takes the neutral fill Home's Start uses (DS4) and the Play icon. */
     const run = readFileSync(
       resolve(repoRoot, "src/components/program/SessionCommandCard.tsx"),
       "utf8"
     );
-    expect(run).toContain('primaryActionVariant ?? (sport === "run"');
+    expect(run).toContain('primaryActionVariant ?? "neutral"');
     expect(run).toMatch(/primaryActionIcon \?\?/);
   });
 });

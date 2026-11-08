@@ -10,9 +10,10 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
  * NOT the Start button — the primary action is its own control so the
  * overflow can live beside it without a nested-button violation.
  *
- * Sport-coded: running uses coral (`sport` Button variant), lifting uses
- * brand purple (`primary`). Tinted surface only — no gradients, no new
- * colours. 44px+ touch targets via the Button/IconButton primitives.
+ * Sport-coded on its wash, eyebrow and picture: coral for running, purple
+ * for lifting. Start is the `neutral` button, Home's (DS4). Tinted surface
+ * only — no gradients, no new colours. 44px+ touch targets via the
+ * Button/IconButton primitives.
  *
  * DS3: the sport wash is 12%, the Home Today card's, and the halo that sat
  * behind the icon corner is gone with the app's other glows. The title is
@@ -196,9 +197,11 @@ export default function SessionCommandCard({
         {action ??
           (primaryActionLabel && onPrimaryAction && (
             <Button
-              variant={
-                primaryActionVariant ?? (sport === "run" ? "sport" : "primary")
-              }
+              /* The screen's one full-width filled button is neutral, as
+                 Home's Start is (DS4, DESIGN_GUIDE §14i, §14m rule 12):
+                 the sport keeps its colour on the card's wash, its eyebrow
+                 and its picture, not on the button. */
+              variant={primaryActionVariant ?? "neutral"}
               size={compact ? "md" : "lg"}
               fullWidth
               leftIcon={
