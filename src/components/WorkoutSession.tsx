@@ -2348,12 +2348,15 @@ export default function WorkoutSession({
       </div>
 
       {/* Exercise navigation pills: the last of the fixed part, so its
-          edge is where the list scrolls under. */}
+          edge is where the list scrolls under. It stays fixed (an owner
+          call, DESIGN_GUIDE §8) and is one 56 pt row (DS4 rule 18):
+          a name under every drawing made it 109 pt, 13% of a 393 × 852
+          phone, for words the list's own heading already says. */}
       <div className="relative border-b border-border/30">
         <div
           ref={tabsRef}
           data-no-page-swipe
-          className="flex gap-2 px-4 py-2 overflow-x-auto"
+          className="flex items-center gap-1.5 overflow-x-auto px-4 py-1.5"
           style={{ scrollbarWidth: "none" }}
         >
           {day.exercises.map((ex, i) => {
@@ -2362,9 +2365,9 @@ export default function WorkoutSession({
             const done = !skipped && isExerciseDone(setsForEx);
             const active = i === currentExIndex;
             /* DS3: the session's exercises as their drawings, in order.
-               The current one is ringed, a finished one carries a check,
-               and the full name is the button's name for assistive tech
-               however the label below truncates. */
+               The current one is ringed and named beside its drawing, a
+               finished one carries a check, and the full name is every
+               button's name for assistive tech. */
             return (
               <button
                 type="button"
@@ -2385,43 +2388,45 @@ export default function WorkoutSession({
                   );
                   setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
                 }}
-                className="flex w-16 shrink-0 flex-col items-center gap-1.5 rounded-xl pb-1 pt-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className={cn(
+                  "flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2.5 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  active && "pl-0.5 pr-1"
+                )}
               >
                 <span
                   className={cn(
-                    "relative rounded-xl",
+                    "relative rounded-lg",
                     active &&
                       "ring-2 ring-primary ring-offset-2 ring-offset-background"
                   )}
                 >
                   <ExerciseThumb
                     exerciseId={ex.exerciseId}
+                    size="sm"
                     className={cn((done || skipped) && !active && "opacity-60")}
                   />
                   {done && (
-                    <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary-strong text-primary-foreground ring-2 ring-background">
-                      <Check className="size-3" strokeWidth={3} />
+                    <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary-strong text-primary-foreground ring-2 ring-background">
+                      <Check className="size-2.5" strokeWidth={3.5} />
                     </span>
                   )}
                   {skipped && (
-                    <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
-                      <SkipForward className="size-3" strokeWidth={3} />
+                    <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
+                      <SkipForward className="size-2.5" strokeWidth={3.5} />
                     </span>
                   )}
                 </span>
-                {/* Up to three lines: cut to one, "Barbell Row" and
-                    "Barbell Curl" both read "Barbell…", and cut to two,
-                    "Straight-Arm Pulldown" reads "Straight-Arm…". */}
-                <span
-                  className={cn(
-                    "line-clamp-3 w-full text-center text-xs leading-tight break-words",
-                    active
-                      ? "font-bold text-foreground"
-                      : "font-medium text-muted-foreground"
-                  )}
-                >
-                  {ex.name}
-                </span>
+                {/* Two lines beside the drawing: "Straight-Arm Pulldown"
+                    whole on a phone. A longer name is whole in the list's
+                    heading under the strip. */}
+                {active && (
+                  <span
+                    aria-hidden="true"
+                    className="line-clamp-2 max-w-[9rem] text-left text-xs font-bold leading-tight text-foreground break-words"
+                  >
+                    {ex.name}
+                  </span>
+                )}
               </button>
             );
           })}
