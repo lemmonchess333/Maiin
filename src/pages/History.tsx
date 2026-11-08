@@ -1115,17 +1115,24 @@ export default function History() {
         </div>
       )}
 
-      <motion.div variants={pageItemVariant}>
-        <FilterPills
-          filter={filter}
-          setFilter={(next) => {
-            setFilter(next);
-            trackHistoryEvent("history_tab_selected", {
-              tab: next as HistoryTab,
-            });
-          }}
-        />
-      </motion.div>
+      {/* The tab-level switch belongs to the overview and the PRs and
+          Badges tabs. A page is a screen pushed from the overview, and its
+          way back is the Overview row: with the switch over it too, a page
+          stacked three control rows under the title (52 + 44 + 52 pt,
+          40% of the first screen with the tab bar; §14m rules 17-18). */}
+      {(filter !== "analytics" || view === "overview") && (
+        <motion.div variants={pageItemVariant}>
+          <FilterPills
+            filter={filter}
+            setFilter={(next) => {
+              setFilter(next);
+              trackHistoryEvent("history_tab_selected", {
+                tab: next as HistoryTab,
+              });
+            }}
+          />
+        </motion.div>
+      )}
 
       <Suspense
         fallback={
@@ -1164,9 +1171,24 @@ export default function History() {
               the "Your first week starts here" card below stands in until the first
               session is logged. `/history#performance` opens the
               Performance page. */}
-            {/* A deeper page's way back to the overview. */}
+            {/* A deeper page's one control row: the way back to the
+                overview, and beside it the range that scopes the page.
+                The range keeps 15em; where the row cannot give it that
+                (a 320pt phone, larger text) it wraps under the way back. */}
             {filter === "analytics" && view !== "overview" && (
-              <AnalyticsBackRow onBack={() => setView("overview")} />
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <AnalyticsBackRow onBack={() => setView("overview")} />
+                {/* The Body page's weight chart keeps its own range, and
+                    the Performance page's sits in its training load card. */}
+                {view !== "body" && view !== "performance" && (
+                  <div className="min-w-[min(100%,15em)] flex-1">
+                    <TimeRangePills
+                      selected={timeRange}
+                      onChange={setTimeRange}
+                    />
+                  </div>
+                )}
+              </div>
             )}
 
             {/* The week's index, range-independent, above the range
@@ -1199,11 +1221,9 @@ export default function History() {
               </SectionErrorBoundary>
             )}
 
-            {/* The range scopes the history below it. The Body page's
-                weight chart keeps its own, so it gets none here, and on
-                the Performance page it scopes only the training load, so
-                it sits in that card. */}
-            {view !== "body" && view !== "performance" && (
+            {/* The range scopes the history below it. On a page it shares
+                the way back's row, above. */}
+            {view === "overview" && (
               <TimeRangePills selected={timeRange} onChange={setTimeRange} />
             )}
 

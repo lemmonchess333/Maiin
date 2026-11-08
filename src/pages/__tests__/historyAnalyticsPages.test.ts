@@ -132,4 +132,21 @@ describe("Analytics — links into the pages", () => {
     );
     expect(program).toContain('"/history?view=lifting"');
   });
+
+  it("draws one control row on a page: the way back, with the range beside it", () => {
+    // The tab switch is the overview's (and the PRs and Badges tabs').
+    expect(conditionBefore("<FilterPills")).toContain(
+      '(filter !== "analytics" || view === "overview")'
+    );
+    // The range on a page shares the way back's row; on the overview it
+    // keeps its place under the week's index.
+    const row = history.slice(
+      history.indexOf("<AnalyticsBackRow"),
+      history.indexOf("</div>", history.indexOf("<AnalyticsBackRow"))
+    );
+    expect(row).toContain("<TimeRangePills");
+    expect(conditionBefore("<TimeRangePills selected={timeRange}", 60)).toMatch(
+      /view === "overview"|view !== "performance"/
+    );
+  });
 });
