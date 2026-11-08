@@ -98,6 +98,8 @@ import {
 } from "@/features/program/represcribe";
 import { liftWeekLabel } from "@/lib/liftWeekLabel";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
+import { liftHeroLine } from "@/lib/homeHero";
+import { resolveLiftUnit } from "@/lib/liftLoad";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
 import {
@@ -1229,6 +1231,15 @@ function ProgramInner() {
       profile?.experience
     ) ?? `Week ${displayWeekNumber}`;
   const liftDayCount = programState.workouts?.length ?? 0;
+  // The session card's line, Home's (`liftHeroLine`), for a day still to
+  // train; a done or missed day is its record, not a prescription.
+  const sessionLine =
+    selectedWorkout && status !== "completed" && !missed
+      ? liftHeroLine(
+          selectedWorkout.exercises,
+          resolveLiftUnit(profile?.liftingWeightUnit)
+        )
+      : null;
   // A no-break space, so "6" never ends a line with "days/week" on the next.
   const liftDaysText =
     liftDayCount === 1 ? "1\u00a0day/week" : `${liftDayCount}\u00a0days/week`;
@@ -1511,7 +1522,7 @@ function ProgramInner() {
                               draggable={false}
                               decoding="async"
                               data-session-art={sessionArt.exerciseName}
-                              className="h-24 w-28 object-contain object-right"
+                              className="h-24 w-28 object-contain object-right @max-[19em]:h-20 @max-[19em]:w-20"
                             />
                           ) : hasMuscleFigure(sessionMuscleCategories) ? (
                             <MiniMuscleFigure
@@ -1536,12 +1547,19 @@ function ProgramInner() {
                             ? `How to do ${sessionArt.exerciseName}`
                             : undefined
                         }
-                        /* The lift the day opens with, on a line of its own
-                           that wraps: a meta item holds together, and a long
-                           lift's name would run past the card at the
-                           largest text. */
+                        /* Home's numbers line for the same session: the
+                           main lift's weight and reps against last time,
+                           or a first session's step (DS4). It takes the
+                           place "Starts with …" had: the first lift is the
+                           list's first row, and the line is the reading
+                           Home gives. A day without the line (no
+                           exercises) still names its first lift. */
+                        line={sessionLine}
                         description={
-                          sessionFirstLift && status !== "completed" && !missed
+                          !sessionLine &&
+                          sessionFirstLift &&
+                          status !== "completed" &&
+                          !missed
                             ? `Starts with ${sessionFirstLift}`
                             : undefined
                         }

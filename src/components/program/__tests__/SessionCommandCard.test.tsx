@@ -203,3 +203,32 @@ describe("runTemplateIcon", () => {
     expect(runTemplateIcon(undefined)).toBe(Footprints);
   });
 });
+
+describe("SessionCommandCard — Home's hero for the same session (DS4)", () => {
+  it("names the session at Home's hero size and draws Home's numbers line", () => {
+    renderCard({
+      sport: "lift",
+      title: "Pull A",
+      line: {
+        title: "Barbell Row 35 kg × 8",
+        detail: "2.5 kg more than last time",
+        mark: "up",
+      },
+    });
+    const heading = screen.getByRole("heading", { name: "Pull A" });
+    expect(heading.className).toMatch(/\btext-hero\b/);
+    expect(screen.getByText(/Barbell Row/)).toBeInTheDocument();
+    expect(screen.getByText(/more than last time/)).toBeInTheDocument();
+    // Home's Start: 44 tall.
+    expect(
+      screen.getByRole("button", { name: /Start run/ }).className
+    ).toContain("min-h-[44px]");
+  });
+
+  it("keeps the H2 step on the plan page's compact card", () => {
+    renderCard({ compact: true, title: "Easy 30" });
+    expect(screen.getByRole("heading", { name: "Easy 30" }).className).toMatch(
+      /\btext-h2\b/
+    );
+  });
+});

@@ -93,6 +93,44 @@ function LineMark({ line, sport }: { line: HeroLine; sport: HeroSport }) {
  * of the content, not its parent, because a button cannot hold a button;
  * the content lets taps through, and only the action takes its own.
  */
+/**
+ * The hero's numbers line: its mark, then the figure and what it is
+ * compared with. Exported so Train's session card draws the same line for
+ * the same session (DS4 uniformity). `onWash` takes the comparison to the
+ * foreground: on a sport-tinted card the muted grey misses AA, as
+ * SessionCommandCard's own description notes.
+ */
+export function HeroLineRow({
+  line,
+  sport,
+  onWash = false,
+  className,
+}: {
+  line: HeroLine;
+  sport: HeroSport;
+  onWash?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex items-center gap-3", className)}>
+      <LineMark line={line} sport={sport} />
+      <div className="min-w-0 flex-1">
+        <p className="text-base font-bold leading-snug text-foreground">
+          <InlineNumerals>{line.title}</InlineNumerals>
+        </p>
+        <p
+          className={cn(
+            "text-sm",
+            onWash ? "font-medium text-foreground" : "text-muted-foreground"
+          )}
+        >
+          <InlineNumerals>{line.detail}</InlineNumerals>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function SessionHero({
   sport,
   variant = "hero",
@@ -226,19 +264,7 @@ export default function SessionHero({
             />
           </div>
         )}
-        {line && (
-          <div className="mt-3 flex items-center gap-3">
-            <LineMark line={line} sport={sport} />
-            <div className="min-w-0 flex-1">
-              <p className="text-base font-bold leading-snug text-foreground">
-                <InlineNumerals>{line.title}</InlineNumerals>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                <InlineNumerals>{line.detail}</InlineNumerals>
-              </p>
-            </div>
-          </div>
-        )}
+        {line && <HeroLineRow line={line} sport={sport} className="mt-3" />}
         {action && <div className="mt-4">{action}</div>}
       </div>
     </div>

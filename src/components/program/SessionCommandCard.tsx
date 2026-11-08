@@ -29,6 +29,8 @@ import MetaLine from "@/components/ui/MetaLine";
 import { cn } from "@/lib/utils";
 import { Button, type ButtonVariant } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+import { HeroLineRow } from "@/components/home/SessionHero";
+import type { HeroLine } from "@/lib/homeHero";
 
 interface SessionCommandCardProps {
   /** Temporal status label — "Up next", "Due today", "Tomorrow", "Pending". */
@@ -73,6 +75,11 @@ interface SessionCommandCardProps {
   action?: ReactNode;
   /** Keep the command prominent while leaving more room for a surrounding agenda. */
   compact?: boolean;
+  /** Home's numbers line for the same session (`liftHeroLine`,
+   *  `runHeroLine`): the lead lift's weight and reps against last time,
+   *  or a first session's step. Drawn as Home's hero draws it, under the
+   *  title and picture. */
+  line?: HeroLine | null;
 }
 
 export default function SessionCommandCard({
@@ -91,6 +98,7 @@ export default function SessionCommandCard({
   figureLabel,
   action,
   compact = false,
+  line,
 }: SessionCommandCardProps) {
   const isRun = sport === "run";
   const Icon = isRun ? Footprints : Dumbbell;
@@ -110,7 +118,7 @@ export default function SessionCommandCard({
       <div
         className={cn(
           "@container relative",
-          compact ? "space-y-3 p-3" : "space-y-4 p-4"
+          compact ? "space-y-3 p-3" : "space-y-3 p-4"
         )}
       >
         {/* The picture gives its room to the title under 14em of card
@@ -123,7 +131,16 @@ export default function SessionCommandCard({
               "~57 min". */}
           <div className="flex-1 min-w-0">
             <p className={cn("text-sm font-bold", accentText)}>{eyebrow}</p>
-            <h3 className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
+            {/* The name at Home's hero size, 36px (DS4 §14m rule 2: the
+                hero holds the screen's largest text), so one session has
+                one size on Home and on Train. The plan page's compact
+                card keeps the H2 step. */}
+            <h3
+              className={cn(
+                "mt-1 font-extrabold tracking-tight text-foreground text-balance",
+                compact ? "text-h2 leading-tight" : "text-hero leading-[1.05]"
+              )}
+            >
               {title}
             </h3>
             {/* The description and the dose take the foreground: on the
@@ -194,6 +211,8 @@ export default function SessionCommandCard({
           )}
         </div>
 
+        {line && <HeroLineRow line={line} sport={sport} onWash />}
+
         {action ??
           (primaryActionLabel && onPrimaryAction && (
             <Button
@@ -202,7 +221,10 @@ export default function SessionCommandCard({
                  the sport keeps its colour on the card's wash, its eyebrow
                  and its picture, not on the button. */
               variant={primaryActionVariant ?? "neutral"}
-              size={compact ? "md" : "lg"}
+              /* Home's height, 44: about 45 pt is the reference (§14m
+                 rule 21), and Train's 52 was the one Start that differed. */
+              size="md"
+              className="text-base"
               fullWidth
               leftIcon={
                 primaryActionIcon ?? (

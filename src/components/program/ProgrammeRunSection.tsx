@@ -1360,6 +1360,19 @@ export default function ProgrammeRunSection({
             title="Pick your pace today"
             description="Easy, tempo, intervals or just go."
             meta={[]}
+            /* Home's free run draws the easy runner; so does this card,
+               as a planned run's does, where it had the icon tile. */
+            figure={
+              <img
+                src={runPoseUrl(runPoseFor(undefined))}
+                alt=""
+                draggable={false}
+                decoding="async"
+                className="h-24 w-auto"
+              />
+            }
+            onFigurePress={openRunForm}
+            figureLabel="Running form"
             primaryActionLabel="Start run"
             onPrimaryAction={() => {
               haptic();
