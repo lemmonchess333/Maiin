@@ -74,3 +74,16 @@ describe("Train's Run tab", () => {
     );
   });
 });
+
+describe("Home's hero on a 320pt phone", () => {
+  it("gives back a third of its picture under 20em, so Start clears the tab bar", () => {
+    const hero = strip(
+      readFileSync(
+        resolve(repoRoot, "src/components/home/SessionHero.tsx"),
+        "utf8"
+      )
+    );
+    expect(hero).toMatch(/"h-\[240px\] @max-\[20em\]:h-\[160px\]"/);
+    expect(hero).toMatch(/"h-\[280px\] @max-\[20em\]:h-\[188px\]"/);
+  });
+});

@@ -237,11 +237,16 @@ export default function SessionHero({
         {picture && (
           /* A runner and the rest day's walker are tall, narrow drawings,
              so their box is taller: at the lift's height the easy stride
-             covered under a tenth of the screen (§14m rule 24). */
+             covered under a tenth of the screen (§14m rule 24). Under 20em
+             of hero (a 320pt phone, or larger text) both give a third
+             back, so Start stays above the tab bar on a 568pt screen; the
+             drawing is still a quarter of that screen. */
           <div
             className={cn(
               "relative mt-3 flex items-center justify-center",
-              sport === "lift" ? "h-[240px]" : "h-[280px]"
+              sport === "lift"
+                ? "h-[240px] @max-[20em]:h-[160px]"
+                : "h-[280px] @max-[20em]:h-[188px]"
             )}
           >
             <div
