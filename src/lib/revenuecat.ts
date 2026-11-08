@@ -37,7 +37,7 @@ let configured = false;
 // Proxy that answers every property, `then` included, so a promise resolved
 // with it calls `Purchases.then()` on the native side ("not implemented on
 // ios") and never settles. RevenueCat was never set up on the first
-// TestFlight builds for exactly this (2026-11-08); haptic.ts and
+// TestFlight builds for exactly this; haptic.ts and
 // systemChrome.ts hold their plugins the same way.
 async function loadPurchases() {
   const mod = await import("@revenuecat/purchases-capacitor");

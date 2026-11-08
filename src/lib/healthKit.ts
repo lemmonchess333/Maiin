@@ -60,7 +60,7 @@ export interface NativeWorkoutExportPlugin extends Plugin {
    answers every property, `then` included, so a promise resolved with one
    calls its `then` on the native side and never settles (revenuecat.ts).
    "HealthPlugin.then() is not implemented on ios" on the first TestFlight
-   builds (2026-11-08) was this. */
+   builds was this. */
 let workoutPluginPromise: Promise<{
   plugin: NativeWorkoutExportPlugin;
 }> | null = null;

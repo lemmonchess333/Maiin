@@ -5,7 +5,7 @@
  * That is the trap this exists to keep shut. A promise resolved with a
  * plugin (`return mod.Purchases` from an async function, `.then((m) =>
  * m.Health)`) asks it for `then`, gets a native call, and never settles: on
- * the first TestFlight builds (2026-11-08) RevenueCat was never set up, App
+ * the first TestFlight builds RevenueCat was never set up, App
  * Check never answered, and checkout sat on "Starting checkout…", each with
  * `"Purchases.then()" is not implemented on ios` and its like in the log. A
  * plain object mock has no `then`, so tests of a loader written that way

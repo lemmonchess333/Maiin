@@ -49,7 +49,7 @@ export function registerNativeAppCheck(): void {
   if (!isNativePlatform()) return;
   // A holder, never the plugin: a promise resolved with a Capacitor plugin
   // calls its `then` on the native side and never settles. Set-up stalled
-  // here on every request of the first TestFlight builds (2026-11-08), and
+  // here on every request of the first TestFlight builds, and
   // each Auth request then waited out the 8-second limit below.
   let ready: Promise<{
     plugin: (typeof import("@capacitor-firebase/app-check"))["FirebaseAppCheck"];
