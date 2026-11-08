@@ -19,11 +19,11 @@
  */
 import { Capacitor } from "@capacitor/core";
 import { logger } from "./logger";
+import { traceBoot } from "./bootTrace";
 import type { StorePrice } from "./proPlans";
 
 const RC_PUBLIC_KEY = import.meta.env.VITE_REVENUECAT_IOS_KEY as
-  | string
-  | undefined;
+  string | undefined;
 
 /** RevenueCat only runs on the native iOS shell, and only once the public key
  *  is provisioned. Everything below short-circuits to a no-op otherwise. */
@@ -32,6 +32,28 @@ export function isRevenueCatEnabled(): boolean {
 }
 
 let configured = false;
+
+/**
+ * One RevenueCat call, timed into the step list a stalled or failed
+ * purchase shows on the iPhone (bootTrace.ts). The first TestFlight
+ * purchase (2026-11-08) sat on "Starting checkout…" with no Apple sheet
+ * and nothing to say which call never answered.
+ */
+async function step<T>(name: string, work: () => Promise<T>): Promise<T> {
+  const started = Date.now();
+  traceBoot(`RevenueCat: ${name}`);
+  try {
+    const result = await work();
+    traceBoot(`RevenueCat: ${name} done in ${Date.now() - started} ms`);
+    return result;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    traceBoot(
+      `RevenueCat: ${name} failed after ${Date.now() - started} ms (${reason})`
+    );
+    throw error;
+  }
+}
 
 // Dynamic import keeps the native plugin out of the web bundle entirely.
 async function loadPurchases() {
@@ -48,7 +70,9 @@ export async function configureRevenueCat(appUserID: string): Promise<void> {
   if (!isRevenueCatEnabled() || configured) return;
   try {
     const Purchases = await loadPurchases();
-    await Purchases.configure({ apiKey: RC_PUBLIC_KEY!, appUserID });
+    await step("set up", () =>
+      Purchases.configure({ apiKey: RC_PUBLIC_KEY!, appUserID })
+    );
     configured = true;
     logger.log("[RevenueCat] configured");
   } catch (err) {
@@ -70,7 +94,7 @@ export async function rcLogIn(appUserID: string): Promise<boolean> {
       return configured;
     }
     const Purchases = await loadPurchases();
-    await Purchases.logIn({ appUserID });
+    await step("switch account", () => Purchases.logIn({ appUserID }));
     return true;
   } catch (err) {
     logger.error("[RevenueCat] logIn failed", err);
@@ -155,10 +179,16 @@ export async function rcPurchase(
     };
   }
   try {
+    traceBoot(`RevenueCat: buying ${productId} (set up: ${configured})`);
     const Purchases = await loadPurchases();
-    const offerings = await Purchases.getOfferings();
+    const offerings = await step("plans for the purchase", () =>
+      Purchases.getOfferings()
+    );
     const pkg = offerings.current?.availablePackages.find(
       (p) => p.product.identifier === productId
+    );
+    traceBoot(
+      `RevenueCat: ${offerings.current?.availablePackages.length ?? 0} plans in the current offering; ${pkg ? "found" : "not found"} ${productId}`
     );
     if (!pkg) {
       // Almost always an operator mismatch: ASC product id vs RC product vs
@@ -171,7 +201,9 @@ export async function rcPurchase(
         error: "This plan isn't available right now. Try again later.",
       };
     }
-    const result = await Purchases.purchasePackage({ aPackage: pkg });
+    const result = await step("Apple purchase sheet", () =>
+      Purchases.purchasePackage({ aPackage: pkg })
+    );
     const isProActive = hasProEntitlement(result.customerInfo);
     if (!isProActive) {
       logger.error("[RevenueCat] purchase completed without pro entitlement");
@@ -246,7 +278,9 @@ export async function rcGetLocalizedPrices(): Promise<Record<
   if (!isRevenueCatEnabled()) return null;
   try {
     const Purchases = await loadPurchases();
-    const offerings = await Purchases.getOfferings();
+    const offerings = await step("plans for the prices", () =>
+      Purchases.getOfferings()
+    );
     const packages = offerings.current?.availablePackages;
     if (!packages || packages.length === 0) return null;
     const prices: Record<string, StorePrice> = {};

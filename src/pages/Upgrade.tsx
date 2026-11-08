@@ -81,6 +81,7 @@ import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
+import StepDetails from "@/components/StepDetails";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 import PlanPicker from "@/components/paywall/PlanPicker";
 import RenewalDisclosure from "@/components/paywall/RenewalDisclosure";
@@ -675,6 +676,7 @@ export default function Upgrade() {
             platform={platform}
             withTrial={withTrial}
           />
+          <StepDetails failed={!!error} waiting={loading} />
 
           {footer}
 
