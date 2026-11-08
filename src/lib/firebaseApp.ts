@@ -25,6 +25,7 @@ import {
   initializeAuth,
 } from "firebase/auth";
 import { isNativePlatform } from "@/lib/platform";
+import { traceBoot } from "@/lib/bootTrace";
 import { logger } from "@/lib/logger";
 import { registerNativeAppCheck } from "@/lib/appCheckNative";
 import { initAppCheck } from "@/lib/appCheck";
@@ -49,6 +50,9 @@ if (!firebaseConfig.apiKey && import.meta.env.VITE_USE_EMULATORS !== "true") {
   );
 }
 
+traceBoot(
+  `Firebase config ${firebaseConfig.apiKey ? "present" : "MISSING"}, project ${firebaseConfig.projectId || "none"}`
+);
 export const app = initializeApp(firebaseConfig);
 
 // App Check runs BEFORE Firestore / Storage / Functions handles are
@@ -57,8 +61,10 @@ export const app = initializeApp(firebaseConfig);
 // That ordering still holds after the split: `firebase.ts` imports this
 // module, so this file's body runs to completion before any of those
 // handles exist. See src/lib/appCheck.ts for the web / native split.
+traceBoot("App Check starting");
 registerNativeAppCheck();
 initAppCheck(app);
+traceBoot("App Check started");
 
 // Analytics provider — the delivery backend behind analyticsClient.emit().
 // Web-only, lazily loaded, and a no-op unless VITE_FIREBASE_MEASUREMENT_ID
@@ -81,6 +87,7 @@ initAnalytics(app);
 export const auth = isNativePlatform()
   ? initializeAuth(app, { persistence: indexedDBLocalPersistence })
   : getAuth(app);
+traceBoot(`Sign-in set up (${isNativePlatform() ? "iPhone app" : "web"})`);
 
 // Emulator wiring for AUTH only; the data services connect in `firebase.ts`
 // beside the handles they belong to. Each service connects at its own

@@ -67,6 +67,7 @@ import type { ShareType } from "@/lib/shareComposer";
 import type { NotificationPreferences } from "@/lib/notificationPreferences";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
+import { traceBoot } from "@/lib/bootTrace";
 import { rememberSignInMethod, signInMethodOf } from "./signInMethod";
 import type { Goal } from "./types";
 import type { PreferredSplit } from "@/features/program/programTypes";
@@ -1191,13 +1192,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let stopHealthExportReconciler = () => {};
     let stopWatchRunSyncReconciler = () => {};
 
+    traceBoot("Waiting for sign-in to answer");
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!isMounted) return;
       const uid = firebaseUser?.uid ?? null;
+      traceBoot(`Sign-in answered: ${uid ? "signed in" : "signed out"}`);
 
       // A queued stale callback must not invalidate the current callback's
       // generation. Reject it before incrementing the epoch.
-      if ((auth.currentUser?.uid ?? null) !== uid) return;
+      if ((auth.currentUser?.uid ?? null) !== uid) {
+        traceBoot("Sign-in answer was out of date");
+        return;
+      }
 
       stopSubscriptionUpdates();
       stopSubscriptionUpdates = () => {};
@@ -1235,6 +1241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setWatchAccountCleanup(null);
       const watchOwner = watchAccountRef.current;
       if (watchOwner !== uid && isNativePlatform()) {
+        traceBoot("Clearing the last account's Watch run");
         for (;;) {
           try {
             await clearOutgoingWatchAccount(uid, watchOwner, isCurrent);
@@ -1256,6 +1263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         if (!isCurrent()) return;
         watchAccountRef.current = uid;
+        traceBoot("Watch run cleared");
       }
       setUser(firebaseUser);
       // This device has had an account: the signed-out screen greets the
@@ -1301,6 +1309,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // hydrateProfile does no writes, and the timezone-capture write stays
         // on the server branch only so it isn't double-fired.
         /* Inside `if (firebaseUser)`, so a profile exists to read. */
+        traceBoot("Loading Firestore");
         const {
           doc,
           getDoc,
@@ -1331,7 +1340,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         try {
+          traceBoot("Reading the profile");
           const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          traceBoot("Profile read");
           if (!isCurrent()) return;
 
           if (profileDoc.exists()) {
@@ -1428,7 +1439,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         syncDarkMode(true);
       }
 
-      if (isCurrent()) setLoading(false);
+      if (isCurrent()) {
+        traceBoot("Ready");
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -1676,6 +1690,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return finishOAuthSignIn(result, method);
       })
       .catch((err) => {
+        traceBoot(
+          `Redirect result: ${err instanceof Error ? err.message : String(err)}`
+        );
         logger.error("[AuthProvider] OAuth redirect sign-in failed", err);
       });
     return () => {

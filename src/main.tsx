@@ -18,11 +18,18 @@ import { initErrorMonitoring } from "./lib/errorReporting";
 import { startSystemChromeSync } from "./lib/systemChrome";
 import { startSystemTextSizeSync } from "./lib/systemTextSize";
 import { captureInviteFromUrl } from "./lib/pendingInvite";
+import { traceBoot, watchBootErrors } from "./lib/bootTrace";
+
+// Name each step of starting up, and keep any error beside them, for the
+// notice under a startup spinner that never clears (bootTrace.ts).
+watchBootErrors();
+traceBoot("App code started");
 
 // An invite link's code (Soc15), kept for setup and taken out of the
 // address before the router reads it.
 captureInviteFromUrl();
 
+traceBoot("Drawing the app");
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
