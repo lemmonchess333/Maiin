@@ -103,7 +103,7 @@ export default function SessionCommandCard({
     <section
       aria-label={`${eyebrow} — ${title}`}
       className={cn(
-        "relative overflow-hidden rounded-2xl card-shadow",
+        "relative overflow-hidden rounded-xl card-shadow",
         surfaceClass
       )}
     >
@@ -175,7 +175,7 @@ export default function SessionCommandCard({
               className={cn(
                 compact
                   ? "size-10 rounded-xl flex @max-[14em]:hidden items-center justify-center shrink-0"
-                  : "size-12 rounded-2xl flex @max-[14em]:hidden items-center justify-center shrink-0",
+                  : "size-12 rounded-lg flex @max-[14em]:hidden items-center justify-center shrink-0",
                 tileClass
               )}
             >

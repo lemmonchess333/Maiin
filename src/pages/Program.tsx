@@ -1270,7 +1270,7 @@ function ProgramInner() {
           value={activeTab}
           onChange={(value) => selectTab(value)}
           tone={activeTab === "run" ? "running" : "lifting"}
-          className="rounded-2xl bg-muted/50 p-1.5"
+          className="rounded-xl bg-muted/50 p-1.5"
           options={
             [
               {
@@ -1773,7 +1773,7 @@ function ProgramInner() {
                              swipes and long-presses to its manage menu,
                              and still has the "…" that opens that menu
                              visibly. */
-                          <div className="rounded-2xl bg-card card-shadow overflow-hidden divide-y divide-border">
+                          <div className="rounded-xl bg-card card-shadow overflow-hidden divide-y divide-border">
                             {selectedWorkout.exercises.map((ex, i) => (
                               <div
                                 key={rowId(ex, idx, i)}

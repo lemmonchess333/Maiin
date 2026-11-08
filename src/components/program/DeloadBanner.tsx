@@ -207,7 +207,7 @@ export default function DeloadBanner({
           className="overflow-hidden"
         >
           <div
-            className="@container p-4 rounded-2xl relative"
+            className="@container p-4 rounded-xl relative"
             style={{
               background: (deloadActive ? THEME.success : THEME.warning) + "14",
             }}
