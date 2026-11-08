@@ -1362,28 +1362,6 @@ function ProgramInner() {
               }
             />
           )}
-          {/* Pgm3: deload banner. Sits ABOVE the week-phase row so
-                it's visible regardless of which day the user is
-                inspecting — deload is a week-level signal. Per-week
-                dismissal lives in localStorage; the banner stays
-                shown across day navigation within the same week, and
-                reopens on a new week if the signal still applies. */}
-          <TrackProgrammeSectionView section="deload_banner">
-            <DeloadBanner
-              /* An active lighter week is state and shows regardless. */
-              visible={showDeloadSuggest}
-              dismissed={deloadNotice.dismissed}
-              onDismiss={deloadNotice.dismiss}
-              weekKey={`w${displayWeekNumber}`}
-              deloadActive={programState.currentPhase === "deload"}
-              // The run half of the deload, named in the copy. Derived from
-              // the snapshot rather than stored — see deloadChangeSummary.
-              runsEased={deloadRunSwapCount(programState)}
-              raceWeek={programState.raceWeek}
-              raceRest={isRaceRestDay(programState.runPlan, todayKey)}
-              onApply={handleApplyDeload}
-            />
-          </TrackProgrammeSectionView>
 
           {/* Single Lift day-selector (ADR-0002 split-ordered rotation).
                 The duplicate "this week" HybridWeekRail that used to sit
@@ -1414,26 +1392,6 @@ function ProgramInner() {
               sessionDayIndex === null &&
               !showOverflow
             }
-          />
-
-          {/* Experience auto-detection: evidence-triggered level suggestion.
-                Renders null almost always — only when the v2 exhaustion
-                criteria hold (misses + survived reset, mature programme,
-                not cutting), and never after a dismissal. Spacing lives
-                INSIDE the card so the null render leaves no phantom gap.
-                BELOW the day selector (DS2, 2026-08-22): it used to sit
-                between WeekPhaseRow and the selector, so on the rare render
-                a ~434px card split the week header from the day circles it
-                governs and the circles read as belonging to the suggestion.
-                Below keeps navigator adjacency without burying the
-                navigator, which moving the card ABOVE the header would. */}
-          <ExperienceSuggestionCard
-            suppressed={liftAdvice === "deload"}
-            workouts={programState?.workouts}
-            context={{
-              weekNumber: programState?.weekNumber,
-              nutritionGoal: programState?.goal,
-            }}
           />
         </>
       )}
@@ -1506,20 +1464,14 @@ function ProgramInner() {
         <>
           <TrackProgrammeSectionView section="session_card">
             <div
-              className="pt-4"
+              className="space-y-3"
               data-swipe-pager
               data-swipe-at-start={idx <= 0}
               data-swipe-at-end={idx >= displayWorkouts.length - 1}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
-              <AnimatePresence
-                mode="wait"
-                custom={direction}
-                onExitComplete={() => {
-                  isAnimating.current = false;
-                }}
-              >
+              <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                   key={idx}
                   custom={direction}
@@ -1689,7 +1641,63 @@ function ProgramInner() {
                           className="px-3"
                         />
                       )}
-
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+              {/* The week's notices sit under the day's session, as Home's banners
+                  sit under its hero (DS4, §14m rule 1: the session's top within
+                  260pt). The lighter-week offer is still on every day of the week,
+                  and its dismissal per week. Outside the day's animation, so they
+                  hold still while the days are swiped, and are counted once. The
+                  level suggestion is suppressed while the lighter week shows. */}
+              <TrackProgrammeSectionView section="deload_banner">
+                <DeloadBanner
+                  /* An active lighter week is state and shows regardless. */
+                  visible={showDeloadSuggest}
+                  dismissed={deloadNotice.dismissed}
+                  onDismiss={deloadNotice.dismiss}
+                  weekKey={`w${displayWeekNumber}`}
+                  deloadActive={programState.currentPhase === "deload"}
+                  // The run half of the deload, named in the copy. Derived from
+                  // the snapshot rather than stored — see deloadChangeSummary.
+                  runsEased={deloadRunSwapCount(programState)}
+                  raceWeek={programState.raceWeek}
+                  raceRest={isRaceRestDay(programState.runPlan, todayKey)}
+                  onApply={handleApplyDeload}
+                />
+              </TrackProgrammeSectionView>
+              <ExperienceSuggestionCard
+                suppressed={liftAdvice === "deload"}
+                workouts={programState?.workouts}
+                context={{
+                  weekNumber: programState?.weekNumber,
+                  nutritionGoal: programState?.goal,
+                }}
+              />
+              <AnimatePresence
+                mode="wait"
+                custom={direction}
+                onExitComplete={() => {
+                  isAnimating.current = false;
+                }}
+              >
+                <motion.div
+                  key={idx}
+                  custom={direction}
+                  variants={motionSafe.variants({
+                    enter: (dir: number) => ({ opacity: 0, x: dir * 50 }),
+                    center: { opacity: 1, x: 0 },
+                    exit: (dir: number) => ({ opacity: 0, x: dir * -50 }),
+                  })}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  style={{ willChange: "transform" }}
+                >
+                  {selectedWorkout && (
+                    <div className="space-y-3">
                       {/* PROGRAM-ADAPT-01, post-de-interception home: the
                           recommendation is VISIBLE before any tap, instead of
                           hiding inside an interstitial everyone paid for.

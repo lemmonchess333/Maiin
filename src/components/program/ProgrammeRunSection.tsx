@@ -1096,17 +1096,18 @@ export default function ProgrammeRunSection({
   // removed, `currentMode` (the last-saved profile.runMode) is the
   // only source of truth for reads on this page.
 
-  return (
-    /* Run7 Q1: outer "Run training" coral container dropped — sections
-       separated by vertical spacing alone. Run sub-tab is the contextual
-       anchor; no need for a second container chrome around it. */
-    <section aria-label="Run training" className="space-y-4">
-      {/* Run7 Q6 + Q10: banners stack ABOVE the section label, in
-          severity-urgency order (warnings before info). Each uses the
-          shared <Banner> primitive — info = coral 6%, warning = amber 8%,
-          no error variant (errors are toasts). State-derived banners
-          (inRecovery, raceCompressed) stay non-dismissible; raceElapsed
-          is action-prompting and dismissible per-week via localStorage. */}
+  // The week's notices, drawn under the session card in every mode (DS4).
+  const weekNotices = (
+    <>
+      {/* Run7 Q6 + Q10: the banners, in severity-urgency order (warnings
+          before info), on the shared <Banner> primitive — info = coral 6%,
+          warning = amber 8%, no error variant (errors are toasts).
+          State-derived banners (inRecovery, raceCompressed) stay
+          non-dismissible; raceElapsed is action-prompting and dismissible
+          per-week via localStorage. They sit under the day's session card
+          (DS4, §14m rule 1), as Home's banners sit under its hero and the
+          Lift tab's lighter week under its card: the card's top within
+          260pt and its Start on the first screen whatever is showing. */}
 
       {/* Warning: race day has passed (the elapsed fallback). Dismissible
           per-week — once the user acknowledges, it stays hidden until
@@ -1302,6 +1303,23 @@ export default function ProgrammeRunSection({
         />
       )}
 
+      {/* Run9's starter goal reached: a plain Done and the next goal,
+          offered once, the same card Home shows. */}
+      {starterDoneShowing && profile.starterGoal?.startedOn && (
+        <StarterDoneCard
+          startedOn={profile.starterGoal.startedOn}
+          navigate={navigate}
+          answer={starterDoneAnswer}
+        />
+      )}
+    </>
+  );
+
+  return (
+    /* Run7 Q1: outer "Run training" coral container dropped — sections
+       separated by vertical spacing alone. Run sub-tab is the contextual
+       anchor; no need for a second container chrome around it. */
+    <section aria-label="Run training" className="space-y-4">
       {/* The visible "Run training" coral section label (Run7 Q6) was removed
           to align the Run tab's vertical rhythm with the Lift tab: the Lift tab
           has no "Lift training" header above its content, so this label pushed
@@ -1324,16 +1342,6 @@ export default function ProgrammeRunSection({
           editor is the race card's "Edit run plan", or the footer link when
           there is no race card. */}
 
-      {/* Run9's starter goal reached: a plain Done and the next goal,
-          offered once, the same card Home shows. */}
-      {starterDoneShowing && profile.starterGoal?.startedOn && (
-        <StarterDoneCard
-          startedOn={profile.starterGoal.startedOn}
-          navigate={navigate}
-          answer={starterDoneAnswer}
-        />
-      )}
-
       {/* ── Hero: freeform ──────────────────────────────────────────
           Start CTA + last-run + this-week summary lines. Empty
           state when the user has no recent runs.
@@ -1342,14 +1350,10 @@ export default function ProgrammeRunSection({
           the Next · Pending card below for visual coherence. */}
       {currentMode === "freeform" && (
         <div className="space-y-3">
-          <NonRaceGoalProgress
-            goal={profile.nonRaceGoal}
-            runs={runs}
-            loading={runsLoading}
-            failed={runsFailed}
-          />
           {/* DS3: the same session card the Lift tab and a planned run
-              use, where a hand-built row carried a gradient "Go" pill. */}
+              use, where a hand-built row carried a gradient "Go" pill.
+              It leads the tab (DS4): the goal's progress follows it, with
+              the week's notices between, as on the Lift tab. */}
           <SessionCommandCard
             sport="run"
             eyebrow="Start a run"
@@ -1361,6 +1365,13 @@ export default function ProgrammeRunSection({
               haptic();
               navigate("/run");
             }}
+          />
+          {weekNotices}
+          <NonRaceGoalProgress
+            goal={profile.nonRaceGoal}
+            runs={runs}
+            loading={runsLoading}
+            failed={runsFailed}
           />
 
           {/* Recent-run context. Hero shell paints immediately;
@@ -1869,6 +1880,8 @@ export default function ProgrammeRunSection({
                 }
               />
             ))}
+
+          {weekNotices}
 
           {/* The starter goal's week, where a race plan has its card. */}
           {starterView && <StarterGoalCard progress={starterView} />}
