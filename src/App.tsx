@@ -29,6 +29,7 @@ import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvi
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
+import BootStallNotice from "@/components/BootStallNotice";
 import { Button } from "@/components/ui/Button";
 import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
@@ -534,7 +535,10 @@ function AppRoutes() {
             </Button>
           </div>
         ) : (
-          <Spinner size="lg" label="Loading Tropos" />
+          <div className="flex flex-col items-center">
+            <Spinner size="lg" label="Loading Tropos" />
+            <BootStallNotice />
+          </div>
         )}
       </div>
     );

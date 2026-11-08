@@ -67,6 +67,7 @@ import type { ShareType } from "@/lib/shareComposer";
 import type { NotificationPreferences } from "@/lib/notificationPreferences";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
+import { traceBoot } from "@/lib/bootTrace";
 import { rememberSignInMethod, signInMethodOf } from "./signInMethod";
 import type { Goal } from "./types";
 import type { PreferredSplit } from "@/features/program/programTypes";
@@ -1069,6 +1070,26 @@ const WATCH_CLEANUP_RETRY_MS = 400;
  * the caller holds the account back. Stops retrying once the account
  * changes again, so a stale attempt can never bind the wrong account.
  */
+/** Firebase's half of a native sign-in, timed for the step list a failed
+ *  sign-in can show (bootTrace.ts). */
+async function traceSignIn<T>(work: Promise<T>): Promise<T> {
+  const started = Date.now();
+  traceBoot("Firebase: signing in");
+  try {
+    const result = await work;
+    traceBoot(`Firebase: signed in after ${Date.now() - started} ms`);
+    return result;
+  } catch (error) {
+    const code =
+      (error as { code?: unknown })?.code ??
+      (error instanceof Error ? error.message : String(error));
+    traceBoot(
+      `Firebase: failed after ${Date.now() - started} ms (${String(code)})`
+    );
+    throw error;
+  }
+}
+
 async function clearOutgoingWatchAccount(
   uid: string | null,
   previousUid: string | null,
@@ -1191,13 +1212,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let stopHealthExportReconciler = () => {};
     let stopWatchRunSyncReconciler = () => {};
 
+    traceBoot("Waiting for sign-in to answer");
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!isMounted) return;
       const uid = firebaseUser?.uid ?? null;
+      traceBoot(`Sign-in answered: ${uid ? "signed in" : "signed out"}`);
 
       // A queued stale callback must not invalidate the current callback's
       // generation. Reject it before incrementing the epoch.
-      if ((auth.currentUser?.uid ?? null) !== uid) return;
+      if ((auth.currentUser?.uid ?? null) !== uid) {
+        traceBoot("Sign-in answer was out of date");
+        return;
+      }
 
       stopSubscriptionUpdates();
       stopSubscriptionUpdates = () => {};
@@ -1235,6 +1261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setWatchAccountCleanup(null);
       const watchOwner = watchAccountRef.current;
       if (watchOwner !== uid && isNativePlatform()) {
+        traceBoot("Clearing the last account's Watch run");
         for (;;) {
           try {
             await clearOutgoingWatchAccount(uid, watchOwner, isCurrent);
@@ -1256,6 +1283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         if (!isCurrent()) return;
         watchAccountRef.current = uid;
+        traceBoot("Watch run cleared");
       }
       setUser(firebaseUser);
       // This device has had an account: the signed-out screen greets the
@@ -1301,6 +1329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // hydrateProfile does no writes, and the timezone-capture write stays
         // on the server branch only so it isn't double-fired.
         /* Inside `if (firebaseUser)`, so a profile exists to read. */
+        traceBoot("Loading Firestore");
         const {
           doc,
           getDoc,
@@ -1331,7 +1360,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         try {
+          traceBoot("Reading the profile");
           const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          traceBoot("Profile read");
           if (!isCurrent()) return;
 
           if (profileDoc.exists()) {
@@ -1428,7 +1459,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         syncDarkMode(true);
       }
 
-      if (isCurrent()) setLoading(false);
+      if (isCurrent()) {
+        traceBoot("Ready");
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -1588,9 +1622,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
        capacitor://localhost, not a Firebase authorized domain — so it drives
        the native Google sheet and completes with the returned credential. */
     if (isNativePlatform()) {
+      traceBoot("Google: opening the account picker");
       const credential = await getGoogleCredentialNative();
+      traceBoot("Google: account chosen");
       await revokeOutgoingAccountDeviceState();
-      const cred = await signInWithCredential(auth, credential);
+      const cred = await traceSignIn(signInWithCredential(auth, credential));
       await finishOAuthSignIn(cred, "google");
       return;
     }
@@ -1622,9 +1658,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithApple = useCallback(async () => {
     if (isNativePlatform()) {
+      traceBoot("Apple: opening the sign-in sheet");
       const { credential, displayName } = await getAppleSignInNative();
+      traceBoot("Apple: account chosen");
       await revokeOutgoingAccountDeviceState();
-      const cred = await signInWithCredential(auth, credential);
+      const cred = await traceSignIn(signInWithCredential(auth, credential));
       // The name Apple shares on the first sign-in, kept before the new
       // profile is made from the account. Never over a name it has.
       if (displayName && !cred.user.displayName) {
@@ -1676,6 +1714,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return finishOAuthSignIn(result, method);
       })
       .catch((err) => {
+        traceBoot(
+          `Redirect result: ${err instanceof Error ? err.message : String(err)}`
+        );
         logger.error("[AuthProvider] OAuth redirect sign-in failed", err);
       });
     return () => {
