@@ -30,6 +30,7 @@ import {
 } from "@/lib/dateHelpers";
 import { isTimedExerciseId } from "@/features/program/repUnits";
 import { bestSetsByReps } from "@/lib/repBuckets";
+import { ONE_CARD_RADIUS } from "@/components/ui/cardClasses";
 import { exerciseProgressReading } from "@/lib/historyReadings";
 import ChartReading from "@/components/analytics/ChartReading";
 
@@ -348,7 +349,7 @@ export default function ExerciseHistory() {
 
   if (loading && (tab !== "form" || !exercise)) {
     return (
-      <div className="space-y-4 pt-2">
+      <div className={`space-y-4 pt-2 ${ONE_CARD_RADIUS}`}>
         <div className="h-8 bg-muted/50 rounded motion-safe:animate-pulse" />
         <div className="h-24 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
         <div className="h-48 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
@@ -390,7 +391,7 @@ export default function ExerciseHistory() {
 
   return (
     <motion.div
-      className="space-y-4 pt-2 pb-8"
+      className={`space-y-4 pt-2 pb-8 ${ONE_CARD_RADIUS}`}
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}

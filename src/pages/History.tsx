@@ -25,6 +25,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
+import { ONE_CARD_RADIUS } from "@/components/ui/cardClasses";
 import EmptyState from "@/components/ui/EmptyState";
 import PeriodSummaryCard, {
   type SummaryFigure,
@@ -1086,6 +1087,7 @@ export default function History() {
   return (
     <PageShell
       {...pullBindProps}
+      className={ONE_CARD_RADIUS}
       title="Analytics"
       actions={
         <Link

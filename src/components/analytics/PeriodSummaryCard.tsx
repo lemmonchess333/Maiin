@@ -247,7 +247,7 @@ export default function PeriodSummaryCard({
                 onClick={() => choose(i)}
                 onKeyDown={(event) => onKeyDown(event, i)}
                 className={cn(
-                  "min-w-0 rounded-xl px-2 py-2 text-left",
+                  "min-w-0 rounded-lg px-2 py-2 text-left",
                   "active:scale-[0.97] motion-safe:transition-[background-color,scale]",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                   selected && "bg-muted"

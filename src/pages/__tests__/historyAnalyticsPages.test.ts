@@ -150,3 +150,22 @@ describe("Analytics — links into the pages", () => {
     );
   });
 });
+
+describe("Analytics — one card radius (§14m rule 20)", () => {
+  it("sets it once on the screen's root, and on an exercise's page", () => {
+    expect(history).toMatch(/className=\{ONE_CARD_RADIUS\}/);
+    const exercise = readFileSync(
+      resolve(repoRoot, "src/pages/ExerciseHistory.tsx"),
+      "utf8"
+    );
+    expect(exercise.match(/\$\{ONE_CARD_RADIUS\}/g)?.length).toBe(2);
+    const primitive = readFileSync(
+      resolve(repoRoot, "src/components/ui/cardClasses.ts"),
+      "utf8"
+    );
+    // 16pt: rounded-xl is --radius + 6px on the 10px base.
+    expect(primitive).toContain(
+      'ONE_CARD_RADIUS = "[&_.rounded-2xl]:rounded-xl"'
+    );
+  });
+});
