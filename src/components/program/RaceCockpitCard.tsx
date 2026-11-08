@@ -103,7 +103,7 @@ export default function RaceCockpitCard({
   return (
     <section
       aria-label="Race plan"
-      className="rounded-2xl bg-card border border-border p-4 space-y-4 card-shadow"
+      className="rounded-xl bg-card border border-border p-4 space-y-4 card-shadow"
     >
       {/* "Edit run plan" drops under the heading, at the right, once the
           heading would be narrower than 9em (a long event name, or larger

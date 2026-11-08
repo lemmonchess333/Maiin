@@ -1412,7 +1412,7 @@ export default function ProgrammeRunSection({
               back up whenever you're ready.
             </p>
           ) : (
-            <Card className="space-y-3">
+            <Card className="space-y-3 rounded-xl">
               {/* R2-1 descriptive cadence headline (not a target). */}
               <p className="text-sm font-semibold text-foreground">
                 You've run {freeformCadence.count}× in the last{" "}
