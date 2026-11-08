@@ -120,6 +120,13 @@ import {
   runRecordRows,
 } from "@/lib/historyFigures";
 import { trainingHistorySearch } from "@/lib/trainingHistory";
+import {
+  comparisonStartKey,
+  rangeChangeReading,
+  type RangeReadingKind,
+} from "@/lib/historyReadings";
+import type { ChartReadingLine } from "@/components/analytics/ChartReading";
+import type { SummaryChange } from "@/lib/periodSummary";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import {
   computeMuscleRecovery,
@@ -830,17 +837,60 @@ export default function History() {
     [runs, lifetimeRuns.runs, allRunsKnown, range, periodSummary.bins]
   );
 
+  /* Each chart's figure against the range before, in a sentence
+     (`historyReadings`): the overview's chosen figure, and the Lifting and
+     Running pages' bars. An account younger than the range is told the
+     day it starts comparing. */
+  const comparesFromKey = comparisonStartKey(range);
+  const rangeReading = (
+    kind: RangeReadingKind,
+    change: SummaryChange | null,
+    previousKnown: boolean
+  ): ChartReadingLine | null => {
+    const text = rangeChangeReading({
+      kind,
+      change,
+      previousKnown,
+      previousLabel: previousRangeLabel(timeRange),
+      comparesFromKey,
+      today: range.now,
+    });
+    return text ? { text, waiting: comparesFromKey !== null } : null;
+  };
+
   const summarySessions = liftingData.liftCount + runningTotals.runCount;
+  const sessionsChange = countChange(
+    summarySessions,
+    periodSummary.prevRunCount === null
+      ? null
+      : liftingData.prevLiftCount + periodSummary.prevRunCount
+  );
+  const volumeRangeChange = volumeChange(
+    liftingData.liftVolume,
+    liftingData.prevLiftVolume,
+    liftUnit
+  );
+  const distanceRangeChange = distanceChange(
+    runningTotals.runDistance * 1000,
+    periodSummary.prevRunM,
+    unit
+  );
+  const liftedReading = rangeReading("lifted", volumeRangeChange, true);
+  const ranReading = rangeReading(
+    "ran",
+    distanceRangeChange,
+    periodSummary.prevRunM !== null
+  );
   const summaryFigures: SummaryFigure[] = [
     {
       metric: "sessions",
       value: String(summarySessions),
       unit: summarySessions === 1 ? "session" : "sessions",
-      change: countChange(
-        summarySessions,
-        periodSummary.prevRunCount === null
-          ? null
-          : liftingData.prevLiftCount + periodSummary.prevRunCount
+      change: sessionsChange,
+      reading: rangeReading(
+        "sessions",
+        sessionsChange,
+        periodSummary.prevRunCount !== null
       ),
     },
     {
@@ -850,11 +900,8 @@ export default function History() {
           ? formatVolume(liftingData.liftVolume, liftUnit).value
           : "0",
       unit: `${liftUnitLabel(liftUnit)} lifted`,
-      change: volumeChange(
-        liftingData.liftVolume,
-        liftingData.prevLiftVolume,
-        liftUnit
-      ),
+      change: volumeRangeChange,
+      reading: liftedReading,
     },
     {
       metric: "distance",
@@ -863,11 +910,8 @@ export default function History() {
           ? formatDistance(distanceIn(runningTotals.runDistance * 1000, unit))
           : "0",
       unit: `${distanceUnitLabel(unit)} run`,
-      change: distanceChange(
-        runningTotals.runDistance * 1000,
-        periodSummary.prevRunM,
-        unit
-      ),
+      change: distanceRangeChange,
+      reading: ranReading,
     },
   ];
 
@@ -1391,6 +1435,7 @@ export default function History() {
                         bins={periodSummary.bins}
                         granularity={periodSummary.granularity}
                         sport="running"
+                        verdict={ranReading}
                         reading={runningBins(unit)}
                         onPick={(b) =>
                           trackHistoryEvent("history_chart_tap_attempted", {
@@ -1503,6 +1548,7 @@ export default function History() {
                         bins={periodSummary.bins}
                         granularity={periodSummary.granularity}
                         sport="lifting"
+                        verdict={liftedReading}
                         reading={liftingBins(liftUnit)}
                         onPick={(b) =>
                           trackHistoryEvent("history_chart_tap_attempted", {
