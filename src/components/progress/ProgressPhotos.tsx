@@ -199,6 +199,8 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
               action={{
                 label: "Add photos",
                 onClick: () => openDay(localDateString()),
+                // The screen's one filled button: neutral (§14m rule 12).
+                variant: "neutral",
               }}
             />
           )

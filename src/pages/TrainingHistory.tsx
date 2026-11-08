@@ -511,10 +511,12 @@ export default function TrainingHistory() {
                 ? {
                     label: "Clear search",
                     onClick: () => change({ search: "" }),
+                    variant: "neutral",
                   }
                 : lastDay
                   ? {
                       label: "Jump to your last session",
+                      variant: "neutral",
                       onClick: () =>
                         change({
                           from: localDateString(
@@ -526,6 +528,7 @@ export default function TrainingHistory() {
                   : {
                       label: "Change dates",
                       onClick: () => setDatesOpen(true),
+                      variant: "neutral",
                     }
             }
           />

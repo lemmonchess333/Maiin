@@ -1328,7 +1328,13 @@ export default function History() {
                        "No analytics yet". */
                     headline="Your first week starts here"
                     sub="Finish your first workout and this page draws your sessions, kg lifted and km run."
-                    action={{ label: "Start a workout", href: "/program" }}
+                    /* The screen's one filled button is neutral, as Home's
+                       and Train's Start are (§14m rule 12). */
+                    action={{
+                      label: "Start a workout",
+                      href: "/program",
+                      variant: "neutral",
+                    }}
                   />
                 </ArrivalFade>
               )}
@@ -1439,6 +1445,9 @@ export default function History() {
                     <RacePredictionsCard />
                   </>
                 ) : runs.length === 0 ? (
+                  /* The page's empty start keeps its domain's colour in the
+                     tinted form (§14i), as Train's Realign does: History
+                     draws no coloured filled button (§14m rules 10, 12). */
                   <SectionEmptyCTA
                     icon={
                       <Footprints className="size-5 shrink-0 text-running" />
@@ -1446,7 +1455,7 @@ export default function History() {
                     text="Complete your first run to see running analytics here"
                     to="/run"
                     ctaLabel="Start run"
-                    variant="sport"
+                    variant="sport-tinted"
                   />
                 ) : (
                   <>
@@ -1552,7 +1561,7 @@ export default function History() {
                     text="Log a workout to see your lifting analytics here"
                     to="/program"
                     ctaLabel="Start lift"
-                    variant="primary"
+                    variant="lifting-tinted"
                   />
                 ) : (
                   <>
@@ -1698,7 +1707,7 @@ export default function History() {
                       text="Log meals to see your nutrition trends here"
                       to="/food"
                       ctaLabel="Log meal"
-                      variant="nutrition"
+                      variant="nutrition-tinted"
                     />
                   </>
                 ) : (
