@@ -64,9 +64,3 @@ export function watchBootErrors(): void {
     traceBoot(`Unhandled: ${describe(event.reason)}`);
   });
 }
-
-/** Test seam: start the list again. */
-export function resetBootTraceForTests(): void {
-  steps = [];
-  listeners.clear();
-}

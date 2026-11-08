@@ -1,12 +1,11 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { restoreRealTimers } from "@/test/fakeTimers";
-import { resetBootTraceForTests, traceBoot } from "@/lib/bootTrace";
+import { traceBoot } from "@/lib/bootTrace";
 import BootStallNotice, { BOOT_STALL_MS } from "../BootStallNotice";
 
 afterEach(async () => {
   await restoreRealTimers();
-  resetBootTraceForTests();
 });
 
 it("says nothing while starting is quick", async () => {

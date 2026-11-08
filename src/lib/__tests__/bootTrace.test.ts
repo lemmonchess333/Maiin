@@ -1,47 +1,45 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  bootSteps,
-  resetBootTraceForTests,
-  subscribeBootTrace,
-  traceBoot,
-  watchBootErrors,
-} from "../bootTrace";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-afterEach(() => resetBootTraceForTests());
+/* A fresh module for each test, as a fresh app start has. */
+let trace: typeof import("../bootTrace");
+beforeEach(async () => {
+  vi.resetModules();
+  trace = await import("../bootTrace");
+});
 
 describe("bootTrace", () => {
   it("keeps the steps in order and tells its listeners", () => {
     const listener = vi.fn();
-    const stop = subscribeBootTrace(listener);
-    traceBoot("App code started");
-    traceBoot("Waiting for sign-in to answer");
-    expect(bootSteps().map((entry) => entry.step)).toEqual([
+    const stop = trace.subscribeBootTrace(listener);
+    trace.traceBoot("App code started");
+    trace.traceBoot("Waiting for sign-in to answer");
+    expect(trace.bootSteps().map((entry) => entry.step)).toEqual([
       "App code started",
       "Waiting for sign-in to answer",
     ]);
     expect(listener).toHaveBeenCalledTimes(2);
     stop();
-    traceBoot("Ready");
+    trace.traceBoot("Ready");
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
   it("keeps only the newest 40", () => {
-    for (let i = 0; i < 45; i += 1) traceBoot(`step ${i}`);
-    expect(bootSteps()).toHaveLength(40);
-    expect(bootSteps()[0].step).toBe("step 5");
-    expect(bootSteps()[39].step).toBe("step 44");
+    for (let i = 0; i < 45; i += 1) trace.traceBoot(`step ${i}`);
+    expect(trace.bootSteps()).toHaveLength(40);
+    expect(trace.bootSteps()[0].step).toBe("step 5");
+    expect(trace.bootSteps()[39].step).toBe("step 44");
   });
 
   it("gives a new list each time, so React sees the change", () => {
-    traceBoot("one");
-    const before = bootSteps();
-    traceBoot("two");
-    expect(bootSteps()).not.toBe(before);
+    trace.traceBoot("one");
+    const before = trace.bootSteps();
+    trace.traceBoot("two");
+    expect(trace.bootSteps()).not.toBe(before);
   });
 
   it("keeps uncaught errors and rejections beside the steps", () => {
-    watchBootErrors();
+    trace.watchBootErrors();
     window.dispatchEvent(
       new ErrorEvent("error", { error: new TypeError("x is undefined") })
     );
@@ -50,7 +48,7 @@ describe("bootTrace", () => {
     };
     rejection.reason = new Error("auth/network-request-failed");
     window.dispatchEvent(rejection);
-    expect(bootSteps().map((entry) => entry.step)).toEqual([
+    expect(trace.bootSteps().map((entry) => entry.step)).toEqual([
       "Error: TypeError: x is undefined",
       "Unhandled: Error: auth/network-request-failed",
     ]);
