@@ -30,6 +30,8 @@ import {
 } from "@/lib/dateHelpers";
 import { isTimedExerciseId } from "@/features/program/repUnits";
 import { bestSetsByReps } from "@/lib/repBuckets";
+import { exerciseProgressReading } from "@/lib/historyReadings";
+import ChartReading from "@/components/analytics/ChartReading";
 
 const ExerciseProgressChart = lazyRetry(
   () => import("@/components/analytics/ExerciseProgressChart")
@@ -327,6 +329,18 @@ export default function ExerciseHistory() {
     exercise?.id,
   ]);
 
+  /* The chart's first point in the range against its latest, under the
+     chart's label and metric switch, which name what is measured: "Up
+     15 kg since 19 Aug." */
+  const progressText = exerciseProgressReading(
+    chartData,
+    chartUnit,
+    new Date()
+  );
+  const progressReading = progressText
+    ? { text: progressText, waiting: false }
+    : null;
+
   const goBack = useCallback(() => {
     haptic("light");
     navigate(-1);
@@ -594,6 +608,7 @@ export default function ExerciseHistory() {
                   className="p-0.5 rounded-full [&_button]:flex-none [&_button]:min-w-[44px] [&_button]:rounded-full [&_button]:px-2 [&_button]:text-micro @max-[12em]:w-full @max-[12em]:flex-col @max-[12em]:rounded-2xl"
                 />
               </div>
+              <ChartReading line={progressReading} />
               <Suspense
                 fallback={
                   <div className="h-40 bg-muted/30 rounded motion-safe:animate-pulse" />

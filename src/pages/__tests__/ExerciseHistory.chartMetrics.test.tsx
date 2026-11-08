@@ -179,6 +179,16 @@ describe("exercise chart metric records", () => {
     expect(chart().data[0].isPR).toBe(false);
   });
 
+  it("reads the chosen metric's latest point against its first in the range", async () => {
+    await open();
+    select("Max Weight");
+    // 90 kg three days ago, 82.5 kg yesterday; the 120-day-old session
+    // is outside the 3-month range.
+    expect(screen.getByTestId("chart-reading").textContent).toMatch(
+      /^Down 7\.5\skg since \d{1,2}\s\w{3,4}\.$/
+    );
+  });
+
   it("announces the metric selection and moves it with the keyboard", async () => {
     await open();
     const group = screen.getByRole("radiogroup", {
