@@ -86,6 +86,12 @@ export default function ProgrammeWeekSelector({
   }, [selectedKey, cells.length]);
 
   if (cells.length === 0) return null;
+  /* A run's name reserves two lines only in a week where one needs them:
+     a week of rest days and one-word runs kept an empty 14px line. The
+     height holds across the row, as before; it can differ week to week. */
+  const runTwoLines =
+    sport === "run" &&
+    cells.some((cell) => runStripLines(cell.bottomLabel).length > 1);
   // Sport colour drives the today/selected circle — purple for lifting,
   // coral for running — so the selector reads as belonging to its tab.
   const SPORT = sport === "run" ? THEME.running : THEME.brand;
@@ -116,7 +122,10 @@ export default function ProgrammeWeekSelector({
         ref={rowRef}
         role="tablist"
         aria-label={ariaLabel ?? `${sport === "run" ? "Run" : "Lift"} week`}
-        className="flex overflow-x-auto px-1 pt-1 pb-2 gap-1 @max-[21em]:px-0 @max-[21em]:gap-0.5"
+        /* One compact row, Food's week strip's size (DS4, §14m rules
+           17-18): the 2px above and below is the today halo's room past
+           the 44pt button, which the row's scroll would clip. */
+        className="flex overflow-x-auto px-1 py-0.5 gap-1 @max-[21em]:px-0 @max-[21em]:gap-0.5"
       >
         {cells.map((cell) => {
           const isSelected = cell.key === selectedKey;
@@ -269,8 +278,7 @@ export default function ProgrammeWeekSelector({
                     ?.focus({ preventScroll: true });
                   onSelect(cells[next].key);
                 }}
-                className="flex w-full items-center justify-center min-w-[44px] min-h-[44px]"
-                style={{ height: 52 }}
+                className="flex h-11 w-full items-center justify-center min-w-[44px]"
               >
                 {/* Colour/border props live in `style`, not `animate`
                   (audit batch 4): Motion cannot tween "transparent" ↔
@@ -317,10 +325,13 @@ export default function ProgrammeWeekSelector({
               <span
                 data-cell-label
                 className={cn(
-                  "text-caption font-semibold text-center leading-tight mt-1 block",
+                  "text-caption font-semibold text-center leading-tight block",
                   sport === "run"
-                    ? "max-w-[calc(100%_+_0.25rem)] min-h-7 @max-[21em]:max-w-[calc(100%_+_0.125rem)] @max-[21em]:tracking-tighter"
-                    : "max-w-full truncate min-h-4"
+                    ? cn(
+                        "max-w-[calc(100%_+_0.25rem)] @max-[21em]:max-w-[calc(100%_+_0.125rem)] @max-[21em]:tracking-tighter",
+                        runTwoLines ? "min-h-7" : "min-h-3.5"
+                      )
+                    : "max-w-full truncate min-h-3.5"
                 )}
                 style={{ color: labelColor }}
               >

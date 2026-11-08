@@ -1470,7 +1470,7 @@ function ProgramInner() {
         // Lift selector lacks, so a little more top padding here lands the
         // circles — not the container — at the same Y, which is what the eye
         // tracks when toggling tabs.
-        <div className="pt-4 space-y-4">
+        <div className="space-y-4">
           {/* A run left before it was saved: Resume picks it up where it
               stopped. */}
           {runStrip && (
