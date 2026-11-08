@@ -2325,7 +2325,7 @@ export default function WorkoutSession({
           the session as figures (DS4): time, sets and kg lifted, where a
           12 px grey line said them, so the session has a number to look
           at between sets. */}
-      <div className="border-b border-border/50 px-4 pb-2.5 pt-1.5">
+      <div className="border-b border-border/50 px-4 pb-2.5 pt-1.5 short:pb-1.5">
         <div className="flex min-h-11 items-center justify-between gap-3">
           {/* The session's title is the screen's heading, so a screen
               reader finds where it is from. A heading by role rather than
@@ -2394,7 +2394,7 @@ export default function WorkoutSession({
         <div
           ref={tabsRef}
           data-no-page-swipe
-          className="flex items-center gap-1.5 overflow-x-auto px-4 py-1.5"
+          className="flex items-center gap-1.5 overflow-x-auto px-4 py-1.5 short:py-1"
           style={{ scrollbarWidth: "none" }}
         >
           {day.exercises.map((ex, i) => {
@@ -2493,7 +2493,7 @@ export default function WorkoutSession({
       {/* Main content area */}
       <div
         ref={contentRef}
-        className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth"
+        className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth short:space-y-3"
       >
         {/* Exercise name + set counter, at the head of the list (an
             owner call, DESIGN_GUIDE §8): fixed above it, they took about
@@ -2502,14 +2502,17 @@ export default function WorkoutSession({
             back. DS3: the exercise's drawing beside its name, where a bare
             dumbbell icon sat. Under 19em of row (a 320px phone, or larger
             text on the phone), the drawing gives its room to the name, which beside it pushed
-            the form guide's button off the screen, and the name's two
-            buttons drop under it when beside it they would squeeze a word
-            ("Bench" at 2x on a 320px phone) out of its box. Wide-first. */}
+            the form guide's button off the screen. The name's two buttons
+            drop under it only under 16em, where beside it they would
+            squeeze a word ("Bench" at 2x on a 320px phone) out of its box:
+            on a 320px phone at the designed size they keep its line, and
+            the row they took is an exercise's fourth set (DS4 pass).
+            Wide-first. */}
         <div
           ref={headerRef}
           data-guide-anchor={setHelpRequest > 0 ? "first-set" : undefined}
           tabIndex={-1}
-          className="@container flex items-start gap-3 pt-3"
+          className="@container flex items-start gap-3 pt-3 short:pt-2"
         >
           {currentExercise && (
             <ExerciseThumb
@@ -2519,7 +2522,7 @@ export default function WorkoutSession({
             />
           )}
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 @max-[19em]:flex-wrap">
+            <div className="flex items-center gap-1 @max-[16em]:flex-wrap">
               <h2 className="min-w-0 text-h3 font-bold leading-tight tracking-tight text-foreground text-balance">
                 {currentExercise?.name}
               </h2>
@@ -2583,7 +2586,9 @@ export default function WorkoutSession({
             {/* Backlog #4 — effort cue as words (operator-approved copy set).
               Reserve cue expands via Tooltip; push/deload cues are plain
               lines. Guidance lives BEFORE the set, never as a verdict after
-              it (voice doc: never shame). */}
+              it (voice doc: never shame). On a short phone its 44 px
+              target reaches over the set line above and the gap below
+              rather than adding to the head's height. */}
             {(() => {
               if (!currentExercise) return null;
               const lastCounted = currentSets.reduce(
@@ -2600,7 +2605,7 @@ export default function WorkoutSession({
                   <Tooltip content={<p>{cue.tooltip}</p>}>
                     <button
                       type="button"
-                      className="min-h-11 -mb-2 text-xs text-muted-foreground underline decoration-dotted underline-offset-2"
+                      className="min-h-11 -mb-2 text-xs text-muted-foreground underline decoration-dotted underline-offset-2 short:-mt-2.5 short:-mb-2.5"
                     >
                       {cue.text}
                     </button>
@@ -2692,7 +2697,7 @@ export default function WorkoutSession({
                 <div
                   className={cn(
                     columns,
-                    "px-3 pt-3 pb-1 text-micro font-semibold uppercase tracking-wide text-muted-foreground"
+                    "px-3 pt-3 pb-1 text-micro font-semibold uppercase tracking-wide text-muted-foreground short:pt-2"
                   )}
                 >
                   <div className="text-center">Set</div>
@@ -2760,7 +2765,7 @@ export default function WorkoutSession({
                       <div
                         className={cn(
                           columns,
-                          "border-t border-border/40 px-3 py-1.5 transition-colors",
+                          "border-t border-border/40 px-3 py-1.5 transition-colors short:py-0.5",
                           !set.completed &&
                             setIdx === currentSetIndex &&
                             "bg-primary/10"
@@ -3254,7 +3259,7 @@ export default function WorkoutSession({
       </AnimatePresence>
 
       {/* Bottom action bar */}
-      <div className="px-4 py-3 border-t border-border/50 bg-background">
+      <div className="px-4 py-3 border-t border-border/50 bg-background short:py-2">
         {(() => {
           const allSetsComplete = isExerciseDone(currentSets);
           const next = nextIncompleteSet(setLogs, currentExIndex);
