@@ -182,7 +182,9 @@ export function muscleRangeReading({
   if (below.length === 0)
     return total === 1
       ? "Your 1 muscle is in its range"
-      : `All ${total} muscles in their range`;
+      : total === 2
+        ? "Both muscles in their range"
+        : `All ${total} muscles in their range`;
   const head = `${below.length} of ${total} ${total === 1 ? "muscle" : "muscles"} below their range`;
   return below.length > namedMax
     ? head
