@@ -826,7 +826,7 @@ test.describe("App Store screenshots", () => {
     await expect(
       page
         .getByText(/^Food log\s+·\s+\d+ items?$/)
-        .or(page.getByText("Nothing logged yet"))
+        .or(page.getByText("Meals you log today show here."))
     ).toBeVisible({ timeout: 20_000 });
     await expect(
       page.getByRole("button", { name: /calories logged/ }).first()

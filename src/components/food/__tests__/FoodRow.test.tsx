@@ -311,7 +311,6 @@ describe("FoodRow — the thumbnail column (Pol1)", function () {
         onOpenChange={noop}
         onDelete={vi.fn()}
         onEdit={vi.fn()}
-        slot="breakfast"
         {...props}
       />
     );
@@ -321,10 +320,11 @@ describe("FoodRow — the thumbnail column (Pol1)", function () {
     // It was a 176 px photo card above the row.
     const { container } = row({
       photoUrl: "data:image/jpeg;base64,AAAA",
-      thumbnailColumn: true,
     });
-    const img = container.querySelector("img")!;
-    expect(img).toHaveClass("size-[52px]", "rounded-xl");
+    const img = container.querySelector("img[data-food-photo]")!;
+    // 48 pt, the inner radius of a card (DS4, §14m rules 20 and 25).
+    expect(img).toHaveClass("size-12", "rounded-lg");
+    expect(container.querySelector("[data-food-art]")).toBeNull();
     expect(img).not.toHaveClass("h-44");
     // The name is beside it: the picture is not read out.
     expect(img).toHaveAttribute("alt", "");
@@ -334,32 +334,25 @@ describe("FoodRow — the thumbnail column (Pol1)", function () {
     ).toBeTruthy();
   });
 
-  it("gives a row without a photo its slot's tile on a day with photos", function () {
-    const { container } = row({ thumbnailColumn: true });
-    expect(
-      container.querySelector('[data-slot-tile="breakfast"]')
-    ).not.toBeNull();
-    expect(container.querySelector("img")).toBeNull();
-  });
-
-  it("keeps a row without a photo compact on a day without photos", function () {
-    const { container } = row({ thumbnailColumn: false });
+  it("gives a row without a photo our drawing of what its name says", function () {
+    // DS4, §14m rule 25: every row that stands for a meal has a picture.
+    const { container } = row();
     expect(screen.getByText("Chicken salad")).toBeInTheDocument();
-    expect(container.querySelector("[data-slot-tile]")).toBeNull();
-    expect(container.querySelector("img")).toBeNull();
+    const art = container.querySelector("img[data-food-art]")!;
+    expect(art).toHaveAttribute("data-food-art", "salad");
+    expect(art.getAttribute("src")).toMatch(/\/food-art\/salad\.webp$/);
+    expect(art).toHaveAttribute("alt", "");
+    expect(container.querySelector("[data-food-photo]")).toBeNull();
   });
 
-  it("falls back to the slot's tile when the photo cannot be read", function () {
+  it("falls back to the drawing when the photo cannot be read", function () {
     // Photos are device-local and age out at 90 days; a legacy Storage
     // URL can 404.
     const { container } = row({
       photoUrl: "data:image/jpeg;base64,AAAA",
-      thumbnailColumn: true,
     });
-    fireEvent.error(container.querySelector("img")!);
-    expect(container.querySelector("img")).toBeNull();
-    expect(
-      container.querySelector('[data-slot-tile="breakfast"]')
-    ).not.toBeNull();
+    fireEvent.error(container.querySelector("img[data-food-photo]")!);
+    expect(container.querySelector("[data-food-photo]")).toBeNull();
+    expect(container.querySelector("[data-food-art]")).not.toBeNull();
   });
 });

@@ -179,14 +179,12 @@ describe("FoodHeroCard — no day-type caption on the card", () => {
   });
 });
 
-describe("FoodHeroCard — the wash behind the ring", () => {
-  it("the two corner colours reach far enough to meet, in both themes", () => {
-    /* Two ellipses, the food surface's orange top-left and the brand
-       purple bottom-right, each spanning most of the card with a
-       three-stop falloff. Pinned on the recipe's shape rather than its
-       exact alphas: both hue tokens present, each with a mid stop and a
-       far edge (past 70% of the card), and the light theme no longer
-       dimmed to 70% — that dim is what made the last version invisible. */
+describe("FoodHeroCard — the glow behind the ring", () => {
+  it("is the food orange alone, with no purple (owner, 7 November 2026)", () => {
+    /* It was a wash from orange into the brand purple, the only two-hue
+       gradient on an everyday screen in 178 measured (DS4 §14m rule 13),
+       and dark was 2.5x louder than light. One hue now, drawn by its
+       class (components.css), faint enough to count in neither theme. */
     const { container } = render(
       <MemoryRouter>
         <FoodHeroCard
@@ -197,17 +195,11 @@ describe("FoodHeroCard — the wash behind the ring", () => {
         />
       </MemoryRouter>
     );
-    const wash = container.querySelector(
-      '[aria-hidden="true"].absolute.inset-0'
-    ) as HTMLElement;
-    expect(wash, "the wash layer").toBeTruthy();
-    const bg = wash.style.background;
-    expect(bg).toContain("--nutrition");
-    expect(bg).toContain("--primary");
-    expect(bg.match(/transparent (7[5-9]|8\d)%/g)?.length).toBe(2);
-    expect(bg.match(/radial-gradient/g)?.length).toBe(2);
-    expect(wash).toHaveClass("opacity-85", "dark:opacity-100");
-    expect(wash).not.toHaveClass("opacity-70");
+    const glow = container.querySelector(".food-hero-glow") as HTMLElement;
+    expect(glow, "the glow layer").toBeTruthy();
+    expect(glow).toHaveAttribute("aria-hidden", "true");
+    expect(glow).toHaveClass("absolute", "inset-0");
+    expect(container.innerHTML).not.toContain("--primary");
   });
 });
 

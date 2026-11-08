@@ -2480,6 +2480,7 @@ export default function Food() {
           setOpenRowId={setOpenRowId}
           onDelete={handleDeleteMeal}
           onEdit={setEditingGroup}
+          isToday={isToday}
         />
 
         {/* Water for the day on screen, past days included (Mob2, call

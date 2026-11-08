@@ -126,7 +126,13 @@ export default function CalorieRing({
         "relative aspect-square block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full",
         // Never wider than its card: at larger text on the phone the
         // ring's rem size outgrew it.
-        compact ? "w-26 max-w-full shrink-0" : "w-40 max-w-full mx-auto"
+        /* The Food card's ring is 176 pt and its figure the screen's
+           largest text, about 1.4x the "Food" title (owner, 7 November
+           2026; DS4 §14m rule 2). A container, so the figure sizes from
+           the ring and never outgrows it at larger text. */
+        compact
+          ? "w-26 max-w-full shrink-0"
+          : "@container w-44 max-w-full mx-auto"
       )}
       style={{
         // Celebration glow — the ring's own orange, for the moment a day's
@@ -216,7 +222,9 @@ export default function CalorieRing({
               <p
                 className={cn(
                   "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground",
-                  compact ? "text-2xl" : "text-4xl"
+                  compact
+                    ? "text-2xl"
+                    : "text-[clamp(1.75rem,25cqw,var(--text-display))]"
                 )}
               >
                 <AnimatedNumber

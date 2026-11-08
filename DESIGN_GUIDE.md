@@ -486,6 +486,20 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   stands for a session, a person or an award carries its own picture
   (36-80 pt); rows are 56-64 pt unless they hold a thumbnail or a big
   number.
+- **Food:** the owner kept the original screen (title, week strip, macro cards with
+  their icons and colours, draining ring, filled meal pill) and took three
+  fixes (7 Nov 2026): a faint one-hue orange glow in place of the
+  orange-into-purple wash behind the ring; a bigger ring (176 pt) and
+  figure, the screen's largest text at about 1.4x the "Food" title; and a
+  picture on every diary row, the meal's own photo from the device or one
+  of our food drawings (`foodArt.ts`, `docs/food-art/`), with an empty day
+  a row and a greyed plate rather than the hexagon block. Against §14m it
+  still misses: a large title above the hero (rule 2), more than one
+  filled control (rule 21: the selected meal pill and Scan, and the usual
+  row's Log), more than three hues (rule 11: the macros' pink, gold and
+  green beside the orange) and an empty day's colour (rules 9 and 16: a
+  full orange ring and full macro bars before anything is logged).
+  Measured in `docs/visual-audit/ds4-2026-11-07/README.md`, "Built: Food".
 
 ---
 
@@ -1248,6 +1262,12 @@ record of what each button was for:
 - **2026-10-13 — Copy yesterday's "Log selected meals"** (Food10 (2),
   decided under the owner's delegation). The page's third way to log food
   says it in the same colour as the other two.
+- **2026-11-07 — Food: the owner kept the original screen (title, week
+  strip, macro cards with their icons and colours, draining ring, filled
+  meal pill) and took three fixes.** Its buttons stay as they were: the
+  filled orange meal pill, Scan and the usual row's Log, so Food has more
+  than DS4's one filled button (§14m rule 21). The fixes and the rules it
+  still misses are in §6.
 
 Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
 mandate to wrap every `<button>` element: pressable cards, list/table rows,

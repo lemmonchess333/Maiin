@@ -254,30 +254,20 @@ export default function FoodHeroCard({
   return (
     <>
       {/* ── CALORIE CARD — caption, ring, glance line ──────────────────── */}
-      <div className="relative overflow-hidden p-4 rounded-2xl bg-card card-shadow">
+      {/* py-2, not p-4's 16: the ring grew by those 16 pt (owner, 7
+          November 2026), and the card keeps its height so Scan stays above
+          the tab bar on a 13 mini (companion-food's pin). */}
+      <div className="relative overflow-hidden px-4 py-2 rounded-2xl bg-card card-shadow">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-85 dark:opacity-100"
-          style={{
-            background:
-              "radial-gradient(ellipse 85% 75% at 15% 20%, hsl(var(--nutrition) / 0.32) 0%, hsl(var(--nutrition) / 0.12) 45%, transparent 78%), radial-gradient(ellipse 85% 75% at 85% 80%, hsl(var(--primary) / 0.38) 0%, hsl(var(--primary) / 0.14) 45%, transparent 78%)",
-          }}
+          className="food-hero-glow pointer-events-none absolute inset-0"
         />
-        {/* A static wash gives the whole card depth without a photo or a
-            second focal point: the food surface's orange from the top-left
-            corner, the brand purple from the bottom-right, the ring at the
-            seam. Owner call from the hero-glow options (V2): the same two
-            colours, made to MEET. Before this each ellipse peaked under
-            20%, faded out by 65% of the card and was dimmed a further 30%
-            in light, so the two never reached each other and the middle
-            was flat card — it read as two corner smudges, not a gradient.
-            Now each spans ~85% of the card with a three-stop falloff, and
-            light runs at 85% rather than 70%. Static, token-derived, and
-            the ring and its readable centre stay above it. The ring is
-            orange as well now, and the purple half stays: the owner
-            compared an orange-only wash, a flat orange tint and a plain
-            card with this one and kept this (DS3's STATUS lines in the
-            plan file). */}
+        {/* A faint glow of the food orange behind the ring, one hue fading
+            into the card (owner, 7 November 2026; DS4 §14m rule 13). It was
+            a wash from orange into the brand purple (DS3's V2), the only
+            two-hue gradient on an everyday screen in 178 measured, and it
+            made dark 2.5x louder than light (rule 15). The glow counts as
+            colour in neither theme (`.food-hero-glow`, components.css). */}
         <div className="relative">
           {/* The ring and the card's three small controls. The controls sit
           in the ring's corners rather than in rows of their own above and
