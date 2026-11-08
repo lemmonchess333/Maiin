@@ -248,3 +248,81 @@ purple (rule 11: three at most); chrome at 28.4%, the title row and the
 week strip (rule 17); and an empty day's colour, a full orange ring and
 full macro bars before anything is logged (rule 16), though the new
 account is now 4.82% on dark, under rule 9's 8%.
+
+## Built: Train
+
+Train kept its order: the title, the Lift/Run switch, the day strip and the
+day's session card. The calendar stays above the session. The same rules
+now hold on both tabs, as on Home and Food: one control row, the week as
+the header's line, a compact strip, the session card as Home's hero for
+that session, the week's notices under the card, one 16 pt card radius and
+one filled button. The owner turned down an earlier pass that put the
+session above the strip ("you're just moving stuff around").
+
+`current-train-*` are Train on main and `built-train-*` Train as built,
+captured on the emulator rig on 8 November 2026 with the CI seed chain:
+the rich seeded account (`rich`: Push / Pull / Legs, a lighter-week offer,
+a freeform runner), a new account straight from setup (`new`), and
+`fellbehind-capture` (`race`: a race plan with its fell-behind banner) on
+the Run tab. Frames are 393 × 852 and 320 × 568 (an SE in Display Zoom),
+in both themes. Boxes are top–bottom in pt, read from the page.
+
+| Block (393, Lift)      | rich, before        | rich, after             | new, before         | new, after  |
+| ---------------------- | ------------------- | ----------------------- | ------------------- | ----------- |
+| Header line            | 71–111 (two lines)  | 76–96 (one line)        | 71–91               | 76–96       |
+| Lift/Run switch        | 123–179, 56 tall    | 104–140, 36 (44 to tap) | 103–159, 56         | 104–140, 36 |
+| Week row and day strip | 363–507, 144        | 156–218, 62             | 175–319, 144        | 156–218, 62 |
+| Lighter-week offer     | 195–347, above      | 553–705, under the card | —                   | —           |
+| Session card           | 539–769             | 234–485                 | 351–562             | 234–485     |
+| Start                  | 701–753, 52, purple | 425–469, 44, neutral    | 494–546, 52, purple | 425–469, 44 |
+| Largest text, next     | "Train" 31, 25      | the name 36, "Train" 31 | the same            | the same    |
+| Chrome                 | 29.5%               | 25.4%                   | 27.1%               | 25.4%       |
+| Colour, dark / light   | 8.0% / 7.8%         | 2.6% / 2.4%             | 7.7% / 7.6%         | 2.4% / 2.2% |
+
+At 320 × 568 the card goes from 555 (rich, Start off the screen) and 371
+(new, Start 90 pt under the tab bar) to 234, with Start at 425–469 on both.
+The race account's Run tab goes from a banner over a 116 pt strip, the
+card at 533 and Start off the screen, to the strip at 156–238, the card
+at 250, Start at 367–411 and the banner under it. Its filled buttons go
+from 2 to 1 and its colour from 11.7% to 2.7% on dark.
+
+What changed:
+
+1. **The header.** The week is the header's one line, the header's full
+   width: "Week 1 · General fitness · 6 days/week". It was a separate row
+   over the day circles. The previous/next week chevrons come onto the
+   line once there is an earlier week. The split's name gave way: the
+   circles name each session and Your plan names the split. The switch
+   is a 36 pt track inside 44 pt buttons (`SegmentedControl size="sm"`,
+   rule 18) and keeps its purple and coral.
+2. **The day strip.** One compact row of 44 pt buttons around 40 pt
+   circles: 62 pt on Lift, the size of Food's strip. Run is 82 pt with
+   its weekday letters and run names.
+3. **The notices** sit under the session card on both tabs, as Home's
+   banners sit under its hero. Realign in the fell-behind banner is
+   `sport-tinted`, so Start is the screen's one filled button.
+4. **The session card is Home's hero for that session.** The name is
+   36 px. The line under the picture is Home's (`liftHeroLine`, drawn by
+   SessionHero's `HeroLineRow`). The minutes are "about 26 min" through
+   Home's `aboutMinutes`, and Start is 44 pt and neutral. "Starts with …"
+   gave way to the line.
+5. **One 16 pt radius** on Train's cards and Food's calorie card.
+
+Home at 320 × 568 (`built-home-320-*`, with `current-home-320-*` for the
+lift states before): under 20em of hero the picture gives back a third.
+The lift box goes from 240 to 160 pt, and the run and rest boxes from 280
+to 188. Start was 52 pt (rich) and 76 pt (new) under the tab bar. It is
+now 28 and 4 pt clear, a run's Start (Easy 30) 74 pt clear, and the rest
+day's hero ends 20 pt above the bar. 393 is unchanged.
+
+Still missing:
+
+- **Rule 2.** The name is 1.15× the 31 px title, not 1.2×.
+- **Rule 1's 215 ideal.** The card is at 234: the header line and the
+  switch row, which Food does not carry, account for the difference from
+  Food's 170.
+- **Rule 17, chrome.** 25.4% against 20%.
+- **A long name at 320.** "Full Body A" wraps to two lines at 320, and
+  its Start ends 11 pt under the tab bar.
+- **The Run card's line.** It has no Home numbers line: its meta already
+  has the run's dose, pace and zone.
