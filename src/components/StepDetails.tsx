@@ -21,15 +21,16 @@ export default function StepDetails({
   const [stalled, setStalled] = useState(false);
 
   useEffect(() => {
-    if (!waiting) {
-      setStalled(false);
-      return;
-    }
+    if (!waiting) return;
     const timer = window.setTimeout(
       () => setStalled(true),
       STEP_DETAILS_AFTER_MS
     );
-    return () => window.clearTimeout(timer);
+    // A checkout that stops waiting starts its count again next time.
+    return () => {
+      window.clearTimeout(timer);
+      setStalled(false);
+    };
   }, [waiting]);
 
   if (!isNativePlatform() || !(failed || (waiting && stalled))) return null;
