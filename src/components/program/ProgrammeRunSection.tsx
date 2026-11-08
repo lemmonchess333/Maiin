@@ -1269,7 +1269,10 @@ export default function ProgrammeRunSection({
           description="Realign keeps your race date and re-plans the remaining weeks from today."
           action={
             <div className="flex flex-col gap-2">
-              <Button variant="sport" fullWidth onClick={handleRealign}>
+              {/* Tinted, not filled: the session card's Start is the
+                  screen's one filled button (DS4, §14m rule 21; §14i's
+                  tinted run action). */}
+              <Button variant="sport-tinted" fullWidth onClick={handleRealign}>
                 Realign my plan
               </Button>
               <Button

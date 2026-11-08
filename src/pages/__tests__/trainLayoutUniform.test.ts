@@ -87,3 +87,11 @@ describe("Home's hero on a 320pt phone", () => {
     expect(hero).toMatch(/"h-\[280px\] @max-\[20em\]:h-\[188px\]"/);
   });
 });
+
+describe("the fell-behind banner", () => {
+  it("offers Realign as the tinted run action, leaving Start the one filled button", () => {
+    expect(run).toMatch(
+      /<Button variant="sport-tinted" fullWidth onClick=\{handleRealign\}>/
+    );
+  });
+});
