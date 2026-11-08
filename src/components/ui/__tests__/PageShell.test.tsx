@@ -191,3 +191,27 @@ describe("PageShell motion", () => {
     }
   });
 });
+
+describe("PageShell subtitle below the title row", () => {
+  it("lays the subtitle after the title and actions, the header's full width", () => {
+    render(
+      <PageShell
+        title="Train"
+        subtitle="Week 1 · General fitness · 6 days/week"
+        subtitleBelow
+        actions={<button type="button">Your plan</button>}
+      >
+        x
+      </PageShell>
+    );
+    const h1 = screen.getByRole("heading", { level: 1, name: "Train" });
+    const line = screen.getByText("Week 1 · General fitness · 6 days/week");
+    const action = screen.getByRole("button", { name: "Your plan" });
+    // Not in the title's column, which sits beside the actions.
+    expect(h1.parentElement!.contains(line)).toBe(false);
+    // After the actions in reading order.
+    expect(
+      action.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+});

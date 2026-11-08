@@ -65,6 +65,10 @@ export interface PageShellProps extends RootProps {
    *  unread, so the header is as tall as the tallest of them at any
    *  width and text size, and switching moves nothing below it. */
   subtitleAlternates?: ReactNode[];
+  /** Lays the subtitle under the title and the actions, the header's full
+   *  width, rather than in the title's column beside the actions. Train's:
+   *  in the column its line ran to two at 393pt and three at 320. */
+  subtitleBelow?: boolean;
   /** The right-hand action cluster: icon buttons, pills, a settings link. */
   actions?: ReactNode;
   /** A controls row inside the header zone, beneath the title —
@@ -84,6 +88,7 @@ export default function PageShell({
   eyebrow,
   subtitle,
   subtitleAlternates,
+  subtitleBelow = false,
   actions,
   controls,
   banner,
@@ -93,6 +98,31 @@ export default function PageShell({
 }: PageShellProps) {
   const titleClass =
     "text-h1 leading-tight tracking-tight font-extrabold text-foreground";
+
+  /* Under the title row, which is the actions' 44pt and so already
+     leaves room below the title's 39, the line needs no gap of its own. */
+  const subtitleGap = subtitleBelow ? "mt-0" : "mt-1";
+  const subtitleLine =
+    subtitle === undefined ? null : subtitleAlternates?.length ? (
+      /* One grid cell holds every line: the shown one, and the others
+         invisible beneath it, so the cell is the height of the tallest. */
+      <p className={cn("grid text-sm text-muted-foreground", subtitleGap)}>
+        <span className="col-start-1 row-start-1">{subtitle}</span>
+        {subtitleAlternates.map((line, i) => (
+          <span
+            key={i}
+            aria-hidden="true"
+            className="invisible col-start-1 row-start-1"
+          >
+            {line}
+          </span>
+        ))}
+      </p>
+    ) : (
+      <p className={cn("text-sm text-muted-foreground", subtitleGap)}>
+        {subtitle}
+      </p>
+    );
 
   return (
     <motion.div
@@ -123,26 +153,7 @@ export default function PageShell({
               </p>
             )}
             <h1 className={titleHidden ? "sr-only" : titleClass}>{title}</h1>
-            {subtitle !== undefined &&
-              (subtitleAlternates?.length ? (
-                /* One grid cell holds every line: the shown one, and the
-                   others invisible beneath it, so the cell is the height of
-                   the tallest. */
-                <p className="grid text-sm text-muted-foreground mt-1">
-                  <span className="col-start-1 row-start-1">{subtitle}</span>
-                  {subtitleAlternates.map((line, i) => (
-                    <span
-                      key={i}
-                      aria-hidden="true"
-                      className="invisible col-start-1 row-start-1"
-                    >
-                      {line}
-                    </span>
-                  ))}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
-              ))}
+            {!subtitleBelow && subtitleLine}
           </div>
           {actions && (
             <div className="ml-auto flex items-center gap-1 flex-shrink-0">
@@ -150,6 +161,7 @@ export default function PageShell({
             </div>
           )}
         </div>
+        {subtitleBelow && subtitleLine}
         {controls && <div className="pt-2">{controls}</div>}
       </motion.header>
       {children}

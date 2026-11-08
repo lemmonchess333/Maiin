@@ -1210,20 +1210,61 @@ function ProgramInner() {
   /* DS3: Train's header is the plain one every page has. The sport-tinted
      header zone and the icon tile beside the title are gone: the Lift/Run
      switch and everything beneath it already say which mode is on. */
+  // The Lift tab's header line (DS4, §14m rules 17-18): the week, its
+  // focus and the day count, one line the header's full width. The week
+  // was a row of its own over the day circles; its chevrons to earlier
+  // weeks come with it. The split's name gave way: the circles under the
+  // line name each of its sessions, and Your plan names the split.
+  const liftWeekText =
+    liftWeekLabel(
+      isViewingHistory
+        ? {
+            weekNumber: displayWeekNumber,
+            primaryGoal: programState.primaryGoal,
+            currentPhase: viewedWeekLighter ? "deload" : "progression",
+            archived: true,
+          }
+        : programState,
+      todayKey,
+      profile?.experience
+    ) ?? `Week ${displayWeekNumber}`;
+  const liftDayCount = programState.workouts?.length ?? 0;
+  // A no-break space, so "6" never ends a line with "days/week" on the next.
+  const liftDaysText =
+    liftDayCount === 1 ? "1\u00a0day/week" : `${liftDayCount}\u00a0days/week`;
+  const liftHeaderText =
+    liftDayCount === 0
+      ? programHeaderLine
+      : `${liftWeekText} · ${liftDaysText}`;
+  const liftHeaderLine =
+    liftDayCount === 0 ? (
+      programHeaderLine
+    ) : (
+      <WeekPhaseRow
+        weekNumber={displayWeekNumber}
+        label={liftWeekText}
+        suffix={` · ${liftDaysText}`}
+        onPrevWeek={goBack}
+        onNextWeek={goForward}
+        canGoPrev={canGoBack}
+        canGoNext={canGoForward}
+      />
+    );
+
   return (
     <PageShell
       title="Train"
       banner={<ProgramOfflineBanner />}
       /* Tab-aware, so the Run tab does not read as an add-on under a
-         lifting-only header. It wraps rather than truncating: a five-day
-         split ("Push / Pull / Legs + Upper / Lower · 5 days/week") is two
-         lines on a phone. The other tab's line holds its place unseen, so
-         the header is as tall as the longer of the two and nothing below
-         moves on Lift↔Run. */
-      subtitle={activeTab === "run" ? programRunHeaderLine : programHeaderLine}
+         lifting-only header. One line the header's full width at 393 and
+         320pt; it wraps rather than truncating at larger text. The other
+         tab's line holds its place unseen, so the header is as tall as the
+         longer of the two and nothing below moves on Lift↔Run. */
+      subtitle={activeTab === "run" ? programRunHeaderLine : liftHeaderLine}
       subtitleAlternates={[
-        activeTab === "run" ? programHeaderLine : programRunHeaderLine,
+        activeTab === "run" ? liftHeaderText : programRunHeaderLine,
       ]}
+      subtitleBelow
       /* Overflow, plus a "Done" exit only while reordering. */
       actions={
         <>
@@ -1270,7 +1311,10 @@ function ProgramInner() {
           value={activeTab}
           onChange={(value) => selectTab(value)}
           tone={activeTab === "run" ? "running" : "lifting"}
-          className="rounded-xl bg-muted/50 p-1.5"
+          /* A 36pt track with 44pt options (§14m rule 18), its 4pt bands
+             above and below laid over the gaps rather than adding to them. */
+          size="sm"
+          className="-my-1 before:bg-muted/50"
           options={
             [
               {
@@ -1339,34 +1383,6 @@ function ProgramInner() {
               raceRest={isRaceRestDay(programState.runPlan, todayKey)}
               onApply={handleApplyDeload}
             />
-          </TrackProgrammeSectionView>
-
-          <TrackProgrammeSectionView section="week_phase_row">
-            <div>
-              <WeekPhaseRow
-                weekNumber={displayWeekNumber}
-                label={
-                  liftWeekLabel(
-                    isViewingHistory
-                      ? {
-                          weekNumber: displayWeekNumber,
-                          primaryGoal: programState.primaryGoal,
-                          currentPhase: viewedWeekLighter
-                            ? "deload"
-                            : "progression",
-                          archived: true,
-                        }
-                      : programState,
-                    todayKey,
-                    profile?.experience
-                  ) ?? undefined
-                }
-                onPrevWeek={goBack}
-                onNextWeek={goForward}
-                canGoPrev={canGoBack}
-                canGoNext={canGoForward}
-              />
-            </div>
           </TrackProgrammeSectionView>
 
           {/* Single Lift day-selector (ADR-0002 split-ordered rotation).
