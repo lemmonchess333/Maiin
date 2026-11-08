@@ -1751,6 +1751,18 @@ describe("WorkoutSession — rest timer", () => {
     expect(restLabel()).toContain("3:00");
   });
 
+  it("names the set the rest leads to, as planned (DS4)", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      reps: 5,
+      weight: 20,
+    });
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("Next · Set 2");
+    expect(restLabel()).toContain("20 kg × 5");
+  });
+
   it("+15 s extends the rest in progress", () => {
     startFirstRest();
     expect(restLabel()).toContain("1:30");

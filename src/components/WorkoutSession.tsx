@@ -269,6 +269,25 @@ function targetLoad(
   return bodyweight ? " @ Bodyweight" : "";
 }
 
+/** A set as the rest band names what comes next, in the lifter's unit:
+ *  "15 kg × 10", "+10 kg × 8" on a bodyweight lift with load added,
+ *  "12 reps" with no load, "30 s" for a hold. */
+function nextSetLoad(
+  set: { weight: number; reps: number },
+  exercise: Pick<ProgramExercise, "exerciseId" | "repUnit">,
+  unit: LiftUnit
+): string {
+  const count =
+    exercise.repUnit === "seconds"
+      ? `${set.reps} s`
+      : set.weight > 0
+        ? `${set.reps}`
+        : `${set.reps} ${set.reps === 1 ? "rep" : "reps"}`;
+  if (set.weight <= 0) return count;
+  const added = isBodyweightExerciseId(exercise.exerciseId) ? "+" : "";
+  return `${added}${formatKitLoad(set.weight, unit, exercise.exerciseId)} × ${count}`;
+}
+
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
 /** What a set's weight is checked against before it logs (Lift16): today's
@@ -1087,6 +1106,25 @@ export default function WorkoutSession({
     setLogs.some((sets) =>
       sets.some((set) => set.completed && set.type !== "warmup")
     );
+
+  /* The set a rest leads to, named in the rest band (DS4): the cursor's
+     set, which ticking a set has already moved on, to the next exercise
+     once this one is done or round a superset. A warm-up passed over is
+     not it. */
+  const restNext = (() => {
+    const at = isSetOutstanding(currentSets, currentSetIndex)
+      ? { exerciseIndex: safeExIndex, setIndex: currentSetIndex }
+      : nextIncompleteSet(setLogs, safeExIndex);
+    const exercise = at ? day.exercises[at.exerciseIndex] : undefined;
+    const sets = at ? setLogs[at.exerciseIndex] : undefined;
+    const set = at && sets ? sets[at.setIndex] : undefined;
+    if (!at || !exercise || !sets || !set) return undefined;
+    return {
+      exerciseId: exercise.exerciseId,
+      name: setName(sets, at.setIndex),
+      load: nextSetLoad(set, exercise, liftUnit),
+    };
+  })();
 
   /* The exercise after this one that still has sets left (DS3 "Up next"):
      session order from the next exercise, wrapping, so one skipped earlier
@@ -3187,6 +3225,7 @@ export default function WorkoutSession({
               startedAt={rest.startedAt}
               initialTarget={rest.target}
               exerciseName={day.exercises[currentExIndex]?.name}
+              next={restNext}
               onStop={stopRest}
               onAnnounce={announceRest}
             />

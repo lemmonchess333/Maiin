@@ -598,6 +598,14 @@ html.guiding [data-brand-mark] {
   font-variant-numeric: tabular-nums;
 }
 
+/* The live workout's rest countdown (DS4 rule 6: a live screen's one
+   display element). 64-72 px by the screen's width: "1:14" is about 200
+   px of the wide cut at 72, so it keeps a 320 px phone's rest band to its
+   two rows. */
+.ds-display-figure.ds-display-rest {
+  font-size: clamp(64px, 18vw, 72px);
+}
+
 /* The finish screen's reward light (DS4 §14m rules 13, 14, 31): one hue,
    the achievement's (`--glow`, by its `data-finish-glow`), from the object out
    into the plain page. A light page needs more of it to read as colour at
