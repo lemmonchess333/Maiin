@@ -116,7 +116,7 @@ describe("the chart draws only once there are bars to compare", () => {
   it("carries one short muted line, inside the locked budget", () => {
     render(<CalorieBalanceChart meals={loggedPast(1)} />);
     const caveat = screen.getByText(
-      new RegExp(`^Log ${ENOUGH} days to see the chart$`)
+      new RegExp(`^Log ${ENOUGH - 1} more days for the chart$`)
     );
     /* Pin 6 caps suppression copy at 30 characters, and pin 7 makes the
        activity-gated register an action rather than patience. The

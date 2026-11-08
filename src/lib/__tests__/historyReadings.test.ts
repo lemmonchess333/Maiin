@@ -333,11 +333,21 @@ describe("exerciseProgressReading", () => {
 describe("chartWaitLine", () => {
   it("counts down to the chart", () => {
     const lifts = { one: "lift", many: "lifts" };
-    expect(chartWaitLine(0, 3, lifts)).toBe("Log 3 lifts to see the chart");
-    expect(chartWaitLine(1, 3, lifts)).toBe(
-      "Log 2 more lifts to see the chart"
-    );
-    expect(chartWaitLine(2, 3, lifts)).toBe("Log 1 more lift to see the chart");
+    expect(chartWaitLine(0, 3, lifts)).toBe("Log 3 lifts for the chart");
+    expect(chartWaitLine(1, 3, lifts)).toBe("Log 2 more lifts for the chart");
+    expect(chartWaitLine(2, 3, lifts)).toBe("Log 1 more lift for the chart");
     expect(chartWaitLine(3, 3, lifts)).toBeNull();
+  });
+
+  it("stays inside the 30 characters a suppression line is given", () => {
+    for (const noun of [
+      { one: "lift", many: "lifts" },
+      { one: "run", many: "runs" },
+      { one: "day", many: "days" },
+    ]) {
+      for (let logged = 0; logged < 3; logged++) {
+        expect(chartWaitLine(logged, 3, noun)!.length).toBeLessThanOrEqual(30);
+      }
+    }
   });
 });

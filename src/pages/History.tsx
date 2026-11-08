@@ -1158,7 +1158,7 @@ export default function History() {
               history under it, so changing the range never moves the
               index — the two mental models (current form vs adjustable
               history) are separated spatially. Suppressed in cold-start:
-              the "No analytics yet" card below stands in until the first
+              the "Your first week starts here" card below stands in until the first
               session is logged. `/history#performance` opens the
               Performance page. */}
             {/* A deeper page's way back to the overview. */}
@@ -1298,8 +1298,11 @@ export default function History() {
                   <EmptyState
                     icon={LineChart}
                     accent={THEME.brand}
-                    headline="No analytics yet"
-                    sub="Log a workout, run or meal and your trends will show up here."
+                    /* Day one is a starting line (DS4 words rules): the
+                       first step, and what fills. The rules' rewrite of
+                       "No analytics yet". */
+                    headline="Your first week starts here"
+                    sub="Finish your first workout and this page draws your sessions, kg lifted and km run."
                     action={{ label: "Start a workout", href: "/program" }}
                   />
                 </ArrivalFade>

@@ -221,7 +221,10 @@ export function exerciseProgressReading(
 
 /**
  * What a chart that is not drawn yet is waiting for, counted down:
- * "Log 2 more lifts to see the chart". Null once there is enough.
+ * "Log 2 more lifts for the chart". Null once there is enough. It said
+ * "Log 3 lifts to see the chart" to someone who had logged two. Held to
+ * the 30 characters Hist5d's pin 6 gives a suppression line: the longest,
+ * "Log 2 more lifts for the chart", is 30.
  */
 export function chartWaitLine(
   logged: number,
@@ -232,6 +235,6 @@ export function chartWaitLine(
   if (left <= 0) return null;
   const word = left === 1 ? noun.one : noun.many;
   return logged === 0
-    ? `Log ${left} ${word} to see the chart`
-    : `Log ${left} more ${word} to see the chart`;
+    ? `Log ${left} ${word} for the chart`
+    : `Log ${left} more ${word} for the chart`;
 }

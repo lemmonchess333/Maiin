@@ -247,7 +247,9 @@ export default function TrainingWeeksCard({
       </div>
 
       {!hasChart && (
-        <p className="text-sm text-muted-foreground">{reading.chartCaveat}</p>
+        <p className="text-sm text-muted-foreground">
+          {reading.chartCaveat(sessions)}
+        </p>
       )}
 
       {hasChart && selected && (
