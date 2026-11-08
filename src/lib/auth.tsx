@@ -1070,6 +1070,26 @@ const WATCH_CLEANUP_RETRY_MS = 400;
  * the caller holds the account back. Stops retrying once the account
  * changes again, so a stale attempt can never bind the wrong account.
  */
+/** Firebase's half of a native sign-in, timed for the step list a failed
+ *  sign-in can show (bootTrace.ts). */
+async function traceSignIn<T>(work: Promise<T>): Promise<T> {
+  const started = Date.now();
+  traceBoot("Firebase: signing in");
+  try {
+    const result = await work;
+    traceBoot(`Firebase: signed in after ${Date.now() - started} ms`);
+    return result;
+  } catch (error) {
+    const code =
+      (error as { code?: unknown })?.code ??
+      (error instanceof Error ? error.message : String(error));
+    traceBoot(
+      `Firebase: failed after ${Date.now() - started} ms (${String(code)})`
+    );
+    throw error;
+  }
+}
+
 async function clearOutgoingWatchAccount(
   uid: string | null,
   previousUid: string | null,
@@ -1602,9 +1622,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
        capacitor://localhost, not a Firebase authorized domain — so it drives
        the native Google sheet and completes with the returned credential. */
     if (isNativePlatform()) {
+      traceBoot("Google: opening the account picker");
       const credential = await getGoogleCredentialNative();
+      traceBoot("Google: account chosen");
       await revokeOutgoingAccountDeviceState();
-      const cred = await signInWithCredential(auth, credential);
+      const cred = await traceSignIn(signInWithCredential(auth, credential));
       await finishOAuthSignIn(cred, "google");
       return;
     }
@@ -1636,9 +1658,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithApple = useCallback(async () => {
     if (isNativePlatform()) {
+      traceBoot("Apple: opening the sign-in sheet");
       const { credential, displayName } = await getAppleSignInNative();
+      traceBoot("Apple: account chosen");
       await revokeOutgoingAccountDeviceState();
-      const cred = await signInWithCredential(auth, credential);
+      const cred = await traceSignIn(signInWithCredential(auth, credential));
       // The name Apple shares on the first sign-in, kept before the new
       // profile is made from the account. Never over a name it has.
       if (displayName && !cred.user.displayName) {

@@ -17,6 +17,8 @@ import {
 import { AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import appIconUrl from "@/assets/brand/app-icon.svg";
 import { Button } from "@/components/ui/Button";
+import BootSteps from "@/components/BootSteps";
+import { isNativePlatform } from "@/lib/platform";
 import { IconButton } from "@/components/ui/IconButton";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import InviteNote from "@/components/onboarding/InviteNote";
@@ -428,6 +430,18 @@ export default function Login() {
             />
             <span>{error}</span>
           </div>
+        )}
+        {/* On the iPhone, what each sign-in step did and how long it took,
+            for a failure nobody can inspect there (bootTrace.ts). */}
+        {error && isNativePlatform() && (
+          <details className="text-left">
+            <summary className="cursor-pointer text-xs text-muted-foreground">
+              Details
+            </summary>
+            <div className="mt-2">
+              <BootSteps />
+            </div>
+          </details>
         )}
 
         {shownNotice && (

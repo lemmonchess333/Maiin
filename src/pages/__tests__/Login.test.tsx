@@ -18,6 +18,7 @@ const h = vi.hoisted(() => ({
   signInWithGoogle: vi.fn(),
   signInWithApple: vi.fn(),
   resetPassword: vi.fn(),
+  native: false,
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -32,9 +33,11 @@ vi.mock("@/lib/auth", () => ({
   hasSignedInOnThisDevice: () => h.signedInBefore,
 }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
+vi.mock("@/lib/platform", () => ({ isNativePlatform: () => h.native }));
 
 import Login from "../Login";
 import { track } from "@/lib/lifecycleAnalytics";
+import { traceBoot } from "@/lib/bootTrace";
 
 const show = () =>
   render(
@@ -51,6 +54,7 @@ const screens = () =>
 beforeEach(() => {
   vi.clearAllMocks();
   h.signedInBefore = false;
+  h.native = false;
   localStorage.clear();
 });
 afterEach(cleanup);
@@ -254,6 +258,21 @@ describe("Login — closing the Google or Apple sheet", () => {
     );
     await tap("Continue with Google");
     expect(screen.getByRole("alert")).toHaveTextContent(/Network issue/);
+    // The step list is for the iPhone, where nothing else can be inspected.
+    expect(screen.queryByText("Details")).toBeNull();
+  });
+
+  it("on the iPhone, a failed sign-in offers what each step did", async () => {
+    h.native = true;
+    traceBoot("Firebase: failed after 30012 ms (auth/network-request-failed)");
+    h.signInWithGoogle.mockRejectedValueOnce(
+      new Error("Firebase: Error (auth/network-request-failed).")
+    );
+    await tap("Continue with Google");
+    fireEvent.click(screen.getByText("Details"));
+    expect(
+      screen.getByRole("list", { name: "What Tropos has done so far" })
+    ).toHaveTextContent("auth/network-request-failed");
   });
 });
 
