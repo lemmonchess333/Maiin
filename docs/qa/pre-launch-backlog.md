@@ -3839,3 +3839,24 @@ are `finish-screens.capture.spec.ts`. These need a phone.
       for the first and gold for the best, and nothing falls with
       Settings → Accessibility → Motion → Reduce Motion on, or on a
       routine session.
+
+## Train's layout and the one-row rule (DS4, 2026-11-08)
+
+Train keeps its order (title, Lift/Run, the day strip, the session) with
+the oversized blocks shrunk: the Lift/Run track is drawn 36 pt with its
+44 pt tap area made of padding (`SegmentedControl size="sm"`), the day
+strip is one 62 pt row, and the week's notices sit under the session card.
+Home's hero picture shrinks by a third under a 20em hero width so Start
+clears the tab bar on a 320 pt phone. Frames: `built-train-*` and
+`built-home-320-*` in `docs/visual-audit/ds4-2026-11-07/`. These need a
+phone.
+
+- [ ] **The small Lift/Run switch is easy to hit.** On a TestFlight
+      build, tap Lift and Run near their top and bottom edges, one-handed.
+      Passing: every tap inside the 44 pt row switches the tab, and none
+      lands on the day strip below it.
+- [ ] **Start is on the first screen on a small iPhone.** On an iPhone SE
+      (or another 320 pt-wide model), open Home and Train on a lifting
+      day. Passing: the whole Start button shows above the tab bar
+      without scrolling, in both themes, with the system text size at its
+      default.
