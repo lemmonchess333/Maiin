@@ -476,8 +476,8 @@ export function splitRationale(
   const d = Math.min(6, Math.max(0, Math.round(weeklyLiftDays)));
   if (chooseSplit(d, equipment) === "upper_lower_fb")
     return d === 5
-      ? "Five days runs upper / lower twice and a full-body day — each muscle about twice a week."
-      : "Six days runs upper / lower twice and two full-body days — each muscle about twice a week.";
+      ? "Five days runs upper / lower twice and a full-body day, so each muscle trains about twice a week."
+      : "Six days runs upper / lower twice and two full-body days, so each muscle trains about twice a week.";
   switch (d) {
     case 0:
       return "No lift days set — add some to build a split.";
