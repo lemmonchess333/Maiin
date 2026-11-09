@@ -24,6 +24,9 @@ import {
   useScanStages,
 } from "@/hooks/useScanStages";
 import { useBackDismiss } from "@/lib/backDismiss";
+import { stripDataUrlPrefix } from "@/lib/base64Helpers";
+import { MAX_EDGE_PX } from "@/lib/foodPhotoStore";
+import { blobToDataUrl, encodeJpeg } from "@/lib/imageEncode";
 import { logger } from "@/lib/logger";
 import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
@@ -197,9 +200,28 @@ type Props = {
   onShown?: () => void;
 };
 
-function dataUrlToBase64(dataUrl: string) {
-  const parts = dataUrl.split(",");
-  return parts.length > 1 ? parts[1] : "";
+/** The JPEG quality of every photo the scan sends, taken or picked. */
+const SCAN_JPEG_QUALITY = 0.85;
+/** The longest side of every photo the scan sends, a frame or a picked
+ *  one: the size the local copy keeps, so each is well under the server's
+ *  image limit. */
+const SCAN_PHOTO_MAX_EDGE_PX = MAX_EDGE_PX;
+
+/**
+ * A library photo at the size the analysis needs, not the size it was
+ * taken. The server refuses an image over five million base64 characters,
+ * and a request past the platform's own limit never reaches it: that
+ * refusal carries no CORS headers, so the app saw only "Couldn't reach the
+ * server". A 48-megapixel JPEG is 11 MB as base64; at 1280 px on the long
+ * side it is under 1 MB. Drawing it through a canvas (encodeJpeg) also
+ * leaves the file's EXIF, the place it was taken among it, on the phone.
+ */
+async function libraryPhotoDataUrl(file: File): Promise<string> {
+  const { blob } = await encodeJpeg(file, {
+    maxEdge: SCAN_PHOTO_MAX_EDGE_PX,
+    quality: SCAN_JPEG_QUALITY,
+  });
+  return blobToDataUrl(blob);
 }
 
 async function startStream(
@@ -572,53 +594,55 @@ export default function FoodCameraModal({
     e.target.value = "";
     if (!file) return;
 
+    setBusy(true);
     try {
-      setBusy(true);
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const dataUrl = String(reader.result || "");
-          if (tab === "barcode") {
-            /* Barcode mode reads the code in the picture, on the device.
-               Sent for AI food analysis like the other tabs, a picture of
-               a barcode would spend a scan and come back "No food
-               detected". The live reader stops meanwhile, so it cannot
-               fire a second lookup of its own. */
-            stopZXingRef.current?.();
-            stopZXingRef.current = null;
-            const code = await decodeBarcodeFromDataUrl(dataUrl);
-            if (code) {
-              setBarcodeFound(true);
-              setBarcodeHint("Found it");
-              haptic("success");
-              await onBarcodeDetected(code);
-              setBarcodeHint(BARCODE_HINT);
-            } else {
-              setBarcodeHint("No barcode found in that photo");
-            }
-            // Still open (no code, or its lookup failed): scan live again.
-            setBarcodeFound(false);
-            setBarcodeRun((n) => n + 1);
-            return;
-          }
-          const base64 = dataUrlToBase64(dataUrl);
-          setPreview(dataUrl);
-          await onCaptureBase64(base64, tab === "label" ? "label" : "food");
-        } finally {
-          setBusy(false);
+      let dataUrl: string;
+      try {
+        /* A barcode photo is read as it was taken: the reader needs its
+           pixels. Any other goes at the size the analysis needs. */
+        dataUrl =
+          tab === "barcode"
+            ? await blobToDataUrl(file)
+            : await libraryPhotoDataUrl(file);
+      } catch (err) {
+        /* A photo that cannot be read or drawn (deleted between pick and
+           read, an iOS Files provider error, a format the web view cannot
+           decode) says so, and leaves the shutter and the library live. */
+        logger.warn("[FoodCameraModal] photo not readable", err);
+        toast.error("Couldn't read that photo. Try another.");
+        return;
+      }
+      if (tab === "barcode") {
+        /* Barcode mode reads the code in the picture, on the device.
+           Sent for AI food analysis like the other tabs, a picture of
+           a barcode would spend a scan and come back "No food
+           detected". The live reader stops meanwhile, so it cannot
+           fire a second lookup of its own. */
+        stopZXingRef.current?.();
+        stopZXingRef.current = null;
+        const code = await decodeBarcodeFromDataUrl(dataUrl);
+        if (code) {
+          setBarcodeFound(true);
+          setBarcodeHint("Found it");
+          haptic("success");
+          await onBarcodeDetected(code);
+          setBarcodeHint(BARCODE_HINT);
+        } else {
+          setBarcodeHint("No barcode found in that photo");
         }
-      };
-      /* A read that never fires onload (file deleted between pick and
-         read, an iOS Files provider error) used to strand busy=true
-         forever — shutter greyed, library dead, no overlay showing,
-         and only close-and-reopen recovered. */
-      reader.onerror = () => {
-        logger.error(reader.error);
-        setBusy(false);
-      };
-      reader.readAsDataURL(file);
+        // Still open (no code, or its lookup failed): scan live again.
+        setBarcodeFound(false);
+        setBarcodeRun((n) => n + 1);
+        return;
+      }
+      setPreview(dataUrl);
+      await onCaptureBase64(
+        stripDataUrlPrefix(dataUrl),
+        tab === "label" ? "label" : "food"
+      );
     } catch (err) {
       logger.error(err);
+    } finally {
       setBusy(false);
     }
   };
@@ -633,16 +657,19 @@ export default function FoodCameraModal({
       const w = videoEl.videoWidth || 1280;
       const h = videoEl.videoHeight || 720;
 
-      canvas.width = w;
-      canvas.height = h;
+      /* The frame at the size the scan sends: a stream larger than that (a
+         4K camera) is drawn down, as a picked photo is. */
+      const scale = Math.min(1, SCAN_PHOTO_MAX_EDGE_PX / Math.max(w, h));
+      canvas.width = Math.max(1, Math.round(w * scale));
+      canvas.height = Math.max(1, Math.round(h * scale));
 
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
 
-      ctx.drawImage(videoEl, 0, 0, w, h);
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-      return { dataUrl, base64: dataUrlToBase64(dataUrl) };
+      const dataUrl = canvas.toDataURL("image/jpeg", SCAN_JPEG_QUALITY);
+      return { dataUrl, base64: stripDataUrlPrefix(dataUrl) };
     } catch (e) {
       logger.error(e);
       return null;

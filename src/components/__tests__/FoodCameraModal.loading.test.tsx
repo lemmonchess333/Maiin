@@ -46,6 +46,17 @@ import { haptic } from "@/lib/haptic";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/backDismiss", () => ({ useBackDismiss: vi.fn() }));
+vi.mock("@/lib/imageEncode", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/imageEncode")>()),
+  /* jsdom has no canvas: a picked photo's resize (encodeJpeg) is stubbed
+     at its own boundary, and what it hands back is a JPEG-typed Blob the
+     real reader turns into the data URL. */
+  encodeJpeg: vi.fn(async () => ({
+    blob: new Blob(["jpeg"], { type: "image/jpeg" }),
+    width: 1280,
+    height: 960,
+  })),
+}));
 
 const realMatchMedia = window.matchMedia;
 

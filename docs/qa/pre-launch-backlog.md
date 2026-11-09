@@ -1773,6 +1773,18 @@ uploaded successfully`, then explicitly
       without it a label photo — which contains no literal food — could
       answer "No food detected"). Scan a packet on the Food label tab and
       confirm macros come back.
+- [ ] **A big photo from the library scans.** Pick the largest photo on
+      the phone (the main camera's 24 or 48 megapixels, HEIC) on the Meal
+      tab, on the iPhone app and on the web: the frame shows the photo and
+      the analysis answers. Sent as the file itself it was over the
+      server's image limit, and past the request limit in front of it the
+      refusal had no CORS headers, so the app read "Couldn't reach the
+      server"; `FoodCameraModal` now draws a library photo down to 1280 px
+      first (`FoodCameraModal.libraryPhoto.test.tsx`), and the live frame
+      is drawn down the same way. jsdom has no canvas, so that WKWebView
+      decodes the HEIC and draws it is a device fact; a web view that
+      cannot (a HEIC picked in Chrome) says "Couldn't read that photo".
+      Barcode's upload is unchanged and reads the file as taken.
 - [ ] **Airplane mode.** Shutter → instant "You're offline" (no burned wait),
       with Type it instead as the PRIMARY action — and typing must work
       end-to-end offline (local NL parse + queued write). Same for the

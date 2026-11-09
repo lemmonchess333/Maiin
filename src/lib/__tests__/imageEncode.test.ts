@@ -12,7 +12,7 @@
  * downloaded photo for EXIF on a device.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { encodeJpeg } from "../imageEncode";
+import { blobToDataUrl, encodeJpeg } from "../imageEncode";
 
 const H = vi.hoisted(() => ({
   natural: { w: 4032, h: 3024 },
@@ -110,5 +110,23 @@ describe("encodeJpeg", () => {
       encodeJpeg(picked, { maxEdge: 1600, quality: 0.82 })
     ).rejects.toThrow("photo decode failed");
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:picked");
+  });
+});
+
+describe("blobToDataUrl", () => {
+  it("reads the encoded JPEG as the data URL a preview and a request body take", async () => {
+    const blob = new Blob(["hi"], { type: "image/jpeg" });
+    expect(await blobToDataUrl(blob)).toBe("data:image/jpeg;base64,aGk=");
+  });
+
+  it("settles when the read is aborted, so nothing waits on it for ever", async () => {
+    vi.spyOn(FileReader.prototype, "readAsDataURL").mockImplementation(
+      function (this: FileReader) {
+        this.dispatchEvent(new Event("abort"));
+      }
+    );
+    await expect(
+      blobToDataUrl(new Blob(["hi"], { type: "image/jpeg" }))
+    ).rejects.toThrow("photo read aborted");
   });
 });
