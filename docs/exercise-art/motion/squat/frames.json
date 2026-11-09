@@ -1,0 +1,12 @@
+{
+  "src": "form-art/motion/squat.webp",
+  "still": "form-art/squat.webp",
+  "frames": 35,
+  "fps": 12,
+  "frameWidth": 334,
+  "frameHeight": 480,
+  "cols": 6,
+  "clipFrames": [2, 37],
+  "clipSha256": "9ccc4a618fa17be281db4e2e52906b4ae8e0226a967dc6f46488d66b1f2b2521",
+  "sha256": "deb25814b19b23ab3f06a6cf6bd0ec67926faf55b74a61ba806693b6c830cd02"
+}

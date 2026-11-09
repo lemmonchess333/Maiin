@@ -1,0 +1,12 @@
+{
+  "src": "form-art/motion/pull-ups.webp",
+  "still": "form-art/pull-ups.webp",
+  "frames": 43,
+  "fps": 12,
+  "frameWidth": 368,
+  "frameHeight": 480,
+  "cols": 7,
+  "clipFrames": [5, 48],
+  "clipSha256": "48e3b8636d9b8f8d3da6afb754ffd61114ddb92ccd5fe07d84021ac0ee66af91",
+  "sha256": "55f45d90cb469014b4fe45bcc1dcf4ddbbc0279902d40ad9c84eed2ba7006f9b"
+}

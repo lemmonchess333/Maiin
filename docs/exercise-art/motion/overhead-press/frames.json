@@ -1,0 +1,12 @@
+{
+  "src": "form-art/motion/overhead-press.webp",
+  "still": "form-art/overhead-press.webp",
+  "frames": 37,
+  "fps": 12,
+  "frameWidth": 329,
+  "frameHeight": 480,
+  "cols": 7,
+  "clipFrames": [0, 37],
+  "clipSha256": "9d9da811bdb065819aa9dd7fbb866da0a919d915db708118f5d79580ffd005c2",
+  "sha256": "d5a1b23a869192487a433b51dde84ef2264498b403635fd35622ba43e7d4f29a"
+}

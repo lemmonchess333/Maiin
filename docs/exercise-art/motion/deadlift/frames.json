@@ -1,0 +1,12 @@
+{
+  "src": "form-art/motion/deadlift.webp",
+  "still": "form-art/deadlift.webp",
+  "frames": 37,
+  "fps": 12,
+  "frameWidth": 480,
+  "frameHeight": 452,
+  "cols": 7,
+  "clipFrames": [5, 42],
+  "clipSha256": "705dcbeb6dee28bb439f8442feb8b9b529f82055eb2e26c0815f9ff22b16ed75",
+  "sha256": "91515f19ced1c7841e8af811f5e890727902c64c96d05a197d198d4258e336e1"
+}

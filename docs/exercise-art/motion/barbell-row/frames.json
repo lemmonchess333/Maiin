@@ -1,0 +1,12 @@
+{
+  "src": "form-art/motion/barbell-row.webp",
+  "still": "form-art/barbell-row.webp",
+  "frames": 16,
+  "fps": 12,
+  "frameWidth": 480,
+  "frameHeight": 438,
+  "cols": 4,
+  "clipFrames": [0, 16],
+  "clipSha256": "46acc5b41790c56f5071c9d61df971bbdafdd8e025f88287dab245f6a58c9b8d",
+  "sha256": "7e7d115eaa231abce1df3fd97bd4a610bda1de2010c1eae85e321221f4a4f2ae"
+}

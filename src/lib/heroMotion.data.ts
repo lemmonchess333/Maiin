@@ -18,6 +18,16 @@ export interface HeroMotionSheet {
 }
 
 export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {
+  "form-art/barbell-row.webp": {
+    src: "form-art/motion/barbell-row.webp",
+    still: "form-art/barbell-row.webp",
+    frames: 16,
+    fps: 12,
+    frameWidth: 480,
+    frameHeight: 438,
+    cols: 4,
+    sha256: "7e7d115eaa231abce1df3fd97bd4a610bda1de2010c1eae85e321221f4a4f2ae",
+  },
   "form-art/bench-press.webp": {
     src: "form-art/motion/bench-press.webp",
     still: "form-art/bench-press.webp",
@@ -28,6 +38,36 @@ export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {
     cols: 7,
     sha256: "cfdba39bc1d176e70fcad13650a7b3c3742c0e679ef220edaef5683569ce6ae3",
   },
+  "form-art/deadlift.webp": {
+    src: "form-art/motion/deadlift.webp",
+    still: "form-art/deadlift.webp",
+    frames: 37,
+    fps: 12,
+    frameWidth: 480,
+    frameHeight: 452,
+    cols: 7,
+    sha256: "91515f19ced1c7841e8af811f5e890727902c64c96d05a197d198d4258e336e1",
+  },
+  "form-art/overhead-press.webp": {
+    src: "form-art/motion/overhead-press.webp",
+    still: "form-art/overhead-press.webp",
+    frames: 37,
+    fps: 12,
+    frameWidth: 329,
+    frameHeight: 480,
+    cols: 7,
+    sha256: "d5a1b23a869192487a433b51dde84ef2264498b403635fd35622ba43e7d4f29a",
+  },
+  "form-art/pull-ups.webp": {
+    src: "form-art/motion/pull-ups.webp",
+    still: "form-art/pull-ups.webp",
+    frames: 43,
+    fps: 12,
+    frameWidth: 368,
+    frameHeight: 480,
+    cols: 7,
+    sha256: "55f45d90cb469014b4fe45bcc1dcf4ddbbc0279902d40ad9c84eed2ba7006f9b",
+  },
   "form-art/run-easy.webp": {
     src: "form-art/motion/run-easy.webp",
     still: "form-art/run-easy.webp",
@@ -37,5 +77,15 @@ export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {
     frameHeight: 480,
     cols: 6,
     sha256: "7861c73e3865785d1086bf0b597f7c3307f73ae00bf2ef3d5fb7a8c7a64388db",
+  },
+  "form-art/squat.webp": {
+    src: "form-art/motion/squat.webp",
+    still: "form-art/squat.webp",
+    frames: 35,
+    fps: 12,
+    frameWidth: 334,
+    frameHeight: 480,
+    cols: 6,
+    sha256: "deb25814b19b23ab3f06a6cf6bd0ec67926faf55b74a61ba806693b6c830cd02",
   },
 };
