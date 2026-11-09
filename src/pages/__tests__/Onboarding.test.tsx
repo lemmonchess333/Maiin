@@ -28,6 +28,8 @@ import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
 import { track } from "@/lib/lifecycleAnalytics";
 import { loadWordFilter } from "@/lib/wordFilter";
 import { SETUP, SETUP_OPTIONS, STARTER } from "@/test/journeyScreens";
+import { NO_EQUIPMENT_EXERCISE_IDS } from "@/features/program/noEquipment";
+import type { WorkoutDay } from "@/features/program/programTypes";
 import {
   addLocalDays,
   localDateString,
@@ -523,9 +525,7 @@ describe("inspect the generated week", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit setup" }));
     const original =
       builder.mock.results.at(-1)!.value.programState.workouts[0];
-    fireEvent.click(
-      screen.getByRole("button", { name: /Minimal \/ bodyweight/ })
-    );
+    fireEvent.click(screen.getByRole("button", { name: /^No equipment/ }));
     const updated = builder.mock.results.at(-1)!.value.programState.workouts[0];
     expect(
       updated.exercises.map((exercise: { name: string }) => exercise.name)
@@ -550,6 +550,36 @@ describe("inspect the generated week", () => {
     expect(
       screen.getByRole("region", { name: "First lift preview" })
     ).toHaveTextContent(updated.exercises[0].name);
+    builder.mockRestore();
+  });
+
+  it("builds no equipment from what the floor allows, and asks for no kit", () => {
+    // Answers kept from a home gym don't follow the person to no equipment.
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      equipment: "home_gym",
+      barbellAtHome: true,
+      smallPlates: true,
+    });
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit setup" }));
+    fireEvent.click(screen.getByRole("button", { name: /^No equipment/ }));
+    // No bar to have, and no plates to make small.
+    expect(screen.queryByText("What do you have?")).toBeNull();
+    expect(
+      screen.queryByRole("switch", { name: "A barbell and a rack" })
+    ).toBeNull();
+    const week = builder.mock.results.at(-1)!.value.programState
+      .workouts as WorkoutDay[];
+    const ids = week.flatMap((day) => day.exercises.map((e) => e.exerciseId));
+    expect(ids.length).toBeGreaterThan(0);
+    expect(ids.filter((id) => !NO_EQUIPMENT_EXERCISE_IDS.has(id))).toEqual([]);
+    expect(builder.mock.calls.at(-1)![0]).toMatchObject({
+      equipment: "no_equipment",
+      barbellAtHome: false,
+      smallPlates: false,
+    });
     builder.mockRestore();
   });
 });
@@ -623,6 +653,7 @@ describe("answers the user has not given", () => {
       /Full gym/,
       /Home gym/,
       /Minimal/,
+      /No equipment/,
       /New to lifting/,
       /Some experience/,
       /Experienced/,
@@ -1221,7 +1252,8 @@ describe("choices with drawings", () => {
     // The approved incline press still pictures dumbbells and a bench
     // while the flat bench illustration is withheld.
     expect(artOf(/Home gym/).img).toMatch(/incline-db-press\.webp$/);
-    expect(artOf(/Minimal/).img).toMatch(/bodyweight-squat\.webp$/);
+    expect(artOf(/Minimal/).img).toMatch(/goblet-squat\.webp$/);
+    expect(artOf(/No equipment/).img).toMatch(/bodyweight-squat\.webp$/);
     for (const [name, solid] of [
       [/New to lifting/, 1],
       [/Some experience/, 2],

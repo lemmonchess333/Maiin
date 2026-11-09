@@ -33,6 +33,8 @@ import {
   equipmentLabel,
   experienceLabel,
   goalLabel,
+  takesBarbellAtHome,
+  takesSmallPlates,
 } from "@/features/program/programLabels";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
@@ -629,8 +631,8 @@ export default function Onboarding() {
           injuries,
           weightKg,
           sessionMinutes,
-          barbellAtHome: equipment !== "full_gym" && barbellAtHome,
-          smallPlates,
+          barbellAtHome: takesBarbellAtHome(equipment) && barbellAtHome,
+          smallPlates: takesSmallPlates(equipment) && smallPlates,
           raceLegTrim,
           weightDisplayUnit,
         },
@@ -863,7 +865,7 @@ export default function Onboarding() {
         experience,
         daysPerWeek,
         equipment,
-        ...(equipment !== "full_gym" ? { barbellAtHome } : {}),
+        ...(takesBarbellAtHome(equipment) ? { barbellAtHome } : {}),
         preferredSplit: "auto",
         runFrequency,
         ...(recentRaceBenchmark
@@ -1756,8 +1758,14 @@ export default function Onboarding() {
                     },
                     {
                       id: "minimal",
-                      label: "Minimal / bodyweight",
-                      desc: "Bodyweight and limited equipment.",
+                      label: "Minimal",
+                      desc: "Dumbbells and your bodyweight.",
+                      art: "goblet-squat",
+                    },
+                    {
+                      id: "no_equipment",
+                      label: "No equipment",
+                      desc: "Just your bodyweight, and a sturdy table for rows.",
                       art: "bodyweight-squat",
                     },
                   ] as const
@@ -1770,7 +1778,7 @@ export default function Onboarding() {
                       setEquipment(option.id);
                     }}
                     /* The kit each setup means, drawn: a machine, dumbbells
-                       on a bench, no equipment at all. */
+                       on a bench, a dumbbell alone, no equipment at all. */
                     icon={
                       <ChoiceArt art={{ kind: "exercise", id: option.art }} />
                     }
@@ -1779,7 +1787,9 @@ export default function Onboarding() {
                   />
                 ))}
               </div>
-              {equipmentConfirmed && (
+              {/* With no equipment there is nothing to add: no bar, and no
+                  plates to make small. */}
+              {equipmentConfirmed && takesSmallPlates(equipment) && (
                 <div className="space-y-3">
                   <div>
                     <h3 className="text-sm font-semibold">What do you have?</h3>
@@ -1787,7 +1797,7 @@ export default function Onboarding() {
                       Optional. The plan uses what you have.
                     </p>
                   </div>
-                  {equipment !== "full_gym" && (
+                  {takesBarbellAtHome(equipment) && (
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-foreground">

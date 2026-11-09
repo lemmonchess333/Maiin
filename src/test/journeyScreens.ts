@@ -68,7 +68,7 @@ export const SETUP_OPTIONS = {
   liftMinutes: ["30 min", "45 min", "60 min", "75+ min"],
   runners: ["New to running", "Occasional runner", "Regular runner"],
   raceDistances: ["5K", "10K", "Half", "Full"],
-  equipment: ["Full gym", "Home gym", "Minimal / bodyweight"],
+  equipment: ["Full gym", "Home gym", "Minimal", "No equipment"],
   experience: ["New to lifting", "Some experience", "Experienced"],
   sexes: ["Male", "Female"],
   ages: ["16–24", "25–34", "35–44", "45–54", "55+"],

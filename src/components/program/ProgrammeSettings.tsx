@@ -52,6 +52,7 @@ import {
   Apple,
   Warehouse,
   User,
+  PersonStanding,
   Award,
   Sparkles,
   Check,
@@ -84,6 +85,7 @@ import {
   represcribeWorkouts,
 } from "@/features/program/represcribe";
 import { runTuningFromProfile } from "@/features/program/runScheduler";
+import { takesBarbellAtHome } from "@/features/program/programLabels";
 import {
   chooseSplit,
   splitLabel,
@@ -392,9 +394,15 @@ const EQUIPMENT_OPTIONS: {
   },
   {
     id: "minimal",
-    label: "Minimal / bodyweight",
-    desc: "Bands, bodyweight, maybe dumbbells",
+    label: "Minimal",
+    desc: "Dumbbells and bodyweight",
     icon: <User size={20} style={{ color: THEME.success }} />,
+  },
+  {
+    id: "no_equipment",
+    label: "No equipment",
+    desc: "Bodyweight, and a sturdy table for rows",
+    icon: <PersonStanding size={20} style={{ color: THEME.teal }} />,
   },
 ];
 
@@ -1222,7 +1230,7 @@ export default function ProgrammeSettings({
             ))}
           </div>
           {/* Lift4 (11): "what do you have?" beside the setups. */}
-          {equipment !== "full_gym" && (
+          {takesBarbellAtHome(equipment) && (
             <div className="mt-3 flex items-center justify-between">
               <div>
                 <p className="text-sm text-foreground">A barbell and a rack</p>

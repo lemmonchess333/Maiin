@@ -17,6 +17,8 @@
  * edit; it does not claim to show the resulting workouts.
  */
 
+import { takesBarbellAtHome } from "@/features/program/programLabels";
+
 export interface ProgrammeSnapshot {
   primaryGoal: string;
   nutritionPhase: string;
@@ -81,7 +83,8 @@ const SPLIT_LABELS: Record<string, string> = {
 const EQUIPMENT_LABELS: Record<string, string> = {
   full_gym: "Full gym",
   home_gym: "Home gym",
-  minimal: "Minimal / bodyweight",
+  minimal: "Minimal",
+  no_equipment: "No equipment",
 };
 
 const INJURY_LABELS: Record<string, string> = {
@@ -234,7 +237,7 @@ export function computeProgrammeChanges(
   }
 
   if (
-    draft.equipment !== "full_gym" &&
+    takesBarbellAtHome(draft.equipment) &&
     draft.barbellAtHome !== undefined &&
     saved.barbellAtHome !== undefined &&
     draft.barbellAtHome !== saved.barbellAtHome

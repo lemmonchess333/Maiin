@@ -385,6 +385,25 @@ describe("ProgrammeSettings — what do you have? (Lift4 (11))", () => {
       screen.getByRole("switch", { name: "A barbell and a rack" })
     ).toHaveAttribute("aria-checked", "true");
   });
+
+  it("asks nothing more of no equipment, and saves it with the plan", async () => {
+    setup({ equipment: "home_gym", barbellAtHome: true });
+    fireEvent.click(screen.getByText("No equipment"));
+    // With no equipment there is no barbell to have.
+    expect(
+      screen.queryByRole("switch", { name: "A barbell and a rack" })
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    const recap = within(screen.getByRole("alertdialog"));
+    expect(recap.getByText("No equipment")).toBeInTheDocument();
+    expect(recap.queryByText("A barbell and a rack")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.equipment).toBe("no_equipment");
+  });
 });
 
 describe("ProgrammeSettings — toggles live-save without rebuild", () => {

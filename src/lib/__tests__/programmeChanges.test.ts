@@ -118,6 +118,24 @@ describe("computeProgrammeChanges", () => {
         { ...base, barbellAtHome: true }
       )
     ).toEqual([]);
+    // With no equipment there is no barbell to have: the answer kept from
+    // a home gym isn't a change the plan makes.
+    const none = { ...base, equipment: "no_equipment" };
+    expect(
+      computeProgrammeChanges(
+        { ...none, barbellAtHome: false },
+        { ...none, barbellAtHome: true }
+      )
+    ).toEqual([]);
+  });
+
+  it("names the no-equipment setup", () => {
+    expect(
+      computeProgrammeChanges(
+        { ...base, equipment: "minimal" },
+        { ...base, equipment: "no_equipment" }
+      )
+    ).toEqual([{ label: "Equipment", from: "Minimal", to: "No equipment" }]);
   });
 
   it("reports lift-day and nutrition changes with readable labels", () => {

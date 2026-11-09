@@ -10,6 +10,9 @@
  * fails here, whichever it is.
  */
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { getReleasedFormArtwork } from "@/lib/formArtwork";
 import { getFormSetup } from "@/lib/formGuides";
@@ -22,6 +25,11 @@ import {
   NO_EQUIPMENT_STAND_INS,
 } from "../noEquipment";
 import type { PrimaryGoal, ProgramExercise, WorkoutDay } from "../programTypes";
+
+const repoRoot = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../.."
+);
 
 const GOALS: PrimaryGoal[] = [
   "general",
@@ -311,5 +319,25 @@ describe("changing a plan to no equipment and back", () => {
         ids(gym.programState.workouts)
       );
     }
+  });
+});
+
+describe("the no-equipment option", () => {
+  /** The `desc` beside `id: "no_equipment"` in a source file's option list. */
+  const copy = (path: string) => {
+    const source = readFileSync(resolve(repoRoot, path), "utf8");
+    const match = source.match(/id: "no_equipment",[\s\S]*?desc: "([^"]+)"/);
+    if (!match) throw new Error(`no no_equipment option in ${path}`);
+    return match[1];
+  };
+
+  it.each([
+    "src/pages/Onboarding.tsx",
+    "src/components/program/ProgrammeSettings.tsx",
+  ])("names the table and no kit: %s", (path) => {
+    expect(copy(path)).toMatch(/table/);
+    expect(copy(path)).not.toMatch(
+      /barbell|dumbbell|kettlebell|cable|machine|band|bench|\bbar\b/i
+    );
   });
 });
