@@ -1701,8 +1701,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      users get their profile doc created via finishOAuthSignIn exactly like
      the popup path (onAuthStateChanged only READS a profile — it would set
      null for a brand-new OAuth user whose doc doesn't exist yet). Runs once
-     on mount; a null result means there was no pending redirect. */
+     on mount; a null result means there was no pending redirect.
+
+     Not inside the iPhone app: it signs in natively (nativeAuth.ts) and
+     never redirects, and its Auth has no popup/redirect resolver
+     (firebaseApp.ts), so asking throws auth/argument-error on every
+     launch, which errorReporting then files as a real error. */
   useEffect(() => {
+    if (isNativePlatform()) return;
     let cancelled = false;
     getRedirectResult(auth)
       .then((result) => {
