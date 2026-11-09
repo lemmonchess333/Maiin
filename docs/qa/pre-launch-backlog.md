@@ -10,6 +10,61 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Live Activities on the phone (Polish2 call 1, 2026-11-09)
+
+Affects: `ios/App/LiveActivities/` (the widget extension, new),
+`ios/App/App.xcodeproj/project.pbxproj`, `ios/App/App/Info.plist`
+(`NSSupportsLiveActivities`), `src/lib/runLiveActivity.ts`,
+`src/lib/restLiveActivity.ts`, the plugin's patch, `deploy-ios.yml`,
+`ios-native-compile.yml`, `scripts/verify_ios_live_activity.py` and
+`scripts/ios/asc-signing.mjs`. The unit suites pin the project's target,
+the keys and colours the Swift reads against the app's, and the verifier
+offline; nothing here has compiled the Swift or drawn a card.
+`docs/run-live-activity.md` has what each view shows and the run's detailed
+table. Live Activities need iOS 16.2 or later and Settings → Tropos → Live
+Activities on; the Dynamic Island needs an iPhone 14 Pro or later.
+
+- [ ] **The pull request compile builds the widget.** On the pull request
+      that adds it, `iOS native compile` passes "Compile a standard build
+      for simulator" (the first compile of the widget's Swift), "Check the
+      standard build embeds the Live Activity widget" and the pilot's pair.
+      A Swift error names a file in `ios/App/LiveActivities/`; an error
+      about `LiveActivitiesKit` or a duplicate package is the local package
+      reference (`docs/run-live-activity.md`, "The extension in the
+      project").
+- [ ] **A standard TestFlight build carries the widget.** Run Deploy iOS
+      to TestFlight with the pilot box unchecked. Passing: "List the
+      targets to sign" names `com.tropos.app.LiveActivities`; the first
+      such run's "Make the signing certificate and profiles from the API
+      key" logs "Registered the App ID com.tropos.app.LiveActivities"
+      (Apple Developer → Identifiers then lists Tropos LiveActivities) and
+      every run makes `Tropos CI <serial> LiveActivities`; both verify
+      steps print "Verified the Live Activity widget"; the upload is
+      accepted with no extension version warning; and on the phone
+      Settings → Tropos shows a Live Activities switch.
+- [ ] **A run on the Lock Screen.** Start an outdoor run and lock the
+      phone. Passing: a dark card with "Recording" in coral, the time
+      large in coral, distance and pace beside it with their units
+      smaller, all moving every few seconds while the phone stays locked.
+      Pause in the app: within about 2 s the card reads "Paused" and its
+      time is grey; resume and it is coral again.
+- [ ] **A run in the Dynamic Island.** During a run, go to the Home
+      Screen. Passing: the island shows the running figure and the time;
+      a long press opens it to the state, the time and distance and pace.
+- [ ] **A rest counts down with the phone locked.** Tick a working set and
+      lock the phone straight away. Passing: the card reads "Rest" in
+      purple, its countdown ticks every second with the app asleep,
+      "Next · <exercise>" over the set ("Set 2 · 15 kg × 10") matches the
+      rest band, and the purple bar empties. At the rest's end, without
+      unlocking, it turns green: "Rest done", 0:00 and a full green bar.
+      In the Dynamic Island: the dumbbell and the countdown, then "Done".
+- [ ] **Each ends cleanly.** Finish a run: the card is gone at once, not
+      left on the lock screen after the save. The same after Discard. In a
+      workout, End rest or tick the next set: the rest's card is gone at
+      once. +15 s: one card, with the later end, never two. Then kill the
+      app mid-run and note how long its card stays (a known limit in
+      `docs/run-live-activity.md`).
+
 ## Setup asks for the public name (2026-11-01)
 
 Setup no longer makes the public name from the email address: an email
@@ -123,6 +178,9 @@ the builds themselves.
       `Tropos CI <serial> LiveActivities` and archives without a workflow
       change, and the widget links `LiveActivitiesKit` through Swift
       Package Manager.
+      STATUS 2026-11-09: the widget is added. The workflow now also
+      requires it and checks it is embedded, and the API key registers its
+      App ID; "Live Activities on the phone" above has the run to check.
 
 ## A lift's rest outside the app (Mob2 call 1, 2026-10-28)
 
@@ -133,11 +191,9 @@ A rest that ended while the app was away no longer chimes again on the way
 back. On the phone the rest has a Live Activity of its own
 (`src/lib/restLiveActivity.ts`): a card with the system's own countdown to
 the rest's end and the next exercise, and the Dynamic Island's dumbbell
-and countdown. **Its native half is not built**: it needs the same widget
-extension as the run's card (`docs/run-live-activity.md`, Mob2 call 13:
-when the owner has a Mac). Until then `startActivity` rejects and the app
-shows nothing there; the rest-end notification is separate and works
-already. The unit suites pin the title, the plugin calls and a rest made
+and countdown. STATUS 2026-11-09: its native half, the widget extension
+in `ios/App/LiveActivities/`, is built; its device rows are in "Live
+Activities on the phone" above. The rest-end notification is separate. The unit suites pin the title, the plugin calls and a rest made
 longer replacing itself; only a phone shows the card.
 
 - [ ] **The tab's title.** In the web app, tick a working set and switch
@@ -153,6 +209,10 @@ longer replacing itself; only a phone shows the card.
       Passing: the card shows "Rest" and a countdown that reaches 0:00 on
       time with the app asleep, "Next:" and the exercise under it; +15 s
       in the app moves the countdown on; End rest takes the card away.
+      STATUS 2026-11-09: the extension exists and the card changed (the
+      next set as well as the exercise, a bar, green when done). Check it
+      with "A rest counts down with the phone locked" and "Each ends
+      cleanly" above, and tick this with them.
 
 ## A photo and a few words (Mob2 call 3, 2026-10-28)
 
@@ -895,12 +955,14 @@ TestFlight script names each one.
 - [ ] **A lawyer reads the Privacy Policy and the Terms.** Not a check:
       every claim in them was verified against the code, and that is not a
       legal review.
-- [ ] **The run's lock-screen card needs its widget extension.** Not a
+- [x] **The run's lock-screen card needs its widget extension.** Not a
       check: the app's half and the plugin are in
       (`src/lib/runLiveActivity.ts`), but the Xcode target in
       `docs/run-live-activity.md` was never added, so `startActivity`
       rejects and nothing shows on the lock screen. That doc's device table
       is the test once it exists. After 1.0.
+      STATUS 2026-11-09: built (Polish2 call 1), `ios/App/LiveActivities/`.
+      The device checks are "Live Activities on the phone" at the top.
 
 ## The Firebase key lets the iPhone app and troposfit.com sign in (2026-10-17)
 

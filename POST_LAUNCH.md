@@ -160,10 +160,12 @@ kind of Xcode target as the run's lock-screen card below.
 
 ### The run's lock-screen card (Live Activity)
 
-The app's half and the plugin are in (`src/lib/runLiveActivity.ts`,
-`capacitor-live-activities`); the widget extension target is not, so nothing
-shows yet. `docs/run-live-activity.md` has the target's steps and the device
-table.
+Built (2026-11-09, Polish2 call 1): the widget extension
+`ios/App/LiveActivities/` draws the run and a lift's rest on the Lock Screen
+and in the Dynamic Island, from the data `src/lib/runLiveActivity.ts` and
+`src/lib/restLiveActivity.ts` send. It waits on its device checks
+(`docs/qa/pre-launch-backlog.md`, "Live Activities on the phone");
+`docs/run-live-activity.md` has the views and the device table.
 
 ### Apple Watch companion
 

@@ -51,13 +51,13 @@ Firebase's website.
 #### Signing: the API key, or your own certificate
 
 A TestFlight archive needs one Apple Distribution certificate and an App
-Store provisioning profile for each app and extension target: today the
-iPhone app and the Watch app. The workflow reads that list from the project
-(`scripts/ios_signed_targets.py`, its first step), so a target added later,
-such as the Live Activity widget extension
-([run-live-activity.md](run-live-activity.md)), is signed, checked and
-exported with no change to the workflow. It gets the certificate and
-profiles one of two ways:
+Store provisioning profile for each app and extension target: the iPhone
+app, the Watch app and the Live Activity widget extension
+([run-live-activity.md](run-live-activity.md)), which every build embeds.
+The workflow reads that list from the project
+(`scripts/ios_signed_targets.py`, its first step), so a target added later
+is signed, checked and exported with no change to the workflow. It gets the
+certificate and profiles one of two ways:
 
 - **From the API key (the default).** With none of the four
   `IOS_DIST_CERT_*` / iPhone and Watch provisioning profile secrets set, each
@@ -67,17 +67,22 @@ profiles one of two ways:
   the runner. Each run makes a new certificate and revokes the previous
   run's certificate. Apple Developer → Certificates shows one Apple
   Distribution certificate from these runs, and Profiles shows one profile
-  per target: `Tropos CI <serial>` for the iPhone app and
-  `Tropos CI <serial> watchkitapp` for the Watch app (the last part of each
-  other bundle ID). Revoking an
+  per target: `Tropos CI <serial>` for the iPhone app,
+  `Tropos CI <serial> watchkitapp` for the Watch app and
+  `Tropos CI <serial> LiveActivities` for the widget (the last part of each
+  other bundle ID). A target with no entitlements needs no App ID
+  capability, so when Apple has no App ID for one the run registers it
+  (the widget's, `com.tropos.app.LiveActivities`, shows in Identifiers as
+  "Tropos LiveActivities"); an App ID with capabilities stays yours to
+  make, below. Revoking an
   old certificate does not affect builds already uploaded, which Apple
   signs itself. This needs the API key to have the **Admin** role.
 - **Your own certificate.** Set all four secrets, including the Watch profile,
   and the run signs with them instead: the openssl steps under "Your own
   certificate" below. The API key then only uploads and marks the build,
   which the **App Manager** role allows. These secrets hold the iPhone and
-  Watch profiles only, so once the project signs another target the run
-  stops and names it: sign from the API key then.
+  Watch profiles only, and every build also signs the widget, so with them
+  the run stops in its first minute and names it: sign from the API key.
 
 Either way the run checks the certificate and every profile against the
 team, its bundle ID and its target's entitlements before it archives. It
@@ -104,6 +109,11 @@ Identifiers. Turn on **HealthKit** there before making its App Store Connect
 profile. The Watch profile must use the same Apple Distribution certificate
 as the iPhone profile. The Watch target has its own entitlements file at
 `ios/App/TroposWatch/TroposWatch.entitlements`.
+
+The Live Activity widget's App ID, `com.tropos.app.LiveActivities`, needs
+no capability (the widget has no entitlements and no App Group), and a run
+signing from the API key registers it when Apple has none, so there is
+nothing to do for it here.
 
 Turning a capability on later means making the profile again. A run that
 signs from the API key makes a new profile each time, so for that, run the
@@ -285,6 +295,8 @@ compiles a standard Release build for Simulator, then the pilot, with
 signing disabled, and runs `scripts/verify_ios_watch.py --unsigned` on each:
 the standard build must carry no Watch app, the gate off and the short Health
 text; the pilot one embedded Watch app, both gates on and the expanded text.
+`scripts/verify_ios_live_activity.py --unsigned` then finds the Live Activity
+widget in both, since every build embeds it.
 It uses a synthetic Firebase plist and does not install, sign, or exercise
 either app. A green compile is required before this gate is considered ready
 for the signed TestFlight and paired-device checks below.
