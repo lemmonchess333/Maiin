@@ -279,6 +279,50 @@ describe.each([
       }
     );
 
+    /* A wrong host answers with Google's HTML 404, not JSON. Before, the
+       parse threw first and the status was lost: the person read "didn't
+       use a scan" with nothing to say why. */
+    it("keeps the model's status when its answer is not JSON", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({
+          ok: false,
+          status: 404,
+          text: async () => "<html>404. That's an error.</html>",
+          json: async () => {
+            throw new SyntaxError("Unexpected token '<'");
+          },
+        }))
+      );
+      const db = seed();
+      installAdmin(db);
+      const res = await post(handler, good);
+      expect(res.statusCode).toBe(500);
+      expect(res.body.modelStatus).toBe(404);
+      expect(spent(db)).toBe(0);
+    });
+
+    it("fails a 200 that is not JSON as unreadable, and gives the scan back", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({
+          ok: true,
+          status: 200,
+          text: async () => "not json",
+          json: async () => {
+            throw new SyntaxError("Unexpected token 'o'");
+          },
+        }))
+      );
+      const db = seed();
+      installAdmin(db);
+      const res = await post(handler, good);
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toMatch(/didn't use a scan/);
+      expect(res.body).not.toHaveProperty("modelStatus");
+      expect(spent(db)).toBe(0);
+    });
+
     it("sends no model status when no model answered", async () => {
       model(200, { candidates: [] });
       const db = seed();
