@@ -1176,14 +1176,22 @@ export default function Home() {
     ]
   );
   const widgetUid = user?.uid ?? null;
+  // By value: the week's count and the drinks list are new objects on every
+  // render, and the snapshot is rebuilt only when what it says changes.
+  const { done: widgetWeekDone, of: widgetWeekOf } = weekSessionCount;
+  const widgetDrinkIds = waterDrinks.map((drink) => drink.id).join(" ");
+  // A read that failed is settled too: what it could not read is left out
+  // of the snapshot rather than holding the rest back.
+  const widgetWaterSettled = !waterLoading || !!waterSyncStatus;
+  const widgetStreakSettled = !streakLoading || streakLoadFailed;
   const widgetInput = useMemo(
     () =>
       widgetUid &&
       profile &&
       widgetTrainingReady &&
       !mealsLoading &&
-      !waterLoading &&
-      !streakLoading
+      widgetWaterSettled &&
+      widgetStreakSettled
         ? {
             todayKey,
             uid: widgetUid,
@@ -1191,7 +1199,7 @@ export default function Home() {
             freeRunLine,
             planPosition: heroPositionLabel,
             strip: widgetStrip,
-            week: weekSessionCount,
+            week: { done: widgetWeekDone, of: widgetWeekOf },
             hasPlan: !!programState,
             freeRunner:
               profile.runMode === "freeform" &&
@@ -1199,13 +1207,14 @@ export default function Home() {
                 profile.athleteType === "Hybrid"),
             raceGoal: profile.raceGoal,
             distanceUnit: resolveDistanceUnit(profile.preferredDistanceUnit),
-            streak: streakLoadFailed
-              ? null
-              : {
-                  days: streak,
-                  best: longestStreak,
-                  loggedToday: hasLoggedToday,
-                },
+            streak:
+              streakLoading || streakLoadFailed
+                ? null
+                : {
+                    days: streak,
+                    best: longestStreak,
+                    loggedToday: hasLoggedToday,
+                  },
             // TodayEnergy's figures: no protein goal below the
             // essential-fat floor (Nutr3).
             food: mealsError
@@ -1218,12 +1227,14 @@ export default function Home() {
                     ? 0
                     : effectiveTargets.protein,
                 },
-            water: {
-              ml: waterMl,
-              targetMl: waterTargetMl,
-              servingMl,
-              drinkIds: waterDrinks.map((drink) => drink.id),
-            },
+            water: waterLoading
+              ? null
+              : {
+                  ml: waterMl,
+                  targetMl: waterTargetMl,
+                  servingMl,
+                  drinkIds: widgetDrinkIds ? widgetDrinkIds.split(" ") : [],
+                },
           }
         : null,
     [
@@ -1231,6 +1242,8 @@ export default function Home() {
       profile,
       widgetTrainingReady,
       mealsLoading,
+      widgetWaterSettled,
+      widgetStreakSettled,
       waterLoading,
       streakLoading,
       todayKey,
@@ -1238,7 +1251,8 @@ export default function Home() {
       freeRunLine,
       heroPositionLabel,
       widgetStrip,
-      weekSessionCount,
+      widgetWeekDone,
+      widgetWeekOf,
       programState,
       streakLoadFailed,
       streak,
@@ -1253,7 +1267,7 @@ export default function Home() {
       waterMl,
       waterTargetMl,
       servingMl,
-      waterDrinks,
+      widgetDrinkIds,
     ]
   );
   useHomeWidgetSnapshot(widgetInput);

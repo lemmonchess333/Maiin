@@ -1,5 +1,6 @@
 import Capacitor
 import Foundation
+import UIKit
 import WidgetKit
 
 /// The web view's way to the Home Screen and Lock Screen widgets (Wid1),
@@ -28,6 +29,24 @@ final class HomeWidgetsPlugin: CAPPlugin, CAPBridgedPlugin {
 
     private var lastReload = Date.distantPast
     private var reloadScheduled = false
+
+    override func load() {
+        // A redraw held by the throttle is asked for at once when the app
+        // goes to the background: suspended, it would wait for the next open.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reloadHeldRedraw),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+    }
+
+    @objc private func reloadHeldRedraw() {
+        guard reloadScheduled else { return }
+        reloadScheduled = false
+        lastReload = Date()
+        WidgetCenter.shared.reloadAllTimelines()
+    }
 
     @objc func writeSnapshot(_ call: CAPPluginCall) {
         guard let text = call.getString("snapshot"),
@@ -98,7 +117,8 @@ final class HomeWidgetsPlugin: CAPPlugin, CAPBridgedPlugin {
             guard !self.reloadScheduled else { return }
             self.reloadScheduled = true
             DispatchQueue.main.asyncAfter(deadline: .now() + wait) { [weak self] in
-                guard let self else { return }
+                // Already asked for, on the way to the background.
+                guard let self, self.reloadScheduled else { return }
                 self.reloadScheduled = false
                 self.lastReload = Date()
                 WidgetCenter.shared.reloadAllTimelines()
