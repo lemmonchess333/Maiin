@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useEffect, useMemo, useRef } from "react";
 import FoodRow, { type FoodRowGroup } from "./FoodRow";
@@ -226,9 +226,9 @@ export default function FoodTimeline({
   }
 
   return (
-    <motion.div
-      layout
-      transition={{ duration: 0.22, ease: "easeOut" }}
+    /* No `layout` on the card: its rows fold their own height when one is
+       deleted, and the card's own tween stretched the rows inside it. */
+    <div
       className="bg-card rounded-xl overflow-hidden card-shadow"
       style={{ contain: "layout paint" }}
     >
@@ -337,6 +337,6 @@ export default function FoodTimeline({
           })}
         </AnimatePresence>
       </div>
-    </motion.div>
+    </div>
   );
 }

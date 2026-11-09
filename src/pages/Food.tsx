@@ -2474,7 +2474,10 @@ export default function Food() {
           row's edit sheet. Targeting a slot for NEW logs stays on the
           composer pills. */}
       <motion.div variants={pageItemVariant} className="space-y-3">
+        {/* Keyed by day, as the hero above is: a new day is a new list,
+            not the old day's rows folding away among the new ones. */}
         <FoodTimeline
+          key={selectedDate}
           meals={visibleTodaysMeals}
           openRowId={openRowId}
           setOpenRowId={setOpenRowId}

@@ -68,6 +68,7 @@ export default function ElevationProfile({
           <YAxis hide domain={[minAlt - 5, maxAlt + 5]} />
           <XAxis hide />
           <Area
+            isAnimationActive={false}
             type="monotone"
             dataKey="alt"
             stroke={accentColor}
