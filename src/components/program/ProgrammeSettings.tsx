@@ -85,7 +85,12 @@ import {
   represcribeWorkouts,
 } from "@/features/program/represcribe";
 import { runTuningFromProfile } from "@/features/program/runScheduler";
-import { takesBarbellAtHome } from "@/features/program/programLabels";
+import {
+  hasPullUpBar,
+  pullUpBarWhenChosen,
+  takesBarbellAtHome,
+  takesPullUpBar,
+} from "@/features/program/programLabels";
 import { NO_EQUIPMENT_PULL_NOTE } from "@/features/program/noEquipment";
 import {
   chooseSplit,
@@ -390,7 +395,7 @@ const EQUIPMENT_OPTIONS: {
   {
     id: "home_gym",
     label: "Home gym",
-    desc: "Dumbbells, bench, pull-up bar",
+    desc: "Dumbbells, bench",
     icon: <Dumbbell size={20} style={{ color: THEME.brand }} />,
   },
   {
@@ -485,6 +490,12 @@ export default function ProgrammeSettings({
       equipment: (profile.equipment as Equipment) ?? "full_gym",
       // Lift4 (11): "what do you have?" beside a home gym's kit.
       barbellAtHome: profile.barbellAtHome === true,
+      // The answer the plan follows: unanswered, an older home or minimal
+      // plan has its pull-ups (`hasPullUpBar`).
+      pullUpBar: hasPullUpBar(
+        profile.equipment ?? "full_gym",
+        profile.pullUpBar
+      ),
       injuries: profile.injuries ?? [],
       runMode: profile.runMode ?? "freeform",
       weeklyRunDays: getWeeklyRunTarget(profile) || 2,
@@ -519,6 +530,7 @@ export default function ProgrammeSettings({
   );
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
   const [barbellAtHome, setBarbellAtHome] = useState(saved.barbellAtHome);
+  const [pullUpBar, setPullUpBar] = useState(saved.pullUpBar);
   const [injuries, setInjuries] = useState<string[]>(saved.injuries);
   // D14 dedupe: run-plan fields are NO LONGER edited here — the focused
   // /settings/run-plan editor (RunPlanSettings) is the one place they
@@ -544,6 +556,7 @@ export default function ProgrammeSettings({
     preferredSplit: saved.preferredSplit,
     equipment,
     barbellAtHome,
+    pullUpBar,
     injuries,
     // Run fields mirror `saved` — run edits live on /settings/run-plan,
     // so they can never appear in this editor's change recap.
@@ -710,6 +723,7 @@ export default function ProgrammeSettings({
           : {}),
         equipment,
         barbellAtHome,
+        ...(takesPullUpBar(equipment) ? { pullUpBar } : {}),
         injuries,
         currentDate: localDateString(new Date()),
         existingState: programState ?? undefined,
@@ -1222,7 +1236,17 @@ export default function ProgrammeSettings({
               <SettingsOptionCard
                 key={opt.id}
                 selected={equipment === opt.id}
-                onSelect={() => setEquipment(opt.id)}
+                onSelect={() => {
+                  // A setup chosen anew starts from its own bar answer;
+                  // back to the saved one, the saved answer.
+                  if (opt.id !== equipment)
+                    setPullUpBar(
+                      opt.id === saved.equipment
+                        ? saved.pullUpBar
+                        : pullUpBarWhenChosen(opt.id)
+                    );
+                  setEquipment(opt.id);
+                }}
                 index={i}
                 icon={opt.icon}
                 label={opt.label}
@@ -1250,6 +1274,22 @@ export default function ProgrammeSettings({
                 label="A barbell and a rack"
                 className="ml-3"
                 onChange={() => setBarbellAtHome((v) => !v)}
+              />
+            </div>
+          )}
+          {takesPullUpBar(equipment) && (
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-foreground">A pull-up bar</p>
+                <p className="text-xs text-muted-foreground">
+                  A doorway bar works. Pull-ups and chin-ups.
+                </p>
+              </div>
+              <Toggle
+                checked={pullUpBar}
+                label="A pull-up bar"
+                className="ml-3"
+                onChange={() => setPullUpBar((v) => !v)}
               />
             </div>
           )}

@@ -32,6 +32,7 @@ export function buildOnboardingPlan(
     | "weightKg"
     | "sessionMinutes"
     | "barbellAtHome"
+    | "pullUpBar"
     | "smallPlates"
     | "raceLegTrim"
     | "weightDisplayUnit"
@@ -69,6 +70,7 @@ export function buildOnboardingPlan(
     liftDays: draft.daysPerWeek,
     sessionMinutes: draft.sessionMinutes,
     barbellAtHome: draft.barbellAtHome,
+    pullUpBar: draft.pullUpBar,
     smallPlates: draft.smallPlates,
     // Lift18: the kit the loads round to, from the body-weight unit.
     loadUnit: liftUnitForBodyWeight(draft.weightDisplayUnit),

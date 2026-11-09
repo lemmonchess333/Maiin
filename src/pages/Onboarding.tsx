@@ -36,6 +36,8 @@ import {
   goalLabel,
   takesBarbellAtHome,
   takesSmallPlates,
+  takesPullUpBar,
+  pullUpBarWhenChosen,
 } from "@/features/program/programLabels";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
@@ -282,7 +284,11 @@ export default function Onboarding() {
   const [equipment, setEquipment] = useState<OnboardingDraft["equipment"]>(
     draft?.equipment ?? "full_gym"
   );
-  // "What do you have?" (Lift4 (11)): optional, beside the three setups.
+  // "What do you have?" (Lift4 (11)): optional, beside the setups. The bar
+  // starts from the setup chosen: on for a home gym, off for Minimal.
+  const [pullUpBar, setPullUpBar] = useState(
+    draft?.pullUpBar ?? pullUpBarWhenChosen(draft?.equipment)
+  );
   const [barbellAtHome, setBarbellAtHome] = useState(
     draft?.barbellAtHome ?? false
   );
@@ -424,6 +430,7 @@ export default function Onboarding() {
       liftDaysPreference,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       recentRaceDistance,
@@ -469,6 +476,7 @@ export default function Onboarding() {
       liftDaysPreference,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       recentRaceDistance,
@@ -633,6 +641,7 @@ export default function Onboarding() {
           weightKg,
           sessionMinutes,
           barbellAtHome: takesBarbellAtHome(equipment) && barbellAtHome,
+          ...(takesPullUpBar(equipment) ? { pullUpBar } : {}),
           smallPlates: takesSmallPlates(equipment) && smallPlates,
           raceLegTrim,
           weightDisplayUnit,
@@ -663,6 +672,7 @@ export default function Onboarding() {
       weightKg,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       weightDisplayUnit,
@@ -867,6 +877,7 @@ export default function Onboarding() {
         daysPerWeek,
         equipment,
         ...(takesBarbellAtHome(equipment) ? { barbellAtHome } : {}),
+        ...(takesPullUpBar(equipment) ? { pullUpBar } : {}),
         preferredSplit: "auto",
         runFrequency,
         ...(recentRaceBenchmark
@@ -1754,7 +1765,7 @@ export default function Onboarding() {
                     {
                       id: "home_gym",
                       label: "Home gym",
-                      desc: "Dumbbells, a bench and a pull-up bar.",
+                      desc: "Dumbbells and a bench.",
                       art: "incline-db-press",
                     },
                     {
@@ -1776,6 +1787,9 @@ export default function Onboarding() {
                     selected={equipmentConfirmed && equipment === option.id}
                     onSelect={() => {
                       setEquipmentConfirmed(true);
+                      // A setup chosen anew starts from its own bar answer.
+                      if (option.id !== equipment)
+                        setPullUpBar(pullUpBarWhenChosen(option.id));
                       setEquipment(option.id);
                     }}
                     /* The kit each setup means, drawn: a machine, dumbbells
@@ -1819,6 +1833,22 @@ export default function Onboarding() {
                         label="A barbell and a rack"
                         className="ml-3"
                         onChange={() => setBarbellAtHome((v) => !v)}
+                      />
+                    </div>
+                  )}
+                  {takesPullUpBar(equipment) && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-foreground">A pull-up bar</p>
+                        <p className="text-xs text-muted-foreground">
+                          A doorway bar works. Pull-ups and chin-ups.
+                        </p>
+                      </div>
+                      <Toggle
+                        checked={pullUpBar}
+                        label="A pull-up bar"
+                        className="ml-3"
+                        onChange={() => setPullUpBar((v) => !v)}
                       />
                     </div>
                   )}

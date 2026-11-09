@@ -214,6 +214,11 @@ export interface PlanBuilderInput {
    *  setup's kit ("what do you have?"). */
   barbellAtHome?: boolean;
 
+  /** "A pull-up bar" beside a home gym's or a minimal setup's kit: pull-ups,
+   *  chin-ups and the hanging leg raise (`hasPullUpBar`). Undefined keeps an
+   *  older plan's, which has them. */
+  pullUpBar?: boolean;
+
   /** Lift4 (10): the answer at race setup to "Lighten leg sessions while
    *  your runs build?". Saved on the profile, and the week being saved in
    *  takes it at once when it is a build week. */
@@ -294,6 +299,8 @@ export interface PlanBuilderOutput {
     liftTimeBudgetMinutes?: number;
     /** A barbell and a rack beside the equipment tier's kit (Lift4 (11)). */
     barbellAtHome?: boolean;
+    /** The pull-up bar answer beside it. */
+    pullUpBar?: boolean;
     /** The race-setup answer on the leg trim (Lift4 (10)). */
     raceLegTrim?: boolean;
     // Pgm4: nutrition phase lives on profile.program.goal — that's what
@@ -376,6 +383,7 @@ type LiftProgramInput = Pick<
   | "weekSchedule"
   | "equipment"
   | "barbellAtHome"
+  | "pullUpBar"
   | "injuries"
   | "existingState"
   | "preserveHistory"
@@ -431,6 +439,7 @@ function buildLiftProgram(input: LiftProgramInput): {
             equipment: input.equipment,
             injuries: input.injuries,
             barbellAtHome: input.barbellAtHome,
+            pullUpBar: input.pullUpBar,
           }
         );
 
@@ -490,12 +499,14 @@ function buildLiftProgram(input: LiftProgramInput): {
       input.injuries,
       input.equipment,
       loadCtx,
-      input.barbellAtHome
+      input.barbellAtHome,
+      input.pullUpBar
     ),
     input.injuries,
     input.equipment,
     loadCtx,
-    input.barbellAtHome
+    input.barbellAtHome,
+    input.pullUpBar
   );
   // A lift the swaps bring in takes its own role's numbers; a new plan's
   // were swapped in the generator, before its role table. With no
@@ -511,7 +522,8 @@ function buildLiftProgram(input: LiftProgramInput): {
         input.injuries,
         toExperience(input.experience),
         loadCtx,
-        input.barbellAtHome
+        input.barbellAtHome,
+        input.pullUpBar
       ),
       input.equipment,
       input.injuries,
@@ -641,6 +653,7 @@ export type FreshLiftAnswers = Pick<
   | "liftDays"
   | "equipment"
   | "barbellAtHome"
+  | "pullUpBar"
   | "injuries"
 >;
 
@@ -880,6 +893,7 @@ function buildProfileUpdates(
     updates.liftTimeBudgetMinutes = sessionMinutesFor(input.sessionMinutes);
   if (input.barbellAtHome !== undefined)
     updates.barbellAtHome = input.barbellAtHome;
+  if (input.pullUpBar !== undefined) updates.pullUpBar = input.pullUpBar;
   if (input.raceLegTrim !== undefined) updates.raceLegTrim = input.raceLegTrim;
   if (input.runningBaseline !== undefined)
     updates.runningBaseline = input.runningBaseline;

@@ -30,6 +30,7 @@ import ProgrammeSettings from "../ProgrammeSettings";
 import type { UserProfile } from "@/lib/auth";
 import { toast } from "@/lib/toast";
 import { PLAN_SAVES_TOO_OFTEN } from "@/lib/callableErrors";
+import { NO_EQUIPMENT_PULL_NOTE } from "@/features/program/noEquipment";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 
@@ -384,6 +385,40 @@ describe("ProgrammeSettings — what do you have? (Lift4 (11))", () => {
     expect(
       screen.getByRole("switch", { name: "A barbell and a rack" })
     ).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("asks about a pull-up bar at home, keeps an older plan's, and saves an answer", async () => {
+    // An older Minimal plan, never asked: it has its pull-ups, so yes.
+    setup({ equipment: "minimal" });
+    const bar = screen.getByRole("switch", { name: "A pull-up bar" });
+    expect(bar).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(bar);
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(
+      within(screen.getByRole("alertdialog")).getByText("A pull-up bar")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.pullUpBar).toBe(false);
+  });
+
+  it("starts a newly chosen setup from its own bar answer, and asks a gym nothing", () => {
+    setup({ equipment: "full_gym" });
+    expect(screen.queryByRole("switch", { name: "A pull-up bar" })).toBeNull();
+    fireEvent.click(screen.getByText("Home gym"));
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByText("Minimal"));
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(screen.getByText("No equipment"));
+    expect(screen.queryByRole("switch", { name: "A pull-up bar" })).toBeNull();
+    expect(screen.getByText(NO_EQUIPMENT_PULL_NOTE)).toBeInTheDocument();
   });
 
   it("asks nothing more of no equipment, and saves it with the plan", async () => {

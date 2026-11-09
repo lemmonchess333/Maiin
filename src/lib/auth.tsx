@@ -589,6 +589,10 @@ export interface UserProfileOnboarding {
   /** Lift4 (11): a barbell and a rack beside a home gym's or a minimal
    *  setup's kit, so the plan can give barbell lifts. */
   barbellAtHome?: boolean;
+  /** Lift4 (11): a pull-up bar beside a home gym's or a minimal setup's
+   *  kit, for pull-ups, chin-ups and the hanging leg raise. Missing on an
+   *  older profile, which keeps them (`hasPullUpBar`). */
+  pullUpBar?: boolean;
   preferredSplit?: PreferredSplit;
   runFrequency?: "regular" | "occasional" | "none" | "new";
   injuries?: string[];

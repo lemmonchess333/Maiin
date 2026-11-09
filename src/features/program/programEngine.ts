@@ -1895,6 +1895,8 @@ export function generateProgram(
     injuries?: readonly string[];
     /** A barbell and a rack beside a home gym's kit. */
     barbellAtHome?: boolean;
+    /** A pull-up bar beside a home gym's or a minimal setup's kit. */
+    pullUpBar?: boolean;
   }
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
@@ -2133,12 +2135,14 @@ export function generateProgram(
         injuries,
         limits.equipment ?? "full_gym",
         loadCtx,
-        limits.barbellAtHome
+        limits.barbellAtHome,
+        limits.pullUpBar
       ),
       injuries,
       limits.equipment,
       loadCtx,
-      limits.barbellAtHome
+      limits.barbellAtHome,
+      limits.pullUpBar
     );
     workouts = applyEquipmentFilterToWorkouts(
       workouts,
@@ -2146,14 +2150,16 @@ export function generateProgram(
       injuries,
       experience,
       loadCtx,
-      limits.barbellAtHome
+      limits.barbellAtHome,
+      limits.pullUpBar
     );
     // Lift14: a supporting lift the kit can't do goes when its day trains
     // the muscle with one it can.
     workouts = dropUnavailableAccessories(
       workouts,
       limits.equipment,
-      limits.barbellAtHome
+      limits.barbellAtHome,
+      limits.pullUpBar
     );
     // With no equipment, a main lift nothing in its movement can stand in
     // for takes a hold or floor lift, so no day is left with one it can't

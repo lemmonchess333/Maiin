@@ -585,6 +585,7 @@ export function useProgram() {
             equipment: profile.equipment,
             injuries: profile.injuries,
             barbellAtHome: profile.barbellAtHome,
+            pullUpBar: profile.pullUpBar,
           }
         );
 
@@ -2425,6 +2426,7 @@ export function useProgram() {
             equipment: profile.equipment,
             injuries: profile.injuries,
             barbellAtHome: profile.barbellAtHome,
+            pullUpBar: profile.pullUpBar,
           }
         );
 

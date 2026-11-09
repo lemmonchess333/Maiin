@@ -556,6 +556,28 @@ describe("inspect the generated week", () => {
     builder.mockRestore();
   });
 
+  it("asks a home gym and Minimal about a pull-up bar, on for one and off for the other", () => {
+    saveOnboardingDraft("setup-test", draft);
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit setup" }));
+    expect(screen.queryByRole("switch", { name: "A pull-up bar" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /^Home gym/ }));
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByRole("button", { name: /^Minimal/ }));
+    const bar = screen.getByRole("switch", { name: "A pull-up bar" });
+    expect(bar).toHaveAttribute("aria-checked", "false");
+    expect(builder.mock.calls.at(-1)![0]).toMatchObject({
+      equipment: "minimal",
+      pullUpBar: false,
+    });
+    fireEvent.click(bar);
+    expect(builder.mock.calls.at(-1)![0]).toMatchObject({ pullUpBar: true });
+    builder.mockRestore();
+  });
+
   it("builds no equipment from what the floor allows, and asks for no kit", () => {
     // Answers kept from a home gym don't follow the person to no equipment.
     saveOnboardingDraft("setup-test", {

@@ -28,6 +28,7 @@ import {
   NO_EQUIPMENT_LAST_RESORT,
   NO_EQUIPMENT_STAND_INS,
 } from "./noEquipment";
+import { hasPullUpBar } from "./programLabels";
 
 /**
  * How many times the week has each lift, kept as a filter swaps them, so a
@@ -157,9 +158,11 @@ export function restoreSwappedLifts(
   injuries: readonly string[],
   equipment: string,
   loadCtx?: StartingLoadContext,
-  barbellAtHome?: boolean
+  barbellAtHome?: boolean,
+  /** A pull-up bar at home (`hasPullUpBar`). */
+  pullUpBar?: boolean
 ): WorkoutDay[] {
-  const owned = ownedKit(equipment, barbellAtHome);
+  const owned = ownedKit(equipment, barbellAtHome, pullUpBar);
   const usable = (id: string) => !owned || owned(id);
   return workouts.map((day) => {
     const ids = new Set(day.exercises.map((e) => e.exerciseId));
@@ -231,7 +234,9 @@ export function applyInjuryFiltersToWorkouts(
   equipment?: string,
   loadCtx?: StartingLoadContext,
   /** A barbell and a rack at home, beside the tier's kit. */
-  barbellAtHome?: boolean
+  barbellAtHome?: boolean,
+  /** A pull-up bar at home (`hasPullUpBar`). */
+  pullUpBar?: boolean
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -246,7 +251,7 @@ export function applyInjuryFiltersToWorkouts(
   const unsafe = Object.keys(CONTRAINDICATED).filter(
     (id) => contraindicatedFor(id, injuries).length > 0
   );
-  const isAvailable = ownedKit(equipment, barbellAtHome);
+  const isAvailable = ownedKit(equipment, barbellAtHome, pullUpBar);
 
   const out = workouts.map(cloneDay);
   const week = weekLifts(out);
@@ -303,7 +308,7 @@ export function applyInjuryFiltersToWorkouts(
  * Which `Exercise.equipment` values each equipment tier can train with.
  * Derived from the EQUIPMENT_OPTIONS copy in ProgrammeSettings:
  *   full_gym  "Barbells, dumbbells, cables, machines"  → everything (no filter)
- *   home_gym  "Dumbbells, bench, pull-up bar"          → DB + bodyweight (+ KB)
+ *   home_gym  "Dumbbells, bench"                       → DB + bodyweight (+ KB)
  *   minimal   "Bands, bodyweight, maybe dumbbells"     → DB + bodyweight
  * home/minimal both EXCLUDE Barbell / Machine / Cable — the meaningful "no
  * barbell or machines" distinction the coarse equipment vocab supports. Bands
@@ -322,16 +327,26 @@ const EQUIPMENT_AVAILABILITY: Record<string, ReadonlySet<string>> = {
 /** Whether a person can do an exercise with the kit they have. */
 type KitCheck = (exerciseId: string) => boolean;
 
+/** The bodyweight lifts that hang from a pull-up bar: what "A pull-up bar"
+ *  allows at home (Lift4 (11)). */
+export const PULL_UP_BAR_EXERCISE_IDS: ReadonlySet<string> = new Set([
+  "pull-ups",
+  "chin-ups",
+  "leg-raise",
+]);
+
 /**
- * What a person can do with their kit: their equipment tier's, and a barbell
- * with a rack when they said they have one at home (Lift4 (11): "what do you
- * have?"), or, with no equipment, the exercises that setup names. Undefined
- * means everything (a full gym, or an unknown tier). An exercise the
- * catalogue doesn't know (a custom one) can't be judged, so it passes.
+ * What a person can do with their kit: their equipment tier's, a barbell
+ * with a rack when they said they have one at home, and the pull-ups,
+ * chin-ups and hanging leg raise only with a pull-up bar (Lift4 (11): "what
+ * do you have?"); or, with no equipment, the floor moves that setup names.
+ * Undefined means everything (a full gym, or an unknown tier). An exercise
+ * the catalogue doesn't know (a custom one) can't be judged, so it passes.
  */
 function ownedKit(
   equipment: string | undefined,
-  barbellAtHome?: boolean
+  barbellAtHome?: boolean,
+  pullUpBar?: boolean
 ): KitCheck | undefined {
   if (equipment === "no_equipment") {
     return (id) =>
@@ -340,7 +355,9 @@ function ownedKit(
   const tier = equipment ? EQUIPMENT_AVAILABILITY[equipment] : undefined;
   if (!tier) return undefined;
   const kit = barbellAtHome ? new Set([...tier, "Barbell"]) : tier;
+  const bar = hasPullUpBar(equipment, pullUpBar);
   return (id) => {
+    if (!bar && PULL_UP_BAR_EXERCISE_IDS.has(id)) return false;
     const eq = getExerciseById(id)?.equipment;
     return eq === undefined || kit.has(eq);
   };
@@ -370,7 +387,9 @@ export function applyEquipmentFilterToWorkouts(
   experience?: Experience,
   loadCtx?: StartingLoadContext,
   /** A barbell and a rack at home, beside the tier's kit. */
-  barbellAtHome?: boolean
+  barbellAtHome?: boolean,
+  /** A pull-up bar at home (`hasPullUpBar`). */
+  pullUpBar?: boolean
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -378,7 +397,7 @@ export function applyEquipmentFilterToWorkouts(
   });
 
   // Unknown id (custom exercise) → can't assess equipment, leave it be.
-  const isAvailable = ownedKit(equipment, barbellAtHome);
+  const isAvailable = ownedKit(equipment, barbellAtHome, pullUpBar);
   if (!isAvailable) return workouts.map(cloneDay); // full_gym / unknown → no filter
 
   const isInjuryContra = (id: string): boolean =>
@@ -557,9 +576,11 @@ export function applyEquipmentFilterToWorkouts(
 export function dropUnavailableAccessories(
   workouts: readonly WorkoutDay[],
   equipment: string | undefined,
-  barbellAtHome?: boolean
+  barbellAtHome?: boolean,
+  /** A pull-up bar at home (`hasPullUpBar`). */
+  pullUpBar?: boolean
 ): WorkoutDay[] {
-  const owned = ownedKit(equipment, barbellAtHome);
+  const owned = ownedKit(equipment, barbellAtHome, pullUpBar);
   if (!owned) return [...workouts];
   const nothing = equipment === "no_equipment";
   return workouts.map((day) => {

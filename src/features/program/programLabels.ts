@@ -92,3 +92,30 @@ export function takesBarbellAtHome(equipment: string | undefined): boolean {
 export function takesSmallPlates(equipment: string | undefined): boolean {
   return equipment !== "no_equipment";
 }
+
+/** Whether a setup takes the "A pull-up bar" answer: a home gym or a
+ *  minimal one. A full gym has one, and with no equipment there is none. */
+export function takesPullUpBar(equipment: string | undefined): boolean {
+  return equipment === "home_gym" || equipment === "minimal";
+}
+
+/** The pull-up bar answer a setup starts from when the person chooses it:
+ *  on for a home gym, whose setup has always had one, off for Minimal. */
+export function pullUpBarWhenChosen(equipment: string | undefined): boolean {
+  return equipment === "home_gym";
+}
+
+/**
+ * Whether a plan may use a pull-up bar. For a home gym or a minimal setup
+ * it is the person's answer, and yes where they haven't given one: a home
+ * gym has always had a bar, and a Minimal plan the person has keeps its
+ * pull-ups until they say no (Pgm5). Every new answer is written, so a
+ * missing one is an older plan's.
+ */
+export function hasPullUpBar(
+  equipment: string | undefined,
+  answer: boolean | undefined
+): boolean {
+  if (!takesPullUpBar(equipment)) return equipment !== "no_equipment";
+  return answer ?? true;
+}

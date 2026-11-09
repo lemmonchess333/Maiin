@@ -129,6 +129,23 @@ describe("computeProgrammeChanges", () => {
     ).toEqual([]);
   });
 
+  it("reports a pull-up bar within a home setup, not across setups", () => {
+    const minimal = { ...base, equipment: "minimal" };
+    expect(
+      computeProgrammeChanges(
+        { ...minimal, pullUpBar: true },
+        { ...minimal, pullUpBar: false }
+      )
+    ).toEqual([{ label: "A pull-up bar", from: "Yes", to: "No" }]);
+    // A setup chosen anew starts its own answer: the setup is the change.
+    expect(
+      computeProgrammeChanges(
+        { ...base, equipment: "home_gym", pullUpBar: true },
+        { ...minimal, pullUpBar: false }
+      ).map((c) => c.label)
+    ).toEqual(["Equipment"]);
+  });
+
   it("names the no-equipment setup", () => {
     expect(
       computeProgrammeChanges(
