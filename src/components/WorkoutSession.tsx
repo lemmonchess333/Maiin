@@ -436,7 +436,12 @@ export default function WorkoutSession({
   const [prescription, setPrescription] = useState<SessionPrescription>(
     () =>
       initialDraft?.prescription ??
-      sessionPrescription(initialDay, initialCompletionId, progressionBaseline)
+      sessionPrescription(
+        initialDay,
+        initialCompletionId,
+        progressionBaseline,
+        profile?.equipment
+      )
   );
   const [sessionProgrammeContext] = useState(
     initialDraft?.programmeContext ?? programmeContext
@@ -2103,7 +2108,8 @@ export default function WorkoutSession({
     const fresh = sessionPrescription(
       initialDay,
       initialCompletionId,
-      progressionBaseline
+      progressionBaseline,
+      profile?.equipment
     );
     setPrescription(fresh);
     setSkippedRows({});

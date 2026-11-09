@@ -227,6 +227,16 @@ const RPE_HOLD_THRESHOLD = 9.5;
 /** Bodyweight rep target stops climbing here; the user is prompted to add load. */
 const MAX_BODYWEIGHT_REPS = 20;
 /**
+ * Where a bodyweight lift's reps stop climbing when the person has nothing
+ * to add load with (no equipment): one rep a session past its range, to 30,
+ * as the owner set it. The cap is the evidence's: muscle grows about as
+ * much from 6 reps as from 30 when sets end near failure (Schoenfeld,
+ * Grgic, Ogborn and Krieger 2017, J Strength Cond Res 31(12):3508-3523, a
+ * meta-analysis of low- against high-load training). Holds keep their 30
+ * to 60 seconds.
+ */
+export const NO_LOAD_MAX_REPS = 30;
+/**
  * Ceilings the GENERATOR will not prescribe past (2026-07-28 audit).
  *
  * `applyDayRoles` shifts a pump day +2 reps with a floor and no ceiling, and
@@ -2341,7 +2351,10 @@ export function applyProgression(
   date: string = format(new Date(), "yyyy-MM-dd"),
   /** The lifter's kit (Lift18, `settings.loadUnit`): the weight steps on
    *  lb plates and an lb rack. */
-  unit: LiftUnit = "kg"
+  unit: LiftUnit = "kg",
+  /** The person has nothing to add load with (no equipment): a bodyweight
+   *  lift climbs its reps to `NO_LOAD_MAX_REPS`, and nothing asks for load. */
+  noLoad = false
 ): ProgramExercise {
   const record = {
     date,
@@ -2462,19 +2475,29 @@ export function applyProgression(
   // steps toward the authored ceiling, and the add-load prompt waits until
   // the hold is genuinely long.
   const isTimed = exercise.repUnit === "seconds";
+  // With nothing to add load with, a bodyweight lift in reps climbs past
+  // its range to `NO_LOAD_MAX_REPS` and stops there, and a hold stays at
+  // its 60 seconds, without a word: the "add load" prompt asks for kit the
+  // person doesn't have.
+  const climbsToNoLoadTop = noLoad && !isTimed;
+  const atTop = (message: string) => {
+    if (!noLoad) updated.notes = `${message}${ADD_LOAD_PROMPT}`;
+  };
   const bumpBodyweightReps = () => {
     if (isTimed) {
       const ceiling = exercise.repRangeMax ?? MAX_HOLD_SECONDS;
       if (exercise.reps >= ceiling) {
-        updated.notes = `Holding this long already${ADD_LOAD_PROMPT}`;
+        atTop("Holding this long already");
       } else {
         updated.reps = Math.min(ceiling, exercise.reps + HOLD_STEP_SECONDS);
       }
       return;
     }
-    const ceiling = exercise.repRangeMax ?? MAX_BODYWEIGHT_REPS;
+    const ceiling = climbsToNoLoadTop
+      ? NO_LOAD_MAX_REPS
+      : (exercise.repRangeMax ?? MAX_BODYWEIGHT_REPS);
     if (exercise.reps >= ceiling) {
-      updated.notes = `Hitting ${ceiling}+ reps${ADD_LOAD_PROMPT}`;
+      atTop(`Hitting ${ceiling}+ reps`);
     } else {
       updated.reps = Math.min(ceiling, exercise.reps + 1);
     }
@@ -2488,7 +2511,10 @@ export function applyProgression(
       const rangeMax =
         exercise.repRangeMax ??
         impliedDoubleRangeMax(resetReps, repsOnly, isTimed);
-      if (repsOnly && rangeMax != null && rangeMax > resetReps) {
+      // The rep climb's top: past the range to 30 with nothing to load.
+      const repsTop =
+        repsOnly && climbsToNoLoadTop ? NO_LOAD_MAX_REPS : rangeMax;
+      if (repsOnly && repsTop != null && repsTop > resetReps) {
         // Range-aware BODYWEIGHT progression. This branch did not exist:
         // the range-aware arm below was gated `!isBodyweight`, so a
         // bodyweight main fell through to the legacy +2-overshoot arm —
@@ -2508,10 +2534,10 @@ export function applyProgression(
         if (rpeOk) {
           if (isTimed) {
             bumpBodyweightReps();
-          } else if (actualReps >= rangeMax) {
-            updated.notes = `Hitting ${rangeMax}+ reps${ADD_LOAD_PROMPT}`;
+          } else if (actualReps >= repsTop) {
+            atTop(`Hitting ${repsTop}+ reps`);
           } else {
-            updated.reps = Math.min(rangeMax, actualReps + 1);
+            updated.reps = Math.min(repsTop, actualReps + 1);
           }
         }
       } else if (!repsOnly && rangeMax != null && rangeMax > resetReps) {
@@ -2561,9 +2587,10 @@ export function applyProgression(
         // axis (7) lowers it on). Without it a pull-up main on a fixed
         // target climbed only on a 2-rep overshoot, and then a single rep.
         // With load added, its step is a plate, below (Pgm8 L6).
-        const rangeMax =
-          exercise.repRangeMax ??
-          impliedDoubleRangeMax(resetReps, repsOnly, isTimed);
+        const rangeMax = climbsToNoLoadTop
+          ? NO_LOAD_MAX_REPS
+          : (exercise.repRangeMax ??
+            impliedDoubleRangeMax(resetReps, repsOnly, isTimed));
         if (rangeMax != null && rangeMax > resetReps) {
           // Range-aware bodyweight climb on the LINEAR path too — a
           // running-goal pull-up main (4-6, linear) was frozen for a
@@ -2573,7 +2600,7 @@ export function applyProgression(
             if (isTimed) {
               bumpBodyweightReps();
             } else if (actualReps >= rangeMax) {
-              updated.notes = `Hitting ${rangeMax}+ reps${ADD_LOAD_PROMPT}`;
+              atTop(`Hitting ${rangeMax}+ reps`);
             } else {
               updated.reps = Math.min(rangeMax, actualReps + 1);
             }
@@ -2684,7 +2711,9 @@ export function applySessionSets(
   /** The session's local date for its history record (`applyProgression`). */
   date: string = format(new Date(), "yyyy-MM-dd"),
   /** The lifter's kit (`applyProgression`). */
-  unit: LiftUnit = "kg"
+  unit: LiftUnit = "kg",
+  /** Nothing to add load with (`applyProgression`). */
+  noLoad = false
 ): ProgramExercise {
   const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
   const reps = recordedReps(read);
@@ -2704,7 +2733,8 @@ export function applySessionSets(
         hardestEffort(read),
         missCounts,
         date,
-        unit
+        unit,
+        noLoad
       ),
       reps
     );

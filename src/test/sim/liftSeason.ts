@@ -1461,7 +1461,8 @@ export function simulateLiftSeason(
           ? { ...stored, exercises: buildEasierSession(stored, rest).exercises }
           : stored,
         completionId,
-        stored.exercises
+        stored.exercises,
+        answers.equipment
       );
       if (easier) season.events.push(`${date}: easier today`);
       // "Swap for today" from the exercise's menu (WorkoutSession's
