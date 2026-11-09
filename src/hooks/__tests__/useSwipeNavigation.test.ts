@@ -234,3 +234,46 @@ describe("useSwipeNavigation — inner-pager boundary hand-off", () => {
     expect(navigate).toHaveBeenCalledWith("/");
   });
 });
+
+describe("useSwipeNavigation — touches from a sheet", () => {
+  /* A sheet renders in a portal outside <main>, yet React bubbles its
+     touches to <main>'s handlers. Spinning the weight dial in Home's sheet
+     changed tab and lost the entry. Real DOM nodes here: the hook asks
+     <main> whether it contains the touched element. */
+  function gesture(
+    result: { current: ReturnType<typeof useSwipeNavigation> },
+    host: HTMLElement,
+    target: HTMLElement
+  ) {
+    nowValue = 0;
+    result.current.onTouchStart({
+      touches: { length: 1, 0: { clientX: 200, clientY: 300 } },
+      target,
+      currentTarget: host,
+    } as unknown as React.TouchEvent);
+    nowValue = 200;
+    result.current.onTouchEnd(endEvent(100, 305));
+  }
+
+  it("ignores a swipe that starts in a portal outside the page", () => {
+    const main = document.createElement("main");
+    const sheet = document.createElement("div");
+    document.body.append(main, sheet);
+    const { result } = renderHook(() => useSwipeNavigation(ROUTES, "/"));
+    gesture(result, main, sheet);
+    expect(navigate).not.toHaveBeenCalled();
+    main.remove();
+    sheet.remove();
+  });
+
+  it("still swipes for a touch inside the page", () => {
+    const main = document.createElement("main");
+    const card = document.createElement("div");
+    main.append(card);
+    document.body.append(main);
+    const { result } = renderHook(() => useSwipeNavigation(ROUTES, "/"));
+    gesture(result, main, card);
+    expect(navigate).toHaveBeenCalledWith("/program");
+    main.remove();
+  });
+});

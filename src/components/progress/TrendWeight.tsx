@@ -346,6 +346,7 @@ export function TrendWeight() {
               fill="hsl(var(--muted-foreground))"
               opacity={0.7}
               r={3}
+              isAnimationActive={false}
             />
             <Line
               dataKey="trend"
@@ -353,6 +354,7 @@ export function TrendWeight() {
               strokeWidth={2}
               dot={false}
               type="monotone"
+              isAnimationActive={false}
             />
           </ComposedChart>
         </ResponsiveContainer>

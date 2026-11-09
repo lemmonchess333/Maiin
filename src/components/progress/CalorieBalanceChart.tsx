@@ -220,7 +220,12 @@ export default function CalorieBalanceChart({
                       );
                     }}
                   />
-                  <Bar dataKey="balance" radius={[3, 3, 3, 3]} barSize={12}>
+                  <Bar
+                    dataKey="balance"
+                    radius={[3, 3, 3, 3]}
+                    barSize={12}
+                    isAnimationActive={false}
+                  >
                     {data.map((entry) => (
                       <Cell
                         key={entry.date}

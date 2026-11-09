@@ -201,7 +201,7 @@ export default function RunLaunchCard({
           fullWidth
           leftIcon={<Play className="size-5" fill="currentColor" />}
           onClick={onStart}
-          className="btn-start-run-pulse text-lg"
+          className="text-lg"
           data-guide-anchor="first-run"
         >
           Start {name}

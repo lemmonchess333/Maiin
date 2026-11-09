@@ -3146,25 +3146,20 @@ export default function WorkoutSession({
             action — `secondary` per the Button-variant table, routed through
             the primitive so it inherits the 44px floor, the focus ring and the
             0.97 press instead of hand-rolling them. */}
-        <AnimatePresence>
-          {lastCompleted && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="mx-auto"
+        {/* No entrance: it comes back after every set and clears after
+            4 s, and a fade there only delayed the one tap it offers. */}
+        {lastCompleted && (
+          <div className="mx-auto">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleUndo}
+              leftIcon={<RotateCcw className="size-3.5" />}
             >
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleUndo}
-                leftIcon={<RotateCcw className="size-3.5" />}
-              >
-                Undo last set
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              Undo last set
+            </Button>
+          </div>
+        )}
 
         {/* What comes after this exercise (DS3): the next one with sets
             left, in session order from here, so the lifter can set up for

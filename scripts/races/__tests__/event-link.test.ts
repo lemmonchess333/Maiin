@@ -72,3 +72,64 @@ describe("official calendar event links", () => {
     ).rejects.toThrow("HTTP 503");
   });
 });
+
+describe("Dublin's yearly event-dates page", () => {
+  const dublin = DATE_SOURCES["dublin-marathon"];
+  const datesPath = (year: number) => `/${year}-event-dates-entry-information/`;
+  const home = (...hrefs: string[]) =>
+    `<title>Irish Life Dublin Marathon ¦ Dublin City Marathon ¦ Dublin Marathon</title>${hrefs
+      .map(
+        (href) =>
+          `<a class="kb-nav-link-content" href="${href}"><strong>Key Dates &amp; Entry Information</strong></a>`
+      )
+      .join("")}`;
+  /* The page's shape: the marathon's KEY DETAILS list straight after its
+     heading, then the Race Series events, whose "Race Date:" items are
+     laid out differently and are decoys here. */
+  const datesPage = (year: number) =>
+    `<title>${year} Event Dates &amp; Entry Information - Irish Life Dublin Marathon</title>` +
+    `<h2>${year} Irish Life Dublin Marathon</h2><p><strong>KEY DETAILS</strong></p>` +
+    `<ul><li><strong>Race Date:</strong> Sunday 24 October ${year}</li><li><strong>Location:</strong> Dublin City Centre</li></ul>` +
+    `<ul><li><strong>Entry opens:</strong> Wednesday 10 February ${year}</li></ul>` +
+    `<h2>${year} Irish Life Dublin Race Series</h2><p>Three events from July to September.</p>` +
+    `<h3>10K</h3><ul><li><strong>Race Date:</strong> Sunday 11 July ${year}</li></ul>` +
+    `<h3>Half</h3><ul><li><strong>Race Date:</strong> Sunday 19 September ${year}</li></ul>`;
+
+  it("finds next year's page from the menu without a yearly URL change", () => {
+    expect(
+      resolveOfficialEventLink(
+        home("https://irishlifedublinmarathon.ie" + datesPath(2028)),
+        dublin
+      )
+    ).toBe("https://irishlifedublinmarathon.ie" + datesPath(2028));
+    expect(() =>
+      resolveOfficialEventLink(home(datesPath(2027), datesPath(2028)), dublin)
+    ).toThrow("single");
+  });
+
+  it("reads the marathon's race date, not the Race Series' or the entry dates", async () => {
+    const fetcher = vi.fn(async (s: typeof dublin) => ({
+      url: s.url,
+      html: s.url === dublin.url ? home(datesPath(2027)) : datesPage(2027),
+    }));
+    const result = await checkDateSource(dublin, fetcher);
+    expect(result.dateKeys).toEqual(["2027-10-24"]);
+    expect(result.sources[0].url).toBe(
+      "https://irishlifedublinmarathon.ie" + datesPath(2027)
+    );
+  });
+
+  it("fails closed when a second race date lands in the marathon's list", async () => {
+    const fetcher = vi.fn(async (s: typeof dublin) => ({
+      url: s.url,
+      html:
+        s.url === dublin.url
+          ? home(datesPath(2027))
+          : datesPage(2027).replace(
+              "<li><strong>Location:",
+              "<li><strong>Race Date:</strong> Sunday 31 October 2027</li><li><strong>Location:"
+            ),
+    }));
+    await expect(checkDateSource(dublin, fetcher)).rejects.toThrow();
+  });
+});
