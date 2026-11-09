@@ -24,6 +24,8 @@ import {
   useScanStages,
 } from "@/hooks/useScanStages";
 import { useBackDismiss } from "@/lib/backDismiss";
+import { stripDataUrlPrefix } from "@/lib/base64Helpers";
+import { MAX_EDGE_PX } from "@/lib/foodPhotoStore";
 import { blobToDataUrl, encodeJpeg } from "@/lib/imageEncode";
 import { logger } from "@/lib/logger";
 import { toast } from "@/lib/toast";
@@ -200,9 +202,10 @@ type Props = {
 
 /** The JPEG quality of every photo the scan sends, taken or picked. */
 const SCAN_JPEG_QUALITY = 0.85;
-/** The longest side of a library photo as the analysis gets it: the size
- *  the local copy keeps (foodPhotoStore's MAX_EDGE_PX). */
-const LIBRARY_PHOTO_MAX_EDGE_PX = 1280;
+/** The longest side of every photo the scan sends, a frame or a picked
+ *  one: the size the local copy keeps, so each is well under the server's
+ *  image limit. */
+const SCAN_PHOTO_MAX_EDGE_PX = MAX_EDGE_PX;
 
 /**
  * A library photo at the size the analysis needs, not the size it was
@@ -215,15 +218,10 @@ const LIBRARY_PHOTO_MAX_EDGE_PX = 1280;
  */
 async function libraryPhotoDataUrl(file: File): Promise<string> {
   const { blob } = await encodeJpeg(file, {
-    maxEdge: LIBRARY_PHOTO_MAX_EDGE_PX,
+    maxEdge: SCAN_PHOTO_MAX_EDGE_PX,
     quality: SCAN_JPEG_QUALITY,
   });
   return blobToDataUrl(blob);
-}
-
-function dataUrlToBase64(dataUrl: string) {
-  const parts = dataUrl.split(",");
-  return parts.length > 1 ? parts[1] : "";
 }
 
 async function startStream(
@@ -610,7 +608,7 @@ export default function FoodCameraModal({
         /* A photo that cannot be read or drawn (deleted between pick and
            read, an iOS Files provider error, a format the web view cannot
            decode) says so, and leaves the shutter and the library live. */
-        logger.error(err);
+        logger.warn("[FoodCameraModal] photo not readable", err);
         toast.error("Couldn't read that photo. Try another.");
         return;
       }
@@ -639,7 +637,7 @@ export default function FoodCameraModal({
       }
       setPreview(dataUrl);
       await onCaptureBase64(
-        dataUrlToBase64(dataUrl),
+        stripDataUrlPrefix(dataUrl),
         tab === "label" ? "label" : "food"
       );
     } catch (err) {
@@ -659,16 +657,19 @@ export default function FoodCameraModal({
       const w = videoEl.videoWidth || 1280;
       const h = videoEl.videoHeight || 720;
 
-      canvas.width = w;
-      canvas.height = h;
+      /* The frame at the size the scan sends: a stream larger than that (a
+         4K camera) is drawn down, as a picked photo is. */
+      const scale = Math.min(1, SCAN_PHOTO_MAX_EDGE_PX / Math.max(w, h));
+      canvas.width = Math.max(1, Math.round(w * scale));
+      canvas.height = Math.max(1, Math.round(h * scale));
 
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
 
-      ctx.drawImage(videoEl, 0, 0, w, h);
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
       const dataUrl = canvas.toDataURL("image/jpeg", SCAN_JPEG_QUALITY);
-      return { dataUrl, base64: dataUrlToBase64(dataUrl) };
+      return { dataUrl, base64: stripDataUrlPrefix(dataUrl) };
     } catch (e) {
       logger.error(e);
       return null;

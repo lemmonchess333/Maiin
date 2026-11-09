@@ -118,4 +118,15 @@ describe("blobToDataUrl", () => {
     const blob = new Blob(["hi"], { type: "image/jpeg" });
     expect(await blobToDataUrl(blob)).toBe("data:image/jpeg;base64,aGk=");
   });
+
+  it("settles when the read is aborted, so nothing waits on it for ever", async () => {
+    vi.spyOn(FileReader.prototype, "readAsDataURL").mockImplementation(
+      function (this: FileReader) {
+        this.dispatchEvent(new Event("abort"));
+      }
+    );
+    await expect(
+      blobToDataUrl(new Blob(["hi"], { type: "image/jpeg" }))
+    ).rejects.toThrow("photo read aborted");
+  });
 });

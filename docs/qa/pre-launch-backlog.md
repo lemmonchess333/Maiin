@@ -1780,9 +1780,11 @@ uploaded successfully`, then explicitly
       server's image limit, and past the request limit in front of it the
       refusal had no CORS headers, so the app read "Couldn't reach the
       server"; `FoodCameraModal` now draws a library photo down to 1280 px
-      first (`FoodCameraModal.libraryPhoto.test.tsx`). jsdom has no
-      canvas, so that WKWebView decodes the HEIC and draws it is a device
-      fact; Barcode's upload is unchanged and reads the file as taken.
+      first (`FoodCameraModal.libraryPhoto.test.tsx`), and the live frame
+      is drawn down the same way. jsdom has no canvas, so that WKWebView
+      decodes the HEIC and draws it is a device fact; a web view that
+      cannot (a HEIC picked in Chrome) says "Couldn't read that photo".
+      Barcode's upload is unchanged and reads the file as taken.
 - [ ] **Airplane mode.** Shutter → instant "You're offline" (no burned wait),
       with Type it instead as the PRIMARY action — and typing must work
       end-to-end offline (local NL parse + queued write). Same for the
