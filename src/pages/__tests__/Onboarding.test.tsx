@@ -53,6 +53,11 @@ vi.mock("@/lib/firestoreWrite", () => ({
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+/* A race date about seven months ahead, from the clock: a literal here
+   went into the past as the calendar moved, and every step that needs a
+   race in the future stopped letting Continue through. */
+const RACE_DATE = localDateString(addLocalDays(new Date(), 200));
+
 const draft: OnboardingDraft = {
   step: 7,
   primaryGoal: "strength",
@@ -355,7 +360,7 @@ describe("the legs while the runs build (Lift4 (10))", () => {
     saveOnboardingDraft("setup-test", {
       ...draft,
       runMode: "race_prep",
-      raceTargetDate: "2027-06-01",
+      raceTargetDate: RACE_DATE,
       ...over,
     });
 
@@ -687,7 +692,7 @@ describe("a race needs a date", () => {
     reachRunningPlan();
     fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
     fireEvent.change(screen.getByLabelText("Race target date"), {
-      target: { value: "2027-06-01" },
+      target: { value: RACE_DATE },
     });
     // Run9 STATUS 2026-11-01: neither is chosen until the person answers.
     for (const name of ["A race I've entered", "On my own"])
@@ -724,7 +729,7 @@ describe("a race needs a date", () => {
     fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
     fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
     fireEvent.change(screen.getByLabelText("Race target date"), {
-      target: { value: "2027-06-01" },
+      target: { value: RACE_DATE },
     });
     fireEvent.click(screen.getByRole("radio", { name: "On my own" }));
     expect(screen.queryByLabelText("Minutes a week")).toBeNull();
@@ -938,7 +943,7 @@ describe("new runners", () => {
     // without a date resolves to the freeform substrate under Run9a.
     fireEvent.click(screen.getByRole("radio", { name: /race prep/i }));
     fireEvent.change(screen.getByLabelText("Race target date"), {
-      target: { value: "2027-06-01" },
+      target: { value: RACE_DATE },
     });
     const target =
       builder.mock.results.at(-1)!.value.profileUpdates.weeklyRunDaysTarget;
@@ -1296,7 +1301,7 @@ describe("setup, by the names the journeys use", () => {
         })
       ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(SETUP.raceDate), {
-      target: { value: "2027-06-01" },
+      target: { value: RACE_DATE },
     });
     fireEvent.click(
       within(group(SETUP.raceEntry)).getByRole("radio", {
