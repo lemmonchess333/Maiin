@@ -66,11 +66,36 @@ test.describe("Security & CSP", () => {
 
   test("external resources use HTTPS", async ({ page }) => {
     await page.goto("");
-    // All link[href] and script[src] should use https or relative paths
-    const insecureLinks = await page.locator('link[href^="http:"]').count();
-    const insecureScripts = await page.locator('script[src^="http:"]').count();
-    expect(insecureLinks).toBe(0);
-    expect(insecureScripts).toBe(0);
+    // The app's own files take the page's scheme. Vite's preload helper
+    // writes them as absolute URLs, so on the http://localhost test server
+    // every lazy chunk the sign-in screen preloads starts "http:" (28 of
+    // them, which turned the nightly run red); on the product they are
+    // https. What must never be plain http is a file from anywhere else.
+    const insecureExternal = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll("link[href], script[src]")]
+          .map(
+            (el) =>
+              new URL(
+                el.getAttribute(el.tagName === "LINK" ? "href" : "src") ?? "",
+                document.baseURI
+              )
+          )
+          .filter(
+            (url) => url.protocol === "http:" && url.origin !== location.origin
+          )
+          .map((url) => url.href)
+      );
+    expect(await insecureExternal()).toEqual([]);
+
+    // The anchor: a plain-http file from elsewhere is still caught.
+    await page.evaluate(() => {
+      const link = document.createElement("link");
+      link.rel = "preconnect";
+      link.href = "http://example.com/";
+      document.head.append(link);
+    });
+    expect(await insecureExternal()).toEqual(["http://example.com/"]);
   });
 
   test("noscript fallback exists", async ({ page }) => {
