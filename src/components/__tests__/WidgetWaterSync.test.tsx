@@ -8,17 +8,25 @@ import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { HomeWidgetSections } from "@/lib/homeWidgetContract";
 
-const H = vi.hoisted(() => ({
-  water: {
+const H = vi.hoisted(() => {
+  /* A fresh day's water for every test. The suite runs shuffled in CI
+     (unit-shuffle), so a test that sets `loading` must not hand it to
+     the next one: rebuilding from the previous object did, and the
+     writer then never wrote. */
+  const freshWater = () => ({
     day: "2026-11-11",
     ml: 750,
     target: 2000,
     servingMl: 250,
     drinks: [{ id: "d1", ml: 750 }],
     loading: false,
-  },
-  sections: [] as HomeWidgetSections[],
-}));
+  });
+  return {
+    freshWater,
+    water: freshWater(),
+    sections: [] as HomeWidgetSections[],
+  };
+});
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { uid: "u1" } }) }));
 vi.mock("@/hooks/useWaterLog", () => ({ useWaterLog: () => H.water }));
 vi.mock("@/lib/homeWidgets", () => ({
@@ -33,7 +41,7 @@ import { widgetAccount } from "@/lib/homeWidgetContract";
 
 beforeEach(() => {
   H.sections = [];
-  H.water = { ...H.water, ml: 750, drinks: [{ id: "d1", ml: 750 }] };
+  H.water = H.freshWater();
 });
 afterEach(cleanup);
 
