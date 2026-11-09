@@ -1,0 +1,12 @@
+{
+  "src": "form-art/motion/bench-press.webp",
+  "still": "form-art/bench-press.webp",
+  "frames": 41,
+  "fps": 12,
+  "frameWidth": 480,
+  "frameHeight": 406,
+  "cols": 7,
+  "clipFrames": [0, 41],
+  "clipSha256": "6a1c400cff7f9ed89f6ee02b15f7944caa5a3029b6f868794f627532f881127f",
+  "sha256": "cfdba39bc1d176e70fcad13650a7b3c3742c0e679ef220edaef5683569ce6ae3"
+}

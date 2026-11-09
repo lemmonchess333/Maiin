@@ -17,4 +17,25 @@ export interface HeroMotionSheet {
   sha256: string;
 }
 
-export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {};
+export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {
+  "form-art/bench-press.webp": {
+    src: "form-art/motion/bench-press.webp",
+    still: "form-art/bench-press.webp",
+    frames: 41,
+    fps: 12,
+    frameWidth: 480,
+    frameHeight: 406,
+    cols: 7,
+    sha256: "cfdba39bc1d176e70fcad13650a7b3c3742c0e679ef220edaef5683569ce6ae3",
+  },
+  "form-art/run-easy.webp": {
+    src: "form-art/motion/run-easy.webp",
+    still: "form-art/run-easy.webp",
+    frames: 36,
+    fps: 24,
+    frameWidth: 269,
+    frameHeight: 480,
+    cols: 6,
+    sha256: "7861c73e3865785d1086bf0b597f7c3307f73ae00bf2ef3d5fb7a8c7a64388db",
+  },
+};

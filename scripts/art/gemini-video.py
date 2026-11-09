@@ -67,6 +67,7 @@ body = {
         {"type": "text", "text": a.prompt},
     ],
     "response_format": {
+        "type": "video",
         "duration": f"{a.duration}s",
         "resolution": a.resolution,
         "aspect_ratio": a.aspect,
