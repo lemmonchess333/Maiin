@@ -15,7 +15,6 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { getReleasedFormArtwork } from "@/lib/formArtwork";
-import { getFormSetup } from "@/lib/formGuides";
 import { buildPlan, type PlanBuilderInput } from "../planBuilder";
 import { applyProgression } from "../programEngine";
 import {
@@ -128,16 +127,6 @@ describe("what the setup allows", () => {
             given.add(ex.exerciseId);
     for (const id of given)
       expect(getReleasedFormArtwork(id), id).not.toBeNull();
-  });
-
-  it("says how to row under a table that won't tip, where the row is shown", () => {
-    // The drawing shows a bar. The table is the setup's one pull, so the
-    // guide's preparation says how, and what keeps it safe.
-    const setup = getFormSetup("inverted-row")?.join(" ") ?? "";
-    expect(setup).toMatch(/sturdy table that won't tip/);
-    expect(getExerciseById("inverted-row")?.instructions?.[0]).toMatch(
-      /sturdy table that won't tip/
-    );
   });
 });
 

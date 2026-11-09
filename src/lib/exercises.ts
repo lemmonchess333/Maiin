@@ -642,7 +642,7 @@ export const EXERCISES: Exercise[] = [
     equipment: "Bodyweight",
     caloriesPerMinute: 7,
     instructions: [
-      "Set a bar at waist height and hang underneath with an overhand grip. No bar? Use the edge of a sturdy table that won't tip.",
+      "Set a bar at waist height and hang underneath with an overhand grip.",
       "Brace your core so your body is one straight line from heels to head.",
       "Pull your chest to the bar, squeezing your shoulder blades together.",
       "Lower under control to a full arm extension without breaking the plank.",

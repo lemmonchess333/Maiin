@@ -668,13 +668,6 @@ export const RELEASED_FORM_PLACARDS = {
       [1, "Squeeze", "Squeeze shoulder blades; keep heels supported."],
       [0.5, "Lower", "Lower slowly without dropping your hips."],
       [0, "Extend", "Return to straight arms; keep your plank."],
-    ],
-    /* The no-equipment setup's one pull (`noEquipment.ts`) is this row
-       under a table, and the drawing shows a bar, so the way to do it
-       with a table, and the one thing that makes it safe, sit here. */
-    [
-      "Set a bar at waist height and hang under it with an overhand grip.",
-      "No bar? Use a sturdy table that won't tip. Lie under its edge and grip it with both hands.",
     ]
   ),
   "hip-thrust": placard(
