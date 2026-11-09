@@ -35,12 +35,19 @@ export default function HeroMotion({
     if (reducedMotion) return;
     let cancelled = false;
     const image = new Image();
+    const loads = new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("sheet did not load"));
+    });
+    loads.catch(() => {});
     image.src = sheetUrl(sheet.src);
-    image
-      .decode()
+    // `decode()` where the browser has it, so the first frame never paints
+    // half-decoded; the load event where it does not (jsdom, an older
+    // WebView).
+    (typeof image.decode === "function" ? image.decode() : loads)
       .then(() => !cancelled && setLoaded(true))
       .catch(() => {
-        /* The still stays: the sheet is a nicety, not the picture. */
+        /* The first frame stays: the sheet is a nicety, not the picture. */
       });
     return () => {
       cancelled = true;
