@@ -52,6 +52,7 @@ import {
   Apple,
   Warehouse,
   User,
+  PersonStanding,
   Award,
   Sparkles,
   Check,
@@ -84,6 +85,14 @@ import {
   represcribeWorkouts,
 } from "@/features/program/represcribe";
 import { runTuningFromProfile } from "@/features/program/runScheduler";
+import {
+  hasPullUpBar,
+  plansNoPull,
+  pullUpBarWhenChosen,
+  takesBarbellAtHome,
+  takesPullUpBar,
+} from "@/features/program/programLabels";
+import { noEquipmentPullNote } from "@/features/program/noEquipment";
 import {
   chooseSplit,
   splitLabel,
@@ -387,14 +396,20 @@ const EQUIPMENT_OPTIONS: {
   {
     id: "home_gym",
     label: "Home gym",
-    desc: "Dumbbells, bench, pull-up bar",
+    desc: "Dumbbells, bench",
     icon: <Dumbbell size={20} style={{ color: THEME.brand }} />,
   },
   {
     id: "minimal",
-    label: "Minimal / bodyweight",
-    desc: "Bands, bodyweight, maybe dumbbells",
+    label: "Minimal",
+    desc: "Dumbbells and bodyweight",
     icon: <User size={20} style={{ color: THEME.success }} />,
+  },
+  {
+    id: "no_equipment",
+    label: "No equipment",
+    desc: "Bodyweight, on the floor",
+    icon: <PersonStanding size={20} style={{ color: THEME.teal }} />,
   },
 ];
 
@@ -476,6 +491,12 @@ export default function ProgrammeSettings({
       equipment: (profile.equipment as Equipment) ?? "full_gym",
       // Lift4 (11): "what do you have?" beside a home gym's kit.
       barbellAtHome: profile.barbellAtHome === true,
+      // The answer the plan follows: unanswered, an older home or minimal
+      // plan has its pull-ups (`hasPullUpBar`).
+      pullUpBar: hasPullUpBar(
+        profile.equipment ?? "full_gym",
+        profile.pullUpBar
+      ),
       injuries: profile.injuries ?? [],
       runMode: profile.runMode ?? "freeform",
       weeklyRunDays: getWeeklyRunTarget(profile) || 2,
@@ -510,6 +531,7 @@ export default function ProgrammeSettings({
   );
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
   const [barbellAtHome, setBarbellAtHome] = useState(saved.barbellAtHome);
+  const [pullUpBar, setPullUpBar] = useState(saved.pullUpBar);
   const [injuries, setInjuries] = useState<string[]>(saved.injuries);
   // D14 dedupe: run-plan fields are NO LONGER edited here — the focused
   // /settings/run-plan editor (RunPlanSettings) is the one place they
@@ -535,6 +557,7 @@ export default function ProgrammeSettings({
     preferredSplit: saved.preferredSplit,
     equipment,
     barbellAtHome,
+    pullUpBar,
     injuries,
     // Run fields mirror `saved` — run edits live on /settings/run-plan,
     // so they can never appear in this editor's change recap.
@@ -592,13 +615,23 @@ export default function ProgrammeSettings({
   // does NOT honour an explicit preference in this rebuild path. Surface the
   // split it WILL generate for the current draft so the picker reads honestly
   // rather than implying control the generation doesn't grant.
-  const generatedSplitLabel = splitLabel(chooseSplit(liftDays));
+  // A save at the same lift days keeps the week's structure (Pgm5), so the
+  // split and its reason are the saved setup's until the days change.
+  const draftNoPull = plansNoPull(equipment, pullUpBar, experience);
+  const savedNoPull = plansNoPull(
+    saved.equipment,
+    saved.pullUpBar,
+    saved.experience
+  );
+  const generatedSplitLabel = splitLabel(chooseSplit(liftDays, draftNoPull));
   // Pgm5 (Q1): the split is shown, not chosen. Prefer the actual current
   // structure (programState.splitType); fall back to what the engine would
-  // derive for the saved lift-days.
-  const currentSplitLabel = splitLabel(
-    programState?.splitType ?? chooseSplit(saved.liftDays)
-  );
+  // derive for the saved lift-days, as for a split this build can't name
+  // (a newer app's).
+  const currentSplitLabel =
+    splitLabel(programState?.splitType) ||
+    splitLabel(chooseSplit(saved.liftDays, savedNoPull));
+  const pullNote = noEquipmentPullNote(equipment, pullUpBar, experience);
 
   // P2: weekly-layout preview counts, derived from the draft lift/run days
   // (consistent with the double-day warning) — no stored weekSchedule needed.
@@ -701,6 +734,7 @@ export default function ProgrammeSettings({
           : {}),
         equipment,
         barbellAtHome,
+        ...(takesPullUpBar(equipment) ? { pullUpBar } : {}),
         injuries,
         currentDate: localDateString(new Date()),
         existingState: programState ?? undefined,
@@ -1133,7 +1167,10 @@ export default function ProgrammeSettings({
               {currentSplitLabel}
             </p>
             <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-              {splitRationale(liftDays)}
+              {splitRationale(
+                liftDays,
+                liftDays === saved.liftDays ? savedNoPull : draftNoPull
+              )}
               {liftDays !== saved.liftDays && (
                 <>
                   {" "}
@@ -1213,7 +1250,17 @@ export default function ProgrammeSettings({
               <SettingsOptionCard
                 key={opt.id}
                 selected={equipment === opt.id}
-                onSelect={() => setEquipment(opt.id)}
+                onSelect={() => {
+                  // A setup chosen anew starts from its own bar answer;
+                  // back to the saved one, the saved answer.
+                  if (opt.id !== equipment)
+                    setPullUpBar(
+                      opt.id === saved.equipment
+                        ? saved.pullUpBar
+                        : pullUpBarWhenChosen(opt.id)
+                    );
+                  setEquipment(opt.id);
+                }}
                 index={i}
                 icon={opt.icon}
                 label={opt.label}
@@ -1222,7 +1269,7 @@ export default function ProgrammeSettings({
             ))}
           </div>
           {/* Lift4 (11): "what do you have?" beside the setups. */}
-          {equipment !== "full_gym" && (
+          {takesBarbellAtHome(equipment) && (
             <div className="mt-3 flex items-center justify-between">
               <div>
                 <p className="text-sm text-foreground">A barbell and a rack</p>
@@ -1237,6 +1284,26 @@ export default function ProgrammeSettings({
                 onChange={() => setBarbellAtHome((v) => !v)}
               />
             </div>
+          )}
+          {takesPullUpBar(equipment) && (
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-foreground">A pull-up bar</p>
+                <p className="text-xs text-muted-foreground">
+                  A doorway bar works. Pull-ups and chin-ups.
+                </p>
+              </div>
+              <Toggle
+                checked={pullUpBar}
+                label="A pull-up bar"
+                className="ml-3"
+                onChange={() => setPullUpBar((v) => !v)}
+              />
+            </div>
+          )}
+          {/* What a no-equipment plan can't train, under its bar switch. */}
+          {pullNote && (
+            <p className="mt-3 text-sm text-muted-foreground">{pullNote}</p>
           )}
         </div>
 

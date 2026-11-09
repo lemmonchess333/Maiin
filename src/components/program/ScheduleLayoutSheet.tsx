@@ -38,6 +38,7 @@ import { previewWeekLayout } from "@/lib/weekReset";
 import { weekPosition } from "@/lib/dateHelpers";
 import { useProgrammeScheduleEditor } from "@/features/program/useProgrammeScheduleEditor";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
+import { plansNoPull } from "@/features/program/programLabels";
 import { Dialog } from "@/components/ui/Dialog";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
@@ -474,7 +475,16 @@ function ScheduleLayoutSheetBody({
             <p className="text-sm font-medium text-foreground">
               Your new programme will use a{" "}
               <span className="text-lifting-strong">
-                {splitLabel(chooseSplit(pendingLiftDays))}
+                {splitLabel(
+                  chooseSplit(
+                    pendingLiftDays,
+                    plansNoPull(
+                      profile?.equipment,
+                      profile?.pullUpBar,
+                      profile?.experience
+                    )
+                  )
+                )}
               </span>{" "}
               split.
             </p>

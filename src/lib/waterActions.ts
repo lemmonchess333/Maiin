@@ -20,6 +20,11 @@ export interface WaterAction {
    *  written when the day has none. */
   keepTarget?: boolean;
   queuedAt: number;
+  /** When the drink was poured, ms, where that was before it was queued:
+   *  a drink the Home Screen widget queued is saved on the app's next
+   *  open (`widgetDrinks.ts`), and its receipt keeps the tap's time.
+   *  Absent reads as `queuedAt`, the tap that queued it. */
+  at?: number;
   /** Set only on a SETTLED record: the moment the transaction returned.
    *  The bridge's age cap is measured from this, never from `queuedAt`.
    *  A tap that waited two minutes in the queue on a weak connection
@@ -34,9 +39,9 @@ export interface WaterReceipt {
   delta: number;
   undone?: boolean;
   rejected?: boolean;
-  /** When the tap happened, ms. Taken from the action's own `queuedAt`,
-   *  so the optimistic pass and the transaction write the same value and
-   *  re-applying is still a no-op. Receipts written before this field
+  /** When the tap happened, ms. Taken from the action's own `at`, else its
+   *  `queuedAt`, so the optimistic pass and the transaction write the same
+   *  value and re-applying is still a no-op. Receipts written before this field
    *  existed have none — `drinksFromReceipts` sorts those to the bottom
    *  and the sheet shows them without a time rather than dropping them. */
   at?: number;
@@ -184,7 +189,7 @@ export function applyWaterAction(
   const next = clampMl(ml + delta);
   nextReceipts = {
     ...nextReceipts,
-    [action.id]: { delta: next - ml, at: action.queuedAt },
+    [action.id]: { delta: next - ml, at: action.at ?? action.queuedAt },
   };
   return { ml: next, receipts: nextReceipts };
 }

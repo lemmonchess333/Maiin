@@ -1,4 +1,4 @@
-import { getExerciseById } from "@/lib/exercises";
+import { getExerciseById, isBodyweightExerciseId } from "@/lib/exercises";
 import { exerciseRole, type ExerciseRole } from "./exerciseRole";
 import { toExperience, type Experience } from "./experienceModel";
 import type { PrimaryGoal } from "./programTypes";
@@ -20,7 +20,8 @@ import type { PrimaryGoal } from "./programTypes";
  * Three sets by default; a beginner's main lifts three and everything else
  * two; four on a strength main lift from intermediate up. "Lose fat" builds
  * as Build muscle, with the cut in the nutrition targets. Timed holds keep
- * their seconds and are not read here.
+ * their seconds and are not read here. A bodyweight lift with no load added
+ * starts at 8 reps, its range moved up whole (`MIN_BODYWEIGHT_REPS`).
  */
 export interface RoleReps {
   sets: number;
@@ -107,18 +108,128 @@ export function isHighRepIsolation(exerciseId: string): boolean {
   return muscle !== undefined && HIGH_REP_MUSCLE_GROUPS.has(muscle);
 }
 
-/** The table's row for one exercise. */
+/**
+ * The fewest reps an easy bodyweight lift with no load added is set,
+ * whatever the goal or the day (the owner's call: "low reps only make sense
+ * with load"). A heavier day can't be heavier without load, so a 5-rep set
+ * of push-ups or squats is only an easier one. With load added (Pgm8 L6)
+ * the lift takes the table's numbers as any loaded lift does, and a hard
+ * one keeps them always (`HARD_BODYWEIGHT_EXERCISE_IDS`).
+ */
+export const MIN_BODYWEIGHT_REPS = 8;
+
+/**
+ * The bodyweight lifts that are easy against the body's weight: most
+ * people can do 8 or more, so the 8-rep floor is theirs. Push-ups and
+ * their variations, squats, lunges, glute bridges, calf raises, the trunk's
+ * floor work, and the holds (whose seconds the floor never reads).
+ * `bodyweightReps.test.ts` holds every bodyweight exercise in the catalogue
+ * to this list or the hard one; the server's copy is in
+ * `functions/lib/roleTable.js`.
+ */
+export const EASY_BODYWEIGHT_EXERCISE_IDS: ReadonlySet<string> = new Set([
+  "push-ups",
+  "pike-push-up",
+  "diamond-push-ups",
+  "weighted-push-ups",
+  "bodyweight-squat",
+  "bodyweight-lunge",
+  "single-leg-calf-raise",
+  "glute-bridge",
+  "crunches",
+  "bicycle-crunch",
+  "decline-sit-up",
+  "russian-twist",
+  "toe-touches",
+  "mountain-climbers",
+  "dead-bug",
+  "burpees",
+  "plank",
+  "side-plank",
+  "superman-hold",
+]);
+
+/**
+ * The bodyweight lifts most people can't do 8 of: the hanging and dipping
+ * ones, the single-leg and lever ones, the row from a bar. Low reps are
+ * right for them, so they keep the table's numbers, as before the floor.
+ */
+export const HARD_BODYWEIGHT_EXERCISE_IDS: ReadonlySet<string> = new Set([
+  "pull-ups",
+  "chin-ups",
+  "muscle-ups",
+  "leg-raise",
+  "inverted-row",
+  "dips",
+  "tricep-dips",
+  "bench-dips",
+  "weighted-chest-dip",
+  "pistol-squat",
+  "sissy-squat",
+  "nordic-hamstring-curl",
+  "handstand-push-ups",
+  "l-sit",
+  "dragon-flag",
+  "weighted-plank",
+]);
+
+/** An easy bodyweight lift done with nothing added, counted in reps: the
+ *  one the 8-rep floor is for. */
+export function takesBodyweightFloor(exercise: {
+  exerciseId: string;
+  weight?: number;
+  repUnit?: string;
+}): boolean {
+  return (
+    EASY_BODYWEIGHT_EXERCISE_IDS.has(exercise.exerciseId) &&
+    isUnloadedBodyweight(exercise)
+  );
+}
+
+/** A bodyweight lift done with nothing added, counted in reps. */
+export function isUnloadedBodyweight(exercise: {
+  exerciseId: string;
+  weight?: number;
+  repUnit?: string;
+}): boolean {
+  return (
+    isBodyweightExerciseId(exercise.exerciseId) &&
+    !((exercise.weight ?? 0) > 0) &&
+    exercise.repUnit !== "seconds"
+  );
+}
+
+/** A row moved up to start at `MIN_BODYWEIGHT_REPS`, its width kept: a
+ *  strength main's fixed 5 becomes 8, a 6–10 range 8–12. */
+function fromBodyweightFloor(row: RoleReps): RoleReps {
+  if (row.bottom >= MIN_BODYWEIGHT_REPS) return row;
+  const up = MIN_BODYWEIGHT_REPS - row.bottom;
+  return {
+    ...row,
+    bottom: MIN_BODYWEIGHT_REPS,
+    ...(row.top !== undefined ? { top: row.top + up } : {}),
+  };
+}
+
+/** The table's row for one exercise, from 8 reps for an easy bodyweight lift
+ *  with no load added (`MIN_BODYWEIGHT_REPS`). */
 export function roleRepsFor(
   goal: PrimaryGoal | undefined,
-  exercise: { exerciseId: string; isAccessory?: boolean },
+  exercise: {
+    exerciseId: string;
+    isAccessory?: boolean;
+    weight?: number;
+    repUnit?: string;
+  },
   experience: Experience | undefined
 ): RoleReps {
-  return roleReps(
+  const row = roleReps(
     goal,
     exerciseRole(exercise),
     experience,
     isHighRepIsolation(exercise.exerciseId)
   );
+  return takesBodyweightFloor(exercise) ? fromBodyweightFloor(row) : row;
 }
 
 /** The reps a whole plan's starting loads are estimated for: its main

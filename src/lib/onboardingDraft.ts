@@ -167,6 +167,8 @@ export interface OnboardingDraft {
   /** "What do you have?" (Lift4 (11)): a barbell and a rack beside a home
    *  gym's or a minimal setup's kit, and small plates. */
   barbellAtHome?: boolean;
+  /** A pull-up bar beside a home gym's or a minimal setup's kit. */
+  pullUpBar?: boolean;
   smallPlates?: boolean;
   /** Lift4 (10): "Lighten leg sessions while your runs build?", asked with
    *  a race. Unanswered, the plan takes yes for Support my running and no
@@ -264,6 +266,7 @@ export function isValidDraft(
     (d.sessionMinutes === undefined ||
       oneOf(DRAFT_SESSION_MINUTES, d.sessionMinutes)) &&
     (d.barbellAtHome === undefined || typeof d.barbellAtHome === "boolean") &&
+    (d.pullUpBar === undefined || typeof d.pullUpBar === "boolean") &&
     (d.smallPlates === undefined || typeof d.smallPlates === "boolean") &&
     (d.raceLegTrim === undefined || typeof d.raceLegTrim === "boolean") &&
     (d.recentRaceDistance === undefined ||

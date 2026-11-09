@@ -248,10 +248,11 @@
 	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
-		<!-- UserDefaults. 1C8F.1: the App Group defaults
-		     capacitor-live-activities shares with the Live Activity widget.
-		     The plugin ships no privacy manifest of its own, so the app
-		     declares its reason. Nothing in the app writes
+		<!-- UserDefaults. 1C8F.1: the App Group defaults the app shares
+		     with its widget extension: the Home Screen widgets' snapshot and
+		     queued drinks (HomeWidgetsPlugin.swift, HomeWidgetStore.swift),
+		     and capacitor-live-activities' own, which the plugin ships no
+		     privacy manifest to declare. Nothing in the app writes
 		     UserDefaults.standard, so CA92.1 is not declared; it went with
 		     @capacitor/preferences, which nothing imported. -->
 		<dict>

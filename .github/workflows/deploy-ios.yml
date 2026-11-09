@@ -42,11 +42,17 @@
 # Canonical pattern: import a distribution cert + a provisioning profile for
 # each app target into an ephemeral keychain, archive with xcodebuild, export
 # an .ipa, upload with an App Store Connect API key. The targets come from
-# the project (scripts/ios_signed_targets.py). The cert and the iPhone and
-# Watch profiles are the owner's own when the IOS_DIST_CERT_* secrets are
-# set; otherwise the run makes the cert and every profile from the API key
-# (scripts/ios/asc-signing.mjs), so the API key, the team ID and the
-# Firebase plist are all it needs. See docs/ios-release.md.
+# the project (scripts/ios_signed_targets.py): the iPhone app, the Watch app
+# and the Live Activity widget (docs/run-live-activity.md), which every build
+# embeds. The cert and the iPhone and Watch profiles are the owner's own when
+# the IOS_DIST_CERT_* secrets are set, which cannot sign the widget, so in
+# practice the run makes the cert and every profile from the API key
+# (scripts/ios/asc-signing.mjs), and the API key, the team ID and the
+# Firebase plist are all it needs. The app and the widget share an App Group
+# (group.com.tropos.app, the Home Screen widgets' data, Wid1), which the
+# owner assigns to both App IDs once in Apple's developer site: the API can
+# read it but not assign it, so the run checks it before making any signing
+# and names the clicks when it is missing. See docs/ios-release.md.
 
 name: Deploy iOS to TestFlight
 
@@ -105,6 +111,11 @@ jobs:
       # the signing material, which is still nowhere near npm.
       BUNDLE_ID: com.tropos.app
       WATCH_BUNDLE_ID: com.tropos.app.watchkitapp
+      # The Live Activity widget extension, embedded in every build.
+      WIDGET_BUNDLE_ID: com.tropos.app.LiveActivities
+      # The App Group the app and the widget share: the Home Screen
+      # widgets' data (Wid1). Both App IDs carry it (docs/ios-release.md).
+      APP_GROUP: group.com.tropos.app
       SCHEME: App
 
     steps:
@@ -147,17 +158,25 @@ jobs:
 
       # Every app and extension target in the project is signed with its own
       # App Store profile. The list comes from project.pbxproj, so a target
-      # added later (the Live Activity widget, docs/run-live-activity.md) is
-      # signed and exported without editing this workflow, and a kind of
-      # target the script does not know stops the run here, naming it.
+      # added later is signed and exported without editing this workflow,
+      # and a kind of target the script does not know stops the run here,
+      # naming it. A target with no entitlements needs no App ID capability,
+      # so the API key may register its App ID; the others' are the owner's
+      # to make (docs/ios-release.md). The targets that ask for an App Group
+      # (the app and the widget) are listed with it, so the signing script
+      # checks their App IDs carry it before it makes anything.
       - name: List the targets to sign
         run: |
           set -euo pipefail
           python3 scripts/ios_signed_targets.py list \
             ios/App/App.xcodeproj/project.pbxproj "$RUNNER_TEMP/signed-targets.json" \
-            --require "$BUNDLE_ID" --require "$WATCH_BUNDLE_ID"
+            --require "$BUNDLE_ID" --require "$WATCH_BUNDLE_ID" --require "$WIDGET_BUNDLE_ID"
           SIGNED_BUNDLE_IDS=$(python3 -c 'import json, sys; print(" ".join(t["bundle_id"] for t in json.load(open(sys.argv[1]))))' "$RUNNER_TEMP/signed-targets.json")
           echo "SIGNED_BUNDLE_IDS=$SIGNED_BUNDLE_IDS" >> "$GITHUB_ENV"
+          REGISTERABLE_BUNDLE_IDS=$(python3 -c 'import json, sys; print(" ".join(t["bundle_id"] for t in json.load(open(sys.argv[1])) if not t["entitlements"]))' "$RUNNER_TEMP/signed-targets.json")
+          echo "REGISTERABLE_BUNDLE_IDS=$REGISTERABLE_BUNDLE_IDS" >> "$GITHUB_ENV"
+          APP_GROUP_BUNDLE_IDS=$(python3 -c 'import json, sys; print(" ".join(t["bundle_id"] + "=" + ",".join(t["app_groups"]) for t in json.load(open(sys.argv[1])) if t["app_groups"]))' "$RUNNER_TEMP/signed-targets.json")
+          echo "APP_GROUP_BUNDLE_IDS=$APP_GROUP_BUNDLE_IDS" >> "$GITHUB_ENV"
 
       # Every secret this run needs, checked together before `npm ci` and a
       # 20-minute archive, so a missing one is named in the first minute and
@@ -196,6 +215,14 @@ jobs:
             exit 1
           fi
           if [ "$own" -eq 4 ]; then
+            # Those secrets hold two profiles, and every build also signs the
+            # Live Activity widget: say so now, not after npm ci and a build.
+            for bundle in $SIGNED_BUNDLE_IDS; do
+              if [ "$bundle" != "$BUNDLE_ID" ] && [ "$bundle" != "$WATCH_BUNDLE_ID" ]; then
+                echo "::error::The project also signs $bundle, and your own signing secrets hold profiles for $BUNDLE_ID and $WATCH_BUNDLE_ID only. Delete IOS_DIST_CERT_P12_BASE64, IOS_DIST_CERT_PASSWORD and both profile secrets, and the run makes every profile from the API key (docs/ios-release.md)."
+                exit 1
+              fi
+            done
             echo "Signing with your own certificate and iPhone/Watch profiles: $SIGNED_BUNDLE_IDS."
           else
             echo "Signing from the API key: this run makes its own certificate and a profile for each of $SIGNED_BUNDLE_IDS."
@@ -383,7 +410,10 @@ jobs:
       # signing from the API key: a private key and certificate request made
       # here, then an Apple Distribution certificate and an App Store profile
       # for each signed target from App Store Connect's API
-      # (scripts/ios/asc-signing.mjs, reading SIGNED_BUNDLE_IDS). The key
+      # (scripts/ios/asc-signing.mjs, reading SIGNED_BUNDLE_IDS, registering
+      # any App ID in REGISTERABLE_BUNDLE_IDS Apple lacks, and first stopping,
+      # with the clicks, if an App ID in APP_GROUP_BUNDLE_IDS lacks its App
+      # Group, before anything is made or revoked). The key
       # never leaves this runner, so every run makes a new certificate, and
       # the script revokes the one the run before made. The import step
       # below checks the result just as it checks the owner's own.
@@ -480,7 +510,7 @@ jobs:
 
           python3 - <<'PY'
           import datetime, hashlib, json, os, plistlib, sys
-          from scripts.verify_ios_entitlements import mismatched_entitlements
+          from scripts.verify_ios_entitlements import explain_mismatch, mismatched_entitlements
 
           profiles = os.environ["PROFILES"]
           team = os.environ["APPLE_TEAM_ID"]
@@ -514,10 +544,21 @@ jobs:
                   # a capability that is really off.
                   for key in mismatched:
                       print(f"{bundle}: app asks {key} = {wanted.get(key)!r}; profile has {have.get(key)!r}")
-                  problems.append(
-                      f"{bundle}: profile lacks matching " + ", ".join(mismatched)
-                      + ". Turn on those App ID capabilities in Apple Developer → Identifiers and regenerate the profile"
-                  )
+                  # An App Group is a capability AND a group assigned to the
+                  # App ID: say both, here, rather than leave it to a
+                  # codesign error 20 minutes into the archive.
+                  plain = []
+                  for key in mismatched:
+                      steps = explain_mismatch(bundle, key, wanted)
+                      if steps:
+                          problems.append(steps)
+                      else:
+                          plain.append(key)
+                  if plain:
+                      problems.append(
+                          f"{bundle}: profile lacks matching " + ", ".join(plain)
+                          + ". Turn on those App ID capabilities in Apple Developer → Identifiers and regenerate the profile"
+                      )
               print(f"Profile for {bundle}: {profile['Name']} ({profile['UUID']}), expires {profile['ExpirationDate']:%Y-%m-%d}")
               uuids[bundle] = profile["UUID"]
               with open(os.path.join(profiles, bundle + ".uuid"), "w") as out:
@@ -628,6 +669,8 @@ jobs:
 
       # A Watch app or extension target without SKIP_INSTALL installs beside
       # App.app in the archive, and the export then sees no single iOS app.
+      # Every build, standard or pilot, embeds the Live Activity widget,
+      # signed with its own profile.
       - name: Verify archived iPhone and Watch signing
         run: |
           set -euo pipefail
@@ -643,6 +686,9 @@ jobs:
             --app "$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app" \
             --bundle-id "$WATCH_BUNDLE_ID" --companion-id "$BUNDLE_ID" \
             --expected-connected-training "${{ steps.training-mode.outputs.native }}"
+          python3 scripts/verify_ios_live_activity.py \
+            --app "$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app" \
+            --bundle-id "$WIDGET_BUNDLE_ID" --app-group "$APP_GROUP"
 
       # A manual export needs a profile for each signed bundle in the
       # archive; without one it stops at "no profiles for com.tropos.app".
@@ -689,6 +735,8 @@ jobs:
           python3 scripts/verify_ios_watch.py --app "${APPS[0]}" \
             --bundle-id "$WATCH_BUNDLE_ID" --companion-id "$BUNDLE_ID" \
             --expected-connected-training "${{ steps.training-mode.outputs.native }}"
+          python3 scripts/verify_ios_live_activity.py --app "${APPS[0]}" \
+            --bundle-id "$WIDGET_BUNDLE_ID" --app-group "$APP_GROUP"
           echo "VERIFIED_IPA=$IPA" >> "$GITHUB_ENV"
 
       - name: Upload to TestFlight

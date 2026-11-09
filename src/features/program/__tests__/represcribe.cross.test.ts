@@ -8,6 +8,7 @@ import {
   prescribedRepCeiling,
   repDeltaForRole,
   repFloorFor,
+  shiftedRepTarget,
   repRangeMaxFor,
 } from "../programEngine";
 import { toExperience, usesUndulation } from "../experienceModel";
@@ -51,6 +52,7 @@ const cf = require("../../../../functions/lib/represcribe") as {
   prescribedRepCeiling: (ex: unknown) => number;
   repDeltaForRole: (role: string) => number;
   repFloorFor: (ex: unknown) => number;
+  shiftedRepTarget: (ex: unknown, target: number, span: number) => number;
   repRangeMaxFor: (
     ex: unknown,
     reps: number,
@@ -276,6 +278,28 @@ describe("goal-prescription engine — client vs functions mirror", () => {
     expect(cf.repFloorFor({ isAccessory: true })).toBe(
       repFloorFor({ isAccessory: true })
     );
+  });
+
+  it("repFloorFor and shiftedRepTarget agree, a bodyweight lift's 8 included", () => {
+    const cases = [
+      { exerciseId: "bench-press" },
+      { exerciseId: "bench-press", isAccessory: true },
+      { exerciseId: "push-ups" },
+      { exerciseId: "push-ups", weight: 10 },
+      { exerciseId: "russian-twist", isAccessory: true },
+      { exerciseId: "plank", repUnit: "seconds" },
+    ];
+    expect(repFloorFor({ exerciseId: "push-ups" })).toBe(8);
+    expect(shiftedRepTarget({ exerciseId: "russian-twist" }, 14, 8)).toBe(12);
+    for (const ex of cases) {
+      expect(cf.repFloorFor(ex), JSON.stringify(ex)).toBe(repFloorFor(ex));
+      for (const target of [2, 5, 10, 14, 19])
+        for (const span of [0, 2, 4, 8])
+          expect(
+            cf.shiftedRepTarget(ex, target, span),
+            `${JSON.stringify(ex)} ${target} ${span}`
+          ).toBe(shiftedRepTarget(ex, target, span));
+    }
   });
 
   it("prescribedRepCeiling agrees across barbell / bodyweight / timed", () => {

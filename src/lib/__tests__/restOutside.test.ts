@@ -2,10 +2,12 @@
 /**
  * A lift's rest seen from outside the app (lifting finding 7): the page's
  * title counting down, on its own clock so it keeps going while the page
- * is hidden; and on a phone, the lock screen's Live Activity, whose native
- * half waits on Xcode, so what is pinned here is the app's half: what it
- * asks the plugin for, a rest made longer replacing itself, and nothing
- * thrown into the workout when the plugin is missing or refuses.
+ * is hidden; and on a phone, the lock screen's Live Activity, which the
+ * widget extension draws on a device alone, so what is pinned here is the
+ * app's half: what it asks the plugin for, a rest made longer replacing
+ * itself, and nothing thrown into the workout when the plugin is missing
+ * or refuses. What the widget reads from the data is pinned in
+ * liveActivityContract.test.ts.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -29,9 +31,10 @@ import { restTitle, showRestOutside } from "../restOutside";
 import {
   __resetRestActivityForTests,
   endRestActivity,
-  restActivityLine,
   startRestActivity,
+  type RestActivity,
 } from "../restLiveActivity";
+import { PLUGIN_LAYOUT } from "../liveActivityContract";
 
 const setNative = (native: boolean) =>
   vi.mocked(isNativePlatform).mockReturnValue(native);
@@ -93,27 +96,37 @@ describe("the page's title", () => {
   });
 });
 
-describe("the lock screen (native half deferred)", () => {
-  it("counts to the rest's end with the system's own timer", async () => {
+describe("the lock screen", () => {
+  it("counts from the rest's start to its end, with the next set, and goes stale at the end", async () => {
     setNative(true);
     const startedAt = Date.now();
     const stop = showRestOutside({
       startedAt,
       target: 90,
       exerciseName: "Bench Press",
+      next: { name: "Set 2", load: "15 kg × 10" },
     });
     await settle();
     expect(plugin.startActivity).toHaveBeenCalledOnce();
     const [options] = plugin.startActivity.mock.calls[0];
-    expect(JSON.stringify(options.layout)).toContain(
-      `{"endTime":${startedAt + 90_000}}`
-    );
-    expect(options.data).toEqual({ next: "Next: Bench Press" });
+    const data = {
+      kind: "rest",
+      startedAt,
+      endsAt: startedAt + 90_000,
+      exercise: "Bench Press",
+      set: "Set 2 · 15 kg × 10",
+    };
+    expect(options.data).toEqual(data);
+    // The system redraws the card as done once the rest's end passes.
+    expect(options.staleDate).toBe(startedAt + 90_000);
+    // The widget draws natively; the plugin only needs a layout to exist.
+    expect(options.layout).toEqual(PLUGIN_LAYOUT.layout);
     stop();
     await settle();
+    // Ended on the state it showed, so it is never drawn empty.
     expect(plugin.endActivity).toHaveBeenCalledWith({
       activityId: "rest-1",
-      data: {},
+      data,
     });
   });
 
@@ -132,27 +145,57 @@ describe("the lock screen (native half deferred)", () => {
     expect(plugin.endActivity).toHaveBeenCalledTimes(1);
     expect(plugin.endActivity).toHaveBeenCalledWith({
       activityId: "rest-1",
-      data: {},
+      data: expect.objectContaining({ endsAt: startedAt + 90_000 }),
     });
     expect(plugin.startActivity).toHaveBeenCalledTimes(2);
+    expect(plugin.startActivity.mock.calls[1][0].data.endsAt).toBe(
+      startedAt + 105_000
+    );
     second();
     await settle();
     expect(plugin.endActivity).toHaveBeenLastCalledWith({
       activityId: "rest-2",
-      data: {},
+      data: expect.objectContaining({ endsAt: startedAt + 105_000 }),
     });
   });
 
   it("throws nothing into the workout when the plugin refuses", async () => {
     setNative(true);
     plugin.startActivity.mockRejectedValue(new Error("no extension"));
-    await expect(startRestActivity({ endsAt: 1 })).resolves.toBeUndefined();
+    await expect(
+      startRestActivity({ startedAt: 0, endsAt: 1 })
+    ).resolves.toBeUndefined();
     await expect(endRestActivity()).resolves.toBeUndefined();
     expect(plugin.endActivity).not.toHaveBeenCalled();
   });
 
-  it("names what comes after the rest", () => {
-    expect(restActivityLine("Squat")).toBe("Next: Squat");
-    expect(restActivityLine()).toBe("Next set");
+  /** The data a start sends the widget for `rest`. */
+  const sentFor = async (rest: RestActivity) => {
+    setNative(true);
+    plugin.startActivity.mockClear();
+    await startRestActivity(rest);
+    return plugin.startActivity.mock.calls[0][0].data;
+  };
+
+  it("names the set after the rest as the rest band does", async () => {
+    const at = { startedAt: 0, endsAt: 90_000 };
+    expect(
+      (await sentFor({ ...at, next: { name: "Set 2", load: "15 kg × 10" } }))
+        .set
+    ).toBe("Set 2 · 15 kg × 10");
+    expect(
+      (await sentFor({ ...at, next: { name: "Warm-up 3", load: "" } })).set
+    ).toBe("Warm-up 3");
+    expect((await sentFor(at)).set).toBe("");
+  });
+
+  it("never sends a start after the end, and leaves out what it does not know", async () => {
+    expect(await sentFor({ startedAt: 5_000, endsAt: 4_000 })).toEqual({
+      kind: "rest",
+      startedAt: 4_000,
+      endsAt: 4_000,
+      exercise: "",
+      set: "",
+    });
   });
 });

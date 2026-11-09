@@ -4,9 +4,11 @@
  * The plugin itself is device-only; what IS unit-testable (and what a
  * mistake here silently breaks on a lock screen nobody in CI can see)
  * is the seam's lifecycle discipline: start-once idempotence, the
- * update throttle + dedup that keeps us inside ActivityKit's budget,
- * end-safety in any order, and the guarantee that web / a missing
- * plugin / a rejecting bridge can never throw into the run.
+ * update throttle + dedup that keeps us inside ActivityKit's budget
+ * without losing a pause to it, end-safety in any order, and the
+ * guarantee that web / a missing plugin / a rejecting bridge can never
+ * throw into the run. What the widget reads from the data is pinned in
+ * liveActivityContract.test.ts.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { capacitorPlugin } from "@/test/capacitorPlugin";
@@ -34,6 +36,7 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 import { isNativePlatform } from "@/lib/platform";
+import { PLUGIN_LAYOUT } from "@/lib/liveActivityContract";
 import {
   startRunActivity,
   updateRunActivity,
@@ -47,10 +50,13 @@ const setNative = (v: boolean) =>
 
 const DATA: RunActivityData = {
   distance: "1.2 km",
-  pace: "5:12/km",
+  pace: "5:12 /km",
   elapsed: "6:14",
   label: "Recording",
+  paused: false,
 };
+/** The content state the widget is given for `data`. */
+const state = (data: RunActivityData) => ({ kind: "run", ...data });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -88,28 +94,18 @@ describe("web / plugin-absent safety", () => {
 });
 
 describe("start", () => {
-  it("declares the layout with placeholder bindings and the initial data", async () => {
+  it("sends the widget the run's data, with the plugin's placeholder layout", async () => {
     await startRunActivity(DATA);
     expect(startActivity).toHaveBeenCalledTimes(1);
     const opts = startActivity.mock.calls[0][0] as {
       layout: unknown;
       dynamicIslandLayout: unknown;
-      data: Record<string, string>;
+      data: Record<string, unknown>;
     };
-    expect(opts.data).toEqual(DATA);
-    const layoutJson = JSON.stringify(opts.layout);
-    for (const binding of [
-      "{{distance}}",
-      "{{pace}}",
-      "{{elapsed}}",
-      "{{label}}",
-    ]) {
-      expect(layoutJson).toContain(binding);
-    }
-    // Dynamic Island carries the compact + minimal states too.
-    const diJson = JSON.stringify(opts.dynamicIslandLayout);
-    expect(diJson).toContain("compactLeading");
-    expect(diJson).toContain("{{distance}}");
+    expect(opts.data).toEqual(state(DATA));
+    // The widget draws natively; the plugin only needs a layout to exist.
+    expect(opts.layout).toEqual(PLUGIN_LAYOUT.layout);
+    expect(opts.dynamicIslandLayout).toEqual(PLUGIN_LAYOUT.dynamicIslandLayout);
   });
 
   it("is idempotent — a second start while one is live is a no-op", async () => {
@@ -125,27 +121,55 @@ describe("update throttle + dedup", () => {
     expect(updateActivity).not.toHaveBeenCalled();
   });
 
-  it("skips inside the 2s window, sends after it, and dedupes unchanged payloads", async () => {
+  it("holds a change inside the 2s window, sends the latest when it opens, and dedupes", async () => {
     await startRunActivity(DATA);
 
-    // 1s later, new data — inside the throttle window: skipped.
+    // 1s later, new data — inside the throttle window: held.
     vi.advanceTimersByTime(1000);
     await updateRunActivity({ ...DATA, elapsed: "6:15" });
     expect(updateActivity).not.toHaveBeenCalled();
-
-    // 2.5s after start — window open: sent, with the held id.
-    vi.advanceTimersByTime(1500);
+    // A newer change replaces the held one.
+    vi.advanceTimersByTime(500);
     await updateRunActivity({ ...DATA, elapsed: "6:16" });
+    expect(updateActivity).not.toHaveBeenCalled();
+
+    // The window opens 2s after start: the latest is sent, with the held id.
+    await vi.advanceTimersByTimeAsync(500);
     expect(updateActivity).toHaveBeenCalledTimes(1);
     expect(updateActivity.mock.calls[0][0]).toEqual({
       activityId: "act-1",
-      data: { ...DATA, elapsed: "6:16" },
+      data: state({ ...DATA, elapsed: "6:16" }),
     });
 
     // Another window later but IDENTICAL payload: deduped.
-    vi.advanceTimersByTime(3000);
+    await vi.advanceTimersByTimeAsync(3000);
     await updateRunActivity({ ...DATA, elapsed: "6:16" });
     expect(updateActivity).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends a pause that came inside the window, though nothing calls again", async () => {
+    // While paused the screen's figures stop moving, so its effect may not
+    // run again: a pause dropped by the throttle would never arrive.
+    await startRunActivity(DATA);
+    vi.advanceTimersByTime(800);
+    const paused = { ...DATA, label: "Paused", paused: true };
+    await updateRunActivity(paused);
+    expect(updateActivity).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1200);
+    expect(updateActivity).toHaveBeenCalledTimes(1);
+    expect(updateActivity.mock.calls[0][0]).toEqual({
+      activityId: "act-1",
+      data: state(paused),
+    });
+  });
+
+  it("drops a held change once the card shows the same again", async () => {
+    await startRunActivity(DATA);
+    vi.advanceTimersByTime(500);
+    await updateRunActivity({ ...DATA, elapsed: "6:15" });
+    await updateRunActivity(DATA);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(updateActivity).not.toHaveBeenCalled();
   });
 });
 
@@ -156,7 +180,7 @@ describe("end", () => {
     await endRunActivity(final);
     expect(endActivity).toHaveBeenCalledWith({
       activityId: "act-1",
-      data: final,
+      data: state(final),
     });
     // After end: updates are no-ops and a second end doesn't call again.
     vi.advanceTimersByTime(5000);
@@ -164,6 +188,26 @@ describe("end", () => {
     await endRunActivity();
     expect(updateActivity).not.toHaveBeenCalled();
     expect(endActivity).toHaveBeenCalledTimes(1);
+  });
+
+  it("ends on the last stats sent when no final ones are given, never an empty card", async () => {
+    await startRunActivity(DATA);
+    vi.advanceTimersByTime(2500);
+    await updateRunActivity({ ...DATA, elapsed: "6:17" });
+    await endRunActivity();
+    expect(endActivity).toHaveBeenCalledWith({
+      activityId: "act-1",
+      data: state({ ...DATA, elapsed: "6:17" }),
+    });
+  });
+
+  it("sends nothing held after the end", async () => {
+    await startRunActivity(DATA);
+    vi.advanceTimersByTime(500);
+    await updateRunActivity({ ...DATA, elapsed: "6:15" });
+    await endRunActivity();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(updateActivity).not.toHaveBeenCalled();
   });
 
   it("is a no-op when nothing is live (unmount cleanup path)", async () => {

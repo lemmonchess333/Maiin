@@ -10,6 +10,161 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Home Screen and Lock Screen widgets (Wid1, 2026-11-09)
+
+Affects: `ios/App/LiveActivities/` (`TodayWidget.swift`,
+`StreakWidget.swift`, `FoodWidget.swift`, `LogDrinkIntent.swift`, the
+snapshot, store, timeline and chrome files), `ios/App/App/HomeWidgetsPlugin.swift`,
+both entitlements files (the App Group `group.com.tropos.app`),
+`src/lib/homeWidgetSnapshot.ts`, `src/lib/homeWidgets.ts`,
+`src/lib/widgetDrinks.ts`, `src/lib/widgetLinks.ts`, Home, `App.tsx`,
+`deploy-ios.yml` and the signing scripts. The unit suites pin the snapshot's
+keys, enums, App Group, plugin methods, links and colours against the Swift
+(`homeWidgetContract.test.ts`) and save a queued drink once against the
+Firestore fake (`widgetDrinks.test.ts`); nothing here has compiled the
+widgets' Swift or drawn one. Add a widget by a long press on the Home Screen
+→ Edit → Add Widget → Tropos, and on the Lock Screen by a long press →
+Customise → Lock Screen → the widget row.
+
+- [ ] **The App Group is on both App IDs.** The owner's one-time steps in
+      `docs/ios-release.md`, "The App Group": `group.com.tropos.app`
+      registered, and assigned to `com.tropos.app` and
+      `com.tropos.app.LiveActivities`. Passing: the next Deploy iOS to
+      TestFlight run passes "Make the signing certificate and profiles
+      from the API key" with no "has no App Groups capability" error,
+      "Import signing certificate + provisioning profiles" with no
+      "carries no App Group", and both verify steps print "the App Group
+      group.com.tropos.app on the widget and the app".
+- [ ] **The pull request compile builds the widgets.** `iOS native compile`
+      passes both simulator builds on the pull request that adds them: the
+      first compile of the widgets' Swift and the App Intent. An error
+      names a file in `ios/App/LiveActivities/` or
+      `ios/App/App/HomeWidgetsPlugin.swift`.
+- [ ] **Each widget is in the gallery.** Passing: the gallery lists Today
+      (small, medium; Lock Screen rectangle and inline), Streak (small;
+      Lock Screen circle) and Today's food (small, medium; Lock Screen
+      circle), each previewed with sample figures.
+- [ ] **First use.** Add each before opening the app after install, and
+      again after signing out. Passing: Today and Today's food read "Open
+      Tropos to see today's session" / "…today's food", Streak "Open Tropos
+      to see your streak", with no figure from another account. Open the
+      app to Home: within a few seconds each shows Home's figures.
+- [ ] **Today says what Home says.** On a lifting day, a running day, a
+      day with both, a rest day and a new account's first-workout day,
+      compare with Home's hero. Passing: the same name, the muscles in
+      words and "about N min" (a run: its distance and minutes), the
+      kicker "Today" (or "Your first workout", "Run when it suits you");
+      medium adds "N of M sessions this week" over seven segments that
+      match Home's strip. Finish today's session and go back to the Home
+      Screen: "Done today" and tomorrow's session; with one of two done,
+      "1 of 2 done today" over the other. With no plan: "No plan yet".
+- [ ] **The Lock Screen line.** Passing: the rectangle reads "Today ·
+      <session>" with its focus and minutes under it, or "Tomorrow ·
+      <session>" once today is done or on a rest day; with a race goal
+      ahead, "N days to your <race>" under it; the inline line over the
+      clock reads the same first line. All in the Lock Screen's own tint,
+      none in the app's colours.
+- [ ] **Midnight with the app asleep.** Leave the app closed across
+      midnight. Passing: Today shows the day the app wrote for tomorrow
+      ("Today · <session>"), the week's segment for today moves on and
+      yesterday's unfinished one is dashed; Streak shows the same count if
+      yesterday was logged, or "Open Tropos to see your streak" if not;
+      Today's food shows "–" and "Open Tropos" for calories.
+- [ ] **A day old, dimmed (W8d).** Leave the app closed for 24 hours (or
+      set the phone's clock a day on). Passing: each Home Screen widget is
+      drawn fainter, still legible, with a ⟳ mark in its corner, and
+      opening the app restores it.
+- [ ] **+ glass is saved once (Wid1 call 2).** On iOS 17 or later, with
+      the app closed, tap the medium food widget's "+ Glass" twice.
+      Passing: its water figure rises by two servings at once, the app
+      does not open. Open the app: Home's water card shows both, once
+      each, with their tap times in its drinks list, and the day's
+      `users/{uid}/waterLog/<day>` holds two receipts whose ids are the
+      widget's. Then tap "+" once more, open the app and force-quit it
+      within a second, and open it again: still one drink for that tap.
+      A tap before midnight with the app opened after it lands on the
+      day of the tap. On iOS 16: the button opens Home instead.
+- [ ] **Food and water follow without Home.** Open the app from the food
+      widget (it opens Food, not Home), log lunch, and go to the Home
+      Screen. Passing: within a few seconds the ring's calories left and
+      the protein figure match Food's ring; edit the meal and delete it, and
+      the widget follows each. Log a drink on Food's diary row for today, or
+      on the Watch with the app open on any screen: the water figure
+      follows. Leave Home unvisited for a day while using Food: the food
+      widget is not dimmed, while Today and Streak are.
+- [ ] **Taps open the right page.** Passing: Today opens its session in
+      Train (the lift's day, or the run tab on today's run), Today's food
+      opens Food, Streak opens Home; from a cold start too, after sign-in
+      where needed.
+- [ ] **StandBy.** Charge the phone on its side, locked, with Streak in
+      StandBy's widgets. Passing: the figure is legible across a room, by
+      day and in the red night mode, with no card behind it.
+- [ ] **The widgets' colours by day and night.** Passing: a white card in
+      light mode and the app's dark card in dark mode, the text the
+      system's; purple on lifting, coral on running, orange on the
+      calorie ring and protein bar, teal on water; on iOS 18's tinted Home
+      Screen the figures take the tint.
+
+## Live Activities on the phone (Polish2 call 1, 2026-11-09)
+
+Affects: `ios/App/LiveActivities/` (the widget extension, new),
+`ios/App/App.xcodeproj/project.pbxproj`, `ios/App/App/Info.plist`
+(`NSSupportsLiveActivities`), `src/lib/runLiveActivity.ts`,
+`src/lib/restLiveActivity.ts`, the plugin's patch, `deploy-ios.yml`,
+`ios-native-compile.yml`, `scripts/verify_ios_live_activity.py` and
+`scripts/ios/asc-signing.mjs`. The unit suites pin the project's target,
+the keys and colours the Swift reads against the app's, and the verifier
+offline; nothing here has compiled the Swift or drawn a card.
+`docs/run-live-activity.md` has what each view shows and the run's detailed
+table. Live Activities need iOS 16.2 or later and Settings → Tropos → Live
+Activities on; the Dynamic Island needs an iPhone 14 Pro or later.
+
+- [ ] **The pull request compile builds the widget.** On the pull request
+      that adds it, `iOS native compile` passes "Compile a standard build
+      for simulator" (the first compile of the widget's Swift), "Check the
+      standard build embeds the Live Activity widget" and the pilot's pair.
+      A Swift error names a file in `ios/App/LiveActivities/`; an error
+      about `LiveActivitiesKit` or a duplicate package is the local package
+      reference (`docs/run-live-activity.md`, "The extension in the
+      project").
+- [ ] **A standard TestFlight build carries the widget.** Run Deploy iOS
+      to TestFlight with the pilot box unchecked. Passing: "List the
+      targets to sign" names `com.tropos.app.LiveActivities`; the first
+      such run's "Make the signing certificate and profiles from the API
+      key" logs "Registered the App ID com.tropos.app.LiveActivities"
+      (Apple Developer → Identifiers then lists Tropos LiveActivities) and
+      every run makes `Tropos CI <serial> LiveActivities`; both verify
+      steps print "Verified the Live Activity widget"; the upload is
+      accepted with no extension version warning; and on the phone
+      Settings → Tropos shows a Live Activities switch.
+      STATUS 2026-11-09 (Wid1): the widget's App ID now carries the App
+      Group the Home Screen widgets share with the app, so the run no
+      longer registers it and logs no "Registered the App ID" line: the
+      owner makes it ("The App Group" in `docs/ios-release.md`, and the
+      first row of "Home Screen and Lock Screen widgets" above).
+- [ ] **A run on the Lock Screen.** Start an outdoor run and lock the
+      phone. Passing: a dark card with "Recording" in coral, the time
+      large in coral, distance and pace beside it with their units
+      smaller, all moving every few seconds while the phone stays locked.
+      Pause in the app: within about 2 s the card reads "Paused" and its
+      time is grey; resume and it is coral again.
+- [ ] **A run in the Dynamic Island.** During a run, go to the Home
+      Screen. Passing: the island shows the running figure and the time;
+      a long press opens it to the state, the time and distance and pace.
+- [ ] **A rest counts down with the phone locked.** Tick a working set and
+      lock the phone straight away. Passing: the card reads "Rest" in
+      purple, its countdown ticks every second with the app asleep,
+      "Next · <exercise>" over the set ("Set 2 · 15 kg × 10") matches the
+      rest band, and the purple bar empties. At the rest's end, without
+      unlocking, it turns green: "Rest done", 0:00 and a full green bar.
+      In the Dynamic Island: the dumbbell and the countdown, then "Done".
+- [ ] **Each ends cleanly.** Finish a run: the card is gone at once, not
+      left on the lock screen after the save. The same after Discard. In a
+      workout, End rest or tick the next set: the rest's card is gone at
+      once. +15 s: one card, with the later end, never two. Then kill the
+      app mid-run and note how long its card stays (a known limit in
+      `docs/run-live-activity.md`).
+
 ## Setup asks for the public name (2026-11-01)
 
 Setup no longer makes the public name from the email address: an email
@@ -123,6 +278,12 @@ the builds themselves.
       `Tropos CI <serial> LiveActivities` and archives without a workflow
       change, and the widget links `LiveActivitiesKit` through Swift
       Package Manager.
+      STATUS 2026-11-09: the widget is added. The workflow now also
+      requires it and checks it is embedded, and the API key registers its
+      App ID; "Live Activities on the phone" above has the run to check.
+      STATUS 2026-11-09 (Wid1): no longer registered by the run, since its
+      App ID carries the App Group; the owner makes it
+      (`docs/ios-release.md`, "The App Group").
 
 ## A lift's rest outside the app (Mob2 call 1, 2026-10-28)
 
@@ -133,11 +294,9 @@ A rest that ended while the app was away no longer chimes again on the way
 back. On the phone the rest has a Live Activity of its own
 (`src/lib/restLiveActivity.ts`): a card with the system's own countdown to
 the rest's end and the next exercise, and the Dynamic Island's dumbbell
-and countdown. **Its native half is not built**: it needs the same widget
-extension as the run's card (`docs/run-live-activity.md`, Mob2 call 13:
-when the owner has a Mac). Until then `startActivity` rejects and the app
-shows nothing there; the rest-end notification is separate and works
-already. The unit suites pin the title, the plugin calls and a rest made
+and countdown. STATUS 2026-11-09: its native half, the widget extension
+in `ios/App/LiveActivities/`, is built; its device rows are in "Live
+Activities on the phone" above. The rest-end notification is separate. The unit suites pin the title, the plugin calls and a rest made
 longer replacing itself; only a phone shows the card.
 
 - [ ] **The tab's title.** In the web app, tick a working set and switch
@@ -153,6 +312,10 @@ longer replacing itself; only a phone shows the card.
       Passing: the card shows "Rest" and a countdown that reaches 0:00 on
       time with the app asleep, "Next:" and the exercise under it; +15 s
       in the app moves the countdown on; End rest takes the card away.
+      STATUS 2026-11-09: the extension exists and the card changed (the
+      next set as well as the exercise, a bar, green when done). Check it
+      with "A rest counts down with the phone locked" and "Each ends
+      cleanly" above, and tick this with them.
 
 ## A photo and a few words (Mob2 call 3, 2026-10-28)
 
@@ -895,12 +1058,14 @@ TestFlight script names each one.
 - [ ] **A lawyer reads the Privacy Policy and the Terms.** Not a check:
       every claim in them was verified against the code, and that is not a
       legal review.
-- [ ] **The run's lock-screen card needs its widget extension.** Not a
+- [x] **The run's lock-screen card needs its widget extension.** Not a
       check: the app's half and the plugin are in
       (`src/lib/runLiveActivity.ts`), but the Xcode target in
       `docs/run-live-activity.md` was never added, so `startActivity`
       rejects and nothing shows on the lock screen. That doc's device table
       is the test once it exists. After 1.0.
+      STATUS 2026-11-09: built (Polish2 call 1), `ios/App/LiveActivities/`.
+      The device checks are "Live Activities on the phone" at the top.
 
 ## The Firebase key lets the iPhone app and troposfit.com sign in (2026-10-17)
 

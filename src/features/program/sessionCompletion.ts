@@ -34,6 +34,10 @@ export interface SessionPrescription {
    *  (`superset.ts`). Absent on sessions with none, and on every session
    *  before supersets. */
   supersets?: SessionSuperset[];
+  /** The person had no equipment when the session started, so nothing to
+   *  add load with: a bodyweight lift climbs its reps to 30 and nothing
+   *  asks for load (`applyProgression`). Absent on every other session. */
+  bodyweightOnly?: true;
 }
 
 export interface SessionProgression {
@@ -83,7 +87,9 @@ export function sessionExercise(
 export function sessionPrescription(
   day: { dayName: string; exercises: ProgramExercise[] },
   completionId: string,
-  progressionBaseline?: ProgramExercise[]
+  progressionBaseline?: ProgramExercise[],
+  /** The person's setup as the session starts (`bodyweightOnly`). */
+  equipment?: string
 ): SessionPrescription {
   const baseline = (ex: ProgramExercise) =>
     withoutSessionProgression(
@@ -101,6 +107,7 @@ export function sessionPrescription(
         ) ?? ex
       )
     ),
+    ...(equipment === "no_equipment" ? { bodyweightOnly: true as const } : {}),
   });
 }
 
@@ -291,7 +298,8 @@ export function applySessionProgression(
                   settings.smallPlates,
                   session.afterHardRun && loadsTheLegs(start) ? 0.5 : 1,
                   session.date,
-                  settings.loadUnit ?? "kg"
+                  settings.loadUnit ?? "kg",
+                  session.prescription.bodyweightOnly === true
                 );
               } else {
                 // A held week keeps the prescription and records the

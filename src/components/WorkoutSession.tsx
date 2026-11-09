@@ -186,7 +186,8 @@ import {
 } from "@/lib/firstSession";
 import type { LiftMomentFacts, PostMoment } from "@/lib/postMoments";
 import GuideHint from "@/components/guide/GuideHint";
-import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
+import { firstSetBody } from "@/lib/firstGuide";
+import { nothingToLoad } from "@/lib/homeHero";
 import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
 import { sessionWork, workFigure } from "@/lib/liftFigures";
 import {
@@ -436,7 +437,12 @@ export default function WorkoutSession({
   const [prescription, setPrescription] = useState<SessionPrescription>(
     () =>
       initialDraft?.prescription ??
-      sessionPrescription(initialDay, initialCompletionId, progressionBaseline)
+      sessionPrescription(
+        initialDay,
+        initialCompletionId,
+        progressionBaseline,
+        profile?.equipment
+      )
   );
   const [sessionProgrammeContext] = useState(
     initialDraft?.programmeContext ?? programmeContext
@@ -2103,7 +2109,8 @@ export default function WorkoutSession({
     const fresh = sessionPrescription(
       initialDay,
       initialCompletionId,
-      progressionBaseline
+      progressionBaseline,
+      profile?.equipment
     );
     setPrescription(fresh);
     setSkippedRows({});
@@ -2261,7 +2268,10 @@ export default function WorkoutSession({
           !editingSet &&
           (!rest || setHelpRequest > 0)
         }
-        body={autoRest ? undefined : FIRST_SET_BODY_NO_AUTO_REST}
+        body={firstSetBody({
+          autoRest,
+          nothingToLoad: nothingToLoad(day.exercises),
+        })}
       />
       {editingSet && (
         <EditSetSheet

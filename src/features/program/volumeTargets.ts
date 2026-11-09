@@ -34,6 +34,7 @@ export function weeklyVolumeTargets(input: {
   equipment?: FreshLiftAnswers["equipment"];
   injuries?: readonly string[];
   barbellAtHome?: boolean;
+  pullUpBar?: boolean;
   bodyweightKg?: number;
   sex?: string;
 }): Map<JudgementMuscle, VolumeLandmark> {
@@ -46,6 +47,7 @@ export function weeklyVolumeTargets(input: {
     equipment: input.equipment ?? "full_gym",
     injuries: [...(input.injuries ?? [])],
     barbellAtHome: input.barbellAtHome,
+    pullUpBar: input.pullUpBar,
     bodyweightKg: input.bodyweightKg,
     sex: input.sex,
   });
@@ -67,7 +69,7 @@ export function weeklyVolumeTargets(input: {
  *  built on. */
 export type TargetKit = Pick<
   UserProfile,
-  "equipment" | "injuries" | "barbellAtHome" | "weightKg" | "sex"
+  "equipment" | "injuries" | "barbellAtHome" | "pullUpBar" | "weightKg" | "sex"
 >;
 
 /** A profile's kit as `weeklyVolumeTargets` takes it. */
@@ -76,6 +78,7 @@ export function targetKit(profile: Partial<TargetKit> | null | undefined) {
     equipment: profile?.equipment,
     injuries: profile?.injuries,
     barbellAtHome: profile?.barbellAtHome,
+    pullUpBar: profile?.pullUpBar,
     bodyweightKg: profile?.weightKg,
     sex: profile?.sex,
   };

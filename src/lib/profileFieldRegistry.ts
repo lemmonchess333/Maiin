@@ -192,6 +192,8 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "preferredWeightUnit", sanitized: true },
   { field: "primaryGoal", sanitized: true },
   { field: "program", sanitized: true },
+  // Lift4 (11): "A pull-up bar" beside a home gym's or a minimal kit.
+  { field: "pullUpBar", sanitized: true },
   { field: "raceGoal", sanitized: true },
   { field: "raceLegTrim", sanitized: true },
   // Pgm6 run-plan tuning knob (quality-work difficulty preset).

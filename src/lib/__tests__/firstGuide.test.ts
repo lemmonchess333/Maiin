@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
+  FIRST_SET_BODY_BODYWEIGHT,
+  FIRST_SET_BODY_BODYWEIGHT_NO_AUTO_REST,
   FIRST_SET_BODY_NO_AUTO_REST,
+  firstSetBody,
   FOOD_STOP_BODY,
   GUIDE_HINTS,
   guideAllowed,
@@ -473,5 +476,28 @@ describe("the guide's words", () => {
 
   it("keys each hint's seen flag by the hint", () => {
     expect(hintSeenKey("first-set")).toBe("tropos-guide-hint:first-set");
+  });
+});
+
+describe("the first-set hint in a session with no weight to pick", () => {
+  it("says nothing about weights", () => {
+    for (const autoRest of [true, false]) {
+      const body = firstSetBody({ autoRest, nothingToLoad: true });
+      expect(body).toBe(
+        autoRest
+          ? FIRST_SET_BODY_BODYWEIGHT
+          : FIRST_SET_BODY_BODYWEIGHT_NO_AUTO_REST
+      );
+      expect(body).not.toMatch(/weight/i);
+    }
+  });
+
+  it("keeps the weights hint where a lift takes one", () => {
+    expect(firstSetBody({ autoRest: true, nothingToLoad: false })).toBe(
+      undefined
+    );
+    expect(firstSetBody({ autoRest: false, nothingToLoad: false })).toBe(
+      FIRST_SET_BODY_NO_AUTO_REST
+    );
   });
 });

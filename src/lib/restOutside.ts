@@ -8,11 +8,11 @@
  *   repaint pulse does not (`useElapsedSeconds`), and it reads the time
  *   left from the rest's start each tick, so a throttled timer is late,
  *   never wrong. The title goes back as the rest ends.
- * - On the phone, the lock screen's Live Activity (`restLiveActivity.ts`).
- *   NATIVE HALF DEFERRED: until its widget extension is built in Xcode
- *   it shows nothing. Loaded only on a phone, so the web never fetches
- *   it. The rest-end notification (`restTimerNotification.ts`) is
- *   separate and already works there.
+ * - On the phone, the lock screen's Live Activity (`restLiveActivity.ts`),
+ *   drawn by the widget extension in `ios/App/LiveActivities/`: the
+ *   countdown, the next set and a bar running down. Loaded only on a
+ *   phone, so the web never fetches it. The rest-end notification
+ *   (`restTimerNotification.ts`) is separate.
  */
 import { isNativePlatform } from "@/lib/platform";
 import { elapsedSecondsSince } from "@/hooks/useElapsedSeconds";
@@ -36,7 +36,10 @@ export function showRestOutside(rest: {
   startedAt: number;
   /** The rest's length, in seconds. */
   target: number;
+  /** The exercise of the set the rest leads to. */
   exerciseName?: string;
+  /** That set, as the rest band names it: "Set 2" and "15 kg × 10". */
+  next?: { name: string; load: string };
 }): () => void {
   const before = document.title;
   const show = () => {
@@ -54,8 +57,10 @@ export function showRestOutside(rest: {
   void native?.then((activity) => {
     if (shown === token)
       void activity?.startRestActivity({
+        startedAt: rest.startedAt,
         endsAt: rest.startedAt + rest.target * 1000,
         exerciseName: rest.exerciseName,
+        next: rest.next,
       });
   });
   return () => {

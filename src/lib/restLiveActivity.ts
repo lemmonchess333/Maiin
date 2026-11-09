@@ -3,40 +3,42 @@
  * the Dynamic Island while the phone is down between sets (Mob2 call 1,
  * lifting finding 7). Hevy shows the same.
  *
- * NATIVE HALF DEFERRED. This is the app's half only, on the seam
- * `runLiveActivity.ts` set: the only module that touches
- * `capacitor-live-activities` for a rest, the plugin imported dynamically
- * so the web bundle never carries it, every call guarded and its failure
- * swallowed, since a Live Activity must never affect the workout. Until
- * the widget extension in `docs/run-live-activity.md` is built in Xcode
- * (Mob2 call 13: when the owner has a Mac), `startActivity` rejects and
- * this does nothing; on the web it is never loaded. The web's own way to
- * see a rest from outside the app is the tab's title (`restOutside.ts`).
- * The device check is in `docs/qa/pre-launch-backlog.md`.
+ * The app's half, on the seam `runLiveActivity.ts` set: the only module
+ * that touches `capacitor-live-activities` for a rest, the plugin imported
+ * dynamically so the web bundle never carries it, every call guarded and
+ * its failure swallowed, since a Live Activity must never affect the
+ * workout. The widget extension (`ios/App/LiveActivities/`,
+ * docs/run-live-activity.md) draws the card from the data sent here, the
+ * keys `liveActivityContract.ts` lists. On the web this is never loaded;
+ * the web's own way to see a rest from outside the app is the tab's title
+ * (`restOutside.ts`). The device check is in `docs/qa/pre-launch-backlog.md`.
  *
- * The countdown is ActivityKit's own timer element, counting to the rest's
- * end, so the lock screen keeps time with the app asleep and needs no
- * updates. Its end is part of the layout, not its data, so a rest that
- * gets longer (+15 s) is shown by ending the activity and starting
- * another.
+ * The countdown and its bar are the system's own, counting from the
+ * rest's start to its end, so the lock screen keeps time with the app
+ * asleep and needs no updates. The rest's end is also the activity's
+ * stale date: when it passes, the system draws the card again as done,
+ * green, as the rest band turns green. A rest that gets longer (+15 s) is
+ * shown by ending the activity and starting another, since an update
+ * would clear that stale date.
  */
 import { isNativePlatform } from "@/lib/platform";
 import { logger } from "@/lib/logger";
-import { THEME } from "@/lib/theme";
-import type {
-  ActivityLayout,
-  DynamicIslandLayout,
-  LayoutElement,
-} from "capacitor-live-activities";
+import { PLUGIN_LAYOUT } from "@/lib/liveActivityContract";
 
 export interface RestActivity {
+  /** When the rest started, in ms. */
+  startedAt: number;
   /** When the rest ends, in ms. */
   endsAt: number;
-  /** The exercise the rest is between sets of. */
+  /** The exercise of the set the rest leads to. */
   exerciseName?: string;
+  /** That set, as the rest band names it: "Set 2" and "15 kg × 10". */
+  next?: { name: string; load: string };
 }
 
 let activityId: string | null = null;
+/** The data the card was started with, sent again as its final state. */
+let shownData: Record<string, string | number> | null = null;
 /** The start in flight, so an end that comes first waits for it. */
 let starting: Promise<void> | null = null;
 
@@ -50,101 +52,27 @@ async function loadPlugin(): Promise<{ plugin: Plugin } | null> {
     const mod = await import("capacitor-live-activities");
     return { plugin: mod.LiveActivities };
   } catch {
-    // Not in this build (the Xcode half is not done): nothing to show.
+    // Not in this build: nothing to show.
     return null;
   }
 }
 
-/* Literal hex, as the run's card has it: the plugin draws natively and
-   reads no CSS custom property. The card is always dark. */
-const CARD_BG = "#17171B" as const;
-const TEXT_MUTED = "#8E8E93" as const;
-const LIFT = THEME.lifting as `#${string}`;
-
-const glyph = (size: number): LayoutElement => ({
-  type: "image",
-  properties: [
-    { systemName: "dumbbell.fill" },
-    { color: LIFT },
-    { width: size },
-    { height: size },
-  ],
-});
-
-const countdown = (endsAt: number, fontSize: number): LayoutElement => ({
-  type: "timer",
-  properties: [
-    { endTime: endsAt },
-    { style: "timer" },
-    { fontSize },
-    { fontWeight: "bold" },
-    { color: "#FFFFFF" },
-    { monospacedDigit: true },
-  ],
-});
-
-function cardLayout(endsAt: number): ActivityLayout {
-  return {
-    type: "container",
-    properties: [
-      { direction: "vertical" },
-      { spacing: 8 },
-      { padding: 14 },
-      { backgroundColor: CARD_BG },
-    ],
-    children: [
-      {
-        type: "container",
-        properties: [{ direction: "horizontal" }, { spacing: 6 }],
-        children: [
-          glyph(16),
-          {
-            type: "text",
-            properties: [
-              { text: "Rest" },
-              { fontSize: 12 },
-              { fontWeight: "semibold" },
-              { color: LIFT },
-            ],
-          },
-        ],
-      },
-      countdown(endsAt, 28),
-      {
-        type: "text",
-        properties: [
-          { text: "{{next}}" },
-          { fontSize: 13 },
-          { color: TEXT_MUTED },
-        ],
-      },
-    ],
-  };
+/** The next set's line under the countdown: "Set 2 · 15 kg × 10". */
+function restSetLine(next?: { name: string; load: string }): string {
+  return next
+    ? [next.name, next.load].filter((part) => part.trim()).join(" · ")
+    : "";
 }
 
-function islandLayout(endsAt: number): DynamicIslandLayout {
+/** The content state the widget reads (liveActivityContract.ts). */
+function restActivityData(rest: RestActivity): Record<string, string | number> {
   return {
-    expanded: {
-      leading: glyph(16),
-      center: countdown(endsAt, 18),
-      bottom: {
-        type: "text",
-        properties: [
-          { text: "{{next}}" },
-          { fontSize: 12 },
-          { color: TEXT_MUTED },
-        ],
-      },
-    },
-    compactLeading: glyph(14),
-    compactTrailing: countdown(endsAt, 14),
-    minimal: glyph(14),
+    kind: "rest",
+    startedAt: Math.min(rest.startedAt, rest.endsAt),
+    endsAt: rest.endsAt,
+    exercise: rest.exerciseName?.trim() ?? "",
+    set: restSetLine(rest.next),
   };
-}
-
-/** What the card says under the countdown. */
-export function restActivityLine(exerciseName?: string): string {
-  return exerciseName ? `Next: ${exerciseName}` : "Next set";
 }
 
 /** Shows a rest on the lock screen, in place of any rest shown there. */
@@ -153,19 +81,15 @@ export async function startRestActivity(rest: RestActivity): Promise<void> {
   const begin = (async () => {
     const plugin = (await loadPlugin())?.plugin;
     if (!plugin) return;
+    const data = restActivityData(rest);
     try {
       const result = await plugin.startActivity({
-        layout: cardLayout(rest.endsAt),
-        dynamicIslandLayout: islandLayout(rest.endsAt),
-        data: { next: restActivityLine(rest.exerciseName) },
-        behavior: {
-          systemActionForegroundColor: LIFT,
-          keyLineTint: LIFT,
-          // Tapping the card opens the app wherever it was.
-          widgetUrl: "tropos://workout",
-        },
+        ...PLUGIN_LAYOUT,
+        data,
+        staleDate: rest.endsAt,
       });
       activityId = result.activityId;
+      shownData = data;
     } catch (err) {
       logger.warn("[restLiveActivity] start failed", err);
     }
@@ -179,12 +103,14 @@ export async function startRestActivity(rest: RestActivity): Promise<void> {
 export async function endRestActivity(): Promise<void> {
   if (starting) await starting;
   const id = activityId;
+  const data = shownData;
   activityId = null;
+  shownData = null;
   if (id === null) return;
   try {
     const plugin = (await loadPlugin())?.plugin;
     if (!plugin) return;
-    await plugin.endActivity({ activityId: id, data: {} });
+    await plugin.endActivity({ activityId: id, data: data ?? {} });
   } catch (err) {
     logger.warn("[restLiveActivity] end failed", err);
   }
@@ -193,5 +119,6 @@ export async function endRestActivity(): Promise<void> {
 /** Test-only: forget the activity between cases. */
 export function __resetRestActivityForTests(): void {
   activityId = null;
+  shownData = null;
   starting = null;
 }

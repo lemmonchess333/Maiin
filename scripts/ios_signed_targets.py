@@ -31,6 +31,7 @@ SIGNED_PRODUCT_TYPES = {
 }
 
 AUTOMATIC = "CODE_SIGN_STYLE = Automatic;"
+APP_GROUPS = "com.apple.security.application-groups"
 OBJECT_ID = r"[0-9A-F]{24}"
 
 
@@ -128,6 +129,31 @@ def signed_targets(text, project_dir="ios/App"):
     return out
 
 
+def entitlement_app_groups(path):
+    """The App Groups an entitlements file asks for, [] for none.
+
+    A file the project names but the checkout lacks reads as none: Xcode
+    stops the archive on it by name.
+
+    deploy-ios.yml hands the bundles that ask for one to asc-signing.mjs,
+    which checks their App IDs have the capability before it makes any
+    signing: the App Store Connect API can read that, but cannot assign a
+    group, which is the owner's to do (docs/ios-release.md).
+    """
+    if not path:
+        return []
+    try:
+        with open(path, "rb") as source:
+            groups = plistlib.load(source).get(APP_GROUPS, [])
+    except FileNotFoundError:
+        return []
+    except (OSError, plistlib.InvalidFileException, ValueError):
+        raise ProjectError(f"{path} is not a readable entitlements file.") from None
+    if not isinstance(groups, list) or not all(isinstance(g, str) and g for g in groups):
+        raise ProjectError(f"{path} lists its App Groups as {groups!r}, not as a list of identifiers.")
+    return groups
+
+
 def sign_project(text, profiles):
     """Switches every configuration of every signed target from automatic
     signing to its App Store profile. Returns the new text and what changed."""
@@ -215,14 +241,17 @@ def main(argv=None):
         if args.command == "list":
             pbxproj = Path(args.pbxproj)
             targets = signed_targets(pbxproj.read_text(), str(pbxproj.parent.parent))
+            for t in targets:
+                t["app_groups"] = entitlement_app_groups(t["entitlements"])
             bundles = {t["bundle_id"] for t in targets}
             missing = [b for b in args.require if b not in bundles]
             if missing:
                 raise ProjectError(f"The project has no target for {', '.join(missing)}.")
             Path(args.out).write_text(json.dumps(targets, indent=2) + "\n")
             for t in targets:
+                groups = f', App Groups {", ".join(t["app_groups"])}' if t["app_groups"] else ""
                 print(f'{t["bundle_id"]}: "{t["target"]}", {t["entitlements"] or "no entitlements"}, '
-                      f'{len(t["configurations"])} configurations')
+                      f'{len(t["configurations"])} configurations{groups}')
         elif args.command == "sign":
             pbxproj = Path(args.pbxproj)
             profiles = json.loads(Path(args.profiles).read_text())

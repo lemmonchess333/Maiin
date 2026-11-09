@@ -29,10 +29,15 @@ import DailyTarget from "@/components/onboarding/DailyTarget";
 import { SETUP_REMINDER_TIME } from "@/lib/workoutReminderCopy";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { injuryChanges } from "@/features/program/injuryChanges";
+import { noEquipmentPullNote } from "@/features/program/noEquipment";
 import {
   equipmentLabel,
   experienceLabel,
   goalLabel,
+  takesBarbellAtHome,
+  takesSmallPlates,
+  takesPullUpBar,
+  pullUpBarWhenChosen,
 } from "@/features/program/programLabels";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
@@ -279,7 +284,12 @@ export default function Onboarding() {
   const [equipment, setEquipment] = useState<OnboardingDraft["equipment"]>(
     draft?.equipment ?? "full_gym"
   );
-  // "What do you have?" (Lift4 (11)): optional, beside the three setups.
+  // "What do you have?" (Lift4 (11)): optional, beside the setups. The bar
+  // starts from the setup chosen: on for a home gym, off for Minimal and
+  // for no equipment.
+  const [pullUpBar, setPullUpBar] = useState(
+    draft?.pullUpBar ?? pullUpBarWhenChosen(draft?.equipment)
+  );
   const [barbellAtHome, setBarbellAtHome] = useState(
     draft?.barbellAtHome ?? false
   );
@@ -293,6 +303,13 @@ export default function Onboarding() {
   // level is a beginner's everywhere (Lift4 (5)).
   const [experience, setExperience] = useState<OnboardingDraft["experience"]>(
     draft?.experience ?? "beginner"
+  );
+  // What a no-equipment plan can't pull, under the bar switch: the level
+  // counts once it's chosen (`noEquipmentPullNote`).
+  const pullNote = noEquipmentPullNote(
+    equipment,
+    pullUpBar,
+    experienceConfirmed ? experience : undefined
   );
   const [chosenRunFrequency, setRunFrequency] = useState<
     OnboardingDraft["runFrequency"]
@@ -421,6 +438,7 @@ export default function Onboarding() {
       liftDaysPreference,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       recentRaceDistance,
@@ -466,6 +484,7 @@ export default function Onboarding() {
       liftDaysPreference,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       recentRaceDistance,
@@ -629,8 +648,9 @@ export default function Onboarding() {
           injuries,
           weightKg,
           sessionMinutes,
-          barbellAtHome: equipment !== "full_gym" && barbellAtHome,
-          smallPlates,
+          barbellAtHome: takesBarbellAtHome(equipment) && barbellAtHome,
+          ...(takesPullUpBar(equipment) ? { pullUpBar } : {}),
+          smallPlates: takesSmallPlates(equipment) && smallPlates,
           raceLegTrim,
           weightDisplayUnit,
         },
@@ -660,6 +680,7 @@ export default function Onboarding() {
       weightKg,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       weightDisplayUnit,
@@ -863,7 +884,8 @@ export default function Onboarding() {
         experience,
         daysPerWeek,
         equipment,
-        ...(equipment !== "full_gym" ? { barbellAtHome } : {}),
+        ...(takesBarbellAtHome(equipment) ? { barbellAtHome } : {}),
+        ...(takesPullUpBar(equipment) ? { pullUpBar } : {}),
         preferredSplit: "auto",
         runFrequency,
         ...(recentRaceBenchmark
@@ -1751,13 +1773,19 @@ export default function Onboarding() {
                     {
                       id: "home_gym",
                       label: "Home gym",
-                      desc: "Dumbbells, a bench and a pull-up bar.",
+                      desc: "Dumbbells and a bench.",
                       art: "incline-db-press",
                     },
                     {
                       id: "minimal",
-                      label: "Minimal / bodyweight",
-                      desc: "Bodyweight and limited equipment.",
+                      label: "Minimal",
+                      desc: "Dumbbells and your bodyweight.",
+                      art: "goblet-squat",
+                    },
+                    {
+                      id: "no_equipment",
+                      label: "No equipment",
+                      desc: "Just your bodyweight, on the floor.",
                       art: "bodyweight-squat",
                     },
                   ] as const
@@ -1767,10 +1795,13 @@ export default function Onboarding() {
                     selected={equipmentConfirmed && equipment === option.id}
                     onSelect={() => {
                       setEquipmentConfirmed(true);
+                      // A setup chosen anew starts from its own bar answer.
+                      if (option.id !== equipment)
+                        setPullUpBar(pullUpBarWhenChosen(option.id));
                       setEquipment(option.id);
                     }}
                     /* The kit each setup means, drawn: a machine, dumbbells
-                       on a bench, no equipment at all. */
+                       on a bench, a dumbbell alone, no equipment at all. */
                     icon={
                       <ChoiceArt art={{ kind: "exercise", id: option.art }} />
                     }
@@ -1779,48 +1810,82 @@ export default function Onboarding() {
                   />
                 ))}
               </div>
-              {equipmentConfirmed && (
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-sm font-semibold">What do you have?</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Optional. The plan uses what you have.
-                    </p>
-                  </div>
-                  {equipment !== "full_gym" && (
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-foreground">
-                          A barbell and a rack
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Squats, deadlifts and presses with the bar.
-                        </p>
-                      </div>
-                      <Toggle
-                        checked={barbellAtHome}
-                        label="A barbell and a rack"
-                        className="ml-3"
-                        onChange={() => setBarbellAtHome((v) => !v)}
-                      />
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between">
+              {/* With no equipment the one thing to add is a doorway bar:
+                  there are no plates to make small. */}
+              {equipmentConfirmed &&
+                (takesSmallPlates(equipment) || takesPullUpBar(equipment)) && (
+                  <div className="space-y-3">
                     <div>
-                      <p className="text-sm text-foreground">Small plates</p>
+                      <h3 className="text-sm font-semibold">
+                        What do you have?
+                      </h3>
                       <p className="text-xs text-muted-foreground">
-                        {smallPlatesHint(liftUnit)}
+                        Optional. The plan uses what you have.
                       </p>
                     </div>
-                    <Toggle
-                      checked={smallPlates}
-                      label="Small plates"
-                      className="ml-3"
-                      onChange={() => setSmallPlates((v) => !v)}
-                    />
+                    {takesBarbellAtHome(equipment) && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-foreground">
+                            A barbell and a rack
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Squats, deadlifts and presses with the bar.
+                          </p>
+                        </div>
+                        <Toggle
+                          checked={barbellAtHome}
+                          label="A barbell and a rack"
+                          className="ml-3"
+                          onChange={() => setBarbellAtHome((v) => !v)}
+                        />
+                      </div>
+                    )}
+                    {takesPullUpBar(equipment) && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-foreground">
+                            A pull-up bar
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            A doorway bar works. Pull-ups and chin-ups.
+                          </p>
+                        </div>
+                        <Toggle
+                          checked={pullUpBar}
+                          label="A pull-up bar"
+                          className="ml-3"
+                          onChange={() => setPullUpBar((v) => !v)}
+                        />
+                      </div>
+                    )}
+                    {takesSmallPlates(equipment) && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-foreground">
+                            Small plates
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {smallPlatesHint(liftUnit)}
+                          </p>
+                        </div>
+                        <Toggle
+                          checked={smallPlates}
+                          label="Small plates"
+                          className="ml-3"
+                          onChange={() => setSmallPlates((v) => !v)}
+                        />
+                      </div>
+                    )}
+                    {/* What a no-equipment plan can't train, under its bar
+                      switch, once, where the setup is chosen. */}
+                    {pullNote && (
+                      <p className="text-sm text-muted-foreground">
+                        {pullNote}
+                      </p>
+                    )}
                   </div>
-                </div>
-              )}
+                )}
               <div className="space-y-3">
                 <h2 className="text-base font-semibold">Lifting experience</h2>
                 {(

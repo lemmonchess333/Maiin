@@ -476,7 +476,7 @@ No phone or console needed; I'll work through these and tick them in the backlog
 Real engineering or owner items, kept in the backlog as they are.
 
 - A lawyer reads the Privacy Policy and the Terms. Every claim in them was checked against the code, which is not a legal review.
-- The run's lock-screen card has no widget extension yet. The app's half and the plugin are in (`src/lib/runLiveActivity.ts`), but the Xcode target in `docs/run-live-activity.md` was never added, so nothing appears on the lock screen or in the Dynamic Island. Engineering, after 1.0.
+- ~~The run's lock-screen card has no widget extension yet.~~ Built 2026-11-09 (`ios/App/LiveActivities/`): the run and a lift's rest on the lock screen and in the Dynamic Island. Its phone checks are in `docs/qa/pre-launch-backlog.md`, "Live Activities on the phone".
 - Who the "trader" is. Before the UK rules start in: This is a legal question for a qualified adviser: who is the trader under the UK subscription rules when Apple sells as commissionaire. No test or console can answer it. Its deadline is January 2027, not 1.0.
 - No tracking framework in the binary: otool -L on the built app: The owner has no Mac, and deploy-ios.yml has no otool step (grep finds none) and uploads no artifact. As things stand, nothing can run this check.
 - The six panels are not one scene (dips station drifts): Still live: public/form-frames/dips/1-6.webp unchanged since 3c8793f3 (2026-09-04), and src/lib/formArtwork.ts:235 still serves them as existing('dips') with status 'existing-needs-review'. Fix is regenerating the art (owner/art pipeline), not a device or console check.

@@ -17,6 +17,11 @@
  * edit; it does not claim to show the resulting workouts.
  */
 
+import {
+  takesBarbellAtHome,
+  takesPullUpBar,
+} from "@/features/program/programLabels";
+
 export interface ProgrammeSnapshot {
   primaryGoal: string;
   nutritionPhase: string;
@@ -37,6 +42,8 @@ export interface ProgrammeSnapshot {
   /** A barbell and a rack beside a home gym's or a minimal setup's kit
    *  (Lift4 (11)). */
   barbellAtHome?: boolean;
+  /** A pull-up bar beside it (Lift4 (11)). */
+  pullUpBar?: boolean;
 }
 
 export interface ProgrammeChange {
@@ -81,7 +88,8 @@ const SPLIT_LABELS: Record<string, string> = {
 const EQUIPMENT_LABELS: Record<string, string> = {
   full_gym: "Full gym",
   home_gym: "Home gym",
-  minimal: "Minimal / bodyweight",
+  minimal: "Minimal",
+  no_equipment: "No equipment",
 };
 
 const INJURY_LABELS: Record<string, string> = {
@@ -234,7 +242,7 @@ export function computeProgrammeChanges(
   }
 
   if (
-    draft.equipment !== "full_gym" &&
+    takesBarbellAtHome(draft.equipment) &&
     draft.barbellAtHome !== undefined &&
     saved.barbellAtHome !== undefined &&
     draft.barbellAtHome !== saved.barbellAtHome
@@ -243,6 +251,22 @@ export function computeProgrammeChanges(
       label: "A barbell and a rack",
       from: saved.barbellAtHome ? "Yes" : "No",
       to: draft.barbellAtHome ? "Yes" : "No",
+    });
+  }
+
+  // The bar answer is a change only within one setup: choosing another
+  // setup is the change, and the answer starts again from its own.
+  if (
+    takesPullUpBar(draft.equipment) &&
+    draft.equipment === saved.equipment &&
+    draft.pullUpBar !== undefined &&
+    saved.pullUpBar !== undefined &&
+    draft.pullUpBar !== saved.pullUpBar
+  ) {
+    changes.push({
+      label: "A pull-up bar",
+      from: saved.pullUpBar ? "Yes" : "No",
+      to: draft.pullUpBar ? "Yes" : "No",
     });
   }
 

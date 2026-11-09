@@ -70,7 +70,10 @@ import { logger } from "./logger";
 import { traceBoot } from "@/lib/bootTrace";
 import { rememberSignInMethod, signInMethodOf } from "./signInMethod";
 import type { Goal } from "./types";
-import type { PreferredSplit } from "@/features/program/programTypes";
+import type {
+  Equipment,
+  PreferredSplit,
+} from "@/features/program/programTypes";
 import {
   PROFILE_REFRESH_ATTEMPTS,
   PROFILE_REFRESH_WAIT_MS,
@@ -582,10 +585,14 @@ export interface UserProfileOnboarding {
    */
   experienceSuggestionDismissed?: { signature: string; at: number };
   daysPerWeek?: 2 | 3 | 4 | 5 | 6;
-  equipment?: "full_gym" | "home_gym" | "minimal";
+  equipment?: Equipment;
   /** Lift4 (11): a barbell and a rack beside a home gym's or a minimal
    *  setup's kit, so the plan can give barbell lifts. */
   barbellAtHome?: boolean;
+  /** Lift4 (11): a pull-up bar beside a home gym's or a minimal setup's
+   *  kit, for pull-ups, chin-ups and the hanging leg raise. Missing on an
+   *  older profile, which keeps them (`hasPullUpBar`). */
+  pullUpBar?: boolean;
   preferredSplit?: PreferredSplit;
   runFrequency?: "regular" | "occasional" | "none" | "new";
   injuries?: string[];
@@ -1492,6 +1499,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isNativePlatform()) {
         const { clearWatchRunAccountState } = await import("./watchRunBridge");
         await clearWatchRunAccountState();
+        // The Home Screen and Lock Screen widgets show the outgoing
+        // account's day until the next one's Home is drawn: take it off.
+        // Best effort, and it never throws.
+        const { clearHomeWidgets } = await import("./homeWidgets");
+        await clearHomeWidgets();
       }
       clearStoredRun(outgoingUid);
       clearWorkoutDraft(outgoingUid);

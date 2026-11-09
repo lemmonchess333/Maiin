@@ -650,6 +650,11 @@ export default function RunPlanSettings({
             }
           : {}),
         equipment: profile.equipment ?? "full_gym",
+        // What the person has beside the setup: a run-plan save rebuilds
+        // the lift week on it as well, and must not swap a barbell lift or
+        // a pull-up the person said they can do.
+        barbellAtHome: profile.barbellAtHome,
+        pullUpBar: profile.pullUpBar,
         injuries: profile.injuries ?? [],
         ...(runMode === "race_prep" && lifts ? { raceLegTrim } : {}),
         currentDate: localDateString(new Date()),

@@ -49,6 +49,8 @@ import {
   dropUnavailableAccessories,
   applyInjuryFiltersToWorkouts,
   restoreSwappedLifts,
+  standInForMissingKit,
+  withoutKitSwapNotes,
 } from "./matchTemplate";
 import {
   extraPastCeiling,
@@ -81,8 +83,16 @@ import {
   toExperience,
   usesUndulation,
 } from "./experienceModel";
-import { mainRepAnchor, roleRepsFor } from "./roleTable";
+import {
+  takesBodyweightFloor,
+  mainRepAnchor,
+  MIN_BODYWEIGHT_REPS,
+  roleRepsFor,
+} from "./roleTable";
 import { nextUpIndex } from "./nextUpCursor";
+import { plansNoPull } from "./programLabels";
+import { capSupermanVolume } from "./noEquipment";
+import { MAX_HOLD_SECONDS } from "./repUnits";
 import {
   hardestEffort,
   recordedReps,
@@ -219,6 +229,16 @@ export function goalProfileFor(primaryGoal?: PrimaryGoal): GoalProfile {
 const RPE_HOLD_THRESHOLD = 9.5;
 /** Bodyweight rep target stops climbing here; the user is prompted to add load. */
 const MAX_BODYWEIGHT_REPS = 20;
+/**
+ * Where a bodyweight lift's reps stop climbing when the person has nothing
+ * to add load with (no equipment): one rep a session past its range, to 30,
+ * as the owner set it. The cap is the evidence's: muscle grows about as
+ * much from 6 reps as from 30 when sets end near failure (Schoenfeld,
+ * Grgic, Ogborn and Krieger 2017, J Strength Cond Res 31(12):3508-3523, a
+ * meta-analysis of low- against high-load training). Holds keep their 30
+ * to 60 seconds.
+ */
+export const NO_LOAD_MAX_REPS = 30;
 /**
  * Ceilings the GENERATOR will not prescribe past (2026-07-28 audit).
  *
@@ -357,8 +377,6 @@ export function prescribedRepRange(
 
 /** Timed holds climb in 5-second steps (N2's time axis). */
 const HOLD_STEP_SECONDS = 5;
-/** Ceiling for a hold with no authored range — past this, add load instead. */
-const MAX_HOLD_SECONDS = 60;
 /** Floor for any hold reduction (failure deload or mesocycle deload) — below
  *  ~10s the movement stops being a hold. LIFT-EV-01 named what was a magic
  *  literal in the deload path. */
@@ -391,7 +409,15 @@ export const PERFORMANCE_HISTORY_CAP = 10;
    SPLIT SELECTION
 ================================ */
 
-export function chooseSplit(weeklyTarget: number): SplitType {
+/**
+ * A plan with nothing to pull on (`plansNoPull`: no equipment, and no
+ * pull-up bar the person is given) has no Pull day to build, so a week of
+ * five or six days runs upper / lower twice and the rest as full-body days,
+ * every muscle still about twice a week. Two to four days build as any
+ * setup's do.
+ */
+export function chooseSplit(weeklyTarget: number, noPull = false): SplitType {
+  if (noPull && Math.min(6, weeklyTarget) >= 5) return "upper_lower_fb";
   if (weeklyTarget <= 0) return "full_body"; // run-only athlete — no lift days
   // Cap at 6. 7 hard lift days/week is the wrong default for every tier
   // (beginner through advanced) — recovery needs at least one non-lift
@@ -417,7 +443,13 @@ export function chooseSplit(weeklyTarget: number): SplitType {
   return "ppl_x2";
 }
 
-export function splitLabel(split: SplitType): string {
+/**
+ * The split's name, or "" for one this build doesn't know. The value is
+ * stored on the plan and read back by every app that opens it, an older
+ * one included, so a split added later (as `upper_lower_fb` was) reaches
+ * apps that can't name it: they say nothing rather than "undefined".
+ */
+export function splitLabel(split: SplitType | undefined): string {
   switch (split) {
     case "full_body":
       return "Full Body";
@@ -431,6 +463,16 @@ export function splitLabel(split: SplitType): string {
       return "Push / Pull / Legs ×2";
     case "ppl_x2_fb":
       return "Push / Pull / Legs ×2 + Full Body";
+    case "upper_lower_fb":
+      return "Upper / Lower + Full Body";
+    default: {
+      // Every SplitType is named above: a new one fails the typecheck
+      // here until it is. What reaches this at runtime is a value from a
+      // newer app, or none.
+      const unnamed: undefined = split;
+      void unnamed;
+      return "";
+    }
   }
 }
 
@@ -440,8 +482,12 @@ export function splitLabel(split: SplitType): string {
  * deliberate coaching choice rather than an ignored preference. Mirrors
  * `chooseSplit`; the thread is weekly per-muscle FREQUENCY.
  */
-export function splitRationale(weeklyLiftDays: number): string {
+export function splitRationale(weeklyLiftDays: number, noPull = false): string {
   const d = Math.min(6, Math.max(0, Math.round(weeklyLiftDays)));
+  if (chooseSplit(d, noPull) === "upper_lower_fb")
+    return d === 5
+      ? "Five days runs upper / lower twice and a full-body day, so each muscle trains about twice a week."
+      : "Six days runs upper / lower twice and two full-body days, so each muscle trains about twice a week.";
   switch (d) {
     case 0:
       return "No lift days set — add some to build a split.";
@@ -1387,9 +1433,47 @@ export function undulationDeltaFor(
   return delta;
 }
 
-/** Lowest rep target a shifted day may fall to, by session role. */
-export function repFloorFor(ex: { isAccessory?: boolean }): number {
+/** Lowest rep target a shifted day may fall to, by session role, and 8 for
+ *  an easy bodyweight lift with no load added (`takesBodyweightFloor`). */
+export function repFloorFor(ex: {
+  isAccessory?: boolean;
+  exerciseId?: string;
+  weight?: number;
+  repUnit?: string;
+}): number {
+  if (
+    ex.exerciseId !== undefined &&
+    takesBodyweightFloor({ ...ex, exerciseId: ex.exerciseId })
+  )
+    return MIN_BODYWEIGHT_REPS;
   return ex.isAccessory === true ? 6 : 3;
+}
+
+/** The narrowest range a shifted day leaves a lift under its ceiling. */
+const MIN_RANGE_WIDTH = 3;
+
+/**
+ * A day's rep target, moved by its role (`delta`), between the lift's
+ * floor (`repFloorFor`) and its ceiling (`prescribedRepCeiling`). A lift
+ * with a range keeps at least three reps of it under the ceiling, so a pump
+ * day's +2 on a bodyweight isolation's 12–15 stays 12–15, not "14–15", a
+ * range with nothing to climb.
+ */
+export function shiftedRepTarget(
+  ex: {
+    isAccessory?: boolean;
+    exerciseId?: string;
+    weight?: number;
+    repUnit?: string;
+  },
+  target: number,
+  span: number
+): number {
+  const room = span > 0 ? Math.min(span, MIN_RANGE_WIDTH) : 0;
+  return Math.min(
+    prescribedRepCeiling(ex) - room,
+    Math.max(repFloorFor(ex), target)
+  );
 }
 
 /**
@@ -1472,7 +1556,8 @@ export function withDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
  */
 function applyDayRoles(
   workouts: WorkoutDay[],
-  experience?: Experience
+  experience: Experience | undefined,
+  goal: PrimaryGoal | undefined
 ): WorkoutDay[] {
   // Not for a novice (2026-07-28). Undulation exists because an intermediate
   // can no longer add load every session, so the stimulus has to be varied
@@ -1487,11 +1572,13 @@ function applyDayRoles(
     return {
       ...day,
       exercises: day.exercises.map((ex) => {
+        // A hold's target is seconds: two of them either way is no heavier
+        // or lighter day, and the hold climbs on its own five-second steps.
+        if (ex.repUnit === "seconds") return ex;
         const delta = undulationDeltaFor(ex, role);
-        const reps = Math.min(
-          prescribedRepCeiling(ex),
-          Math.max(repFloorFor(ex), ex.reps + delta)
-        );
+        const row = roleRepsFor(goal, ex, experience);
+        const span = row.top === undefined ? 0 : row.top - row.bottom;
+        const reps = shiftedRepTarget(ex, ex.reps + delta, span);
         return { ...ex, reps, baseReps: reps };
       }),
     };
@@ -1829,6 +1916,8 @@ export function generateProgram(
     injuries?: readonly string[];
     /** A barbell and a rack beside a home gym's kit. */
     barbellAtHome?: boolean;
+    /** A pull-up bar beside the setup's kit (`hasPullUpBar`). */
+    pullUpBar?: boolean;
   }
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
@@ -1843,7 +1932,10 @@ export function generateProgram(
   // `primaryGoal` wasn't passed (e.g. legacy call sites).
   const profile = goalProfileFor(primaryGoal);
 
-  const splitType = chooseSplit(weeklyTarget);
+  const splitType = chooseSplit(
+    weeklyTarget,
+    plansNoPull(limits?.equipment, limits?.pullUpBar, experience)
+  );
 
   const buildSplit = (existingWorkouts?: WorkoutDay[]): WorkoutDay[] => {
     let workouts: WorkoutDay[];
@@ -1882,6 +1974,19 @@ export function generateProgram(
         workouts = [...ppl, buildLegsB(profile, existingWorkouts)];
         break;
       }
+      case "upper_lower_fb":
+        // The full-body days start at week position 4: same offset rule as
+        // `ppl_ul`.
+        workouts = [
+          ...buildUpperLower(profile, existingWorkouts),
+          ...buildFullBody(
+            profile,
+            Math.min(weeklyTarget, 6) - 4,
+            existingWorkouts?.slice(4),
+            experience
+          ),
+        ];
+        break;
       case "ppl_x2_fb": {
         // Retained for backward-compat — `chooseSplit` no longer returns
         // this (capped at 6 days) but existing programState rows on disk
@@ -2054,12 +2159,14 @@ export function generateProgram(
         injuries,
         limits.equipment ?? "full_gym",
         loadCtx,
-        limits.barbellAtHome
+        limits.barbellAtHome,
+        limits.pullUpBar
       ),
       injuries,
       limits.equipment,
       loadCtx,
-      limits.barbellAtHome
+      limits.barbellAtHome,
+      limits.pullUpBar
     );
     workouts = applyEquipmentFilterToWorkouts(
       workouts,
@@ -2067,21 +2174,35 @@ export function generateProgram(
       injuries,
       experience,
       loadCtx,
-      limits.barbellAtHome
+      limits.barbellAtHome,
+      limits.pullUpBar
     );
     // Lift14: a supporting lift the kit can't do goes when its day trains
     // the muscle with one it can.
     workouts = dropUnavailableAccessories(
       workouts,
       limits.equipment,
-      limits.barbellAtHome
+      limits.barbellAtHome,
+      limits.pullUpBar
     );
+    // With no equipment, a main lift nothing in its movement can stand in
+    // for takes a hold or floor lift, so no day is left with one it can't
+    // do, or with none.
+    workouts = standInForMissingKit(
+      workouts,
+      limits.equipment,
+      injuries,
+      loadCtx,
+      limits.pullUpBar
+    );
+    // The kit swaps of a plan being built name lifts it never gave.
+    workouts = withoutKitSwapNotes(workouts);
   }
   // Lift4 (5): each lift's sets, reps and progression come from its role
   // (`roleTable.ts`), once the identity passes have settled who is where;
   // then backlog #3's day roles shift the reps, see applyDayRoles above.
   workouts = applyRoleTable(workouts, primaryGoal, experience);
-  workouts = applyDayRoles(withDayRoles(workouts), experience);
+  workouts = applyDayRoles(withDayRoles(workouts), experience, primaryGoal);
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
   // (lifts with logged history keep theirs; with no bodyweight, the plan
   // starts from the bar). After every pass that settles who is where, so it
@@ -2158,7 +2279,9 @@ export function generateProgram(
     }
     if (!dropped) break;
   }
-  workouts = settled;
+  // The floor plan's superman hold: 3 sets a session, about 6 a week, its
+  // extra days' holds gone rather than thinned to a set.
+  workouts = capSupermanVolume(settled, { drop: true });
 
   // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
   // seeding — advanceWeek derives each week's sets from baseSets.
@@ -2247,7 +2370,10 @@ export function applyProgression(
   date: string = format(new Date(), "yyyy-MM-dd"),
   /** The lifter's kit (Lift18, `settings.loadUnit`): the weight steps on
    *  lb plates and an lb rack. */
-  unit: LiftUnit = "kg"
+  unit: LiftUnit = "kg",
+  /** The person has nothing to add load with (no equipment): a bodyweight
+   *  lift climbs its reps to `NO_LOAD_MAX_REPS`, and nothing asks for load. */
+  noLoad = false
 ): ProgramExercise {
   const record = {
     date,
@@ -2368,19 +2494,29 @@ export function applyProgression(
   // steps toward the authored ceiling, and the add-load prompt waits until
   // the hold is genuinely long.
   const isTimed = exercise.repUnit === "seconds";
+  // With nothing to add load with, a bodyweight lift in reps climbs past
+  // its range to `NO_LOAD_MAX_REPS` and stops there, and a hold stays at
+  // its 60 seconds, without a word: the "add load" prompt asks for kit the
+  // person doesn't have.
+  const climbsToNoLoadTop = noLoad && !isTimed;
+  const atTop = (message: string) => {
+    if (!noLoad) updated.notes = `${message}${ADD_LOAD_PROMPT}`;
+  };
   const bumpBodyweightReps = () => {
     if (isTimed) {
       const ceiling = exercise.repRangeMax ?? MAX_HOLD_SECONDS;
       if (exercise.reps >= ceiling) {
-        updated.notes = `Holding this long already${ADD_LOAD_PROMPT}`;
+        atTop("Holding this long already");
       } else {
         updated.reps = Math.min(ceiling, exercise.reps + HOLD_STEP_SECONDS);
       }
       return;
     }
-    const ceiling = exercise.repRangeMax ?? MAX_BODYWEIGHT_REPS;
+    const ceiling = climbsToNoLoadTop
+      ? NO_LOAD_MAX_REPS
+      : (exercise.repRangeMax ?? MAX_BODYWEIGHT_REPS);
     if (exercise.reps >= ceiling) {
-      updated.notes = `Hitting ${ceiling}+ reps${ADD_LOAD_PROMPT}`;
+      atTop(`Hitting ${ceiling}+ reps`);
     } else {
       updated.reps = Math.min(ceiling, exercise.reps + 1);
     }
@@ -2394,7 +2530,10 @@ export function applyProgression(
       const rangeMax =
         exercise.repRangeMax ??
         impliedDoubleRangeMax(resetReps, repsOnly, isTimed);
-      if (repsOnly && rangeMax != null && rangeMax > resetReps) {
+      // The rep climb's top: past the range to 30 with nothing to load.
+      const repsTop =
+        repsOnly && climbsToNoLoadTop ? NO_LOAD_MAX_REPS : rangeMax;
+      if (repsOnly && repsTop != null && repsTop > resetReps) {
         // Range-aware BODYWEIGHT progression. This branch did not exist:
         // the range-aware arm below was gated `!isBodyweight`, so a
         // bodyweight main fell through to the legacy +2-overshoot arm —
@@ -2414,10 +2553,10 @@ export function applyProgression(
         if (rpeOk) {
           if (isTimed) {
             bumpBodyweightReps();
-          } else if (actualReps >= rangeMax) {
-            updated.notes = `Hitting ${rangeMax}+ reps${ADD_LOAD_PROMPT}`;
+          } else if (actualReps >= repsTop) {
+            atTop(`Hitting ${repsTop}+ reps`);
           } else {
-            updated.reps = Math.min(rangeMax, actualReps + 1);
+            updated.reps = Math.min(repsTop, actualReps + 1);
           }
         }
       } else if (!repsOnly && rangeMax != null && rangeMax > resetReps) {
@@ -2467,9 +2606,10 @@ export function applyProgression(
         // axis (7) lowers it on). Without it a pull-up main on a fixed
         // target climbed only on a 2-rep overshoot, and then a single rep.
         // With load added, its step is a plate, below (Pgm8 L6).
-        const rangeMax =
-          exercise.repRangeMax ??
-          impliedDoubleRangeMax(resetReps, repsOnly, isTimed);
+        const rangeMax = climbsToNoLoadTop
+          ? NO_LOAD_MAX_REPS
+          : (exercise.repRangeMax ??
+            impliedDoubleRangeMax(resetReps, repsOnly, isTimed));
         if (rangeMax != null && rangeMax > resetReps) {
           // Range-aware bodyweight climb on the LINEAR path too — a
           // running-goal pull-up main (4-6, linear) was frozen for a
@@ -2479,7 +2619,7 @@ export function applyProgression(
             if (isTimed) {
               bumpBodyweightReps();
             } else if (actualReps >= rangeMax) {
-              updated.notes = `Hitting ${rangeMax}+ reps${ADD_LOAD_PROMPT}`;
+              atTop(`Hitting ${rangeMax}+ reps`);
             } else {
               updated.reps = Math.min(rangeMax, actualReps + 1);
             }
@@ -2590,7 +2730,9 @@ export function applySessionSets(
   /** The session's local date for its history record (`applyProgression`). */
   date: string = format(new Date(), "yyyy-MM-dd"),
   /** The lifter's kit (`applyProgression`). */
-  unit: LiftUnit = "kg"
+  unit: LiftUnit = "kg",
+  /** Nothing to add load with (`applyProgression`). */
+  noLoad = false
 ): ProgramExercise {
   const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
   const reps = recordedReps(read);
@@ -2610,7 +2752,8 @@ export function applySessionSets(
         hardestEffort(read),
         missCounts,
         date,
-        unit
+        unit,
+        noLoad
       ),
       reps
     );

@@ -51,13 +51,13 @@ Firebase's website.
 #### Signing: the API key, or your own certificate
 
 A TestFlight archive needs one Apple Distribution certificate and an App
-Store provisioning profile for each app and extension target: today the
-iPhone app and the Watch app. The workflow reads that list from the project
-(`scripts/ios_signed_targets.py`, its first step), so a target added later,
-such as the Live Activity widget extension
-([run-live-activity.md](run-live-activity.md)), is signed, checked and
-exported with no change to the workflow. It gets the certificate and
-profiles one of two ways:
+Store provisioning profile for each app and extension target: the iPhone
+app, the Watch app and the Live Activity widget extension
+([run-live-activity.md](run-live-activity.md)), which every build embeds.
+The workflow reads that list from the project
+(`scripts/ios_signed_targets.py`, its first step), so a target added later
+is signed, checked and exported with no change to the workflow. It gets the
+certificate and profiles one of two ways:
 
 - **From the API key (the default).** With none of the four
   `IOS_DIST_CERT_*` / iPhone and Watch provisioning profile secrets set, each
@@ -67,17 +67,22 @@ profiles one of two ways:
   the runner. Each run makes a new certificate and revokes the previous
   run's certificate. Apple Developer → Certificates shows one Apple
   Distribution certificate from these runs, and Profiles shows one profile
-  per target: `Tropos CI <serial>` for the iPhone app and
-  `Tropos CI <serial> watchkitapp` for the Watch app (the last part of each
-  other bundle ID). Revoking an
+  per target: `Tropos CI <serial>` for the iPhone app,
+  `Tropos CI <serial> watchkitapp` for the Watch app and
+  `Tropos CI <serial> LiveActivities` for the widget (the last part of each
+  other bundle ID). A target with no entitlements needs no App ID
+  capability, so when Apple has no App ID for one the run registers it;
+  an App ID with capabilities stays yours to make, below. Every target
+  has one now: the widget's App ID carries the App Group it shares with
+  the app ("The App Group", below). Revoking an
   old certificate does not affect builds already uploaded, which Apple
   signs itself. This needs the API key to have the **Admin** role.
 - **Your own certificate.** Set all four secrets, including the Watch profile,
   and the run signs with them instead: the openssl steps under "Your own
   certificate" below. The API key then only uploads and marks the build,
   which the **App Manager** role allows. These secrets hold the iPhone and
-  Watch profiles only, so once the project signs another target the run
-  stops and names it: sign from the API key then.
+  Watch profiles only, and every build also signs the widget, so with them
+  the run stops in its first minute and names it: sign from the API key.
 
 Either way the run checks the certificate and every profile against the
 team, its bundle ID and its target's entitlements before it archives. It
@@ -104,6 +109,59 @@ Identifiers. Turn on **HealthKit** there before making its App Store Connect
 profile. The Watch profile must use the same Apple Distribution certificate
 as the iPhone profile. The Watch target has its own entitlements file at
 `ios/App/TroposWatch/TroposWatch.entitlements`.
+
+The widget extension's App ID, `com.tropos.app.LiveActivities`, needs one
+capability, **App Groups**, with the group assigned: the next section.
+
+#### The App Group (once, for the Home Screen widgets)
+
+The Home Screen and Lock Screen widgets (Wid1: Today, Streak, Today's food)
+cannot run the app's code or reach Firestore. The app writes a snapshot of
+Home to an App Group, `group.com.tropos.app`, and the widget extension
+reads it there; the food widget's "+" queues a drink there for the app to
+save. Both App IDs must carry the group, and both entitlements files ask
+for it (`ios/App/App/App.entitlements`,
+`ios/App/LiveActivities/LiveActivities.entitlements`).
+
+The run cannot do this for you. App Store Connect's API can switch the App
+Groups capability on for an App ID, but it has no way to register an App
+Group or to assign one to an App ID, and a profile made from an App ID with
+the capability on and no group assigned does not carry the group. So this
+is done once, by hand, on Apple's site. No Mac is needed.
+
+1. Sign in at [developer.apple.com/account](https://developer.apple.com/account)
+   and open **Certificates, Identifiers & Profiles**, then **Identifiers**
+   in the sidebar.
+2. **Register the group.** Click the **+** beside the Identifiers heading,
+   choose **App Groups**, then **Continue**. Description: `Tropos widgets`.
+   Identifier: `group.com.tropos.app` (exactly; Apple adds nothing to it).
+   **Continue**, then **Register**. If the list (filter it to **App Groups**
+   with the menu at the top right) already shows `group.com.tropos.app`,
+   skip this step.
+3. **The iPhone app's App ID.** Filter the list back to **App IDs** and
+   click `com.tropos.app`. Under **Capabilities**, tick **App Groups**,
+   then click **Configure** on that row. In **App Group Assignment** tick
+   `group.com.tropos.app`, then **Continue**. Click **Save** at the top
+   right, and **Confirm** when Apple warns that the change makes the App
+   ID's profiles invalid (a run makes new ones each time).
+4. **The widget's App ID.** Click `com.tropos.app.LiveActivities` and do
+   the same as step 3. If it is not in the list (no run has signed the
+   widget yet), click **+**, choose **App IDs**, **Continue**, **App**,
+   **Continue**; Description `Tropos LiveActivities`, Bundle ID
+   **Explicit** `com.tropos.app.LiveActivities`; tick **App Groups**;
+   **Continue**, **Register**. Then open it from the list and do step 3's
+   **Configure**, **Continue** and **Save**.
+5. Run **Deploy iOS to TestFlight** again. Signing from the API key makes
+   new profiles, which carry the group.
+
+The run says so if any of this is missing, before it makes or revokes
+anything: `asc-signing.mjs` reads both App IDs' capabilities and stops,
+naming the App ID and these clicks, when App Groups is off; the profile
+check before the archive names the App ID whose profile carries no
+`group.com.tropos.app` (the capability on but the group not assigned); and
+the archive and the exported IPA are checked for the group on the signed
+app and the signed widget (`verify_ios_live_activity.py`). With your own
+certificate and profiles, the iPhone profile must be made after step 3.
 
 Turning a capability on later means making the profile again. A run that
 signs from the API key makes a new profile each time, so for that, run the
@@ -207,9 +265,10 @@ the comment on the build step, and the activation order in
 
 #### First-run checklist
 
-1. Register both App IDs and turn on their capabilities, then add the five
-   required secrets above (and the four optional ones only if you sign with
-   your own certificate).
+1. Register the App IDs and turn on their capabilities, assign the App
+   Group to the iPhone app's and the widget's ("The App Group" above), then
+   add the five required secrets above (and the four optional ones only if
+   you sign with your own certificate).
 2. Make sure App Store Connect → Apps has an app for `com.tropos.app`. The
    upload has nowhere to go without one.
 3. Actions tab → **Deploy iOS to TestFlight** → Run workflow. Leave
@@ -224,9 +283,9 @@ the comment on the build step, and the activation order in
    expiry, target entitlements) and the certificate (a valid Apple
    Distribution identity that every profile names),
    before archiving. Its error names the piece to fix: an API key without
-   the Admin role, an App ID that is missing or lacks a capability, or an
-   account already holding as many distribution certificates as Apple
-   allows.
+   the Admin role, an App ID that is missing or lacks a capability or the
+   App Group, or an account already holding as many distribution
+   certificates as Apple allows.
 5. Signing: the project as committed signs automatically, which cannot
    work on a runner with no Apple account, so the workflow switches every
    signed target, in every configuration, to manual signing with its
@@ -285,6 +344,8 @@ compiles a standard Release build for Simulator, then the pilot, with
 signing disabled, and runs `scripts/verify_ios_watch.py --unsigned` on each:
 the standard build must carry no Watch app, the gate off and the short Health
 text; the pilot one embedded Watch app, both gates on and the expanded text.
+`scripts/verify_ios_live_activity.py --unsigned` then finds the Live Activity
+widget in both, since every build embeds it.
 It uses a synthetic Firebase plist and does not install, sign, or exercise
 either app. A green compile is required before this gate is considered ready
 for the signed TestFlight and paired-device checks below.

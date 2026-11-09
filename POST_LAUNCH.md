@@ -154,16 +154,25 @@ client code.
 
 ### Home Screen widgets
 
-Today's calories and protein, the next session, the streak, the week's
-training, and a Start Run shortcut. Each is a WidgetKit extension, the same
-kind of Xcode target as the run's lock-screen card below.
+Built (2026-11-09, Wid1): Today (the session, the week's segments, the
+Lock Screen line with a race countdown), Streak (StandBy and a Lock Screen
+circle) and Today's food (a calories-left ring, protein and water with an
+iOS 17 "+" that queues a drink), in the Live Activity's extension, drawn
+from a snapshot the app writes to the App Group `group.com.tropos.app`.
+They wait on the owner's App Group step (`docs/ios-release.md`) and their
+device checks (`docs/qa/pre-launch-backlog.md`, "Home Screen and Lock
+Screen widgets"). Wid1 call 4 leaves for later: the last activity, the
+weekly league, Control Center shortcuts such as Start run (iOS 18
+controls) and a food log button.
 
 ### The run's lock-screen card (Live Activity)
 
-The app's half and the plugin are in (`src/lib/runLiveActivity.ts`,
-`capacitor-live-activities`); the widget extension target is not, so nothing
-shows yet. `docs/run-live-activity.md` has the target's steps and the device
-table.
+Built (2026-11-09, Polish2 call 1): the widget extension
+`ios/App/LiveActivities/` draws the run and a lift's rest on the Lock Screen
+and in the Dynamic Island, from the data `src/lib/runLiveActivity.ts` and
+`src/lib/restLiveActivity.ts` send. It waits on its device checks
+(`docs/qa/pre-launch-backlog.md`, "Live Activities on the phone");
+`docs/run-live-activity.md` has the views and the device table.
 
 ### Apple Watch companion
 

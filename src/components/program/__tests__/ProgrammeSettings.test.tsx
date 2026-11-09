@@ -30,6 +30,10 @@ import ProgrammeSettings from "../ProgrammeSettings";
 import type { UserProfile } from "@/lib/auth";
 import { toast } from "@/lib/toast";
 import { PLAN_SAVES_TOO_OFTEN } from "@/lib/callableErrors";
+import {
+  NO_EQUIPMENT_BEGINNER_BAR_NOTE,
+  NO_EQUIPMENT_PULL_NOTE,
+} from "@/features/program/noEquipment";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 
@@ -385,6 +389,89 @@ describe("ProgrammeSettings — what do you have? (Lift4 (11))", () => {
       screen.getByRole("switch", { name: "A barbell and a rack" })
     ).toHaveAttribute("aria-checked", "true");
   });
+
+  it("asks about a pull-up bar at home, keeps an older plan's, and saves an answer", async () => {
+    // An older Minimal plan, never asked: it has its pull-ups, so yes.
+    setup({ equipment: "minimal" });
+    const bar = screen.getByRole("switch", { name: "A pull-up bar" });
+    expect(bar).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(bar);
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(
+      within(screen.getByRole("alertdialog")).getByText("A pull-up bar")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.pullUpBar).toBe(false);
+  });
+
+  it("starts a newly chosen setup from its own bar answer, and asks a gym nothing", () => {
+    setup({ equipment: "full_gym" });
+    expect(screen.queryByRole("switch", { name: "A pull-up bar" })).toBeNull();
+    fireEvent.click(screen.getByText("Home gym"));
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByText("Minimal"));
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "false");
+    // No equipment asks too, off until turned on, and says what that means.
+    fireEvent.click(screen.getByText("No equipment"));
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByText(NO_EQUIPMENT_PULL_NOTE)).toBeInTheDocument();
+  });
+
+  it("drops the no-pull note once a bar gives the plan its pull", () => {
+    setup({ equipment: "no_equipment", experience: "intermediate" });
+    const bar = screen.getByRole("switch", { name: "A pull-up bar" });
+    expect(bar).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByText(NO_EQUIPMENT_PULL_NOTE)).toBeInTheDocument();
+    fireEvent.click(bar);
+    expect(screen.queryByText(NO_EQUIPMENT_PULL_NOTE)).toBeNull();
+    expect(screen.queryByText(NO_EQUIPMENT_BEGINNER_BAR_NOTE)).toBeNull();
+  });
+
+  it("tells a beginner with a bar why the plan still has no pull-ups", () => {
+    setup({
+      equipment: "no_equipment",
+      experience: "beginner",
+      pullUpBar: true,
+    });
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "true");
+    expect(
+      screen.getByText(NO_EQUIPMENT_BEGINNER_BAR_NOTE)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(NO_EQUIPMENT_PULL_NOTE)).toBeNull();
+  });
+
+  it("asks no equipment only about a bar, and saves it with the plan", async () => {
+    setup({ equipment: "home_gym", barbellAtHome: true });
+    fireEvent.click(screen.getByText("No equipment"));
+    // With no equipment there is no barbell to have.
+    expect(
+      screen.queryByRole("switch", { name: "A barbell and a rack" })
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("switch", { name: "A pull-up bar" }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    const recap = within(screen.getByRole("alertdialog"));
+    expect(recap.getByText("No equipment")).toBeInTheDocument();
+    expect(recap.queryByText("A barbell and a rack")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.equipment).toBe("no_equipment");
+    expect(payload.profileUpdates.pullUpBar).toBe(true);
+  });
 });
 
 describe("ProgrammeSettings — toggles live-save without rebuild", () => {
@@ -692,6 +779,17 @@ describe("ProgrammeSettings — split is a derived display (Pgm5 Q1)", () => {
         name: /full body|push \/ pull \/ legs|upper \/ lower/i,
       })
     ).not.toBeInTheDocument();
+  });
+
+  it("names the split from the days for one this build can't name", () => {
+    // A newer app's split, read by this one: no "undefined", and the card
+    // reads as the engine would build the saved days.
+    setup({}, "lift", {
+      ...programState,
+      splitType: "a_newer_apps_split",
+    } as unknown as ProgramState);
+    expect(screen.getByText("Upper / Lower")).toBeInTheDocument();
+    expect(screen.queryByText(/undefined/)).toBeNull();
   });
 
   it("threads the persisted preferredSplit through save (inert, not chosen)", async () => {

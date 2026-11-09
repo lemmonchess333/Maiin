@@ -104,10 +104,24 @@ export default function WorkoutRestTimer({
     };
   }, [startedAt, target, exerciseName]);
 
-  // The rest outside the app: the tab's title, and the lock screen.
+  // The rest outside the app: the tab's title, and the lock screen, which
+  // names the next set too. Keyed on the set's words, not the object the
+  // session makes afresh on each render, so a render does not restart the
+  // lock screen's card; an edit to the next set's load does.
+  const nextName = next?.name;
+  const nextLoad = next?.load;
   useEffect(
-    () => showRestOutside({ startedAt, target, exerciseName }),
-    [startedAt, target, exerciseName]
+    () =>
+      showRestOutside({
+        startedAt,
+        target,
+        exerciseName,
+        next:
+          nextName !== undefined
+            ? { name: nextName, load: nextLoad ?? "" }
+            : undefined,
+      }),
+    [startedAt, target, exerciseName, nextName, nextLoad]
   );
 
   useEffect(() => {

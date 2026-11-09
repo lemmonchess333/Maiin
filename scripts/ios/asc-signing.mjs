@@ -22,7 +22,11 @@
  *
  * with ASC_API_KEY_ID, ASC_API_ISSUER_ID, ASC_API_KEY_PATH (the .p8) and
  * SIGNED_BUNDLE_IDS, the space-separated bundle IDs the project signs
- * (scripts/ios_signed_targets.py lists them), in the environment. Writes
+ * (scripts/ios_signed_targets.py lists them), in the environment, and
+ * REGISTERABLE_BUNDLE_IDS, those of them whose target has no entitlements,
+ * whose App ID the run may register if Apple has none, and
+ * APP_GROUP_BUNDLE_IDS, those whose target asks for an App Group, as
+ * "<bundle ID>=<group>[,<group>]" pairs, whose App ID must have it. Writes
  * <out-dir>/dist.cer (DER) and <out-dir>/profiles/<bundle ID>.mobileprovision
  * for each.
  */
@@ -113,11 +117,67 @@ export function profileNames(serial, identifiers) {
   return names;
 }
 
+/** The name an App ID this registers is given: Apple allows letters,
+ *  numbers and spaces, so "com.tropos.app.LiveActivities" is
+ *  "Tropos LiveActivities". */
+export function bundleIdName(identifier) {
+  const last = identifier.split(".").pop().replace(/[^A-Za-z0-9]+/g, " ").trim();
+  return `Tropos ${last || "extension"}`;
+}
+
+/** APP_GROUP_BUNDLE_IDS as { bundle ID: [groups] }. */
+export function parseAppGroups(text) {
+  const groups = {};
+  for (const pair of (text ?? "").split(/\s+/).filter(Boolean)) {
+    const [identifier, list = ""] = pair.split("=");
+    const named = list.split(",").filter(Boolean);
+    if (identifier && named.length) groups[identifier] = named;
+  }
+  return groups;
+}
+
+/** The owner's steps for App IDs that lack the App Groups capability. */
+export function appGroupSteps(missing, appGroups) {
+  const groups = [...new Set(missing.flatMap((identifier) => appGroups[identifier] ?? []))];
+  const named = groups.join(", ") || "the App Group";
+  return (
+    `The App ID ${missing.join(" and ")} has no App Groups capability, and the Home Screen widgets read what the app writes through ${named}. ` +
+    `The App Store Connect API cannot make an App Group or assign one, so in Apple Developer, Certificates, Identifiers & Profiles: ` +
+    `under Identifiers, App Groups, register ${named} if it is not there; then for each App ID, open it under App IDs, tick App Groups, ` +
+    `click Configure, choose ${named}, Continue, and Save. Then run this again (docs/ios-release.md, "The App Group").`
+  );
+}
+
 /**
  * Clears earlier runs' signing, then makes this run's. Returns the
  * certificate (DER) and a profile per bundle ID, all as Buffers.
+ *
+ * `register` names the bundle IDs whose target has no entitlements, so
+ * whose App ID needs no capability turned on (the Live Activity widget):
+ * one Apple does not have yet is registered here, so a target added to the
+ * project signs on its first run. An App ID with capabilities is the
+ * owner's to make, since a profile carries what the App ID had when it was
+ * made; a missing one stops the run before anything is made or revoked.
+ *
+ * `appGroups` maps the bundle IDs whose target asks for an App Group (the
+ * app and the widget, Wid1) to the groups. A profile carries the groups
+ * assigned to its App ID when it is made, so each of those App IDs is read
+ * for the App Groups capability first, and a missing one stops the run,
+ * naming the clicks, before anything is made or revoked. The API could
+ * turn the capability on (bundleIdCapabilities), but it has no way to make
+ * an App Group or assign one to an App ID, so the capability alone would
+ * make a profile without the group: that stays the owner's, in Apple's
+ * developer site. The import step checks each profile carries the group.
  */
-export async function prepareSigning({ request, bundleIdentifier, bundleIdentifiers, csr, log = () => {} }) {
+export async function prepareSigning({
+  request,
+  bundleIdentifier,
+  bundleIdentifiers,
+  register = [],
+  appGroups = {},
+  csr,
+  log = () => {},
+}) {
   const identifiers = bundleIdentifiers ?? [bundleIdentifier];
   if (!identifiers.length || identifiers.some((identifier) => !identifier)) {
     throw new Error("At least one App ID is required for signing.");
@@ -128,13 +188,41 @@ export async function prepareSigning({ request, bundleIdentifier, bundleIdentifi
       request,
       `/v1/bundleIds?filter[identifier]=${encodeURIComponent(identifier)}&limit=200`
     );
-    const bundle = matches.find((b) => b.attributes?.identifier === identifier);
-    if (!bundle) {
+    bundles.push(matches.find((b) => b.attributes?.identifier === identifier) ?? null);
+  }
+  for (const [index, identifier] of identifiers.entries()) {
+    if (!bundles[index] && !register.includes(identifier)) {
+      const groups = appGroups[identifier];
       throw new Error(
-        `Apple has no App ID for ${identifier}. Register it under Apple Developer → Identifiers, with its capabilities, then run this again.`
+        `Apple has no App ID for ${identifier}. Register it under Apple Developer → Identifiers, with its capabilities` +
+          (groups ? `, App Groups among them with ${groups.join(", ")} assigned (docs/ios-release.md, "The App Group")` : "") +
+          ", then run this again."
       );
     }
-    bundles.push(bundle);
+  }
+  const lacking = [];
+  for (const [index, identifier] of identifiers.entries()) {
+    if (!appGroups[identifier] || !bundles[index]) continue;
+    const capabilities = await listAll(
+      request,
+      `/v1/bundleIds/${bundles[index].id}/bundleIdCapabilities`
+    );
+    if (!capabilities.some((c) => c.attributes?.capabilityType === "APP_GROUPS")) {
+      lacking.push(identifier);
+    }
+  }
+  if (lacking.length) throw new Error(appGroupSteps(lacking, appGroups));
+  for (const [index, identifier] of identifiers.entries()) {
+    if (bundles[index]) continue;
+    bundles[index] = (
+      await request("POST", "/v1/bundleIds", {
+        data: {
+          type: "bundleIds",
+          attributes: { identifier, name: bundleIdName(identifier), platform: "IOS" },
+        },
+      })
+    ).data;
+    log(`Registered the App ID ${identifier}, which needs no capability (${bundleIdName(identifier)})`);
   }
 
   const existingProfiles = await listAll(request, "/v1/profiles?filter[profileType]=IOS_APP_STORE&limit=200");
@@ -247,6 +335,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const result = await prepareSigning({
       request: connect({ token }),
       bundleIdentifiers,
+      register: (env.REGISTERABLE_BUNDLE_IDS ?? "").split(/\s+/).filter(Boolean),
+      appGroups: parseAppGroups(env.APP_GROUP_BUNDLE_IDS),
       csr: readFileSync(csrPath, "utf8"),
       log: (line) => console.log(line),
     });

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The widget extension's own manifest: a privacy manifest covers
+	     the bundle it is in, and the extension is a bundle inside the app.
+	     It collects nothing and reaches no network: the Live Activity draws
+	     what the app hands the activity, and the Home Screen widgets draw
+	     the snapshot the app writes to the App Group. The app's manifest
+	     (ios/App/App/PrivacyInfo.xcprivacy) declares what Tropos collects.
+	     Pinned by src/lib/__tests__/iosPrivacyDeclarations.test.ts. -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<!-- UserDefaults. 1C8F.1: the App Group defaults the extension shares
+		     with the app. The Home Screen widgets read the app's snapshot
+		     there and queue the food widget's drinks (HomeWidgetStore.swift),
+		     and capacitor-live-activities' LiveActivitiesKit, linked in for
+		     its attributes type, carries its own (SharedDataManager), as the
+		     app's manifest declares for the plugin. Nothing reads
+		     UserDefaults.standard. -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>1C8F.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

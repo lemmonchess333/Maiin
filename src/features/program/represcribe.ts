@@ -39,9 +39,8 @@ import { kgToLb, lbToKg } from "@/lib/weightUnits";
 import {
   assignDayRoles,
   dayRoleOf,
-  prescribedRepCeiling,
+  shiftedRepTarget,
   undulationDeltaFor,
-  repFloorFor,
   repRangeMaxFor,
 } from "./programEngine";
 import { usesUndulation } from "./experienceModel";
@@ -138,10 +137,7 @@ export function represcribeWorkouts(
       // (high-rep heavy hinge — see undulationDeltaFor).
       const delta = undulates ? undulationDeltaFor(ex, roles[dayIndex]) : 0;
 
-      const reps = Math.min(
-        prescribedRepCeiling(ex),
-        Math.max(repFloorFor(ex), row.bottom + delta)
-      );
+      const reps = shiftedRepTarget(ex, row.bottom + delta, span);
       const rangeMax = repRangeMaxFor(ex, reps, span);
 
       const out: ProgramExercise = {

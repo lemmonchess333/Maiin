@@ -1378,6 +1378,7 @@ describe("the next session after today", () => {
       target: `/program?tab=run&rday=${THURSDAY}`,
       dateKey: THURSDAY,
       daysAhead: 1,
+      sport: "run",
     });
   });
 
@@ -1391,6 +1392,7 @@ describe("the next session after today", () => {
     );
     expect(session.next?.daysAhead).toBe(2);
     expect(session.next?.dateKey).toBe(FRIDAY);
+    expect(session.next?.sport).toBe("lift");
     expect(session.next?.label).toBeTruthy();
     expect(session.next?.label).not.toBe(session.lift?.name);
   });
