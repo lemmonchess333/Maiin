@@ -16,6 +16,7 @@ import {
 import Button from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import ScanProButton from "@/components/food/ScanProButton";
+import StepDetails from "@/components/StepDetails";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
@@ -1095,6 +1096,13 @@ export default function FoodCameraModal({
                     </p>
                     <p className="text-sm text-white/75">{failureCopy.sub}</p>
                   </div>
+                  {/* On the iPhone, what the scan did and how long it
+                      took, for a failure nothing else can inspect. */}
+                  <StepDetails
+                    failed={failure === "error"}
+                    waiting={false}
+                    onDark
+                  />
                   {failureActions}
                 </motion.div>
               ) : (
@@ -1167,6 +1175,11 @@ export default function FoodCameraModal({
                 </p>
                 <p className="text-sm text-white/75">{failureCopy.sub}</p>
               </div>
+              <StepDetails
+                failed={failure === "error"}
+                waiting={false}
+                onDark
+              />
               {failureActions}
             </div>
           ) : (

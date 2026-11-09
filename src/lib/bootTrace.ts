@@ -41,7 +41,9 @@ export function subscribeBootTrace(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
-function describe(reason: unknown): string {
+/** A thrown reason as a step reads it: an Error's name and words, a
+ *  string as it is, anything else as JSON. */
+export function describeReason(reason: unknown): string {
   if (reason instanceof Error) return `${reason.name}: ${reason.message}`;
   if (typeof reason === "string") return reason;
   try {
@@ -58,9 +60,9 @@ export function watchBootErrors(): void {
   if (errorsWatched || typeof window === "undefined") return;
   errorsWatched = true;
   window.addEventListener("error", (event) => {
-    traceBoot(`Error: ${describe(event.error ?? event.message)}`);
+    traceBoot(`Error: ${describeReason(event.error ?? event.message)}`);
   });
   window.addEventListener("unhandledrejection", (event) => {
-    traceBoot(`Unhandled: ${describe(event.reason)}`);
+    traceBoot(`Unhandled: ${describeReason(event.reason)}`);
   });
 }

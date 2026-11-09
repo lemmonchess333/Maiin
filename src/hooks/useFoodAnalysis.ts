@@ -3,6 +3,8 @@ import { filterIdentifiableAiItems } from "@/lib/aiFoodIdentification";
 import { auth } from "@/lib/firebase";
 import { logger } from "@/lib/logger";
 import { functionEndpoint } from "@/lib/functionEndpoint";
+import type { User } from "firebase/auth";
+import { describeReason, traceBoot } from "@/lib/bootTrace";
 import {
   AI_ANALYSIS_OFF_MESSAGE,
   AI_ANALYSIS_OFF_REASON,
@@ -17,6 +19,43 @@ const TEXT_FUNCTION_URL = functionEndpoint("analyzeFoodText");
    failure while staying far above a slow-but-working Gemini round-trip
    (typically 5-15s). */
 const ANALYZE_TIMEOUT_MS = 45_000;
+
+/**
+ * A request as the step list sees it (bootTrace.ts), under `label`: the
+ * signed request, the server's answer with its status, and a failure with
+ * the error's own name and words, each with the time since `started`. The
+ * first TestFlight scan failed with only "Couldn't reach the server",
+ * which is what the person reads for any TypeError; here a token that
+ * never comes and a server that never answers read apart.
+ */
+async function tracedPost(
+  label: string,
+  user: User,
+  url: string,
+  body: unknown,
+  signal: AbortSignal,
+  started: number
+): Promise<Response> {
+  const since = () => `${Date.now() - started} ms`;
+  try {
+    const token = await user.getIdToken();
+    traceBoot(`${label}: signed the request in ${since()}`);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
+      },
+      body: JSON.stringify(body),
+      signal,
+    });
+    traceBoot(`${label}: server answered ${response.status} in ${since()}`);
+    return response;
+  } catch (err) {
+    traceBoot(`${label}: failed after ${since()} (${describeReason(err)})`);
+    throw err;
+  }
+}
 
 /* Map the HTTP status returned by the analyzeFood callable into copy
    the user can act on. The server message is preferred when present
@@ -100,24 +139,23 @@ export function useFoodAnalysis() {
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
+    const started = Date.now();
+    traceBoot(
+      `Scan: sending a ${Math.round((imageBase64.length * 3) / 4 / 1024)} KB photo`
+    );
 
     try {
       const user = auth.currentUser;
       if (!user) throw new Error("Not logged in");
 
-      const token = await user.getIdToken();
-
-      const response = await fetch(FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-        body: JSON.stringify(
-          detail ? { imageBase64, detail } : { imageBase64 }
-        ),
-        signal: controller.signal,
-      });
+      const response = await tracedPost(
+        "Scan",
+        user,
+        FUNCTION_URL,
+        detail ? { imageBase64, detail } : { imageBase64 },
+        controller.signal,
+        started
+      );
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
@@ -170,20 +208,20 @@ export function useFoodAnalysis() {
   ): Promise<FoodAnalysis | null> => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
+    const started = Date.now();
+    traceBoot("Typed meal: sending");
     try {
       const user = auth.currentUser;
       if (!user) return null;
 
-      const token = await user.getIdToken();
-      const response = await fetch(TEXT_FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-        body: JSON.stringify({ text }),
-        signal: controller.signal,
-      });
+      const response = await tracedPost(
+        "Typed meal",
+        user,
+        TEXT_FUNCTION_URL,
+        { text },
+        controller.signal,
+        started
+      );
 
       if (!response.ok) {
         /* Null either way: the composer reads the meal on the phone and
