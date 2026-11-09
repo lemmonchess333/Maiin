@@ -284,7 +284,7 @@ describe("the Live Activity widget's privacy manifest", () => {
     expect(widget.NSPrivacyCollectedDataTypes).toEqual([]);
   });
 
-  it("declares the App Group defaults LiveActivitiesKit carries, and no other API", () => {
+  it("declares the App Group defaults it and LiveActivitiesKit share with the app, and no other API", () => {
     expect(widget.NSPrivacyAccessedAPITypes).toEqual([
       {
         NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryUserDefaults",
@@ -297,14 +297,22 @@ describe("the Live Activity widget's privacy manifest", () => {
         "node_modules/capacitor-live-activities/ios/LiveActivitiesKit/Widget/DynamicActivityWidget.swift"
       )
     ).toContain("UserDefaults(suiteName:");
-    // ...and the widget's own code reaches no required-reason API.
+    // ...and so does the widgets' own store (Wid1), the App Group's
+    // defaults and nothing else: 1C8F.1 is that reason, read and written
+    // only by the app and its extension.
+    const store = read(`${dir}/HomeWidgetStore.swift`);
+    expect(store).toContain("UserDefaults(suiteName: appGroup)");
+    expect(store).not.toMatch(/UserDefaults\.standard/);
+    // Every other file of the widget's reaches no required-reason API.
     const swift = readdirSync(resolve(repoRoot, dir)).filter((name) =>
       name.endsWith(".swift")
     );
     expect(swift.length).toBeGreaterThanOrEqual(4);
     for (const name of swift)
       expect(read(`${dir}/${name}`), name).not.toMatch(
-        /UserDefaults|FileManager|systemUptime|attributesOfItem|volumeAvailableCapacity/
+        name === "HomeWidgetStore.swift"
+          ? /FileManager|systemUptime|attributesOfItem|volumeAvailableCapacity/
+          : /UserDefaults|FileManager|systemUptime|attributesOfItem|volumeAvailableCapacity/
       );
   });
 });

@@ -53,7 +53,8 @@ struct TroposLiveActivity: Widget {
 /// The app's colours, as `src/lib/theme.ts` holds them (pinned by
 /// `liveActivityContract.test.ts`). The card is always dark, as the run
 /// screen is: a Live Activity sits on the wallpaper, not in the app's theme.
-/// Every colour here measures at least 4.6:1 on the surface.
+/// Every colour the Live Activity draws as text measures at least 4.6:1 on
+/// the surface. The Home Screen widgets draw the last three as fills only.
 enum Palette {
     /// THEME.surface, the app's dark card.
     static let surface = Color(rgb: 0x17171B)
@@ -67,6 +68,13 @@ enum Palette {
     static let lifting = Color(rgb: 0x7B72E9)
     /// THEME.success, green: a rest that is done.
     static let done = Color(rgb: 0x4DB872)
+    /// THEME.semantic.nutrition, the food orange: the Home Screen food
+    /// widget's calorie ring and protein bar. A fill, never text.
+    static let food = Color(rgb: 0xD9884E)
+    /// THEME.calorieRing.deep: the ring's lap past the target.
+    static let foodDeep = Color(rgb: 0xA34B08)
+    /// THEME.semantic.hydration, teal: the food widget's water.
+    static let water = Color(rgb: 0x52A3BD)
 }
 
 extension Color {

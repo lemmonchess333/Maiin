@@ -588,6 +588,52 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(
       keys.includes("com.apple.developer.devicecheck.appattest-environment")
     ).toBe("@capacitor-firebase/app-check" in pkg.dependencies);
+    // The Home Screen widgets read what the app writes to the App Group
+    // (HomeWidgetsPlugin.swift), and both bundles carry the same one.
+    const appGroups = (xml: string) =>
+      xml
+        .match(
+          /<key>com\.apple\.security\.application-groups<\/key>\s*<array>([\s\S]*?)<\/array>/
+        )?.[1]
+        .match(/<string>([^<]+)<\/string>/g)
+        ?.map((s) => s.replace(/<\/?string>/g, "")) ?? [];
+    const widget = read("ios/App/LiveActivities/LiveActivities.entitlements");
+    expect(
+      read("ios/App/App/HomeWidgetsPlugin.swift").includes("HomeWidgetStore")
+    ).toBe(true);
+    expect(appGroups(entitlements)).toEqual(["group.com.tropos.app"]);
+    expect(appGroups(widget)).toEqual(appGroups(entitlements));
+    expect(plistKeys(widget)).toEqual([
+      "com.apple.security.application-groups",
+    ]);
+    expect(read("ios/App/LiveActivities/HomeWidgetStore.swift")).toContain(
+      'static let appGroup = "group.com.tropos.app"'
+    );
+  });
+
+  it("compiles the widgets' App Group store into the app as well as the widget, and registers the plugin", () => {
+    const appSources = pbxObject(
+      nativeTarget("App").match(
+        new RegExp(`(${OBJECT_ID.source}) /\\* Sources \\*/`)
+      )![1]
+    );
+    const files = [...appSources.matchAll(/\/\* (.+?) in Sources \*\//g)].map(
+      (m) => m[1]
+    );
+    expect(files).toContain("HomeWidgetsPlugin.swift");
+    expect(files).toContain("HomeWidgetStore.swift");
+    // The store the app compiles is the very file the widget compiles.
+    const storeRefs = new Set(
+      [
+        ...pbxproj.matchAll(
+          /\/\* HomeWidgetStore\.swift in Sources \*\/ = \{isa = PBXBuildFile; fileRef = ([0-9A-F]{24})/g
+        ),
+      ].map((m) => m[1])
+    );
+    expect(storeRefs.size).toBe(1);
+    expect(read("ios/App/App/TroposBridgeViewController.swift")).toContain(
+      "bridge?.registerPluginInstance(HomeWidgetsPlugin())"
+    );
   });
 
   it("names in the guide every secret the run checks for, and checks every secret it reads", () => {
@@ -657,9 +703,12 @@ describe("the Live Activity widget — built, linked and embedded in every build
       // Switched to its App Store profile by ios_signed_targets.py, as the
       // app and the Watch app are.
       expect(settings.CODE_SIGN_STYLE).toBe("Automatic");
-      // No capabilities: its profile needs nothing turned on, and it reads
-      // nothing but the activity it draws, so it needs no App Group.
-      expect(settings.CODE_SIGN_ENTITLEMENTS).toBeUndefined();
+      // One capability, the App Group it shares with the app: the Home
+      // Screen widgets read the app's snapshot from it, and the food
+      // widget's "+" queues drinks in it (Wid1).
+      expect(settings.CODE_SIGN_ENTITLEMENTS).toBe(
+        "LiveActivities/LiveActivities.entitlements"
+      );
       // Polish2 call 1: the widget is gated on iOS 16.2, the plugin's floor.
       expect(settings.IPHONEOS_DEPLOYMENT_TARGET).toBe("16.2");
       expect(settings.INFOPLIST_FILE).toBe("LiveActivities/Info.plist");

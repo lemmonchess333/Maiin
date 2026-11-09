@@ -87,9 +87,15 @@ class SignedTargetsTests(unittest.TestCase):
             [
                 ("App", APP, "ios/App/App/App.entitlements", ["Debug", "Release"]),
                 ("TroposWatch", WATCH, "ios/App/TroposWatch/TroposWatch.entitlements", ["Debug", "Release"]),
-                # No capabilities, so no entitlements file: its profile is
-                # checked against none, and needs nothing turned on.
-                ("LiveActivitiesExtension", WIDGET, None, ["Debug", "Release"]),
+                # The App Group it shares with the app (Wid1), so its App ID
+                # is the owner's to make with that capability on, and its
+                # profile is checked against the group.
+                (
+                    "LiveActivitiesExtension",
+                    WIDGET,
+                    "ios/App/LiveActivities/LiveActivities.entitlements",
+                    ["Debug", "Release"],
+                ),
             ],
         )
         signed, switched = targets.sign_project(PBXPROJ, COMMITTED)

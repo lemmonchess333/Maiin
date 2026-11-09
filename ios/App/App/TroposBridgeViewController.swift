@@ -7,5 +7,6 @@ import Capacitor
 final class TroposBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(WatchRunPlugin())
+        bridge?.registerPluginInstance(HomeWidgetsPlugin())
     }
 }

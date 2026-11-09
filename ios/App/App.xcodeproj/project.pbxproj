@@ -34,6 +34,16 @@
 		D20000000000000000000016 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000007 /* PrivacyInfo.xcprivacy */; };
 		D20000000000000000000017 /* LiveActivitiesExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D20000000000000000000008 /* LiveActivitiesExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D20000000000000000000018 /* LiveActivitiesKit in Frameworks */ = {isa = PBXBuildFile; productRef = D2000000000000000000002D /* LiveActivitiesKit */; };
+		D30000000000000000000101 /* HomeWidgetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000001 /* HomeWidgetStore.swift */; };
+		D30000000000000000000102 /* HomeWidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000002 /* HomeWidgetSnapshot.swift */; };
+		D30000000000000000000103 /* HomeWidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000003 /* HomeWidgetTimeline.swift */; };
+		D30000000000000000000104 /* WidgetChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000004 /* WidgetChrome.swift */; };
+		D30000000000000000000105 /* TodayWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000005 /* TodayWidget.swift */; };
+		D30000000000000000000106 /* StreakWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000006 /* StreakWidget.swift */; };
+		D30000000000000000000107 /* FoodWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000007 /* FoodWidget.swift */; };
+		D30000000000000000000108 /* LogDrinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000008 /* LogDrinkIntent.swift */; };
+		D30000000000000000000021 /* HomeWidgetsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3000000000000000000000A /* HomeWidgetsPlugin.swift */; };
+		D30000000000000000000022 /* HomeWidgetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000001 /* HomeWidgetStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,6 +120,16 @@
 		D20000000000000000000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D20000000000000000000007 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		D20000000000000000000008 /* LiveActivitiesExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiveActivitiesExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D30000000000000000000001 /* HomeWidgetStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetStore.swift; sourceTree = "<group>"; };
+		D30000000000000000000002 /* HomeWidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetSnapshot.swift; sourceTree = "<group>"; };
+		D30000000000000000000003 /* HomeWidgetTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetTimeline.swift; sourceTree = "<group>"; };
+		D30000000000000000000004 /* WidgetChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetChrome.swift; sourceTree = "<group>"; };
+		D30000000000000000000005 /* TodayWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayWidget.swift; sourceTree = "<group>"; };
+		D30000000000000000000006 /* StreakWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakWidget.swift; sourceTree = "<group>"; };
+		D30000000000000000000007 /* FoodWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodWidget.swift; sourceTree = "<group>"; };
+		D30000000000000000000008 /* LogDrinkIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogDrinkIntent.swift; sourceTree = "<group>"; };
+		D30000000000000000000009 /* LiveActivities.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiveActivities.entitlements; sourceTree = "<group>"; };
+		D3000000000000000000000A /* HomeWidgetsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetsPlugin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -167,6 +187,7 @@
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				A10000000000000000000001 /* TroposBridgeViewController.swift */,
 				A10000000000000000000002 /* WatchRunPlugin.swift */,
+				D3000000000000000000000A /* HomeWidgetsPlugin.swift */,
 				A10000000000000000000003 /* WatchRunCoordinator.swift */,
 				A10000000000000000000004 /* HealthWorkoutStore.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
@@ -202,8 +223,17 @@
 				D20000000000000000000003 /* LiveActivityPayload.swift */,
 				D20000000000000000000004 /* RunActivityViews.swift */,
 				D20000000000000000000005 /* RestActivityViews.swift */,
+				D30000000000000000000001 /* HomeWidgetStore.swift */,
+				D30000000000000000000002 /* HomeWidgetSnapshot.swift */,
+				D30000000000000000000003 /* HomeWidgetTimeline.swift */,
+				D30000000000000000000004 /* WidgetChrome.swift */,
+				D30000000000000000000005 /* TodayWidget.swift */,
+				D30000000000000000000006 /* StreakWidget.swift */,
+				D30000000000000000000007 /* FoodWidget.swift */,
+				D30000000000000000000008 /* LogDrinkIntent.swift */,
 				D20000000000000000000006 /* Info.plist */,
 				D20000000000000000000007 /* PrivacyInfo.xcprivacy */,
+				D30000000000000000000009 /* LiveActivities.entitlements */,
 			);
 			path = LiveActivities;
 			sourceTree = "<group>";
@@ -374,6 +404,8 @@
 				B10000000000000000000002 /* WatchRunPlugin.swift in Sources */,
 				B10000000000000000000003 /* WatchRunCoordinator.swift in Sources */,
 				B10000000000000000000004 /* HealthWorkoutStore.swift in Sources */,
+				D30000000000000000000021 /* HomeWidgetsPlugin.swift in Sources */,
+				D30000000000000000000022 /* HomeWidgetStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -386,6 +418,14 @@
 				D20000000000000000000013 /* LiveActivityPayload.swift in Sources */,
 				D20000000000000000000014 /* RunActivityViews.swift in Sources */,
 				D20000000000000000000015 /* RestActivityViews.swift in Sources */,
+				D30000000000000000000101 /* HomeWidgetStore.swift in Sources */,
+				D30000000000000000000102 /* HomeWidgetSnapshot.swift in Sources */,
+				D30000000000000000000103 /* HomeWidgetTimeline.swift in Sources */,
+				D30000000000000000000104 /* WidgetChrome.swift in Sources */,
+				D30000000000000000000105 /* TodayWidget.swift in Sources */,
+				D30000000000000000000106 /* StreakWidget.swift in Sources */,
+				D30000000000000000000107 /* FoodWidget.swift in Sources */,
+				D30000000000000000000108 /* LogDrinkIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -654,6 +694,7 @@
 		D2000000000000000000002A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LiveActivities/LiveActivities.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = LiveActivities/Info.plist;
@@ -676,6 +717,7 @@
 		D2000000000000000000002B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LiveActivities/LiveActivities.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = LiveActivities/Info.plist;
