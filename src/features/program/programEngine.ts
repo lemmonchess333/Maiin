@@ -91,6 +91,7 @@ import {
 } from "./roleTable";
 import { nextUpIndex } from "./nextUpCursor";
 import { plansNoPull } from "./programLabels";
+import { capSupermanVolume } from "./noEquipment";
 import { MAX_HOLD_SECONDS } from "./repUnits";
 import {
   hardestEffort,
@@ -2264,7 +2265,9 @@ export function generateProgram(
     }
     if (!dropped) break;
   }
-  workouts = settled;
+  // The floor plan's superman hold: 3 sets a session, about 6 a week, its
+  // extra days' holds gone rather than thinned to a set.
+  workouts = capSupermanVolume(settled, { drop: true });
 
   // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
   // seeding — advanceWeek derives each week's sets from baseSets.

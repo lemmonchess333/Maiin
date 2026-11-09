@@ -30,6 +30,7 @@
  */
 import type { MovementCategory } from "@/lib/exerciseMovementCategory";
 import type { MovementComplexity } from "./experienceModel";
+import type { ProgramExercise, WorkoutDay } from "./programTypes";
 import { plansNoPull } from "./programLabels";
 
 /** The exercises a person with no equipment can do: floor moves. */
@@ -173,4 +174,87 @@ export function noEquipmentPullNote(
   if (!plansNoPull(equipment, pullUpBar, experience)) return null;
   if (pullUpBar !== true) return NO_EQUIPMENT_PULL_NOTE;
   return experience === undefined ? null : NO_EQUIPMENT_BEGINNER_BAR_NOTE;
+}
+
+/** The most sets of the superman hold in one session. */
+export const SUPERMAN_SETS_PER_SESSION = 3;
+/** About the most sets of the superman hold in a week. */
+export const SUPERMAN_SETS_PER_WEEK = 6;
+const SUPERMAN = "superman-hold";
+
+/**
+ * The superman hold's sets: at most 3 in a session and about 6 in a week.
+ * A floor plan meets it on most days, as an upper day's back work, a
+ * full-body day's pull and a lower day's second hinge, and a hold keeps
+ * the sets of the slot it took (a row's four), so a week could hold ten
+ * or more sets of one lower-back hold.
+ *
+ * Over the week's budget, the holds are kept first where they're the day's
+ * back work (a day with no other hinge), then in day order, and share the
+ * budget evenly. In a new plan (`drop`) only as many are kept as can have
+ * two sets each, and the rest go from days that keep another lift. In a
+ * plan the person has, each keeps its slot, with a set at the least, so
+ * the kit coming back still brings back what it replaced
+ * (`restoreSwappedLifts`). `cap` picks the holds this may change; the rest
+ * count towards the week as they are.
+ */
+export function capSupermanVolume(
+  workouts: readonly WorkoutDay[],
+  options: {
+    drop: boolean;
+    cap?: (dayIndex: number, exerciseIndex: number) => boolean;
+  }
+): WorkoutDay[] {
+  const out = workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => ({ ...ex })),
+  }));
+  const setSets = (ex: ProgramExercise, sets: number) => {
+    ex.sets = sets;
+    if (ex.baseSets !== undefined) ex.baseSets = sets;
+  };
+  const holds: { day: number; ex: ProgramExercise; backWork: boolean }[] = [];
+  let fixed = 0;
+  out.forEach((day, d) =>
+    day.exercises.forEach((ex, e) => {
+      if (ex.exerciseId !== SUPERMAN) return;
+      if (options.cap && !options.cap(d, e)) {
+        fixed += ex.sets;
+        return;
+      }
+      setSets(ex, Math.min(ex.sets, SUPERMAN_SETS_PER_SESSION));
+      holds.push({
+        day: d,
+        ex,
+        backWork: !day.exercises.some(
+          (other) => other !== ex && other.movementCategory === "hip_dominant"
+        ),
+      });
+    })
+  );
+  const budget = Math.max(0, SUPERMAN_SETS_PER_WEEK - fixed);
+  const total = holds.reduce((sum, h) => sum + h.ex.sets, 0);
+  if (holds.length === 0 || total <= budget) return out;
+  // The day's back work first, then day order.
+  const order = [...holds].sort(
+    (a, b) => Number(b.backWork) - Number(a.backWork) || a.day - b.day
+  );
+  const keep = options.drop
+    ? order.slice(0, Math.max(1, Math.floor(budget / 2)))
+    : order;
+  const each = Math.max(1, Math.floor(budget / keep.length));
+  const extra = Math.max(0, budget - each * keep.length);
+  keep.forEach((h, i) =>
+    setSets(h.ex, Math.min(h.ex.sets, each + (i < extra ? 1 : 0)))
+  );
+  const gone = new Set(order.slice(keep.length).map((h) => h.ex));
+  if (gone.size === 0) return out;
+  return out.map((day) => {
+    const left = day.exercises.filter((ex) => !gone.has(ex));
+    if (left.length === day.exercises.length) return day;
+    if (left.length > 0) return { ...day, exercises: left };
+    // A day of nothing but the hold keeps it, at one set.
+    for (const ex of day.exercises) setSets(ex, 1);
+    return day;
+  });
 }

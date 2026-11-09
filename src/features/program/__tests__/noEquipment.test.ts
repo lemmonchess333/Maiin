@@ -30,6 +30,9 @@ import {
   NO_EQUIPMENT_BEGINNER_BAR_NOTE,
   NO_EQUIPMENT_PULL_NOTE,
   NO_EQUIPMENT_STAND_INS,
+  SUPERMAN_SETS_PER_SESSION,
+  SUPERMAN_SETS_PER_WEEK,
+  capSupermanVolume,
   noEquipmentPullNote,
 } from "../noEquipment";
 import type { PrimaryGoal, ProgramExercise, WorkoutDay } from "../programTypes";
@@ -362,6 +365,138 @@ describe("changing a plan to no equipment and back", () => {
         ids(gym.programState.workouts)
       );
     }
+  });
+
+  it("gives the supermen a swap brings in a hold's sets, in their slots", () => {
+    for (const days of DAYS) {
+      const none = build(days, "no_equipment", build(days, "full_gym"))
+        .programState.workouts;
+      const holds = supermen(none);
+      expect(holds.length, `${days}d`).toBeGreaterThan(0);
+      for (const ex of holds) {
+        expect(ex.sets, `${days}d`).toBeLessThanOrEqual(3);
+        expect(ex.baseSets ?? ex.sets, `${days}d`).toBe(ex.sets);
+      }
+      expect(weekSets(none), `${days}d`).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it("leaves the sets the person gave their own superman", () => {
+    const mine = build(4, "no_equipment");
+    const workouts = mine.programState.workouts.map((day) => ({
+      ...day,
+      exercises: day.exercises.map((ex) =>
+        ex.exerciseId === "superman-hold" ? { ...ex, sets: 5, baseSets: 5 } : ex
+      ),
+    }));
+    const saved = build(4, "no_equipment", {
+      ...mine,
+      programState: { ...mine.programState, workouts },
+    });
+    expect(supermen(workouts).length).toBeGreaterThan(0);
+    expect(supermen(saved.programState.workouts).map((ex) => ex.sets)).toEqual(
+      supermen(workouts).map(() => 5)
+    );
+  });
+});
+
+const supermen = (workouts: readonly WorkoutDay[]) =>
+  lifts(workouts).filter((ex) => ex.exerciseId === "superman-hold");
+const weekSets = (workouts: readonly WorkoutDay[]) =>
+  supermen(workouts).reduce((sum, ex) => sum + ex.sets, 0);
+
+describe("the superman hold's sets", () => {
+  it("are 3 at most in a session and about 6 in a week, bar or no bar", () => {
+    for (const goal of GOALS)
+      for (const level of LEVELS)
+        for (const days of DAYS)
+          for (const pullUpBar of [false, true]) {
+            const { workouts } = buildPlan({
+              primaryGoal: goal,
+              nutritionPhase: "recomp",
+              experience: level,
+              bodyweightKg: 80,
+              sex: "male",
+              liftDays: days,
+              preferredSplit: "auto",
+              runMode: "freeform",
+              weeklyRunDays: 0,
+              equipment: "no_equipment",
+              pullUpBar,
+              injuries: [],
+              currentDate: "2026-07-28",
+            } as PlanBuilderInput).programState;
+            const at = `${goal}/${level}/${days}d/bar ${pullUpBar}`;
+            for (const day of workouts)
+              expect(
+                weekSets([day]),
+                `${at} ${day.dayName}`
+              ).toBeLessThanOrEqual(SUPERMAN_SETS_PER_SESSION);
+            expect(weekSets(workouts), at).toBeLessThanOrEqual(
+              SUPERMAN_SETS_PER_WEEK
+            );
+          }
+  });
+
+  it("keeps the hold where it's the day's back work, two sets each, in a new plan", () => {
+    const day = (
+      name: string,
+      ...ids: [string, string, number][]
+    ): WorkoutDay =>
+      ({
+        dayName: name,
+        exercises: ids.map(([exerciseId, movementCategory, sets]) => ({
+          exerciseId,
+          movementCategory,
+          sets,
+          baseSets: sets,
+        })),
+      }) as unknown as WorkoutDay;
+    const week = [
+      day(
+        "Lower",
+        ["glute-bridge", "hip_dominant", 3],
+        ["superman-hold", "core", 2]
+      ),
+      day(
+        "Upper A",
+        ["push-ups", "horizontal_push", 3],
+        ["superman-hold", "core", 4]
+      ),
+      day(
+        "Full",
+        ["glute-bridge", "hip_dominant", 2],
+        ["superman-hold", "core", 2]
+      ),
+      day(
+        "Upper B",
+        ["pike-push-up", "vertical_push", 3],
+        ["superman-hold", "core", 4]
+      ),
+      day("Hold", ["superman-hold", "core", 3]),
+    ];
+    const capped = capSupermanVolume(week, { drop: true });
+    // Where it's the day's back work it stays, two sets each; a day with a
+    // glute bridge has its hinge and loses the hold.
+    expect(capped.map((d) => supermen([d]).map((ex) => ex.sets))).toEqual([
+      [],
+      [2],
+      [],
+      [2],
+      [2],
+    ]);
+    expect(capped[0].exercises.map((ex) => ex.exerciseId)).toEqual([
+      "glute-bridge",
+    ]);
+    // In the plan the person has, every slot stays.
+    const kept = capSupermanVolume(week, { drop: false });
+    expect(kept.map((d) => supermen([d]).map((ex) => ex.sets))).toEqual([
+      [1],
+      [2],
+      [1],
+      [1],
+      [1],
+    ]);
   });
 });
 

@@ -102,6 +102,7 @@ import {
   withoutKitSwapNotes,
 } from "./matchTemplate";
 import { contraindicatedFor } from "./injurySubstitutions";
+import { capSupermanVolume } from "./noEquipment";
 import {
   generateRacePlanV2,
   scheduleStructuredWeekV2,
@@ -537,7 +538,16 @@ function buildLiftProgram(input: LiftProgramInput): {
   );
   // A plan being built carries no kit swap's note: it names a lift the
   // person was never given. A swap in the plan they have keeps its note.
-  const equipmentSafe = preserve ? swapped : withoutKitSwapNotes(swapped);
+  // A superman hold this save swapped in takes the hold's sets, 3 a session
+  // and about 6 a week, in its slot; the person's own keep theirs. A new
+  // plan's were capped where it was built.
+  const equipmentSafe = preserve
+    ? capSupermanVolume(swapped, {
+        drop: false,
+        cap: (d, e) =>
+          levelled[d]?.exercises[e]?.exerciseId !== "superman-hold",
+      })
+    : withoutKitSwapNotes(swapped);
   // Lift4 (5): a settings save that changes the session length re-fits the
   // plan the person has, sets only. Anything else keeps the plan's sets as
   // they are, and the length it was fitted to.
