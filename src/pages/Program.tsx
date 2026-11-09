@@ -1482,7 +1482,13 @@ function ProgramInner() {
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
-              <AnimatePresence mode="wait" custom={direction}>
+              {/* initial={false}: Train opens on its day settled; a day
+                  swipe still slides. */}
+              <AnimatePresence
+                mode="wait"
+                custom={direction}
+                initial={false}
+              >
                 <motion.div
                   key={idx}
                   custom={direction}
@@ -1696,6 +1702,7 @@ function ProgramInner() {
               <AnimatePresence
                 mode="wait"
                 custom={direction}
+                initial={false}
                 onExitComplete={() => {
                   isAnimating.current = false;
                 }}

@@ -679,13 +679,9 @@ export default function SessionCompleteScreen({
                 aria-hidden="true"
               />
             </summary>
-            {/* Exercise Breakdown */}
-            <motion.div
-              className="rounded-2xl bg-card overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
+            {/* Exercise Breakdown. No entrance: it sits in a closed
+                <details>, so its rows played their stagger unseen. */}
+            <div className="rounded-2xl bg-card overflow-hidden">
               <div className="flex items-baseline justify-between gap-3 px-4 pt-4 pb-2">
                 <SectionHeading size="compact">Exercises</SectionHeading>
                 {/* Working sets only, as every set count here. */}
@@ -697,13 +693,10 @@ export default function SessionCompleteScreen({
                 </span>
               </div>
               <div className="divide-y divide-border/30">
-                {exerciseSummary.map((ex, i) => (
-                  <motion.div
+                {exerciseSummary.map((ex) => (
+                  <div
                     key={ex.name}
                     className="flex items-center justify-between px-4 py-3"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 + i * 0.05 }}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <p className="text-sm text-foreground truncate">
@@ -723,10 +716,10 @@ export default function SessionCompleteScreen({
                         {ex.setsCompleted}/{ex.totalSets} sets
                       </p>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </details>
           {/* The saved workout, where it can be changed or deleted. */}
           {saved && onViewWorkout && (

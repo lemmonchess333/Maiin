@@ -133,60 +133,55 @@ export function BadgeEarnedContent({
           />
         </SealStage>
 
-        {/* Pre-reveal prompt — below the seal, full card width. */}
-        <SealPrompt seal={seal} />
-
-        {/* Copy — fades up only after the reveal so the moment leads. */}
-        <AnimatePresence>
-          {revealed && (
-            <motion.div
-              key="copy"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: reduce ? 0 : 0.3, duration: 0.3 }}
-              className="relative z-10 space-y-1"
-            >
-              <p className="text-xs font-semibold" style={{ color: tier }}>
-                {badge.tier.charAt(0).toUpperCase() + badge.tier.slice(1)} badge
+        {/* The prompt sits over the words and Done, which are laid out
+            from the start, as MedalReveal's are: mounting them at the
+            break grew the centred card by ~120 px, so the seal, its shards
+            and rays jumped ~60 px in the moment it shattered. Hidden from
+            sight, reach and the accessibility tree until the break, and
+            Done is disabled, so the focus trap counts only the seal. */}
+        <div className="relative w-full space-y-4">
+          <SealPrompt seal={seal} className="absolute inset-x-0 top-0" />
+          <motion.div
+            className="relative z-10 space-y-1"
+            style={{ visibility: revealed ? "visible" : "hidden" }}
+            aria-hidden={!revealed}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: revealed ? 1 : 0 }}
+            transition={{ delay: reduce ? 0 : 0.3, duration: 0.3 }}
+          >
+            <p className="text-xs font-semibold" style={{ color: tier }}>
+              {badge.tier.charAt(0).toUpperCase() + badge.tier.slice(1)} badge
+            </p>
+            <p className="text-xl font-bold text-foreground">{badge.name}</p>
+            <p className="text-sm text-muted-foreground">
+              {badgeDescription(badge, liftUnit)}
+            </p>
+            {badge.id === "first_step" && (
+              <p className="text-sm font-semibold pt-2" style={{ color: tier }}>
+                Come back tomorrow to build your streak.
               </p>
-              <p className="text-xl font-bold text-foreground">{badge.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {badgeDescription(badge, liftUnit)}
-              </p>
-              {badge.id === "first_step" && (
-                <p
-                  className="text-sm font-semibold pt-2"
-                  style={{ color: tier }}
-                >
-                  Come back tomorrow to build your streak.
-                </p>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </motion.div>
 
-        {/* Dismiss appears only post-reveal — pre-reveal the action is "break". */}
-        <AnimatePresence>
-          {revealed && (
-            <motion.button
-              data-motion-driven
-              key="done"
-              type="button"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: reduce ? 0 : 0.45 }}
-              onClick={onDismiss}
-              className="relative z-10 w-full py-3 rounded-xl text-sm font-semibold transition-colors"
-              style={{
-                backgroundColor: `${tier}20`,
-                color: tier,
-                border: `1px solid ${tier}30`,
-              }}
-            >
-              Nice
-            </motion.button>
-          )}
-        </AnimatePresence>
+          <motion.button
+            data-motion-driven
+            type="button"
+            disabled={!revealed}
+            style={{
+              visibility: revealed ? "visible" : "hidden",
+              backgroundColor: `${tier}20`,
+              color: tier,
+              border: `1px solid ${tier}30`,
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: revealed ? 1 : 0 }}
+            transition={{ delay: reduce ? 0 : 0.45 }}
+            onClick={onDismiss}
+            className="relative z-10 w-full py-3 rounded-xl text-sm font-semibold transition-colors"
+          >
+            Nice
+          </motion.button>
+        </div>
       </motion.div>
     </motion.div>
   );

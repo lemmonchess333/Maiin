@@ -68,7 +68,20 @@ export function useSwipeNavigation(
     // Only the direction-INDEPENDENT bails happen here (multi-touch + edge
     // guard). The opt-out / pager hand-off is resolved at touchEND because
     // it depends on the swipe direction (which boundary we'd cross).
+    // A touch inside a sheet or overlay is not a page swipe. Sheets render
+    // in a portal outside <main>, but React still bubbles their touches to
+    // <main>'s handlers, and the opt-out below reads DOM ancestors, which a
+    // portal's content does not have: spinning the weight dial in Home's
+    // sheet changed tab and lost the entry.
+    const host = e.currentTarget as unknown as Node | null;
+    const fromPortal =
+      !!host &&
+      typeof host.contains === "function" &&
+      typeof Node !== "undefined" &&
+      e.target instanceof Node &&
+      !host.contains(e.target);
     const ignore =
+      fromPortal ||
       t.clientX < EDGE_GUARD_PX ||
       t.clientX > window.innerWidth - EDGE_GUARD_PX;
     start.current = {

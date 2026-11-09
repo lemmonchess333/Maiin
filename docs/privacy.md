@@ -43,6 +43,11 @@ rests on a contract, not on a setting someone could forget to flip.
 Re-verified 2026-08-22: both call sites still target `aiplatform`, and no
 `generativelanguage` reference exists anywhere in `functions/`.
 
+2026-11-09: the endpoint is now `aiplatform.us.rep.googleapis.com`, location
+`us` (`functions/lib/foodModel.js`), because `gemini-3.8-flash` is not served
+in us-central1. Still Vertex AI, still `aiplatform`, so the training claim
+stands; the `us` multi-region keeps the processing in one jurisdiction.
+
 ### Google's retention posture for Vertex AI Gemini (as of 2026-08-22)
 
 Per Google's Vertex AI data-governance and abuse-monitoring

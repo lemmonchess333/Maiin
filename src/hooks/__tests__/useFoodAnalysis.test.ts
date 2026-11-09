@@ -256,6 +256,56 @@ describe("useFoodAnalysis — the outcome contract", () => {
     ]);
   });
 
+  it("a refused scan names the AI model's own answer in the step list", async () => {
+    // The first TestFlight scans: the model, asked for in a region that
+    // does not serve it, answered 404, and the list said only "server
+    // answered 500".
+    stubFetch(async () =>
+      reply(500, {
+        error: "ai-failed",
+        message:
+          "Couldn't analyse this. Try again. This one didn't use a scan.",
+        modelStatus: 404,
+      })
+    );
+    const { result } = renderHook(() => useFoodAnalysis());
+    const before = new Set(bootSteps());
+    let outcome!: Awaited<ReturnType<typeof result.current.analyzeFood>>;
+    await act(async () => {
+      outcome = await result.current.analyzeFood("QUJD");
+    });
+    expect(outcome.errorMessage).toMatch(/didn't use a scan/);
+    expect(stepsSince(before)).toEqual([
+      expect.stringMatching(/^Scan: sending a \d+ KB photo$/),
+      expect.stringMatching(/^Scan: signed the request in \d+ ms$/),
+      expect.stringMatching(/^Scan: server answered 500 in \d+ ms$/),
+      "Scan: the AI model answered 404",
+    ]);
+  });
+
+  it("a typed meal names the model's answer too, and a failure without one adds nothing", async () => {
+    stubFetch(async () => reply(500, { error: "ai-failed", modelStatus: 403 }));
+    const { result } = renderHook(() => useFoodAnalysis());
+    let before = new Set(bootSteps());
+    await act(async () => {
+      await result.current.analyzeFoodText("2 eggs");
+    });
+    expect(stepsSince(before)).toContain(
+      "Typed meal: the AI model answered 403"
+    );
+
+    stubFetch(async () =>
+      reply(500, { error: "Failed to analyze food image" })
+    );
+    before = new Set(bootSteps());
+    await act(async () => {
+      await result.current.analyzeFood("QUJD");
+    });
+    expect(
+      stepsSince(before).some((step) => step.includes("AI model answered"))
+    ).toBe(false);
+  });
+
   it("a stalled request times out instead of hanging forever", async () => {
     // A request that never settles must end as an honest timeout
     // rather than an indefinite loading state with the shutter dead.

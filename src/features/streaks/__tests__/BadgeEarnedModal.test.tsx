@@ -74,12 +74,16 @@ function reveal() {
 describe("BadgeEarnedModal — tap-to-reveal + forward streak hook (#974)", function () {
   it("gates the copy behind the reveal: hidden pre-tap, shown after", function () {
     render(<BadgeEarnedModal badge={makeBadge()} onDismiss={() => {}} />);
-    // Pre-reveal: the moment leads — name/hook not yet shown.
-    expect(screen.queryByText("First Step")).not.toBeInTheDocument();
-    expect(screen.queryByText(FORWARD_HOOK)).not.toBeInTheDocument();
+    // Pre-reveal: the moment leads — name/hook not yet shown. They are
+    // laid out from the start, out of sight and the accessibility tree,
+    // so the break moves nothing.
+    expect(screen.getByText("First Step")).not.toBeVisible();
+    expect(screen.getByText(FORWARD_HOOK)).not.toBeVisible();
+    expect(screen.queryByRole("button", { name: "Nice" })).toBeNull();
     reveal();
-    expect(screen.getByText("First Step")).toBeInTheDocument();
-    expect(screen.getByText(FORWARD_HOOK)).toBeInTheDocument();
+    expect(screen.getByText("First Step")).toBeVisible();
+    expect(screen.getByText(FORWARD_HOOK)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Nice" })).toBeEnabled();
   });
 
   it("does NOT render the hook on other (streak-threshold) badges", function () {
@@ -112,11 +116,11 @@ describe("BadgeEarnedModal — tap-to-reveal + forward streak hook (#974)", func
       fireEvent.click(screen.getByRole("button", { name: /break the seal/i }));
     expect(screen.getByText(/tap to break the seal/i)).toBeInTheDocument();
     tap(); // 1
-    expect(screen.queryByText("First Step")).not.toBeInTheDocument();
+    expect(screen.getByText("First Step")).not.toBeVisible();
     tap(); // 2 — still sealed
-    expect(screen.queryByText("First Step")).not.toBeInTheDocument();
+    expect(screen.getByText("First Step")).not.toBeVisible();
     tap(); // 3 — breaks open
-    expect(screen.getByText("First Step")).toBeInTheDocument();
+    expect(screen.getByText("First Step")).toBeVisible();
   });
 
   it("does not dismiss until after the seal is broken", function () {
