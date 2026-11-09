@@ -90,7 +90,13 @@ export default function LeagueResultReveal({
   useEffect(() => {
     titleRef.current?.focus();
     haptic(rose ? "success" : "light");
-    if (rose && !reduce) throwConfetti(metal);
+    if (!rose || reduce) return;
+    // On the badge's arrival, not before it: fired as the screen opened,
+    // the confetti fell while the screen was still fading in and before
+    // the badge's spring peaked (~315 ms). The finish screen waits the
+    // same way (FinishHero).
+    const timer = window.setTimeout(() => throwConfetti(metal), 300);
+    return () => window.clearTimeout(timer);
     // Once, as it opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
