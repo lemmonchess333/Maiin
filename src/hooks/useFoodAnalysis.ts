@@ -3,6 +3,7 @@ import { filterIdentifiableAiItems } from "@/lib/aiFoodIdentification";
 import { auth } from "@/lib/firebase";
 import { logger } from "@/lib/logger";
 import { functionEndpoint } from "@/lib/functionEndpoint";
+import { traceBoot } from "@/lib/bootTrace";
 import {
   AI_ANALYSIS_OFF_MESSAGE,
   AI_ANALYSIS_OFF_REASON,
@@ -17,6 +18,14 @@ const TEXT_FUNCTION_URL = functionEndpoint("analyzeFoodText");
    failure while staying far above a slow-but-working Gemini round-trip
    (typically 5-15s). */
 const ANALYZE_TIMEOUT_MS = 45_000;
+
+/** The failure as the step list shows it (bootTrace.ts): the error's
+ *  name and words, which the sentence the person reads leaves out. The
+ *  first TestFlight scan failed with only "Couldn't reach the server". */
+function describeFailure(err: unknown): string {
+  if (err instanceof Error) return `${err.name}: ${err.message}`;
+  return String(err);
+}
 
 /* Map the HTTP status returned by the analyzeFood callable into copy
    the user can act on. The server message is preferred when present
@@ -100,6 +109,10 @@ export function useFoodAnalysis() {
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
+    const started = Date.now();
+    traceBoot(
+      `Scan: sending a ${Math.round((imageBase64.length * 3) / 4 / 1024)} KB photo`
+    );
 
     try {
       const user = auth.currentUser;
@@ -118,6 +131,9 @@ export function useFoodAnalysis() {
         ),
         signal: controller.signal,
       });
+      traceBoot(
+        `Scan: server answered ${response.status} in ${Date.now() - started} ms`
+      );
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
@@ -149,6 +165,9 @@ export function useFoodAnalysis() {
       if (!keepResult) setResult(data);
       return { data, errorMessage: null };
     } catch (err) {
+      traceBoot(
+        `Scan: failed after ${Date.now() - started} ms (${describeFailure(err)})`
+      );
       const message =
         err instanceof DOMException && err.name === "AbortError"
           ? "This is taking too long. Check your signal and try again."
@@ -170,6 +189,8 @@ export function useFoodAnalysis() {
   ): Promise<FoodAnalysis | null> => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
+    const started = Date.now();
+    traceBoot("Scan: sending a typed meal");
     try {
       const user = auth.currentUser;
       if (!user) return null;
@@ -184,6 +205,9 @@ export function useFoodAnalysis() {
         body: JSON.stringify({ text }),
         signal: controller.signal,
       });
+      traceBoot(
+        `Scan: server answered ${response.status} in ${Date.now() - started} ms`
+      );
 
       if (!response.ok) {
         /* Null either way: the composer reads the meal on the phone and
@@ -199,6 +223,9 @@ export function useFoodAnalysis() {
       }
       return await response.json();
     } catch (e) {
+      traceBoot(
+        `Scan: failed after ${Date.now() - started} ms (${describeFailure(e)})`
+      );
       logger.error("[analyzeFoodText] failed", e);
       return null;
     } finally {

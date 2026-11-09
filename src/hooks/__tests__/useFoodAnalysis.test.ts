@@ -32,6 +32,7 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 import { useFoodAnalysis } from "../useFoodAnalysis";
+import { bootSteps } from "@/lib/bootTrace";
 
 const GOOD = {
   foodName: "Chicken and rice",
@@ -212,6 +213,17 @@ describe("useFoodAnalysis — the outcome contract", () => {
     });
     expect(outcome.errorMessage).toMatch(/couldn't reach the server/i);
     expect(outcome.errorMessage).not.toMatch(/failed to fetch/i);
+    // The browser's own words do reach the step list, which only the
+    // iPhone's Details shows: they are what a screenshot needs.
+    const steps = bootSteps().map((entry) => entry.step);
+    expect(steps.some((s) => /^Scan: sending a \d+ KB photo$/.test(s))).toBe(
+      true
+    );
+    expect(
+      steps.some((s) =>
+        /^Scan: failed after \d+ ms \(TypeError: Failed to fetch\)$/.test(s)
+      )
+    ).toBe(true);
   });
 
   it("a stalled request times out instead of hanging forever", async () => {
