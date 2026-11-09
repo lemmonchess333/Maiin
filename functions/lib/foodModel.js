@@ -9,7 +9,14 @@
  * `gemini-2.5-flash` is retiring too, so the next step is the 3.x line:
  * `gemini-3.8-flash`, with no retirement date announced, the owner's choice
  * over 3.5 Flash and 3.1 Flash-Lite (Ship1 in the plan file has the dates).
- * It is served from us-central1, where the functions run.
+ *
+ * 3.8 Flash is not served from single regions. Google's model page lists
+ * the global endpoint and the `us` and `eu` multi-regions only, so asking
+ * us-central1 (where the functions run, and where 2.0 Flash was served)
+ * failed every scan and every typed meal with a 4xx from the first
+ * TestFlight build. `us` keeps the processing in one jurisdiction, which
+ * the global endpoint does not promise. A multi-region has its own host,
+ * `aiplatform.us.rep.googleapis.com`, not a `us-` prefix.
  *
  * Gemini 3 and later models think before they answer, which changes three
  * settings:
@@ -25,12 +32,12 @@
  * defend against anyway.
  */
 const FOOD_MODEL = "gemini-3.8-flash";
-const FOOD_MODEL_LOCATION = "us-central1";
+const FOOD_MODEL_LOCATION = "us";
 
 /** The generateContent endpoint for the food model in this project. */
 function foodModelUrl(projectId) {
   return (
-    `https://${FOOD_MODEL_LOCATION}-aiplatform.googleapis.com/v1/projects/` +
+    `https://aiplatform.${FOOD_MODEL_LOCATION}.rep.googleapis.com/v1/projects/` +
     `${projectId}/locations/${FOOD_MODEL_LOCATION}/publishers/google/models/` +
     `${FOOD_MODEL}:generateContent`
   );

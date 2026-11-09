@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
+  animate,
   motion,
   useMotionValue,
   useTransform,
@@ -8,6 +9,7 @@ import {
 import { Pencil, Trash2 } from "lucide-react";
 import { foodArtKindFor, foodArtUrl } from "@/lib/foodArt";
 import { haptic } from "@/lib/haptic";
+import { swipeSettlesOpen } from "@/lib/foodRowSwipe";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 import { formatCalories } from "@/utils/formatNutrition";
@@ -76,6 +78,8 @@ interface FoodRowProps {
 const OPEN_OFFSET = -96;
 const OPEN_THRESHOLD = -52;
 const FULL_SWIPE_THRESHOLD = -200;
+/** How the row settles, open or closed. */
+const SETTLE = { type: "spring", stiffness: 400, damping: 35 } as const;
 
 /**
  * Quantity label formatter (change #5).
@@ -168,7 +172,15 @@ export default function FoodRow({
       onDelete();
       return;
     }
-    onOpenChange(info.offset.x < OPEN_THRESHOLD);
+    const velocity = info.velocity.x;
+    const open = swipeSettlesOpen(x.get(), velocity, OPEN_THRESHOLD);
+    // The `animate` prop only moves the row when `isOpen` changes, so a
+    // drag that ends in the state it began in settles here, carrying the
+    // finger's speed into the spring.
+    if (open === isOpen) {
+      animate(x, open ? OPEN_OFFSET : 0, { ...SETTLE, velocity });
+    }
+    onOpenChange(open);
   };
 
   // Tap on the row body: when open, a tap closes the swipe (iOS behaviour);
@@ -397,9 +409,10 @@ export default function FoodRow({
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
         onTap={handleTap}
+        dragMomentum={false}
         style={{ x }}
         animate={{ x: targetX }}
-        transition={{ type: "spring", stiffness: 400, damping: 35 }}
+        transition={SETTLE}
         role="button"
         tabIndex={0}
         aria-label={`Edit ${actionName}`}

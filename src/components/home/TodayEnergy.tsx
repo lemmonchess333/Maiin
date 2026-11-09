@@ -184,6 +184,10 @@ export default function TodayEnergy({
               mode={mode}
               onToggleMode={toggleMode}
               trajectoryLabel={null}
+              /* The macro tiles beside it count for 600 ms, as Food's
+                 ring does; at the default 1500 the calories landed a
+                 second after them on every Home visit. */
+              ringDurationMs={600}
             />
           )}
           <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5 @max-[12em]:w-full">

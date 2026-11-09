@@ -941,6 +941,22 @@ could call Vertex, so the first real request is the test.
       the prompt and output tokens per scan; check one against the price
       of 3.8 Flash before launch.
 
+**2026-11-09: us-central1 was the wrong place to ask.** The first TestFlight
+scans (build 13) reached the server and each came back "Couldn't analyse
+this. Try again." without "didn't use a scan", so the model had answered a
+4xx other than 429. Google's page for 3.8 Flash lists the global endpoint
+and the `us` and `eu` multi-regions only. Both analyses now call
+`aiplatform.us.rep.googleapis.com`, location `us`; a 401, 403 or 404 from
+the model gives the scan back; and the server sends the model's status as
+`modelStatus`, which the scan's Details shows as "Scan: the AI model
+answered N". The two checks above stand, now against the `us` endpoint:
+
+- [ ] **After the deploy, one scan on the iPhone.** It comes back with
+      foods. If it fails, Details names the model's status: a 404 means
+      3.8 Flash is not served in `us` either (try `global`), a 403 that
+      the functions' account lacks Vertex AI User, a 400 the setting it
+      refused (the log's `Vertex AI error:` line has `errorStatus`).
+
 ## The plan moves on with the day while the app stays open (2026-10-10)
 
 Affects: `useProgram` (`src/features/program/useProgram.ts`) and Home's
@@ -3881,6 +3897,29 @@ phone.
       day. Passing: the whole Start button shows above the tab bar
       without scrolling, in both themes, with the system text size at its
       default.
+
+## Holding a post's photo full screen (2026-11-09)
+
+The full-screen photo viewer follows the finger: a sideways swipe drags
+the strip with the next photo beside it, a pull down closes it with the
+stage fading, two fingers pinch (1× to 4×), a zoomed photo pans, and a
+double tap zooms in to where it landed or back out. The rules are in
+`src/lib/photoGesture.ts`. The unit suites and a touch-driven browser run
+cover the logic; only a phone shows how it feels under a real finger.
+
+- [ ] **Swipe, pull, pinch and pan on an iPhone.** On a TestFlight build,
+      open a post with three photos. Passing: the photo moves with the
+      finger and the next one slides in beside it; a short slow drag
+      springs back; the first and last photos give a little and spring
+      back; a pull down shrinks the photo and fades the stage, and letting
+      go closes it, while a push up does not; a pinch zooms about the
+      fingers and a zoomed photo pans without turning; a double tap zooms
+      in where it landed and a second one zooms back out. Nothing behind
+      the viewer scrolls, and the tab bar never changes tab.
+- [ ] **Reduce Motion.** With Settings → Accessibility → Motion → Reduce
+      Motion on, repeat the swipe and the pull. Passing: the photo still
+      follows the finger, and a turn or a close happens at once, with
+      nothing sliding by itself.
 
 ## An exercise row's long press on Train (2026-11-09)
 

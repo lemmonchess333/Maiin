@@ -4,7 +4,6 @@ import {
   type PointerEvent as ReactPointerEvent,
   type MouseEvent as ReactMouseEvent,
 } from "react";
-import { motion } from "framer-motion";
 import IconButton from "@/components/ui/IconButton";
 import { ChevronDown, ChevronRight, PenLine, Star, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -449,11 +448,7 @@ function FoodSuggestionsDropdown({
         </div>
       )}
       {offResults.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div>
           {offResults.map((food, i) => (
             <button
               type="button"
@@ -519,7 +514,7 @@ function FoodSuggestionsDropdown({
           <p className="px-4 py-2 text-micro text-muted-foreground">
             {OFF_CREDIT}
           </p>
-        </motion.div>
+        </div>
       )}
       {suggestions.length === 0 &&
         offResults.length === 0 &&
