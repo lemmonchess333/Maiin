@@ -42,11 +42,13 @@ let starting: Promise<void> | null = null;
 
 type Plugin = typeof import("capacitor-live-activities").LiveActivities;
 
-async function loadPlugin(): Promise<Plugin | null> {
+/** A holder, never the plugin: a promise resolved with a Capacitor plugin
+ *  calls its `then` on the native side and never settles (revenuecat.ts). */
+async function loadPlugin(): Promise<{ plugin: Plugin } | null> {
   if (!isNativePlatform()) return null;
   try {
     const mod = await import("capacitor-live-activities");
-    return mod.LiveActivities;
+    return { plugin: mod.LiveActivities };
   } catch {
     // Not in this build (the Xcode half is not done): nothing to show.
     return null;
@@ -149,7 +151,7 @@ export function restActivityLine(exerciseName?: string): string {
 export async function startRestActivity(rest: RestActivity): Promise<void> {
   await endRestActivity();
   const begin = (async () => {
-    const plugin = await loadPlugin();
+    const plugin = (await loadPlugin())?.plugin;
     if (!plugin) return;
     try {
       const result = await plugin.startActivity({
@@ -180,7 +182,7 @@ export async function endRestActivity(): Promise<void> {
   activityId = null;
   if (id === null) return;
   try {
-    const plugin = await loadPlugin();
+    const plugin = (await loadPlugin())?.plugin;
     if (!plugin) return;
     await plugin.endActivity({ activityId: id, data: {} });
   } catch (err) {

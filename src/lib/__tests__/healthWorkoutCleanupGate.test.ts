@@ -9,7 +9,7 @@ const { auth, writer } = vi.hoisted(() => ({
 vi.mock("../firebase", () => ({ auth, db: {} }));
 vi.mock("firebase/firestore");
 vi.mock("../healthKit", () => ({
-  getNativeWorkoutCleanupPlugin: async () => writer,
+  getNativeWorkoutCleanupPlugin: async () => ({ plugin: writer }),
   isWorkoutWriteAvailable: async () => false,
 }));
 vi.mock("../offlineQueue", () => ({

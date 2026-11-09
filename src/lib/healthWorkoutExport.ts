@@ -323,7 +323,7 @@ async function reconcile(uid: string): Promise<void> {
       (CONNECTED_TRAINING_RELEASED && record.state !== "exported")
   );
   if (!records.length || !isCurrentUser(uid)) return;
-  const plugin = await getNativeWorkoutCleanupPlugin();
+  const plugin = (await getNativeWorkoutCleanupPlugin())?.plugin;
   if (!plugin) return;
 
   // A server read is required. Firestore's ordinary getDoc can return a local

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { capacitorPlugin } from "@/test/capacitorPlugin";
 import { INTRO_ELIGIBILITY_STATUS } from "@revenuecat/purchases-typescript-internal-esm";
 
 /**
@@ -10,9 +11,9 @@ const mockPurchases = {
   checkTrialOrIntroductoryPriceEligibility: vi.fn(),
 };
 
-vi.mock("@revenuecat/purchases-capacitor", () => ({
-  Purchases: mockPurchases,
-}));
+vi.mock("@revenuecat/purchases-capacitor", () => {
+  return { Purchases: capacitorPlugin(mockPurchases) };
+});
 
 vi.mock("@capacitor/core", () => ({
   Capacitor: { isNativePlatform: () => true },

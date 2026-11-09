@@ -4,6 +4,7 @@
  * non-fatal reports under the signed-in account.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { capacitorPlugin } from "@/test/capacitorPlugin";
 
 const isNativePlatform = vi.fn(() => false);
 vi.mock("@/lib/platform", () => ({
@@ -24,7 +25,7 @@ const plugin = vi.hoisted(() => ({
 }));
 vi.mock("@capacitor-firebase/crashlytics", () => {
   plugin.loaded += 1;
-  return { FirebaseCrashlytics: plugin };
+  return { FirebaseCrashlytics: capacitorPlugin(plugin) };
 });
 
 import {

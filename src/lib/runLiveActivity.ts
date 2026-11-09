@@ -62,11 +62,13 @@ let lastPayloadKey = "";
 
 type Plugin = typeof import("capacitor-live-activities").LiveActivities;
 
-async function loadPlugin(): Promise<Plugin | null> {
+/** A holder, never the plugin: a promise resolved with a Capacitor plugin
+ *  calls its `then` on the native side and never settles (revenuecat.ts). */
+async function loadPlugin(): Promise<{ plugin: Plugin } | null> {
   if (!isNativePlatform()) return null;
   try {
     const mod = await import("capacitor-live-activities");
-    return mod.LiveActivities;
+    return { plugin: mod.LiveActivities };
   } catch {
     // Plugin absent from the build (operator half not done) — inert.
     return null;
@@ -205,7 +207,7 @@ export async function startRunActivity(data: RunActivityData): Promise<void> {
   if (activityId !== null || starting) return;
   starting = true;
   try {
-    const plugin = await loadPlugin();
+    const plugin = (await loadPlugin())?.plugin;
     if (!plugin) return;
     const result = await plugin.startActivity({
       layout: runCardLayout(),
@@ -246,7 +248,7 @@ export async function updateRunActivity(data: RunActivityData): Promise<void> {
   lastUpdateAt = now;
   lastPayloadKey = key;
   try {
-    const plugin = await loadPlugin();
+    const plugin = (await loadPlugin())?.plugin;
     if (!plugin) return;
     await plugin.updateActivity({ activityId, data: { ...data } });
   } catch (err) {
@@ -265,7 +267,7 @@ export async function endRunActivity(final?: RunActivityData): Promise<void> {
   lastPayloadKey = "";
   if (id === null) return;
   try {
-    const plugin = await loadPlugin();
+    const plugin = (await loadPlugin())?.plugin;
     if (!plugin) return;
     await plugin.endActivity({
       activityId: id,

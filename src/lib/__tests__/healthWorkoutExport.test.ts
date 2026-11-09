@@ -21,8 +21,8 @@ const { auth, writer, locallyDisabled, localConsent, localQueue, localReview } =
 vi.mock("../firebase", () => ({ auth, db: {} }));
 vi.mock("firebase/firestore");
 vi.mock("../healthKit", () => ({
-  getNativeWorkoutExportPlugin: async () => writer,
-  getNativeWorkoutCleanupPlugin: async () => writer,
+  getNativeWorkoutExportPlugin: async () => ({ plugin: writer }),
+  getNativeWorkoutCleanupPlugin: async () => ({ plugin: writer }),
   isWorkoutWriteAvailable: async () => true,
 }));
 vi.mock("../offlineQueue", () => ({
