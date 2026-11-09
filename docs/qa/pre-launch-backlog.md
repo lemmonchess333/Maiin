@@ -3881,3 +3881,18 @@ phone.
       day. Passing: the whole Start button shows above the tab bar
       without scrolling, in both themes, with the system text size at its
       default.
+
+## An exercise row's long press on Train (2026-11-09)
+
+Holding an exercise row on Train opens its menu (Replace, Remove, Move).
+It cancelled on any movement at all, so a finger's tremor often stopped
+it, and when it did open, lifting the finger could also open the
+exercise's history under the menu. It now allows 10 px of drift and
+swallows the tap that follows a fired press (`useLongPress`, the Quick
+Add rows' rules). Touch only, so a phone shows it.
+
+- [ ] **Hold an exercise row.** On a TestFlight build, on Train's lift
+      day, hold an exercise row for half a second without trying to keep
+      perfectly still. Passing: one medium haptic and the menu opens, and
+      the exercise's history does not open behind it; a quick tap still
+      opens the history; starting a scroll on a row never opens the menu.
