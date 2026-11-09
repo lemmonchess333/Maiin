@@ -57,6 +57,22 @@ async function tracedPost(
   }
 }
 
+/**
+ * The AI model's own status under a failed answer, as the step list sees
+ * it. The server sends it as `modelStatus` (aiScanQuota.failedScanResponse)
+ * when the model refused, so "server answered 500" says who refused: the
+ * first TestFlight scans failed with a 404 from the model, which read only
+ * as a 500 here.
+ */
+function traceModelStatus(label: string, errorBody: unknown): void {
+  const status =
+    errorBody && typeof errorBody === "object"
+      ? (errorBody as { modelStatus?: unknown }).modelStatus
+      : undefined;
+  if (typeof status === "number")
+    traceBoot(`${label}: the AI model answered ${status}`);
+}
+
 /* Map the HTTP status returned by the analyzeFood callable into copy
    the user can act on. The server message is preferred when present
    (e.g. rate-limit and quota failures carry the useful text); otherwise
@@ -159,6 +175,7 @@ export function useFoodAnalysis() {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
+        traceModelStatus("Scan", errorBody);
         throw new Error(
           friendlyFoodAnalysisError(
             response.status,
@@ -228,6 +245,7 @@ export function useFoodAnalysis() {
            logs it. A refusal because AI analysis is off is the person's
            own setting doing its job, so it is noted, not reported. */
         const errorBody = await response.json().catch(() => null);
+        traceModelStatus("Typed meal", errorBody);
         if (errorBody?.reason === AI_ANALYSIS_OFF_REASON) {
           logger.warn("[analyzeFoodText] AI analysis is off for this account");
         } else {
