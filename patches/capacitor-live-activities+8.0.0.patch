@@ -15,7 +15,7 @@ index 5942995..f40bd73 100644
      dependencies: [
          .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0")
 diff --git a/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift b/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift
-index 8d2aad6..71075fc 100644
+index 8d2aad6..9709b1b 100644
 --- a/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift
 +++ b/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift
 @@ -1,6 +1,7 @@
@@ -26,3 +26,17 @@ index 8d2aad6..71075fc 100644
  
  #if canImport(ActivityKit)
  import ActivityKit
+@@ -162,9 +163,12 @@
+             ActivityContent(state: $0, staleDate: nil)
+         }
+         
++        // Tropos: dismiss at once. The default policy keeps an ended
++        // activity on the Lock Screen for up to four hours, and a run or a
++        // rest that has ended leaves the lock screen with it.
+         await activity.end(
+             finalContent,
+-            dismissalPolicy: .default
++            dismissalPolicy: .immediate
+         )
+         
+         activities.removeValue(forKey: activityId)
