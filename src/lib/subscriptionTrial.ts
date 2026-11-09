@@ -55,6 +55,13 @@ export function cancelByText(trial: SubscriptionTrial): string | null {
   return by ? `${formatTimeOfDay(by)} on ${formatWeekdayDayMonth(by)}` : null;
 }
 
+/** Whether the last moment to cancel before the first charge has gone by:
+ *  the store wants a day's notice, so a trial's last day is past it. */
+export function cancelByPassed(trial: SubscriptionTrial, now: Date): boolean {
+  const by = instant(trial.cancelBy);
+  return !!by && by.getTime() <= now.getTime();
+}
+
 /** "Saturday 10 October", the day the trial ends. */
 export function trialEndDayText(trial: SubscriptionTrial): string | null {
   const ends = instant(trial.endsAt);

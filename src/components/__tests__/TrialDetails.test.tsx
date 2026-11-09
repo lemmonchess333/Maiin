@@ -68,6 +68,18 @@ describe("TrialDetails", () => {
     ).toBeInTheDocument();
   });
 
+  it("on the trial's last day, says the time to cancel before the charge has gone", () => {
+    // Friday 9 October 14:30 was the last moment; it is now Saturday 09:00.
+    vi.setSystemTime(new Date(2026, 9, 10, 9, 0));
+    render(<TrialDetails trial={trial()} />);
+    expect(
+      screen.getByText(
+        "Then £3.99 a month. The time to cancel before that has passed; cancelling now stops the renewals after it."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/unless you cancel by/)).toBeNull();
+  });
+
   it("says nothing will be charged once renewal is off, and offers no reminder", async () => {
     setNotificationPermission("default");
     render(<TrialDetails trial={trial({ willRenew: false })} />);
