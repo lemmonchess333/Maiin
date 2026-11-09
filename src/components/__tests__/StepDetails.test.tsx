@@ -11,6 +11,7 @@ beforeEach(() => {
 });
 afterEach(async () => {
   await restoreRealTimers();
+  window.localStorage.removeItem("tropos-step-details");
 });
 
 it("offers the steps under a failed checkout on the iPhone", () => {
@@ -37,4 +38,24 @@ it("shows nothing on the web, or for a checkout that is neither", () => {
   native.value = false;
   rerender(<StepDetails failed waiting={false} />);
   expect(screen.queryByText(/Details/)).toBeNull();
+});
+
+it("on the web, shows the link only when localStorage asks for it", () => {
+  native.value = false;
+  window.localStorage.setItem("tropos-step-details", "on");
+  render(<StepDetails failed waiting={false} />);
+  expect(screen.getByText("Details")).toBeInTheDocument();
+});
+
+it("on a dark overlay, the link and the list take light ink", () => {
+  render(<StepDetails failed waiting={false} onDark />);
+  expect(screen.getByText("Details").className).toContain("text-white/75");
+  expect(screen.getByRole("list").className).toContain("bg-white/10");
+});
+
+it("keeps the list to a box that scrolls, so forty steps never push the actions away", () => {
+  render(<StepDetails failed waiting={false} />);
+  const list = screen.getByRole("list");
+  expect(list.className).toContain("max-h-48");
+  expect(list.className).toContain("overflow-y-auto");
 });
