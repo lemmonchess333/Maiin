@@ -17,6 +17,14 @@
  * thing. The numbers it adds to (water) and counts down (calories) arrive
  * as numbers.
  *
+ * Food and water change away from Home, so they are also written on their
+ * own (`HomeWidgetSections`): Food writes the food section from the totals
+ * and targets it draws, and a small writer above the routes keeps the
+ * water section on today's water log, so a meal or a drink logged anywhere
+ * reaches the widgets without Home being drawn. The plugin merges a
+ * section into the stored snapshot. Each section carries its own time, so
+ * the food widget dims a day after its own figures, not after Home's.
+ *
  * The key lists below are the JSON's, and `homeWidgetContract.test.ts`
  * holds them to the Swift structs' properties and the builder's output.
  */
@@ -159,6 +167,9 @@ export interface WidgetFood {
   /** Grams. A target of 0 is none (an infeasible split, Nutr3). */
   protein: number;
   proteinTarget: number;
+  /** When the app wrote these figures, ms: the food widget dims a day
+   *  after the newer of this and the water's (W8d). */
+  updatedAt: number;
 }
 
 export interface WidgetWater {
@@ -172,7 +183,22 @@ export interface WidgetWater {
   /** The drinks the total already counts, so a drink the widget queued
    *  is never added twice once the app has saved it. */
   drinkIds: string[];
+  /** When the app wrote these figures, ms. */
+  updatedAt: number;
 }
+
+/** The sections written on their own, for the account the snapshot is
+ *  for. A section left out is left as it is; null clears it. */
+export interface HomeWidgetSections {
+  account: string;
+  food?: WidgetFood | null;
+  water?: WidgetWater | null;
+}
+
+/** The snapshot's sections that may be written on their own. */
+export const SECTION_KEYS = ["food", "water"] as const satisfies readonly (
+  keyof HomeWidgetSnapshot | keyof HomeWidgetSections
+)[];
 
 export interface HomeWidgetSnapshot {
   version: typeof HOME_WIDGET_SNAPSHOT_VERSION;
@@ -246,6 +272,7 @@ export const FOOD_KEYS = [
   "target",
   "protein",
   "proteinTarget",
+  "updatedAt",
 ] as const satisfies readonly (keyof WidgetFood)[];
 export const WATER_KEYS = [
   "date",
@@ -254,6 +281,7 @@ export const WATER_KEYS = [
   "servingMl",
   "servingLabel",
   "drinkIds",
+  "updatedAt",
 ] as const satisfies readonly (keyof WidgetWater)[];
 export const DRINK_KEYS = [
   "id",

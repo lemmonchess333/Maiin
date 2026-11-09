@@ -44,6 +44,8 @@ import {
   widgetAccount,
   type HomeWidgetSnapshot,
   type WidgetDay,
+  type WidgetFood,
+  type WidgetWater,
   type WidgetSegment,
   type WidgetSport,
   type WidgetWeek,
@@ -75,18 +77,26 @@ export interface HomeWidgetInput {
   raceGoal: { distance: string; targetDate: string } | null | undefined;
   distanceUnit: DistanceUnit;
   streak: { days: number; best: number; loggedToday: boolean } | null;
-  food: {
-    eaten: number;
-    target: number;
-    protein: number;
-    proteinTarget: number;
-  } | null;
-  water: {
-    ml: number;
-    targetMl: number;
-    servingMl: number;
-    drinkIds: readonly string[];
-  } | null;
+  food: FoodFigures | null;
+  water: WaterFigures | null;
+}
+
+/** The day's food as Home's and Food's cards hold it: calories and
+ *  protein logged, against the day's targets (`useEffectiveTargets`). */
+export interface FoodFigures {
+  eaten: number;
+  target: number;
+  protein: number;
+  /** 0 for no protein goal (an infeasible split, Nutr3). */
+  proteinTarget: number;
+}
+
+/** The day's water as `useWaterLog` holds it. */
+export interface WaterFigures {
+  ml: number;
+  targetMl: number;
+  servingMl: number;
+  drinkIds: readonly string[];
 }
 
 /** One session today, as the widget words it. */
@@ -439,6 +449,41 @@ export function servingLabel(ml: number): string {
 
 const whole = (n: number) => (Number.isFinite(n) ? Math.round(n) : 0);
 
+/** The food section, whole numbers, for `dateKey`. Home's snapshot and
+ *  Food's own section write both come through here. */
+export function widgetFoodSection(
+  dateKey: string,
+  food: FoodFigures,
+  nowMs: number
+): WidgetFood {
+  return {
+    date: dateKey,
+    eaten: Math.max(0, whole(food.eaten)),
+    target: Math.max(0, whole(food.target)),
+    protein: Math.max(0, whole(food.protein)),
+    proteinTarget: Math.max(0, whole(food.proteinTarget)),
+    updatedAt: Math.round(nowMs),
+  };
+}
+
+/** The water section, whole numbers, for `dateKey`. Home's snapshot and
+ *  the water writer above the routes both come through here. */
+export function widgetWaterSection(
+  dateKey: string,
+  water: WaterFigures,
+  nowMs: number
+): WidgetWater {
+  return {
+    date: dateKey,
+    ml: Math.max(0, whole(water.ml)),
+    targetMl: Math.max(0, whole(water.targetMl)),
+    servingMl: whole(water.servingMl),
+    servingLabel: servingLabel(whole(water.servingMl)),
+    drinkIds: [...water.drinkIds],
+    updatedAt: Math.round(nowMs),
+  };
+}
+
 export function homeWidgetSnapshot(input: HomeWidgetInput): HomeWidgetSnapshot {
   const { todayKey } = input;
   return {
@@ -462,23 +507,10 @@ export function homeWidgetSnapshot(input: HomeWidgetInput): HomeWidgetSnapshot {
         }
       : null,
     food: input.food
-      ? {
-          date: todayKey,
-          eaten: Math.max(0, whole(input.food.eaten)),
-          target: Math.max(0, whole(input.food.target)),
-          protein: Math.max(0, whole(input.food.protein)),
-          proteinTarget: Math.max(0, whole(input.food.proteinTarget)),
-        }
+      ? widgetFoodSection(todayKey, input.food, input.nowMs)
       : null,
     water: input.water
-      ? {
-          date: todayKey,
-          ml: Math.max(0, whole(input.water.ml)),
-          targetMl: Math.max(0, whole(input.water.targetMl)),
-          servingMl: whole(input.water.servingMl),
-          servingLabel: servingLabel(whole(input.water.servingMl)),
-          drinkIds: [...input.water.drinkIds],
-        }
+      ? widgetWaterSection(todayKey, input.water, input.nowMs)
       : null,
   };
 }

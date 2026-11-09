@@ -90,6 +90,7 @@ import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useAiConsent } from "@/hooks/useAiConsent";
 import AiConsentSheet from "@/components/food/AiConsentSheet";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
+import { useWidgetFoodSection } from "@/hooks/useHomeWidgetSections";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
 import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
@@ -620,6 +621,25 @@ export default function Food() {
   const dailyTotals = useMemo(
     () => sumMealTotals(visibleTodaysMeals),
     [visibleTodaysMeals]
+  );
+  /* The Home Screen food widget's calories and protein (Wid1) follow a
+     meal logged, edited or deleted here at once, without Home being drawn:
+     today's figures as the ring above shows them, with no protein goal
+     below the essential-fat floor (Nutr3). Only today's: a day further
+     back in the diary is not what the widget draws. */
+  useWidgetFoodSection(
+    uid,
+    todayStr,
+    selectedDate === todayStr && !mealsLoading && !mealsError
+      ? {
+          eaten: dailyTotals.calories,
+          target: dailyTargets.finalTarget,
+          protein: dailyTotals.protein,
+          proteinTarget: dailyTargets.targetInfeasible
+            ? 0
+            : dailyTargets.protein,
+        }
+      : null
   );
   /* The day as the portion sheets count against it: what is logged and
      the targets, for their "left after this" line. */

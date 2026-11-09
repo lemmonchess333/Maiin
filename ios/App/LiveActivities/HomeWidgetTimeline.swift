@@ -11,6 +11,11 @@ struct HomeWidgetEntry: TimelineEntry {
     var stale: Bool {
         snapshot?.isStale(at: date) ?? false
     }
+
+    /// The food widget's own staleness, from its sections' times.
+    var foodStale: Bool {
+        snapshot.map { date >= $0.foodStaleAt } ?? false
+    }
 }
 
 /// The timeline all three widgets draw from (W8c): an entry now, one at
@@ -39,7 +44,7 @@ struct HomeWidgetProvider: TimelineProvider {
         let snapshot = HomeWidgetSnapshot.load()
         let drinks = HomeWidgetStore.queuedDrinks()
         var moments = [now, WidgetCalendar.nextMidnight(after: now)]
-        if let staleAt = snapshot?.staleAt, staleAt > now {
+        for staleAt in [snapshot?.staleAt, snapshot?.foodStaleAt].compactMap({ $0 }) where staleAt > now {
             moments.append(staleAt)
         }
         let entries = moments.sorted().map {
@@ -114,14 +119,22 @@ extension HomeWidgetEntry {
                 summary: "2 of 6 sessions this week"
             ),
             streak: WidgetStreak(date: todayKey, days: streakDays, best: 20, loggedToday: true, nextDay: streakDays),
-            food: WidgetFood(date: todayKey, eaten: 1240, target: 2400, protein: 62, proteinTarget: 140),
+            food: WidgetFood(
+                date: todayKey,
+                eaten: 1240,
+                target: 2400,
+                protein: 62,
+                proteinTarget: 140,
+                updatedAt: (writtenAt ?? now).timeIntervalSince1970 * 1000
+            ),
             water: WidgetWater(
                 date: todayKey,
                 ml: 750,
                 targetMl: 2000,
                 servingMl: 250,
                 servingLabel: "Glass",
-                drinkIds: []
+                drinkIds: [],
+                updatedAt: (writtenAt ?? now).timeIntervalSince1970 * 1000
             )
         )
     }

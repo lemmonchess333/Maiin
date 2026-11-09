@@ -15,6 +15,7 @@ final class HomeWidgetsPlugin: CAPPlugin, CAPBridgedPlugin {
     let jsName = "HomeWidgets"
     let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "writeSnapshot", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "writeSections", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "clearSnapshot", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getQueuedDrinks", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "removeQueuedDrinks", returnType: CAPPluginReturnPromise)
@@ -63,6 +64,59 @@ final class HomeWidgetsPlugin: CAPPlugin, CAPBridgedPlugin {
         }
         reloadWidgets()
         call.resolve()
+    }
+
+    /// The sections written on their own (`HomeWidgetSections` in
+    /// homeWidgetContract.ts): Food's calories and protein, and today's water.
+    static let sectionKeys = ["food", "water"]
+
+    /// Merges the sections named into the snapshot kept for their account,
+    /// leaving every other part as Home last wrote it. With no snapshot for
+    /// that account (none written yet, or another account's), it starts a
+    /// bare one: no days, so Today and Streak say to open the app, and a
+    /// time of 0, so they are drawn as old. The plugin's calls run one at a
+    /// time, so a whole snapshot and a section never interleave.
+    @objc func writeSections(_ call: CAPPluginCall) {
+        guard let text = call.getString("sections"),
+              let data = text.data(using: .utf8),
+              data.count <= Self.maxSnapshotBytes,
+              let sections = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let account = sections["account"] as? String, !account.isEmpty else {
+            call.reject("Invalid widget sections")
+            return
+        }
+        var snapshot = Self.emptySnapshot(account: account)
+        if let stored = HomeWidgetStore.snapshotData(),
+           let object = try? JSONSerialization.jsonObject(with: stored) as? [String: Any],
+           object["version"] as? Int == 1,
+           object["account"] as? String == account {
+            snapshot = object
+        }
+        for key in Self.sectionKeys where sections.keys.contains(key) {
+            snapshot[key] = sections[key]
+        }
+        guard let merged = try? JSONSerialization.data(withJSONObject: snapshot),
+              HomeWidgetStore.writeSnapshot(merged) else {
+            call.reject("The App Group is not available")
+            return
+        }
+        reloadWidgets()
+        call.resolve()
+    }
+
+    /// A snapshot with nothing in it but the account, in the shape the
+    /// widgets decode.
+    static func emptySnapshot(account: String) -> [String: Any] {
+        [
+            "version": 1,
+            "writtenAt": 0,
+            "account": account,
+            "days": [Any](),
+            "week": NSNull(),
+            "streak": NSNull(),
+            "food": NSNull(),
+            "water": NSNull()
+        ]
     }
 
     @objc func clearSnapshot(_ call: CAPPluginCall) {

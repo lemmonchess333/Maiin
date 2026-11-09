@@ -56,11 +56,11 @@ struct FoodWidgetView: View {
                     .accessoryCard(disc: false)
             case .systemMedium:
                 FoodMedium(entry: entry, figures: figures)
-                    .staleMark(entry.stale)
+                    .staleMark(entry.foodStale)
                     .homeWidgetCard()
             default:
                 FoodSmall(entry: entry, figures: figures)
-                    .staleMark(entry.stale)
+                    .staleMark(entry.foodStale)
                     .homeWidgetCard()
             }
         }

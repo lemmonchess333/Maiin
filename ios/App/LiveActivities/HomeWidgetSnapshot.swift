@@ -143,6 +143,9 @@ struct WidgetFood: Decodable {
     let target: Int
     let protein: Int
     let proteinTarget: Int
+    /// When the app wrote these figures, ms: Food writes them on their own
+    /// (`writeSections`), so they can be newer than the snapshot.
+    let updatedAt: Double
 }
 
 struct WidgetWater: Decodable {
@@ -152,6 +155,8 @@ struct WidgetWater: Decodable {
     let servingMl: Int
     let servingLabel: String
     let drinkIds: [String]
+    /// When the app wrote these figures, ms.
+    let updatedAt: Double
 }
 
 extension HomeWidgetSnapshot {
@@ -166,6 +171,14 @@ extension HomeWidgetSnapshot {
             .filter { $0.account == account && $0.date == key && !counted.contains($0.id) }
             .reduce(0) { $0 + $1.ml }
         return base + added
+    }
+
+    /// When the food widget's figures go stale: a day after the newer of
+    /// the snapshot and its food and water sections, which the app writes
+    /// on their own from Food and from today's water log.
+    var foodStaleAt: Date {
+        let newest = max(writtenAt, food?.updatedAt ?? 0, water?.updatedAt ?? 0)
+        return Date(timeIntervalSince1970: newest / 1000).addingTimeInterval(Self.staleAfter)
     }
 
     /// The day's food, when the app wrote it for that day.

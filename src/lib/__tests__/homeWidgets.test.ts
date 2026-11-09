@@ -10,6 +10,7 @@ const H = vi.hoisted(() => ({
   native: true,
   drinks: [] as unknown[],
   writeSnapshot: vi.fn(async (_o: { snapshot: string }) => {}),
+  writeSections: vi.fn(async (_o: { sections: string }) => {}),
   clearSnapshot: vi.fn(async () => {}),
   removeQueuedDrinks: vi.fn(async (_o: { ids: string[] }) => {}),
 }));
@@ -21,6 +22,7 @@ vi.mock("@capacitor/core", async () => {
     registerPlugin: () =>
       capacitorPlugin({
         writeSnapshot: H.writeSnapshot,
+        writeSections: H.writeSections,
         clearSnapshot: H.clearSnapshot,
         getQueuedDrinks: async () => ({ drinks: H.drinks }),
         removeQueuedDrinks: H.removeQueuedDrinks,
@@ -35,9 +37,32 @@ import {
   readWidgetDrinks,
   removeWidgetDrinks,
   widgetDrinkOf,
+  writeHomeWidgetSections,
   writeHomeWidgetSnapshot,
 } from "../homeWidgets";
-import type { HomeWidgetSnapshot } from "../homeWidgetContract";
+import type {
+  HomeWidgetSnapshot,
+  WidgetFood,
+  WidgetWater,
+} from "../homeWidgetContract";
+
+const FOOD: WidgetFood = {
+  date: "2026-11-11",
+  eaten: 1240,
+  target: 2400,
+  protein: 62,
+  proteinTarget: 140,
+  updatedAt: 1_000_000,
+};
+const WATER: WidgetWater = {
+  date: "2026-11-11",
+  ml: 750,
+  targetMl: 2000,
+  servingMl: 250,
+  servingLabel: "Glass",
+  drinkIds: ["d1"],
+  updatedAt: 1_000_000,
+};
 
 const SNAPSHOT: HomeWidgetSnapshot = {
   version: 1,
@@ -110,6 +135,79 @@ describe("writing the snapshot", () => {
     await expect(clearHomeWidgets()).resolves.toBeUndefined();
     await writeHomeWidgetSnapshot(SNAPSHOT);
     expect(H.writeSnapshot).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("writing food or water on its own", () => {
+  const sent = () =>
+    H.writeSections.mock.calls.map((call) => JSON.parse(call[0].sections));
+
+  it("hands native the section, for the account, and nothing else", async () => {
+    expect(
+      await writeHomeWidgetSections(
+        { account: "0a1b2c3d", food: FOOD },
+        1_000_000
+      )
+    ).toBe(true);
+    expect(sent()).toEqual([{ account: "0a1b2c3d", food: FOOD }]);
+    expect(H.writeSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("writes the same figures again only once their time needs refreshing", async () => {
+    await writeHomeWidgetSections(
+      { account: "0a1b2c3d", water: WATER },
+      1_000_000
+    );
+    await writeHomeWidgetSections(
+      { account: "0a1b2c3d", water: { ...WATER, updatedAt: 1_000_500 } },
+      1_000_500
+    );
+    expect(sent()).toHaveLength(1);
+    // New figures go at once, and only the section that changed.
+    await writeHomeWidgetSections(
+      { account: "0a1b2c3d", food: FOOD, water: { ...WATER, ml: 1000 } },
+      1_001_000
+    );
+    expect(sent().at(-1)).toEqual({
+      account: "0a1b2c3d",
+      food: FOOD,
+      water: { ...WATER, ml: 1000 },
+    });
+    await writeHomeWidgetSections(
+      { account: "0a1b2c3d", water: { ...WATER, ml: 1000 } },
+      1_001_000 + SNAPSHOT_REWRITE_MS
+    );
+    expect(sent()).toHaveLength(3);
+  });
+
+  it("skips figures Home's whole snapshot has just written", async () => {
+    await writeHomeWidgetSnapshot({ ...SNAPSHOT, food: FOOD, water: WATER });
+    await writeHomeWidgetSections(
+      { account: SNAPSHOT.account, food: { ...FOOD, updatedAt: 1_000_200 } },
+      1_000_200
+    );
+    expect(H.writeSections).not.toHaveBeenCalled();
+    // Another account's are its own.
+    await writeHomeWidgetSections(
+      { account: "ffffffff", food: FOOD },
+      1_000_300
+    );
+    expect(H.writeSections).toHaveBeenCalledTimes(1);
+  });
+
+  it("does nothing off the phone, and says a refused write did not land", async () => {
+    H.native = false;
+    expect(await writeHomeWidgetSections({ account: "a", food: FOOD })).toBe(
+      false
+    );
+    H.native = true;
+    H.writeSections.mockRejectedValueOnce({ code: "UNIMPLEMENTED" });
+    expect(await writeHomeWidgetSections({ account: "a", food: FOOD })).toBe(
+      false
+    );
+    expect(await writeHomeWidgetSections({ account: "a", food: FOOD })).toBe(
+      true
+    );
   });
 });
 

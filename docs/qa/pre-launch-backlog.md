@@ -84,6 +84,14 @@ Customise → Lock Screen → the widget row.
       within a second, and open it again: still one drink for that tap.
       A tap before midnight with the app opened after it lands on the
       day of the tap. On iOS 16: the button opens Home instead.
+- [ ] **Food and water follow without Home.** Open the app from the food
+      widget (it opens Food, not Home), log lunch, and go to the Home
+      Screen. Passing: within a few seconds the ring's calories left and
+      the protein figure match Food's ring; edit the meal and delete it, and
+      the widget follows each. Log a drink on Food's diary row for today, or
+      on the Watch with the app open on any screen: the water figure
+      follows. Leave Home unvisited for a day while using Food: the food
+      widget is not dimmed, while Today and Streak are.
 - [ ] **Taps open the right page.** Passing: Today opens its session in
       Train (the lift's day, or the run tab on today's run), Today's food
       opens Food, Streak opens Home; from a cold start too, after sign-in

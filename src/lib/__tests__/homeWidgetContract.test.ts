@@ -26,6 +26,7 @@ import {
   HOME_WIDGET_APP_GROUP,
   HOME_WIDGET_SNAPSHOT_VERSION,
   HOME_WIDGET_STALE_AFTER_MS,
+  SECTION_KEYS,
   SNAPSHOT_KEYS,
   STREAK_KEYS,
   WATER_KEYS,
@@ -187,6 +188,32 @@ describe("one App Group, one plugin, on both sides", () => {
       expect(pluginSwift).toContain(
         `@objc func ${method}(_ call: CAPPluginCall)`
       );
+  });
+
+  it("merges food and water written on their own into a snapshot the widget decodes", () => {
+    // The sections the app writes away from Home are the ones the plugin
+    // merges, and only those.
+    expect(pluginSwift).toContain(
+      `static let sectionKeys = [${SECTION_KEYS.map((k) => `"${k}"`).join(", ")}]`
+    );
+    expect(pluginSwift).toContain(
+      "for key in Self.sectionKeys where sections.keys.contains(key)"
+    );
+    // A bare snapshot, for an account Home has not written yet, has every
+    // key the widget decodes.
+    const empty = swiftBody(
+      pluginSwift,
+      "static func emptySnapshot(account: String) -> [String: Any] {"
+    );
+    expect(
+      [...empty.matchAll(/^\s+"(\w+)": /gm)].map((m) => m[1]).sort()
+    ).toEqual([...SNAPSHOT_KEYS].sort());
+    // Each section keeps its own time, and the food widget dims by it.
+    expect(snapshotSwift).toContain(
+      "max(writtenAt, food?.updatedAt ?? 0, water?.updatedAt ?? 0)"
+    );
+    expect(widget("FoodWidget.swift")).toContain(".staleMark(entry.foodStale)");
+    expect(widget("FoodWidget.swift")).not.toContain(".staleMark(entry.stale)");
   });
 
   it("redraws the widgets when the app writes, throttled", () => {

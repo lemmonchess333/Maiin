@@ -445,7 +445,10 @@ describe("the snapshot", () => {
       servingMl: 250,
       servingLabel: "Glass",
       drinkIds: ["d1"],
+      // The section's own time: Food and the water writer stamp theirs.
+      updatedAt: 1_762_850_000_000,
     });
+    expect(snapshot.food?.updatedAt).toBe(snapshot.writtenAt);
     expect(servingLabel(500)).toBe("Bottle");
     expect(servingLabel(330)).toBe("330 ml");
   });

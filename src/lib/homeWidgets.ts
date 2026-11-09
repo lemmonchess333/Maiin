@@ -14,6 +14,8 @@ import { registerPlugin } from "@capacitor/core";
 import { isNativePlatform } from "./platform";
 import {
   DRINK_KEYS,
+  SECTION_KEYS,
+  type HomeWidgetSections,
   type HomeWidgetSnapshot,
   type WidgetDrink,
 } from "./homeWidgetContract";
@@ -21,6 +23,9 @@ import {
 interface HomeWidgetsPlugin {
   /** Keeps the snapshot, JSON, and redraws the widgets. */
   writeSnapshot(options: { snapshot: string }): Promise<void>;
+  /** Merges the sections named, JSON, into the snapshot kept for their
+   *  account (a bare one when there is none), and redraws. */
+  writeSections(options: { sections: string }): Promise<void>;
   /** Forgets it, on sign-out: the widgets draw their first-use state. */
   clearSnapshot(): Promise<void>;
   /** The drinks the widget queued, oldest first. */
@@ -44,6 +49,35 @@ export const SNAPSHOT_REWRITE_MS = 15 * 60 * 1000;
 
 let lastWritten: { content: string; writtenAt: number } | null = null;
 
+type SectionKey = (typeof SECTION_KEYS)[number];
+/** Each section as last written, by itself or in a whole snapshot, and
+ *  when: the same figures go again only to refresh their time. */
+const lastSections = new Map<
+  SectionKey,
+  { account: string; content: string; at: number }
+>();
+
+/** A section's figures without its time, to tell new figures apart. */
+function sectionContent(value: { updatedAt?: number } | null | undefined) {
+  if (!value) return "null";
+  const { updatedAt: _at, ...figures } = value;
+  return JSON.stringify(figures);
+}
+
+function rememberSections(
+  account: string,
+  sections: Partial<Record<SectionKey, { updatedAt?: number } | null>>,
+  at: number
+) {
+  for (const key of SECTION_KEYS)
+    if (key in sections)
+      lastSections.set(key, {
+        account,
+        content: sectionContent(sections[key]),
+        at,
+      });
+}
+
 /** Writes the snapshot, unless the same content went less than
  *  `SNAPSHOT_REWRITE_MS` ago. Whether the widgets have it now. */
 export async function writeHomeWidgetSnapshot(
@@ -62,6 +96,47 @@ export async function writeHomeWidgetSnapshot(
   try {
     await native.writeSnapshot({ snapshot: JSON.stringify(snapshot) });
     lastWritten = { content, writtenAt };
+    rememberSections(snapshot.account, snapshot, writtenAt);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Writes the food or water section on its own, from a screen other than
+ * Home: Food after a meal is logged, edited or deleted, and the water
+ * writer above the routes after any drink. The plugin merges it into the
+ * stored snapshot, under the same throttled redraw. Figures already
+ * written, by a section write or Home's whole snapshot, go again only
+ * after `SNAPSHOT_REWRITE_MS`, to refresh their time. Whether the widgets
+ * have them now.
+ */
+export async function writeHomeWidgetSections(
+  sections: HomeWidgetSections,
+  nowMs: number = Date.now()
+): Promise<boolean> {
+  const native = nativePlugin();
+  if (!native) return false;
+  const changed = SECTION_KEYS.filter((key) => {
+    if (!(key in sections)) return false;
+    const last = lastSections.get(key);
+    return !(
+      last &&
+      last.account === sections.account &&
+      last.content === sectionContent(sections[key]) &&
+      nowMs - last.at < SNAPSHOT_REWRITE_MS
+    );
+  });
+  if (changed.length === 0) return true;
+  const write: HomeWidgetSections = {
+    account: sections.account,
+    ...(changed.includes("food") ? { food: sections.food ?? null } : {}),
+    ...(changed.includes("water") ? { water: sections.water ?? null } : {}),
+  };
+  try {
+    await native.writeSections({ sections: JSON.stringify(write) });
+    rememberSections(sections.account, write, nowMs);
     return true;
   } catch {
     return false;
@@ -72,6 +147,7 @@ export async function writeHomeWidgetSnapshot(
  *  account's lock screen never shows the last one's day. Never throws. */
 export async function clearHomeWidgets(): Promise<void> {
   lastWritten = null;
+  lastSections.clear();
   const native = nativePlugin();
   if (!native) return;
   try {
@@ -146,4 +222,5 @@ export async function removeWidgetDrinks(ids: string[]): Promise<boolean> {
 export function __resetHomeWidgetsForTests(): void {
   plugin = null;
   lastWritten = null;
+  lastSections.clear();
 }
