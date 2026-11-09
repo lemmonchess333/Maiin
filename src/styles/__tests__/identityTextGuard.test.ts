@@ -330,7 +330,10 @@ function bareUses(token: string): string[] {
 // 2026-11-04: 42 → 43. The signed-out invite line (Soc15) carries a
 // person icon in brand purple, as the sign-in notice beside it carries its
 // mail icon; its words are foreground and muted text.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 43 } as const;
+// 43 → 44 with the drawn pull to refresh: PullToRefreshIndicator's
+// arrow turns brand purple once a release would refresh. An ICON on the
+// card chip, with no words.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 44 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

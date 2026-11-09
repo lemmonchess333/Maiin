@@ -87,7 +87,6 @@ export interface FeedViewProps {
   openPeople: () => void;
   /** Jump to the Together tab. */
   openTogether: () => void;
-  pullRefreshing: boolean;
   /** The shell's pull-to-refresh needs the ACTIVE feed's refresh; the
    *  view publishes it into this ref so refresh keeps working without
    *  lifting the feed hooks out of the view. */
@@ -113,7 +112,6 @@ export default function FeedView({
   hiddenActivityIds,
   openPeople,
   openTogether,
-  pullRefreshing,
   refreshRef,
   onOverlayChange,
 }: FeedViewProps) {
@@ -548,12 +546,6 @@ export default function FeedView({
                 accent={THEME.brand}
                 action={{ label: "Find people", onClick: openPeople }}
               />
-            )}
-
-            {pullRefreshing && (
-              <div className="flex items-center justify-center py-2">
-                <Spinner size="sm" variant="primary" label="Refreshing feed" />
-              </div>
             )}
 
             {/* The full-width refresh button that used to live here was

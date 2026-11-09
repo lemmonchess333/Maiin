@@ -3881,3 +3881,22 @@ phone.
       day. Passing: the whole Start button shows above the tab bar
       without scrolling, in both themes, with the system text size at its
       default.
+
+## Pull to refresh, drawn (2026-11-09)
+
+Food, Analytics and Social share one pull-to-refresh indicator
+(`PullToRefreshIndicator`, driven by `usePullToRefresh`'s `pull`): a round
+chip comes down from under the status bar with the finger, turning as it
+comes, turns the brand colour once a release would refresh (with one
+light haptic), holds with a spinner while the refresh runs and springs
+away after. The unit suites and a touch-driven browser run cover it; only
+a phone shows the haptic and how it sits under the notch.
+
+- [ ] **Pull on an iPhone.** On a TestFlight build, at the top of Food,
+      Analytics and Social, pull down slowly. Passing: the chip follows
+      the finger from under the status bar, never under the notch at rest;
+      one light tap is felt as it turns purple; letting go there shows a
+      spinner until the page has refreshed; letting go before it springs
+      back with nothing refreshed; pulling while scrolled down scrolls the
+      page as before; and on Food, a sideways swipe on a meal row never
+      starts a pull.

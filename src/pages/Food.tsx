@@ -38,6 +38,7 @@ const ManualFoodLogger = lazyRetry(() =>
 );
 import { useMeals, type Meal, type MealItem } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 import { Timestamp } from "firebase/firestore";
 import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { copySelectedMeals, type MealCopySelection } from "@/lib/mealCopy";
@@ -1998,12 +1999,16 @@ export default function Food() {
 
   // Retry the subscription as well as acknowledging the gesture. A terminated
   // listener otherwise leaves a failed diary read stuck until a full reload.
-  const { isRefreshing: pullRefreshing, bindProps: pullBindProps } =
-    usePullToRefresh({
-      onRefresh: refreshMeals,
-      minDisplayMs: 600,
-      excludeSelector: "[data-food-row]",
-    });
+  const {
+    isRefreshing: pullRefreshing,
+    pull,
+    readyAt: pullReadyAt,
+    bindProps: pullBindProps,
+  } = usePullToRefresh({
+    onRefresh: refreshMeals,
+    minDisplayMs: 600,
+    excludeSelector: "[data-food-row]",
+  });
 
   const dateBar = (
     <FoodDateBar
@@ -2075,18 +2080,11 @@ export default function Food() {
          notched iPhones. A hardcoded pb ignores the inset. */
       style={{ paddingBottom: "var(--page-bottom-pad)" }}
     >
-      {pullRefreshing && (
-        <div
-          className="flex justify-center py-2"
-          role="status"
-          aria-label="Refreshing"
-        >
-          <div
-            className="h-1 w-12 rounded-full bg-muted motion-safe:animate-pulse"
-            aria-hidden="true"
-          />
-        </div>
-      )}
+      <PullToRefreshIndicator
+        pull={pull}
+        readyAt={pullReadyAt}
+        refreshing={pullRefreshing}
+      />
       {readError}
 
       <motion.div variants={pageItemVariant}>

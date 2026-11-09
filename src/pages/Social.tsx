@@ -1,6 +1,7 @@
 import { useHiddenActivities } from "@/hooks/useHiddenActivities";
 import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useUid } from "@/lib/auth";
@@ -217,6 +218,8 @@ export default function Social() {
 
   const {
     isRefreshing: pullRefreshing,
+    pull,
+    readyAt: pullReadyAt,
     triggerRefresh,
     bindProps: pullBindProps,
   } = usePullToRefresh({ onRefresh: performRefresh });
@@ -275,6 +278,12 @@ export default function Social() {
         </>
       }
     >
+      <PullToRefreshIndicator
+        pull={pull}
+        readyAt={pullReadyAt}
+        refreshing={pullRefreshing}
+        label="Refreshing feed"
+      />
       {/* A new medal's reveal (Soc15), once per medal and tier, on the
           next visit to Social and never over Home. A blocking surface in
           the coordinator, so it never opens over another sheet; it waits
@@ -343,7 +352,6 @@ export default function Social() {
         blockedUsers={blockedUsers}
         blockedReady={blockedReady}
         hiddenActivityIds={hiddenActivityIds}
-        pullRefreshing={pullRefreshing}
         refreshRef={feedRefreshRef}
         onOverlayChange={setChromeHidden}
       />
