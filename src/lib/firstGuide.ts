@@ -366,6 +366,28 @@ export const GUIDE_HINTS = {
 export const FIRST_SET_BODY_NO_AUTO_REST =
   "Each row is a set. Check weight and reps, then tap the box when it’s done.\n\nWeights are estimates. Start light: use a weight you can control for every rep, with a few more left.";
 
+/** The first-set hint for a session with no weight to pick (a no-equipment
+ *  day): the same steps, and no word about weights. */
+export const FIRST_SET_BODY_BODYWEIGHT =
+  "Each row is a set. Check the reps or seconds, then tap the box when it’s done. Your rest timer starts automatically.\n\nStart easy: stop each set with a few reps left in you.";
+
+/** The same, with the automatic rest timer off. */
+export const FIRST_SET_BODY_BODYWEIGHT_NO_AUTO_REST =
+  "Each row is a set. Check the reps or seconds, then tap the box when it’s done.\n\nStart easy: stop each set with a few reps left in you.";
+
+/** The first-set hint's body for a session, or undefined for the hint's
+ *  own (weights, with the rest timer on). */
+export function firstSetBody(input: {
+  autoRest: boolean;
+  nothingToLoad: boolean;
+}): string | undefined {
+  if (input.nothingToLoad)
+    return input.autoRest
+      ? FIRST_SET_BODY_BODYWEIGHT
+      : FIRST_SET_BODY_BODYWEIGHT_NO_AUTO_REST;
+  return input.autoRest ? undefined : FIRST_SET_BODY_NO_AUTO_REST;
+}
+
 export type GuideHintId = keyof typeof GUIDE_HINTS;
 
 /** Where the walk's seen flag lives (scoped to the account by

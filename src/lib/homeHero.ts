@@ -151,9 +151,12 @@ export const FIRST_BODYWEIGHT_STEP =
 
 /** Whether a session has no weight to pick: every lift is the body's own,
  *  with no load added. */
-function nothingToLoad(exercises: readonly HeroExercise[]): boolean {
-  return exercises.every(
-    (ex) => isBodyweightExerciseId(ex.exerciseId) && !(ex.weight ?? 0)
+export function nothingToLoad(exercises: readonly HeroExercise[]): boolean {
+  return (
+    exercises.length > 0 &&
+    exercises.every(
+      (ex) => isBodyweightExerciseId(ex.exerciseId) && !(ex.weight ?? 0)
+    )
   );
 }
 
