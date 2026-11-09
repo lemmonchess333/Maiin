@@ -21,6 +21,7 @@ import {
   rcPurchase,
   rcRestore,
 } from "@/lib/revenuecat";
+import { traceBoot } from "@/lib/bootTrace";
 
 export type { PlanId };
 
@@ -233,11 +234,17 @@ function reportedPrice(productId: string, price: StorePrice): ReportedPrice {
  *  webhook lands the same write within seconds regardless. `price` is what
  *  Apple's sheet showed, for a trial's reminder email. */
 async function syncEntitlementBestEffort(price?: ReportedPrice): Promise<void> {
+  const started = Date.now();
+  traceBoot("Server: syncing Pro");
   try {
     const sync = httpsCallable(functions, "syncRevenueCatEntitlement");
     await sync(price ? { price } : {});
-  } catch {
+    traceBoot(`Server: Pro synced in ${Date.now() - started} ms`);
+  } catch (error) {
     /* tolerated: webhook is the source of truth */
+    traceBoot(
+      `Server: sync failed after ${Date.now() - started} ms (${error instanceof Error ? error.message : String(error)})`
+    );
   }
 }
 
