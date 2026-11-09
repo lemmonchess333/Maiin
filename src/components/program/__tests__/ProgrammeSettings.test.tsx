@@ -781,6 +781,17 @@ describe("ProgrammeSettings — split is a derived display (Pgm5 Q1)", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("names the split from the days for one this build can't name", () => {
+    // A newer app's split, read by this one: no "undefined", and the card
+    // reads as the engine would build the saved days.
+    setup({}, "lift", {
+      ...programState,
+      splitType: "a_newer_apps_split",
+    } as unknown as ProgramState);
+    expect(screen.getByText("Upper / Lower")).toBeInTheDocument();
+    expect(screen.queryByText(/undefined/)).toBeNull();
+  });
+
   it("threads the persisted preferredSplit through save (inert, not chosen)", async () => {
     setup(); // saved preferredSplit = "ppl"
     fireEvent.click(screen.getByText("Get stronger"));

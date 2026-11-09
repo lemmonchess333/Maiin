@@ -443,7 +443,13 @@ export function chooseSplit(weeklyTarget: number, noPull = false): SplitType {
   return "ppl_x2";
 }
 
-export function splitLabel(split: SplitType): string {
+/**
+ * The split's name, or "" for one this build doesn't know. The value is
+ * stored on the plan and read back by every app that opens it, an older
+ * one included, so a split added later (as `upper_lower_fb` was) reaches
+ * apps that can't name it: they say nothing rather than "undefined".
+ */
+export function splitLabel(split: SplitType | undefined): string {
   switch (split) {
     case "full_body":
       return "Full Body";
@@ -459,6 +465,14 @@ export function splitLabel(split: SplitType): string {
       return "Push / Pull / Legs ×2 + Full Body";
     case "upper_lower_fb":
       return "Upper / Lower + Full Body";
+    default: {
+      // Every SplitType is named above: a new one fails the typecheck
+      // here until it is. What reaches this at runtime is a value from a
+      // newer app, or none.
+      const unnamed: undefined = split;
+      void unnamed;
+      return "";
+    }
   }
 }
 

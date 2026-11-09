@@ -1077,8 +1077,10 @@ function ProgramInner() {
     // states it on every render, in Settings' words (`focusLabel`), with
     // or without a block running. Carrying it here as well named one
     // field twice. Split and day count are stated in words nowhere else,
-    // so they stay.
-    return `${splitLabel(programState.splitType)} · ${daysLabel}`;
+    // so they stay. A split this build can't name (a newer app's) leaves
+    // the days alone.
+    const split = splitLabel(programState.splitType);
+    return split ? `${split} · ${daysLabel}` : daysLabel;
   })();
 
   // Run-tab header line — so the subtitle stops being lift-led when the

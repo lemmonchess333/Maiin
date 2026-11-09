@@ -626,10 +626,11 @@ export default function ProgrammeSettings({
   const generatedSplitLabel = splitLabel(chooseSplit(liftDays, draftNoPull));
   // Pgm5 (Q1): the split is shown, not chosen. Prefer the actual current
   // structure (programState.splitType); fall back to what the engine would
-  // derive for the saved lift-days.
-  const currentSplitLabel = splitLabel(
-    programState?.splitType ?? chooseSplit(saved.liftDays, savedNoPull)
-  );
+  // derive for the saved lift-days, as for a split this build can't name
+  // (a newer app's).
+  const currentSplitLabel =
+    splitLabel(programState?.splitType) ||
+    splitLabel(chooseSplit(saved.liftDays, savedNoPull));
   const pullNote = noEquipmentPullNote(equipment, pullUpBar, experience);
 
   // P2: weekly-layout preview counts, derived from the draft lift/run days
