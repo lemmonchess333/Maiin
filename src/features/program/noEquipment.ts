@@ -6,8 +6,14 @@
  * to pull on. So a no-equipment plan has no pull, as Insanity, T25, Nike
  * Training Club's no-equipment workouts and Seven have none: its back work
  * is the superman hold, and setup says so where the setup is chosen. A
- * doorway pull-up bar adds pulling, through Minimal and its "What do you
- * have?" question (`whatYouHave.ts`).
+ * doorway pull-up bar adds pulling: the setup asks "A pull-up bar", off
+ * until the person turns it on, and with it the plan takes pull-ups,
+ * chin-ups and the hanging leg raise (`ownedKit` in `matchTemplate.ts`)
+ * and has its Pull days (`plansNoPull`).
+ *
+ * The list below stays floor moves whatever the bar answer: the bar's
+ * three are added beside it, not to it, so a circuit drawn from the floor
+ * list (Circ1) stays on the floor.
  *
  * "Minimal" stays what its copy says, some kit (`matchTemplate.ts` gives it
  * dumbbells), so the person with nothing has their own setup rather than a
@@ -24,6 +30,7 @@
  */
 import type { MovementCategory } from "@/lib/exerciseMovementCategory";
 import type { MovementComplexity } from "./experienceModel";
+import { plansNoPull } from "./programLabels";
 
 /** The exercises a person with no equipment can do: floor moves. */
 export const NO_EQUIPMENT_EXERCISE_IDS: ReadonlySet<string> = new Set([
@@ -137,9 +144,33 @@ export const NO_EQUIPMENT_LAST_RESORT: readonly string[] = [
 ];
 
 /**
- * What a no-equipment plan can't train, said once where the setup is
- * chosen (setup's equipment step, Settings → Programme): there is no pull,
- * and a doorway pull-up bar adds one through Minimal's "What do you have?".
+ * What a no-equipment plan can't train, said once under the "A pull-up
+ * bar" switch where the setup is chosen (setup's equipment step, Settings
+ * → Programme): with the switch off, that the switch adds the pull.
  */
 export const NO_EQUIPMENT_PULL_NOTE =
-  "This plan has no pulling: pull-ups and rows need something to pull on. A doorway pull-up bar adds them: choose Minimal, then A pull-up bar.";
+  "No pulling without something to pull on. Have a doorway pull-up bar? Turn it on above.";
+
+/**
+ * With the bar on, a beginner's plan still has no pull: pull-ups and
+ * chin-ups aren't a beginner's (`offerableTo`), so the note says why the
+ * switch changed nothing.
+ */
+export const NO_EQUIPMENT_BEGINNER_BAR_NOTE =
+  "A beginner's plan has no pull-ups, so your back work is the superman hold.";
+
+/**
+ * The note a no-equipment setup shows under its bar switch, or none: a
+ * plan with its pull says nothing. Setup asks the level after the kit, so
+ * an unknown level (undefined) says nothing about the bar until it's
+ * chosen.
+ */
+export function noEquipmentPullNote(
+  equipment: string | undefined,
+  pullUpBar: boolean | undefined,
+  experience: string | undefined
+): string | null {
+  if (!plansNoPull(equipment, pullUpBar, experience)) return null;
+  if (pullUpBar !== true) return NO_EQUIPMENT_PULL_NOTE;
+  return experience === undefined ? null : NO_EQUIPMENT_BEGINNER_BAR_NOTE;
+}

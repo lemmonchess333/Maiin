@@ -42,6 +42,8 @@ export const SETUP = {
   weekMinutes: "Minutes a week",
   longestRun: "Longest run, min",
   legTrim: "Lighten leg sessions while your runs build",
+  /** "What do you have?" beside a home gym, Minimal and no equipment. */
+  pullUpBar: "A pull-up bar",
   noInjuries: "None",
   weight: "Weight (kg)",
   height: "Height (cm)",

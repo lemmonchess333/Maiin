@@ -21,6 +21,7 @@ import type {
   PreferredSplit,
   PrimaryGoal,
 } from "./programTypes";
+import { toExperience } from "./experienceModel";
 
 /** How often the user wants runs woven into the lifting week. Onboarding-only
  *  vocabulary (the programme itself stores runDays), so it lives beside its
@@ -93,29 +94,54 @@ export function takesSmallPlates(equipment: string | undefined): boolean {
   return equipment !== "no_equipment";
 }
 
-/** Whether a setup takes the "A pull-up bar" answer: a home gym or a
- *  minimal one. A full gym has one, and with no equipment there is none. */
+/** Whether a setup takes the "A pull-up bar" answer: a home gym, a
+ *  minimal one, or no equipment, where a doorway bar is the one piece of
+ *  kit many people own. A full gym has one. */
 export function takesPullUpBar(equipment: string | undefined): boolean {
-  return equipment === "home_gym" || equipment === "minimal";
+  return (
+    equipment === "home_gym" ||
+    equipment === "minimal" ||
+    equipment === "no_equipment"
+  );
 }
 
 /** The pull-up bar answer a setup starts from when the person chooses it:
- *  on for a home gym, whose setup has always had one, off for Minimal. */
+ *  on for a home gym, whose setup has always had one, off for Minimal and
+ *  for no equipment. */
 export function pullUpBarWhenChosen(equipment: string | undefined): boolean {
   return equipment === "home_gym";
 }
 
 /**
- * Whether a plan may use a pull-up bar. For a home gym or a minimal setup
- * it is the person's answer, and yes where they haven't given one: a home
- * gym has always had a bar, and a Minimal plan the person has keeps its
- * pull-ups until they say no (Pgm5). Every new answer is written, so a
- * missing one is an older plan's.
+ * Whether a plan may use a pull-up bar: the person's answer. Where they
+ * haven't given one, a home gym or a minimal plan says yes (a home gym has
+ * always had a bar, and a Minimal plan the person has keeps its pull-ups
+ * until they say no, Pgm5) and no equipment says no. Every new answer is
+ * written, so a missing one is an older plan's.
  */
 export function hasPullUpBar(
   equipment: string | undefined,
   answer: boolean | undefined
 ): boolean {
-  if (!takesPullUpBar(equipment)) return equipment !== "no_equipment";
+  if (equipment === "no_equipment") return answer === true;
+  if (!takesPullUpBar(equipment)) return true;
   return answer ?? true;
+}
+
+/**
+ * Whether a plan has nothing to pull with: no equipment, and no pull-up bar
+ * a person at their level is given. A beginner with only a bar has none
+ * either: pull-ups and chin-ups aren't a beginner's (the bodyweight-floor
+ * rule, `experienceModel.ts`), and the floor has no row. Such a plan builds
+ * no Pull day (`chooseSplit`), and its back work is the superman hold.
+ */
+export function plansNoPull(
+  equipment: string | undefined,
+  answer: boolean | undefined,
+  experience: string | undefined
+): boolean {
+  if (equipment !== "no_equipment") return false;
+  return (
+    !hasPullUpBar(equipment, answer) || toExperience(experience) === "beginner"
+  );
 }

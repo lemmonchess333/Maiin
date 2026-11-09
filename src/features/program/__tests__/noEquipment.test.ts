@@ -2,7 +2,8 @@
  * The no-equipment setup: someone who owns nothing is given floor moves
  * only, and still gets a whole plan: push, squat, hinge, the trunk and the
  * superman hold for the back. With nothing to pull on it has no pull
- * (`noEquipment.ts`).
+ * (`noEquipment.ts`); a doorway pull-up bar, when the person has one, adds
+ * pull-ups, chin-ups and the hanging leg raise.
  *
  * The plans are built end to end through `buildPlan`, so every pass that
  * picks an exercise runs: the generator, the twice-a-week cap, the level
@@ -17,13 +18,19 @@ import { fileURLToPath } from "node:url";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { getReleasedFormArtwork } from "@/lib/formArtwork";
 import { buildPlan, type PlanBuilderInput } from "../planBuilder";
-import { applyProgression } from "../programEngine";
+import {
+  applyProgression,
+  chooseSplit,
+  splitRationale,
+} from "../programEngine";
 import {
   BODYWEIGHT_EXERCISES_NEEDING_KIT,
   NO_EQUIPMENT_EXERCISE_IDS,
   NO_EQUIPMENT_LAST_RESORT,
+  NO_EQUIPMENT_BEGINNER_BAR_NOTE,
   NO_EQUIPMENT_PULL_NOTE,
   NO_EQUIPMENT_STAND_INS,
+  noEquipmentPullNote,
 } from "../noEquipment";
 import type { PrimaryGoal, ProgramExercise, WorkoutDay } from "../programTypes";
 
@@ -378,9 +385,135 @@ describe("the no-equipment option", () => {
     );
   });
 
-  it("says once that it has no pulling, and how a bar adds it", () => {
+  it("says under the bar switch that there's no pulling, and that the switch adds it", () => {
     expect(NO_EQUIPMENT_PULL_NOTE).toBe(
-      "This plan has no pulling: pull-ups and rows need something to pull on. A doorway pull-up bar adds them: choose Minimal, then A pull-up bar."
+      "No pulling without something to pull on. Have a doorway pull-up bar? Turn it on above."
     );
+    expect(noEquipmentPullNote("no_equipment", false, "intermediate")).toBe(
+      NO_EQUIPMENT_PULL_NOTE
+    );
+    expect(noEquipmentPullNote("no_equipment", undefined, undefined)).toBe(
+      NO_EQUIPMENT_PULL_NOTE
+    );
+  });
+
+  it("says nothing once the bar gives the plan its pull", () => {
+    expect(
+      noEquipmentPullNote("no_equipment", true, "intermediate")
+    ).toBeNull();
+    expect(noEquipmentPullNote("no_equipment", true, "advanced")).toBeNull();
+    for (const equipment of ["full_gym", "home_gym", "minimal"])
+      expect(
+        noEquipmentPullNote(equipment, false, "beginner"),
+        equipment
+      ).toBeNull();
+  });
+
+  it("tells a beginner with a bar why it has no pull-ups, once the level is chosen", () => {
+    expect(noEquipmentPullNote("no_equipment", true, "beginner")).toBe(
+      NO_EQUIPMENT_BEGINNER_BAR_NOTE
+    );
+    // Setup asks the level after the kit: until it's chosen, nothing.
+    expect(noEquipmentPullNote("no_equipment", true, undefined)).toBeNull();
+  });
+});
+
+describe("a no-equipment plan with a doorway pull-up bar", () => {
+  const withBar = (
+    primaryGoal: PrimaryGoal,
+    experience: string,
+    days: number
+  ) =>
+    buildPlan({
+      primaryGoal,
+      nutritionPhase: "recomp",
+      experience,
+      bodyweightKg: 80,
+      sex: "male",
+      liftDays: days,
+      preferredSplit: "auto",
+      runMode: "freeform",
+      weeklyRunDays: 0,
+      equipment: "no_equipment",
+      pullUpBar: true,
+      injuries: [],
+      currentDate: "2026-07-28",
+    } as PlanBuilderInput).programState;
+  const BAR = new Set(["pull-ups", "chin-ups", "leg-raise"]);
+
+  it("adds the bar's three lifts and nothing else that needs kit", () => {
+    for (const goal of GOALS)
+      for (const level of LEVELS)
+        for (const days of DAYS) {
+          const { workouts } = withBar(goal, level, days);
+          expect(
+            lifts(workouts)
+              .map((ex) => ex.exerciseId)
+              .filter(
+                (id) => !NO_EQUIPMENT_EXERCISE_IDS.has(id) && !BAR.has(id)
+              ),
+            `${goal}/${level}/${days}d`
+          ).toEqual([]);
+        }
+  });
+
+  it("pulls past beginner, and five or six days get their Pull days back", () => {
+    for (const goal of GOALS)
+      for (const level of ["intermediate", "advanced"])
+        for (const days of DAYS) {
+          const { splitType, workouts } = withBar(goal, level, days);
+          const at = `${goal}/${level}/${days}d`;
+          expect(
+            lifts(workouts).some(
+              (ex) =>
+                ex.exerciseId === "pull-ups" || ex.exerciseId === "chin-ups"
+            ),
+            at
+          ).toBe(true);
+          if (days >= 5) {
+            expect(splitType, at).not.toBe("upper_lower_fb");
+            expect(
+              workouts.some((day) => /^Pull\b/.test(day.dayName)),
+              at
+            ).toBe(true);
+          }
+        }
+  });
+
+  it("gives a beginner the plan without a bar: no pull-ups, and the superman", () => {
+    for (const goal of GOALS)
+      for (const days of DAYS) {
+        const bar = withBar(goal, "beginner", days);
+        const none = plan(goal, "beginner", days).programState;
+        const at = `${goal}/${days}d`;
+        expect(bar.splitType, at).toBe(none.splitType);
+        expect(
+          lifts(bar.workouts).filter(
+            (ex) => ex.exerciseId === "pull-ups" || ex.exerciseId === "chin-ups"
+          ),
+          at
+        ).toEqual([]);
+        expect(
+          lifts(bar.workouts).some((ex) => ex.exerciseId === "superman-hold"),
+          at
+        ).toBe(true);
+      }
+  });
+
+  it("runs the floor split only for a week with nothing to pull with", () => {
+    expect(chooseSplit(5, true)).toBe("upper_lower_fb");
+    expect(chooseSplit(6, true)).toBe("upper_lower_fb");
+    expect(chooseSplit(4, true)).toBe("upper_lower");
+    expect(chooseSplit(5, false)).toBe("ppl_ul");
+    expect(chooseSplit(6, false)).toBe("ppl_x2");
+    expect(splitRationale(6, true)).toMatch(/upper \/ lower twice/);
+    expect(splitRationale(6, false)).toBe(splitRationale(6));
+  });
+
+  it("keeps the floor list floor moves, so a circuit drawn from it stays on the floor", () => {
+    // Circ1: a circuit's lifts are the kit tier's, and with no equipment
+    // that's the floor, bar or no bar.
+    for (const id of BAR)
+      expect(NO_EQUIPMENT_EXERCISE_IDS.has(id), id).toBe(false);
   });
 });

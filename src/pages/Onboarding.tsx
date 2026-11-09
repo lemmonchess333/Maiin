@@ -29,7 +29,7 @@ import DailyTarget from "@/components/onboarding/DailyTarget";
 import { SETUP_REMINDER_TIME } from "@/lib/workoutReminderCopy";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { injuryChanges } from "@/features/program/injuryChanges";
-import { NO_EQUIPMENT_PULL_NOTE } from "@/features/program/noEquipment";
+import { noEquipmentPullNote } from "@/features/program/noEquipment";
 import {
   equipmentLabel,
   experienceLabel,
@@ -285,7 +285,8 @@ export default function Onboarding() {
     draft?.equipment ?? "full_gym"
   );
   // "What do you have?" (Lift4 (11)): optional, beside the setups. The bar
-  // starts from the setup chosen: on for a home gym, off for Minimal.
+  // starts from the setup chosen: on for a home gym, off for Minimal and
+  // for no equipment.
   const [pullUpBar, setPullUpBar] = useState(
     draft?.pullUpBar ?? pullUpBarWhenChosen(draft?.equipment)
   );
@@ -302,6 +303,13 @@ export default function Onboarding() {
   // level is a beginner's everywhere (Lift4 (5)).
   const [experience, setExperience] = useState<OnboardingDraft["experience"]>(
     draft?.experience ?? "beginner"
+  );
+  // What a no-equipment plan can't pull, under the bar switch: the level
+  // counts once it's chosen (`noEquipmentPullNote`).
+  const pullNote = noEquipmentPullNote(
+    equipment,
+    pullUpBar,
+    experienceConfirmed ? experience : undefined
   );
   const [chosenRunFrequency, setRunFrequency] = useState<
     OnboardingDraft["runFrequency"]
@@ -1802,72 +1810,82 @@ export default function Onboarding() {
                   />
                 ))}
               </div>
-              {/* With no equipment there is nothing to add: no bar, and no
-                  plates to make small. What the plan can't train is said
-                  here instead, once, where the setup is chosen. */}
-              {equipmentConfirmed && equipment === "no_equipment" && (
-                <p className="text-sm text-muted-foreground">
-                  {NO_EQUIPMENT_PULL_NOTE}
-                </p>
-              )}
-              {equipmentConfirmed && takesSmallPlates(equipment) && (
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-sm font-semibold">What do you have?</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Optional. The plan uses what you have.
-                    </p>
-                  </div>
-                  {takesBarbellAtHome(equipment) && (
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-foreground">
-                          A barbell and a rack
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Squats, deadlifts and presses with the bar.
-                        </p>
-                      </div>
-                      <Toggle
-                        checked={barbellAtHome}
-                        label="A barbell and a rack"
-                        className="ml-3"
-                        onChange={() => setBarbellAtHome((v) => !v)}
-                      />
-                    </div>
-                  )}
-                  {takesPullUpBar(equipment) && (
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-foreground">A pull-up bar</p>
-                        <p className="text-xs text-muted-foreground">
-                          A doorway bar works. Pull-ups and chin-ups.
-                        </p>
-                      </div>
-                      <Toggle
-                        checked={pullUpBar}
-                        label="A pull-up bar"
-                        className="ml-3"
-                        onChange={() => setPullUpBar((v) => !v)}
-                      />
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between">
+              {/* With no equipment the one thing to add is a doorway bar:
+                  there are no plates to make small. */}
+              {equipmentConfirmed &&
+                (takesSmallPlates(equipment) || takesPullUpBar(equipment)) && (
+                  <div className="space-y-3">
                     <div>
-                      <p className="text-sm text-foreground">Small plates</p>
+                      <h3 className="text-sm font-semibold">
+                        What do you have?
+                      </h3>
                       <p className="text-xs text-muted-foreground">
-                        {smallPlatesHint(liftUnit)}
+                        Optional. The plan uses what you have.
                       </p>
                     </div>
-                    <Toggle
-                      checked={smallPlates}
-                      label="Small plates"
-                      className="ml-3"
-                      onChange={() => setSmallPlates((v) => !v)}
-                    />
+                    {takesBarbellAtHome(equipment) && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-foreground">
+                            A barbell and a rack
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Squats, deadlifts and presses with the bar.
+                          </p>
+                        </div>
+                        <Toggle
+                          checked={barbellAtHome}
+                          label="A barbell and a rack"
+                          className="ml-3"
+                          onChange={() => setBarbellAtHome((v) => !v)}
+                        />
+                      </div>
+                    )}
+                    {takesPullUpBar(equipment) && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-foreground">
+                            A pull-up bar
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            A doorway bar works. Pull-ups and chin-ups.
+                          </p>
+                        </div>
+                        <Toggle
+                          checked={pullUpBar}
+                          label="A pull-up bar"
+                          className="ml-3"
+                          onChange={() => setPullUpBar((v) => !v)}
+                        />
+                      </div>
+                    )}
+                    {takesSmallPlates(equipment) && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-foreground">
+                            Small plates
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {smallPlatesHint(liftUnit)}
+                          </p>
+                        </div>
+                        <Toggle
+                          checked={smallPlates}
+                          label="Small plates"
+                          className="ml-3"
+                          onChange={() => setSmallPlates((v) => !v)}
+                        />
+                      </div>
+                    )}
+                    {/* What a no-equipment plan can't train, under its bar
+                      switch, once, where the setup is chosen. */}
+                    {pullNote && (
+                      <p className="text-sm text-muted-foreground">
+                        {pullNote}
+                      </p>
+                    )}
                   </div>
-                </div>
-              )}
+                )}
               <div className="space-y-3">
                 <h2 className="text-base font-semibold">Lifting experience</h2>
                 {(

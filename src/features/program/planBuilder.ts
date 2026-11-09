@@ -528,7 +528,8 @@ function buildLiftProgram(input: LiftProgramInput): {
       ),
       input.equipment,
       input.injuries,
-      loadCtx
+      loadCtx,
+      input.pullUpBar
     ),
     input.primaryGoal,
     toExperience(input.experience),

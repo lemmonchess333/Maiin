@@ -90,6 +90,7 @@ import {
   roleRepsFor,
 } from "./roleTable";
 import { nextUpIndex } from "./nextUpCursor";
+import { plansNoPull } from "./programLabels";
 import { MAX_HOLD_SECONDS } from "./repUnits";
 import {
   hardestEffort,
@@ -408,17 +409,14 @@ export const PERFORMANCE_HISTORY_CAP = 10;
 ================================ */
 
 /**
- * With no equipment there is nothing to pull on (`noEquipment.ts`), so a
- * week of five or six days has no Pull day to build: it runs upper / lower
- * twice and the rest as full-body days, every muscle still about twice a
- * week. Two to four days build as any setup's do.
+ * A plan with nothing to pull on (`plansNoPull`: no equipment, and no
+ * pull-up bar the person is given) has no Pull day to build, so a week of
+ * five or six days runs upper / lower twice and the rest as full-body days,
+ * every muscle still about twice a week. Two to four days build as any
+ * setup's do.
  */
-export function chooseSplit(
-  weeklyTarget: number,
-  equipment?: string
-): SplitType {
-  if (equipment === "no_equipment" && Math.min(6, weeklyTarget) >= 5)
-    return "upper_lower_fb";
+export function chooseSplit(weeklyTarget: number, noPull = false): SplitType {
+  if (noPull && Math.min(6, weeklyTarget) >= 5) return "upper_lower_fb";
   if (weeklyTarget <= 0) return "full_body"; // run-only athlete — no lift days
   // Cap at 6. 7 hard lift days/week is the wrong default for every tier
   // (beginner through advanced) — recovery needs at least one non-lift
@@ -469,12 +467,9 @@ export function splitLabel(split: SplitType): string {
  * deliberate coaching choice rather than an ignored preference. Mirrors
  * `chooseSplit`; the thread is weekly per-muscle FREQUENCY.
  */
-export function splitRationale(
-  weeklyLiftDays: number,
-  equipment?: string
-): string {
+export function splitRationale(weeklyLiftDays: number, noPull = false): string {
   const d = Math.min(6, Math.max(0, Math.round(weeklyLiftDays)));
-  if (chooseSplit(d, equipment) === "upper_lower_fb")
+  if (chooseSplit(d, noPull) === "upper_lower_fb")
     return d === 5
       ? "Five days runs upper / lower twice and a full-body day, so each muscle trains about twice a week."
       : "Six days runs upper / lower twice and two full-body days, so each muscle trains about twice a week.";
@@ -1906,7 +1901,7 @@ export function generateProgram(
     injuries?: readonly string[];
     /** A barbell and a rack beside a home gym's kit. */
     barbellAtHome?: boolean;
-    /** A pull-up bar beside a home gym's or a minimal setup's kit. */
+    /** A pull-up bar beside the setup's kit (`hasPullUpBar`). */
     pullUpBar?: boolean;
   }
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
@@ -1922,7 +1917,10 @@ export function generateProgram(
   // `primaryGoal` wasn't passed (e.g. legacy call sites).
   const profile = goalProfileFor(primaryGoal);
 
-  const splitType = chooseSplit(weeklyTarget, limits?.equipment);
+  const splitType = chooseSplit(
+    weeklyTarget,
+    plansNoPull(limits?.equipment, limits?.pullUpBar, experience)
+  );
 
   const buildSplit = (existingWorkouts?: WorkoutDay[]): WorkoutDay[] => {
     let workouts: WorkoutDay[];
@@ -2179,7 +2177,8 @@ export function generateProgram(
       workouts,
       limits.equipment,
       injuries,
-      loadCtx
+      loadCtx,
+      limits.pullUpBar
     );
     // The kit swaps of a plan being built name lifts it never gave.
     workouts = withoutKitSwapNotes(workouts);

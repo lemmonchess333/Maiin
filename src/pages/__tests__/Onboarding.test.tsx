@@ -578,7 +578,7 @@ describe("inspect the generated week", () => {
     builder.mockRestore();
   });
 
-  it("builds no equipment from what the floor allows, and asks for no kit", () => {
+  it("builds no equipment from what the floor allows, and asks only about a bar", () => {
     // Answers kept from a home gym don't follow the person to no equipment.
     saveOnboardingDraft("setup-test", {
       ...draft,
@@ -590,13 +590,17 @@ describe("inspect the generated week", () => {
     open();
     fireEvent.click(screen.getByRole("button", { name: "Edit setup" }));
     fireEvent.click(screen.getByRole("button", { name: /^No equipment/ }));
-    // No bar to have, and no plates to make small.
-    expect(screen.queryByText("What do you have?")).toBeNull();
-    // What it can't train, said where the setup is chosen.
-    expect(screen.getByText(NO_EQUIPMENT_PULL_NOTE)).toBeInTheDocument();
+    // A doorway bar is the one thing to have: no barbell, no plates.
+    expect(screen.getByText("What do you have?")).toBeInTheDocument();
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "false");
     expect(
       screen.queryByRole("switch", { name: "A barbell and a rack" })
     ).toBeNull();
+    expect(screen.queryByRole("switch", { name: "Small plates" })).toBeNull();
+    // What it can't train, said under the bar switch.
+    expect(screen.getByText(NO_EQUIPMENT_PULL_NOTE)).toBeInTheDocument();
     const week = builder.mock.results.at(-1)!.value.programState
       .workouts as WorkoutDay[];
     const ids = week.flatMap((day) => day.exercises.map((e) => e.exerciseId));
@@ -605,8 +609,40 @@ describe("inspect the generated week", () => {
     expect(builder.mock.calls.at(-1)![0]).toMatchObject({
       equipment: "no_equipment",
       barbellAtHome: false,
+      pullUpBar: false,
       smallPlates: false,
     });
+    builder.mockRestore();
+  });
+
+  it("gives no equipment its pull with a doorway bar, and drops the note", () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      experience: "intermediate",
+      daysPerWeek: 5,
+      equipment: "no_equipment",
+    });
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit setup" }));
+    const bar = screen.getByRole("switch", { name: SETUP.pullUpBar });
+    expect(bar).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(bar);
+    expect(screen.queryByText(NO_EQUIPMENT_PULL_NOTE)).toBeNull();
+    expect(builder.mock.calls.at(-1)![0]).toMatchObject({
+      equipment: "no_equipment",
+      pullUpBar: true,
+    });
+    const plan = builder.mock.results.at(-1)!.value.programState as {
+      splitType: string;
+      workouts: WorkoutDay[];
+    };
+    expect(plan.splitType).toBe("ppl_ul");
+    expect(
+      plan.workouts.some((day) =>
+        day.exercises.some((e) => e.exerciseId === "pull-ups")
+      )
+    ).toBe(true);
     builder.mockRestore();
   });
 });

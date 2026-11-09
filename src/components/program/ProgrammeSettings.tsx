@@ -87,11 +87,12 @@ import {
 import { runTuningFromProfile } from "@/features/program/runScheduler";
 import {
   hasPullUpBar,
+  plansNoPull,
   pullUpBarWhenChosen,
   takesBarbellAtHome,
   takesPullUpBar,
 } from "@/features/program/programLabels";
-import { NO_EQUIPMENT_PULL_NOTE } from "@/features/program/noEquipment";
+import { noEquipmentPullNote } from "@/features/program/noEquipment";
 import {
   chooseSplit,
   splitLabel,
@@ -614,13 +615,22 @@ export default function ProgrammeSettings({
   // does NOT honour an explicit preference in this rebuild path. Surface the
   // split it WILL generate for the current draft so the picker reads honestly
   // rather than implying control the generation doesn't grant.
-  const generatedSplitLabel = splitLabel(chooseSplit(liftDays, equipment));
+  // A save at the same lift days keeps the week's structure (Pgm5), so the
+  // split and its reason are the saved setup's until the days change.
+  const draftNoPull = plansNoPull(equipment, pullUpBar, experience);
+  const savedNoPull = plansNoPull(
+    saved.equipment,
+    saved.pullUpBar,
+    saved.experience
+  );
+  const generatedSplitLabel = splitLabel(chooseSplit(liftDays, draftNoPull));
   // Pgm5 (Q1): the split is shown, not chosen. Prefer the actual current
   // structure (programState.splitType); fall back to what the engine would
   // derive for the saved lift-days.
   const currentSplitLabel = splitLabel(
-    programState?.splitType ?? chooseSplit(saved.liftDays, saved.equipment)
+    programState?.splitType ?? chooseSplit(saved.liftDays, savedNoPull)
   );
+  const pullNote = noEquipmentPullNote(equipment, pullUpBar, experience);
 
   // P2: weekly-layout preview counts, derived from the draft lift/run days
   // (consistent with the double-day warning) — no stored weekSchedule needed.
@@ -1156,7 +1166,10 @@ export default function ProgrammeSettings({
               {currentSplitLabel}
             </p>
             <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-              {splitRationale(liftDays, equipment)}
+              {splitRationale(
+                liftDays,
+                liftDays === saved.liftDays ? savedNoPull : draftNoPull
+              )}
               {liftDays !== saved.liftDays && (
                 <>
                   {" "}
@@ -1254,12 +1267,6 @@ export default function ProgrammeSettings({
               />
             ))}
           </div>
-          {/* What a no-equipment plan can't train, where the setup is chosen. */}
-          {equipment === "no_equipment" && (
-            <p className="mt-3 text-sm text-muted-foreground">
-              {NO_EQUIPMENT_PULL_NOTE}
-            </p>
-          )}
           {/* Lift4 (11): "what do you have?" beside the setups. */}
           {takesBarbellAtHome(equipment) && (
             <div className="mt-3 flex items-center justify-between">
@@ -1292,6 +1299,10 @@ export default function ProgrammeSettings({
                 onChange={() => setPullUpBar((v) => !v)}
               />
             </div>
+          )}
+          {/* What a no-equipment plan can't train, under its bar switch. */}
+          {pullNote && (
+            <p className="mt-3 text-sm text-muted-foreground">{pullNote}</p>
           )}
         </div>
 

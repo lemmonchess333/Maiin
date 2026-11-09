@@ -1,14 +1,17 @@
 /**
  * "A pull-up bar" (Lift4 (11), "What do you have?"): at home, pull-ups,
- * chin-ups and the hanging leg raise need one. A home gym or a minimal
- * setup asks; without a bar those lifts take their usual swaps, and a plan
- * the person has keeps them until they answer no (Pgm5).
+ * chin-ups and the hanging leg raise need one. A home gym, a minimal setup
+ * and no equipment ask; without a bar those lifts take their usual swaps,
+ * and a home or minimal plan the person has keeps them until they answer
+ * no (Pgm5). No equipment starts with no bar (`noEquipment.test.ts` has
+ * its plans both ways).
  */
 import { describe, it, expect } from "vitest";
 import { buildPlan, type PlanBuilderInput } from "../planBuilder";
 import { PULL_UP_BAR_EXERCISE_IDS } from "../matchTemplate";
 import {
   hasPullUpBar,
+  plansNoPull,
   pullUpBarWhenChosen,
   takesPullUpBar,
 } from "../programLabels";
@@ -43,22 +46,39 @@ const barLifts = (workouts: readonly WorkoutDay[]) =>
 const GOALS: PrimaryGoal[] = ["general", "hypertrophy", "strength"];
 
 describe("who is asked, and what an answer starts as", () => {
-  it("asks a home gym and a minimal setup only", () => {
+  it("asks a home gym, a minimal setup and no equipment, not a full gym", () => {
     expect(takesPullUpBar("home_gym")).toBe(true);
     expect(takesPullUpBar("minimal")).toBe(true);
+    expect(takesPullUpBar("no_equipment")).toBe(true);
     expect(takesPullUpBar("full_gym")).toBe(false);
-    expect(takesPullUpBar("no_equipment")).toBe(false);
   });
 
-  it("starts a home gym on and Minimal off, and reads no answer as yes", () => {
+  it("starts a home gym on, Minimal and no equipment off, and reads no answer as an older plan's", () => {
     expect(pullUpBarWhenChosen("home_gym")).toBe(true);
     expect(pullUpBarWhenChosen("minimal")).toBe(false);
+    expect(pullUpBarWhenChosen("no_equipment")).toBe(false);
     // An older plan, whose person was never asked, keeps its pull-ups.
     expect(hasPullUpBar("minimal", undefined)).toBe(true);
     expect(hasPullUpBar("home_gym", undefined)).toBe(true);
     expect(hasPullUpBar("minimal", false)).toBe(false);
-    expect(hasPullUpBar("no_equipment", true)).toBe(false);
     expect(hasPullUpBar("full_gym", undefined)).toBe(true);
+    // No equipment has a bar only when the person said so.
+    expect(hasPullUpBar("no_equipment", undefined)).toBe(false);
+    expect(hasPullUpBar("no_equipment", false)).toBe(false);
+    expect(hasPullUpBar("no_equipment", true)).toBe(true);
+  });
+
+  it("plans no pull with no equipment, unless a bar is there for someone past beginner", () => {
+    expect(plansNoPull("no_equipment", undefined, "intermediate")).toBe(true);
+    expect(plansNoPull("no_equipment", false, "advanced")).toBe(true);
+    expect(plansNoPull("no_equipment", true, "intermediate")).toBe(false);
+    expect(plansNoPull("no_equipment", true, "advanced")).toBe(false);
+    // Pull-ups and chin-ups aren't a beginner's (`offerableTo`): a bar
+    // gives a beginner nothing to pull with.
+    expect(plansNoPull("no_equipment", true, "beginner")).toBe(true);
+    expect(plansNoPull("no_equipment", true, undefined)).toBe(true);
+    for (const equipment of ["full_gym", "home_gym", "minimal"])
+      expect(plansNoPull(equipment, false, "beginner"), equipment).toBe(false);
   });
 });
 

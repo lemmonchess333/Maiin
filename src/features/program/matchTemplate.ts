@@ -368,7 +368,8 @@ export function withoutKitSwapNotes(
  * What a person can do with their kit: their equipment tier's, a barbell
  * with a rack when they said they have one at home, and the pull-ups,
  * chin-ups and hanging leg raise only with a pull-up bar (Lift4 (11): "what
- * do you have?"); or, with no equipment, the floor moves that setup names.
+ * do you have?"); or, with no equipment, the floor moves that setup names,
+ * and the bar's three when they said they have a doorway bar.
  * Undefined means everything (a full gym, or an unknown tier). An exercise
  * the catalogue doesn't know (a custom one) can't be judged, so it passes.
  */
@@ -377,14 +378,16 @@ function ownedKit(
   barbellAtHome?: boolean,
   pullUpBar?: boolean
 ): KitCheck | undefined {
+  const bar = hasPullUpBar(equipment, pullUpBar);
   if (equipment === "no_equipment") {
     return (id) =>
-      getExerciseById(id) === undefined || NO_EQUIPMENT_EXERCISE_IDS.has(id);
+      getExerciseById(id) === undefined ||
+      NO_EQUIPMENT_EXERCISE_IDS.has(id) ||
+      (bar && PULL_UP_BAR_EXERCISE_IDS.has(id));
   }
   const tier = equipment ? EQUIPMENT_AVAILABILITY[equipment] : undefined;
   if (!tier) return undefined;
   const kit = barbellAtHome ? new Set([...tier, "Barbell"]) : tier;
-  const bar = hasPullUpBar(equipment, pullUpBar);
   return (id) => {
     if (!bar && PULL_UP_BAR_EXERCISE_IDS.has(id)) return false;
     const eq = getExerciseById(id)?.equipment;
@@ -649,10 +652,12 @@ export function standInForMissingKit(
   workouts: readonly WorkoutDay[],
   equipment: string | undefined,
   injuries: readonly string[] = [],
-  loadCtx?: StartingLoadContext
+  loadCtx?: StartingLoadContext,
+  /** A doorway pull-up bar (`hasPullUpBar`): its lifts aren't missing. */
+  pullUpBar?: boolean
 ): WorkoutDay[] {
   if (equipment !== "no_equipment") return [...workouts];
-  const owned = ownedKit(equipment);
+  const owned = ownedKit(equipment, false, pullUpBar);
   if (!owned) return [...workouts];
   const out = workouts.map((day) => ({
     ...day,
