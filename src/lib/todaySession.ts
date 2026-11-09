@@ -218,7 +218,13 @@ export interface NextSession {
   target: string;
   dateKey: string;
   daysAhead: number;
+  /** What the day holds, for a surface that colours it by sport (the Home
+   *  Screen widget's tomorrow). Absent reads as unknown. */
+  sport?: SessionSport;
 }
+
+/** What a day ahead holds: a lift, a run, or both. */
+export type SessionSport = "lift" | "run" | "both";
 
 export type RestDayOffer =
   /** A new lifter's first workout: lifts follow the rotation, not the
@@ -393,6 +399,7 @@ function nextSessionAhead(
           addLocalDays(parseLocalDate(input.today), daysAhead)
         ),
         daysAhead,
+        sport: session.sport,
       };
   }
   return null;
@@ -530,7 +537,10 @@ function nextRestSession(
       homeLift,
       daysAhead
     );
-    if (session) return session;
+    if (session) {
+      const { label, target, dateKey } = session;
+      return dateKey ? { label, target, dateKey } : { label, target };
+    }
   }
   return null;
 }
@@ -542,7 +552,7 @@ function sessionDaysAhead(
   currentWeekKey: string,
   homeLift: ResolvedLift,
   daysAhead: number
-): TomorrowSession | null {
+): (TomorrowSession & { sport: SessionSport }) | null {
   const { today, profile, programState, claimMap } = input;
   const date = addLocalDays(parseLocalDate(today), daysAhead);
   const dateKey = localDateString(date);
@@ -597,7 +607,11 @@ function sessionDaysAhead(
     liftName && typeof tomorrowLift?.index === "number"
       ? `/program?day=${tomorrowLift.index}`
       : `/program?tab=run&rday=${dateKey}`;
-  return daysAhead === 1 ? { label, target } : { label, target, dateKey };
+  const sport: SessionSport =
+    liftName && runName ? "both" : liftName ? "lift" : "run";
+  return daysAhead === 1
+    ? { label, target, sport }
+    : { label, target, dateKey, sport };
 }
 
 /** A planned run's dose at the person's confirmed easy pace (Run21 (5)). */
