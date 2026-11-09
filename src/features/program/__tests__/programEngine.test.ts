@@ -9,6 +9,7 @@ import {
   goalProfileFor,
   dedupeDayExercises,
   splitRationale,
+  shiftedRepTarget,
 } from "../programEngine";
 import {
   generateWeekPrescription,
@@ -951,14 +952,16 @@ describe("day roles (backlog #3)", () => {
       // Each lift sits 2 under its role's moderate number (`roleTable.ts`);
       // the slots can hold different lifts in the two weeks, since the
       // overlap cap re-points the 3-day week's hinge.
-      const moderate = roleRepsFor("hypertrophy", ex, "intermediate").bottom;
-      const floor = ex.isAccessory === true ? 6 : 3;
-      expect(ex.reps).toBe(Math.max(floor, moderate - 2));
+      // The shift stops at the lift's floor: 6 for an accessory, 3 for a
+      // main lift, 8 for a bodyweight lift with no load (`repFloorFor`).
+      const row = roleRepsFor("hypertrophy", ex, "intermediate");
+      const span = row.top === undefined ? 0 : row.top - row.bottom;
+      expect(ex.reps).toBe(shiftedRepTarget(ex, row.bottom - 2, span));
       expect(ex.baseReps).toBe(ex.reps);
       const twin = moderateA.exercises.find(
         (t) => t.exerciseId === ex.exerciseId
       );
-      if (twin) expect(ex.reps).toBe(Math.max(floor, twin.reps - 2));
+      if (twin) expect(ex.reps).toBe(shiftedRepTarget(ex, twin.reps - 2, span));
     });
     // middle day is moderate: the mains start at the table's bottom
     expect(mainRepsOf(three.workouts[1])).toContain(6);
@@ -1810,14 +1813,16 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
       .filter((e) => e.isAccessory === true)
       .map((e) => e.reps);
     // day A is the heavy day: every accessory sits 2 under its role's
-    // bottom (`roleTable.ts`), floored at 6
+    // bottom (`roleTable.ts`), floored at 6, or 8 for a bodyweight lift
     dayA.exercises
       .filter((e) => e.isAccessory === true)
-      .forEach((e, i) =>
+      .forEach((e, i) => {
+        const row = roleRepsFor("hypertrophy", e, "intermediate");
+        const span = row.top === undefined ? 0 : row.top - row.bottom;
         expect(accessoryReps[i]).toBe(
-          Math.max(6, roleRepsFor("hypertrophy", e, "intermediate").bottom - 2)
-        )
-      );
+          shiftedRepTarget(e, row.bottom - 2, span)
+        );
+      });
     dayA.exercises.forEach((e) => expect(e.baseReps).toBe(e.reps));
   });
 

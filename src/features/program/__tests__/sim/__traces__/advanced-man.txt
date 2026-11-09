@@ -171,7 +171,7 @@ w17 2026-06-29  plan week 17 progression  5/5 sessions  46–60 min
   sets/days: Chest 15/2 · FrontDelts 15/2 · SideDelts 4/2 · RearDelts 13/2 · Triceps 17/2 · Lats 13/2 · UpperBack 19/5 · LowerBack 7/2 · Biceps 15/2 · Quads 12/2 · Hamstrings 15/2 · Glutes 19/2 · Calves 4/2 · Abs 4/2
   · 2026-07-02: took barbell-row down to 87.5 kg (plan 97.5 × 3)
 
-w18 2026-07-06  plan week 18 progression  4/5 sessions  54–60 min
+w18 2026-07-06  plan week 18 progression  4/5 sessions  53–60 min
   squat           plan 182.5 × 5 × 4  1RM 207.7 logged 212.8  180×[5,5,5,5] step | 172.5×[7,7,7,7] step
   bench-press     plan 130 × 3 × 3  1RM 144.2 logged 151.1  122.5×[7,7,5] LOWERED
   deadlift        plan 215 × 5 × 3  1RM 249.0 logged 247.9  212.5×[5,5,5] step | 210×[5,5,5,5] step

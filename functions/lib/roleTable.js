@@ -20,6 +20,8 @@
  * lists change in the same commit.
  */
 
+const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
+
 /** The catalogue's `mechanic: "isolation"` rows. */
 const ISOLATION_EXERCISE_IDS = Object.freeze([
   "ab-wheel",
@@ -194,20 +196,48 @@ function roleReps(goal, role, experience, highRepIsolation) {
   return { sets, ...reps };
 }
 
+/** Mirror of roleTable.ts MIN_BODYWEIGHT_REPS: the fewest reps a
+ *  bodyweight lift with no load added is set. */
+const MIN_BODYWEIGHT_REPS = 8;
+
+/** Mirror of roleTable.ts isUnloadedBodyweight. */
+function isUnloadedBodyweight(exercise) {
+  return (
+    !!exercise &&
+    isBodyweightExerciseId(exercise.exerciseId) &&
+    !(typeof exercise.weight === "number" && exercise.weight > 0) &&
+    exercise.repUnit !== "seconds"
+  );
+}
+
+/** Mirror of roleTable.ts fromBodyweightFloor. */
+function fromBodyweightFloor(row) {
+  if (row.bottom >= MIN_BODYWEIGHT_REPS) return row;
+  const up = MIN_BODYWEIGHT_REPS - row.bottom;
+  return {
+    ...row,
+    bottom: MIN_BODYWEIGHT_REPS,
+    ...(row.top !== undefined ? { top: row.top + up } : {}),
+  };
+}
+
 /** Mirror of roleTable.ts roleRepsFor. */
 function roleRepsFor(goal, exercise, experience) {
-  return roleReps(
+  const row = roleReps(
     goal,
     exerciseRole(exercise),
     experience,
     HIGH_REP_SET.has(exercise && exercise.exerciseId)
   );
+  return isUnloadedBodyweight(exercise) ? fromBodyweightFloor(row) : row;
 }
 
 module.exports = {
   HIGH_REP_EXERCISE_IDS,
   ISOLATION_EXERCISE_IDS,
+  MIN_BODYWEIGHT_REPS,
   exerciseRole,
+  isUnloadedBodyweight,
   roleReps,
   roleRepsFor,
   toExperience,

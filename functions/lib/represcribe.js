@@ -60,7 +60,12 @@
  */
 
 const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
-const { roleRepsFor, toExperience } = require("./roleTable");
+const {
+  isUnloadedBodyweight,
+  MIN_BODYWEIGHT_REPS,
+  roleRepsFor,
+  toExperience,
+} = require("./roleTable");
 
 /** Mirror of programEngine.ts MAX_BODYWEIGHT_REPS: where a bodyweight lift's
  *  climb stops and the plan asks for load. */
@@ -186,9 +191,24 @@ function undulationDeltaFor(ex, role) {
   return delta;
 }
 
-/** Mirror of programEngine.ts repFloorFor. */
+/** Mirror of programEngine.ts repFloorFor: 8 for a bodyweight lift with no
+ *  load added (roleTable's MIN_BODYWEIGHT_REPS). */
 function repFloorFor(ex) {
+  if (isUnloadedBodyweight(ex)) return MIN_BODYWEIGHT_REPS;
   return ex && ex.isAccessory === true ? 6 : 3;
+}
+
+/** Mirror of programEngine.ts MIN_RANGE_WIDTH. */
+const MIN_RANGE_WIDTH = 3;
+
+/** Mirror of programEngine.ts shiftedRepTarget: a day's target between the
+ *  lift's floor and its ceiling, three reps of a range left under it. */
+function shiftedRepTarget(ex, target, span) {
+  const room = span > 0 ? Math.min(span, MIN_RANGE_WIDTH) : 0;
+  return Math.min(
+    prescribedRepCeiling(ex) - room,
+    Math.max(repFloorFor(ex), target)
+  );
 }
 
 /** Mirror of programEngine.ts repRangeMaxFor. */
@@ -254,10 +274,7 @@ function represcribeWorkouts(workouts, goal, experience, unit = "kg") {
       // (high-rep heavy hinge — see undulationDeltaFor).
       const delta = undulates ? undulationDeltaFor(ex, roles[dayIndex]) : 0;
 
-      const reps = Math.min(
-        prescribedRepCeiling(ex),
-        Math.max(repFloorFor(ex), row.bottom + delta)
-      );
+      const reps = shiftedRepTarget(ex, row.bottom + delta, span);
       const rangeMax = repRangeMaxFor(ex, reps, span);
 
       const out = {
@@ -339,6 +356,7 @@ module.exports = {
   repRangeMaxFor,
   represcribeWorkouts,
   scaleLoadForReps,
+  shiftedRepTarget,
   toExperience,
   undulationDeltaFor,
   usesUndulation,

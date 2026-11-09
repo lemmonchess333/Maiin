@@ -82,7 +82,12 @@ import {
   toExperience,
   usesUndulation,
 } from "./experienceModel";
-import { mainRepAnchor, roleRepsFor } from "./roleTable";
+import {
+  isUnloadedBodyweight,
+  mainRepAnchor,
+  MIN_BODYWEIGHT_REPS,
+  roleRepsFor,
+} from "./roleTable";
 import { nextUpIndex } from "./nextUpCursor";
 import { MAX_HOLD_SECONDS } from "./repUnits";
 import {
@@ -1387,9 +1392,47 @@ export function undulationDeltaFor(
   return delta;
 }
 
-/** Lowest rep target a shifted day may fall to, by session role. */
-export function repFloorFor(ex: { isAccessory?: boolean }): number {
+/** Lowest rep target a shifted day may fall to, by session role, and 8 for
+ *  a bodyweight lift with no load added (`MIN_BODYWEIGHT_REPS`). */
+export function repFloorFor(ex: {
+  isAccessory?: boolean;
+  exerciseId?: string;
+  weight?: number;
+  repUnit?: string;
+}): number {
+  if (
+    ex.exerciseId !== undefined &&
+    isUnloadedBodyweight({ ...ex, exerciseId: ex.exerciseId })
+  )
+    return MIN_BODYWEIGHT_REPS;
   return ex.isAccessory === true ? 6 : 3;
+}
+
+/** The narrowest range a shifted day leaves a lift under its ceiling. */
+const MIN_RANGE_WIDTH = 3;
+
+/**
+ * A day's rep target, moved by its role (`delta`), between the lift's
+ * floor (`repFloorFor`) and its ceiling (`prescribedRepCeiling`). A lift
+ * with a range keeps at least three reps of it under the ceiling, so a pump
+ * day's +2 on a bodyweight isolation's 12–15 stays 12–15, not "14–15", a
+ * range with nothing to climb.
+ */
+export function shiftedRepTarget(
+  ex: {
+    isAccessory?: boolean;
+    exerciseId?: string;
+    weight?: number;
+    repUnit?: string;
+  },
+  target: number,
+  span: number
+): number {
+  const room = span > 0 ? Math.min(span, MIN_RANGE_WIDTH) : 0;
+  return Math.min(
+    prescribedRepCeiling(ex) - room,
+    Math.max(repFloorFor(ex), target)
+  );
 }
 
 /**
@@ -1472,7 +1515,8 @@ export function withDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
  */
 function applyDayRoles(
   workouts: WorkoutDay[],
-  experience?: Experience
+  experience: Experience | undefined,
+  goal: PrimaryGoal | undefined
 ): WorkoutDay[] {
   // Not for a novice (2026-07-28). Undulation exists because an intermediate
   // can no longer add load every session, so the stimulus has to be varied
@@ -1491,10 +1535,9 @@ function applyDayRoles(
         // or lighter day, and the hold climbs on its own five-second steps.
         if (ex.repUnit === "seconds") return ex;
         const delta = undulationDeltaFor(ex, role);
-        const reps = Math.min(
-          prescribedRepCeiling(ex),
-          Math.max(repFloorFor(ex), ex.reps + delta)
-        );
+        const row = roleRepsFor(goal, ex, experience);
+        const span = row.top === undefined ? 0 : row.top - row.bottom;
+        const reps = shiftedRepTarget(ex, ex.reps + delta, span);
         return { ...ex, reps, baseReps: reps };
       }),
     };
@@ -2093,7 +2136,7 @@ export function generateProgram(
   // (`roleTable.ts`), once the identity passes have settled who is where;
   // then backlog #3's day roles shift the reps, see applyDayRoles above.
   workouts = applyRoleTable(workouts, primaryGoal, experience);
-  workouts = applyDayRoles(withDayRoles(workouts), experience);
+  workouts = applyDayRoles(withDayRoles(workouts), experience, primaryGoal);
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
   // (lifts with logged history keep theirs; with no bodyweight, the plan
   // starts from the bar). After every pass that settles who is where, so it

@@ -89,14 +89,18 @@ describe("role table — client vs functions mirror", () => {
   it("every catalogue exercise gets the same role and row in every slot", () => {
     for (const e of EXERCISES) {
       for (const isAccessory of [undefined, false, true]) {
-        const slot = { exerciseId: e.id, isAccessory };
-        expect(cf.exerciseRole(slot), e.id).toBe(exerciseRole(slot));
-        for (const goal of GOALS) {
-          for (const experience of EXPERIENCES) {
-            expect(
-              cf.roleRepsFor(goal, slot, experience),
-              `${e.id}/${goal}/${experience}`
-            ).toEqual(roleRepsFor(goal, slot, experience));
+        // Unloaded, loaded and held: a bodyweight lift with nothing added
+        // starts at 8 reps on both sides.
+        for (const extra of [{}, { weight: 20 }, { repUnit: "seconds" }]) {
+          const slot = { exerciseId: e.id, isAccessory, ...extra };
+          expect(cf.exerciseRole(slot), e.id).toBe(exerciseRole(slot));
+          for (const goal of GOALS) {
+            for (const experience of EXPERIENCES) {
+              expect(
+                cf.roleRepsFor(goal, slot, experience),
+                `${e.id}/${JSON.stringify(extra)}/${goal}/${experience}`
+              ).toEqual(roleRepsFor(goal, slot, experience));
+            }
           }
         }
       }

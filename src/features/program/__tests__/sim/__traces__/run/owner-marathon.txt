@@ -179,7 +179,7 @@ w1 2026-03-15  plan week 1 progression  0/0 sessions
   deadlift        plan 100 × 6 × 3  1RM - logged -
   overhead-press  plan 35 × 6 × 3  1RM - logged -
 
-w2 2026-03-16  plan week 1 progression  5/6 sessions  37–57 min
+w2 2026-03-16  plan week 1 progression  5/6 sessions  35–57 min
   squat           plan 87.5 × 6 × 3  1RM 101.0 logged 110.5  87.5×[6,4,1] own | 85×[9,7,5] miss
   bench-press     plan 67.5 × 6 × 3  1RM 80.7 logged 81.0  67.5×[6,6,5] own
   deadlift        plan 112.5 × 6 × 3  1RM 131.3 logged 139.3  112.5×[6,5,2] own | 110×[8,7,6] own
