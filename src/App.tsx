@@ -21,6 +21,7 @@ import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
 import { useNativeInviteNavigation } from "@/hooks/useNativeInviteNavigation";
 import { useLocalNotificationNavigation } from "@/hooks/useLocalNotificationNavigation";
+import { useWidgetLinkNavigation } from "@/hooks/useWidgetLinkNavigation";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
@@ -431,6 +432,8 @@ function AppRoutes() {
     !loading && !!user && !!profile?.onboardingComplete,
     !loading && !!user && !profile?.onboardingComplete
   );
+  // The Home Screen widgets (Wid1): a tap opens the page it names.
+  useWidgetLinkNavigation(!loading && !!user && !!profile?.onboardingComplete);
   // Signed in: fetch the shell's chunks side by side, while the profile
   // loads, instead of one after another as each layer renders. A device
   // that has signed in before started them at module load already; this

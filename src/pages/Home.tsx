@@ -63,6 +63,8 @@ import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { summariseWeek } from "@/lib/weekSummary";
 import { trainingWeek, weekDays } from "@/lib/trainingWeek";
+import { weekStripDays } from "@/lib/weekStripDays";
+import { useHomeWidgetSnapshot } from "@/hooks/useHomeWidgetSnapshot";
 import { todaySession } from "@/lib/todaySession";
 import {
   freeRunHeroLine,
@@ -225,7 +227,15 @@ export default function Home() {
   } = useHomeProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
-  const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
+  const {
+    currentStreak: streak,
+    longestStreak,
+    hasLoggedToday,
+    loading: streakLoading,
+    loadFailed: streakLoadFailed,
+    newBadge,
+    dismissNewBadge,
+  } = useStreaks();
   const {
     ml: waterMl,
     target: waterTargetMl,
@@ -235,6 +245,7 @@ export default function Home() {
     servingMl,
     syncStatus: waterSyncStatus,
     retry: retryWater,
+    loading: waterLoading,
   } = useWaterLog();
 
   // The day comes from the shared local date key, which moves at midnight
@@ -1130,6 +1141,123 @@ export default function Home() {
     },
     [peekDate, getDailyTotals]
   );
+  /* The Home Screen and Lock Screen widgets (Wid1) draw what this page
+     has just drawn: today's session, the week's segments and count, the
+     streak, the day's food and water. Written once every source has
+     loaded, and not while the training plan could not be read, so a
+     widget never shows a half-loaded day; the last good snapshot stays
+     and dims after a day (W8d). */
+  const widgetTrainingReady =
+    !programLoading &&
+    !v2RaceWeekBuilding &&
+    !v2TrainingUnavailable &&
+    !workoutsLoading &&
+    !workoutsFailed &&
+    !savedRunsLoading;
+  const widgetStrip = useMemo(
+    () =>
+      weekStripDays({
+        todayKey,
+        profile,
+        programState,
+        claimMap,
+        loggedLiftDates,
+        extraRunDates,
+        startKey,
+      }),
+    [
+      todayKey,
+      profile,
+      programState,
+      claimMap,
+      loggedLiftDates,
+      extraRunDates,
+      startKey,
+    ]
+  );
+  const widgetUid = user?.uid ?? null;
+  const widgetInput = useMemo(
+    () =>
+      widgetUid &&
+      profile &&
+      widgetTrainingReady &&
+      !mealsLoading &&
+      !waterLoading &&
+      !streakLoading
+        ? {
+            todayKey,
+            uid: widgetUid,
+            session,
+            freeRunLine,
+            planPosition: heroPositionLabel,
+            strip: widgetStrip,
+            week: weekSessionCount,
+            hasPlan: !!programState,
+            freeRunner:
+              profile.runMode === "freeform" &&
+              (profile.athleteType === "Runner" ||
+                profile.athleteType === "Hybrid"),
+            raceGoal: profile.raceGoal,
+            distanceUnit: resolveDistanceUnit(profile.preferredDistanceUnit),
+            streak: streakLoadFailed
+              ? null
+              : {
+                  days: streak,
+                  best: longestStreak,
+                  loggedToday: hasLoggedToday,
+                },
+            // TodayEnergy's figures: no protein goal below the
+            // essential-fat floor (Nutr3).
+            food: mealsError
+              ? null
+              : {
+                  eaten: todayIntake.calories,
+                  target: effectiveTargets.finalTarget,
+                  protein: todayIntake.protein,
+                  proteinTarget: effectiveTargets.targetInfeasible
+                    ? 0
+                    : effectiveTargets.protein,
+                },
+            water: {
+              ml: waterMl,
+              targetMl: waterTargetMl,
+              servingMl,
+              drinkIds: waterDrinks.map((drink) => drink.id),
+            },
+          }
+        : null,
+    [
+      widgetUid,
+      profile,
+      widgetTrainingReady,
+      mealsLoading,
+      waterLoading,
+      streakLoading,
+      todayKey,
+      session,
+      freeRunLine,
+      heroPositionLabel,
+      widgetStrip,
+      weekSessionCount,
+      programState,
+      streakLoadFailed,
+      streak,
+      longestStreak,
+      hasLoggedToday,
+      mealsError,
+      todayIntake.calories,
+      todayIntake.protein,
+      effectiveTargets.finalTarget,
+      effectiveTargets.targetInfeasible,
+      effectiveTargets.protein,
+      waterMl,
+      waterTargetMl,
+      servingMl,
+      waterDrinks,
+    ]
+  );
+  useHomeWidgetSnapshot(widgetInput);
+
   if (!profile) return <HomeSkeleton />;
 
   return (

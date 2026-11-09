@@ -25,6 +25,7 @@ import {
   WEEK_KEYS,
   widgetAccount,
 } from "@/lib/homeWidgetContract";
+import { widgetRoute } from "@/lib/widgetLinks";
 
 // A Wednesday, with Thursday after it and Saturday three days on.
 const WEDNESDAY = "2026-11-11";
@@ -376,6 +377,18 @@ describe("the snapshot", () => {
     );
     expect(Object.keys(snapshot.food!).sort()).toEqual([...FOOD_KEYS].sort());
     expect(Object.keys(snapshot.water!).sort()).toEqual([...WATER_KEYS].sort());
+  });
+
+  it("writes each day's tap as the address that opens its page", () => {
+    const snapshot = homeWidgetSnapshot(
+      input({ session: { ...liftToday(), next: TOMORROW_RUN } })
+    );
+    expect(snapshot.days.map((d) => d.link)).toEqual([
+      "https://troposfit.com/program?day=0&from=widget",
+      `https://troposfit.com/program?tab=run&rday=${THURSDAY}&from=widget`,
+    ]);
+    for (const day of snapshot.days)
+      expect(widgetRoute(day.link)).not.toBeNull();
   });
 
   it("carries the account as a tag, never the uid", () => {

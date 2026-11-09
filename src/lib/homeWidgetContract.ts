@@ -120,7 +120,9 @@ export interface WidgetDay {
   /** A race goal's countdown from this day: "26 days to your marathon",
    *  or empty. */
   race: string;
-  /** The app path a tap opens: the session in Train. */
+  /** The address a tap opens, the session in Train: an app path on the
+   *  app's origin, marked as a widget's (`widgetUrl`). The builder
+   *  works in paths; the snapshot holds the address. */
   link: string;
 }
 

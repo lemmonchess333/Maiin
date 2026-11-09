@@ -1492,6 +1492,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isNativePlatform()) {
         const { clearWatchRunAccountState } = await import("./watchRunBridge");
         await clearWatchRunAccountState();
+        // The Home Screen and Lock Screen widgets show the outgoing
+        // account's day until the next one's Home is drawn: take it off.
+        // Best effort, and it never throws.
+        const { clearHomeWidgets } = await import("./homeWidgets");
+        await clearHomeWidgets();
       }
       clearStoredRun(outgoingUid);
       clearWorkoutDraft(outgoingUid);

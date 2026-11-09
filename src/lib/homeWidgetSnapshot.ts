@@ -48,6 +48,7 @@ import {
   type WidgetSport,
   type WidgetWeek,
 } from "@/lib/homeWidgetContract";
+import { widgetUrl } from "@/lib/widgetLinks";
 
 export interface HomeWidgetInput {
   /** Home's day, "yyyy-MM-dd" (`useLocalDateKey`). */
@@ -444,7 +445,12 @@ export function homeWidgetSnapshot(input: HomeWidgetInput): HomeWidgetSnapshot {
     version: HOME_WIDGET_SNAPSHOT_VERSION,
     writtenAt: Math.round(input.nowMs),
     account: widgetAccount(input.uid),
-    days: [widgetToday(input), widgetTomorrow(input)],
+    // Written as the address a tap opens (`widgetUrl`), so the widget
+    // builds no URL of its own.
+    days: [widgetToday(input), widgetTomorrow(input)].map((day) => ({
+      ...day,
+      link: widgetUrl(day.link),
+    })),
     week: widgetWeek(input),
     streak: input.streak
       ? {
