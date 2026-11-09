@@ -22,6 +22,7 @@ import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
 import { blockWeekOf } from "@/features/program/trainingBlock";
 import { racePlanWeek, racePlanWeekLabel } from "@/lib/racePlanWeek";
 import { sessionLeadIndex } from "@/lib/formArtCutouts";
+import { isBodyweightExerciseId } from "@/lib/exercises";
 import { distanceValue, paceLabel } from "@/lib/runLabels";
 import { distanceUnitLabel, type DistanceUnit } from "@/lib/distanceUnits";
 import {
@@ -143,6 +144,19 @@ export function aboutMinutes(minutes: number): string {
 export const FIRST_LIFT_STEP =
   "Pick a weight you could lift 3 more times than the reps ask.";
 
+/** The same step where no lift in the session takes a weight (a
+ *  no-equipment day): the reps in reserve, with nothing to pick. */
+export const FIRST_BODYWEIGHT_STEP =
+  "Stop each set when you could do 3 more reps.";
+
+/** Whether a session has no weight to pick: every lift is the body's own,
+ *  with no load added. */
+function nothingToLoad(exercises: readonly HeroExercise[]): boolean {
+  return exercises.every(
+    (ex) => isBodyweightExerciseId(ex.exerciseId) && !(ex.weight ?? 0)
+  );
+}
+
 function plural(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`;
 }
@@ -198,7 +212,9 @@ export function liftHeroLine(
         plural(exercises.length, "exercise", "exercises"),
         ...(sets > 0 ? [plural(sets, "set", "sets")] : []),
       ].join(" · "),
-      detail: FIRST_LIFT_STEP,
+      detail: nothingToLoad(exercises)
+        ? FIRST_BODYWEIGHT_STEP
+        : FIRST_LIFT_STEP,
       mark: "lift",
     };
   }

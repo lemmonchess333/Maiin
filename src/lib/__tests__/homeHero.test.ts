@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  FIRST_BODYWEIGHT_STEP,
   FIRST_LIFT_STEP,
   focusPhrase,
   freeRunHeroLine,
@@ -342,6 +343,25 @@ describe("the lift line: today's lead lift against last time", () => {
       "Pick a weight you could lift 3 more times than the reps ask."
     );
     expect(liftHeroLine([], "kg")).toBeNull();
+  });
+
+  it("with nothing to load, asks for the reps in reserve, not a weight", () => {
+    // A no-equipment day: push-ups, the inverted row, a pike push-up.
+    const bodyweight = (name: string, exerciseId: string) =>
+      row({ name, exerciseId, weight: 0, lastPerformance: null });
+    const day = [
+      bodyweight("Push-Ups", "push-ups"),
+      bodyweight("Inverted Row", "inverted-row"),
+      bodyweight("Pike Push-Up", "pike-push-up"),
+    ];
+    expect(liftHeroLine(day, "kg")?.detail).toBe(FIRST_BODYWEIGHT_STEP);
+    expect(FIRST_BODYWEIGHT_STEP).toBe(
+      "Stop each set when you could do 3 more reps."
+    );
+    // One lift with a weight to pick, and the step is the weight's.
+    expect(
+      liftHeroLine([...day, row({ lastPerformance: null })], "kg")?.detail
+    ).toBe(FIRST_LIFT_STEP);
   });
 
   it("is about the lift the picture shows", () => {
