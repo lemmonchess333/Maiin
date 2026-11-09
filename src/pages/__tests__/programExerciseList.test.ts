@@ -231,3 +231,17 @@ describe("the card carries Home's line, and names the first lift without one", (
     expect(card).toMatch(/\{description && \(/);
   });
 });
+
+describe("an exercise row's long press", () => {
+  it("is useLongPress's, so a tremor keeps it and its lift does not also open the history", () => {
+    expect(code).toMatch(/const exercisePress = useLongPress</);
+    expect(code).toMatch(/onTouchMove=\{exercisePress\.move\}/);
+    expect(code).toMatch(/onTouchCancel=\{exercisePress\.end\}/);
+    // The row's tap asks first, and goes nowhere for the press's own lift.
+    expect(code).toMatch(
+      /if \(exercisePress\.swallowClick\(\)\)\s*return;\s*navigate\(\s*`\/history\/exercise\//
+    );
+    // The press that cancelled on any movement at all is gone.
+    expect(code).not.toMatch(/onTouchMove=\{handleLongPressCancel\}/);
+  });
+});

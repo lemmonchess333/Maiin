@@ -39,6 +39,7 @@ import {
 import { lazyRetry } from "@/lib/lazyRetry";
 import type { ReactNode } from "react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useLongPress } from "@/hooks/useLongPress";
 import { useBackDismiss } from "@/lib/backDismiss";
 import { Link, useNavigate } from "react-router-dom";
 import { usePageSearchParams } from "@/hooks/usePageSearchParams";
@@ -492,7 +493,6 @@ function ProgramInner() {
     dayIndex: number;
     exIndex: number;
   } | null>(null);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // The drop's green flash, cleared if the page goes before it ends.
   const dropFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
@@ -606,27 +606,15 @@ function ProgramInner() {
     );
   };
 
-  const handleLongPressStart = (
-    dayIdx: number,
-    exIndex: number,
-    e: React.TouchEvent
-  ) => {
-    if (reorderMode) return;
-    const touch = e.touches[0];
-    const x = touch.clientX;
-    const y = touch.clientY;
-    longPressTimer.current = setTimeout(() => {
+  /* An exercise row's long press opens its menu. A finger's tremor does
+     not cancel it, and the tap iOS sends as the finger lifts does not
+     also open the exercise's history under the menu. */
+  const exercisePress = useLongPress<{ dayIndex: number; exIndex: number }>(
+    (row, at) => {
       haptic("medium");
-      setContextMenu({ dayIndex: dayIdx, exIndex, x, y });
-    }, 500);
-  };
-
-  const handleLongPressCancel = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
+      setContextMenu({ ...row, ...at });
     }
-  };
+  );
 
   // Save feedback states
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
@@ -1851,18 +1839,25 @@ function ProgramInner() {
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() =>
+                                      onClick={() => {
+                                        if (exercisePress.swallowClick())
+                                          return;
                                         navigate(
                                           `/history/exercise/${encodeURIComponent(ex.name)}`,
                                           { state: { initialTab: "form" } }
-                                        )
-                                      }
+                                        );
+                                      }}
                                       className="flex-1 min-w-0 flex items-center p-3 text-left transition-colors active:bg-muted"
-                                      onTouchStart={(e) =>
-                                        handleLongPressStart(idx, i, e)
-                                      }
-                                      onTouchMove={handleLongPressCancel}
-                                      onTouchEnd={handleLongPressCancel}
+                                      onTouchStart={(e) => {
+                                        if (reorderMode) return;
+                                        exercisePress.start(e, {
+                                          dayIndex: idx,
+                                          exIndex: i,
+                                        });
+                                      }}
+                                      onTouchMove={exercisePress.move}
+                                      onTouchEnd={exercisePress.end}
+                                      onTouchCancel={exercisePress.end}
                                       onContextMenu={(e) => {
                                         // D-LIFT-17: long-press is touch-only —
                                         // right-click is its pointer/desktop
