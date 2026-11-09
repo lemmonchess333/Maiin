@@ -1403,10 +1403,14 @@ exports.applyProgramCommand = functions
     // A callable obtains its token asynchronously on the client. A queued
     // command must never execute under an account switched in during that
     // await. Older clients have no expectedUid and keep their bare payload.
-    if (data && Object.prototype.hasOwnProperty.call(data, "expectedUid") &&
-        data.expectedUid !== uid) {
+    if (
+      data &&
+      Object.prototype.hasOwnProperty.call(data, "expectedUid") &&
+      data.expectedUid !== uid
+    ) {
       throw new functions.https.HttpsError(
-        "cancelled", "Programme command belongs to another account."
+        "cancelled",
+        "Programme command belongs to another account."
       );
     }
     const firestore = admin.firestore();
@@ -1704,7 +1708,11 @@ exports.analyzeFood = functions
           ),
         });
 
-        const data = await response.json();
+        // A refusal can come back as a page rather than JSON (a wrong host
+        // answers with Google's HTML 404), so the body is read leniently:
+        // the status is what says who refused, and it must survive a body
+        // that is not JSON. A 200 that is not JSON fails as unreadable.
+        const data = await response.json().catch(() => null);
         // 2026-05-26 audit PR 4 (finding #10) — success-path full-body
         // log dropped; structural-metadata log on the error path only.
         if (!response.ok) {
@@ -1911,7 +1919,9 @@ exports.analyzeFoodText = functions
           body: JSON.stringify(buildFoodTextRequest(text)),
         });
 
-        const data = await response.json();
+        // Read leniently, as in analyzeFood: a refusal's status must
+        // survive a body that is not JSON.
+        const data = await response.json().catch(() => null);
 
         if (!response.ok) {
           console.error(

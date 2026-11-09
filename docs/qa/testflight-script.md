@@ -46,7 +46,7 @@ These need a person signed in to a console. Most unblock later steps.
    them set.
 
 4. **Check Vertex AI keeps no copy of food photos.** Google Cloud console →
-   Vertex AI: request-response logging for the Gemini model in us-central1 is
+   Vertex AI: request-response logging for the Gemini model in the `us` multi-region is
    off. The Privacy Policy (section 7) says Google keeps nothing.
 5. **Let Apple's private relay reach Hide My Email users.** Apple Developer →
    Certificates, Identifiers & Profiles → Services → Sign in with Apple for
