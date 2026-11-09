@@ -39,7 +39,10 @@ import {
   __resetRunActivityForTests,
   startRunActivity,
 } from "@/lib/runLiveActivity";
-import { restActivityData } from "@/lib/restLiveActivity";
+import {
+  __resetRestActivityForTests,
+  startRestActivity,
+} from "@/lib/restLiveActivity";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const read = (p: string) => readFileSync(resolve(repoRoot, p), "utf8");
@@ -87,6 +90,7 @@ const RUN = {
 beforeEach(() => {
   vi.clearAllMocks();
   __resetRunActivityForTests();
+  __resetRestActivityForTests();
   startActivity.mockResolvedValue({ activityId: "act-1" });
 });
 
@@ -111,13 +115,14 @@ describe("the data the app sends is the data the widget reads", () => {
       expect(readAs(sent[key]), key).toBe(how);
   });
 
-  it("a rest: every key sent is read, as the type it is sent as", () => {
-    const sent = restActivityData({
+  it("a rest: every key sent is read, as the type it is sent as", async () => {
+    await startRestActivity({
       startedAt: 1_000,
       endsAt: 91_000,
       exerciseName: "Bench Press",
       next: { name: "Set 2", load: "15 kg × 10" },
     });
+    const sent = startActivity.mock.calls[0][0].data as Record<string, unknown>;
     expect(sent.kind).toBe("rest");
     expect(Object.keys(sent).sort()).toEqual([...REST_ACTIVITY_KEYS].sort());
     const reads = readsOf("RestPayload");

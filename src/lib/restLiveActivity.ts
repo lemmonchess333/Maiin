@@ -58,16 +58,14 @@ async function loadPlugin(): Promise<{ plugin: Plugin } | null> {
 }
 
 /** The next set's line under the countdown: "Set 2 · 15 kg × 10". */
-export function restSetLine(next?: { name: string; load: string }): string {
+function restSetLine(next?: { name: string; load: string }): string {
   return next
     ? [next.name, next.load].filter((part) => part.trim()).join(" · ")
     : "";
 }
 
 /** The content state the widget reads (liveActivityContract.ts). */
-export function restActivityData(
-  rest: RestActivity
-): Record<string, string | number> {
+function restActivityData(rest: RestActivity): Record<string, string | number> {
   return {
     kind: "rest",
     startedAt: Math.min(rest.startedAt, rest.endsAt),

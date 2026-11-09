@@ -31,9 +31,8 @@ import { restTitle, showRestOutside } from "../restOutside";
 import {
   __resetRestActivityForTests,
   endRestActivity,
-  restActivityData,
-  restSetLine,
   startRestActivity,
+  type RestActivity,
 } from "../restLiveActivity";
 import { PLUGIN_LAYOUT } from "../liveActivityContract";
 
@@ -170,16 +169,28 @@ describe("the lock screen", () => {
     expect(plugin.endActivity).not.toHaveBeenCalled();
   });
 
-  it("names the set after the rest as the rest band does", () => {
-    expect(restSetLine({ name: "Set 2", load: "15 kg × 10" })).toBe(
-      "Set 2 · 15 kg × 10"
-    );
-    expect(restSetLine({ name: "Warm-up 3", load: "" })).toBe("Warm-up 3");
-    expect(restSetLine()).toBe("");
+  /** The data a start sends the widget for `rest`. */
+  const sentFor = async (rest: RestActivity) => {
+    setNative(true);
+    plugin.startActivity.mockClear();
+    await startRestActivity(rest);
+    return plugin.startActivity.mock.calls[0][0].data;
+  };
+
+  it("names the set after the rest as the rest band does", async () => {
+    const at = { startedAt: 0, endsAt: 90_000 };
+    expect(
+      (await sentFor({ ...at, next: { name: "Set 2", load: "15 kg × 10" } }))
+        .set
+    ).toBe("Set 2 · 15 kg × 10");
+    expect(
+      (await sentFor({ ...at, next: { name: "Warm-up 3", load: "" } })).set
+    ).toBe("Warm-up 3");
+    expect((await sentFor(at)).set).toBe("");
   });
 
-  it("never sends a start after the end, and leaves out what it does not know", () => {
-    expect(restActivityData({ startedAt: 5_000, endsAt: 4_000 })).toEqual({
+  it("never sends a start after the end, and leaves out what it does not know", async () => {
+    expect(await sentFor({ startedAt: 5_000, endsAt: 4_000 })).toEqual({
       kind: "rest",
       startedAt: 4_000,
       endsAt: 4_000,
