@@ -66,6 +66,22 @@ async function shutter() {
 }
 
 describe("FoodCameraModal — the capture", () => {
+  it("asks the back camera for a 720p frame, as a wish rather than a demand", async () => {
+    /* Without a size an iPhone's camera answers with 640 × 480: a quarter
+       of the pixels the analysis reads a plate from and the barcode reader
+       finds a code in. `ideal` never refuses a camera that has no 720p. */
+    render(<FoodCameraModal {...props()} />);
+    await shutter();
+    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+      audio: false,
+    });
+  });
+
   it("says so when no frame can be taken, and sends nothing", async () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     const p = props();

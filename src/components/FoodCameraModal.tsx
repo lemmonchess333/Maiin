@@ -224,12 +224,18 @@ async function libraryPhotoDataUrl(file: File): Promise<string> {
   return blobToDataUrl(blob);
 }
 
+/** The frame size asked of the camera. Without a size, an iPhone's camera
+ *  answers with 640 × 480: a quarter of the pixels the analysis reads a
+ *  plate from and the barcode reader finds a code in. `ideal` is a wish,
+ *  never a refusal: a camera without 720p gives its nearest. */
+const CAMERA_FRAME = { width: { ideal: 1280 }, height: { ideal: 720 } };
+
 async function startStream(
   videoEl: HTMLVideoElement,
   facingMode: "environment" | "user"
 ) {
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode },
+    video: { facingMode, ...CAMERA_FRAME },
     audio: false,
   });
   videoEl.srcObject = stream;
