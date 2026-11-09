@@ -1168,6 +1168,10 @@ words; these need the operator, a device, or a real trial.
       and "Remind me before the trial ends"; tapping it brings the system
       prompt once, and Diagnostics lists the pending reminder (id 3003).
       Sandbox trials last minutes, so check the screens, not the date.
+      STATUS 2026-11-08: the card, the trial line, the price line and the
+      Remind me button all showed on build 12 after the owner's sandbox
+      purchase. The tap, the system prompt and Diagnostics' id 3003 are
+      still to check.
 - [ ] **The first real reminder.** The first App Store trial after launch:
       the email arrives at 10:00 local on day 4 with the price, the dates
       and the cancel link right, and the console shows
@@ -1224,7 +1228,7 @@ people search, `FoodCameraModal`).
 Unit tests pin the API client, the settings file and the padding; these
 need Apple, the Cloud console or a phone.
 
-- [ ] **The first TestFlight run signs from the API key.** With only the
+- [x] **The first TestFlight run signs from the API key.** With only the
       five secrets `docs/ios-release.md` asks for, Deploy iOS to
       TestFlight makes a certificate and a profile named
       `Tropos CI <serial>`, passes the import step's checks, archives and
@@ -1232,6 +1236,11 @@ need Apple, the Cloud console or a phone.
       its certificate (Apple Developer → Certificates shows one Apple
       Distribution certificate from these runs), and the first build
       stays installable in TestFlight.
+      STATUS 2026-11-08: proven. Runs 7–12 each signed from the API key,
+      archived and uploaded; each revoked the previous run's certificate
+      (Apple emailed "certificate revoked" per run) and every earlier
+      build stayed installable. Run 12's only failure was the Crashlytics
+      symbol upload crashing (segmentation fault), after the upload.
 - [ ] **Function settings from GitHub.** After setting `ADMIN_UIDS` and
       the rest as repository variables and running Deploy production,
       the "Write functions/.env from repository variables" step names

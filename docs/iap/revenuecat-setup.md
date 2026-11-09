@@ -218,6 +218,31 @@ webhook was checked (All apps, production and sandbox), and App Store
 Connect's App Store Server Notifications point at RevenueCat's URL for
 both production and sandbox. The EU trader status was still pending.
 
+STATUS 2026-11-08: proven on a phone. On TestFlight build 12 the owner's
+account bought Monthly in the sandbox, RevenueCat showed the `pro`
+entitlement, the webhook delivered (200) and the Pro card read "You're on
+Pro". Three things stood between the first build and that, in order:
+
+1. **The app hung on its native plugins** (#3093): promises resolved with
+   a Capacitor plugin never settle (CLAUDE.md, Common Gotchas). RevenueCat
+   was never configured, so checkout sat on "Starting checkout…".
+2. **The iOS app was not registered in Firebase App Check**, so every Auth
+   request waited on a token that never came and sign-in failed at 30 s as
+   "Network issue". Registered with App Attest; `appCheckNative.ts` also
+   gives up on a token after 8 s so this can never block a request again.
+3. **`REVENUECAT_REST_KEY` did not match the dashboard's key**: the
+   webhook logged `revenueCatWebhook: sync failed` with `error: http-401`
+   and RevenueCat showed the delivery "Retrying" with a 500. The fix is a
+   new Secret Manager version holding the dashboard's "Tropos server" V1
+   key (copy it from RevenueCat → API keys, no surrounding whitespace),
+   then Deploy production, which always re-uploads the functions. The
+   webhook's own retries, or its Retry button, then deliver.
+
+A sandbox storefront can price in USD while Apple's sheet charges GBP:
+the paywall read "$3.99" and the sheet "£3.99". That is the sandbox
+account's storefront, not the app. RevenueCat's dashboard hides sandbox
+data until its "Sandbox data" switch is on.
+
 ---
 
 ## What I build once you've done the above

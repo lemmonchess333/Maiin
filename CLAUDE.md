@@ -538,6 +538,17 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
   turns those assertions into claims about the stub. Run the FULL unit suite
   before pushing a change that adds a cross-module import — the touched
   subset will not show it.
+- **Never resolve a promise with a Capacitor plugin.** A plugin is a Proxy
+  that answers EVERY property with a native call, `then` included, so
+  `return mod.Purchases` from an async function, or
+  `.then((m) => m.Health)`, asks it for `then`, calls a native method that
+  does not exist (`"Purchases.then()" is not implemented on ios`) and never
+  settles. The first TestFlight builds hung on exactly this: RevenueCat was
+  never set up, App Check never answered, and checkout sat on "Starting
+  checkout…". Hand back a holder (`{ plugin }`) as `haptic.ts`,
+  `systemChrome.ts` and `revenuecat.ts` do, and mock the plugin in tests
+  with `src/test/capacitorPlugin.ts`, which answers `then` as the bridge
+  does, so the old shape hangs the test instead of passing.
 - `react-body-highlighter` exports `Muscle` type — cast `mapMuscles()` return to `Muscle[]`
 - Recharts v3 Tooltip props: let TypeScript infer `labelFormatter`/`formatter` parameter types
 - `useRef` in strict mode requires an explicit initial value argument
