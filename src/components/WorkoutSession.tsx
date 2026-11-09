@@ -188,6 +188,7 @@ import type { LiftMomentFacts, PostMoment } from "@/lib/postMoments";
 import GuideHint from "@/components/guide/GuideHint";
 import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
 import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
+import { sessionWork, workFigure } from "@/lib/liftFigures";
 import {
   formatKitLoad,
   kitLoadIn,
@@ -266,6 +267,25 @@ function targetLoad(
   if (exercise.weight > 0)
     return ` @ ${bodyweight ? "Bodyweight + " : ""}${formatKitLoad(exercise.weight, unit, exercise.exerciseId)}`;
   return bodyweight ? " @ Bodyweight" : "";
+}
+
+/** A set as the rest band names what comes next, in the lifter's unit:
+ *  "15 kg × 10", "+10 kg × 8" on a bodyweight lift with load added,
+ *  "12 reps" with no load, "30 s" for a hold. */
+function nextSetLoad(
+  set: { weight: number; reps: number },
+  exercise: Pick<ProgramExercise, "exerciseId" | "repUnit">,
+  unit: LiftUnit
+): string {
+  const count =
+    exercise.repUnit === "seconds"
+      ? `${set.reps} s`
+      : set.weight > 0
+        ? `${set.reps}`
+        : `${set.reps} ${set.reps === 1 ? "rep" : "reps"}`;
+  if (set.weight <= 0) return count;
+  const added = isBodyweightExerciseId(exercise.exerciseId) ? "+" : "";
+  return `${added}${formatKitLoad(set.weight, unit, exercise.exerciseId)} × ${count}`;
 }
 
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
@@ -1074,12 +1094,37 @@ export default function WorkoutSession({
   const countedInSession = countedSets(setLogs.flat());
   const totalSetsCompleted = countedInSession.filter((s) => s.completed).length;
   const totalSetsTotal = countedInSession.length;
+  // The header's kg lifted: the finish screen's sum of the same sets.
+  const { volumeKg: workKg, reps: workReps } = sessionWork(
+    setLogs,
+    day.exercises
+  );
+  const sessionWorkFigure = workFigure(workKg, workReps, liftUnit);
   // Finishing early: once a working set is done, while sets remain.
   const finishEarlyOffered =
     nextIncompleteSet(setLogs) !== null &&
     setLogs.some((sets) =>
       sets.some((set) => set.completed && set.type !== "warmup")
     );
+
+  /* The set a rest leads to, named in the rest band (DS4): the cursor's
+     set, which ticking a set has already moved on, to the next exercise
+     once this one is done or round a superset. A warm-up passed over is
+     not it. */
+  const restNext = (() => {
+    const at = isSetOutstanding(currentSets, currentSetIndex)
+      ? { exerciseIndex: safeExIndex, setIndex: currentSetIndex }
+      : nextIncompleteSet(setLogs, safeExIndex);
+    const exercise = at ? day.exercises[at.exerciseIndex] : undefined;
+    const sets = at ? setLogs[at.exerciseIndex] : undefined;
+    const set = at && sets ? sets[at.setIndex] : undefined;
+    if (!at || !exercise || !sets || !set) return undefined;
+    return {
+      exerciseId: exercise.exerciseId,
+      name: setName(sets, at.setIndex),
+      load: nextSetLoad(set, exercise, liftUnit),
+    };
+  })();
 
   /* The exercise after this one that still has sets left (DS3 "Up next"):
      session order from the next exercise, wrapping, so one skipped earlier
@@ -2276,9 +2321,12 @@ export default function WorkoutSession({
       )}
 
       {/* Top Bar — the day named as Train names it ("Pull B"), never its
-          stored name. A routine's own name reads as written. */}
-      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/50">
-        <div className="min-w-0">
+          stored name. A routine's own name reads as written. Under it,
+          the session as figures (DS4): time, sets and kg lifted, where a
+          12 px grey line said them, so the session has a number to look
+          at between sets. */}
+      <div className="border-b border-border/50 px-4 pb-2.5 pt-1.5 short:pb-1.5">
+        <div className="flex min-h-11 items-center justify-between gap-3">
           {/* The session's title is the screen's heading, so a screen
               reader finds where it is from. A heading by role rather than
               an h1 element: the global h1 rule in index.css is unlayered,
@@ -2286,44 +2334,45 @@ export default function WorkoutSession({
           <p
             role="heading"
             aria-level={1}
-            className="truncate text-base font-bold text-foreground"
+            className="min-w-0 truncate text-base font-bold text-foreground"
           >
             {dayLabel ?? liftDayLine(sessionName)}
           </p>
-          <WorkoutProgress
-            key={sessionStartedAt}
-            startedAt={sessionStartedAt}
-            completed={totalSetsCompleted}
-            total={totalSetsTotal}
-          />
+          {/* Finish sits by Close, as Hevy and Strong put it (an owner
+              call, DESIGN_GUIDE §8): under the set action it took a row
+              from the list on every set after the first. Offered once a working set is
+              done and while sets remain; when none remain, the bar's own
+              "Finish workout" takes over, so there is one Finish at a
+              time. It goes straight to the review, which is the check: the
+              review counts the sets left unticked and has Edit workout to go
+              back for them, so a dialog asking first was a second check on a
+              step that can be undone. */}
+          <div className="flex shrink-0 items-center gap-1">
+            {finishEarlyOffered && (
+              <Button
+                variant="secondary"
+                className={SECONDARY_ON_CARD_EDGE}
+                aria-label="Finish workout"
+                onClick={completeSession}
+              >
+                Finish
+              </Button>
+            )}
+            <IconButton
+              variant="ghost"
+              aria-label="Close workout"
+              onClick={onClose}
+              icon={<X className="size-5 text-muted-foreground" />}
+            />
+          </div>
         </div>
-        {/* Finish sits by Close, as Hevy and Strong put it (an owner
-            call, DESIGN_GUIDE §8): under the set action it took a row
-            from the list on every set after the first. Offered once a working set is
-            done and while sets remain; when none remain, the bar's own
-            "Finish workout" takes over, so there is one Finish at a
-            time. It goes straight to the review, which is the check: the
-            review counts the sets left unticked and has Edit workout to go
-            back for them, so a dialog asking first was a second check on a
-            step that can be undone. */}
-        <div className="flex shrink-0 items-center gap-1">
-          {finishEarlyOffered && (
-            <Button
-              variant="secondary"
-              className={SECONDARY_ON_CARD_EDGE}
-              aria-label="Finish workout"
-              onClick={completeSession}
-            >
-              Finish
-            </Button>
-          )}
-          <IconButton
-            variant="ghost"
-            aria-label="Close workout"
-            onClick={onClose}
-            icon={<X className="size-5 text-muted-foreground" />}
-          />
-        </div>
+        <WorkoutProgress
+          key={sessionStartedAt}
+          startedAt={sessionStartedAt}
+          completed={totalSetsCompleted}
+          total={totalSetsTotal}
+          work={sessionWorkFigure}
+        />
       </div>
 
       {/* Progress bar */}
@@ -2337,12 +2386,15 @@ export default function WorkoutSession({
       </div>
 
       {/* Exercise navigation pills: the last of the fixed part, so its
-          edge is where the list scrolls under. */}
+          edge is where the list scrolls under. It stays fixed (an owner
+          call, DESIGN_GUIDE §8) and is one 56 pt row (DS4 rule 18):
+          a name under every drawing made it 109 pt, 13% of a 393 × 852
+          phone, for words the list's own heading already says. */}
       <div className="relative border-b border-border/30">
         <div
           ref={tabsRef}
           data-no-page-swipe
-          className="flex gap-2 px-4 py-2 overflow-x-auto"
+          className="flex items-center gap-1.5 overflow-x-auto px-4 py-1.5 short:py-1"
           style={{ scrollbarWidth: "none" }}
         >
           {day.exercises.map((ex, i) => {
@@ -2351,9 +2403,9 @@ export default function WorkoutSession({
             const done = !skipped && isExerciseDone(setsForEx);
             const active = i === currentExIndex;
             /* DS3: the session's exercises as their drawings, in order.
-               The current one is ringed, a finished one carries a check,
-               and the full name is the button's name for assistive tech
-               however the label below truncates. */
+               The current one is ringed and named beside its drawing, a
+               finished one carries a check, and the full name is every
+               button's name for assistive tech. */
             return (
               <button
                 type="button"
@@ -2374,43 +2426,45 @@ export default function WorkoutSession({
                   );
                   setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
                 }}
-                className="flex w-16 shrink-0 flex-col items-center gap-1.5 rounded-xl pb-1 pt-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className={cn(
+                  "flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2.5 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  active && "pl-0.5 pr-1"
+                )}
               >
                 <span
                   className={cn(
-                    "relative rounded-xl",
+                    "relative rounded-lg",
                     active &&
                       "ring-2 ring-primary ring-offset-2 ring-offset-background"
                   )}
                 >
                   <ExerciseThumb
                     exerciseId={ex.exerciseId}
+                    size="sm"
                     className={cn((done || skipped) && !active && "opacity-60")}
                   />
                   {done && (
-                    <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary-strong text-primary-foreground ring-2 ring-background">
-                      <Check className="size-3" strokeWidth={3} />
+                    <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary-strong text-primary-foreground ring-2 ring-background">
+                      <Check className="size-2.5" strokeWidth={3.5} />
                     </span>
                   )}
                   {skipped && (
-                    <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
-                      <SkipForward className="size-3" strokeWidth={3} />
+                    <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
+                      <SkipForward className="size-2.5" strokeWidth={3.5} />
                     </span>
                   )}
                 </span>
-                {/* Up to three lines: cut to one, "Barbell Row" and
-                    "Barbell Curl" both read "Barbell…", and cut to two,
-                    "Straight-Arm Pulldown" reads "Straight-Arm…". */}
-                <span
-                  className={cn(
-                    "line-clamp-3 w-full text-center text-xs leading-tight break-words",
-                    active
-                      ? "font-bold text-foreground"
-                      : "font-medium text-muted-foreground"
-                  )}
-                >
-                  {ex.name}
-                </span>
+                {/* Two lines beside the drawing: "Straight-Arm Pulldown"
+                    whole on a phone. A longer name is whole in the list's
+                    heading under the strip. */}
+                {active && (
+                  <span
+                    aria-hidden="true"
+                    className="line-clamp-2 max-w-[9rem] text-left text-xs font-bold leading-tight text-foreground break-words"
+                  >
+                    {ex.name}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -2439,7 +2493,7 @@ export default function WorkoutSession({
       {/* Main content area */}
       <div
         ref={contentRef}
-        className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth"
+        className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth short:space-y-3"
       >
         {/* Exercise name + set counter, at the head of the list (an
             owner call, DESIGN_GUIDE §8): fixed above it, they took about
@@ -2448,14 +2502,17 @@ export default function WorkoutSession({
             back. DS3: the exercise's drawing beside its name, where a bare
             dumbbell icon sat. Under 19em of row (a 320px phone, or larger
             text on the phone), the drawing gives its room to the name, which beside it pushed
-            the form guide's button off the screen, and the name's two
-            buttons drop under it when beside it they would squeeze a word
-            ("Bench" at 2x on a 320px phone) out of its box. Wide-first. */}
+            the form guide's button off the screen. The name's two buttons
+            drop under it only under 16em, where beside it they would
+            squeeze a word ("Bench" at 2x on a 320px phone) out of its box:
+            on a 320px phone at the designed size they keep its line, and
+            the row they took is an exercise's fourth set (DS4 pass).
+            Wide-first. */}
         <div
           ref={headerRef}
           data-guide-anchor={setHelpRequest > 0 ? "first-set" : undefined}
           tabIndex={-1}
-          className="@container flex items-start gap-3 pt-3"
+          className="@container flex items-start gap-3 pt-3 short:pt-2"
         >
           {currentExercise && (
             <ExerciseThumb
@@ -2465,7 +2522,7 @@ export default function WorkoutSession({
             />
           )}
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 @max-[19em]:flex-wrap">
+            <div className="flex items-center gap-1 @max-[16em]:flex-wrap">
               <h2 className="min-w-0 text-h3 font-bold leading-tight tracking-tight text-foreground text-balance">
                 {currentExercise?.name}
               </h2>
@@ -2529,7 +2586,9 @@ export default function WorkoutSession({
             {/* Backlog #4 — effort cue as words (operator-approved copy set).
               Reserve cue expands via Tooltip; push/deload cues are plain
               lines. Guidance lives BEFORE the set, never as a verdict after
-              it (voice doc: never shame). */}
+              it (voice doc: never shame). On a short phone its 44 px
+              target reaches over the set line above and the gap below
+              rather than adding to the head's height. */}
             {(() => {
               if (!currentExercise) return null;
               const lastCounted = currentSets.reduce(
@@ -2546,7 +2605,7 @@ export default function WorkoutSession({
                   <Tooltip content={<p>{cue.tooltip}</p>}>
                     <button
                       type="button"
-                      className="min-h-11 -mb-2 text-xs text-muted-foreground underline decoration-dotted underline-offset-2"
+                      className="min-h-11 -mb-2 text-xs text-muted-foreground underline decoration-dotted underline-offset-2 short:-mt-2.5 short:-mb-2.5"
                     >
                       {cue.text}
                     </button>
@@ -2638,7 +2697,7 @@ export default function WorkoutSession({
                 <div
                   className={cn(
                     columns,
-                    "px-3 pt-3 pb-1 text-micro font-semibold uppercase tracking-wide text-muted-foreground"
+                    "px-3 pt-3 pb-1 text-micro font-semibold uppercase tracking-wide text-muted-foreground short:pt-2"
                   )}
                 >
                   <div className="text-center">Set</div>
@@ -2706,7 +2765,7 @@ export default function WorkoutSession({
                       <div
                         className={cn(
                           columns,
-                          "border-t border-border/40 px-3 py-1.5 transition-colors",
+                          "border-t border-border/40 px-3 py-1.5 transition-colors short:py-0.5",
                           !set.completed &&
                             setIdx === currentSetIndex &&
                             "bg-primary/10"
@@ -3171,6 +3230,7 @@ export default function WorkoutSession({
               startedAt={rest.startedAt}
               initialTarget={rest.target}
               exerciseName={day.exercises[currentExIndex]?.name}
+              next={restNext}
               onStop={stopRest}
               onAnnounce={announceRest}
             />
@@ -3199,18 +3259,24 @@ export default function WorkoutSession({
       </AnimatePresence>
 
       {/* Bottom action bar */}
-      <div className="px-4 py-3 border-t border-border/50 bg-background">
+      <div className="px-4 py-3 border-t border-border/50 bg-background short:py-2">
         {(() => {
           const allSetsComplete = isExerciseDone(currentSets);
           const next = nextIncompleteSet(setLogs, currentExIndex);
 
           /* DS3: the bar's three states through the Button primitive, in
-             sentence case. Finish is the lifting CTA like the other two:
-             green is for status (a done set's check), not for actions. */
+             sentence case. Green is for status (a done set's check), not
+             for actions. DS4 call 1a: the screen's one full-width filled
+             button is neutral, white on dark and ink on light, at Home's
+             and Train's Start height (44, rule 21): filled in purple it
+             was 97% of the screen's colour, where the largest colour is
+             the person's data (rule 10). The purple stays on the data: the
+             progress bar, the current exercise's ring, the rest's arc. */
           if (allSetsComplete && !next) {
             return (
               <Button
-                size="lg"
+                variant="neutral"
+                className="text-base"
                 fullWidth
                 // Everything skipped with nothing done leaves nothing to save.
                 disabled={
@@ -3228,7 +3294,8 @@ export default function WorkoutSession({
           if (allSetsComplete) {
             return (
               <Button
-                size="lg"
+                variant="neutral"
+                className="text-base"
                 fullWidth
                 onClick={() => {
                   if (next) {
@@ -3244,7 +3311,8 @@ export default function WorkoutSession({
           }
           return (
             <Button
-              size="lg"
+              variant="neutral"
+              className="text-base"
               fullWidth
               onClick={() => {
                 stopRest();

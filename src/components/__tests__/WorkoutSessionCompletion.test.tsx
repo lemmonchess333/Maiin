@@ -152,6 +152,18 @@ function openSession(
   return onCompleteDay;
 }
 
+/** A figure in the workout's header, by the word under it ("time",
+ *  "sets", "kg lifted"), as it is drawn. */
+function headerFigure(word: string): string {
+  const figure = screen.getByText(word, { selector: "dt" })
+    .nextElementSibling as HTMLElement;
+  return (
+    figure.querySelector('[aria-hidden="true"]')?.textContent ??
+    figure.textContent ??
+    ""
+  );
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   h.load.mockReturnValue(null);
@@ -254,6 +266,15 @@ describe("set completion through row controls", () => {
     expect(
       screen.getByRole("button", { name: "Edit completed set 1" })
     ).toBeInTheDocument();
+  });
+
+  it("completes a set on the neutral full-width button (DS4 call 1a)", () => {
+    // White on dark, ink on light, as Home's and Train's Start: in purple
+    // it was nearly all of the screen's colour.
+    openSession();
+    const complete = screen.getByRole("button", { name: "Complete set 1" });
+    expect(complete).toHaveClass("bg-foreground", "text-background", "w-full");
+    expect(complete).not.toHaveClass("bg-primary-strong");
   });
 
   it("draws Previous in grey, still a tap to fill", () => {
@@ -1667,13 +1688,7 @@ describe("WorkoutSession — warm-ups are optional", () => {
       screen.getByRole("button", { name: "Complete warm-up 1" })
     ).toBeInTheDocument();
     // The session's progress counts the sets that count.
-    expect(
-      screen.getByText(
-        (_, element) =>
-          element?.tagName === "P" &&
-          /^0\/3 sets/.test(element.textContent ?? "")
-      )
-    ).toBeInTheDocument();
+    expect(headerFigure("sets")).toBe("0/3");
   });
 
   it("moves on from a skipped ramp instead of going back to it", () => {
@@ -1686,6 +1701,22 @@ describe("WorkoutSession — warm-ups are optional", () => {
       screen.getByRole("button", { name: "Complete set 2" })
     ).toBeInTheDocument();
     expect(setLine(/^Set 2 of 3 · 1 done$/)).toBeInTheDocument();
+  });
+
+  it("adds each working set to the header's kg lifted, and no warm-up", () => {
+    // The finish screen's sum (`sessionWork`), growing set by set.
+    openSession(writer(), vi.fn(), squat);
+    expect(headerFigure("kg lifted")).toBe("0");
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+    expect(headerFigure("kg lifted")).toBe("0");
+    // Left unticked: warm-ups 2 and 3, then set 1 at 100 kg × 8.
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[2]
+    );
+    expect(headerFigure("kg lifted")).toBe("800");
+    expect(headerFigure("sets")).toBe("1/3");
   });
 
   it("finishes the exercise when the working sets are done", async () => {
@@ -1727,6 +1758,18 @@ describe("WorkoutSession — rest timer", () => {
     });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
     expect(restLabel()).toContain("3:00");
+  });
+
+  it("names the set the rest leads to, as planned (DS4)", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      reps: 5,
+      weight: 20,
+    });
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("Next · Set 2");
+    expect(restLabel()).toContain("20 kg × 5");
   });
 
   it("+15 s extends the rest in progress", () => {
@@ -1878,7 +1921,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
        interval ticks and `handleFinish` read the wall-clock anchor. */
     openSession();
     await background(5 * 60_000);
-    expect(screen.getByText(/0\/3 sets · 5:0\d/)).toBeInTheDocument();
+    expect(headerFigure("time")).toMatch(/^5:0\d$/);
   });
 
   it("still advances second by second in the foreground", async () => {
@@ -1888,7 +1931,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     await act(async () => {
       vi.advanceTimersByTime(3000);
     });
-    expect(screen.getByText(/0\/3 sets · 0:0[23]/)).toBeInTheDocument();
+    expect(headerFigure("time")).toMatch(/^0:0[23]$/);
   });
 
   it("ticks both displays without re-rendering the set editor or saving drafts", async () => {
@@ -1901,7 +1944,8 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     await act(async () => {
       vi.advanceTimersByTime(3000);
     });
-    expect(screen.getByText(/1\/3 sets · 0:03/)).toBeInTheDocument();
+    expect(headerFigure("sets")).toBe("1/3");
+    expect(headerFigure("time")).toBe("0:03");
     expect(screen.getByRole("group", { name: "Rest timer" })).toHaveTextContent(
       "1:27"
     );
@@ -1929,13 +1973,13 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     await act(async () => {
       vi.advanceTimersByTime(60_000);
     });
-    expect(screen.getByText(/1\/3 sets · 0:00/)).toBeInTheDocument();
+    expect(headerFigure("time")).toBe("0:00");
     expect(h.authReads).not.toHaveBeenCalled();
     hidden.mockReturnValue(false);
     act(() => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
-    expect(screen.getByText(/1\/3 sets · 1:00/)).toBeInTheDocument();
+    expect(headerFigure("time")).toBe("1:00");
     expect(screen.getByRole("group", { name: "Rest timer" })).toHaveTextContent(
       "0:30"
     );

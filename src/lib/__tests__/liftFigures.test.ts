@@ -4,7 +4,12 @@
  * says what the finish said.
  */
 import { describe, expect, it } from "vitest";
-import { durationFigure, setsFigure, workFigure } from "../liftFigures";
+import {
+  durationFigure,
+  sessionWork,
+  setsFigure,
+  workFigure,
+} from "../liftFigures";
 
 const written = (figure: { to: number; format: (n: number) => string }) =>
   figure.format(figure.to);
@@ -62,5 +67,30 @@ describe("lift figures", () => {
     expect(setsFigure(12).unit).toBe("sets");
     expect(setsFigure(1).unit).toBe("set");
     expect(written(setsFigure(12))).toBe("12");
+  });
+
+  it("adds up the done working sets, as the live header and the finish do", () => {
+    const set = (
+      weight: number,
+      reps: number,
+      completed = true,
+      type = "normal"
+    ) => ({
+      weight,
+      reps,
+      completed,
+      type,
+    });
+    const work = sessionWork(
+      [
+        // A warm-up and an unticked set are not the session's work.
+        [set(20, 5, true, "warmup"), set(60, 8), set(60, 8, false)],
+        // A hold's reps are seconds: 20 kg for 60 s moves nothing.
+        [set(20, 60)],
+        [set(0, 12), set(0, 10)],
+      ],
+      [{}, { repUnit: "seconds" }, { repUnit: "reps" }]
+    );
+    expect(work).toEqual({ volumeKg: 480, reps: 30 });
   });
 });

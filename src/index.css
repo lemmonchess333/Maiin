@@ -13,6 +13,10 @@
    this, Tailwind v4 compiles `dark:` to prefers-color-scheme, so the
    app's dark mode on a phone set to Light drew the light-mode edges. */
 @custom-variant dark (&:where(.dark, .dark *));
+/* A phone under 640 pt tall, the 320 x 568 iPhone SE: the live workout
+   takes in its padding there, so an exercise's four set rows fit its
+   first screen under the header's figures (DS4 pass, 8 November 2026). */
+@custom-variant short (@media (max-height: 640px));
 @import "./styles/tokens.css";
 @import "./styles/components.css";
 @import "./styles/animations.css";
