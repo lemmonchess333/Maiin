@@ -10,6 +10,8 @@ from unittest.mock import Mock
 import verify_ios_live_activity as verifier
 
 WIDGET = "com.tropos.app.LiveActivities"
+GROUP = "group.com.tropos.app"
+GROUPS = "com.apple.security.application-groups"
 
 
 class WidgetSigningTests(unittest.TestCase):
@@ -32,6 +34,18 @@ class WidgetSigningTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "does not match its profile"):
             self.validate()
 
+    def test_a_widget_signed_without_the_app_group_is_refused(self):
+        self.entitlements[GROUPS] = [GROUP]
+        self.profile["Entitlements"][GROUPS] = [GROUP]
+        verifier.validate_signed_widget(self.entitlements, self.profile, WIDGET, GROUP)
+        self.profile["Entitlements"][GROUPS] = []
+        with self.assertRaisesRegex(ValueError, "profile carries no App Group group.com.tropos.app"):
+            verifier.validate_signed_widget(self.entitlements, self.profile, WIDGET, GROUP)
+        self.profile["Entitlements"][GROUPS] = [GROUP]
+        del self.entitlements[GROUPS]
+        with self.assertRaisesRegex(ValueError, "signature carries no App Group"):
+            verifier.validate_signed_widget(self.entitlements, self.profile, WIDGET, GROUP)
+
     def test_development_signing_is_refused(self):
         self.entitlements["get-task-allow"] = True
         with self.assertRaisesRegex(ValueError, "distribution"):
@@ -51,6 +65,7 @@ class BuildTests(unittest.TestCase):
         self.iphone = Path(self.temp.name) / "App.app"
         self.iphone.mkdir()
         self.calls = []
+        self.ungrouped = Path("/nowhere")
         self.write_iphone()
 
     def write_iphone(self, **changes):
@@ -84,6 +99,10 @@ class BuildTests(unittest.TestCase):
         self.calls.append(args)
         result = Mock()
         entitlements = {"application-identifier": "TEAM." + WIDGET}
+        # The app and the widget both signed into the App Group, unless a
+        # test takes it off one of them.
+        if not any(str(arg).startswith(str(self.ungrouped)) for arg in args[-1:]):
+            entitlements[GROUPS] = [GROUP]
         if args[:2] == ["codesign", "--display"]:
             result.stdout = plistlib.dumps(entitlements)
         elif args[:2] == ["security", "cms"]:
@@ -109,6 +128,20 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(self.inspect(), widget)
         self.assertIn(["codesign", "--display", "--entitlements", ":-", str(widget)], self.calls)
         self.assertIn(["security", "cms", "-D", "-i", str(widget / "embedded.mobileprovision")], self.calls)
+
+    def test_a_signed_build_checks_the_app_group_on_the_widget_and_on_the_app(self):
+        widget = self.write_extension()
+        self.inspect()
+        self.assertIn(["codesign", "--display", "--entitlements", ":-", str(self.iphone)], self.calls)
+        self.ungrouped = widget
+        with self.assertRaisesRegex(ValueError, "com.tropos.app.LiveActivities signature carries no App Group"):
+            self.inspect()
+        # The app's own signing: its path is a prefix of the widget's, so
+        # the stand-in takes the group off the app's calls alone.
+        self.ungrouped = Path(str(self.iphone) + "/embedded.mobileprovision")
+        self.calls.clear()
+        with self.assertRaisesRegex(ValueError, "com.tropos.app profile carries no App Group"):
+            self.inspect()
 
     def test_an_unsigned_build_checks_packaging_without_codesign(self):
         self.write_extension()

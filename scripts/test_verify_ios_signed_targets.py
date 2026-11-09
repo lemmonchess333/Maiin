@@ -121,6 +121,22 @@ class SignedTargetsTests(unittest.TestCase):
         self.assertEqual(signed.count('CODE_SIGN_IDENTITY = "Apple Distribution";'), 9)
         self.assertEqual(signed.count('CODE_SIGN_IDENTITY = "iPhone Developer";'), 2)
 
+    def test_the_app_and_the_widget_ask_for_the_app_group_and_the_watch_for_none(self):
+        listed = targets.signed_targets(PBXPROJ)
+        groups = {t["bundle_id"]: targets.entitlement_app_groups(str(ROOT / t["entitlements"])) for t in listed}
+        self.assertEqual(groups, {APP: ["group.com.tropos.app"], WATCH: [], WIDGET: ["group.com.tropos.app"]})
+        self.assertEqual(targets.entitlement_app_groups(None), [])
+
+    def test_an_entitlements_file_that_cannot_be_read_stops_the_listing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            bad = Path(directory) / "Bad.entitlements"
+            bad.write_text("not a plist")
+            with self.assertRaisesRegex(targets.ProjectError, "not a readable entitlements file"):
+                targets.entitlement_app_groups(str(bad))
+            bad.write_bytes(plistlib.dumps({"com.apple.security.application-groups": "group.com.tropos.app"}))
+            with self.assertRaisesRegex(targets.ProjectError, "not as a list"):
+                targets.entitlement_app_groups(str(bad))
+
     def test_a_target_without_a_profile_stops_the_signing(self):
         with self.assertRaisesRegex(targets.ProjectError, f"No profile was made or given for {WIDGET}"):
             targets.sign_project(PBXPROJ, {APP: "A", WATCH: "W"})

@@ -367,6 +367,79 @@ describe("App Store Connect signing from the API key", () => {
     expect(mixed.calls.every((call) => call.method === "GET")).toBe(true);
   });
 
+  it("checks the App Group's App IDs carry it before making or revoking anything", async () => {
+    const base = account({
+      profiles: [{ id: "P-OLD", name: "Tropos CI 11AA22BB" }],
+      certificates: [{ id: "C-OLD", serialNumber: "11AA22BB" }],
+    });
+    const api = fakeApi((call) =>
+      call.path.endsWith("/bundleIdCapabilities")
+        ? { data: [{ id: "CAP-1", attributes: { capabilityType: "PUSH_NOTIFICATIONS" } }] }
+        : base(call)
+    );
+    await expect(
+      asc.prepareSigning({
+        request: api.request,
+        bundleIdentifiers: ["com.tropos.app", "com.tropos.app.watchkitapp"],
+        appGroups: { "com.tropos.app": ["group.com.tropos.app"] },
+        csr: "CSR",
+      })
+    ).rejects.toThrow(
+      /App ID com\.tropos\.app has no App Groups capability.*cannot make an App Group or assign one.*Configure, choose group\.com\.tropos\.app/
+    );
+    // Read only: nothing made, nothing revoked, and only the App ID that
+    // asks for a group was read for its capabilities.
+    expect(api.calls.every((c) => c.method === "GET")).toBe(true);
+    expect(api.calls.filter((c) => c.path.endsWith("/bundleIdCapabilities")).map((c) => c.path)).toEqual([
+      "/v1/bundleIds/B-APP/bundleIdCapabilities",
+    ]);
+  });
+
+  it("signs once every App Group App ID carries the capability", async () => {
+    const base = account();
+    const api = fakeApi((call) =>
+      call.path.endsWith("/bundleIdCapabilities")
+        ? { data: [{ id: "CAP-1", attributes: { capabilityType: "APP_GROUPS" } }] }
+        : base(call)
+    );
+    const result = await asc.prepareSigning({
+      request: api.request,
+      bundleIdentifiers: ["com.tropos.app", "com.tropos.app.watchkitapp"],
+      appGroups: asc.parseAppGroups("com.tropos.app=group.com.tropos.app"),
+      csr: "CSR",
+    });
+    expect(Object.keys(result.profiles)).toEqual(["com.tropos.app", "com.tropos.app.watchkitapp"]);
+  });
+
+  it("names the App Group when the App ID that needs one is missing", async () => {
+    const api = fakeApi(account());
+    await expect(
+      asc.prepareSigning({
+        request: api.request,
+        bundleIdentifiers: ["com.tropos.app.LiveActivities"],
+        appGroups: { "com.tropos.app.LiveActivities": ["group.com.tropos.app"] },
+        csr: "CSR",
+      })
+    ).rejects.toThrow(
+      /no App ID for com\.tropos\.app\.LiveActivities.*App Groups among them with group\.com\.tropos\.app assigned/
+    );
+    expect(api.calls.every((c) => c.method === "GET")).toBe(true);
+  });
+
+  it("reads the App Group bundle IDs as the workflow writes them", () => {
+    expect(
+      asc.parseAppGroups(
+        "com.tropos.app=group.com.tropos.app com.tropos.app.LiveActivities=group.com.tropos.app,group.x"
+      )
+    ).toEqual({
+      "com.tropos.app": ["group.com.tropos.app"],
+      "com.tropos.app.LiveActivities": ["group.com.tropos.app", "group.x"],
+    });
+    expect(asc.parseAppGroups("")).toEqual({});
+    expect(asc.parseAppGroups(undefined)).toEqual({});
+    expect(asc.parseAppGroups("com.tropos.app=")).toEqual({});
+  });
+
   it("names an App ID it registers as Apple allows: letters, numbers and spaces", () => {
     expect(asc.bundleIdName("com.tropos.app.LiveActivities")).toBe("Tropos LiveActivities");
     expect(asc.bundleIdName("com.tropos.app.notification-service")).toBe(
@@ -486,7 +559,7 @@ describe("deploy-ios.yml signs from the API key when no certificate is given", (
     }
   });
 
-  it("signs the Live Activity widget in every build, may register its App ID, and checks it twice", () => {
+  it("signs the Live Activity widget in every build, may register an App ID that needs no capability, and checks the widget twice", () => {
     expect(workflow).toContain("WIDGET_BUNDLE_ID: com.tropos.app.LiveActivities");
     const list = step("List the targets to sign");
     expect(list).toContain('--require "$WIDGET_BUNDLE_ID"');
@@ -512,6 +585,25 @@ describe("deploy-ios.yml signs from the API key when no certificate is given", (
     // Both of the pull request's simulator builds, standard and pilot.
     const compile = readFileSync(join(root, ".github/workflows/ios-native-compile.yml"), "utf8");
     expect(compile.match(/python3 scripts\/verify_ios_live_activity\.py --unsigned/g)?.length).toBe(2);
+  });
+
+  it("checks the App Group the app and the widget share before the signing, at the profiles and on the build", () => {
+    // Wid1: both App IDs carry the group, assigned once by the owner.
+    expect(workflow).toContain("APP_GROUP: group.com.tropos.app");
+    const list = step("List the targets to sign");
+    expect(list).toMatch(/t\["bundle_id"\] \+ "=" \+ ",".join\(t\["app_groups"\]\)/);
+    expect(list).toContain('echo "APP_GROUP_BUNDLE_IDS=$APP_GROUP_BUNDLE_IDS" >> "$GITHUB_ENV"');
+    const script = readFileSync(join(root, "scripts/ios/asc-signing.mjs"), "utf8");
+    expect(script).toContain("parseAppGroups(env.APP_GROUP_BUNDLE_IDS)");
+    // A profile without the group is named with the clicks, before the
+    // archive, rather than left to codesign.
+    const imported = step("Import signing certificate + provisioning profiles");
+    expect(imported).toContain("explain_mismatch(bundle, key, wanted)");
+    for (const name of [
+      "Verify archived iPhone and Watch signing",
+      "Verify exported iPhone and Watch signing",
+    ])
+      expect(step(name)).toContain('--app-group "$APP_GROUP"');
   });
 
   it("takes the .p8 and the Firebase plist pasted as text as well as in base64", () => {

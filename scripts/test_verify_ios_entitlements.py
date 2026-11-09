@@ -11,7 +11,7 @@ import tempfile
 import textwrap
 import unittest
 
-from verify_ios_entitlements import ASSOCIATED_DOMAINS, mismatched_entitlements
+from verify_ios_entitlements import APP_GROUPS, ASSOCIATED_DOMAINS, explain_mismatch, mismatched_entitlements
 
 ROOT = Path(__file__).resolve().parent.parent
 DOMAIN = "applinks:troposfit.com"
@@ -74,6 +74,31 @@ class IosEntitlementSigningTest(unittest.TestCase):
                 with self.subTest(key=key, invalid=invalid):
                     self.assertEqual(mismatched_entitlements(requested, {**allowed, key: invalid}), [key])
 
+    def test_a_profile_carrying_the_app_group_passes_beside_others_its_app_id_has(self):
+        requested = {APP_GROUPS: ["group.com.tropos.app"]}
+        self.assertEqual(mismatched_entitlements(requested, requested), [])
+        # A profile lists every group assigned to its App ID.
+        self.assertEqual(
+            mismatched_entitlements(requested, {APP_GROUPS: ["group.com.tropos.other", "group.com.tropos.app"]}),
+            [],
+        )
+
+    def test_a_profile_without_the_app_group_fails_and_says_where_to_assign_it(self):
+        requested = {APP_GROUPS: ["group.com.tropos.app"]}
+        for allowed in (None, [], ["group.com.tropos.other"], "group.com.tropos.app", ["*"], ["group.*"]):
+            with self.subTest(allowed=allowed):
+                self.assertEqual(mismatched_entitlements(requested, {APP_GROUPS: allowed}), [APP_GROUPS])
+        for asked in ([], ["*"], ["group.*"], ["com.tropos.app"], "group.com.tropos.app"):
+            with self.subTest(asked=asked):
+                self.assertEqual(
+                    mismatched_entitlements({APP_GROUPS: asked}, {APP_GROUPS: ["group.com.tropos.app"]}),
+                    [APP_GROUPS],
+                )
+        steps = explain_mismatch("com.tropos.app.LiveActivities", APP_GROUPS, requested)
+        for words in ("group.com.tropos.app", "com.tropos.app.LiveActivities", "Configure", "docs/ios-release.md"):
+            self.assertIn(words, steps)
+        self.assertIsNone(explain_mismatch("com.tropos.app", "aps-environment", {"aps-environment": "production"}))
+
     def test_unrequested_profile_capabilities_are_unchanged(self):
         self.assertEqual(mismatched_entitlements({}, {ASSOCIATED_DOMAINS: ["*"]}), [])
 
@@ -92,7 +117,7 @@ class IosEntitlementSigningTest(unittest.TestCase):
             (temporary / "signed-targets.json").write_text(json.dumps([
                 {"bundle_id": bundle, "entitlements": str(source)},
             ]))
-            for capability, expected_status in ((["*"], 0), ("*", 0), (None, 1)):
+            for capability, expected_status in ((["*"], 0), ("*", 0), (None, 1), ("no-app-group", 1)):
                 with self.subTest(capability=capability):
                     allowed = {
                         **requested,
@@ -102,6 +127,10 @@ class IosEntitlementSigningTest(unittest.TestCase):
                     }
                     if capability is None:
                         del allowed[ASSOCIATED_DOMAINS]
+                    elif capability == "no-app-group":
+                        # The App ID's capability on, but no group assigned.
+                        allowed[ASSOCIATED_DOMAINS] = "*"
+                        allowed[APP_GROUPS] = []
                     else:
                         allowed[ASSOCIATED_DOMAINS] = capability
                     profile = {
@@ -119,7 +148,10 @@ class IosEntitlementSigningTest(unittest.TestCase):
                         capture_output=True, text=True, timeout=10,
                     )
                     self.assertEqual(result.returncode, expected_status, result.stdout + result.stderr)
-                    if expected_status:
+                    if capability == "no-app-group":
+                        self.assertIn("carries no App Group group.com.tropos.app", result.stdout)
+                        self.assertIn("Configure", result.stdout)
+                    elif expected_status:
                         self.assertIn(ASSOCIATED_DOMAINS, result.stdout)
 
 
