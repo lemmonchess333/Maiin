@@ -474,7 +474,7 @@ function ScheduleLayoutSheetBody({
             <p className="text-sm font-medium text-foreground">
               Your new programme will use a{" "}
               <span className="text-lifting-strong">
-                {splitLabel(chooseSplit(pendingLiftDays))}
+                {splitLabel(chooseSplit(pendingLiftDays, profile?.equipment))}
               </span>{" "}
               split.
             </p>

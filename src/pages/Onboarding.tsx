@@ -29,6 +29,7 @@ import DailyTarget from "@/components/onboarding/DailyTarget";
 import { SETUP_REMINDER_TIME } from "@/lib/workoutReminderCopy";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { injuryChanges } from "@/features/program/injuryChanges";
+import { NO_EQUIPMENT_PULL_NOTE } from "@/features/program/noEquipment";
 import {
   equipmentLabel,
   experienceLabel,
@@ -1765,7 +1766,7 @@ export default function Onboarding() {
                     {
                       id: "no_equipment",
                       label: "No equipment",
-                      desc: "Just your bodyweight, and a sturdy table for rows.",
+                      desc: "Just your bodyweight, on the floor.",
                       art: "bodyweight-squat",
                     },
                   ] as const
@@ -1788,7 +1789,13 @@ export default function Onboarding() {
                 ))}
               </div>
               {/* With no equipment there is nothing to add: no bar, and no
-                  plates to make small. */}
+                  plates to make small. What the plan can't train is said
+                  here instead, once, where the setup is chosen. */}
+              {equipmentConfirmed && equipment === "no_equipment" && (
+                <p className="text-sm text-muted-foreground">
+                  {NO_EQUIPMENT_PULL_NOTE}
+                </p>
+              )}
               {equipmentConfirmed && takesSmallPlates(equipment) && (
                 <div className="space-y-3">
                   <div>

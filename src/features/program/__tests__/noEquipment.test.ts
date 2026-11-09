@@ -1,6 +1,7 @@
 /**
- * The no-equipment setup: someone who owns nothing is never given an
- * exercise they can't do, and still gets a whole plan, pulling included
+ * The no-equipment setup: someone who owns nothing is given floor moves
+ * only, and still gets a whole plan: push, squat, hinge, the trunk and the
+ * superman hold for the back. With nothing to pull on it has no pull
  * (`noEquipment.ts`).
  *
  * The plans are built end to end through `buildPlan`, so every pass that
@@ -21,6 +22,7 @@ import {
   BODYWEIGHT_EXERCISES_NEEDING_KIT,
   NO_EQUIPMENT_EXERCISE_IDS,
   NO_EQUIPMENT_LAST_RESORT,
+  NO_EQUIPMENT_PULL_NOTE,
   NO_EQUIPMENT_STAND_INS,
 } from "../noEquipment";
 import type { PrimaryGoal, ProgramExercise, WorkoutDay } from "../programTypes";
@@ -93,15 +95,17 @@ describe("what the setup allows", () => {
     }
   });
 
-  it("leaves out what hangs from a bar, dips on bars or lies on a bench", () => {
+  it("leaves out what hangs from a bar, dips on bars, lies on a bench or leans on a wall", () => {
     for (const id of [
       "pull-ups",
       "chin-ups",
       "leg-raise",
+      "inverted-row",
       "dips",
       "tricep-dips",
       "bench-dips",
       "weighted-push-ups",
+      "handstand-push-ups",
     ]) {
       expect(NO_EQUIPMENT_EXERCISE_IDS.has(id), id).toBe(false);
     }
@@ -171,27 +175,53 @@ describe("a no-equipment plan", () => {
     }
   }, 60_000);
 
-  it("pushes, pulls, squats, hinges and trains the trunk every week", () => {
+  it("pushes, squats, hinges, holds the back and trains the trunk every week", () => {
     for (const { goal, level, days } of matrix) {
       const week = lifts(plan(goal, level, days).programState.workouts);
       const at = `${goal}/${level}/${days}d`;
       const has = (...categories: string[]) =>
         week.some((ex) => categories.includes(ex.movementCategory));
       expect(has("horizontal_push", "vertical_push"), `${at} push`).toBe(true);
-      // The pull is the inverted row: the one the floor allows, under a table.
+      expect(has("knee_dominant"), `${at} squat or lunge`).toBe(true);
       expect(
-        week.some((ex) => ex.exerciseId === "inverted-row"),
-        `${at} pull`
+        week.some((ex) => ex.exerciseId === "glute-bridge"),
+        `${at} hinge`
       ).toBe(true);
-      expect(has("knee_dominant"), `${at} knee`).toBe(true);
-      expect(has("hip_dominant"), `${at} hip`).toBe(true);
       expect(has("core"), `${at} core`).toBe(true);
+      // The back work the floor allows: there is nothing to pull on.
+      expect(
+        week.some((ex) => ex.exerciseId === "superman-hold"),
+        `${at} back`
+      ).toBe(true);
+    }
+  });
+
+  it("has no pull, and no day named for one", () => {
+    // Insanity, T25 and Nike Training Club's no-equipment workouts have
+    // none either: pulling needs something to pull on.
+    for (const { goal, level, days } of matrix) {
+      const { workouts } = plan(goal, level, days).programState;
+      const at = `${goal}/${level}/${days}d`;
+      expect(
+        lifts(workouts)
+          .filter((ex) =>
+            ["horizontal_pull", "vertical_pull", "arms_biceps"].includes(
+              ex.movementCategory
+            )
+          )
+          .map((ex) => ex.name),
+        at
+      ).toEqual([]);
+      expect(
+        workouts.map((day) => day.dayName).filter((n) => /^Pull\b/.test(n)),
+        at
+      ).toEqual([]);
     }
   });
 
   it("covers every pattern in each session of a full-body week", () => {
     // Two and three days are full-body weeks: each session is the whole
-    // body, so each has a push, the row, a squat and a hinge.
+    // body, so each has a push, a squat and a hinge.
     for (const goal of GOALS)
       for (const level of LEVELS)
         for (const days of [2, 3]) {
@@ -202,7 +232,6 @@ describe("a no-equipment plan", () => {
                 categories.includes(ex.movementCategory)
               );
             expect(has("horizontal_push", "vertical_push"), at).toBe(true);
-            expect(has("horizontal_pull", "vertical_pull"), at).toBe(true);
             expect(has("knee_dominant"), at).toBe(true);
             expect(has("hip_dominant"), at).toBe(true);
           }
@@ -323,10 +352,17 @@ describe("the no-equipment option", () => {
   it.each([
     "src/pages/Onboarding.tsx",
     "src/components/program/ProgrammeSettings.tsx",
-  ])("names the table and no kit: %s", (path) => {
-    expect(copy(path)).toMatch(/table/);
+  ])("says bodyweight on the floor, and names no kit: %s", (path) => {
+    expect(copy(path)).toMatch(/bodyweight/i);
+    expect(copy(path)).toMatch(/floor/);
     expect(copy(path)).not.toMatch(
-      /barbell|dumbbell|kettlebell|cable|machine|band|bench|\bbar\b/i
+      /barbell|dumbbell|kettlebell|cable|machine|band|bench|table|chair|\bbar\b/i
+    );
+  });
+
+  it("says once that it has no pulling, and how a bar adds it", () => {
+    expect(NO_EQUIPMENT_PULL_NOTE).toBe(
+      "This plan has no pulling: pull-ups and rows need something to pull on. A doorway pull-up bar adds them: choose Minimal, then A pull-up bar."
     );
   });
 });

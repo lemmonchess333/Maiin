@@ -28,7 +28,10 @@ import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
 import { track } from "@/lib/lifecycleAnalytics";
 import { loadWordFilter } from "@/lib/wordFilter";
 import { SETUP, SETUP_OPTIONS, STARTER } from "@/test/journeyScreens";
-import { NO_EQUIPMENT_EXERCISE_IDS } from "@/features/program/noEquipment";
+import {
+  NO_EQUIPMENT_EXERCISE_IDS,
+  NO_EQUIPMENT_PULL_NOTE,
+} from "@/features/program/noEquipment";
 import type { WorkoutDay } from "@/features/program/programTypes";
 import {
   addLocalDays,
@@ -567,6 +570,8 @@ describe("inspect the generated week", () => {
     fireEvent.click(screen.getByRole("button", { name: /^No equipment/ }));
     // No bar to have, and no plates to make small.
     expect(screen.queryByText("What do you have?")).toBeNull();
+    // What it can't train, said where the setup is chosen.
+    expect(screen.getByText(NO_EQUIPMENT_PULL_NOTE)).toBeInTheDocument();
     expect(
       screen.queryByRole("switch", { name: "A barbell and a rack" })
     ).toBeNull();

@@ -3,8 +3,8 @@
  *
  * The person picks "No equipment" at setup, and the real
  * `completeOnboarding` stores the plan. Every exercise in it is one the
- * floor, a wall, a step and a sturdy table allow (`noEquipment.ts`), its
- * pull is the inverted row, and Train shows the first session as stored.
+ * floor allows (`noEquipment.ts`), its back work is the superman hold,
+ * it has no pull, and Train shows the first session as stored.
  */
 import { test, expect } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
@@ -24,9 +24,7 @@ import { emulatorAdmin } from "../helpers/realCallables";
 import { nextUpIndex } from "../../src/features/program/nextUpCursor";
 import { NO_EQUIPMENT_EXERCISE_IDS } from "../../src/features/program/noEquipment";
 
-test("No equipment: a week of bodyweight work, pulling included", async ({
-  page,
-}) => {
+test("No equipment: a week of floor work, with no pull", async ({ page }) => {
   test.skip(!emulatorActive, "needs the local emulators");
   test.setTimeout(5 * 60_000);
   let account: JourneyAccount | null = null;
@@ -59,7 +57,8 @@ test("No equipment: a week of bodyweight work, pulling included", async ({
     );
     expect(ids.length).toBeGreaterThan(0);
     expect(ids.filter((id) => !NO_EQUIPMENT_EXERCISE_IDS.has(id))).toEqual([]);
-    expect(ids).toContain("inverted-row");
+    expect(ids).toContain("superman-hold");
+    expect(state.workouts.some((day) => /^Pull/.test(day.dayName))).toBe(false);
 
     await expectTrainShowsSession(page, state.workouts[nextUpIndex(state)]);
     expect(pageErrors(page)).toEqual([]);

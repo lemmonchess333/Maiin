@@ -34,7 +34,7 @@ const BEGINNER: LiftPersona = {
   lifter: { trainingAge: "novice", start1RM: {}, seedRir: 4 },
   sessionShare: 0.9,
   calibrates: false,
-  tracked: ["push-ups", "inverted-row", "bodyweight-squat", "glute-bridge"],
+  tracked: ["push-ups", "bodyweight-squat", "glute-bridge"],
 };
 
 const INTERMEDIATE: LiftPersona = {
@@ -71,7 +71,8 @@ describe.each([BEGINNER, INTERMEDIATE].map((p) => [p.name, p] as const))(
           .map((l) => l.exerciseId)
           .filter((id) => !NO_EQUIPMENT_EXERCISE_IDS.has(id))
       ).toEqual([]);
-      expect(lifts.some((l) => l.exerciseId === "inverted-row")).toBe(true);
+      // Floor moves only: the back work is the superman hold.
+      expect(lifts.some((l) => l.exerciseId === "superman-hold")).toBe(true);
     });
 
     it("climbs in reps on the lifts it does every week", () => {

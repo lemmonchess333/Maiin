@@ -396,7 +396,18 @@ export const PERFORMANCE_HISTORY_CAP = 10;
    SPLIT SELECTION
 ================================ */
 
-export function chooseSplit(weeklyTarget: number): SplitType {
+/**
+ * With no equipment there is nothing to pull on (`noEquipment.ts`), so a
+ * week of five or six days has no Pull day to build: it runs upper / lower
+ * twice and the rest as full-body days, every muscle still about twice a
+ * week. Two to four days build as any setup's do.
+ */
+export function chooseSplit(
+  weeklyTarget: number,
+  equipment?: string
+): SplitType {
+  if (equipment === "no_equipment" && Math.min(6, weeklyTarget) >= 5)
+    return "upper_lower_fb";
   if (weeklyTarget <= 0) return "full_body"; // run-only athlete — no lift days
   // Cap at 6. 7 hard lift days/week is the wrong default for every tier
   // (beginner through advanced) — recovery needs at least one non-lift
@@ -436,6 +447,8 @@ export function splitLabel(split: SplitType): string {
       return "Push / Pull / Legs ×2";
     case "ppl_x2_fb":
       return "Push / Pull / Legs ×2 + Full Body";
+    case "upper_lower_fb":
+      return "Upper / Lower + Full Body";
   }
 }
 
@@ -445,8 +458,15 @@ export function splitLabel(split: SplitType): string {
  * deliberate coaching choice rather than an ignored preference. Mirrors
  * `chooseSplit`; the thread is weekly per-muscle FREQUENCY.
  */
-export function splitRationale(weeklyLiftDays: number): string {
+export function splitRationale(
+  weeklyLiftDays: number,
+  equipment?: string
+): string {
   const d = Math.min(6, Math.max(0, Math.round(weeklyLiftDays)));
+  if (chooseSplit(d, equipment) === "upper_lower_fb")
+    return d === 5
+      ? "Five days runs upper / lower twice and a full-body day — each muscle about twice a week."
+      : "Six days runs upper / lower twice and two full-body days — each muscle about twice a week.";
   switch (d) {
     case 0:
       return "No lift days set — add some to build a split.";
@@ -1889,7 +1909,7 @@ export function generateProgram(
   // `primaryGoal` wasn't passed (e.g. legacy call sites).
   const profile = goalProfileFor(primaryGoal);
 
-  const splitType = chooseSplit(weeklyTarget);
+  const splitType = chooseSplit(weeklyTarget, limits?.equipment);
 
   const buildSplit = (existingWorkouts?: WorkoutDay[]): WorkoutDay[] => {
     let workouts: WorkoutDay[];
@@ -1928,6 +1948,19 @@ export function generateProgram(
         workouts = [...ppl, buildLegsB(profile, existingWorkouts)];
         break;
       }
+      case "upper_lower_fb":
+        // The full-body days start at week position 4: same offset rule as
+        // `ppl_ul`.
+        workouts = [
+          ...buildUpperLower(profile, existingWorkouts),
+          ...buildFullBody(
+            profile,
+            Math.min(weeklyTarget, 6) - 4,
+            existingWorkouts?.slice(4),
+            experience
+          ),
+        ];
+        break;
       case "ppl_x2_fb": {
         // Retained for backward-compat — `chooseSplit` no longer returns
         // this (capped at 6 days) but existing programState rows on disk

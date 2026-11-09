@@ -86,6 +86,7 @@ import {
 } from "@/features/program/represcribe";
 import { runTuningFromProfile } from "@/features/program/runScheduler";
 import { takesBarbellAtHome } from "@/features/program/programLabels";
+import { NO_EQUIPMENT_PULL_NOTE } from "@/features/program/noEquipment";
 import {
   chooseSplit,
   splitLabel,
@@ -401,7 +402,7 @@ const EQUIPMENT_OPTIONS: {
   {
     id: "no_equipment",
     label: "No equipment",
-    desc: "Bodyweight, and a sturdy table for rows",
+    desc: "Bodyweight, on the floor",
     icon: <PersonStanding size={20} style={{ color: THEME.teal }} />,
   },
 ];
@@ -600,12 +601,12 @@ export default function ProgrammeSettings({
   // does NOT honour an explicit preference in this rebuild path. Surface the
   // split it WILL generate for the current draft so the picker reads honestly
   // rather than implying control the generation doesn't grant.
-  const generatedSplitLabel = splitLabel(chooseSplit(liftDays));
+  const generatedSplitLabel = splitLabel(chooseSplit(liftDays, equipment));
   // Pgm5 (Q1): the split is shown, not chosen. Prefer the actual current
   // structure (programState.splitType); fall back to what the engine would
   // derive for the saved lift-days.
   const currentSplitLabel = splitLabel(
-    programState?.splitType ?? chooseSplit(saved.liftDays)
+    programState?.splitType ?? chooseSplit(saved.liftDays, saved.equipment)
   );
 
   // P2: weekly-layout preview counts, derived from the draft lift/run days
@@ -1141,7 +1142,7 @@ export default function ProgrammeSettings({
               {currentSplitLabel}
             </p>
             <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-              {splitRationale(liftDays)}
+              {splitRationale(liftDays, equipment)}
               {liftDays !== saved.liftDays && (
                 <>
                   {" "}
@@ -1229,6 +1230,12 @@ export default function ProgrammeSettings({
               />
             ))}
           </div>
+          {/* What a no-equipment plan can't train, where the setup is chosen. */}
+          {equipment === "no_equipment" && (
+            <p className="mt-3 text-sm text-muted-foreground">
+              {NO_EQUIPMENT_PULL_NOTE}
+            </p>
+          )}
           {/* Lift4 (11): "what do you have?" beside the setups. */}
           {takesBarbellAtHome(equipment) && (
             <div className="mt-3 flex items-center justify-between">

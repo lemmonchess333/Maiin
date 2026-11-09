@@ -15,7 +15,14 @@ import type { CanonicalMuscle } from "./muscleTaxonomy";
 export type { MovementCategory } from "@/lib/exerciseMovementCategory";
 
 export type SplitType =
-  "full_body" | "upper_lower" | "ppl" | "ppl_ul" | "ppl_x2" | "ppl_x2_fb";
+  | "full_body"
+  | "upper_lower"
+  | "ppl"
+  | "ppl_ul"
+  | "ppl_x2"
+  | "ppl_x2_fb"
+  // No equipment, five or six days: no Pull day to build (`chooseSplit`).
+  | "upper_lower_fb";
 
 /**
  * User-facing split *preference* vocabulary — distinct from the engine's
