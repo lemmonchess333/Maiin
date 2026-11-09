@@ -1,12 +1,13 @@
 {
   "src": "form-art/motion/deadlift.webp",
   "still": "form-art/deadlift.webp",
-  "frames": 37,
+  "frames": 34,
   "fps": 12,
   "frameWidth": 480,
-  "frameHeight": 452,
-  "cols": 7,
-  "clipFrames": [5, 42],
-  "clipSha256": "705dcbeb6dee28bb439f8442feb8b9b529f82055eb2e26c0815f9ff22b16ed75",
-  "sha256": "91515f19ced1c7841e8af811f5e890727902c64c96d05a197d198d4258e336e1"
+  "frameHeight": 476,
+  "cols": 6,
+  "clipFrames": [0, -1],
+  "clipSha256": "b8b449f87ab75e60f7d442eb553907924af54172058cb3bdbe5a21c073e70bc2",
+  "thenSha256": "d5d6cc22e1dd2d8f451cf1763edd1026311509945c51fc7c46adf4353ab6c4c7",
+  "sha256": "eb85eae41416895077f5bc37e5d13f968cc8476de40a579cb0259798488d5655"
 }

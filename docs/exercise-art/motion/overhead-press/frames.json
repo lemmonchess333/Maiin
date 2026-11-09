@@ -1,12 +1,13 @@
 {
   "src": "form-art/motion/overhead-press.webp",
   "still": "form-art/overhead-press.webp",
-  "frames": 37,
+  "frames": 34,
   "fps": 12,
   "frameWidth": 329,
   "frameHeight": 480,
-  "cols": 7,
-  "clipFrames": [0, 37],
-  "clipSha256": "9d9da811bdb065819aa9dd7fbb866da0a919d915db708118f5d79580ffd005c2",
-  "sha256": "d5a1b23a869192487a433b51dde84ef2264498b403635fd35622ba43e7d4f29a"
+  "cols": 6,
+  "clipFrames": [0, -1],
+  "clipSha256": "dd498644da7f1d06fe233dec7b2e6cb42adf76d7231e1bd5106d6dad41192cbe",
+  "thenSha256": "1f70a65ce37689d23bb978574aaefa836573565490e51f001235d5d8a07758e4",
+  "sha256": "945fbd56c89088caf8247f772e9f0a54c996d646e0d3e2539d4b8ede7658c140"
 }

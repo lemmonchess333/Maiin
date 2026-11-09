@@ -1,12 +1,13 @@
 {
   "src": "form-art/motion/squat.webp",
   "still": "form-art/squat.webp",
-  "frames": 35,
+  "frames": 34,
   "fps": 12,
-  "frameWidth": 334,
+  "frameWidth": 308,
   "frameHeight": 480,
   "cols": 6,
-  "clipFrames": [2, 37],
-  "clipSha256": "9ccc4a618fa17be281db4e2e52906b4ae8e0226a967dc6f46488d66b1f2b2521",
-  "sha256": "deb25814b19b23ab3f06a6cf6bd0ec67926faf55b74a61ba806693b6c830cd02"
+  "clipFrames": [0, -1],
+  "clipSha256": "2ab99c2b43bac02e0a690a515695109ac7fc2ebf18c1dd92b222b8a4d1c419da",
+  "thenSha256": "61ccbc0b94d060fafa281ed3c84c94464c298bb4d61aba85de8b7626264c4fa0",
+  "sha256": "e60a3d21e4f09593e38488faae1d60f6b70c63a173521892241d7364666fd57f"
 }
