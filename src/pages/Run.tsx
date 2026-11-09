@@ -281,6 +281,8 @@ export default function Run() {
     !runHistory.failed &&
     runHistory.runCount === 0;
   const [locked, setLocked] = useState(false);
+  /** Bumped by a tap on the map: RunBottomSheet rises to full. */
+  const [panelExpandRequest, setPanelExpandRequest] = useState(0);
   const unlockButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (locked) unlockButtonRef.current?.focus();
@@ -2504,6 +2506,7 @@ export default function Run() {
             <RunMap
               points={gps.points}
               currentPoint={gps.currentPoint}
+              onMapTap={() => setPanelExpandRequest((n) => n + 1)}
               interactive={true}
               liveControls={true}
               distanceMarkers={true}
@@ -2643,6 +2646,7 @@ export default function Run() {
             )}
 
             <RunBottomSheet
+              expandRequest={panelExpandRequest}
               elapsed={timer.elapsed}
               distance={currentDistance}
               points={gps.points}

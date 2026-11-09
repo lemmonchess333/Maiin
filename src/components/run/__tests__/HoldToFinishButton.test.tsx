@@ -79,6 +79,23 @@ describe("HoldToFinishButton", () => {
     expect(onFinish).not.toHaveBeenCalled();
   });
 
+  it("a hold let go early only resets: no dialog, no finish", () => {
+    const { onFinish, onRequestConfirm, btn } = setup();
+    fireEvent.pointerDown(btn);
+    now = 900; // a real hold, short of the threshold
+    fireEvent.pointerUp(btn);
+    flush();
+    fireEvent.click(btn);
+    expect(onRequestConfirm).not.toHaveBeenCalled();
+    expect(onFinish).not.toHaveBeenCalled();
+    // The next tap still opens the dialog.
+    fireEvent.pointerDown(btn);
+    now = 1000;
+    fireEvent.pointerUp(btn);
+    fireEvent.click(btn);
+    expect(onRequestConfirm).toHaveBeenCalledTimes(1);
+  });
+
   it("keyboard/AT activation (click with no hold) opens the confirm dialog", () => {
     const { onFinish, onRequestConfirm, btn } = setup();
     fireEvent.click(btn);
