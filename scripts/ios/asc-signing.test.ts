@@ -300,6 +300,80 @@ describe("App Store Connect signing from the API key", () => {
     expect(api.calls.every((call) => call.method === "GET")).toBe(true);
   });
 
+  it("registers an App ID that needs no capability, then signs it with the rest", async () => {
+    const base = account();
+    const api = fakeApi((call) => {
+      if (call.method === "POST" && call.path === "/v1/bundleIds") {
+        return {
+          data: { id: "B-LIVE", attributes: { identifier: "com.tropos.app.LiveActivities" } },
+        };
+      }
+      return base(call);
+    });
+    const result = await asc.prepareSigning({
+      request: api.request,
+      bundleIdentifiers: ["com.tropos.app", "com.tropos.app.watchkitapp", "com.tropos.app.LiveActivities"],
+      register: ["com.tropos.app.LiveActivities"],
+      csr: "CSR",
+    });
+    const registered = api.calls.filter((c) => c.method === "POST" && c.path === "/v1/bundleIds");
+    expect(registered.map((c) => c.body)).toEqual([
+      {
+        data: {
+          type: "bundleIds",
+          attributes: {
+            identifier: "com.tropos.app.LiveActivities",
+            name: "Tropos LiveActivities",
+            platform: "IOS",
+          },
+        },
+      },
+    ]);
+    const created = api.calls.filter((c) => c.method === "POST" && c.path === "/v1/profiles");
+    expect(
+      created.map(
+        (c) =>
+          (c.body as { data: { relationships: { bundleId: { data: { id: string } } } } }).data
+            .relationships.bundleId.data.id
+      )
+    ).toEqual(["B-APP", "B-WATCH", "B-LIVE"]);
+    expect(Object.keys(result.profiles)).toEqual([
+      "com.tropos.app",
+      "com.tropos.app.watchkitapp",
+      "com.tropos.app.LiveActivities",
+    ]);
+  });
+
+  it("registers no App ID Apple has, and none before every missing one may be", async () => {
+    const found = fakeApi(account());
+    await asc.prepareSigning({
+      request: found.request,
+      bundleIdentifiers: ["com.tropos.app"],
+      register: ["com.tropos.app"],
+      csr: "CSR",
+    });
+    expect(found.calls.some((c) => c.path === "/v1/bundleIds" && c.method === "POST")).toBe(false);
+
+    // One that may be registered and one that may not: nothing is made.
+    const mixed = fakeApi(account());
+    await expect(
+      asc.prepareSigning({
+        request: mixed.request,
+        bundleIdentifiers: ["com.tropos.app.LiveActivities", "com.tropos.app.missing"],
+        register: ["com.tropos.app.LiveActivities"],
+        csr: "CSR",
+      })
+    ).rejects.toThrow(/no App ID for com\.tropos\.app\.missing/);
+    expect(mixed.calls.every((call) => call.method === "GET")).toBe(true);
+  });
+
+  it("names an App ID it registers as Apple allows: letters, numbers and spaces", () => {
+    expect(asc.bundleIdName("com.tropos.app.LiveActivities")).toBe("Tropos LiveActivities");
+    expect(asc.bundleIdName("com.tropos.app.notification-service")).toBe(
+      "Tropos notification service"
+    );
+  });
+
   it("follows the API's pages", async () => {
     const api = fakeApi(({ method, path }) => {
       if (path.startsWith("/v1/bundleIds")) return bundleIds;
@@ -410,6 +484,34 @@ describe("deploy-ios.yml signs from the API key when no certificate is given", (
     ]) {
       expect(step(name)).toContain("python3 scripts/verify_ios_watch.py");
     }
+  });
+
+  it("signs the Live Activity widget in every build, may register its App ID, and checks it twice", () => {
+    expect(workflow).toContain("WIDGET_BUNDLE_ID: com.tropos.app.LiveActivities");
+    const list = step("List the targets to sign");
+    expect(list).toContain('--require "$WIDGET_BUNDLE_ID"');
+    // Only a target with no entitlements needs no App ID capability.
+    expect(list).toMatch(/if not t\["entitlements"\]/);
+    expect(list).toContain(
+      'echo "REGISTERABLE_BUNDLE_IDS=$REGISTERABLE_BUNDLE_IDS" >> "$GITHUB_ENV"'
+    );
+    const script = readFileSync(join(root, "scripts/ios/asc-signing.mjs"), "utf8");
+    expect(script).toContain("env.REGISTERABLE_BUNDLE_IDS");
+    // The owner's own secrets hold no widget profile: said in the first
+    // minute, before npm ci and a build.
+    expect(step("Check the signing secrets are set")).toMatch(
+      /your own signing secrets hold profiles for \$BUNDLE_ID and \$WATCH_BUNDLE_ID only/
+    );
+    for (const name of [
+      "Verify archived iPhone and Watch signing",
+      "Verify exported iPhone and Watch signing",
+    ]) {
+      expect(step(name)).toContain("python3 scripts/verify_ios_live_activity.py");
+      expect(step(name)).toContain('--bundle-id "$WIDGET_BUNDLE_ID"');
+    }
+    // Both of the pull request's simulator builds, standard and pilot.
+    const compile = readFileSync(join(root, ".github/workflows/ios-native-compile.yml"), "utf8");
+    expect(compile.match(/python3 scripts\/verify_ios_live_activity\.py --unsigned/g)?.length).toBe(2);
   });
 
   it("takes the .p8 and the Firebase plist pasted as text as well as in base64", () => {

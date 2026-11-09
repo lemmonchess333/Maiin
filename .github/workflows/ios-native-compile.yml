@@ -45,9 +45,11 @@ jobs:
       # The same project builds both kinds of TestFlight build: a standard
       # one, which embeds no Watch app and carries the short Health text, and
       # the pilot, which overrides the release gate exactly as deploy-ios.yml
-      # does. Standard first: the pilot's embedded Watch app would otherwise
-      # be left behind in the shared products folder and read as the standard
-      # build's. Sharing the derived data lets the pilot reuse what it can.
+      # does. Both embed the Live Activity widget, and this is the only
+      # place its Swift is compiled before a TestFlight run. Standard first:
+      # the pilot's embedded Watch app would otherwise be left behind in the
+      # shared products folder and read as the standard build's. Sharing the
+      # derived data lets the pilot reuse what it can.
       - name: Compile a standard build for simulator
         run: |
           set -euo pipefail
@@ -66,6 +68,11 @@ jobs:
           python3 scripts/verify_ios_watch.py --unsigned \
             --app "$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app" \
             --expected-connected-training NO
+      # Every build embeds the Live Activity widget, the standard one too.
+      - name: Check the standard build embeds the Live Activity widget
+        run: |
+          python3 scripts/verify_ios_live_activity.py --unsigned \
+            --app "$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app"
       - name: Compile the connected training pilot for simulator
         run: |
           set -euo pipefail
@@ -84,3 +91,7 @@ jobs:
           python3 scripts/verify_ios_watch.py --unsigned \
             --app "$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app" \
             --expected-connected-training YES
+      - name: Check the pilot build embeds the Live Activity widget
+        run: |
+          python3 scripts/verify_ios_live_activity.py --unsigned \
+            --app "$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app"
