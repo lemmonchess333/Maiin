@@ -62,3 +62,14 @@ export function cardClasses({
   const { radius, padding } = SIZE_CLASSES[size];
   return cn(radius, padded && padding, TONE_CLASSES[tone], className);
 }
+
+/**
+ * One card radius for a whole screen (§14m rule 20: 16pt cards, 10-12pt
+ * inside them). The primitive's hero card is `rounded-2xl`, 22pt; Home,
+ * Food and Train moved their cards to 16pt one by one (#3084, #3089).
+ * History draws about twenty kinds of card from as many components, some
+ * of them loaded late, so the screen sets it once on its root instead:
+ * every `rounded-2xl` inside takes `rounded-xl`. Sheets open in a portal,
+ * outside the root, and keep theirs.
+ */
+export const ONE_CARD_RADIUS = "[&_.rounded-2xl]:rounded-xl";

@@ -56,9 +56,15 @@ async function step<T>(name: string, work: () => Promise<T>): Promise<T> {
 }
 
 // Dynamic import keeps the native plugin out of the web bundle entirely.
+// Resolves to a holder, never the plugin itself: a Capacitor plugin is a
+// Proxy that answers every property, `then` included, so a promise resolved
+// with it calls `Purchases.then()` on the native side ("not implemented on
+// ios") and never settles. RevenueCat was never set up on the first
+// TestFlight builds for exactly this; haptic.ts and
+// systemChrome.ts hold their plugins the same way.
 async function loadPurchases() {
   const mod = await import("@revenuecat/purchases-capacitor");
-  return mod.Purchases;
+  return { Purchases: mod.Purchases };
 }
 
 /**
@@ -69,7 +75,7 @@ async function loadPurchases() {
 export async function configureRevenueCat(appUserID: string): Promise<void> {
   if (!isRevenueCatEnabled() || configured) return;
   try {
-    const Purchases = await loadPurchases();
+    const { Purchases } = await loadPurchases();
     await step("set up", () =>
       Purchases.configure({ apiKey: RC_PUBLIC_KEY!, appUserID })
     );
@@ -93,7 +99,7 @@ export async function rcLogIn(appUserID: string): Promise<boolean> {
       // actual result so the identity hook can retry this same account.
       return configured;
     }
-    const Purchases = await loadPurchases();
+    const { Purchases } = await loadPurchases();
     await step("switch account", () => Purchases.logIn({ appUserID }));
     return true;
   } catch (err) {
@@ -106,7 +112,7 @@ export async function rcLogIn(appUserID: string): Promise<boolean> {
 export async function rcLogOut(): Promise<void> {
   if (!isRevenueCatEnabled() || !configured) return;
   try {
-    const Purchases = await loadPurchases();
+    const { Purchases } = await loadPurchases();
     await Purchases.logOut();
   } catch (err) {
     logger.error("[RevenueCat] logOut failed", err);
@@ -180,7 +186,7 @@ export async function rcPurchase(
   }
   try {
     traceBoot(`RevenueCat: buying ${productId} (set up: ${configured})`);
-    const Purchases = await loadPurchases();
+    const { Purchases } = await loadPurchases();
     const offerings = await step("plans for the purchase", () =>
       Purchases.getOfferings()
     );
@@ -240,7 +246,7 @@ export async function rcRestore(): Promise<RcPurchaseOutcome> {
     };
   }
   try {
-    const Purchases = await loadPurchases();
+    const { Purchases } = await loadPurchases();
     const { customerInfo } = await Purchases.restorePurchases();
     const isProActive = hasProEntitlement(customerInfo);
     return isProActive
@@ -277,7 +283,7 @@ export async function rcGetLocalizedPrices(): Promise<Record<
 > | null> {
   if (!isRevenueCatEnabled()) return null;
   try {
-    const Purchases = await loadPurchases();
+    const { Purchases } = await loadPurchases();
     const offerings = await step("plans for the prices", () =>
       Purchases.getOfferings()
     );
@@ -321,7 +327,7 @@ export async function rcTrialEligibility(
 ): Promise<Record<string, StoreTrialEligibility> | null> {
   if (!isRevenueCatEnabled()) return null;
   try {
-    const Purchases = await loadPurchases();
+    const { Purchases } = await loadPurchases();
     const statuses = await Purchases.checkTrialOrIntroductoryPriceEligibility({
       productIdentifiers: [...productIds],
     });

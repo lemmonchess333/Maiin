@@ -9,18 +9,21 @@
  * plugin / a rejecting bridge can never throw into the run.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { capacitorPlugin } from "@/test/capacitorPlugin";
 
 const startActivity = vi.fn();
 const updateActivity = vi.fn();
 const endActivity = vi.fn();
 
-vi.mock("capacitor-live-activities", () => ({
-  LiveActivities: {
-    startActivity: (...a: unknown[]) => startActivity(...a),
-    updateActivity: (...a: unknown[]) => updateActivity(...a),
-    endActivity: (...a: unknown[]) => endActivity(...a),
-  },
-}));
+vi.mock("capacitor-live-activities", () => {
+  return {
+    LiveActivities: capacitorPlugin({
+      startActivity: (...a: unknown[]) => startActivity(...a),
+      updateActivity: (...a: unknown[]) => updateActivity(...a),
+      endActivity: (...a: unknown[]) => endActivity(...a),
+    }),
+  };
+});
 
 vi.mock("@/lib/platform", () => ({
   isNativePlatform: vi.fn(() => true),

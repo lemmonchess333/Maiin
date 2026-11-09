@@ -263,6 +263,9 @@ export default function TrainingHistory() {
             ariaLabel="Session type"
             value={filters.sport}
             onChange={(sport) => change({ sport })}
+            /* 44pt, the dates button's height beside it, with the 36pt
+               track History's other rows take. */
+            size="sm"
             className="flex-1 basis-[11rem]"
             options={[
               { value: "all", label: "All" },
@@ -508,10 +511,12 @@ export default function TrainingHistory() {
                 ? {
                     label: "Clear search",
                     onClick: () => change({ search: "" }),
+                    variant: "neutral",
                   }
                 : lastDay
                   ? {
                       label: "Jump to your last session",
+                      variant: "neutral",
                       onClick: () =>
                         change({
                           from: localDateString(
@@ -523,6 +528,7 @@ export default function TrainingHistory() {
                   : {
                       label: "Change dates",
                       onClick: () => setDatesOpen(true),
+                      variant: "neutral",
                     }
             }
           />

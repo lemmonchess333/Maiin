@@ -47,9 +47,13 @@ function message(error: unknown): string {
  * loads only when the native CustomProvider actually requests a token. */
 export function registerNativeAppCheck(): void {
   if (!isNativePlatform()) return;
-  let ready: Promise<
-    (typeof import("@capacitor-firebase/app-check"))["FirebaseAppCheck"]
-  > | null = null;
+  // A holder, never the plugin: a promise resolved with a Capacitor plugin
+  // calls its `then` on the native side and never settles. Set-up stalled
+  // here on every request of the first TestFlight builds, and
+  // each Auth request then waited out the 8-second limit below.
+  let ready: Promise<{
+    plugin: (typeof import("@capacitor-firebase/app-check"))["FirebaseAppCheck"];
+  }> | null = null;
   setNativeAppCheckProvider(
     () =>
       new CustomProvider({
@@ -63,7 +67,7 @@ export function registerNativeAppCheck(): void {
                 isTokenAutoRefreshEnabled: true,
                 debugToken: false,
               });
-              return FirebaseAppCheck;
+              return { plugin: FirebaseAppCheck };
             })
             .catch((error: unknown) => {
               ready = null;
@@ -73,7 +77,7 @@ export function registerNativeAppCheck(): void {
           let expireTimeMillis: number | undefined;
           try {
             const pendingSetUp = ready;
-            const native = await withinLimit(
+            const { plugin: native } = await withinLimit(
               pendingSetUp,
               "App Check set-up"
             ).catch((error: unknown) => {

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { capacitorPlugin } from "@/test/capacitorPlugin";
 
 const mock = vi.hoisted(() => ({
   native: true,
@@ -8,9 +9,14 @@ const mock = vi.hoisted(() => ({
 }));
 vi.mock("../platform", () => ({ isNativePlatform: () => mock.native }));
 vi.mock("../appCheck", () => ({ setNativeAppCheckProvider: mock.register }));
-vi.mock("@capacitor-firebase/app-check", () => ({
-  FirebaseAppCheck: { initialize: mock.initialize, getToken: mock.getToken },
-}));
+vi.mock("@capacitor-firebase/app-check", () => {
+  return {
+    FirebaseAppCheck: capacitorPlugin({
+      initialize: mock.initialize,
+      getToken: mock.getToken,
+    }),
+  };
+});
 vi.mock("firebase/app-check", () => ({
   CustomProvider: class {
     options: { getToken: () => Promise<unknown> };

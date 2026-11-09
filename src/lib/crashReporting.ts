@@ -32,16 +32,18 @@ export type CrashReportingStatus =
   | "active" // native, the plugin answered
   | "error"; // native, the plugin failed to load or answer
 
-let plugin: Promise<Crashlytics | null> | null = null;
+// A holder, never the plugin: a promise resolved with a Capacitor plugin
+// calls its `then` on the native side and never settles (revenuecat.ts).
+let plugin: Promise<{ crashlytics: Crashlytics } | null> | null = null;
 let status: CrashReportingStatus = "pending";
 
-function crashlytics(): Promise<Crashlytics | null> {
+function crashlytics(): Promise<{ crashlytics: Crashlytics } | null> {
   if (!isNativePlatform()) {
     status = "web";
     return Promise.resolve(null);
   }
   plugin ??= import("@capacitor-firebase/crashlytics").then(
-    (mod) => mod.FirebaseCrashlytics,
+    (mod) => ({ crashlytics: mod.FirebaseCrashlytics }),
     (err: unknown) => {
       status = "error";
       logger.warn("[Crashlytics] plugin failed to load:", err);
@@ -55,7 +57,7 @@ async function call(
   request: (c: Crashlytics) => Promise<unknown>
 ): Promise<void> {
   try {
-    const c = await crashlytics();
+    const c = (await crashlytics())?.crashlytics;
     if (!c) return;
     await request(c);
     status = "active";

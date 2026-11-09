@@ -10,14 +10,16 @@ export function isNativePushAvailable(): boolean {
   );
 }
 
+/** A holder, never the plugin: a promise resolved with a Capacitor plugin
+ *  calls its `then` on the native side and never settles (revenuecat.ts). */
 async function messaging() {
   const { FirebaseMessaging } = await import("@capacitor-firebase/messaging");
-  return FirebaseMessaging;
+  return { plugin: FirebaseMessaging };
 }
 
 export async function nativePushPermission(request = false): Promise<boolean> {
   if (!isNativePushAvailable()) return false;
-  const plugin = await messaging();
+  const { plugin } = await messaging();
   const result = request
     ? await plugin.requestPermissions()
     : await plugin.checkPermissions();
@@ -26,7 +28,7 @@ export async function nativePushPermission(request = false): Promise<boolean> {
 
 /** Firebase's FCM token, never the APNs device token. */
 export async function getNativePushToken(): Promise<string> {
-  const plugin = await messaging();
+  const { plugin } = await messaging();
   try {
     return (await plugin.getToken()).token;
   } catch (error) {
@@ -69,7 +71,7 @@ export async function getNativePushToken(): Promise<string> {
 }
 
 export async function deleteNativePushToken(): Promise<void> {
-  if (isNativePushAvailable()) await (await messaging()).deleteToken();
+  if (isNativePushAvailable()) await (await messaging()).plugin.deleteToken();
 }
 
 /** Native banners are presented by FirebaseMessaging's iOS configuration. */
@@ -77,7 +79,7 @@ export async function listenForNativePushRefresh(
   onRefresh: () => void
 ): Promise<() => void> {
   if (!isNativePushAvailable()) return () => {};
-  const plugin = await messaging();
+  const { plugin } = await messaging();
   const token = await plugin.addListener("tokenReceived", () => onRefresh());
   try {
     const { App } = await import("@capacitor/app");
@@ -100,7 +102,7 @@ export async function listenForNativePushActions(
   if (!isNativePushAvailable()) return () => {};
   const handle = await (
     await messaging()
-  ).addListener("notificationActionPerformed", (event) => {
+  ).plugin.addListener("notificationActionPerformed", (event) => {
     if (event.actionId === "tap") onTap(event.notification.data);
   });
   return () => {

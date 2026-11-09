@@ -34,7 +34,9 @@ const PAGE_BLOCKS: Record<string, string> = {
   title: 'title="Analytics"',
   tabs: "<FilterPills",
   performance: "<PerformanceOverviewCard",
-  range: "<TimeRangePills",
+  /* The overview's range, under Performance. A page draws its own, beside
+     the way back, written over several lines higher in the file. */
+  range: "<TimeRangePills selected={timeRange} onChange={setTimeRange} />",
   "period-summary": "<PeriodSummaryCard",
 };
 

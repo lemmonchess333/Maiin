@@ -6,6 +6,7 @@
  * rather than found on a device.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { capacitorPlugin } from "@/test/capacitorPlugin";
 
 const native = vi.fn(() => true);
 vi.mock("../platform", () => ({ isNativePlatform: () => native() }));
@@ -16,7 +17,9 @@ const plugin = {
   queryAggregated: vi.fn(),
   openAppleHealthSettings: vi.fn(),
 };
-vi.mock("capacitor-health", () => ({ Health: plugin }));
+vi.mock("capacitor-health", () => {
+  return { Health: capacitorPlugin(plugin) };
+});
 
 import {
   getTodayStepTotal,

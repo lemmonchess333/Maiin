@@ -136,7 +136,11 @@ export default function PerformanceSection({
             sub={copy.sub}
             action={
               copy.showAction
-                ? { label: "Start a workout", href: "/program" }
+                ? {
+                    label: "Start a workout",
+                    href: "/program",
+                    variant: "neutral",
+                  }
                 : undefined
             }
           />

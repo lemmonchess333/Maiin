@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { capacitorPlugin } from "@/test/capacitorPlugin";
 
 /**
  * Slice 3 (#1099) — enabled-path tests for purchase / restore / prices.
@@ -18,9 +19,9 @@ const mockPurchases = {
   restorePurchases: vi.fn(),
 };
 
-vi.mock("@revenuecat/purchases-capacitor", () => ({
-  Purchases: mockPurchases,
-}));
+vi.mock("@revenuecat/purchases-capacitor", () => {
+  return { Purchases: capacitorPlugin(mockPurchases) };
+});
 
 vi.mock("@capacitor/core", () => ({
   Capacitor: { isNativePlatform: () => true },

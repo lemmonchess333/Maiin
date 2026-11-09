@@ -1,5 +1,6 @@
 import Card from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
+import { muscleRangeReading } from "@/lib/historyReadings";
 import {
   JUDGEMENT_MUSCLE_LABEL,
   type VolumeStatus,
@@ -81,13 +82,14 @@ export default function MuscleVolumeCard({
           below.length > 0 ? "text-warning-strong" : "text-foreground"
         )}
       >
-        {below.length === 0
-          ? "Every muscle is in its range"
-          : below.length > NAMED_BELOW
-            ? `${below.length} muscles below their range`
-            : `Below range: ${below
-                .map((r) => JUDGEMENT_MUSCLE_LABEL[r.muscle].toLowerCase())
-                .join(", ")}`}
+        {/* With the count out of all of them: "Every muscle is in its
+            range" and "Below range: abs" carried no number, and the
+            words rules ask a verdict for one and what it is out of. */}
+        {muscleRangeReading({
+          total: rows.length,
+          below: below.map((r) => JUDGEMENT_MUSCLE_LABEL[r.muscle]),
+          namedMax: NAMED_BELOW,
+        })}
       </p>
 
       {/* Under 15em of card (larger text) a row's fixed widths alone were

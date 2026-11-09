@@ -16,6 +16,7 @@ import {
 import { abbreviateK, formatDistance, formatVolume } from "@/utils/formatters";
 import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "./liftLoad";
 import { T5_BARS_MIN_COUNT } from "./dataConfidence";
+import { chartWaitLine } from "./historyReadings";
 
 export interface TrainingFigure {
   value: string;
@@ -31,8 +32,9 @@ export interface BinReading {
   count: (bin: SummaryBin) => number;
   countText: (bin: SummaryBin) => string;
   /** What stands where the chart would, until there is enough to draw:
-   *  the page's shared rule for a bar chart (`dataConfidence` T5). */
-  chartCaveat: string;
+   *  the page's shared rule for a bar chart (`dataConfidence` T5), counted
+   *  down from the sessions the range has. */
+  chartCaveat: (logged: number) => string;
 }
 
 /** "1 run", "3 runs", "0 runs". */
@@ -105,7 +107,11 @@ export function liftingBins(unit: LiftUnit): BinReading {
     describe: (value) => `${abbreviateK(value)} ${liftUnitLabel(unit)}`,
     count: (bin) => bin.lifts,
     countText: (bin) => countOf(bin.lifts, "session", "sessions"),
-    chartCaveat: `Log ${T5_BARS_MIN_COUNT} lifts to see the chart`,
+    chartCaveat: (logged) =>
+      chartWaitLine(logged, T5_BARS_MIN_COUNT, {
+        one: "lift",
+        many: "lifts",
+      }) ?? "",
   };
 }
 
@@ -117,6 +123,8 @@ export function runningBins(unit: DistanceUnit): BinReading {
     describe: (value) => `${value.toFixed(1)} ${distanceUnitLabel(unit)}`,
     count: (bin) => bin.runs,
     countText: (bin) => countOf(bin.runs, "run", "runs"),
-    chartCaveat: `Log ${T5_BARS_MIN_COUNT} runs to see the chart`,
+    chartCaveat: (logged) =>
+      chartWaitLine(logged, T5_BARS_MIN_COUNT, { one: "run", many: "runs" }) ??
+      "",
   };
 }
