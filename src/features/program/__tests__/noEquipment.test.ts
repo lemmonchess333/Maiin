@@ -329,6 +329,24 @@ describe("changing a plan to no equipment and back", () => {
     }
   });
 
+  it("says what each swap replaced in the plan the person has, and nothing in a new one", () => {
+    const swapNotes = (w: readonly WorkoutDay[]) =>
+      lifts(w).filter((ex) =>
+        /not available with your equipment/.test(ex.notes ?? "")
+      );
+    for (const days of DAYS) {
+      // A new plan's lifts were chosen for the kit: no "Swapped from".
+      expect(
+        swapNotes(build(days, "no_equipment").programState.workouts),
+        `${days}d new`
+      ).toEqual([]);
+      // A plan the person has: each lift that moved says what it was.
+      const moved = build(days, "no_equipment", build(days, "full_gym"))
+        .programState.workouts;
+      expect(swapNotes(moved).length, `${days}d moved`).toBeGreaterThan(0);
+    }
+  });
+
   it("brings the gym's lifts back when the kit comes back", () => {
     for (const days of DAYS) {
       const gym = build(days, "full_gym");

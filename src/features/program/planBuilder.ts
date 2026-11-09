@@ -99,6 +99,7 @@ import {
   applyEquipmentFilterToWorkouts,
   restoreSwappedLifts,
   standInForMissingKit,
+  withoutKitSwapNotes,
 } from "./matchTemplate";
 import { contraindicatedFor } from "./injurySubstitutions";
 import {
@@ -513,7 +514,7 @@ function buildLiftProgram(input: LiftProgramInput): {
   // equipment, a lift nothing in its movement can stand in for takes a hold
   // or floor lift in its slot, and comes back with the kit
   // (`standInForMissingKit`).
-  const equipmentSafe = represcribeSwapped(
+  const swapped = represcribeSwapped(
     levelled,
     standInForMissingKit(
       applyEquipmentFilterToWorkouts(
@@ -533,6 +534,9 @@ function buildLiftProgram(input: LiftProgramInput): {
     toExperience(input.experience),
     input.existingState?.settings?.loadUnit ?? input.loadUnit
   );
+  // A plan being built carries no kit swap's note: it names a lift the
+  // person was never given. A swap in the plan they have keeps its note.
+  const equipmentSafe = preserve ? swapped : withoutKitSwapNotes(swapped);
   // Lift4 (5): a settings save that changes the session length re-fits the
   // plan the person has, sets only. Anything else keeps the plan's sets as
   // they are, and the length it was fitted to.

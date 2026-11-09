@@ -50,6 +50,7 @@ import {
   applyInjuryFiltersToWorkouts,
   restoreSwappedLifts,
   standInForMissingKit,
+  withoutKitSwapNotes,
 } from "./matchTemplate";
 import {
   extraPastCeiling,
@@ -2180,6 +2181,8 @@ export function generateProgram(
       injuries,
       loadCtx
     );
+    // The kit swaps of a plan being built name lifts it never gave.
+    workouts = withoutKitSwapNotes(workouts);
   }
   // Lift4 (5): each lift's sets, reps and progression come from its role
   // (`roleTable.ts`), once the identity passes have settled who is where;

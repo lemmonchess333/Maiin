@@ -335,6 +335,35 @@ export const PULL_UP_BAR_EXERCISE_IDS: ReadonlySet<string> = new Set([
   "leg-raise",
 ]);
 
+/** The end of the note a lift swapped for the kit carries in a plan the
+ *  person has: "Swapped from Barbell Row — not available with your
+ *  equipment." */
+const KIT_SWAP_NOTE_TAIL = " — not available with your equipment.";
+
+/**
+ * A new plan without the kit swaps' notes. Its lifts were chosen for the
+ * person's kit: "Swapped from Bench Press" names a lift they were never
+ * given. The swap itself is kept (`swappedFrom`), so a save with more kit
+ * still brings the original back. In a plan the person has, a swap moves a
+ * lift they had, and its note stays.
+ */
+export function withoutKitSwapNotes(
+  workouts: readonly WorkoutDay[]
+): WorkoutDay[] {
+  return workouts.map((day) =>
+    day.exercises.some((ex) => ex.notes?.endsWith(KIT_SWAP_NOTE_TAIL))
+      ? {
+          ...day,
+          exercises: day.exercises.map((ex) => {
+            if (!ex.notes?.endsWith(KIT_SWAP_NOTE_TAIL)) return ex;
+            const { notes: _swap, ...rest } = ex;
+            return rest;
+          }),
+        }
+      : day
+  );
+}
+
 /**
  * What a person can do with their kit: their equipment tier's, a barbell
  * with a rack when they said they have one at home, and the pull-ups,
@@ -426,7 +455,7 @@ export function applyEquipmentFilterToWorkouts(
         id,
         exerciseDisplayName(id),
         loadCtx,
-        `Swapped from ${ex.name} — not available with your equipment.`
+        `Swapped from ${ex.name}${KIT_SWAP_NOTE_TAIL}`
       );
     };
     // Catalogue-pinned slots (direct calf work): their bank category pool
@@ -645,7 +674,7 @@ export function standInForMissingKit(
       id,
       exerciseDisplayName(id),
       loadCtx,
-      `Swapped from ${ex.name} — not available with your equipment.`
+      `Swapped from ${ex.name}${KIT_SWAP_NOTE_TAIL}`
     );
   }
   return out;
