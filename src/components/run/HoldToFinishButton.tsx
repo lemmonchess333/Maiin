@@ -14,8 +14,7 @@
  * (and every stray brush) gets the safe path. A completed hold ends the run
  * directly and swallows its trailing click. A hold let go early only resets
  * the ring and swallows its click too: the runner changed their mind, and a
- * dialog mid-run would interrupt them (owner-delegated call, 2026-11-09;
- * it opened the dialog, against what this note always said). See spec
+ * dialog mid-run would interrupt them (DESIGN_GUIDE §14h). See spec
  * `spec-run-fast-launch.md` §12.
  *
  * The paused screen's Stop is the same control at the large size, with its

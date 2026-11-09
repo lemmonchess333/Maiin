@@ -473,8 +473,8 @@ export default function RunBottomSheet({
       {/* No layer over the map when the panel is lowered: the map takes
           pans and pinches, as Strava's and Nike Run Club's do mid-run
           (its Recenter brings the runner back), and a tap on it raises
-          the panel through `expandRequest` (owner-delegated call,
-          2026-11-09). The grip still raises it by keyboard. */}
+          the panel through `expandRequest` (DESIGN_GUIDE
+          §14h). The grip still raises it by keyboard. */}
       <motion.div
         className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px]"
         style={{

@@ -113,7 +113,7 @@ export default function BottomNavigation({
                         label. It moves with the tab at once, as a native
                         tab bar's does: its shared-layout glide ran on the
                         main thread just as the next page mounted
-                        (owner-delegated call, 2026-11-09). */}
+                        (DESIGN_GUIDE §14h). */}
                     {isActive && (
                       <div className="bottom-nav-pill absolute inset-0 rounded-full ring-1 ring-inset ring-primary/15 z-0" />
                     )}

@@ -3221,7 +3221,7 @@ export default function WorkoutSession({
             key="rest"
             /* A fade, no rise: it arrives after every set, and a 26 px
                rise there out-moved the new best above it
-               (owner-delegated call, 2026-11-09). */
+               (DESIGN_GUIDE §14h). */
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={reduceMotion ? undefined : { opacity: 0 }}

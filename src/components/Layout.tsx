@@ -324,7 +324,7 @@ export default function Layout() {
         {/* Keyed by path, so /user/a to /user/b mounts a fresh page, but
             with no fade: a page arrives at once, as a native tab does,
             and PageShell's content starts settled for the same reason
-            (owner-delegated call, 2026-11-09). */}
+            (DESIGN_GUIDE §14h). */}
         <div key={location.pathname}>
           <Suspense
             fallback={<PageContentSkeleton pathname={location.pathname} />}

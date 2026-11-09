@@ -1484,8 +1484,7 @@ function ProgramInner() {
                   from, over 180 ms; the old day goes at once, as a setup
                   step does, so a tap never waits on an exit. Not on the
                   first paint (direction 0): Train opens on its day settled.
-                  Owner-delegated call, 2026-11-09: it was a 200 ms exit
-                  then a 200 ms enter, and taps were ignored meanwhile. */}
+                  DESIGN_GUIDE §14h. */}
               <>
                 <motion.div
                   key={idx}
@@ -1697,8 +1696,7 @@ function ProgramInner() {
                   from, over 180 ms; the old day goes at once, as a setup
                   step does, so a tap never waits on an exit. Not on the
                   first paint (direction 0): Train opens on its day settled.
-                  Owner-delegated call, 2026-11-09: it was a 200 ms exit
-                  then a 200 ms enter, and taps were ignored meanwhile. */}
+                  DESIGN_GUIDE §14h. */}
               <>
                 <motion.div
                   key={idx}
