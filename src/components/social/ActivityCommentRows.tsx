@@ -25,7 +25,9 @@ export default function ActivityCommentRows({
   const { comments, viewerUid, deletingId, setPanel, react } = thread;
   return (
     <>
-      <AnimatePresence>
+      {/* initial={false}: the thread opens settled; a comment added or
+          deleted while it is open still animates. */}
+      <AnimatePresence initial={false}>
         {comments.map((c) => {
           const timeAgo = c.createdAt?.toDate
             ? getTimeAgo(c.createdAt.toDate())
