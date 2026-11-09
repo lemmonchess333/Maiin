@@ -180,19 +180,21 @@ describe("a post's photos on its card", () => {
 });
 
 describe("the full-screen viewer", () => {
-  const open = (index: number, count = 3) => {
+  // The viewer loads on the press, so it arrives a moment after the tap.
+  const open = async (index: number, count = 3) => {
     const view = renderCard({ photos: photos(count) });
     const tile = tiles(view.container)[index];
     tile.focus();
     fireEvent.click(tile);
+    await screen.findByRole("dialog");
     return { ...view, tile };
   };
   const viewer = () =>
     screen.getByRole("dialog", { name: "Photos from Maya Chen's run" });
   const shown = () => within(viewer()).getByRole("img");
 
-  it("opens at the photo tapped, whole, with its count and its name", () => {
-    open(1);
+  it("opens at the photo tapped, whole, with its count and its name", async () => {
+    await open(1);
     expect(viewer()).toHaveAttribute("aria-modal", "true");
     expect(within(viewer()).getByText("2 of 3")).toBeInTheDocument();
     expect(shown()).toHaveAttribute("alt", "Photo 2 of 3 from Maya Chen's run");
@@ -208,8 +210,8 @@ describe("the full-screen viewer", () => {
     expect(document.body.style.overflow).toBe("hidden");
   });
 
-  it("puts focus on Close, and keeps it inside", () => {
-    open(0);
+  it("puts focus on Close, and keeps it inside", async () => {
+    await open(0);
     const close = within(viewer()).getByRole("button", {
       name: "Close photos",
     });
@@ -217,8 +219,8 @@ describe("the full-screen viewer", () => {
     expect(close.className).toMatch(/size-11/);
   });
 
-  it("moves between photos with the arrow keys and the buttons, and stops at the ends", () => {
-    open(0);
+  it("moves between photos with the arrow keys and the buttons, and stops at the ends", async () => {
+    await open(0);
     fireEvent.keyDown(document, { key: "ArrowRight" });
     expect(within(viewer()).getByText("2 of 3")).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "ArrowRight" });
@@ -238,8 +240,8 @@ describe("the full-screen viewer", () => {
     expect(within(viewer()).getByText("1 of 3")).toBeInTheDocument();
   });
 
-  it("moves with a swipe, and not with a short or upward drag", () => {
-    open(0);
+  it("moves with a swipe, and not with a short or upward drag", async () => {
+    await open(0);
     const stage = shown().parentElement!;
     const drag = (fromX: number, toX: number, toY = 300) => {
       fireEvent.pointerDown(stage, { clientX: fromX, clientY: 300 });
@@ -256,7 +258,7 @@ describe("the full-screen viewer", () => {
   });
 
   it("closes on a pull down, and not on a push up or a nudge", async () => {
-    open(1);
+    await open(1);
     const stage = shown().parentElement!;
     const pull = (toY: number) => {
       fireEvent.pointerDown(stage, { clientX: 200, clientY: 300 });
@@ -271,7 +273,7 @@ describe("the full-screen viewer", () => {
   });
 
   it("zooms with a double tap or a pinch, pans while zoomed, and turns the photo at rest", async () => {
-    open(0);
+    await open(0);
     const stage = shown().parentElement!.parentElement!.parentElement!;
     const zoomed = () => stage.getAttribute("data-zoomed");
     expect(zoomed()).toBe("false");
@@ -309,7 +311,7 @@ describe("the full-screen viewer", () => {
     expect(zoomed()).toBe("false");
   });
 
-  it("keeps its touches from the page that opened it", () => {
+  it("keeps its touches from the page that opened it", async () => {
     const onTouchStart = vi.fn();
     const onTouchEnd = vi.fn();
     const view = render(
@@ -320,6 +322,7 @@ describe("the full-screen viewer", () => {
       </MemoryRouter>
     );
     fireEvent.click(tiles(view.container)[0]);
+    await screen.findByRole("dialog");
     const stage = shown().parentElement!;
     fireEvent.touchStart(stage, { touches: [{ clientX: 300, clientY: 300 }] });
     fireEvent.touchEnd(stage, {
@@ -329,15 +332,15 @@ describe("the full-screen viewer", () => {
     expect(onTouchEnd).not.toHaveBeenCalled();
   });
 
-  it("shows only the open photo to a screen reader", () => {
-    open(1);
+  it("shows only the open photo to a screen reader", async () => {
+    await open(1);
     // Its neighbours are drawn beside it for the swipe, hidden from AT.
     expect(within(viewer()).getAllByRole("img")).toHaveLength(1);
     expect(viewer().querySelectorAll("img")).toHaveLength(3);
   });
 
-  it("closes on Escape and on Close, with focus back on the photo that opened it", () => {
-    const { tile } = open(2);
+  it("closes on Escape and on Close, with focus back on the photo that opened it", async () => {
+    const { tile } = await open(2);
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(tile);
@@ -353,8 +356,8 @@ describe("the full-screen viewer", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("has no arrows for a single photo", () => {
-    open(0, 1);
+  it("has no arrows for a single photo", async () => {
+    await open(0, 1);
     expect(within(viewer()).getByText("1 of 1")).toBeInTheDocument();
     expect(
       within(viewer()).queryByRole("button", { name: "Next photo" })
