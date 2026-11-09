@@ -84,7 +84,7 @@ import {
   usesUndulation,
 } from "./experienceModel";
 import {
-  isUnloadedBodyweight,
+  takesBodyweightFloor,
   mainRepAnchor,
   MIN_BODYWEIGHT_REPS,
   roleRepsFor,
@@ -1424,7 +1424,7 @@ export function undulationDeltaFor(
 }
 
 /** Lowest rep target a shifted day may fall to, by session role, and 8 for
- *  a bodyweight lift with no load added (`MIN_BODYWEIGHT_REPS`). */
+ *  an easy bodyweight lift with no load added (`takesBodyweightFloor`). */
 export function repFloorFor(ex: {
   isAccessory?: boolean;
   exerciseId?: string;
@@ -1433,7 +1433,7 @@ export function repFloorFor(ex: {
 }): number {
   if (
     ex.exerciseId !== undefined &&
-    isUnloadedBodyweight({ ...ex, exerciseId: ex.exerciseId })
+    takesBodyweightFloor({ ...ex, exerciseId: ex.exerciseId })
   )
     return MIN_BODYWEIGHT_REPS;
   return ex.isAccessory === true ? 6 : 3;

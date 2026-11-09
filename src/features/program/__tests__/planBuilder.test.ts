@@ -31,7 +31,7 @@ import {
 } from "../programEngine";
 import { isRaceBuildWeek, raceBlockWeek } from "../weekPrescription";
 import { loadsTheLegs } from "../easierToday";
-import { isUnloadedBodyweight, roleRepsFor } from "../roleTable";
+import { roleRepsFor, takesBodyweightFloor } from "../roleTable";
 import { exerciseRole } from "../exerciseRole";
 import { represcribeWorkouts } from "../represcribe";
 import { getExerciseById } from "@/lib/exercises";
@@ -1219,7 +1219,7 @@ describe("buildPlan · a level change is a content edit (Lift4)", () => {
     // A beginner's Get stronger main lifts: one target of 5, not Build
     // muscle's 8; a bodyweight one with no load added starts at 8.
     for (const lift of lifts(edited, true)) {
-      expect(lift.reps, lift.name).toBe(isUnloadedBodyweight(lift) ? 8 : 5);
+      expect(lift.reps, lift.name).toBe(takesBodyweightFloor(lift) ? 8 : 5);
       expect(lift.progressionType, lift.name).toBe("linear");
     }
   });

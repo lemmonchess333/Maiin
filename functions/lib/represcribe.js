@@ -61,7 +61,7 @@
 
 const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
 const {
-  isUnloadedBodyweight,
+  takesBodyweightFloor,
   MIN_BODYWEIGHT_REPS,
   roleRepsFor,
   toExperience,
@@ -191,10 +191,10 @@ function undulationDeltaFor(ex, role) {
   return delta;
 }
 
-/** Mirror of programEngine.ts repFloorFor: 8 for a bodyweight lift with no
+/** Mirror of programEngine.ts repFloorFor: 8 for an easy bodyweight lift with no
  *  load added (roleTable's MIN_BODYWEIGHT_REPS). */
 function repFloorFor(ex) {
-  if (isUnloadedBodyweight(ex)) return MIN_BODYWEIGHT_REPS;
+  if (takesBodyweightFloor(ex)) return MIN_BODYWEIGHT_REPS;
   return ex && ex.isAccessory === true ? 6 : 3;
 }
 
