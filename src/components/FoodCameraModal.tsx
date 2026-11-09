@@ -24,6 +24,7 @@ import {
   useScanStages,
 } from "@/hooks/useScanStages";
 import { useBackDismiss } from "@/lib/backDismiss";
+import { blobToDataUrl, encodeJpeg } from "@/lib/imageEncode";
 import { logger } from "@/lib/logger";
 import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
@@ -196,6 +197,29 @@ type Props = {
    *  animation holds the screen until this lands. */
   onShown?: () => void;
 };
+
+/** The JPEG quality of every photo the scan sends, taken or picked. */
+const SCAN_JPEG_QUALITY = 0.85;
+/** The longest side of a library photo as the analysis gets it: the size
+ *  the local copy keeps (foodPhotoStore's MAX_EDGE_PX). */
+const LIBRARY_PHOTO_MAX_EDGE_PX = 1280;
+
+/**
+ * A library photo at the size the analysis needs, not the size it was
+ * taken. The server refuses an image over five million base64 characters,
+ * and a request past the platform's own limit never reaches it: that
+ * refusal carries no CORS headers, so the app saw only "Couldn't reach the
+ * server". A 48-megapixel JPEG is 11 MB as base64; at 1280 px on the long
+ * side it is under 1 MB. Drawing it through a canvas (encodeJpeg) also
+ * leaves the file's EXIF, the place it was taken among it, on the phone.
+ */
+async function libraryPhotoDataUrl(file: File): Promise<string> {
+  const { blob } = await encodeJpeg(file, {
+    maxEdge: LIBRARY_PHOTO_MAX_EDGE_PX,
+    quality: SCAN_JPEG_QUALITY,
+  });
+  return blobToDataUrl(blob);
+}
 
 function dataUrlToBase64(dataUrl: string) {
   const parts = dataUrl.split(",");
@@ -572,53 +596,55 @@ export default function FoodCameraModal({
     e.target.value = "";
     if (!file) return;
 
+    setBusy(true);
     try {
-      setBusy(true);
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const dataUrl = String(reader.result || "");
-          if (tab === "barcode") {
-            /* Barcode mode reads the code in the picture, on the device.
-               Sent for AI food analysis like the other tabs, a picture of
-               a barcode would spend a scan and come back "No food
-               detected". The live reader stops meanwhile, so it cannot
-               fire a second lookup of its own. */
-            stopZXingRef.current?.();
-            stopZXingRef.current = null;
-            const code = await decodeBarcodeFromDataUrl(dataUrl);
-            if (code) {
-              setBarcodeFound(true);
-              setBarcodeHint("Found it");
-              haptic("success");
-              await onBarcodeDetected(code);
-              setBarcodeHint(BARCODE_HINT);
-            } else {
-              setBarcodeHint("No barcode found in that photo");
-            }
-            // Still open (no code, or its lookup failed): scan live again.
-            setBarcodeFound(false);
-            setBarcodeRun((n) => n + 1);
-            return;
-          }
-          const base64 = dataUrlToBase64(dataUrl);
-          setPreview(dataUrl);
-          await onCaptureBase64(base64, tab === "label" ? "label" : "food");
-        } finally {
-          setBusy(false);
+      let dataUrl: string;
+      try {
+        /* A barcode photo is read as it was taken: the reader needs its
+           pixels. Any other goes at the size the analysis needs. */
+        dataUrl =
+          tab === "barcode"
+            ? await blobToDataUrl(file)
+            : await libraryPhotoDataUrl(file);
+      } catch (err) {
+        /* A photo that cannot be read or drawn (deleted between pick and
+           read, an iOS Files provider error, a format the web view cannot
+           decode) says so, and leaves the shutter and the library live. */
+        logger.error(err);
+        toast.error("Couldn't read that photo. Try another.");
+        return;
+      }
+      if (tab === "barcode") {
+        /* Barcode mode reads the code in the picture, on the device.
+           Sent for AI food analysis like the other tabs, a picture of
+           a barcode would spend a scan and come back "No food
+           detected". The live reader stops meanwhile, so it cannot
+           fire a second lookup of its own. */
+        stopZXingRef.current?.();
+        stopZXingRef.current = null;
+        const code = await decodeBarcodeFromDataUrl(dataUrl);
+        if (code) {
+          setBarcodeFound(true);
+          setBarcodeHint("Found it");
+          haptic("success");
+          await onBarcodeDetected(code);
+          setBarcodeHint(BARCODE_HINT);
+        } else {
+          setBarcodeHint("No barcode found in that photo");
         }
-      };
-      /* A read that never fires onload (file deleted between pick and
-         read, an iOS Files provider error) used to strand busy=true
-         forever — shutter greyed, library dead, no overlay showing,
-         and only close-and-reopen recovered. */
-      reader.onerror = () => {
-        logger.error(reader.error);
-        setBusy(false);
-      };
-      reader.readAsDataURL(file);
+        // Still open (no code, or its lookup failed): scan live again.
+        setBarcodeFound(false);
+        setBarcodeRun((n) => n + 1);
+        return;
+      }
+      setPreview(dataUrl);
+      await onCaptureBase64(
+        dataUrlToBase64(dataUrl),
+        tab === "label" ? "label" : "food"
+      );
     } catch (err) {
       logger.error(err);
+    } finally {
       setBusy(false);
     }
   };
@@ -641,7 +667,7 @@ export default function FoodCameraModal({
 
       ctx.drawImage(videoEl, 0, 0, w, h);
 
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      const dataUrl = canvas.toDataURL("image/jpeg", SCAN_JPEG_QUALITY);
       return { dataUrl, base64: dataUrlToBase64(dataUrl) };
     } catch (e) {
       logger.error(e);
