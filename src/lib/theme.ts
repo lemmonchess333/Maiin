@@ -94,9 +94,9 @@ export const THEME = {
      failing dark's muted tiles too. The muted-text identity is the
      theme-aware `--muted-foreground` token — `text-muted-foreground` in
      className contexts, `"hsl(var(--muted-foreground))"` in style/JS
-     contexts. Do not reintroduce a JS hex for secondary text; the one
-     legitimate literal left is `runLiveActivity.ts` (native plugin,
-     always-dark overlay, no CSS vars). */
+     contexts. Do not reintroduce a JS hex for secondary text. The Live
+     Activity widget's #8E8E93 lives in Swift (`ios/App/LiveActivities/`,
+     an always-dark card with no CSS vars), not here. */
 
   // Neutral backgrounds
   neutral: {

@@ -3,51 +3,40 @@
  * distance and time while a run records (Tier 2 item 4).
  *
  * Seam-first, per the appCheck.ts / analyticsProvider.ts pattern: this
- * module is the ONLY place that touches `capacitor-live-activities`, it
- * dynamically imports the plugin so the registration chunk never ships
- * in the web bundle, and every call is guarded + error-swallowed — a
- * Live Activity failure must never affect the run itself. On web (or
- * before the operator's Xcode half exists) every function is an inert
- * no-op; the web-visible path for this feature is the in-app run HUD
- * that already ships.
+ * module is the ONLY place that touches `capacitor-live-activities` for a
+ * run, it dynamically imports the plugin so the registration chunk never
+ * ships in the web bundle, and every call is guarded + error-swallowed — a
+ * Live Activity failure must never affect the run itself. On web every
+ * function is an inert no-op; the web-visible path for this feature is the
+ * in-app run HUD that already ships.
  *
- * Layout model: the card and Dynamic Island are declared ONCE at start
- * with `{{placeholder}}` bindings, and every subsequent update sends
- * data only — the shape the plugin optimises for. Labels arrive
- * PRE-FORMATTED from Run.tsx (distanceLabel / paceLabel / the timer's
- * own formatter) so this module stays unit-agnostic and the lock screen
- * can never disagree with the in-app HUD about what "1.2 mi" reads as.
+ * The widget extension (`ios/App/LiveActivities/`, docs/run-live-activity.md)
+ * draws the card natively from the data sent here, the keys
+ * `liveActivityContract.ts` lists, and reads no layout. Labels arrive
+ * PRE-FORMATTED from Run.tsx (distanceLabel / paceLabel / the timer's own
+ * formatter) so this module stays unit-agnostic and the lock screen can
+ * never disagree with the in-app HUD about what "1.2 mi" reads as.
  *
- * No native self-ticking timer element, deliberately: ActivityKit's
- * timer keeps counting through a PAUSE, so elapsed comes through the
- * app's own label on each update — always consistent with the HUD,
- * at worst a few seconds stale while backgrounded.
- *
- * Operator half (Mac/Xcode, documented in docs/run-live-activity.md):
- * widget-extension target + Podfile entry + NSSupportsLiveActivities +
- * App Group, then `npx cap sync ios`. Until then `startActivity`
- * rejects and this module swallows it.
+ * No native self-ticking timer element, deliberately: ActivityKit's timer
+ * keeps counting through a PAUSE, so elapsed comes through the app's own
+ * label on each update — always consistent with the HUD, at worst a few
+ * seconds stale while backgrounded.
  */
 import { isNativePlatform } from "@/lib/platform";
 import { logger } from "@/lib/logger";
-import { THEME } from "@/lib/theme";
-/* Type-only — erased at build, zero web-bundle cost (the runtime import
-   below stays dynamic). */
-import type {
-  ActivityLayout,
-  DynamicIslandLayout,
-  LayoutElement,
-} from "capacitor-live-activities";
+import { PLUGIN_LAYOUT } from "@/lib/liveActivityContract";
 
 export interface RunActivityData {
-  /** Pre-formatted, unit-aware distance, e.g. "3.42 km". */
+  /** Pre-formatted, unit-aware distance, e.g. "3.4 km" (em-dash at 0). */
   distance: string;
   /** Pre-formatted rolling pace, e.g. "5:12 /km" (em-dash when unknown). */
   pace: string;
   /** Pre-formatted elapsed time from the run timer, e.g. "23:41". */
   elapsed: string;
-  /** State line: "Recording" | "Paused" | activity label. */
+  /** State line: "Recording" | "Paused". */
   label: string;
+  /** Paused: the card greys its time, as the HUD does. */
+  paused: boolean;
 }
 
 /** Min interval between updateActivity calls. ActivityKit throttles and
@@ -59,6 +48,11 @@ let activityId: string | null = null;
 let starting = false;
 let lastUpdateAt = 0;
 let lastPayloadKey = "";
+/** The last data the card was given, sent again as its final state. */
+let lastData: RunActivityData | null = null;
+/** A change that came inside the throttle window, sent when it opens. */
+let pending: RunActivityData | null = null;
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
 type Plugin = typeof import("capacitor-live-activities").LiveActivities;
 
@@ -70,132 +64,20 @@ async function loadPlugin(): Promise<{ plugin: Plugin } | null> {
     const mod = await import("capacitor-live-activities");
     return { plugin: mod.LiveActivities };
   } catch {
-    // Plugin absent from the build (operator half not done) — inert.
+    // Plugin absent from the build — inert.
     return null;
   }
 }
 
-const CARD_BG = "#17171B" as const; // THEME.surface — the run overlay is always-dark
-/* Literal hex is DELIBERATE here (DS2 exemption): the Live Activity plugin
-   renders natively and cannot resolve CSS custom properties, and this
-   overlay is always-dark, where #8E8E93 measures ~4.9:1 — passing. */
-const TEXT_MUTED = "#8E8E93" as const;
-/* The plugin's ColorString wants a template-literal hex; THEME.running is
-   typed plain string. The value IS "#D4637A" — assert the shape once. */
-const CORAL = THEME.running as `#${string}`;
-
-/** One stat column: micro label over the bound value. */
-function statColumn(caption: string, binding: string): LayoutElement {
-  return {
-    type: "container" as const,
-    properties: [{ direction: "vertical" as const }, { spacing: 2 }],
-    children: [
-      {
-        type: "text" as const,
-        properties: [
-          { text: caption },
-          { fontSize: 11 },
-          { color: TEXT_MUTED },
-        ],
-      },
-      {
-        type: "text" as const,
-        properties: [
-          { text: binding },
-          { fontSize: 20 },
-          { fontWeight: "bold" as const },
-          { color: "#FFFFFF" },
-          { monospacedDigit: true },
-        ],
-      },
-    ],
-  };
+/** The content state the widget reads (liveActivityContract.ts). */
+function runState(data: RunActivityData): Record<string, string | boolean> {
+  return { kind: "run", ...data };
 }
 
-function runCardLayout(): ActivityLayout {
-  return {
-    type: "container" as const,
-    properties: [
-      { direction: "vertical" as const },
-      { spacing: 10 },
-      { padding: 14 },
-      { backgroundColor: CARD_BG },
-    ],
-    children: [
-      {
-        type: "container" as const,
-        properties: [{ direction: "horizontal" as const }, { spacing: 6 }],
-        children: [
-          {
-            type: "image" as const,
-            properties: [
-              { systemName: "figure.run" },
-              { color: CORAL },
-              { width: 16 },
-              { height: 16 },
-            ],
-          },
-          {
-            type: "text" as const,
-            properties: [
-              { text: "{{label}}" },
-              { fontSize: 12 },
-              { fontWeight: "semibold" as const },
-              { color: CORAL },
-            ],
-          },
-        ],
-      },
-      {
-        type: "container" as const,
-        properties: [{ direction: "horizontal" as const }, { spacing: 18 }],
-        children: [
-          statColumn("DISTANCE", "{{distance}}"),
-          statColumn("PACE", "{{pace}}"),
-          statColumn("TIME", "{{elapsed}}"),
-        ],
-      },
-    ],
-  };
-}
-
-function dynamicIslandLayout(): DynamicIslandLayout {
-  const smallText = (binding: string): LayoutElement => ({
-    type: "text",
-    properties: [
-      { text: binding },
-      { fontSize: 14 },
-      { fontWeight: "semibold" },
-      { monospacedDigit: true },
-    ],
-  });
-  const runGlyph: LayoutElement = {
-    type: "image",
-    properties: [
-      { systemName: "figure.run" },
-      { color: CORAL },
-      { width: 14 },
-      { height: 14 },
-    ],
-  };
-  return {
-    expanded: {
-      leading: smallText("{{distance}}"),
-      center: smallText("{{pace}}"),
-      trailing: smallText("{{elapsed}}"),
-      bottom: {
-        type: "text" as const,
-        properties: [
-          { text: "{{label}}" },
-          { fontSize: 12 },
-          { color: TEXT_MUTED },
-        ],
-      },
-    },
-    compactLeading: runGlyph,
-    compactTrailing: smallText("{{distance}}"),
-    minimal: runGlyph,
-  };
+function clearPending(): void {
+  pending = null;
+  if (flushTimer !== null) clearTimeout(flushTimer);
+  flushTimer = null;
 }
 
 /**
@@ -210,21 +92,13 @@ export async function startRunActivity(data: RunActivityData): Promise<void> {
     const plugin = (await loadPlugin())?.plugin;
     if (!plugin) return;
     const result = await plugin.startActivity({
-      layout: runCardLayout(),
-      dynamicIslandLayout: dynamicIslandLayout(),
-      data: { ...data },
-      behavior: {
-        systemActionForegroundColor: CORAL,
-        keyLineTint: CORAL,
-        /* Required by the plugin type; tapping the card foregrounds the
-           app regardless. "tropos://run" is inert until a custom URL
-           scheme is registered — noted in docs/run-live-activity.md. */
-        widgetUrl: "tropos://run",
-      },
+      ...PLUGIN_LAYOUT,
+      data: runState(data),
     });
     activityId = result.activityId;
     lastUpdateAt = Date.now();
     lastPayloadKey = JSON.stringify(data);
+    lastData = data;
   } catch (err) {
     logger.warn("[runLiveActivity] start failed", err);
   } finally {
@@ -235,22 +109,41 @@ export async function startRunActivity(data: RunActivityData): Promise<void> {
 /**
  * Push fresh stats. Throttled to one OS call per MIN_UPDATE_INTERVAL_MS
  * and skipped entirely when nothing changed — ActivityKit budgets
- * updates, and the caller ticks every second.
+ * updates, and the caller ticks every second. A change inside the window
+ * is held and sent when it opens, latest first, so a pause or a resume is
+ * never lost to the throttle: while paused nothing else changes, and the
+ * screen may not call again.
  */
 export async function updateRunActivity(data: RunActivityData): Promise<void> {
   if (activityId === null) return;
   const key = JSON.stringify(data);
-  const now = Date.now();
-  if (key === lastPayloadKey) return;
-  if (now - lastUpdateAt < MIN_UPDATE_INTERVAL_MS) return;
+  if (key === lastPayloadKey) {
+    // The card shows this already; anything held is older.
+    clearPending();
+    return;
+  }
+  const wait = lastUpdateAt + MIN_UPDATE_INTERVAL_MS - Date.now();
+  if (wait > 0) {
+    pending = data;
+    flushTimer ??= setTimeout(() => {
+      flushTimer = null;
+      const next = pending;
+      pending = null;
+      if (next) void updateRunActivity(next);
+    }, wait);
+    return;
+  }
+  clearPending();
   // Claim the slot before the await so a per-second caller can't stack
   // parallel updates while one is in flight.
-  lastUpdateAt = now;
+  lastUpdateAt = Date.now();
   lastPayloadKey = key;
+  lastData = data;
+  const id = activityId;
   try {
     const plugin = (await loadPlugin())?.plugin;
     if (!plugin) return;
-    await plugin.updateActivity({ activityId, data: { ...data } });
+    await plugin.updateActivity({ activityId: id, data: runState(data) });
   } catch (err) {
     logger.warn("[runLiveActivity] update failed", err);
   }
@@ -258,20 +151,25 @@ export async function updateRunActivity(data: RunActivityData): Promise<void> {
 
 /**
  * End and dismiss the Live Activity. Safe to call when none is live
- * (unmount cleanup + finish/discard can all call it). Final stats stick
- * on the lock screen briefly per OS behaviour when provided.
+ * (unmount cleanup + finish/discard can all call it). The final state is
+ * `final` when given, else the last stats sent, so the card is never
+ * drawn empty on its way out; the plugin dismisses it at once
+ * (patches/capacitor-live-activities+8.0.0.patch).
  */
 export async function endRunActivity(final?: RunActivityData): Promise<void> {
   const id = activityId;
+  const last = final ?? lastData;
   activityId = null;
   lastPayloadKey = "";
+  lastData = null;
+  clearPending();
   if (id === null) return;
   try {
     const plugin = (await loadPlugin())?.plugin;
     if (!plugin) return;
     await plugin.endActivity({
       activityId: id,
-      data: final ? { ...final } : {},
+      data: last ? runState(last) : {},
     });
   } catch (err) {
     logger.warn("[runLiveActivity] end failed", err);
@@ -284,4 +182,6 @@ export function __resetRunActivityForTests(): void {
   starting = false;
   lastUpdateAt = 0;
   lastPayloadKey = "";
+  lastData = null;
+  clearPending();
 }
