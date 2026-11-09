@@ -50,6 +50,8 @@
 	<array>
 		<string>location</string>
 	</array>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Tropos opens your photo library when you choose a photo: a meal, nutrition label or barcode to log food, a progress photo, your profile photo, or a photo for your posts, a Space post or a share card.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

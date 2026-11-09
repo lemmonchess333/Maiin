@@ -25,12 +25,22 @@
  * which on a runner with no Apple account looks for a development profile
  * that will never exist; an export with no profile mapping; and none of the
  * entitlements the Sign in with Apple and HealthKit plugins need.
+ *
+ * The Live Activity widget extension (2026-11-09) was written into the
+ * project by hand, as the Watch app was, so the pins under "the Live
+ * Activity widget" read its target the same way: what it builds, what it
+ * links, and that every build embeds it.
  */
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { appInfoPlistString, resolvedSetting } from "@/test/iosBuildSettings";
+import {
+  appInfoPlistString,
+  resolvedSetting,
+  targetConfigurations,
+  targetSettings,
+} from "@/test/iosBuildSettings";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -54,6 +64,38 @@ function workflowStep(name: string): string {
   if (start < 0) throw new Error(`no step named "${name}" in deploy-ios.yml`);
   const next = workflow.indexOf("- name:", start + 1);
   return workflow.slice(start, next < 0 ? undefined : next);
+}
+
+/** One object's block in project.pbxproj, from its id to its closing brace. */
+function pbxObject(id: string): string {
+  const block = pbxproj.match(
+    new RegExp(
+      `^\\t\\t${id} /\\*[^\\n]*\\*/ = \\{\\n[\\s\\S]*?^\\t\\t\\};`,
+      "m"
+    )
+  );
+  if (!block) throw new Error(`no object ${id} in project.pbxproj`);
+  return block[0];
+}
+
+/** A native target's block, by its name. */
+function nativeTarget(name: string): string {
+  const id = pbxproj.match(
+    new RegExp(
+      `^\\t\\t(${OBJECT_ID.source}) /\\* ${name} \\*/ = \\{\\n\\t\\t\\tisa = PBXNativeTarget;`,
+      "m"
+    )
+  )?.[1];
+  if (!id) throw new Error(`no PBXNativeTarget "${name}"`);
+  return pbxObject(id);
+}
+
+/** The names of the targets a target depends on. */
+function dependencyNames(target: string): string[] {
+  const list = nativeTarget(target).match(/dependencies = \(([\s\S]*?)\);/)![1];
+  return [...list.matchAll(new RegExp(`(${OBJECT_ID.source}) /\\*`, "g"))].map(
+    (m) => pbxObject(m[1]).match(/target = [0-9A-F]{24} \/\* (.+?) \*\//)![1]
+  );
 }
 
 /** Top-level keys of a plist dict, in the order they appear. */
@@ -280,9 +322,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
       /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?productType/
     )![0];
     expect(appTarget).toContain(`${embed![1]} /* Embed Watch Content */`);
-    expect(appTarget).toMatch(
-      /dependencies = \(\s*[0-9A-F]{24} \/\* PBXTargetDependency \*\/,\s*\);/
-    );
+    expect(dependencyNames("App")).toContain("TroposWatch");
 
     const glob = (pattern: string) =>
       new RegExp(
@@ -424,7 +464,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     // is read from the project (scripts/ios_signed_targets.py, tested in
     // scripts/test_verify_ios_signed_targets.py), so a widget extension
     // added later is signed without editing the workflow.
-    expect(pbxproj.match(/CODE_SIGN_STYLE = Automatic;/g)?.length).toBe(4);
+    expect(pbxproj.match(/CODE_SIGN_STYLE = Automatic;/g)?.length).toBe(6);
     const list = workflowStep("List the targets to sign");
     expect(list).toContain("python3 scripts/ios_signed_targets.py list");
     expect(list).toContain(
@@ -527,24 +567,6 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(importStep).toContain('"profile-uuids.json"');
   });
 
-  it("lets the Live Activity widget link LiveActivitiesKit through Swift Package Manager", () => {
-    // The project has no CocoaPods: plugins arrive through CapApp-SPM. The
-    // plugin ships LiveActivitiesKit as a pod only, so the patch makes it a
-    // library product the widget extension can add, and the runbook says
-    // to add it that way rather than through a Podfile.
-    const manifest = read(
-      "node_modules/capacitor-live-activities/Package.swift"
-    );
-    expect(manifest).toMatch(
-      /\.library\(\s*name: "LiveActivitiesKit",\s*targets: \["LiveActivitiesKit"\]\)/
-    );
-    expect(existsSync(resolve(repoRoot, "ios/App/Podfile"))).toBe(false);
-    const runbook = read("docs/run-live-activity.md");
-    expect(runbook).toMatch(/\*\*LiveActivitiesKit\*\* product/);
-    expect(runbook).not.toMatch(/^\s*(target '|pod ')/m);
-    expect(runbook).not.toMatch(/`pod install`(?! step)/);
-  });
-
   it("declares the entitlement each native plugin needs, and only while it is used", () => {
     const keys = plistKeys(entitlements);
     // Anchor: a parse that found nothing would make the checks below vacuous.
@@ -587,5 +609,166 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     // to create a secret for it.
     expect(guide).not.toContain("KEYCHAIN_PASSWORD");
     expect(workflow).not.toContain("secrets.KEYCHAIN_PASSWORD");
+  });
+});
+
+describe("the Live Activity widget — built, linked and embedded in every build", () => {
+  const WIDGET = "LiveActivitiesExtension";
+  const CONFIGURATIONS = ["Debug", "Release"];
+
+  /** Whether an Xcode file-name pattern matches a name. */
+  const globMatches = (pattern: string, name: string) =>
+    new RegExp(
+      "^" +
+        pattern
+          .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+          .replace(/\*/g, "[^/]*")
+          .replace(/\?/g, "[^/]") +
+        "$"
+    ).test(name);
+
+  /** The files one of the widget's build phases holds. */
+  const phaseFiles = (phase: string) => {
+    const id = nativeTarget(WIDGET).match(
+      new RegExp(`(${OBJECT_ID.source}) /\\* ${phase} \\*/`)
+    )?.[1];
+    if (!id) throw new Error(`${WIDGET} has no ${phase} phase`);
+    return [
+      ...pbxObject(id).matchAll(
+        /\/\* (.+?) in (?:Sources|Resources|Frameworks) \*\//g
+      ),
+    ].map((m) => m[1]);
+  };
+
+  it("is an app extension, signed like the app, under the app's bundle ID", () => {
+    expect(nativeTarget(WIDGET)).toContain(
+      'productType = "com.apple.product-type.app-extension";'
+    );
+    expect(targetConfigurations(WIDGET)).toEqual(CONFIGURATIONS);
+    for (const configuration of CONFIGURATIONS) {
+      const settings = targetSettings(WIDGET, configuration);
+      expect(settings.PRODUCT_BUNDLE_IDENTIFIER).toBe(
+        "com.tropos.app.LiveActivities"
+      );
+      // Inside the app only: an archive with an extension beside App.app
+      // is not one iOS app to the export.
+      expect(settings.SKIP_INSTALL).toBe("YES");
+      expect(settings.TARGETED_DEVICE_FAMILY).toBe("1");
+      // Switched to its App Store profile by ios_signed_targets.py, as the
+      // app and the Watch app are.
+      expect(settings.CODE_SIGN_STYLE).toBe("Automatic");
+      // No capabilities: its profile needs nothing turned on, and it reads
+      // nothing but the activity it draws, so it needs no App Group.
+      expect(settings.CODE_SIGN_ENTITLEMENTS).toBeUndefined();
+      // Polish2 call 1: the widget is gated on iOS 16.2, the plugin's floor.
+      expect(settings.IPHONEOS_DEPLOYMENT_TARGET).toBe("16.2");
+      expect(settings.INFOPLIST_FILE).toBe("LiveActivities/Info.plist");
+      // An extension's versions must be its app's; the archive sets both
+      // on the command line, and these are the committed defaults.
+      for (const name of ["MARKETING_VERSION", "CURRENT_PROJECT_VERSION"])
+        expect(resolvedSetting(WIDGET, configuration, name), name).toBe(
+          resolvedSetting("App", configuration, name)
+        );
+    }
+  });
+
+  it("compiles every Swift file in its folder and bundles its privacy manifest", () => {
+    const swift = readdirSync(resolve(repoRoot, "ios/App/LiveActivities"))
+      .filter((name) => name.endsWith(".swift"))
+      .sort();
+    expect(swift.length).toBeGreaterThanOrEqual(4);
+    expect(phaseFiles("Sources").sort()).toEqual(swift);
+    expect(phaseFiles("Resources")).toEqual(["PrivacyInfo.xcprivacy"]);
+    expect(phaseFiles("Frameworks")).toEqual(["LiveActivitiesKit"]);
+    const group = pbxproj.match(
+      /\/\* LiveActivities \*\/ = \{\s*isa = PBXGroup;[\s\S]*?path = ([^;]+);/
+    );
+    expect(group?.[1]).toBe("LiveActivities");
+  });
+
+  it("links LiveActivitiesKit from the plugin's own package, the copy CapApp-SPM builds the app with", () => {
+    // The plugin's attributes type lives in LiveActivitiesKit, and the
+    // widget must draw that very type. The project has no CocoaPods; the
+    // patch makes LiveActivitiesKit a library product of the plugin's
+    // Swift package, and the widget links it from there.
+    const manifest = read(
+      "node_modules/capacitor-live-activities/Package.swift"
+    );
+    expect(manifest).toMatch(
+      /\.library\(\s*name: "LiveActivitiesKit",\s*targets: \["LiveActivitiesKit"\]\)/
+    );
+    expect(existsSync(resolve(repoRoot, "ios/App/Podfile"))).toBe(false);
+    const product = pbxproj.match(
+      /\/\* LiveActivitiesKit \*\/ = \{\s*isa = XCSwiftPackageProductDependency;\s*package = ([0-9A-F]{24})[^;]*;\s*productName = LiveActivitiesKit;/
+    );
+    expect(product).not.toBeNull();
+    const reference = pbxObject(product![1]);
+    expect(reference).toContain("isa = XCLocalSwiftPackageReference;");
+    const relative = reference.match(/relativePath = "?([^";]+)"?;/)![1];
+    const plugin = resolve(repoRoot, "node_modules/capacitor-live-activities");
+    expect(resolve(repoRoot, "ios/App", relative)).toBe(plugin);
+    // CapApp-SPM, which cap sync writes, names the same directory, so
+    // Swift Package Manager sees one package. A symlinked path would be a
+    // second package defining the same targets.
+    const capApp = read("ios/App/CapApp-SPM/Package.swift");
+    const path = capApp.match(
+      /\.package\(name: "CapacitorLiveActivities", path: "([^"]+)"\)/
+    )?.[1];
+    expect(path).toBeDefined();
+    expect(resolve(repoRoot, "ios/App/CapApp-SPM", path!)).toBe(plugin);
+    expect(read("capacitor.config.ts")).not.toContain(
+      '"capacitor-live-activities"'
+    );
+  });
+
+  it("is embedded in every build, whatever the Watch gate says", () => {
+    expect(dependencyNames("App")).toEqual(["TroposWatch", WIDGET]);
+    const embedId = nativeTarget("App").match(
+      new RegExp(`(${OBJECT_ID.source}) /\\* Embed Foundation Extensions \\*/`)
+    )?.[1];
+    expect(embedId).toBeDefined();
+    const embed = pbxObject(embedId!);
+    expect(embed).toContain("isa = PBXCopyFilesBuildPhase;");
+    // 13 is the app's PlugIns folder, where iOS looks for extensions.
+    expect(embed).toContain("dstSubfolderSpec = 13;");
+    expect(embed).toContain('dstPath = "";');
+    expect(
+      [
+        ...embed.matchAll(/\/\* (.+?) in Embed Foundation Extensions \*\//g),
+      ].map((m) => m[1])
+    ).toEqual([`${WIDGET}.appex`]);
+    // The Watch app's gate skips files by name; the widget is never one.
+    for (const configuration of CONFIGURATIONS)
+      for (const gate of ["YES", "NO", ""]) {
+        const excluded = resolvedSetting(
+          "App",
+          configuration,
+          "EXCLUDED_SOURCE_FILE_NAMES",
+          { WATCH_RUN_RELEASE_ENABLED: gate }
+        )
+          .split(/\s+/)
+          .filter(Boolean);
+        expect(
+          excluded.some((pattern) => globMatches(pattern, `${WIDGET}.appex`)),
+          `${configuration} with the gate "${gate}"`
+        ).toBe(false);
+      }
+  });
+
+  it("is a WidgetKit extension whose versions follow the app's, in an app that declares Live Activities", () => {
+    const info = read("ios/App/LiveActivities/Info.plist");
+    expect(info).toMatch(
+      /<key>NSExtensionPointIdentifier<\/key>\s*<string>com\.apple\.widgetkit-extension<\/string>/
+    );
+    expect(info).toMatch(
+      /<key>CFBundleShortVersionString<\/key>\s*<string>\$\(MARKETING_VERSION\)<\/string>/
+    );
+    expect(info).toMatch(
+      /<key>CFBundleVersion<\/key>\s*<string>\$\(CURRENT_PROJECT_VERSION\)<\/string>/
+    );
+    // Without it the app's startActivity is refused and nothing shows.
+    expect(infoPlist).toMatch(
+      /<key>NSSupportsLiveActivities<\/key>\s*<true\/>/
+    );
   });
 });
