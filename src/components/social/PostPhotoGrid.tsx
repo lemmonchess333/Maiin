@@ -8,14 +8,18 @@
  * Every tile is a box of a fixed ratio before its photo loads, so nothing
  * on the card moves when it does, and the photo fills it (object-cover).
  * Tapping one opens the full-screen viewer at that photo, where it is
- * shown whole. A photo that fails to load (one the screen deleted after it
+ * shown whole. The viewer, with its gestures, loads on the press, so the
+ * feed carries none of it until someone opens a photo. A photo that fails to load (one the screen deleted after it
  * was named) leaves a quiet tile rather than a broken image.
  */
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { postPhotoAlt, type PostPhoto } from "@/lib/postPhotos";
-import PostPhotoViewer from "./PostPhotoViewer";
+
+const loadViewer = () => import("./PostPhotoViewer");
+const PostPhotoViewer = lazyRetry(loadViewer);
 
 /* Written out whole, so Tailwind sees every class it has to build. */
 const GRID: Record<number, string> = {
@@ -46,6 +50,8 @@ function Tile({
   return (
     <button
       type="button"
+      // The finger is on its way: start fetching the viewer now.
+      onPointerDown={() => void loadViewer().catch(() => {})}
       onClick={onOpen}
       aria-label={failed ? alt : undefined}
       className={cn(
@@ -110,13 +116,15 @@ export default function PostPhotoGrid({
         ))}
       </div>
       {open !== null && (
-        <PostPhotoViewer
-          photos={photos}
-          startIndex={open}
-          authorName={authorName}
-          kind={kind}
-          onClose={() => setOpen(null)}
-        />
+        <Suspense fallback={null}>
+          <PostPhotoViewer
+            photos={photos}
+            startIndex={open}
+            authorName={authorName}
+            kind={kind}
+            onClose={() => setOpen(null)}
+          />
+        </Suspense>
       )}
     </>
   );
