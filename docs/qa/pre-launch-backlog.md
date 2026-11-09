@@ -3881,3 +3881,24 @@ phone.
       day. Passing: the whole Start button shows above the tab bar
       without scrolling, in both themes, with the system text size at its
       default.
+
+## The water tile on the compositor (2026-11-09)
+
+Home's water tile no longer animates on the main thread: each wave is
+drawn once and slid by `Element.animate`, the bubbles are `Element.animate`
+of transform and opacity, and the fill rises by `translateY`. Measured in
+headless Chromium at 6x CPU slowdown, the idle tile went from about
+290 ms of main-thread work a second (30 layouts) to about 96 ms (none);
+WebKit on a phone hands these animations to Core Animation, which only a
+device shows.
+
+- [ ] **The water still looks alive on an iPhone.** On a TestFlight build,
+      log a drink from Home with three or more glasses already in. Passing:
+      the surface stands up and settles as the fill rises, the two waves
+      drift at different speeds with no visible seam or jump as they loop,
+      bubbles rise and fade, and with Settings → Accessibility → Motion →
+      Reduce Motion on the surface is still and there are no bubbles.
+- [ ] **It costs nothing visible.** With Instruments' Core Animation (or
+      Safari's Web Inspector Timelines over the device), sit on Home for
+      10 seconds with the water tile on screen. Passing: no repeating
+      layout or paint entries from the water tile.

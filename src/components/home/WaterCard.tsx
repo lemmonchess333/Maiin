@@ -90,6 +90,11 @@ function WaterPresetRow({
   );
 }
 
+/* The water is the tile's full height, moved up into view: a transform,
+   so the rise on arrival and on each drink lays nothing out, where a
+   spring on `height` laid the tile out on every frame of its second. */
+const FILL_RISE = { type: "spring", stiffness: 120, damping: 14 } as const;
+
 export default function WaterCard({
   ml,
   targetMl,
@@ -310,11 +315,11 @@ export default function WaterCard({
       >
         {heading}
         <motion.div
-          className="absolute inset-x-0 bottom-0 pointer-events-none rounded-xl"
+          className="absolute inset-0 pointer-events-none rounded-xl"
           style={{ background: fillBg }}
-          initial={{ height: 0 }}
-          animate={{ height: fillPercent + "%" }}
-          transition={{ type: "spring", stiffness: 120, damping: 14 }}
+          initial={{ y: "100%" }}
+          animate={{ y: `${100 - fillPercent}%` }}
+          transition={FILL_RISE}
         >
           {hasWater && (
             <WaterWave fillPercent={fillPercent} splash={rippleKey} />
@@ -533,11 +538,11 @@ export default function WaterCard({
     >
       {heading}
       <motion.div
-        className="absolute inset-x-0 bottom-0 pointer-events-none rounded-xl"
+        className="absolute inset-0 pointer-events-none rounded-xl"
         style={{ background: fillBg }}
-        initial={{ height: 0 }}
-        animate={{ height: fillPercent + "%" }}
-        transition={{ type: "spring", stiffness: 120, damping: 14 }}
+        initial={{ y: "100%" }}
+        animate={{ y: `${100 - fillPercent}%` }}
+        transition={FILL_RISE}
       >
         {hasWater && <WaterWave fillPercent={fillPercent} splash={rippleKey} />}
       </motion.div>
