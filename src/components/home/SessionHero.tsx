@@ -12,6 +12,8 @@ import MetaLine from "@/components/ui/MetaLine";
 import { cardClasses } from "@/components/ui/cardClasses";
 import { cn } from "@/lib/utils";
 import type { HeroLine } from "@/lib/homeHero";
+import { heroMotionCycles, type HeroMotionSheet } from "@/lib/heroMotion";
+import HeroMotion from "./HeroMotion";
 
 export type HeroSport = "lift" | "run" | "rest";
 
@@ -20,6 +22,9 @@ export interface HeroPicture {
   src: string;
   /** The art's own class (the form drawings' light-theme edge). */
   className?: string;
+  /** The same drawing moving, where it has a flipbook (`heroMotionFor`):
+   *  it plays when Home opens, then rests on the still. */
+  motion?: HeroMotionSheet | null;
 }
 
 /** A soft glow of the sport's own colour behind the picture, fading into
@@ -256,17 +261,25 @@ export default function SessionHero({
                 GLOW[sport]
               )}
             />
-            <img
-              src={picture.src}
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-              decoding="async"
-              className={cn(
-                "relative size-full object-contain",
-                picture.className
-              )}
-            />
+            {picture.motion ? (
+              <HeroMotion
+                sheet={picture.motion}
+                cycles={heroMotionCycles(picture.motion)}
+                className={picture.className}
+              />
+            ) : (
+              <img
+                src={picture.src}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                decoding="async"
+                className={cn(
+                  "relative size-full object-contain",
+                  picture.className
+                )}
+              />
+            )}
           </div>
         )}
         {line && <HeroLineRow line={line} sport={sport} className="mt-3" />}

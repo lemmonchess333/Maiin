@@ -6,7 +6,8 @@
  * a flipbook.
  *
  *   npx tsx scripts/art/hero-motion.ts --clip clip.mp4 --id run-easy \
- *     [--fps 12] [--from 0] [--to 9] [--highlight running] [--preview p.mp4]
+ *     --still form-art/run-easy.webp [--fps 12] [--from 0] [--to 9] \
+ *     [--highlight running] [--preview p.mp4]
  *
  * Without --to it only lists every frame's likeness to the first (1 is
  * identical), so the loop's end can be chosen where the motion comes back
@@ -14,9 +15,11 @@
  * --from up to, not including, --to are the loop.
  *
  * Writes public/form-art/motion/<id>.webp (the sheet, `cols` frames a row)
- * and docs/exercise-art/motion/<id>/frames.json (its layout and the
- * clip's and sheet's hashes). --preview also writes a review video of the
- * loop on the dark card colour, three times round.
+ * and docs/exercise-art/motion/<id>/frames.json (its layout, the still it
+ * animates, and the clip's and sheet's hashes), then regenerates
+ * src/lib/heroMotion.data.ts from every frames.json, which is where the
+ * hero finds a still's flipbook (heroMotionFor). --preview also writes a
+ * review video of the loop on the dark card colour, three times round.
  */
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
@@ -46,6 +49,7 @@ const { values } = parseArgs({
     from: { type: "string", default: "0" },
     to: { type: "string" },
     highlight: { type: "string" },
+    still: { type: "string" },
     preview: { type: "string" },
   },
 });
@@ -56,6 +60,29 @@ if (!/^[a-z0-9-]+$/.test(values.id)) throw new Error("--id: a-z, 0-9 and -");
 const fps = Number(values.fps);
 const sha256 = (bytes: Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
+
+/** src/lib/heroMotion.data.ts, from every animation's frames.json. */
+function writeRegistry() {
+  const dir = resolve(ROOT, "docs/exercise-art/motion");
+  const rows = readdirSync(dir)
+    .sort()
+    .map((id) => JSON.parse(readFileSync(join(dir, id, "frames.json"), "utf8")))
+    .map(
+      (f) =>
+        `  ${JSON.stringify(f.still)}: { src: ${JSON.stringify(f.src)}, ` +
+        `still: ${JSON.stringify(f.still)}, frames: ${f.frames}, fps: ${f.fps}, ` +
+        `frameWidth: ${f.frameWidth}, frameHeight: ${f.frameHeight}, ` +
+        `cols: ${f.cols}, sha256: ${JSON.stringify(f.sha256)} },`
+    );
+  const file = resolve(ROOT, "src/lib/heroMotion.data.ts");
+  const current = readFileSync(file, "utf8");
+  const head = current.slice(0, current.indexOf("export const HERO_MOTION"));
+  writeFileSync(
+    file,
+    `${head}export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {\n${rows.join("\n")}\n};\n`
+  );
+  execFileSync("npx", ["prettier", "--write", file], { stdio: "ignore" });
+}
 
 const work = mkdtempSync(join(tmpdir(), "hero-motion-"));
 try {
@@ -91,6 +118,7 @@ try {
   } else {
     const from = Number(values.from);
     const to = Number(values.to);
+    if (!values.still) throw new Error("--still: the cut-out it animates");
     const loop = files.slice(from, to);
     if (loop.length < 2) throw new Error("the loop needs at least two frames");
 
@@ -155,6 +183,7 @@ try {
     mkdirSync(docs, { recursive: true });
     const layout = {
       src: out,
+      still: values.still.replace(/^\//, ""),
       frames: tiles.length,
       fps,
       frameWidth,
@@ -168,6 +197,7 @@ try {
       join(docs, "frames.json"),
       JSON.stringify(layout, null, 2) + "\n"
     );
+    writeRegistry();
     console.log(
       `${out}: ${tiles.length} frames of ${frameWidth}x${frameHeight}, ` +
         `${cols} a row, ${(sheet.length / 1024).toFixed(0)} KB`
