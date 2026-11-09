@@ -7,7 +7,15 @@
  *
  *   npx tsx scripts/art/hero-motion.ts --clip clip.mp4 --id run-easy \
  *     --still form-art/run-easy.webp [--fps 12] [--from 0] [--to 9] \
- *     [--highlight running] [--preview p.mp4]
+ *     [--then up.mp4] [--play-fps 12] [--highlight running] [--preview p.mp4]
+ *
+ * A lift is made in two halves, each between two reviewed form frames
+ * (the card's position and the other end of the rep), so the rep reaches
+ * the lockout and the full stretch the form guide shows: --clip runs from
+ * the card's position to the other end and --then runs back, its first
+ * frame (the other end again) dropped. --fps samples the clips and
+ * --play-fps plays the loop, so a rep made slowly can play at a lifting
+ * pace.
  *
  * Without --to it only lists every frame's likeness to the first (1 is
  * identical), so the loop's end can be chosen where the motion comes back
@@ -51,6 +59,8 @@ const { values } = parseArgs({
     highlight: { type: "string" },
     still: { type: "string" },
     preview: { type: "string" },
+    then: { type: "string" },
+    "play-fps": { type: "string" },
   },
 });
 if (!values.clip || !values.id) {
@@ -58,6 +68,7 @@ if (!values.clip || !values.id) {
 }
 if (!/^[a-z0-9-]+$/.test(values.id)) throw new Error("--id: a-z, 0-9 and -");
 const fps = Number(values.fps);
+const playFps = Number(values["play-fps"] ?? values.fps);
 const sha256 = (bytes: Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
 
@@ -86,19 +97,27 @@ function writeRegistry() {
 
 const work = mkdtempSync(join(tmpdir(), "hero-motion-"));
 try {
-  execFileSync("ffmpeg", [
-    "-v",
-    "error",
-    "-i",
-    values.clip,
-    "-vf",
-    `fps=${fps},format=rgb24`,
-    join(work, "%04d.png"),
-  ]);
-  const files = readdirSync(work)
-    .filter((f) => f.endsWith(".png"))
-    .sort()
-    .map((f) => join(work, f));
+  const extract = (clip: string, prefix: string) => {
+    execFileSync("ffmpeg", [
+      "-v",
+      "error",
+      "-i",
+      clip,
+      "-vf",
+      `fps=${fps},format=rgb24`,
+      join(work, `${prefix}%04d.png`),
+    ]);
+    return readdirSync(work)
+      .filter((f) => f.startsWith(prefix) && f.endsWith(".png"))
+      .sort()
+      .map((f) => join(work, f));
+  };
+  const files = [
+    ...extract(values.clip, "a"),
+    // The second half starts where the first ended: its first frame is a
+    // repeat.
+    ...(values.then ? extract(values.then, "b").slice(1) : []),
+  ];
 
   if (values.to === undefined) {
     // Likeness of each frame to the first, on a small grey thumbnail.
@@ -185,12 +204,13 @@ try {
       src: out,
       still: values.still.replace(/^\//, ""),
       frames: tiles.length,
-      fps,
+      fps: playFps,
       frameWidth,
       frameHeight,
       cols,
       clipFrames: [from, to],
       clipSha256: sha256(readFileSync(values.clip)),
+      ...(values.then ? { thenSha256: sha256(readFileSync(values.then)) } : {}),
       sha256: sha256(sheet),
     };
     writeFileSync(
@@ -224,7 +244,7 @@ try {
         "error",
         "-y",
         "-framerate",
-        String(fps),
+        String(playFps),
         "-i",
         join(shots, "%04d.png"),
         "-vf",
