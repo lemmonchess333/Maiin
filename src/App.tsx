@@ -22,6 +22,7 @@ import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
 import { useNativeInviteNavigation } from "@/hooks/useNativeInviteNavigation";
 import { useLocalNotificationNavigation } from "@/hooks/useLocalNotificationNavigation";
 import { useWidgetLinkNavigation } from "@/hooks/useWidgetLinkNavigation";
+import { useWidgetDrinkReplay } from "@/hooks/useWidgetDrinkReplay";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
@@ -432,8 +433,11 @@ function AppRoutes() {
     !loading && !!user && !!profile?.onboardingComplete,
     !loading && !!user && !profile?.onboardingComplete
   );
-  // The Home Screen widgets (Wid1): a tap opens the page it names.
+  // The Home Screen widgets (Wid1): a tap opens the page it names, and a
+  // drink the food widget's "+" queued is saved once, against the
+  // person's own water target, so it waits for the profile.
   useWidgetLinkNavigation(!loading && !!user && !!profile?.onboardingComplete);
+  useWidgetDrinkReplay(profile ? uid : null, profile?.targetWaterGlasses);
   // Signed in: fetch the shell's chunks side by side, while the profile
   // loads, instead of one after another as each layer renders. A device
   // that has signed in before started them at module load already; this
