@@ -3146,25 +3146,20 @@ export default function WorkoutSession({
             action — `secondary` per the Button-variant table, routed through
             the primitive so it inherits the 44px floor, the focus ring and the
             0.97 press instead of hand-rolling them. */}
-        <AnimatePresence>
-          {lastCompleted && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="mx-auto"
+        {/* No entrance: it comes back after every set and clears after
+            4 s, and a fade there only delayed the one tap it offers. */}
+        {lastCompleted && (
+          <div className="mx-auto">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleUndo}
+              leftIcon={<RotateCcw className="size-3.5" />}
             >
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleUndo}
-                leftIcon={<RotateCcw className="size-3.5" />}
-              >
-                Undo last set
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              Undo last set
+            </Button>
+          </div>
+        )}
 
         {/* What comes after this exercise (DS3): the next one with sets
             left, in session order from here, so the lifter can set up for
@@ -3219,10 +3214,13 @@ export default function WorkoutSession({
         {rest ? (
           <motion.div
             key="rest"
-            initial={reduceMotion ? false : { opacity: 0, y: 26 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: 12 }}
-            transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+            /* A fade, no rise: it arrives after every set, and a 26 px
+               rise there out-moved the new best above it
+               (DESIGN_GUIDE §14h). */
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={reduceMotion ? undefined : { opacity: 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className="mx-4 mb-3 shrink-0"
           >
             <WorkoutRestTimer

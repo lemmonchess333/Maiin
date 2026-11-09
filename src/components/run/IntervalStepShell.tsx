@@ -160,16 +160,17 @@ export default function IntervalStepShell({
           >
             <div
               className={
-                reduce ? "h-full" : "h-full transition-all duration-1000"
+                reduce
+                  ? "h-full w-full"
+                  : "h-full w-full transition-transform duration-1000"
               }
               style={{
                 background: TYPE_COLOR[s.type],
-                width:
-                  i < idx
-                    ? "100%"
-                    : i === idx
-                      ? `${liveProgress * 100}%`
-                      : "0%",
+                /* Full width, slid into place: a width retargeted every
+                   second laid out and painted every frame of the run. */
+                transform: `translateX(${
+                  (i < idx ? 0 : i === idx ? liveProgress - 1 : -1) * 100
+                }%)`,
               }}
             />
           </div>

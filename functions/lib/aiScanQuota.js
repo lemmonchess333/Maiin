@@ -165,9 +165,21 @@ async function checkDailyAiQuota(db, { uid, action, now = new Date() } = {}) {
  * the day's scan all the same, and a free account has one. A 4xx the
  * request caused keeps the charge, so a bad request cannot be retried for
  * free. Never throws: the refund is not the response.
+ *
+ * 401, 403 and 404 are ours too: the server's own credentials refused, or
+ * a model or region that is not served. Nothing in a photo or a typed meal
+ * causes them, and the first TestFlight scans each cost a scan for a 4xx
+ * of that kind.
  */
+const OUR_OWN_MODEL_REFUSALS = [401, 403, 404];
+
 function isServiceFailure(modelStatus) {
-  return modelStatus === undefined || modelStatus === 429 || modelStatus >= 500;
+  return (
+    modelStatus === undefined ||
+    modelStatus === 429 ||
+    modelStatus >= 500 ||
+    OUR_OWN_MODEL_REFUSALS.includes(modelStatus)
+  );
 }
 
 async function refundDailyAiQuota(db, { uid, action, dayKey } = {}) {
@@ -200,8 +212,14 @@ async function refundDailyAiQuota(db, { uid, action, dayKey } = {}) {
   }
 }
 
-/** What the person is told when the scan failed after it was counted. */
+/**
+ * What the person is told when the scan failed after it was counted. The
+ * model's own status rides along as `modelStatus` when there is one, so the
+ * app's step list can show it: a status code, nothing from the request or
+ * the answer. Without it, a refused scan reads only "server answered 500".
+ */
 function failedScanResponse(modelStatus) {
+  const status = typeof modelStatus === "number" ? { modelStatus } : {};
   if (modelStatus === 429) {
     return {
       status: 503,
@@ -209,6 +227,7 @@ function failedScanResponse(modelStatus) {
         error: "ai-busy",
         message:
           "Food analysis is busy right now. Try again in a minute. This one didn't use a scan.",
+        ...status,
       },
     };
   }
@@ -219,8 +238,13 @@ function failedScanResponse(modelStatus) {
           error: "ai-failed",
           message:
             "Couldn't analyse this. Try again. This one didn't use a scan.",
+          ...status,
         }
-      : { error: "ai-failed", message: "Couldn't analyse this. Try again." },
+      : {
+          error: "ai-failed",
+          message: "Couldn't analyse this. Try again.",
+          ...status,
+        },
   };
 }
 

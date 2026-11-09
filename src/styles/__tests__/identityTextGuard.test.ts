@@ -220,7 +220,7 @@ const EXPECTED_INLINE_USES = {
   // flame from amber to the brand purple.
   // 33 → 34. The notification tray's league result (Soc15 call 3): its
   // medal icon, in the brand purple Social's rewards wear.
-  "THEME.brand": 34,
+  "THEME.brand": 33,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
@@ -330,7 +330,10 @@ function bareUses(token: string): string[] {
 // 2026-11-04: 42 → 43. The signed-out invite line (Soc15) carries a
 // person icon in brand purple, as the sign-in notice beside it carries its
 // mail icon; its words are foreground and muted text.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 43 } as const;
+// 43 → 44 with the drawn pull to refresh: PullToRefreshIndicator's
+// arrow turns brand purple once a release would refresh. An ICON on the
+// card chip, with no words.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 44 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

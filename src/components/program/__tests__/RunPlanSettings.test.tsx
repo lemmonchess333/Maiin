@@ -180,7 +180,11 @@ function sentPayload(): ConfigurePayload {
 /** First upcoming catalogue race — read from config so the test never
  *  goes stale as dateKeys are pasted forward each edition. */
 function firstUpcomingRace() {
-  const races = upcomingRaceSpaceDefs(localDateString());
+  // A distance the plan builds for: an ultra next in the catalogue (as
+  // the calendar moves on) has no Distance choice to pick it by.
+  const races = upcomingRaceSpaceDefs(localDateString()).filter((d) =>
+    ["5k", "10k", "half", "marathon"].includes(d.event!.distance)
+  );
   expect(races.length).toBeGreaterThan(0);
   return races[0];
 }

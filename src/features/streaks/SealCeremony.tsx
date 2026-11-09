@@ -89,12 +89,13 @@ export function SealStage({
             ? {
                 scale: reduce ? 1 : [0.6, 1],
                 opacity: 1,
-                filter: "blur(0px)",
               }
             : {
+                // No blur: an animated filter stutters in WKWebView
+                // (DESIGN_GUIDE §14h). The faint, smaller prize reads as
+                // waiting behind the seal without it.
                 scale: 0.86,
                 opacity: prizeHidden ? 0 : 0.35,
-                filter: "blur(2px)",
               }
         }
         transition={{

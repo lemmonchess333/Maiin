@@ -136,7 +136,7 @@ screen passes both tests or neither; §14m has the numbers to check it with.
 | `src/index.css`                      | The **canonical HSL colour variables** (`--primary`, `--card`, `--destructive`, etc.) for `:root` (light) and `.dark`, plus the Tailwind `@theme` bridge that exposes them as `bg-primary`, `text-muted-foreground`, etc. Also app-shell layout vars (`--tab-bar-height`, safe-area insets). |
 | `src/lib/theme.ts`                   | The `THEME` **JavaScript object** — sport colours, semantic colours, macro colours, chart colours, gradients. Used in TS/inline styles where a CSS class can't reach. Also `MACROS_TEXT_LIGHT` + `useMacroPalette()`.                                                                        |
 | `src/styles/components.css`          | Shared CSS primitives: `.ds-card`, `.ds-card-interactive`, `.ds-input`, `.ds-status-banner`, `.bottom-nav-frost`, auth shell, `.stat-number`, `.progress-ring`, `.pressable`.                                                                                                                |
-| `src/styles/animations.css`          | The Start Run pulse (`ds-run-pulse`, `.btn-start-run-pulse`), the skeleton shimmer and pulse, and the global reduced-motion reset. Nothing else: what moves is framer-motion in its component (§8).                                                                                          |
+| `src/styles/animations.css`          | The skeleton shimmer and pulse, Social's live pulse ring, and the global reduced-motion reset. Nothing else: what moves is framer-motion in its component (§8).                                                                                          |
 | `src/components/ui/`                 | React primitives: `Button`, `IconButton`, `Banner`, `BottomSheet`, `Dialog`, `ConfirmDialog`, `ChoiceSheet`, `Tooltip`, `Toggle`, `Spinner`, `AnimatedNumber`, `ErrorState`.                                                                                                                 |
 | `CLAUDE.md` → "Tropos Design System" | The authoritative spec this guide summarises. If you need deeper detail, read that section.                                                                                                                                                                                                  |
 
@@ -1125,6 +1125,17 @@ Constraints these primitives must keep:
   the single most-trained muscle pulses; nothing else loops. `prefers-
 reduced-motion` always gets the settled static state — no entrance, no
   loop.
+- **Motion calls, owner-delegated (2026-11-09),** from the audits run
+  with Emil Kowalski's animation-performance, choreograph, gestures and
+  remove-animations skills:
+  - A page arrives at once: no route fade, and the tab bar's pill moves
+    with the tab, as a native tab bar's does.
+  - The rest card fades in over 150 ms after a set, with no rise.
+  - Train's day change: the old day goes at once and the new one comes in
+    16 px from its side over 180 ms; taps are never held.
+  - The live run map takes pans and pinches; a tap on it raises the panel.
+  - Hold to finish: a hold let go early only resets the ring; a tap opens
+    the Stop dialog.
 - **Warning register:** warnings use `THEME.warning`, and since the D19
   split (2026-08-22, owner-delegated) that is the AMBER family —
   `#D97706`, one value with `THEME.amber`, matching the CSS ramp that was

@@ -248,11 +248,10 @@ export function ChallengeCard({
   const heroPhoto = challengeEditorialImage(challenge);
 
   return (
-    <motion.div
-      initial={motionSafe({ opacity: 0, y: 8 })}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl bg-card border border-border/50 overflow-hidden"
-    >
+    /* No entrance of its own: the card is shown only inside a bottom
+       sheet (ChallengeList), whose slide is the entrance; a rise inside
+       it was a second one. */
+    <div className="rounded-2xl bg-card border border-border/50 overflow-hidden">
       {/* Hero band (Social uplift v2/v3) — same visual grammar as the
           ActivityCard hero panels; static everything (WKWebView rule);
           accent is the sport-coded metric colour so a km challenge
@@ -762,6 +761,6 @@ export function ChallengeCard({
           </button>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

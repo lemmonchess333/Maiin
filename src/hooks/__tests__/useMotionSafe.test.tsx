@@ -115,7 +115,6 @@ const GATED = [
   "src/pages/Program.tsx",
   "src/components/program/ExercisePicker.tsx",
   "src/features/challenges/ChallengeCard.tsx",
-  "src/components/NotificationBubble.tsx",
   "src/components/home/DayPeekCard.tsx",
 ];
 
