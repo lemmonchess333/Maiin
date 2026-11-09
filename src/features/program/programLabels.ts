@@ -76,5 +76,19 @@ export function equipmentLabel(e: Equipment): string {
       return "Home gym";
     case "minimal":
       return "Minimal";
+    case "no_equipment":
+      return "No equipment";
   }
+}
+
+/** Whether a setup takes the "A barbell and a rack" answer beside its kit
+ *  (Lift4 (11)): a home gym or a minimal one. A full gym has a barbell, and
+ *  with no equipment there is none. */
+export function takesBarbellAtHome(equipment: string | undefined): boolean {
+  return equipment === "home_gym" || equipment === "minimal";
+}
+
+/** Whether a setup takes "Small plates": every one with weights to load. */
+export function takesSmallPlates(equipment: string | undefined): boolean {
+  return equipment !== "no_equipment";
 }

@@ -70,7 +70,10 @@ import { logger } from "./logger";
 import { traceBoot } from "@/lib/bootTrace";
 import { rememberSignInMethod, signInMethodOf } from "./signInMethod";
 import type { Goal } from "./types";
-import type { PreferredSplit } from "@/features/program/programTypes";
+import type {
+  Equipment,
+  PreferredSplit,
+} from "@/features/program/programTypes";
 import {
   PROFILE_REFRESH_ATTEMPTS,
   PROFILE_REFRESH_WAIT_MS,
@@ -582,7 +585,7 @@ export interface UserProfileOnboarding {
    */
   experienceSuggestionDismissed?: { signature: string; at: number };
   daysPerWeek?: 2 | 3 | 4 | 5 | 6;
-  equipment?: "full_gym" | "home_gym" | "minimal";
+  equipment?: Equipment;
   /** Lift4 (11): a barbell and a rack beside a home gym's or a minimal
    *  setup's kit, so the plan can give barbell lifts. */
   barbellAtHome?: boolean;

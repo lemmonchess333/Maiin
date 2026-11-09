@@ -49,6 +49,7 @@ import {
   dropUnavailableAccessories,
   applyInjuryFiltersToWorkouts,
   restoreSwappedLifts,
+  standInForMissingKit,
 } from "./matchTemplate";
 import {
   extraPastCeiling,
@@ -83,6 +84,7 @@ import {
 } from "./experienceModel";
 import { mainRepAnchor, roleRepsFor } from "./roleTable";
 import { nextUpIndex } from "./nextUpCursor";
+import { MAX_HOLD_SECONDS } from "./repUnits";
 import {
   hardestEffort,
   recordedReps,
@@ -357,8 +359,6 @@ export function prescribedRepRange(
 
 /** Timed holds climb in 5-second steps (N2's time axis). */
 const HOLD_STEP_SECONDS = 5;
-/** Ceiling for a hold with no authored range — past this, add load instead. */
-const MAX_HOLD_SECONDS = 60;
 /** Floor for any hold reduction (failure deload or mesocycle deload) — below
  *  ~10s the movement stops being a hold. LIFT-EV-01 named what was a magic
  *  literal in the deload path. */
@@ -1487,6 +1487,9 @@ function applyDayRoles(
     return {
       ...day,
       exercises: day.exercises.map((ex) => {
+        // A hold's target is seconds: two of them either way is no heavier
+        // or lighter day, and the hold climbs on its own five-second steps.
+        if (ex.repUnit === "seconds") return ex;
         const delta = undulationDeltaFor(ex, role);
         const reps = Math.min(
           prescribedRepCeiling(ex),
@@ -2075,6 +2078,15 @@ export function generateProgram(
       workouts,
       limits.equipment,
       limits.barbellAtHome
+    );
+    // With no equipment, a main lift nothing in its movement can stand in
+    // for takes a hold or floor lift, so no day is left with one it can't
+    // do, or with none.
+    workouts = standInForMissingKit(
+      workouts,
+      limits.equipment,
+      injuries,
+      loadCtx
     );
   }
   // Lift4 (5): each lift's sets, reps and progression come from its role

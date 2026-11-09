@@ -48,6 +48,7 @@ import {
 
 import { planningEasyPaceSPerKm, type RunFitnessInput } from "@/lib/runPaces";
 import type {
+  Equipment,
   Goal,
   PreferredSplit,
   PrimaryGoal,
@@ -97,6 +98,7 @@ import {
   applyInjuryFiltersToWorkouts,
   applyEquipmentFilterToWorkouts,
   restoreSwappedLifts,
+  standInForMissingKit,
 } from "./matchTemplate";
 import { contraindicatedFor } from "./injurySubstitutions";
 import {
@@ -206,7 +208,7 @@ export interface PlanBuilderInput {
    *  same knobs this build used. */
   runTuning?: RunTuning;
 
-  equipment: "full_gym" | "home_gym" | "minimal";
+  equipment: Equipment;
 
   /** Lift4 (11): a barbell and a rack beside a home gym's or a minimal
    *  setup's kit ("what do you have?"). */
@@ -496,16 +498,24 @@ function buildLiftProgram(input: LiftProgramInput): {
     input.barbellAtHome
   );
   // A lift the swaps bring in takes its own role's numbers; a new plan's
-  // were swapped in the generator, before its role table.
+  // were swapped in the generator, before its role table. With no
+  // equipment, a lift nothing in its movement can stand in for takes a hold
+  // or floor lift in its slot, and comes back with the kit
+  // (`standInForMissingKit`).
   const equipmentSafe = represcribeSwapped(
     levelled,
-    applyEquipmentFilterToWorkouts(
-      injurySafe,
+    standInForMissingKit(
+      applyEquipmentFilterToWorkouts(
+        injurySafe,
+        input.equipment,
+        input.injuries,
+        toExperience(input.experience),
+        loadCtx,
+        input.barbellAtHome
+      ),
       input.equipment,
       input.injuries,
-      toExperience(input.experience),
-      loadCtx,
-      input.barbellAtHome
+      loadCtx
     ),
     input.primaryGoal,
     toExperience(input.experience),
