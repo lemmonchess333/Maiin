@@ -1125,6 +1125,17 @@ Constraints these primitives must keep:
   the single most-trained muscle pulses; nothing else loops. `prefers-
 reduced-motion` always gets the settled static state — no entrance, no
   loop.
+- **Motion calls, owner-delegated (2026-11-09),** from the audits run
+  with Emil Kowalski's animation-performance, choreograph, gestures and
+  remove-animations skills:
+  - A page arrives at once: no route fade, and the tab bar's pill moves
+    with the tab, as a native tab bar's does.
+  - The rest card fades in over 150 ms after a set, with no rise.
+  - Train's day change: the old day goes at once and the new one comes in
+    16 px from its side over 180 ms; taps are never held.
+  - The live run map takes pans and pinches; a tap on it raises the panel.
+  - Hold to finish: a hold let go early only resets the ring; a tap opens
+    the Stop dialog.
 - **Warning register:** warnings use `THEME.warning`, and since the D19
   split (2026-08-22, owner-delegated) that is the AMBER family —
   `#D97706`, one value with `THEME.amber`, matching the CSS ramp that was

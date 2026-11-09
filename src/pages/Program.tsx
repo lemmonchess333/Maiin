@@ -394,7 +394,6 @@ function ProgramInner() {
     [setDayInUrl]
   );
   const [direction, setDirection] = useState(0);
-  const isAnimating = useRef(false);
 
   // UI state
   const [orderHelpRequest, setOrderHelpRequest] = useState(0);
@@ -1039,8 +1038,7 @@ function ProgramInner() {
 
   // ── Handlers ──
   const handleSelect = (newIndex: number) => {
-    if (isAnimating.current || newIndex === idx) return;
-    isAnimating.current = true;
+    if (newIndex === idx) return;
     setDirection(newIndex > idx ? 1 : -1);
     selectDay(newIndex);
     trackProgrammeEvent("programme_day_tapped", { dayIndex: newIndex });
@@ -1482,20 +1480,22 @@ function ProgramInner() {
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
-              <AnimatePresence mode="wait" custom={direction}>
+              {/* A new day comes in 16 px from the side it was reached
+                  from, over 180 ms; the old day goes at once, as a setup
+                  step does, so a tap never waits on an exit. Not on the
+                  first paint (direction 0): Train opens on its day settled.
+                  Owner-delegated call, 2026-11-09: it was a 200 ms exit
+                  then a 200 ms enter, and taps were ignored meanwhile. */}
+              <>
                 <motion.div
                   key={idx}
-                  custom={direction}
-                  variants={motionSafe.variants({
-                    enter: (dir: number) => ({ opacity: 0, x: dir * 50 }),
-                    center: { opacity: 1, x: 0 },
-                    exit: (dir: number) => ({ opacity: 0, x: dir * -50 }),
-                  })}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  style={{ willChange: "transform" }}
+                  initial={
+                    direction === 0
+                      ? false
+                      : motionSafe({ opacity: 0, x: direction * 16 })
+                  }
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                 >
                   {selectedWorkout && (
                     <div className="space-y-3">
@@ -1662,7 +1662,7 @@ function ProgramInner() {
                     </div>
                   )}
                 </motion.div>
-              </AnimatePresence>
+              </>
               {/* The week's notices sit under the day's session, as Home's banners
                   sit under its hero (DS4, §14m rule 1: the session's top within
                   260pt). The lighter-week offer is still on every day of the week,
@@ -1693,26 +1693,22 @@ function ProgramInner() {
                   nutritionGoal: programState?.goal,
                 }}
               />
-              <AnimatePresence
-                mode="wait"
-                custom={direction}
-                onExitComplete={() => {
-                  isAnimating.current = false;
-                }}
-              >
+              {/* A new day comes in 16 px from the side it was reached
+                  from, over 180 ms; the old day goes at once, as a setup
+                  step does, so a tap never waits on an exit. Not on the
+                  first paint (direction 0): Train opens on its day settled.
+                  Owner-delegated call, 2026-11-09: it was a 200 ms exit
+                  then a 200 ms enter, and taps were ignored meanwhile. */}
+              <>
                 <motion.div
                   key={idx}
-                  custom={direction}
-                  variants={motionSafe.variants({
-                    enter: (dir: number) => ({ opacity: 0, x: dir * 50 }),
-                    center: { opacity: 1, x: 0 },
-                    exit: (dir: number) => ({ opacity: 0, x: dir * -50 }),
-                  })}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  style={{ willChange: "transform" }}
+                  initial={
+                    direction === 0
+                      ? false
+                      : motionSafe({ opacity: 0, x: direction * 16 })
+                  }
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                 >
                   {selectedWorkout && (
                     <div className="space-y-3">
@@ -2069,7 +2065,7 @@ function ProgramInner() {
                     </div>
                   )}
                 </motion.div>
-              </AnimatePresence>
+              </>
             </div>
           </TrackProgrammeSectionView>
         </>

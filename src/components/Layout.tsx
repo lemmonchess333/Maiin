@@ -321,22 +321,17 @@ export default function Layout() {
         onTouchStart={onSwipeStart}
         onTouchEnd={onSwipeEnd}
       >
-        <motion.div
-          key={location.pathname}
-          initial={prefersReducedMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={
-            prefersReducedMotion
-              ? { duration: 0 }
-              : { duration: 0.15, ease: [0.23, 1, 0.32, 1] }
-          }
-        >
+        {/* Keyed by path, so /user/a to /user/b mounts a fresh page, but
+            with no fade: a page arrives at once, as a native tab does,
+            and PageShell's content starts settled for the same reason
+            (owner-delegated call, 2026-11-09). */}
+        <div key={location.pathname}>
           <Suspense
             fallback={<PageContentSkeleton pathname={location.pathname} />}
           >
             <Outlet />
           </Suspense>
-        </motion.div>
+        </div>
       </main>
 
       {/* Bottom tab bar */}

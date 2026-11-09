@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import type { TabIcon } from "@/components/icons/TabIcons";
-import { LayoutGroup, motion } from "framer-motion";
 import { activeTabForPath } from "@/lib/activeTab";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -32,7 +31,7 @@ export default function BottomNavigation({
       data-tab-bar
       className="bottom-nav-frame fixed bottom-0 left-0 right-0 z-30"
     >
-      <LayoutGroup>
+      <>
         {/* The wrapping <nav aria-label="Main navigation"> on the
         parent element already gives this surface the correct
         semantics. The Codex PR added role="tablist" but a real
@@ -110,25 +109,14 @@ export default function BottomNavigation({
               >
                 {
                   <>
-                    {/* Active-destination indicator: a single shared pill
-                        (layoutId) that GLIDES + morphs between tabs with a
-                        crisp spring — motion continuity is what makes the
-                        bar feel premium vs a per-cell cross-fade. It sits behind the
-                        icon + label. Reduced-motion → static, no slide. */}
-                    {isActive &&
-                      (prefersReducedMotion ? (
-                        <div className="bottom-nav-pill absolute inset-0 rounded-full ring-1 ring-inset ring-primary/15 z-0" />
-                      ) : (
-                        <motion.div
-                          layoutId="nav-active-pill"
-                          className="bottom-nav-pill absolute inset-0 rounded-full ring-1 ring-inset ring-primary/15 z-0"
-                          transition={{
-                            type: "spring",
-                            stiffness: 600,
-                            damping: 38,
-                          }}
-                        />
-                      ))}
+                    {/* Active-destination indicator, behind the icon and
+                        label. It moves with the tab at once, as a native
+                        tab bar's does: its shared-layout glide ran on the
+                        main thread just as the next page mounted
+                        (owner-delegated call, 2026-11-09). */}
+                    {isActive && (
+                      <div className="bottom-nav-pill absolute inset-0 rounded-full ring-1 ring-inset ring-primary/15 z-0" />
+                    )}
                     <div className="bottom-nav-icon relative z-10">
                       {/* DS3's own tab icons: an outline, and a
                           filled form drawn for the open tab. */}
@@ -162,7 +150,7 @@ export default function BottomNavigation({
             );
           })}
         </div>
-      </LayoutGroup>
+      </>
     </nav>
   );
 }

@@ -12,8 +12,11 @@
  * a screen-reader activation opens the existing Stop confirm dialog instead
  * (via onRequestConfirm) — so hold users get the fast path and everyone else
  * (and every stray brush) gets the safe path. A completed hold ends the run
- * directly and swallows its trailing click. See spec `spec-run-fast-launch.md`
- * §12.
+ * directly and swallows its trailing click. A hold let go early only resets
+ * the ring and swallows its click too: the runner changed their mind, and a
+ * dialog mid-run would interrupt them (owner-delegated call, 2026-11-09;
+ * it opened the dialog, against what this note always said). See spec
+ * `spec-run-fast-launch.md` §12.
  *
  * The paused screen's Stop is the same control at the large size, with its
  * own label and glyph: a hold there ends the run too, and a tap still opens
@@ -35,6 +38,8 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 
 const HOLD_MS = 1500;
+/** A press longer than this was a hold, not a tap. */
+const TAP_MAX_MS = 300;
 /* The ring sits 4px inside the button's edge, at either size. */
 const BUTTON_PX: Record<RunControlSize, number> = { sm: 56, lg: 76 };
 const RING_INSET = 4;
@@ -72,6 +77,8 @@ export default function HoldToFinishButton({
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number | null>(null);
   const completedRef = useRef(false);
+  /** The last press was a hold let go early: its click is swallowed. */
+  const abandonedHoldRef = useRef(false);
   const tickRef = useRef(0);
   const loopRef = useRef<(() => void) | null>(null);
   const [progress, setProgress] = useState(0);
@@ -113,6 +120,7 @@ export default function HoldToFinishButton({
 
   const begin = useCallback(() => {
     completedRef.current = false;
+    abandonedHoldRef.current = false;
     tickRef.current = 0;
     startRef.current = performance.now();
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
@@ -123,6 +131,9 @@ export default function HoldToFinishButton({
   // trailing click (from a tap) is handled by handleClick below.
   const cancel = useCallback(() => {
     if (completedRef.current) return;
+    const started = startRef.current;
+    abandonedHoldRef.current =
+      started != null && performance.now() - started > TAP_MAX_MS;
     stop();
   }, [stop]);
 
@@ -131,6 +142,11 @@ export default function HoldToFinishButton({
     // the trailing click so it doesn't also open the confirm dialog.
     if (completedRef.current) {
       completedRef.current = false;
+      return;
+    }
+    // A hold let go early: the ring has reset, and that is all.
+    if (abandonedHoldRef.current) {
+      abandonedHoldRef.current = false;
       return;
     }
     onRequestConfirm();

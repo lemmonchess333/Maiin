@@ -3219,10 +3219,13 @@ export default function WorkoutSession({
         {rest ? (
           <motion.div
             key="rest"
-            initial={reduceMotion ? false : { opacity: 0, y: 26 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: 12 }}
-            transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+            /* A fade, no rise: it arrives after every set, and a 26 px
+               rise there out-moved the new best above it
+               (owner-delegated call, 2026-11-09). */
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={reduceMotion ? undefined : { opacity: 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className="mx-4 mb-3 shrink-0"
           >
             <WorkoutRestTimer
