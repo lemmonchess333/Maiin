@@ -36,7 +36,7 @@ let configured = false;
 /**
  * One RevenueCat call, timed into the step list a stalled or failed
  * purchase shows on the iPhone (bootTrace.ts). The first TestFlight
- * purchase (2026-11-08) sat on "Starting checkout…" with no Apple sheet
+ * purchase sat on "Starting checkout…" with no Apple sheet
  * and nothing to say which call never answered.
  */
 async function step<T>(name: string, work: () => Promise<T>): Promise<T> {
