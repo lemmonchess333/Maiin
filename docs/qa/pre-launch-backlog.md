@@ -3881,3 +3881,26 @@ phone.
       day. Passing: the whole Start button shows above the tab bar
       without scrolling, in both themes, with the system text size at its
       default.
+
+## Holding a post's photo full screen (2026-11-09)
+
+The full-screen photo viewer follows the finger: a sideways swipe drags
+the strip with the next photo beside it, a pull down closes it with the
+stage fading, two fingers pinch (1× to 4×), a zoomed photo pans, and a
+double tap zooms in to where it landed or back out. The rules are in
+`src/lib/photoGesture.ts`. The unit suites and a touch-driven browser run
+cover the logic; only a phone shows how it feels under a real finger.
+
+- [ ] **Swipe, pull, pinch and pan on an iPhone.** On a TestFlight build,
+      open a post with three photos. Passing: the photo moves with the
+      finger and the next one slides in beside it; a short slow drag
+      springs back; the first and last photos give a little and spring
+      back; a pull down shrinks the photo and fades the stage, and letting
+      go closes it, while a push up does not; a pinch zooms about the
+      fingers and a zoomed photo pans without turning; a double tap zooms
+      in where it landed and a second one zooms back out. Nothing behind
+      the viewer scrolls, and the tab bar never changes tab.
+- [ ] **Reduce Motion.** With Settings → Accessibility → Motion → Reduce
+      Motion on, repeat the swipe and the pull. Passing: the photo still
+      follows the finger, and a turn or a close happens at once, with
+      nothing sliding by itself.

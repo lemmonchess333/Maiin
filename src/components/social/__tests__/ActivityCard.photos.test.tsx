@@ -5,12 +5,20 @@
  * fixed ratio so nothing moves as it loads, under the session's own
  * numbers and before its moments, on a run's card and a lift's. A tap
  * opens the viewer at that photo: the photo whole, "2 of 3", a close
- * button that has focus, the arrow keys and a swipe between photos,
- * Escape to close with focus back on the photo that opened it, and each
- * photo named for a screen reader.
+ * button that has focus, the arrow keys and a swipe between photos, a
+ * pull down, Escape or Close to close with focus back on the photo that
+ * opened it, a pinch or a double tap to zoom, and each photo named for a
+ * screen reader.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ActivityCard from "../ActivityCard";
 import type { FeedItem } from "../../../hooks/useSocialFeed";
@@ -192,7 +200,10 @@ describe("the full-screen viewer", () => {
     expect(shown().className).toMatch(/object-contain/);
     // Over everything, on the dark stage, below the status bar.
     expect(viewer().className).toMatch(/fixed inset-0/);
-    expect(viewer().className).toMatch(/bg-stage/);
+    // The stage is its own layer, so a pull down can fade it.
+    expect(viewer().querySelector("[data-photo-backdrop]")?.className).toMatch(
+      /bg-stage/
+    );
     expect(viewer().className).toMatch(/--safe-top/);
     expect(document.body.style.overflow).toBe("hidden");
   });
@@ -242,6 +253,87 @@ describe("the full-screen viewer", () => {
     expect(within(viewer()).getByText("2 of 3")).toBeInTheDocument();
     drag(100, 300);
     expect(within(viewer()).getByText("1 of 3")).toBeInTheDocument();
+  });
+
+  it("closes on a pull down, and not on a push up or a nudge", async () => {
+    open(1);
+    const stage = shown().parentElement!;
+    const pull = (toY: number) => {
+      fireEvent.pointerDown(stage, { clientX: 200, clientY: 300 });
+      fireEvent.pointerMove(stage, { clientX: 200, clientY: 300 + toY / 2 });
+      fireEvent.pointerUp(stage, { clientX: 200, clientY: 300 + toY });
+    };
+    pull(-300);
+    pull(20);
+    expect(viewer()).toBeInTheDocument();
+    pull(400);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("zooms with a double tap or a pinch, pans while zoomed, and turns the photo at rest", async () => {
+    open(0);
+    const stage = shown().parentElement!.parentElement!.parentElement!;
+    const zoomed = () => stage.getAttribute("data-zoomed");
+    expect(zoomed()).toBe("false");
+
+    const tap = () => {
+      fireEvent.pointerDown(stage, { clientX: 200, clientY: 300 });
+      fireEvent.pointerUp(stage, { clientX: 200, clientY: 300 });
+    };
+    tap();
+    tap();
+    expect(zoomed()).toBe("true");
+    // Let the zoom spring arrive before the next finger takes hold of it.
+    await waitFor(() =>
+      expect(shown().style.transform).toMatch(/scale\(2\.5\)/)
+    );
+    // A zoomed photo pans under one finger; it does not turn.
+    fireEvent.pointerDown(stage, { clientX: 300, clientY: 300 });
+    fireEvent.pointerMove(stage, { clientX: 200, clientY: 300 });
+    fireEvent.pointerUp(stage, { clientX: 100, clientY: 300 });
+    expect(within(viewer()).getByText("1 of 3")).toBeInTheDocument();
+    expect(zoomed()).toBe("true");
+    tap();
+    tap();
+    expect(zoomed()).toBe("false");
+
+    // Two fingers spreading zoom in; turning the photo leaves it at rest.
+    fireEvent.pointerDown(stage, { pointerId: 1, clientX: 180, clientY: 300 });
+    fireEvent.pointerDown(stage, { pointerId: 2, clientX: 220, clientY: 300 });
+    fireEvent.pointerMove(stage, { pointerId: 2, clientX: 320, clientY: 300 });
+    fireEvent.pointerUp(stage, { pointerId: 2, clientX: 320, clientY: 300 });
+    fireEvent.pointerUp(stage, { pointerId: 1, clientX: 180, clientY: 300 });
+    expect(zoomed()).toBe("true");
+    fireEvent.keyDown(document, { key: "ArrowRight" });
+    expect(within(viewer()).getByText("2 of 3")).toBeInTheDocument();
+    expect(zoomed()).toBe("false");
+  });
+
+  it("keeps its touches from the page that opened it", () => {
+    const onTouchStart = vi.fn();
+    const onTouchEnd = vi.fn();
+    const view = render(
+      <MemoryRouter>
+        <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+          <ActivityCard feedItem={post({ photos: photos(3) }, "run")} />
+        </div>
+      </MemoryRouter>
+    );
+    fireEvent.click(tiles(view.container)[0]);
+    const stage = shown().parentElement!;
+    fireEvent.touchStart(stage, { touches: [{ clientX: 300, clientY: 300 }] });
+    fireEvent.touchEnd(stage, {
+      changedTouches: [{ clientX: 100, clientY: 300 }],
+    });
+    expect(onTouchStart).not.toHaveBeenCalled();
+    expect(onTouchEnd).not.toHaveBeenCalled();
+  });
+
+  it("shows only the open photo to a screen reader", () => {
+    open(1);
+    // Its neighbours are drawn beside it for the swipe, hidden from AT.
+    expect(within(viewer()).getAllByRole("img")).toHaveLength(1);
+    expect(viewer().querySelectorAll("img")).toHaveLength(3);
   });
 
   it("closes on Escape and on Close, with focus back on the photo that opened it", () => {
