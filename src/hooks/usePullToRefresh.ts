@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RefObject, TouchEvent as ReactTouchEvent } from "react";
+import { animate, useMotionValue, type MotionValue } from "framer-motion";
+import { haptic } from "@/lib/haptic";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 /* Pull-to-refresh gesture hook — shared between Social, History, and
    Food page touch-handlers. Extracted from duplicated inline
@@ -25,7 +28,15 @@ import type { RefObject, TouchEvent as ReactTouchEvent } from "react";
    means preventDefault inside them is a no-op. We need the
    non-passive listener attached via addEventListener with
    { passive: false } so the preventDefault call actually suppresses
-   browser overscroll. */
+   browser overscroll.
+
+   The pull is drawn, since the browser's own bounce is held off: `pull`
+   is how far the indicator has come down, rubber-banded from the
+   finger's travel, so it follows the finger and slows as it goes
+   (PullToRefreshIndicator draws it). Crossing the threshold ticks a
+   light haptic once, as iOS does; letting go past it holds the
+   indicator at PULL_HOLD while the refresh runs, and short of it the
+   indicator springs back. */
 export interface UsePullToRefreshOptions {
   /** Refresh action invoked when the gesture commits. May return a
    *  promise; the hook awaits it and holds isRefreshing true for
@@ -53,6 +64,11 @@ export interface UsePullToRefreshReturn {
   /** True while a refresh is in-flight; pages render their indicator
    *  from this. */
   isRefreshing: boolean;
+  /** How far the indicator has come down, in px: follows the finger
+   *  through a pull, PULL_HOLD while refreshing, 0 at rest. */
+  pull: MotionValue<number>;
+  /** The pull at which a release refreshes (the threshold's travel). */
+  readyAt: number;
   /** Manually trigger the refresh (no gesture required). Honours the
    *  same isRefreshing guard so a programmatic trigger can't race
    *  with an in-flight gesture-triggered refresh. Used by Social's
@@ -75,6 +91,23 @@ export interface UsePullToRefreshReturn {
 
 const DEFAULT_THRESHOLD = 80;
 
+/** The furthest the indicator comes down, however far the finger goes. */
+export const PULL_MAX = 120;
+/** Where the indicator waits while a refresh runs. */
+export const PULL_HOLD = 56;
+
+/**
+ * How far the indicator has come for a finger that has travelled `diff`
+ * px: half the travel at first, slowing towards PULL_MAX, so a long pull
+ * feels held rather than stopped at a wall.
+ */
+export function pullDistance(diff: number): number {
+  if (diff <= 0) return 0;
+  return PULL_MAX * (1 - Math.exp(-(diff * 0.5) / PULL_MAX));
+}
+
+const SPRING = { type: "spring", stiffness: 420, damping: 38 } as const;
+
 export function usePullToRefresh({
   onRefresh,
   threshold = DEFAULT_THRESHOLD,
@@ -86,6 +119,20 @@ export function usePullToRefresh({
   const isSwiping = useRef(false);
   const suppressed = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pull = useMotionValue(0);
+  const armed = useRef(false);
+  const reduced = useReducedMotion();
+  const reducedRef = useRef(reduced);
+  useEffect(() => {
+    reducedRef.current = reduced;
+  }, [reduced]);
+  const settlePull = useCallback(
+    (to: number) => {
+      if (reducedRef.current) pull.set(to);
+      else animate(pull, to, SPRING);
+    },
+    [pull]
+  );
 
   /* Stash the latest onRefresh in a ref so the touchend handler
      always sees the freshest callback without re-binding listeners
@@ -95,10 +142,18 @@ export function usePullToRefresh({
   useEffect(() => {
     onRefreshRef.current = onRefresh;
   }, [onRefresh]);
+  /* The imperative touchmove listener is bound once; it reads these. */
+  const thresholdRef = useRef(threshold);
+  const refreshingRef = useRef(isRefreshing);
+  useEffect(() => {
+    thresholdRef.current = threshold;
+    refreshingRef.current = isRefreshing;
+  }, [threshold, isRefreshing]);
 
   const runRefresh = useCallback(async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
+    settlePull(PULL_HOLD);
     const start = Date.now();
     try {
       await onRefreshRef.current();
@@ -109,13 +164,15 @@ export function usePullToRefresh({
         await new Promise((r) => setTimeout(r, wait));
       }
       setIsRefreshing(false);
+      settlePull(0);
     }
-  }, [isRefreshing, minDisplayMs]);
+  }, [isRefreshing, minDisplayMs, settlePull]);
 
   const handleTouchStart = useCallback(
     (e: ReactTouchEvent) => {
       pullStartY.current = e.touches[0].clientY;
       isSwiping.current = false;
+      armed.current = false;
       /* Exclusion guard: if the touchstart originated inside an
          element matching excludeSelector (e.g. a Food page swipeable
          row), suppress the gesture for this whole touch sequence.
@@ -138,11 +195,19 @@ export function usePullToRefresh({
       if (diff > 0 && window.scrollY <= 0) {
         isSwiping.current = true;
         e.preventDefault();
+        if (!refreshingRef.current) pull.set(pullDistance(diff));
+        const ready = diff > thresholdRef.current;
+        if (ready && !armed.current && !refreshingRef.current) haptic("light");
+        armed.current = ready;
+      } else if (isSwiping.current && !refreshingRef.current) {
+        // Back up past where it started: the indicator goes with it.
+        pull.set(0);
+        armed.current = false;
       }
     };
     el.addEventListener("touchmove", handler, { passive: false });
     return () => el.removeEventListener("touchmove", handler);
-  }, []);
+  }, [pull]);
 
   const handleTouchEnd = useCallback(
     (e: ReactTouchEvent) => {
@@ -153,14 +218,19 @@ export function usePullToRefresh({
       const diff = e.changedTouches[0].clientY - pullStartY.current;
       if (diff > threshold && isSwiping.current && !isRefreshing) {
         void runRefresh();
+      } else if (isSwiping.current && !isRefreshing) {
+        settlePull(0);
       }
       isSwiping.current = false;
+      armed.current = false;
     },
-    [threshold, isRefreshing, runRefresh]
+    [threshold, isRefreshing, runRefresh, settlePull]
   );
 
   return {
     isRefreshing,
+    pull,
+    readyAt: pullDistance(threshold),
     triggerRefresh: runRefresh,
     bindProps: {
       ref: containerRef,

@@ -52,6 +52,8 @@ const ZONE_COLOR: Record<ZoneNumber, string> = {
 };
 
 interface RunBottomSheetProps {
+  /** Bumped by a tap on the map: the panel rises to full. */
+  expandRequest?: number;
   elapsed: number;
   distance: number;
   points: GPSPoint[];
@@ -332,6 +334,7 @@ function KmProgress({
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function RunBottomSheet({
+  expandRequest = 0,
   elapsed,
   distance,
   points,
@@ -356,6 +359,14 @@ export default function RunBottomSheet({
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const stopTitleId = useId();
   const isExpanded = snapIdx === 2;
+  // A tap on the map raises a lowered panel (the map itself takes pans and
+  // pinches, so nothing covers it any more). Adjusted while rendering, as
+  // React advises for state that follows a prop.
+  const [seenExpandRequest, setSeenExpandRequest] = useState(expandRequest);
+  if (expandRequest !== seenExpandRequest) {
+    setSeenExpandRequest(expandRequest);
+    if (snapIdx !== 2) setSnapIdx(2);
+  }
   const isSplitsView = snapIdx === 1;
 
   // ── Draggable bottom sheet ────────────────────────────────────────────
@@ -468,27 +479,11 @@ export default function RunBottomSheet({
 
   return (
     <>
-      {/* Tap map to re-expand */}
-      {!isExpanded && (
-        <div
-          className="fixed inset-0 z-30"
-          style={{ bottom: `${SNAPS[snapIdx] * 100}vh` }}
-          role="button"
-          tabIndex={0}
-          aria-label="Expand bottom sheet"
-          onClick={() => {
-            setSnapIdx(2);
-            haptic("light");
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              setSnapIdx(2);
-              haptic("light");
-            }
-          }}
-        />
-      )}
-
+      {/* No layer over the map when the panel is lowered: the map takes
+          pans and pinches, as Strava's and Nike Run Club's do mid-run
+          (its Recenter brings the runner back), and a tap on it raises
+          the panel through `expandRequest` (DESIGN_GUIDE
+          §14h). The grip still raises it by keyboard. */}
       <motion.div
         className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px]"
         style={{

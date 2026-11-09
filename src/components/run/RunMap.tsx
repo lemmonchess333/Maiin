@@ -44,6 +44,9 @@ interface RunMapProps {
    * Static for the run; populate once (e.g. re-running a past run's polyline).
    */
   targetRoute?: GPSPoint[];
+  /** A tap on the map, not a pan or a pinch (MapLibre's `click`). The live
+   *  run raises its panel with it, now that the map itself takes touches. */
+  onMapTap?: () => void;
 }
 
 export default function RunMap({
@@ -58,11 +61,17 @@ export default function RunMap({
   replayIndex,
   liveControls = false,
   distanceMarkers = false,
+  onMapTap,
   markerUnit = "km",
   targetRoute,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  // Read through a ref, so a new callback never rebuilds the map.
+  const onMapTapRef = useRef(onMapTap);
+  useEffect(() => {
+    onMapTapRef.current = onMapTap;
+  });
   // Live "follow mode": true means the camera auto-centres on the runner on
   // every fix. A hand pan/pinch flips it false (and reveals Recenter); the
   // Recenter button flips it back on. A ref (not state) so the per-fix route
@@ -246,6 +255,8 @@ export default function RunMap({
       followingRef.current = false;
       setShowRecenter(true);
     };
+    const onTap = () => onMapTapRef.current?.();
+    map.on("click", onTap);
     if (liveControls) {
       map.on("dragstart", onUserGesture);
       map.on("zoomstart", onUserGesture);
@@ -256,6 +267,7 @@ export default function RunMap({
 
     return () => {
       map.off("load", onLoad);
+      map.off("click", onTap);
       map.off("dragstart", onUserGesture);
       map.off("zoomstart", onUserGesture);
       map.off("rotatestart", onUserGesture);
