@@ -752,7 +752,10 @@ jobs:
       # is built on a runner, so they go up here, from the archive just sent
       # to TestFlight. After that upload, so a failure here turns the run red
       # without keeping the build from testers, and whatever the step before
-      # did, so a slow App Store Connect does not cost the symbols.
+      # did, so a slow App Store Connect does not cost the symbols. The tool
+      # itself has crashed once (a segmentation fault, build 12) with the
+      # build already in TestFlight, so a failed upload is tried once more
+      # before the run goes red.
       - name: Upload Crashlytics symbol files
         if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
         run: |
@@ -765,7 +768,12 @@ jobs:
             exit 1
           fi
           "$UPLOAD" -gsp ios/App/App/GoogleService-Info.plist -p ios \
-            "$RUNNER_TEMP/App.xcarchive/dSYMs"
+            "$RUNNER_TEMP/App.xcarchive/dSYMs" || {
+            echo "::warning::upload-symbols failed once; trying again in 15 s"
+            sleep 15
+            "$UPLOAD" -gsp ios/App/App/GoogleService-Info.plist -p ios \
+              "$RUNNER_TEMP/App.xcarchive/dSYMs"
+          }
 
       # The runner is thrown away after the job, but the signing key should
       # not outlive the steps that needed it.
