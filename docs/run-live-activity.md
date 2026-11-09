@@ -110,11 +110,15 @@ system's counterpart of the rest band's Archivo display cut.
   gate. The Watch app's gate does not reach it.
 - `ios/App/App/Info.plist` declares `NSSupportsLiveActivities`; without it
   every start is refused.
-- **No App Group and no entitlements.** The plugin's README asks for an App
-  Group, which it uses for images saved with `saveImage` and for copies of
-  the data it never reads back. Tropos uses neither: the widget draws only
-  the activity's own state. So the extension's App ID needs no capability,
-  and the app's entitlements are unchanged.
+- **The Live Activity uses no App Group.** The plugin's README asks for an
+  App Group, which it uses for images saved with `saveImage` and for copies
+  of the data it never reads back. Tropos uses neither: the Live Activity
+  draws only the activity's own state. STATUS 2026-11-09 (Wid1): the same
+  extension now holds the Home Screen and Lock Screen widgets, which read
+  the app's snapshot from the App Group `group.com.tropos.app`, so the
+  extension has entitlements (`LiveActivities.entitlements`), the app's
+  carry the same group, and both App IDs need it (`docs/ios-release.md`,
+  "The App Group").
 - The extension has its own privacy manifest
   (`ios/App/LiveActivities/PrivacyInfo.xcprivacy`): it collects nothing, and
   declares the App Group defaults code in `LiveActivitiesKit` (1C8F.1), as the
@@ -129,9 +133,9 @@ system's counterpart of the rest band's Archivo display cut.
 - `deploy-ios.yml` lists the targets it signs from the project
   (`scripts/ios_signed_targets.py`), and requires the widget among them
   (`WIDGET_BUNDLE_ID`). Signing from the API key makes its profile
-  (`Tropos CI <serial> LiveActivities`) and, the first time, registers its App
-  ID: a target with no entitlements needs no capability, so
-  `scripts/ios/asc-signing.mjs` may register it. The owner's own certificate
+  (`Tropos CI <serial> LiveActivities`). STATUS 2026-11-09 (Wid1): it no
+  longer registers the App ID, which carries the App Group; the run checks
+  both App IDs have it before making any signing. The owner's own certificate
   secrets hold only the iPhone and Watch profiles, so with them the run stops
   in its first minute and says to sign from the API key.
 - `scripts/verify_ios_live_activity.py` checks the archive and the exported
