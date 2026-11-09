@@ -194,17 +194,19 @@ export async function saveFoodPhoto(
   let img: HTMLImageElement;
   try {
     img = await decodeJpeg(base64Jpeg);
+    const scale = downscaleFactor(
+      img.naturalWidth,
+      img.naturalHeight,
+      MAX_EDGE_PX,
+      "long"
+    );
+    /* A photo already within MAX_EDGE_PX is kept as it came. The scan
+       sends every photo at that size (FoodCameraModal draws a frame and a
+       picked photo down to it), so encoding it again here would be a
+       second JPEG generation for no byte saved. */
     await Filesystem.writeFile({
       path: pathFor(uid, mealId),
-      data: encodeJpeg(
-        img,
-        downscaleFactor(
-          img.naturalWidth,
-          img.naturalHeight,
-          MAX_EDGE_PX,
-          "long"
-        )
-      ),
+      data: scale < 1 ? encodeJpeg(img, scale) : base64Jpeg,
       directory: Directory.LibraryNoCloud,
       recursive: true,
     });
