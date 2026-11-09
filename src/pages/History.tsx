@@ -8,6 +8,7 @@ import { useMeals } from "@/hooks/useMeals";
 import { useMealsInRange } from "@/hooks/useMealsInRange";
 import { useLifetimeMealStats } from "@/hooks/useLifetimeMealStats";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 import { useStallWatch } from "@/hooks/useStallWatch";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
@@ -674,13 +675,17 @@ export default function History() {
   // stuck. The more precise alternative would be to watch
   // runsLoading directly, but that introduces a render dependency
   // loop here.
-  const { isRefreshing: pullRefreshing, bindProps: pullBindProps } =
-    usePullToRefresh({
-      onRefresh: () => {
-        refreshRuns();
-      },
-      minDisplayMs: 600,
-    });
+  const {
+    isRefreshing: pullRefreshing,
+    pull,
+    readyAt: pullReadyAt,
+    bindProps: pullBindProps,
+  } = usePullToRefresh({
+    onRefresh: () => {
+      refreshRuns();
+    },
+    minDisplayMs: 600,
+  });
 
   /* The nutrition StatCards' "target N" reference line.
    *
@@ -1105,17 +1110,11 @@ export default function History() {
          title, where Food and Train keep theirs. */
       banner={<HistoryOfflineBanner />}
     >
-      {/* Hist4: small refresh indicator while the pull-to-refresh
-          gesture is in flight. aria-live polite so screen readers
-          announce the transient state without interrupting. */}
-      {pullRefreshing && (
-        <div
-          className="flex justify-center py-1 text-xs text-muted-foreground"
-          aria-live="polite"
-        >
-          Refreshing…
-        </div>
-      )}
+      <PullToRefreshIndicator
+        pull={pull}
+        readyAt={pullReadyAt}
+        refreshing={pullRefreshing}
+      />
 
       {/* The tab-level switch belongs to the overview and the PRs and
           Badges tabs. A page is a screen pushed from the overview, and its

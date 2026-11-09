@@ -227,7 +227,6 @@ function setup(overrides: FeedViewProps = {}) {
         hiddenActivityIds={new Set()}
         openPeople={vi.fn()}
         openTogether={openTogether}
-        pullRefreshing={false}
         refreshRef={refreshRef}
         onOverlayChange={vi.fn()}
         {...overrides}
