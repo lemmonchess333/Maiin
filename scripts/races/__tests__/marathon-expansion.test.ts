@@ -38,8 +38,10 @@ const cases = [
   ],
   [
     "frankfurt-marathon",
-    "Mainova Frankfurt Marathon",
-    "<h3>31st OCTOBER 2027</h3><p>Previous edition: 25 October 2026</p>",
+    "Home - mainova Frankfurt Marathon",
+    // The header's h3 as the organiser's page carried it on 2026-11-09;
+    // the German date beside it and the news dates are decoys.
+    "<strong>Sonntag 31. Oktober 2027</strong><h3>31.10.2027 Mainova Frankfurt Marathon</h3><h3>Results Frankfurt Marathon 2026</h3><p>25. October 2026 | Registration for 2027 is now open</p>",
     "2027-10-31",
   ],
   [
