@@ -2,6 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { restoreRealTimers } from "@/test/fakeTimers";
 import StepDetails, { STEP_DETAILS_AFTER_MS } from "../StepDetails";
+import { remove, writeString } from "@/lib/localStore";
 
 const native = vi.hoisted(() => ({ value: true }));
 vi.mock("@/lib/platform", () => ({ isNativePlatform: () => native.value }));
@@ -11,7 +12,7 @@ beforeEach(() => {
 });
 afterEach(async () => {
   await restoreRealTimers();
-  window.localStorage.removeItem("tropos-step-details");
+  remove("tropos-step-details");
 });
 
 it("offers the steps under a failed checkout on the iPhone", () => {
@@ -42,7 +43,7 @@ it("shows nothing on the web, or for a checkout that is neither", () => {
 
 it("on the web, shows the link only when localStorage asks for it", () => {
   native.value = false;
-  window.localStorage.setItem("tropos-step-details", "on");
+  writeString("tropos-step-details", "on");
   render(<StepDetails failed waiting={false} />);
   expect(screen.getByText("Details")).toBeInTheDocument();
 });

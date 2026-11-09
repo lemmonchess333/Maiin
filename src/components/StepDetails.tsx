@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import BootSteps from "@/components/BootSteps";
+import { readString } from "@/lib/localStore";
 import { isNativePlatform } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 
@@ -12,11 +13,7 @@ export const STEP_DETAILS_AFTER_MS = 15_000;
 const STEP_DETAILS_ON_WEB_KEY = "tropos-step-details";
 
 function askedForOnWeb(): boolean {
-  try {
-    return window.localStorage.getItem(STEP_DETAILS_ON_WEB_KEY) === "on";
-  } catch {
-    return false;
-  }
+  return readString(STEP_DETAILS_ON_WEB_KEY) === "on";
 }
 
 /**
