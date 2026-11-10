@@ -798,6 +798,10 @@ export default function RunSummary() {
   );
   // Keep the run's clock independently of the coordinates privacy zones cut.
   const startedAt = state?.identity?.startedAt ?? state?.points[0]?.timestamp;
+  /* The date the run goes out of the app under (the share card, a GPX's
+     track): its start, as the saved run's own page has it. A run begun on
+     Sunday night and shared after midnight is Sunday's. */
+  const runDate = startedAt !== undefined ? new Date(startedAt) : new Date();
 
   /* This run as the screen's two week lines count it, saved or not yet.
      One read of the week (`useWeekPulse`, counted by `trainingWeek`) feeds
@@ -1479,7 +1483,7 @@ export default function RunSummary() {
     }
     // Track name travels into other apps with the export — a stable
     // "22 Aug 2026", not whatever the device locale renders.
-    const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(new Date())}`);
+    const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(runDate)}`);
     /* The share sheet on the iPhone, where a blob download is dropped
        without a word, and a download on the web; the same handover and
        the same words as RunDetail's Export GPX. */
@@ -2378,7 +2382,7 @@ export default function RunSummary() {
             ? `${finishLine.before}${finishLine.figure}${finishLine.after}`
             : undefined,
           tone: finishReward?.tone,
-          date: new Date().toLocaleDateString("en-GB", {
+          date: runDate.toLocaleDateString("en-GB", {
             day: "numeric",
             month: "short",
             year: "numeric",
