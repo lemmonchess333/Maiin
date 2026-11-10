@@ -13,15 +13,22 @@ generated, never edited by hand.
 Every exercise `sessionLeadIndex` can pick for a generated plan. A sweep of
 `freshLiftWeek` over every setup answer (1 to 6 lift days, five goals, three
 levels, four session lengths, three kits, barbell at home, all 32 injury
-combinations: 57,600 builds, 2026-11-09) found 25: the six compound
-primaries (bench press, overhead press, barbell row, pull-ups, squat,
-deadlift) and 19 that kit and injury swaps put first (bulgarian-split,
-incline-db-press, trap-bar-deadlift, chest-supported-db-row, db-rdl,
-glute-bridge, db-bench, chest-press-machine, inverted-row, landmine-press,
-db-shoulder-press, goblet-squat, db-row, shoulder-press-machine,
-romanian-deadlift, hip-thrust, straight-arm-pulldown, arnold-press,
-kettlebell-swing). Re-run the sweep when templates, swaps or the lead rule
-change. A lead with no flipbook shows its still, as before.
+combinations: 57,600 builds, 2026-11-10) finds 24, and every one has a
+flipbook: the six compound primaries (bench press, overhead press, barbell
+row, pull-ups, squat, deadlift) and 18 that kit and injury swaps put first
+(bulgarian-split, incline-db-press, trap-bar-deadlift,
+chest-supported-db-row, db-rdl, glute-bridge, db-bench,
+chest-press-machine, inverted-row, landmine-press, db-shoulder-press,
+goblet-squat, db-row, shoulder-press-machine, romanian-deadlift,
+hip-thrust, arnold-press, kettlebell-swing). Re-run the sweep when
+templates, swaps or the lead rule change. A lead with no flipbook shows its
+still, as before.
+
+A day with no compound primary is pictured by its first compound movement
+before an isolation (owner, 2026-11-10: a primary mover leads). The
+straight-arm pulldown led 640 of the builds that way, a beginner's home
+pull day, and the chest-supported row beside it leads them now; the
+pulldown leads none.
 
 ## How one is made
 
@@ -66,9 +73,10 @@ first and last frame, looped on one stride where two frames match.
   on the Gemini API on 2026-10-22. About $0.07 a second at 720p. Tier 1
   allows 8 requests a minute and **40 a day**; the account is prepaid, and
   a 402 means the credit ran out. Run at most two at a time.
-- **The safety filter blocks the straight-arm pulldown**: the only lead
-  drawn from behind, and our figures wear nothing. Local motion
-  interpolation between its frames smears the arms. Still open.
+- **The safety filter blocks the straight-arm pulldown**: drawn from
+  behind, and our figures wear nothing. Local motion interpolation between
+  its frames smears the arms. It no longer leads a day (above), so no
+  hero needs it.
 - **OpenAI is no alternative**: ChatGPT Images 2.0 makes stills only, and
   Sora's API shut down on 2026-09-24.
 - **Size**: a lift sheet is 0.5 to 1 MB; the full set is about 18 MB of
