@@ -76,8 +76,8 @@ export interface HistoryRange {
   todayKey: string;
   /** The account's first day, when it is known. */
   startKey: string | null;
-  /** The account began inside the range: there is no range before it to
-   *  compare with. */
+  /** The account began inside the range, on its first day or after:
+   *  there is no range before it to compare with. */
   joinedInRange: boolean;
   /** The days the range covers for this account: the whole range, or the
    *  days since the account began when it is younger than the range. */
@@ -102,7 +102,9 @@ export function historyRange(
   const todayKey = localDateString(now);
   const startKey = startDayKey(createdAt);
   const age = daysSinceStart(startKey, todayKey);
-  const joinedInRange = age !== null && age < rangeDays;
+  // An account exactly as old as the range began on its first day, so the
+  // range before is all from before it: still nothing to compare with.
+  const joinedInRange = age !== null && age <= rangeDays;
   return {
     rangeDays,
     now,

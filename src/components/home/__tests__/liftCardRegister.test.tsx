@@ -51,6 +51,41 @@ function renderLift(over: Record<string, unknown> = {}) {
   );
 }
 
+describe("the lift card's line against last time", () => {
+  /* After a save the day holds next time's load and this session as
+     "last time" (applySessionProgression). */
+  const progressed = {
+    ...workout,
+    exercises: [
+      {
+        name: "Barbell row",
+        sets: 3,
+        reps: 8,
+        weight: 37.5,
+        lastPerformance: { weight: 35, reps: 8 },
+      },
+    ],
+  };
+
+  it("is drawn for a day still to train", () => {
+    renderLift({ nextWorkout: progressed, unit: "kg" });
+    expect(screen.getByText(/more than last time/)).toBeInTheDocument();
+  });
+
+  it("is not drawn once the day is done or skipped", () => {
+    for (const status of ["completed", "skipped"]) {
+      const view = renderLift({
+        nextWorkout: { ...progressed, completed: status === "completed" },
+        status,
+        unit: "kg",
+      });
+      expect(screen.queryByText(/than last time/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Barbell row 37/)).not.toBeInTheDocument();
+      view.unmount();
+    }
+  });
+});
+
 describe("the lift card does not claim the cursor's session", () => {
   it("names the workout it resolved, and claims nothing about the day", () => {
     renderLift();

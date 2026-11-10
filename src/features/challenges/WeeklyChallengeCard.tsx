@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Clock, Trophy } from "lucide-react";
+import { ChevronRight, Trophy } from "lucide-react";
 import SectionHeading from "@/components/ui/SectionHeading";
-import SectionLabel from "@/components/ui/SectionLabel";
-import PhotoCaption from "@/components/ui/PhotoCaption";
 import { Button } from "@/components/ui/Button";
 import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
 import Avatar from "@/components/Avatar";
@@ -11,19 +9,24 @@ import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { countMyWeekLifts } from "@/lib/leaderboard";
-import { challengeEditorialImage } from "@/lib/editorialImages";
 import { THEME, RANK_COLORS } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { rankNamedBoard, useFriendsBoard } from "@/hooks/useFriendsBoard";
 import { finalDayLine, inFinalDay } from "./challengeEditions";
-import { challengeSport, SPORT_ACCENT } from "./challengeSport";
-import { getTimeRemaining, type Challenge } from "./useChallenges";
+import ChallengeMedalBand from "./ChallengeMedalBand";
+import { challengeHasMedal } from "./rowMedal";
+import {
+  getTimeRemaining,
+  type Challenge,
+  type ChallengeParticipant,
+} from "./useChallenges";
 import { getWeeklyAccountability } from "./weeklyAccountability";
 
 /**
- * This week's challenge on Together: the week's photo, shorter than a
- * challenge's own hero, then the next useful action, then where the
- * person stands among the people they follow.
+ * This week's challenge on Together: the medal the week is working
+ * toward beside its name and time left (`ChallengeMedalBand`), then the
+ * next useful action, then where the person stands among the people they
+ * follow.
  *
  * Accountability first: the card leads with the action, not a ranking.
  * The population is the follow graph (the friends board), so the copy
@@ -39,6 +42,7 @@ import { getWeeklyAccountability } from "./weeklyAccountability";
 export default function WeeklyChallengeCard({
   weekly,
   joined,
+  progress,
   hasChallenges,
   leads = true,
   onJoin,
@@ -47,6 +51,9 @@ export default function WeeklyChallengeCard({
 }: {
   weekly: Challenge | undefined;
   joined: boolean;
+  /** The person's place in the weekly challenge, once joined: its medal
+   *  is then the next tier above the one they hold. */
+  progress?: ChallengeParticipant | null;
   /** Whether any challenge is live: with none, and nobody on the board,
    *  the card gives way to the short "No active challenges" line. */
   hasChallenges: boolean;
@@ -149,13 +156,16 @@ export default function WeeklyChallengeCard({
     target,
     ...(weekly && !joined ? { unjoined: { name: weekly.name } } : {}),
   });
-  const photo = weekly ? challengeEditorialImage(weekly) : null;
-  const accent = weekly ? SPORT_ACCENT[challengeSport(weekly.metric)] : "";
-  /* On the photo the challenge's name is the caption, so the line under
-     it does not say it again. */
-  const showTitle = !(photo && weekly && title === weekly.name);
+  /* The header is the medal the week is working toward (Soc16), with
+     the challenge's name beside it, so the line under it does not say
+     the name again. */
+  const medal = !!weekly && challengeHasMedal(weekly);
+  const showTitle = !(medal && weekly && title === weekly.name);
+  /* Leading, the action is the page's one filled button, and neutral
+     (Soc16, §0 rule 12): white on dark, the colour left to the medal and
+     the progress. */
   const actionStyle = leads
-    ? {}
+    ? { variant: "neutral" as const, className: undefined }
     : {
         variant: "secondary" as const,
         className: SECONDARY_ON_CARD_EDGE,
@@ -163,35 +173,12 @@ export default function WeeklyChallengeCard({
 
   return (
     <div className="rounded-2xl bg-card border border-border/50 card-shadow overflow-hidden">
-      {photo && weekly && (
-        <div className="relative h-28 overflow-hidden border-b border-border/50">
-          <img
-            src={photo}
-            alt=""
-            aria-hidden
-            className="absolute inset-0 size-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(150deg, ${accent}59 0%, ${accent}1F 60%, transparent 100%)`,
-            }}
-          />
-          <PhotoCaption onPhoto className="px-[16px]">
-            {timeLeft && (
-              <SectionLabel className="flex items-center gap-1 text-white/85">
-                <Clock className="size-3" aria-hidden />
-                {timeLeft}
-              </SectionLabel>
-            )}
-            <p className="text-lg font-bold leading-tight line-clamp-2 break-words mt-0.5 text-white">
-              {weekly.name}
-            </p>
-          </PhotoCaption>
-        </div>
+      {medal && weekly && (
+        <ChallengeMedalBand
+          challenge={weekly}
+          progress={progress}
+          timeLeft={timeLeft}
+        />
       )}
       <div className="p-4">
         {/* The icon and its gap in px, so larger text keeps the room for
@@ -199,21 +186,23 @@ export default function WeeklyChallengeCard({
             narrower than 8em beside it, rather than running over the
             title at 320 px and double text. */}
         <div className="flex items-start gap-[12px] mb-3">
-          <div
-            className="size-[36px] rounded-xl flex items-center justify-center shrink-0"
-            style={{
-              background: goalMet
-                ? `${THEME.semantic.positive}14`
-                : `${THEME.brand}14`,
-            }}
-          >
-            <Trophy
-              size={18}
+          {!medal && (
+            <div
+              className="size-[36px] rounded-xl flex items-center justify-center shrink-0"
               style={{
-                color: goalMet ? THEME.semantic.positive : THEME.brand,
+                background: goalMet
+                  ? `${THEME.semantic.positive}14`
+                  : `${THEME.brand}14`,
               }}
-            />
-          </div>
+            >
+              <Trophy
+                size={18}
+                style={{
+                  color: goalMet ? THEME.semantic.positive : THEME.brand,
+                }}
+              />
+            </div>
+          )}
           <div className="min-w-0 flex-1 flex flex-wrap items-start justify-between gap-x-[12px] gap-y-1">
             <div className="min-w-[min(8em,100%)] flex-1">
               {showTitle && (
@@ -232,7 +221,7 @@ export default function WeeklyChallengeCard({
                 {sub}
               </p>
             </div>
-            {timeLeft && !photo && (
+            {timeLeft && !medal && (
               <span className="text-caption text-muted-foreground shrink-0 mt-0.5">
                 {timeLeft}
               </span>

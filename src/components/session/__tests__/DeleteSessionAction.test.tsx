@@ -152,6 +152,56 @@ describe("DeleteSessionAction", () => {
     expect(navigate).toHaveBeenCalledWith("/history", { replace: true });
   });
 
+  it("goes back to the Training History list it was opened from", async () => {
+    // In-app, the list is the entry below: back to it, not a new copy on
+    // top whose Back returns to the same list.
+    window.history.replaceState({ idx: 2 }, "");
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/workout/w-1",
+            state: { trainingHistoryReturnTo: "/history/sessions?sport=lifts" },
+          },
+        ]}
+      >
+        <DeleteSessionAction uid="u1" kind="workout" id="w-1" />
+      </MemoryRouter>
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /delete this workout/i })
+    );
+    await screen.findByRole("alertdialog");
+    fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith(-1));
+    expect(navigate).toHaveBeenCalledTimes(1);
+
+    // Opened from a link, there is no list below: the list replaces it.
+    window.history.replaceState({ idx: 0 }, "");
+    cleanup();
+    navigate.mockClear();
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/run/r-1",
+            state: { trainingHistoryReturnTo: "/history/sessions?sport=runs" },
+          },
+        ]}
+      >
+        <DeleteSessionAction uid="u1" kind="run" id="r-1" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /delete this run/i }));
+    await screen.findByRole("alertdialog");
+    fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith("/history/sessions?sport=runs", {
+        replace: true,
+      })
+    );
+  });
+
   it("keeps the session and stays put when the delete fails", async () => {
     // A workout is deleted in one batch with the best-lift map's
     // invalidation (liftRecordsStore.ts), so the batch is what fails.

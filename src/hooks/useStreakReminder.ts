@@ -148,17 +148,17 @@ export function firstWeekNudgeAction(state: {
   sharedNudge?: { dateKey: string; mine: boolean } | null;
 }): "schedule" | "rearm" | "cancel" | "none" {
   if (state.loading) return "none";
+  // Off is off: whatever was armed, with or without a saved marker.
+  if (!state.enabled) return "cancel";
   const shared = state.firstWeekNudgeDateKey ? null : state.sharedNudge;
   const marker =
     state.firstWeekNudgeDateKey ?? (shared?.mine ? shared.dateKey : null);
   if (marker) {
-    if (!state.enabled) return "cancel";
     if (marker === state.todayKey && state.hasLoggedToday) return "cancel";
     if (shared?.mine && marker >= state.todayKey) return "rearm";
     return "none";
   }
   if (shared) return "cancel";
-  if (!state.enabled) return "none";
   if (!state.primingShown) return "none";
   if (state.currentStreak < 1 || state.currentStreak >= 2) return "none";
   if (!state.hasLoggedToday) return "none";
@@ -267,14 +267,15 @@ export function useStreakReminderInternal(
   const updatePrefs = useCallback(
     async (updates: Partial<StreakReminderPrefs>) => {
       if (!uid) return;
-      const next = { ...prefs, ...updates };
       const ref = doc(db, "users", uid, "settings", "streakReminder");
       try {
         // Patch the changed fields so a pending first-week marker does not
         // overwrite a reminder switch changed on another device.
         await setDocGuarded(ref, updates, { merge: true });
         if (auth.currentUser?.uid !== uid) return;
-        setPrefs(next);
+        // Onto the prefs as they are now: a marker save started before a
+        // switch changed must not put the old switch back.
+        setPrefs((current) => ({ ...current, ...updates }));
       } catch (err) {
         logger.error("[StreakReminder] save failed", err);
         captureError(
@@ -285,7 +286,7 @@ export function useStreakReminderInternal(
         throw err;
       }
     },
-    [uid, prefs]
+    [uid]
   );
 
   // ── Reschedule on any relevant state change ───────────────────────────
@@ -401,7 +402,11 @@ export function useStreakReminderInternal(
     };
     const reconcile = async () => {
       if (cancelled) return;
-      if (pushOwns !== false) {
+      // Not known yet: a new day's activity key reads the push consent
+      // again. The nudge is one-shot, and a claimed one is never armed
+      // again, so wait for the answer rather than cancel it.
+      if (pushOwns === null) return;
+      if (pushOwns) {
         await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
         return;
       }

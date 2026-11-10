@@ -25,12 +25,14 @@ describe("race browsing", () => {
         (r) => r.id
       )
     ).toEqual([
-      "chicago-marathon",
-      "new-york-city-marathon",
+      // In date order: Chicago's and New York's bundled dates are their
+      // 2027 editions, after Boston's April.
       "honolulu-marathon",
       "houston-marathon",
       "los-angeles-marathon",
       "boston-marathon",
+      "chicago-marathon",
+      "new-york-city-marathon",
     ]);
     expect(allFull.map((r) => r.event!.dateKey)).toEqual(
       allFull.map((r) => r.event!.dateKey).sort()

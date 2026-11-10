@@ -244,6 +244,7 @@ export default function CorrectWorkoutSheet({
                 Change it
               </Button>
               <Button
+                variant="neutral"
                 fullWidth
                 disabled={saving}
                 onClick={() => void save(true)}
@@ -263,7 +264,12 @@ export default function CorrectWorkoutSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" fullWidth disabled={saving || !changed}>
+            <Button
+              variant="neutral"
+              type="submit"
+              fullWidth
+              disabled={saving || !changed}
+            >
               {saving ? "Saving…" : "Save corrections"}
             </Button>
           </div>

@@ -83,7 +83,7 @@ const open = () =>
   );
 const codeField = () => screen.getByLabelText("Their invite code");
 const goToToday = async () => {
-  const start = screen.getByRole("button", { name: "Go to Today" });
+  const start = screen.getByRole("button", { name: "Start my plan" });
   await waitFor(() => expect(start).toBeEnabled());
   fireEvent.click(start);
 };

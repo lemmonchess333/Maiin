@@ -16,6 +16,7 @@ import {
   leagueCardState,
   leagueWeekEnd,
   lockedLine,
+  showsJoinedCount,
   parseMembership,
   parseResult,
   parseStanding,
@@ -130,6 +131,11 @@ describe("the words", () => {
     expect(lockedLine(3, 10)).toBe(
       "Leagues open when 10 people have joined. 3 so far."
     );
+    // Under three, the count only says the room is empty: none is given.
+    expect(lockedLine(1, 10)).toBe("Leagues open when 10 people have joined.");
+    expect(lockedLine(2, 10)).toBe("Leagues open when 10 people have joined.");
+    expect(showsJoinedCount(2)).toBe(false);
+    expect(showsJoinedCount(3)).toBe(true);
     expect(lockedLine(12, 10)).toBe(
       "Leagues start on Monday. 12 people have joined."
     );

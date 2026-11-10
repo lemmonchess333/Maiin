@@ -30,6 +30,8 @@ const {
   firstNameOf,
   lookupKey,
   getOrCreateInviteCode,
+  renewInviteCode,
+  renewInviteCodeAfterBlock,
   redeemInvite,
   lookupInviter,
 } = require("../lib/inviteCodes");
@@ -201,6 +203,120 @@ describe("getOrCreateInviteCode", () => {
   });
 });
 
+describe("renewInviteCode — the owner's New code", () => {
+  it("gives a new code, and the old one stops working at once", async () => {
+    const firestore = world();
+    const got = await renewInviteCode({
+      firestore,
+      uid: "maya",
+      createdAt: STAMP,
+      makeCode: () => "A2B3C4D5",
+    });
+    expect(got).toEqual({ code: "A2B3C4D5" });
+    expect(firestore.data.get("users/maya").inviteCode).toBe("A2B3C4D5");
+    expect(firestore.data.get("inviteCodes/A2B3C4D5")).toEqual({
+      uid: "maya",
+      createdAt: STAMP,
+    });
+    expect(firestore.data.has(`inviteCodes/${CODE}`)).toBe(false);
+    expect(await reason(redeem(firestore))).toBe("code-not-found");
+  });
+
+  it("never hands back the old code or one someone else holds", async () => {
+    const firestore = world({ "inviteCodes/A2B3C4D5": { uid: "sam" } });
+    const codes = [CODE, "A2B3C4D5", "Z9Y8X7W6"];
+    const got = await renewInviteCode({
+      firestore,
+      uid: "maya",
+      createdAt: STAMP,
+      makeCode: () => codes.shift() ?? "Q2R3S4T5",
+    });
+    expect(got.code).toBe("Z9Y8X7W6");
+    expect(firestore.data.get("inviteCodes/A2B3C4D5").uid).toBe("sam");
+  });
+
+  it("gives someone with no code their first", async () => {
+    const firestore = world();
+    const got = await renewInviteCode({
+      firestore,
+      uid: "sam",
+      createdAt: STAMP,
+      makeCode: () => "A2B3C4D5",
+    });
+    expect(got.code).toBe("A2B3C4D5");
+    expect(firestore.data.get(`inviteCodes/${CODE}`).uid).toBe("maya");
+  });
+});
+
+describe("renewInviteCodeAfterBlock — a block of someone who joined from it", () => {
+  const BLOCKED_AT = new Date(NOW);
+  const afterBlock = (firestore, opts = {}) =>
+    renewInviteCodeAfterBlock({
+      firestore,
+      blockerUid: "maya",
+      blockedUid: "sam",
+      createdAt: STAMP,
+      makeCode: () => "A2B3C4D5",
+      ...opts,
+    });
+
+  it("renews the code, so a new account the person makes cannot use it", async () => {
+    const firestore = world();
+    await redeem(firestore);
+    // The block flow takes the follow edges down with the block.
+    for (const path of EDGES) firestore.data.delete(path);
+    firestore.data.set("blocks/maya/users/sam", { blockedAt: BLOCKED_AT });
+    await expect(afterBlock(firestore)).resolves.toEqual({
+      renewed: true,
+      reason: "joined-from-invite",
+    });
+    expect(firestore.data.get("users/maya").inviteCode).toBe("A2B3C4D5");
+    expect(firestore.data.has(`inviteCodes/${CODE}`)).toBe(false);
+  });
+
+  it("leaves the code for someone who joined any other way, or an unblock", async () => {
+    const other = world({
+      "users/sam": { displayName: "Sam", invitedBy: "lee" },
+      "blocks/maya/users/sam": { blockedAt: BLOCKED_AT },
+    });
+    expect((await afterBlock(other)).reason).toBe("not-from-invite");
+    expect(other.data.get("users/maya").inviteCode).toBe(CODE);
+
+    const unblocked = world({
+      "users/sam": { displayName: "Sam", invitedBy: "maya" },
+    });
+    expect((await afterBlock(unblocked)).reason).toBe("not-blocked");
+    expect(unblocked.data.has(`inviteCodes/${CODE}`)).toBe(true);
+  });
+
+  it("renews once: a retried delivery, or a code made since the block, is left", async () => {
+    const firestore = world({
+      "users/sam": { displayName: "Sam", invitedBy: "maya" },
+      "blocks/maya/users/sam": { blockedAt: BLOCKED_AT },
+      [`inviteCodes/${CODE}`]: {
+        uid: "maya",
+        createdAt: new Date(NOW + 1000),
+      },
+    });
+    expect((await afterBlock(firestore)).reason).toBe("renewed-since");
+    expect(firestore.data.get("users/maya").inviteCode).toBe(CODE);
+  });
+
+  it("makes no code for a blocker who never had one", async () => {
+    const firestore = world({
+      "users/sam": { displayName: "Sam" },
+      "users/lee": { displayName: "Lee", invitedBy: "sam" },
+      "blocks/sam/users/lee": { blockedAt: BLOCKED_AT },
+    });
+    const got = await afterBlock(firestore, {
+      blockerUid: "sam",
+      blockedUid: "lee",
+    });
+    expect(got.reason).toBe("no-code");
+    expect(firestore.data.has("inviteCodes/A2B3C4D5")).toBe(false);
+  });
+});
+
 describe("redeemInvite — joining from an invite", () => {
   it("with Approve followers off, follows both ways at once, marked as from the invite", async () => {
     const firestore = world({
@@ -218,6 +334,8 @@ describe("redeemInvite — joining from an invite", () => {
       });
     expect(firestore.data.has("followRequests/maya/users/sam")).toBe(false);
     expect(firestore.data.get("users/sam").invitedAt).toBe(STAMP);
+    // Who invited them, for a block of them to renew the code.
+    expect(firestore.data.get("users/sam").invitedBy).toBe("maya");
     expect(firestore.data.get(`inviteCodes/${CODE}`).redemptions).toEqual([
       NOW,
     ]);

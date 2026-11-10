@@ -172,6 +172,64 @@ describe("Training history", () => {
     ).toBeNull();
   });
 
+  it("finds a search's match older than the first thirty sessions", async () => {
+    seedFirestore({
+      ...Object.fromEntries(
+        Array.from({ length: 35 }, (_, i) => [
+          `users/history-owner/workouts/upper-${i}`,
+          savedWorkoutDoc("2026-10-20", { notes: "Upper A" }),
+        ])
+      ),
+      "users/history-owner/workouts/deadlift": savedWorkoutDoc("2026-10-02", {
+        notes: "Deadlift day",
+      }),
+    });
+    open("?sport=lifts&q=deadlift");
+    await waitFor(() => expect(sessionLinks()).toHaveLength(1));
+    expect(sessionLinks()[0]).toHaveAttribute(
+      "href",
+      expect.stringContaining("/workout/deadlift")
+    );
+    expect(screen.queryByText("No matching sessions")).toBeNull();
+  });
+
+  it("counts the sessions on screen, not every one read", async () => {
+    seedFirestore({
+      ...Object.fromEntries(
+        Array.from({ length: 35 }, (_, i) => [
+          `users/history-owner/workouts/many-${i}`,
+          savedWorkoutDoc("2026-10-20"),
+        ])
+      ),
+      ...Object.fromEntries(
+        Array.from({ length: 35 }, (_, i) => [
+          `users/history-owner/runs/many-${i}`,
+          savedRunDoc("2026-10-21"),
+        ])
+      ),
+    });
+    open();
+    await waitFor(() => expect(sessionLinks()).toHaveLength(30));
+    expect(screen.getByText("30 sessions shown")).toBeInTheDocument();
+  });
+
+  it("jumps a Runs view to the last run, not to a later lift", async () => {
+    resetFirestore();
+    seedFirestore({
+      "users/history-owner/runs/older": savedRunDoc("2026-08-01"),
+      "users/history-owner/workouts/later": savedWorkoutDoc("2026-09-15"),
+    });
+    open("?sport=runs");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Jump to your last session" })
+    );
+    await waitFor(() => expect(sessionLinks()).toHaveLength(1));
+    expect(sessionLinks()[0]).toHaveAttribute(
+      "href",
+      expect.stringContaining("/run/older")
+    );
+  });
+
   it("returns to the plan with the review it came from, not a fresh plan", async () => {
     const planState = { returnTo: "/review", resetFeel: "a_bit_much" };
     const router = createMemoryRouter(

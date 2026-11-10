@@ -9,7 +9,6 @@ import {
   starterNewRunnerUntil,
   starterRunSlots,
   starterTemplateId,
-  starterWeekDone,
 } from "../starterPlan";
 import {
   newRunnerLongestRunMinutes,
@@ -124,13 +123,8 @@ describe("a starter week", () => {
     expect(runsInWeek(days, W3)).toBe(3);
     expect(runsInWeek(days, W2)).toBe(1);
     expect(runsInWeek(days, W4)).toBe(1);
-  });
-
-  it("is done with two runs, and not with one", () => {
-    expect(starterWeekDone([W3, "2026-10-07"], W3)).toBe(true);
-    expect(starterWeekDone([W3], W3)).toBe(false);
     // Duplicate records on one date are one exposure.
-    expect(starterWeekDone([W3, W3], W3)).toBe(false);
+    expect(runsInWeek([W3, W3], W3)).toBe(1);
   });
 
   it("counts the weeks in a row with no run", () => {

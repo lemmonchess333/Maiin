@@ -79,8 +79,14 @@ export function repairRunPrescriptions(
 
   // Today's row may already have a saved activity claim outside this lightweight
   // snapshot. Preserve it rather than orphaning that display during migration.
+  // A run the person moved or chose is theirs too: a move lands off the
+  // starter slots by a day, and pruning it would delete their choice
+  // (racePlanContinuation keeps the same rows).
   const fixedBeginnerRow = (day: ScheduledRunDay) =>
-    immutable(day) || (validDate(day.date) && day.date === today);
+    immutable(day) ||
+    (validDate(day.date) && day.date === today) ||
+    !!day.movedFromDate ||
+    !!day.userOverride;
   const inWeek = (day: ScheduledRunDay) =>
     validDate(day.date) && localWeekKey(parseLocalDate(day.date)) === week;
   const fixed = rows.filter(

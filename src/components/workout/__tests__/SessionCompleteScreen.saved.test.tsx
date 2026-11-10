@@ -6,7 +6,8 @@
  * opening it where FW1 says a session's badge opens.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { finishKicker } from "@/lib/finishMoment";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { SetPR } from "@/lib/prTracking";
 import { LiftUnitContext } from "@/hooks/useLiftUnit";
@@ -49,6 +50,17 @@ vi.mock("@/features/streaks/BadgeEarnedModal", () => ({
   BadgeEarnedContent: ({ badge }: { badge: { name: string } }) => (
     <div data-testid="session-badge">{badge.name}</div>
   ),
+}));
+
+/* What the finish screen hands its share card, read without drawing it. */
+const shareCard = vi.hoisted(() => ({
+  data: null as null | Record<string, unknown>,
+}));
+vi.mock("@/components/share/ShareCardSheet", () => ({
+  default: ({ data }: { data: Record<string, unknown> }) => {
+    shareCard.data = data;
+    return null;
+  },
 }));
 
 const confetti = vi.hoisted(() => vi.fn());
@@ -387,6 +399,49 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
     );
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(confetti).not.toHaveBeenCalled();
+  });
+
+  it("still says what comes next when a reward takes the first screen's line", () => {
+    render(
+      <SessionCompleteScreen
+        {...screenProps({
+          saved: true,
+          moments: [
+            { kind: "pr", exercise: "Bench Press", weightKg: 80, reps: 8 },
+          ],
+        })}
+      />
+    );
+    expect(register()).toBe("reward");
+    expect(screen.getAllByText("Next: Legs · Squat focus")).toHaveLength(1);
+  });
+
+  it("dates its share card by the session's start, and hands it a bodyweight session's reps", async () => {
+    shareCard.data = null;
+    // Recorded late: started yesterday evening, the screen opened today.
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(19, 0, 0, 0);
+    render(
+      <SessionCompleteScreen
+        {...screenProps({
+          saved: true,
+          startedAt: yesterday.getTime(),
+          exercises: [{ ...bench, name: "Pull-up" }],
+          setLogs: [
+            [{ reps: 12, weight: 0, completed: true, type: "working" }],
+          ],
+          prResults: new Map(),
+        })}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    await waitFor(() => expect(shareCard.data).not.toBeNull());
+    expect(shareCard.data!.date).toBe(
+      finishKicker(undefined, yesterday.getTime())
+    );
+    expect(shareCard.data!.totalVolumeKg).toBe(0);
+    expect(shareCard.data!.totalReps).toBe(12);
   });
 
   it("offers no reward before the save", () => {

@@ -82,6 +82,33 @@ describe("which session the hero draws", () => {
     expect(heroLead({ ...both, runFirst: true })).toBe("run");
   });
 
+  it("the one still to do, once the other of the two is done", () => {
+    const liftDone = day({
+      type: "both",
+      lift: lift({ status: "completed" }),
+      run: run(),
+    });
+    expect(heroLead(liftDone)).toBe("run");
+    expect(heroLead({ ...liftDone, lift: lift({ status: "skipped" }) })).toBe(
+      "run"
+    );
+    const runDone = day({
+      type: "both",
+      lift: lift(),
+      run: run({ completed: true }),
+      runFirst: true,
+    });
+    expect(heroLead(runDone)).toBe("lift");
+    // Both done, or both to do: the aim's order.
+    const bothDone = day({
+      type: "both",
+      lift: lift({ status: "completed" }),
+      run: run({ completed: true }),
+    });
+    expect(heroLead(bothDone)).toBe("lift");
+    expect(heroLead({ ...bothDone, runFirst: true })).toBe("run");
+  });
+
   it("the run when the lifting day has no workout to draw", () => {
     expect(
       heroLead(day({ type: "both", lift: lift({ workout: null }), run: run() }))

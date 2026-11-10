@@ -22,7 +22,10 @@
  *
  * The whole page is written in one transaction that reads both accounts'
  * deletion state, as `writeFeedPage` does, so nothing lands in a feed whose
- * account is being deleted, nor carries an author who is.
+ * account is being deleted, nor carries an author who is. It reads the
+ * author's restriction too: a restricted account reaches no one (S4e), and
+ * routing its older posts into a new follower's feed would add to what
+ * other people see, as the pulse and the community goal refuse to.
  */
 const { buildFeedIndex, FEED_COPY_RETENTION_DAYS } = require("./feedIndex");
 const { transactionAccountsLive } = require("./deletionTransactionGuard");
@@ -70,13 +73,19 @@ async function backfillFollowedPosts({
     .collection("feeds")
     .doc(followerUid)
     .collection("items");
+  const restricted = firestore
+    .collection("globalRestrictedUids")
+    .doc(authorUid);
   return firestore.runTransaction(async (tx) => {
-    const live = await transactionAccountsLive({
-      firestore,
-      tx,
-      uids: [authorUid, followerUid],
-    });
-    if (!live) return { written: 0 };
+    const [live, authorRestricted] = await Promise.all([
+      transactionAccountsLive({
+        firestore,
+        tx,
+        uids: [authorUid, followerUid],
+      }),
+      tx.get(restricted),
+    ]);
+    if (!live || authorRestricted.exists) return { written: 0 };
     const existing = await Promise.all(
       posts.map(({ id }) => tx.get(rows.doc(id)))
     );

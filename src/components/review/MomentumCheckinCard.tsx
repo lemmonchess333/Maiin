@@ -334,7 +334,12 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
               />
             </div>
           )}
-          <Button onClick={submit} loading={saving} className="w-full">
+          <Button
+            variant="neutral"
+            onClick={submit}
+            loading={saving}
+            className="w-full"
+          >
             Save check-in
           </Button>
         </div>

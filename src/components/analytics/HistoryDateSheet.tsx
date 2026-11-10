@@ -108,7 +108,11 @@ export default function HistoryDateSheet({
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button disabled={invalid} onClick={() => onApply(draft)}>
+          <Button
+            variant="neutral"
+            disabled={invalid}
+            onClick={() => onApply(draft)}
+          >
             Apply dates
           </Button>
         </div>

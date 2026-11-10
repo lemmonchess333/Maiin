@@ -319,6 +319,10 @@ export default function SessionCompleteScreen({
   const quietLine = saved
     ? (summaryLine(moments) ?? planContext?.next ?? null)
     : null;
+  /* The first screen's line: a reward's, else the routine one. What comes
+     next is said below whenever this line did not say it, so a new best
+     or a first never takes it off the screen. */
+  const heroLine = line ?? quietLine;
   const variantNote =
     sessionVariant === "easier_today"
       ? "Easier session. Your regular plan stays in place."
@@ -405,7 +409,7 @@ export default function SessionCompleteScreen({
             title={heading}
             figure={{ to: work.to, format: work.format }}
             caption={`${work.unit} in ${durationWords}`}
-            line={line ?? quietLine ?? (saved ? null : variantNote)}
+            line={heroLine ?? (saved ? null : variantNote)}
             lineIcon={
               reward?.tone === "achievement"
                 ? "trophy"
@@ -615,7 +619,7 @@ export default function SessionCompleteScreen({
 
           {/* What comes next, when the first screen's line said something
               else; and a shorter session's note, said once. */}
-          {saved && planContext && quietLine !== planContext.next && (
+          {saved && planContext && heroLine !== planContext.next && (
             <p className="text-sm text-muted-foreground">
               <InlineNumerals>{planContext.next}</InlineNumerals>
             </p>
@@ -772,8 +776,11 @@ export default function SessionCompleteScreen({
             data={{
               template: "lift",
               handle: profile?.displayName || "Athlete",
-              date: finishKicker(undefined, openedAt),
+              // The session's day, as the kicker and the saved workout
+              // date it: by its start.
+              date: finishKicker(undefined, startedAt ?? openedAt),
               totalVolumeKg: totalVolume,
+              totalReps,
               exerciseCount: exerciseSummary.length,
               prCount: bests.length,
               prExercise: bests[0]?.name,

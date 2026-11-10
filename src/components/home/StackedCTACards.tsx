@@ -11,7 +11,7 @@ import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { LiftUnit } from "@/lib/liftLoad";
-import type { HeroLine } from "@/lib/homeHero";
+import { heroLead, type HeroLine } from "@/lib/homeHero";
 
 const stagger = {
   hidden: {},
@@ -59,9 +59,10 @@ export default function StackedCTACards({
   freeRunLine?: HeroLine | null;
 }) {
   const { lift, run, rest } = session;
-  // On a day with both, the run leads when running is the person's aim
-  // (`todaySession` decides), and when the lift has no workout to draw.
-  const runLeads = !!run && (!!session.runFirst || !lift?.workout);
+  // On a day with both, the run leads when running is the person's aim,
+  // when the lift has no workout to draw, and when the lift is done and
+  // the run is not (`heroLead`, which the label beside the date reads too).
+  const runLeads = !!run && heroLead(session) === "run";
   const runCard = run && (
     <motion.div key="run" variants={fadeUp} data-guide-stop="today-run">
       <RunCTACard

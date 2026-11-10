@@ -85,6 +85,22 @@ export function safeNum(val: unknown): number {
  * lookbehind would also work and is deliberately avoided — it needs
  * iOS 16.4+, and this runs in the Capacitor WKWebView.
  */
+/**
+ * A number the serving patterns read, as the label means it. A sign or a
+ * separator glued to a word or a number before it is punctuation, not part
+ * of the number: "1 bar,40 g" is 40 g (not 0.4), "approx.30g" 30 g,
+ * "Portion-30g" 30 g and "30-35g" the top of its range. Read from the
+ * character before the match, since a lookbehind is out (see above). A sign
+ * at the start or after a space stays, so "-5 g" is still refused.
+ */
+function servingNumber(raw: string, before: string | undefined): number {
+  const glued = before !== undefined && /[\p{L}\d.,]/u.test(before);
+  const text = glued
+    ? raw.replace(/^[+-]/, "").replace(/^[.,](?=\d)/, "")
+    : raw;
+  return Number(text.replace(",", "."));
+}
+
 export function parseServingGrams(servingSize?: string): number | null {
   if (!servingSize) return null;
   // A count of a weight, "2 x 25g": the serving is both. Read as the first
@@ -95,7 +111,10 @@ export function parseServingGrams(servingSize?: string): number | null {
     /([+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+))\s*[x×]\s*([+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+))\s*(?:gram\p{L}*|gr|g)(?!\p{L})/iu
   );
   if (counted) {
-    const count = Number(counted[1].replace(",", "."));
+    const count = servingNumber(
+      counted[1],
+      servingSize[(counted.index ?? 0) - 1]
+    );
     const weight = Number(counted[2].replace(",", "."));
     if (count <= 0 || weight <= 0) return null;
     const grams = count * weight;
@@ -108,7 +127,7 @@ export function parseServingGrams(servingSize?: string): number | null {
     /([+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+))\s*(?:gram\p{L}*|gr|g)(?!\p{L})/iu
   );
   if (!m) return null;
-  const grams = Number(m[1].replace(",", "."));
+  const grams = servingNumber(m[1], servingSize[(m.index ?? 0) - 1]);
   return Number.isFinite(grams) && grams > 0 ? grams : null;
 }
 

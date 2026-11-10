@@ -32,6 +32,7 @@ import {
   type Query,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { logger } from "./logger";
 import { parseLocalDate } from "./dateHelpers";
 import { pendingDocumentWrites } from "./offlineQueue";
 import { fetchSaved, type SavedSessionSource } from "./savedSessions";
@@ -425,6 +426,27 @@ export const SAVED_RUNS: SavedSessionSource<SavedRun, RunWindow> = {
   inWindow: inRunWindow,
   withQueued: withQueuedRuns,
 };
+
+/**
+ * Every saved run, for a finished run's pace badges and its post's firsts
+ * and bests (RunSummary). `known` is whether the read is the whole history:
+ * a failed read, or one answered offline from this phone's cache, could
+ * miss older runs, and a first claimed from it would call a seasoned
+ * runner's half marathon their first (as `earlierSessions` guards in
+ * firstSession.ts). The runs are returned either way, for what can use a
+ * partial history.
+ */
+export async function readRunHistory(
+  uid: string
+): Promise<{ runs: SavedRun[]; known: boolean }> {
+  const online = typeof navigator === "undefined" || navigator.onLine !== false;
+  try {
+    return { runs: await fetchSavedRuns(uid, { all: true }), known: online };
+  } catch (err) {
+    logger.error("[savedRuns] run history not read", err);
+    return { runs: [], known: false };
+  }
+}
 
 /**
  * One read of a window, for readers that do not stay subscribed. Runs saved

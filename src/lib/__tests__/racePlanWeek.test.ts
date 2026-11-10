@@ -87,6 +87,24 @@ describe("racePlanWeek", () => {
     expect(racePlanWeekLabel(week!, "short")).toBe("Recovering");
   });
 
+  // A plan made on a Thursday: its first week starts on the Monday after.
+  it("counts no week in a lead-in, then the plan's first week", () => {
+    const leadIn = {
+      currentWeek: 0,
+      totalWeeks: 12,
+      leadInWeek: "2026-07-20",
+    };
+    for (const todayKey of ["2026-07-23", "2026-07-26"])
+      expect(
+        racePlanWeek({ raceGoal: RACE, runPlan: leadIn, todayKey })
+      ).toBeNull();
+    // Monday: the plan's first week. The rollover drops the lead-in then;
+    // one still there counts no differently.
+    expect(
+      racePlanWeek({ raceGoal: RACE, runPlan: leadIn, todayKey: "2026-07-27" })
+    ).toEqual({ kind: "plan", week: 1, of: 12 });
+  });
+
   it("has nothing to count without a race or a built plan", () => {
     expect(
       racePlanWeek({

@@ -70,7 +70,7 @@ export default function RenameWorkoutSheet({
             {OBJECTIONABLE_NAME_MESSAGE}
           </p>
         )}
-        <Button type="submit" fullWidth disabled={refused}>
+        <Button variant="neutral" type="submit" fullWidth disabled={refused}>
           Save name
         </Button>
         <Button variant="ghost" fullWidth onClick={onClose}>

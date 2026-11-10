@@ -854,7 +854,8 @@ export default function History() {
   const rangeReading = (
     kind: RangeReadingKind,
     change: SummaryChange | null,
-    previousKnown: boolean
+    previousKnown: boolean,
+    noneInEither: boolean
   ): ChartReadingLine | null => {
     const text = rangeChangeReading({
       kind,
@@ -862,6 +863,7 @@ export default function History() {
       previousKnown,
       previousLabel: previousRangeLabel(timeRange),
       comparesFromKey,
+      noneInEither,
       today: range.now,
     });
     return text ? { text, waiting: comparesFromKey !== null } : null;
@@ -884,11 +886,17 @@ export default function History() {
     periodSummary.prevRunM,
     unit
   );
-  const liftedReading = rangeReading("lifted", volumeRangeChange, true);
+  const liftedReading = rangeReading(
+    "lifted",
+    volumeRangeChange,
+    true,
+    liftingData.liftVolume === 0 && liftingData.prevLiftVolume === 0
+  );
   const ranReading = rangeReading(
     "ran",
     distanceRangeChange,
-    periodSummary.prevRunM !== null
+    periodSummary.prevRunM !== null,
+    runningTotals.runDistance === 0 && periodSummary.prevRunM === 0
   );
   const summaryFigures: SummaryFigure[] = [
     {
@@ -899,7 +907,9 @@ export default function History() {
       reading: rangeReading(
         "sessions",
         sessionsChange,
-        periodSummary.prevRunCount !== null
+        periodSummary.prevRunCount !== null,
+        summarySessions === 0 &&
+          liftingData.prevLiftCount + (periodSummary.prevRunCount ?? 0) === 0
       ),
     },
     {

@@ -41,9 +41,9 @@ const plural = (n: number, one: string, many: string) =>
   `${n} ${n === 1 ? one : many}`;
 
 /**
- * The day an account younger than the range first has a whole range
- * before it to compare with: its first day plus the range. Null when the
- * account is older than the range (it compares already) or its first day
+ * The day an account that began inside the range first has days of its
+ * own in the range before: its first day plus the range. Null when the
+ * account began before the range (it compares already) or its first day
  * is not known.
  */
 export function comparisonStartKey(range: HistoryRange): string | null {
@@ -67,6 +67,9 @@ export type RangeReadingKind = "sessions" | "lifted" | "ran";
  *   read failed). An unknown is not a range with nothing in it, so the
  *   line says nothing rather than "more than nothing".
  * - `change` null with the range before known: it rounds to no change.
+ * - `noneInEither`: nothing in this range or the one before. "You trained
+ *   as many sessions" over a 0 says someone trained; the line says nothing
+ *   and the card keeps naming what it compares with.
  */
 export function rangeChangeReading({
   kind,
@@ -74,6 +77,7 @@ export function rangeChangeReading({
   previousKnown,
   previousLabel,
   comparesFromKey = null,
+  noneInEither = false,
   today,
 }: {
   kind: RangeReadingKind;
@@ -82,12 +86,13 @@ export function rangeChangeReading({
   /** "the 30 days before" (`previousRangeLabel`). */
   previousLabel: string;
   comparesFromKey?: string | null;
+  noneInEither?: boolean;
   today: Date;
 }): string | null {
   if (comparesFromKey) {
     return `From ${dayText(comparesFromKey, today)}, this compares with ${previousLabel}.`;
   }
-  if (!previousKnown) return null;
+  if (!previousKnown || noneInEither) return null;
   if (!change) {
     if (kind === "sessions")
       return `You trained as many sessions as in ${previousLabel}.`;

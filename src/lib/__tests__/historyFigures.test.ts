@@ -133,10 +133,20 @@ describe("historyRange", () => {
     expect(range.accountDays).toBe(10);
   });
 
-  it("is the whole range for an account exactly as old as it", () => {
+  it("is the whole range for an account exactly as old as it, with nothing before it", () => {
+    // It began on the range's first day: every day of the range before is
+    // from before the account, so there is nothing to compare with yet.
     const range = range30(createdDaysAgo(29));
+    expect(range.joinedInRange).toBe(true);
+    expect(range.accountDays).toBe(30);
+    expect(range.prevSinceKey < range.startKey!).toBe(true);
+  });
+
+  it("compares once the range before has the account's first day in it", () => {
+    const range = range30(createdDaysAgo(30));
     expect(range.joinedInRange).toBe(false);
     expect(range.accountDays).toBe(30);
+    expect(range.sinceKey > range.startKey!).toBe(true);
   });
 
   it("counts an account stamped ahead of this device's clock as one day old", () => {

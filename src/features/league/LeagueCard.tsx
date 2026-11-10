@@ -11,6 +11,7 @@ import {
   leagueCardState,
   lockedLine,
   pointsLine,
+  showsJoinedCount,
   sessionsLine,
 } from "./league";
 import { ordinal, tierName } from "./leagueRules";
@@ -111,24 +112,22 @@ export default function LeagueCard({ uid }: { uid: string }) {
             The chevron sits in the corner, clear of them. */}
         <div className="min-w-[min(12em,100%)] flex-1 space-y-1 pr-[28px]">
           <h3 className="text-base font-bold leading-snug text-foreground">
-            {locked ? "You're in the league" : `${tierName(state.tier)} league`}
+            {locked ? "Weekly league" : `${tierName(state.tier)} league`}
           </h3>
           {locked ? (
             <>
               <p className="text-sm leading-snug text-foreground text-pretty">
                 {lockedLine(state.joined, state.needed)}
               </p>
-              <JoinedBar joined={state.joined} needed={state.needed} />
+              {showsJoinedCount(state.joined) && (
+                <JoinedBar joined={state.joined} needed={state.needed} />
+              )}
             </>
           ) : (
             <p className="text-sm leading-snug text-foreground text-pretty">
               You&rsquo;re in. Your group starts on Monday.
             </p>
           )}
-          <p className="text-xs leading-snug text-muted-foreground text-pretty">
-            Groups are made each Monday from people who trained in the last 14
-            days.
-          </p>
         </div>
         <ChevronRight
           className="absolute right-[12px] top-[22px] size-5 text-muted-foreground"
@@ -220,8 +219,11 @@ function JoinedBar({ joined, needed }: { joined: number; needed: number }) {
       aria-valuenow={Math.min(joined, needed)}
     >
       <div
-        className="h-full rounded-full bg-primary"
-        style={{ width: `${Math.min(100, (100 * joined) / needed)}%` }}
+        className="h-full rounded-full"
+        style={{
+          width: `${Math.min(100, (100 * joined) / needed)}%`,
+          background: LEAGUE_LIGHT.bronze,
+        }}
       />
     </div>
   );
