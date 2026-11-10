@@ -394,7 +394,17 @@ async function settleOneGroup(db, groupRef, weekKey, { now, notify }) {
 
   if (notify) {
     for (const result of results) {
-      await notify(result.uid, { ...result, weekKey });
+      // One person's notification failing must not stop the week: the
+      // result is already written, and the turn would fail on it again
+      // at every retry, leaving the week's groups unformed.
+      try {
+        await notify(result.uid, { ...result, weekKey });
+      } catch (err) {
+        console.error(
+          `leagues: could not tell ${result.uid} their ${weekKey} result:`,
+          err && err.message ? err.message : String(err)
+        );
+      }
     }
   }
   const standings = await groupRef.collection(STANDINGS).get();
@@ -592,7 +602,10 @@ async function formWeek(db, weekKey, { now, rng, isHidden, markerRef }) {
  * leagueWeeks/{weekKey}: (a) settle last week, (b) form this week, (c)
  * write the figure. Each of (a) and (b) is marked done once it finishes,
  * and each is safe to run again if a run stops part way, so running the
- * turn twice does nothing twice.
+ * turn twice does nothing twice. The schedule runs it again each hour on
+ * Monday, so a run cut off part way is finished the same day; once the
+ * week is finished a run does nothing at all, since the figure's count
+ * has moved on with each join and leave since (refreshJoinedCount).
  */
 async function runLeagueTurn(
   db,
@@ -603,6 +616,7 @@ async function runLeagueTurn(
   const markerRef = db.collection(WEEKS).doc(weekKey);
   const marker = (await markerRef.get()).data() || {};
   const summary = { weekKey, settled: marker.settled || null, formed: marker.formed || null };
+  if (marker.finishedAt) return { ...summary, alreadyFinished: true };
 
   if (!marker.settled) {
     summary.settled = await settleWeek(db, lastWeek, { now, notify });

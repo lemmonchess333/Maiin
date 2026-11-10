@@ -13,6 +13,7 @@ import {
 import {
   countdownLine,
   endsLine,
+  leagueResultsAt,
   leagueCardState,
   leagueWeekEnd,
   lockedLine,
@@ -197,6 +198,29 @@ describe("the week's end, where the person is", () => {
     expect(endsLine(WEEK, sunday)).toBe("Ends tonight");
   });
 
+  it("the card says the week is over once it has ended, until the results", () => {
+    // The membership still names last week until Monday's turn settles it.
+    const monday = day(7);
+    monday.setHours(9);
+    expect(endsLine(WEEK, monday)).toBe("Week over");
+    expect(endsLine(WEEK, leagueWeekEnd(WEEK))).toBe("Week over");
+  });
+
+  it("the results come on the Monday after, at 12:15 UTC, said where the person is", () => {
+    expect(leagueResultsAt(WEEK).toISOString()).toBe(
+      `${localDateString(day(7))}T12:15:00.000Z`
+    );
+    const justOver = new Date(leagueWeekEnd(WEEK).getTime() + 1000);
+    // West of UTC+11:45 that is later on the person's Monday; east of it,
+    // as in Auckland's summer or Kiritimati, it is their Tuesday.
+    const tuesday = localDateString(day(8));
+    expect(countdownLine(WEEK, justOver)).toBe(
+      localDateString(leagueResultsAt(WEEK)) === tuesday
+        ? "Week over. Results tomorrow."
+        : "Week over. Results later today."
+    );
+  });
+
   it("the page counts down in days and hours, then hours and minutes", () => {
     const end = leagueWeekEnd(WEEK).getTime();
     const before = (ms: number) => new Date(end - ms);
@@ -212,8 +236,8 @@ describe("the week's end, where the person is", () => {
     );
     expect(countdownLine(WEEK, before(9 * 60_000 + 1))).toBe("Ends in 9 min");
     expect(countdownLine(WEEK, before(20_000))).toBe("Ends in 1 min");
-    expect(countdownLine(WEEK, new Date(end + 1000))).toBe(
-      "Week over. Results on Monday."
+    expect(countdownLine(WEEK, new Date(end + 1000))).toMatch(
+      /^Week over\. Results (later today|tomorrow)\.$/
     );
   });
 });
