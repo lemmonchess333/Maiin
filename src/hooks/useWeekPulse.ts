@@ -19,7 +19,11 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
-import { localDateString, localWeekKey } from "@/lib/dateHelpers";
+import {
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import {
   buildWeekPulse,
   weekBounds,
@@ -67,11 +71,22 @@ export function useWeekPulse(
    * left out the run just finished. It is counted here unless the read
    * already holds it.
    */
-  pendingRun: PendingRun | null = null
+  pendingRun: PendingRun | null = null,
+  /**
+   * The local day the session on screen counts for: a lift's start day
+   * (`liftSessionDay`), and a run's own date when not given. The card reads
+   * that day's week, so a session begun on Sunday night and reviewed after
+   * midnight is shown with its own week, not the new one it is not in.
+   * Without one, the week the screen opened in.
+   */
+  sessionDay: string | null = null
 ): WeekPulse | null {
   const { user, profile } = useAuth();
   const { currentStreak } = useStreaks();
   const [week, setWeek] = useState<WeekFetch | null>(null);
+  const [openedWeek] = useState(() => localWeekKey(new Date()));
+  const day = sessionDay ?? pendingRun?.date ?? null;
+  const weekKey = day ? localWeekKey(parseLocalDate(day)) : openedWeek;
 
   useEffect(() => {
     if (!user) return;
@@ -79,7 +94,6 @@ export function useWeekPulse(
     (async () => {
       try {
         const readAt = new Date();
-        const weekKey = localWeekKey(readAt);
         const { start, end } = weekBounds(weekKey);
         const [savedWorkouts, savedRuns, programStateSnap] = await Promise.all([
           // Through the saved-workout reader: the week's workouts, including
@@ -112,9 +126,11 @@ export function useWeekPulse(
       cancelled = true;
     };
     // Snapshot on mount; streak/profile churn shouldn't refetch mid-screen.
-    // The pending session and run are render-time addends, not fetch inputs.
+    // The pending session and run are render-time addends, not fetch inputs;
+    // the week is read again only if the session's day moves to another
+    // week (a lift's start changed on its finish screen).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid]);
+  }, [user?.uid, weekKey]);
 
   const hasPending = pendingRun !== null;
   const pendingId = pendingRun?.id ?? null;
