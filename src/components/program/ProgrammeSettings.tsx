@@ -918,6 +918,7 @@ export default function ProgrammeSettings({
                saves — neither outcome is the silent default. */
           <div className="space-y-2 pt-1">
             <Button
+              variant="neutral"
               fullWidth
               {...commitWaits("Save and update sessions")}
               onClick={() => void applyRebuild(true)}
@@ -1312,6 +1313,7 @@ export default function ProgrammeSettings({
           />
           {!saving && loadFailedLine(loadFailedId, "mb-2 text-center")}
           <Button
+            variant="neutral"
             fullWidth
             onClick={() => setConfirmRebuild(true)}
             disabled={!dirty || saving || !programReady}

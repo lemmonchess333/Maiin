@@ -302,7 +302,7 @@ export default function ShoesManager() {
                   {distanceUnitLabel(unit)}
                 </span>
               </div>
-              <Button onClick={handleAdd} loading={adding}>
+              <Button variant="neutral" onClick={handleAdd} loading={adding}>
                 Save
               </Button>
             </div>

@@ -584,7 +584,12 @@ export default function Upgrade() {
             {/* The app's primary button: it was a purple-to-teal gradient,
                 the one decorative gradient left on a button. */}
             {onSale && (
-              <Button size="lg" fullWidth onClick={handleContinue}>
+              <Button
+                variant="neutral"
+                size="lg"
+                fullWidth
+                onClick={handleContinue}
+              >
                 Continue
               </Button>
             )}
@@ -648,8 +653,10 @@ export default function Upgrade() {
           {/* Sub1a trial transparency — what actually happens, before the ask. */}
           {withTrial ? <TrialTimeline plan={selected} /> : null}
 
-          {/* Direct purchase CTA — never opens another modal. */}
+          {/* Direct purchase CTA — never opens another modal. The screen's
+              one full-width filled button, so neutral (DS4 call 1a). */}
           <Button
+            variant="neutral"
             size="lg"
             fullWidth
             onClick={handleCheckout}
@@ -659,7 +666,7 @@ export default function Upgrade() {
               <>
                 <Spinner
                   size="sm"
-                  variant="inverse"
+                  variant="current"
                   label="Starting checkout"
                 />
                 <span>Starting checkout…</span>

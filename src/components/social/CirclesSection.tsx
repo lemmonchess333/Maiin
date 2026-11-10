@@ -1330,6 +1330,7 @@ export default function CirclesSection({
             className="ds-input text-sm font-mono"
           />
           <Button
+            variant="neutral"
             className="w-full"
             loading={busy}
             disabled={joinInput.trim().length === 0}
