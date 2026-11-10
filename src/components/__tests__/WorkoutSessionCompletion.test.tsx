@@ -988,9 +988,14 @@ it("a reconnect rejection keeps the session and retries the same completion", as
     expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument()
   );
   await act(async () => settle("failed"));
-  expect(
-    screen.getByText("Needs attention · your session is here to retry")
-  ).toBeVisible();
+  // The screen fades in from opacity 0, so its first frame has to run
+  // before anything on it is visible. "Waiting to sync" above waits the
+  // same way.
+  await vi.waitFor(() =>
+    expect(
+      screen.getByText("Needs attention · your session is here to retry")
+    ).toBeVisible()
+  );
   expect(
     screen.getByRole("heading", { name: "Review workout" })
   ).toBeInTheDocument();
