@@ -683,6 +683,9 @@ before acting; the citations are starting points, not a to-do list.
 `app-improvement-pass-2026-09-05.md` is that prompt's first run: what
 shipped, what was declined and why, the operator checklist, the open owner
 calls with both options measured, and the ratchet baselines it left.
+`whole-app-pass-2026-11-10.md` is a narrower pass by one session: what it
+fixed, the open follow-list finding and its four-step plan, seven
+architecture candidates and five owner calls.
 
 ### Domain docs
 
@@ -691,6 +694,12 @@ Single-context. `GLOSSARY.md` at repo root holds the domain terms (its
 `docs/adr/`. See `docs/agents/domain.md`. It was `CONTEXT.md` until
 2026-10-04, and plan-file rows and ADRs from before then still call it that.
 Don't create a `GLOSSARY-MAP.md`: this repo has one context.
+
+`docs/state-machines.md` lists every flow with more than two states: which
+have them written down as a type or a graph, and which are flags and refs,
+with a combination each can hold that it should not. Read it before changing
+one of those flows, and add a row with a new one;
+`stateMachinesDoc.test.ts` keeps its file and type names true.
 
 Training-programming evidence handoffs (integrated 2026-08-09): start at
 `docs/training-programming-claude-handoff.md`, which indexes the lifting
