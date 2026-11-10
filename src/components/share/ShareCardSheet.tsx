@@ -66,6 +66,7 @@ export interface ShareCardSheetData {
   artSrc?: string;
   // LIFT
   totalVolumeKg?: number;
+  totalReps?: number;
   exerciseCount?: number;
   prCount?: number;
   prExercise?: string;
@@ -201,6 +202,7 @@ export function ShareCardSheet({
     tone: data.tone,
     artSrc: data.artSrc,
     totalVolumeKg: data.totalVolumeKg,
+    totalReps: data.totalReps,
     exerciseCount: data.exerciseCount,
     prCount: data.prCount,
     prExercise: data.prExercise,
