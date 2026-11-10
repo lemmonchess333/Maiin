@@ -9,6 +9,11 @@ import RaceHero from "@/features/spaces/RaceHero";
    only loads when the user opens the Together tab. lazyRetry gives the
    same stale-chunk recovery the page-level lazy loads use. */
 import { lazyRetry } from "@/lib/lazyRetry";
+import { usePrototypeVariant } from "@/components/dev/prototypeVariant";
+// PROTOTYPE: loaded only when ?variant= asks for it, so the screen ships unchanged.
+const PartnerWeekPrototype = lazyRetry(
+  () => import("@/features/partnerStreak/PartnerWeek.prototype")
+);
 const ChallengeList = lazyRetry(() =>
   import("@/features/challenges/ChallengeList").then((m) => ({
     default: m.ChallengeList,
@@ -66,6 +71,8 @@ export default function CommunityView({
      with its generation guard; challenge progress refetch, which cascades
      the leaderboards). Challenge DOCS and space membership are live
      subscriptions already, so there is nothing to refetch there. */
+  // PROTOTYPE (claude/prototype-three-features): ?variant=A|B|C.
+  const partnerVariant = usePrototypeVariant(["A", "B", "C"]);
   const circlesRefreshRef = useRef<(() => Promise<void>) | null>(null);
   const challengesRefreshRef = useRef<(() => Promise<void>) | null>(null);
   useEffect(() => {
@@ -122,16 +129,23 @@ export default function CommunityView({
           spaces={<SpacesDirectory />}
           league={
             uid ? (
-              <Suspense
-                fallback={
-                  <div
-                    className="h-36 rounded-2xl bg-muted/40 motion-safe:animate-pulse"
-                    aria-hidden="true"
-                  />
-                }
-              >
-                <LeagueCard uid={uid} />
-              </Suspense>
+              <>
+                {partnerVariant && (
+                  <Suspense fallback={null}>
+                    <PartnerWeekPrototype variant={partnerVariant} />
+                  </Suspense>
+                )}
+                <Suspense
+                  fallback={
+                    <div
+                      className="h-36 rounded-2xl bg-muted/40 motion-safe:animate-pulse"
+                      aria-hidden="true"
+                    />
+                  }
+                >
+                  <LeagueCard uid={uid} />
+                </Suspense>
+              </>
             ) : null
           }
           weeklyLeads={circlesState !== "none"}
