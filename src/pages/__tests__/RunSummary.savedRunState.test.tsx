@@ -207,10 +207,12 @@ function savedRun(notes = "") {
   };
 }
 
-function renderSummary() {
+function renderSummary(extra: Record<string, unknown> = {}) {
   return render(
     <MemoryRouter
-      initialEntries={[{ pathname: "/run-summary", state: savedRun() }]}
+      initialEntries={[
+        { pathname: "/run-summary", state: { ...savedRun(), ...extra } },
+      ]}
     >
       <Routes>
         <Route path="/run-summary" element={<RunSummary />} />
@@ -422,6 +424,31 @@ describe("RunSummary — the week's runs are counted once", () => {
     d.setDate(d.getDate() + days);
     return localDateString(d);
   };
+
+  it("names race week for a race run begun on race day and reviewed after midnight", async () => {
+    // The run is dated by its start; read on today, the day after the
+    // race, the kicker named no week under the race itself.
+    (h.auth.profile as Record<string, unknown>).runMode = "race_prep";
+    const raceDay = daysFromToday(-1);
+    h.runPlan = {
+      currentWeek: 11,
+      totalWeeks: 12,
+      raceGoal: { distance: "10k", targetDate: raceDay },
+    };
+    const startedAt = new Date(`${raceDay}T22:30:00`).getTime();
+    renderSummary({
+      identity: {
+        uid: "runner",
+        sessionId: "race-run",
+        runId: "race-run",
+        scheduledRunId: null,
+        startedAt,
+        startLocalDate: raceDay,
+        originTimeZone: "UTC",
+      },
+    });
+    expect(await screen.findByText("Week 12 of 12")).toBeInTheDocument();
+  });
 
   it("counts no plan week once race day has passed", async () => {
     (h.auth.profile as Record<string, unknown>).runMode = "race_prep";

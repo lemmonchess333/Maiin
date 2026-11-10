@@ -1087,14 +1087,17 @@ export default function RunSummary() {
 
   /* A race plan's week, as Train's header says it (`racePlanWeek`): the
      plan's week up to race day, the recovery's after it, and none once
-     the race has passed with no recovery running. */
+     the race has passed with no recovery running. Read on the run's own
+     day, as the week card is: a run begun on Sunday night and reviewed
+     after midnight is still that week's, and a race run late on race day
+     is still race week's. */
+  const summaryDay = pendingWeekRun?.date ?? localDateString();
   const raceWeek =
     profile?.runMode === "race_prep"
       ? racePlanWeek({
-          raceGoal: resolveRunPlan(profile, programState, localDateString())
-            .raceGoal,
+          raceGoal: resolveRunPlan(profile, programState, summaryDay).raceGoal,
           runPlan: programState?.runPlan,
-          todayKey: localDateString(),
+          todayKey: summaryDay,
         })
       : null;
 
