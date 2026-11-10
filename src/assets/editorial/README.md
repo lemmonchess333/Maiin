@@ -1,8 +1,8 @@
 # Editorial imagery
 
-Athlete and city photography for **editorial surfaces** — challenge
-cards and Community Space cards today; plan/curated surfaces may join
-later. Licensed stock, plus (since 2026-09-14) generated frames where
+City and community photography for **editorial surfaces**: the race and
+Community Space cards, the race and Space headers, and Together's race
+hero. Challenges carry their own medal art instead (Soc16). Licensed stock, plus (since 2026-09-14) generated frames where
 the subject is generic — see "Licensing and provenance" below for which
 route a given file may take.
 
@@ -62,39 +62,25 @@ point. Existing unique challenge covers continue to resolve by challenge ID.
 
 ## Drop-in contract
 
-The featured monthly goal alternates between Active Days (January, March, May,
-July, September and November) and Training Minutes (February, April, June,
-August, October and December). Each category has a distinct photograph.
-Active Days shows a running group photographed by Yuval Zukerman. Training
-Minutes uses the real photograph recorded in the latest 2026-10-31 manifest
-above. The earlier licensed source, exact crop and hashes remain in
-[`sources-rotating-challenges-2026-10-18.json`](./sources-rotating-challenges-2026-10-18.json).
+Photographs here are for places and communities only (Soc16): a race shows
+its real place, a Space its cover. A challenge carries no photograph; its
+picture is its own medal (`MedalArt`), as Strava's, Nike Run Club's and
+Garmin's challenges are badge art. The `challenge-*` covers were retired on
+2026-11-10, and `editorialImages.test.ts` fails on any file here that is
+not a `space-` stem. Their manifests below stay as history.
 
-Add files with these exact stems (any of `.webp .avif .jpg .jpeg .png`;
-prefer WebP ≤ 120 KB, landscape, ≥ 800 px wide):
+Add files with this stem (any of `.webp .avif .jpg .jpeg .png`; prefer WebP
+≤ 120 KB, landscape, ≥ 800 px wide):
 
-| File                              | Used for                                       |
-| --------------------------------- | ---------------------------------------------- |
-| `challenge-weekly.webp`           | Weekly Warrior; lifting metrics from elsewhere |
-| `challenge-mileage.webp`          | `<Month>` Mileage; km from elsewhere           |
-| `challenge-hybrid-hero.webp`      | `<Month>` Hybrid Hero; any other metric        |
-| `challenge-strength.webp`         | `<Month>` Strength Builder                     |
-| `challenge-active-days.webp`      | Featured Active Days editions                  |
-| `challenge-training-minutes.webp` | Featured Training Minutes editions             |
-| `challenge-season-<season>.webp`  | Spring Reset, Summer Shred, Autumn Push,       |
-|                                   | Winter Bulk                                    |
-| `challenge-fastest-5k.webp`       | Fastest 5K                                     |
-| `challenge-together.webp`         | Together: 1,000 km                             |
-| `space-<spaceId>.webp`            | Community Space cards (directory + header) —   |
-|                                   | one per id in `spaceDefs.ts` SPACE_DEFS,       |
-|                                   | e.g. `space-trail-running.webp`                |
+| File                   | Used for                                     |
+| ---------------------- | -------------------------------------------- |
+| `space-<spaceId>.webp` | Community Space and race cards (directory,   |
+|                        | header, Together's race hero): one per id in |
+|                        | `spaceDefs.ts` SPACE_DEFS, e.g.              |
+|                        | `space-trail-running.webp`                   |
 
-Each challenge the server defines (`functions/lib/challengeDefs.js`) has
-its own photo, by the id prefix its definition stamps
-(`challengeEditorialStem`). **No two files may be the same photo**:
-`editorialImages.test.ts` fails on a byte-identical pair, and on a
-challenge definition with no photo or another's. Until 2026-10 three
-photos were shared by metric and several race cards shared a city view;
+**No two files may be the same photo**: `editorialImages.test.ts` fails on
+a byte-identical pair. Until 2026-10 several race cards shared a city view;
 the owner's word for it was "recycled".
 
 They're picked up at **build time** (`import.meta.glob`) — no code

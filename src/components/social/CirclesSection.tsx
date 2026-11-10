@@ -32,9 +32,15 @@
  */
 
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
-import { useCallback, useEffect, useState, type MutableRefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type MutableRefObject,
+  type ReactNode,
+} from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Copy, UserPlus, Users } from "lucide-react";
+import { ChevronDown, Copy, UserPlus, Users } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
@@ -162,6 +168,34 @@ function formatTargetDate(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   if (Number.isNaN(d.getTime())) return iso;
   return formatDayMonth(d);
+}
+
+/** The smallest Circle whose size its row says (Soc16): a Circle of one
+ *  is the person alone, and "1 member" only says the room is empty. */
+const CIRCLE_SIZE_MIN_VISIBLE = 2;
+
+/** A Circle row's line under its name: "4 members · until 12 Sep", the
+ *  size only from a pair, the date when it has one, or nothing. */
+function circleMeta(
+  memberCount: number,
+  targetDate: string | null | undefined
+): ReactNode {
+  const size =
+    memberCount >= CIRCLE_SIZE_MIN_VISIBLE ? (
+      <>
+        <span className="font-mono tabular-nums">{memberCount}</span> members
+      </>
+    ) : null;
+  const until = targetDate ? formatTargetDate(targetDate) : null;
+  if (size && until)
+    return (
+      <>
+        {size} · until {until}
+      </>
+    );
+  if (size) return size;
+  if (until) return <>Until {until}</>;
+  return null;
 }
 
 /** Today's local calendar day as YYYY-MM-DD — the same string basis the
@@ -320,6 +354,8 @@ export default function CirclesSection({
   const [chooserOpen, setChooserOpen] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
   const [detailOf, setDetailOf] = useState<CircleSummary | null>(null);
+  /* Ended Circles fold under one row at the foot of the list (Soc16). */
+  const [showEnded, setShowEnded] = useState(false);
   /* When the detail sheet was opened (or its code last replaced): the
      moment its invite code's expiry is read against. */
   const [detailSeenAt, setDetailSeenAt] = useState(0);
@@ -417,6 +453,9 @@ export default function CirclesSection({
   const rows = featured
     ? [featured, ...circles.filter((c) => c !== featured)]
     : circles;
+  const liveRows = rows.filter((c) => c.space.active);
+  const endedRows = rows.filter((c) => !c.space.active);
+  const listRows = showEnded ? [...liveRows, ...endedRows] : liveRows;
   /* Deliberately separate from the detail-sheet's members/events state —
      the sheet keeps its own load flow when opened. One-shot reads only;
      loadDetail never opens a listener. Stamped with the viewer and the
@@ -874,6 +913,7 @@ export default function CirclesSection({
           <div className="@container">
             <div className="flex gap-2 @max-[18em]:flex-col">
               <Button
+                variant="neutral"
                 className="flex-1"
                 onClick={() => {
                   if (refused()) return;
@@ -912,164 +952,189 @@ export default function CirclesSection({
             className: "overflow-hidden",
           })}
         >
-          <ul aria-label="Your circles" className="divide-y divide-border/40">
-            {rows.map((c) => {
-              const isFeatured = c.space.id === featuredId;
-              const targetReached = isFeatured && isTargetReached(c.space, uid);
-              const title = (
-                <>
-                  {circleTitle(c.space, wordFilter)}
-                  {!c.space.active && (
-                    <span className="font-normal text-muted-foreground">
-                      {" "}
-                      · ended
-                    </span>
-                  )}
-                </>
-              );
-              /* Chosen-focus pulse, a count and never a ranking, in place
+          {listRows.length > 0 && (
+            <ul aria-label="Your circles" className="divide-y divide-border/40">
+              {listRows.map((c) => {
+                const isFeatured = c.space.id === featuredId;
+                const targetReached =
+                  isFeatured && isTargetReached(c.space, uid);
+                const title = (
+                  <>
+                    {circleTitle(c.space, wordFilter)}
+                    {!c.space.active && (
+                      <span className="font-normal text-muted-foreground">
+                        {" "}
+                        · ended
+                      </span>
+                    )}
+                  </>
+                );
+                /* Chosen-focus pulse, a count and never a ranking, in place
                  of the member count once anyone has set a focus. Not in a
                  Circle of one, where "1 of 1 focusing" says nothing. */
-              const pulse =
-                isFeatured &&
-                featuredDetail &&
-                featuredDetail.members.length >= 2 &&
-                featuredFocusCount > 0;
-              const meta = pulse ? (
-                <>
-                  <span className="font-mono tabular-nums">
-                    {featuredFocusCount}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-mono tabular-nums">
-                    {featuredDetail!.members.length}
-                  </span>{" "}
-                  focusing this week
-                </>
-              ) : (
-                <>
-                  <span className="font-mono tabular-nums">
-                    {c.space.memberCount}
-                  </span>{" "}
-                  {c.space.memberCount === 1 ? "member" : "members"}
-                  {c.space.targetDate && (
-                    <> · until {formatTargetDate(c.space.targetDate)}</>
-                  )}
-                </>
-              );
-              /* The one next step: a Circle of one that its owner can
+                const pulse =
+                  isFeatured &&
+                  featuredDetail &&
+                  featuredDetail.members.length >= 2 &&
+                  featuredFocusCount > 0;
+                const meta = pulse ? (
+                  <>
+                    <span className="font-mono tabular-nums">
+                      {featuredFocusCount}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-mono tabular-nums">
+                      {featuredDetail!.members.length}
+                    </span>{" "}
+                    focusing this week
+                  </>
+                ) : (
+                  circleMeta(c.space.memberCount, c.space.targetDate)
+                );
+                /* The one next step: a Circle of one that its owner can
                  invite to asks for someone to invite; any other active
                  Circle asks for this week's check-in. An ended Circle,
                  or one whose target date has passed, has none here. */
-              const step =
-                !c.space.active || targetReached
-                  ? null
-                  : leadsWithInvite(c)
-                    ? "invite"
-                    : "check-in";
-              return (
-                <CircleRow
-                  key={c.space.id}
-                  title={title}
-                  meta={meta}
-                  circle={c}
-                  onOpen={openDetail}
-                  actionLabel={
-                    step === "invite"
-                      ? "Invite someone"
-                      : step === "check-in"
-                        ? isFeatured && featuredMyCheckIn
-                          ? "Change focus"
-                          : "Check in"
-                        : undefined
-                  }
-                  actionIcon={
-                    step === "invite" ? (
-                      <UserPlus className="size-4" aria-hidden />
-                    ) : undefined
-                  }
-                  onAction={step === "invite" ? openInvite : checkIn}
-                >
-                  {targetReached && (
-                    /* CIRCLE-TARGET-LIFECYCLE: the deadline arrived. The
+                const step =
+                  !c.space.active || targetReached
+                    ? null
+                    : leadsWithInvite(c)
+                      ? "invite"
+                      : "check-in";
+                return (
+                  <CircleRow
+                    key={c.space.id}
+                    title={title}
+                    meta={meta}
+                    circle={c}
+                    onOpen={openDetail}
+                    actionLabel={
+                      step === "invite"
+                        ? "Invite someone"
+                        : step === "check-in"
+                          ? isFeatured && featuredMyCheckIn
+                            ? "Change focus"
+                            : "Check in"
+                          : undefined
+                    }
+                    actionIcon={
+                      step === "invite" ? (
+                        <UserPlus className="size-4" aria-hidden />
+                      ) : undefined
+                    }
+                    onAction={step === "invite" ? openInvite : checkIn}
+                  >
+                    {targetReached && (
+                      /* CIRCLE-TARGET-LIFECYCLE: the deadline arrived. The
                        owner continues (a new future date) or wraps up;
                        a reached target is the most decision-worthy state
                        a Circle has, so it takes the step's place. */
-                    <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        You've reached your target date. Keep training together,
-                        or wrap this circle up.
-                      </p>
-                      {extendOpen ? (
-                        <div className="space-y-2">
-                          {/* An empty date field draws as a blank bar on
+                      <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground">
+                          You've reached your target date. Keep training
+                          together, or wrap this circle up.
+                        </p>
+                        {extendOpen ? (
+                          <div className="space-y-2">
+                            {/* An empty date field draws as a blank bar on
                               the iPhone, and its intrinsic width runs past
                               the card: a visible label says what it is,
                               and the field takes the card's width. */}
-                          <label className="block space-y-1">
-                            <span className="text-xs font-semibold text-foreground">
-                              New target date
-                            </span>
-                            <input
-                              type="date"
-                              value={newTargetDate}
-                              min={localTomorrowKey()}
-                              onChange={(e) => setNewTargetDate(e.target.value)}
-                              className="ds-input block w-full min-w-0 max-w-full appearance-none text-sm"
-                            />
-                          </label>
+                            <label className="block space-y-1">
+                              <span className="text-xs font-semibold text-foreground">
+                                New target date
+                              </span>
+                              <input
+                                type="date"
+                                value={newTargetDate}
+                                min={localTomorrowKey()}
+                                onChange={(e) =>
+                                  setNewTargetDate(e.target.value)
+                                }
+                                className="ds-input block w-full min-w-0 max-w-full appearance-none text-sm"
+                              />
+                            </label>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="secondary"
+                                className={cn("flex-1", SECONDARY_ON_CARD_EDGE)}
+                                loading={targetBusy}
+                                disabled={!newTargetDate}
+                                onClick={() =>
+                                  void handleContinueTarget(c.space.id)
+                                }
+                              >
+                                Set new date
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                onClick={() => {
+                                  setExtendOpen(false);
+                                  setNewTargetDate("");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
                           <div className="flex gap-2">
                             <Button
                               variant="secondary"
                               className={cn("flex-1", SECONDARY_ON_CARD_EDGE)}
-                              loading={targetBusy}
-                              disabled={!newTargetDate}
-                              onClick={() =>
-                                void handleContinueTarget(c.space.id)
-                              }
+                              disabled={targetBusy}
+                              onClick={() => {
+                                haptic("light");
+                                setExtendOpen(true);
+                              }}
                             >
-                              Set new date
+                              Continue
                             </Button>
                             <Button
                               variant="ghost"
-                              onClick={() => {
-                                setExtendOpen(false);
-                                setNewTargetDate("");
-                              }}
+                              className="flex-1"
+                              loading={targetBusy}
+                              onClick={() => void handleWrapTarget(c.space.id)}
                             >
-                              Cancel
+                              Wrap up
                             </Button>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="secondary"
-                            className={cn("flex-1", SECONDARY_ON_CARD_EDGE)}
-                            disabled={targetBusy}
-                            onClick={() => {
-                              haptic("light");
-                              setExtendOpen(true);
-                            }}
-                          >
-                            Continue
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            className="flex-1"
-                            loading={targetBusy}
-                            onClick={() => void handleWrapTarget(c.space.id)}
-                          >
-                            Wrap up
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CircleRow>
-              );
-            })}
-          </ul>
+                        )}
+                      </div>
+                    )}
+                  </CircleRow>
+                );
+              })}
+            </ul>
+          )}
+          {endedRows.length > 0 && (
+            <button
+              type="button"
+              aria-expanded={showEnded}
+              onClick={() => setShowEnded((open) => !open)}
+              className={cn(
+                "flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm text-muted-foreground active:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+                listRows.length > 0 && "border-t border-border/40"
+              )}
+            >
+              <span>
+                {showEnded ? "Hide ended circles" : "Ended circles"}
+                {!showEnded && (
+                  <span className="font-mono tabular-nums">
+                    {" "}
+                    · {endedRows.length}
+                  </span>
+                )}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "size-4 shrink-0 transition-transform",
+                  showEnded && "rotate-180"
+                )}
+                aria-hidden
+              />
+            </button>
+          )}
           <div className="flex flex-wrap items-center justify-center gap-x-1 border-t border-border/40 px-2">
             <Button
               variant="ghost"

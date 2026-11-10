@@ -44,46 +44,49 @@ const LIST_CARD = cardClasses({
 });
 
 /**
- * The Together page, in three sections, around the challenges it reads
- * once (`useChallenges`):
+ * The Together page (Soc16), around the challenges it reads once
+ * (`useChallenges`):
  *
- *   You        `circles` (the person's Circles, or the start-or-join card
- *              without one), then the challenges they joined, each with
- *              its progress, then any that ended this week
- *   This week  the weekly challenge (`WeeklyChallengeCard`), then
- *              `league`, the weekly league (both are this week's and end
- *              on Sunday), then `planGroup`, the people training for the
- *              person's race and its weeks to go
- *   Discover   the challenges they have not joined as a quiet list, the
- *              community goal first once it has moved, then `spaces`
+ *   hero       `hero`, the person's race while they train for one (the
+ *              race's photo, name and weeks to go); without one the
+ *              weekly challenge's photo card leads
+ *   This week  the weekly challenge (`WeeklyChallengeCard`), the
+ *              challenges the person joined, each with the medal it is
+ *              working toward and its progress, any that ended this week,
+ *              then `league`, the weekly league
+ *   Circles    `circles`, the person's Circles, or the start-or-join card
+ *              without one
+ *   Discover   `spaces` (races and Spaces, the page's pictures), then the
+ *              community goal once it has moved and the challenges not
+ *              joined, each with its medal
  *
  * A row opens its challenge in a sheet, where its board, Join and Leave
- * are. The page keeps one filled button: the weekly challenge's action,
- * or, while there is no Circle (`weeklyLeads` false), the start-or-join
- * card's Start a circle.
+ * are. The page keeps one filled button, neutral: the weekly challenge's
+ * action, or, while there is no Circle (`weeklyLeads` false), the
+ * start-or-join card's Start a circle.
  */
 export function ChallengeList({
   onFindFriends,
   refreshRef,
+  hero,
   circles,
   spaces,
   league,
-  planGroup,
   weeklyLeads = true,
 }: {
   onFindFriends?: () => void;
   /** CommunityView's pull-to-refresh awaits this section's progress
    *  refetch (challenge docs are already a live subscription). */
   refreshRef?: MutableRefObject<(() => Promise<void>) | null>;
-  /** The top of You: the Circles section. */
+  /** The top of the page: the person's race (Soc16). Renders nothing
+   *  without one, and the weekly challenge's card leads. */
+  hero?: ReactNode;
+  /** The Circles section, under This week. */
   circles?: ReactNode;
-  /** The foot of Discover: the Spaces and races directory. */
+  /** The head of Discover: the races and Spaces directory. */
   spaces?: ReactNode;
-  /** Under the weekly challenge: the weekly league (Soc15 call 3). */
+  /** The foot of This week: the weekly league (Soc15 call 3). */
   league?: ReactNode;
-  /** Under the league: the person's plan group, the people on Tropos
-   *  training for their race (Soc15). Renders nothing without one. */
-  planGroup?: ReactNode;
   /** False while the page has a Start a circle card, which is then the
    *  page's one filled button and the weekly action steps down. */
   weeklyLeads?: boolean;
@@ -103,8 +106,8 @@ export function ChallengeList({
     restricted,
   } = useChallenges();
   const [openId, setOpenId] = useState<string | null>(null);
-  const youId = useId();
   const weekId = useId();
+  const circlesId = useId();
   const discoverId = useId();
 
   /* Publish the progress refetch for the shell's pull-to-refresh
@@ -146,10 +149,6 @@ export function ChallengeList({
     ? (challenges.find((c) => c.id === openId) ?? null)
     : null;
 
-  const showYou =
-    !!circles ||
-    (!loading && (joined.length > 0 || myEndedChallenges.length > 0));
-
   const skeleton = (height: string) => (
     <div
       className={`${height} rounded-2xl bg-muted motion-safe:animate-pulse`}
@@ -159,37 +158,7 @@ export function ChallengeList({
 
   return (
     <div className="space-y-8">
-      {showYou && (
-        <section aria-labelledby={youId} className="space-y-3">
-          <SectionHeading id={youId}>You</SectionHeading>
-          {circles}
-          {!loading && joined.length > 0 && (
-            <ul aria-label="Your challenges" className={LIST_CARD}>
-              {joined.map((ch) => (
-                <JoinedChallengeRow
-                  key={ch.id}
-                  challenge={ch}
-                  progress={myProgress[ch.id]}
-                  onOpen={() => setOpenId(ch.id)}
-                  showTimeLeft={joinedTimeLeft.has(ch.id)}
-                />
-              ))}
-            </ul>
-          )}
-          {/* Challenges the person took part in that ended within the last
-            7 days. Closure for the effort; dismiss-once per id. */}
-          {!loading &&
-            myEndedChallenges.map((ch) => (
-              <ChallengeFinaleCard
-                key={ch.id}
-                challenge={ch}
-                myProgress={myProgress[ch.id]}
-                leaderboard={leaderboards[ch.id]}
-                selfUid={user?.uid}
-              />
-            ))}
-        </section>
-      )}
+      {hero}
 
       <section aria-labelledby={weekId} className="space-y-3">
         <SectionHeading id={weekId}>This week</SectionHeading>
@@ -202,6 +171,7 @@ export function ChallengeList({
           <WeeklyChallengeCard
             weekly={weeklyCh}
             joined={!!(weeklyCh && myProgress[weeklyCh.id])}
+            progress={weeklyCh ? myProgress[weeklyCh.id] : undefined}
             hasChallenges={challenges.length > 0}
             leads={weeklyLeads}
             onJoin={join}
@@ -211,12 +181,44 @@ export function ChallengeList({
             onFindFriends={onFindFriends}
           />
         )}
+        {!loading && joined.length > 0 && (
+          <ul aria-label="Your challenges" className={LIST_CARD}>
+            {joined.map((ch) => (
+              <JoinedChallengeRow
+                key={ch.id}
+                challenge={ch}
+                progress={myProgress[ch.id]}
+                onOpen={() => setOpenId(ch.id)}
+                showTimeLeft={joinedTimeLeft.has(ch.id)}
+              />
+            ))}
+          </ul>
+        )}
+        {/* Challenges the person took part in that ended within the last
+            7 days. Closure for the effort; dismiss-once per id. */}
+        {!loading &&
+          myEndedChallenges.map((ch) => (
+            <ChallengeFinaleCard
+              key={ch.id}
+              challenge={ch}
+              myProgress={myProgress[ch.id]}
+              leaderboard={leaderboards[ch.id]}
+              selfUid={user?.uid}
+            />
+          ))}
         {league}
-        {planGroup}
       </section>
+
+      {circles && (
+        <section aria-labelledby={circlesId} className="space-y-3">
+          <SectionHeading id={circlesId}>Circles</SectionHeading>
+          {circles}
+        </section>
+      )}
 
       <section aria-labelledby={discoverId} className="space-y-5">
         <SectionHeading id={discoverId}>Discover</SectionHeading>
+        {spaces}
         {loading
           ? skeleton("h-16")
           : (discover.length > 0 || collectiveCh) && (
@@ -249,7 +251,6 @@ export function ChallengeList({
                 )}
               </div>
             )}
-        {spaces}
       </section>
 
       {/* The challenge a row opened: its picture, goal, board, and Join or

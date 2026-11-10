@@ -3975,3 +3975,25 @@ device shows.
       Safari's Web Inspector Timelines over the device), sit on Home for
       10 seconds with the water tile on screen. Passing: no repeating
       layout or paint entries from the water tile.
+
+## Together leads with your race; challenges show their medals (2026-11-10)
+
+Soc16: Together opens on the person's race (`RaceHero`) when their goal is
+bound to a race ahead, then This week, Circles and Discover. A challenge's
+picture is its medal (`ChallengeMedalBand` on the weekly card and in a
+challenge's sheet, `MedalArt` on every row), not a photograph. The medals
+are SVG with an illustration inside; how WebKit draws them at row size is
+for a phone to show.
+
+- [ ] **The race leads.** On a TestFlight build, with a race goal bound to a
+      race ahead (Settings → Programme, a race picked from the list), open
+      Social → Together. Passing: the race's photo fills the first card with
+      its name, "Your race · N weeks to go", its date and place, and the
+      words readable over the photo at Settings → Accessibility → Larger
+      Text; tapping it opens the race's space. With no race goal, the
+      weekly challenge's card is first.
+- [ ] **The medals read.** On the same build, look at the weekly challenge
+      and at a challenge row in This week and in Discover, then tap one.
+      Passing: each shows a ribbon and a coin with its figure (not a blank
+      or a broken image), sharp at its small size on the row and large in
+      the sheet, in both light and dark mode.
