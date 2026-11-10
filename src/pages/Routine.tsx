@@ -17,6 +17,7 @@ import { RESUME_PARAM } from "../lib/resumeParam";
 import { Skeleton } from "../components/LoadingSkeleton";
 import { ErrorState } from "../components/ui/ErrorState";
 import WorkoutSession from "../components/WorkoutSession";
+import { keepTitleWhole } from "@/lib/workoutLabels";
 
 /**
  * Saved-routine workout runner (PR 4.1).
@@ -157,7 +158,11 @@ export default function Routine() {
         bodyweightKg: profile?.weightKg ?? 0,
         // The post names the workout the way the user thinks of it.
         title: routine.name,
-        notes: `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`,
+        // Kept whole: the title is read up to the first " — " (`workoutTitle`),
+        // and a routine's name or its author's can hold one.
+        notes: keepTitleWhole(
+          `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`
+        ),
         extra: { routineId: routine.id, routineName: routine.name },
         moments: sessionData.moments,
       });
