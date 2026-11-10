@@ -9,6 +9,7 @@ import {
   runRolloverAndVerify,
   releaseFailureMessage,
   schedulerJobs,
+  jsonRequest,
 } from "./rollover-deployed-challenges.mjs";
 
 const requireFunctions = createRequire(
@@ -799,5 +800,133 @@ test("a rollover-script-only fix runs the backend release gate", () => {
       !changedPathRunsBackend.test(path),
       `${path} is not a backend runtime change`
     );
+  }
+});
+
+const jobsUrl = `https://cloudscheduler.googleapis.com/v1/${targetLocation.name}/jobs?pageSize=500`;
+const answer = (body) => ({ ok: true, status: 200, json: async () => body });
+const unavailable = () => ({
+  ok: false,
+  status: 503,
+  json: async () => {
+    throw new Error("private response body");
+  },
+});
+
+test("a read that does not complete is tried again, and the release goes on", async (context) => {
+  let calls = 0;
+  context.mock.method(globalThis, "fetch", async () => {
+    if (++calls === 1) throw new Error("socket hang up");
+    return answer({ jobs: [job] });
+  });
+  const waits = [];
+  const page = await jsonRequest(
+    jobsUrl,
+    "not-logged",
+    {},
+    {
+      sleep: async (ms) => waits.push(ms),
+    }
+  );
+  assert.deepEqual(page, { jobs: [job] });
+  assert.equal(calls, 2);
+  assert.equal(waits.length, 1);
+});
+
+test("a read Google answers with 429 or a 5xx is tried again", async (context) => {
+  for (const status of [429, 500, 502, 503, 504]) {
+    let calls = 0;
+    context.mock.method(globalThis, "fetch", async () =>
+      ++calls === 1 ? { ...unavailable(), status } : answer({ jobs: [job] })
+    );
+    const page = await jsonRequest(
+      jobsUrl,
+      "not-logged",
+      {},
+      {
+        sleep: async () => {},
+      }
+    );
+    assert.deepEqual(page, { jobs: [job] }, `HTTP ${status}`);
+    assert.equal(calls, 2, `HTTP ${status}`);
+  }
+});
+
+test("a read that keeps failing gives up after three tries with the same safe message", async (context) => {
+  let calls = 0;
+  context.mock.method(globalThis, "fetch", async () => {
+    calls++;
+    throw new Error("private-token in an SDK message");
+  });
+  await assert.rejects(
+    jsonRequest(jobsUrl, "not-logged", {}, { sleep: async () => {} }),
+    (error) => {
+      assert.equal(
+        releaseFailureMessage(error),
+        "Scheduler jobs list (europe-west2) request did not complete"
+      );
+      return true;
+    }
+  );
+  assert.equal(calls, 3);
+
+  calls = 0;
+  context.mock.method(globalThis, "fetch", async () => {
+    calls++;
+    return unavailable();
+  });
+  await assert.rejects(
+    jsonRequest(jobsUrl, "not-logged", {}, { sleep: async () => {} }),
+    (error) => {
+      assert.equal(
+        releaseFailureMessage(error),
+        "Scheduler jobs list (europe-west2) request refused (HTTP 503)"
+      );
+      return true;
+    }
+  );
+  assert.equal(calls, 3);
+});
+
+test("a refusal that will not change is not tried again", async (context) => {
+  for (const status of [400, 401, 403, 404]) {
+    let calls = 0;
+    context.mock.method(globalThis, "fetch", async () => {
+      calls++;
+      return { ...unavailable(), status };
+    });
+    await assert.rejects(
+      jsonRequest(jobsUrl, "not-logged", {}, { sleep: async () => {} }),
+      new RegExp(`refused \\(HTTP ${status}\\)`)
+    );
+    assert.equal(calls, 1, `HTTP ${status}`);
+  }
+});
+
+test("the rollover dispatch is sent once, whatever happens to it", async (context) => {
+  const runUrl = `https://cloudscheduler.googleapis.com/v1/${job.name}:run`;
+  for (const fail of [
+    () => {
+      throw new Error("socket hang up");
+    },
+    unavailable,
+  ]) {
+    let calls = 0;
+    context.mock.method(globalThis, "fetch", async () => {
+      calls++;
+      return fail();
+    });
+    await assert.rejects(
+      jsonRequest(
+        runUrl,
+        "not-logged",
+        { method: "POST" },
+        {
+          sleep: async () => {},
+        }
+      ),
+      /Scheduler dispatch request/
+    );
+    assert.equal(calls, 1);
   }
 });
