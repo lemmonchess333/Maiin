@@ -18,6 +18,16 @@ export interface HeroMotionSheet {
 }
 
 export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {
+  "form-art/arnold-press.webp": {
+    src: "form-art/motion/arnold-press.webp",
+    still: "form-art/arnold-press.webp",
+    frames: 34,
+    fps: 12,
+    frameWidth: 281,
+    frameHeight: 480,
+    cols: 6,
+    sha256: "7f2d70235e8f453ee3960748cdc75a9143ca60debc7f1922b6b8dd12bcb33b0b",
+  },
   "form-art/barbell-row.webp": {
     src: "form-art/motion/barbell-row.webp",
     still: "form-art/barbell-row.webp",
@@ -138,6 +148,16 @@ export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {
     cols: 6,
     sha256: "f6a068c136ba3d3523816348deab99ea6b32d3d45fbb72f536c0520bf6f477db",
   },
+  "form-art/hip-thrust.webp": {
+    src: "form-art/motion/hip-thrust.webp",
+    still: "form-art/hip-thrust.webp",
+    frames: 34,
+    fps: 12,
+    frameWidth: 480,
+    frameHeight: 339,
+    cols: 6,
+    sha256: "9db47ee18f6fc583afd57537a708d00288063d811ed012892aa8d0168495fb97",
+  },
   "form-art/incline-db-press.webp": {
     src: "form-art/motion/incline-db-press.webp",
     still: "form-art/incline-db-press.webp",
@@ -157,6 +177,16 @@ export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {
     frameHeight: 292,
     cols: 6,
     sha256: "13046a98453737f2038f2d342ec1ab23b2f9f73c1b5b690c259994dbe96debbd",
+  },
+  "form-art/kettlebell-swing.webp": {
+    src: "form-art/motion/kettlebell-swing.webp",
+    still: "form-art/kettlebell-swing.webp",
+    frames: 34,
+    fps: 12,
+    frameWidth: 305,
+    frameHeight: 480,
+    cols: 6,
+    sha256: "b977764e7cf5cce52846424982d86fd9942498601a9959d13867d22781938290",
   },
   "form-art/landmine-press.webp": {
     src: "form-art/motion/landmine-press.webp",
@@ -188,6 +218,16 @@ export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {
     cols: 6,
     sha256: "464b9a46da39d7aaee90550297d1684896e3bff74908bf2e7a13f21342cdbbb2",
   },
+  "form-art/romanian-deadlift.webp": {
+    src: "form-art/motion/romanian-deadlift.webp",
+    still: "form-art/romanian-deadlift.webp",
+    frames: 34,
+    fps: 12,
+    frameWidth: 382,
+    frameHeight: 480,
+    cols: 6,
+    sha256: "061d67cccfea99df97a30c4a38c317b42895e6ba9447d2f172e5190a1068f458",
+  },
   "form-art/run-easy.webp": {
     src: "form-art/motion/run-easy.webp",
     still: "form-art/run-easy.webp",
@@ -197,6 +237,16 @@ export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {
     frameHeight: 480,
     cols: 6,
     sha256: "7861c73e3865785d1086bf0b597f7c3307f73ae00bf2ef3d5fb7a8c7a64388db",
+  },
+  "form-art/shoulder-press-machine.webp": {
+    src: "form-art/motion/shoulder-press-machine.webp",
+    still: "form-art/shoulder-press-machine.webp",
+    frames: 34,
+    fps: 12,
+    frameWidth: 274,
+    frameHeight: 480,
+    cols: 6,
+    sha256: "d70b43914aa5eaec115e3a6ef8e15f039fd6662850465129e54ead1ed2fd9780",
   },
   "form-art/squat.webp": {
     src: "form-art/motion/squat.webp",

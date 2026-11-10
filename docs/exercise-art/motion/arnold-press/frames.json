@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/arnold-press.webp",
+  "still": "form-art/arnold-press.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 281,
+  "frameHeight": 480,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "3ed0ec78c51a4058ec440bba11641cafb28e3fe1376c47eb26406bfdf7d95eab",
+  "thenSha256": "ba5b14a23e372b0516eeb5a1869b335332b1d83c689ed712db481a2e6aa0dd86",
+  "sha256": "7f2d70235e8f453ee3960748cdc75a9143ca60debc7f1922b6b8dd12bcb33b0b"
+}

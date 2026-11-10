@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/hip-thrust.webp",
+  "still": "form-art/hip-thrust.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 480,
+  "frameHeight": 339,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "4aecfdd96f1237d876a40b8cdcb622806addaa6a8a8a3e76ec3f28c57225d0d3",
+  "thenSha256": "200a72335a5b299c06b9bc796acbea95da657303b8641a98136a1cdd03736afd",
+  "sha256": "9db47ee18f6fc583afd57537a708d00288063d811ed012892aa8d0168495fb97"
+}
