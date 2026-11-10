@@ -132,12 +132,22 @@
 
 /* Dark mode shadow adjustments */
 .dark {
-  /* DS2 — deeper lift for the dark canvas (separation leans on shadow +
-     a faint top rim of light). */
+  /* A dark card's edge is light, not shadow (DS6, DESIGN_GUIDE §14o). A
+     black shadow cannot show on a near-black page, and the card's fill is
+     only 1.06:1 against it, so without an edge a card has none. The two
+     inset layers draw it: a faint outline all round and a hairline of
+     light along the top, which add up to about 1.6:1 against the page on
+     the top edge. They are inset so a clipping parent cannot cut them and
+     no layout moves. The drop shadows stay for the surfaces a card
+     crosses that are lighter than the page. */
   --ds-shadow-card:
-    0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px -6px rgba(0, 0, 0, 0.45);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 3px rgba(0, 0, 0, 0.3),
+    0 8px 24px -6px rgba(0, 0, 0, 0.45);
   --ds-shadow-card-hover:
-    0 4px 12px rgba(0, 0, 0, 0.4), 0 18px 40px -10px rgba(0, 0, 0, 0.55);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07), 0 4px 12px rgba(0, 0, 0, 0.4),
+    0 18px 40px -10px rgba(0, 0, 0, 0.55);
   --ds-shadow-elevated:
     0 8px 28px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
   --ds-shadow-nav:
