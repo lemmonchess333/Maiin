@@ -30,7 +30,7 @@ function MileagePill({ shoe }: { shoe: Shoe }) {
           {storedKmLabel(shoe.maxKm, unit)}
         </p>
       </div>
-      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+      <div className="h-1.5 rounded-full track-cut overflow-hidden">
         <div
           className={`h-full rounded-full transition-all ${wearClass}`}
           style={{ width: `${pct}%` }}

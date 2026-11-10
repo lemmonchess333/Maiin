@@ -1153,7 +1153,7 @@ function FoodScreen({ live }: { live: boolean }) {
       <div className="absolute inset-x-0 top-0 h-[54px] bg-background" />
       <div className="absolute inset-x-3 bottom-[34px]">
         <div
-          className="flex items-stretch rounded-full border border-border/60 p-1 card-shadow"
+          className="flex items-stretch rounded-full border border-border/60 dark:border-0 p-1 card-shadow"
           style={{ background: "var(--surface-solid)" }}
         >
           {TABS.map(({ label, Icon }) => {

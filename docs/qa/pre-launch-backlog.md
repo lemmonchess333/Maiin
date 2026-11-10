@@ -4136,3 +4136,27 @@ for a phone to show.
       Passing: each shows a ribbon and a coin with its figure (not a blank
       or a broken image), sharp at its small size on the row and large in
       the sheet, in both light and dark mode.
+
+## Lit edges, chips and cut tracks on a phone (DS6, 2026-11-10)
+
+Affects: the dark theme's card edge (`--ds-shadow-card`), the pills'
+(`chip-edge` on the muted and tinted buttons and the streak chip) and the
+tracks cut into a card (`track-cut`: Home's week segments and This week
+bars, the performance ring, and the bars on Train, History and Social).
+The captures in `docs/visual-audit/ds6-2026-11-10/` are the real
+components on a desktop Chrome; a hairline of light at 6 to 9% is the kind
+of thing a phone's screen and WebKit decide.
+
+- [ ] **The edges show.** On a TestFlight build in dark mode, open Home.
+      Passing: each card has a thin lighter line along its top edge, the
+      streak chip and the "Swap" style pills have one too, and no card has
+      a doubled line. At the lowest screen brightness the cards still part
+      from the page.
+- [ ] **The tracks read as slots.** On Home, the week's rest days and the
+      empty part of each This week bar are darker than the card, and a
+      day's colour or a bar's fill stands out more than before. Tap a day:
+      its white selection ring is drawn round the segment. Passing: an
+      empty bar ("0 of 1") can still be seen end to end.
+- [ ] **Focus is not lost.** With a keyboard attached (or on the web
+      build), Tab to a "Swap" style pill in dark mode. Passing: the purple
+      focus ring shows, with the pill's edge still under it.

@@ -172,7 +172,7 @@ export default function WeeklyChallengeCard({
       };
 
   return (
-    <div className="rounded-2xl bg-card border border-border/50 card-shadow overflow-hidden">
+    <div className="rounded-2xl bg-card border border-border/50 dark:border-0 card-shadow overflow-hidden">
       {medal && weekly && (
         <ChallengeMedalBand
           challenge={weekly}
@@ -346,7 +346,7 @@ export default function WeeklyChallengeCard({
                         {entry.value}
                       </span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div className="h-1.5 rounded-full track-cut overflow-hidden">
                       <div
                         className="h-full rounded-full bg-primary/60 transition-all duration-500"
                         style={{ width: `${barWidth}%` }}
