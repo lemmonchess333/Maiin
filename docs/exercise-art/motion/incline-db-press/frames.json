@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/incline-db-press.webp",
+  "still": "form-art/incline-db-press.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 480,
+  "frameHeight": 470,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "0d88df9b638fb8a7bfff1df75d6993109542414d27a5fbf0197f91e6b7cdd5fc",
+  "thenSha256": "b81d205cedddb770226678c26274c5b8568b811aa6c43437d8e610daf2b0ff88",
+  "sha256": "2785825a4d1f83690c7ed36b63c24b6a1064c4c029ce1f39cfcdda15369391ff"
+}

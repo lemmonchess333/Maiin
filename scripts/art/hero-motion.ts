@@ -75,7 +75,11 @@ const sha256 = (bytes: Buffer) =>
 /** src/lib/heroMotion.data.ts, from every animation's frames.json. */
 function writeRegistry() {
   const dir = resolve(ROOT, "docs/exercise-art/motion");
-  const rows = readdirSync(dir)
+  // Each animation is a folder holding its frames.json; the README beside
+  // them is not one.
+  const rows = readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
     .sort()
     .map((id) => JSON.parse(readFileSync(join(dir, id, "frames.json"), "utf8")))
     .map(

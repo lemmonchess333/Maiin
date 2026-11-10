@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/goblet-squat.webp",
+  "still": "form-art/goblet-squat.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 182,
+  "frameHeight": 480,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "48b626cbffb29f6a9ff1824e51e185b54806fb8b4f72ab32317b8ddd5376bf13",
+  "thenSha256": "9da07cf57e6e7799f7a6e5cf54457ebc7d85890d2f3a02a2d6d07fd219bd4c96",
+  "sha256": "f6a068c136ba3d3523816348deab99ea6b32d3d45fbb72f536c0520bf6f477db"
+}
