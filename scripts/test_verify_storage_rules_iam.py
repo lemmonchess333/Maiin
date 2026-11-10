@@ -159,6 +159,41 @@ class ClientTest(unittest.TestCase):
                 with self.assertRaisesRegex(check.VerificationError, "^http-403$"):
                     check.make_client("t")(f"projects/{PROJECT}")
 
+    def project_answer(self):
+        return io.BytesIO(json.dumps({"projectId": PROJECT, "projectNumber": NUMBER}).encode())
+
+    def test_a_read_google_did_not_answer_is_tried_again(self):
+        for failure in [urllib.error.URLError("timed out"), TimeoutError(), ConnectionResetError(104, "reset"),
+                        urllib.error.HTTPError(check.API, 503, "busy", {}, io.BytesIO(b""))]:
+            waits = []
+            with self.subTest(failure=type(failure).__name__), patch.object(
+                check.urllib.request, "build_opener"
+            ) as build:
+                build.return_value.open.side_effect = [failure, self.project_answer()]
+                read = check.make_client("t", sleep=waits.append)
+                self.assertEqual(read(f"projects/{PROJECT}")["projectNumber"], NUMBER)
+                self.assertEqual(build.return_value.open.call_count, 2)
+                self.assertEqual(len(waits), 1)
+
+    def test_a_read_that_keeps_failing_gives_up_after_three_tries(self):
+        for failure, code in [(urllib.error.URLError("timed out"), "network-unavailable"),
+                              (urllib.error.HTTPError(check.API, 503, "busy", {}, io.BytesIO(b"")), "http-503")]:
+            with self.subTest(code=code), patch.object(check.urllib.request, "build_opener") as build:
+                build.return_value.open.side_effect = failure
+                with self.assertRaisesRegex(check.VerificationError, f"^{code}$"):
+                    check.make_client("t", sleep=lambda _: None)(f"projects/{PROJECT}")
+                self.assertEqual(build.return_value.open.call_count, 3)
+
+    def test_a_refusal_or_a_disabled_api_is_not_tried_again(self):
+        disabled = b'{"error":{"details":[{"reason":"SERVICE_DISABLED"}]}}'
+        for code, body, reason in [(400, b"", "http-400"), (401, b"", "http-401"),
+                                   (403, b"", "http-403"), (403, disabled, "api-disabled"), (404, b"", "http-404")]:
+            with self.subTest(reason=reason, code=code), patch.object(check.urllib.request, "build_opener") as build:
+                build.return_value.open.side_effect = urllib.error.HTTPError(check.API, code, "no", {}, io.BytesIO(body))
+                with self.assertRaisesRegex(check.VerificationError, f"^{reason}$"):
+                    check.make_client("t", sleep=lambda _: None)(f"projects/{PROJECT}")
+                self.assertEqual(build.return_value.open.call_count, 1)
+
     def test_project_read_is_a_get(self):
         with patch.object(check.urllib.request, "build_opener") as build:
             build.return_value.open.return_value.__enter__.return_value = io.BytesIO(
@@ -203,7 +238,7 @@ class CliTest(unittest.TestCase):
             summary = Path(directory) / "summary.md"
             with patch.object(check, "read_storage_rules", return_value=source), patch.object(
                 check.subprocess, "check_output", return_value=token
-            ) as gcloud, patch.dict(
+            ) as gcloud, patch.object(check.time, "sleep"), patch.dict(
                 check.os.environ, {"GITHUB_STEP_SUMMARY": str(summary)}
             ), contextlib.redirect_stdout(io.StringIO()) as output:
                 code = check.main([])
