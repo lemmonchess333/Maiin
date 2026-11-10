@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Link } from "react-router-dom";
 import {
   readSessionJson,
@@ -22,8 +22,12 @@ import { isNativePlatform } from "@/lib/platform";
 import { IconButton } from "@/components/ui/IconButton";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import InviteNote from "@/components/onboarding/InviteNote";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { usePrototypeVariant } from "@/components/dev/prototypeVariant";
-import WelcomeExamplePrototype from "@/components/onboarding/WelcomeExample.prototype";
+// PROTOTYPE: loaded only when ?variant= asks for it, so the screen ships unchanged.
+const WelcomeExamplePrototype = lazyRetry(
+  () => import("@/components/onboarding/WelcomeExample.prototype")
+);
 import { FoodTabIcon } from "@/components/icons/TabIcons";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { readLastSignInMethod, type SignInMethod } from "@/lib/signInMethod";
@@ -313,7 +317,9 @@ export default function Login() {
           {/* Each row's picture gives way under 9em (double text on a
               narrow phone), leaving the words the row. Wide-first. */}
           {welcomeVariant ? (
-            <WelcomeExamplePrototype variant={welcomeVariant} />
+            <Suspense fallback={null}>
+              <WelcomeExamplePrototype variant={welcomeVariant} />
+            </Suspense>
           ) : (
             <ul className="@container space-y-2" aria-label="What Tropos plans">
               <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">

@@ -1,5 +1,5 @@
 /**
- * PROTOTYPE, throwaway (claude/prototype-three-features, 2026-11-10).
+ * PROTOTYPE, throwaway (claude/prototype-three-features).
  *
  * Question: how should a partner's week sit beside yours (spec feature 3,
  * call 7)? Shown on Together above the league card, with a stub partner

@@ -1,5 +1,5 @@
 /**
- * PROTOTYPE, throwaway (claude/prototype-three-features, 2026-11-10).
+ * PROTOTYPE, throwaway (claude/prototype-three-features).
  *
  * Question: how should the welcome screen show an example day before
  * sign-up (spec feature 2, call 5)? Each variant replaces the welcome
@@ -16,6 +16,8 @@ import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import { FoodTabIcon } from "@/components/icons/TabIcons";
 import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
 import { cn } from "@/lib/utils";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { Button } from "@/components/ui/Button";
 import PrototypeSwitcher from "@/components/dev/PrototypeSwitcher";
 
 const WELCOME_VARIANTS = [
@@ -84,7 +86,7 @@ function OneSession() {
           <p className="text-xs font-semibold text-lifting-strong">
             An example day
           </p>
-          <p className="text-h3 font-extrabold leading-tight text-foreground">
+          <p className="text-h3 font-bold leading-tight text-foreground">
             Upper A
           </p>
           <p className="text-sm text-muted-foreground">
@@ -138,7 +140,7 @@ function SwipeAWeek() {
           <ul className="mt-2 grid grid-cols-7 gap-1 text-center">
             {WEEK.map(([day, name, kind]) => (
               <li key={day} className="min-w-0">
-                <p className="text-[11px] text-muted-foreground">{day}</p>
+                <p className="text-xs text-muted-foreground">{day}</p>
                 <span
                   aria-hidden="true"
                   className={cn(
@@ -167,10 +169,10 @@ function SwipeAWeek() {
           <p className="text-xs font-semibold text-nutrition-strong">
             A training day
           </p>
-          <p className="font-mono text-h2 font-extrabold tabular-nums text-foreground">
-            2,450 cal
+          <p className="font-mono text-lg font-bold tabular-nums text-foreground">
+            2,450 {CALORIE_UNIT}
           </p>
-          <ul className="mt-2 space-y-1.5 text-sm">
+          <ul className="mt-2 space-y-2 text-sm">
             {(
               [
                 ["Protein", "160g", "w-[70%]"],
@@ -294,8 +296,10 @@ function RowsThatOpen() {
       ),
       example: (
         <p className="text-sm">
-          <span className="font-mono font-bold tabular-nums">2,450 cal</span> on
-          a training day, with{" "}
+          <span className="font-mono font-bold tabular-nums">
+            2,450 {CALORIE_UNIT}
+          </span>{" "}
+          on a training day, with{" "}
           <span className="font-mono tabular-nums">160g</span> of protein
         </p>
       ),
@@ -307,11 +311,12 @@ function RowsThatOpen() {
         const isOpen = open === row.id;
         return (
           <li key={row.id} className="rounded-xl bg-muted/60">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              fullWidth
               aria-expanded={isOpen}
               onClick={() => setOpen(isOpen ? null : row.id)}
-              className="flex w-full items-center gap-3 p-3 text-left"
+              className="h-auto justify-start gap-3 p-3 text-left font-normal"
             >
               <span className="shrink-0 @max-[9em]:hidden">{row.art}</span>
               <span className="min-w-0 flex-1">
@@ -329,7 +334,7 @@ function RowsThatOpen() {
                   isOpen && "rotate-180"
                 )}
               />
-            </button>
+            </Button>
             {isOpen && <div className="px-3 pb-3">{row.example}</div>}
           </li>
         );

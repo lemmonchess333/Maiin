@@ -1,5 +1,5 @@
 /**
- * PROTOTYPE, throwaway (claude/prototype-three-features, 2026-11-10).
+ * PROTOTYPE, throwaway (claude/prototype-three-features).
  *
  * A floating bar that flips a screen between prototype variants through
  * `?variant=`. Shown only in a dev build or a build made with
@@ -48,7 +48,7 @@ export default function PrototypeSwitcher({
   return (
     <div
       data-prototype-switcher=""
-      className="fixed left-1/2 z-[100] flex -translate-x-1/2 items-center gap-1 rounded-full bg-black px-1.5 py-1 text-white shadow-lg ring-2 ring-yellow-300"
+      className="fixed left-1/2 z-[100] flex -translate-x-1/2 items-center gap-1 rounded-full bg-foreground px-1.5 py-1 text-background shadow-lg ring-2 ring-primary"
       style={{ bottom: "calc(env(safe-area-inset-bottom) + 92px)" }}
     >
       <button

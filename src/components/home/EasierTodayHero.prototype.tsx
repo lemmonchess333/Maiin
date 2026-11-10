@@ -1,5 +1,5 @@
 /**
- * PROTOTYPE, throwaway (claude/prototype-three-features, 2026-11-10).
+ * PROTOTYPE, throwaway (claude/prototype-three-features).
  *
  * Question: how should Home offer "Go easier today" (spec feature 1,
  * call 2)? Three variants on Home's real hero, with a stub leg day after a
@@ -131,13 +131,14 @@ export default function EasierTodayHeroPrototype({
               {shownReason && (
                 <p className="text-sm text-muted-foreground">{shownReason}</p>
               )}
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={start("easier")}
-                className="mt-0.5 inline-flex min-h-11 items-center px-2 text-sm font-semibold text-lifting-strong"
+                className="mt-0.5 text-lifting-strong"
               >
                 Go easier today · {EASIER}
-              </button>
+              </Button>
             </div>
           )}
         </>

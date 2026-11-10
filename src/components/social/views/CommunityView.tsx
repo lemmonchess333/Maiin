@@ -10,7 +10,10 @@ import RaceHero from "@/features/spaces/RaceHero";
    same stale-chunk recovery the page-level lazy loads use. */
 import { lazyRetry } from "@/lib/lazyRetry";
 import { usePrototypeVariant } from "@/components/dev/prototypeVariant";
-import PartnerWeekPrototype from "@/features/partnerStreak/PartnerWeek.prototype";
+// PROTOTYPE: loaded only when ?variant= asks for it, so the screen ships unchanged.
+const PartnerWeekPrototype = lazyRetry(
+  () => import("@/features/partnerStreak/PartnerWeek.prototype")
+);
 const ChallengeList = lazyRetry(() =>
   import("@/features/challenges/ChallengeList").then((m) => ({
     default: m.ChallengeList,
@@ -128,7 +131,9 @@ export default function CommunityView({
             uid ? (
               <>
                 {partnerVariant && (
-                  <PartnerWeekPrototype variant={partnerVariant} />
+                  <Suspense fallback={null}>
+                    <PartnerWeekPrototype variant={partnerVariant} />
+                  </Suspense>
                 )}
                 <Suspense
                   fallback={

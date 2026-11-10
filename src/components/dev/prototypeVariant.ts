@@ -1,5 +1,5 @@
 /**
- * PROTOTYPE, throwaway (claude/prototype-three-features, 2026-11-10).
+ * PROTOTYPE, throwaway (claude/prototype-three-features).
  * Which prototype variant a screen shows, from `?variant=`. Only in a dev
  * build or a build made with VITE_PROTOTYPES=true.
  */

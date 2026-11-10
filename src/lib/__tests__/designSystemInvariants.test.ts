@@ -1093,6 +1093,8 @@ describe("an action takes its domain's colour wherever it appears", () => {
   const NEUTRAL_MAIN_ACTIONS = new Set([
     "src/components/home/LiftCTACard.tsx Start workout",
     "src/components/home/RunCTACard.tsx Start run",
+    // PROTOTYPE branch only: the prototype hero mirrors LiftCTACard's.
+    "src/components/home/EasierTodayHero.prototype.tsx Start workout",
   ]);
   function neutralMain(c: Control): boolean {
     return (
