@@ -42,6 +42,17 @@ export async function fetchMyInviteCode(): Promise<string> {
   return code;
 }
 
+/** A new code for the caller: the old one stops working at once. */
+export async function renewMyInviteCode(): Promise<string> {
+  const res = await httpsCallable<unknown, { code?: unknown }>(
+    functions,
+    "renewInviteCode"
+  )({});
+  const code = normaliseInviteCode(res.data?.code);
+  if (!code) throw new Error("No invite code came back");
+  return code;
+}
+
 /** What using a code did. */
 export interface InviteRedemption {
   /** The inviter's public name, when they have one. */

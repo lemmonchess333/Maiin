@@ -219,18 +219,20 @@ describe("Upgrade — plan radiogroup (free user)", () => {
   });
 });
 
-describe("Upgrade — the buttons are the app's primary button", () => {
-  it("Continue and checkout carry no gradient", () => {
+describe("Upgrade — the buttons are the app's neutral filled button", () => {
+  it("Continue and checkout carry no gradient, and no purple", () => {
     renderPage();
     const next = screen.getByRole("button", { name: "Continue" });
-    // Both were purple-to-teal gradients (2026-09-29).
-    expect(next.className).toContain("bg-primary-strong");
+    // Both were purple-to-teal gradients (2026-09-29), then purple: a
+    // screen's one full-width filled button is neutral (DS4 call 1a).
+    expect(next.className).toMatch(/(^|\s)bg-foreground(\s|$)/);
+    expect(next.className).not.toContain("bg-primary-strong");
     expect(next.getAttribute("style") ?? "").not.toMatch(/gradient/);
     fireEvent.click(next);
     const checkout = screen.getByRole("button", {
       name: "Start Pro — £34.99/yr",
     });
-    expect(checkout.className).toContain("bg-primary-strong");
+    expect(checkout.className).toMatch(/(^|\s)bg-foreground(\s|$)/);
     expect(checkout.getAttribute("style") ?? "").not.toMatch(/gradient/);
   });
 });

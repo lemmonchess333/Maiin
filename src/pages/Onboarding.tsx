@@ -223,7 +223,7 @@ export default function Onboarding() {
   const [nameTyped, setNameTyped] = useState(
     chosenDraftName(draft?.displayName, user?.email) !== undefined
   );
-  /* Go to Today was pressed without a name it can publish: the field says
+  /* Start my plan was pressed without a name it can publish: the field says
      why from then on, rather than greeting an empty box with an error. */
   const [nameAsked, setNameAsked] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -2358,9 +2358,10 @@ export default function Onboarding() {
               : step === 7
                 ? saveError
                   ? "Try again"
-                  : ACTIVATION_JOURNEY_V2_ENABLED
-                    ? "Go to Today"
-                    : "Start my plan"
+                  : // One label for both journeys: where it goes is the
+                    // server's answer (the comparison group and a switched-off
+                    // v2 go to the Pro offer), which no label can know first.
+                    "Start my plan"
                 : returnToReview
                   ? "Back to review"
                   : "Continue"}

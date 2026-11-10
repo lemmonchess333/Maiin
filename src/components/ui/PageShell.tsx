@@ -58,6 +58,11 @@ export interface PageShellProps extends RootProps {
   titleHidden?: boolean;
   /** A short line above the title — Home's date. */
   eyebrow?: ReactNode;
+  /** A control in the title's place, beside the actions, for a screen
+   *  whose title is hidden: Social's Together/Feed switch. The header is
+   *  then one row, the control and the actions (DS4, DESIGN_GUIDE §14m:
+   *  no large title above a hero, one control row of 32-40pt). */
+  lead?: ReactNode;
   /** A line beneath the title. It wraps rather than truncating. */
   subtitle?: ReactNode;
   /** The other lines a switching subtitle can show (Train's is
@@ -86,6 +91,7 @@ export default function PageShell({
   title,
   titleHidden = false,
   eyebrow,
+  lead,
   subtitle,
   subtitleAlternates,
   subtitleBelow = false,
@@ -141,8 +147,8 @@ export default function PageShell({
         <div
           className={cn(
             "flex flex-wrap justify-between gap-x-3 gap-y-2 pt-1 pb-1",
-            /* With no title the row is the eyebrow beside the actions, so
-               the two share a centre line. */
+            /* With no title the row is the eyebrow or the lead control
+               beside the actions, so the two share a centre line. */
             titleHidden ? "items-center" : "items-start"
           )}
         >
@@ -152,6 +158,7 @@ export default function PageShell({
                 {eyebrow}
               </p>
             )}
+            {lead !== undefined && <div>{lead}</div>}
             <h1 className={titleHidden ? "sr-only" : titleClass}>{title}</h1>
             {!subtitleBelow && subtitleLine}
           </div>

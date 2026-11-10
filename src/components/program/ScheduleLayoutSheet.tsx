@@ -253,6 +253,7 @@ function ScheduleLayoutSheetBody({
             )}
             <div className="space-y-2">
               <Button
+                variant="neutral"
                 fullWidth
                 onClick={handleApply}
                 disabled={
@@ -435,6 +436,7 @@ function ScheduleLayoutSheetBody({
               </Button>
               {(guided ? draftChanged : hasUnsavedScheduleChanges) && (
                 <Button
+                  variant="neutral"
                   onClick={guided ? () => setReviewing(true) : handleApply}
                   disabled={
                     saving ||
@@ -489,6 +491,7 @@ function ScheduleLayoutSheetBody({
               Cancel
             </Button>
             <Button
+              variant="neutral"
               className="flex-1"
               onClick={handleConfirmAndClose}
               disabled={restructuring}
@@ -497,7 +500,7 @@ function ScheduleLayoutSheetBody({
                 <>
                   <Spinner
                     size="sm"
-                    variant="inverse"
+                    variant="current"
                     label="Rebuilding programme"
                   />
                   Rebuilding...

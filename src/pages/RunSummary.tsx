@@ -53,7 +53,7 @@ import { Button } from "@/components/ui/Button";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
-import { fetchSavedRuns, type SavedRun } from "../lib/savedRuns";
+import { readRunHistory, type SavedRun } from "../lib/savedRuns";
 import PaceInsightCard from "../components/run/PaceInsightCard";
 import {
   usePaceInsightFromRuns,
@@ -671,23 +671,20 @@ export default function RunSummary() {
   const [historyRead, setHistoryRead] = useState<{
     uid: string;
     runs: SavedRun[];
+    /** The whole history (readRunHistory): the post's firsts and bests are
+     *  claimed only from that; the pace widgets read the runs either way. */
+    known: boolean;
   } | null>(null);
   useEffect(() => {
     if (!uid || !hasRun) return;
     let cancelled = false;
     (async () => {
-      let runs: SavedRun[] = [];
-      try {
-        /* Saved runs carry their source and validity fields, so
-           paceTrends can exclude treadmill / manual / invalid /
-           savedAnyway records — a treadmill 2:38/km can't masquerade as
-           a PR against historical outdoor runs. */
-        runs = await fetchSavedRuns(uid, { all: true });
-      } catch (err) {
-        if (cancelled) return;
-        logger.error("[RunSummary] pace-history load failed", err);
-      }
-      if (!cancelled) setHistoryRead({ uid, runs });
+      /* Saved runs carry their source and validity fields, so paceTrends
+         can exclude treadmill / manual / invalid / savedAnyway records — a
+         treadmill 2:38/km can't masquerade as a PR against historical
+         outdoor runs. */
+      const { runs, known } = await readRunHistory(uid);
+      if (!cancelled) setHistoryRead({ uid, runs, known });
     })();
     return () => {
       cancelled = true;
@@ -1314,7 +1311,7 @@ export default function RunSummary() {
       finishedRun.moments = {
         ...atFirstSave.current,
         history:
-          historyRead && historyRead.uid === user.uid
+          historyRead && historyRead.uid === user.uid && historyRead.known
             ? earlierRunHistory(historyRead.runs, saveRunId)
             : null,
       };

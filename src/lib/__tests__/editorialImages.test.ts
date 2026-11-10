@@ -1,116 +1,42 @@
 /**
- * Editorial imagery manifest — the challenge photos and the set as a whole.
+ * Editorial imagery — the set as a whole.
  *
- * Every challenge the server defines gets a photo of its own (owner,
- * 2026-10-16: "these are just recycled"): until 2026-10 three photos were
- * shared by metric, so every running challenge showed one runner, and
- * several race cards shared one city view. The definitions are read from
- * the server's own module, so a challenge added there without a photo, or
- * sharing another's, fails here.
+ * Photographs are for places and communities only: a race shows its real
+ * place and a Space its cover. A challenge carries no photograph; its
+ * picture is its own medal (Soc16), as Strava's, Nike Run Club's and
+ * Garmin's challenges are badge art. A stock photo of someone else on a
+ * challenge was the same for every person and said nothing of the goal.
  */
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
-import {
-  challengeEditorialImage,
-  challengeEditorialStem,
-  type EditorialChallenge,
-} from "../editorialImages";
+import { spaceEditorialImage } from "../editorialImages";
 
-const require_ = createRequire(import.meta.url);
-const { buildCurrentChallenges } = require_(
-  "../../../functions/lib/challengeDefs.js"
-) as { buildCurrentChallenges: (now: Date) => EditorialChallenge[] };
-
-/** A day in each season, so every seasonal definition is built. */
-const SEASON_DAYS = ["01-15", "04-15", "07-15", "10-15"].map(
-  (day) => new Date(`2026-${day}T12:00:00Z`)
-);
-
-describe("challenge photos", () => {
-  it("gives each challenge the server defines a photo of its own", () => {
-    for (const now of SEASON_DAYS) {
-      const defs = buildCurrentChallenges(now);
-      const stems = defs.map(challengeEditorialStem);
-      expect(new Set(stems).size, stems.join(", ")).toBe(stems.length);
-      for (const def of defs) {
-        expect(challengeEditorialImage(def), def.name).toEqual(
-          expect.any(String)
-        );
-      }
-    }
-  });
-
-  it("gives each season's challenge its own season's photo", () => {
-    const seasonal = SEASON_DAYS.map(
-      (now) =>
-        buildCurrentChallenges(now).find((def) =>
-          def.id.startsWith("seasonal-")
-        )!
-    );
-    expect(seasonal.map(challengeEditorialStem)).toEqual([
-      "challenge-season-winter",
-      "challenge-season-spring",
-      "challenge-season-summer",
-      "challenge-season-autumn",
-    ]);
-  });
-
-  it("finds a challenge from elsewhere by what it measures", () => {
-    expect(challengeEditorialStem({ id: "custom-1", metric: "total_km" })).toBe(
-      "challenge-mileage"
-    );
-    expect(
-      challengeEditorialStem({ id: "custom-2", metric: "workout_count" })
-    ).toBe("challenge-weekly");
-    expect(
-      challengeEditorialStem({ id: "custom-3", metric: "some_future_metric" })
-    ).toBe("challenge-hybrid-hero");
-  });
-
-  it("follows the featured month's metric instead of reusing a core goal's photo", () => {
-    const id = "featured-monthly-2027-01-01";
-    expect(challengeEditorialStem({ id, metric: "active_days" })).toBe(
-      "challenge-active-days"
-    );
-    expect(challengeEditorialStem({ id, metric: "training_minutes" })).toBe(
-      "challenge-training-minutes"
-    );
-  });
-
-  it("finds both new metric photos for custom challenges too", () => {
-    expect(
-      challengeEditorialStem({ id: "custom-days", metric: "active_days" })
-    ).toBe("challenge-active-days");
-    expect(
-      challengeEditorialStem({ id: "custom-time", metric: "training_minutes" })
-    ).toBe("challenge-training-minutes");
-  });
-
-  it("has a distinct licensed photo for each featured metric", () => {
-    const photos = ["active_days", "training_minutes"].map((metric) =>
-      challengeEditorialImage({ id: "featured-monthly-2027-01-01", metric })
-    );
-    expect(photos).toEqual([expect.any(String), expect.any(String)]);
-    expect(new Set(photos).size).toBe(2);
-  });
-});
+const DIR = resolve(process.cwd(), "src/assets/editorial");
+const images = () =>
+  readdirSync(DIR).filter((file) => /\.(webp|avif|jpe?g|png)$/i.test(file));
 
 describe("the editorial set", () => {
   it("never ships one photo as two files", () => {
-    const dir = resolve(process.cwd(), "src/assets/editorial");
     const byHash = new Map<string, string[]>();
-    for (const file of readdirSync(dir)) {
-      if (!/\.(webp|avif|jpe?g|png)$/i.test(file)) continue;
+    for (const file of images()) {
       const hash = createHash("sha256")
-        .update(readFileSync(resolve(dir, file)))
+        .update(readFileSync(resolve(DIR, file)))
         .digest("hex");
       byHash.set(hash, [...(byHash.get(hash) ?? []), file]);
     }
     expect([...byHash.values()].filter((files) => files.length > 1)).toEqual(
       []
     );
+  });
+
+  it("is race and Space covers only: no challenge carries a photograph", () => {
+    expect(images().filter((file) => !file.startsWith("space-"))).toEqual([]);
+  });
+
+  it("finds a Space's cover by its id, and nothing for one without", () => {
+    expect(spaceEditorialImage("london-marathon")).toEqual(expect.any(String));
+    expect(spaceEditorialImage("no-such-space")).toBeNull();
   });
 });

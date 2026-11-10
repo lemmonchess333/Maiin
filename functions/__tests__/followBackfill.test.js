@@ -172,6 +172,21 @@ describe("backfillFollowedPosts", () => {
     }
   });
 
+  it("routes nothing of a restricted author, who reaches no one", async () => {
+    const { firestore, writes } = makeFirestore({
+      posts: [post("a1", 1)],
+      docs: { "globalRestrictedUids/author": { restrictedAt: NOW } },
+    });
+    const result = await backfillFollowedPosts({
+      firestore,
+      followerUid: "follower",
+      authorUid: "author",
+      now: NOW,
+    });
+    expect(result).toEqual({ written: 0 });
+    expect(writes).toEqual([]);
+  });
+
   it("does nothing for a follow of yourself or a post with no date", async () => {
     const self = makeFirestore({ posts: [post("a1", 1)] });
     expect(

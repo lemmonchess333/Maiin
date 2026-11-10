@@ -112,16 +112,35 @@ export function nextWeekdayOccurrence(
   return target;
 }
 
+/**
+ * When a training day's reminder next goes off: its next occurrence, or
+ * the week after when that falls on `doneDay`, the day a session was
+ * already saved ("YYYY-MM-DD"), which needs no reminder. The scheduler
+ * arms this and the previews name it, so the two agree.
+ */
+export function reminderAtOn(
+  timeHHMM: string,
+  weekday: number,
+  doneDay: string | null = null,
+  now: Date = new Date()
+): Date | null {
+  const at = nextWeekdayOccurrence(timeHHMM, weekday, now);
+  if (at && doneDay && localDateString(at) === doneDay)
+    at.setDate(at.getDate() + 7);
+  return at;
+}
+
 /** When the reminder next goes off, across the week's training days. */
 export function nextReminderAt(
   timeHHMM: string,
   schedule: Schedule,
-  now: Date = new Date()
+  now: Date = new Date(),
+  doneDay: string | null = null
 ): { at: Date; weekday: number } | null {
   let soonest: { at: Date; weekday: number } | null = null;
   for (let weekday = 0; weekday < 7; weekday++) {
     if (!isReminderDay(weekday, schedule)) continue;
-    const at = nextWeekdayOccurrence(timeHHMM, weekday, now);
+    const at = reminderAtOn(timeHHMM, weekday, doneDay, now);
     if (at && (!soonest || at.getTime() < soonest.at.getTime()))
       soonest = { at, weekday };
   }
@@ -142,15 +161,18 @@ export function reminderWhen(at: Date, now: Date = new Date()): string {
  * Setup's preview of the first reminder: "Upper A tomorrow at 07:30" on a
  * lift day, "A run tomorrow at 07:30" on a run day, "A reminder tomorrow at
  * 07:30" when the day's session cannot be named. Null when the reminder
- * would never go off (a time that is not "HH:mm").
+ * would never go off (a time that is not "HH:mm"). `doneDay` is a day a
+ * session was already saved on, whose reminder is not sent
+ * (`reminderAtOn`).
  */
 export function reminderPreview(
   timeHHMM: string,
   schedule: Schedule,
   liftName: string | null | undefined,
-  now: Date = new Date()
+  now: Date = new Date(),
+  doneDay: string | null = null
 ): string | null {
-  const next = nextReminderAt(timeHHMM, schedule, now);
+  const next = nextReminderAt(timeHHMM, schedule, now, doneDay);
   if (!next) return null;
   const when = reminderWhen(next.at, now);
   const type = dayTypeOf(next.weekday, schedule);

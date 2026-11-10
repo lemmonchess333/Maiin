@@ -45,6 +45,14 @@
  * request the follows make moot, and stamps `invitedAt` on the caller. The
  * notice for an instant two-way follow is the callable's, after the commit.
  *
+ * The redemption also stamps `invitedBy` (the inviter's uid) beside
+ * `invitedAt`. A code is renewed (Soc15): by its owner at
+ * any time (renewInviteCode, the card's New code), and by itself when its
+ * owner blocks someone who joined from it (renewInviteCodeAfterBlock, run by
+ * onBlockWritten). The old code's document goes, so a link shared before
+ * stops working at once: without that, a person blocked could make a new
+ * account, use the same code and be followed by the blocker again.
+ *
  * The alphabet, the length and the 14-day window are mirrored in
  * src/lib/inviteCode.ts; inviteCode.cross.test.ts pins the two.
  */
@@ -227,6 +235,130 @@ async function getOrCreateInviteCode({
   });
 }
 
+/** A Firestore timestamp, a Date or a number, as milliseconds; null for
+ *  anything else. */
+function millisOf(value) {
+  if (value && typeof value.toMillis === "function") return value.toMillis();
+  if (value instanceof Date) return value.getTime();
+  return Number.isFinite(value) ? value : null;
+}
+
+/** A fresh code among `candidates` that no one holds and is not `old`. */
+function freeCode(candidates, taken, old) {
+  return candidates.find(
+    (c, i) => normaliseInviteCode(c) === c && c !== old && !taken[i].exists
+  );
+}
+
+/** In `tx`, after every read: `uid`'s code becomes `code`, and the one they
+ *  held stops working (its document goes, with its day's redemptions). */
+function moveCode(tx, firestore, { uid, held, oldCode, code, createdAt }) {
+  if (held && held.exists && (held.data() || {}).uid === uid)
+    tx.delete(codeRef(firestore, oldCode));
+  tx.create(codeRef(firestore, code), { uid, createdAt });
+  tx.update(userRef(firestore, uid), { inviteCode: code });
+}
+
+/**
+ * The caller's new invite code (the renewInviteCode callable): the old one
+ * stops working at once, as a Circle's does (renewGoalSpaceInviteCode).
+ * For a code posted where it should not have been, or that reached someone
+ * the owner would rather it had not. Someone with no code yet gets their
+ * first. Returns `{ code }`. The callable refuses a restricted account
+ * before this runs.
+ */
+async function renewInviteCode({
+  firestore,
+  uid,
+  createdAt,
+  makeCode = makeInviteCode,
+}) {
+  if (!isUid(uid))
+    throw new InviteError("invalid-argument", "setup-unfinished");
+  const candidates = Array.from({ length: CODE_ATTEMPTS }, () => makeCode());
+  return firestore.runTransaction(async (tx) => {
+    const [user, live] = await Promise.all([
+      tx.get(userRef(firestore, uid)),
+      transactionAccountsLive({ firestore, tx, uids: [uid] }),
+    ]);
+    if (!user.exists) {
+      throw new InviteError("failed-precondition", "setup-unfinished");
+    }
+    if (!live) {
+      throw new InviteError("failed-precondition", "account-unavailable");
+    }
+    const oldCode = normaliseInviteCode((user.data() || {}).inviteCode);
+    const held = oldCode ? await tx.get(codeRef(firestore, oldCode)) : null;
+    const taken = await Promise.all(
+      candidates.map((c) => tx.get(codeRef(firestore, c)))
+    );
+    const code = freeCode(candidates, taken, oldCode);
+    if (!code) throw new InviteError("aborted", "account-unavailable");
+    moveCode(tx, firestore, { uid, held, oldCode, code, createdAt });
+    return { code };
+  });
+}
+
+/**
+ * After `blockerUid` blocks `blockedUid` (onBlockWritten): when the person
+ * blocked joined from the blocker's invite (`invitedBy`, stamped by
+ * redeemInvite), the blocker's code is renewed, so a new account that
+ * person makes cannot use it again and be followed by the blocker. The
+ * block flow deletes the follow edges between the two as it writes the
+ * block, so their `fromInvite` marks are gone by the time this runs; the
+ * stamp on the person's own account is not.
+ *
+ * Nothing for an unblock, for someone who joined any other way, for a
+ * blocker with no code or being deleted, or when the code was made after
+ * the block: a retried delivery, or the owner's own New code since.
+ * Returns `{ renewed, reason }`.
+ */
+async function renewInviteCodeAfterBlock({
+  firestore,
+  blockerUid,
+  blockedUid,
+  createdAt,
+  makeCode = makeInviteCode,
+}) {
+  if (!isUid(blockerUid) || !isUid(blockedUid))
+    return { renewed: false, reason: "invalid" };
+  const candidates = Array.from({ length: CODE_ATTEMPTS }, () => makeCode());
+  return firestore.runTransaction(async (tx) => {
+    const [block, blocked, blocker, live] = await Promise.all([
+      tx.get(blockDoc(firestore, blockerUid, blockedUid)),
+      tx.get(userRef(firestore, blockedUid)),
+      tx.get(userRef(firestore, blockerUid)),
+      transactionAccountsLive({ firestore, tx, uids: [blockerUid] }),
+    ]);
+    if (!block.exists) return { renewed: false, reason: "not-blocked" };
+    if (!blocked.exists || (blocked.data() || {}).invitedBy !== blockerUid)
+      return { renewed: false, reason: "not-from-invite" };
+    if (!blocker.exists || !live)
+      return { renewed: false, reason: "unavailable" };
+    const oldCode = normaliseInviteCode((blocker.data() || {}).inviteCode);
+    const held = oldCode ? await tx.get(codeRef(firestore, oldCode)) : null;
+    if (!held || !held.exists || (held.data() || {}).uid !== blockerUid)
+      return { renewed: false, reason: "no-code" };
+    const madeAt = millisOf((held.data() || {}).createdAt);
+    const blockedAt = millisOf((block.data() || {}).blockedAt);
+    if (madeAt !== null && blockedAt !== null && madeAt > blockedAt)
+      return { renewed: false, reason: "renewed-since" };
+    const taken = await Promise.all(
+      candidates.map((c) => tx.get(codeRef(firestore, c)))
+    );
+    const code = freeCode(candidates, taken, oldCode);
+    if (!code) throw new InviteError("aborted", "account-unavailable");
+    moveCode(tx, firestore, {
+      uid: blockerUid,
+      held,
+      oldCode,
+      code,
+      createdAt,
+    });
+    return { renewed: true, reason: "joined-from-invite" };
+  });
+}
+
 /**
  * Use `code` for the caller `uid`, whose Auth account was made at
  * `accountCreatedAtMs`. Returns `{ inviterUid, alreadyJoined }`; a second
@@ -364,7 +496,10 @@ async function redeemInvite({
         tx.set(followerEdge(firestore, inviterUid, uid), edge);
       tx.delete(requestDoc(firestore, inviterUid, uid));
     }
-    tx.update(userRef(firestore, uid), { invitedAt: serverTimestamp });
+    tx.update(userRef(firestore, uid), {
+      invitedAt: serverTimestamp,
+      invitedBy: inviterUid,
+    });
     tx.update(codeRef(firestore, normalised), {
       redemptions: [...recent, nowMs],
     });
@@ -410,6 +545,8 @@ module.exports = {
   publicName,
   lookupKey,
   getOrCreateInviteCode,
+  renewInviteCode,
+  renewInviteCodeAfterBlock,
   redeemInvite,
   lookupInviter,
 };

@@ -192,6 +192,35 @@ describe("getRaceGoalPlannerState — a plan made mid-week", () => {
   });
 });
 
+/* A plan made Thursday to Sunday starts with a lead-in, and its weekly
+   shape is the week after: its hard runs on lift days are still counted. */
+describe("getRaceGoalPlannerState — a plan with a lead-in", () => {
+  // A lift every day, runs on Tuesday, Thursday and Sunday.
+  const EVERY_DAY_LIFTS = Array.from({ length: 7 }, (_, day) => ({
+    day,
+    type: [1, 3, 6].includes(day) ? ("both" as const) : ("lift" as const),
+  }));
+  const input = (currentDate: string): RaceGoalPlannerInput => ({
+    ...base,
+    distance: "half",
+    currentDate,
+    liftDays: 7,
+    weeklyRunDays: 3,
+    targetDate: "2026-10-04",
+    weekSchedule: EVERY_DAY_LIFTS,
+  });
+
+  it("counts the same clashes as a plan made on the Monday", () => {
+    const monday = getRaceGoalPlannerState(input(TODAY));
+    expect(monday.hardClashDays).toBeGreaterThan(0);
+    for (const day of ["2026-06-04", "2026-06-06"]) {
+      const later = getRaceGoalPlannerState(input(day));
+      expect(later.hardClashDays).toBe(monday.hardClashDays);
+      expect(later.recommendedRunDays).toBe(monday.recommendedRunDays);
+    }
+  });
+});
+
 /* Run19: a plan made after its week's last run day starts on next week's
    runs, and the preview shows that week. */
 describe("getRaceGoalPlannerState — a plan made after the week's last run", () => {

@@ -20,6 +20,10 @@ export function collectiveTotal(
   return Number.isFinite(meters) && meters > 0 ? meters / 1000 : 0;
 }
 
+/** The fewest runners the community goal counts aloud (Soc16): "1 runner"
+ *  only says the room is empty, while the total still moves. */
+export const COLLECTIVE_RUNNERS_MIN_VISIBLE = 3;
+
 /** How many people have a run in the community goal's total. */
 export function collectiveRunners(
   challenge?: Pick<CollectiveGoalSource, "collectiveRunners"> | null

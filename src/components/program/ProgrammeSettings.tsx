@@ -130,6 +130,12 @@ type SplitChoice = (typeof VALID_SPLIT_CHOICES)[number];
 
 interface ProgrammeSettingsProps {
   recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
+  /** `useProgram().recentRuns`: the saved runs read with the layoff, null
+   *  while unread. A save rebuilds this week's race runs, and a running
+   *  starting point climbs from what these say was done; without them the
+   *  week is built as if every run so far had been followed. */
+  recentRuns:
+    readonly import("@/features/program/layoffDetection").DatedRun[] | null;
   profile: UserProfile;
   programState: ProgramState | null;
   /** `useProgram().readiness`: whether `programState` is the server's copy
@@ -445,6 +451,7 @@ const INJURY_OPTIONS: {
 // Run9 (3a): `structured` retired as a user-selectable mode — running is
 export default function ProgrammeSettings({
   recentLayoff = "none",
+  recentRuns,
   profile,
   programState,
   readiness,
@@ -684,6 +691,7 @@ export default function ProgrammeSettings({
         runningBaseline: profile.runningBaseline ?? null,
         runTimeLimits: profile.runTimeLimits ?? null,
         recentLayoff,
+        recentRuns,
         newRunnerUntil: profileNewRunnerUntil(profile),
         weekSchedule: profile.weekSchedule,
         ...(saved.runMode === "race_prep" && saved.raceTargetDate
@@ -918,6 +926,7 @@ export default function ProgrammeSettings({
                saves — neither outcome is the silent default. */
           <div className="space-y-2 pt-1">
             <Button
+              variant="neutral"
               fullWidth
               {...commitWaits("Save and update sessions")}
               onClick={() => void applyRebuild(true)}
@@ -1312,6 +1321,7 @@ export default function ProgrammeSettings({
           />
           {!saving && loadFailedLine(loadFailedId, "mb-2 text-center")}
           <Button
+            variant="neutral"
             fullWidth
             onClick={() => setConfirmRebuild(true)}
             disabled={!dirty || saving || !programReady}

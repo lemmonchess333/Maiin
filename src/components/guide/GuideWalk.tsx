@@ -502,6 +502,7 @@ export default function GuideWalk({
                   </Button>
                 )}
                 <Button
+                  variant="neutral"
                   ref={primaryRef}
                   onClick={next}
                   className={single ? "ml-auto" : undefined}

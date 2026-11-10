@@ -5,9 +5,7 @@ import {
   runsInWeek,
   STARTER_RUNS_FOR_A_DONE_WEEK,
   STARTER_STAGES,
-  starterWeekDone,
   starterStageRunDays,
-  weekKeyAfter,
 } from "./starterPlan";
 
 /** The device's record that a goal's Done was answered: per goal, keyed
@@ -32,7 +30,8 @@ export interface StarterProgress {
   /** Distinct days completed at this stage, including earlier repeated weeks. */
   runsThisStage?: number;
   runsForTheWeek: number;
-  /** The stage is last week's again: last week was not done. */
+  /** The stage is last week's again: the rollover kept it, so it began
+   *  in an earlier week (`stageStartedWeek`). */
   repeated: boolean;
   /** The last stage's week is done: the goal is reached, though the
    *  rollover writes it as finished only once the week is over. */
@@ -55,8 +54,10 @@ export function starterProgress(
   const stage = clampStarterStage(plan.stage ?? 1);
   const weekKey = plan.stageWeekKey;
   const weeksToGo = STARTER_STAGES - stage + 1;
-  const lastWeek = weekKeyAfter(weekKey, -1);
-  // A week repeats when the one before it was in the goal and not done.
+  // A week repeats when the rollover kept the stage: it records the week
+  // the stage began only then (weekRollover's nextStarterWeek), and drops
+  // it when the stage moves on. Distinct run days add up across weeks, so
+  // last week alone being short no longer means the stage stayed.
   const goalLastWeek =
     !!starterGoal?.startedOn && starterGoal.startedOn < weekKey;
   const stageDays = starterStageRunDays(
@@ -67,12 +68,14 @@ export function starterProgress(
   return {
     stage,
     weekLabel: `Stage ${stage} of ${STARTER_STAGES}`,
-    toGoLabel:
-      weeksToGo <= 1 ? "the last stage" : `${weeksToGo} stages to go`,
+    toGoLabel: weeksToGo <= 1 ? "the last stage" : `${weeksToGo} stages to go`,
     runsThisWeek: runsInWeek(runDays, weekKey),
     runsThisStage: stageDays.length,
     runsForTheWeek: STARTER_RUNS_FOR_A_DONE_WEEK,
-    repeated: goalLastWeek && !starterWeekDone(runDays, lastWeek),
+    repeated:
+      goalLastWeek &&
+      !!plan.stageStartedWeek &&
+      plan.stageStartedWeek < weekKey,
     reached:
       stage >= STARTER_STAGES &&
       stageDays.length >= STARTER_RUNS_FOR_A_DONE_WEEK,

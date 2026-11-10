@@ -11,10 +11,20 @@
  * no recovery running there is no week to count: the race-elapsed,
  * no-show and recovery-complete banners say what state the plan is in.
  *
+ * A plan made on a Thursday or later in the week has its first week from
+ * the Monday after, and the days before it are a lead-in (`RunPlan.leadInWeek`), none of the
+ * race's weeks: the plan's counter already reads its first week then, so
+ * the lead-in and the week after it both said "Week 1". There is no week
+ * to count until the first one starts, as Train's header says ("Starts").
+ *
  * Pure: callers pass the local day key.
  */
 import { differenceInCalendarDays } from "date-fns";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 
 export type RacePlanWeek =
@@ -35,6 +45,8 @@ export interface RacePlanWeekArgs {
         totalWeeks?: number | null;
         phase?: string | null;
         recoveryEndDate?: string | null;
+        /** The Monday of the plan's lead-in week, while it lasts. */
+        leadInWeek?: string | null;
       }
     | null
     | undefined;
@@ -63,6 +75,13 @@ export function racePlanWeek({
     };
   }
   if (todayKey > raceGoal.targetDate) return null;
+  const leadIn = runPlan?.leadInWeek;
+  if (
+    leadIn &&
+    todayKey < localDateString(addLocalDays(parseLocalDate(leadIn), 7))
+  ) {
+    return null;
+  }
   const week = runPlan?.currentWeek;
   const of = runPlan?.totalWeeks;
   if (

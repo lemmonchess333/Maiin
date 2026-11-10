@@ -17,9 +17,12 @@ vi.mock("@/lib/firebase", () => ({
 }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "runner" }));
 
+// The goal began last week and that week had no runs, so the rollover kept
+// stage 1 and recorded the week it began (weekRollover's nextStarterWeek).
 const plan = starterWeekFrom({
   today: "2026-11-16",
   stage: 1,
+  stageStartedWeek: "2026-11-09",
   weekSchedule: [
     { day: 3, type: "run" },
     { day: 5, type: "run" },
@@ -79,7 +82,9 @@ it("counts the journey's saved runs as their days arrive, without remounting", a
   // both, so waiting longer cannot make the starter week done.
   await screen.findByText("0 saved runs");
   expect(
-    screen.getByText("This stage again: 2 more runs on separate days to move on.")
+    screen.getByText(
+      "This stage again: 2 more runs on separate days to move on."
+    )
   ).toBeVisible();
   expect(screen.queryByText(STARTER.weekDone)).not.toBeInTheDocument();
 

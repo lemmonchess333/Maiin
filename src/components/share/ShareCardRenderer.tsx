@@ -12,7 +12,8 @@ import {
 } from "@/lib/distanceUnits";
 import { paceMinSec, distanceValue, elevationLabel } from "@/lib/runLabels";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
-import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
+import { liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
+import { workFigure } from "@/lib/liftFigures";
 import { THEME } from "@/lib/theme";
 import type { FinishTone } from "@/lib/finishMoment";
 
@@ -128,6 +129,9 @@ export interface ShareCardRenderData {
 
   // ── LIFT ──
   totalVolumeKg?: number;
+  /** The session's working reps (`sessionWork`), so a bodyweight session
+   *  reads as its reps rather than "0 kg lifted" (`workFigure`). */
+  totalReps?: number;
   exerciseCount?: number;
   prCount?: number;
   prExercise?: string; // PR callout headline
@@ -757,7 +761,13 @@ function LiftTemplate({
   // figure in the display register, and the reward's sentence when it
   // earned one. Without a sentence, a new best still says so in gold.
   const liftUnit = data.liftUnit ?? "kg";
-  const volume = Math.round(liftVolumeIn(data.totalVolumeKg ?? 0, liftUnit));
+  // The finish screen's own figure: kg (or lb) lifted, or a bodyweight
+  // session's reps.
+  const work = workFigure(
+    data.totalVolumeKg ?? 0,
+    data.totalReps ?? 0,
+    liftUnit
+  );
   // "in 41 min", as the finish screen's caption says it.
   const time =
     show("duration") && data.durationSec
@@ -797,8 +807,8 @@ function LiftTemplate({
       {data.headline && <Headline text={data.headline} scale={scale} />}
       {show("volume") && (
         <Hero
-          value={volume.toLocaleString("en-GB")}
-          label={`${liftUnitLabel(liftUnit)} lifted${time}`}
+          value={Math.round(work.to).toLocaleString("en-GB")}
+          label={`${work.unit}${time}`}
           color="#ffffff"
           scale={scale}
           display

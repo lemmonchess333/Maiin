@@ -80,6 +80,24 @@ describe("rangeChangeReading", () => {
     ).toBe("You trained as many sessions as in the 30 days before.");
   });
 
+  it("says nothing when neither range has anything in it, rather than 'you trained'", () => {
+    for (const kind of ["sessions", "lifted", "ran"] as const) {
+      expect(
+        rangeChangeReading({ ...base, kind, change: null, noneInEither: true })
+      ).toBeNull();
+    }
+    // A new account still hears the day it starts comparing.
+    expect(
+      rangeChangeReading({
+        ...base,
+        kind: "sessions",
+        change: null,
+        noneInEither: true,
+        comparesFromKey: keyOf(-3),
+      })
+    ).toMatch(/^From /);
+  });
+
   it("says nothing while the range before is unknown, rather than 'more than nothing'", () => {
     expect(
       rangeChangeReading({
@@ -159,7 +177,21 @@ describe("comparisonStartKey", () => {
     );
   });
 
-  it("is null once the account is as old as the range, or its start unknown", () => {
+  it("names the day the comparison starts, for an account exactly as old as the range", () => {
+    // Began on the range's first day: the range before is all from before
+    // it, so the line waits one more day, and that day is the one it names.
+    const today = historyRange(30, { createdAt: createdDaysAgo(29), now: NOW });
+    expect(comparisonStartKey(today)).toBe(
+      localDateString(addLocalDays(NOW, 1))
+    );
+    const tomorrow = historyRange(30, {
+      createdAt: createdDaysAgo(30),
+      now: NOW,
+    });
+    expect(comparisonStartKey(tomorrow)).toBeNull();
+  });
+
+  it("is null once the account is older than the range, or its start unknown", () => {
     expect(
       comparisonStartKey(
         historyRange(30, { createdAt: createdDaysAgo(30), now: NOW })

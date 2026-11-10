@@ -518,6 +518,7 @@ function WorkoutDetailContent() {
           handle: profile?.displayName || "Athlete",
           date: shortDate,
           totalVolumeKg: tonnage,
+          totalReps,
           exerciseCount: exercises.length,
           durationSec: (workout.durationMinutes ?? 0) * 60,
         }}
