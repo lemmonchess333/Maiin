@@ -13,7 +13,7 @@ import { addLocalDays, localDateString } from "@/lib/dateHelpers";
 import {
   PLAN_GROUP_MIN_COUNT,
   parseCohortCount,
-  planGroupCardLine,
+  planGroupHeroCardLine,
   planGroupHeroLine,
   planGroupRace,
   weeksToGoLine,
@@ -107,23 +107,16 @@ describe("planGroupRace", () => {
 });
 
 describe("the words", () => {
-  it("the card at a count of 1, 2, 3 and 12", () => {
-    const name = "Manchester Marathon";
-    expect(planGroupCardLine(1, name)).toBe(
-      "You're training for Manchester Marathon"
+  it("Together's race hero at a count of 3 and 12, and nothing under three", () => {
+    expect(planGroupHeroCardLine(12)).toBe(
+      "You and 11 others on Tropos are training for it"
     );
-    expect(planGroupCardLine(2, name)).toBe(
-      "You're training for Manchester Marathon"
+    expect(planGroupHeroCardLine(3)).toBe(
+      "You and 2 others on Tropos are training for it"
     );
-    expect(planGroupCardLine(3, name)).toBe(
-      "You and 2 others are training for Manchester Marathon"
-    );
-    expect(planGroupCardLine(12, name)).toBe(
-      "You and 11 others are training for Manchester Marathon"
-    );
-    expect(planGroupCardLine(null, name)).toBe(
-      "You're training for Manchester Marathon"
-    );
+    expect(planGroupHeroCardLine(2)).toBeNull();
+    expect(planGroupHeroCardLine(1)).toBeNull();
+    expect(planGroupHeroCardLine(null)).toBeNull();
     expect(PLAN_GROUP_MIN_COUNT).toBe(3);
   });
 

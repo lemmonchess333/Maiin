@@ -6,12 +6,14 @@ import { challengeGoal } from "./challengeFormat";
 import { challengeSport } from "./challengeSport";
 import { getTimeRemaining, type Challenge } from "./useChallenges";
 import SportIconTile from "./SportIconTile";
+import MedalArt from "./MedalArt";
+import { rowMedalFace } from "./rowMedal";
 
 /**
- * One challenge in Discover's quiet list, as a row in a grouped card: the
- * sport's icon, the name and the goal. The whole row opens the challenge
+ * One challenge in Discover's list, as a row in a grouped card: the medal
+ * its first tier wins, the name and the goal. The whole row opens the challenge
  * (`onOpen`), where its board and Join are, as the running apps' challenge
- * lists do: a Join on every row made a wall of buttons, and the icon and
+ * lists do: a Join on every row made a wall of buttons, and the medal and
  * the goal's own words already say the sport.
  *
  * Says how long is left only when asked to (`showTimeLeft`): the monthly
@@ -31,6 +33,7 @@ export default function ChallengeRow({
   const goal =
     challengeGoal(challenge, liftUnit, distanceUnit) ?? challenge.description;
   const timeLeft = showTimeLeft ? getTimeRemaining(challenge.endDate) : "";
+  const medal = rowMedalFace(challenge, null, liftUnit, distanceUnit);
 
   return (
     <li>
@@ -38,14 +41,24 @@ export default function ChallengeRow({
         type="button"
         aria-haspopup="dialog"
         onClick={onOpen}
-        className="flex w-full items-center gap-[12px] p-3 text-left active:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+        className="flex w-full items-center gap-[12px] px-3 py-2 text-left active:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
       >
-        {/* The tile gives its room to the words once the row is under 14em
-            (larger text on a narrow phone). */}
-        <SportIconTile
-          sport={challengeSport(challenge.metric)}
-          className="@max-[14em]:hidden"
-        />
+        {/* The medal its first tier wins (Soc16), or the sport's tile for
+            a challenge that awards none. Either gives its room to the
+            words once the row is under 14em (larger text on a narrow
+            phone). */}
+        {medal ? (
+          <MedalArt
+            {...medal}
+            size={36}
+            className="shrink-0 @max-[14em]:hidden"
+          />
+        ) : (
+          <SportIconTile
+            sport={challengeSport(challenge.metric)}
+            className="@max-[14em]:hidden"
+          />
+        )}
         <span className="min-w-0 flex-1">
           <span
             data-challenge-name=""

@@ -28,7 +28,8 @@ export default function CircleRow({
   circle: CircleSummary;
   title: ReactNode;
   /** One line, cut short rather than wrapped. */
-  meta: ReactNode;
+  /** The line under the title; none for a Circle of one with no date. */
+  meta?: ReactNode;
   /** Opens the Circle's sheet. */
   onOpen: (circle: CircleSummary) => unknown;
   /** The next step's words; without them the row has no step. */
@@ -61,9 +62,11 @@ export default function CircleRow({
             >
               {title}
             </span>
-            <span className="block text-xs text-muted-foreground leading-snug truncate">
-              {meta}
-            </span>
+            {meta && (
+              <span className="block text-xs text-muted-foreground leading-snug truncate">
+                {meta}
+              </span>
+            )}
           </span>
         </button>
         {actionLabel && (

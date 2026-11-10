@@ -154,8 +154,11 @@ export default function WeeklyChallengeCard({
   /* On the photo the challenge's name is the caption, so the line under
      it does not say it again. */
   const showTitle = !(photo && weekly && title === weekly.name);
+  /* Leading, the action is the page's one filled button, and neutral
+     (Soc16, §0 rule 12): white on dark, the colour left to the photo and
+     the progress. */
   const actionStyle = leads
-    ? {}
+    ? { variant: "neutral" as const, className: undefined }
     : {
         variant: "secondary" as const,
         className: SECONDARY_ON_CARD_EDGE,
