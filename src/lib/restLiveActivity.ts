@@ -3,16 +3,16 @@
  * the Dynamic Island while the phone is down between sets (Mob2 call 1,
  * lifting finding 7). Hevy shows the same.
  *
- * NATIVE HALF DEFERRED. This is the app's half only, on the seam
- * `runLiveActivity.ts` set: the only module that touches
- * `capacitor-live-activities` for a rest, the plugin imported dynamically
- * so the web bundle never carries it, every call guarded and its failure
- * swallowed, since a Live Activity must never affect the workout. Until
- * the widget extension in `docs/run-live-activity.md` is built in Xcode
- * (Mob2 call 13: when the owner has a Mac), `startActivity` rejects and
- * this does nothing; on the web it is never loaded. The web's own way to
- * see a rest from outside the app is the tab's title (`restOutside.ts`).
- * The device check is in `docs/qa/pre-launch-backlog.md`.
+ * The app's half, on the seam `runLiveActivity.ts` set: the only module
+ * that touches `capacitor-live-activities` for a rest, the plugin imported
+ * dynamically so the web bundle never carries it, every call guarded and
+ * its failure swallowed, since a Live Activity must never affect the
+ * workout. The native half is the `LiveActivitiesExtension` widget target
+ * in ios/App (`docs/run-live-activity.md`); on iOS before 16.2
+ * `startActivity` rejects and this does nothing, and on the web it is
+ * never loaded. The web's own way to see a rest from outside the app is
+ * the tab's title (`restOutside.ts`). The device check is in
+ * `docs/qa/pre-launch-backlog.md`.
  *
  * The countdown is ActivityKit's own timer element, counting to the rest's
  * end, so the lock screen keeps time with the app asleep and needs no

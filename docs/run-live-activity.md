@@ -1,13 +1,23 @@
 # Run Live Activity (lock screen / Dynamic Island)
 
-**Status:** TypeScript half ✅ shipped — `src/lib/runLiveActivity.ts` (the
-seam, tested) + Run.tsx lifecycle wiring (start on active, throttled
-per-tick updates mirroring the HUD's rolling pace, end on
-finish/discard/unmount). The plugin (`capacitor-live-activities`) is
-installed. **Remaining is operator-bound**: the widget-extension half
-below needs a Mac + Xcode; until it exists the seam's `startActivity`
-rejects and every call is a swallowed no-op — web and un-provisioned
-native builds are unaffected.
+**Status:** both halves built.
+
+- **TypeScript:** `src/lib/runLiveActivity.ts` (the seam, tested) and the
+  Run.tsx lifecycle wiring (start on active, throttled per-tick updates
+  mirroring the HUD's rolling pace, end on finish/discard/unmount).
+- **Native (2026-11-10):** the `LiveActivitiesExtension` target, written
+  into `ios/App/App.xcodeproj` without a Mac: `ios/App/LiveActivities/`
+  (the widget bundle, its Info.plist and entitlements), `LiveActivitiesKit`
+  linked from the plugin's patched package, `NSSupportsLiveActivities` in
+  the app, and the App Group on both. CI's simulator build compiles it,
+  and `iosProjectWiring.test.ts` pins each piece. The owner registered
+  `com.tropos.app.LiveActivities` and the group in Apple Developer.
+- **Remaining:** the device checks below, on a TestFlight build. On iOS
+  before 16.2 the extension is never loaded and `startActivity` rejects
+  into a swallowed no-op, as on the web.
+
+The steps below are what Xcode would have done; the target in the
+project matches them.
 
 The same extension also shows a lift's rest (`src/lib/restLiveActivity.ts`):
 a dark card with a purple dumbbell, "Rest", the system's own countdown to

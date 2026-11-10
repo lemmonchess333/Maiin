@@ -23,10 +23,10 @@
  * app's own label on each update — always consistent with the HUD,
  * at worst a few seconds stale while backgrounded.
  *
- * Operator half (Mac/Xcode, documented in docs/run-live-activity.md):
- * widget-extension target + Podfile entry + NSSupportsLiveActivities +
- * App Group, then `npx cap sync ios`. Until then `startActivity`
- * rejects and this module swallows it.
+ * Native half: the `LiveActivitiesExtension` widget target in
+ * ios/App (docs/run-live-activity.md), NSSupportsLiveActivities and the
+ * App Group. A build without it, or iOS before 16.2, rejects
+ * `startActivity`, and this module swallows it.
  */
 import { isNativePlatform } from "@/lib/platform";
 import { logger } from "@/lib/logger";

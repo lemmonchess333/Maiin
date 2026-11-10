@@ -178,10 +178,10 @@ A rest that ended while the app was away no longer chimes again on the way
 back. On the phone the rest has a Live Activity of its own
 (`src/lib/restLiveActivity.ts`): a card with the system's own countdown to
 the rest's end and the next exercise, and the Dynamic Island's dumbbell
-and countdown. **Its native half is not built**: it needs the same widget
-extension as the run's card (`docs/run-live-activity.md`, Mob2 call 13:
-when the owner has a Mac). Until then `startActivity` rejects and the app
-shows nothing there; the rest-end notification is separate and works
+and countdown. Its native half is the widget extension the run's card
+uses (`docs/run-live-activity.md`), in the project since 2026-11-10 and
+built without a Mac. On iOS before 16.2 `startActivity` rejects and the
+app shows nothing there; the rest-end notification is separate and works
 already. The unit suites pin the title, the plugin calls and a rest made
 longer replacing itself; only a phone shows the card.
 
@@ -193,11 +193,18 @@ longer replacing itself; only a phone shows the card.
       wait past the rest. Passing: the rest-end notification arrives, and
       unlocking back into the workout shows the finished ring without a
       chime or a buzz.
-- [ ] **The lock screen, once the extension exists.** After the Xcode
-      steps in `docs/run-live-activity.md`, tick a set and lock the phone.
-      Passing: the card shows "Rest" and a countdown that reaches 0:00 on
-      time with the app asleep, "Next:" and the exercise under it; +15 s
-      in the app moves the countdown on; End rest takes the card away.
+- [ ] **The lock screen.** On a TestFlight build with the widget
+      extension (2026-11-10 or later), on iOS 16.2 or later, tick a set and
+      lock the phone. Passing: the card shows "Rest" and a countdown that
+      reaches 0:00 on time with the app asleep, "Next:" and the exercise
+      under it; +15 s in the app moves the countdown on; End rest takes the
+      card away.
+- [ ] **A run on the lock screen.** On the same build, start an outdoor
+      run and lock the phone. Passing: a dark card with "Recording" and the
+      distance, pace and time, updating while locked; Pause reads "Paused";
+      Finish or Discard takes the card away; on an iPhone with a Dynamic
+      Island, the run's distance shows there. The rest of
+      `docs/run-live-activity.md`'s device checklist goes with it.
 
 ## A photo and a few words (Mob2 call 3, 2026-10-28)
 

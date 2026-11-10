@@ -280,8 +280,9 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
       /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?productType/
     )![0];
     expect(appTarget).toContain(`${embed![1]} /* Embed Watch Content */`);
+    // Two dependencies: the Watch app and the Live Activity widget.
     expect(appTarget).toMatch(
-      /dependencies = \(\s*[0-9A-F]{24} \/\* PBXTargetDependency \*\/,\s*\);/
+      /dependencies = \(\s*[0-9A-F]{24} \/\* PBXTargetDependency \*\/,\s*[0-9A-F]{24} \/\* PBXTargetDependency \*\/,\s*\);/
     );
 
     const glob = (pattern: string) =>
@@ -424,7 +425,8 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     // is read from the project (scripts/ios_signed_targets.py, tested in
     // scripts/test_verify_ios_signed_targets.py), so a widget extension
     // added later is signed without editing the workflow.
-    expect(pbxproj.match(/CODE_SIGN_STYLE = Automatic;/g)?.length).toBe(4);
+    // Two configurations each for the app, the Watch app and the widget.
+    expect(pbxproj.match(/CODE_SIGN_STYLE = Automatic;/g)?.length).toBe(6);
     const list = workflowStep("List the targets to sign");
     expect(list).toContain("python3 scripts/ios_signed_targets.py list");
     expect(list).toContain(
@@ -566,6 +568,100 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(
       keys.includes("com.apple.developer.devicecheck.appattest-environment")
     ).toBe("@capacitor-firebase/app-check" in pkg.dependencies);
+    // The Live Activity plugin and its widget share an App Group.
+    expect(keys.includes("com.apple.security.application-groups")).toBe(
+      "capacitor-live-activities" in pkg.dependencies
+    );
+  });
+
+  it("embeds the Live Activity widget in every build, inside the app", () => {
+    // The run and a lift's rest show on the Lock Screen and in the Dynamic
+    // Island only once this extension ships (docs/run-live-activity.md);
+    // without it the plugin's startActivity rejects and nothing shows.
+    const embed = pbxproj.match(
+      new RegExp(
+        `(${OBJECT_ID.source}) /\\* Embed Foundation Extensions \\*/ = \\{\\s*isa = PBXCopyFilesBuildPhase;[\\s\\S]*?dstSubfolderSpec = (\\d+);[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+      )
+    );
+    expect(embed).not.toBeNull();
+    // 13 is the app's PlugIns folder.
+    expect(embed![2]).toBe("13");
+    expect(
+      [
+        ...embed![3].matchAll(
+          /\/\* (.+?) in Embed Foundation Extensions \*\//g
+        ),
+      ].map((m) => m[1])
+    ).toEqual(["LiveActivitiesExtension.appex"]);
+    const appTarget = pbxproj.match(
+      /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?productType/
+    )![0];
+    expect(appTarget).toContain(
+      `${embed![1]} /* Embed Foundation Extensions */`
+    );
+    // Not behind the Watch's gate: every build carries it.
+    expect(pbxproj).not.toMatch(
+      /(EXCLUDED|INCLUDED)_SOURCE_FILE_NAMES = [^;]*appex/
+    );
+
+    const target = pbxproj.match(
+      /\/\* LiveActivitiesExtension \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?productType = "([^"]+)";/
+    );
+    expect(target?.[1]).toBe("com.apple.product-type.app-extension");
+    expect(target![0]).toMatch(/LiveActivitiesKit \*\//);
+    const list = pbxproj.match(
+      /\/\* Build configuration list for PBXNativeTarget "LiveActivitiesExtension" \*\/ = \{[\s\S]*?buildConfigurations = \(([\s\S]*?)\);/
+    );
+    const ids = [
+      ...list![1].matchAll(new RegExp(`(${OBJECT_ID.source}) /\\*`, "g")),
+    ].map((m) => m[1]);
+    expect(ids).toHaveLength(2);
+    for (const id of ids) {
+      const config = pbxproj.match(
+        new RegExp(`^\\s*${id} /\\*[^\\n]*\\*/ = \\{([\\s\\S]*?)^\\s*\\};`, "m")
+      )![1];
+      // Inside the app only: an archive refuses an extension beside it.
+      expect(config).toContain("SKIP_INSTALL = YES;");
+      expect(config).toContain("TARGETED_DEVICE_FAMILY = 1;");
+      // The plugin's widget needs iOS 16.2; the app still opens on 15.4,
+      // where the extension is never loaded.
+      expect(config).toContain("IPHONEOS_DEPLOYMENT_TARGET = 16.2;");
+      expect(config).toContain(
+        "PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app.LiveActivities;"
+      );
+      expect(config).toContain(
+        "CODE_SIGN_ENTITLEMENTS = LiveActivities/LiveActivities.entitlements;"
+      );
+    }
+    // LiveActivitiesKit comes from the plugin's own package, the patched one.
+    expect(pbxproj).toMatch(
+      /relativePath = "\.\.\/\.\.\/node_modules\/capacitor-live-activities";/
+    );
+    expect(pbxproj).toMatch(/productName = LiveActivitiesKit;/);
+
+    // The app says it shows Live Activities; the extension is a widget.
+    expect(infoPlist).toMatch(
+      /<key>NSSupportsLiveActivities<\/key>\s*<true\/>/
+    );
+    const widgetPlist = read("ios/App/LiveActivities/Info.plist");
+    expect(widgetPlist).toMatch(
+      /<key>NSExtensionPointIdentifier<\/key>\s*<string>com\.apple\.widgetkit-extension<\/string>/
+    );
+    expect(read("ios/App/LiveActivities/LiveActivitiesBundle.swift")).toMatch(
+      /DynamicActivityWidget\(\)/
+    );
+
+    // Both carry the group the plugin names from the app's bundle ID.
+    expect(
+      read(
+        "node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift"
+      )
+    ).toContain('"group.\\(bundleId).liveactivities"');
+    const group = "<string>group.com.tropos.app.liveactivities</string>";
+    expect(entitlements).toContain(group);
+    expect(
+      read("ios/App/LiveActivities/LiveActivities.entitlements")
+    ).toContain(group);
   });
 
   it("names in the guide every secret the run checks for, and checks every secret it reads", () => {
