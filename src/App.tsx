@@ -15,6 +15,7 @@ import {
   useUid,
 } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { flushOnAppResume } from "@/lib/flushOnAppResume";
 import { CONNECTED_TRAINING_RELEASED } from "@/lib/connectedTrainingRelease";
 import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
@@ -505,9 +506,13 @@ function AppRoutes() {
     window.addEventListener("focus", resumeWater);
     window.addEventListener("storage", resumeWater);
     window.addEventListener("online", tryFlush);
+    // And when the person comes back to the app: `online` does not fire for
+    // a flush that failed while connected (flushOnAppResume.ts).
+    const stopResumeFlush = flushOnAppResume(tryFlush);
     return () => {
       cancelled = true;
       stopForegroundPush();
+      stopResumeFlush();
       window.removeEventListener("online", tryFlush);
       document.removeEventListener("visibilitychange", resumeWater);
       window.removeEventListener("focus", resumeWater);
