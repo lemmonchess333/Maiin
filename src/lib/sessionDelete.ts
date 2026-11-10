@@ -11,6 +11,7 @@ import type { ProgramState } from "@/features/program/programTypes";
 import {
   pendingDocumentWrites,
   flushQueue,
+  hasQueuedWorkoutCompletion,
   queueDurableWrite,
 } from "@/lib/offlineQueue";
 import { logger } from "@/lib/logger";
@@ -103,6 +104,17 @@ export async function deleteLoggedSession({
       )
     )
       throw new Error("Sync this run before deleting it.");
+  }
+  // A finished workout whose save is still queued, or failed and kept to
+  // retry, shows in History from the queue but is not on the server yet:
+  // the delete would find nothing, and the next flush would save it and
+  // tick its plan day. Send it first, so the delete takes it and its
+  // progression back off.
+  if (kind === "workout" && hasQueuedWorkoutCompletion(uid, id)) {
+    if (!navigator.onLine) throw new Error("Connect to delete this workout.");
+    await flushQueue(db, uid);
+    if (hasQueuedWorkoutCompletion(uid, id))
+      throw new Error("Sync this workout before deleting it.");
   }
   // Persist the native HealthKit cleanup intent BEFORE deleting a run. If the
   // app dies just after Firestore accepts the delete, the next foreground can
