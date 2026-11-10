@@ -189,6 +189,28 @@ describe("sessionLeadArt", () => {
     ).toBe("Incline DB Press");
   });
 
+  // A beginner's home pull day has no compound primary: the floor gate's
+  // straight-arm pulldown came first and took the picture, an isolation
+  // the hero could not animate, over the row beside it (owner, 2026-11-10).
+  it("pictures a primary mover before an isolation, with no compound primary", () => {
+    const homePull = [
+      { exerciseId: "straight-arm-pulldown", name: "Straight-Arm Pulldown" },
+      { exerciseId: "chest-supported-db-row", name: "Chest-Supported DB Row" },
+      { exerciseId: "db-curl", name: "Dumbbell Curl" },
+    ];
+    expect(sessionLeadIndex(homePull)).toBe(1);
+    expect(sessionLeadArt(homePull)?.exerciseName).toBe(
+      "Chest-Supported DB Row"
+    );
+    // A day of isolations alone still has its first drawn one.
+    expect(
+      sessionLeadIndex([
+        { exerciseId: "straight-arm-pulldown" },
+        { exerciseId: "barbell-curl" },
+      ])
+    ).toBe(0);
+  });
+
   it("is null for a day with no drawn exercise", () => {
     expect(sessionLeadIndex([{ exerciseId: "not-in-the-library" }])).toBe(-1);
     expect(sessionLeadArt([{ name: "Custom finisher" }])).toBeNull();

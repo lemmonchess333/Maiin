@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { formArtCutoutUrl, sessionLeadArt } from "@/lib/formArtCutouts";
+import { heroMotionFor } from "@/lib/heroMotion";
 import {
   cardSessionMinutes,
   type PricedExercise,
@@ -203,7 +204,11 @@ export default function LiftCTACard({
       meta={meta}
       picture={
         art
-          ? { src: formArtCutoutUrl(art), className: "exercise-drawing" }
+          ? {
+              src: formArtCutoutUrl(art),
+              className: "exercise-drawing",
+              motion: heroMotionFor(art.src),
+            }
           : null
       }
       line={line}

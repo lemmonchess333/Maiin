@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/chest-press-machine.webp",
+  "still": "form-art/chest-press-machine.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 421,
+  "frameHeight": 480,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "80e8db449e59787fad83b21fafe4b5e5f2b051fd62eea750d73ab36ea6f6e8de",
+  "thenSha256": "5454818d98ef8cbff31806eaa5eacf633cdd87e7724a13875a22dce0af9cf0a9",
+  "sha256": "25c531dc6cd97fda065e25e63d03dfffcdf4b4e720ef8af2723013ca8dea2858"
+}

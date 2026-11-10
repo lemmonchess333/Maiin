@@ -528,6 +528,10 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
   branch whose lint had just been "checked". Same shape as the `tsc -p`
   row above and as `echo $?` after a pipe: a number that looks like the
   answer to the question you asked.
+- **Gate a push on the checks in the same command with `&&`, never `;`.**
+  `vitest … | grep …; git push` pushes whatever the tests said: a pipe's
+  status is its last stage's, and `;` ignores it anyway. It pushed 28
+  failing Home tests on 2026-11-09.
 - **Adding an import to a component breaks any suite that mocks that module
   wholesale.** `vi.mock("@/lib/auth", () => ({ useAuth: … }))` makes every
   OTHER export `undefined`, and the failure surfaces at the call site

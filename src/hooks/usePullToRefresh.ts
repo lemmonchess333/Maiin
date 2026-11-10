@@ -75,8 +75,8 @@ export interface UsePullToRefreshReturn {
    *  `tropos:social-tab-retap` event handler. */
   triggerRefresh: () => Promise<void>;
   /** Spread onto the outer scrollable container. The ref lets the
-   *  hook attach the non-passive touchmove listener; the touchstart
-   *  / touchend handlers are React-synthetic. */
+   *  hook attach the non-passive touchmove listener; the touchstart,
+   *  touchend and touchcancel handlers are React-synthetic. */
   bindProps: {
     /* React 19's stricter `useRef<T>(null)` typing returns
        RefObject<T | null>; downstream consumers that need a non-
@@ -86,6 +86,9 @@ export interface UsePullToRefreshReturn {
     ref: RefObject<HTMLDivElement | null>;
     onTouchStart: (e: ReactTouchEvent) => void;
     onTouchEnd: (e: ReactTouchEvent) => void;
+    /** The system took the touch (a call, Notification Center): no
+     *  touchend follows, so the indicator goes back up from here. */
+    onTouchCancel: () => void;
   };
 }
 
@@ -227,6 +230,13 @@ export function usePullToRefresh({
     [threshold, isRefreshing, runRefresh, settlePull]
   );
 
+  const handleTouchCancel = useCallback(() => {
+    suppressed.current = false;
+    if (isSwiping.current && !isRefreshing) settlePull(0);
+    isSwiping.current = false;
+    armed.current = false;
+  }, [isRefreshing, settlePull]);
+
   return {
     isRefreshing,
     pull,
@@ -236,6 +246,7 @@ export function usePullToRefresh({
       ref: containerRef,
       onTouchStart: handleTouchStart,
       onTouchEnd: handleTouchEnd,
+      onTouchCancel: handleTouchCancel,
     },
   };
 }

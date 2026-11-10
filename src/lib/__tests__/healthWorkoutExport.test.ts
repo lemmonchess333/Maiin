@@ -1,22 +1,31 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { auth, writer, locallyDisabled, localConsent, localQueue, localReview } =
-  vi.hoisted(() => ({
-    auth: { currentUser: { uid: "u1" } as { uid: string } | null },
-    writer: {
-      getWorkoutExportStatus: vi.fn(),
-      exportWorkout: vi.fn(),
-      deleteWorkout: vi.fn(),
-    },
-    locallyDisabled: vi.fn(() => false),
-    localConsent: vi.fn(
-      () => null as { id: string; enabledAtMs: number } | null
-    ),
-    localQueue: vi.fn(() => [] as Array<{ id: string }>),
-    localReview: vi.fn(
-      () => null as { phase: string; identity?: { runId: string } } | null
-    ),
-  }));
+const {
+  auth,
+  writer,
+  writeAccess,
+  locallyDisabled,
+  localConsent,
+  localQueue,
+  localReview,
+} = vi.hoisted(() => ({
+  writeAccess: {
+    status: "authorized" as
+      "authorized" | "denied" | "notDetermined" | "unavailable",
+  },
+  auth: { currentUser: { uid: "u1" } as { uid: string } | null },
+  writer: {
+    getWorkoutExportStatus: vi.fn(),
+    exportWorkout: vi.fn(),
+    deleteWorkout: vi.fn(),
+  },
+  locallyDisabled: vi.fn(() => false),
+  localConsent: vi.fn(() => null as { id: string; enabledAtMs: number } | null),
+  localQueue: vi.fn(() => [] as Array<{ id: string }>),
+  localReview: vi.fn(
+    () => null as { phase: string; identity?: { runId: string } } | null
+  ),
+}));
 
 vi.mock("../firebase", () => ({ auth, db: {} }));
 vi.mock("firebase/firestore");
@@ -24,6 +33,7 @@ vi.mock("../healthKit", () => ({
   getNativeWorkoutExportPlugin: async () => ({ plugin: writer }),
   getNativeWorkoutCleanupPlugin: async () => ({ plugin: writer }),
   isWorkoutWriteAvailable: async () => true,
+  getWorkoutWriteAuthorization: async () => writeAccess.status,
 }));
 vi.mock("../offlineQueue", () => ({
   subscribeSyncedRunWrites: () => () => {},
@@ -107,6 +117,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubGlobal("localStorage", memoryStorage());
   auth.currentUser = { uid: "u1" };
+  writeAccess.status = "authorized";
   seedConsent(true);
   locallyDisabled.mockReturnValue(false);
   localConsent.mockReturnValue(null);
@@ -153,6 +164,34 @@ describe("Apple Health export reconciliation", () => {
     expect(readDoc("users/u1/healthWorkoutExports/run-1")).toMatchObject({
       state: "exported",
       runId: "run-1",
+      workoutId: "hk-1",
+    });
+  });
+
+  // Write access off in the Health app: native refuses before saving. A
+  // receipt reserved first then blocked the run's export for good.
+  it("reserves nothing without write access, and exports once it is given", async () => {
+    seedRun("run-1");
+    writeAccess.status = "denied";
+    writer.exportWorkout.mockRejectedValue(new Error("permissionRequired"));
+    queueHealthWorkoutExport("u1", "run-1", true);
+    await reconcilePendingHealthExports("u1");
+    expect(writer.exportWorkout).not.toHaveBeenCalled();
+    expect(readDoc("users/u1/healthWorkoutExports/run-1")).toBeUndefined();
+    expect(pendingHealthWorkoutExports("u1")).toEqual([
+      { runId: "run-1", status: "pending" },
+    ]);
+
+    writeAccess.status = "authorized";
+    writer.exportWorkout.mockImplementation(async ({ revision }) => ({
+      status: "created",
+      workoutId: "hk-1",
+      revision,
+    }));
+    await reconcilePendingHealthExports("u1");
+    expect(writer.exportWorkout).toHaveBeenCalledOnce();
+    expect(readDoc("users/u1/healthWorkoutExports/run-1")).toMatchObject({
+      state: "exported",
       workoutId: "hk-1",
     });
   });

@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/inverted-row.webp",
+  "still": "form-art/inverted-row.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 480,
+  "frameHeight": 292,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "6285f820805203e8791deec8ed2a6b3c8a45bd00bd6aed99bcd17ac8cc056295",
+  "thenSha256": "05cbd1d7499e1aa3173e6756e15962cd2f417b3ce80731d6fbcaa80a3d580a19",
+  "sha256": "13046a98453737f2038f2d342ec1ab23b2f9f73c1b5b690c259994dbe96debbd"
+}

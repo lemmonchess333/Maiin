@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/db-shoulder-press.webp",
+  "still": "form-art/db-shoulder-press.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 284,
+  "frameHeight": 480,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "78807d53f2891a2706062260784a636ae1a8113ef74496bc6fd8cce785102e57",
+  "thenSha256": "a26864db08bffaf96c926164c7a9e484ecbccf1fb2e61d00a5ca0f441d33ed4d",
+  "sha256": "f7ce9666c4ca5aea4a767b054dcd1c4d43190a7381aa9a84891d6cd2df1cdc37"
+}
