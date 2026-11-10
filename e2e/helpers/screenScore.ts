@@ -80,9 +80,22 @@ export async function readDomFigures(
         .filter((t) => t >= 0 && t < usableBottom);
       const firstContentTop = tops.length ? Math.min(...tops) : null;
 
-      let hero: HTMLElement | null = null;
-      let heroArea = 0;
-      for (const el of blocks) {
+      // A screen that marks its hero (`data-hero`, or a test id naming
+      // one) is taken at its word, the highest such block in the first
+      // screen; otherwise the largest block is taken for the hero.
+      const marked = blocks
+        .filter((el) => el.matches('[data-hero], [data-testid*="hero"]'))
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.top < usableBottom && r.bottom > 0;
+        })
+        .sort(
+          (a, b) =>
+            a.getBoundingClientRect().top - b.getBoundingClientRect().top
+        );
+      let hero: HTMLElement | null = marked[0] ?? null;
+      let heroArea = marked.length ? Infinity : 0;
+      for (const el of marked.length ? [] : blocks) {
         const r = el.getBoundingClientRect();
         const seen = Math.max(
           0,
@@ -147,10 +160,10 @@ export async function readDomFigures(
       ).length;
 
       const label = heroEl
-        ? (heroEl.getAttribute("aria-label") ??
-          heroEl.getAttribute("data-testid") ??
-          heroEl.textContent?.trim().slice(0, 40) ??
-          heroEl.tagName.toLowerCase())
+        ? heroEl.getAttribute("aria-label") ||
+          heroEl.getAttribute("data-testid") ||
+          heroEl.textContent?.trim().slice(0, 40) ||
+          heroEl.tagName.toLowerCase()
         : "";
 
       return {
