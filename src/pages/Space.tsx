@@ -401,6 +401,7 @@ export default function Space() {
   const postIds = useMemo(() => visiblePosts.map((p) => p.id), [visiblePosts]);
   const spaceLikes = useSpacePostLikes(spaceId ?? "", postIds);
 
+  const isRace = def?.kind === "race";
   const photo = useMemo(
     () => (spaceId ? spaceEditorialImage(spaceId) : null),
     [spaceId]
@@ -596,9 +597,18 @@ export default function Space() {
               </p>
             )}
           </div>
+          {/* Join is a generic action, so it is neutral (DS4 call 1). On a
+              race's space the race's own "Train for this race" is the
+              page's one filled button, so Join there is the quiet chip
+              Joined is drawn as. */}
           {joined === false && (
             <Button
-              className="rounded-full px-5 shrink-0"
+              variant={isRace ? "ghost" : "neutral"}
+              className={cn(
+                "rounded-full px-5 shrink-0",
+                isRace && (photo ? PHOTO_CHIP : PLAIN_CHIP)
+              )}
+              style={isRace && photo ? { background: THEME.scrim } : undefined}
               loading={busy}
               onClick={join}
             >
