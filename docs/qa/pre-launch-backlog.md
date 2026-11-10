@@ -13,21 +13,21 @@ Manual checks deferred from work that already shipped to a feature branch. Burn 
 ## Setup asks for the public name (2026-11-01)
 
 Setup no longer makes the public name from the email address: an email
-account's name field on the review starts empty, and Go to Today with no
+account's name field on the review starts empty, and Start my plan with no
 name scrolls to the field, focuses it and says "Enter a name first."
 (`onboardingName.ts`, `Onboarding.tsx`). jsdom draws no layout and opens
 no keyboard; only a phone shows where the field lands.
 
 - [ ] **The field comes up above the keyboard.** On a TestFlight build,
       sign up with an email address and answer setup. On the review, tap
-      Go to Today without scrolling. Passing: the page moves to the name
+      Start my plan without scrolling. Passing: the page moves to the name
       field, the keyboard opens, and the field and "Enter a name first."
-      are both visible above it. Type a name and tap Go to Today: Home
+      are both visible above it. Type a name and tap Start my plan: Home
       opens, and from a second account Social's Search finds it by that
       name, not by the address.
 - [ ] **A Google or Apple name still arrives.** Make an account with Sign
       in with Apple (sharing the name) and one with Google. Passing: the
-      review's name field holds that name, and Go to Today goes straight
+      review's name field holds that name, and Start my plan goes straight
       on.
 
 ## A distance goal: a race entered, or on your own (Run9 STATUS 2026-11-01)
@@ -3646,7 +3646,7 @@ these need a phone, the deployed rules or the console.
 - [ ] **Typing a code during setup on a phone.** Install the TestFlight
       build fresh, sign up, and on setup's last step open "Invited by a
       friend?", type a friend's code (lower case and with or without the
-      dash), then Go to Today. Passing, with the friend's Approve followers
+      dash), then Start my plan. Passing, with the friend's Approve followers
       on (the default): Home shows the toast "<name> follows you now. Your
       request to follow them is waiting", the friend appears under your
       Followers but not your Following, and the friend has a request from
