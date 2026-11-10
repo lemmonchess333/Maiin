@@ -74,6 +74,8 @@ type Gesture =
       baseY: number;
       previous: { t: number; x: number; y: number } | null;
       last: { t: number; x: number; y: number };
+      /** The finger left down when a pinch ended: its lift is never a tap. */
+      afterPinch: boolean;
     }
   | {
       kind: "pinch";
@@ -264,7 +266,11 @@ export default function PostPhotoViewer({
     settle(stripX, 0, reduced);
     settle(pullY, 0, reduced);
   };
-  const startOne = (point: Point, axis: OneFinger["axis"]) => {
+  const startOne = (
+    point: Point,
+    axis: OneFinger["axis"],
+    afterPinch = false
+  ) => {
     const t = performance.now();
     gesture.current = {
       kind: "one",
@@ -275,6 +281,7 @@ export default function PostPhotoViewer({
       baseY: pullY.get(),
       previous: null,
       last: { t, ...point },
+      afterPinch,
     };
   };
 
@@ -308,6 +315,8 @@ export default function PostPhotoViewer({
     const now = performance.now();
     if (g.axis === "pan") {
       toRest(settleView(view(), size));
+      // The last finger of a pinch lifting is the pinch ending, not a tap.
+      if (g.afterPinch) return;
       // A zoomed photo still takes a tap: a pan that never moved is one.
       if (dragAxis(dx, point.y - g.origin.y) !== null) return;
     }
@@ -446,10 +455,10 @@ export default function PostPhotoViewer({
           const g = gesture.current;
           if (!g) return;
           if (g.kind === "pinch") {
-            const rest = [...pointers.current.values()][0];
-            if (rest) {
+            const remaining = [...pointers.current.values()][0];
+            if (remaining) {
               // One finger stays down: it carries on panning.
-              startOne(rest, "pan");
+              startOne(remaining, "pan", true);
               return;
             }
             gesture.current = null;

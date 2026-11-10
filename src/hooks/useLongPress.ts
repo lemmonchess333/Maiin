@@ -8,8 +8,9 @@ export const LONG_PRESS_MS = 500;
  *  A finger never stays perfectly still; 10 px is above its tremor and
  *  below a scroll. */
 export const LONG_PRESS_MOVE_PX = 10;
-/** After a long press fires, the click iOS synthesises as the finger lifts
- *  is swallowed for this long, so the press does not also tap. */
+/** After a fired long press, the click iOS synthesises as the finger lifts
+ *  is swallowed for this long from the lift, so the press does not also
+ *  tap, however long the finger stayed down. */
 export const LONG_PRESS_CLICK_MS = 400;
 
 /**
@@ -30,6 +31,8 @@ export function useLongPress<T>(
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const origin = useRef<{ x: number; y: number } | null>(null);
   const swallowUntil = useRef(0);
+  /** The press in progress has fired: its lift opens the swallow window. */
+  const fired = useRef(false);
   const callback = useRef(onLongPress);
   useEffect(() => {
     callback.current = onLongPress;
@@ -41,11 +44,23 @@ export function useLongPress<T>(
     origin.current = null;
   }, []);
 
+  /* The finger lifts (or the touch is cancelled). After a fired press the
+     click that follows comes now, not when the press fired, so the window
+     is counted from here. */
+  const end = useCallback(() => {
+    if (fired.current) {
+      fired.current = false;
+      swallowUntil.current = Date.now() + LONG_PRESS_CLICK_MS;
+    }
+    clear();
+  }, [clear]);
+
   useEffect(() => clear, [clear]);
 
   const start = useCallback(
     (e: ReactTouchEvent, target: T) => {
       clear();
+      fired.current = false;
       const touch = e.touches[0];
       if (!touch || e.touches.length > 1) return;
       const at = { x: touch.clientX, y: touch.clientY };
@@ -53,6 +68,7 @@ export function useLongPress<T>(
       timer.current = setTimeout(() => {
         timer.current = null;
         origin.current = null;
+        fired.current = true;
         swallowUntil.current = Date.now() + LONG_PRESS_CLICK_MS;
         callback.current(target, at);
       }, LONG_PRESS_MS);
@@ -78,5 +94,5 @@ export function useLongPress<T>(
     return true;
   }, []);
 
-  return { start, move, end: clear, swallowClick };
+  return { start, move, end, swallowClick };
 }

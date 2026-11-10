@@ -39,6 +39,10 @@ import { haptic } from "@/lib/haptic";
 const HOLD_MS = 1500;
 /** A press longer than this was a hold, not a tap. */
 const TAP_MAX_MS = 300;
+/** How long after a hold is let go its click is taken as that release's
+ *  own; a click later than this is a separate activation (Enter, a
+ *  VoiceOver double-tap) and opens the dialog. */
+const RELEASE_CLICK_MS = 400;
 /* The ring sits 4px inside the button's edge, at either size. */
 const BUTTON_PX: Record<RunControlSize, number> = { sm: 56, lg: 76 };
 const RING_INSET = 4;
@@ -76,8 +80,9 @@ export default function HoldToFinishButton({
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number | null>(null);
   const completedRef = useRef(false);
-  /** The last press was a hold let go early: its click is swallowed. */
-  const abandonedHoldRef = useRef(false);
+  /** When the last press, a hold, was let go early: the click that
+   *  follows that release is swallowed. */
+  const abandonedAtRef = useRef<number | null>(null);
   const tickRef = useRef(0);
   const loopRef = useRef<(() => void) | null>(null);
   const [progress, setProgress] = useState(0);
@@ -119,7 +124,7 @@ export default function HoldToFinishButton({
 
   const begin = useCallback(() => {
     completedRef.current = false;
-    abandonedHoldRef.current = false;
+    abandonedAtRef.current = null;
     tickRef.current = 0;
     startRef.current = performance.now();
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
@@ -131,8 +136,12 @@ export default function HoldToFinishButton({
   const cancel = useCallback(() => {
     if (completedRef.current) return;
     const started = startRef.current;
-    abandonedHoldRef.current =
-      started != null && performance.now() - started > TAP_MAX_MS;
+    // No press in progress: an echo of one already ended. On touch the
+    // browser fires pointerleave after pointerup, and that second call
+    // must not wipe what the first one recorded.
+    if (started == null) return;
+    const now = performance.now();
+    abandonedAtRef.current = now - started > TAP_MAX_MS ? now : null;
     stop();
   }, [stop]);
 
@@ -143,9 +152,14 @@ export default function HoldToFinishButton({
       completedRef.current = false;
       return;
     }
-    // A hold let go early: the ring has reset, and that is all.
-    if (abandonedHoldRef.current) {
-      abandonedHoldRef.current = false;
+    // A hold let go early: the ring has reset, and that is all. Only the
+    // click that comes with that release; a later one is its own press.
+    const abandonedAt = abandonedAtRef.current;
+    abandonedAtRef.current = null;
+    if (
+      abandonedAt != null &&
+      performance.now() - abandonedAt < RELEASE_CLICK_MS
+    ) {
       return;
     }
     onRequestConfirm();
