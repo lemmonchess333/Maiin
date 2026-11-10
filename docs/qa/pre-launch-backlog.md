@@ -264,6 +264,19 @@ the gates against fakes; only a phone shows the fix time and the battery.
       Settings → Battery is in line with a screen left on, and no location
       arrow shows while the phone is locked on the setup screen.
 
+## A pause while the run is already paused (2026-11-10)
+
+The run timer refuses a second pause and a resume while running
+(`useRunTimer`): a Pause tapped during an auto-pause added that stretch to
+the duration twice, and four of the pause sites had no guard of their own.
+The unit suite drives the timer; only a run shows auto-pause and the
+buttons together.
+
+- [ ] **Pause during an auto-pause.** On an iPhone, start a run and stop
+      at a crossing until auto-pause shows. Tap Pause, wait ten seconds,
+      tap Resume and run on. Passing: the duration does not jump, and the
+      saved run's time is the moving time, with the stop counted once.
+
 ## The streak's days, from the flame (Mob1 call 4, 2026-10-27)
 
 Home's flame opens a sheet: the month's logged days filled in purple,
