@@ -11,6 +11,20 @@ imagery (route scenes, muscle figures) by design. See `GLOSSARY.md` →
 "Editorial imagery" and `src/lib/editorialImages.ts` for the resolution
 logic.
 
+### Weekly cover re-cropped — 2026-11-10
+
+`challenge-weekly` is the same Morrow Solutions photograph, cropped again
+from the 2400 px original and encoded at quality 90. The earlier file was a
+centre crop at quality 78: the weekly card's band cut off the lifter's head,
+and the dark wall broke into flat blotches. The new crop is 2:1 with the head
+near the top, so a centred band holds the head, the bar and both hands at
+every card size. It is 74 KB, 1200 × 600. Crop, hashes and settings are in
+[`sources-2026-11-10-weekly-recrop.json`](./sources-2026-11-10-weekly-recrop.json).
+
+A dark photograph with little texture comes out small at any quality, so
+judge an encode by its 3× brightness check, not by its size next to the
+others.
+
 ### Real Social covers — 2026-10-31
 
 Eight generic challenge and Space covers now use distinct, real Pexels
@@ -288,6 +302,6 @@ All are landscape WebP at 1200 × 753, original colour, below 120 KB, and were
 checked at 3x brightness. The kettlebell's moulded "24KG" is its weight, not a
 maker's mark. The Dugald Stewart Monument's carved name on Calton Hill is
 faint at 3x and treated like the city signage above. Northleg asks for a
-credit link (northleg.com); the Unsplash License does not require one. In the
-challenge card's 361 × 112 band `challenge-weekly` loses the lifter's head;
-the bar and back still read.
+credit link (northleg.com); the Unsplash License does not require one.
+`challenge-weekly` has since been re-cropped (2026-11-10, at the top of this
+file) because this crop lost the lifter's head in the card's band.
