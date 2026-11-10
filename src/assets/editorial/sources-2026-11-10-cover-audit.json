@@ -1,6 +1,6 @@
 {
   "updatedOn": "2026-11-10",
-  "notes": "Cover audit, 2026-11-10. The owner, on Social: the weekly challenge's photo is poor quality; find a better one and check whether any others are low quality, at the marathon and space covers' bar. All 85 covers were drawn in every band they are used in (object-fit: cover, 2x) and their darkest flat area checked at 3.25x brightness. Six were weak. Five, the race and space covers, are replaced here, each from a 2400 px Unsplash source whose download was registered through the Unsplash API, encoded as 1200 x 600 WebP under 120,000 bytes, original colour, no retouching. Each record says what it replaces and why. The earlier records of the replaced files stay in their own manifests as history. The sixth, challenge-weekly, is not replaced: challenges move to their own medal art (Soc16), so no challenge carries a photograph.",
+  "notes": "Cover audit, 2026-11-10. The owner, on Social: the weekly challenge's photo is poor quality; find a better one and check whether any others are low quality, at the marathon and space covers' bar. All 85 covers were drawn in every band they are used in (object-fit: cover, 2x) and their darkest flat area checked at 3.25x brightness. Six were weak. Four race and space covers are replaced here, each from a 2400 px Unsplash source whose download was registered through the Unsplash API, encoded as 1200 x 600 WebP under 120,000 bytes, original colour, no retouching. Each record says what it replaces and why. The earlier records of the replaced files stay in their own manifests as history. The sixth, challenge-weekly, is not replaced: challenges move to their own medal art (Soc16), so no challenge carries a photograph. space-runners was listed too and keeps its photograph: the owner kept a replacement only where it was clearly better (2026-11-10), and its group running towards the camera is sharp enough at card size.",
   "images": [
     {
       "asset": "space-lifters.webp",
@@ -36,41 +36,6 @@
       },
       "marksCheck": "Checked at 3.25x: the plate's moulded '5KG' is its weight; no apparel or equipment marks.",
       "replaces": "space-lifters (Mikhail Nilov / Pexels, three people chatting after training). Soft (Pexels tinysrgb source: Laplacian variance 143, half that of a sharp cover), no lifting in frame, and the standing woman's face is cut off by the top of the 393x176 hero band. The new one is people lifting together, sharp, and holds in the 160x136 card and the hero."
-    },
-    {
-      "asset": "space-runners.webp",
-      "sourceUrl": "https://unsplash.com/photos/three-people-jogging-on-a-sunny-sidewalk-Lu98ARdCHAs",
-      "downloadUrl": "https://images.unsplash.com/photo-1762169786069-be5b81cd42b9?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
-      "photographer": "Nathan Nuyda",
-      "license": "Unsplash License",
-      "licenseUrl": "https://unsplash.com/license",
-      "content": "Three runners from behind on a tree-lined path in low autumn sun, long shadows. Real licensed editorial photograph; not Tropos members.",
-      "subject": "Three runners from behind on a tree-lined path in low autumn sun, long shadows. Real licensed editorial photograph; not Tropos members.",
-      "retrievedOn": "2026-11-10",
-      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool before fetching.",
-      "sourceSha256": "298e665001fe055395a24232a3ea8a0b98b5a89b6917e125941ca9e8ca212a33",
-      "sourceSize": {
-        "width": 2400,
-        "height": 1614
-      },
-      "crop": {
-        "left": 362,
-        "top": 620,
-        "width": 1560,
-        "height": 780
-      },
-      "processing": "Crop, Lanczos resize to 1200 x 600, WebP (Pillow) method 6 at the recorded quality, the highest that fits 120,000 bytes from a start of 86-90. Original colour, no retouching.",
-      "bands": "Checked centred (object-fit: cover) in every band the stem is drawn in, at 2x, and its darkest flat area at 3x brightness: no blotches, no marks.",
-      "output": {
-        "width": 1200,
-        "height": 600,
-        "quality": 74,
-        "method": 6,
-        "bytes": 115768,
-        "sha256": "579bab2a151553e30b77eac5eeb1408a5da896e9783c43f7c6d9cbe53b4d4f99"
-      },
-      "marksCheck": "Checked at 3x: no apparel marks on the runners' backs. Two parked cars at the left of the source (a Toyota grille badge and a plate frame on one) are cropped out: the crop starts at x 362, past the badge at x ~330.",
-      "replaces": "space-runners (cottonbro studio / Pexels, five runners toward the camera in flat grey light). Soft source (Laplacian variance 201) and the lead runner's face is motion-blurred at the centre of every band. Considered and rejected: sne058DdMVk (big group run, an Odlo logo on a red jacket at the centre) and c59hEeerAaI (beach group, Nike swoosh on a shirt)."
     },
     {
       "asset": "space-seville-marathon.webp",
