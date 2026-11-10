@@ -47,6 +47,14 @@ const h = vi.hoisted(() => ({
   skipRunDay: vi.fn(),
   track: vi.fn(),
   mapProps: [] as Record<string, unknown>[],
+  runDays: undefined as
+    | undefined
+    | {
+        id: string;
+        date: string;
+        templateId: string;
+        status: string;
+      }[],
   runPlan: undefined as
     | {
         currentWeek: number;
@@ -71,7 +79,7 @@ vi.mock("@/features/program/useProgram", () => ({
       markManualComplete: h.markManualComplete,
       skipRunDay: h.skipRunDay,
       programState: {
-        runDays: [{ id: "rd-1", status: "planned" }],
+        runDays: h.runDays ?? [{ id: "rd-1", status: "planned" }],
         runPlan: h.runPlan,
       },
     };
@@ -384,6 +392,7 @@ describe("RunSummary — past runs are read once", () => {
 describe("RunSummary — the week's runs are counted once", () => {
   afterEach(() => {
     h.runPlan = undefined;
+    h.runDays = undefined;
     delete (h.auth.profile as Record<string, unknown>).runMode;
   });
 
@@ -448,6 +457,39 @@ describe("RunSummary — the week's runs are counted once", () => {
       },
     });
     expect(await screen.findByText("Week 12 of 12")).toBeInTheDocument();
+  });
+
+  it("names the run after the run's own day as next, for a run saved after midnight", async () => {
+    // Read from today, a Sunday-night run saved after midnight skipped
+    // Monday's run and named Tuesday's.
+    const yesterday = daysFromToday(-1);
+    const today = daysFromToday(0);
+    h.runDays = [
+      { id: "today", date: today, templateId: "easy_30", status: "planned" },
+      {
+        id: "tomorrow",
+        date: daysFromToday(1),
+        templateId: "tempo_run",
+        status: "planned",
+      },
+    ];
+    renderSummary({
+      identity: {
+        uid: "runner",
+        sessionId: "late-run",
+        runId: "late-run",
+        scheduledRunId: null,
+        startedAt: new Date(`${yesterday}T23:30:00`).getTime(),
+        startLocalDate: yesterday,
+        originTimeZone: "UTC",
+      },
+    });
+    const weekday = new Date(`${today}T12:00:00`).toLocaleDateString("en-GB", {
+      weekday: "long",
+    });
+    expect(
+      await screen.findByText(new RegExp(`^Next run: .* — ${weekday}$`))
+    ).toBeInTheDocument();
   });
 
   it("counts no plan week once race day has passed", async () => {

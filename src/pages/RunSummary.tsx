@@ -2197,11 +2197,14 @@ export default function RunSummary() {
 
             {saved &&
               (() => {
+                /* After the run's own day, as the kicker reads it: a run
+                   begun on Sunday night and saved after midnight leaves
+                   Monday's run next, not Tuesday's. */
                 const next = programState?.runDays
                   ?.filter(
                     (day) =>
                       day.date &&
-                      day.date > localDateString() &&
+                      day.date > summaryDay &&
                       !day.completed &&
                       day.status !== "skipped" &&
                       day.status !== "race_no_show"
