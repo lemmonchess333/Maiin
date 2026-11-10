@@ -4,6 +4,7 @@ import {
   runEvidenceDate,
 } from "@/lib/runExecutionEvidence";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import { useDayMoment } from "@/hooks/useDayMoment";
 import RunPlanPurpose from "@/components/run/RunPlanPurpose";
 /**
  * Programme Run tab — hybrid training cockpit.
@@ -1032,13 +1033,14 @@ export default function ProgrammeRunSection({
   // The window is bounded by useRunningStats(30) above, so "lapsed" only
   // surfaces for runs 4–~4.3 weeks old; older history reads as cold-start,
   // which shares the same invitational copy.
+  const cadenceNow = useDayMoment();
   const freeformCadence = useMemo(
     () =>
       getFreeformCadence(
         runs.map((r) => r.completedAt),
-        new Date()
+        cadenceNow
       ),
-    [runs]
+    [runs, cadenceNow]
   );
 
   const modeLabel =

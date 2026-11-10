@@ -129,7 +129,12 @@ import {
 } from "@/lib/historyReadings";
 import type { ChartReadingLine } from "@/components/analytics/ChartReading";
 import type { SummaryChange } from "@/lib/periodSummary";
-import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import { useDayMoment } from "@/hooks/useDayMoment";
 import {
   computeMuscleRecovery,
   hitsFromWorkoutDocs,
@@ -604,9 +609,12 @@ export default function History() {
      window, the range before it, and the days an account younger than
      the range has had (`historyFigures`). Such an account has nothing in
      the range before it to compare with. */
+  /* Read at the day's moment, so a History left open overnight, or brought
+     back the next morning, covers the new day's window (useDayMoment). */
+  const now = useDayMoment();
   const range = useMemo(
-    () => historyRange(rangeDays, { createdAt: profile?.createdAt }),
-    [rangeDays, profile?.createdAt]
+    () => historyRange(rangeDays, { createdAt: profile?.createdAt, now }),
+    [rangeDays, profile?.createdAt, now]
   );
   const { startKey, joinedInRange } = range;
   const historyReturnTo = `/history${searchParams.size ? `?${searchParams}` : ""}`;
@@ -776,15 +784,15 @@ export default function History() {
   // half). NOW-state — always computed over the last RECOVERY_LOOKBACK_DAYS
   // regardless of the page's TimeRange (the card labels the carve-out).
   const muscleRecovery = useMemo(() => {
-    const lookbackStart = new Date();
-    lookbackStart.setDate(lookbackStart.getDate() - RECOVERY_LOOKBACK_DAYS);
-    const lookbackKey = localDateString(lookbackStart);
+    const lookbackKey = localDateString(
+      addLocalDays(parseLocalDate(range.todayKey), -RECOVERY_LOOKBACK_DAYS)
+    );
     const recent = workouts.filter((w) => w.date >= lookbackKey);
     const hits = hitsFromWorkoutDocs(recent);
     return recoveryForHeatMapGroups(
-      computeMuscleRecovery(hits, localDateString())
+      computeMuscleRecovery(hits, range.todayKey)
     );
-  }, [workouts]);
+  }, [workouts, range.todayKey]);
 
   /* The range's sessions, kilograms and sets per muscle, the range
      before for the changes, and the PRs tab's lift records. */
