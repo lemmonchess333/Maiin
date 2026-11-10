@@ -327,7 +327,7 @@ async function next(page: Page) {
 }
 
 /**
- * Setup's screens, as a person answers them, then Go to Today (answered by
+ * Setup's screens, as a person answers them, then Start my plan (answered by
  * the real `completeOnboarding`). Leaves the page on Home. A legacy-client
  * test can expect the existing offer before Home instead.
  */

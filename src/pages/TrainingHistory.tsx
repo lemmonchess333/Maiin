@@ -94,11 +94,14 @@ export default function TrainingHistory() {
   // Thirty at a time (XB1 call 3): each source reads the period's newest as
   // many sessions as are shown, and Show more reads thirty more, so a long
   // period never streams every route. Equal dates keep their order across
-  // reads, so a page boundary never skips a same-day session.
+  // reads, so a page boundary never skips a same-day session. A search
+  // reads the whole period: its matches can be anywhere in it, and only
+  // the whole period can say there are none.
+  const searching = filters.search.trim() !== "";
   const sessionWindow = {
     since: filters.from,
     until: filters.to,
-    cap: position.count,
+    cap: searching ? undefined : position.count,
   };
   const lifts = useSavedSessions(
     SAVED_WORKOUTS,
@@ -127,15 +130,16 @@ export default function TrainingHistory() {
   );
   // An empty period offers the last session: one newest read of each.
   const empty = !pending && !failed && complete && sessions.length === 0;
+  // Of the kind shown: a Runs view jumps to the last run, not a lift.
   const lastLift = useSavedSessions(
     SAVED_WORKOUTS,
     user?.uid,
-    empty && !filters.search ? { latest: 1 } : null
+    empty && !searching && filters.sport !== "runs" ? { latest: 1 } : null
   );
   const lastRun = useSavedSessions(
     SAVED_RUNS,
     user?.uid,
-    empty && !filters.search ? { latest: 1 } : null
+    empty && !searching && filters.sport !== "lifts" ? { latest: 1 } : null
   );
   const lastDay = [lastLift.items[0]?.date, lastRun.items[0]?.day]
     .filter((day): day is string => !!day && day < filters.from)
@@ -171,7 +175,8 @@ export default function TrainingHistory() {
   // A source that filled its read may hold more of the period.
   const more =
     position.count < sessions.length ||
-    sources.some((source) => source.items.length >= position.count);
+    (!searching &&
+      sources.some((source) => source.items.length >= position.count));
   const groups = new Map<string, HistorySession[]>();
   for (const session of visible) {
     const month = session.day.slice(0, 7);
@@ -348,7 +353,7 @@ export default function TrainingHistory() {
               ? "Loading sessions…"
               : failed && sessions.length === 0
                 ? "History unavailable"
-                : `${sessions.length} ${noun}${sessions.length === 1 ? "" : "s"}${complete && !more ? "" : " shown"}`}
+                : `${visible.length} ${noun}${visible.length === 1 ? "" : "s"}${complete && !more ? "" : " shown"}`}
           </p>
           <span className="text-xs text-muted-foreground">Newest first</span>
         </div>

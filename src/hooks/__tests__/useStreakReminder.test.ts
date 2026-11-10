@@ -86,12 +86,13 @@ describe("firstWeekNudgeAction", () => {
     expect(firstWeekNudgeAction(fwBase)).toBe("schedule");
   });
 
-  it("never schedules while loading / unconsented / disabled", () => {
+  it("never schedules while loading or unconsented, and cancels when switched off", () => {
     expect(firstWeekNudgeAction({ ...fwBase, loading: true })).toBe("none");
     expect(firstWeekNudgeAction({ ...fwBase, primingShown: false })).toBe(
       "none"
     );
-    expect(firstWeekNudgeAction({ ...fwBase, enabled: false })).toBe("none");
+    // Off cancels whatever was armed, though its marker never saved.
+    expect(firstWeekNudgeAction({ ...fwBase, enabled: false })).toBe("cancel");
   });
 
   it("only fires in the streak-1 window — at ≥ 2 the daily reminder owns the surface", () => {

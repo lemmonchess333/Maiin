@@ -48,7 +48,7 @@ export const SETUP = {
   sex: "Sex for calorie calculation",
   age: "Age range",
   name: "Your public display name",
-  start: "Go to Today",
+  start: "Start my plan",
 } as const;
 
 /** The answers on setup's screens that the journeys give, by question.
