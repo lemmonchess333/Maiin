@@ -447,6 +447,10 @@ export interface UserProfileSocial {
    *  timestamp): absent until it does, and then People stops offering a
    *  code field. Server-written by redeemInvite, never by the client. */
   invitedAt?: unknown;
+  /** Whose invite this account joined from (their uid), stamped with
+   *  `invitedAt`: a block of this account by that person renews their code
+   *  (Soc15). Server-written by redeemInvite. */
+  invitedBy?: string;
   /** LEGACY (share composer superseded these, #1416): the saved share
    *  default decides auto-posting now — `shareDefaults` above. Nothing has
    *  READ these three since; the Settings switches that wrote
