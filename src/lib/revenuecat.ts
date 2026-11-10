@@ -127,6 +127,16 @@ export async function rcLogOut(): Promise<void> {
  *  docs/iap/revenuecat-setup.md Part B3 (lowercase `pro`). */
 const PRO_ENTITLEMENT_ID = "pro";
 
+/** Why a purchase the store has not refused is not Pro yet. Neither is a
+ *  failure, and neither is helped by buying again. */
+export type PurchasePending =
+  /** The store is holding the payment for someone's yes: Ask to Buy, a
+   *  bank's check. Nothing has been bought until it is given. */
+  | "approval"
+  /** The store took the purchase, and RevenueCat's answer carried no Pro:
+   *  its servers are behind, or the product is not on the entitlement. */
+  | "entitlement";
+
 export interface RcPurchaseOutcome {
   success: boolean;
   /** True when the `pro` entitlement is active on the returned CustomerInfo —
@@ -134,6 +144,9 @@ export interface RcPurchaseOutcome {
   isProActive: boolean;
   /** True when the user dismissed Apple's purchase sheet — not an error. */
   userCancelled?: boolean;
+  /** Set when the store has the purchase and Pro is not active: `success`
+   *  is false and `error` is unset. */
+  pending?: PurchasePending;
   /** The price of the product bought, as Apple's sheet showed it. The
    *  server keeps it for the trial reminder's email, since RevenueCat holds
    *  no renewal price for a trial. */
@@ -156,6 +169,19 @@ function isUserCancelled(err: unknown): boolean {
     if (typeof e.message === "string" && /cancel/i.test(e.message)) return true;
   }
   return false;
+}
+
+/** The SDK's PAYMENT_PENDING_ERROR, which the plugin hands over as the
+ *  rejection's `code` (`revenuecatPurchase.test.ts` holds it to the SDK's
+ *  own list). */
+const PAYMENT_PENDING_CODE = "20";
+
+function isPaymentPending(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    (err as { code?: unknown }).code === PAYMENT_PENDING_CODE
+  );
 }
 
 function hasProEntitlement(customerInfo: {
@@ -211,19 +237,26 @@ export async function rcPurchase(
       Purchases.purchasePackage({ aPackage: pkg })
     );
     const isProActive = hasProEntitlement(result.customerInfo);
-    if (!isProActive) {
-      logger.error("[RevenueCat] purchase completed without pro entitlement");
-    }
-    if (!isProActive) return { success: false, isProActive };
     const { priceString, price, currencyCode } = pkg.product;
-    return {
-      success: true,
-      isProActive,
-      price: { priceString, price, currencyCode },
-    };
+    const shown = { priceString, price, currencyCode };
+    if (!isProActive) {
+      // The sheet finished, so the store has the purchase. Calling it a
+      // failure asks the person to pay for something they already bought.
+      logger.error("[RevenueCat] purchase completed without pro entitlement");
+      return {
+        success: false,
+        isProActive,
+        pending: "entitlement",
+        price: shown,
+      };
+    }
+    return { success: true, isProActive, price: shown };
   } catch (err) {
     if (isUserCancelled(err)) {
       return { success: false, isProActive: false, userCancelled: true };
+    }
+    if (isPaymentPending(err)) {
+      return { success: false, isProActive: false, pending: "approval" };
     }
     logger.error("[RevenueCat] purchase failed", err);
     return {

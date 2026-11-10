@@ -151,6 +151,32 @@ describe("useBlockedUsers", () => {
     expect(result.current.blocked.has("blocked-1")).toBe(true);
   });
 
+  it("reads the block list once for every consumer that mounts before it settles", async () => {
+    currentAuthUser = { uid: "test-one-read" };
+    let resolveFetch: (ids: string[]) => void = () => {};
+    mockGetBlockedUsers.mockImplementation(
+      () => new Promise<string[]>((res) => (resolveFetch = res))
+    );
+
+    // A table of rows: each one a consumer, all mounted before the read
+    // comes back.
+    const rows = [1, 2, 3, 4].map(() => renderHook(() => useBlockedUsers()));
+    expect(mockGetBlockedUsers).toHaveBeenCalledTimes(1);
+    act(() => latest("test-one-read").deliver([]));
+
+    await act(async () => {
+      resolveFetch(["blocked-1"]);
+      await Promise.resolve();
+    });
+    for (const row of rows) {
+      expect(row.result.current.ready).toBe(true);
+      expect(row.result.current.blocked.has("blocked-1")).toBe(true);
+    }
+    // Settled: a later consumer reads nothing.
+    renderHook(() => useBlockedUsers());
+    expect(mockGetBlockedUsers).toHaveBeenCalledTimes(1);
+  });
+
   it("becomes ready (fail-open) even if the block-list fetch rejects", async () => {
     currentAuthUser = { uid: "test-ready-reject" };
     let rejectFetch: (e: Error) => void = () => {};

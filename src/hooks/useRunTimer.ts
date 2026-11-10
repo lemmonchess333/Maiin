@@ -7,22 +7,34 @@ export function useRunTimer() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef(0);
   const accumulatedRef = useRef(0);
+  /* `isRunning`, readable inside the stable callbacks below. The timer has
+     two states and each of `pause` and `resume` is legal from one of them:
+     a pause while paused would bank the time since the last start a second
+     time, and a resume while running would drop the time not yet banked.
+     Both are refused here, so no caller has to check first. */
+  const runningRef = useRef(false);
 
   const start = useCallback(() => {
     startTimeRef.current = Date.now();
+    runningRef.current = true;
     setIsRunning(true);
   }, []);
   const pause = useCallback(() => {
+    if (!runningRef.current) return;
     accumulatedRef.current += (Date.now() - startTimeRef.current) / 1000;
+    runningRef.current = false;
     setIsRunning(false);
   }, []);
   const resume = useCallback(() => {
+    if (runningRef.current) return;
     startTimeRef.current = Date.now();
+    runningRef.current = true;
     setIsRunning(true);
   }, []);
   const reset = useCallback(() => {
     accumulatedRef.current = 0;
     startTimeRef.current = 0;
+    runningRef.current = false;
     setElapsed(0);
     setIsRunning(false);
   }, []);
@@ -49,6 +61,7 @@ export function useRunTimer() {
     (args: { accumulatedSeconds: number; isRunning: boolean }) => {
       accumulatedRef.current = args.accumulatedSeconds;
       startTimeRef.current = Date.now();
+      runningRef.current = args.isRunning;
       setElapsed(Math.floor(args.accumulatedSeconds));
       setIsRunning(args.isRunning);
     },

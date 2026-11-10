@@ -158,6 +158,7 @@ export async function getDocFromCache(ref: DocRef) {
 }
 
 export async function getCountFromServer(ref: CollectionRef) {
+  firestoreFake.failIfArmed("getCount", ref.path);
   const snap = firestoreFake.querySnap(ref);
   return { data: () => ({ count: snap.size }) };
 }

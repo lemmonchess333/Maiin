@@ -167,6 +167,8 @@ import {
   pendingReads,
   releaseRead,
   rejectRead,
+  resumeReads,
+  seedCache,
   failNextFirestore,
   unfiredFailures,
 } from "@/test/firestoreHarness";
@@ -185,9 +187,13 @@ function Probe() {
       data-u={user?.uid ?? "null"}
       data-p={profile?.uid ?? "null"}
       data-loading={String(loading)}
+      data-load={auth.profileLoad}
       data-watch-failed={String(!!auth.watchAccountCleanup)}
     >
       <button onClick={() => auth.watchAccountCleanup?.retry()}>retry</button>
+      <button onClick={() => void auth.refreshProfile().catch(() => {})}>
+        read profile again
+      </button>
     </div>
   );
 }
@@ -197,6 +203,7 @@ const state = () => {
     u: el.getAttribute("data-u"),
     p: el.getAttribute("data-p"),
     loading: el.getAttribute("data-loading"),
+    load: el.getAttribute("data-load"),
     watchFailed: el.getAttribute("data-watch-failed"),
   };
 };
@@ -417,6 +424,119 @@ describe("AuthProvider — account switch isolation", () => {
     await emit("A");
     expect(state().p).toBe("A");
     expect(state().loading).toBe("false");
+  });
+});
+
+/* `profile === null` is true of an account with no profile and of one whose
+   profile could not be read. Only the first belongs in setup, where
+   finishing replaces the programme: `profileLoad` tells them apart. The
+   server read is held and then rejected, since an armed `getDoc` failure
+   would be spent on the cache read that comes first. */
+describe("AuthProvider — a profile that cannot be read", () => {
+  it("a first read that fails with nothing cached is failed, not missing", async () => {
+    deferReads();
+    await emit("A");
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A"]));
+    expect(state().load).toBe("loading");
+
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    await waitFor(() => expect(state().loading).toBe("false"));
+    expect(state().u).toBe("A");
+    expect(state().p).toBe("null");
+    expect(state().load).toBe("failed");
+  });
+
+  it("an account with no profile yet is missing, and goes to setup", async () => {
+    await emit("N");
+    await waitFor(() => expect(state().loading).toBe("false"));
+    expect(state().u).toBe("N");
+    expect(state().p).toBe("null");
+    expect(state().load).toBe("missing");
+  });
+
+  it("a failed read keeps the profile this device had cached", async () => {
+    seedCache({ "users/A": { email: "A@x.z", onboardingComplete: true } });
+    deferReads();
+    await emit("A");
+    // Painted from the cache while the server read is still out.
+    await waitFor(() => expect(state().p).toBe("A"));
+    expect(pendingReads()).toEqual(["users/A"]);
+
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    expect(state().p).toBe("A");
+    expect(state().load).toBe("ready");
+  });
+
+  it("a read that fails on a token refresh keeps the profile already shown", async () => {
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+
+    // The same account comes back through the listener, as a token refresh
+    // does, and this time the server does not answer.
+    deferReads();
+    await emit("A");
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A"]));
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    expect(state().p).toBe("A");
+    expect(state().load).toBe("ready");
+    expect(state().loading).toBe("false");
+  });
+
+  it("reading again after a failure opens the account", async () => {
+    deferReads();
+    await emit("A");
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A"]));
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    await waitFor(() => expect(state().load).toBe("failed"));
+
+    resumeReads();
+    await act(async () => {
+      screen.getByText("read profile again").click();
+    });
+    await waitFor(() => expect(state().p).toBe("A"));
+    expect(state().load).toBe("ready");
+  });
+
+  it("reading again and failing again stays failed", async () => {
+    deferReads();
+    await emit("A");
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A"]));
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    await waitFor(() => expect(state().load).toBe("failed"));
+
+    resumeReads();
+    failNextFirestore("getDoc", { path: "users/A", code: "unavailable" });
+    await act(async () => {
+      screen.getByText("read profile again").click();
+    });
+    expect(unfiredFailures()).toEqual([]);
+    expect(state().p).toBe("null");
+    expect(state().load).toBe("failed");
+  });
+
+  it("another account signing in starts clean of the last one's failure", async () => {
+    deferReads();
+    await emit("A");
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A"]));
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    await waitFor(() => expect(state().load).toBe("failed"));
+
+    resumeReads();
+    await emit("B");
+    await waitFor(() => expect(state().p).toBe("B"));
+    expect(state().load).toBe("ready");
   });
 });
 

@@ -3,7 +3,11 @@
  * Finish asks about a swap (Lift4 (11)), through the real session screen.
  * What the plan does with the answer is `sessionSwapCompletion.test.ts`'s.
  */
-import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
+import {
+  readsAt,
+  resetFirestore,
+  seedFirestore,
+} from "@/test/firestoreHarness";
 vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
 vi.mock("@/components/workout/SessionShareRow", () => ({
   default: () => null,
@@ -362,6 +366,40 @@ describe("Swap for today", () => {
       expect(screen.getByLabelText("Set 2 reps")).toHaveValue(8);
     }
   );
+
+  it("reads last time's sessions once, and not again for the swap", async () => {
+    h.user = { uid: "read-once" };
+    seedFirestore({
+      "users/read-once/workouts/last": {
+        completionId: "last",
+        date: "2026-09-01",
+        createdAt: { seconds: 1, nanoseconds: 0 },
+        exercises: [
+          {
+            exerciseId: "bench-press",
+            exerciseName: "Bench Press",
+            sets: [
+              { weightKg: 40, reps: 8 },
+              { weightKg: 35, reps: 8 },
+            ],
+          },
+        ],
+      },
+    });
+    openSession();
+    await vi.waitFor(() =>
+      expect(screen.getByLabelText("Set 2 weight")).toHaveValue(35)
+    );
+    const before = readsAt("users/read-once/workouts").length;
+    expect(before).toBeGreaterThan(0);
+
+    await swapBench();
+    await menu("Dumbbell Bench Press");
+    await choose(/^Back to Bench Press/);
+    // Back on the planned lift, its rows still start from last time.
+    expect(screen.getByLabelText("Set 2 weight")).toHaveValue(35);
+    expect(readsAt("users/read-once/workouts")).toHaveLength(before);
+  });
 
   it("is offered only before a set of the exercise is done", async () => {
     openSession();

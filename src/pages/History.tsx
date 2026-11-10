@@ -573,7 +573,13 @@ export default function History() {
     enabled: filter === "analytics" && view === "performance",
   });
   const uid = useUid();
-  const { meals, loading: mealsLoading } = useMeals();
+  const {
+    meals,
+    deletedMeals,
+    hasMore: mealsPastWindow,
+    loading: mealsLoading,
+    error: mealsError,
+  } = useMeals();
   /* The nutrition section reads its OWN range-scoped query rather than
      slicing the 400-doc `useMeals` window, which silently truncated 3M / 6M
      / 1Y for anyone logging more than a couple of meals a day. `* 2` because
@@ -584,7 +590,15 @@ export default function History() {
     rangeDays * 2
   );
   const lifetimeRuns = useLifetimeRunStats();
-  const lifetimeMeals = useLifetimeMealStats();
+  // The window above is every meal for an account that fits in it, so the
+  // lifetime figures read nothing more; past it, one read a session.
+  const lifetimeMeals = useLifetimeMealStats({
+    meals,
+    deletedMeals,
+    hasMore: mealsPastWindow,
+    loading: mealsLoading,
+    error: mealsError,
+  });
   const { profile } = useAuth();
   /* The range the pill names, read once for every figure below: its
      window, the range before it, and the days an account younger than
@@ -710,11 +724,12 @@ export default function History() {
 
   // Lifetime totals — all-time aggregates shown only on the "All" tab,
   // pinned at the very bottom as a quiet "you've come this far" footer.
-  /* Runs and meals each come from a one-shot whole-collection read, so
-     records older than any window still count toward a total that claims to
-     be lifetime. `useMeals` cannot serve this: it subscribes to the newest
-     400 meal docs, so both meal figures would saturate there — silently,
-     since a capped count looks exactly like a real one.
+  /* Runs come from a one-shot whole-collection read, so records older than
+     any window still count toward a total that claims to be lifetime. Meals
+     do too once they outgrow the `useMeals` window, which stops at the
+     newest 400: counted from the window alone, both meal figures would
+     saturate there, silently, since a capped count looks exactly like a
+     real one. `useLifetimeMealStats` knows when the window is everything.
 
      Workouts still read `useWorkouts`. Whether that hook is bounded the
      same way is a separate question on a separate surface — not assumed

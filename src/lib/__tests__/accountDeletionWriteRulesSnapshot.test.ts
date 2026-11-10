@@ -194,6 +194,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // setBoardSharing callable (actor-locked) and the session triggers
   // (system-writer guard) write it, and the executor deletes it.
   "match /friendsBoard/{uid}",
+  // How many follow an account and how many it follows. Read-only for
+  // clients; the two follow-edge triggers write it, reading the deletion
+  // state in their transaction, and the executor deletes it.
+  "match /followCounts/{uid}",
   // Soc15 call 3: weekly leagues, server-written throughout. Members read
   // their membership, their group and its standings; the turn's markers
   // are server only, and the figure names no one. setLeagueSharing is

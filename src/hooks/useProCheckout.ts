@@ -22,7 +22,11 @@ import { useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "@/lib/toast";
 import { useAuth } from "@/lib/auth";
-import { purchase, type CheckoutEntryPoint } from "@/lib/purchaseProvider";
+import {
+  purchase,
+  type CheckoutEntryPoint,
+  type PurchasePending,
+} from "@/lib/purchaseProvider";
 import { isNativeIOS } from "@/lib/purchaseProvider";
 import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import type { PlanId } from "@/lib/proPlans";
@@ -66,9 +70,22 @@ function entryPointFromPath(pathname: string): CheckoutEntryPoint {
 
 const SIGN_IN_MESSAGE = "Sign in to start Pro.";
 
+/** What a paywall says while the store has the purchase and Pro is not on.
+ *  Each names what the person is waiting for, and neither asks them to buy
+ *  again. */
+const PENDING_MESSAGE: Record<PurchasePending, string> = {
+  approval:
+    "Your purchase is waiting for approval. Pro switches on once it's approved.",
+  entitlement:
+    "The App Store has your purchase. Pro switches on once it's confirmed. If it hasn't in a few minutes, tap Restore.",
+};
+
 export interface UseProCheckoutResult {
   loading: boolean;
   error: string | null;
+  /** Set when the store has the purchase and Pro is not on yet: a sentence
+   *  to show calmly, never as an error. */
+  notice: string | null;
   startCheckout: (
     plan: PlanId,
     options?: StartCheckoutOptions
@@ -84,6 +101,7 @@ export function useProCheckout(): UseProCheckoutResult {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const startCheckout = useCallback(
     async (plan: PlanId, options: StartCheckoutOptions = {}) => {
@@ -103,6 +121,7 @@ export function useProCheckout(): UseProCheckoutResult {
       }
 
       setError(null);
+      setNotice(null);
       setLoading(true);
 
       // Capture plan at submit so a mid-flight selection change
@@ -136,6 +155,17 @@ export function useProCheckout(): UseProCheckoutResult {
             featureKey: options.featureKey,
             selectedPlan: submittedPlan,
             platform,
+          });
+        } else if (!result.success && result.pending) {
+          // The store has not refused. The subscription listener switches
+          // Pro on when the server hears; until then say what is awaited.
+          setNotice(PENDING_MESSAGE[result.pending]);
+          track("checkout_pending", {
+            source: options.source ?? "unknown",
+            featureKey: options.featureKey,
+            selectedPlan: submittedPlan,
+            platform,
+            pending: result.pending,
           });
         } else if (!result.success) {
           const message = result.error || "Couldn't start checkout. Try again.";
@@ -177,6 +207,7 @@ export function useProCheckout(): UseProCheckoutResult {
   return {
     loading,
     error,
+    notice,
     startCheckout,
     requiresSignIn: !user,
   };
