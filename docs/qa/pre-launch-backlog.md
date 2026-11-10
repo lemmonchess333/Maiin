@@ -1314,10 +1314,37 @@ need Apple, the Cloud console or a phone.
       food camera, the run screen (setup, countdown and the live map's
       controls), the run summary and the Privacy Policy, Terms and
       Support pages keep their first row clear of the clock and the
-      Dynamic Island, with no doubled gap above it. The shell sets
-      `ios.contentInset: "automatic"`, so whether its web view reports a
-      top inset is unverified; pages and these screens pad by the same
-      `--safe-top`, so a gap on one is a gap on all.
+      Dynamic Island, with no doubled gap above it. Pages and these
+      screens pad by the same `--safe-top`, so a gap on one is a gap on
+      all. A recording of the TestFlight build on 10 Nov 2026 showed the
+      doubled gap on every page: the shell set
+      `ios.contentInset: "automatic"` while the page padded as well. The
+      shell sets `"never"` now; check this row on the first build that has
+      it, with the section below.
+
+## One inset for the notch and the home bar (2026-11-10)
+
+Affects: `capacitor.config.ts` (`ios.contentInset`, pinned by
+`src/lib/__tests__/iosContentInset.test.ts`) and so the top and bottom of
+every screen on a phone. Needs a TestFlight build made after the change;
+the web build never showed any of it. Measured on an iPhone with a notch,
+where the bars were 47 pt and 34 pt.
+
+- [ ] **No black bar above a page.** Open each tab and stay at its top:
+      the clock sits on the page's own background, and the title is in
+      the same place before a scroll and after one.
+- [ ] **No black bar under the tab bar.** Scroll each tab to its end and
+      keep pulling: the tab bar stays where it is.
+- [ ] **A screen that does not scroll fills the phone.** The run's setup,
+      "Acquiring GPS", its Customise page and the Weekly Review have no
+      bar above or below.
+- [ ] **The first row still clears the clock** on the screens the row
+      above lists, and a sheet's handle is never under it.
+- [ ] **The keyboard.** In Food's search and in a set's weight field, the
+      field stays in view above the keyboard.
+- [ ] **The launch mark holds still** as the web layer takes over from
+      the launch image ("The handover from the launch image" names this
+      setting as a cause of a jump).
 
 ## Privacy and consent for App Review (2026-10-04)
 
