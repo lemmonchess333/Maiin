@@ -311,6 +311,23 @@ describe("the full-screen viewer", () => {
     expect(zoomed()).toBe("false");
   });
 
+  it("does not count the last finger of a pinch lifting as a tap", async () => {
+    await open(0);
+    const stage = shown().parentElement!.parentElement!.parentElement!;
+    const zoomed = () => stage.getAttribute("data-zoomed");
+    fireEvent.pointerDown(stage, { pointerId: 1, clientX: 180, clientY: 300 });
+    fireEvent.pointerDown(stage, { pointerId: 2, clientX: 220, clientY: 300 });
+    fireEvent.pointerMove(stage, { pointerId: 2, clientX: 320, clientY: 300 });
+    fireEvent.pointerUp(stage, { pointerId: 2, clientX: 320, clientY: 300 });
+    // The finger left down lifts where it was: the pinch ending.
+    fireEvent.pointerUp(stage, { pointerId: 1, clientX: 180, clientY: 300 });
+    expect(zoomed()).toBe("true");
+    // One tap on the same spot straight after is a first tap, not a second.
+    fireEvent.pointerDown(stage, { pointerId: 3, clientX: 180, clientY: 300 });
+    fireEvent.pointerUp(stage, { pointerId: 3, clientX: 180, clientY: 300 });
+    expect(zoomed()).toBe("true");
+  });
+
   it("keeps its touches from the page that opened it", async () => {
     const onTouchStart = vi.fn();
     const onTouchEnd = vi.fn();

@@ -96,6 +96,31 @@ describe("HoldToFinishButton", () => {
     expect(onRequestConfirm).toHaveBeenCalledTimes(1);
   });
 
+  it("a hold let go early on a phone (lift, then leave, then click) only resets", () => {
+    // On touch the browser fires pointerleave after pointerup; the second
+    // cancel used to clear the "let go early" mark before the click came.
+    const { onFinish, onRequestConfirm, btn } = setup();
+    fireEvent.pointerDown(btn);
+    now = 900;
+    fireEvent.pointerUp(btn);
+    fireEvent.pointerLeave(btn);
+    flush();
+    fireEvent.click(btn);
+    expect(onRequestConfirm).not.toHaveBeenCalled();
+    expect(onFinish).not.toHaveBeenCalled();
+  });
+
+  it("a hold slid off with no click does not swallow a later keyboard press", () => {
+    const { onRequestConfirm, btn } = setup();
+    fireEvent.pointerDown(btn);
+    now = 400;
+    fireEvent.pointerLeave(btn); // slid off: no click follows
+    flush();
+    now = 5000; // a while later, Enter or a VoiceOver double-tap
+    fireEvent.click(btn);
+    expect(onRequestConfirm).toHaveBeenCalledTimes(1);
+  });
+
   it("keyboard/AT activation (click with no hold) opens the confirm dialog", () => {
     const { onFinish, onRequestConfirm, btn } = setup();
     fireEvent.click(btn);

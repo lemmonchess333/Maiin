@@ -413,6 +413,29 @@ describe("FoodSuggestionsDropdown quick-add — long-press → remove (ported fr
     expect(onAdd).not.toHaveBeenCalled();
   });
 
+  it("swallows the click after a long hold held on past the window, counted from the lift", () => {
+    const onRemove = vi.fn();
+    const onAdd = vi.fn();
+    renderQuickAdd({
+      items: [makeItem({ favouriteId: "oats" })],
+      onRemove,
+      onAdd,
+    });
+    const row = screen.getByRole("button", { name: /oats/i });
+    fireEvent.pointerDown(row, { clientX: 100, clientY: 100 });
+    vi.advanceTimersByTime(500);
+    expect(onRemove).toHaveBeenCalledTimes(1);
+    // The finger stays down well past the window, then lifts.
+    vi.advanceTimersByTime(800);
+    fireEvent.pointerUp(window);
+    fireEvent.click(row);
+    expect(onAdd).not.toHaveBeenCalled();
+    // A tap once the window has passed still logs.
+    vi.advanceTimersByTime(400);
+    fireEvent.click(row);
+    expect(onAdd).toHaveBeenCalledTimes(1);
+  });
+
   it("calls onAdd on a normal tap (no long-press)", () => {
     const onAdd = vi.fn();
     renderQuickAdd({ items: [makeItem({ favouriteId: "oats" })], onAdd });

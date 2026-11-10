@@ -137,6 +137,19 @@ describe("the pull, drawn", () => {
     expect(screen.queryByRole("status")).toBeNull();
   });
 
+  it("goes back up, and does not refresh, when the system cancels the touch", () => {
+    // A call coming in, or Notification Center taking the gesture: iOS
+    // sends touchcancel and never touchend.
+    const onRefresh = vi.fn(async () => {});
+    render(<Page onRefresh={onRefresh} />);
+    start(100);
+    move(300);
+    expect(pull.get()).toBeGreaterThan(0);
+    fireEvent.touchCancel(page(), { changedTouches: [{ clientY: 300 }] });
+    expect(pull.get()).toBe(0);
+    expect(onRefresh).not.toHaveBeenCalled();
+  });
+
   it("holds with Refreshing while the refresh runs, then goes", async () => {
     let finish!: () => void;
     const onRefresh = vi.fn(

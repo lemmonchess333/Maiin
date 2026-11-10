@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   type Ref,
   type PointerEvent as ReactPointerEvent,
@@ -28,7 +29,9 @@ const TOUCH_MOVE_CANCEL_PX = 10;
  *  finger-lift is swallowed. iOS Safari synthesises a click on
  *  touchend even when the long-press fired its own action, which
  *  without this guard would double-trigger (log meal AND open
- *  remove sheet). */
+ *  remove sheet). It counts from the lift, not from when the press
+ *  fired: a finger held on past 500 ms would otherwise lift after the
+ *  window closed and log the food it had just removed. */
 const GHOST_CLICK_SUPPRESS_MS = 400;
 
 /**
@@ -195,6 +198,22 @@ function FoodSuggestionsDropdown({
   const suppressNextClickRef = useRef<boolean>(false);
   const ghostClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressStartRef = useRef<{ x: number; y: number } | null>(null);
+  /** Stops listening for the lift of a press that has fired. The row it
+   *  started on is hidden the moment it fires, so its own pointerup never
+   *  comes; the lift is heard on the window instead. */
+  const stopWaitingForLiftRef = useRef<(() => void) | null>(null);
+
+  // Nothing fires, and nothing listens, once the dropdown has closed.
+  useEffect(
+    () => () => {
+      if (longPressTimerRef.current !== null)
+        clearTimeout(longPressTimerRef.current);
+      if (ghostClickTimerRef.current !== null)
+        clearTimeout(ghostClickTimerRef.current);
+      stopWaitingForLiftRef.current?.();
+    },
+    []
+  );
 
   const clearLongPressTimer = () => {
     if (longPressTimerRef.current !== null) {
@@ -214,6 +233,24 @@ function FoodSuggestionsDropdown({
     }, GHOST_CLICK_SUPPRESS_MS);
   };
 
+  /** Swallow the click now, and again for a while from the lift. */
+  const suppressUntilAfterLift = () => {
+    armGhostClickSuppress();
+    stopWaitingForLiftRef.current?.();
+    const onLift = () => {
+      stop();
+      armGhostClickSuppress();
+    };
+    const stop = () => {
+      window.removeEventListener("pointerup", onLift, true);
+      window.removeEventListener("pointercancel", onLift, true);
+      stopWaitingForLiftRef.current = null;
+    };
+    window.addEventListener("pointerup", onLift, true);
+    window.addEventListener("pointercancel", onLift, true);
+    stopWaitingForLiftRef.current = stop;
+  };
+
   const beginPress = (
     e: ReactPointerEvent<HTMLButtonElement>,
     item: QuickAddItem
@@ -224,7 +261,7 @@ function FoodSuggestionsDropdown({
     clearLongPressTimer();
     longPressTimerRef.current = setTimeout(() => {
       longPressTimerRef.current = null;
-      armGhostClickSuppress();
+      suppressUntilAfterLift();
       haptic("medium");
       quickAdd.onRemove!(item.favouriteId!, item.name);
     }, LONG_PRESS_MS);
