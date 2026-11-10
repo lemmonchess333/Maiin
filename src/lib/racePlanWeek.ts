@@ -11,8 +11,8 @@
  * no recovery running there is no week to count: the race-elapsed,
  * no-show and recovery-complete banners say what state the plan is in.
  *
- * A plan made Thursday to Sunday starts its first week on the Monday after,
- * and the days before it are a lead-in (`RunPlan.leadInWeek`), none of the
+ * A plan made on a Thursday or later in the week has its first week from
+ * the Monday after, and the days before it are a lead-in (`RunPlan.leadInWeek`), none of the
  * race's weeks: the plan's counter already reads its first week then, so
  * the lead-in and the week after it both said "Week 1". There is no week
  * to count until the first one starts, as Train's header says ("Starts").
