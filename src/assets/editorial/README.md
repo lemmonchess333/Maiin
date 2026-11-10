@@ -11,6 +11,24 @@ imagery (route scenes, muscle figures) by design. See `GLOSSARY.md` →
 "Editorial imagery" and `src/lib/editorialImages.ts` for the resolution
 logic.
 
+### Provenance found for the unrecorded covers — 2026-11-10
+
+Twelve covers shipped with no source record (first committed in #1631 and
+#1690, July 2026). Ten are now traced to exact free Unsplash photographs,
+each confirmed by aligning the 2400 px download to the shipped file and by
+eye: `space-trail-running` (Lucas Canino), `space-travel-racecations`
+(Andrea Leopardi), `space-london-marathon` (Charles Postiaux),
+`space-great-north-run` (Jack Foster), `space-brighton-marathon` (Rhys
+Kentish), `space-edinburgh-marathon` (Mike Newbry), `space-cardiff-half`
+(Nick Fewings), `space-great-birmingham-run` (Sarah Doffman),
+`space-leeds-10k` (Paul Rigel) and `space-royal-parks-half` (V2F). Records,
+with location evidence, are in
+[`sources-2026-11-10-provenance.json`](./sources-2026-11-10-provenance.json).
+
+Still open, for the owner: `space-the-big-half` and `space-london-10000`
+could not be traced, so their licence is unknown; and nothing in
+`space-royal-parks-half` or its caption shows that it is Hyde Park.
+
 ### Cover audit — 2026-11-10
 
 The owner, on Social: the weekly challenge's photo is poor quality, so find a
@@ -38,11 +56,14 @@ covers below treat theirs. Sources, crops and
 hashes are in
 [`sources-2026-11-10-cover-audit.json`](./sources-2026-11-10-cover-audit.json).
 
-Left for later: seven covers are over 120 KB (`space-royal-parks-half` at
-250 KB, `space-trail-running`, `space-great-north-run`, `space-the-big-half`,
-`space-london-marathon`, `space-london-10000`, `space-edinburgh-marathon`) and
-want re-encoding from their sources, and 14 covers have no source record whose
-hash matches the file.
+Seven covers are over 120 KB and are kept as they are: `space-royal-parks-half`
+(250 KB), `space-trail-running`, `space-great-north-run`, `space-the-big-half`,
+`space-london-marathon`, `space-london-10000` and `space-edinburgh-marathon`.
+They are dense crowd and city scenes: at 1200 px they reach 120 KB only at
+WebP quality 55 or lower (`space-royal-parks-half` is still 212 KB there),
+which brings back the blotches this audit replaced covers for, and a cover
+loads only with its card. The covers that had no source record are traced in
+the section above.
 
 ### Real Social covers — 2026-10-31
 
