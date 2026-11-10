@@ -519,13 +519,19 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
   // failure once did, left everything queued behind it unsynced, on every
   // flush, for good.
   const refused = new Set<string>();
+  // Documents whose best-effort write failed in a way a later flush can
+  // land. A later write to the same document waits, as behind a refusal:
+  // the merges here carry whole figures (a day's log, a session's notes),
+  // so one landing first was overwritten by the older one on the next
+  // flush. Other documents go ahead.
+  const waiting = new Set<string>();
   const { auth } = await import("@/lib/firebase");
 
   for (const item of queue) {
     // Not our user's item — leave it for the next time that user signs in.
     if (item.uid !== uid) continue;
     const target = item.docId ? `${item.collectionPath}/${item.docId}` : null;
-    if (target && refused.has(target)) continue;
+    if (target && (refused.has(target) || waiting.has(target))) continue;
     try {
       // A queued flush can start after sign-out, or resume after another
       // account signs in while an earlier write awaits acknowledgement.
@@ -614,6 +620,8 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
       } else if (forGood) {
         // A best-effort write no flush can land, retried on every one.
         dropped.add(item.id);
+      } else if (target) {
+        waiting.add(target);
       }
     }
   }

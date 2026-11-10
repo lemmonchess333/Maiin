@@ -514,6 +514,27 @@ describe("offlineQueue", () => {
       expect(stored.map((q: { docId: string }) => q.docId)).toEqual(["d2"]);
     });
 
+    it("holds a later change to the same document behind one that may land later", async () => {
+      // Two merges of one day's log, each with the whole figure. The first
+      // times out; the second must not land ahead of it, or the next flush
+      // replays the older figure over the newer one.
+      queueWrite(UID_A, `users/${UID_A}/logs`, { meals: 2 }, "d1", true);
+      queueWrite(UID_A, `users/${UID_A}/logs`, { meals: 3 }, "d1", true);
+      queueWrite(UID_A, `users/${UID_A}/logs`, { meals: 1 }, "d2", true);
+      failNextFirestore("setDoc", {
+        path: `users/${UID_A}/logs/d1`,
+        code: "unavailable",
+      });
+
+      // Another document still goes ahead.
+      expect(await flushQueue(db, UID_A)).toBe(1);
+      expect(readDoc(`users/${UID_A}/logs/d2`)).toMatchObject({ meals: 1 });
+
+      expect(await flushQueue(db, UID_A)).toBe(2);
+      expect(readDoc(`users/${UID_A}/logs/d1`)).toMatchObject({ meals: 3 });
+      expect(getQueueLength(UID_A)).toBe(0);
+    });
+
     it("can be discarded, with what waits behind it, and only by its account", async () => {
       queueDurableWrite(UID_A, meals, "refused", { foodName: "Oats" });
       queueDurableWrite(UID_A, meals, "refused", { deletedAt: 1 }, true);
