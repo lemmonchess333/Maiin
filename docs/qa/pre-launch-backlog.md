@@ -124,6 +124,51 @@ the builds themselves.
       change, and the widget links `LiveActivitiesKit` through Swift
       Package Manager.
 
+## Before Watch runs and Health export reach anyone (review, 2026-11-10)
+
+A review of #3002 and #3003 found four gaps in the connected-training path.
+It is closed to everyone (`CONNECTED_TRAINING_RELEASED`), so no one meets
+them yet; each needs native code that only a Mac, an iPhone and a Watch can
+confirm. Fix them before the first pilot build, and tick a row when a
+paired-device run proves it.
+
+- [ ] **A failed Health save can block that run's export for good.** The
+      export reserves its server receipt (`attempted`) before native checks
+      write access (`healthWorkoutExport.ts` around `reserveHealthWorkoutExport`,
+      `HealthWorkoutStore.swift`'s `permissionRequired`). With write access
+      off, or the app killed or the phone locked between the two, every
+      later try finds the workout "absent" with a receipt that isn't fresh
+      and throws: Settings shows a pending update forever. Fix: check
+      `getWorkoutWriteAuthorization()` before reserving, and let native
+      report an empty lookup with write access as verified absent, which
+      may retry an `attempted` receipt. Passing: turn write access off,
+      save a run, turn it on, Try again: the workout appears in Health.
+- [ ] **Deleting a run whose workout was removed in Health gets stuck.**
+      Native delete with write access and an empty lookup fails with
+      `permissionRequired` while its local map still names the run
+      (`HealthWorkoutStore.swift`, `delete`), so the run stays
+      `pending-delete` on every foreground. Fix: with write access and no
+      workout found, forget the run and report it deleted. Passing: export
+      a run, delete the workout in Health, delete the run in Tropos: no
+      pending update is left.
+- [ ] **After sign-out and sign-in, the Watch is off for runs until
+      Settings is opened.** Signing out clears the native session, which
+      sets the native switch off; only Settings → Apple Health
+      (`HealthSection.tsx`) turns it back on, while the Run page goes by
+      the account's choice alone (`Run.tsx`, `watchEligible`), so every
+      snapshot is refused natively. Fix: apply the account's choice to the
+      native switch where the account is bound, not only on that page.
+      Passing: sign out and in, start a run without opening Settings: the
+      Watch shows it.
+- [ ] **The Watch app may need the workout-processing background mode.**
+      `TroposWatch/Info.plist` has no `WKBackgroundModes`, and the live
+      heart rate comes from an `HKWorkoutSession` with an anchored query
+      (`WatchRunModel.swift`). Apple's workout-session guide asks for the
+      Workout Processing mode to keep the app running with the wrist down.
+      Passing: run with the wrist down for a minute: the phone's heart rate
+      keeps updating. If it stops, add `workout-processing` and check it in
+      `scripts/verify_ios_watch.py`.
+
 ## A lift's rest outside the app (Mob2 call 1, 2026-10-28)
 
 While a rest runs, the page's title counts it down ("1:23 rest", then
