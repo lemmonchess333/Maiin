@@ -10,6 +10,25 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## A purchase the store has, before Pro is on (2026-11-10)
+
+A purchase that Apple's sheet finished without RevenueCat granting Pro, and
+a payment Apple is holding for approval, no longer read "Purchase failed.
+Try again.": the paywall shows a note and no error (`rcPurchase`'s
+`pending`, `useProCheckout`'s `notice`). The unit tests feed the plugin's
+answers by hand; only the sandbox shows what the plugin really sends.
+
+- [ ] **Ask to Buy.** On a TestFlight build, signed in to a sandbox Apple
+      account that has Ask to Buy on (a child in a Family Sharing group),
+      start Pro. Passing: after Apple's "Ask permission" sheet the paywall
+      reads "Your purchase is waiting for approval. Pro switches on once
+      it's approved.", with no red error and no toast. Approve it from the
+      organiser's device: Pro switches on without another tap.
+- [ ] **The pending code.** In that run, Xcode's console shows the
+      rejection's code. Passing: it is "20". If it is anything else, the
+      paywall said "Purchase failed. Try again." above: change
+      `PAYMENT_PENDING_CODE` in `src/lib/revenuecat.ts` to match.
+
 ## Setup asks for the public name (2026-11-01)
 
 Setup no longer makes the public name from the email address: an email
