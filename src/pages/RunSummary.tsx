@@ -190,7 +190,7 @@ function RetryBanner({
           Couldn&apos;t save your run
         </p>
         <p className="mt-0.5 text-muted-foreground">
-          {error || "We couldn't save this run."}
+          {error || "Couldn't save this run."}
         </p>
       </div>
       <Button variant="sport" className="shrink-0" onClick={onRetry}>
@@ -1453,13 +1453,13 @@ export default function RunSummary() {
       logger.error("[RunSave] Failed:", error);
       // The privacy-zone and storage sentences are the app's own; an
       // SDK error's text is not copy.
-      const message = appErrorMessage(error, "Failed to save run");
+      const message = appErrorMessage(error, "Couldn't save this run");
       setSaveStatus("error");
       setSaveError(message);
       /* Toast still fires as supplementary feedback for users who
          scrolled away or have the app backgrounded; the inline retry
          banner above the action row is the durable affordance. */
-      toast.error("Failed to save run. Tap Retry below.");
+      toast.error("Couldn't save this run. Try again below.");
     } finally {
       savingRef.current = false;
     }
@@ -2156,7 +2156,7 @@ export default function RunSummary() {
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any notes about this run..."
+              placeholder="Any notes about this run…"
               aria-label="Run notes"
               rows={3}
               className="ds-input resize-none text-sm"
@@ -2392,7 +2392,7 @@ export default function RunSummary() {
       <ConfirmDialog
         open={showDiscardConfirm}
         title="Discard this run?"
-        description="This cannot be undone."
+        description="This can't be undone."
         confirmLabel="Discard"
         destructive
         onConfirm={() => {

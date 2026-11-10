@@ -116,7 +116,7 @@ export default function TrainingLoadCard({
         </h3>
         {rangeRow}
         <ErrorState
-          title="Could not load your training history"
+          title="Couldn't load your training history"
           description="Your training load is unavailable until your sessions can be read."
           retry={onRetry ? { onClick: onRetry } : undefined}
         />
@@ -146,7 +146,7 @@ export default function TrainingLoadCard({
           headline="Your training load curve builds here"
           sub={
             sessionDays === 0
-              ? "Every workout and run feeds one fitness/fatigue curve — log a few sessions and the trend appears."
+              ? "Every workout and run feeds one curve of fitness and fatigue. Log a few sessions and the trend appears."
               : `${sessionDays} of ${MIN_SESSION_DAYS} days with a session. The trend appears at ${MIN_SESSION_DAYS}.`
           }
         />

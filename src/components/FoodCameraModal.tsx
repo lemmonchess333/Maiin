@@ -579,7 +579,8 @@ export default function FoodCameraModal({
         };
       } catch (e: unknown) {
         logger.error(e);
-        if (!cancelled) setBarcodeHint("Scanner failed. Try again.");
+        if (!cancelled)
+          setBarcodeHint("Couldn't start the scanner. Try again.");
       }
     };
 
@@ -909,7 +910,7 @@ export default function FoodCameraModal({
           line sweeps top → bottom whatever the stage's size.
         - Copy rotates through honest stages and HOLDS on the last.
           It is aria-hidden; the status div carries one stable label
-          so screen readers hear "Analyzing food" once, not a feed.
+          so screen readers hear "Analysing food" once, not a feed.
         - Reduced motion: corners + photo + static-but-advancing
           copy. No laser. Content change is information, not motion.
         - Barcode lookups (and any wait with no captured frame) fall
@@ -933,7 +934,7 @@ export default function FoodCameraModal({
         aria-live="polite"
         data-testid="scan-live-status"
       >
-        {locked ? "Done" : loading ? "Analyzing food" : ""}
+        {locked ? "Done" : loading ? "Analysing food" : ""}
       </span>
       <span className="sr-only" role="alert" data-testid="scan-live-alert">
         {failureCopy ? `${failureCopy.title}. ${failureCopy.sub}` : ""}

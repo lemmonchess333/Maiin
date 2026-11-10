@@ -216,7 +216,7 @@ async function purchaseWithRevenueCat(plan: PlanId): Promise<PurchaseResult> {
   if (!outcome.success) {
     return {
       success: false,
-      error: outcome.error ?? "Purchase failed. Try again.",
+      error: outcome.error ?? "Couldn't complete the purchase. Try again.",
       detail: outcome.detail,
     };
   }
@@ -382,7 +382,7 @@ export async function restorePurchases(): Promise<PurchaseResult> {
   if (!outcome.success) {
     return {
       success: false,
-      error: outcome.error ?? "Failed to restore purchases.",
+      error: outcome.error ?? "Couldn't restore your purchases.",
       detail: outcome.detail,
     };
   }

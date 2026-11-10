@@ -237,7 +237,7 @@ describe("onboarding chapters and commit", () => {
     open();
     fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "We couldn’t save your plan"
+      "Couldn’t save your plan"
     );
     expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
     expect(loadOnboardingDraft("setup-test", 7)?.weightKg).toBe(81.5);

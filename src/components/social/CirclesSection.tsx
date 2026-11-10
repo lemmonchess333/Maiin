@@ -432,7 +432,7 @@ export default function CirclesSection({
       setTargetBusy(false);
       if (ok) {
         haptic("light");
-        toast.success("Circle wrapped. Nice work.");
+        toast.success("Circle wrapped.");
       } else {
         toast.error("Couldn't wrap the circle. Try again.");
       }

@@ -165,7 +165,7 @@ export default function NotificationsSection({
         (err as { code?: string; message?: string })?.code ??
         (err as { message?: string })?.message ??
         "error";
-      toast.error(`Test push failed (${code}).`);
+      toast.error(`Couldn't send the test push (${code}).`);
     }
   };
 
@@ -819,7 +819,7 @@ export function ReminderDiagnostics({
           // is broken.
           <span>
             {isNativePlatform()
-              ? "No reminder is currently scheduled."
+              ? "No reminder is scheduled."
               : "Reminders fire while this tab is open."}
           </span>
         )}

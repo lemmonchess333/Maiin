@@ -87,7 +87,7 @@ export default function ExerciseFormFrames({
   if (!complete)
     return (
       <p role="status" className="mt-4 text-muted-foreground">
-        This form guide is not ready yet.
+        This form guide isn't ready yet.
       </p>
     );
 
@@ -203,7 +203,7 @@ export default function ExerciseFormFrames({
               role="status"
               className="absolute inset-0 flex items-center justify-center text-small text-stage-muted"
             >
-              Frame could not load.
+              Couldn't load this frame.
             </p>
           )}
         </div>
@@ -275,7 +275,7 @@ export default function ExerciseFormFrames({
         <div className="mt-2 text-center">
           <p role="status" className="text-small text-muted-foreground">
             {failed !== index
-              ? "The next frame could not load. Playback is paused."
+              ? "Couldn't load the next frame. Playback is paused."
               : "You can still read the instructions below."}
           </p>
           <Button

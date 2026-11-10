@@ -205,7 +205,7 @@ export default function Login() {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
       // On a failed password sign-in, a Google/Apple-only account is the most
-      // confusing case: "Invalid email or password" implies a wrong password
+      // confusing case: "Wrong email or password" implies a wrong password
       // when really there's NO password. If the email is OAuth-only, point to
       // the right button instead. (Skipped on sign-up — nothing to look up.)
       if (!isSignUp && /invalid-credential|wrong-password/.test(message)) {
@@ -625,7 +625,7 @@ export default function Login() {
             aria-pressed={isSignUp}
             className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 text-lifting-strong font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
           >
-            {isSignUp ? "Sign In" : "Sign Up"}
+            {isSignUp ? "Sign In" : "Sign up"}
           </button>
         </p>
       </div>

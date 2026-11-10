@@ -162,7 +162,7 @@ export default function NotificationsSheet({
             icon={Bell}
             accent={THEME.warning}
             headline="Notifications unavailable"
-            sub="We couldn't load your notifications. Check your connection and try again."
+            sub="Couldn't load your notifications. Check your connection and try again."
             action={
               onRetry
                 ? { label: "Try again", onClick: onRetry, variant: "secondary" }

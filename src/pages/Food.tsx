@@ -1385,7 +1385,7 @@ export default function Food() {
         );
       } catch (err) {
         logger.error("[Food] meal edit failed", err);
-        toast.error("Could not save changes");
+        toast.error("Couldn't save your changes");
         // Keep the editor open and do not change servings or announce success
         // after any of the existing entries failed to update.
         return;
@@ -2385,7 +2385,7 @@ export default function Food() {
         <Suspense
           fallback={
             <div className="py-12 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
-              Loading scanner...
+              Loading scanner…
             </div>
           }
         >

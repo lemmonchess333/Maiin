@@ -246,7 +246,7 @@ test("a new account can start training before replaying the guide", async ({
   const isButton = await startsRun.evaluate((el) => el.tagName === "BUTTON");
   await (isButton ? startsRun : startsRun.getByRole("button").first()).click();
   await expect(firstRun).toHaveCount(0);
-  await expect(page.getByText("Acquiring GPS...")).toBeVisible({
+  await expect(page.getByText("Acquiring GPS…")).toBeVisible({
     timeout: 10_000,
   });
   await expect(startsRun).toHaveCount(0);

@@ -524,7 +524,7 @@ describe("the range track's fill/groove edge — WCAG 1.4.11", () => {
  *
  * One misattribution stays pinned: 7.26:1 was once published as the base's
  * ratio (calling it AAA). That figure belongs to `Run.tsx:142`'s
- * "Acquiring GPS..." label — `text-warning-strong/90` on the DARK page.
+ * "Acquiring GPS…" label — `text-warning-strong/90` on the DARK page.
  * The assertion computing it keeps either number from being quoted for the
  * other again.
  */

@@ -503,7 +503,7 @@ function ScheduleLayoutSheetBody({
                     variant="current"
                     label="Rebuilding programme"
                   />
-                  Rebuilding...
+                  Rebuilding…
                 </>
               ) : (
                 "Confirm"

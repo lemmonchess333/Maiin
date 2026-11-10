@@ -2311,7 +2311,7 @@ export default function Run() {
                   ? "Location is off for Tropos"
                   : quality === "strong" || quality === "good"
                     ? "GPS locked"
-                    : "Acquiring GPS..."}
+                    : "Acquiring GPS…"}
               </p>
               <p
                 className="text-sm text-center max-w-[260px]"
@@ -2323,7 +2323,7 @@ export default function Run() {
                     : "Allow location for this site in your browser's settings to track this run with GPS, or track it without GPS."
                   : quality === "weak" || quality === "searching"
                     ? "Move to an open area away from buildings"
-                    : "Getting accurate signal..."}
+                    : "Getting an accurate signal…"}
               </p>
               {locationDenied ? (
                 isNativePlatform() && (
@@ -2731,7 +2731,7 @@ export default function Run() {
       <ConfirmDialog
         open={showDiscardConfirm}
         title="Discard this run?"
-        description="This cannot be undone."
+        description="This can't be undone."
         confirmLabel="Discard"
         destructive
         onConfirm={() => {

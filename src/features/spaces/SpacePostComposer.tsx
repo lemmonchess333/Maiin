@@ -156,7 +156,7 @@ export default function SpacePostComposer({
         toast.error(
           error instanceof PhotoRefusedError
             ? error.message
-            : "Photo upload failed. Try again, or remove the photo to post without it."
+            : "Couldn't upload the photo. Try again, or remove it to post without it."
         );
         setBusy(false);
         return;

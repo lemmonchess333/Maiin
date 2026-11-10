@@ -80,7 +80,7 @@ export default function VerifyEmailBanner() {
       title="Verify your email to post and comment"
       description={
         <>
-          {unsent ? "We couldn't send the link to " : "We sent a link to "}
+          {unsent ? "Couldn't send the link to " : "We sent a link to "}
           <strong className="font-medium text-foreground break-all">
             {user.email}
           </strong>

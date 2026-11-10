@@ -142,9 +142,7 @@ describe("VerifyEmailBanner", () => {
     h.user = emailUser();
     h.unsent = true;
     show();
-    expect(
-      screen.getByText(/We couldn't send the link to/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Couldn't send the link to/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Send link" }));
     await waitFor(() =>
       expect(screen.getByText(/We sent a link to/)).toBeInTheDocument()

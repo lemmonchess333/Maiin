@@ -1323,7 +1323,7 @@ export default function Home() {
           <Banner
             variant="neutral"
             title="Training isn't ready"
-            description="We couldn't load today's training yet. Open your training plan to try again."
+            description="Couldn't load today's training. Open your plan to try again."
             action={
               <Button variant="secondary" onClick={() => navigate("/program")}>
                 Open training plan
