@@ -555,7 +555,8 @@ const EXPECTED = {
     kind: "schedule",
     maxInstances: 1,
     secrets: [],
-    schedule: "15 12 * * 1",
+    // 12:15 UTC, then each hour until the turn has finished.
+    schedule: "15 12-23 * * 1",
     timeoutSeconds: 540,
   },
   // Mob2 call 7: Remove follower, both edges of one follow of the caller.

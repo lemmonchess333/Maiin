@@ -3975,3 +3975,22 @@ device shows.
       Safari's Web Inspector Timelines over the device), sit on Home for
       10 seconds with the water tile on screen. Passing: no repeating
       layout or paint entries from the water tile.
+
+## The league turn runs again until it finishes (2026-11-10)
+
+`weeklyLeagueTurn` used to run once, at Monday 12:15 UTC. Cloud Functions do
+not retry a scheduled function, so a run cut off part way (the 540 s
+timeout, one failed write) left that week with no groups. It now runs at
+quarter past every hour until the end of Monday UTC; a run after the week
+has finished reads `leagueWeeks/{weekKey}.finishedAt` and stops. Only the
+console shows the schedule that deployed.
+
+- [ ] **The schedule deployed.** After the release that carries this, open
+      Cloud Scheduler for `adaptive-fitness-af8bb` and find the
+      `firebase-schedule-weeklyLeagueTurn-…` job. Passing: its frequency
+      reads `15 12-23 * * 1` in `Etc/UTC`.
+- [ ] **A Monday's later runs stop at once.** On the first Monday after
+      that release, open `jobRuns/weeklyLeagueTurn` after 13:15 UTC.
+      Passing: `lastOutcome` is `ok` and `lastSummary.alreadyFinished` is
+      `true`, with `leagueWeeks/{that Monday}.finishedAt` set from the
+      12:15 run.
