@@ -2,7 +2,7 @@ import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { STARTER_MOST_RUNS_A_WEEK } from "@/features/program/starterPlan";
 import { STARTER_GOAL_NAME } from "@/features/program/starterProgress";
 import {
-  endStarterGoalPatch,
+  starterGoalAfterSave,
   setStarterGoalPatch,
   starterGoalIsActive,
 } from "@/features/program/runModeResolution";
@@ -454,8 +454,23 @@ export default function RunPlanSettings({
   const raceGoalRef = useRef<HTMLDivElement>(null);
 
   const liftDays = profile.weeklyWorkoutsTarget ?? 4;
-  // Run20 (5): a new runner's first weeks, for the preview and the save.
-  const newRunnerUntil = profileNewRunnerUntil(profile);
+  // Run20 (5): a new runner's first weeks, for the preview and the save,
+  // read from the starter goal as this save leaves it: leaving a running
+  // goal for a race ends it at the stage reached, which the plan built now
+  // must start from.
+  const starterStage =
+    programState?.runPlan?.mode === "starter"
+      ? (programState.runPlan.stage ?? 1)
+      : 1;
+  const newRunnerUntil = profileNewRunnerUntil({
+    ...profile,
+    starterGoal: starterGoalAfterSave(
+      profile.starterGoal,
+      runMode,
+      starterStage,
+      today
+    ),
+  });
 
   // Runway preview — same engine the save commits (raceGoalPlanner.ts).
   const plannerState = useMemo(
@@ -675,13 +690,13 @@ export default function RunPlanSettings({
         starterRunning &&
         profile.starterGoal
       ) {
-        plan.profileUpdates.starterGoal = endStarterGoalPatch(
-          profile.starterGoal,
-          todayKey,
-          programState?.runPlan?.mode === "starter"
-            ? (programState.runPlan.stage ?? 1)
-            : 1
-        ).starterGoal;
+        plan.profileUpdates.starterGoal =
+          starterGoalAfterSave(
+            profile.starterGoal,
+            runMode,
+            starterStage,
+            todayKey
+          ) ?? undefined;
       }
 
       if (runMode === "race_prep") {

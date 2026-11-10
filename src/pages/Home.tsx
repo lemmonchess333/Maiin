@@ -944,6 +944,13 @@ export default function Home() {
     (!programState ||
       (firstWeekLifts && !workoutsLoading && workoutsFailed) ||
       (v2RacePlanNeedsBuild && programMaintenanceFailed));
+  /* The hero waits for what decides it: the programme, a race plan's
+     week being built, and a new account's workouts (the first-workout
+     offer must not flash before the real count). */
+  const heroPlaceholder =
+    programLoading ||
+    v2RaceWeekBuilding ||
+    (activationJourneyV2 && firstWeekLifts && workoutsLoading);
   const showWeekStrip =
     !activationJourneyV2 ||
     (!programLoading &&
@@ -1154,7 +1161,9 @@ export default function Home() {
           <span className="font-bold text-foreground">
             {formatShortWeekdayDayMonth(today)}
           </span>
-          {kicker && (
+          {/* The kicker is the hero's, so it waits with it: "Your first
+              workout" is not said before the workouts say so. */}
+          {kicker && !heroPlaceholder && !v2TrainingUnavailable && (
             <span>
               <span aria-hidden="true">· </span>
               <InlineNumerals>{kicker}</InlineNumerals>
@@ -1306,9 +1315,7 @@ export default function Home() {
           visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
         }}
       >
-        {programLoading ||
-        v2RaceWeekBuilding ||
-        (activationJourneyV2 && firstWeekLifts && workoutsLoading) ? (
+        {heroPlaceholder ? (
           // The hero's own height, so the week below it does not jump
           // when the session lands.
           <div className="h-[420px] rounded-2xl bg-muted motion-safe:animate-pulse" />

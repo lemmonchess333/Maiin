@@ -22,9 +22,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: () => "km" }));
 vi.mock("../useChallengePercentile", () => ({
   useChallengePercentile: () => null,
 }));
-vi.mock("@/lib/editorialImages", () => ({
-  challengeEditorialImage: () => null,
-}));
 vi.mock("@/components/social/BlockAwareAvatar", () => ({
   default: () => null,
 }));

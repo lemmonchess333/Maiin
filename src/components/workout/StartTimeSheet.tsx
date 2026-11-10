@@ -134,7 +134,12 @@ export default function StartTimeSheet({
             {message}
           </p>
         )}
-        <Button type="submit" fullWidth disabled={problem !== null}>
+        <Button
+          variant="neutral"
+          type="submit"
+          fullWidth
+          disabled={problem !== null}
+        >
           Save start time
         </Button>
         <Button variant="ghost" fullWidth onClick={onClose}>

@@ -288,7 +288,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-10-11",
+      dateKey: "2027-10-10",
       distance: "half",
       city: "London",
       countryCode: "GB",
@@ -387,7 +387,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-10-18",
+      dateKey: "2027-10-17",
       distance: "marathon",
       city: "York",
       countryCode: "GB",
@@ -516,7 +516,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-11-01",
+      dateKey: "2027-11-07",
       distance: "marathon",
       city: "New York City",
       countryCode: "US",
@@ -532,7 +532,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-10-11",
+      dateKey: "2027-10-10",
       distance: "marathon",
       city: "Chicago",
       countryCode: "US",
@@ -808,7 +808,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-10-11",
+      dateKey: "2027-10-10",
       distance: "half",
       city: "Oxford",
       countryCode: "GB",
@@ -889,7 +889,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-10-11",
+      dateKey: "2027-10-10",
       distance: "half",
       city: "Bournemouth",
       countryCode: "GB",
@@ -922,7 +922,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-10-25",
+      dateKey: "2027-10-24",
       distance: "half",
       city: "Valencia",
       countryCode: "ES",
@@ -955,7 +955,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-10-11",
+      dateKey: "2027-10-10",
       distance: "10k",
       city: "Bournemouth",
       countryCode: "GB",
@@ -1020,7 +1020,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-10-10",
+      dateKey: "2027-10-09",
       distance: "5k",
       city: "Bournemouth",
       countryCode: "GB",
@@ -1036,7 +1036,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-11-07",
+      dateKey: "2027-11-06",
       distance: "5k",
       city: "South Queensferry",
       countryCode: "GB",

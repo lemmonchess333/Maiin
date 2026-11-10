@@ -223,6 +223,22 @@ describe("ShareCardRenderer", () => {
     expect(screen.queryByText(/Back Squat/)).toBeNull();
   });
 
+  it("LIFT gives a bodyweight session its reps, not 0 kg lifted", () => {
+    const { container } = render(
+      <ShareCardRenderer
+        data={{
+          ...base,
+          template: "lift",
+          totalVolumeKg: 0,
+          totalReps: 60,
+        }}
+        offscreen={false}
+      />
+    );
+    expect(screen.getByText(/^reps in /)).toBeTruthy();
+    expect(container.textContent).not.toMatch(/kg lifted/);
+  });
+
   /* Lift18: the volume in the SHARER's lifting unit, as the distance is
      in theirs. 12,400 kg is 27,337 lb. */
   it("LIFT reads the volume in the sharer's lifting unit", () => {

@@ -155,6 +155,9 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // could clear the second could join from a second invite.
   { field: "inviteCode", sanitized: false, serverOnly: true },
   { field: "invitedAt", sanitized: false, serverOnly: true },
+  // Whose invite it was: a block of this account by them renews their code.
+  // A client that could write it could renew someone else's by blocking.
+  { field: "invitedBy", sanitized: false, serverOnly: true },
   {
     field: "lastActiveAt",
     sanitized: false,

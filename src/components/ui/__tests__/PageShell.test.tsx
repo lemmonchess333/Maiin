@@ -45,6 +45,35 @@ describe("PageShell header", () => {
     ).toBeTruthy();
   });
 
+  it("puts a lead control in a hidden title's place, one row with the actions", () => {
+    // Social's: its hero names the screen, so the title is for readers
+    // and the Together/Feed switch sits beside search and notifications.
+    render(
+      <PageShell
+        title="Social"
+        titleHidden
+        lead={
+          <div role="radiogroup" aria-label="Social section">
+            <button type="button" role="radio" aria-checked>
+              Together
+            </button>
+          </div>
+        }
+        actions={<button type="button">Search</button>}
+      >
+        x
+      </PageShell>
+    );
+    const h1 = screen.getByRole("heading", { level: 1, name: "Social" });
+    expect(h1.className).toMatch(/\bsr-only\b/);
+    const lead = screen.getByRole("radiogroup", { name: "Social section" });
+    const search = screen.getByRole("button", { name: "Search" });
+    // The same row: the lead's column and the actions share one parent.
+    const row = lead.parentElement!.parentElement!.parentElement!;
+    expect(row.contains(search)).toBe(true);
+    expect(row.parentElement!.tagName).toBe("HEADER");
+  });
+
   it("renders subtitle and actions in their slots", () => {
     render(
       <PageShell

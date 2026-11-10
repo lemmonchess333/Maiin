@@ -165,7 +165,7 @@ export default function EditSetSheet({
           </>
         ) : (
           <>
-            <Button type="submit" fullWidth loading={saving}>
+            <Button variant="neutral" type="submit" fullWidth loading={saving}>
               Save changes
             </Button>
             <Button

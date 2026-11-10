@@ -210,6 +210,7 @@ function PantryFoodSheet({
       </div>
       <div className="shrink-0 border-t border-border/40 px-4 pt-3 pb-4">
         <Button
+          variant="neutral"
           size="lg"
           fullWidth
           loading={saving}

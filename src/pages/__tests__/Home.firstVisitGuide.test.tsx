@@ -682,6 +682,18 @@ describe("the version 2 first-week journey", () => {
     expect(screen.queryByRole("button", { name: "Start workout" })).toBeNull();
   });
 
+  it("does not say 'Your first workout' beside the date before the workouts say so", () => {
+    h.workoutsLoading = true;
+    renderHome();
+    expect(screen.queryByText("Your first workout")).toBeNull();
+    cleanup();
+    h.workoutsLoading = false;
+    h.workoutsFailed = true;
+    renderHome();
+    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.queryByText("Your first workout")).toBeNull();
+  });
+
   function racePlanToBuild() {
     h.profile.athleteType = "Runner";
     h.profile.runMode = "race_prep";

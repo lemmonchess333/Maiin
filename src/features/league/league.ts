@@ -197,7 +197,19 @@ export function leagueCardState({
 export function lockedLine(joined: number, needed: number): string {
   if (joined >= needed)
     return `Leagues start on Monday. ${joined} people have joined.`;
+  if (!showsJoinedCount(joined))
+    return `Leagues open when ${needed} people have joined.`;
   return `Leagues open when ${needed} people have joined. ${joined} so far.`;
+}
+
+/** The fewest people joined that the waiting league counts aloud (Soc16):
+ *  "1 so far" only says the room is empty. */
+export const LEAGUE_JOINED_MIN_VISIBLE = 3;
+
+/** Whether the waiting league says how many have joined, and draws its
+ *  bar of them. */
+export function showsJoinedCount(joined: number): boolean {
+  return joined >= LEAGUE_JOINED_MIN_VISIBLE;
 }
 
 /** "3 of 4 sessions". */

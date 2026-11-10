@@ -397,7 +397,9 @@ describe("DS ratchets — surface-level drift", () => {
   // Raw <button> elements. CTAs belong on the Button / IconButton
   // primitives (44px floor, focus ring, press feedback come with them);
   // pressable cards, rows, chips and day-cells are legitimately bare.
-  const RAW_BUTTON_BASELINE = 291;
+  // 291 → 292: the "Ended circles" fold under the Circles list (Soc16), a
+  // full-width row that opens the list's ended rows.
+  const RAW_BUTTON_BASELINE = 292;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length

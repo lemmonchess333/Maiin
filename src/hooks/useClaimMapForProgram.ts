@@ -43,6 +43,7 @@ import type { ClaimState, SavedRunLike } from "@/lib/scheduledRunCompletion";
 import type { RunWindow, SavedRun } from "@/lib/savedRuns";
 import { claimableRuns, claimMapFor, type SavedRunDoc } from "@/lib/runClaims";
 import { useSavedRuns } from "./useSavedRuns";
+import { starterCreditStart } from "@/features/program/starterPlan";
 
 /**
  * Stable-by-content key for the bounded claim window. Include every claim
@@ -103,15 +104,31 @@ interface UseClaimMapResult {
  * first day and the earliest planned day can claim or count. Reading every
  * run the account has, each with its route, on every Home visit, read
  * years of them for nothing.
+ *
+ * A starter plan's stage is weighed by the run days since it began, up to
+ * two weeks back (`starterCreditStart`), so the read starts there too:
+ * from this week only, Home missed the goal reached over two weeks that
+ * Train, reading 30 days, said Done for.
  */
 export function claimWindowStart(
   today: string,
-  runDays: readonly { date?: string }[]
+  runDays: readonly { date?: string }[],
+  runPlan?: Pick<
+    NonNullable<ProgramState["runPlan"]>,
+    "mode" | "stageWeekKey" | "stageStartedWeek"
+  > | null
 ): string {
   let since = localWeekKey(parseLocalDate(today));
   for (const day of runDays) {
     if (typeof day.date === "string" && day.date.length === 10)
       if (day.date < since) since = day.date;
+  }
+  if (runPlan?.mode === "starter" && runPlan.stageWeekKey) {
+    const credit = starterCreditStart(
+      runPlan.stageWeekKey,
+      runPlan.stageStartedWeek ?? runPlan.stageWeekKey
+    );
+    if (credit < since) since = credit;
   }
   // A day early for legacy completion-time reads: a run recorded east of
   // here may complete before this zone's midnight of the day it belongs to.
@@ -134,7 +151,7 @@ export function useClaimMapForProgram(
      fills its day on Home at once. */
   const today = dateAnchor ?? localDateString(new Date());
   const runDays = programState?.runDays ?? [];
-  const since = claimWindowStart(today, runDays);
+  const since = claimWindowStart(today, runDays, programState?.runPlan);
   const window = useMemo<RunWindow>(() => ({ since }), [since]);
   const { runs, loading, failed, evidenceReady, refresh } =
     useSavedRuns(window);

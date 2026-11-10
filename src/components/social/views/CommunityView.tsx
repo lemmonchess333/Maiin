@@ -4,7 +4,7 @@ import CirclesSection, {
   type CirclesSectionState,
 } from "@/components/social/CirclesSection";
 import SpacesDirectory from "@/features/spaces/SpacesDirectory";
-import PlanGroupCard from "@/features/spaces/PlanGroupCard";
+import RaceHero from "@/features/spaces/RaceHero";
 /* ChallengeList is lazy-loaded so the Social entry chunk stays lean: it
    only loads when the user opens the Together tab. lazyRetry gives the
    same stale-chunk recovery the page-level lazy loads use. */
@@ -19,22 +19,25 @@ const ChallengeList = lazyRetry(() =>
 const LeagueCard = lazyRetry(() => import("@/features/league/LeagueCard"));
 
 /**
- * Together tab, in three sections (Soc14):
+ * Together tab (Soc16):
  *
- *   You        the person's Circles as compact rows, each with its next
- *              step, a live Circle first; then the challenges they joined,
- *              each with its progress. With no Circle and no joined
- *              challenge, the start-or-join card alone.
+ *   hero       the person's race while they train for one (`RaceHero`):
+ *              its photo, name, weeks to go and, from three, the people on
+ *              Tropos training for it. Without one, the weekly challenge's
+ *              photo card leads
  *   This week  the weekly challenge, whose action is the page's one
  *              filled button (or, with no Circle yet, Start a circle is),
- *              then the weekly league, then the person's plan group (the
- *              people training for their race), when they have one
- *   Discover   the other challenges as a quiet list, the community goal
- *              first once it has moved, then Spaces, then races
+ *              the challenges the person joined with their medals and
+ *              progress, then the weekly league
+ *   Circles    the person's Circles as compact rows, each with its next
+ *              step, a live Circle first and ended ones folded away; with
+ *              none, the start-or-join card
+ *   Discover   races and Spaces, then the community goal and the other
+ *              challenges with their medals
  *
- * ChallengeList reads the challenges once and lays the three sections out
- * around the two parts that read their own data: the Circles section at
- * the top of You and the Spaces directory at the foot of Discover.
+ * ChallengeList reads the challenges once and lays the sections out
+ * around the parts that read their own data: the race hero, the Circles
+ * section and the races and Spaces directory.
  */
 export interface CommunityViewProps {
   /** True when the Together tab is the active top-level tab. The view
@@ -112,6 +115,7 @@ export default function CommunityView({
         }
       >
         <ChallengeList
+          hero={uid ? <RaceHero /> : null}
           onFindFriends={openPeople}
           refreshRef={challengesRefreshRef}
           circles={circles}
@@ -130,7 +134,6 @@ export default function CommunityView({
               </Suspense>
             ) : null
           }
-          planGroup={uid ? <PlanGroupCard /> : null}
           weeklyLeads={circlesState !== "none"}
         />
       </Suspense>

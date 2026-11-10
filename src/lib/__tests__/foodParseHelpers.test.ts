@@ -47,6 +47,21 @@ describe("safeNum", () => {
 });
 
 describe("parseServingGrams", () => {
+  it("reads punctuation glued to a word or a number as punctuation, not as the number", () => {
+    // A comma or dot after a word is not a decimal point: these were read
+    // as 0.15 g, 0.4 g and 0.3 g, a hundredth of the calories.
+    expect(parseServingGrams("1 biscuit,15g")).toBe(15);
+    expect(parseServingGrams("1 bar,40 g")).toBe(40);
+    expect(parseServingGrams("approx.30g")).toBe(30);
+    // A dash after a word or a number is not a minus sign.
+    expect(parseServingGrams("Portion-30g")).toBe(30);
+    expect(parseServingGrams("30-35g")).toBe(35);
+    // A sign at the start still is, and a leading separator a decimal.
+    expect(parseServingGrams("-5g")).toBeNull();
+    expect(parseServingGrams(",5 g")).toBe(0.5);
+    expect(parseServingGrams("Pack,2 x 25g")).toBe(50);
+  });
+
   it("parses 'Ng' shape directly", () => {
     expect(parseServingGrams("30g")).toBe(30);
     expect(parseServingGrams("100g")).toBe(100);

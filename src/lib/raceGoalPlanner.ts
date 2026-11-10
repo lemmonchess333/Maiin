@@ -256,8 +256,7 @@ export interface RaceGoalPlannerInput {
   /** The recent saved runs, as the save passes them
    *  (`PlanBuilderInput.recentRuns`). */
   recentRuns?:
-    | readonly import("@/features/program/layoffDetection").DatedRun[]
-    | null;
+    readonly import("@/features/program/layoffDetection").DatedRun[] | null;
   /** Run20 (5): as the save passes it (`PlanBuilderInput.newRunnerUntil`),
    *  so the preview shows the weeks the save writes. */
   newRunnerUntil?: string | null;
@@ -451,14 +450,22 @@ export function getRaceGoalPlannerState(
       ? "compressed"
       : "healthy";
 
-  const inThisWeek = (run: ScheduledRunDay) =>
+  const inWeek = (key: string) => (run: ScheduledRunDay) =>
     run.date
-      ? localWeekKey(parseLocalDate(run.date)) === weekStart
-      : !run.weekKey || run.weekKey === weekStart;
+      ? localWeekKey(parseLocalDate(run.date)) === key
+      : !run.weekKey || run.weekKey === key;
   // What is saved for the plan's first week (`raceWeekFromToday`), and a
   // week's shape: a plan made on a Thursday still runs three days a week.
-  const week0 = (plan.weeks[0] ?? []).filter(inThisWeek);
-  const shape = shapeWeek.filter(inThisWeek);
+  // After a lead-in the shape is the week after this one, so it is held to
+  // its own week: held to this one it was empty, which hid its clashes.
+  const week0 = (plan.weeks[0] ?? []).filter(inWeek(weekStart));
+  const shape = shapeWeek.filter(
+    inWeek(
+      plan.leadInWeek
+        ? localWeekKey(addLocalDays(parseLocalDate(weekStart), 7))
+        : weekStart
+    )
+  );
   const recommendedRunDays = shape.length || weeklyRunDays;
   const hardClashDays = shape.filter((rd) => rd.clashesWithLift).length;
   const blockWeeks = continuedBlockWeeks(plan.totalWeeks, continued);

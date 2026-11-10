@@ -69,6 +69,34 @@ describe("beginner prescription repair", () => {
       )
     ).toBe(state);
   });
+  it("keeps a run the person moved off the starter slots", () => {
+    const novice = { ...profile, runMode: "starter" } as UserProfile;
+    const state = {
+      ...base,
+      runPlan: { mode: "starter", stage: 3 },
+    } as ProgramState;
+    const pruned = repairRunPrescriptions(state, novice, "2026-11-09");
+    const wednesday = pruned.runDays!.find((d) => d.date === "2026-11-11")!;
+    expect(wednesday).toBeDefined();
+    // On Monday, Wednesday's run is moved to Thursday (moveRunDay).
+    const moved = {
+      ...wednesday,
+      date: "2026-11-12",
+      dayIndex: 4,
+      movedFromDate: "2026-11-11",
+      movedToDate: "2026-11-12",
+    };
+    const withMove = {
+      ...pruned,
+      runDays: pruned.runDays!.map((d) => (d === wednesday ? moved : d)),
+    } as ProgramState;
+    const next = repairRunPrescriptions(withMove, novice, "2026-11-09");
+    expect(next.runDays).toContain(moved);
+    expect(next.runDays!.filter((d) => d.date === "2026-11-12")).toHaveLength(
+      1
+    );
+  });
+
   it("keeps today's planned slot because saved activity claims are not loaded here", () => {
     const novice = { ...profile, runMode: "starter" } as UserProfile;
     const state = {

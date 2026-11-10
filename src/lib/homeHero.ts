@@ -49,11 +49,20 @@ export type HeroLead = "lift" | "run" | "rest" | "first-meal" | null;
 
 /**
  * The session the hero draws. On a day with both, the run leads when
- * running is the person's aim (`runFirst`), as the cards were ordered.
- * A lifting day with no workout linked leads with its recovery banner,
- * which is not a hero, and so does nothing here.
+ * running is the person's aim (`runFirst`), as the cards were ordered,
+ * until one of them is done: then the one still to do leads, since the
+ * first thing on Home is something to do today. A lifting day with no
+ * workout linked leads with its recovery banner, which is not a hero, and
+ * so does nothing here. StackedCTACards sizes its cards by this.
  */
 export function heroLead(session: TodaySession): HeroLead {
+  const { lift, run } = session;
+  if (run && lift?.workout) {
+    const runOpen = !run.completed;
+    const liftOpen = lift.status === "planned";
+    if (runOpen !== liftOpen) return runOpen ? "run" : "lift";
+    return session.runFirst ? "run" : "lift";
+  }
   if (session.runFirst && session.run) return "run";
   if (session.lift?.workout) return "lift";
   if (session.run) return "run";

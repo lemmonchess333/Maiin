@@ -13,21 +13,21 @@ Manual checks deferred from work that already shipped to a feature branch. Burn 
 ## Setup asks for the public name (2026-11-01)
 
 Setup no longer makes the public name from the email address: an email
-account's name field on the review starts empty, and Go to Today with no
+account's name field on the review starts empty, and Start my plan with no
 name scrolls to the field, focuses it and says "Enter a name first."
 (`onboardingName.ts`, `Onboarding.tsx`). jsdom draws no layout and opens
 no keyboard; only a phone shows where the field lands.
 
 - [ ] **The field comes up above the keyboard.** On a TestFlight build,
       sign up with an email address and answer setup. On the review, tap
-      Go to Today without scrolling. Passing: the page moves to the name
+      Start my plan without scrolling. Passing: the page moves to the name
       field, the keyboard opens, and the field and "Enter a name first."
-      are both visible above it. Type a name and tap Go to Today: Home
+      are both visible above it. Type a name and tap Start my plan: Home
       opens, and from a second account Social's Search finds it by that
       name, not by the address.
 - [ ] **A Google or Apple name still arrives.** Make an account with Sign
       in with Apple (sharing the name) and one with Google. Passing: the
-      review's name field holds that name, and Go to Today goes straight
+      review's name field holds that name, and Start my plan goes straight
       on.
 
 ## A distance goal: a race entered, or on your own (Run9 STATUS 2026-11-01)
@@ -123,6 +123,51 @@ the builds themselves.
       `Tropos CI <serial> LiveActivities` and archives without a workflow
       change, and the widget links `LiveActivitiesKit` through Swift
       Package Manager.
+
+## Before Watch runs and Health export reach anyone (review, 2026-11-10)
+
+A review of #3002 and #3003 found four gaps in the connected-training path.
+It is closed to everyone (`CONNECTED_TRAINING_RELEASED`), so no one meets
+them yet; each needs native code that only a Mac, an iPhone and a Watch can
+confirm. Fix them before the first pilot build, and tick a row when a
+paired-device run proves it.
+
+- [ ] **A failed Health save can block that run's export for good.** The
+      export reserves its server receipt (`attempted`) before native checks
+      write access (`healthWorkoutExport.ts` around `reserveHealthWorkoutExport`,
+      `HealthWorkoutStore.swift`'s `permissionRequired`). With write access
+      off, or the app killed or the phone locked between the two, every
+      later try finds the workout "absent" with a receipt that isn't fresh
+      and throws: Settings shows a pending update forever. Fix: check
+      `getWorkoutWriteAuthorization()` before reserving, and let native
+      report an empty lookup with write access as verified absent, which
+      may retry an `attempted` receipt. Passing: turn write access off,
+      save a run, turn it on, Try again: the workout appears in Health.
+- [ ] **Deleting a run whose workout was removed in Health gets stuck.**
+      Native delete with write access and an empty lookup fails with
+      `permissionRequired` while its local map still names the run
+      (`HealthWorkoutStore.swift`, `delete`), so the run stays
+      `pending-delete` on every foreground. Fix: with write access and no
+      workout found, forget the run and report it deleted. Passing: export
+      a run, delete the workout in Health, delete the run in Tropos: no
+      pending update is left.
+- [ ] **After sign-out and sign-in, the Watch is off for runs until
+      Settings is opened.** Signing out clears the native session, which
+      sets the native switch off; only Settings → Apple Health
+      (`HealthSection.tsx`) turns it back on, while the Run page goes by
+      the account's choice alone (`Run.tsx`, `watchEligible`), so every
+      snapshot is refused natively. Fix: apply the account's choice to the
+      native switch where the account is bound, not only on that page.
+      Passing: sign out and in, start a run without opening Settings: the
+      Watch shows it.
+- [ ] **The Watch app may need the workout-processing background mode.**
+      `TroposWatch/Info.plist` has no `WKBackgroundModes`, and the live
+      heart rate comes from an `HKWorkoutSession` with an anchored query
+      (`WatchRunModel.swift`). Apple's workout-session guide asks for the
+      Workout Processing mode to keep the app running with the wrist down.
+      Passing: run with the wrist down for a minute: the phone's heart rate
+      keeps updating. If it stops, add `workout-processing` and check it in
+      `scripts/verify_ios_watch.py`.
 
 ## A lift's rest outside the app (Mob2 call 1, 2026-10-28)
 
@@ -3601,7 +3646,7 @@ these need a phone, the deployed rules or the console.
 - [ ] **Typing a code during setup on a phone.** Install the TestFlight
       build fresh, sign up, and on setup's last step open "Invited by a
       friend?", type a friend's code (lower case and with or without the
-      dash), then Go to Today. Passing, with the friend's Approve followers
+      dash), then Start my plan. Passing, with the friend's Approve followers
       on (the default): Home shows the toast "<name> follows you now. Your
       request to follow them is waiting", the friend appears under your
       Followers but not your Following, and the friend has a request from
@@ -3975,3 +4020,25 @@ device shows.
       Safari's Web Inspector Timelines over the device), sit on Home for
       10 seconds with the water tile on screen. Passing: no repeating
       layout or paint entries from the water tile.
+
+## Together leads with your race; challenges show their medals (2026-11-10)
+
+Soc16: Together opens on the person's race (`RaceHero`) when their goal is
+bound to a race ahead, then This week, Circles and Discover. A challenge's
+picture is its medal (`ChallengeMedalBand` on the weekly card and in a
+challenge's sheet, `MedalArt` on every row), not a photograph. The medals
+are SVG with an illustration inside; how WebKit draws them at row size is
+for a phone to show.
+
+- [ ] **The race leads.** On a TestFlight build, with a race goal bound to a
+      race ahead (Settings → Programme, a race picked from the list), open
+      Social → Together. Passing: the race's photo fills the first card with
+      its name, "Your race · N weeks to go", its date and place, and the
+      words readable over the photo at Settings → Accessibility → Larger
+      Text; tapping it opens the race's space. With no race goal, the
+      weekly challenge's card is first.
+- [ ] **The medals read.** On the same build, look at the weekly challenge
+      and at a challenge row in This week and in Discover, then tap one.
+      Passing: each shows a ribbon and a coin with its figure (not a blank
+      or a broken image), sharp at its small size on the row and large in
+      the sheet, in both light and dark mode.

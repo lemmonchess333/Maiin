@@ -192,7 +192,9 @@ const EXPECTED_INLINE_USES = {
   // themes, where the coral measures about 5:1.
   // 2026-10-26: 17 → 16. The live run's 68px timer greys while the run is
   // paused, so its coral is one side of a choice and no longer counted.
-  "THEME.running": 16,
+  // 2026-11-10: 16 → 17. Together's race hero (Soc16) without a photo:
+  // its 160px ghosted flag, an icon, as the Space hero's fallback draws.
+  "THEME.running": 17,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
   // 2026-10-01: 5 → 4. The same recap card's volume figure.

@@ -584,6 +584,12 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // Soc15 STATUS 2026-11-10: the owner's New code.
+  renewInviteCode: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   redeemInvite: {
     kind: "callable",
     maxInstances: 100,

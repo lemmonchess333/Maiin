@@ -10,6 +10,7 @@ import { STREAK_WINDOW_DAYS, useStreaks } from "./useStreaks";
 import {
   coveredDayLine,
   earliestStreakMonth,
+  streakReadFrom,
   monthOf,
   streakMonth,
   type StreakDayState,
@@ -25,6 +26,7 @@ const DAY_CLASSES: Record<StreakDayState, string> = {
   covered: "border-2 border-primary text-foreground",
   none: "text-muted-foreground",
   ahead: "text-muted-foreground",
+  unread: "text-muted-foreground",
 };
 
 /**
@@ -55,7 +57,8 @@ export default function StreakSheet({
     new Date(current.getFullYear(), current.getMonth() - shownBack, 1),
     activeDates,
     bridgedDates,
-    todayKey
+    todayKey,
+    streakReadFrom(todayKey, STREAK_WINDOW_DAYS)
   );
   const reassurance = coveredDayLine(bridgedDates, currentStreak, todayKey);
   return (

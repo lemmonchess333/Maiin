@@ -4,8 +4,8 @@ Most skills in `.claude/skills/` are copied from other repositories. This
 records where each came from, which version is here, and what this repo
 changed in it. With that, an update check is one `diff -r` against upstream,
 and the local changes are carried into the next copy instead of being lost.
-`lock-decision` and `verifier-tropos-web` are this repo's own and are not
-listed.
+`lock-decision`, `screen-critique` and `verifier-tropos-web` are this repo's
+own and are not listed.
 
 ## mattpocock/skills
 
