@@ -196,15 +196,23 @@ longer replacing itself; only a phone shows the card.
 - [ ] **The lock screen.** On a TestFlight build with the widget
       extension (2026-11-10 or later), on iOS 16.2 or later, tick a set and
       lock the phone. Passing: the card shows "Rest" and a countdown that
-      reaches 0:00 on time with the app asleep, "Next:" and the exercise
-      under it; +15 s in the app moves the countdown on; End rest takes the
-      card away.
+      reaches 0:00 on time with the app asleep and stays there (it doesn't
+      count back up), "Next:" and the exercise under it; +15 s in the app
+      moves the countdown on; End rest or the next set takes the card away
+      at once. After the lift, no ended rest cards are left on the Lock
+      Screen.
 - [ ] **A run on the lock screen.** On the same build, start an outdoor
       run and lock the phone. Passing: a dark card with "Recording" and the
       distance, pace and time, updating while locked; Pause reads "Paused";
-      Finish or Discard takes the card away; on an iPhone with a Dynamic
+      Finish or Discard takes the card away at once, leaving no blank card;
+      on an iPhone with a Dynamic
       Island, the run's distance shows there. The rest of
       `docs/run-live-activity.md`'s device checklist goes with it.
+- [ ] **A card a closed app left.** On the same build, swipe the app
+      away during a rest, open it again and tick the next set. Passing:
+      one rest card, the new one; the one left from before is gone. The
+      same for a run: swipe it away while recording, open the app and
+      resume the run, and one run card shows.
 
 ## A photo and a few words (Mob2 call 3, 2026-10-28)
 

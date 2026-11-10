@@ -4,8 +4,9 @@
  * lifting finding 7). Hevy shows the same.
  *
  * The app's half, on the seam `runLiveActivity.ts` set: the only module
- * that touches `capacitor-live-activities` for a rest, the plugin imported
- * dynamically so the web bundle never carries it, every call guarded and
+ * that shows a rest, reaching `capacitor-live-activities` only through
+ * `liveActivities.ts`, which imports the plugin dynamically so the web
+ * bundle never carries it, every call guarded and
  * its failure swallowed, since a Live Activity must never affect the
  * workout. The native half is the `LiveActivitiesExtension` widget target
  * in ios/App (`docs/run-live-activity.md`); on iOS before 16.2
@@ -16,12 +17,14 @@
  *
  * The countdown is ActivityKit's own timer element, counting to the rest's
  * end, so the lock screen keeps time with the app asleep and needs no
- * updates. Its end is part of the layout, not its data, so a rest that
- * gets longer (+15 s) is shown by ending the activity and starting
- * another.
+ * updates. It stops at 0:00: the plugin's `countdown` style, not `timer`,
+ * which counts back up once its time has passed, and the phone can stay
+ * locked well past the rest with the app asleep and unable to end the
+ * card. Its end is part of the layout, not its data, so a rest that gets
+ * longer (+15 s) is shown by ending the activity and starting another.
  */
-import { isNativePlatform } from "@/lib/platform";
 import { logger } from "@/lib/logger";
+import { endCard, loadLiveActivities } from "@/lib/liveActivities";
 import { THEME } from "@/lib/theme";
 import type {
   ActivityLayout,
@@ -39,21 +42,6 @@ export interface RestActivity {
 let activityId: string | null = null;
 /** The start in flight, so an end that comes first waits for it. */
 let starting: Promise<void> | null = null;
-
-type Plugin = typeof import("capacitor-live-activities").LiveActivities;
-
-/** A holder, never the plugin: a promise resolved with a Capacitor plugin
- *  calls its `then` on the native side and never settles (revenuecat.ts). */
-async function loadPlugin(): Promise<{ plugin: Plugin } | null> {
-  if (!isNativePlatform()) return null;
-  try {
-    const mod = await import("capacitor-live-activities");
-    return { plugin: mod.LiveActivities };
-  } catch {
-    // Not in this build (the Xcode half is not done): nothing to show.
-    return null;
-  }
-}
 
 /* Literal hex, as the run's card has it: the plugin draws natively and
    reads no CSS custom property. The card is always dark. */
@@ -75,7 +63,7 @@ const countdown = (endsAt: number, fontSize: number): LayoutElement => ({
   type: "timer",
   properties: [
     { endTime: endsAt },
-    { style: "timer" },
+    { style: "countdown" },
     { fontSize },
     { fontWeight: "bold" },
     { color: "#FFFFFF" },
@@ -151,7 +139,7 @@ export function restActivityLine(exerciseName?: string): string {
 export async function startRestActivity(rest: RestActivity): Promise<void> {
   await endRestActivity();
   const begin = (async () => {
-    const plugin = (await loadPlugin())?.plugin;
+    const plugin = (await loadLiveActivities())?.plugin;
     if (!plugin) return;
     try {
       const result = await plugin.startActivity({
@@ -182,9 +170,9 @@ export async function endRestActivity(): Promise<void> {
   activityId = null;
   if (id === null) return;
   try {
-    const plugin = (await loadPlugin())?.plugin;
+    const plugin = (await loadLiveActivities())?.plugin;
     if (!plugin) return;
-    await plugin.endActivity({ activityId: id, data: {} });
+    await endCard(plugin, id);
   } catch (err) {
     logger.warn("[restLiveActivity] end failed", err);
   }

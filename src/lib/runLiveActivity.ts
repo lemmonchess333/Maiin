@@ -3,9 +3,10 @@
  * distance and time while a run records (Tier 2 item 4).
  *
  * Seam-first, per the appCheck.ts / analyticsProvider.ts pattern: this
- * module is the ONLY place that touches `capacitor-live-activities`, it
- * dynamically imports the plugin so the registration chunk never ships
- * in the web bundle, and every call is guarded + error-swallowed — a
+ * module reaches `capacitor-live-activities` only through
+ * `liveActivities.ts`, which imports the plugin dynamically so the
+ * registration chunk never ships in the web bundle, and every call is
+ * guarded + error-swallowed — a
  * Live Activity failure must never affect the run itself. On web (or
  * before the operator's Xcode half exists) every function is an inert
  * no-op; the web-visible path for this feature is the in-app run HUD
@@ -28,8 +29,8 @@
  * App Group. A build without it, or iOS before 16.2, rejects
  * `startActivity`, and this module swallows it.
  */
-import { isNativePlatform } from "@/lib/platform";
 import { logger } from "@/lib/logger";
+import { endCard, loadLiveActivities } from "@/lib/liveActivities";
 import { THEME } from "@/lib/theme";
 /* Type-only — erased at build, zero web-bundle cost (the runtime import
    below stays dynamic). */
@@ -59,21 +60,6 @@ let activityId: string | null = null;
 let starting = false;
 let lastUpdateAt = 0;
 let lastPayloadKey = "";
-
-type Plugin = typeof import("capacitor-live-activities").LiveActivities;
-
-/** A holder, never the plugin: a promise resolved with a Capacitor plugin
- *  calls its `then` on the native side and never settles (revenuecat.ts). */
-async function loadPlugin(): Promise<{ plugin: Plugin } | null> {
-  if (!isNativePlatform()) return null;
-  try {
-    const mod = await import("capacitor-live-activities");
-    return { plugin: mod.LiveActivities };
-  } catch {
-    // Plugin absent from the build (operator half not done) — inert.
-    return null;
-  }
-}
 
 const CARD_BG = "#17171B" as const; // THEME.surface — the run overlay is always-dark
 /* Literal hex is DELIBERATE here (DS2 exemption): the Live Activity plugin
@@ -207,7 +193,7 @@ export async function startRunActivity(data: RunActivityData): Promise<void> {
   if (activityId !== null || starting) return;
   starting = true;
   try {
-    const plugin = (await loadPlugin())?.plugin;
+    const plugin = (await loadLiveActivities())?.plugin;
     if (!plugin) return;
     const result = await plugin.startActivity({
       layout: runCardLayout(),
@@ -248,7 +234,7 @@ export async function updateRunActivity(data: RunActivityData): Promise<void> {
   lastUpdateAt = now;
   lastPayloadKey = key;
   try {
-    const plugin = (await loadPlugin())?.plugin;
+    const plugin = (await loadLiveActivities())?.plugin;
     if (!plugin) return;
     await plugin.updateActivity({ activityId, data: { ...data } });
   } catch (err) {
@@ -257,9 +243,9 @@ export async function updateRunActivity(data: RunActivityData): Promise<void> {
 }
 
 /**
- * End and dismiss the Live Activity. Safe to call when none is live
- * (unmount cleanup + finish/discard can all call it). Final stats stick
- * on the lock screen briefly per OS behaviour when provided.
+ * End the Live Activity and take it off the lock screen at once. Safe to
+ * call when none is live (unmount cleanup + finish/discard can all call
+ * it).
  */
 export async function endRunActivity(final?: RunActivityData): Promise<void> {
   const id = activityId;
@@ -267,12 +253,9 @@ export async function endRunActivity(final?: RunActivityData): Promise<void> {
   lastPayloadKey = "";
   if (id === null) return;
   try {
-    const plugin = (await loadPlugin())?.plugin;
+    const plugin = (await loadLiveActivities())?.plugin;
     if (!plugin) return;
-    await plugin.endActivity({
-      activityId: id,
-      data: final ? { ...final } : {},
-    });
+    await endCard(plugin, id, final ? { ...final } : {});
   } catch (err) {
     logger.warn("[runLiveActivity] end failed", err);
   }
