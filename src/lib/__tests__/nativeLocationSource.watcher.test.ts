@@ -1,7 +1,7 @@
 /**
  * nativeLocationSource's watchers, with the background-geolocation plugin
  * faked. The plugin ships no JavaScript, so on the web and in the unit
- * suite every call stops at `loadPlugin()`; these give it a plugin and pin
+ * suite every call stops at `nativePlugin()`; these give it a plugin and pin
  * what the iOS app relies on: the options that keep a run recording with
  * the screen locked, fixes and errors mapped onto the Web shapes, and a
  * stop that lands before the native watcher's id has come back.
@@ -28,7 +28,11 @@ const fake = vi.hoisted(() => {
 });
 const native = vi.hoisted(() => ({ value: true }));
 
-vi.mock("@capacitor/core", () => {
+vi.mock("@capacitor/core", async () => {
+  // The bridge's own shape: a Proxy that answers `then` too. A plain object
+  // has none, so a loader that resolved a promise with the plugin passed
+  // here and hung on the phone (a run sat on "Finding GPS").
+  const { capacitorPlugin } = await import("@/test/capacitorPlugin");
   fake.addWatcher = vi.fn(
     (_options: unknown, callback: Callback) =>
       new Promise<string>((resolve) => {
@@ -38,11 +42,12 @@ vi.mock("@capacitor/core", () => {
   );
   fake.removeWatcher = vi.fn((_arg: { id: string }) => Promise.resolve());
   return {
-    registerPlugin: () => ({
-      addWatcher: (options: unknown, callback: Callback) =>
-        fake.addWatcher(options, callback),
-      removeWatcher: (arg: { id: string }) => fake.removeWatcher(arg),
-    }),
+    registerPlugin: () =>
+      capacitorPlugin({
+        addWatcher: (options: unknown, callback: Callback) =>
+          fake.addWatcher(options, callback),
+        removeWatcher: (arg: { id: string }) => fake.removeWatcher(arg),
+      }),
     Capacitor: { isNativePlatform: () => native.value },
   };
 });
@@ -62,7 +67,7 @@ const FIX = {
   time: 1_700_000_000_000,
 };
 
-/** Let loadPlugin's promise and the addWatcher call run. */
+/** Let the addWatcher call and its id run. */
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
 beforeEach(() => {

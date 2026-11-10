@@ -283,6 +283,26 @@ the gates against fakes; only a phone shows the fix time and the battery.
       Settings → Battery is in line with a screen left on, and no location
       arrow shows while the phone is locked on the setup screen.
 
+## A run asks for location, and says when it is off (2026-11-10)
+
+On the TestFlight build a run sat on "Finding GPS" and never asked for
+location. The location plugin was handed back through a promise, which a
+Capacitor plugin never settles, so no watcher was added: iOS never asked,
+and no refusal came back to show "Location is off for Tropos". The plugin is
+now taken directly; the unit suite fakes it as the bridge makes it, and only
+a phone shows the prompt.
+
+- [ ] **The first run asks.** On a new install, open Run and tap a tile.
+      Passing: iOS asks to use your location; once allowed, the rings find
+      a fix and the countdown starts.
+- [ ] **Location off says so.** In Settings → Tropos → Location choose
+      Never, then open Run and tap a tile. Passing: "Location is off for
+      Tropos" with Open settings, which opens Tropos's page in Settings, and
+      a run can still be tracked without GPS.
+- [ ] **Location Services off for the phone.** Turn off Settings → Privacy
+      & Security → Location Services, then tap a tile. Passing: the same
+      words show, not "Acquiring GPS..." with no end.
+
 ## A pause while the run is already paused (2026-11-10)
 
 The run timer refuses a second pause and a resume while running

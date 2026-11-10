@@ -42,13 +42,19 @@ const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>(
   "BackgroundGeolocation"
 );
 
-/** Kept async-shaped so call sites read identically to the repo's other lazy
- *  plugin holders; the proxy itself is created synchronously above. Returns
- *  null off-native (belt-and-braces with getLocationSource's platform branch)
- *  so a stray web/test invocation is inert instead of tripping Capacitor's
- *  internal UNIMPLEMENTED rejection, which surfaces outside our promise chain. */
-function loadPlugin(): Promise<BackgroundGeolocationPlugin | null> {
-  return Promise.resolve(isNativePlatform() ? BackgroundGeolocation : null);
+/** The plugin, or null off-native (belt-and-braces with getLocationSource's
+ *  platform branch) so a stray web/test invocation is inert instead of
+ *  tripping Capacitor's internal UNIMPLEMENTED rejection.
+ *
+ *  Handed back as it is, never through a promise. It used to be
+ *  `Promise.resolve(plugin)`: a plugin is a Proxy that answers every property
+ *  with a native call, `then` included, so the promise called
+ *  `BackgroundGeolocation.then()`, which iOS does not implement, and never
+ *  settled. No watcher was ever added: iOS never asked for location, no
+ *  error came back to say it was off, and a run sat on "Finding GPS"
+ *  (CLAUDE.md, "Never resolve a promise with a Capacitor plugin"). */
+function nativePlugin(): BackgroundGeolocationPlugin | null {
+  return isNativePlatform() ? BackgroundGeolocation : null;
 }
 
 /** Map a plugin fix to the Web Geolocation shape the pipeline consumes. */
@@ -103,27 +109,26 @@ export const nativeLocationSource: LocationSource = {
      chipset pre-warm wants. No permission prompt here (requestPermissions
      false) — the real watcher below owns the prompt so it's tied to Start. */
   getCurrent(_options, onFix, onError) {
+    const plugin = nativePlugin();
+    if (!plugin) return; // plugin missing → silent, same as a slow fix
     let settled = false;
-    void loadPlugin().then((plugin) => {
-      if (!plugin) return; // plugin missing → silent, same as a slow fix
-      let id: string | null = null;
-      const finish = () => {
-        if (id) void plugin.removeWatcher({ id }).catch(() => {});
-      };
-      plugin
-        .addWatcher({ requestPermissions: false, stale: true }, (pos, err) => {
-          if (settled) return;
-          settled = true;
-          if (err) onError(toGeolocationError(err));
-          else if (pos) onFix(toGeolocationPosition(pos));
-          finish();
-        })
-        .then((watcherId) => {
-          id = watcherId;
-          if (settled) finish(); // fix arrived before the id resolved
-        })
-        .catch(() => {});
-    });
+    let id: string | null = null;
+    const finish = () => {
+      if (id) void plugin.removeWatcher({ id }).catch(() => {});
+    };
+    plugin
+      .addWatcher({ requestPermissions: false, stale: true }, (pos, err) => {
+        if (settled) return;
+        settled = true;
+        if (err) onError(toGeolocationError(err));
+        else if (pos) onFix(toGeolocationPosition(pos));
+        finish();
+      })
+      .then((watcherId) => {
+        id = watcherId;
+        if (settled) finish(); // fix arrived before the id resolved
+      })
+      .catch(() => {});
   },
 
   /* Continuous fixes that SURVIVE screen-lock / backgrounding. The
@@ -135,8 +140,8 @@ export const nativeLocationSource: LocationSource = {
   watch(_options, onFix, onError) {
     let cleared = false;
     let id: string | null = null;
-    void loadPlugin().then((plugin) => {
-      if (!plugin) return;
+    const plugin = nativePlugin();
+    if (plugin) {
       plugin
         .addWatcher(
           {
@@ -161,17 +166,14 @@ export const nativeLocationSource: LocationSource = {
           }
         })
         .catch(() => {});
-    });
+    }
     const handle: LocationWatch = {
       clear() {
         cleared = true;
-        if (id) {
+        if (id && plugin) {
           const watcherId = id;
           id = null;
-          void loadPlugin().then((plugin) => {
-            if (plugin)
-              void plugin.removeWatcher({ id: watcherId }).catch(() => {});
-          });
+          void plugin.removeWatcher({ id: watcherId }).catch(() => {});
         }
       },
     };
