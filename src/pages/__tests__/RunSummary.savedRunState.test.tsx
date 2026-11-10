@@ -47,6 +47,14 @@ const h = vi.hoisted(() => ({
   skipRunDay: vi.fn(),
   track: vi.fn(),
   mapProps: [] as Record<string, unknown>[],
+  runDays: undefined as
+    | undefined
+    | {
+        id: string;
+        date: string;
+        templateId: string;
+        status: string;
+      }[],
   runPlan: undefined as
     | {
         currentWeek: number;
@@ -58,6 +66,10 @@ const h = vi.hoisted(() => ({
     | undefined,
   failedOptional: null as "kudos" | "week" | null,
   optionalAttempts: [] as string[],
+  /** What the share sheet was last given: the card's data and its extra
+   *  actions (Export GPX among them). */
+  shareSheet: null as null | { data: { date?: string }; extras?: unknown },
+  gpx: [] as string[],
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => h.auth,
@@ -71,7 +83,7 @@ vi.mock("@/features/program/useProgram", () => ({
       markManualComplete: h.markManualComplete,
       skipRunDay: h.skipRunDay,
       programState: {
-        runDays: [{ id: "rd-1", status: "planned" }],
+        runDays: h.runDays ?? [{ id: "rd-1", status: "planned" }],
         runPlan: h.runPlan,
       },
     };
@@ -123,8 +135,18 @@ vi.mock("@/components/analytics/ElevationProfile", () => ({
   default: () => null,
 }));
 vi.mock("@/components/share/ShareCardSheet", () => ({
-  default: () => null,
+  default: (props: { data: { date?: string }; extras?: unknown }) => {
+    h.shareSheet = props;
+    return null;
+  },
   ShareCardSheet: () => null,
+}));
+vi.mock("@/lib/shareRoute", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/shareRoute")>()),
+  shareGpx: async (gpx: string) => {
+    h.gpx.push(gpx);
+    return "shared" as const;
+  },
 }));
 vi.mock("@/components/social/CircleShareSheet", () => ({
   default: () => null,
@@ -207,10 +229,12 @@ function savedRun(notes = "") {
   };
 }
 
-function renderSummary() {
+function renderSummary(extra: Record<string, unknown> = {}) {
   return render(
     <MemoryRouter
-      initialEntries={[{ pathname: "/run-summary", state: savedRun() }]}
+      initialEntries={[
+        { pathname: "/run-summary", state: { ...savedRun(), ...extra } },
+      ]}
     >
       <Routes>
         <Route path="/run-summary" element={<RunSummary />} />
@@ -236,6 +260,8 @@ beforeEach(() => {
   h.skipRunDay.mockResolvedValue({ status: "applied" });
   h.failedOptional = null;
   h.optionalAttempts.length = 0;
+  h.shareSheet = null;
+  h.gpx.length = 0;
 });
 afterEach(() => {
   resumeReads();
@@ -382,6 +408,7 @@ describe("RunSummary — past runs are read once", () => {
 describe("RunSummary — the week's runs are counted once", () => {
   afterEach(() => {
     h.runPlan = undefined;
+    h.runDays = undefined;
     delete (h.auth.profile as Record<string, unknown>).runMode;
   });
 
@@ -422,6 +449,94 @@ describe("RunSummary — the week's runs are counted once", () => {
     d.setDate(d.getDate() + days);
     return localDateString(d);
   };
+
+  it("names race week for a race run begun on race day and reviewed after midnight", async () => {
+    // The run is dated by its start; read on today, the day after the
+    // race, the kicker named no week under the race itself.
+    (h.auth.profile as Record<string, unknown>).runMode = "race_prep";
+    const raceDay = daysFromToday(-1);
+    h.runPlan = {
+      currentWeek: 11,
+      totalWeeks: 12,
+      raceGoal: { distance: "10k", targetDate: raceDay },
+    };
+    const startedAt = new Date(`${raceDay}T22:30:00`).getTime();
+    renderSummary({
+      identity: {
+        uid: "runner",
+        sessionId: "race-run",
+        runId: "race-run",
+        scheduledRunId: null,
+        startedAt,
+        startLocalDate: raceDay,
+        originTimeZone: "UTC",
+      },
+    });
+    expect(await screen.findByText("Week 12 of 12")).toBeInTheDocument();
+  });
+
+  it("names the run after the run's own day as next, for a run saved after midnight", async () => {
+    // Read from today, a Sunday-night run saved after midnight skipped
+    // Monday's run and named Tuesday's.
+    const yesterday = daysFromToday(-1);
+    const today = daysFromToday(0);
+    h.runDays = [
+      { id: "today", date: today, templateId: "easy_30", status: "planned" },
+      {
+        id: "tomorrow",
+        date: daysFromToday(1),
+        templateId: "tempo_run",
+        status: "planned",
+      },
+    ];
+    renderSummary({
+      identity: {
+        uid: "runner",
+        sessionId: "late-run",
+        runId: "late-run",
+        scheduledRunId: null,
+        startedAt: new Date(`${yesterday}T23:30:00`).getTime(),
+        startLocalDate: yesterday,
+        originTimeZone: "UTC",
+      },
+    });
+    const weekday = new Date(`${today}T12:00:00`).toLocaleDateString("en-GB", {
+      weekday: "long",
+    });
+    expect(
+      await screen.findByText(new RegExp(`^Next run: .* — ${weekday}$`))
+    ).toBeInTheDocument();
+  });
+
+  it("shares and exports a run under its own day, for a run shared after midnight", async () => {
+    // Dated by the moment of sharing, a Sunday-night run shared after
+    // midnight went out as Monday's: the saved run's page says Sunday.
+    const yesterday = daysFromToday(-1);
+    const startedAt = new Date(`${yesterday}T23:30:00`).getTime();
+    renderSummary({
+      identity: {
+        uid: "runner",
+        sessionId: "late-run",
+        runId: "late-run",
+        scheduledRunId: null,
+        startedAt,
+        startLocalDate: yesterday,
+        originTimeZone: "UTC",
+      },
+    });
+    const runDay = new Date(startedAt).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+    await waitFor(() => expect(h.shareSheet?.data.date).toBe(runDay));
+    // The sheet's Export GPX names the track by the same day.
+    cleanup();
+    render(<>{h.shareSheet?.extras as React.ReactNode}</>);
+    fireEvent.click(screen.getByRole("button", { name: "Export GPX" }));
+    await waitFor(() => expect(h.gpx).toHaveLength(1));
+    expect(h.gpx[0]).toContain(`Tropos Run ${runDay}`);
+  });
 
   it("counts no plan week once race day has passed", async () => {
     (h.auth.profile as Record<string, unknown>).runMode = "race_prep";
