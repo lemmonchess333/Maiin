@@ -658,6 +658,23 @@
       "implementation": "functions/accountDeletion.js"
     },
     {
+      "key": "followCountsOwn",
+      "domain": "E_fanout",
+      "type": "topLevelByUid",
+      "path": "followCounts/{uid}",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "publicProfile",
+      "strategy": "deleteKnownDocIfExists",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "How many accounts follow this one and how many it follows, recounted by the server from the two follow lists whenever an edge is made or removed (lib/followCounts.js), so a profile shows the numbers without reading the lists. Deleted with the account; the triggers read the deletion state in the transaction that writes.",
+      "testCoverageKey": "smoke::topLevelOwn::followCounts",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/accountDeletion.js"
+    },
+    {
       "key": "globalRestrictedUids",
       "domain": "F_usage",
       "type": "topLevelByUid",

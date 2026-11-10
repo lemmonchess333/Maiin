@@ -69,6 +69,7 @@ const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const blockGuard = require("./lib/blockGuard");
 const blockMirror = require("./lib/blockMirror");
+const followCounts = require("./lib/followCounts");
 const identityResync = require("./lib/identityResync");
 // S4e: a restricted account is refused anything that reaches another person.
 const restriction = require("./lib/restriction");
@@ -9011,6 +9012,38 @@ exports.onBlockWritten = functions
       functions.logger.info("onBlockWritten.inviteCodeRenewed", {
         blockerUid,
       });
+    return null;
+  });
+
+/**
+ * onFollowerEdgeWritten and onFollowingEdgeWritten keep
+ * `followCounts/{uid}` (lib/followCounts.js): how many people follow an
+ * account and how many it follows, so a profile reads two numbers and
+ * nobody's lists.
+ *
+ * Each recounts one list for the account that owns it, and only when an
+ * edge was made or removed. A retry counts the same edges and stores the
+ * same number, and an account being deleted is left alone.
+ */
+exports.onFollowerEdgeWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("followers/{uid}/users/{followerUid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (!followCounts.edgeMovesCount(change.before.exists, change.after.exists))
+      return null;
+    await followCounts.recountFollowSide(db, context.params.uid, "followers");
+    return null;
+  });
+
+exports.onFollowingEdgeWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("following/{uid}/users/{targetUid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (!followCounts.edgeMovesCount(change.before.exists, change.after.exists))
+      return null;
+    await followCounts.recountFollowSide(db, context.params.uid, "following");
     return null;
   });
 

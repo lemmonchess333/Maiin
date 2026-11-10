@@ -817,6 +817,44 @@ cover the logic; these need two real accounts.
       list no longer shows it; with A's switch off, B's Follow is immediate
       and reads Following at once.
 
+## Follow counts kept by the server (2026-11-10)
+
+A profile reads someone else's follower and following numbers from
+`followCounts/{uid}`, which two new triggers recount from the follow lists
+(`functions/lib/followCounts.js`). It is step 1 of closing the follow
+lists: until now any signed-in account could list anyone's followers and
+following, because the counts were read from those lists. Only production
+shows the triggers deployed and the counts landing.
+
+- [ ] **The triggers deployed.** After Deploy production runs for this
+      change, `onFollowerEdgeWritten` and `onFollowingEdgeWritten` are in
+      the Firebase console's function list, and the release's source
+      read-back passed for both.
+- [ ] **A follow lands in the count.** From a second account, follow the
+      first. Passing: within a few seconds `followCounts/{first uid}` has
+      `followers` one higher and `followCounts/{second uid}` has
+      `following` one higher, and the first account's profile, opened from
+      the second, shows the new number. Unfollow: both go back.
+- [ ] **Every account counted.** Run the "Backfill follow counts" workflow
+      (Actions → Run workflow, or a dated line in
+      `.github/backfill-follow-counts.request` on main) only after the
+      row above passes. Passing: the first pass prints the accounts it
+      counted and the second pass ends with `changed: 0`.
+- [ ] **Then close the lists.** Merge the rules change that lets only the
+      two people on a follow read it, and only the owner list their own
+      (its pull request names this row). Not before the backfill: an
+      account nobody has counted reads as 0 once the lists are closed.
+      And not before every installed iPhone build reads the server's
+      count: a build from before it counts other people's lists itself,
+      and once the rules refuse that its profiles say the counts could
+      not be loaded. Upload a TestFlight build first.
+- [ ] **The lists are closed.** After Deploy production runs for the
+      rules change, from a second account open the first account's
+      profile. Passing: its two numbers still show, and your own
+      Followers and Following pages still list. In the browser console
+      on the web build, `getDocs` on `followers/{first uid}/users` from
+      the second account is refused with permission-denied.
+
 ## What a deletion used to leave behind (2026-10-20)
 
 Four records outlived the account they named, and the password-reset
