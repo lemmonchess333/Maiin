@@ -9135,11 +9135,15 @@ exports.setLeagueSharing = functions
  * one notification), forms this week's from the people who opted in and
  * trained in the last 14 days, and writes the figure the locked card reads.
  * Keyed by this week's Monday in leagueWeeks/{weekKey}, so a second run
- * does nothing twice (lib/leagues.js runLeagueTurn).
+ * does nothing twice (lib/leagues.js runLeagueTurn). It runs again at
+ * quarter past each hour until the end of Monday UTC: a scheduled function
+ * is not retried, and a run cut off part way (a timeout, one failed write)
+ * would otherwise leave the week with no groups. Once the week is finished
+ * a run reads its marker and stops.
  */
 exports.weeklyLeagueTurn = functions
   .runWith(SCHEDULED_CAP)
-  .pubsub.schedule("15 12 * * 1")
+  .pubsub.schedule("15 12-23 * * 1")
   .timeZone("Etc/UTC")
   .onRun(() =>
     jobRuns.recordJobRun(db, "weeklyLeagueTurn", async () => {

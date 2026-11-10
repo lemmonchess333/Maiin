@@ -83,7 +83,15 @@ import { fetchRecentRuns, type RecentRuns } from "./fetchRecentLayoff";
 import type { LayoffClass } from "./layoffDetection";
 import { profileNewRunnerUntil } from "./newRunner";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
-import { readStoredRunSummary } from "@/lib/runResumeStorage";
+import {
+  readStoredRunSummary,
+  storedRunClears,
+  subscribeStoredRunClears,
+} from "@/lib/runResumeStorage";
+import {
+  earlierWeeksRunOnPhone,
+  planWeeksLiftOnPhone,
+} from "./sessionsOnPhone";
 import {
   migrateProgramState,
   backfillWeekScheduleIfMissing,
@@ -277,9 +285,21 @@ function lighterWeekStarted(raceWeek: ProgramState["raceWeek"]): string {
 export type ProgramReadiness = "pending" | "ready" | "failed";
 
 /** A finish the week rollover must wait for: a programme session open on
- *  this device, or a finished one still waiting to sync. */
-function finishOutstanding(uid: string | undefined): boolean {
-  return isLiftSessionOpen() || (!!uid && hasPendingProgrammeCompletion(uid));
+ *  this device, a finished one still waiting to sync, or a session still
+ *  on this phone (`sessionsOnPhone`): a run from an earlier week, unsaved,
+ *  or a lift from the plan's week the app was closed partway through. */
+function finishOutstanding(
+  uid: string | undefined,
+  todayKey: string,
+  programState: ProgramState
+): boolean {
+  return (
+    isLiftSessionOpen() ||
+    (!!uid &&
+      (hasPendingProgrammeCompletion(uid) ||
+        earlierWeeksRunOnPhone(uid, todayKey) ||
+        planWeeksLiftOnPhone(uid, programState)))
+  );
 }
 
 export function useProgram() {
@@ -325,7 +345,11 @@ export function useProgram() {
      *  is weighed by their days, and a running starting point climbs from
      *  what they say was done. Null when they could not be read. */
     runs: RecentRuns["runs"];
-  }>({ uid: null, day: null, cls: "none", runs: null });
+    /** `storedRunClears()` when it was read: a read taken while a run was
+     *  still on the phone, unsaved, does not count for the rollover once
+     *  the run has gone (`earlierWeeksRunOnPhone`). */
+    clears: number;
+  }>({ uid: null, day: null, cls: "none", runs: null, clears: 0 });
   const recentLayoff: LayoffClass =
     layoffRead.uid && layoffRead.uid === user?.uid ? layoffRead.cls : "none";
   const recentRuns =
@@ -333,11 +357,12 @@ export function useProgram() {
   /**
    * One read per account and day, shared: the effect below holds its
    * answer, and a rebuild that starts before it lands waits on the same
-   * read rather than making a second.
+   * read rather than making a second. Read again once a run stored on this
+   * phone has gone (saved, it is a run the last read did not have).
    */
   const recentRunReads = useRef(new Map<string, Promise<RecentRuns>>());
   const recentRunsFor = useCallback((uid: string, day: string) => {
-    const key = `${uid}|${day}`;
+    const key = `${uid}|${day}|${storedRunClears()}`;
     let read = recentRunReads.current.get(key);
     if (!read) {
       read = fetchRecentRuns(uid, day);
@@ -1125,6 +1150,13 @@ export function useProgram() {
     liftSessionVersion,
     liftSessionVersion
   );
+  // A run on this phone from an earlier week holds them too, until it is
+  // saved or discarded (`earlierWeeksRunOnPhone`).
+  const runClears = useSyncExternalStore(
+    subscribeStoredRunClears,
+    storedRunClears,
+    storedRunClears
+  );
 
   // PR-G: auto week-rollover effect. When the user opens the app
   // and the calendar week has advanced past the week their
@@ -1181,9 +1213,16 @@ export function useProgram() {
     // And for TODAY's read: an app resumed on a later day still holds the
     // day it was opened on, and a runner who has been away since then would
     // roll into a full week on the old answer.
-    if (user && (layoffRead.uid !== user.uid || layoffRead.day !== today))
+    // And for a read taken since the last run on this phone went: saved
+    // after midnight, last week's run is in that one, not in the first.
+    if (
+      user &&
+      (layoffRead.uid !== user.uid ||
+        layoffRead.day !== today ||
+        layoffRead.clears !== runClears)
+    )
       return;
-    if (finishOutstanding(user?.uid)) return;
+    if (finishOutstanding(user?.uid, today, programState)) return;
 
     const rollover = weekRolloverAnchor(programState, profile);
     if (rollover?.side !== "run") return;
@@ -1261,6 +1300,7 @@ export function useProgram() {
     mirrorReady,
     queuedWrites,
     openSessions,
+    runClears,
     today,
   ]);
 
@@ -1300,14 +1340,21 @@ export function useProgram() {
     if (!profile?.runMode || profile.runMode === "freeform") return;
     let cancelled = false;
     const uid = user.uid;
+    const clears = runClears;
     void recentRunsFor(uid, today).then((read) => {
       if (!cancelled)
-        setLayoffRead({ uid, day: today, cls: read.layoff, runs: read.runs });
+        setLayoffRead({
+          uid,
+          day: today,
+          cls: read.layoff,
+          runs: read.runs,
+          clears,
+        });
     });
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, profile?.runMode, today, recentRunsFor]);
+  }, [user?.uid, profile?.runMode, today, recentRunsFor, runClears]);
 
   useEffect(() => {
     if (!programState || !profile) return;
@@ -1316,7 +1363,7 @@ export function useProgram() {
     if (!mirrorReady) return;
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
-    if (finishOutstanding(user?.uid)) return;
+    if (finishOutstanding(user?.uid, today, programState)) return;
 
     // The run-side effect acts on a "run" anchor and this one on a "lift"
     // anchor, so exactly one of the two can act on any given state. No
@@ -1364,6 +1411,7 @@ export function useProgram() {
     user,
     queuedWrites,
     openSessions,
+    runClears,
     today,
   ]);
 
@@ -1381,7 +1429,7 @@ export function useProgram() {
     if (!mirrorReady) return;
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
-    if (finishOutstanding(user?.uid)) return;
+    if (finishOutstanding(user?.uid, today, programState)) return;
     const rollover = weekRolloverAnchor(programState, profile);
     if (rollover && rollover.weekKey < localWeekKey()) return;
     for (const dayIndex of raceRestSkips(programState, localDateString())) {
@@ -1413,6 +1461,7 @@ export function useProgram() {
     user,
     queuedWrites,
     openSessions,
+    runClears,
     runProgramCommand,
     today,
   ]);

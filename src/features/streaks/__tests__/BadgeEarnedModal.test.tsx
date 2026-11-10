@@ -40,7 +40,7 @@ vi.mock("framer-motion", function () {
 // canvas-confetti is lazy-imported in the modal; stub so the celebration
 // path doesn't try to render to a real canvas in jsdom.
 vi.mock("canvas-confetti", function () {
-  return { default: vi.fn() };
+  return { default: Object.assign(vi.fn(), { reset: vi.fn() }) };
 });
 
 import { BadgeEarnedModal } from "../BadgeEarnedModal";
