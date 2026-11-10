@@ -51,16 +51,32 @@ function loadPlugin(): Promise<BackgroundGeolocationPlugin | null> {
   return Promise.resolve(isNativePlatform() ? BackgroundGeolocation : null);
 }
 
+/**
+ * Whether a fix's altitude is real. iOS marks one it could not measure with
+ * a negative vertical accuracy and still sends a number, 0 for a Wi-Fi
+ * fix (CLLocation's `verticalAccuracy`). The web's Geolocation gives null
+ * then, and so does this: a run that started on Wi-Fi fixes and then found
+ * GPS counted the climb from 0 to the street as elevation gained.
+ */
+function hasAltitude(loc: PluginLocation): boolean {
+  return (
+    typeof loc.altitude === "number" &&
+    Number.isFinite(loc.altitude) &&
+    !(typeof loc.altitudeAccuracy === "number" && loc.altitudeAccuracy < 0)
+  );
+}
+
 /** Map a plugin fix to the Web Geolocation shape the pipeline consumes. */
 export function toGeolocationPosition(
   loc: PluginLocation
 ): GeolocationPosition {
+  const altitude = hasAltitude(loc);
   const coords = {
     latitude: loc.latitude,
     longitude: loc.longitude,
     accuracy: loc.accuracy,
-    altitude: loc.altitude,
-    altitudeAccuracy: loc.altitudeAccuracy,
+    altitude: altitude ? loc.altitude : null,
+    altitudeAccuracy: altitude ? loc.altitudeAccuracy : null,
     heading: loc.bearing,
     speed: loc.speed,
     toJSON() {
