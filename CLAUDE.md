@@ -76,7 +76,7 @@ e2e/                    # Playwright specs; screenshot capture specs in e2e/scre
 - **Offline support:** `src/lib/offlineQueue.ts` queues writes when offline
 - **Error boundaries:** `RouteErrorBoundary` (page-level) and `SectionErrorBoundary` (card-level)
 - **Tab preloading:** `BottomNavigation` calls `preloadTab()` (`src/lib/preloadTab.ts`) to load a tab's page as the person reaches for it
-- **Auth routing:** Three route sets — unauthenticated (Login), onboarding incomplete (Onboarding), authenticated (full app)
+- **Auth routing:** Three route sets — unauthenticated (Login), onboarding incomplete (Onboarding), authenticated (full app). Route on `profileLoad` (`auth.tsx`), not on `profile === null`: an account with no profile yet is `missing` and goes to Onboarding, while one whose profile could not be read is `failed` and gets `ProfileUnavailable` (Try again, Sign out), because finishing setup replaces the programme
 - **App version:** Defined via `__APP_VERSION__`, read from `package.json` at build time
 
 ## Pages (src/pages/)
