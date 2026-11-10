@@ -293,7 +293,7 @@ it("keeps the claimed nudge armed when a new day reads the push consent again", 
   const { result, rerender } = renderHook(
     ({ push, key }: { push: boolean | null; key: string }) =>
       useStreakReminderInternal(push, key),
-    { initialProps: { push: false, key: "2026-09-06" } }
+    { initialProps: { push: false as boolean | null, key: "2026-09-06" } }
   );
   await waitFor(() => expect(result.current.loading).toBe(false));
   await waitFor(() =>
