@@ -30,6 +30,7 @@ import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
 import BootStallNotice from "@/components/BootStallNotice";
+import ProfileUnavailable from "@/components/ProfileUnavailable";
 import { Button } from "@/components/ui/Button";
 import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
@@ -412,7 +413,15 @@ class ErrorBoundary extends Component<
 ================================ */
 
 function AppRoutes() {
-  const { user, profile, loading, watchAccountCleanup } = useAuth();
+  const {
+    user,
+    profile,
+    profileLoad,
+    loading,
+    watchAccountCleanup,
+    refreshProfile,
+    signOut,
+  } = useAuth();
   const uid = user?.uid ?? null;
   const deletion = useAccountDeletionStatus(user?.uid);
   /* Email accounts verify after the plan, not before it: onboarding opens
@@ -560,7 +569,14 @@ function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
       <MotionRoot>
-        <SignedInRoutes user={user} profile={profile} deletion={deletion} />
+        <SignedInRoutes
+          user={user}
+          profile={profile}
+          profileUnreadable={profileLoad === "failed"}
+          onRetryProfile={refreshProfile}
+          onSignOut={signOut}
+          deletion={deletion}
+        />
       </MotionRoot>
     </Suspense>
   );
@@ -573,10 +589,17 @@ type AuthState = ReturnType<typeof useAuth>;
 function SignedInRoutes({
   user,
   profile,
+  profileUnreadable,
+  onRetryProfile,
+  onSignOut,
   deletion,
 }: {
   user: NonNullable<AuthState["user"]>;
   profile: AuthState["profile"];
+  /** The profile could not be read and the device holds no copy. */
+  profileUnreadable: boolean;
+  onRetryProfile: () => Promise<void>;
+  onSignOut: () => Promise<void>;
   deletion: ReturnType<typeof useAccountDeletionStatus>;
 }) {
   if (deletion.pending || deletion.completed) {
@@ -589,6 +612,14 @@ function SignedInRoutes({
           <SettingsAccount duringSetup />
         </main>
       </Suspense>
+    );
+  }
+
+  // Before setup: no profile here means one of two things, and only an
+  // account that has none yet belongs in setup (`ProfileLoad`, auth.tsx).
+  if (profileUnreadable) {
+    return (
+      <ProfileUnavailable onRetry={onRetryProfile} onSignOut={onSignOut} />
     );
   }
 
