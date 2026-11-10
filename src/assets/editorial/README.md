@@ -11,6 +11,63 @@ imagery (route scenes, muscle figures) by design. See `GLOSSARY.md` →
 "Editorial imagery" and `src/lib/editorialImages.ts` for the resolution
 logic.
 
+### Provenance found for the unrecorded covers — 2026-11-10
+
+Twelve covers shipped with no source record (first committed in #1631 and
+#1690, July 2026). Ten are now traced to exact free Unsplash photographs,
+each confirmed by aligning the 2400 px download to the shipped file and by
+eye: `space-trail-running` (Lucas Canino), `space-travel-racecations`
+(Andrea Leopardi), `space-london-marathon` (Charles Postiaux),
+`space-great-north-run` (Jack Foster), `space-brighton-marathon` (Rhys
+Kentish), `space-edinburgh-marathon` (Mike Newbry), `space-cardiff-half`
+(Nick Fewings), `space-great-birmingham-run` (Sarah Doffman),
+`space-leeds-10k` (Paul Rigel) and `space-royal-parks-half` (V2F). Records,
+with location evidence, are in
+[`sources-2026-11-10-provenance.json`](./sources-2026-11-10-provenance.json).
+
+`space-the-big-half` and `space-london-10000` were not found by text,
+photographer or image searches. The owner supplied them through ChatGPT
+(owner, 2026-11-10) and keeps them. Still open: nothing in
+`space-royal-parks-half` or its caption shows that it is Hyde Park.
+
+### Cover audit — 2026-11-10
+
+The owner, on Social: the weekly challenge's photo is poor quality, so find a
+better one and check whether any other cover falls below the marathon and
+space covers. All 85 covers were drawn in every band they are used in and
+their darkest flat area checked at 3× brightness. Six were weak. Four race
+and space covers among them are replaced, each with a sharper photograph of
+the same subject. `space-runners` keeps its photograph: the owner kept a
+replacement only where it was clearly better (2026-11-10), and the group
+running towards the camera is sharp enough at card size. `challenge-weekly`
+is not replaced, because challenges move to their own medal art (Soc16) and
+carry no photograph:
+
+| Asset                        | Photographer    | Was                                         | Now                                                    |
+| ---------------------------- | --------------- | ------------------------------------------- | ------------------------------------------------------ |
+| `space-lifters`              | Sven Mieke      | Three people chatting, nobody lifting       | A squat class, three lifters (black and white)         |
+| `space-seville-marathon`     | Taisia Karaseva | Fisheye, bent verticals, empty paving       | Plaza de España, straight and sharp                    |
+| `space-bournemouth-half`     | Jordy Muñoz     | A sun in an orange sky, nothing of the town | Bournemouth Pier with the beach in front               |
+| `space-los-angeles-marathon` | Jeffrey Clayton | Downtown a thin strip on a hazy horizon     | The downtown skyline, palms in front, mountains behind |
+
+Each is a 2400 px Unsplash source, its download registered through the
+Unsplash API, encoded as 1200 × 600 WebP under 120 KB. The race covers' records
+carry their location evidence; none of their captions names the place, so each
+is identified from its landmarks. The rooftop names on the Los Angeles towers
+(2–3 px at card size) are treated as city signage, as the 2026-10-17
+covers below treat theirs. Sources, crops and
+hashes are in
+[`sources-2026-11-10-cover-audit.json`](./sources-2026-11-10-cover-audit.json).
+
+Seven covers are over 120 KB and are kept as they are: `space-royal-parks-half`
+(250 KB), `space-trail-running`, `space-great-north-run`, `space-the-big-half`,
+`space-london-marathon`, `space-london-10000` and `space-edinburgh-marathon`.
+They are dense crowd and city scenes: at 1200 px they reach 120 KB only at
+WebP quality 55 or lower (`space-royal-parks-half` is still 212 KB there),
+which brings back the blotches this audit replaced covers for, and a cover
+loads only with its card. The covers that had no source record are traced in
+the section above.
+
 ### Real Social covers — 2026-10-31
 
 Eight generic challenge and Space covers now use distinct, real Pexels
