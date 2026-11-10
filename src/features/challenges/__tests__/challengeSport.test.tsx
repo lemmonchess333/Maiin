@@ -139,7 +139,7 @@ function renderJoined(
 
 /** The bar's fill: the one child of the track. */
 function barFill(container: HTMLElement): HTMLElement {
-  const fill = container.querySelector(".h-2.bg-muted > div");
+  const fill = container.querySelector(".h-2.track-cut > div");
   expect(fill, "the progress bar renders").not.toBeNull();
   return fill as HTMLElement;
 }

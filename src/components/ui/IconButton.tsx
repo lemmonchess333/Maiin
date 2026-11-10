@@ -66,24 +66,24 @@ const BASE_CLASSES = [
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
     "bg-primary-strong text-primary-foreground hover:bg-primary-strong/90",
-  secondary: "bg-muted text-foreground hover:bg-muted/80",
+  secondary: "bg-muted text-foreground hover:bg-muted/80 chip-edge",
   destructive:
     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
   "destructive-tinted":
-    "bg-destructive/10 text-destructive-strong hover:bg-destructive/20",
+    "bg-destructive/10 text-destructive-strong hover:bg-destructive/20 chip-edge",
   ghost: "bg-transparent text-foreground hover:bg-muted",
   outline: "bg-transparent text-foreground border border-border hover:bg-muted",
   sport: "bg-running-fill text-white",
   // Mirrors Button.tsx — the sport variants resolve via three coral
   // tokens: --running-fill under white, --running/10 as the tint, and
   // --running-strong as the icon colour ON that tint.
-  "sport-tinted": "bg-running/10 text-running-strong",
-  "lifting-tinted": "bg-lifting/10 text-lifting-strong",
+  "sport-tinted": "bg-running/10 text-running-strong chip-edge",
+  "lifting-tinted": "bg-lifting/10 text-lifting-strong chip-edge",
   // Mirrors Button.tsx — nutrition variants resolve via --nutrition /
   // --nutrition-fill / --nutrition-strong. Filled uses the fill step
   // under white; the tint carries the theme-aware text step.
   nutrition: "bg-nutrition-fill text-white",
-  "nutrition-tinted": "bg-nutrition/10 text-nutrition-strong",
+  "nutrition-tinted": "bg-nutrition/10 text-nutrition-strong chip-edge",
   // Mirrors Button.tsx — the foreground fill, white on dark and ink on
   // light.
   neutral: "bg-foreground text-background hover:bg-foreground/90",

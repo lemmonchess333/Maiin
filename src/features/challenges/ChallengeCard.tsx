@@ -452,7 +452,7 @@ export function ChallengeCard({
             return (
               <div className="space-y-2">
                 <div className="relative pt-1 pb-1">
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-2 rounded-full track-cut overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${collPct}%` }}
@@ -528,7 +528,7 @@ export function ChallengeCard({
                 the "You're at …" line beneath while a gap opened above the
                 bar. */}
             <div className="relative pt-1 pb-7">
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div className="h-2 rounded-full track-cut overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{

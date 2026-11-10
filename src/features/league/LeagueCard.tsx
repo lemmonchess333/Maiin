@@ -182,7 +182,7 @@ export default function LeagueCard({ uid }: { uid: string }) {
           </p>
         </div>
         <div
-          className="h-2 overflow-hidden rounded-full bg-muted"
+          className="h-2 overflow-hidden rounded-full track-cut"
           aria-hidden="true"
         >
           <div
@@ -211,7 +211,7 @@ export default function LeagueCard({ uid }: { uid: string }) {
 function JoinedBar({ joined, needed }: { joined: number; needed: number }) {
   return (
     <div
-      className="h-2 overflow-hidden rounded-full bg-muted"
+      className="h-2 overflow-hidden rounded-full track-cut"
       role="progressbar"
       aria-label="People who have joined"
       aria-valuemin={0}

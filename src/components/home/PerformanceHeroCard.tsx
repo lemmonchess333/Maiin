@@ -101,7 +101,13 @@ export default function PerformanceHeroCard({
           copy ? `${copy.headline}. ${copy.sub}` : "Performance — loading"
         }
       >
-        <ProgressRing value={0} size={RING} stroke={STROKE} color="transparent">
+        <ProgressRing
+          value={0}
+          size={RING}
+          stroke={STROKE}
+          color="transparent"
+          cut
+        >
           <span className="text-base font-extrabold font-figure tabular-nums text-muted-foreground">
             —
           </span>
@@ -158,6 +164,7 @@ export default function PerformanceHeroCard({
         size={RING}
         stroke={STROKE}
         color={hue}
+        cut
       >
         <motion.span
           className="text-base font-extrabold font-figure tabular-nums leading-none"

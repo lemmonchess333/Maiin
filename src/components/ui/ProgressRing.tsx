@@ -16,6 +16,12 @@ interface ProgressRingProps {
    *  card in both themes (`bg-muted` measures 1.06:1 against the card,
    *  which is why the macro rings moved off it). */
   trackColor?: string;
+  /** Cut the groove into the card the ring sits on (DESIGN_GUIDE §14o).
+   *  In the dark theme the track is then darker than the card, with a
+   *  hairline of light under it; the light theme draws the same groove
+   *  as without it. For a ring on a card: on the page there is no darker
+   *  to cut to. A `trackColor` wins over it. */
+  cut?: boolean;
   /** Centre content — the number the ring is about. */
   children?: ReactNode;
   className?: string;
@@ -39,7 +45,8 @@ export default function ProgressRing({
   size,
   stroke,
   color,
-  trackColor = "hsl(var(--muted-foreground) / 0.22)",
+  trackColor,
+  cut = false,
   children,
   className,
 }: ProgressRingProps) {
@@ -47,6 +54,7 @@ export default function ProgressRing({
   const circumference = 2 * Math.PI * r;
   const clamped = Math.min(1, Math.max(0, Number.isFinite(value) ? value : 0));
   const reduce = useReducedMotion();
+  const cutIn = cut && trackColor === undefined;
   return (
     <div
       className={cn("relative flex-shrink-0", className)}
@@ -56,15 +64,38 @@ export default function ProgressRing({
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
-        className="-rotate-90"
+        className={cn("-rotate-90", cutIn && "overflow-visible")}
         aria-hidden="true"
       >
+        {cutIn && (
+          /* The light a cut groove catches: the track's own shape one
+             pixel lower, under it, so it shows only below the ring's
+             outer edge and along the top of the island inside. The svg
+             is turned a quarter, which makes its -x the screen's down,
+             and the lowest pixel falls outside the viewBox, hence the
+             visible overflow. */
+          <circle
+            data-ring-lip=""
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke="var(--ds-ring-lip)"
+            strokeWidth={stroke}
+            transform="translate(-1 0)"
+          />
+        )}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={trackColor}
+          stroke={
+            trackColor ??
+            (cutIn
+              ? "var(--ds-ring-track)"
+              : "hsl(var(--muted-foreground) / 0.22)")
+          }
           strokeWidth={stroke}
         />
         {clamped > 0 && (

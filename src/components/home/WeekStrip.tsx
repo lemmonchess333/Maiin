@@ -125,14 +125,18 @@ function trainingLabel(
   return run;
 }
 
+/* A segment that holds nothing yet is a track (DESIGN_GUIDE §14o): in the
+ * dark theme it is cut into the week card, so a done day's colour sits in
+ * something. `track-cut` equals `bg-muted` in the light theme, so only
+ * the states with no fill there name the theme. */
 const STATE_CLASSES: Record<WeekDayState, string> = {
   "lift-done": "bg-lifting",
   "run-done": "bg-running",
   "both-done": "",
-  planned: "border-2",
-  missed: "border-2 border-dashed border-foreground/30",
-  rest: "bg-muted",
-  before: "bg-muted/50",
+  planned: "border-2 dark:track-cut",
+  missed: "border-2 border-dashed border-foreground/30 dark:track-cut",
+  rest: "track-cut",
+  before: "bg-muted/50 dark:bg-track/60 dark:shadow-[var(--ds-shadow-track)]",
 };
 
 /** A planned day's outline, in the colour of what it plans. A day with
