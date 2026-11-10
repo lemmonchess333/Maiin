@@ -132,7 +132,11 @@ describe("the league result", () => {
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     // Its confetti goes with it, so none falls on the page underneath.
-    expect(vi.mocked(confetti.reset)).toHaveBeenCalledTimes(1);
+    // The reveal stops it as it unmounts, and React runs that cleanup in
+    // a task after the one that takes the dialog out of the page.
+    await waitFor(() =>
+      expect(vi.mocked(confetti.reset)).toHaveBeenCalledTimes(1)
+    );
 
     cleanup();
     renderGate();
