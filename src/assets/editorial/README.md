@@ -11,19 +11,38 @@ imagery (route scenes, muscle figures) by design. See `GLOSSARY.md` →
 "Editorial imagery" and `src/lib/editorialImages.ts` for the resolution
 logic.
 
-### Weekly cover re-cropped — 2026-11-10
+### Cover audit — 2026-11-10
 
-`challenge-weekly` is the same Morrow Solutions photograph, cropped again
-from the 2400 px original and encoded at quality 90. The earlier file was a
-centre crop at quality 78: the weekly card's band cut off the lifter's head,
-and the dark wall broke into flat blotches. The new crop is 2:1 with the head
-near the top, so a centred band holds the head, the bar and both hands at
-every card size. It is 74 KB, 1200 × 600. Crop, hashes and settings are in
-[`sources-2026-11-10-weekly-recrop.json`](./sources-2026-11-10-weekly-recrop.json).
+The owner, on Social: the weekly challenge's photo is poor quality, so find a
+better one and check whether any other cover falls below the marathon and
+space covers. All 85 covers were drawn in every band they are used in and
+their darkest flat area checked at 3× brightness. Six were weak. The five race
+and space covers among them are replaced, each with a sharper photograph of
+the same subject; the sixth, `challenge-weekly`, is not, because challenges
+move to their own medal art (Soc16) and carry no photograph:
 
-A dark photograph with little texture comes out small at any quality, so
-judge an encode by its 3× brightness check, not by its size next to the
-others.
+| Asset                        | Photographer    | Was                                         | Now                                                    |
+| ---------------------------- | --------------- | ------------------------------------------- | ------------------------------------------------------ |
+| `space-lifters`              | Sven Mieke      | Three people chatting, nobody lifting       | A squat class, three lifters (black and white)         |
+| `space-runners`              | Nathan Nuyda    | Soft, flat light, the lead runner blurred   | Three runners on a tree-lined path in low sun          |
+| `space-seville-marathon`     | Taisia Karaseva | Fisheye, bent verticals, empty paving       | Plaza de España, straight and sharp                    |
+| `space-bournemouth-half`     | Jordy Muñoz     | A sun in an orange sky, nothing of the town | Bournemouth Pier with the beach in front               |
+| `space-los-angeles-marathon` | Jeffrey Clayton | Downtown a thin strip on a hazy horizon     | The downtown skyline, palms in front, mountains behind |
+
+Each is a 2400 px Unsplash source, its download registered through the
+Unsplash API, encoded as 1200 × 600 WebP under 120 KB. The race covers' records
+carry their location evidence; none of their captions names the place, so each
+is identified from its landmarks. The rooftop names on the Los Angeles towers
+(2–3 px at card size) are treated as city signage, as the 2026-10-17
+covers below treat theirs. Sources, crops and
+hashes are in
+[`sources-2026-11-10-cover-audit.json`](./sources-2026-11-10-cover-audit.json).
+
+Left for later: seven covers are over 120 KB (`space-royal-parks-half` at
+250 KB, `space-trail-running`, `space-great-north-run`, `space-the-big-half`,
+`space-london-marathon`, `space-london-10000`, `space-edinburgh-marathon`) and
+want re-encoding from their sources, and 14 covers have no source record whose
+hash matches the file.
 
 ### Real Social covers — 2026-10-31
 
@@ -302,6 +321,6 @@ All are landscape WebP at 1200 × 753, original colour, below 120 KB, and were
 checked at 3x brightness. The kettlebell's moulded "24KG" is its weight, not a
 maker's mark. The Dugald Stewart Monument's carved name on Calton Hill is
 faint at 3x and treated like the city signage above. Northleg asks for a
-credit link (northleg.com); the Unsplash License does not require one.
-`challenge-weekly` has since been re-cropped (2026-11-10, at the top of this
-file) because this crop lost the lifter's head in the card's band.
+credit link (northleg.com); the Unsplash License does not require one. In the
+challenge card's 361 × 112 band `challenge-weekly` loses the lifter's head;
+the bar and back still read.

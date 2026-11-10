@@ -1,0 +1,181 @@
+{
+  "updatedOn": "2026-11-10",
+  "notes": "Cover audit, 2026-11-10. The owner, on Social: the weekly challenge's photo is poor quality; find a better one and check whether any others are low quality, at the marathon and space covers' bar. All 85 covers were drawn in every band they are used in (object-fit: cover, 2x) and their darkest flat area checked at 3.25x brightness. Six were weak. Five, the race and space covers, are replaced here, each from a 2400 px Unsplash source whose download was registered through the Unsplash API, encoded as 1200 x 600 WebP under 120,000 bytes, original colour, no retouching. Each record says what it replaces and why. The earlier records of the replaced files stay in their own manifests as history. The sixth, challenge-weekly, is not replaced: challenges move to their own medal art (Soc16), so no challenge carries a photograph.",
+  "images": [
+    {
+      "asset": "space-lifters.webp",
+      "sourceUrl": "https://unsplash.com/photos/three-person-lifting-barbels-Lx_GDv7VA9M",
+      "downloadUrl": "https://images.unsplash.com/photo-1554284126-aa88f22d8b74?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Sven Mieke",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "content": "Black-and-white: three people back-squatting together in a class, the nearest woman sharp with the plate in front, two others behind. Real licensed editorial photograph; not Tropos members.",
+      "subject": "Black-and-white: three people back-squatting together in a class, the nearest woman sharp with the plate in front, two others behind. Real licensed editorial photograph; not Tropos members.",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool before fetching.",
+      "sourceSha256": "df5d2ddf11a64e4e0bf1f89ec5866c5396eb422998239668210657e5e5c7e483",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1401
+      },
+      "crop": {
+        "left": 0,
+        "top": 60,
+        "width": 2400,
+        "height": 1200
+      },
+      "processing": "Crop, Lanczos resize to 1200 x 600, WebP (Pillow) method 6 at the recorded quality, the highest that fits 120,000 bytes from a start of 86-90. Original colour, no retouching.",
+      "bands": "Checked centred (object-fit: cover) in every band the stem is drawn in, at 2x, and its darkest flat area at 3x brightness: no blotches, no marks.",
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 88,
+        "method": 6,
+        "bytes": 55314,
+        "sha256": "2da58c9cc4505020112f38fe1e119c51e1d9464fc81dba44769cb30a97c0af13"
+      },
+      "marksCheck": "Checked at 3.25x: the plate's moulded '5KG' is its weight; no apparel or equipment marks.",
+      "replaces": "space-lifters (Mikhail Nilov / Pexels, three people chatting after training). Soft (Pexels tinysrgb source: Laplacian variance 143, half that of a sharp cover), no lifting in frame, and the standing woman's face is cut off by the top of the 393x176 hero band. The new one is people lifting together, sharp, and holds in the 160x136 card and the hero."
+    },
+    {
+      "asset": "space-runners.webp",
+      "sourceUrl": "https://unsplash.com/photos/three-people-jogging-on-a-sunny-sidewalk-Lu98ARdCHAs",
+      "downloadUrl": "https://images.unsplash.com/photo-1762169786069-be5b81cd42b9?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Nathan Nuyda",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "content": "Three runners from behind on a tree-lined path in low autumn sun, long shadows. Real licensed editorial photograph; not Tropos members.",
+      "subject": "Three runners from behind on a tree-lined path in low autumn sun, long shadows. Real licensed editorial photograph; not Tropos members.",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool before fetching.",
+      "sourceSha256": "298e665001fe055395a24232a3ea8a0b98b5a89b6917e125941ca9e8ca212a33",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1614
+      },
+      "crop": {
+        "left": 362,
+        "top": 620,
+        "width": 1560,
+        "height": 780
+      },
+      "processing": "Crop, Lanczos resize to 1200 x 600, WebP (Pillow) method 6 at the recorded quality, the highest that fits 120,000 bytes from a start of 86-90. Original colour, no retouching.",
+      "bands": "Checked centred (object-fit: cover) in every band the stem is drawn in, at 2x, and its darkest flat area at 3x brightness: no blotches, no marks.",
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 74,
+        "method": 6,
+        "bytes": 115768,
+        "sha256": "579bab2a151553e30b77eac5eeb1408a5da896e9783c43f7c6d9cbe53b4d4f99"
+      },
+      "marksCheck": "Checked at 3x: no apparel marks on the runners' backs. Two parked cars at the left of the source (a Toyota grille badge and a plate frame on one) are cropped out: the crop starts at x 362, past the badge at x ~330.",
+      "replaces": "space-runners (cottonbro studio / Pexels, five runners toward the camera in flat grey light). Soft source (Laplacian variance 201) and the lead runner's face is motion-blurred at the centre of every band. Considered and rejected: sne058DdMVk (big group run, an Odlo logo on a red jacket at the centre) and c59hEeerAaI (beach group, Nike swoosh on a shirt)."
+    },
+    {
+      "asset": "space-seville-marathon.webp",
+      "sourceUrl": "https://unsplash.com/photos/a-large-building-with-a-fountain-in-front-of-it-3purECWQ47I",
+      "downloadUrl": "https://images.unsplash.com/photo-1688404808661-92f72f2ea258?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Taisia Karaseva",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "subject": "Plaza de España, Seville, from the upper gallery: the semicircular brick building, the canal with its tiled bridges, the Vicente Traver fountain and the north tower, under broken cloud.",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool before fetching.",
+      "sourceSha256": "7fae7f459eb0fe28a87c667578720df26a9b9c9490440d3a79a2f310b0530916",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1590
+      },
+      "crop": {
+        "left": 0,
+        "top": 20,
+        "width": 2400,
+        "height": 1200
+      },
+      "processing": "Crop, Lanczos resize to 1200 x 600, WebP (Pillow) method 6 at the recorded quality, the highest that fits 120,000 bytes from a start of 86-90. Original colour, no retouching.",
+      "bands": "Checked centred (object-fit: cover) in every band the stem is drawn in, at 2x, and its darkest flat area at 3x brightness: no blotches, no marks.",
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 68,
+        "method": 6,
+        "bytes": 118326,
+        "sha256": "1a53889a41b12c1b2e9eadeb4e03624ba7bf31ff7262f22258a3e1b03a16bc4f"
+      },
+      "marksCheck": "No signage or marks.",
+      "replaces": "space-seville-marathon (Jose Manuel Esp, fisheye view of the same plaza). Bent verticals, the towers pushed to the band edges, and empty paving plus two tourists filling the centre of every band; soft (Laplacian variance 169). Same landmark, now straight and sharp, with the building across the whole band.",
+      "locationEvidence": "The caption names no place ('a large building with a fountain in front of it'). Identified from the photograph: Plaza de España in the Parque de María Luisa, Seville - the semicircular Regionalist building with its two towers, the moat crossed by tiled bridges, the central Vicente Traver fountain and the striped paving of the plaza. Returned by a search for 'Plaza de España Seville'; the same place as the cover it replaces."
+    },
+    {
+      "asset": "space-bournemouth-half.webp",
+      "sourceUrl": "https://unsplash.com/photos/a-pier-with-people-on-it-next-to-a-large-body-of-water-Yup5PSo9OiE",
+      "downloadUrl": "https://images.unsplash.com/photo-1658330800032-3d1fd61e70b8?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Jordy Muñoz",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "subject": "Bournemouth Pier from the beach on a summer evening: the pier buildings, the PierZip tower and the helter-skelter, surf and people on the sand.",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool before fetching.",
+      "sourceSha256": "b42fce70f46523edebbb8a7c4ba9b53a27deca10d5133fd214ef2244084874f8",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1350
+      },
+      "crop": {
+        "left": 0,
+        "top": 80,
+        "width": 2400,
+        "height": 1200
+      },
+      "processing": "Crop, Lanczos resize to 1200 x 600, WebP (Pillow) method 6 at the recorded quality, the highest that fits 120,000 bytes from a start of 86-90. Original colour, no retouching.",
+      "bands": "Checked centred (object-fit: cover) in every band the stem is drawn in, at 2x, and its darkest flat area at 3x brightness: no blotches, no marks.",
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 76,
+        "method": 6,
+        "bytes": 110134,
+        "sha256": "83f39b462e37dc93aec70d4e6ee2ad519a48be02302ad56d41170e25edd61fe3"
+      },
+      "marksCheck": "The pier building's own RockReef / 'BOOK A...' attraction sign is place signage (like ARNDALE in the Manchester cover); about 3 px tall at 1200 px.",
+      "replaces": "space-bournemouth-half (Tomas Kostadinov, a sun in an orange sky). Nothing in any band says Bournemouth - the shoreline walkers are specks under the scrim - and the frame has almost no detail (22 KB, Laplacian variance 52, faint blocking in the sun's gradient).",
+      "locationEvidence": "The caption names no place. Identified from the photograph: Bournemouth Pier - its pier-head building carrying the RockReef sign, the PierZip zip-wire tower and the striped helter-skelter at the head, above the town beach. Returned by a search for 'Bournemouth'. Bournemouth 5K (Boscombe Pier) and 10K (aerial of this pier) covers are different photographs."
+    },
+    {
+      "asset": "space-los-angeles-marathon.webp",
+      "sourceUrl": "https://unsplash.com/photos/a-view-of-a-city-with-mountains-in-the-background-yXq6IEWoOcI",
+      "downloadUrl": "https://images.unsplash.com/photo-1649080832349-06b15253c27c?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Jeffrey Clayton",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "subject": "Downtown Los Angeles skyline across the residential flats, palm trees in front and the snow-capped San Gabriel Mountains behind, under cloud.",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool before fetching.",
+      "sourceSha256": "3482eec331ee9fbf916948d2e5fcc25a903910dd5207e229b5df66819eb3f199",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1438
+      },
+      "crop": {
+        "left": 0,
+        "top": 120,
+        "width": 2400,
+        "height": 1200
+      },
+      "processing": "Crop, Lanczos resize to 1200 x 600, WebP (Pillow) method 6 at the recorded quality, the highest that fits 120,000 bytes from a start of 86-90. Original colour, no retouching.",
+      "bands": "Checked centred (object-fit: cover) in every band the stem is drawn in, at 2x, and its darkest flat area at 3x brightness: no blotches, no marks.",
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 80,
+        "method": 6,
+        "bytes": 115058,
+        "sha256": "808b47da828c91a759439907f5b8c9cf76c09c93280f9b5f2011745b2eb67550"
+      },
+      "marksCheck": "Rooftop corporate signage on the towers (e.g. 'City National', 'Deloitte') is incidental skyline signage, 2-3 px tall at 1200 px - treated like the city signage the README already accepts. Flag it if the owner reads that rule more strictly.",
+      "replaces": "space-los-angeles-marathon (Bobby Thapa, hazy sprawl from the hills). Downtown is a strip about a tenth of the band high on the horizon: a tiny subject that does not read as Los Angeles at card size; encoded at q52.",
+      "locationEvidence": "The caption names no place ('a view of a city with mountains in the background'). Identified from the photograph: the downtown Los Angeles skyline - the Wilshire Grand Center's sail-shaped crown, the U.S. Bank Tower's stepped crown and the City National Plaza towers - in front of the San Gabriel Mountains, with palms in the foreground. Returned by a search for 'downtown Los Angeles skyline'."
+    }
+  ]
+}
