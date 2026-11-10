@@ -296,6 +296,19 @@ buttons together.
       tap Resume and run on. Passing: the duration does not jump, and the
       saved run's time is the moving time, with the stop counted once.
 
+## A flat run counts no climb from its first fixes (2026-11-10)
+
+On a phone an altitude iOS has not measured comes through as 0 with a
+negative vertical accuracy, and the run keeps fixes up to 150 m, so a run
+that began on Wi-Fi fixes counted the climb from 0 to the street. The
+native source now reads it as no altitude, as the web's Geolocation does
+(`nativeLocationSource.ts`). The unit suite feeds the plugin's shape; only
+a phone gives a Wi-Fi fix. Needs a build with the location fix (#3163).
+
+- [ ] **A run started indoors.** On an iPhone, start a run inside, walk
+      out and run a flat kilometre. Passing: the summary's elevation is a
+      few metres at most, not the street's height above sea level.
+
 ## The streak's days, from the flame (Mob1 call 4, 2026-10-27)
 
 Home's flame opens a sheet: the month's logged days filled in purple,
