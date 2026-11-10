@@ -3975,3 +3975,27 @@ device shows.
       Safari's Web Inspector Timelines over the device), sit on Home for
       10 seconds with the water tile on screen. Passing: no repeating
       layout or paint entries from the water tile.
+
+## Touches that end early, or never end (2026-11-10)
+
+#3131 fixed how a few gestures treat a finger that lets go early, stays
+down, or is taken by the system: on a phone a released press fires
+pointerup, then pointerleave, then click, and an incoming call or a
+system gesture ends a touch with touchcancel instead of touchend. The
+unit suites replay those orders; only a phone fires them for real.
+
+- [ ] **Let go of Hold to finish halfway.** On a TestFlight build, during
+      a run, press Hold to finish and let go before the ring fills.
+      Passing: the ring empties and the run carries on; a full hold still
+      finishes it.
+- [ ] **A long press held on.** Hold an exercise row on Train for a full
+      second before lifting, and hold a saved food in Food's Quick add for
+      a second. Passing: Train's menu opens and the exercise's history does
+      not; the food is removed (with Undo) and nothing is logged.
+- [ ] **Pinch, then tap.** Open a post's photo, pinch it bigger, lift one
+      finger and then the other without moving it, then tap once. Passing:
+      the photo stays zoomed; a second quick tap zooms it back out.
+- [ ] **A touch the system takes.** Start a pull to refresh on Food, or a
+      swipe on an exercise row in the programme editor, and with the finger
+      still down pull Control Centre or take a call. Passing: the pull
+      chip goes back up with nothing refreshed, and the row slides home.
