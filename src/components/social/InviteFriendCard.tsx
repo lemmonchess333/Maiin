@@ -13,16 +13,26 @@
  * on the account (`profile.inviteCode`), so after that it shows at once. A
  * restricted account gets none: the card's actions are off, as People's
  * other ways of reaching people are.
+ *
+ * New code renews it (renewInviteCode): the old link and code stop working
+ * at once, as a Circle owner's New code does. A block renews it too, when
+ * the person blocked joined from it (Soc15 STATUS 2026-11-10), and the
+ * profile here is read once, so the card asks the server for the code each
+ * time People opens rather than share one that no longer works.
  */
 import { useEffect, useState } from "react";
-import { Copy, Share } from "lucide-react";
+import { Copy, RefreshCw, Share } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
 import { THEME } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { appInviteUrl } from "@/lib/publicLinks";
 import { formatInviteCode, normaliseInviteCode } from "@/lib/inviteCode";
-import { fetchMyInviteCode, INVITE_CODE_UNAVAILABLE } from "@/lib/invites";
+import {
+  fetchMyInviteCode,
+  INVITE_CODE_UNAVAILABLE,
+  renewMyInviteCode,
+} from "@/lib/invites";
 
 export default function InviteFriendCard({
   active,
@@ -38,13 +48,14 @@ export default function InviteFriendCard({
     normaliseInviteCode(profile?.inviteCode)
   );
   const [fetching, setFetching] = useState(false);
+  const [renewing, setRenewing] = useState(false);
 
-  /* The code shows as soon as People opens: made once, on the first open
-     after setup, and read from the profile after that (the server returns
-     the same code to every ask). A failure leaves the line out; Share asks
-     again. */
+  /* The code shows as soon as People opens, from the profile, and the
+     server's answer replaces it: a block may have renewed it since the
+     profile was read. Made on the first open after setup. A failure keeps
+     the profile's; Share asks again when there is none. */
   useEffect(() => {
-    if (!active || disabled || code) return;
+    if (!active || disabled) return;
     let live = true;
     fetchMyInviteCode()
       .then((next) => {
@@ -56,7 +67,7 @@ export default function InviteFriendCard({
     return () => {
       live = false;
     };
-  }, [active, disabled, code]);
+  }, [active, disabled]);
 
   const ensureCode = async (): Promise<string | null> => {
     if (code) return code;
@@ -93,6 +104,18 @@ export default function InviteFriendCard({
       toast.success("Invite link copied");
     } catch {
       toast.error("Couldn't copy the invite link. Try again.");
+    }
+  };
+
+  const renew = async () => {
+    setRenewing(true);
+    try {
+      setCode(await renewMyInviteCode());
+      toast.success("New invite code. The old one no longer works.");
+    } catch {
+      toast.error("Couldn't make a new code. Try again.");
+    } finally {
+      setRenewing(false);
     }
   };
 
@@ -152,6 +175,14 @@ export default function InviteFriendCard({
             leftIcon={<Copy className="size-4" aria-hidden="true" />}
           >
             Copy code
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => void renew()}
+            loading={renewing}
+            leftIcon={<RefreshCw className="size-4" aria-hidden="true" />}
+          >
+            New code
           </Button>
         </div>
       )}

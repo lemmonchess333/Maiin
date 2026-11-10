@@ -8983,6 +8983,11 @@ exports.onFollowRequestCreated = functions
  * On every write, and each delivery sets the row to what the block is now,
  * read in the transaction that writes it, so a retry or a delivery out of
  * order changes nothing that is already right.
+ *
+ * A block of someone who joined from the blocker's invite also renews the
+ * blocker's code (lib/inviteCodes.js renewInviteCodeAfterBlock), so the
+ * person blocked cannot make a new account and join from it again. Read
+ * against the block and the code's age, so a retry renews nothing twice.
  */
 exports.onBlockWritten = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -8996,6 +9001,16 @@ exports.onBlockWritten = functions
       blockedUid,
     });
     functions.logger.info("onBlockWritten.reconciled", { result });
+    const invite = await inviteCodes.renewInviteCodeAfterBlock({
+      firestore: admin.firestore(),
+      blockerUid,
+      blockedUid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    if (invite.renewed)
+      functions.logger.info("onBlockWritten.inviteCodeRenewed", {
+        blockerUid,
+      });
     return null;
   });
 
@@ -9205,6 +9220,43 @@ exports.getInviteCode = functions
     }
     try {
       const { code } = await inviteCodes.getOrCreateInviteCode({
+        firestore: admin.firestore(),
+        uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { code };
+    } catch (err) {
+      throw mapInviteError(err);
+    }
+  });
+
+/**
+ * renewInviteCode — the caller's new invite code (Soc15 STATUS 2026-11-10):
+ * the old one stops working at once, as a Circle owner's New code does. A
+ * restricted account gets none, as with getInviteCode: a code reaches the
+ * people who use it. Five a day: a code is renewed when it went somewhere
+ * it should not have, not to reset its daily cap.
+ */
+exports.renewInviteCode = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
+    if (await isRateLimited(uid, "inviteCodeRenew", 5, 86_400_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "You've made a few new codes today. Try again tomorrow."
+      );
+    }
+    try {
+      const { code } = await inviteCodes.renewInviteCode({
         firestore: admin.firestore(),
         uid,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
