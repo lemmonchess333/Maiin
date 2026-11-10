@@ -20,7 +20,9 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
-vi.mock("canvas-confetti", () => ({ default: vi.fn() }));
+vi.mock("canvas-confetti", () => ({
+  default: Object.assign(vi.fn(), { reset: vi.fn() }),
+}));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn(), info: vi.fn() },
@@ -101,6 +103,7 @@ beforeEach(() => {
   resetFirestore();
   remove(scopedKey("leagueReveals", UID));
   vi.mocked(confetti).mockClear();
+  vi.mocked(confetti.reset).mockClear();
   reduce = false;
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches: query.includes("prefers-reduced-motion") ? reduce : false,
@@ -124,9 +127,12 @@ describe("the league result", () => {
     expect(dialog.textContent).toContain("100 points");
     expect(revealedLeagueWeeks(UID)).toEqual([LAST_WEEK]);
     await waitFor(() => expect(vi.mocked(confetti)).toHaveBeenCalled());
+    expect(vi.mocked(confetti.reset)).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    // Its confetti goes with it, so none falls on the page underneath.
+    expect(vi.mocked(confetti.reset)).toHaveBeenCalledTimes(1);
 
     cleanup();
     renderGate();

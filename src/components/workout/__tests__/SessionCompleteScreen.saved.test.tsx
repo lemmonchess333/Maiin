@@ -63,7 +63,7 @@ vi.mock("@/components/share/ShareCardSheet", () => ({
   },
 }));
 
-const confetti = vi.hoisted(() => vi.fn());
+const confetti = vi.hoisted(() => Object.assign(vi.fn(), { reset: vi.fn() }));
 vi.mock("canvas-confetti", () => ({ default: confetti }));
 
 import SessionCompleteScreen from "../SessionCompleteScreen";
@@ -367,6 +367,36 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
       />
     );
     await waitFor(() => expect(confetti).toHaveBeenCalledTimes(1));
+  });
+
+  it("takes its confetti with it when the screen closes", async () => {
+    confetti.mockClear();
+    confetti.reset.mockClear();
+    motionPref.reduce = false;
+    const view = render(
+      <SessionCompleteScreen
+        {...screenProps({ saved: true, moments: [{ kind: "firstSession" }] })}
+      />
+    );
+    await waitFor(() => expect(confetti).toHaveBeenCalledTimes(1));
+    expect(confetti.reset).not.toHaveBeenCalled();
+    view.unmount();
+    expect(confetti.reset).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears nothing when it closes before any was thrown", async () => {
+    confetti.mockClear();
+    confetti.reset.mockClear();
+    motionPref.reduce = false;
+    const view = render(
+      <SessionCompleteScreen
+        {...screenProps({ saved: true, moments: [{ kind: "firstSession" }] })}
+      />
+    );
+    view.unmount();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(confetti).not.toHaveBeenCalled();
+    expect(confetti.reset).not.toHaveBeenCalled();
   });
 
   it("rewards a runner's first workout as a first, though its post claims none", () => {
