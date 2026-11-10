@@ -82,7 +82,7 @@ class BuildModeTests(unittest.TestCase):
         info = {"CFBundleIdentifier": self.companion, verifier.GATE: gate, **health}
         (self.iphone / "Info.plist").write_bytes(plistlib.dumps(info))
 
-    def write_watch(self, gate, companion=None):
+    def write_watch(self, gate, companion=None, background=("workout-processing",)):
         watch = self.iphone / "Watch" / "TroposWatch.app"
         watch.mkdir(parents=True, exist_ok=True)
         info = {
@@ -90,6 +90,8 @@ class BuildModeTests(unittest.TestCase):
             "WKCompanionAppBundleIdentifier": companion or self.companion,
             verifier.GATE: gate,
         }
+        if background is not None:
+            info["WKBackgroundModes"] = list(background)
         (watch / "Info.plist").write_bytes(plistlib.dumps(info))
         return watch
 
@@ -146,6 +148,23 @@ class BuildModeTests(unittest.TestCase):
         self.write_watch("YES", companion="com.other.app")
         with self.assertRaisesRegex(ValueError, "companion"):
             self.inspect("YES", signed=False)
+
+    def test_a_pilot_watch_app_keeps_its_workout_running_with_the_wrist_down(self):
+        self.write_iphone("YES", PILOT_HEALTH)
+        self.write_watch("YES", background=None)
+        with self.assertRaisesRegex(ValueError, "workout-processing"):
+            self.inspect("YES", signed=False)
+        self.write_watch("YES", background=("remote-notification",))
+        with self.assertRaisesRegex(ValueError, "workout-processing"):
+            self.inspect("YES", signed=False)
+        self.write_watch("YES")
+        self.inspect("YES", signed=False)
+
+    def test_the_project_watch_app_declares_it(self):
+        info = plistlib.loads(
+            (Path(__file__).resolve().parents[1] / "ios/App/TroposWatch/Info.plist").read_bytes()
+        )
+        verifier.validate_watch_background(info)
 
     def test_a_pilot_build_needs_both_gates_and_the_expanded_health_text(self):
         self.write_iphone("YES", PILOT_HEALTH)

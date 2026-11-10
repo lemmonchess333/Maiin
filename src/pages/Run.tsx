@@ -103,6 +103,7 @@ import type { SavedRouteSource } from "../lib/savedRoutes";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useHeartRate } from "../hooks/useHeartRate";
 import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
+import { useWatchRunSwitch } from "@/hooks/useWatchRunSwitch";
 import { isWatchRunLocallyDisabled } from "@/lib/connectedTrainingPrefs";
 import {
   beginMoving,
@@ -449,6 +450,7 @@ export default function Run() {
     sessionId: activeSessionId,
     uid: user?.uid,
   });
+  useWatchRunSwitch(user?.uid, watchEligible);
   const watchEligibleRef = useRef(false);
   useEffect(() => {
     if (!watchEligible && watchEligibleRef.current && activeSessionId)

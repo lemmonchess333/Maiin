@@ -29,6 +29,15 @@ def validate_watch_identity(info, bundle_id, companion_id):
         raise ValueError("The Watch app does not name the expected iPhone companion.")
 
 
+def validate_watch_background(info):
+    # A run's heart rate comes from an HKWorkoutSession, which keeps the
+    # Watch app running with the wrist down only in the Workout Processing
+    # background mode; without it the samples stop until the app is raised.
+    modes = info.get("WKBackgroundModes")
+    if not isinstance(modes, list) or "workout-processing" not in modes:
+        raise ValueError("The Watch app needs the workout-processing background mode.")
+
+
 def validate_signed_watch(entitlements, profile, info, bundle_id, companion_id):
     validate_watch_identity(info, bundle_id, companion_id)
     signed_id = entitlements.get("application-identifier")
@@ -112,6 +121,7 @@ def inspect_build(
         raise ValueError("Expected exactly one embedded Watch app in the pilot build.")
     watch_info = read_plist(apps[0] / "Info.plist")
     validate_watch_identity(watch_info, bundle_id, companion_id)
+    validate_watch_background(watch_info)
     if signed:
         inspect_signed_watch(apps[0], bundle_id, companion_id, runner)
     validate_connected_training_flags(iphone_info, watch_info, "YES")

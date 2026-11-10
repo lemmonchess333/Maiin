@@ -22,6 +22,10 @@
     <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>WKApplication</key>
     <true/>
+    <key>WKBackgroundModes</key>
+    <array>
+        <string>workout-processing</string>
+    </array>
     <key>WKCompanionAppBundleIdentifier</key>
     <string>com.tropos.app</string>
     <key>TroposConnectedTrainingEnabled</key>
