@@ -16,7 +16,7 @@
  *
  * New code renews it (renewInviteCode): the old link and code stop working
  * at once, as a Circle owner's New code does. A block renews it too, when
- * the person blocked joined from it (Soc15 STATUS 2026-11-10), and the
+ * the person blocked joined from it (Soc15), and the
  * profile here is read once, so the card asks the server for the code each
  * time People opens rather than share one that no longer works.
  */

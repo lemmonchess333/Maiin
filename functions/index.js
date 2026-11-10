@@ -9231,7 +9231,7 @@ exports.getInviteCode = functions
   });
 
 /**
- * renewInviteCode — the caller's new invite code (Soc15 STATUS 2026-11-10):
+ * renewInviteCode — the caller's new invite code (Soc15):
  * the old one stops working at once, as a Circle owner's New code does. A
  * restricted account gets none, as with getInviteCode: a code reaches the
  * people who use it. Five a day: a code is renewed when it went somewhere

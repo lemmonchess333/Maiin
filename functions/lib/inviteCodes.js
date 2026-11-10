@@ -46,7 +46,7 @@
  * notice for an instant two-way follow is the callable's, after the commit.
  *
  * The redemption also stamps `invitedBy` (the inviter's uid) beside
- * `invitedAt`. A code is renewed (Soc15 STATUS 2026-11-10): by its owner at
+ * `invitedAt`. A code is renewed (Soc15): by its owner at
  * any time (renewInviteCode, the card's New code), and by itself when its
  * owner blocks someone who joined from it (renewInviteCodeAfterBlock, run by
  * onBlockWritten). The old code's document goes, so a link shared before

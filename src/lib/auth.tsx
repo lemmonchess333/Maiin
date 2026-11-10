@@ -449,7 +449,7 @@ export interface UserProfileSocial {
   invitedAt?: unknown;
   /** Whose invite this account joined from (their uid), stamped with
    *  `invitedAt`: a block of this account by that person renews their code
-   *  (Soc15 STATUS 2026-11-10). Server-written by redeemInvite. */
+   *  (Soc15). Server-written by redeemInvite. */
   invitedBy?: string;
   /** LEGACY (share composer superseded these, #1416): the saved share
    *  default decides auto-posting now — `shareDefaults` above. Nothing has
