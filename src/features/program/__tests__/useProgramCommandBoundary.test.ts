@@ -135,7 +135,12 @@ afterEach(() => {
 });
 
 import { useProgram } from "../useProgram";
-import { __resetCommandOutboxForTests, outboxLength, enqueueCommand, MAX_OUTBOX_ENTRIES } from "../commandOutbox";
+import {
+  __resetCommandOutboxForTests,
+  outboxLength,
+  enqueueCommand,
+  MAX_OUTBOX_ENTRIES,
+} from "../commandOutbox";
 import { addedExerciseWeight } from "../startingLoads";
 
 const PROGRAM = "users/test-user-1/programState/current";
@@ -192,8 +197,10 @@ const names = (hook: { result: { current: { programState: unknown } } }) =>
     (e) => e.name
   );
 
+/** As the SDK throws one with no body to read: its message is the bare
+ *  code ("internal" for a request that got no answer). */
 const callableError = (code: string) =>
-  Object.assign(new Error(code), { code });
+  Object.assign(new Error(code.replace(/^functions\//, "")), { code });
 
 beforeEach(() => {
   resetFirestore();
@@ -356,7 +363,9 @@ describe("a refused command is said once and reported", () => {
 
   it("a refused setting is said, not silently undone", async () => {
     // A code with no user-fit prose: the line says the plan is re-read.
-    sendProgramCommand.mockRejectedValue(callableError("functions/invalid-argument"));
+    sendProgramCommand.mockRejectedValue(
+      callableError("functions/invalid-argument")
+    );
     const hook = await mounted();
 
     let outcome: unknown;
@@ -973,45 +982,63 @@ describe("a block with the week's own focus changes nothing", () => {
   });
 });
 
-
-it.each(["functions/internal", "functions/unavailable"])("reports failed, rolls back, and does not promise sync when storage refuses after %s", async (code) => {
-  sendProgramCommand.mockRejectedValue(callableError(code));
-  const hook = await mounted();
-  const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-    throw new DOMException("Full", "QuotaExceededError");
-  });
-  try {
-    let outcome: unknown;
-    await act(async () => {
-      outcome = await hook.result.current.updateSettings({ autoProgression: false });
-    });
-    expect(outcome).toEqual({ status: "failed" });
-    expect(hook.result.current.programState?.settings?.autoProgression).toBe(true);
-    expect(outboxLength("test-user-1")).toBe(0);
-    const { toast } = await import("sonner");
-    expect(toast.error).toHaveBeenCalledWith(
-      "Couldn't save that change on this device. Try again.", expect.anything()
-    );
-  } finally { spy.mockRestore(); }
-});
-
+it.each(["functions/internal", "functions/unavailable"])(
+  "reports failed, rolls back, and does not promise sync when storage refuses after %s",
+  async (code) => {
+    sendProgramCommand.mockRejectedValue(callableError(code));
+    const hook = await mounted();
+    const spy = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("Full", "QuotaExceededError");
+      });
+    try {
+      let outcome: unknown;
+      await act(async () => {
+        outcome = await hook.result.current.updateSettings({
+          autoProgression: false,
+        });
+      });
+      expect(outcome).toEqual({ status: "failed" });
+      expect(hook.result.current.programState?.settings?.autoProgression).toBe(
+        true
+      );
+      expect(outboxLength("test-user-1")).toBe(0);
+      const { toast } = await import("sonner");
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't save that change on this device. Try again.",
+        expect.anything()
+      );
+    } finally {
+      spy.mockRestore();
+    }
+  }
+);
 
 it("reports failed and rolls back when the command queue is full", async () => {
   const hook = await mounted();
   for (let i = 0; i < MAX_OUTBOX_ENTRIES; i++) {
-    enqueueCommand("other-account", { kind: "applyDeloadWeek", commandId: `pending-${i}` });
+    enqueueCommand("other-account", {
+      kind: "applyDeloadWeek",
+      commandId: `pending-${i}`,
+    });
   }
   const before = localStorage.getItem("tropos.program.commandOutbox");
   sendProgramCommand.mockRejectedValue(callableError("functions/unavailable"));
   let outcome: unknown;
   await act(async () => {
-    outcome = await hook.result.current.updateSettings({ autoProgression: false });
+    outcome = await hook.result.current.updateSettings({
+      autoProgression: false,
+    });
   });
   expect(outcome).toEqual({ status: "failed" });
-  expect(hook.result.current.programState?.settings?.autoProgression).toBe(true);
+  expect(hook.result.current.programState?.settings?.autoProgression).toBe(
+    true
+  );
   expect(localStorage.getItem("tropos.program.commandOutbox")).toBe(before);
   const { toast } = await import("sonner");
   expect(toast.error).toHaveBeenCalledWith(
-    "Couldn't save that change on this device. Try again.", expect.anything()
+    "Couldn't save that change on this device. Try again.",
+    expect.anything()
   );
 });

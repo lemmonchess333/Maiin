@@ -73,14 +73,6 @@ export function runsInWeek(
   return new Set(runDays.filter((day) => day >= weekKey && day < end)).size;
 }
 
-/** Whether the week starting `weekKey` was done (`STARTER_RUNS_FOR_A_DONE_WEEK`). */
-export function starterWeekDone(
-  runDays: readonly string[],
-  weekKey: string
-): boolean {
-  return runsInWeek(runDays, weekKey) >= STARTER_RUNS_FOR_A_DONE_WEEK;
-}
-
 /**
  * The weeks in a row with no run, ending with the week starting `weekKey`:
  * 0 when that week has one. Counted no further than one past the step-back
