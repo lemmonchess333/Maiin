@@ -8,6 +8,7 @@ import "@fontsource-variable/archivo/wdth-italic.css";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { throwConfetti } from "@/lib/confetti";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { FinishTone, RewardLine } from "@/lib/finishMoment";
@@ -25,39 +26,33 @@ const CONFETTI: Record<FinishTone, string[]> = {
   running: [THEME.running, THEME.runningLight, THEME.textPrimary],
 };
 
-const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
-
 /** Rule 32: confetti for a first, a new best and a finished plan, thrown
- *  once as the reward appears, and never under Reduce Motion. */
+ *  once as the reward appears, and never under Reduce Motion. It leaves
+ *  with the screen: Done stops it, so none of it falls on the next page. */
 function useFinishConfetti(tone: FinishTone | null, on: boolean) {
   const reduce = useReducedMotion();
   useEffect(() => {
     if (!on || !tone || reduce) return;
-    let cancelled = false;
+    let stop: (() => void) | null = null;
     const timer = window.setTimeout(() => {
-      lazyConfetti()
-        .then((confetti) => {
-          if (cancelled) return;
-          confetti({
-            colors: CONFETTI[tone],
-            particleCount: 90,
-            spread: 90,
-            startVelocity: 40,
-            ticks: 220,
-            gravity: 0.9,
-            decay: 0.92,
-            scalar: 0.9,
-            origin: { y: 0.3 },
-            disableForReducedMotion: true,
-          });
-        })
-        .catch(() => {
-          // No canvas: the reward stands on its own.
-        });
+      stop = throwConfetti([
+        {
+          colors: CONFETTI[tone],
+          particleCount: 90,
+          spread: 90,
+          startVelocity: 40,
+          ticks: 220,
+          gravity: 0.9,
+          decay: 0.92,
+          scalar: 0.9,
+          origin: { y: 0.3 },
+          disableForReducedMotion: true,
+        },
+      ]);
     }, 250);
     return () => {
-      cancelled = true;
       window.clearTimeout(timer);
+      stop?.();
     };
   }, [on, tone, reduce]);
 }

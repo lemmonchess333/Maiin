@@ -6,11 +6,10 @@ import {
   type RefObject,
 } from "react";
 import { THEME } from "@/lib/theme";
+import { throwConfetti } from "@/lib/confetti";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import type { BadgeTier } from "./badges";
-
-const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 
 /** Taps the seal takes to break open. Reduce Motion takes one. */
 export const SEAL_TAPS = 3;
@@ -60,55 +59,48 @@ function playCrack(step: number) {
   }
 }
 
-function throwConfetti(tierColor: string) {
-  lazyConfetti()
-    .then((confetti) => {
-      // Palette tells the prize's story: the earned tier + brand purples +
-      // celebratory gold (tier token) — no off-palette green/amber.
-      const colors = [
-        tierColor,
-        THEME.brand,
-        THEME.brandLight,
-        THEME.tier.gold,
-      ];
-      // Higher ticks + softer gravity = a slower, more graceful fall than
-      // the old single hard pop.
-      const defaults = { colors, ticks: 240, gravity: 0.85, decay: 0.92 };
-      // Centre pop from the prize itself…
-      confetti({
-        ...defaults,
-        particleCount: 110,
-        spread: 100,
-        startVelocity: 42,
-        scalar: 1.05,
-        origin: { y: 0.42 },
-      });
-      // …then two angled side volleys a beat apart (award-ceremony shape),
-      // so the moment reads as a sequence rather than one flat burst.
-      setTimeout(() => {
-        confetti({
-          ...defaults,
-          particleCount: 40,
-          angle: 60,
-          spread: 55,
-          startVelocity: 52,
-          origin: { x: 0, y: 0.62 },
-        });
-      }, 160);
-      setTimeout(() => {
-        confetti({
-          ...defaults,
-          particleCount: 40,
-          angle: 120,
-          spread: 55,
-          startVelocity: 52,
-          origin: { x: 1, y: 0.62 },
-        });
-      }, 320);
-    })
-    .catch(() => {
-      // No confetti where canvas is missing; the break stands on its own.
-    });
+/** The break's confetti; the stop to call as the ceremony's surface goes.
+ *
+ * The palette tells the prize's story: the earned tier, the brand purples
+ * and the tier gold. Long ticks and soft gravity make a slow fall. A centre
+ * pop from the prize, then two angled side volleys a beat apart (the shape
+ * of an award ceremony), so it reads as a sequence and not one flat burst.
+ */
+function throwBreakConfetti(tierColor: string): () => void {
+  const shared = {
+    colors: [tierColor, THEME.brand, THEME.brandLight, THEME.tier.gold],
+    ticks: 240,
+    gravity: 0.85,
+    decay: 0.92,
+  };
+  return throwConfetti([
+    {
+      ...shared,
+      particleCount: 110,
+      spread: 100,
+      startVelocity: 42,
+      scalar: 1.05,
+      origin: { y: 0.42 },
+    },
+    {
+      ...shared,
+      after: 160,
+      particleCount: 40,
+      angle: 60,
+      spread: 55,
+      startVelocity: 52,
+      origin: { x: 0, y: 0.62 },
+    },
+    {
+      ...shared,
+      after: 320,
+      particleCount: 40,
+      angle: 120,
+      spread: 55,
+      startVelocity: 52,
+      origin: { x: 1, y: 0.62 },
+    },
+  ]);
 }
 
 /** Where a seal's ceremony stands, for `SealStage` and `SealPrompt` to draw
@@ -157,6 +149,11 @@ export function useSealBreak({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [taps, setTaps] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const stopConfetti = useRef<(() => void) | null>(null);
+
+  // The confetti leaves with the ceremony's surface, so none of it falls
+  // on the page underneath after the card closes.
+  useEffect(() => () => stopConfetti.current?.(), []);
 
   // Reduced motion collapses the ceremony to a single tap (no shake / shatter).
   const tapsNeeded = reduce ? 1 : SEAL_TAPS;
@@ -176,7 +173,7 @@ export function useSealBreak({
     // particle rain contradicts that intent, so the reveal is haptic +
     // chime + bloom only. (Previously still fired 60 particles.)
     if (reduce || !confetti) return;
-    throwConfetti(THEME.tier[tier]);
+    stopConfetti.current = throwBreakConfetti(THEME.tier[tier]);
   }, [reduce, tier, confetti]);
 
   // Each tap cracks the seal a little more; the last tap breaks it open and
