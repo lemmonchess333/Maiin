@@ -32,6 +32,8 @@ import { toast } from "@/lib/toast";
 import { PLAN_SAVES_TOO_OFTEN } from "@/lib/callableErrors";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
+import type { DatedRun } from "@/features/program/layoffDetection";
+import { buildPlan } from "@/features/program/planBuilder";
 
 const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
 vi.mock("firebase/functions", () => ({
@@ -46,6 +48,12 @@ vi.mock("@/lib/firebase", () => ({
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
+// The real builder, watched: a save's plan is built by it as in the app.
+vi.mock("@/features/program/planBuilder", async (importOriginal) => {
+  const real =
+    await importOriginal<typeof import("@/features/program/planBuilder")>();
+  return { ...real, buildPlan: vi.fn(real.buildPlan) };
+});
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
@@ -78,6 +86,7 @@ function LocationProbe() {
 type Programme = {
   readiness?: ProgramReadiness;
   programState?: ProgramState | null;
+  recentRuns?: readonly DatedRun[] | null;
 };
 
 function setup(
@@ -94,10 +103,12 @@ function setup(
   const page = ({
     readiness = "ready",
     programState: loaded = stateOverride ?? programState,
+    recentRuns = null,
   }: Programme) => (
     <MemoryRouter>
       <ProgrammeSettings
         variant={variant}
+        recentRuns={recentRuns}
         profile={profile}
         programState={loaded}
         readiness={readiness}
@@ -123,6 +134,7 @@ function setup(
 beforeEach(() => {
   cleanup();
   configureSpy.mockClear();
+  vi.mocked(buildPlan).mockClear();
 });
 
 describe("ProgrammeSettings — lift variant (Section-Split)", () => {
@@ -169,6 +181,30 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
     expect(screen.queryByText("Long-run volume")).not.toBeInTheDocument();
     expect(screen.queryByText("Intensity")).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/target date/i)).not.toBeInTheDocument();
+  });
+
+  it("a rebuild builds this week's race runs from the recent runs", async () => {
+    // A running starting point climbs this week from what was done; left
+    // out, the save built the week as if every run had been followed.
+    const recentRuns: DatedRun[] = [
+      { date: "2026-11-03", distance: 5000, duration: 1800 },
+    ];
+    setup(
+      {
+        runMode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2027-03-01" },
+      },
+      "lift",
+      undefined,
+      { recentRuns }
+    );
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(buildPlan)).toHaveBeenCalledWith(
+      expect.objectContaining({ recentRuns })
+    );
   });
 
   it("D14: a rebuild threads the SAVED race plan through unchanged", async () => {
