@@ -171,6 +171,7 @@ export function ChallengeList({
           <WeeklyChallengeCard
             weekly={weeklyCh}
             joined={!!(weeklyCh && myProgress[weeklyCh.id])}
+            progress={weeklyCh ? myProgress[weeklyCh.id] : undefined}
             hasChallenges={challenges.length > 0}
             leads={weeklyLeads}
             onJoin={join}

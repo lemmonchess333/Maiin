@@ -1,6 +1,6 @@
 /**
- * Every photo card on Together (a challenge's hero, a Space, a race) puts
- * its words on the one scrim, which runs behind the words themselves and
+ * Every photo card on Together (a Space, a race) puts its words on the
+ * one scrim, which runs behind the words themselves and
  * so grows with a two-line name, and lets the name take two lines rather
  * than cutting it on its first. White text on a bright photo (the bridge
  * lights behind "Supernova Forth Road Bridge 5K") was hard to read on a
@@ -24,7 +24,6 @@ vi.mock("@/components/social/BlockAwareAvatar", () => ({
 }));
 /* A photo for every card, so each draws its photo caption. */
 vi.mock("@/lib/editorialImages", () => ({
-  challengeEditorialImage: () => "/photo.webp",
   spaceEditorialImage: () => "/photo.webp",
 }));
 const directory = vi.hoisted(() => ({ entries: [] as unknown[] }));
@@ -52,7 +51,7 @@ function expectCaptioned(name: string) {
 }
 
 describe("photo card captions on Together", () => {
-  it("a challenge's hero", () => {
+  it("a challenge's header is its medal, not a photo, and its name takes two lines", () => {
     const now = Date.now();
     const challenge = {
       id: "monthly-2026-11-01",
@@ -74,7 +73,17 @@ describe("photo card captions on Together", () => {
         onLeave={() => {}}
       />
     );
-    expectCaptioned("November Mileage");
+    // A challenge carries no photograph (Soc16): its picture is its medal.
+    const title = screen.getByText("November Mileage");
+    const band = title.closest("[data-challenge-medal-band]");
+    expect(band).not.toBeNull();
+    expect(band!.querySelector("img")).toBeNull();
+    expect(band!.querySelector("[data-medal-tier]")).toHaveAttribute(
+      "data-medal-tier",
+      "bronze"
+    );
+    expect(title.className).toContain("line-clamp-2");
+    expect(title.className).not.toContain("truncate");
   });
 
   it("a Space and a race in the directory", () => {

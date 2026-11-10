@@ -47,3 +47,13 @@ export function rowMedalFace(
   });
   return medal ? medalFace(medal, liftUnit, distanceUnit) : null;
 }
+
+/** Whether a challenge has a medal to show: tiers to win, and not the
+ *  community goal, which awards none. */
+export function challengeHasMedal(
+  challenge: Pick<Challenge, "tiers" | "collectiveTarget">
+): boolean {
+  return (
+    (challenge.collectiveTarget ?? 0) <= 0 && rowMedalTier(challenge) !== null
+  );
+}
