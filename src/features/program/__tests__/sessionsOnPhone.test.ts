@@ -215,20 +215,20 @@ describe("planWeeksLiftOnPhone", () => {
 
   it("holds for the plan week's lift with a set done, saved in the last six hours", () => {
     storeDraft(3, NOW - HOUR, true);
-    expect(planWeeksLiftOnPhone(UID, plan, context, NOW)).toBe(true);
+    expect(planWeeksLiftOnPhone(UID, plan, NOW)).toBe(true);
   });
 
   it("does not hold with no set done, past six hours, or for another week", () => {
     storeDraft(3, NOW - HOUR, false);
-    expect(planWeeksLiftOnPhone(UID, plan, context, NOW)).toBe(false);
+    expect(planWeeksLiftOnPhone(UID, plan, NOW)).toBe(false);
 
     localStorage.clear();
     storeDraft(3, NOW - 6 * HOUR - 1, true);
-    expect(planWeeksLiftOnPhone(UID, plan, context, NOW)).toBe(false);
+    expect(planWeeksLiftOnPhone(UID, plan, NOW)).toBe(false);
 
     localStorage.clear();
     storeDraft(2, NOW - HOUR, true);
-    expect(planWeeksLiftOnPhone(UID, plan, context, NOW)).toBe(false);
+    expect(planWeeksLiftOnPhone(UID, plan, NOW)).toBe(false);
   });
 
   it("does not hold for a day already done", () => {
@@ -239,6 +239,6 @@ describe("planWeeksLiftOnPhone", () => {
         i === 1 ? { ...d, completed: true } : d
       ),
     };
-    expect(planWeeksLiftOnPhone(UID, done, context, NOW)).toBe(false);
+    expect(planWeeksLiftOnPhone(UID, done, NOW)).toBe(false);
   });
 });

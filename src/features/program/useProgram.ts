@@ -92,7 +92,6 @@ import {
   earlierWeeksRunOnPhone,
   planWeeksLiftOnPhone,
 } from "./sessionsOnPhone";
-import { sessionDayContext } from "./sessionDay";
 import {
   migrateProgramState,
   backfillWeekScheduleIfMissing,
@@ -292,19 +291,14 @@ export type ProgramReadiness = "pending" | "ready" | "failed";
 function finishOutstanding(
   uid: string | undefined,
   todayKey: string,
-  programState: ProgramState,
-  profile: UserProfile
+  programState: ProgramState
 ): boolean {
   return (
     isLiftSessionOpen() ||
     (!!uid &&
       (hasPendingProgrammeCompletion(uid) ||
         earlierWeeksRunOnPhone(uid, todayKey) ||
-        planWeeksLiftOnPhone(
-          uid,
-          programState,
-          sessionDayContext(programState, profile)
-        )))
+        planWeeksLiftOnPhone(uid, programState)))
   );
 }
 
@@ -1228,7 +1222,7 @@ export function useProgram() {
         layoffRead.clears !== runClears)
     )
       return;
-    if (finishOutstanding(user?.uid, today, programState, profile)) return;
+    if (finishOutstanding(user?.uid, today, programState)) return;
 
     const rollover = weekRolloverAnchor(programState, profile);
     if (rollover?.side !== "run") return;
@@ -1369,7 +1363,7 @@ export function useProgram() {
     if (!mirrorReady) return;
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
-    if (finishOutstanding(user?.uid, today, programState, profile)) return;
+    if (finishOutstanding(user?.uid, today, programState)) return;
 
     // The run-side effect acts on a "run" anchor and this one on a "lift"
     // anchor, so exactly one of the two can act on any given state. No
@@ -1435,7 +1429,7 @@ export function useProgram() {
     if (!mirrorReady) return;
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
-    if (finishOutstanding(user?.uid, today, programState, profile)) return;
+    if (finishOutstanding(user?.uid, today, programState)) return;
     const rollover = weekRolloverAnchor(programState, profile);
     if (rollover && rollover.weekKey < localWeekKey()) return;
     for (const dayIndex of raceRestSkips(programState, localDateString())) {

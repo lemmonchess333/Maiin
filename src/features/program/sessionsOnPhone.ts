@@ -18,9 +18,8 @@ import {
   readStoredRunSummary,
   RUN_RESUME_MAX_AGE_MS,
 } from "@/lib/runResumeStorage";
-import { resumableLift } from "@/lib/sessionsInFlight";
 import type { ProgramState } from "./programTypes";
-import type { SessionDayContext } from "./sessionDay";
+import { countedSets } from "./setLabels";
 
 /** How long a session on this phone holds the plan, from its last write. */
 const HOLD_MS = RUN_RESUME_MAX_AGE_MS;
@@ -48,19 +47,33 @@ export function earlierWeeksRunOnPhone(
 
 /**
  * A lift from the plan's week the app was closed partway through, with a
- * set done: Home and Train offer it to resume (`resumableLift`). Its draft
- * is kept for the plan's week, so once the week rolled it was no longer
- * offered, and the sets done on Sunday night were lost.
+ * working set done: Home and Train offer it to resume (`resumableLift`).
+ * Its draft is kept for the plan's week (its identity names the week and
+ * the day), so once the week rolled it was no longer offered, and the sets
+ * done on Sunday night were lost.
+ *
+ * Read from the draft's identity rather than through `resumableLift`,
+ * which brings the In progress strip's modules into every page that
+ * mounts the plan; a draft whose day was rebuilt since holds the week
+ * no longer than six hours either way.
  */
 export function planWeeksLiftOnPhone(
   uid: string,
   programState: Pick<ProgramState, "workouts" | "weekNumber">,
-  context: SessionDayContext,
   now: number = Date.now()
 ): boolean {
-  const fresh = listWorkoutDrafts(uid).filter(
-    (draft) => now - draft.savedAt <= HOLD_MS
-  );
-  const lift = resumableLift(fresh, programState, context);
-  return !!lift && lift.sets > 0;
+  return listWorkoutDrafts(uid).some((draft) => {
+    if (draft.completionPending || now - draft.savedAt > HOLD_MS) return false;
+    const [version, scope, epoch, day] = draft.identity.split("|");
+    if (
+      version !== "v1" ||
+      !scope?.startsWith("programme") ||
+      epoch !== `e${programState.weekNumber}` ||
+      day !== `d${draft.dayIndex}`
+    )
+      return false;
+    const planned = programState.workouts?.[draft.dayIndex];
+    if (!planned || planned.completed || planned.skipped) return false;
+    return countedSets(draft.setLogs.flat()).some((set) => set.completed);
+  });
 }
