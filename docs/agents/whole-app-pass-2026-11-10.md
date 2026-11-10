@@ -183,5 +183,15 @@ screen suites, about 250 lines.
 
 ## New baseline
 
-Unit suite on the combined tree of this pass's commits: the numbers are in
-the PR that carries this file. Everything else is as measured above.
+On the combined tree of this pass's commits, `npm run verify` passes: lint
+0 problems, the verifier tests, the two form-art checks, no cycles, the
+build, dist size (6,709.6 kB against a baseline of 6,681.2 kB, inside its
+tolerance) and the unit suite: 1,488 files and 17,386 tests passed, 15 files
+and 585 tests skipped, none failed. That is 63 tests and 3 files more than
+the baseline above. Everything else is as measured there.
+
+Run the suite in a real clone. In a git worktree whose `node_modules` is a
+symlink, six map suites (`RunMap*`, `RoutePlannerSheet`) cannot load: Vite
+refuses MapLibre's worker file because it resolves outside the project root
+("Denied ID"). That is the sandbox, not the code, and it cost this pass a
+second run to tell apart.
