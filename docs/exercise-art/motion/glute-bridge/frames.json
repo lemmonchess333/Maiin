@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/glute-bridge.webp",
+  "still": "form-art/glute-bridge.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 480,
+  "frameHeight": 244,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "eae27e14528ebe98ff6670352309f87b86fcb8998327d4a95eeebb2d9af8b42a",
+  "thenSha256": "5926afac6acd0e2d7aed820d7985859faa276a096d1c33efcd546b800269b5e5",
+  "sha256": "90e538118dd1f5f1cbbc7fb499a7942f48f3053d94a97c980f73c09ef7f04e8f"
+}

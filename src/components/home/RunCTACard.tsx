@@ -6,6 +6,8 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { unlockSpeech } from "@/lib/speechUnlock";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { runPoseFor, runPoseUrl } from "@/lib/runPoses";
+import { RUN_POSE_CUTOUTS } from "@/lib/runPoses.data";
+import { heroMotionFor } from "@/lib/heroMotion";
 import type { RacePaceWork } from "@/lib/racePace";
 import { runSessionName } from "@/lib/runSessionAbout";
 import { runHeroLine, type HeroLine } from "@/lib/homeHero";
@@ -160,7 +162,10 @@ export default function RunCTACard({
       variant={variant}
       title={runLabel}
       meta={meta}
-      picture={{ src: runPoseUrl(pose) }}
+      picture={{
+        src: runPoseUrl(pose),
+        motion: heroMotionFor(RUN_POSE_CUTOUTS[pose].src),
+      }}
       line={line}
       action={action}
       preview={{

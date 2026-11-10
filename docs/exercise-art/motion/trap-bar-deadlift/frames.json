@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/trap-bar-deadlift.webp",
+  "still": "form-art/trap-bar-deadlift.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 416,
+  "frameHeight": 480,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "93bf75336d4383120ecbd41d3cf519e5a558ef536bb24fd2972e16b1360cbd46",
+  "thenSha256": "3d6f330a9e412a22770c142cca8e845ffa157a6d15a10571b70dc914d8d13b98",
+  "sha256": "4dfbb8ab6652b7631c18ee59e34a12d4653a55ced869a53a0292fcf67ef58042"
+}
