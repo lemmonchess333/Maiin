@@ -1907,7 +1907,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             done:
               // A week begun by the day the runs were read.
               input.recentRuns && weekKey === thisWeekKey && weekKey <= runsAsOf
-                ? recentRunning(input.recentRuns, weekKey)
+                ? recentRunning(
+                    input.recentRuns,
+                    weekKey,
+                    Math.min(input.weeklyRunDays, availableRunSlots.length)
+                  )
                 : null,
           })
         : null,

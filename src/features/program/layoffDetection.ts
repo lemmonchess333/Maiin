@@ -242,16 +242,19 @@ export const DONE_WEEK_RUNS = 2;
 export const RECENT_RUN_DAYS = 28;
 
 /** Whether the week starting `weekKey` was done: `DONE_WEEK_RUNS` or more
- *  saved runs dated in it. */
+ *  saved runs dated in it, or every run of a plan with fewer run days
+ *  (`runDays`): a plan on one run day a week is done with its one run, or
+ *  its running could never climb. */
 export function isWeekDone(
   runs: readonly DatedRun[],
-  weekKey: string
+  weekKey: string,
+  runDays: number = DONE_WEEK_RUNS
 ): boolean {
   const last = shiftDays(weekKey, 6);
   return (
     eligibleRuns(runs).filter(
       (run) => run.date! >= weekKey && run.date! <= last
-    ).length >= DONE_WEEK_RUNS
+    ).length >= Math.max(1, Math.min(DONE_WEEK_RUNS, runDays))
   );
 }
 
@@ -260,13 +263,15 @@ export function isWeekDone(
  * minutes, the farthest one's km, the most minutes one of its four weeks
  * ran besides that week's longest run, and the pace of them all together
  * (seconds a km), each null with none; and whether the last of those weeks
- * was done (`isWeekDone`). The weeks are the seven days ending at
- * `beforeKey`, the seven before them, and so on. A pace outside 2:30 to
- * 20:00 a km is a recording, not a run, and is left out.
+ * was done (`isWeekDone`, for a plan of `runDays` run days a week). The
+ * weeks are the seven days ending at `beforeKey`, the seven before them,
+ * and so on. A pace outside 2:30 to 20:00 a km is a recording, not a run,
+ * and is left out.
  */
 export function recentRunning(
   runs: readonly DatedRun[],
-  beforeKey: string
+  beforeKey: string,
+  runDays: number = DONE_WEEK_RUNS
 ): {
   longestMinutes: number | null;
   longestKm: number | null;
@@ -275,7 +280,7 @@ export function recentRunning(
   lastWeekDone: boolean;
 } {
   const from = shiftDays(beforeKey, -RECENT_RUN_DAYS);
-  const lastWeekDone = isWeekDone(runs, shiftDays(beforeKey, -7));
+  const lastWeekDone = isWeekDone(runs, shiftDays(beforeKey, -7), runDays);
   const recent = eligibleRuns(runs).filter(
     (run) => run.date! >= from && run.date! < beforeKey
   );

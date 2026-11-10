@@ -223,3 +223,21 @@ export function endStarterGoalPatch(
     runMode: "freeform",
   };
 }
+
+/**
+ * The starter goal as a Run plan save leaves it: a running goal left for a
+ * race or free running ends with the stage reached (`endStarterGoalPatch`),
+ * and any other is as it was. The plan the save builds reads its new-runner
+ * limits from this (`profileNewRunnerUntil`), so a race begun from stage 3
+ * starts from stage 3 the week it is made, not from the sign-up date, which
+ * is all a goal still running says.
+ */
+export function starterGoalAfterSave(
+  goal: StarterGoal | null | undefined,
+  runMode: RunMode,
+  stage: number,
+  todayKey: string
+): StarterGoal | null | undefined {
+  if (runMode === "starter" || !goal || !starterGoalIsActive(goal)) return goal;
+  return endStarterGoalPatch(goal, todayKey, stage).starterGoal;
+}
