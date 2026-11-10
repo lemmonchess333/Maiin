@@ -136,6 +136,8 @@ import {
   useStoreTrialEligibility,
 } from "@/hooks/useStoreTrialEligibility";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
+import { usePrototypeVariant } from "@/components/dev/prototypeVariant";
+import EasierTodayHeroPrototype from "@/components/home/EasierTodayHero.prototype";
 
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
 
@@ -224,6 +226,8 @@ export default function Home() {
     controller: programController,
   } = useHomeProgram();
   const weeklyDayMap = useWeeklyDayMap();
+  // PROTOTYPE (claude/prototype-three-features): ?variant=A|B|C swaps the hero.
+  const easierVariant = usePrototypeVariant(["A", "B", "C"]);
   const navigate = useNavigate();
   const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
   const {
@@ -1315,7 +1319,9 @@ export default function Home() {
           visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
         }}
       >
-        {heroPlaceholder ? (
+        {easierVariant ? (
+          <EasierTodayHeroPrototype variant={easierVariant} />
+        ) : heroPlaceholder ? (
           // The hero's own height, so the week below it does not jump
           // when the session lands.
           <div className="h-[420px] rounded-2xl bg-muted motion-safe:animate-pulse" />

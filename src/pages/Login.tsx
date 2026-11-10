@@ -22,6 +22,8 @@ import { isNativePlatform } from "@/lib/platform";
 import { IconButton } from "@/components/ui/IconButton";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import InviteNote from "@/components/onboarding/InviteNote";
+import { usePrototypeVariant } from "@/components/dev/prototypeVariant";
+import WelcomeExamplePrototype from "@/components/onboarding/WelcomeExample.prototype";
 import { FoodTabIcon } from "@/components/icons/TabIcons";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { readLastSignInMethod, type SignInMethod } from "@/lib/signInMethod";
@@ -88,6 +90,8 @@ export default function Login() {
   /* An email change, once confirmed, signs this phone out; say so, and
      offer the new address (emailChangeNote.ts). */
   const [changedEmail] = useState(() => pendingEmailChange());
+  // PROTOTYPE (claude/prototype-three-features): ?variant=A|B|C.
+  const welcomeVariant = usePrototypeVariant(["A", "B", "C"]);
   const [returning] = useState(takeLoginForm);
   const [lastMethod] = useState<SignInMethod | null>(() =>
     readLastSignInMethod()
@@ -308,44 +312,52 @@ export default function Login() {
           <InviteNote />
           {/* Each row's picture gives way under 9em (double text on a
               narrow phone), leaving the words the row. Wide-first. */}
-          <ul className="@container space-y-2" aria-label="What Tropos plans">
-            <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
-              <span className="shrink-0 @max-[9em]:hidden">
-                <ChoiceArt art={{ kind: "exercise", id: "db-curl" }} />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">Lifting</p>
-                <p className="text-xs text-muted-foreground">
-                  Sessions for your days, gym and experience
-                </p>
-              </div>
-            </li>
-            <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
-              <span className="shrink-0 text-running-strong @max-[9em]:hidden">
-                <ChoiceArt art={{ kind: "route", distance: 3 }} />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">Running</p>
-                <p className="text-xs text-muted-foreground">
-                  Run when you like, or train for a race
-                </p>
-              </div>
-            </li>
-            <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
-              <span
-                aria-hidden="true"
-                className="size-12 shrink-0 rounded-xl bg-muted flex items-center justify-center text-nutrition-strong @max-[9em]:hidden"
-              >
-                <FoodTabIcon active={false} className="size-7" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">Food</p>
-                <p className="text-xs text-muted-foreground">
-                  A calorie target worked out from your numbers
-                </p>
-              </div>
-            </li>
-          </ul>
+          {welcomeVariant ? (
+            <WelcomeExamplePrototype variant={welcomeVariant} />
+          ) : (
+            <ul className="@container space-y-2" aria-label="What Tropos plans">
+              <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
+                <span className="shrink-0 @max-[9em]:hidden">
+                  <ChoiceArt art={{ kind: "exercise", id: "db-curl" }} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">
+                    Lifting
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Sessions for your days, gym and experience
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
+                <span className="shrink-0 text-running-strong @max-[9em]:hidden">
+                  <ChoiceArt art={{ kind: "route", distance: 3 }} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">
+                    Running
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Run when you like, or train for a race
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
+                <span
+                  aria-hidden="true"
+                  className="size-12 shrink-0 rounded-xl bg-muted flex items-center justify-center text-nutrition-strong @max-[9em]:hidden"
+                >
+                  <FoodTabIcon active={false} className="size-7" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Food</p>
+                  <p className="text-xs text-muted-foreground">
+                    A calorie target worked out from your numbers
+                  </p>
+                </div>
+              </li>
+            </ul>
+          )}
           <div className="space-y-2">
             <Button fullWidth size="md" onClick={() => setView("signUp")}>
               Get started

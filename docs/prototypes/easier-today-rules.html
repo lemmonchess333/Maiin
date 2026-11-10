@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Easier Today Rules</title>
+<style>
+  :root {
+    --bg: #f7f6f3; --card: #ffffff; --ink: #1d1b22; --muted: #6b6775;
+    --line: #e4e1ea; --accent: #6d4ae0; --accent-soft: #efeafd;
+    --changed: #fff4d6; --run: #d9583b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141318; --card: #1e1c24; --ink: #f1eff5; --muted: #a29eac;
+      --line: #2f2c37; --accent: #a58cf5; --accent-soft: #2a2440;
+      --changed: #3a3218; --run: #f08a70;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 28px 0 10px; }
+  p.lead { color: var(--muted); margin: 0 0 8px; max-width: 70ch; }
+  .note { font-size: 13px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+  dt { color: var(--muted); }
+  dd { margin: 0; font-weight: 600; }
+  dd.changed, .changed { background: var(--changed); border-radius: 6px; padding: 0 4px; margin: 0 -4px; }
+  .phone { border: 1px solid var(--line); border-radius: 22px; padding: 18px; background: var(--bg); }
+  .phone .kicker { font-size: 12px; color: var(--muted); }
+  .phone .title { font-size: 28px; font-weight: 800; line-height: 1.05; margin: 2px 0 4px; }
+  .phone .meta { color: var(--muted); font-weight: 500; }
+  .phone .art { height: 90px; border-radius: 50%; margin: 12px auto; width: 90px;
+    background: radial-gradient(circle, var(--accent-soft), transparent 70%); }
+  .phone .reason { display: flex; gap: 10px; align-items: center; margin: 8px 0 0; }
+  .phone .reason .dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--accent); flex: none; }
+  .phone .reason b { display: block; }
+  .phone .q { margin-top: 12px; padding: 10px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+  .phone .q .chips { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; background: var(--card); font: inherit; color: var(--ink); cursor: pointer; }
+  .phone .start { margin-top: 14px; width: 100%; padding: 12px; border-radius: 12px; border: 0;
+    background: var(--ink); color: var(--bg); font: inherit; font-weight: 700; }
+  .phone .start.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); margin-top: 8px; }
+  .phone .link { display: block; margin-top: 10px; text-align: center; color: var(--accent); font-weight: 600; }
+  .phone .empty { color: var(--muted); text-align: center; padding: 20px 0; }
+  .controls { display: grid; gap: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .row > span { width: 100%; font-size: 13px; color: var(--muted); }
+  button.opt { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 10px;
+    padding: 7px 11px; font: inherit; font-size: 14px; cursor: pointer; }
+  button.opt[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.act { border: 0; background: var(--accent); color: #fff; border-radius: 10px; padding: 8px 12px; font: inherit; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tabs button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  ol.steps { padding-left: 20px; margin: 10px 0 0; }
+  ol.steps li { margin: 6px 0; }
+  ol.steps li.done { color: var(--muted); text-decoration: line-through; }
+  .log { font-size: 13px; color: var(--muted); margin-top: 8px; min-height: 1.4em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Go easier today: the rules</h1>
+  <p class="lead">A throwaway prototype (2026-11-10). It asks one question: <b>when should Home offer an easier version of today's session, what reason does it give, and what does "easier" mean?</b> The app never shows a score. It names one thing it knows, or what the person told it.</p>
+  <p class="note">Pick a variant (the owner's call 2), set up a day, and watch what Home's hero would show. The walkthroughs below set up the awkward cases.</p>
+
+  <h2>Guided walkthroughs</h2>
+  <div class="card">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div id="scenario"></div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <h2>What Home's hero shows</h2>
+      <div class="phone" id="phone"></div>
+      <div class="log" id="log"></div>
+    </div>
+    <div>
+      <h2>The situation</h2>
+      <div class="card"><dl id="state"></dl></div>
+    </div>
+  </div>
+
+  <h2>Free play</h2>
+  <div class="card controls" id="controls"></div>
+</main>
+
+<script>
+/* ---------------------------------------------------------------------
+   The rules: a pure module. No DOM in here; the page below only calls it.
+   This is the part worth lifting into src/features/program/easierToday.ts.
+   --------------------------------------------------------------------- */
+const Rules = (() => {
+  const SHORT_SLEEP_MINUTES = 6 * 60;
+  const HARD_RUNS = new Set(["intervals", "tempo", "long", "race"]);
+
+  const initial = () => ({
+    variant: "B",              // call 2: A only with a reason, B always a choice, C morning question
+    today: "lift-legs",        // lift-legs, lift-upper, run-easy, run-intervals, run-tempo, run-long, rest
+    yesterday: "nothing",      // nothing, run-easy, run-hard, run-long, lift-legs, lift-upper
+    sleep: "not-connected",    // not-connected, not-recorded, or minutes asleep (number)
+    answer: null,              // null, "good", "tired", "rough" (asked in variant C only)
+    started: null,             // null, "full", "easier"
+    day: 1,
+  });
+
+  const isRun = (t) => t.startsWith("run-");
+  const isLift = (t) => t.startsWith("lift-");
+  const runKind = (t) => t.slice(4);
+  const hardToday = (t) => isRun(t) && HARD_RUNS.has(runKind(t));
+  const hardYesterday = (y) => y === "run-hard" || y === "run-long";
+
+  /** What the easier session is, or null when there isn't one. */
+  function easierSession(today) {
+    if (isLift(today)) return "one set less per lift, lighter loads";
+    if (today === "run-intervals" || today === "run-tempo")
+      return "an easy run for the same time";
+    if (today === "run-long") return "two-thirds of the distance, at easy pace";
+    return null; // an easy run or a rest day has no easier version
+  }
+
+  /** Every reason that holds today, in the order one is chosen. */
+  function reasons(s) {
+    const out = [];
+    if (s.answer === "tired") out.push("You said you're tired today");
+    if (s.answer === "rough") out.push("You said you're feeling rough");
+    if (s.answer === "good") return out; // their own word outranks the facts
+    if (hardYesterday(s.yesterday) && s.today === "lift-legs")
+      out.push("Hard run yesterday, and this session works the same legs");
+    if (s.yesterday === "lift-legs" && hardToday(s.today))
+      out.push("Leg day yesterday, and today's run is a hard one");
+    if (typeof s.sleep === "number" && s.sleep < SHORT_SLEEP_MINUTES) {
+      const h = Math.floor(s.sleep / 60), m = s.sleep % 60;
+      out.push(`${h} h ${m} min of sleep last night`);
+    }
+    return out;
+  }
+
+  /** What the hero shows. */
+  function hero(s) {
+    const easier = easierSession(s.today);
+    const all = reasons(s);
+    const reason = easier ? all[0] ?? null : null;
+    if (s.today === "rest") return { kind: "rest" };
+    if (s.started) return { kind: "started", started: s.started };
+    const asks = s.variant === "C" && s.answer === null && easier !== null;
+    const answerEases = s.answer === "tired" || s.answer === "rough";
+    const link =
+      easier === null ? null
+      : s.variant === "A" ? (reason ? easier : null)
+      : s.variant === "B" ? easier
+      : null; // C asks instead; a known reason sits in the question card
+    const primary = s.variant === "C" && answerEases && easier ? "easier" : "full";
+    return { kind: "planned", reason, alsoTrue: all.slice(1), asks, link, primary, easier };
+  }
+
+  function reduce(s, a) {
+    switch (a.type) {
+      case "variant": return { ...s, variant: a.value, answer: null, started: null };
+      case "today": return { ...s, today: a.value, started: null };
+      case "yesterday": return { ...s, yesterday: a.value, started: null };
+      case "sleep": return { ...s, sleep: a.value, started: null };
+      case "answer": return s.variant === "C" ? { ...s, answer: a.value } : s;
+      case "start": return s.today === "rest" || s.started ? s : { ...s, started: a.value };
+      case "next-day":
+        // Midnight: the answer and today's choice are gone. The plan is untouched,
+        // so tomorrow's session is exactly the one the plan had.
+        return { ...s, day: s.day + 1, answer: null, started: null,
+          yesterday: s.started ? doneToYesterday(s.today, s.started) : "nothing",
+          sleep: s.sleep === "not-connected" ? s.sleep : "not-recorded" };
+      case "reset": return initial();
+      default: return s;
+    }
+  }
+
+  function doneToYesterday(today, how) {
+    if (today === "lift-legs") return "lift-legs";
+    if (today === "lift-upper") return "lift-upper";
+    if (how === "easier" || today === "run-easy") return "run-easy";
+    return today === "run-long" ? "run-long" : "run-hard";
+  }
+
+  return { initial, reduce, hero, reasons, easierSession };
+})();
+
+/* ------------------------------ the page ------------------------------ */
+const LABEL = {
+  variant: { A: "A · only with a reason", B: "B · always a choice", C: "C · morning question" },
+  today: { "lift-legs": "Lift: Lower A (legs)", "lift-upper": "Lift: Upper A", "run-easy": "Easy run, 30 min",
+    "run-intervals": "Intervals, 40 min", "run-tempo": "Tempo run, 35 min", "run-long": "Long run, 14 km", rest: "Rest day" },
+  yesterday: { nothing: "Nothing", "run-easy": "An easy run", "run-hard": "A hard run (tempo)",
+    "run-long": "A long run", "lift-legs": "A leg day", "lift-upper": "An upper-body day" },
+  sleep: { "not-connected": "Apple Health not connected", "not-recorded": "Connected, nothing recorded last night",
+    450: "7 h 30 min", 340: "5 h 40 min" },
+  answer: { good: "Good", tired: "Tired", rough: "Rough" },
+};
+const LINE = { "lift-legs": ["Squat 60 kg × 8", "Last time 57.5 kg × 8"], "lift-upper": ["Bench press 50 kg × 8", "Last time 47.5 kg × 8"],
+  "run-easy": ["30 min easy", "Last easy run 28 min"], "run-intervals": ["6 × 3 min", "Last time 5 × 3 min"],
+  "run-tempo": ["20 min steady", "Last time 18 min"], "run-long": ["14 km", "Longest so far 13 km"] };
+const TITLE = { "lift-legs": ["Lower A", "Legs and glutes · about 50 min"], "lift-upper": ["Upper A", "Chest, back and shoulders · about 45 min"],
+  "run-easy": ["Easy run", "30 min · easy pace"], "run-intervals": ["Intervals", "6 × 3 min · about 40 min"],
+  "run-tempo": ["Tempo run", "35 min · 20 min steady"], "run-long": ["Long run", "14 km · easy pace"] };
+
+let state = Rules.initial();
+let prev = state;
+let lastAction = "Start of the demo.";
+
+function dispatch(action, note) {
+  prev = state;
+  state = Rules.reduce(state, action);
+  lastAction = note || "";
+  render();
+}
+
+function sleepText(v) { return typeof v === "number" ? LABEL.sleep[v] ?? `${v} min` : LABEL.sleep[v]; }
+
+function renderPhone() {
+  const h = Rules.hero(state);
+  const el = document.getElementById("phone");
+  if (h.kind === "rest") { el.innerHTML = `<div class="kicker">Tuesday 10 November</div><div class="title">Rest day</div><div class="meta">Nothing planned. No question, no link.</div>`; return; }
+  const [title, meta] = TITLE[state.today];
+  if (h.kind === "started") {
+    el.innerHTML = `<div class="kicker">Tuesday 10 November</div><div class="title">${title}</div><div class="empty">Session started (${h.started === "easier" ? "the easier version" : "the full session"}).<br>Saved on the private record as <code>${h.started === "easier" ? 'sessionVariant: "easier_today"' : "the full session"}</code>. The plan is unchanged.</div>`;
+    return;
+  }
+  let html = `<div class="kicker">Tuesday 10 November</div><div class="title">${title}</div><div class="meta">${meta}</div><div class="art"></div>`;
+  const [lineTitle, lineDetail] = LINE[state.today];
+  html += `<div class="reason"><span class="dot"></span><span><b>${lineTitle}</b><span class="note">${lineDetail}</span></span></div>`;
+  if (h.asks) html += `<div class="q">${h.reason ? `<span class="note">${h.reason}.</span><br>` : ""}<b>How do you feel today?</b><div class="chips">${["good","tired","rough"].map(a => `<button class="chip" data-answer="${a}">${LABEL.answer[a]}</button>`).join("")}</div></div>`;
+  if (h.primary === "easier") {
+    html += `<button class="start" data-start="easier">Start easier session</button><button class="start secondary" data-start="full">Full session</button>`;
+  } else {
+    html += `<button class="start" data-start="full">Start ${state.today.startsWith("run") ? "run" : "workout"}</button>`;
+    if (h.reason && h.link) html += `<p class="note" style="text-align:center;margin:12px 0 0">${h.reason}</p>`;
+    if (h.link) html += `<a class="link" href="#" data-start="easier" style="margin-top:${h.reason ? 2 : 10}px">Go easier today · ${h.link}</a>`;
+  }
+  if (h.primary === "easier" && h.reason) html += `<p class="note" style="text-align:center;margin:10px 0 0">${h.reason}. Easier: ${h.easier}.</p>`;
+  el.innerHTML = html;
+  el.querySelectorAll("[data-answer]").forEach(b => b.onclick = () => dispatch({ type: "answer", value: b.dataset.answer }, `They answered "${LABEL.answer[b.dataset.answer]}".`));
+  el.querySelectorAll("[data-start]").forEach(b => b.onclick = (e) => { e.preventDefault(); dispatch({ type: "start", value: b.dataset.start }, b.dataset.start === "easier" ? "They started the easier session." : "They started the full session."); });
+}
+
+function renderState() {
+  const h = Rules.hero(state);
+  const rows = [
+    ["Variant (call 2)", LABEL.variant[state.variant], "variant"],
+    ["Day", `Day ${state.day}`, "day"],
+    ["Today's plan", LABEL.today[state.today], "today"],
+    ["Yesterday", LABEL.yesterday[state.yesterday], "yesterday"],
+    ["Sleep last night", sleepText(state.sleep), "sleep"],
+    ["Their answer", state.variant !== "C" ? "Not asked in this variant" : state.answer ? LABEL.answer[state.answer] : "Not answered yet", "answer"],
+    ["The reason shown", h.kind === "planned" ? (h.reason ?? "None") : "—", null],
+    ["Also true, not shown", h.kind === "planned" && h.alsoTrue.length ? h.alsoTrue.join("; ") : "—", null],
+    ["What easier means", Rules.easierSession(state.today) ?? "No easier version", null],
+  ];
+  document.getElementById("state").innerHTML = rows.map(([k, v, key]) =>
+    `<dt>${k}</dt><dd class="${key && prev[key] !== state[key] ? "changed" : ""}">${v}</dd>`).join("");
+  document.getElementById("log").textContent = lastAction;
+}
+
+function renderControls() {
+  const group = (label, key, values, action) => `<div class="row"><span>${label}</span>${values.map(v =>
+    `<button class="opt" aria-pressed="${String(state[key] === v || String(state[key]) === String(v))}" data-type="${action}" data-value="${v}">${LABEL[key][v]}</button>`).join("")}</div>`;
+  document.getElementById("controls").innerHTML =
+    group("Variant (the owner's call 2)", "variant", ["A", "B", "C"], "variant") +
+    group("Today's plan", "today", Object.keys(LABEL.today), "today") +
+    group("Yesterday", "yesterday", Object.keys(LABEL.yesterday), "yesterday") +
+    group("Sleep last night (Apple Health, iOS only)", "sleep", ["not-connected", "not-recorded", 450, 340], "sleep") +
+    `<div class="row"><span>Time</span><button class="act" data-next>Next morning</button><button class="opt" data-reset>Start again</button></div>`;
+  document.querySelectorAll("#controls [data-type]").forEach(b => b.onclick = () => {
+    const raw = b.dataset.value; const value = /^\d+$/.test(raw) ? Number(raw) : raw;
+    dispatch({ type: b.dataset.type, value }, `Set ${b.dataset.type} to "${b.textContent}".`);
+  });
+  document.querySelector("[data-next]").onclick = () => dispatch({ type: "next-day" }, "Midnight passed. The answer and today's choice are gone; the plan is the same.");
+  document.querySelector("[data-reset]").onclick = () => dispatch({ type: "reset" }, "Back to the start.");
+}
+
+/* Walkthroughs: each starts from a known day and steps through real actions. */
+const SCENARIOS = [
+  { name: "The reason that exists", text: "A hard tempo run yesterday, legs today. This is the one reason the app has now (Lift4). Watch it reach Home, in each variant.",
+    steps: [["Variant A", { type: "variant", value: "A" }], ["Today: Lower A", { type: "today", value: "lift-legs" }], ["Yesterday: a hard run", { type: "yesterday", value: "run-hard" }],
+      ["Variant B: the same reason, and the link is there every day", { type: "variant", value: "B" }], ["Today: Upper A instead (the reason goes, B's link stays)", { type: "today", value: "lift-upper" }]] },
+  { name: "The new run reason", text: "Leg day yesterday, intervals today. The mirror of the existing reason, for a run day. The easier run is an easy run for the same time.",
+    steps: [["Variant A", { type: "variant", value: "A" }], ["Yesterday: a leg day", { type: "yesterday", value: "lift-legs" }], ["Today: intervals", { type: "today", value: "run-intervals" }],
+      ["Today: an easy run instead (no easier version, nothing shows)", { type: "today", value: "run-easy" }]] },
+  { name: "Short sleep", text: "5 h 40 min of sleep before an upper-body day. Then the same night with Health not connected: no reason, and no \"no data\" line either.",
+    steps: [["Variant A", { type: "variant", value: "A" }], ["Today: Upper A", { type: "today", value: "lift-upper" }], ["Sleep: 5 h 40 min", { type: "sleep", value: 340 }],
+      ["Sleep: Health not connected", { type: "sleep", value: "not-connected" }], ["Sleep: connected, nothing recorded", { type: "sleep", value: "not-recorded" }]] },
+  { name: "Two reasons at once", text: "A long run yesterday, legs today, and 5 h 40 min of sleep. Only one reason shows; the other is listed under \"Also true\". Is the order right?",
+    steps: [["Variant A", { type: "variant", value: "A" }], ["Today: Lower A", { type: "today", value: "lift-legs" }], ["Yesterday: a long run", { type: "yesterday", value: "run-long" }], ["Sleep: 5 h 40 min", { type: "sleep", value: 340 }]] },
+  { name: "They say Good after a short night", text: "Variant C. Five hours of sleep, but they answer Good. Their word outranks the facts: no reason shows. Should it?",
+    steps: [["Variant C", { type: "variant", value: "C" }], ["Today: Upper A", { type: "today", value: "lift-upper" }], ["Sleep: 5 h 40 min", { type: "sleep", value: 340 }], ["They answer Good", { type: "answer", value: "good" }]] },
+  { name: "Rough, then the next day", text: "Variant C. They answer Rough: the easier session becomes the main button. They take it. Next morning the question is back, and the plan is the same as before.",
+    steps: [["Variant C", { type: "variant", value: "C" }], ["Today: Lower A", { type: "today", value: "lift-legs" }], ["They answer Rough", { type: "answer", value: "rough" }],
+      ["They start the easier session", { type: "start", value: "easier" }], ["Next morning", { type: "next-day" }]] },
+  { name: "Trying to answer outside C", text: "Variants A and B never ask. An answer sent there changes nothing, which is what should happen.",
+    steps: [["Variant B", { type: "variant", value: "B" }], ["Try to answer Rough (ignored)", { type: "answer", value: "rough" }]] },
+];
+let active = 0, step = 0;
+
+function renderScenario() {
+  document.getElementById("tabs").innerHTML = SCENARIOS.map((s, i) =>
+    `<button role="tab" aria-selected="${i === active}" data-tab="${i}">${s.name}</button>`).join("");
+  document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => startScenario(Number(b.dataset.tab)));
+  const s = SCENARIOS[active];
+  document.getElementById("scenario").innerHTML = `<p>${s.text}</p><ol class="steps">${s.steps.map(([label], i) =>
+    `<li class="${i < step ? "done" : ""}"><button class="act" data-step="${i}" ${i === step ? "" : "disabled"}>${label}</button></li>`).join("")}</ol>`;
+  document.querySelectorAll("[data-step]").forEach(b => b.onclick = () => {
+    const [label, action] = s.steps[step]; step += 1; dispatch(action, label + "."); renderScenario();
+  });
+}
+function startScenario(i) { active = i; step = 0; prev = state = Rules.initial(); lastAction = "Walkthrough started from a plain Tuesday."; render(); renderScenario(); }
+
+function render() { renderPhone(); renderState(); renderControls(); }
+startScenario(0);
+</script>
+</body>
+</html>
