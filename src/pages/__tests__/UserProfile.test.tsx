@@ -34,11 +34,10 @@ vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/auth", () => ({ useUid: () => H.viewer }));
 vi.mock("@/lib/socialApi", () => ({
-  getFollowerCount: async (uid: string) => {
+  getFollowCounts: async (uid: string) => {
     if (H.countsFail) throw new Error("unavailable");
-    return H.followers[uid] ?? 0;
+    return { followers: H.followers[uid] ?? 0, following: 0 };
   },
-  getFollowingCount: async () => 0,
   batchGetKudos: async () => ({}),
   blockUser: vi.fn(),
   unblockUser: vi.fn(async () => {}),

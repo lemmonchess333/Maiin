@@ -1,5 +1,8 @@
 # Exercise artwork migration
 
+Home's hero animations (flipbooks of a lead lift's rep and the runner) are
+made from these frames: see [motion/README.md](motion/README.md).
+
 ## Current checkpoint — 7 November 2026
 
 The owner had Straight-Arm Pulldown redrawn ("looks bad", "needs redoing").

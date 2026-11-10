@@ -308,6 +308,18 @@ describe("ProModal — checkout", () => {
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Card declined.");
   });
+
+  it("a purchase the store took shows a note, not an error", async () => {
+    purchaseMock.mockResolvedValueOnce({
+      success: false,
+      pending: "entitlement",
+    });
+    renderModal({ onClose: () => {} });
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    const note = await screen.findByText(/The App Store has your purchase\./);
+    expect(note.getAttribute("role")).toBe("status");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
 });
 
 describe("ProModal — Sub1a P1 trial CTA", () => {

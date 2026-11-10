@@ -311,6 +311,20 @@ describe("Upgrade — checkout uses selected plan (the original bug)", () => {
     expect(alert.textContent).toContain("Card declined.");
   });
 
+  it("a purchase the store took shows a note, not an error", async () => {
+    purchaseMock.mockResolvedValueOnce({
+      success: false,
+      pending: "approval",
+    });
+    renderPlans();
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    const note = await screen.findByText(
+      /Your purchase is waiting for approval\./
+    );
+    expect(note.getAttribute("role")).toBe("status");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("checkout passes entryPoint = upgrade", async () => {
     // After the server-synthesised-URL pivot, the client no longer
     // sends successPath / cancelPath strings; it sends a single

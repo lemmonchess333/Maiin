@@ -30,7 +30,7 @@ const MIN_REGION = 1200;
 const GROW_RADIUS = 4;
 const EDGE_RAMP = 48;
 const PAD_SHARE = 0.04;
-const LONG_SIDE = 480;
+export const LONG_SIDE = 480;
 
 /** Separable square min (erode) or max (dilate) filter over a 0/1 mask. */
 function squareFilter(
@@ -115,7 +115,10 @@ function bigRegions(
   return keep;
 }
 
-async function cutOut(file: string): Promise<{
+/** One drawing keyed out of its black backdrop, uncropped: the RGBA a
+ *  card cut-out and each frame of a hero animation (hero-motion.ts) start
+ *  from. */
+export async function cutOut(file: string): Promise<{
   rgba: Buffer;
   width: number;
   height: number;
@@ -161,7 +164,7 @@ async function cutOut(file: string): Promise<{
 }
 
 /** Bounding box of pixels with visible alpha, padded and clamped. */
-function contentBox(rgba: Buffer, w: number, h: number) {
+export function contentBox(rgba: Buffer, w: number, h: number) {
   let x0 = w;
   let y0 = h;
   let x1 = -1;

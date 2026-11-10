@@ -109,7 +109,9 @@ function memoryFirestore(seed = {}) {
       orderBy: () => q,
       select: () => q,
       limit: (n) => collection(path, group, filters, cursor, n),
-      startAfter: (r) => collection(path, group, filters, r.path || r, cap),
+      // A reference, a document snapshot (as Firestore takes) or a path.
+      startAfter: (r) =>
+        collection(path, group, filters, r.path || r.ref?.path || r, cap),
       // An aggregation, as Firestore's count(): the matching documents'
       // number, without them, and the time it was read. Each read is
       // later than the last, as Firestore's read times are.

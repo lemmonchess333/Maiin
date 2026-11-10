@@ -8,6 +8,7 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import IconButton from "@/components/ui/IconButton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import WaterWave from "@/components/home/WaterWave";
+import { waterFillBackground } from "@/components/home/waterFill";
 import WaterBubbles from "@/components/home/WaterBubbles";
 import {
   GLASS_ML,
@@ -297,9 +298,7 @@ export default function WaterCard({
   const iconBoxShadow = hasWater
     ? "var(--ds-shadow-card), inset 0 -4px 12px rgba(82, 163, 189, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.4)"
     : "var(--ds-shadow-card)";
-  const fillBg = hasWater
-    ? "linear-gradient(0deg, rgba(30, 120, 155, 0.25) 0%, rgba(58, 153, 186, 0.15) 40%, rgba(82, 163, 189, 0.08) 100%)"
-    : "transparent";
+  const fillBg = hasWater ? waterFillBackground(fillPercent) : "transparent";
 
   /* The tile's heading, so Home's cards can be stepped through by heading.
      Unseen: the visible "Water" sits inside the tile's button, and a

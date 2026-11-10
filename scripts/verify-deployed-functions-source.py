@@ -26,6 +26,7 @@ RETRY_REQUIRED = frozenset({
     "onFollowerCreated", "onFollowRequestCreated",
     "onBlockWritten", "onPublicProfileIdentityChanged",
     "onChallengeParticipantWritten", "onRaceGoalWritten",
+    "onFollowerEdgeWritten", "onFollowingEdgeWritten",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -88,6 +89,10 @@ def source_targets():
     league_lib = ["lib/leagues.js", "lib/leagueRules.js", "lib/leaguePlanned.js"]
     # Soc15: the live pulse's one writer, and the deletion guard it reads.
     pulse_lib = ["lib/pulse.js", "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js"]
+    follow_count_paths = ["index.js", "package-lock.json", "lib/followCounts.js",
+                          "lib/raceCohorts.js", "lib/spaceIds.js",
+                          "lib/deletionTransactionGuard.js",
+                          "lib/accountDeletionStatus.js", "lib/triggerRetry.js"]
     league_paths = ["index.js", "package-lock.json"] + league_lib + [
                     "lib/friendsBoard.js", "lib/deletionTransactionGuard.js",
                     "lib/accountDeletionStatus.js", "lib/restriction.js",
@@ -119,6 +124,11 @@ def source_targets():
         # Who has blocked each account, the copy the blocked person's app reads.
         "onBlockWritten": ["index.js", "package-lock.json", "lib/blockMirror.js",
                            "lib/triggerRetry.js", "lib/accountDeletionLocks.js"],
+        # How many follow an account and how many it follows: the one
+        # writer of followCounts, the freshness rule it shares with the
+        # race counts, and the deletion freeze its transaction reads.
+        "onFollowerEdgeWritten": follow_count_paths,
+        "onFollowingEdgeWritten": follow_count_paths,
         # A Circle's invite code expires, and its owner replaces it.
         "joinGoalSpace": circle_paths,
         "renewGoalSpaceInviteCode": circle_paths,

@@ -595,6 +595,24 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // Follow counts: an edge made or removed recounts its list for the
+  // account that owns it (lib/followCounts.js).
+  onFollowerEdgeWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/followers/{uid}/users/{followerUid}",
+  },
+  onFollowingEdgeWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/following/{uid}/users/{targetUid}",
+  },
   // Polish3 call 1: the person blocked's copy of a block, on every write.
   onBlockWritten: {
     kind: "event",

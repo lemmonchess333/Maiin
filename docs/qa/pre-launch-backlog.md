@@ -10,6 +10,25 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## A purchase the store has, before Pro is on (2026-11-10)
+
+A purchase that Apple's sheet finished without RevenueCat granting Pro, and
+a payment Apple is holding for approval, no longer read "Purchase failed.
+Try again.": the paywall shows a note and no error (`rcPurchase`'s
+`pending`, `useProCheckout`'s `notice`). The unit tests feed the plugin's
+answers by hand; only the sandbox shows what the plugin really sends.
+
+- [ ] **Ask to Buy.** On a TestFlight build, signed in to a sandbox Apple
+      account that has Ask to Buy on (a child in a Family Sharing group),
+      start Pro. Passing: after Apple's "Ask permission" sheet the paywall
+      reads "Your purchase is waiting for approval. Pro switches on once
+      it's approved.", with no red error and no toast. Approve it from the
+      organiser's device: Pro switches on without another tap.
+- [ ] **The pending code.** In that run, Xcode's console shows the
+      rejection's code. Passing: it is "20". If it is anything else, the
+      paywall said "Purchase failed. Try again." above: change
+      `PAYMENT_PENDING_CODE` in `src/lib/revenuecat.ts` to match.
+
 ## Setup asks for the public name (2026-11-01)
 
 Setup no longer makes the public name from the email address: an email
@@ -263,6 +282,19 @@ the gates against fakes; only a phone shows the fix time and the battery.
       minutes, then lock the phone for ten. Passing: battery use in
       Settings → Battery is in line with a screen left on, and no location
       arrow shows while the phone is locked on the setup screen.
+
+## A pause while the run is already paused (2026-11-10)
+
+The run timer refuses a second pause and a resume while running
+(`useRunTimer`): a Pause tapped during an auto-pause added that stretch to
+the duration twice, and four of the pause sites had no guard of their own.
+The unit suite drives the timer; only a run shows auto-pause and the
+buttons together.
+
+- [ ] **Pause during an auto-pause.** On an iPhone, start a run and stop
+      at a crossing until auto-pause shows. Tap Pause, wait ten seconds,
+      tap Resume and run on. Passing: the duration does not jump, and the
+      saved run's time is the moving time, with the stop counted once.
 
 ## The streak's days, from the flame (Mob1 call 4, 2026-10-27)
 
@@ -784,6 +816,44 @@ cover the logic; these need two real accounts.
       leaves B's button at Follow; B tapping Requested cancels it and A's
       list no longer shows it; with A's switch off, B's Follow is immediate
       and reads Following at once.
+
+## Follow counts kept by the server (2026-11-10)
+
+A profile reads someone else's follower and following numbers from
+`followCounts/{uid}`, which two new triggers recount from the follow lists
+(`functions/lib/followCounts.js`). It is step 1 of closing the follow
+lists: until now any signed-in account could list anyone's followers and
+following, because the counts were read from those lists. Only production
+shows the triggers deployed and the counts landing.
+
+- [ ] **The triggers deployed.** After Deploy production runs for this
+      change, `onFollowerEdgeWritten` and `onFollowingEdgeWritten` are in
+      the Firebase console's function list, and the release's source
+      read-back passed for both.
+- [ ] **A follow lands in the count.** From a second account, follow the
+      first. Passing: within a few seconds `followCounts/{first uid}` has
+      `followers` one higher and `followCounts/{second uid}` has
+      `following` one higher, and the first account's profile, opened from
+      the second, shows the new number. Unfollow: both go back.
+- [ ] **Every account counted.** Run the "Backfill follow counts" workflow
+      (Actions → Run workflow, or a dated line in
+      `.github/backfill-follow-counts.request` on main) only after the
+      row above passes. Passing: the first pass prints the accounts it
+      counted and the second pass ends with `changed: 0`.
+- [ ] **Then close the lists.** Merge the rules change that lets only the
+      two people on a follow read it, and only the owner list their own
+      (its pull request names this row). Not before the backfill: an
+      account nobody has counted reads as 0 once the lists are closed.
+      And not before every installed iPhone build reads the server's
+      count: a build from before it counts other people's lists itself,
+      and once the rules refuse that its profiles say the counts could
+      not be loaded. Upload a TestFlight build first.
+- [ ] **The lists are closed.** After Deploy production runs for the
+      rules change, from a second account open the first account's
+      profile. Passing: its two numbers still show, and your own
+      Followers and Following pages still list. In the browser console
+      on the web build, `getDocs` on `followers/{first uid}/users` from
+      the second account is refused with permission-denied.
 
 ## What a deletion used to leave behind (2026-10-20)
 
@@ -4020,6 +4090,30 @@ device shows.
       Safari's Web Inspector Timelines over the device), sit on Home for
       10 seconds with the water tile on screen. Passing: no repeating
       layout or paint entries from the water tile.
+
+## Touches that end early, or never end (2026-11-10)
+
+#3131 fixed how a few gestures treat a finger that lets go early, stays
+down, or is taken by the system: on a phone a released press fires
+pointerup, then pointerleave, then click, and an incoming call or a
+system gesture ends a touch with touchcancel instead of touchend. The
+unit suites replay those orders; only a phone fires them for real.
+
+- [ ] **Let go of Hold to finish halfway.** On a TestFlight build, during
+      a run, press Hold to finish and let go before the ring fills.
+      Passing: the ring empties and the run carries on; a full hold still
+      finishes it.
+- [ ] **A long press held on.** Hold an exercise row on Train for a full
+      second before lifting, and hold a saved food in Food's Quick add for
+      a second. Passing: Train's menu opens and the exercise's history does
+      not; the food is removed (with Undo) and nothing is logged.
+- [ ] **Pinch, then tap.** Open a post's photo, pinch it bigger, lift one
+      finger and then the other without moving it, then tap once. Passing:
+      the photo stays zoomed; a second quick tap zooms it back out.
+- [ ] **A touch the system takes.** Start a pull to refresh on Food, or a
+      swipe on an exercise row in the programme editor, and with the finger
+      still down pull Control Centre or take a call. Passing: the pull
+      chip goes back up with nothing refreshed, and the row slides home.
 
 ## Together leads with your race; challenges show their medals (2026-11-10)
 

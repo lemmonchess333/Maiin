@@ -9,6 +9,7 @@ import { doc, getDocFromServer } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import {
   getNativeWorkoutCleanupPlugin,
+  getWorkoutWriteAuthorization,
   isWorkoutWriteAvailable,
 } from "./healthKit";
 import {
@@ -333,8 +334,15 @@ async function reconcile(uid: string): Promise<void> {
   let consent = false;
   let enabledAtMs: number | null = null;
   let serverConsentId: string | null = null;
+  // Write access is read before any receipt is reserved. Native refuses an
+  // export without it, and a receipt reserved for an export that never ran
+  // could not be told from one that did: the next try found the workout
+  // absent with an `attempted` receipt and stopped for good. Without
+  // access, an export waits on this phone until it is given.
   const canWriteNewWorkout =
-    CONNECTED_TRAINING_RELEASED && (await isWorkoutWriteAvailable());
+    CONNECTED_TRAINING_RELEASED &&
+    (await isWorkoutWriteAvailable()) &&
+    (await getWorkoutWriteAuthorization()) === "authorized";
   if (
     canWriteNewWorkout &&
     records.some((record) => record.state !== "pending-delete")

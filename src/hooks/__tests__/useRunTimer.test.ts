@@ -170,6 +170,57 @@ describe("useRunTimer", () => {
     expect(acc).toBeLessThanOrEqual(4.7);
   });
 
+  it("a second pause banks nothing more", () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() => result.current.start());
+    vi.advanceTimersByTime(10_000);
+    act(() => result.current.pause());
+    expect(result.current.getAccumulatedSeconds()).toBe(10);
+
+    // Auto-pause and the Pause button can both reach the timer.
+    vi.advanceTimersByTime(40_000);
+    act(() => result.current.pause());
+    expect(result.current.getAccumulatedSeconds()).toBe(10);
+    expect(result.current.isRunning).toBe(false);
+  });
+
+  it("a pause before any start banks nothing", () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() => result.current.pause());
+    expect(result.current.getAccumulatedSeconds()).toBe(0);
+  });
+
+  it("a resume while running keeps the time not yet banked", () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() => result.current.start());
+    vi.advanceTimersByTime(20_000);
+    act(() => result.current.resume());
+    vi.advanceTimersByTime(5_000);
+    act(() => result.current.pause());
+    expect(result.current.getAccumulatedSeconds()).toBe(25);
+  });
+
+  it("a pause after a restored paused run banks nothing", () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() =>
+      result.current.rehydrate({ accumulatedSeconds: 600, isRunning: false })
+    );
+    vi.advanceTimersByTime(30_000);
+    act(() => result.current.pause());
+    expect(result.current.getAccumulatedSeconds()).toBe(600);
+  });
+
+  it("a restored running run pauses once, with the time since it was restored", () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() =>
+      result.current.rehydrate({ accumulatedSeconds: 600, isRunning: true })
+    );
+    vi.advanceTimersByTime(30_000);
+    act(() => result.current.pause());
+    act(() => result.current.pause());
+    expect(result.current.getAccumulatedSeconds()).toBe(630);
+  });
+
   it("accumulates time correctly across pause/resume cycles", () => {
     const { result } = renderHook(() => useRunTimer());
 

@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/bulgarian-split.webp",
+  "still": "form-art/bulgarian-split.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 480,
+  "frameHeight": 457,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "bf014a8a8c89bc4b70ddd54dbccd787b72d83903b27066f59019ad9b6f9caf63",
+  "thenSha256": "dfe313dee8b7242cefd4ba2f8fae49941ed76438595b71f39bae9bc39ac8eed9",
+  "sha256": "a8d93f521bad1c8fd49ac123e34f77b08aff081ad6fc0cc78cbd477679bdf9ef"
+}
