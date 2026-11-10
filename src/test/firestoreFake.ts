@@ -116,15 +116,7 @@ export class FakeTimestamp {
 /* ── Refs ──────────────────────────────────────────────────────────── */
 
 export type WhereOp =
-  | "=="
-  | "!="
-  | "<"
-  | "<="
-  | ">"
-  | ">="
-  | "array-contains"
-  | "in"
-  | "not-in";
+  "==" | "!=" | "<" | "<=" | ">" | ">=" | "array-contains" | "in" | "not-in";
 
 export interface Constraint {
   kind: "where" | "orderBy" | "limit" | "startAfter";
@@ -187,6 +179,9 @@ export interface FakeQuerySnap {
 export type FailOp =
   | "getDoc"
   | "getDocs"
+  /** `getCountFromServer`. Its own name, so arming a query read does not
+   *  catch a count that happens to run first. */
+  | "getCount"
   | "onSnapshot"
   | "setDoc"
   | "addDoc"

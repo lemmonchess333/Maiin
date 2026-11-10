@@ -232,6 +232,27 @@ async function countFollowList(
   return snap.data().count;
 }
 
+/**
+ * Someone else's list, counted for a side the server has no number for.
+ * While the rules let any account count a list, this is that side's real
+ * size for an account the backfill has not reached. Once the rules keep a
+ * list to its owner the count is refused, and by then every account has
+ * been counted, so no stored number means nobody.
+ */
+async function countOrNobody(
+  kind: "followers" | "following",
+  uid: string
+): Promise<number> {
+  try {
+    return await countFollowList(kind, uid);
+  } catch (err) {
+    if ((err as { code?: string } | undefined)?.code === "permission-denied") {
+      return 0;
+    }
+    throw err;
+  }
+}
+
 /** A stored count, or null for a side the server has not counted. */
 function storedCount(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) && value >= 0
@@ -244,7 +265,8 @@ function storedCount(value: unknown): number | null {
  *
  * Someone else's come from `followCounts/{uid}`, which the server keeps
  * (functions/lib/followCounts.js): one document, and nobody's lists. A
- * side it has not counted is read from the list itself. Your own come from
+ * side it has not counted is read from the list while the rules allow
+ * that, and is 0 once they do not (`countOrNobody`). Your own come from
  * your own lists, which are right the moment you follow someone or accept
  * a request; the server's copy trails that by a second or two.
  */
@@ -262,8 +284,8 @@ export async function getFollowCounts(
   const snap = await getDoc(doc(db, "followCounts", uid));
   const stored = snap.exists() ? snap.data() : {};
   const [followers, following] = await Promise.all([
-    storedCount(stored.followers) ?? countFollowList("followers", uid),
-    storedCount(stored.following) ?? countFollowList("following", uid),
+    storedCount(stored.followers) ?? countOrNobody("followers", uid),
+    storedCount(stored.following) ?? countOrNobody("following", uid),
   ]);
   return { followers, following };
 }

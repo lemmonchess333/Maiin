@@ -275,6 +275,51 @@ describe("getFollowCounts", () => {
     });
   });
 
+  it("reads a side it is refused as 0: the lists are closed and everyone was counted", async () => {
+    seedFirestore({
+      "followCounts/user1": { followers: 5 },
+      ...list("following", "user1", 10),
+    });
+    failNextFirestore("getCount", {
+      path: "following/user1/users",
+      code: "permission-denied",
+    });
+    expect(await getFollowCounts("user1", false)).toEqual({
+      followers: 5,
+      following: 0,
+    });
+    expect(unfiredFailures()).toEqual([]);
+  });
+
+  it("an account with no stored count, once the lists are closed, is 0 and 0", async () => {
+    seedFirestore({ ...list("followers", "user1", 3) });
+    failNextFirestore("getCount", { code: "permission-denied", times: 2 });
+    expect(await getFollowCounts("user1", false)).toEqual({
+      followers: 0,
+      following: 0,
+    });
+    expect(unfiredFailures()).toEqual([]);
+  });
+
+  it("a count that fails for any other reason is a failure, not 0", async () => {
+    seedFirestore({ "followCounts/user1": { followers: 5 } });
+    failNextFirestore("getCount", {
+      path: "following/user1/users",
+      code: "unavailable",
+    });
+    await expect(getFollowCounts("user1", false)).rejects.toMatchObject({
+      code: "unavailable",
+    });
+  });
+
+  it("your own counts refused is a failure: your lists are always yours", async () => {
+    seedFirestore({ ...list("followers", "me", 2) });
+    failNextFirestore("getCount", { code: "permission-denied" });
+    await expect(getFollowCounts("me", true)).rejects.toMatchObject({
+      code: "permission-denied",
+    });
+  });
+
   it("takes a stored 0 as counted, not as missing", async () => {
     seedFirestore({
       "followCounts/user1": { followers: 0, following: 0 },
