@@ -172,6 +172,22 @@ describe("end", () => {
     expect(endActivity).toHaveBeenCalledTimes(1);
   });
 
+  it("an end while the card is still starting takes it down once it shows", async () => {
+    let shown!: (result: { activityId: string }) => void;
+    startActivity.mockReturnValue(new Promise((resolve) => (shown = resolve)));
+    const start = startRunActivity(DATA);
+    // Discarded before iOS has answered: the card must not stay on
+    // "Recording" with no one left to end it.
+    const end = endRunActivity();
+    shown({ activityId: "act-1" });
+    await Promise.all([start, end]);
+    expect(endActivity).toHaveBeenCalledWith({
+      activityId: "act-1",
+      data: {},
+      behavior: { dismissalPolicy: "immediate" },
+    });
+  });
+
   it("is a no-op when nothing is live (unmount cleanup path)", async () => {
     await endRunActivity();
     expect(endActivity).not.toHaveBeenCalled();

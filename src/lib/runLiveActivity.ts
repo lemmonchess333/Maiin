@@ -56,8 +56,10 @@ export interface RunActivityData {
 const MIN_UPDATE_INTERVAL_MS = 2000;
 
 let activityId: string | null = null;
-/** Serialises start against a concurrent end (both are async). */
-let starting = false;
+/** The start in flight: a second start waits on it, and an end that
+ *  comes first waits for it, so a card that appears after its run ended
+ *  is taken down rather than left on "Recording". */
+let starting: Promise<void> | null = null;
 let lastUpdateAt = 0;
 let lastPayloadKey = "";
 
@@ -191,7 +193,13 @@ function dynamicIslandLayout(): DynamicIslandLayout {
  */
 export async function startRunActivity(data: RunActivityData): Promise<void> {
   if (activityId !== null || starting) return;
-  starting = true;
+  const begin = beginRunActivity(data);
+  starting = begin;
+  await begin;
+  if (starting === begin) starting = null;
+}
+
+async function beginRunActivity(data: RunActivityData): Promise<void> {
   try {
     const plugin = (await loadLiveActivities())?.plugin;
     if (!plugin) return;
@@ -213,8 +221,6 @@ export async function startRunActivity(data: RunActivityData): Promise<void> {
     lastPayloadKey = JSON.stringify(data);
   } catch (err) {
     logger.warn("[runLiveActivity] start failed", err);
-  } finally {
-    starting = false;
   }
 }
 
@@ -248,6 +254,7 @@ export async function updateRunActivity(data: RunActivityData): Promise<void> {
  * it).
  */
 export async function endRunActivity(final?: RunActivityData): Promise<void> {
+  if (starting) await starting;
   const id = activityId;
   activityId = null;
   lastPayloadKey = "";
@@ -264,7 +271,7 @@ export async function endRunActivity(final?: RunActivityData): Promise<void> {
 /** Test-only: reset module state between cases. */
 export function __resetRunActivityForTests(): void {
   activityId = null;
-  starting = false;
+  starting = null;
   lastUpdateAt = 0;
   lastPayloadKey = "";
 }
