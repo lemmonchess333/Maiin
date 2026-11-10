@@ -103,4 +103,16 @@ describe("SortableExerciseRow", () => {
     fireEvent.transitionEnd(row);
     expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();
   });
+
+  it("goes home when the system cancels the touch mid-swipe", () => {
+    const row = renderDeletable();
+    fireEvent.touchStart(row, { touches: [{ clientX: 200, clientY: 100 }] });
+    fireEvent.touchMove(row, { touches: [{ clientX: 110, clientY: 100 }] });
+    expect(row.style.transform).toBe("translateX(-80px)");
+    fireEvent.touchCancel(row, { touches: [] });
+    expect(row.style.transform).toBe("translateX(0px)");
+    expect(row.style.transition).toBe("transform 0.2s ease-out");
+    fireEvent.transitionEnd(row);
+    expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();
+  });
 });
