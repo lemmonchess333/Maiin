@@ -1,9 +1,10 @@
 // @vitest-environment jsdom — reads the run stored in local storage.
 /**
- * The week rollover waits on a run from an earlier week still on this
- * phone, unsaved (`earlierWeeksRunOnPhone`): one that ran past Sunday
- * midnight, or waits on its summary. Saved, it counts for the week it was
- * started in, so that week must not be weighed without it.
+ * The week rollover waits on a session still on this phone: a run from an
+ * earlier week, unsaved (`earlierWeeksRunOnPhone`), one that ran past
+ * Sunday midnight or waits on its summary; and a lift from the plan's week
+ * the app was closed partway through (`planWeeksLiftOnPhone`), which a
+ * rolled week no longer offers to resume.
  */
 import { beforeEach, describe, expect, it } from "vitest";
 import {
@@ -16,7 +17,12 @@ import {
 } from "@/lib/runResumeStorage";
 import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
 import { createRunSessionIdentity } from "@/lib/runSessionIdentity";
-import { earlierWeeksRunOnPhone } from "../earlierWeeksRun";
+import {
+  earlierWeeksRunOnPhone,
+  planWeeksLiftOnPhone,
+} from "../sessionsOnPhone";
+import { programmeDraftIdentity, sessionDayContext } from "../sessionDay";
+import type { ProgramState } from "../programTypes";
 
 const UID = "user-A";
 /** Tuesday; its week began on Monday 9 November. */
@@ -143,5 +149,96 @@ describe("a stored run going away is announced", () => {
     } finally {
       stop();
     }
+  });
+});
+
+describe("planWeeksLiftOnPhone", () => {
+  const plan = {
+    weekNumber: 3,
+    workouts: [
+      { dayName: "Upper", dayType: "push", completed: true, exercises: [] },
+      {
+        dayName: "Lower",
+        dayType: "legs",
+        completed: false,
+        exercises: [
+          {
+            instanceId: "lower-squat",
+            exerciseId: "barbell-squat",
+            name: "Barbell Squat",
+            sets: 3,
+            reps: 5,
+            weight: 100,
+            progressionType: "linear",
+          },
+        ],
+      },
+    ],
+  } as unknown as ProgramState;
+  const context = sessionDayContext(null, null);
+  const NOW = Date.now();
+
+  function storeDraft(
+    weekNumber: number,
+    savedAt: number,
+    completed: boolean
+  ): void {
+    const identity = programmeDraftIdentity(
+      plan.workouts[1],
+      1,
+      weekNumber,
+      "full",
+      context
+    );
+    localStorage.setItem(
+      `tropos_workout_draft:v2:${UID}:${encodeURIComponent(identity)}`,
+      JSON.stringify({
+        dayIndex: 1,
+        dayName: "Lower",
+        setLogs: [
+          [
+            { reps: 5, weight: 100, completed, type: "working" },
+            { reps: 5, weight: 100, completed: false, type: "working" },
+            { reps: 5, weight: 100, completed: false, type: "working" },
+          ],
+        ],
+        exerciseNotes: {},
+        elapsedSeconds: 900,
+        currentExIndex: 0,
+        savedAt,
+        identity,
+        completionId: "lower-draft",
+        completionCommandId: "lower-draft",
+      })
+    );
+  }
+
+  it("holds for the plan week's lift with a set done, saved in the last six hours", () => {
+    storeDraft(3, NOW - HOUR, true);
+    expect(planWeeksLiftOnPhone(UID, plan, context, NOW)).toBe(true);
+  });
+
+  it("does not hold with no set done, past six hours, or for another week", () => {
+    storeDraft(3, NOW - HOUR, false);
+    expect(planWeeksLiftOnPhone(UID, plan, context, NOW)).toBe(false);
+
+    localStorage.clear();
+    storeDraft(3, NOW - 6 * HOUR - 1, true);
+    expect(planWeeksLiftOnPhone(UID, plan, context, NOW)).toBe(false);
+
+    localStorage.clear();
+    storeDraft(2, NOW - HOUR, true);
+    expect(planWeeksLiftOnPhone(UID, plan, context, NOW)).toBe(false);
+  });
+
+  it("does not hold for a day already done", () => {
+    storeDraft(3, NOW - HOUR, true);
+    const done = {
+      ...plan,
+      workouts: plan.workouts.map((d, i) =>
+        i === 1 ? { ...d, completed: true } : d
+      ),
+    };
+    expect(planWeeksLiftOnPhone(UID, done, context, NOW)).toBe(false);
   });
 });

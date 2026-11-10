@@ -4009,6 +4009,73 @@ describe("the week rollover waits for a finish (Lift4)", () => {
     await waitFor(() => expect(rolled()).toBe(true), { timeout: 2000 });
   });
 
+  it("rolls only once a lift from last week, still on this phone, is finished", async () => {
+    // The app was closed partway through Lower on Sunday night. Its draft is
+    // kept for the plan's week, so rolled first, Lower was not offered
+    // again and its sets were lost.
+    mockProfile = lifterProfile();
+    resetFirestore();
+    const plan = lastWeeksPlan();
+    seedProgram(plan);
+    const { programmeDraftIdentity, sessionDayContext } =
+      await import("../sessionDay");
+    const { listWorkoutDrafts } = await import("@/hooks/useWorkoutDraft");
+    const { resumableLift } = await import("@/lib/sessionsInFlight");
+    const context = sessionDayContext(plan, mockProfile as never);
+    const identity = programmeDraftIdentity(
+      plan.workouts[1],
+      1,
+      plan.weekNumber,
+      "full",
+      context
+    );
+    localStorage.setItem(
+      `tropos_workout_draft:v2:test-user-1:${encodeURIComponent(identity)}`,
+      JSON.stringify({
+        dayIndex: 1,
+        dayName: "Lower",
+        setLogs: [
+          [
+            { reps: 5, weight: 100, completed: true, type: "working" },
+            { reps: 5, weight: 100, completed: false, type: "working" },
+            { reps: 5, weight: 100, completed: false, type: "working" },
+          ],
+        ],
+        exerciseNotes: {},
+        elapsedSeconds: 900,
+        currentExIndex: 0,
+        savedAt: Date.now() - 60 * 60 * 1000,
+        identity,
+        completionId: "lower-draft",
+        completionCommandId: "lower-draft",
+      })
+    );
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(rolled()).toBe(false);
+    // Home still offers Lower to resume.
+    expect(
+      resumableLift(
+        listWorkoutDrafts("test-user-1"),
+        result.current.programState,
+        context
+      )
+    ).toMatchObject({ dayIndex: 1, sets: 1 });
+
+    // Resumed and finished (or ended with nothing kept): the draft goes
+    // with the session, and the week rolls.
+    const { openLiftSession } = await import("../openLiftSession");
+    const close = openLiftSession();
+    for (const key of Object.keys(localStorage))
+      if (key.startsWith("tropos_workout_draft:")) localStorage.removeItem(key);
+    act(() => close());
+    await waitFor(() => expect(rolled()).toBe(true), { timeout: 2000 });
+  });
+
   it("weighs a race plan's week on the runs read after last week's run is saved", async () => {
     // The recent runs are read once a day. The one taken while the run was
     // still on the phone does not have it, so the rollover reads them again.

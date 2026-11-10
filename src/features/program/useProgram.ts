@@ -88,7 +88,11 @@ import {
   storedRunClears,
   subscribeStoredRunClears,
 } from "@/lib/runResumeStorage";
-import { earlierWeeksRunOnPhone } from "./earlierWeeksRun";
+import {
+  earlierWeeksRunOnPhone,
+  planWeeksLiftOnPhone,
+} from "./sessionsOnPhone";
+import { sessionDayContext } from "./sessionDay";
 import {
   migrateProgramState,
   backfillWeekScheduleIfMissing,
@@ -282,14 +286,25 @@ function lighterWeekStarted(raceWeek: ProgramState["raceWeek"]): string {
 export type ProgramReadiness = "pending" | "ready" | "failed";
 
 /** A finish the week rollover must wait for: a programme session open on
- *  this device, a finished one still waiting to sync, or a run from an
- *  earlier week still on this phone. */
-function finishOutstanding(uid: string | undefined, todayKey: string): boolean {
+ *  this device, a finished one still waiting to sync, or a session still
+ *  on this phone (`sessionsOnPhone`): a run from an earlier week, unsaved,
+ *  or a lift from the plan's week the app was closed partway through. */
+function finishOutstanding(
+  uid: string | undefined,
+  todayKey: string,
+  programState: ProgramState,
+  profile: UserProfile
+): boolean {
   return (
     isLiftSessionOpen() ||
     (!!uid &&
       (hasPendingProgrammeCompletion(uid) ||
-        earlierWeeksRunOnPhone(uid, todayKey)))
+        earlierWeeksRunOnPhone(uid, todayKey) ||
+        planWeeksLiftOnPhone(
+          uid,
+          programState,
+          sessionDayContext(programState, profile)
+        )))
   );
 }
 
@@ -1213,7 +1228,7 @@ export function useProgram() {
         layoffRead.clears !== runClears)
     )
       return;
-    if (finishOutstanding(user?.uid, today)) return;
+    if (finishOutstanding(user?.uid, today, programState, profile)) return;
 
     const rollover = weekRolloverAnchor(programState, profile);
     if (rollover?.side !== "run") return;
@@ -1354,7 +1369,7 @@ export function useProgram() {
     if (!mirrorReady) return;
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
-    if (finishOutstanding(user?.uid, today)) return;
+    if (finishOutstanding(user?.uid, today, programState, profile)) return;
 
     // The run-side effect acts on a "run" anchor and this one on a "lift"
     // anchor, so exactly one of the two can act on any given state. No
@@ -1420,7 +1435,7 @@ export function useProgram() {
     if (!mirrorReady) return;
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
-    if (finishOutstanding(user?.uid, today)) return;
+    if (finishOutstanding(user?.uid, today, programState, profile)) return;
     const rollover = weekRolloverAnchor(programState, profile);
     if (rollover && rollover.weekKey < localWeekKey()) return;
     for (const dayIndex of raceRestSkips(programState, localDateString())) {
