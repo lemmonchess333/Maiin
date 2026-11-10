@@ -508,6 +508,7 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
       <MemoryRouter>
         <ProgrammeSettings
           variant="overview"
+          recentRuns={null}
           profile={makeProfile({ weeklyWorkoutsTarget })}
           programState={programState}
           readiness="ready"

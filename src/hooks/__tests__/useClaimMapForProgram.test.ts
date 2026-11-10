@@ -641,6 +641,7 @@ describe("claimWindowStart", () => {
     // Another plan reads this week, as before.
     expect(
       claimWindowStart("2026-10-21", [], {
+        mode: "race_prep",
         stageWeekKey: "2026-10-19",
         stageStartedWeek: "2026-10-12",
       })

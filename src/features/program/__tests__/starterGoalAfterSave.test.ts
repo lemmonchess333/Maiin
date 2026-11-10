@@ -10,9 +10,10 @@ import { describe, expect, it } from "vitest";
 import { starterGoalAfterSave } from "../runModeResolution";
 import { profileNewRunnerUntil } from "../newRunner";
 import { starterNewRunnerUntil } from "../starterPlan";
+import type { UserProfile } from "@/lib/auth";
 
 const TODAY = "2026-11-10";
-const running = { startedOn: "2026-10-05" };
+const running: UserProfile["starterGoal"] = { startedOn: "2026-10-05" };
 
 describe("starterGoalAfterSave", () => {
   it("ends a running goal left for a race or free running, at the stage reached", () => {
