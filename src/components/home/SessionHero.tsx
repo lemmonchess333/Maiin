@@ -201,7 +201,7 @@ export default function SessionHero({
   }
 
   return (
-    <div className="@container relative rounded-2xl">
+    <div className="@container relative rounded-2xl" data-hero="">
       {previewButton}
       <div className="pointer-events-none relative z-10">
         {category && (

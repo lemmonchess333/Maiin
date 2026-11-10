@@ -671,6 +671,11 @@ from, its version and the local changes to carry into the next update are in
 
 ### Reusable prompts
 
+When the owner says a screen feels off, use the `screen-critique` skill: it
+scores the screen against §14m (`npm run score:screens` on the emulator
+rig), sets it beside the reference apps, finds the cause in the code and
+ends in fixes for the owner to call. Together's Soc16 critique is its model.
+
 Three paste-ready session prompts live in `docs/agents/`, each carrying its
 measured baseline: `visual-pass-prompt.md` for the pixels-only visual pass,
 `app-improvement-prompt.md` for the whole-app pass (security, guards,
