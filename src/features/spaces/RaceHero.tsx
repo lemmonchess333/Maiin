@@ -29,6 +29,10 @@ import { useRaceCohort } from "./useRaceCohort";
  * Social may be loud (DESIGN_GUIDE §14l): a full-bleed photo under the
  * one dark shade every photo card uses, the running coral's wash on it.
  */
+/** The scrim PhotoCaption draws: full behind the words, fading out over
+ *  the 2.5rem above them. */
+const SCRIM = `linear-gradient(to top, ${THEME.scrim} 0%, ${THEME.scrim} calc(100% - 2.5rem), transparent 100%)`;
+
 export default function RaceHero() {
   const { profile } = useAuth();
   const overrides = useRaceEventOverrides();
@@ -66,15 +70,6 @@ export default function RaceHero() {
               background: `linear-gradient(150deg, ${THEME.running}40 0%, ${THEME.running}14 55%, transparent 100%)`,
             }}
           />
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              /* Full scrim through the band the words sit in, so white
-                 words hold 4.5:1 over even a pale photo; it thins above. */
-              background: `linear-gradient(to top, ${THEME.scrim} 0%, ${THEME.scrim} 45%, ${THEME.scrimSoft} 70%, transparent 88%)`,
-            }}
-          />
         </>
       ) : (
         <Flag
@@ -88,8 +83,12 @@ export default function RaceHero() {
           aria-hidden
         />
       )}
+      {/* On a photo the words sit on the one scrim every photo card uses,
+          behind the words themselves: it grows with them, so at large
+          text the kicker over a pale sky holds 4.5:1 as the name does. */}
       <div
-        className={`relative space-y-1 p-[16px] ${photo ? "text-white" : "text-foreground"}`}
+        className={`relative space-y-1 p-[16px] ${photo ? "pt-10 text-white" : "text-foreground"}`}
+        style={photo ? { background: SCRIM } : undefined}
       >
         <SectionLabel className={photo ? "text-white/85" : undefined}>
           Your race ·{" "}
