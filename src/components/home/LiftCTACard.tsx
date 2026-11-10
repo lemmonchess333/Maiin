@@ -115,9 +115,14 @@ export default function LiftCTACard({
     () => sessionLeadArt(nextWorkout.exercises)?.cutout ?? null,
     [nextWorkout.exercises]
   );
+  /* The line is a prescription against last time, so only a day still to
+     train has one, as on Train. Saving a session moves the day on (next
+     time's load, and this session as "last time"), so a done day would
+     read next session's target against the one just done. */
   const line = useMemo(
-    () => liftHeroLine(nextWorkout.exercises, unit),
-    [nextWorkout.exercises, unit]
+    () =>
+      state === "planned" ? liftHeroLine(nextWorkout.exercises, unit) : null,
+    [state, nextWorkout.exercises, unit]
   );
   const focus = muscleGroups ? focusPhrase(muscleGroups) : "";
   /* The day's muscles as words, then its minutes; with no muscles to
