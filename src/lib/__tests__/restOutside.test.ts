@@ -2,8 +2,8 @@
 /**
  * A lift's rest seen from outside the app (lifting finding 7): the page's
  * title counting down, on its own clock so it keeps going while the page
- * is hidden; and on a phone, the lock screen's Live Activity, whose native
- * half waits on Xcode, so what is pinned here is the app's half: what it
+ * is hidden; and on a phone, the lock screen's Live Activity, whose widget
+ * no CI run can see, so what is pinned here is the app's half: what it
  * asks the plugin for, a rest made longer replacing itself, and nothing
  * thrown into the workout when the plugin is missing or refuses.
  */
@@ -12,13 +12,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const plugin = vi.hoisted(() => ({
   startActivity: vi.fn(),
   endActivity: vi.fn(),
+  getAllActivities: vi.fn(),
 }));
-vi.mock("capacitor-live-activities", () => ({
-  LiveActivities: {
-    startActivity: (...a: unknown[]) => plugin.startActivity(...a),
-    endActivity: (...a: unknown[]) => plugin.endActivity(...a),
-  },
-}));
+vi.mock("capacitor-live-activities", async () => {
+  const { capacitorPlugin } = await import("@/test/capacitorPlugin");
+  return {
+    LiveActivities: capacitorPlugin({
+      startActivity: (...a: unknown[]) => plugin.startActivity(...a),
+      endActivity: (...a: unknown[]) => plugin.endActivity(...a),
+      getAllActivities: (...a: unknown[]) => plugin.getAllActivities(...a),
+    }),
+  };
+});
 vi.mock("@/lib/platform", () => ({ isNativePlatform: vi.fn(() => false) }));
 vi.mock("@/lib/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), log: vi.fn() },
@@ -26,6 +31,7 @@ vi.mock("@/lib/logger", () => ({
 
 import { isNativePlatform } from "@/lib/platform";
 import { restTitle, showRestOutside } from "../restOutside";
+import { __resetLiveActivitiesForTests } from "../liveActivities";
 import {
   __resetRestActivityForTests,
   endRestActivity,
@@ -45,9 +51,11 @@ const settle = async () => {
 beforeEach(() => {
   vi.clearAllMocks();
   __resetRestActivityForTests();
+  __resetLiveActivitiesForTests();
   setNative(false);
   plugin.startActivity.mockResolvedValue({ activityId: "rest-1" });
   plugin.endActivity.mockResolvedValue(undefined);
+  plugin.getAllActivities.mockResolvedValue({ activities: [] });
   document.title = "Tropos";
 });
 afterEach(() => {
@@ -93,7 +101,7 @@ describe("the page's title", () => {
   });
 });
 
-describe("the lock screen (native half deferred)", () => {
+describe("the lock screen", () => {
   it("counts to the rest's end with the system's own timer", async () => {
     setNative(true);
     const startedAt = Date.now();
@@ -109,11 +117,19 @@ describe("the lock screen (native half deferred)", () => {
       `{"endTime":${startedAt + 90_000}}`
     );
     expect(options.data).toEqual({ next: "Next: Bench Press" });
+    // It stops at 0:00: "timer" counts back up once the rest is over, with
+    // the phone still locked and the app asleep.
+    for (const layout of [options.layout, options.dynamicIslandLayout]) {
+      const json = JSON.stringify(layout);
+      expect(json).toContain(`{"style":"countdown"}`);
+      expect(json).not.toContain(`{"style":"timer"}`);
+    }
     stop();
     await settle();
     expect(plugin.endActivity).toHaveBeenCalledWith({
       activityId: "rest-1",
       data: {},
+      behavior: { dismissalPolicy: "immediate" },
     });
   });
 
@@ -133,6 +149,7 @@ describe("the lock screen (native half deferred)", () => {
     expect(plugin.endActivity).toHaveBeenCalledWith({
       activityId: "rest-1",
       data: {},
+      behavior: { dismissalPolicy: "immediate" },
     });
     expect(plugin.startActivity).toHaveBeenCalledTimes(2);
     second();
@@ -140,6 +157,7 @@ describe("the lock screen (native half deferred)", () => {
     expect(plugin.endActivity).toHaveBeenLastCalledWith({
       activityId: "rest-2",
       data: {},
+      behavior: { dismissalPolicy: "immediate" },
     });
   });
 
