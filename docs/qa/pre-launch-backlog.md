@@ -302,6 +302,12 @@ a phone shows the prompt.
 - [ ] **Location Services off for the phone.** Turn off Settings → Privacy
       & Security → Location Services, then tap a tile. Passing: the same
       words show, not "Acquiring GPS..." with no end.
+- [ ] **Location goes off when you leave without a fix.** Somewhere a fix
+      is slow (deep indoors), open Run, tap a tile, and back out before
+      the rings find one. Passing: the location arrow in the status bar
+      goes within about 10 seconds. The one-off fixes the run screen polls
+      for while acquiring now give up at their timeout, as the web's do;
+      before, each waited for a fix, one more every 3 seconds.
 
 ## A pause while the run is already paused (2026-11-10)
 

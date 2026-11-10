@@ -97,6 +97,17 @@ export function toGeolocationError(
   } as GeolocationPositionError;
 }
 
+/** The Web's TIMEOUT error, for a one-off fix that did not come in time. */
+function timeoutError(): GeolocationPositionError {
+  return {
+    code: 3,
+    message: "Timeout expired",
+    PERMISSION_DENIED: 1,
+    POSITION_UNAVAILABLE: 2,
+    TIMEOUT: 3,
+  } as GeolocationPositionError;
+}
+
 /** Foreground-service notification copy (Android requires it for a
  *  background watcher; iOS ignores it). Calm, specific, no alarm. */
 const BACKGROUND_TITLE = "Tropos is tracking your run";
@@ -108,14 +119,35 @@ export const nativeLocationSource: LocationSource = {
      returns the cached last-known fix immediately, which is exactly what the
      chipset pre-warm wants. No permission prompt here (requestPermissions
      false) — the real watcher below owns the prompt so it's tied to Start. */
-  getCurrent(_options, onFix, onError) {
+  getCurrent(options, onFix, onError) {
     const plugin = nativePlugin();
     if (!plugin) return; // plugin missing → silent, same as a slow fix
     let settled = false;
     let id: string | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const finish = () => {
+      if (timer) clearTimeout(timer);
+      timer = null;
       if (id) void plugin.removeWatcher({ id }).catch(() => {});
     };
+    /* Give up at `timeout`, as the Web's getCurrentPosition does. The run
+       screen polls one of these every 3 s while its watch is acquiring;
+       without this each one lived until a fix came, so a slow fix (indoors,
+       no cached location) left a watcher per poll, keeping location on
+       after the run screen had gone. */
+    const timeout = options?.timeout;
+    if (typeof timeout === "number" && Number.isFinite(timeout)) {
+      timer = setTimeout(
+        () => {
+          timer = null;
+          if (settled) return;
+          settled = true;
+          onError(timeoutError());
+          finish();
+        },
+        Math.max(0, timeout)
+      );
+    }
     plugin
       .addWatcher({ requestPermissions: false, stale: true }, (pos, err) => {
         if (settled) return;
