@@ -711,6 +711,48 @@ describe("the turn, run twice", () => {
   });
 });
 
+describe("the turn, run again each hour on Monday", () => {
+  it("does nothing once the week is finished, leaving the count joins have moved since", async () => {
+    const firestore = memoryFirestore(joiners(12));
+    await turn(firestore);
+    expect(firestore.data.get("leagueStatus/current")).toMatchObject({
+      joined: 12,
+      open: true,
+    });
+    // Someone leaves after the turn; the figure's count follows.
+    await leagues.setLeagueSharing(firestore, "bronze00", false, {
+      now: TURN + 60_000,
+    });
+    await leagues.refreshJoinedCount(firestore, { now: TURN + 60_000 });
+    const after = firestore.data.get("leagueStatus/current");
+    expect(after.joined).toBe(11);
+
+    const again = await turn(firestore, { now: TURN + 3_600_000 });
+    expect(again.alreadyFinished).toBe(true);
+    expect(again.formed).toMatchObject({ groups: 1 });
+    expect(firestore.data.get("leagueStatus/current")).toEqual(after);
+  });
+
+  it("one person's notification failing does not stop the week", async () => {
+    const firestore = memoryFirestore({
+      ...lastWeeksGroup(12),
+      ...joiners(10),
+    });
+    const notify = vi.fn(async (uid) => {
+      if (uid === "m03") throw new Error("notification write failed");
+    });
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const summary = await turn(firestore, { notify });
+    expect(notify).toHaveBeenCalledTimes(12);
+    expect(summary.settled).toEqual({ groups: 1, results: 12 });
+    expect(summary.formed.groups).toBeGreaterThan(0);
+    expect(firestore.data.has("leagueGroups/last-001")).toBe(false);
+    expect(firestore.data.get(`leagueWeeks/${WEEK}`).finishedAt).toBeTruthy();
+    expect(error).toHaveBeenCalledTimes(1);
+    error.mockRestore();
+  });
+});
+
 describe("removeLeagueTraces (account deletion)", () => {
   it("takes the account's standing, its place and its membership, and leaves the group", async () => {
     const firestore = inAGroup();

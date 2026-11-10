@@ -104,6 +104,16 @@ describe("useLongPress", () => {
     expect(onTap).toHaveBeenCalledTimes(1);
   });
 
+  it("swallows the tap after a long hold, the window counted from the lift", () => {
+    // Held well past the fire while reading the menu that opened: the
+    // click iOS sends on the lift still belongs to the press.
+    fireEvent.touchStart(row(), touch(100, 200));
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS + 1500));
+    fireEvent.touchEnd(row());
+    fireEvent.click(row());
+    expect(onTap).not.toHaveBeenCalled();
+  });
+
   it("lets a later tap through once the window has passed", () => {
     fireEvent.touchStart(row(), touch(100, 200));
     act(() => vi.advanceTimersByTime(LONG_PRESS_MS));

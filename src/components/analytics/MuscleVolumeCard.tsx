@@ -121,7 +121,7 @@ export default function MuscleVolumeCard({
                 {label}
               </span>
               <div
-                className="relative h-2 flex-1 rounded-full bg-muted @max-[15em]:col-start-1 @max-[15em]:row-start-2"
+                className="relative h-2 flex-1 rounded-full track-cut @max-[15em]:col-start-1 @max-[15em]:row-start-2"
                 aria-hidden="true"
               >
                 <div

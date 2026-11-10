@@ -188,7 +188,7 @@ export default function Upgrade() {
     selectedPlan
   );
 
-  const { loading, error, startCheckout } = useProCheckout();
+  const { loading, error, notice, startCheckout } = useProCheckout();
 
   const platform: "web" | "ios" = isNativeIOS() ? "ios" : "web";
 
@@ -647,6 +647,14 @@ export default function Upgrade() {
               className="text-xs text-destructive-strong bg-destructive/10 rounded-lg px-3 py-2"
             >
               {error}
+            </p>
+          ) : null}
+          {notice ? (
+            <p
+              role="status"
+              className="text-xs text-foreground bg-muted rounded-lg px-3 py-2"
+            >
+              {notice}
             </p>
           ) : null}
 

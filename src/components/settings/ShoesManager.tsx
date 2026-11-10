@@ -37,7 +37,7 @@ function MileageBar({ shoe }: { shoe: Shoe }) {
           {storedKmLabel(shoe.maxKm, unit)}
         </span>
       </div>
-      <div className="h-2 rounded-full bg-muted overflow-hidden">
+      <div className="h-2 rounded-full track-cut overflow-hidden">
         <div
           className={cn("h-full rounded-full transition-all", wearClass)}
           style={{ width: `${pct}%` }}

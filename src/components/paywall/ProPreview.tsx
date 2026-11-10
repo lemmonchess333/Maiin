@@ -57,7 +57,7 @@ function TargetFrame() {
           <span>Logged today</span>
           <span className="font-mono tabular-nums">1,412 / 2,336</span>
         </div>
-        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div className="h-1.5 rounded-full track-cut overflow-hidden">
           <div
             className="h-full rounded-full"
             style={{ width: "60%", background: THEME.brand }}

@@ -14,7 +14,7 @@ Five research passes on Mobbin, each measured with code on the screenshots (pixe
 | Imagery, rewards, first use | 74                    | 16                  | 27              |
 | Words                       | 82 screens, 322 lines | 16                  | all frames      |
 
-Apps: Apple Fitness, WHOOP, Oura, Strava, Nike Run Club, Hevy, Ladder, Runna, Fitbod, Gentler Streak, Bevel, Duolingo, MacroFactor, Cal AI, Yazio, Lifesum, MyFitnessPal and others. Revolut, Headspace and Airbnb are cross-checks only. Each area's rules, measurements and cited screens (as Mobbin links) are in this folder: `rules-type.md`, `rules-colour.md`, `rules-layout.md`, `rules-imagery.md`, `rules-words.md`. The screenshots and measuring scripts were working files and are not committed; Mobbin screens are linked, not copied.
+Apps: Apple Fitness, WHOOP, Oura, Strava, Nike Run Club, Hevy, Ladder, Runna, Fitbod, Gentler Streak, Bevel, Duolingo, MacroFactor, Cal AI, Yazio, Lifesum, MyFitnessPal and others. Revolut, Headspace and Airbnb are cross-checks only. Each area's rules, measurements and cited screens (as Mobbin links) are in this folder: `rules-type.md`, `rules-colour.md`, `rules-layout.md`, `rules-imagery.md`, `rules-words.md`. A sixth file, `rules-engagement.md` (10 November 2026), counts what a flow does; its rules 45 to 55 are at the end of this page. The screenshots and measuring scripts were working files and are not committed; Mobbin screens are linked, not copied.
 
 ## What it found
 
@@ -132,3 +132,45 @@ New, with nothing to replace:
 - one filled button per screen (21);
 - badge silhouettes and numbers in the art (27);
 - the words rules (34–44).
+
+## A sixth pass: what a flow does (10 November 2026)
+
+The five passes above measure how a screen looks. `rules-engagement.md` counts what a flow does: the streak and its page, missed days, asking for notifications, setup and the plan it ends on, logging a set and logging food, the week's count and the paywall. It read 168 preview screens from 51 apps by eye and compared them with Tropos's code, so its numbers are counts with small samples, not pixel measurements, and none of them overrides a number above.
+
+| Area                                 | Reference screens | Apps | Tropos side        |
+| ------------------------------------ | ----------------- | ---- | ------------------ |
+| Habit loops, setup, logging, selling | 168 previews      | 51   | read from the code |
+
+**What it found.** Tropos already has the mechanics: of the eleven rules below it meets nine, partly meets two and breaks none. Setup is the shortest in the sample, the streak forgives without selling forgiveness, and the trial screen is more candid than nine of ten paywalls. The difference from the apps people come back to is how quietly Tropos draws these loops, which rules 1 to 33 already address.
+
+### Habit loops
+
+45. **The streak's own screen shows its days, as a week row or a month, beside the count.** _(10 of 15.)_
+46. **The count stands against something: your best, or the next tier and how far off it is.** _(8 of 15. Tropos's sheet shows neither; the best is on the badges page.)_
+47. **A missed day is absorbed, or answered with a next step. It is never blamed, and protection is never sold.** _(5 of 5 comeback screens; five apps absorb a miss; two sell protection.)_
+
+### Asking for attention
+
+48. **A permission is asked with its reason. A notification ask also shows the notification, in its real words and at its real time. Saying no is one plain tap.** _(Reason first on 10 of 10; shown on 6 of 11; plain decline on 8 of 10.)_
+
+### Setup and the plan
+
+49. **Setup asks one thing a screen, says why under the question, and shows where you are. It stays at eight steps.** _(4 of 4 flows; reference flows run 12 to 34 screens.)_
+50. **Setup ends on your plan in your own numbers, changeable there, behind one button.** _(10 of 10 play the answers back; 5 of 10 allow a change there.)_
+
+### Logging
+
+51. **A set row arrives filled in. One tap on the row logs it, and the row changes at once.** _(6 of 6.)_
+52. **Adding food opens on what you ate before. A row adds in one tap and carries its calories.** _(7 of 8; 7 of 8; 6 of 8.)_
+
+### The week
+
+53. **The week is seven days in a row with done against planned.** _(7 of 9 draw the days; 5 of 9 set a target.)_
+
+### Selling
+
+54. **A paywall states the price and the period beside its button, says how to cancel, and can be left. A trial names the day it charges and the reminder before it.** _(9, 8 and 10 of 10 in an unbiased sample; 8 of 9 trial timelines promise the reminder.)_
+
+### What Tropos does not do
+
+55. **No pressure tricks:** paid or earned-currency streak protection, a countdown or a "streak lost" interruption, a second prompt that argues with a no, a multiplier with no source, a drawn copy of a system dialog, a struck-through price, a setup question that serves the business, a ticked marketing opt-in, or a limit on how much someone may train or log. _(Each seen in the sample: 2, 2, 1, 3, 2, 4, 1, 1 and 1 apps.)_

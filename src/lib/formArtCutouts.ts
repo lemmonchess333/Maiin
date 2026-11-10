@@ -15,6 +15,7 @@ import { getReleasedFormArtwork } from "./formArtwork";
 import { isFormArtQuarantined } from "./formArtQuarantine";
 import { cardFrameOf } from "./formArtCardFrames";
 import { isCompoundPrimary } from "@/features/program/variationBank";
+import { getExerciseById } from "@/lib/exercises";
 import { FORM_ART_CUTOUTS, type FormArtCutout } from "./formArtCutouts.data";
 
 export type { FormArtCutout };
@@ -46,23 +47,30 @@ export function formArtCutoutUrl(cutout: FormArtCutout): string {
 /**
  * Which exercise pictures a lift day: its main lift, drawn. That is the
  * first compound primary with released art (the squat, the bench, the
- * row: `isCompoundPrimary`), else the first exercise with art, else -1.
- * Position alone picked a beginner's pull day by its straight-arm
+ * row: `isCompoundPrimary`), else the first compound movement with art (a
+ * primary mover, not an isolation), else the first exercise with art,
+ * else -1. Position alone picked a beginner's pull day by its straight-arm
  * pulldown, a cable tower with a small figure, over the barbell row that
- * is the day's main lift (owner, 2026-11-07). Home's hero, Train's session
- * card and the finish screen all use it, so the pictures of one day agree.
+ * is the day's main lift (owner, 2026-11-07); and a day with no compound
+ * primary still led with that isolation pulldown over the chest-supported
+ * row beside it, the one lead the hero could not animate (owner,
+ * 2026-11-10: a primary mover leads). Home's hero, Train's session card
+ * and the finish screen all use it, so the pictures of one day agree.
  */
 export function sessionLeadIndex(
   exercises: readonly { exerciseId?: string }[]
 ): number {
+  let firstCompound = -1;
   let firstDrawn = -1;
   for (let i = 0; i < exercises.length; i++) {
     const id = exercises[i].exerciseId;
     if (!id || !getFormArtCutout(id)) continue;
     if (isCompoundPrimary(id)) return i;
+    if (firstCompound < 0 && getExerciseById(id)?.mechanic !== "isolation")
+      firstCompound = i;
     if (firstDrawn < 0) firstDrawn = i;
   }
-  return firstDrawn;
+  return firstCompound >= 0 ? firstCompound : firstDrawn;
 }
 
 /** The drawing that pictures a lift day (`sessionLeadIndex`), with its

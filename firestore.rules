@@ -2217,6 +2217,19 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    /* How many people follow an account and how many it follows, counted
+       by the server from the two lists (functions/lib/followCounts.js), so
+       a profile shows the numbers without reading who. Read one at a time
+       by anyone signed in, except someone its owner has blocked, as the
+       public profile is; never listed, and never written by a client. */
+    match /followCounts/{uid} {
+      allow get: if request.auth != null
+        && (request.auth.uid == uid
+            || !exists(/databases/$(database)/documents/blocks/$(uid)/users/$(request.auth.uid)));
+      allow list: if false;
+      allow write: if false;
+    }
+
     /* Weekly leagues (Soc15 call 3, functions/lib/leagues.js). Opt-in
        (users/{uid}.leagueOptIn, set only by the setLeagueSharing callable)
        and server-written throughout: the turn, the session triggers and

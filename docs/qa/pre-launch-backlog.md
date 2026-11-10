@@ -10,6 +10,25 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## A purchase the store has, before Pro is on (2026-11-10)
+
+A purchase that Apple's sheet finished without RevenueCat granting Pro, and
+a payment Apple is holding for approval, no longer read "Purchase failed.
+Try again.": the paywall shows a note and no error (`rcPurchase`'s
+`pending`, `useProCheckout`'s `notice`). The unit tests feed the plugin's
+answers by hand; only the sandbox shows what the plugin really sends.
+
+- [ ] **Ask to Buy.** On a TestFlight build, signed in to a sandbox Apple
+      account that has Ask to Buy on (a child in a Family Sharing group),
+      start Pro. Passing: after Apple's "Ask permission" sheet the paywall
+      reads "Your purchase is waiting for approval. Pro switches on once
+      it's approved.", with no red error and no toast. Approve it from the
+      organiser's device: Pro switches on without another tap.
+- [ ] **The pending code.** In that run, Xcode's console shows the
+      rejection's code. Passing: it is "20". If it is anything else, the
+      paywall said "Purchase failed. Try again." above: change
+      `PAYMENT_PENDING_CODE` in `src/lib/revenuecat.ts` to match.
+
 ## Setup asks for the public name (2026-11-01)
 
 Setup no longer makes the public name from the email address: an email
@@ -178,10 +197,10 @@ A rest that ended while the app was away no longer chimes again on the way
 back. On the phone the rest has a Live Activity of its own
 (`src/lib/restLiveActivity.ts`): a card with the system's own countdown to
 the rest's end and the next exercise, and the Dynamic Island's dumbbell
-and countdown. **Its native half is not built**: it needs the same widget
-extension as the run's card (`docs/run-live-activity.md`, Mob2 call 13:
-when the owner has a Mac). Until then `startActivity` rejects and the app
-shows nothing there; the rest-end notification is separate and works
+and countdown. Its native half is the widget extension the run's card
+uses (`docs/run-live-activity.md`), in the project since 2026-11-10 and
+built without a Mac. On iOS before 16.2 `startActivity` rejects and the
+app shows nothing there; the rest-end notification is separate and works
 already. The unit suites pin the title, the plugin calls and a rest made
 longer replacing itself; only a phone shows the card.
 
@@ -193,11 +212,26 @@ longer replacing itself; only a phone shows the card.
       wait past the rest. Passing: the rest-end notification arrives, and
       unlocking back into the workout shows the finished ring without a
       chime or a buzz.
-- [ ] **The lock screen, once the extension exists.** After the Xcode
-      steps in `docs/run-live-activity.md`, tick a set and lock the phone.
-      Passing: the card shows "Rest" and a countdown that reaches 0:00 on
-      time with the app asleep, "Next:" and the exercise under it; +15 s
-      in the app moves the countdown on; End rest takes the card away.
+- [ ] **The lock screen.** On a TestFlight build with the widget
+      extension (2026-11-10 or later), on iOS 16.2 or later, tick a set and
+      lock the phone. Passing: the card shows "Rest" and a countdown that
+      reaches 0:00 on time with the app asleep and stays there (it doesn't
+      count back up), "Next:" and the exercise under it; +15 s in the app
+      moves the countdown on; End rest or the next set takes the card away
+      at once. After the lift, no ended rest cards are left on the Lock
+      Screen.
+- [ ] **A run on the lock screen.** On the same build, start an outdoor
+      run and lock the phone. Passing: a dark card with "Recording" and the
+      distance, pace and time, updating while locked; Pause reads "Paused";
+      Finish or Discard takes the card away at once, leaving no blank card;
+      on an iPhone with a Dynamic
+      Island, the run's distance shows there. The rest of
+      `docs/run-live-activity.md`'s device checklist goes with it.
+- [ ] **A card a closed app left.** On the same build, swipe the app
+      away during a rest, open it again and tick the next set. Passing:
+      one rest card, the new one; the one left from before is gone. The
+      same for a run: swipe it away while recording, open the app and
+      resume the run, and one run card shows.
 
 ## A photo and a few words (Mob2 call 3, 2026-10-28)
 
@@ -263,6 +297,52 @@ the gates against fakes; only a phone shows the fix time and the battery.
       minutes, then lock the phone for ten. Passing: battery use in
       Settings → Battery is in line with a screen left on, and no location
       arrow shows while the phone is locked on the setup screen.
+
+## A run asks for location, and says when it is off (2026-11-10)
+
+On the TestFlight build a run sat on "Finding GPS" and never asked for
+location. The location plugin was handed back through a promise, which a
+Capacitor plugin never settles, so no watcher was added: iOS never asked,
+and no refusal came back to show "Location is off for Tropos". The plugin is
+now taken directly; the unit suite fakes it as the bridge makes it, and only
+a phone shows the prompt.
+
+- [ ] **The first run asks.** On a new install, open Run and tap a tile.
+      Passing: iOS asks to use your location; once allowed, the rings find
+      a fix and the countdown starts.
+- [ ] **Location off says so.** In Settings → Tropos → Location choose
+      Never, then open Run and tap a tile. Passing: "Location is off for
+      Tropos" with Open settings, which opens Tropos's page in Settings, and
+      a run can still be tracked without GPS.
+- [ ] **Location Services off for the phone.** Turn off Settings → Privacy
+      & Security → Location Services, then tap a tile. Passing: the same
+      words show, not "Acquiring GPS..." with no end.
+
+## A pause while the run is already paused (2026-11-10)
+
+The run timer refuses a second pause and a resume while running
+(`useRunTimer`): a Pause tapped during an auto-pause added that stretch to
+the duration twice, and four of the pause sites had no guard of their own.
+The unit suite drives the timer; only a run shows auto-pause and the
+buttons together.
+
+- [ ] **Pause during an auto-pause.** On an iPhone, start a run and stop
+      at a crossing until auto-pause shows. Tap Pause, wait ten seconds,
+      tap Resume and run on. Passing: the duration does not jump, and the
+      saved run's time is the moving time, with the stop counted once.
+
+## A flat run counts no climb from its first fixes (2026-11-10)
+
+On a phone an altitude iOS has not measured comes through as 0 with a
+negative vertical accuracy, and the run keeps fixes up to 150 m, so a run
+that began on Wi-Fi fixes counted the climb from 0 to the street. The
+native source now reads it as no altitude, as the web's Geolocation does
+(`nativeLocationSource.ts`). The unit suite feeds the plugin's shape; only
+a phone gives a Wi-Fi fix. Needs a build with the location fix (#3163).
+
+- [ ] **A run started indoors.** On an iPhone, start a run inside, walk
+      out and run a flat kilometre. Passing: the summary's elevation is a
+      few metres at most, not the street's height above sea level.
 
 ## The streak's days, from the flame (Mob1 call 4, 2026-10-27)
 
@@ -784,6 +864,44 @@ cover the logic; these need two real accounts.
       leaves B's button at Follow; B tapping Requested cancels it and A's
       list no longer shows it; with A's switch off, B's Follow is immediate
       and reads Following at once.
+
+## Follow counts kept by the server (2026-11-10)
+
+A profile reads someone else's follower and following numbers from
+`followCounts/{uid}`, which two new triggers recount from the follow lists
+(`functions/lib/followCounts.js`). It is step 1 of closing the follow
+lists: until now any signed-in account could list anyone's followers and
+following, because the counts were read from those lists. Only production
+shows the triggers deployed and the counts landing.
+
+- [ ] **The triggers deployed.** After Deploy production runs for this
+      change, `onFollowerEdgeWritten` and `onFollowingEdgeWritten` are in
+      the Firebase console's function list, and the release's source
+      read-back passed for both.
+- [ ] **A follow lands in the count.** From a second account, follow the
+      first. Passing: within a few seconds `followCounts/{first uid}` has
+      `followers` one higher and `followCounts/{second uid}` has
+      `following` one higher, and the first account's profile, opened from
+      the second, shows the new number. Unfollow: both go back.
+- [ ] **Every account counted.** Run the "Backfill follow counts" workflow
+      (Actions → Run workflow, or a dated line in
+      `.github/backfill-follow-counts.request` on main) only after the
+      row above passes. Passing: the first pass prints the accounts it
+      counted and the second pass ends with `changed: 0`.
+- [ ] **Then close the lists.** Merge the rules change that lets only the
+      two people on a follow read it, and only the owner list their own
+      (its pull request names this row). Not before the backfill: an
+      account nobody has counted reads as 0 once the lists are closed.
+      And not before every installed iPhone build reads the server's
+      count: a build from before it counts other people's lists itself,
+      and once the rules refuse that its profiles say the counts could
+      not be loaded. Upload a TestFlight build first.
+- [ ] **The lists are closed.** After Deploy production runs for the
+      rules change, from a second account open the first account's
+      profile. Passing: its two numbers still show, and your own
+      Followers and Following pages still list. In the browser console
+      on the web build, `getDocs` on `followers/{first uid}/users` from
+      the second account is refused with permission-denied.
 
 ## What a deletion used to leave behind (2026-10-20)
 
@@ -1314,10 +1432,37 @@ need Apple, the Cloud console or a phone.
       food camera, the run screen (setup, countdown and the live map's
       controls), the run summary and the Privacy Policy, Terms and
       Support pages keep their first row clear of the clock and the
-      Dynamic Island, with no doubled gap above it. The shell sets
-      `ios.contentInset: "automatic"`, so whether its web view reports a
-      top inset is unverified; pages and these screens pad by the same
-      `--safe-top`, so a gap on one is a gap on all.
+      Dynamic Island, with no doubled gap above it. Pages and these
+      screens pad by the same `--safe-top`, so a gap on one is a gap on
+      all. A recording of the TestFlight build on 10 Nov 2026 showed the
+      doubled gap on every page: the shell set
+      `ios.contentInset: "automatic"` while the page padded as well. The
+      shell sets `"never"` now; check this row on the first build that has
+      it, with the section below.
+
+## One inset for the notch and the home bar (2026-11-10)
+
+Affects: `capacitor.config.ts` (`ios.contentInset`, pinned by
+`src/lib/__tests__/iosContentInset.test.ts`) and so the top and bottom of
+every screen on a phone. Needs a TestFlight build made after the change;
+the web build never showed any of it. Measured on an iPhone with a notch,
+where the bars were 47 pt and 34 pt.
+
+- [ ] **No black bar above a page.** Open each tab and stay at its top:
+      the clock sits on the page's own background, and the title is in
+      the same place before a scroll and after one.
+- [ ] **No black bar under the tab bar.** Scroll each tab to its end and
+      keep pulling: the tab bar stays where it is.
+- [ ] **A screen that does not scroll fills the phone.** The run's setup,
+      "Acquiring GPS", its Customise page and the Weekly Review have no
+      bar above or below.
+- [ ] **The first row still clears the clock** on the screens the row
+      above lists, and a sheet's handle is never under it.
+- [ ] **The keyboard.** In Food's search and in a set's weight field, the
+      field stays in view above the keyboard.
+- [ ] **The launch mark holds still** as the web layer takes over from
+      the launch image ("The handover from the launch image" names this
+      setting as a cause of a jump).
 
 ## Privacy and consent for App Review (2026-10-04)
 
@@ -4021,6 +4166,49 @@ device shows.
       10 seconds with the water tile on screen. Passing: no repeating
       layout or paint entries from the water tile.
 
+## The league turn runs again until it finishes (2026-11-10)
+
+`weeklyLeagueTurn` used to run once, at Monday 12:15 UTC. Cloud Functions do
+not retry a scheduled function, so a run cut off part way (the 540 s
+timeout, one failed write) left that week with no groups. It now runs at
+quarter past every hour until the end of Monday UTC; a run after the week
+has finished reads `leagueWeeks/{weekKey}.finishedAt` and stops. Only the
+console shows the schedule that deployed.
+
+- [ ] **The schedule deployed.** After the release that carries this, open
+      Cloud Scheduler for `adaptive-fitness-af8bb` and find the
+      `firebase-schedule-weeklyLeagueTurn-…` job. Passing: its frequency
+      reads `15 12-23 * * 1` in `Etc/UTC`.
+- [ ] **A Monday's later runs stop at once.** On the first Monday after
+      that release, open `jobRuns/weeklyLeagueTurn` after 13:15 UTC.
+      Passing: `lastOutcome` is `ok` and `lastSummary.alreadyFinished` is
+      `true`, with `leagueWeeks/{that Monday}.finishedAt` set from the
+      12:15 run.
+
+## Touches that end early, or never end (2026-11-10)
+
+#3131 fixed how a few gestures treat a finger that lets go early, stays
+down, or is taken by the system: on a phone a released press fires
+pointerup, then pointerleave, then click, and an incoming call or a
+system gesture ends a touch with touchcancel instead of touchend. The
+unit suites replay those orders; only a phone fires them for real.
+
+- [ ] **Let go of Hold to finish halfway.** On a TestFlight build, during
+      a run, press Hold to finish and let go before the ring fills.
+      Passing: the ring empties and the run carries on; a full hold still
+      finishes it.
+- [ ] **A long press held on.** Hold an exercise row on Train for a full
+      second before lifting, and hold a saved food in Food's Quick add for
+      a second. Passing: Train's menu opens and the exercise's history does
+      not; the food is removed (with Undo) and nothing is logged.
+- [ ] **Pinch, then tap.** Open a post's photo, pinch it bigger, lift one
+      finger and then the other without moving it, then tap once. Passing:
+      the photo stays zoomed; a second quick tap zooms it back out.
+- [ ] **A touch the system takes.** Start a pull to refresh on Food, or a
+      swipe on an exercise row in the programme editor, and with the finger
+      still down pull Control Centre or take a call. Passing: the pull
+      chip goes back up with nothing refreshed, and the row slides home.
+
 ## Together leads with your race; challenges show their medals (2026-11-10)
 
 Soc16: Together opens on the person's race (`RaceHero`) when their goal is
@@ -4042,3 +4230,27 @@ for a phone to show.
       Passing: each shows a ribbon and a coin with its figure (not a blank
       or a broken image), sharp at its small size on the row and large in
       the sheet, in both light and dark mode.
+
+## Lit edges, chips and cut tracks on a phone (DS6, 2026-11-10)
+
+Affects: the dark theme's card edge (`--ds-shadow-card`), the pills'
+(`chip-edge` on the muted and tinted buttons and the streak chip) and the
+tracks cut into a card (`track-cut`: Home's week segments and This week
+bars, the performance ring, and the bars on Train, History and Social).
+The captures in `docs/visual-audit/ds6-2026-11-10/` are the real
+components on a desktop Chrome; a hairline of light at 6 to 9% is the kind
+of thing a phone's screen and WebKit decide.
+
+- [ ] **The edges show.** On a TestFlight build in dark mode, open Home.
+      Passing: each card has a thin lighter line along its top edge, the
+      streak chip and the "Swap" style pills have one too, and no card has
+      a doubled line. At the lowest screen brightness the cards still part
+      from the page.
+- [ ] **The tracks read as slots.** On Home, the week's rest days and the
+      empty part of each This week bar are darker than the card, and a
+      day's colour or a bar's fill stands out more than before. Tap a day:
+      its white selection ring is drawn round the segment. Passing: an
+      empty bar ("0 of 1") can still be seen end to end.
+- [ ] **Focus is not lost.** With a keyboard attached (or on the web
+      build), Tab to a "Swap" style pill in dark mode. Passing: the purple
+      focus ring shows, with the pill's edge still under it.

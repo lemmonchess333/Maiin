@@ -39,6 +39,28 @@ function read(file: string): string {
   return readFileSync(resolve(repoRoot, ".github/workflows", file), "utf8");
 }
 
+/** The branches a workflow's `push` trigger lists, comments left out. */
+function pushBranches(text: string): string[] {
+  const block = text.match(/^on:\n {2}push:\n([\s\S]*?)\n {2}\w/m)?.[1] ?? "";
+  return block
+    .split("\n")
+    .filter((line) => /^\s+- /.test(line))
+    .map((line) => line.trim().slice(2).replace(/"/g, ""));
+}
+
+describe("one run for each commit of a pull request", () => {
+  it("emulator-tests.yml runs a claude/** branch through its pull request only", () => {
+    /* Every claude/** branch has a pull request, and the required checks
+       are bound to its event (autoUpdateNeedsPat.test.ts). A push trigger
+       on the same branches ran the four emulator jobs again for each
+       commit, about an hour of runners, gating nothing. */
+    expect(pushBranches(read("emulator-tests.yml"))).toEqual([
+      "main",
+      "codex/**",
+    ]);
+  });
+});
+
 describe("runner-pool concurrency", () => {
   it.each(GUARDED)("%s supersedes its own older runs", (file) => {
     const text = read(file);

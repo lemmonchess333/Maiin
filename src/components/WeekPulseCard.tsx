@@ -14,9 +14,14 @@ export default function WeekPulseCard({
   pendingLifts = 0,
   /** The run a run's finish screen is showing (see useWeekPulse). */
   pendingRun = null,
+  /** The day the session on screen counts for (see useWeekPulse). */
+  sessionDay = null,
 }: {
   pendingLifts?: number;
   pendingRun?: PendingRun | null;
+  sessionDay?: string | null;
 } = {}) {
-  return <WeekPulseView pulse={useWeekPulse(pendingLifts, pendingRun)} />;
+  return (
+    <WeekPulseView pulse={useWeekPulse(pendingLifts, pendingRun, sessionDay)} />
+  );
 }

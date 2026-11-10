@@ -72,7 +72,7 @@ export default function JoinedChallengeRow({
           </p>
         </div>
         <div
-          className="h-1.5 rounded-full bg-muted overflow-hidden"
+          className="h-1.5 rounded-full track-cut overflow-hidden"
           role="progressbar"
           aria-label={challenge.name}
           aria-valuemin={0}

@@ -89,6 +89,16 @@
     0 22px 44px -14px rgba(16, 16, 24, 0.14);
   --ds-shadow-elevated:
     0 8px 28px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05);
+  /* A chip's edge and a track's cut (DESIGN_GUIDE §14o). The light theme
+     draws neither: its surfaces part by lightness and shadow already.
+     They are a transparent shadow and never `none`, because `chip-edge`
+     and `track-cut` put them in one box-shadow list with a focus ring,
+     and `none` inside a list voids the whole list, ring included. */
+  --ds-shadow-chip: 0 0 rgba(0, 0, 0, 0);
+  --ds-shadow-track: 0 0 rgba(0, 0, 0, 0);
+  /* A ring's groove, and the light under it where the theme cuts one. */
+  --ds-ring-track: hsl(var(--muted-foreground) / 0.22);
+  --ds-ring-lip: transparent;
   --ds-shadow-nav:
     0 -10px 30px rgba(15, 15, 18, 0.08), 0 -1px 0 rgba(255, 255, 255, 0.62);
   --ds-shadow-purple-glow: 0 4px 16px rgba(123, 114, 233, 0.22);
@@ -132,14 +142,36 @@
 
 /* Dark mode shadow adjustments */
 .dark {
-  /* DS2 — deeper lift for the dark canvas (separation leans on shadow +
-     a faint top rim of light). */
+  /* A dark card's edge is light, not shadow (DS6, DESIGN_GUIDE §14o). A
+     black shadow cannot show on a near-black page, and the card's fill is
+     only 1.06:1 against it, so without an edge a card has none. The two
+     inset layers draw it: a faint outline all round and a hairline of
+     light along the top, which add up to about 1.6:1 against the page on
+     the top edge. They are inset so a clipping parent cannot cut them and
+     no layout moves. The drop shadows stay for the surfaces a card
+     crosses that are lighter than the page. */
   --ds-shadow-card:
-    0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px -6px rgba(0, 0, 0, 0.45);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 3px rgba(0, 0, 0, 0.3),
+    0 8px 24px -6px rgba(0, 0, 0, 0.45);
   --ds-shadow-card-hover:
-    0 4px 12px rgba(0, 0, 0, 0.4), 0 18px 40px -10px rgba(0, 0, 0, 0.55);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07), 0 4px 12px rgba(0, 0, 0, 0.4),
+    0 18px 40px -10px rgba(0, 0, 0, 0.55);
   --ds-shadow-elevated:
     0 8px 28px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
+  /* A chip or a pill button takes the card's lit edge at its own size:
+     light along the top, a faint outline all round, a contact shadow. */
+  --ds-shadow-chip:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.5);
+  /* A track on a card reads as cut into it: shadow under its top edge
+     and a hairline of light below its bottom one. Its fill is `--track`
+     (index.css), darker than the card. */
+  --ds-shadow-track:
+    inset 0 1px 1px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.07);
+  --ds-ring-track: hsl(var(--track));
+  --ds-ring-lip: rgba(255, 255, 255, 0.07);
   --ds-shadow-nav:
     0 -12px 34px rgba(0, 0, 0, 0.36), 0 -1px 0 rgba(255, 255, 255, 0.05);
   /* Input shadows + borders — slightly higher alphas in dark mode

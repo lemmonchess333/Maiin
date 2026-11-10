@@ -658,15 +658,34 @@ export default function WorkoutSession({
     };
   }, [day.exercises, setLogs, sessionDay]);
 
+  /* Last time's sessions, read once for this session. The effect below
+     runs again whenever the exercise list changes (a swap, an added or
+     removed exercise) and derives from the same read: reading again
+     fetched the 50 newest workouts on every one of those. A read that
+     failed is forgotten, so the next change tries again. */
+  const recentWorkoutsRef = useRef<{
+    uid: string;
+    read: ReturnType<typeof fetchSavedWorkouts>;
+  } | null>(null);
+
   // Pre-fill weights/reps from most recent previous session + build PR map
   useEffect(() => {
     // An empty workout reads last time too: what it adds starts from there.
     if (!user?.uid) return;
+    const uid = user.uid;
 
     const fetchPreviousWeights = async () => {
       // The 50 newest workouts, including one finished on this phone that
       // has not synced yet: it is the last session even offline.
-      const recent = await fetchSavedWorkouts(user.uid, { latest: 50 });
+      if (recentWorkoutsRef.current?.uid !== uid) {
+        const read = fetchSavedWorkouts(uid, { latest: 50 });
+        recentWorkoutsRef.current = { uid, read };
+        read.catch(() => {
+          if (recentWorkoutsRef.current?.read === read)
+            recentWorkoutsRef.current = null;
+        });
+      }
+      const recent = await recentWorkoutsRef.current.read;
 
       const notes: Record<number, { text: string; date: string }> = {};
 
@@ -727,7 +746,7 @@ export default function WorkoutSession({
       // again, and the bests already set this session went with it.
       if (loadedRecordsRef.current) return;
       try {
-        const records = await loadLiftRecords(user.uid, recent);
+        const records = await loadLiftRecords(uid, recent);
         loadedRecordsRef.current = records;
         recordBaseline.current = records.map;
         setSessionCounts(records.sessionCounts);

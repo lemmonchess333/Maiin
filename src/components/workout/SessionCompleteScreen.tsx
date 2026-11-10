@@ -17,6 +17,7 @@ import MiniMuscleFigure, {
 import { CATEGORY_DISPLAY } from "@/components/analytics/muscleGroupTaxonomy";
 import { movementCategoryLabel } from "@/lib/exerciseMovementCategory";
 import { liftDayLine } from "@/lib/liftDayLabel";
+import { liftSessionDay } from "@/lib/liftCompletion";
 import { sessionWork, setsFigure, workFigure } from "@/lib/liftFigures";
 import { ChevronDown, ChevronRight, Share, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -627,7 +628,9 @@ export default function SessionCompleteScreen({
           {saved && variantNote && (
             <p className="text-sm text-muted-foreground">{variantNote}</p>
           )}
-          {saved && <WeekPulseCard />}
+          {/* The week the lift counts for: the day it started, which a
+              session begun on Sunday night keeps past midnight. */}
+          {saved && <WeekPulseCard sessionDay={liftSessionDay(startedAt)} />}
           {saved && (
             <CompletionExtras
               share={share}

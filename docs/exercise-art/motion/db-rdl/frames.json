@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/db-rdl.webp",
+  "still": "form-art/db-rdl.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 221,
+  "frameHeight": 480,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "c70205c96fb808f76426a03e21cf0aa885701e6270395b3e4cb5056bd128c1b2",
+  "thenSha256": "634276c0cfc0722209803c2475fbb5e853a96ac51430d0f023f521e431868984",
+  "sha256": "897b33c321850a4a9572cdfe62ba8dc3453fc6e3abce36e0f17f65e8949e430b"
+}

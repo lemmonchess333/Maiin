@@ -11,6 +11,7 @@ import {
   toGeolocationError,
   nativeLocationSource,
 } from "../nativeLocationSource";
+import { climbBySegment, type GPSPoint } from "../gps";
 
 describe("toGeolocationPosition", () => {
   it("maps plugin fields onto the Web Geolocation shape (bearing → heading)", () => {
@@ -51,6 +52,62 @@ describe("toGeolocationPosition", () => {
     expect(pos.timestamp).toBeGreaterThanOrEqual(before);
     expect(pos.coords.altitude).toBeNull();
     expect(pos.coords.heading).toBeNull();
+  });
+});
+
+describe("a fix's altitude", () => {
+  const fix = (altitude: number | null, altitudeAccuracy: number | null) =>
+    toGeolocationPosition({
+      latitude: 51.5,
+      longitude: -0.12,
+      accuracy: 65,
+      altitude,
+      altitudeAccuracy,
+      simulated: false,
+      bearing: null,
+      speed: null,
+      time: 1_700_000_000_000,
+    });
+
+  it("is none when iOS marks it unmeasured, as the web's Geolocation says", () => {
+    // A Wi-Fi fix: CLLocation sends altitude 0 with verticalAccuracy -1.
+    const pos = fix(0, -1);
+    expect(pos.coords.altitude).toBeNull();
+    expect(pos.coords.altitudeAccuracy).toBeNull();
+    // The position itself still counts.
+    expect(pos.coords.latitude).toBe(51.5);
+    expect(pos.coords.accuracy).toBe(65);
+  });
+
+  it("is kept when it was measured, at sea level too", () => {
+    expect(fix(0, 3).coords.altitude).toBe(0);
+    expect(fix(12.5, 4).coords.altitude).toBe(12.5);
+  });
+
+  it("adds no climb to a flat run that began on Wi-Fi fixes", () => {
+    // Ten Wi-Fi fixes (altitude 0, unmeasured), then GPS on flat ground at
+    // 45 m. Read as 0, the run climbed 45 m before it had gone anywhere.
+    const fixes = [
+      ...Array.from({ length: 10 }, () => fix(0, -1)),
+      ...Array.from({ length: 40 }, () => fix(45, 4)),
+    ];
+    const points: GPSPoint[] = fixes.map((pos, i) => ({
+      lat: pos.coords.latitude + i * 0.0001,
+      lon: pos.coords.longitude,
+      altitude: pos.coords.altitude,
+      accuracy: pos.coords.accuracy,
+      speed: null,
+      timestamp: 1_700_000_000_000 + i * 1000,
+      rawLat: pos.coords.latitude + i * 0.0001,
+      rawLon: pos.coords.longitude,
+    }));
+    const { gain } = climbBySegment(points);
+    expect(gain.reduce((sum, metres) => sum + metres, 0)).toBe(0);
+  });
+
+  it("is kept when the platform gives no accuracy for it", () => {
+    // Android can leave the vertical accuracy out on older versions.
+    expect(fix(40, null).coords.altitude).toBe(40);
   });
 });
 

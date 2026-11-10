@@ -30,7 +30,7 @@ function AgainstUsual({ measure }: { measure: WeekMeasure }) {
     <div
       aria-hidden="true"
       data-testid={`against-usual-${measure.key}`}
-      className="relative h-2 rounded-full bg-muted"
+      className="relative h-2 rounded-full track-cut"
     >
       <div
         className={cn(

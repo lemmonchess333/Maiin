@@ -166,4 +166,17 @@ describe("an empty workout's name", () => {
     const name = emptyWorkoutName("Legs — heavy");
     expect(workoutTitle({ notes: name })).toBe("Legs – heavy");
   });
+
+  it("keeps its whole title with two dashes in a row, or one at an end", () => {
+    // A phone's keyboard makes "--" an em dash; two in a row share the
+    // space between them, and the second was left an em dash.
+    for (const [typed, title] of [
+      ["Legs — — heavy", "Legs – – heavy"],
+      ["Legs —— heavy", "Legs –– heavy"],
+      ["— Legs", "– Legs"],
+      ["Legs —", "Legs –"],
+    ]) {
+      expect(workoutTitle({ notes: emptyWorkoutName(typed) })).toBe(title);
+    }
+  });
 });

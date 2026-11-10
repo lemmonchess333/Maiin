@@ -98,10 +98,7 @@ export default function WeekSummary({
                 )}
               </p>
               <div
-                className="mt-1.5 h-1.5 rounded-full overflow-hidden"
-                style={{
-                  backgroundColor: "hsl(var(--muted-foreground) / 0.22)",
-                }}
+                className="mt-1.5 h-1.5 rounded-full overflow-hidden bg-muted-foreground/22 dark:track-cut"
                 aria-hidden="true"
               >
                 <div

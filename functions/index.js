@@ -69,6 +69,7 @@ const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const blockGuard = require("./lib/blockGuard");
 const blockMirror = require("./lib/blockMirror");
+const followCounts = require("./lib/followCounts");
 const identityResync = require("./lib/identityResync");
 // S4e: a restricted account is refused anything that reaches another person.
 const restriction = require("./lib/restriction");
@@ -9015,6 +9016,38 @@ exports.onBlockWritten = functions
   });
 
 /**
+ * onFollowerEdgeWritten and onFollowingEdgeWritten keep
+ * `followCounts/{uid}` (lib/followCounts.js): how many people follow an
+ * account and how many it follows, so a profile reads two numbers and
+ * nobody's lists.
+ *
+ * Each recounts one list for the account that owns it, and only when an
+ * edge was made or removed. A retry counts the same edges and stores the
+ * same number, and an account being deleted is left alone.
+ */
+exports.onFollowerEdgeWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("followers/{uid}/users/{followerUid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (!followCounts.edgeMovesCount(change.before.exists, change.after.exists))
+      return null;
+    await followCounts.recountFollowSide(db, context.params.uid, "followers");
+    return null;
+  });
+
+exports.onFollowingEdgeWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("following/{uid}/users/{targetUid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (!followCounts.edgeMovesCount(change.before.exists, change.after.exists))
+      return null;
+    await followCounts.recountFollowSide(db, context.params.uid, "following");
+    return null;
+  });
+
+/**
  * setBoardSharing — the person's answer to "Show my week" on friends'
  * boards (Polish2 call 5). Yes stores the answer and computes this week's
  * tally at once (friendsBoard.js); no stores the answer and deletes the
@@ -9102,11 +9135,15 @@ exports.setLeagueSharing = functions
  * one notification), forms this week's from the people who opted in and
  * trained in the last 14 days, and writes the figure the locked card reads.
  * Keyed by this week's Monday in leagueWeeks/{weekKey}, so a second run
- * does nothing twice (lib/leagues.js runLeagueTurn).
+ * does nothing twice (lib/leagues.js runLeagueTurn). It runs again at
+ * quarter past each hour until the end of Monday UTC: a scheduled function
+ * is not retried, and a run cut off part way (a timeout, one failed write)
+ * would otherwise leave the week with no groups. Once the week is finished
+ * a run reads its marker and stops.
  */
 exports.weeklyLeagueTurn = functions
   .runWith(SCHEDULED_CAP)
-  .pubsub.schedule("15 12 * * 1")
+  .pubsub.schedule("15 12-23 * * 1")
   .timeZone("Etc/UTC")
   .onRun(() =>
     jobRuns.recordJobRun(db, "weeklyLeagueTurn", async () => {

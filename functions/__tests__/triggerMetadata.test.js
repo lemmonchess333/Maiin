@@ -555,7 +555,8 @@ const EXPECTED = {
     kind: "schedule",
     maxInstances: 1,
     secrets: [],
-    schedule: "15 12 * * 1",
+    // 12:15 UTC, then each hour until the turn has finished.
+    schedule: "15 12-23 * * 1",
     timeoutSeconds: 540,
   },
   // Mob2 call 7: Remove follower, both edges of one follow of the caller.
@@ -594,6 +595,24 @@ const EXPECTED = {
     kind: "callable",
     maxInstances: 100,
     secrets: [],
+  },
+  // Follow counts: an edge made or removed recounts its list for the
+  // account that owns it (lib/followCounts.js).
+  onFollowerEdgeWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/followers/{uid}/users/{followerUid}",
+  },
+  onFollowingEdgeWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/following/{uid}/users/{targetUid}",
   },
   // Polish3 call 1: the person blocked's copy of a block, on every write.
   onBlockWritten: {

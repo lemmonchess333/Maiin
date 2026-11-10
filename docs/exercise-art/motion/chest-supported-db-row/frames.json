@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/chest-supported-db-row.webp",
+  "still": "form-art/chest-supported-db-row.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 480,
+  "frameHeight": 414,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "06e372369e86bd4231c81e8ac813cf1121dced39847f59ac5ddd42dfac720e03",
+  "thenSha256": "9ca0e0f04c0b1ff295ee32d08bddd1e8958be3da6ce5c146161dc46f3454266b",
+  "sha256": "2504c7e5525b7ba2fa3375c5231c8b950c3311378d747993532689c787427998"
+}

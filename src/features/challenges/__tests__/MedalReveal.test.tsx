@@ -22,7 +22,9 @@ import {
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
-vi.mock("canvas-confetti", () => ({ default: vi.fn() }));
+vi.mock("canvas-confetti", () => ({
+  default: Object.assign(vi.fn(), { reset: vi.fn() }),
+}));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: () => "km" }));
 vi.mock("@/lib/logger", () => ({

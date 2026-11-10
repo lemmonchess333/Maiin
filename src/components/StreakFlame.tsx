@@ -117,13 +117,11 @@ export function StreakFlame({
           ? { duration: 0.3, ease: "easeOut" }
           : { type: "spring", stiffness: 300 }
       }
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card"
-      style={{
-        // Neutral drop-shadow — no tier colour in the shadow, so the
-        // only warm element on the chip is the flame itself. Matches
-        // Cal AI's approach.
-        boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
-      }}
+      // A neutral edge, with no tier colour in it, so the only warm thing
+      // on the chip is the flame. Light: a soft drop and a faint outline.
+      // Dark: the chip's fill is 1.06:1 against the page it sits on and a
+      // dark shadow cannot show there, so it takes the lit edge.
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card shadow-[0_1px_3px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.04)] dark:chip-edge"
     >
       <span style={{ display: "inline-flex" }}>
         <FlameSvg palette={palette} size={18} />

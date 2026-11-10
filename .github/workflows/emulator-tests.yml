@@ -12,14 +12,17 @@ name: Firebase Emulator Tests
 
 on:
   push:
-    # Fires on main AND on any feature branch starting with
-    # `claude/` or `codex/` so workflow changes can be validated before they
-    # merge. Without the feature-branch trigger, every workflow
-    # fix has to ride a separate merge cycle to even run, which
-    # turns debugging into a guessing game.
+    # main, the deploy gate, and `codex/**`, as in ci.yml. `claude/**` is
+    # not listed: every such branch has a pull request, and a pull
+    # request's run uses the branch's own copy of this file, so a workflow
+    # change is still tried before it merges (the reason feature branches
+    # were added, 2026-05-12). Listed, each push ran these four jobs twice
+    # for one commit, about an hour of runners, and the push run gated
+    # nothing: the required checks are bound to the pull_request event
+    # (autoUpdateNeedsPat.test.ts). On 10 November 2026 that was 16 extra
+    # runs in four hours, with runs queued for over two.
     branches:
       - main
-      - "claude/**"
       - "codex/**"
   pull_request:
     branches: ["main"]
@@ -37,7 +40,8 @@ on:
 #
 # `github.ref` keeps push and pull_request in SEPARATE groups on purpose.
 # Collapsing them would also cancel the duplicate the two triggers
-# produce for one commit, which is real waste — but a cancelled run
+# produce for one commit of a `codex/**` branch, which is real waste (a
+# `claude/**` branch no longer makes one, above) — but a cancelled run
 # posts a cancelled check under the same workflow name on the same sha
 # as the live one, and that is the PR's own gate. Superseding within one
 # event only ever cancels a run for an OLDER commit, whose checks gate

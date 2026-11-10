@@ -129,7 +129,12 @@ import {
 } from "@/lib/historyReadings";
 import type { ChartReadingLine } from "@/components/analytics/ChartReading";
 import type { SummaryChange } from "@/lib/periodSummary";
-import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import { useDayMoment } from "@/hooks/useDayMoment";
 import {
   computeMuscleRecovery,
   hitsFromWorkoutDocs,
@@ -573,7 +578,13 @@ export default function History() {
     enabled: filter === "analytics" && view === "performance",
   });
   const uid = useUid();
-  const { meals, loading: mealsLoading } = useMeals();
+  const {
+    meals,
+    deletedMeals,
+    hasMore: mealsPastWindow,
+    loading: mealsLoading,
+    error: mealsError,
+  } = useMeals();
   /* The nutrition section reads its OWN range-scoped query rather than
      slicing the 400-doc `useMeals` window, which silently truncated 3M / 6M
      / 1Y for anyone logging more than a couple of meals a day. `* 2` because
@@ -584,15 +595,26 @@ export default function History() {
     rangeDays * 2
   );
   const lifetimeRuns = useLifetimeRunStats();
-  const lifetimeMeals = useLifetimeMealStats();
+  // The window above is every meal for an account that fits in it, so the
+  // lifetime figures read nothing more; past it, one read a session.
+  const lifetimeMeals = useLifetimeMealStats({
+    meals,
+    deletedMeals,
+    hasMore: mealsPastWindow,
+    loading: mealsLoading,
+    error: mealsError,
+  });
   const { profile } = useAuth();
   /* The range the pill names, read once for every figure below: its
      window, the range before it, and the days an account younger than
      the range has had (`historyFigures`). Such an account has nothing in
      the range before it to compare with. */
+  /* Read at the day's moment, so a History left open overnight, or brought
+     back the next morning, covers the new day's window (useDayMoment). */
+  const now = useDayMoment();
   const range = useMemo(
-    () => historyRange(rangeDays, { createdAt: profile?.createdAt }),
-    [rangeDays, profile?.createdAt]
+    () => historyRange(rangeDays, { createdAt: profile?.createdAt, now }),
+    [rangeDays, profile?.createdAt, now]
   );
   const { startKey, joinedInRange } = range;
   const historyReturnTo = `/history${searchParams.size ? `?${searchParams}` : ""}`;
@@ -710,11 +732,12 @@ export default function History() {
 
   // Lifetime totals — all-time aggregates shown only on the "All" tab,
   // pinned at the very bottom as a quiet "you've come this far" footer.
-  /* Runs and meals each come from a one-shot whole-collection read, so
-     records older than any window still count toward a total that claims to
-     be lifetime. `useMeals` cannot serve this: it subscribes to the newest
-     400 meal docs, so both meal figures would saturate there — silently,
-     since a capped count looks exactly like a real one.
+  /* Runs come from a one-shot whole-collection read, so records older than
+     any window still count toward a total that claims to be lifetime. Meals
+     do too once they outgrow the `useMeals` window, which stops at the
+     newest 400: counted from the window alone, both meal figures would
+     saturate there, silently, since a capped count looks exactly like a
+     real one. `useLifetimeMealStats` knows when the window is everything.
 
      Workouts still read `useWorkouts`. Whether that hook is bounded the
      same way is a separate question on a separate surface — not assumed
@@ -761,15 +784,15 @@ export default function History() {
   // half). NOW-state — always computed over the last RECOVERY_LOOKBACK_DAYS
   // regardless of the page's TimeRange (the card labels the carve-out).
   const muscleRecovery = useMemo(() => {
-    const lookbackStart = new Date();
-    lookbackStart.setDate(lookbackStart.getDate() - RECOVERY_LOOKBACK_DAYS);
-    const lookbackKey = localDateString(lookbackStart);
+    const lookbackKey = localDateString(
+      addLocalDays(parseLocalDate(range.todayKey), -RECOVERY_LOOKBACK_DAYS)
+    );
     const recent = workouts.filter((w) => w.date >= lookbackKey);
     const hits = hitsFromWorkoutDocs(recent);
     return recoveryForHeatMapGroups(
-      computeMuscleRecovery(hits, localDateString())
+      computeMuscleRecovery(hits, range.todayKey)
     );
-  }, [workouts]);
+  }, [workouts, range.todayKey]);
 
   /* The range's sessions, kilograms and sets per muscle, the range
      before for the changes, and the PRs tab's lift records. */

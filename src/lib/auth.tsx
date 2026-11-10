@@ -939,7 +939,19 @@ interface AuthContextType {
    * loading screen until `retry` succeeds, and says why.
    */
   watchAccountCleanup: { retry: () => void } | null;
+  /** Whether this account's profile is here, absent or could not be read.
+   *  Route on this, not on `profile === null`, which is true of both. */
+  profileLoad: ProfileLoad;
 }
+
+/**
+ * Where the signed-in account's own profile stands. `missing` and `failed`
+ * are different answers: a new account has no profile yet and goes to setup,
+ * while a profile that could not be read belongs to someone who may have
+ * weeks of training, and setup would replace their programme. Only `failed`
+ * offers a retry. Signed out, it reads `missing`; nothing asks then.
+ */
+export type ProfileLoad = "loading" | "ready" | "missing" | "failed";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -1138,6 +1150,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  /* The last read of this account's profile failed. It matters only while
+     no profile is held: with one, the app carries on with it. */
+  const [profileReadFailed, setProfileReadFailed] = useState(false);
   /* A sign-out that clears the device's Firestore copy ends in a reload
      (firestoreCacheClear.ts). Until it does, the app stays on its loading
      screen: Login drawn on the page being left would take input the
@@ -1255,6 +1270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         invalidatePushTokenLifecycle();
         setUser(null);
         setProfile(null);
+        setProfileReadFailed(false);
         setLoading(true);
       }
       // The Watch bridge can retain an active run, pending controls and raw
@@ -1368,6 +1384,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
           traceBoot("Profile read");
           if (!isCurrent()) return;
+          setProfileReadFailed(false);
 
           if (profileDoc.exists()) {
             const data = profileDoc.data();
@@ -1426,7 +1443,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (err) {
           if (!isCurrent()) return;
           logger.error("[AuthProvider] Failed to load profile", err);
-          setProfile(null);
+          /* A read that failed is not a profile that is missing. Clearing
+             the profile here would send a signed-in account to setup: on a
+             first read with no connection, and also mid-session, since
+             every token refresh comes back through here. Finishing setup
+             replaces the programme (completeOnboarding). Keep the copy this
+             account already shows, from the device's cache or an earlier
+             read; with none, `profileLoad` says "failed" and the app offers
+             a retry. */
+          setProfileReadFailed(true);
+          setProfile((previous) => (previous?.uid === uid ? previous : null));
         }
 
         if (!isCurrent()) return;
@@ -1460,6 +1486,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         // No signed-in user (Login screen) — apply the dark default.
         setProfile(null);
+        setProfileReadFailed(false);
         syncDarkMode(true);
       }
 
@@ -2020,6 +2047,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         snap = await getDoc(ref);
       }
       if (auth.currentUser?.uid !== uid) return;
+      // The read answered, with a profile or without one: the retry screen's
+      // "Try again" lands here, and a new account then goes on to setup.
+      setProfileReadFailed(false);
       if (snap.exists()) {
         setProfile(
           hydrateProfile(
@@ -2055,10 +2085,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [signIn, signUp, signInWithGoogle, signInWithApple, signOutUser]
   );
 
+  const profileLoad: ProfileLoad =
+    loading || leavingForReload
+      ? "loading"
+      : profile
+        ? "ready"
+        : user && profileReadFailed
+          ? "failed"
+          : "missing";
+
   const value = useMemo(
     () => ({
       user,
       profile,
+      profileLoad,
       loading: loading || leavingForReload,
       ...credentialActions,
       resetPassword,
@@ -2071,6 +2111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [
       user,
       profile,
+      profileLoad,
       loading,
       leavingForReload,
       credentialActions,

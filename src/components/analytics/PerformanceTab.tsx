@@ -276,7 +276,7 @@ function ScoreBar({
           {Math.round(value)}
         </p>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden bg-muted">
+      <div className="h-1.5 rounded-full overflow-hidden track-cut">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${Math.min(value, 100)}%`, background: color }}

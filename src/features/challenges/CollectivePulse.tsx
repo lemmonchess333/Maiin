@@ -85,7 +85,7 @@ export default function CollectivePulse({
         </div>
       </div>
       <div
-        className="mt-2.5 h-1.5 rounded-full bg-muted overflow-hidden"
+        className="mt-2.5 h-1.5 rounded-full track-cut overflow-hidden"
         role="progressbar"
         aria-valuenow={Math.round(total)}
         aria-valuemin={0}

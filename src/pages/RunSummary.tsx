@@ -798,6 +798,10 @@ export default function RunSummary() {
   );
   // Keep the run's clock independently of the coordinates privacy zones cut.
   const startedAt = state?.identity?.startedAt ?? state?.points[0]?.timestamp;
+  /* The date the run goes out of the app under (the share card, a GPX's
+     track): its start, as the saved run's own page has it. A run begun on
+     Sunday night and shared after midnight is Sunday's. */
+  const runDate = startedAt !== undefined ? new Date(startedAt) : new Date();
 
   /* This run as the screen's two week lines count it, saved or not yet.
      One read of the week (`useWeekPulse`, counted by `trainingWeek`) feeds
@@ -1087,14 +1091,17 @@ export default function RunSummary() {
 
   /* A race plan's week, as Train's header says it (`racePlanWeek`): the
      plan's week up to race day, the recovery's after it, and none once
-     the race has passed with no recovery running. */
+     the race has passed with no recovery running. Read on the run's own
+     day, as the week card is: a run begun on Sunday night and reviewed
+     after midnight is still that week's, and a race run late on race day
+     is still race week's. */
+  const summaryDay = pendingWeekRun?.date ?? localDateString();
   const raceWeek =
     profile?.runMode === "race_prep"
       ? racePlanWeek({
-          raceGoal: resolveRunPlan(profile, programState, localDateString())
-            .raceGoal,
+          raceGoal: resolveRunPlan(profile, programState, summaryDay).raceGoal,
           runPlan: programState?.runPlan,
-          todayKey: localDateString(),
+          todayKey: summaryDay,
         })
       : null;
 
@@ -1476,7 +1483,7 @@ export default function RunSummary() {
     }
     // Track name travels into other apps with the export — a stable
     // "22 Aug 2026", not whatever the device locale renders.
-    const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(new Date())}`);
+    const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(runDate)}`);
     /* The share sheet on the iPhone, where a blob download is dropped
        without a word, and a download on the web; the same handover and
        the same words as RunDetail's Export GPX. */
@@ -2194,11 +2201,14 @@ export default function RunSummary() {
 
             {saved &&
               (() => {
+                /* After the run's own day, as the kicker reads it: a run
+                   begun on Sunday night and saved after midnight leaves
+                   Monday's run next, not Tuesday's. */
                 const next = programState?.runDays
                   ?.filter(
                     (day) =>
                       day.date &&
-                      day.date > localDateString() &&
+                      day.date > summaryDay &&
                       !day.completed &&
                       day.status !== "skipped" &&
                       day.status !== "race_no_show"
@@ -2372,7 +2382,7 @@ export default function RunSummary() {
             ? `${finishLine.before}${finishLine.figure}${finishLine.after}`
             : undefined,
           tone: finishReward?.tone,
-          date: new Date().toLocaleDateString("en-GB", {
+          date: runDate.toLocaleDateString("en-GB", {
             day: "numeric",
             month: "short",
             year: "numeric",

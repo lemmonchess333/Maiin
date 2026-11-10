@@ -595,6 +595,10 @@ async function deleteAccount({
     // Polish2: the week shown on followers' boards. The session triggers
     // that recompute it write nothing for an account being deleted.
     await firestore.doc(`friendsBoard/${uid}`).delete();
+    // How many follow this account and how many it follows
+    // (lib/followCounts.js). Its triggers read the deletion state in the
+    // transaction that writes, so the edges going below put nothing back.
+    await firestore.doc(`followCounts/${uid}`).delete();
     // Soc15 call 3: the account's league membership, its standing in this
     // week's group and its place in the group's members (lib/leagues.js).
     // The writers (the turn, the session triggers, setLeagueSharing) each
