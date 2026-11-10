@@ -451,7 +451,7 @@ function ActivityCard({
       className={`${className} inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong`}
     >
       <Star className="size-3.5 fill-achievement" />
-      {prCount} PR{prCount === 1 ? "" : "s"}
+      {prCount} {prCount === 1 ? "best" : "bests"}
     </span>
   );
 
@@ -840,7 +840,7 @@ function ActivityCard({
                 </p>
               </div>
               <SectionLabel className="mt-0.5">
-                {prCount === 1 ? "PR" : "PRs"}
+                {prCount === 1 ? "Best" : "Bests"}
               </SectionLabel>
             </div>
           )}
@@ -1028,8 +1028,7 @@ function ActivityCard({
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 bg-achievement/10 border border-achievement/20 @max-[16em]:flex-col @max-[16em]:items-start @max-[16em]:gap-1">
             <Trophy className="size-4 text-achievement shrink-0" />
             <p className="min-w-0 max-w-full break-words text-xs font-medium text-achievement-strong">
-              New PR:{" "}
-              {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
+              New best: {feedItem.prExercise || activity?.prExercise || "lift"}{" "}
               {feedItem.prWeight || activity?.prWeight
                 ? formatLoad(
                     (feedItem.prWeight || activity?.prWeight) as number,

@@ -33,7 +33,7 @@ describe("postMomentLines", () => {
       reps: 5,
     };
     expect(lines(pr, KM_KG)).toEqual({
-      headline: "New PR",
+      headline: "New best",
       detail: { text: "Bench Press", figure: "90 kg × 5" },
       tone: "best",
       icon: "trophy",

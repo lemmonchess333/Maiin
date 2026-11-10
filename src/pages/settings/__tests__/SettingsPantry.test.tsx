@@ -79,7 +79,7 @@ describe("SettingsPantry", () => {
   it("lists the saved foods by name, each with its serving and figures", () => {
     renderPage();
     expect(
-      screen.getByRole("heading", { name: "My pantry" })
+      screen.getByRole("heading", { name: "Your pantry" })
     ).toBeInTheDocument();
     const rows = screen
       .getAllByRole("button")

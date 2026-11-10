@@ -452,12 +452,12 @@ it("a supported PR appears only on its row and Undo removes it", async () => {
   fireEvent.click(
     screen.getAllByRole("button", { name: "Mark set complete" })[0]
   );
-  expect(screen.getByText("PR")).toBeInTheDocument();
+  expect(screen.getByText("Best")).toBeInTheDocument();
   expect(h.success).not.toHaveBeenCalled();
   expect(h.message).not.toHaveBeenCalled();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
-  expect(screen.queryByText("PR")).not.toBeInTheDocument();
+  expect(screen.queryByText("Best")).not.toBeInTheDocument();
 });
 
 /** Whether `later` comes after `earlier` in the document: the order the
@@ -585,7 +585,7 @@ describe("the new-best moment (DS3)", () => {
     expect(
       screen.getAllByRole("button", { name: "Mark set complete" })
     ).toHaveLength(3);
-    expect(screen.queryByText("PR")).toBeNull();
+    expect(screen.queryByText("Best")).toBeNull();
     expect(spoken()).toBeNull();
   });
 
@@ -708,7 +708,7 @@ it("rebuilds corrected records from full history without dropping an older valid
   fireEvent.click(
     screen.getAllByRole("button", { name: "Mark set complete" })[0]
   );
-  expect(screen.getByText("PR")).toBeInTheDocument();
+  expect(screen.getByText("Best")).toBeInTheDocument();
   for (let i = 0; i < 2; i++)
     fireEvent.click(
       screen.getAllByRole("button", { name: "Mark set complete" })[0]
@@ -1435,12 +1435,12 @@ describe("WorkoutSession — a done set's type can be corrected", () => {
     fireEvent.click(
       screen.getAllByRole("button", { name: "Mark set complete" })[0]
     );
-    expect(screen.getByText("PR")).toBeInTheDocument();
+    expect(screen.getByText("Best")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Set 1. Change set type" })
     );
     fireEvent.click(screen.getByRole("button", { name: /^W?Warm-up/ }));
-    expect(screen.queryByText("PR")).not.toBeInTheDocument();
+    expect(screen.queryByText("Best")).not.toBeInTheDocument();
   });
 });
 
@@ -2751,13 +2751,13 @@ describe("records across resume and delayed history", () => {
         openSession(complete, vi.fn(), {}, { resumeDraft: true });
       });
       if (completed > 0) {
-        expect(screen.getAllByText("PR").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("Best").length).toBeGreaterThan(0);
       }
       for (let index = completed; index < weights.length; index++) {
         setWeight(index + 1, weights[index]);
         completeNextSet();
         if (index < weights.length - 1) {
-          expect(screen.getAllByText("PR").length).toBeGreaterThan(0);
+          expect(screen.getAllByText("Best").length).toBeGreaterThan(0);
         }
       }
       expect(
@@ -2786,9 +2786,11 @@ describe("records across resume and delayed history", () => {
     openSession();
     setWeight(1, 120);
     completeNextSet();
-    expect(screen.queryByText("PR")).not.toBeInTheDocument();
+    expect(screen.queryByText("Best")).not.toBeInTheDocument();
     await releaseHistory();
-    await vi.waitFor(() => expect(screen.getByText("PR")).toBeInTheDocument());
+    await vi.waitFor(() =>
+      expect(screen.getByText("Best")).toBeInTheDocument()
+    );
   });
 
   it("invalidates the cache when Finish saves before history is loaded", async () => {

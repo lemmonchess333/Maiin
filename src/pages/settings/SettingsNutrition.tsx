@@ -150,7 +150,7 @@ export default function SettingsNutrition() {
       <SettingsGroup title="Your foods">
         <SettingsRow
           icon={Refrigerator}
-          label="My pantry"
+          label="Your pantry"
           description="Edit or remove the foods you've logged"
           onClick={() => navigate("/settings/pantry")}
         />

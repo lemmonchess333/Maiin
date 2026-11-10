@@ -116,8 +116,8 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Dedicated lift-plan editor                                                      |
 | `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)           |
 | `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                             |
-| `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into My pantry              |
-| `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | My pantry — edit or remove the saved foods Quick add offers (F2d)               |
+| `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into Your pantry            |
+| `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | Your pantry — edit or remove the saved foods Quick add offers (F2d)             |
 | `settings/SettingsData.tsx`            | `/settings/data`                   | Your data — exports, and the way into recently deleted meals                    |
 | `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                   |
 | `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                         |
@@ -332,7 +332,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
   option) and AM/PM in copy are banned by
   `src/utils/__tests__/timeTreatment.test.ts`. Durations and paces ("23:41",
   "5:18 /km") are not times of day.
-- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 cal", and a pace "5:34 /km"
+- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 kcal", and a pace "5:34 /km"
   (`src/utils/__tests__/unitTreatment.test.ts` bans unspaced kg/km and a pace glued to its unit, including
   the `${x}kg` template form). Two named exceptions: grams on the food
   surface stay unspaced ("128g" — MacroColumn's documented house style), and

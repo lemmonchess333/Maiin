@@ -294,7 +294,7 @@ export default function SettingsPantry() {
 
   return (
     <SettingsSection
-      title="My pantry"
+      title="Your pantry"
       subtitle="Foods you've logged, which Quick add offers"
       backTo="/settings/nutrition"
       backLabel="Nutrition"

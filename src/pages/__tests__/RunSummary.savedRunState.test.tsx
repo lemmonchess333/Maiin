@@ -1039,7 +1039,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       )
     );
     const easy = renderPlanned("easy_30");
-    expect(await screen.findByText("PR!")).toBeInTheDocument();
+    expect(await screen.findByText("New best")).toBeInTheDocument();
     easy.unmount();
 
     renderPlanned("run_walk_1");
@@ -1048,7 +1048,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     ).toBeInTheDocument();
     // The history has been read and judged by the time the insight settles.
     await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
-    expect(screen.queryByText("PR!")).toBeNull();
+    expect(screen.queryByText("New best")).toBeNull();
   });
 });
 
@@ -1245,7 +1245,7 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
       )
     );
     const outdoors = renderTreadmillRun(true);
-    expect(await screen.findByText("PR!")).toBeInTheDocument();
+    expect(await screen.findByText("New best")).toBeInTheDocument();
     outdoors.unmount();
 
     renderTreadmillRun();
@@ -1257,7 +1257,7 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
     ).toBeInTheDocument();
     // The history has been read and judged by the time the insight settles.
     await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
-    expect(screen.queryByText("PR!")).toBeNull();
+    expect(screen.queryByText("New best")).toBeNull();
   });
 
   it("suggests no new benchmark from a typed pace, as an outdoor run's can", async () => {
