@@ -117,6 +117,30 @@ describe("the cards an earlier launch left", () => {
     );
   });
 
+  it("hold the first card back while iOS is still listing them", async () => {
+    let list!: (cards: unknown) => void;
+    plugin.getAllActivities.mockReturnValue(
+      new Promise((resolve) => (list = resolve))
+    );
+    const start = startRestActivity({ endsAt: Date.now() + 90_000 });
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    await vi.dynamicImportSettled();
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    expect(plugin.startActivity).not.toHaveBeenCalled();
+    list({
+      activities: [{ id: "left-rest", state: "active", systemId: "s1" }],
+    });
+    await start;
+    expect(plugin.endActivity).toHaveBeenCalledWith({
+      activityId: "left-rest",
+      data: {},
+      behavior: IMMEDIATE,
+    });
+    expect(plugin.startActivity.mock.invocationCallOrder[0]).toBeGreaterThan(
+      plugin.endActivity.mock.invocationCallOrder[0]
+    );
+  });
+
   it("are looked for once a launch, so this launch's cards are never swept", async () => {
     await startRunActivity(RUN);
     plugin.getAllActivities.mockResolvedValue({
