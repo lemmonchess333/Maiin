@@ -154,7 +154,14 @@ import {
   pendingReads,
   resumeReads,
   releaseAllReads,
+  readsAt,
 } from "@/test/firestoreHarness";
+import {
+  clearStoredRun,
+  RUN_RESUME_SCHEMA_VERSION,
+  writeStoredRun,
+  type StoredRun,
+} from "@/lib/runResumeStorage";
 import { toast } from "sonner";
 
 // ─── useAuth + adjacent mocks ────────────────────────────────────────
@@ -3964,6 +3971,103 @@ describe("the week rollover waits for a finish (Lift4)", () => {
     } finally {
       close();
     }
+  });
+
+  /** A run started late last Sunday and still on this phone, unsaved: it
+   *  ran past midnight, or waits on its summary. */
+  function storeLastSundaysRun(): void {
+    const sunday = addLocalDays(parseLocalDate(localWeekKey()), -1);
+    sunday.setHours(23, 30, 0, 0);
+    writeStoredRun("test-user-1", {
+      v: RUN_RESUME_SCHEMA_VERSION,
+      config: { activityType: "easy" } as StoredRun["config"],
+      startedAt: sunday.getTime(),
+      accumulatedSeconds: 1800,
+      isRunning: true,
+      points: [],
+      lastWriteAt: Date.now(),
+      phase: "active",
+    });
+  }
+
+  it("rolls only once last week's run on this phone is saved", async () => {
+    // Saved, the run counts for the week it started in. Rolled first, that
+    // week was weighed without it.
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(lastWeeksPlan());
+    storeLastSundaysRun();
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(rolled()).toBe(false);
+
+    act(() => clearStoredRun("test-user-1"));
+    await waitFor(() => expect(rolled()).toBe(true), { timeout: 2000 });
+  });
+
+  it("weighs a race plan's week on the runs read after last week's run is saved", async () => {
+    // The recent runs are read once a day. The one taken while the run was
+    // still on the phone does not have it, so the rollover reads them again.
+    const stale = lastWeek();
+    const raceDate = raceHalfAYearOut();
+    mockProfile = raceProfile(raceDate, { weeklyRunDaysTarget: 2 });
+    resetFirestore();
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          id: "stale_runday",
+          dayIndex: 1,
+          date: stale,
+          weekKey: stale,
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+          completed: false,
+        } as ScheduledRunDay,
+      ],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: raceDate },
+      },
+    } as ProgramState);
+    storeLastSundaysRun();
+    const runWeekRolled = () =>
+      setDocCalls().some(
+        (w) =>
+          (w.data as ProgramState)?.runDays?.[0]?.weekKey === localWeekKey()
+      );
+    const runReads = () => readsAt("users/test-user-1/runs").length;
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await waitFor(() => expect(runReads()).toBeGreaterThan(0), {
+      timeout: 2000,
+    });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(runWeekRolled()).toBe(false);
+    const readsWhileOnPhone = runReads();
+
+    act(() => clearStoredRun("test-user-1"));
+    await waitFor(() => expect(runWeekRolled()).toBe(true), {
+      timeout: 2000,
+    });
+    expect(runReads()).toBeGreaterThan(readsWhileOnPhone);
   });
 });
 
