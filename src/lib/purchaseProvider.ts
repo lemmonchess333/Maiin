@@ -20,10 +20,11 @@ import {
   rcGetLocalizedPrices,
   rcPurchase,
   rcRestore,
+  type PurchasePending,
 } from "@/lib/revenuecat";
 import { traceBoot } from "@/lib/bootTrace";
 
-export type { PlanId };
+export type { PlanId, PurchasePending };
 
 export interface PurchaseResult {
   success: boolean;
@@ -35,6 +36,9 @@ export interface PurchaseResult {
   /** The person closed the purchase sheet. Not a failure: callers say
    *  nothing, and `error` is unset. */
   cancelled?: boolean;
+  /** The store has the purchase and Pro is not active yet. Not a failure:
+   *  `error` is unset, and callers say what the person is waiting for. */
+  pending?: PurchasePending;
   /** Optional URL the caller can redirect to (Stripe portal, App
    *  Store manage-subscriptions page). When set, the caller is
    *  responsible for navigation — purchase() and manageSubscription()
@@ -197,6 +201,17 @@ async function purchaseWithRevenueCat(plan: PlanId): Promise<PurchaseResult> {
   const outcome = await rcPurchase(productId);
   if (outcome.userCancelled) {
     return { success: false, cancelled: true };
+  }
+  if (outcome.pending) {
+    // A purchase the store took is what the sync is for: it asks
+    // RevenueCat again from the server. An approval has nothing to sync
+    // until it is given, and the webhook brings that.
+    if (outcome.pending === "entitlement") {
+      await syncEntitlementBestEffort(
+        outcome.price ? reportedPrice(productId, outcome.price) : undefined
+      );
+    }
+    return { success: false, pending: outcome.pending };
   }
   if (!outcome.success) {
     return {

@@ -147,7 +147,8 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
     setSyncedInitialPlan(initialPlan);
     if (initialPlan) setSelectedPlan(initialPlan);
   }
-  const { loading, error, startCheckout, requiresSignIn } = useProCheckout();
+  const { loading, error, notice, startCheckout, requiresSignIn } =
+    useProCheckout();
   const { profile } = useAuth();
   // Apple-localized prices on the RC build; hardcoded proPlans fallback
   // elsewhere (IAP slice 3, #1099) so the displayed price matches Apple's
@@ -336,6 +337,14 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
             className="text-xs text-destructive-strong bg-destructive/10 rounded-lg px-3 py-2"
           >
             {error}
+          </p>
+        ) : null}
+        {notice ? (
+          <p
+            role="status"
+            className="text-xs text-foreground bg-muted rounded-lg px-3 py-2"
+          >
+            {notice}
           </p>
         ) : null}
 
