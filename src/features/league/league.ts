@@ -216,8 +216,26 @@ export function leagueWeekEnd(weekKey: string): Date {
   return addLocalDays(parseLocalDate(weekKey), 7);
 }
 
-/** The card's short line: "Ends Sunday", or "Ends tonight" on the day. */
+/** When the server settles the week: the Monday after it, 12:15 UTC
+ *  (`weeklyLeagueTurn`), whatever the person's timezone. */
+export function leagueResultsAt(weekKey: string): Date {
+  const [y, m, d] = weekKey.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + 7, 12, 15));
+}
+
+/** "later today" or "tomorrow": when the results come, where the person
+ *  is. East of UTC+11:45 Monday 12:15 UTC is already Tuesday. */
+function resultsWhen(weekKey: string, now: Date): string {
+  const at = localDateString(leagueResultsAt(weekKey));
+  if (at === localDateString(addLocalDays(now, 1))) return "tomorrow";
+  return "later today";
+}
+
+/** The card's short line: "Ends Sunday", "Ends tonight" on the day, and
+ *  "Week over" once it has ended and its results are still to come (the
+ *  membership names the week until the Monday turn settles it). */
 export function endsLine(weekKey: string, now: Date = new Date()): string {
+  if (now.getTime() >= leagueWeekEnd(weekKey).getTime()) return "Week over";
   const sunday = localDateString(addLocalDays(parseLocalDate(weekKey), 6));
   return localDateString(now) === sunday ? "Ends tonight" : "Ends Sunday";
 }
@@ -229,7 +247,7 @@ const DAY = 24 * HOUR;
  *  "Ends in 9 min". */
 export function countdownLine(weekKey: string, now: Date = new Date()): string {
   const left = leagueWeekEnd(weekKey).getTime() - now.getTime();
-  if (left <= 0) return "Week over. Results on Monday.";
+  if (left <= 0) return `Week over. Results ${resultsWhen(weekKey, now)}.`;
   const days = Math.floor(left / DAY);
   const hours = Math.floor((left % DAY) / HOUR);
   const minutes = Math.floor((left % HOUR) / 60_000);
