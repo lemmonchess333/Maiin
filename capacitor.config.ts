@@ -75,7 +75,15 @@ const config: CapacitorConfig = {
     },
   },
   ios: {
-    contentInset: "automatic",
+    // The page handles the notch and the home bar itself: index.html asks
+    // for `viewport-fit=cover` and src/index.css pads by `--safe-top` and
+    // `--safe-bottom`. So the web view must not inset its scroll view for
+    // them as well. Any other value does both: a black bar the height of
+    // the status bar above every page until it is scrolled, one the height
+    // of the home bar under the tab bar at a page's end, and both, all the
+    // time, on a screen that does not scroll. "never" is Capacitor's
+    // default; it is written out because iosContentInset.test.ts pins it.
+    contentInset: "never",
     // No `scheme`: in the CLI that is the Xcode BUILD scheme (default
     // "App", the only one ios/App has), not the web view's URL scheme, so
     // "Tropos" made a local `npx cap run ios` look for a scheme that does
