@@ -9,6 +9,7 @@ import {
   setSnapshotMetadata,
   unfiredFailures,
   batchLog,
+  readsAt,
 } from "@/test/firestoreHarness";
 import { Timestamp } from "firebase/firestore";
 
@@ -68,8 +69,7 @@ import {
   declineFollowRequest,
   getFollowRequests,
   isFollowing,
-  getFollowerCount,
-  getFollowingCount,
+  getFollowCounts,
   toggleKudos,
   fetchActivitiesByIds,
   batchGetKudos,
@@ -226,28 +226,90 @@ describe("isFollowing", () => {
   });
 });
 
-describe("getFollowerCount", () => {
-  it("returns the number of follower docs", async () => {
+describe("getFollowCounts", () => {
+  /** `n` edges in one of `uid`'s lists, and one in someone else's. */
+  function list(kind: "followers" | "following", uid: string, n: number) {
     const tree: Record<string, Record<string, unknown>> = {};
-    for (let i = 0; i < 42; i++) tree[`followers/user1/users/f${i}`] = { i };
-    // A follower of someone ELSE must not be counted — the collection
-    // path is the whole contract here, and a stubbed `{ size: 42 }`
-    // asserted nothing about which collection was read.
-    tree["followers/other/users/x"] = { i: -1 };
-    seedFirestore(tree);
-    const count = await getFollowerCount("user1");
-    expect(count).toBe(42);
-  });
-});
+    for (let i = 0; i < n; i++) tree[`${kind}/${uid}/users/f${i}`] = { i };
+    // Someone ELSE'S edge must not be counted: the collection path is the
+    // whole contract, and a stubbed `{ size }` says nothing about which
+    // collection was read.
+    tree[`${kind}/other/users/x`] = { i: -1 };
+    return tree;
+  }
 
-describe("getFollowingCount", () => {
-  it("returns the number of following docs", async () => {
-    const tree: Record<string, Record<string, unknown>> = {};
-    for (let i = 0; i < 10; i++) tree[`following/user1/users/f${i}`] = { i };
-    tree["following/other/users/x"] = { i: -1 };
-    seedFirestore(tree);
-    const count = await getFollowingCount("user1");
-    expect(count).toBe(10);
+  it("reads someone else's from the server's count, and nobody's lists", async () => {
+    seedFirestore({
+      "followCounts/user1": { followers: 1284, following: 37 },
+      // The lists disagree on purpose: they are not what is read.
+      ...list("followers", "user1", 3),
+      ...list("following", "user1", 2),
+    });
+    expect(await getFollowCounts("user1", false)).toEqual({
+      followers: 1284,
+      following: 37,
+    });
+    expect(readsAt("followers/user1/users")).toHaveLength(0);
+    expect(readsAt("following/user1/users")).toHaveLength(0);
+  });
+
+  it("counts the list for a side the server has not counted yet", async () => {
+    seedFirestore({
+      "followCounts/user1": { followers: 5 },
+      ...list("following", "user1", 10),
+    });
+    expect(await getFollowCounts("user1", false)).toEqual({
+      followers: 5,
+      following: 10,
+    });
+  });
+
+  it("counts both lists for an account with no stored count", async () => {
+    seedFirestore({
+      ...list("followers", "user1", 42),
+      ...list("following", "user1", 10),
+    });
+    expect(await getFollowCounts("user1", false)).toEqual({
+      followers: 42,
+      following: 10,
+    });
+  });
+
+  it("takes a stored 0 as counted, not as missing", async () => {
+    seedFirestore({
+      "followCounts/user1": { followers: 0, following: 0 },
+      ...list("followers", "user1", 4),
+    });
+    expect(await getFollowCounts("user1", false)).toEqual({
+      followers: 0,
+      following: 0,
+    });
+  });
+
+  it("does not trust a stored value that is not a count", async () => {
+    seedFirestore({
+      "followCounts/user1": { followers: "many", following: -3 },
+      ...list("followers", "user1", 2),
+      ...list("following", "user1", 1),
+    });
+    expect(await getFollowCounts("user1", false)).toEqual({
+      followers: 2,
+      following: 1,
+    });
+  });
+
+  it("counts your own lists, which are right the moment you follow someone", async () => {
+    seedFirestore({
+      // The server's copy trails a follow made a moment ago.
+      "followCounts/me": { followers: 1, following: 1 },
+      ...list("followers", "me", 2),
+      ...list("following", "me", 3),
+    });
+    expect(await getFollowCounts("me", true)).toEqual({
+      followers: 2,
+      following: 3,
+    });
+    expect(readsAt("followCounts/me")).toHaveLength(0);
   });
 });
 

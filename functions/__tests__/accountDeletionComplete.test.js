@@ -60,6 +60,7 @@ function setup(extra = {}) {
     "followRequests/carol/users/bob": { requestedAt: now },
     // Polish2: the week on followers' boards, Alice's and Bob's.
     "friendsBoard/alice": { sessions: 3 },
+    "followCounts/alice": { followers: 1, following: 2 },
     // Soc15 call 3: Alice and Bob in this week's league group, her
     // membership, her result from last week, and Bob's own.
     "leagueMembers/alice": { uid: "alice", tier: "silver", groupId: "wk-001" },
@@ -96,6 +97,7 @@ function setup(extra = {}) {
       dateKey: pulseDay,
     },
     "friendsBoard/bob": { sessions: 1 },
+    "followCounts/bob": { followers: 4, following: 1 },
     // Soc15: Alice's invite code, an old one of hers, and Bob's.
     "inviteCodes/K7P49M2H": { uid: "alice", createdAt: now },
     "inviteCodes/A2B3C4D5": { uid: "alice", createdAt: now },
@@ -230,6 +232,7 @@ function setup(extra = {}) {
 // smoke::topLevelOwn::followRequests
 // smoke::followRequests::sent
 // smoke::topLevelOwn::friendsBoard
+// smoke::topLevelOwn::followCounts
 // smoke::topLevelOwn::blockedBy
 // smoke::blockedByReverse
 // smoke::topLevelQuery::inviteCodes
@@ -272,6 +275,7 @@ describe("complete account erasure", () => {
       "followRequests/alice/users/bob",
       "followRequests/carol/users/alice",
       "friendsBoard/alice",
+      "followCounts/alice",
       "inviteCodes/K7P49M2H",
       "inviteCodes/A2B3C4D5",
       "leagueMembers/alice",
@@ -307,6 +311,7 @@ describe("complete account erasure", () => {
       "followRequests/carol/users/bob",
       "blockedBy/bob/users/carol",
       "friendsBoard/bob",
+      "followCounts/bob",
       "inviteCodes/Z9Y8X7W6",
       "leagueMembers/bob",
       "leagueGroups/wk-001/standings/bob",

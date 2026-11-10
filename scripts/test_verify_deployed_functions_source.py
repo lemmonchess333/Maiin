@@ -187,6 +187,17 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
         self.assertEqual(len(paths), len(set(paths)))
         self.assertIn("onBlockWritten", verifier.RETRY_REQUIRED)
 
+    def test_follow_count_triggers_read_back_their_writer_and_its_guards(self):
+        targets = verifier.source_targets()
+        for name in ("onFollowerEdgeWritten", "onFollowingEdgeWritten"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/followCounts.js",
+                                 "lib/raceCohorts.js", "lib/deletionTransactionGuard.js",
+                                 "lib/accountDeletionStatus.js",
+                                 "lib/triggerRetry.js"}.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+                self.assertIn(name, verifier.RETRY_REQUIRED)
+
     def test_medal_trigger_reads_back_its_rules_freeze_guard_and_retry_guard(self):
         paths = verifier.source_targets()["onChallengeParticipantWritten"]
         self.assertTrue({"index.js", "package-lock.json", "lib/medals.js",

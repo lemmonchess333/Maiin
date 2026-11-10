@@ -10,11 +10,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import {
-  batchGetKudos,
-  getFollowerCount,
-  getFollowingCount,
-} from "@/lib/socialApi";
+import { batchGetKudos, getFollowCounts } from "@/lib/socialApi";
 import { activityToFeedItem, createdAtMs } from "@/lib/activityFeedItem";
 import { BADGE_DEFINITIONS, type EarnedBadge } from "@/features/streaks/badges";
 import { logger } from "@/lib/logger";
@@ -229,14 +225,23 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     });
 
     const countFailed = (err: unknown) => {
-      logger.warn(`[profile] follow counts read failed for ${uid}`, err);
+      /* The rules refuse the counts to a reader their owner blocked, as
+         they do the profile, which is drawn as not available. That is
+         the rules working, not a read worth a warning. */
+      const refused =
+        !isOwn &&
+        (err as { code?: string } | undefined)?.code === "permission-denied";
+      if (!refused) {
+        logger.warn(`[profile] follow counts read failed for ${uid}`, err);
+      }
       if (live()) setCountsFailed(true);
     };
-    getFollowerCount(uid)
-      .then((n) => live() && setFollowers(n))
-      .catch(countFailed);
-    getFollowingCount(uid)
-      .then((n) => live() && setFollowingCount(n))
+    getFollowCounts(uid, isOwn)
+      .then((counts) => {
+        if (!live()) return;
+        setFollowers(counts.followers);
+        setFollowingCount(counts.following);
+      })
       .catch(countFailed);
 
     // Your own badges come from the live record (owner-only), so their

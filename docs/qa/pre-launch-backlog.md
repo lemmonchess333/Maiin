@@ -10,6 +10,34 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Follow counts kept by the server (2026-11-10)
+
+A profile reads someone else's follower and following numbers from
+`followCounts/{uid}`, which two new triggers recount from the follow lists
+(`functions/lib/followCounts.js`). It is step 1 of closing the follow
+lists: until now any signed-in account could list anyone's followers and
+following, because the counts were read from those lists. Only production
+shows the triggers deployed and the counts landing.
+
+- [ ] **The triggers deployed.** After Deploy production runs for this
+      change, `onFollowerEdgeWritten` and `onFollowingEdgeWritten` are in
+      the Firebase console's function list, and the release's source
+      read-back passed for both.
+- [ ] **A follow lands in the count.** From a second account, follow the
+      first. Passing: within a few seconds `followCounts/{first uid}` has
+      `followers` one higher and `followCounts/{second uid}` has
+      `following` one higher, and the first account's profile, opened from
+      the second, shows the new number. Unfollow: both go back.
+- [ ] **Every account counted.** Run the "Backfill follow counts" workflow
+      (Actions → Run workflow, or a dated line in
+      `.github/backfill-follow-counts.request` on main) only after the
+      row above passes. Passing: the first pass prints the accounts it
+      counted and the second pass ends with `changed: 0`.
+- [ ] **Then close the lists.** Merge the rules change that lets only the
+      two people on a follow read it, and only the owner list their own
+      (its pull request names this row). Not before the backfill: an
+      account nobody has counted reads as 0 once the lists are closed.
+
 ## Setup asks for the public name (2026-11-01)
 
 Setup no longer makes the public name from the email address: an email

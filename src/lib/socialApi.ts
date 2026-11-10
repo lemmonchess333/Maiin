@@ -217,20 +217,55 @@ export async function isFollowing(
   return snap.exists();
 }
 
-/* Counted on the server: a profile with 1,284 followers is one
-   aggregation read, not 1,284 documents downloaded to show a number. */
-export async function getFollowerCount(uid: string): Promise<number> {
-  const snap = await getCountFromServer(
-    collection(db, "followers", uid, "users")
-  );
+export interface FollowCounts {
+  followers: number;
+  following: number;
+}
+
+/* Counted on the server: a list of 1,284 followers is one aggregation
+   read, not 1,284 documents downloaded to show a number. */
+async function countFollowList(
+  kind: "followers" | "following",
+  uid: string
+): Promise<number> {
+  const snap = await getCountFromServer(collection(db, kind, uid, "users"));
   return snap.data().count;
 }
 
-export async function getFollowingCount(uid: string): Promise<number> {
-  const snap = await getCountFromServer(
-    collection(db, "following", uid, "users")
-  );
-  return snap.data().count;
+/** A stored count, or null for a side the server has not counted. */
+function storedCount(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : null;
+}
+
+/**
+ * How many people follow `uid` and how many `uid` follows.
+ *
+ * Someone else's come from `followCounts/{uid}`, which the server keeps
+ * (functions/lib/followCounts.js): one document, and nobody's lists. A
+ * side it has not counted is read from the list itself. Your own come from
+ * your own lists, which are right the moment you follow someone or accept
+ * a request; the server's copy trails that by a second or two.
+ */
+export async function getFollowCounts(
+  uid: string,
+  own: boolean
+): Promise<FollowCounts> {
+  if (own) {
+    const [followers, following] = await Promise.all([
+      countFollowList("followers", uid),
+      countFollowList("following", uid),
+    ]);
+    return { followers, following };
+  }
+  const snap = await getDoc(doc(db, "followCounts", uid));
+  const stored = snap.exists() ? snap.data() : {};
+  const [followers, following] = await Promise.all([
+    storedCount(stored.followers) ?? countFollowList("followers", uid),
+    storedCount(stored.following) ?? countFollowList("following", uid),
+  ]);
+  return { followers, following };
 }
 
 /**

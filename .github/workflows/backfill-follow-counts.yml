@@ -1,0 +1,75 @@
+name: Backfill follow counts
+
+# onFollowerEdgeWritten and onFollowingEdgeWritten keep followCounts/{uid}
+# (how many follow an account and how many it follows) in step with the
+# two follow lists, but only from the first edge made or removed after they
+# were deployed. This counts every account, the ones with no follows
+# included (functions/scripts/backfill-follow-counts.js). A count is stored
+# only if it was read after the one already there, so it is safe to run at
+# any time and beside the triggers, and it stays as the repair for a count
+# that has drifted.
+#
+# Run it by hand from the Actions tab once Deploy production has shipped
+# the triggers (docs/qa/pre-launch-backlog.md, the follow counts rows), or
+# add a dated line to .github/backfill-follow-counts.request on main: a
+# change to that file runs it too, which is the way to start it from a
+# session whose GitHub app cannot dispatch a workflow. Nothing else runs
+# it: a run before the triggers are live would miss the follows made
+# between its pass and their deploy. The second pass is the check: once the
+# first has stored every count, no number is left to move.
+
+on:
+  workflow_dispatch:
+  # A new line in the request file on main. Only main, which is also the
+  # only branch the production environment lets this job read its
+  # credentials on.
+  push:
+    branches: [main]
+    paths:
+      - .github/backfill-follow-counts.request
+
+permissions:
+  contents: read
+
+concurrency:
+  group: follow-count-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    # The production environment holds the release credentials: only a
+    # job that names it can read its secrets, and its branch rule decides
+    # where such a job may run.
+    environment: production
+    # Install and two passes of two counts an account.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install function dependencies
+        run: npm ci --prefix functions
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Backfill
+        run: node functions/scripts/backfill-follow-counts.js adaptive-fitness-af8bb
+
+      - name: Run again and expect no number left to move
+        run: |
+          set -euo pipefail
+          node functions/scripts/backfill-follow-counts.js adaptive-fitness-af8bb | tee second-run.json
+          node -e '
+            const t = JSON.parse(require("fs").readFileSync("second-run.json", "utf8"));
+            if (t.changed !== 0) {
+              console.error(`The second run still moved ${t.changed} counts.`);
+              process.exit(1);
+            }
+          '
