@@ -1308,7 +1308,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 ### 14k. Current Known Design Considerations
 
-- The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
+- The water card's fill rises by `translateY`, and its waves and bubbles move by `Element.animate` on transform and opacity, so the compositor runs them (WaterWave + WaterBubbles). Keep it that way when modifying
 - Group headings are sentence-case `SectionHeading`s and in-card labels are sentence-case captions (DS3). Nothing sits below the 12px micro floor except `text-caption` numerals and units
 - New-best and PR badges are gold (`--achievement`), never the food orange
 - The streak flame is brand purple (Polish3, call 4). Its tiers are steps of the purple ramp, deeper as the streak runs longer (1, 7, 30 days), and at 100 days its heart is the platinum of the top badge tier. The table is `src/features/streaks/flameTiers.ts`, built from `THEME.purpleRamp` and `THEME.tier.platinum`; `eslint.config.js` bans any hex literal in it (`PALETTE_TABLES`). Gold is never a tier colour

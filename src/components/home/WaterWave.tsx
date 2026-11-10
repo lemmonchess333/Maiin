@@ -6,61 +6,97 @@ interface WaterWaveProps {
   splash: number;
 }
 
-const PATH_WIDTH = 400;
+/** One tile's width of wave, in the SVG's units. */
+const TILE = 400;
 const HEIGHT = 24;
-const POINTS = 40;
-
-function buildPath(
-  phase: number,
-  frequency: number,
-  amplitudeMultiplier: number,
-  amplitude: number
-): string {
-  let d = `M 0 ${HEIGHT}`;
-  for (let index = 0; index <= POINTS; index += 1) {
-    const x = (index / POINTS) * PATH_WIDTH;
-    const normal = index / POINTS;
-    const first =
-      Math.sin(normal * Math.PI * 3 + phase * frequency) *
-      amplitude *
-      amplitudeMultiplier;
-    const second =
-      Math.sin(normal * Math.PI * 5.3 - phase * frequency * 0.7) *
-      amplitude *
-      amplitudeMultiplier *
-      0.4;
-    d += ` L ${x.toFixed(1)} ${(first + second + HEIGHT / 2).toFixed(1)}`;
-  }
-  return `${d} L ${PATH_WIDTH} ${HEIGHT} Z`;
-}
-
-/* The shapes the paths are first drawn with: the wave at rest, before the
-   loop's first frame. They are constants, so a re-render (a new fill
-   colour, say) hands React the same `d` it had and React leaves the
-   attribute the loop has since written alone. Rebuilding the current
-   shape from the loop's refs in render reaches the same picture, and
-   reading refs during render is what react-hooks/refs forbids. */
-const BACK_AT_REST = buildPath(0, 0.6, 0.7, 3);
-const FRONT_AT_REST = buildPath(0, 1, 1, 3);
+const AMPLITUDE = 3;
 
 /**
- * Water surface wave. ONE visibility-paused RAF loop drives all three wave
- * paths. Previously this ran one parent `useAnimationFrame` PLUS three
- * per-`WavePath` animation-frame callbacks — four loops rewriting SVG paths
- * on the Home tree perpetually, even when the water card was off-screen or the
- * tab was hidden. Mirrors WaterBubbles' IntersectionObserver +
- * visibilitychange pause pattern; throttled to ~30fps; schedules NO frame
- * while hidden / off-screen / reduced-motion. Framer Motion is gone from this
- * component and `WavePath` is removed.
+ * A wave that repeats every TILE units, drawn `tiles` wide: every
+ * component has a whole number of cycles per tile, so a strip two tiles
+ * wide slid left by one tile looks exactly as it started, and the loop
+ * has no seam.
+ */
+function periodicPath(
+  tiles: number,
+  waves: { cycles: number; size: number; phase: number }[]
+): string {
+  const width = TILE * tiles;
+  const points = 80 * tiles;
+  let d = `M 0 ${HEIGHT}`;
+  for (let index = 0; index <= points; index += 1) {
+    const x = (index / points) * width;
+    const y = waves.reduce(
+      (sum, wave) =>
+        sum +
+        Math.sin((x / TILE) * Math.PI * 2 * wave.cycles + wave.phase) *
+          AMPLITUDE *
+          wave.size,
+      HEIGHT / 2
+    );
+    d += ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }
+  return `${d} L ${width} ${HEIGHT} Z`;
+}
+
+const FRONT = [
+  { cycles: 2, size: 1, phase: 0 },
+  { cycles: 3, size: 0.4, phase: 1.1 },
+];
+const BACK = [
+  { cycles: 2, size: 0.7, phase: 2.1 },
+  { cycles: 5, size: 0.28, phase: 0.4 },
+];
+const FRONT_STRIP = periodicPath(2, FRONT);
+const BACK_STRIP = periodicPath(2, BACK);
+const FRONT_AT_REST = periodicPath(1, FRONT);
+
+/** How long each wave takes to travel one tile; different, so they drift. */
+const FRONT_MS = 8000;
+const BACK_MS = 13000;
+const SLIDE: Keyframe[] = [
+  { transform: "translateX(0)" },
+  { transform: "translateX(-50%)" },
+];
+/** A splash: the surface stands taller, then settles back. */
+const SPLASH: Keyframe[] = [
+  { transform: "scaleY(2.4)" },
+  { transform: "scaleY(1)" },
+];
+const SPLASH_OPTIONS: KeyframeAnimationOptions = {
+  duration: 1400,
+  easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+};
+
+function play(
+  el: Element | null,
+  keyframes: Keyframe[],
+  options: KeyframeAnimationOptions
+): Animation | null {
+  if (!el || typeof el.animate !== "function") return null;
+  return el.animate(keyframes, options);
+}
+
+/**
+ * The water's surface. Each wave is drawn once, two tiles wide, and slid
+ * sideways by the Web Animations API: a transform the compositor runs, so
+ * the main thread does no work per frame. Do not go back to rebuilding the
+ * paths' `d` on a loop: each rewrite costs a style, layout and paint pass,
+ * and at thirty a second that is about a fifth of the main thread while
+ * Home sits still (measured at 6x CPU slowdown). A splash is a one-off
+ * scaleY of both waves.
+ *
+ * The slide pauses while the tile is off-screen or the app is in the
+ * background, and Reduce Motion gets a still surface.
  */
 export default function WaterWave({ fillPercent, splash }: WaterWaveProps) {
   const reducedMotion = useReducedMotion();
   const gradientId = useId().replace(/:/g, "");
-  const svgRef = useRef<SVGSVGElement>(null);
-  const backRef = useRef<SVGPathElement>(null);
-  const frontRef = useRef<SVGPathElement>(null);
-  const highlightRef = useRef<SVGPathElement>(null);
-  const amplitudeRef = useRef(3);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const backRef = useRef<HTMLDivElement>(null);
+  const frontRef = useRef<HTMLDivElement>(null);
+  const slides = useRef<Animation[]>([]);
   const [active, setActive] = useState(() =>
     typeof document === "undefined"
       ? true
@@ -72,13 +108,10 @@ export default function WaterWave({ fillPercent, splash }: WaterWaveProps) {
   const backColor =
     fillPercent > 60 ? "rgba(78, 195, 220, 0.18)" : "rgba(58, 153, 186, 0.14)";
 
-  useEffect(() => {
-    amplitudeRef.current = reducedMotion ? 3 : 8;
-  }, [splash, reducedMotion]);
-
+  // Whether anyone can see it: on-screen and the app in the foreground.
   useEffect(() => {
     if (reducedMotion) return;
-    const element = svgRef.current;
+    const element = rootRef.current;
     if (!element) return;
 
     let onScreen = true;
@@ -101,47 +134,48 @@ export default function WaterWave({ fillPercent, splash }: WaterWaveProps) {
     };
   }, [reducedMotion]);
 
+  // The two slides, started once and kept for the component's life.
   useEffect(() => {
-    if (reducedMotion || !active) return;
-    let frame = 0;
-    let lastUpdate = 0;
-    let cancelled = false;
-
-    const tick = (time: number) => {
-      if (time - lastUpdate >= 33) {
-        lastUpdate = time;
-        const phase = time * 0.001;
-        const amplitude = amplitudeRef.current;
-        backRef.current?.setAttribute(
-          "d",
-          buildPath(phase, 0.6, 0.7, amplitude)
-        );
-        frontRef.current?.setAttribute("d", buildPath(phase, 1, 1, amplitude));
-        highlightRef.current?.setAttribute(
-          "d",
-          buildPath(phase, 1, 1, amplitude)
-        );
-        if (amplitudeRef.current > 3.1) {
-          amplitudeRef.current = Math.max(amplitudeRef.current * 0.98, 3);
-        }
-      }
-      if (!cancelled) frame = window.requestAnimationFrame(tick);
-    };
-
-    frame = window.requestAnimationFrame(tick);
+    if (reducedMotion) return;
+    const started = [
+      play(backRef.current, SLIDE, {
+        duration: BACK_MS,
+        iterations: Infinity,
+        easing: "linear",
+      }),
+      play(frontRef.current, SLIDE, {
+        duration: FRONT_MS,
+        iterations: Infinity,
+        easing: "linear",
+      }),
+    ].filter((animation): animation is Animation => animation !== null);
+    slides.current = started;
     return () => {
-      cancelled = true;
-      window.cancelAnimationFrame(frame);
+      for (const animation of started) animation.cancel();
+      slides.current = [];
     };
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    for (const animation of slides.current) {
+      if (active) animation.play();
+      else animation.pause();
+    }
   }, [active, reducedMotion]);
+
+  // The surface stands up as the water arrives and on each new drink.
+  useEffect(() => {
+    if (reducedMotion) return;
+    const animation = play(surfaceRef.current, SPLASH, SPLASH_OPTIONS);
+    return () => animation?.cancel();
+  }, [splash, reducedMotion]);
 
   if (reducedMotion) {
     return (
       <svg
-        ref={svgRef}
         width="100%"
         height={HEIGHT}
-        viewBox={`0 0 ${PATH_WIDTH} ${HEIGHT}`}
+        viewBox={`0 0 ${TILE} ${HEIGHT}`}
         preserveAspectRatio="none"
         className="absolute inset-x-0 top-0 pointer-events-none"
         style={{ transform: "translateY(-12px)" }}
@@ -153,30 +187,54 @@ export default function WaterWave({ fillPercent, splash }: WaterWaveProps) {
   }
 
   return (
-    <svg
-      ref={svgRef}
-      width="100%"
-      height={HEIGHT}
-      viewBox={`0 0 ${PATH_WIDTH} ${HEIGHT}`}
-      preserveAspectRatio="none"
+    <div
+      ref={rootRef}
+      data-water-wave
       className="absolute inset-x-0 top-0 pointer-events-none"
-      style={{ transform: "translateY(-12px)" }}
+      style={{ height: HEIGHT, transform: "translateY(-12px)" }}
       aria-hidden="true"
     >
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgba(255,255,255,0.25)" />
-          <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-        </linearGradient>
-      </defs>
-      <path ref={backRef} fill={backColor} d={BACK_AT_REST} />
-      <path ref={frontRef} fill={surfaceColor} d={FRONT_AT_REST} />
-      <path
-        ref={highlightRef}
-        fill={`url(#${gradientId})`}
-        d={FRONT_AT_REST}
-        style={{ clipPath: `inset(0 0 ${HEIGHT - 6}px 0)` }}
-      />
-    </svg>
+      <div ref={surfaceRef} className="absolute inset-0">
+        <div
+          ref={backRef}
+          className="absolute inset-y-0 left-0 w-[200%] will-change-transform"
+        >
+          <svg
+            width="100%"
+            height={HEIGHT}
+            viewBox={`0 0 ${TILE * 2} ${HEIGHT}`}
+            preserveAspectRatio="none"
+            className="block"
+          >
+            <path fill={backColor} d={BACK_STRIP} />
+          </svg>
+        </div>
+        <div
+          ref={frontRef}
+          className="absolute inset-y-0 left-0 w-[200%] will-change-transform"
+        >
+          <svg
+            width="100%"
+            height={HEIGHT}
+            viewBox={`0 0 ${TILE * 2} ${HEIGHT}`}
+            preserveAspectRatio="none"
+            className="block"
+          >
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.25)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+              </linearGradient>
+            </defs>
+            <path fill={surfaceColor} d={FRONT_STRIP} />
+            <path
+              fill={`url(#${gradientId})`}
+              d={FRONT_STRIP}
+              style={{ clipPath: `inset(0 0 ${HEIGHT - 6}px 0)` }}
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
   );
 }

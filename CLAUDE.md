@@ -556,7 +556,7 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
 - Firestore `d.data()` returns `DocumentData` — always assert types at boundaries
 - Run tracking pages (`/run`, `/run-summary`) render full-screen without the Layout nav wrapper
 - Which card Home's session stack shows, and what it says, is decided in `src/lib/todaySession.ts` from one day key; `StackedCTACards.tsx` only draws the answer, so change the rules there and test them without rendering Home
-- `WaterWave.tsx` + `WaterBubbles.tsx` have complex SVG animations — treat carefully when modifying
+- `WaterWave.tsx` + `WaterBubbles.tsx` move on the compositor: each wave is drawn once, two tiles wide, and slid by `Element.animate`, and each bubble is an `Element.animate` of transform and opacity. Do not put back an animation-frame loop, a rewrite of a path's `d`, or a framer `y`: the old loop cost about a fifth of the main thread on an idle Home. The tests stub `Element.animate` (jsdom has none)
 
 ## gstack
 
