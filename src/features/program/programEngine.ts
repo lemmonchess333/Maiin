@@ -29,11 +29,6 @@ import {
 } from "./variationBank";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import {
-  balancePushPull,
-  judgementLandmark,
-  reconcileToLandmarks,
-} from "./volumeModel";
-import {
   refitSessionsToTime,
   sessionFits,
   sizeSessionsToTime,
@@ -67,11 +62,7 @@ import {
   orderForAdjacency,
   surplusExposures,
 } from "./overlapModel";
-import {
-  applyComplexityGate,
-  offerableTo,
-  toExperience,
-} from "./experienceModel";
+import { applyComplexityGate, offerableTo } from "./experienceModel";
 import { isMainFloorDeadlift, mainRepAnchor, roleRepsFor } from "./roleTable";
 import { nextUpIndex } from "./nextUpCursor";
 import {
@@ -684,9 +675,9 @@ export const KEEP_RANKS: Readonly<Record<string, readonly number[]>> = {
   "Full Body — Squat Focus": [1, 2, 3, 4, 5, 6],
   "Full Body — Deadlift Focus": [1, 2, 3, 4, 5, 6],
   "Full Body — Posterior Focus": [1, 3, 4, 2, 6, 5],
-  "Upper — Chest & Back": [1, 2, 3, 4, 5],
+  "Upper — Chest & Back": [1, 2, 3, 4, 5, 6],
   "Lower — Squat Focus": [1, 2, 3, 6, 4, 5],
-  "Upper — Shoulders & Arms": [1, 2, 3, 5, 6, 4],
+  "Upper — Shoulders & Arms": [1, 2, 3, 4, 6, 7, 5],
   "Lower — Deadlift Focus": [1, 2, 3, 4, 5, 6],
   "Push — Chest Focus": [1, 2, 5, 4, 6, 3],
   "Pull — Lat Focus": [1, 2, 5, 3, 6, 4],
@@ -1036,13 +1027,17 @@ function buildUpperLower(
           "linear",
           findExisting(0, 2)
         ),
+        // The day's second pull (Lift21): two presses and one row left an
+        // upper/lower week with about twice the pressing sets of its
+        // pulling ones, and nothing adds sets to a built week any more.
+        makeAccessory("vertical_pull", round(3 * vm), acc, 40, "pull-ups"),
         makeExercise(
           "arms_biceps",
           round(3 * vm),
           12,
           12,
           "double",
-          findExisting(0, 3),
+          findExisting(0, 4),
           true
         ),
         makeExercise(
@@ -1051,7 +1046,7 @@ function buildUpperLower(
           12,
           15,
           "double",
-          findExisting(0, 4),
+          findExisting(0, 5),
           true
         ),
       ],
@@ -1110,17 +1105,15 @@ function buildUpperLower(
           findExisting(2, 1)
         ),
         makeAccessory("horizontal_push", round(3 * vm), acc, 30, "bench-press"),
-        // Arm isolation runs at the 2-base here, not the 3-base day A uses:
-        // this day funds the lateral-raise slot below inside the 18-set
-        // session budget (generatorAudit pins it), and arms already take
-        // their heavier dose on Upper A.
+        // The day's second pull (see the Upper — Chest & Back note).
+        makeAccessory("horizontal_pull", round(3 * vm), acc, 30, "barbell-row"),
         makeExercise(
           "arms_biceps",
           round(2 * vm),
           12,
           10,
           "double",
-          findExisting(2, 3),
+          findExisting(2, 4),
           true
         ),
         makeExercise(
@@ -1129,7 +1122,7 @@ function buildUpperLower(
           12,
           12,
           "double",
-          findExisting(2, 4),
+          findExisting(2, 5),
           true
         ),
         // Direct side-delt work (named slot — see makeNamedAccessory). The
@@ -1622,35 +1615,6 @@ function applyRoleTable(
       };
     }),
   }));
-}
-
-/**
- * The week's volume passes, once its sessions fit their time (Lift4 (5)).
- * The weekly bands are only a ceiling, in two tiers (a beginner's, everyone
- * else's). ADR-0010's staged condition, landed with the SECONDARY_SET_WEIGHT
- * 1:1 flip, runs reconcile → balance → reconcile:
- *   1. shrink what the builders over-authored (the ceilings' authority);
- *   2. D-LIFT-3: keep weekly pull volume ≥ push (shoulder-health balance),
- *      adding only inside what each session fits;
- *   3. a second reconcile polices anything the adds re-inflated (at 1:1 an
- *      add credits every secondary too).
- * Shared by a new plan and a plan re-fitted to a new session length, so the
- * two come out alike.
- */
-export function balanceWeekVolume(
-  workouts: WorkoutDay[],
-  goal: PrimaryGoal | undefined,
-  experience: Experience | undefined,
-  minutes: number
-): WorkoutDay[] {
-  const ceiling = (m: Parameters<typeof judgementLandmark>[1]) =>
-    judgementLandmark(goal, m, toExperience(experience));
-  const balanced = balancePushPull(
-    reconcileToLandmarks(workouts, ceiling),
-    ceiling,
-    (exercises) => sessionFits(exercises, minutes)
-  );
-  return reconcileToLandmarks(balanced, ceiling);
 }
 
 /**
@@ -2788,24 +2752,21 @@ export function resetToBaseSets(workouts: WorkoutDay[]): WorkoutDay[] {
  * a lift loaded past that gains warm-up sets the fit never priced, and a
  * fitted day comes to run over its length. Such a day (`warmupsOutgrewFit`)
  * is re-fitted as a plan the person has is re-fitted to a new length
- * (`refitSessionsToTime`, then `balanceWeekVolume`, as a settings save does)
- * and keeps only that re-fit's cuts: sets come off in the fit's order, a main
- * lift keeps at least two, no lift is dropped, added or swapped, and none
- * gains a set (the re-fit path gives some slots a set the generator's fit
- * doesn't). A cut lift's `baseSets` moves with its sets, so the weeks after
- * start from them. Every other day comes back as it was, and a week with no
- * day to re-fit comes back whole.
+ * (`refitSessionsToTime`, as a settings save does) and keeps only that
+ * re-fit's cuts: sets come off in the fit's order, a main lift keeps at
+ * least two, no lift is dropped, added or swapped, and none gains a set (a
+ * re-fit can give a lift one, where there is time). A cut lift's `baseSets`
+ * moves with its sets, so the weeks after start from them. Every other day
+ * comes back as it was, and a week with no day to re-fit comes back whole.
  */
 export function refitOutgrownSessions(
   workouts: WorkoutDay[],
-  goal: PrimaryGoal | undefined,
   experience: Experience | undefined,
   minutes: number
 ): WorkoutDay[] {
   return keepRefitCuts(
     workouts,
     workouts.map((day) => warmupsOutgrewFit(day.exercises, minutes)),
-    goal,
     experience,
     minutes
   );
@@ -2825,7 +2786,6 @@ export function refitOutgrownSessions(
 export function refitSessionsASaveOverran(
   before: readonly WorkoutDay[],
   after: WorkoutDay[],
-  goal: PrimaryGoal | undefined,
   experience: Experience | undefined,
   minutes: number
 ): WorkoutDay[] {
@@ -2837,7 +2797,6 @@ export function refitSessionsASaveOverran(
         before[d] !== undefined &&
         sessionFits(before[d].exercises, minutes)
     ),
-    goal,
     experience,
     minutes
   );
@@ -2848,18 +2807,12 @@ export function refitSessionsASaveOverran(
 function keepRefitCuts(
   workouts: WorkoutDay[],
   which: readonly boolean[],
-  goal: PrimaryGoal | undefined,
   experience: Experience | undefined,
   minutes: number
 ): WorkoutDay[] {
   const outgrown = which;
   if (!outgrown.includes(true)) return workouts;
-  const refitted = balanceWeekVolume(
-    refitSessionsToTime(workouts, goal, experience, minutes),
-    goal,
-    experience,
-    minutes
-  );
+  const refitted = refitSessionsToTime(workouts, experience, minutes);
   return workouts.map((day, d) => {
     if (!outgrown[d]) return day;
     // The re-fit moves sets only, so each lift is where it was in the day.
@@ -3069,7 +3022,6 @@ export function advanceWeek(
   if (ordinary && state.sessionMinutes !== undefined) {
     workouts = refitOutgrownSessions(
       workouts,
-      options.primaryGoal,
       experience,
       sessionMinutesFor(state.sessionMinutes)
     );

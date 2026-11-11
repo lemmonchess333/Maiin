@@ -171,9 +171,9 @@ const FALLBACK: MovementCategory = "core";
  * first-match-wins, and got 27 of the 151 catalogue exercises wrong. The
  * expensive one: "fly"/"flye" sit under horizontal_push, so `Reverse Flyes`
  * and `Rear Delt Machine Fly` — both PULL movements — classified as PUSH.
- * `balancePushPull` keys on this category and exists specifically to keep
- * pull >= push for shoulder health, so it was counting rear-delt work as the
- * very thing it was protecting against. Others were merely absurd:
+ * The pull-to-push balance is counted on this category, to keep pull >= push
+ * for shoulder health, so it was counting rear-delt work as the very thing
+ * it was protecting against. Others were merely absurd:
  * `Nordic Hamstring Curl` matched "curl" and became a biceps exercise,
  * `Cable Glute Kickback` matched "kickback" and became triceps, and 38
  * exercises fell through every rule into the `core` fallback — including

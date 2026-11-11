@@ -41,13 +41,17 @@ const load = (state: ProgramState) =>
   migrateProgramState(normalizeProgramState(state), "2026-03-09");
 
 describe("a plan fitted to its time, through the loader", () => {
-  it("keeps a new 30-minute plan's two-set main lifts", () => {
+  it("keeps a new 30-minute plan's two-set lifts", () => {
     const plan = buildOnboardingPlan(
       answers({ sessionMinutes: 30 }),
       "cut",
       "2026-03-09"
     ).programState;
-    expect(twoSetMains(plan).length).toBeGreaterThan(0);
+    // A half-hour day's supporting lifts take two sets (Lift21).
+    expect(
+      plan.workouts.flatMap((d) => d.exercises).filter((e) => e.sets === 2)
+        .length
+    ).toBeGreaterThan(0);
     expect(setsOf(load(plan))).toEqual(setsOf(plan));
   });
 
@@ -60,7 +64,7 @@ describe("a plan fitted to its time, through the loader", () => {
     const refitted: ProgramState = {
       ...plan,
       sessionMinutes: 30,
-      workouts: refitSessionsToTime(plan.workouts, "general", "beginner", 30),
+      workouts: refitSessionsToTime(plan.workouts, "beginner", 30),
     };
     expect(twoSetMains(refitted).length).toBeGreaterThan(0);
     expect(setsOf(load(refitted))).toEqual(setsOf(refitted));

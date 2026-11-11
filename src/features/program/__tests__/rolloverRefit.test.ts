@@ -20,14 +20,9 @@ import {
 import type { OnboardingDraft } from "@/lib/onboardingDraft";
 import { buildOnboardingPlan } from "@/lib/onboardingPlan";
 import { migrateProgramState } from "../migrations";
-import {
-  advanceWeek,
-  balanceWeekVolume,
-  refitOutgrownSessions,
-} from "../programEngine";
+import { advanceWeek, refitOutgrownSessions } from "../programEngine";
 import {
   normalizeProgramState,
-  type PrimaryGoal,
   type ProgramExercise,
   type ProgramState,
   type WorkoutDay,
@@ -63,12 +58,17 @@ function onDay<T>(day: string, run: () => T): T {
   }
 }
 
-/** Three full-body days an hour long, for an intermediate. */
+/** The length the lifter's plan is fitted to. */
+const MINUTES = 45;
+
+/** Four upper and lower days of 45 minutes, for an intermediate. A day is
+ *  sized to its length with a twentieth to spare (`FIT_TOLERANCE`), and
+ *  this is the week where one heavier press takes a day past that. */
 const lifter: OnboardingDraft = {
   step: 7,
   primaryGoal: "general",
-  daysPerWeek: 3,
-  sessionMinutes: 60,
+  daysPerWeek: 4,
+  sessionMinutes: MINUTES,
   equipment: "full_gym",
   runFrequency: "none",
   runMode: "freeform",
@@ -119,11 +119,12 @@ const PRESS_AND_CURL: Record<string, number> = {
   "barbell-curl": 30,
 };
 
-/** Four days to get stronger, and a stronger lifter's loads on the upper
- *  days' lifts. */
+/** Four days to get stronger, an hour each, and a stronger lifter's loads
+ *  on the upper days' lifts. */
 const STRENGTH: Partial<OnboardingDraft> = {
   primaryGoal: "strength",
   daysPerWeek: 4,
+  sessionMinutes: 60,
   weightKg: 85,
 };
 const STRONGER: Record<string, number> = {
@@ -180,16 +181,10 @@ const dayNamed = (s: ProgramState, name: string): WorkoutDay =>
  *  the fewer of its sets and the re-fit's, lift by lift. */
 function refitCuts(
   s: ProgramState,
-  goal: PrimaryGoal | undefined,
   experience: UserProfile["experience"]
 ): Record<string, number[]> {
   const minutes = s.sessionMinutes!;
-  const refit = balanceWeekVolume(
-    refitSessionsToTime(s.workouts, goal, experience, minutes),
-    goal,
-    experience,
-    minutes
-  );
+  const refit = refitSessionsToTime(s.workouts, experience, minutes);
   return Object.fromEntries(
     s.workouts.map((d, i) => [
       d.dayName,
@@ -239,8 +234,8 @@ const race10k: Partial<OnboardingDraft> = {
 describe("a day its warm-ups outgrew, as the week moves on (Lift7)", () => {
   it("is re-fitted at the Monday rollover, by sets alone", () => {
     const { state, profile } = build();
-    // Every day fits the hour as the plan is built…
-    expect(state.sessionMinutes).toBe(60);
+    // Every day fits its length as the plan is built…
+    expect(state.sessionMinutes).toBe(MINUTES);
     expect(over(state)).toEqual([]);
     // …and one runs over it once the press and the curl are heavier.
     const before = trainedHeavier(state);
@@ -269,30 +264,7 @@ describe("a day its warm-ups outgrew, as the week moves on (Lift7)", () => {
       Object.fromEntries(
         s.workouts.map((d) => [d.dayName, d.exercises.map((ex) => ex.sets)])
       );
-    expect(sets(rolled)).toEqual(
-      refitCuts(before, profile.primaryGoal, profile.experience)
-    );
-  });
-
-  it("starts from the person's own focus, not one a block has set", () => {
-    // Get stronger gives an intermediate's main lifts four sets
-    // (`roleTable.ts`). A block for size moves their reps, never their
-    // sets, so the re-fit still starts from four.
-    const { state, profile } = build(STRENGTH);
-    const before: ProgramState = {
-      ...trainedHeavier(state, STRONGER),
-      primaryGoal: "hypertrophy",
-    };
-    expect(over(before).length).toBeGreaterThan(0);
-    const rolled = rollLiftWeeks(before, profile, WEEK_2).state;
-    expect(over(rolled)).toEqual([]);
-    const sets = Object.fromEntries(
-      rolled.workouts.map((d) => [d.dayName, d.exercises.map((ex) => ex.sets)])
-    );
-    expect(sets).toEqual(refitCuts(before, "strength", profile.experience));
-    expect(sets).not.toEqual(
-      refitCuts(before, "hypertrophy", profile.experience)
-    );
+    expect(sets(rolled)).toEqual(refitCuts(before, profile.experience));
   });
 
   it("is re-fitted the same way by Start next week", () => {
@@ -389,23 +361,6 @@ describe("a day over its length for another reason (Lift7)", () => {
     const rolled = rollLiftWeeks(before, profile, WEEK_2).state;
     expect(setsOf(rolled)[grown]).toEqual(setsOf(before)[grown]);
     expect(over(rolled)).toContain(grown);
-  });
-
-  it("keeps a short session whose lifts are at two sets as it is, over", () => {
-    // In half an hour a stronger lifter's loads take the upper day past its
-    // length with every lift at two sets: the fit can't bring it inside, so
-    // nothing is cut, nothing dropped, and its card's estimate says so.
-    const { state, profile } = build({ ...STRENGTH, sessionMinutes: 30 });
-    const before = trainedHeavier(state, STRONGER);
-    const short = over(before).filter((name) =>
-      dayNamed(before, name).exercises.every((ex) => ex.sets <= 2)
-    );
-    expect(short.length).toBeGreaterThan(0);
-    const rolled = rollLiftWeeks(before, profile, WEEK_2).state;
-    for (const name of short) {
-      expect(setsOf(rolled)[name]).toEqual(setsOf(before)[name]);
-      expect(over(rolled)).toContain(name);
-    }
   });
 });
 
@@ -539,12 +494,11 @@ describe("a plan the re-fit leaves alone (Lift7)", () => {
 });
 
 describe("refitOutgrownSessions", () => {
-  const goal = "general";
   const experience = "intermediate";
 
   it("returns a week with no day outgrown as it was", () => {
     const { state } = build();
-    expect(refitOutgrownSessions(state.workouts, goal, experience, 60)).toBe(
+    expect(refitOutgrownSessions(state.workouts, experience, MINUTES)).toBe(
       state.workouts
     );
   });
@@ -570,23 +524,18 @@ describe("refitOutgrownSessions", () => {
   });
 
   it("returns each day it doesn't re-fit as it was", () => {
-    // A strength plan's lower days have time to spare: one keeps a fifth
-    // set on its first lift, though the re-fit would start it from four.
+    // A day that fits keeps a set fewer on its first lift, set by hand,
+    // though the re-fit would start it from its place's sets.
     const grown = trainedHeavier(build(STRENGTH).state, STRONGER);
     const fitting = grown.workouts.find(
       (d) => !over(grown).includes(d.dayName)
     )!;
     const first = fitting.exercises[0].sets;
-    const before = withSets(grown, fitting.dayName, 0, first + 1);
+    const before = withSets(grown, fitting.dayName, 0, first - 1);
     expect(over(before)).not.toContain(fitting.dayName);
     const outgrown = over(before);
     expect(outgrown.length).toBeGreaterThan(0);
-    const refitted = refitOutgrownSessions(
-      before.workouts,
-      "strength",
-      experience,
-      60
-    );
+    const refitted = refitOutgrownSessions(before.workouts, experience, 60);
     before.workouts.forEach((day, i) => {
       if (outgrown.includes(day.dayName)) expect(refitted[i]).not.toBe(day);
       else expect(refitted[i]).toBe(day);
@@ -595,9 +544,9 @@ describe("refitOutgrownSessions", () => {
 
   it("gives no lift a set, where the re-fit would", () => {
     // The outgrown day's last lift taken down to one set by hand, and its
-    // set given to the lift before it, so the day still runs over and only
-    // for its warm-ups: the re-fit starts the last lift from its role's
-    // sets and gives it two.
+    // sets given to the lift before it, so the day still runs over and only
+    // for its warm-ups: the re-fit starts the last lift from its place's
+    // sets and gives it more than one.
     const grown = trainedHeavier(build().state);
     const [name] = over(grown);
     const last = dayNamed(grown, name).exercises.length - 1;
@@ -605,26 +554,24 @@ describe("refitOutgrownSessions", () => {
       withSets(grown, name, last, 1),
       name,
       last - 1,
-      dayNamed(grown, name).exercises[last - 1].sets + 1
+      dayNamed(grown, name).exercises[last - 1].sets +
+        dayNamed(grown, name).exercises[last].sets -
+        1
     );
     expect(over(before)).toContain(name);
-    expect(warmupsOutgrewFit(dayNamed(before, name).exercises, 60)).toBe(true);
-    const d = before.workouts.findIndex((day) => day.dayName === name);
-    const reFit = balanceWeekVolume(
-      refitSessionsToTime(before.workouts, goal, experience, 60),
-      goal,
-      experience,
-      60
+    expect(warmupsOutgrewFit(dayNamed(before, name).exercises, MINUTES)).toBe(
+      true
     );
+    const d = before.workouts.findIndex((day) => day.dayName === name);
+    const reFit = refitSessionsToTime(before.workouts, experience, MINUTES);
     expect(reFit[d].exercises[last].sets).toBeGreaterThan(1);
     const refitted = refitOutgrownSessions(
       before.workouts,
-      goal,
       experience,
-      60
+      MINUTES
     );
     expect(refitted[d].exercises[last].sets).toBe(1);
     expectOnlySetsCut(before.workouts[d], refitted[d]);
-    expect(sessionFits(refitted[d].exercises, 60)).toBe(true);
+    expect(sessionFits(refitted[d].exercises, MINUTES)).toBe(true);
   });
 });

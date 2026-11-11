@@ -15,8 +15,8 @@
  *
  * A plan the person already has is RE-FITTED (`refitSessionsToTime`), when
  * they change the length or a day outgrows it: its lifts and their history
- * stay, and only sets move, each lift from its role's sets (`roleTable.ts`)
- * down to two, in this order, re-priced after each cut:
+ * stay, and only sets move, each lift from its place's sets down to two, in
+ * this order, re-priced after each cut:
  *
  *   1. isolations' sets, the largest first and then from the end of the day;
  *   2. other compounds' sets, the same way;
@@ -29,18 +29,13 @@ import { estimateSessionSeconds } from "./expressSession";
 import { exerciseRole } from "./exerciseRole";
 import { toExperience } from "./experienceModel";
 import { isLiftTimeBudget } from "./liftTimeBudget";
-import { isFloorDeadlift, roleRepsFor } from "./roleTable";
+import { isFloorDeadlift } from "./roleTable";
 import {
   startingWeightForExercise,
   type StartingLoadContext,
 } from "./startingLoads";
 import { MAX_SETS_PER_SESSION } from "./volumeModel";
-import type {
-  Experience,
-  PrimaryGoal,
-  ProgramExercise,
-  WorkoutDay,
-} from "./programTypes";
+import type { Experience, ProgramExercise, WorkoutDay } from "./programTypes";
 
 /** The lengths the days step offers; 75 reads "75+". */
 export const SESSION_MINUTES_OPTIONS = [30, 45, 60, 75] as const;
@@ -245,29 +240,22 @@ const SHORT_SESSION_MINUTES = 30;
 const MUST_HOLD_RANKS = 4;
 
 /**
- * Size a new plan's sessions to `minutes` (Lift21). Time sets the number of
- * lifts, not the sets on each:
+ * The sets a day's lifts take by their place in it, for a session length
+ * and a level (Lift21), and the sets time left over gives back:
  *
- *   - the day's main lift takes 4 sets from 60 minutes and 3 under; every
- *     other lift 3. A beginner keeps 3 and 2, and so does a 30-minute day,
- *     the one place a lift past beginner sits under 3;
- *   - while the day does not fit, the lift with the highest `keepRank` goes
- *     (the builders rank each day's lifts; one a later pass added goes
- *     before any of theirs), down to three lifts, two in a 30-minute day.
- *     One of the day's first four that then fits comes back;
- *   - time the next lift would not fit goes to the lifts the day has, first
- *     to last, a set at a time, to 4 (3 for a beginner and in a 30-minute
- *     day), inside the day's length and its set ceiling.
+ *   - the day's first main lift takes 4 sets from 60 minutes and 3 under; a
+ *     second main lift (a full-body day's press, a beginner's second
+ *     deadlift) 3; every other lift 3. A beginner's other lifts take 2, and
+ *     so do a 30-minute day's, the one place a lift past beginner sits
+ *     under 3;
+ *   - time left goes to the lifts the day has, first to last, a set at a
+ *     time, to 4 (3 for a beginner and in a 30-minute day), inside the
+ *     day's length and its set ceiling.
  *
  * A floor deadlift keeps its row's 3 sets at most. Timed holds keep their
- * sets. With no length to fit, every lift stays at its
- * place's sets.
+ * sets.
  */
-export function sizeSessionsToTime(
-  workouts: WorkoutDay[],
-  minutes: number,
-  experience: Experience | undefined
-): WorkoutDay[] {
+function setsByPlace(minutes: number, experience: Experience | undefined) {
   const beginner = toExperience(experience) === "beginner";
   const short = minutes <= SHORT_SESSION_MINUTES;
   const mainSets = beginner || short ? 3 : minutes >= 60 ? 4 : 3;
@@ -276,17 +264,57 @@ export function sizeSessionsToTime(
   const timed = (ex: ProgramExercise) => ex.repUnit === "seconds";
   const capFor = (ex: ProgramExercise) =>
     isFloorDeadlift(ex.exerciseId) ? Math.min(3, deepest) : deepest;
+  return {
+    /** The day's lifts, each a copy at its place's sets. */
+    place(exercises: readonly ProgramExercise[]): ProgramExercise[] {
+      const mainIndex = exercises.findIndex((ex) => ex.isAccessory !== true);
+      return exercises.map((ex, i) => {
+        if (timed(ex)) return { ...ex };
+        const sets =
+          i === mainIndex ? mainSets : ex.isAccessory !== true ? 3 : otherSets;
+        return { ...ex, sets: Math.min(sets, capFor(ex)) };
+      });
+    },
+    /** Gives time left back as sets, in place. */
+    deepen(exercises: ProgramExercise[]): void {
+      if (!Number.isFinite(minutes)) return;
+      const total = () => exercises.reduce((n, e) => n + e.sets, 0);
+      for (let pass = 0; pass < 2; pass++) {
+        for (const ex of exercises) {
+          if (timed(ex) || ex.sets >= capFor(ex)) continue;
+          if (total() >= maxSessionSets(minutes)) break;
+          ex.sets += 1;
+          if (plannedSeconds(exercises, minutes) > minutes * 60) ex.sets -= 1;
+        }
+      }
+    },
+  };
+}
+
+/**
+ * Size a new plan's sessions to `minutes` (Lift21). Time sets the number of
+ * lifts, not the sets on each:
+ *
+ *   - every lift starts at its place's sets (`setsByPlace`);
+ *   - while the day does not fit, the lift with the highest `keepRank` goes
+ *     (the builders rank each day's lifts; one a later pass added goes
+ *     before any of theirs), down to three lifts, two in a 30-minute day.
+ *     One of the day's first four that then fits comes back;
+ *   - time the next lift would not fit goes back to the lifts the day has.
+ *
+ * With no length to fit, every lift stays, at its place's sets.
+ */
+export function sizeSessionsToTime(
+  workouts: WorkoutDay[],
+  minutes: number,
+  experience: Experience | undefined
+): WorkoutDay[] {
+  const sets = setsByPlace(minutes, experience);
+  const short = minutes <= SHORT_SESSION_MINUTES;
 
   return workouts.map((day) => {
     const mainIndex = day.exercises.findIndex((ex) => ex.isAccessory !== true);
-    const placed = day.exercises.map((ex, i) => {
-      if (timed(ex)) return { ...ex };
-      // The day's first main lift takes the main lift's sets; a second
-      // one (a full-body day's press, a beginner's second deadlift) three.
-      const sets =
-        i === mainIndex ? mainSets : ex.isAccessory !== true ? 3 : otherSets;
-      return { ...ex, sets: Math.min(sets, capFor(ex)) };
-    });
+    const placed = sets.place(day.exercises);
     if (!Number.isFinite(minutes)) return { ...day, exercises: placed };
     // The order lifts are given up in: the highest rank first, and among
     // lifts with none (added after the builders) the last first.
@@ -315,41 +343,31 @@ export function sizeSessionsToTime(
       if (!sessionFits(kept(), minutes)) gone.add(i);
     }
     const exercises = kept();
-    const total = () => exercises.reduce((n, e) => n + e.sets, 0);
-    for (let pass = 0; pass < 2; pass++) {
-      for (const ex of exercises) {
-        if (timed(ex) || ex.sets >= capFor(ex)) continue;
-        if (total() >= maxSessionSets(minutes)) break;
-        ex.sets += 1;
-        if (plannedSeconds(exercises, minutes) > minutes * 60) ex.sets -= 1;
-      }
-    }
+    sets.deepen(exercises);
     return { ...day, exercises };
   });
 }
 
 /**
- * Re-fit a plan the person has to a new session length: each lift's sets go
- * back to its role's (timed holds keep theirs) and are cut to the time, and
- * nothing is dropped, so a longer session later gives the sets back. Reps,
- * weights, history and progress stay.
+ * Re-fit a plan the person has to a session length: each lift goes back to
+ * its place's sets (`setsByPlace`; timed holds keep theirs) and, where the
+ * day runs over, sets are cut to the time, never a lift; time left over
+ * goes back as sets, as a new plan's does. The person's lifts, reps,
+ * weights and history all stay. The plan's volume anchor (`baseSets`) moves
+ * with the sets, so the weeks after start from the fitted number.
  */
 export function refitSessionsToTime(
   workouts: WorkoutDay[],
-  goal: PrimaryGoal | undefined,
   experience: Experience | undefined,
   minutes: number
 ): WorkoutDay[] {
+  const sets = setsByPlace(minutes, experience);
   return workouts.map((day) => {
-    const reset = {
-      ...day,
-      exercises: day.exercises.map((ex) => {
-        if (ex.repUnit === "seconds") return ex;
-        const sets = roleRepsFor(goal, ex, experience).sets;
-        return { ...ex, sets, baseSets: sets };
-      }),
-    };
-    const fitted = fitDay(reset, minutes);
+    const fitted = fitDay(
+      { ...day, exercises: sets.place(day.exercises) },
+      minutes
+    );
+    sets.deepen(fitted.exercises);
     return {
       ...fitted,
       exercises: fitted.exercises.map((ex) => ({ ...ex, baseSets: ex.sets })),

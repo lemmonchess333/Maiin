@@ -293,17 +293,18 @@ describe("sizeSessionsToTime — a new plan, sized to its time (Lift21)", () => 
 describe("refitSessionsToTime — a plan the person has", () => {
   it("moves sets only: nothing is dropped, and a longer session gives them back", () => {
     const week = [fullBody()];
-    const short = refitSessionsToTime(week, "hypertrophy", "intermediate", 30);
+    const short = refitSessionsToTime(week, "intermediate", 30);
     expect(short[0].exercises).toHaveLength(6);
     short[0].exercises.forEach((e) => {
       expect(e.sets).toBeGreaterThanOrEqual(2);
       expect(e.baseSets).toBe(e.sets);
     });
-    const long = refitSessionsToTime(short, "hypertrophy", "intermediate", 75);
-    // Build muscle from intermediate up: three sets on every lift, whatever
-    // its role, and the six at three fit in 75 minutes.
+    const long = refitSessionsToTime(short, "intermediate", 75);
+    // Its place's sets: four on the day's first main lift from an hour,
+    // three on every other lift. The six fill the 75 minutes, so none goes
+    // deeper.
     expect(shape(long[0])).toBe(
-      "bench-press 3, squat 3, lat-pulldown 3, romanian-deadlift 3, cable-crunch 3, standing-calf-raise 3"
+      "bench-press 4, squat 3, lat-pulldown 3, romanian-deadlift 3, cable-crunch 3, standing-calf-raise 3"
     );
   });
 
@@ -317,7 +318,7 @@ describe("refitSessionsToTime — a plan the person has", () => {
         { date: "2026-10-01", weight: 70, repsCompleted: 8, repsTarget: 8 },
       ],
     };
-    const [out] = refitSessionsToTime([day], "hypertrophy", undefined, 45);
+    const [out] = refitSessionsToTime([day], undefined, 45);
     expect(out.exercises[0]).toMatchObject({
       reps: 9,
       weight: 72.5,
@@ -335,7 +336,6 @@ describe("refitSessionsToTime — a plan the person has", () => {
     });
     const [out] = refitSessionsToTime(
       [{ ...fullBody(), exercises: [plank] }],
-      "hypertrophy",
       undefined,
       75
     );
