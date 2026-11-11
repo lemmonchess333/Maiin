@@ -38,14 +38,14 @@ export function levelSuggestionCopy(
         "more days, and changes what a plan built later can include.",
       basis:
         "Based only on your logged sessions: a reset and honest misses are " +
-        "already in this window, and you're not in a cut. Advanced is " +
-        "never suggested automatically — that's a years-of-training " +
+        "already in this window, and you’re not in a cut. Advanced is " +
+        "never suggested automatically — that’s a years-of-training " +
         "judgement, and it stays yours.",
     };
   }
   return {
     title: "You could progress faster",
-    summary: "You're still adding weight nearly every session.",
+    summary: "You’re still adding weight nearly every session.",
     body:
       "Your exercises " +
       `stay as they are. Beginner ${ranged ? "gives your main lifts one target each, without heavier and lighter days" : "takes the heavier and lighter days off your main lifts"}, ` +

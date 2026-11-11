@@ -56,21 +56,33 @@ export interface NativeWorkoutExportPlugin extends Plugin {
   }): Promise<{ status: "deleted" | "absent" }>;
 }
 
-let workoutPluginPromise: Promise<NativeWorkoutExportPlugin> | null = null;
+/* Plugins are held, never resolved with: a Capacitor plugin is a Proxy that
+   answers every property, `then` included, so a promise resolved with one
+   calls its `then` on the native side and never settles (revenuecat.ts).
+   "HealthPlugin.then() is not implemented on ios" on the first TestFlight
+   builds was this. */
+let workoutPluginPromise: Promise<{
+  plugin: NativeWorkoutExportPlugin;
+}> | null = null;
 /** The workout writer is the app's WatchRun plugin, not capacitor-health. */
-export async function getNativeWorkoutExportPlugin(): Promise<NativeWorkoutExportPlugin | null> {
+export async function getNativeWorkoutExportPlugin(): Promise<{
+  plugin: NativeWorkoutExportPlugin;
+} | null> {
   if (!CONNECTED_TRAINING_RELEASED) return null;
   return getNativeWorkoutCleanupPlugin();
 }
 
 /** Existing app-owned workouts still need deletion after a release rollback.
  * Native `deleteWorkout` remains available when new Watch/export work is off. */
-export async function getNativeWorkoutCleanupPlugin(): Promise<NativeWorkoutExportPlugin | null> {
+export async function getNativeWorkoutCleanupPlugin(): Promise<{
+  plugin: NativeWorkoutExportPlugin;
+} | null> {
   if (!isNativePlatform()) return null;
   try {
     workoutPluginPromise ??= import("@capacitor/core").then(
-      ({ registerPlugin }) =>
-        registerPlugin<NativeWorkoutExportPlugin>("WatchRun")
+      ({ registerPlugin }) => ({
+        plugin: registerPlugin<NativeWorkoutExportPlugin>("WatchRun"),
+      })
     );
     return await workoutPluginPromise;
   } catch {
@@ -80,7 +92,7 @@ export async function getNativeWorkoutCleanupPlugin(): Promise<NativeWorkoutExpo
 
 /** Actual native writer availability; web and older shells return false. */
 export async function isWorkoutWriteAvailable(): Promise<boolean> {
-  const plugin = await getNativeWorkoutExportPlugin();
+  const plugin = (await getNativeWorkoutExportPlugin())?.plugin;
   if (!plugin) return false;
   try {
     return (await plugin.isWorkoutWriteAvailable()).available === true;
@@ -91,7 +103,7 @@ export async function isWorkoutWriteAvailable(): Promise<boolean> {
 
 /** HealthKit WRITE access has a readable grant state, unlike READ access. */
 export async function requestWorkoutWritePermission(): Promise<boolean> {
-  const plugin = await getNativeWorkoutExportPlugin();
+  const plugin = (await getNativeWorkoutExportPlugin())?.plugin;
   if (!plugin) return false;
   try {
     return (await plugin.requestWorkoutWritePermission()).granted === true;
@@ -104,7 +116,7 @@ export async function requestWorkoutWritePermission(): Promise<boolean> {
 export async function getWorkoutWriteAuthorization(): Promise<
   "authorized" | "denied" | "notDetermined" | "unavailable"
 > {
-  const plugin = await getNativeWorkoutExportPlugin();
+  const plugin = (await getNativeWorkoutExportPlugin())?.plugin;
   if (!plugin) return "unavailable";
   try {
     const { status } = await plugin.getWorkoutWriteAuthorization();
@@ -120,10 +132,12 @@ export async function getWorkoutWriteAuthorization(): Promise<
 
 /** Lazily imported so this module has no side effects and the plugin chunk
  *  stays out of the web bundle (dynamic import → own chunk, native only). */
-let pluginPromise: Promise<HealthPlugin> | null = null;
-async function getPlugin(): Promise<HealthPlugin> {
+let pluginPromise: Promise<{ plugin: HealthPlugin }> | null = null;
+async function getPlugin(): Promise<{ plugin: HealthPlugin }> {
   if (!pluginPromise) {
-    pluginPromise = import("capacitor-health").then((m) => m.Health);
+    pluginPromise = import("capacitor-health").then((m) => ({
+      plugin: m.Health,
+    }));
   }
   return pluginPromise;
 }
@@ -132,7 +146,7 @@ async function getPlugin(): Promise<HealthPlugin> {
 export async function isHealthAvailable(): Promise<boolean> {
   if (!isNativePlatform()) return false;
   try {
-    const { available } = await (await getPlugin()).isHealthAvailable();
+    const { available } = await (await getPlugin()).plugin.isHealthAvailable();
     return available;
   } catch {
     return false;
@@ -151,7 +165,7 @@ export async function requestStepsReadPermission(): Promise<
   try {
     await (
       await getPlugin()
-    ).requestHealthPermissions({
+    ).plugin.requestHealthPermissions({
       permissions: ["READ_STEPS"],
     });
     return "granted";
@@ -171,7 +185,7 @@ export async function requestStepsReadPermission(): Promise<
 export async function getTodayStepTotal(): Promise<number | null> {
   if (!isNativePlatform()) return null;
   try {
-    const plugin = await getPlugin();
+    const { plugin } = await getPlugin();
     const start = new Date();
     start.setHours(0, 0, 0, 0); // local midnight
     const end = new Date();
@@ -200,7 +214,7 @@ export async function getTodayStepTotal(): Promise<number | null> {
 export async function openHealthSettings(): Promise<void> {
   if (!isNativePlatform()) return;
   try {
-    await (await getPlugin()).openAppleHealthSettings();
+    await (await getPlugin()).plugin.openAppleHealthSettings();
   } catch {
     /* best-effort — nothing actionable if the bridge rejects */
   }

@@ -166,7 +166,7 @@ describe("the Space post a notice opens", () => {
   it("a deleted post, reached without the tray, says so and offers the Space", async () => {
     renderAt(`/space/${SPACE}/post/gone`);
     expect(
-      await screen.findByText("This post isn't available")
+      await screen.findByText("This post isn’t available")
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Open Women's Running" })
@@ -179,7 +179,7 @@ describe("the Space post a notice opens", () => {
     failNextFirestore("getDoc", { path: POST_PATH, code: "unavailable" });
     renderAt(`/space/${SPACE}/post/p1`, FROM_TRAY);
     expect(
-      await screen.findByText("Couldn't load this post")
+      await screen.findByText("Couldn’t load this post")
     ).toBeInTheDocument();
     expect(unfiredFailures()).toEqual([]);
     expect(screen.queryByText("space page")).toBeNull();
@@ -192,7 +192,7 @@ describe("the Space post a notice opens", () => {
     blocks.blocked = new Set(["blocker"]);
     renderAt(`/space/${SPACE}/post/p1`);
     expect(
-      await screen.findByText("This post isn't available")
+      await screen.findByText("This post isn’t available")
     ).toBeInTheDocument();
     expect(screen.queryByTestId("space-post")).toBeNull();
   });
@@ -210,7 +210,7 @@ describe("the Space post a notice opens", () => {
     });
     renderAt(`/space/${SPACE}/post/p1`);
     expect(
-      await screen.findByText("This post isn't available")
+      await screen.findByText("This post isn’t available")
     ).toBeInTheDocument();
     expect(screen.queryByTestId("space-post")).toBeNull();
   });
@@ -219,7 +219,7 @@ describe("the Space post a notice opens", () => {
     seedFirestore({ "spaces/merged-away/posts/p1": POST });
     renderAt("/space/merged-away/post/p1");
     expect(
-      await screen.findByText("This post isn't available")
+      await screen.findByText("This post isn’t available")
     ).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /^Open / })).toBeNull();
     expect(

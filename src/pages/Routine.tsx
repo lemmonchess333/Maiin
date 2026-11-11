@@ -17,6 +17,7 @@ import { RESUME_PARAM } from "../lib/resumeParam";
 import { Skeleton } from "../components/LoadingSkeleton";
 import { ErrorState } from "../components/ui/ErrorState";
 import WorkoutSession from "../components/WorkoutSession";
+import { keepTitleWhole } from "@/lib/workoutLabels";
 
 /**
  * Saved-routine workout runner (PR 4.1).
@@ -157,7 +158,11 @@ export default function Routine() {
         bodyweightKg: profile?.weightKg ?? 0,
         // The post names the workout the way the user thinks of it.
         title: routine.name,
-        notes: `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`,
+        // Kept whole: the title is read up to the first " — " (`workoutTitle`),
+        // and a routine's name or its author's can hold one.
+        notes: keepTitleWhole(
+          `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`
+        ),
         extra: { routineId: routine.id, routineName: routine.name },
         moments: sessionData.moments,
       });
@@ -180,7 +185,7 @@ export default function Routine() {
     return (
       <div className="p-6 space-y-3 text-center">
         <ErrorState
-          title="Couldn't load this routine"
+          title="Couldn’t load this routine"
           description="Check your connection and try again."
           retry={{
             onClick: () => {
@@ -195,7 +200,7 @@ export default function Routine() {
           onClick={() => navigate("/program")}
           className="text-xs font-medium text-lifting-strong"
         >
-          Back to program
+          Back to programme
         </button>
       </div>
     );
@@ -212,7 +217,7 @@ export default function Routine() {
           onClick={() => navigate("/program")}
           className="text-xs font-medium text-lifting-strong"
         >
-          Back to program
+          Back to programme
         </button>
       </div>
     );

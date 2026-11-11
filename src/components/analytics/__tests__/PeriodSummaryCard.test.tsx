@@ -146,7 +146,7 @@ describe("PeriodSummaryCard", () => {
     expect(label).toContain("This week: 1 lift and 1 run, 5 planned");
   });
 
-  it("outlines the rest of this week's plan", () => {
+  it("outlines the rest of this week’s plan", () => {
     const { container } = card();
     expect(container.querySelectorAll("rect[stroke-dasharray]")).toHaveLength(
       1

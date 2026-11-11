@@ -85,7 +85,7 @@ export default function League() {
   } else if (league.failed) {
     body = (
       <ErrorState
-        title="Couldn't load your league"
+        title="Couldn’t load your league"
         description="Check your connection and try again."
         retry={{ onClick: league.reload }}
       />
@@ -124,7 +124,7 @@ export default function League() {
                 className="shrink-0"
               />
               <h2 className="min-w-0 flex-1 text-h3 font-bold leading-tight">
-                {locked ? "You're in" : `${tierName(state.tier)} league`}
+                {locked ? "You’re in" : `${tierName(state.tier)} league`}
               </h2>
             </div>
             <p className="text-sm text-foreground text-pretty">
@@ -175,7 +175,7 @@ export default function League() {
       <ConfirmDialog
         open={confirmLeave}
         title="Leave the league?"
-        description="Your row comes out of this week's group now, and you won't be placed in the next one. You can join again from Social, starting in Bronze."
+        description="Your row comes out of this week’s group now, and you won’t be placed in the next one. You can join again from Social, starting in Bronze."
         confirmLabel="Leave"
         destructive
         onConfirm={() => {

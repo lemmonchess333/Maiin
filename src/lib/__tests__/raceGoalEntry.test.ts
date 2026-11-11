@@ -37,7 +37,7 @@ describe("a race entered, or on your own", () => {
 
   it("offers the race first, then on your own", () => {
     expect(RACE_GOAL_ENTRY_OPTIONS.map((o) => o.label)).toEqual([
-      "A race I've entered",
+      "A race I’ve entered",
       "On my own",
     ]);
   });

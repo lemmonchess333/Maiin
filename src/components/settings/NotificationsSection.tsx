@@ -120,7 +120,7 @@ export default function NotificationsSection({
           toast.success("Push on. This device is registered.");
         } else if (result.reason !== "account-changed") {
           toast.error(
-            `Couldn't register for push (${result.reason}${result.detail ? `: ${result.detail}` : ""}).`
+            `Couldn’t register for push (${result.reason}${result.detail ? `: ${result.detail}` : ""}).`
           );
         }
       } else {
@@ -133,7 +133,7 @@ export default function NotificationsSection({
         }
       }
     } catch {
-      toast.error("Couldn't save push settings. Try again when you're online.");
+      toast.error("Couldn’t save push settings. Try again when you’re online.");
     } finally {
       setPushBusy(false);
     }
@@ -158,14 +158,14 @@ export default function NotificationsSection({
         const why = data.detail
           ? `${data.reason ?? "failed"}: ${data.detail}`
           : (data.reason ?? "unknown");
-        toast.error(`Couldn't send the test push (${why}).`);
+        toast.error(`Couldn’t send the test push (${why}).`);
       }
     } catch (err) {
       const code =
         (err as { code?: string; message?: string })?.code ??
         (err as { message?: string })?.message ??
         "error";
-      toast.error(`Test push failed (${code}).`);
+      toast.error(`Couldn’t send the test push (${code}).`);
     }
   };
 
@@ -224,7 +224,7 @@ export default function NotificationsSection({
       toast.error(
         error instanceof Error
           ? error.message
-          : "Couldn't save reminder settings. Try again."
+          : "Couldn’t save reminder settings. Try again."
       );
     }
   };
@@ -235,7 +235,7 @@ export default function NotificationsSection({
       toast.error(
         error instanceof Error
           ? error.message
-          : "Couldn't save reminder settings. Try again."
+          : "Couldn’t save reminder settings. Try again."
       );
     }
   };
@@ -261,7 +261,7 @@ export default function NotificationsSection({
       // (and disappears once it fires).
       refreshPending();
     } else {
-      toast.error("Couldn't send test. Check notification permission.");
+      toast.error("Couldn’t send test. Check notification permission.");
     }
   };
 
@@ -376,8 +376,8 @@ export default function NotificationsSection({
               Notifications are blocked
             </p>
             <p className="text-xs leading-snug text-muted-foreground">
-              Reminders won&apos;t fire until you enable notifications for
-              Tropos in your device settings.
+              Reminders won’t fire until you enable notifications for Tropos in
+              your device settings.
             </p>
           </div>
         </div>
@@ -396,7 +396,7 @@ export default function NotificationsSection({
           <div className={LABEL}>
             <p className="text-sm text-foreground">Meals</p>
             <p className="text-xs text-muted-foreground">
-              When it&apos;s time to eat
+              When it’s time to eat
             </p>
           </div>
           <Toggle
@@ -560,7 +560,7 @@ export default function NotificationsSection({
             <div className={LABEL}>
               <p className="text-sm text-foreground">Weekly review</p>
               <p className="text-xs text-muted-foreground">
-                Monday at 09:00, when last week&apos;s review is ready
+                Monday at 09:00, when last week’s review is ready
               </p>
             </div>
             <Toggle
@@ -588,7 +588,7 @@ export default function NotificationsSection({
                     value: next,
                   });
                 } catch {
-                  toast.error("Couldn't save reminder settings. Try again.");
+                  toast.error("Couldn’t save reminder settings. Try again.");
                 }
               }}
             />
@@ -609,7 +609,7 @@ export default function NotificationsSection({
           <div className={LABEL}>
             <p className="text-sm text-foreground">Streak</p>
             <p className="text-xs text-muted-foreground">
-              If you haven&apos;t logged today
+              If you haven’t logged today
             </p>
           </div>
           <Toggle
@@ -642,7 +642,7 @@ export default function NotificationsSection({
                   value: next,
                 });
               } catch {
-                toast.error("Couldn't save reminder settings. Try again.");
+                toast.error("Couldn’t save reminder settings. Try again.");
               }
             }}
           />
@@ -666,7 +666,7 @@ export default function NotificationsSection({
               onChange={(e) => {
                 void updateStreakReminder({ time: e.target.value }).catch(
                   () => {
-                    toast.error("Couldn't save reminder time. Try again.");
+                    toast.error("Couldn’t save reminder time. Try again.");
                   }
                 );
               }}
@@ -751,7 +751,7 @@ export default function NotificationsSection({
                         }
                       } catch {
                         toast.error(
-                          "Couldn't save push settings. Try again when you're online."
+                          "Couldn’t save push settings. Try again when you’re online."
                         );
                       } finally {
                         setPushBusy(false);
@@ -819,7 +819,7 @@ export function ReminderDiagnostics({
           // is broken.
           <span>
             {isNativePlatform()
-              ? "No reminder is currently scheduled."
+              ? "No reminder is scheduled."
               : "Reminders fire while this tab is open."}
           </span>
         )}

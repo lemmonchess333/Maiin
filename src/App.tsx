@@ -15,6 +15,7 @@ import {
   useUid,
 } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { flushOnAppResume } from "@/lib/flushOnAppResume";
 import { CONNECTED_TRAINING_RELEASED } from "@/lib/connectedTrainingRelease";
 import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
@@ -29,6 +30,8 @@ import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvi
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
+import BootStallNotice from "@/components/BootStallNotice";
+import ProfileUnavailable from "@/components/ProfileUnavailable";
 import { Button } from "@/components/ui/Button";
 import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
@@ -255,6 +258,13 @@ const BreakFoodLab =
     ? lazyRetry(() => import("@/pages/dev/BreakFoodLab"))
     : null;
 
+// Dev-only finish lab: the lift's finish screen as a reward and as a
+// summary, and the share card, with fixtures. Same build-time stripping.
+const FinishLab =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/FinishLab"))
+    : null;
+
 // The ambient-emission bake-off (#1252) shipped a single brand-purple
 // glow behind every signed-in page as <AmbientGlow>. DS3 (2026-09-27)
 // retired it: the page is a plain canvas and colour belongs to content.
@@ -404,7 +414,15 @@ class ErrorBoundary extends Component<
 ================================ */
 
 function AppRoutes() {
-  const { user, profile, loading, watchAccountCleanup } = useAuth();
+  const {
+    user,
+    profile,
+    profileLoad,
+    loading,
+    watchAccountCleanup,
+    refreshProfile,
+    signOut,
+  } = useAuth();
   const uid = user?.uid ?? null;
   const deletion = useAccountDeletionStatus(user?.uid);
   /* Email accounts verify after the plan, not before it: onboarding opens
@@ -497,9 +515,13 @@ function AppRoutes() {
     window.addEventListener("focus", resumeWater);
     window.addEventListener("storage", resumeWater);
     window.addEventListener("online", tryFlush);
+    // And when the person comes back to the app: `online` does not fire for
+    // a flush that failed while connected (flushOnAppResume.ts).
+    const stopResumeFlush = flushOnAppResume(tryFlush);
     return () => {
       cancelled = true;
       stopForegroundPush();
+      stopResumeFlush();
       window.removeEventListener("online", tryFlush);
       document.removeEventListener("visibilitychange", resumeWater);
       window.removeEventListener("focus", resumeWater);
@@ -527,7 +549,10 @@ function AppRoutes() {
             </Button>
           </div>
         ) : (
-          <Spinner size="lg" label="Loading Tropos" />
+          <div className="flex flex-col items-center">
+            <Spinner size="lg" label="Loading Tropos" />
+            <BootStallNotice />
+          </div>
         )}
       </div>
     );
@@ -549,7 +574,14 @@ function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
       <MotionRoot>
-        <SignedInRoutes user={user} profile={profile} deletion={deletion} />
+        <SignedInRoutes
+          user={user}
+          profile={profile}
+          profileUnreadable={profileLoad === "failed"}
+          onRetryProfile={refreshProfile}
+          onSignOut={signOut}
+          deletion={deletion}
+        />
       </MotionRoot>
     </Suspense>
   );
@@ -562,10 +594,17 @@ type AuthState = ReturnType<typeof useAuth>;
 function SignedInRoutes({
   user,
   profile,
+  profileUnreadable,
+  onRetryProfile,
+  onSignOut,
   deletion,
 }: {
   user: NonNullable<AuthState["user"]>;
   profile: AuthState["profile"];
+  /** The profile could not be read and the device holds no copy. */
+  profileUnreadable: boolean;
+  onRetryProfile: () => Promise<void>;
+  onSignOut: () => Promise<void>;
   deletion: ReturnType<typeof useAccountDeletionStatus>;
 }) {
   if (deletion.pending || deletion.completed) {
@@ -578,6 +617,14 @@ function SignedInRoutes({
           <SettingsAccount duringSetup />
         </main>
       </Suspense>
+    );
+  }
+
+  // Before setup: no profile here means one of two things, and only an
+  // account that has none yet belongs in setup (`ProfileLoad`, auth.tsx).
+  if (profileUnreadable) {
+    return (
+      <ProfileUnavailable onRetry={onRetryProfile} onSignOut={onSignOut} />
     );
   }
 
@@ -1077,6 +1124,16 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <BreakFoodLab />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                      )}
+                      {FinishLab && (
+                        <Route
+                          path="/dev/finish"
+                          element={
+                            <RouteErrorBoundary>
+                              <FinishLab />
                             </RouteErrorBoundary>
                           }
                         />

@@ -129,7 +129,7 @@ test.describe("core user journeys", () => {
     // plan saves; neither is chosen for a new goal.
     await page
       .getByRole("radiogroup", { name: "Race or on your own" })
-      .getByRole("radio", { name: "A race I've entered", exact: true })
+      .getByRole("radio", { name: "A race I’ve entered", exact: true })
       .click();
 
     // The planner derives a live preview for the chosen distance/date —

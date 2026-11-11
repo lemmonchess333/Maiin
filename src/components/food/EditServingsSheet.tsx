@@ -939,6 +939,7 @@ function EditServingsSheet({
             Cancel
           </Button>
           <Button
+            variant="neutral"
             size="lg"
             className="flex-1"
             onClick={handleSave}

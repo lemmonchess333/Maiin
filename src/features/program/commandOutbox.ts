@@ -116,13 +116,9 @@ export const MAX_OUTBOX_ENTRIES = 50;
  * Firebase callable error codes that mean "the network did not deliver this",
  * as opposed to "the server considered it and said no".
  *
- * Firebase also maps failed fetches and invalid gateway responses to
- * `internal`, so it cannot safely be treated as a permanent rejection.
- * Replaying an uncertain result is safe because command ids are idempotent.
+ * `internal` is not on the list: it means both. See `isTransportFailure`.
  */
 const TRANSPORT_CODES = new Set([
-  "functions/internal",
-  "internal",
   "auth/network-request-failed",
   "functions/unavailable",
   "functions/deadline-exceeded",
@@ -140,6 +136,21 @@ export interface OutboxEntry {
   queuedAt: number;
 }
 
+/**
+ * The messages an `internal` error carries when no answer came back: the
+ * SDK's own for a fetch that failed or a gateway's reply it could not read
+ * (@firebase/functions: postJSON, callAtURL), and the platform's for a
+ * function that crashed before it could answer. The server's own
+ * `internal` says what it failed to do ("Failed to apply programme
+ * command.") and fails the same way on every replay.
+ */
+const NO_ANSWER_INTERNAL = new Set([
+  "internal",
+  "INTERNAL",
+  "Response is not valid JSON object.",
+  "Response is missing data field.",
+]);
+
 /** True when this could be a transient failure rather than a definitive refusal. */
 export function isTransportFailure(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
@@ -147,6 +158,12 @@ export function isTransportFailure(err: unknown): boolean {
   if (typeof code !== "string") {
     // No code at all — a raw network/fetch rejection. This is the offline case.
     return err instanceof Error;
+  }
+  if (code === "functions/internal" || code === "internal") {
+    // Replaying the server's own refusal would hold it, and every command
+    // queued after it, at the head of the queue for good.
+    const message = (err as { message?: unknown }).message;
+    return typeof message === "string" && NO_ANSWER_INTERNAL.has(message);
   }
   return TRANSPORT_CODES.has(code);
 }
@@ -170,7 +187,10 @@ function read(): OutboxEntry[] {
   });
 }
 
-function write(entries: OutboxEntry[], settlement?: { uid: string; result: CommandSettlement }): boolean {
+function write(
+  entries: OutboxEntry[],
+  settlement?: { uid: string; result: CommandSettlement }
+): boolean {
   // localStorage.setItem is atomic on failure. Never shrink or delete the
   // previous queue to make a new write fit: that would lose unsynced work.
   if (!writeJson(OUTBOX_KEY, entries)) {
@@ -199,7 +219,10 @@ export function enqueueCommand(
     return write(queue);
   }
   if (queue.length >= MAX_OUTBOX_ENTRIES) {
-    logger.error("[commandOutbox] queue full — could not queue command", command.kind);
+    logger.error(
+      "[commandOutbox] queue full — could not queue command",
+      command.kind
+    );
     return false;
   }
   return write([...queue, { uid, command, queuedAt: Date.now() }]);
@@ -278,10 +301,12 @@ export async function flushCommandOutbox(
   // from the LIVE queue keeps everything else, any uid, in storage order.
   const live = read();
   if (done.size === 0) return 0;
-  if (!write(
-    live.filter((e) => e.uid !== uid || !done.has(e.command.commandId)),
-    settlement ? { uid, result: settlement } : undefined
-  )) {
+  if (
+    !write(
+      live.filter((e) => e.uid !== uid || !done.has(e.command.commandId)),
+      settlement ? { uid, result: settlement } : undefined
+    )
+  ) {
     // The server may have applied these, but they remain queued. A later
     // replay uses the same ids and cannot apply the change twice.
     return 0;

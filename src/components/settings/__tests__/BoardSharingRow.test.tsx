@@ -47,7 +47,7 @@ function renderWith(shared: boolean | undefined) {
   return {
     refreshProfile,
     toggle: screen.getByRole("switch", {
-      name: "Toggle showing my week on friends' boards",
+      name: "Toggle showing my week on friends’ boards",
     }),
   };
 }
@@ -108,7 +108,7 @@ describe("BoardSharingRow", () => {
     });
     expect(toggle).toHaveAttribute("aria-checked", "false");
     expect(H.toastError).toHaveBeenCalledWith(
-      "Couldn't change who sees your week. Try again."
+      "Couldn’t change who sees your week. Try again."
     );
   });
 

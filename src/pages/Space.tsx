@@ -401,6 +401,7 @@ export default function Space() {
   const postIds = useMemo(() => visiblePosts.map((p) => p.id), [visiblePosts]);
   const spaceLikes = useSpacePostLikes(spaceId ?? "", postIds);
 
+  const isRace = def?.kind === "race";
   const photo = useMemo(
     () => (spaceId ? spaceEditorialImage(spaceId) : null),
     [spaceId]
@@ -450,7 +451,7 @@ export default function Space() {
       setHasMore(snap.docs.length >= POSTS_PAGE_SIZE);
     } catch {
       // The posts already shown stay, and the button stays to try again.
-      toast.error("Couldn't load more posts. Try again.");
+      toast.error("Couldn’t load more posts. Try again.");
     } finally {
       setLoadingMore(false);
     }
@@ -596,9 +597,18 @@ export default function Space() {
               </p>
             )}
           </div>
+          {/* Join is a generic action, so it is neutral (DS4 call 1). On a
+              race's space the race's own "Train for this race" is the
+              page's one filled button, so Join there is the quiet chip
+              Joined is drawn as. */}
           {joined === false && (
             <Button
-              className="rounded-full px-5 shrink-0"
+              variant={isRace ? "ghost" : "neutral"}
+              className={cn(
+                "rounded-full px-5 shrink-0",
+                isRace && (photo ? PHOTO_CHIP : PLAIN_CHIP)
+              )}
+              style={isRace && photo ? { background: THEME.scrim } : undefined}
               loading={busy}
               onClick={join}
             >
@@ -663,7 +673,7 @@ export default function Space() {
           </div>
           {posts === null && postsFailed ? (
             <ErrorState
-              title="Couldn't load posts"
+              title="Couldn’t load posts"
               description="Check your connection and try again."
               retry={{
                 onClick: () => {
@@ -683,7 +693,7 @@ export default function Space() {
               headline="No posts from members yet"
               sub={
                 joined === true
-                  ? "Share a session, ask a question, or say what you're training for."
+                  ? "Share a session, ask a question, or say what you’re training for."
                   : joined === false
                     ? "Join to post here."
                     : undefined

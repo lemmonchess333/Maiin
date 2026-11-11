@@ -260,7 +260,7 @@ function ActivityCard({
       if (isRestrictedRefusal(err)) showRestrictedToast();
       // The haptic alone says nothing on the web, where the count just
       // drops back.
-      else toast.error("Couldn't give props. Try again.");
+      else toast.error("Couldn’t give props. Try again.");
     }
   };
 
@@ -451,7 +451,7 @@ function ActivityCard({
       className={`${className} inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong`}
     >
       <Star className="size-3.5 fill-achievement" />
-      {prCount} PR{prCount === 1 ? "" : "s"}
+      {prCount} {prCount === 1 ? "best" : "bests"}
     </span>
   );
 
@@ -840,7 +840,7 @@ function ActivityCard({
                 </p>
               </div>
               <SectionLabel className="mt-0.5">
-                {prCount === 1 ? "PR" : "PRs"}
+                {prCount === 1 ? "Best" : "Bests"}
               </SectionLabel>
             </div>
           )}
@@ -961,7 +961,8 @@ function ActivityCard({
 
         {/* Moments (Soc15), Strava's way: a tile, a bold line and the
             figures under it, each from the post's own numbers in the
-            reader's units. Gold for a best, the brand purple for the rest
+            reader's units. Gold for a best, the brand purple for the rest,
+            and a first session in its sport's colour, coral on a run
             (`postMomentLines`). At large text the tile stands above the
             words, as the PR line's icon does below. */}
         {moments.length > 0 && (
@@ -984,7 +985,9 @@ function ActivityCard({
                     className={`grid size-10 shrink-0 place-items-center rounded-xl ${
                       lines.tone === "best"
                         ? "bg-achievement/15 text-achievement"
-                        : "bg-primary/15 text-primary"
+                        : lines.tone === "sport" && isRun
+                          ? "bg-running/15 text-running-strong"
+                          : "bg-primary/15 text-primary"
                     }`}
                   >
                     <Icon className="size-5" />
@@ -1025,8 +1028,7 @@ function ActivityCard({
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 bg-achievement/10 border border-achievement/20 @max-[16em]:flex-col @max-[16em]:items-start @max-[16em]:gap-1">
             <Trophy className="size-4 text-achievement shrink-0" />
             <p className="min-w-0 max-w-full break-words text-xs font-medium text-achievement-strong">
-              New PR:{" "}
-              {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
+              New best: {feedItem.prExercise || activity?.prExercise || "lift"}{" "}
               {feedItem.prWeight || activity?.prWeight
                 ? formatLoad(
                     (feedItem.prWeight || activity?.prWeight) as number,
@@ -1197,7 +1199,7 @@ function ActivityCard({
               </div>
             ) : kudosUsers.length === 0 ? (
               <p className="text-xs text-muted-foreground py-1">
-                Couldn&apos;t load props right now. Try again.
+                Couldn’t load props right now. Try again.
               </p>
             ) : (
               /* Nobody either side of a block with you, as in the
@@ -1308,7 +1310,7 @@ function ActivityCard({
             addBlocked(activity.authorId as string);
             toast.success(`Blocked ${feedItem.authorName}`);
           } catch {
-            toast.error(`Couldn't block ${feedItem.authorName}. Try again.`);
+            toast.error(`Couldn’t block ${feedItem.authorName}. Try again.`);
           }
         }}
         onCancel={() => setShowBlockConfirm(false)}

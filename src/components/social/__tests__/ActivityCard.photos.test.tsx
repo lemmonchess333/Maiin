@@ -5,12 +5,20 @@
  * fixed ratio so nothing moves as it loads, under the session's own
  * numbers and before its moments, on a run's card and a lift's. A tap
  * opens the viewer at that photo: the photo whole, "2 of 3", a close
- * button that has focus, the arrow keys and a swipe between photos,
- * Escape to close with focus back on the photo that opened it, and each
- * photo named for a screen reader.
+ * button that has focus, the arrow keys and a swipe between photos, a
+ * pull down, Escape or Close to close with focus back on the photo that
+ * opened it, a pinch or a double tap to zoom, and each photo named for a
+ * screen reader.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ActivityCard from "../ActivityCard";
 import type { FeedItem } from "../../../hooks/useSocialFeed";
@@ -129,7 +137,7 @@ describe("a post's photos on its card", () => {
         expect(img).toHaveAttribute("height", String(photos(count)[i].h));
         expect(img).toHaveAttribute(
           "alt",
-          `Photo ${i + 1} of ${count} from Maya Chen's run`
+          `Photo ${i + 1} of ${count} from Maya Chen’s run`
         );
       });
     }
@@ -156,7 +164,7 @@ describe("a post's photos on its card", () => {
     ).toBeTruthy();
     expect(within(box).getAllByRole("img")[0]).toHaveAttribute(
       "alt",
-      "Photo 1 of 2 from Maya Chen's workout"
+      "Photo 1 of 2 from Maya Chen’s workout"
     );
   });
 
@@ -166,39 +174,44 @@ describe("a post's photos on its card", () => {
     fireEvent.error(img);
     expect(tiles(container)[1].querySelector("img")).toBeNull();
     expect(tiles(container)[1]).toHaveAccessibleName(
-      "Photo 2 of 2 from Maya Chen's run"
+      "Photo 2 of 2 from Maya Chen’s run"
     );
   });
 });
 
 describe("the full-screen viewer", () => {
-  const open = (index: number, count = 3) => {
+  // The viewer loads on the press, so it arrives a moment after the tap.
+  const open = async (index: number, count = 3) => {
     const view = renderCard({ photos: photos(count) });
     const tile = tiles(view.container)[index];
     tile.focus();
     fireEvent.click(tile);
+    await screen.findByRole("dialog");
     return { ...view, tile };
   };
   const viewer = () =>
-    screen.getByRole("dialog", { name: "Photos from Maya Chen's run" });
+    screen.getByRole("dialog", { name: "Photos from Maya Chen’s run" });
   const shown = () => within(viewer()).getByRole("img");
 
-  it("opens at the photo tapped, whole, with its count and its name", () => {
-    open(1);
+  it("opens at the photo tapped, whole, with its count and its name", async () => {
+    await open(1);
     expect(viewer()).toHaveAttribute("aria-modal", "true");
     expect(within(viewer()).getByText("2 of 3")).toBeInTheDocument();
-    expect(shown()).toHaveAttribute("alt", "Photo 2 of 3 from Maya Chen's run");
+    expect(shown()).toHaveAttribute("alt", "Photo 2 of 3 from Maya Chen’s run");
     expect(shown()).toHaveAttribute("src", photo(2).url);
     expect(shown().className).toMatch(/object-contain/);
     // Over everything, on the dark stage, below the status bar.
     expect(viewer().className).toMatch(/fixed inset-0/);
-    expect(viewer().className).toMatch(/bg-stage/);
+    // The stage is its own layer, so a pull down can fade it.
+    expect(viewer().querySelector("[data-photo-backdrop]")?.className).toMatch(
+      /bg-stage/
+    );
     expect(viewer().className).toMatch(/--safe-top/);
     expect(document.body.style.overflow).toBe("hidden");
   });
 
-  it("puts focus on Close, and keeps it inside", () => {
-    open(0);
+  it("puts focus on Close, and keeps it inside", async () => {
+    await open(0);
     const close = within(viewer()).getByRole("button", {
       name: "Close photos",
     });
@@ -206,13 +219,13 @@ describe("the full-screen viewer", () => {
     expect(close.className).toMatch(/size-11/);
   });
 
-  it("moves between photos with the arrow keys and the buttons, and stops at the ends", () => {
-    open(0);
+  it("moves between photos with the arrow keys and the buttons, and stops at the ends", async () => {
+    await open(0);
     fireEvent.keyDown(document, { key: "ArrowRight" });
     expect(within(viewer()).getByText("2 of 3")).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "ArrowRight" });
     expect(within(viewer()).getByText("3 of 3")).toBeInTheDocument();
-    expect(shown()).toHaveAttribute("alt", "Photo 3 of 3 from Maya Chen's run");
+    expect(shown()).toHaveAttribute("alt", "Photo 3 of 3 from Maya Chen’s run");
     const next = within(viewer()).getByRole("button", { name: "Next photo" });
     expect(next).toHaveAttribute("aria-disabled", "true");
     fireEvent.keyDown(document, { key: "ArrowRight" });
@@ -227,8 +240,8 @@ describe("the full-screen viewer", () => {
     expect(within(viewer()).getByText("1 of 3")).toBeInTheDocument();
   });
 
-  it("moves with a swipe, and not with a short or upward drag", () => {
-    open(0);
+  it("moves with a swipe, and not with a short or upward drag", async () => {
+    await open(0);
     const stage = shown().parentElement!;
     const drag = (fromX: number, toX: number, toY = 300) => {
       fireEvent.pointerDown(stage, { clientX: fromX, clientY: 300 });
@@ -244,8 +257,107 @@ describe("the full-screen viewer", () => {
     expect(within(viewer()).getByText("1 of 3")).toBeInTheDocument();
   });
 
-  it("closes on Escape and on Close, with focus back on the photo that opened it", () => {
-    const { tile } = open(2);
+  it("closes on a pull down, and not on a push up or a nudge", async () => {
+    await open(1);
+    const stage = shown().parentElement!;
+    const pull = (toY: number) => {
+      fireEvent.pointerDown(stage, { clientX: 200, clientY: 300 });
+      fireEvent.pointerMove(stage, { clientX: 200, clientY: 300 + toY / 2 });
+      fireEvent.pointerUp(stage, { clientX: 200, clientY: 300 + toY });
+    };
+    pull(-300);
+    pull(20);
+    expect(viewer()).toBeInTheDocument();
+    pull(400);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("zooms with a double tap or a pinch, pans while zoomed, and turns the photo at rest", async () => {
+    await open(0);
+    const stage = shown().parentElement!.parentElement!.parentElement!;
+    const zoomed = () => stage.getAttribute("data-zoomed");
+    expect(zoomed()).toBe("false");
+
+    const tap = () => {
+      fireEvent.pointerDown(stage, { clientX: 200, clientY: 300 });
+      fireEvent.pointerUp(stage, { clientX: 200, clientY: 300 });
+    };
+    tap();
+    tap();
+    expect(zoomed()).toBe("true");
+    // Let the zoom spring arrive before the next finger takes hold of it.
+    await waitFor(() =>
+      expect(shown().style.transform).toMatch(/scale\(2\.5\)/)
+    );
+    // A zoomed photo pans under one finger; it does not turn.
+    fireEvent.pointerDown(stage, { clientX: 300, clientY: 300 });
+    fireEvent.pointerMove(stage, { clientX: 200, clientY: 300 });
+    fireEvent.pointerUp(stage, { clientX: 100, clientY: 300 });
+    expect(within(viewer()).getByText("1 of 3")).toBeInTheDocument();
+    expect(zoomed()).toBe("true");
+    tap();
+    tap();
+    expect(zoomed()).toBe("false");
+
+    // Two fingers spreading zoom in; turning the photo leaves it at rest.
+    fireEvent.pointerDown(stage, { pointerId: 1, clientX: 180, clientY: 300 });
+    fireEvent.pointerDown(stage, { pointerId: 2, clientX: 220, clientY: 300 });
+    fireEvent.pointerMove(stage, { pointerId: 2, clientX: 320, clientY: 300 });
+    fireEvent.pointerUp(stage, { pointerId: 2, clientX: 320, clientY: 300 });
+    fireEvent.pointerUp(stage, { pointerId: 1, clientX: 180, clientY: 300 });
+    expect(zoomed()).toBe("true");
+    fireEvent.keyDown(document, { key: "ArrowRight" });
+    expect(within(viewer()).getByText("2 of 3")).toBeInTheDocument();
+    expect(zoomed()).toBe("false");
+  });
+
+  it("does not count the last finger of a pinch lifting as a tap", async () => {
+    await open(0);
+    const stage = shown().parentElement!.parentElement!.parentElement!;
+    const zoomed = () => stage.getAttribute("data-zoomed");
+    fireEvent.pointerDown(stage, { pointerId: 1, clientX: 180, clientY: 300 });
+    fireEvent.pointerDown(stage, { pointerId: 2, clientX: 220, clientY: 300 });
+    fireEvent.pointerMove(stage, { pointerId: 2, clientX: 320, clientY: 300 });
+    fireEvent.pointerUp(stage, { pointerId: 2, clientX: 320, clientY: 300 });
+    // The finger left down lifts where it was: the pinch ending.
+    fireEvent.pointerUp(stage, { pointerId: 1, clientX: 180, clientY: 300 });
+    expect(zoomed()).toBe("true");
+    // One tap on the same spot straight after is a first tap, not a second.
+    fireEvent.pointerDown(stage, { pointerId: 3, clientX: 180, clientY: 300 });
+    fireEvent.pointerUp(stage, { pointerId: 3, clientX: 180, clientY: 300 });
+    expect(zoomed()).toBe("true");
+  });
+
+  it("keeps its touches from the page that opened it", async () => {
+    const onTouchStart = vi.fn();
+    const onTouchEnd = vi.fn();
+    const view = render(
+      <MemoryRouter>
+        <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+          <ActivityCard feedItem={post({ photos: photos(3) }, "run")} />
+        </div>
+      </MemoryRouter>
+    );
+    fireEvent.click(tiles(view.container)[0]);
+    await screen.findByRole("dialog");
+    const stage = shown().parentElement!;
+    fireEvent.touchStart(stage, { touches: [{ clientX: 300, clientY: 300 }] });
+    fireEvent.touchEnd(stage, {
+      changedTouches: [{ clientX: 100, clientY: 300 }],
+    });
+    expect(onTouchStart).not.toHaveBeenCalled();
+    expect(onTouchEnd).not.toHaveBeenCalled();
+  });
+
+  it("shows only the open photo to a screen reader", async () => {
+    await open(1);
+    // Its neighbours are drawn beside it for the swipe, hidden from AT.
+    expect(within(viewer()).getAllByRole("img")).toHaveLength(1);
+    expect(viewer().querySelectorAll("img")).toHaveLength(3);
+  });
+
+  it("closes on Escape and on Close, with focus back on the photo that opened it", async () => {
+    const { tile } = await open(2);
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(tile);
@@ -261,8 +373,8 @@ describe("the full-screen viewer", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("has no arrows for a single photo", () => {
-    open(0, 1);
+  it("has no arrows for a single photo", async () => {
+    await open(0, 1);
     expect(within(viewer()).getByText("1 of 1")).toBeInTheDocument();
     expect(
       within(viewer()).queryByRole("button", { name: "Next photo" })

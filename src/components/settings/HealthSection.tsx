@@ -185,23 +185,23 @@ export default function HealthSection({
         // Only a fully saved, native-enabled explicit tap retires the veto.
         if (!setWatchRunLocallyDisabled(uid, true)) {
           toast.error(
-            "Couldn't remember your Watch choice. Free device storage and try again."
+            "Couldn’t remember your Watch choice. Free device storage and try again."
           );
           return;
         }
         if (!(await update("useWatchForRuns", true))) {
-          toast.error("Couldn't save your Watch setting. Try again.");
+          toast.error("Couldn’t save your Watch setting. Try again.");
           return;
         }
         if (!(await setWatchRunEnabled(true))) {
           syncAttempted.current = `${uid}:true`;
           await update("useWatchForRuns", false);
-          toast.error("Couldn't connect your Watch. Try again.");
+          toast.error("Couldn’t connect your Watch. Try again.");
           return;
         }
         if (!setWatchRunLocallyDisabled(uid, false)) {
           await setWatchRunEnabled(false);
-          toast.error("Couldn't remember your Watch choice. Try again.");
+          toast.error("Couldn’t remember your Watch choice. Try again.");
           return;
         }
       } else {
@@ -209,12 +209,12 @@ export default function HealthSection({
         // failed account write must never silently turn this Watch back on.
         if (!setWatchRunLocallyDisabled(uid, true)) {
           toast.error(
-            "Couldn't remember your Watch choice. Free device storage and try again."
+            "Couldn’t remember your Watch choice. Free device storage and try again."
           );
           return;
         }
         if (!(await setWatchRunEnabled(false))) {
-          toast.error("Couldn't turn off Watch runs. Try again.");
+          toast.error("Couldn’t turn off Watch runs. Try again.");
           return;
         }
         if (!(await update("useWatchForRuns", false))) {
@@ -252,7 +252,7 @@ export default function HealthSection({
       }
       if (!next && uid) setWorkoutExportLocallyDisabled(uid, true);
       if (!(await update("saveWorkoutsToHealth", next))) {
-        toast.error("Couldn't save your Apple Health choice. Try again.");
+        toast.error("Couldn’t save your Apple Health choice. Try again.");
         return;
       }
       if (next && uid && !setWorkoutExportLocallyDisabled(uid, false)) {
@@ -526,7 +526,7 @@ export default function HealthSection({
       {CONNECTED_TRAINING_RELEASED && failed && (
         <div className="p-3 rounded-lg bg-muted space-y-2">
           <p className="text-sm text-foreground">
-            Couldn't load your connected training choices.
+            Couldn’t load your connected training choices.
           </p>
           <Button variant="secondary" onClick={retry}>
             Try again

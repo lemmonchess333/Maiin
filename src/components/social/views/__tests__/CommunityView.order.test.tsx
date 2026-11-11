@@ -1,16 +1,18 @@
 /**
- * The Together page (Soc14): You, then This week, then Discover, drawn
- * from the real sections. The Circles come from a scripted Circle list,
- * the challenges from the Firestore fake, the Spaces from a scripted
- * directory.
+ * The Together page (Soc16): This week, then Circles, then Discover,
+ * drawn from the real sections. The Circles come from a scripted Circle
+ * list, the challenges from the Firestore fake, the Spaces from a
+ * scripted directory. The race hero has its own suite (RaceHero.test);
+ * with no race goal here it draws nothing.
  *
- *   You        the Circles as rows, a live Circle first, each with its
- *              next step; then the joined challenges with their progress.
- *              With neither, the start-or-join card alone.
  *   This week  the weekly challenge, whose action is the page's one
- *              filled button, unless there is no Circle, when Start a
- *              circle is.
- *   Discover   the challenges not joined, then Spaces.
+ *              filled button, neutral, unless there is no Circle, when
+ *              Start a circle is; then the joined challenges, each with
+ *              the medal it is working toward and its progress.
+ *   Circles    the Circles as rows, a live Circle first, each with its
+ *              next step, ended ones folded; with none, the start-or-join
+ *              card alone.
+ *   Discover   races and Spaces, then the challenges not joined.
  */
 import {
   afterEach,
@@ -21,7 +23,13 @@ import {
   it,
   vi,
 } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Timestamp } from "firebase/firestore";
 import type { CircleSummary } from "@/features/goalSpace/useGoalSpaces";
@@ -188,7 +196,8 @@ async function openTogether() {
 const before = (a: Element, b: Element) =>
   !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
-const FILLED = /\bbg-(primary-strong|running-fill|nutrition-fill)\b/;
+const FILLED =
+  /(^|\s)bg-(primary-strong|running-fill|nutrition-fill|foreground)(\s|$)/;
 const filledButtons = () =>
   screen
     .getAllByRole("button")
@@ -196,7 +205,7 @@ const filledButtons = () =>
     .map((b) => b.getAttribute("aria-label") ?? b.textContent);
 
 describe("the Together page's order", () => {
-  it("is You, then This week, then Discover", async () => {
+  it("is This week, then Circles, then Discover", async () => {
     circlesHook.circles = [circle("c1", "Sunday long runs", 3)];
     seedFirestore({
       [`challenges/${MONTH_ID}/participants/me`]: {
@@ -216,26 +225,34 @@ describe("the Together page's order", () => {
     await openTogether();
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((el) => el.textContent)
-    ).toEqual(["You", "This week", "Discover"]);
+    ).toEqual(["This week", "Circles", "Discover"]);
 
-    const you = screen.getByRole("region", { name: "You" });
-    const circles = within(you).getByRole("list", { name: "Your circles" });
-    const joined = await within(you).findByRole("list", {
+    const week = screen.getByRole("region", { name: "This week" });
+    const weekly = within(week).getByRole("button", {
+      name: "Join weekly challenge",
+    });
+    const joined = await within(week).findByRole("list", {
       name: "Your challenges",
     });
-    expect(before(circles, joined)).toBe(true);
+    expect(before(weekly, joined)).toBe(true);
+
+    const circles = screen.getByRole("region", { name: "Circles" });
+    expect(
+      within(circles).getByRole("list", { name: "Your circles" })
+    ).toBeInTheDocument();
 
     const discover = screen.getByRole("region", { name: "Discover" });
     const toJoin = within(discover).getByRole("list", {
       name: "Challenges to join",
     });
     expect(within(toJoin).getByText("September Mileage")).toBeInTheDocument();
+    // The pictures first: Spaces lead Discover, the list follows.
     expect(
-      before(toJoin, within(discover).getByRole("heading", { name: "Spaces" }))
+      before(within(discover).getByRole("heading", { name: "Spaces" }), toJoin)
     ).toBe(true);
   });
 
-  it("leads You with a live Circle, ahead of one still waiting on its invite", async () => {
+  it("leads the Circles with a live one, ahead of one still waiting on its invite", async () => {
     circlesHook.circles = [
       circle("solo", "Hear", 1),
       circle("live", "Sunday long runs", 3),
@@ -249,22 +266,8 @@ describe("the Together page's order", () => {
   });
 });
 
-describe("You", () => {
-  it("gives a circle of one its next step, Invite someone, on its row", async () => {
-    circlesHook.circles = [circle("solo", "Hear", 1)];
-    await openTogether();
-    const row = within(
-      screen.getByRole("list", { name: "Your circles" })
-    ).getByRole("listitem");
-    expect(
-      within(row).getByRole("button", { name: "Invite someone" })
-    ).toBeInTheDocument();
-    expect(within(row).queryByRole("button", { name: /check in/i })).toBeNull();
-    // The member count stays one line beside it.
-    expect(row.textContent).toContain("1 member");
-  });
-
-  it("shows each joined challenge with how far along it is", async () => {
+describe("This week", () => {
+  it("shows each joined challenge with the medal it is working toward and how far along it is", async () => {
     circlesHook.circles = [circle("c1", "Sunday long runs", 3)];
     seedFirestore({
       [`challenges/${MONTH_ID}/participants/me`]: {
@@ -274,8 +277,8 @@ describe("You", () => {
       },
     });
     await openTogether();
-    const you = screen.getByRole("region", { name: "You" });
-    const joined = await within(you).findByRole("list", {
+    const week = screen.getByRole("region", { name: "This week" });
+    const joined = await within(week).findByRole("list", {
       name: "Your challenges",
     });
     const row = within(joined)
@@ -286,25 +289,104 @@ describe("You", () => {
       "aria-valuenow",
       "38"
     );
+    expect(row.querySelector("[data-medal-tier]")).toHaveAttribute(
+      "data-medal-tier",
+      "bronze"
+    );
   });
 
-  it("is the start-or-join card alone with no Circle and no joined challenge", async () => {
+  it("shows the next tier's medal once a tier is reached", async () => {
+    seedFirestore({
+      [`challenges/${MONTH_ID}/participants/me`]: {
+        currentValue: 9,
+        tierAchieved: "bronze",
+        joinedAt: Timestamp.fromDate(new Date("2026-09-02T09:00:00Z")),
+      },
+    });
     await openTogether();
-    const you = screen.getByRole("region", { name: "You" });
+    const joined = await screen.findByRole("list", { name: "Your challenges" });
+    expect(joined.querySelector("[data-medal-tier]")).toHaveAttribute(
+      "data-medal-tier",
+      "silver"
+    );
+  });
+
+  it("gives a challenge to join the medal its first tier wins", async () => {
+    await openTogether();
+    const toJoin = screen.getByRole("list", { name: "Challenges to join" });
+    const row = within(toJoin)
+      .getByText("September Active Days")
+      .closest("li")!;
+    expect(row.querySelector("[data-medal-tier]")).toHaveAttribute(
+      "data-medal-tier",
+      "bronze"
+    );
+  });
+});
+
+describe("Circles", () => {
+  it("gives a circle of one its next step, Invite someone, and says nothing of its size", async () => {
+    circlesHook.circles = [circle("solo", "Hear", 1)];
+    await openTogether();
+    const row = within(
+      screen.getByRole("list", { name: "Your circles" })
+    ).getByRole("listitem");
     expect(
-      within(you).getByText("Train with a few friends")
+      within(row).getByRole("button", { name: "Invite someone" })
     ).toBeInTheDocument();
-    expect(within(you).queryAllByRole("list")).toHaveLength(0);
+    expect(within(row).queryByRole("button", { name: /check in/i })).toBeNull();
+    // "1 member" only says the room is empty.
+    expect(row.textContent).not.toMatch(/member/);
+  });
+
+  it("says a Circle's size from a pair", async () => {
+    circlesHook.circles = [circle("pair", "Two of us", 2)];
+    await openTogether();
+    const row = within(
+      screen.getByRole("list", { name: "Your circles" })
+    ).getByRole("listitem");
+    expect(row.textContent).toContain("2 members");
+  });
+
+  it("folds ended Circles under one row, and opens them", async () => {
+    const ended = circle("old", "Spring block", 3);
+    ended.space.active = false;
+    circlesHook.circles = [circle("live", "Sunday long runs", 3), ended];
+    await openTogether();
+    const list = () => screen.getByRole("list", { name: "Your circles" });
+    expect(within(list()).getAllByRole("listitem")).toHaveLength(1);
+    const fold = screen.getByRole("button", { name: /Ended circles/ });
+    expect(fold).toHaveAttribute("aria-expanded", "false");
+    expect(fold.textContent).toContain("· 1");
+    fireEvent.click(fold);
+    const rows = within(list()).getAllByRole("listitem");
+    expect(rows).toHaveLength(2);
+    expect(rows[1].textContent).toContain("Spring block");
     expect(
-      within(you)
+      screen.getByRole("button", { name: /Hide ended circles/ })
+    ).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("is the start-or-join card alone with no Circle", async () => {
+    await openTogether();
+    const circles = screen.getByRole("region", { name: "Circles" });
+    expect(
+      within(circles).getByText("Train with a few friends")
+    ).toBeInTheDocument();
+    expect(within(circles).queryAllByRole("list")).toHaveLength(0);
+    expect(
+      within(circles)
         .getAllByRole("button")
         .map((b) => b.textContent)
     ).toEqual(["Start a circle", "Join with code"]);
   });
 });
 
+/** The neutral fill, white on dark (§0 rule 12). */
+const NEUTRAL = /(^|\s)bg-foreground(\s|$)/;
+
 describe("the page's one filled button", () => {
-  it("is the weekly challenge's Join once there is a Circle", async () => {
+  it("is the weekly challenge's Join once there is a Circle, and neutral", async () => {
     // A live Circle's check-in is a quiet step on its row, not a second
     // filled button.
     circlesHook.circles = [
@@ -313,10 +395,16 @@ describe("the page's one filled button", () => {
     ];
     await openTogether();
     expect(filledButtons()).toEqual(["Join weekly challenge"]);
+    expect(
+      screen.getByRole("button", { name: "Join weekly challenge" }).className
+    ).toMatch(NEUTRAL);
   });
 
-  it("is Start a circle while there is no Circle", async () => {
+  it("is Start a circle while there is no Circle, and neutral", async () => {
     await openTogether();
     expect(filledButtons()).toEqual(["Start a circle"]);
+    expect(
+      screen.getByRole("button", { name: "Start a circle" }).className
+    ).toMatch(NEUTRAL);
   });
 });

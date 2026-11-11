@@ -8,6 +8,7 @@ import { Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import type { Challenge } from "./useChallenges";
 import {
+  COLLECTIVE_RUNNERS_MIN_VISIBLE,
   collectiveRunners,
   collectiveTotal,
   showsCollectiveGoal,
@@ -27,9 +28,9 @@ import {
  * or not (`collectiveTotal`). Not drawn until someone has added to it
  * (`showsCollectiveGoal`): a goal at "0 of 1,000 km" over an empty bar
  * reads as an empty room. From the first kilometre the line under the name
- * is the figure and how many people ran it, "412.5 of 1,000 km · 7
- * runners". Counting up, never a shortfall or a percentage. Static bar; no
- * animation (WKWebView rule).
+ * is the figure and, from three, how many people ran it, "412.5 of 1,000
+ * km · 7 runners". Counting up, never a shortfall or a percentage. Static
+ * bar; no animation (WKWebView rule).
  */
 export default function CollectivePulse({
   challenge,
@@ -71,20 +72,20 @@ export default function CollectivePulse({
             </span>{" "}
             of <span className="font-mono tabular-nums">{targetText}</span>{" "}
             {label}
-            {runners > 0 && (
+            {runners >= COLLECTIVE_RUNNERS_MIN_VISIBLE && (
               <>
                 {" · "}
                 <span className="font-mono tabular-nums">
                   {runners.toLocaleString()}
                 </span>{" "}
-                {runners === 1 ? "runner" : "runners"}
+                runners
               </>
             )}
           </p>
         </div>
       </div>
       <div
-        className="mt-2.5 h-1.5 rounded-full bg-muted overflow-hidden"
+        className="mt-2.5 h-1.5 rounded-full track-cut overflow-hidden"
         role="progressbar"
         aria-valuenow={Math.round(total)}
         aria-valuemin={0}

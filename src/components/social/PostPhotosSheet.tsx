@@ -131,7 +131,7 @@ export default function PostPhotosSheet({
     } catch (err) {
       logger.warn("[PostPhotosSheet] remove failed:", err);
       haptic("error");
-      toast.error("Couldn't remove the photo. Try again.");
+      toast.error("Couldn’t remove the photo. Try again.");
     } finally {
       setRemoving(null);
     }
@@ -221,7 +221,7 @@ export default function PostPhotosSheet({
               {outcome.leftOut > 0 && (
                 <p className="text-sm text-muted-foreground">
                   A post holds up to 4 photos, so {photosWord(outcome.leftOut)}{" "}
-                  you picked {outcome.leftOut === 1 ? "wasn't" : "weren't"}{" "}
+                  you picked {outcome.leftOut === 1 ? "wasn’t" : "weren’t"}{" "}
                   added.
                 </p>
               )}
@@ -233,8 +233,8 @@ export default function PostPhotosSheet({
               {outcome.failed.length > 0 && (
                 <>
                   <p className="text-sm text-destructive-strong">
-                    Couldn&apos;t add {photosWord(outcome.failed.length)}. Check
-                    your connection and try again.
+                    Couldn’t add {photosWord(outcome.failed.length)}. Check your
+                    connection and try again.
                   </p>
                   <Button
                     variant="secondary"

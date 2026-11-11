@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { challengeSport, SPORT_BAR_FILL } from "./challengeSport";
 import { joinedProgress } from "./joinedProgress";
 import SportIconTile from "./SportIconTile";
+import MedalArt from "./MedalArt";
+import { rowMedalFace } from "./rowMedal";
 import {
   getTimeRemaining,
   type Challenge,
@@ -12,9 +14,9 @@ import {
 } from "./useChallenges";
 
 /**
- * A challenge the person has joined, as a row under their Circles on
- * Together: the sport's tile, the name, how far they are towards the next
- * tier, and a bar in the sport's colour. The whole row opens the
+ * A challenge the person has joined, as a row in Together's This week:
+ * the medal they are working toward, the name, how far they are towards
+ * that tier, and a bar in the sport's colour. The whole row opens the
  * challenge, where its board and Leave are.
  *
  * Reads the progress the challenges hook already holds; it adds no read.
@@ -40,6 +42,7 @@ export default function JoinedChallengeRow({
     distanceUnit
   );
   const timeLeft = showTimeLeft ? getTimeRemaining(challenge.endDate) : "";
+  const medal = rowMedalFace(challenge, progress, liftUnit, distanceUnit);
 
   return (
     <li className="relative flex items-center gap-[12px] p-3">
@@ -50,7 +53,13 @@ export default function JoinedChallengeRow({
         onClick={onOpen}
         className="absolute inset-0 active:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
       />
-      <SportIconTile sport={sport} />
+      {/* The medal the person is working toward (Soc16): the next tier
+          above the one they hold, gold once gold is theirs. */}
+      {medal ? (
+        <MedalArt {...medal} size={36} className="shrink-0" />
+      ) : (
+        <SportIconTile sport={sport} />
+      )}
       <div className="min-w-0 flex-1 space-y-1.5 pointer-events-none">
         <div>
           <p className="text-sm font-semibold text-foreground leading-snug break-words">
@@ -63,7 +72,7 @@ export default function JoinedChallengeRow({
           </p>
         </div>
         <div
-          className="h-1.5 rounded-full bg-muted overflow-hidden"
+          className="h-1.5 rounded-full track-cut overflow-hidden"
           role="progressbar"
           aria-label={challenge.name}
           aria-valuemin={0}

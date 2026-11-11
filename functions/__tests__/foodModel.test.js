@@ -29,12 +29,19 @@ describe("the food model", () => {
     expect(index.match(/foodModelUrl\(projectId\)/g)).toHaveLength(2);
   });
 
-  it("is reached in us-central1, in the project given", () => {
+  it("is reached in the us multi-region, in the project given", () => {
+    // 3.8 Flash is served from global, us and eu only. us-central1, where
+    // 2.0 Flash was served, refused every scan on the first TestFlight
+    // build.
     expect(foodModelUrl("adaptive-fitness-af8bb")).toBe(
-      "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
-        "adaptive-fitness-af8bb/locations/us-central1/publishers/google/" +
+      "https://aiplatform.us.rep.googleapis.com/v1/projects/" +
+        "adaptive-fitness-af8bb/locations/us/publishers/google/" +
         `models/${FOOD_MODEL}:generateContent`
     );
+  });
+
+  it("names no single region, which 3.8 Flash is not served from", () => {
+    expect(foodModelUrl("p")).not.toMatch(/us-central1|-aiplatform\./);
   });
 
   it("thinks by level, leaves temperature alone and asks for JSON", () => {

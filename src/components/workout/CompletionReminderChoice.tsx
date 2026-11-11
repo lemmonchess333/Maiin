@@ -28,7 +28,7 @@ export default function CompletionReminderChoice({
       }
       await updatePrefs({ enabled: !enabled, primingShown: true });
     } catch {
-      toast.error("Couldn't update the reminder. Try again.");
+      toast.error("Couldn’t update the reminder. Try again.");
     } finally {
       setPending(false);
     }
@@ -38,10 +38,10 @@ export default function CompletionReminderChoice({
   return (
     <div className="flex min-h-11 items-center justify-between gap-4">
       <span className="text-sm text-muted-foreground">
-        Evening reminder if you haven't logged
+        Evening reminder if you haven’t logged
       </span>
       <Toggle
-        label="Evening reminder if you haven't logged"
+        label="Evening reminder if you haven’t logged"
         checked={enabled}
         disabled={loading || pending}
         onChange={() => {

@@ -203,7 +203,7 @@ export default function WeightLogSheet({
       setError(
         err instanceof Error && !("code" in err)
           ? err.message
-          : "Couldn't save your weight. Check your connection and try again."
+          : "Couldn’t save your weight. Check your connection and try again."
       );
     } finally {
       pending.current = false;
@@ -217,7 +217,7 @@ export default function WeightLogSheet({
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Couldn't save this correction."
+        err instanceof Error ? err.message : "Couldn’t save this correction."
       );
     }
   };
@@ -259,7 +259,7 @@ export default function WeightLogSheet({
       .catch(() => {
         if (cancelled) return;
         setLoadingEntry(false);
-        setError("Couldn't load the saved entry. You can still log a weight.");
+        setError("Couldn’t load the saved entry. You can still log a weight.");
       });
     return () => {
       cancelled = true;

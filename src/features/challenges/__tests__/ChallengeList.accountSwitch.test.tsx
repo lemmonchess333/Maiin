@@ -82,7 +82,7 @@ describe("ChallengeList — weekly standings across an account switch", () => {
     const view = render(list());
     // POSITIVE anchor: account A's own standing drives its card, and its
     // follow graph is on screen.
-    expect(await screen.findByText("You're on the board")).toBeInTheDocument();
+    expect(await screen.findByText("You’re on the board")).toBeInTheDocument();
     expect(screen.getByText("Friend Of A")).toBeInTheDocument();
 
     h.user = { uid: "acct-b" };

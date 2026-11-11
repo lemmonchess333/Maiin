@@ -17,6 +17,8 @@ import {
 import { AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import appIconUrl from "@/assets/brand/app-icon.svg";
 import { Button } from "@/components/ui/Button";
+import BootSteps from "@/components/BootSteps";
+import { isNativePlatform } from "@/lib/platform";
 import { IconButton } from "@/components/ui/IconButton";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import InviteNote from "@/components/onboarding/InviteNote";
@@ -175,7 +177,7 @@ export default function Login() {
         setError(
           message.startsWith("Too many")
             ? message
-            : friendlyAuthError(message, "Couldn't send the link. Try again.")
+            : friendlyAuthError(message, "Couldn’t send the link. Try again.")
         );
         setLoadingAction(null);
         return;
@@ -203,7 +205,7 @@ export default function Login() {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
       // On a failed password sign-in, a Google/Apple-only account is the most
-      // confusing case: "Invalid email or password" implies a wrong password
+      // confusing case: "Wrong email or password" implies a wrong password
       // when really there's NO password. If the email is OAuth-only, point to
       // the right button instead. (Skipped on sign-up — nothing to look up.)
       if (!isSignUp && /invalid-credential|wrong-password/.test(message)) {
@@ -217,8 +219,8 @@ export default function Login() {
         friendlyAuthError(
           message,
           isSignUp
-            ? "Couldn't create your account. Try again."
-            : "Couldn't sign in. Try again."
+            ? "Couldn’t create your account. Try again."
+            : "Couldn’t sign in. Try again."
         )
       );
     } finally {
@@ -248,7 +250,7 @@ export default function Login() {
         }
       }
     }
-    setError(friendlyAuthError(message, "Couldn't sign in. Try again."));
+    setError(friendlyAuthError(message, "Couldn’t sign in. Try again."));
   };
 
   const handleGoogle = async () => {
@@ -429,6 +431,18 @@ export default function Login() {
             <span>{error}</span>
           </div>
         )}
+        {/* On the iPhone, what each sign-in step did and how long it took,
+            for a failure nobody can inspect there (bootTrace.ts). */}
+        {error && isNativePlatform() && (
+          <details className="text-left">
+            <summary className="cursor-pointer text-xs text-muted-foreground">
+              Details
+            </summary>
+            <div className="mt-2">
+              <BootSteps />
+            </div>
+          </details>
+        )}
 
         {shownNotice && (
           <div
@@ -601,7 +615,7 @@ export default function Login() {
 
         {/* Toggle */}
         <p className="text-center text-sm text-muted-foreground">
-          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+          {isSignUp ? "Already have an account?" : "Don’t have an account?"}{" "}
           <button
             type="button"
             onClick={() => {
@@ -611,7 +625,7 @@ export default function Login() {
             aria-pressed={isSignUp}
             className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 text-lifting-strong font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
           >
-            {isSignUp ? "Sign In" : "Sign Up"}
+            {isSignUp ? "Sign In" : "Sign up"}
           </button>
         </p>
       </div>

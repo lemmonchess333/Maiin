@@ -33,7 +33,7 @@ export default function StarterDoneCard({
   const { dismissed, dismiss } = answer ?? own;
   if (dismissed) return null;
   return (
-    <Card className="space-y-3">
+    <Card className="space-y-3 rounded-xl">
       <div>
         <p className="text-sm font-bold text-running-strong">Done</p>
         <p className="text-base font-bold text-foreground">

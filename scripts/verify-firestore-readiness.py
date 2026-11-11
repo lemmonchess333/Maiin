@@ -12,6 +12,15 @@ import urllib.parse
 import urllib.request
 
 BASE = "https://firestore.googleapis.com/v1/projects/adaptive-fitness-af8bb/databases/(default)/collectionGroups/-"
+# Answers a later poll can clear, as verify-deployed-functions-source.py has.
+TRANSIENT_STATUS = frozenset({408, 429, *range(500, 600)})
+
+
+def passing_failure(error):
+    """Why a poll failed when the next poll can clear it; None for a refusal."""
+    if isinstance(error, urllib.error.HTTPError):
+        return f"HTTP {error.code}" if error.code in TRANSIENT_STATUS else None
+    return "no answer"
 
 
 def list_resources(kind, token, **params):
@@ -82,8 +91,20 @@ def verify():
     while True:
         # Refresh on every poll: index/TTL builds can outlast an access token.
         token = subprocess.check_output(["gcloud", "auth", "print-access-token"], text=True).strip()
-        pending = pending_resources(spec, list_resources("indexes", token),
-                                    list_resources("fields", token, filter="indexConfig.usesAncestorConfig=false OR ttlConfig:*"))
+        try:
+            pending = pending_resources(spec, list_resources("indexes", token),
+                                        list_resources("fields", token, filter="indexConfig.usesAncestorConfig=false OR ttlConfig:*"))
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as error:
+            # One poll of up to 120 that Google did not answer is not a
+            # verdict on the indexes: poll again, within the same hour.
+            reason = passing_failure(error)
+            if reason is None:
+                raise
+            if time.monotonic() >= deadline:
+                raise RuntimeError(f"Firestore readiness timed out: Google gave {reason}") from None
+            print(f"Google gave {reason}; checking again in 30 s", flush=True)
+            time.sleep(30)
+            continue
         if not pending:
             print("Verified: all configured indexes READY and retention TTL policies ACTIVE.", flush=True)
             return

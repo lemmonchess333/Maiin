@@ -5,14 +5,13 @@ import { Button } from "@/components/ui/Button";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useBackDismiss } from "@/lib/backDismiss";
+import { throwConfetti } from "@/lib/confetti";
 import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";
 import { LEAGUE_LIGHT } from "@/features/league/leaguePalettes";
 import { resultTitle, weekOfLine, type LeagueResult } from "./league";
 import { ordinal } from "./leagueRules";
 import TierBadge from "./TierBadge";
-
-const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 
 /* The ray fan's mask. `#000` is a MASK stop, not a colour: in a mask
    gradient the channel is alpha geometry and never renders (the medal
@@ -22,27 +21,20 @@ const RAY_MASK = "radial-gradient(circle, #000 0%, transparent 62%)";
 /** The badge's width on the reveal. */
 const BADGE = 168;
 
-function throwConfetti(tierColour: string) {
-  lazyConfetti()
-    .then((confetti) => {
-      const colors = [
-        tierColour,
-        THEME.brand,
-        THEME.brandLight,
-        THEME.tier.gold,
-      ];
-      const defaults = { colors, ticks: 220, gravity: 0.9, decay: 0.92 };
-      confetti({
-        ...defaults,
-        particleCount: 90,
-        spread: 90,
-        startVelocity: 40,
-        origin: { y: 0.4 },
-      });
-    })
-    .catch(() => {
-      // No confetti where canvas is missing; the rise stands on its own.
-    });
+/** One centre burst in the tier's metal; the stop to call as it closes. */
+function throwRiseConfetti(tierColour: string): () => void {
+  return throwConfetti([
+    {
+      colors: [tierColour, THEME.brand, THEME.brandLight, THEME.tier.gold],
+      ticks: 220,
+      gravity: 0.9,
+      decay: 0.92,
+      particleCount: 90,
+      spread: 90,
+      startVelocity: 40,
+      origin: { y: 0.4 },
+    },
+  ]);
 }
 
 /**
@@ -90,7 +82,19 @@ export default function LeagueResultReveal({
   useEffect(() => {
     titleRef.current?.focus();
     haptic(rose ? "success" : "light");
-    if (rose && !reduce) throwConfetti(metal);
+    if (!rose || reduce) return;
+    // On the badge's arrival, not before it: fired as the screen opened,
+    // the confetti fell while the screen was still fading in and before
+    // the badge's spring peaked (~315 ms). The finish screen waits the
+    // same way (FinishHero). It leaves with the reveal: Done stops it.
+    let stop: (() => void) | null = null;
+    const timer = window.setTimeout(() => {
+      stop = throwRiseConfetti(metal);
+    }, 300);
+    return () => {
+      window.clearTimeout(timer);
+      stop?.();
+    };
     // Once, as it opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

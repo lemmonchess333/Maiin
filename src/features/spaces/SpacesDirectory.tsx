@@ -1,13 +1,13 @@
 /**
- * The Spaces and races directory at the foot of Together's Discover
- * section (Spc1 PR2). Horizontally snap-scrolling photo cards, the Runna
+ * The races and Spaces directory at the head of Together's Discover
+ * section (Spc1 PR2; first since Soc16, as the page's pictures). Horizontally snap-scrolling photo cards, the Runna
  * Spaces pattern: each card is a full-bleed editorial photo
  * (`space-<id>` stems) under the one dark shade every photo card uses,
  * with the space name over it. Until photos land the card renders the
  * designed fallback band (accent gradient + ghosted icon, the same
  * grammar as the challenge hero). Interest Spaces are the smaller cards.
  *
- * Races & Events (races plan PR2): a second row of race-kind spaces,
+ * Races & Events (races plan PR2): the first row, of race-kind spaces,
  * with the race's distance chip and date + city under the name (Runna's
  * card anatomy), soonest first, then evergreen races awaiting their next
  * date, filtered by a row of chips.
@@ -279,9 +279,6 @@ export default function SpacesDirectory() {
 
   return (
     <div className="space-y-4">
-      {interest.length > 0 && (
-        <CardRow label="Spaces" entries={interest} size="small" />
-      )}
       {showRaces && (
         <section className="space-y-2" aria-label="Races & events">
           <SectionHeading as="h3" size="compact">
@@ -310,6 +307,9 @@ export default function SpacesDirectory() {
             />
           )}
         </section>
+      )}
+      {interest.length > 0 && (
+        <CardRow label="Spaces" entries={interest} size="small" />
       )}
     </div>
   );

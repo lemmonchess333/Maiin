@@ -89,7 +89,7 @@ describe("ExerciseHistory — empty states (shared hexagon EmptyState)", () => {
     const { container } = renderAt("Totally Made Up Lift");
     expect(screen.getByText("Exercise not found")).toBeInTheDocument();
     expect(
-      screen.getByText(/isn't in your logs or the exercise database/i)
+      screen.getByText(/isn’t in your logs or the exercise database/i)
     ).toBeInTheDocument();
     // Single action — the shared primitive's button (no separate top Back).
     expect(
@@ -120,7 +120,7 @@ describe("ExerciseHistory — empty states (shared hexagon EmptyState)", () => {
     } as any;
     renderAt("Bench Press");
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't load your sessions"
+      "Couldn’t load your sessions"
     );
     expect(screen.queryByText("No sessions logged yet")).toBeNull();
     expect(screen.queryByText("Exercise not found")).toBeNull();
@@ -284,8 +284,8 @@ describe("ExerciseHistory — comparisons belong to the session", () => {
     expect(row("evening")).toHaveTextContent("Last: 62.5 kg × 8");
     expect(row("morning")).toHaveTextContent("Last: 60 kg × 8");
     expect(row("first")).not.toHaveTextContent("Last:");
-    expect(within(row("evening")).queryByText("PR")).toBeNull();
-    expect(within(row("morning")).getByText("PR")).toBeVisible();
+    expect(within(row("evening")).queryByText("Best")).toBeNull();
+    expect(within(row("morning")).getByText("Best")).toBeVisible();
   });
 
   it("leaves warm-ups out of top sets, volume, set counts and comparison history", () => {

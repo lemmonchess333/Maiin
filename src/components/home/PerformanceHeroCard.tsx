@@ -51,7 +51,7 @@ const STROKE = 6;
 // the phone): the words and the chevron go under the ring, rather than
 // "Performance" running past the card.
 const ROW =
-  "flex flex-wrap items-center gap-4 rounded-xl -mx-1 px-1 py-1 motion-safe:active:scale-[0.99] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "flex flex-wrap items-center gap-4 rounded-lg -mx-1 px-1 py-1 motion-safe:active:scale-[0.99] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
 function trackTap() {
   haptic();
@@ -101,7 +101,13 @@ export default function PerformanceHeroCard({
           copy ? `${copy.headline}. ${copy.sub}` : "Performance — loading"
         }
       >
-        <ProgressRing value={0} size={RING} stroke={STROKE} color="transparent">
+        <ProgressRing
+          value={0}
+          size={RING}
+          stroke={STROKE}
+          color="transparent"
+          cut
+        >
           <span className="text-base font-extrabold font-figure tabular-nums text-muted-foreground">
             —
           </span>
@@ -158,6 +164,7 @@ export default function PerformanceHeroCard({
         size={RING}
         stroke={STROKE}
         color={hue}
+        cut
       >
         <motion.span
           className="text-base font-extrabold font-figure tabular-nums leading-none"

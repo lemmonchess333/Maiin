@@ -124,6 +124,37 @@ class RulesVerificationTest(unittest.TestCase):
             self.assertIsNone(request.data)
             self.assertEqual(request.full_url, verifier.API + RELEASE)
 
+    def answer(self):
+        return io.BytesIO(json.dumps(self.release).encode())
+
+    def test_http_reader_tries_a_read_google_did_not_answer_again(self):
+        for failure in [urllib.error.URLError("timed out"), TimeoutError(),
+                        urllib.error.HTTPError(verifier.API, 503, "busy", {}, io.BytesIO(b""))]:
+            waits = []
+            with patch.object(verifier.urllib.request, "build_opener") as build:
+                build.return_value.open.side_effect = [failure, self.answer()]
+                self.assertEqual(verifier.make_reader("token", sleep=waits.append)(RELEASE), self.release)
+                self.assertEqual(build.return_value.open.call_count, 2)
+            self.assertEqual(len(waits), 1)
+
+    def test_http_reader_gives_up_after_three_tries_with_the_same_safe_code(self):
+        for failure, code in [(urllib.error.URLError("timed out"), "network-unavailable"),
+                              (urllib.error.HTTPError(verifier.API, 503, "busy", {}, io.BytesIO(b"")), "http-503")]:
+            with patch.object(verifier.urllib.request, "build_opener") as build:
+                build.return_value.open.side_effect = failure
+                with self.assertRaisesRegex(verifier.VerificationError, f"^{code}$"):
+                    verifier.make_reader("token", sleep=lambda _: None)(RELEASE)
+                self.assertEqual(build.return_value.open.call_count, 3)
+
+    def test_http_reader_does_not_retry_a_refusal(self):
+        for code in [400, 401, 403, 404]:
+            with patch.object(verifier.urllib.request, "build_opener") as build:
+                build.return_value.open.side_effect = urllib.error.HTTPError(
+                    verifier.API, code, "no", {}, io.BytesIO(b""))
+                with self.assertRaisesRegex(verifier.VerificationError, f"^http-{code}$"):
+                    verifier.make_reader("token", sleep=lambda _: None)(RELEASE)
+                self.assertEqual(build.return_value.open.call_count, 1)
+
     def test_redirects_are_refused(self):
         with self.assertRaisesRegex(verifier.VerificationError, "unexpected-redirect"):
             verifier.NoRedirect().redirect_request(None, None, 302, "", {}, "https://evil.invalid")

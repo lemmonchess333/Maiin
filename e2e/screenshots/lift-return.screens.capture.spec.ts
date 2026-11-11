@@ -91,7 +91,7 @@ test.describe("lift return screenshots", () => {
     // midnight UTC: the staged gap is centred in the "about 3 weeks"
     // rounding bucket so a day of drift cannot change the line below.
     // Pinned by src/components/program/__tests__/liftReturnCaptureFixture.
-    await expect(page.getByText(/It's been about 3 weeks/i)).toBeVisible({
+    await expect(page.getByText(/It’s been about 3 weeks/i)).toBeVisible({
       timeout: 25_000,
     });
     await expect(

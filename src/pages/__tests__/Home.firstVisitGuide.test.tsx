@@ -655,7 +655,7 @@ describe("the version 2 first-week journey", () => {
   it("shows repair without a checklist or fabricated Start when the plan is missing", () => {
     h.programState = null;
     renderHome();
-    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.getByText("Training isn’t ready")).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Your first week" })
     ).toBeNull();
@@ -668,18 +668,30 @@ describe("the version 2 first-week journey", () => {
     h.programState = null;
     h.workoutsLoading = true;
     renderHome();
-    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.getByText("Training isn’t ready")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
   });
 
   it("waits rather than showing a false incomplete task when workout evidence failed", () => {
     h.workoutsFailed = true;
     renderHome();
-    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.getByText("Training isn’t ready")).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Your first week" })
     ).toBeNull();
     expect(screen.queryByRole("button", { name: "Start workout" })).toBeNull();
+  });
+
+  it("does not say 'Your first workout' beside the date before the workouts say so", () => {
+    h.workoutsLoading = true;
+    renderHome();
+    expect(screen.queryByText("Your first workout")).toBeNull();
+    cleanup();
+    h.workoutsLoading = false;
+    h.workoutsFailed = true;
+    renderHome();
+    expect(screen.getByText("Training isn’t ready")).toBeInTheDocument();
+    expect(screen.queryByText("Your first workout")).toBeNull();
   });
 
   function racePlanToBuild() {
@@ -696,18 +708,18 @@ describe("the version 2 first-week journey", () => {
   it("waits, with no error, while a race plan's week is being built", () => {
     racePlanToBuild();
     renderHome();
-    expect(screen.queryByText("Training isn't ready")).toBeNull();
+    expect(screen.queryByText("Training isn’t ready")).toBeNull();
     expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
     expect(
       screen.queryByRole("heading", { name: "Your first week" })
     ).toBeNull();
   });
 
-  it("says training isn't ready only when building a race plan's week failed", () => {
+  it("says training isn’t ready only when building a race plan’s week failed", () => {
     racePlanToBuild();
     h.maintenanceFailed = true;
     renderHome();
-    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.getByText("Training isn’t ready")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
   });
 });

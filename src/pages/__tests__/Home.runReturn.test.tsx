@@ -418,7 +418,7 @@ describe("Home — a race plan's welcome back", () => {
     renderHome();
     await findSheet("Welcome back");
     expect(
-      screen.getByText(/It's been a while between runs/i)
+      screen.getByText(/It’s been a while between runs/i)
     ).toBeInTheDocument();
     expect(screen.queryByText(/ of .* runs \(/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Rebuild my plan/i }));

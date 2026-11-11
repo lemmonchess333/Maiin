@@ -92,13 +92,13 @@ export function useReminderPreferences<T extends { enabled: boolean }>(
         failed ||
         (session.pending > 0 && !turningOff)
       )
-        throw new Error("Reminder settings aren't ready. Try again.");
+        throw new Error("Reminder settings aren’t ready. Try again.");
       // Persist before showing off or cancelling the OS alarms. A failed
       // server write must not make an old on choice win after a restart.
       if (turningOff) {
         if (!setReminderLocallyOff(uid, kind, true))
           throw new Error(
-            "Couldn't remember your reminder choice. Free device storage and try again."
+            "Couldn’t remember your reminder choice. Free device storage and try again."
           );
         setReminders((current) => ({ ...current, ...updates }));
       }
@@ -125,7 +125,7 @@ export function useReminderPreferences<T extends { enabled: boolean }>(
           acknowledged.enabled === true &&
           !setReminderLocallyOff(uid, kind, false)
         )
-          throw new Error("Couldn't remember your reminder choice. Try again.");
+          throw new Error("Couldn’t remember your reminder choice. Try again.");
         setReminders((current) => ({ ...current, ...acknowledged }));
       } catch (err) {
         logger.error(`[${documentName}] save failed`, err);
@@ -138,8 +138,8 @@ export function useReminderPreferences<T extends { enabled: boolean }>(
         );
         throw new Error(
           turningOff
-            ? "Your choice to turn reminders off is saved on this phone, but couldn't sync to your account."
-            : "Couldn't save reminder settings. Try again.",
+            ? "Your choice to turn reminders off is saved on this phone, but couldn’t sync to your account."
+            : "Couldn’t save reminder settings. Try again.",
           { cause: err }
         );
       } finally {

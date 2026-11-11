@@ -61,3 +61,18 @@ export async function encodeJpeg(
     URL.revokeObjectURL(objectUrl);
   }
 }
+
+/** `blob` as a data URL, for a preview and the base64 a request carries.
+ *  Rejects when the read fails. */
+export function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () =>
+      reject(reader.error ?? new Error("photo read failed"));
+    /* An aborted read fires abort, not error: without this the promise
+       never settles and whatever awaits it stays busy. */
+    reader.onabort = () => reject(new Error("photo read aborted"));
+    reader.readAsDataURL(blob);
+  });
+}

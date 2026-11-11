@@ -116,7 +116,7 @@ describe("AccountSection — sign out", () => {
     fireEvent.click(screen.getByText("Sign out"));
     await waitFor(() =>
       expect(vi.mocked(toast.error).mock.calls[0]?.[0]).toBe(
-        "Signing out needs a connection, so this phone stops getting this account's notifications. Try again when you're online."
+        "Signing out needs a connection, so this phone stops getting this account’s notifications. Try again when you’re online."
       )
     );
     online.mockRestore();
@@ -275,7 +275,7 @@ describe("AccountSection — P0b Apple subscription warning", () => {
 
     // The reauth prompt must open — NOT a raw toast of the server message.
     await waitFor(() =>
-      expect(screen.getByText(/Confirm it's you/i)).toBeInTheDocument()
+      expect(screen.getByText(/Confirm it’s you/i)).toBeInTheDocument()
     );
   });
 });
@@ -444,7 +444,7 @@ describe("AccountSection deletion recovery", () => {
     }
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        expect.stringContaining("Couldn't verify your identity"),
+        expect.stringContaining("Couldn’t verify your identity"),
         expect.anything()
       )
     );

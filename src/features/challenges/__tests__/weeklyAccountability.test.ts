@@ -9,7 +9,7 @@ describe("getWeeklyAccountability", () => {
       target: 2,
     });
     expect(a.title).toBe("Train twice this week");
-    expect(a.ctaLabel).toBe("Start today's session");
+    expect(a.ctaLabel).toBe("Start today’s session");
     expect(a.ctaTo).toBe("/program");
     expect(a.goalMet).toBe(false);
     // Cold-start must NOT claim social activity.
@@ -32,7 +32,7 @@ describe("getWeeklyAccountability", () => {
       target: 2,
     });
     expect(single.title).toBe("1 person you follow trained this week");
-    expect(single.ctaLabel).toBe("Do today's session");
+    expect(single.ctaLabel).toBe("Do today’s session");
     expect(single.ctaTo).toBe("/program");
 
     const many = getWeeklyAccountability({
@@ -49,9 +49,9 @@ describe("getWeeklyAccountability", () => {
       othersTrained: 5,
       target: 2,
     });
-    expect(c.title).toBe("You're on the board");
+    expect(c.title).toBe("You’re on the board");
     expect(c.sub).toBe("1 of 2 sessions this week.");
-    expect(c.ctaLabel).toBe("Do today's session");
+    expect(c.ctaLabel).toBe("Do today’s session");
     expect(c.goalMet).toBe(false);
   });
 
@@ -61,7 +61,7 @@ describe("getWeeklyAccountability", () => {
       othersTrained: 0,
       target: 2,
     });
-    expect(c.title).toBe("You've hit your 2-session week");
+    expect(c.title).toBe("You’ve hit your 2-session week");
     expect(c.ctaLabel).toBe("View progress");
     expect(c.ctaTo).toBe("/history");
     expect(c.goalMet).toBe(true);

@@ -104,7 +104,7 @@ describe("calculatePaceTrend", () => {
       const allRuns = generateRuns(10, 300, 5000, 1); // all at 300 s/km
       const result = calculatePaceTrend(current, allRuns);
       expect(result.trend).toBe("pr");
-      expect(result.label).toBe("PR!");
+      expect(result.label).toBe("New best");
       expect(result.className).toBe(
         "bg-achievement/10 text-achievement-strong"
       );

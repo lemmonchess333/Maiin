@@ -35,13 +35,11 @@ afterEach(() => {
 
 function setup() {
   const applyEaseWeek = vi.fn(async () => 0);
-  const realignRacePlan = vi.fn(
-    async (): Promise<RealignOutcome> => ({
-      status: "applied",
-      timing: "healthy",
-      totalWeeks: 15,
-    })
-  );
+  const realignRacePlan = vi.fn(async (): Promise<RealignOutcome> => ({
+    status: "applied",
+    timing: "healthy",
+    totalWeeks: 15,
+  }));
   render(
     <AdjustWeekSheet
       unit="km"
@@ -62,7 +60,7 @@ describe("AdjustWeekSheet — intent list", () => {
   it("renders exactly the three actionable intents", () => {
     setup();
     expect(
-      screen.getByRole("button", { name: /I'm not feeling 100%/ })
+      screen.getByRole("button", { name: /I’m not feeling 100%/ })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /My week is crowded/ })
@@ -81,7 +79,7 @@ describe("AdjustWeekSheet — intent list", () => {
   it("an easier-intent tap still advances to the preview step", () => {
     setup();
     fireEvent.click(
-      screen.getByRole("button", { name: /I'm not feeling 100%/ })
+      screen.getByRole("button", { name: /I’m not feeling 100%/ })
     );
     expect(screen.getByText(/Easier week — preview/)).toBeInTheDocument();
   });
@@ -366,7 +364,7 @@ describe("AdjustWeekSheet — pending changes", () => {
     const { toast } = await import("@/lib/toast");
     await vi.waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "Couldn't undo the easier week. Try again."
+        "Couldn’t undo the easier week. Try again."
       )
     );
     expect(getEasedWeekKey(UID)).not.toBeNull();
@@ -401,12 +399,10 @@ describe("AdjustWeekSheet — pending changes", () => {
     // toast "Re-planned" over it and close, because a refusal came back as
     // a healthy plan of 0 weeks.
     const onClose = vi.fn();
-    const realignRacePlan = vi.fn(
-      async (): Promise<RealignOutcome> => ({
-        status: "declined",
-        reason: "Your race date has passed.",
-      })
-    );
+    const realignRacePlan = vi.fn(async (): Promise<RealignOutcome> => ({
+      status: "declined",
+      reason: "Your race date has passed.",
+    }));
     openEaser({ realignRacePlan, onClose });
     fireEvent.click(screen.getByRole("button", { name: /My week is crowded/ }));
     fireEvent.click(screen.getByRole("button", { name: "Re-plan from today" }));
@@ -446,7 +442,7 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
       screen.queryByRole("button", { name: /I need easier running/ })
     ).toBeNull();
     expect(
-      screen.queryByRole("button", { name: /I'm not feeling 100%/ })
+      screen.queryByRole("button", { name: /I’m not feeling 100%/ })
     ).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /My week is crowded/ }));
     expect(
@@ -486,7 +482,7 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
     fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
     const { toast } = await import("@/lib/toast");
     await vi.waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Couldn't undo the easier week.")
+      expect(toast.error).toHaveBeenCalledWith("Couldn’t undo the easier week.")
     );
     expect(toast.success).not.toHaveBeenCalled();
   });
@@ -571,7 +567,7 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
 
     const { toast } = await import("@/lib/toast");
     await vi.waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Couldn't undo the easier week.")
+      expect(toast.error).toHaveBeenCalledWith("Couldn’t undo the easier week.")
     );
   });
 

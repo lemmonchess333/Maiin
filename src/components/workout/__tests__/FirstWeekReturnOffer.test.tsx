@@ -20,6 +20,7 @@ const h = vi.hoisted(() => ({
   record: vi.fn(async (_: string) => true),
   track: vi.fn(),
   pushAsked: vi.fn(),
+  doneDay: null as string | null,
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -46,6 +47,7 @@ vi.mock("@/hooks/RemindersProvider", () => ({
     updateReminders: h.updateReminders,
     requestPermission: h.requestPermission,
     liftName: "Pull B",
+    doneDay: h.doneDay,
   }),
   useStreakReminder: () => ({
     prefs: { enabled: false, primingShown: false },
@@ -97,6 +99,7 @@ beforeEach(() => {
   h.version = 2;
   h.enabled = false;
   h.choiceResponse = null;
+  h.doneDay = null;
   h.requestPermission.mockResolvedValue(true);
 });
 
@@ -126,6 +129,42 @@ describe("a v2 account's one first-week reminder ask", () => {
     expect(h.record).toHaveBeenCalledWith("accepted");
     // No streak nudge, and no push, is asked for.
     expect(h.pushAsked).not.toHaveBeenCalled();
+  });
+
+  // A session saved at 06:40: today's 07:30 reminder is not sent, so the
+  // card names the next one.
+  it("never promises today's reminder once today's session is saved", async () => {
+    vi.setSystemTime(new Date(2026, 9, 29, 6, 40));
+    h.doneDay = "2026-10-29";
+    open();
+    expect(
+      await screen.findByText(
+        (_, el) =>
+          el?.tagName === "P" &&
+          /^Pull B tomorrow at 07:30, then on each training day\.$/.test(
+            el.textContent ?? ""
+          )
+      )
+    ).toBeVisible();
+  });
+
+  it("sends Not now once, however often it is tapped while it saves", async () => {
+    let saved!: () => void;
+    h.record.mockImplementationOnce(
+      () => new Promise<boolean>((resolve) => (saved = () => resolve(true)))
+    );
+    open();
+    const notNow = await screen.findByRole("button", { name: "Not now" });
+    fireEvent.click(notNow);
+    fireEvent.click(notNow);
+    expect(screen.queryByRole("button", { name: "Not now" })).toBeNull();
+    await act(async () => saved());
+    expect(h.record).toHaveBeenCalledTimes(1);
+    expect(
+      h.track.mock.calls.filter(
+        ([name]) => name === "first_week_reminder_choice"
+      )
+    ).toHaveLength(1);
   });
 
   it("asks nothing when setup already turned the reminder on", async () => {

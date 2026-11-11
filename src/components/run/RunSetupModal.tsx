@@ -172,7 +172,7 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
         : null;
       break;
     case "structured_today":
-      line1 = `This week's plan${ctx.todayLabel ? ` · ${ctx.todayLabel}` : ""}`;
+      line1 = `This week’s plan${ctx.todayLabel ? ` · ${ctx.todayLabel}` : ""}`;
       break;
     case "rest_day":
       line1 = "Rest day in your plan.";
@@ -1269,8 +1269,9 @@ export default function RunSetupModal({
               // the codebase's semantic palette. Now: flat coral solid
               // (THEME.running) — matches the Programme Run section's
               // Next · Pending Start button + Pgm3 Start CTA discipline.
-              // The pulse animation stays via btn-start-run-pulse.
-              className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg transition-transform active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed bg-running-fill"
+              // No pulse: its endless box-shadow repainted every frame and
+              // glowed food orange on the coral button (§14h, §0 rule 2).
+              className="w-full py-5 rounded-2xl text-white font-semibold text-lg transition-transform active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed bg-running-fill"
             >
               <Icon className="inline size-5 mr-1" />{" "}
               {onTreadmill

@@ -44,10 +44,14 @@ describe("CollectivePulse", () => {
     expect(text(goal())).not.toMatch(/\bkm\b/);
   });
 
-  it("counts one runner as one", () => {
+  it("names no runners under three, while the total still shows", () => {
     unit = "km";
-    expect(text(goal({ collectiveRunners: 1 }))).toContain("· 1 runner");
-    expect(text(goal({ collectiveRunners: 1 }))).not.toContain("runners");
+    for (const collectiveRunners of [1, 2]) {
+      const line = text(goal({ collectiveRunners }));
+      expect(line).toContain(`400 of ${groupText(1000)} km`);
+      expect(line).not.toMatch(/runner/);
+    }
+    expect(text(goal({ collectiveRunners: 3 }))).toContain("· 3 runners");
   });
 
   it("is not drawn while nobody has added to it", () => {

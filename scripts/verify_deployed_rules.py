@@ -30,7 +30,17 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise VerificationError("unexpected-redirect")
 
 
-def make_reader(token):
+# A read Google did not answer, or answered 408, 429 or 5xx, is tried again:
+# one such read otherwise fails the release with the rules already live, as a
+# single timed-out Scheduler list did to the release of 2ecb0152 (#3171). A
+# refusal fails at once; no wait changes it.
+READ_PAUSES_S = (5, 15)
+TRANSIENT_STATUS = frozenset({408, 429, *range(500, 600)})
+
+
+def make_reader(token, sleep=None):
+    # Looked up when called, so a test that patches time.sleep reaches it.
+    sleep = sleep or (lambda seconds: time.sleep(seconds))
     opener = urllib.request.build_opener(NoRedirect())
 
     def read(resource):
@@ -40,15 +50,20 @@ def make_reader(token):
         request = urllib.request.Request(
             API + resource, headers={"Authorization": f"Bearer {token}"}, method="GET"
         )
-        try:
-            with opener.open(request, timeout=30) as response:
-                data = json.load(response)
-        except urllib.error.HTTPError as error:
-            raise VerificationError(f"http-{error.code}") from None
-        except (urllib.error.URLError, TimeoutError):
-            raise VerificationError("network-unavailable") from None
-        except (ValueError, UnicodeError):
-            raise VerificationError("invalid-json") from None
+        for pause in (*READ_PAUSES_S, None):
+            try:
+                with opener.open(request, timeout=30) as response:
+                    data = json.load(response)
+                break
+            except urllib.error.HTTPError as error:
+                if error.code not in TRANSIENT_STATUS or pause is None:
+                    raise VerificationError(f"http-{error.code}") from None
+            except (urllib.error.URLError, TimeoutError, ConnectionError):
+                if pause is None:
+                    raise VerificationError("network-unavailable") from None
+            except (ValueError, UnicodeError):
+                raise VerificationError("invalid-json") from None
+            sleep(pause)
         if not isinstance(data, dict):
             raise VerificationError("invalid-response")
         return data

@@ -253,6 +253,7 @@ function ScheduleLayoutSheetBody({
             )}
             <div className="space-y-2">
               <Button
+                variant="neutral"
                 fullWidth
                 onClick={handleApply}
                 disabled={
@@ -435,6 +436,7 @@ function ScheduleLayoutSheetBody({
               </Button>
               {(guided ? draftChanged : hasUnsavedScheduleChanges) && (
                 <Button
+                  variant="neutral"
                   onClick={guided ? () => setReviewing(true) : handleApply}
                   disabled={
                     saving ||
@@ -465,7 +467,7 @@ function ScheduleLayoutSheetBody({
           closeOnBackdrop={!saving}
           closeOnEscape={!saving}
           title="Restructure programme?"
-          description="Changing your training days will restructure your programme. Your workout history won't be affected, but your programme will be rebuilt. This cannot be undone."
+          description="Changing your training days will restructure your programme. Your workout history won’t be affected, but your programme will be rebuilt. This cannot be undone."
           role="alertdialog"
           overlayClassName="z-[60]"
           className="z-[70]"
@@ -489,6 +491,7 @@ function ScheduleLayoutSheetBody({
               Cancel
             </Button>
             <Button
+              variant="neutral"
               className="flex-1"
               onClick={handleConfirmAndClose}
               disabled={restructuring}
@@ -497,10 +500,10 @@ function ScheduleLayoutSheetBody({
                 <>
                   <Spinner
                     size="sm"
-                    variant="inverse"
+                    variant="current"
                     label="Rebuilding programme"
                   />
-                  Rebuilding...
+                  Rebuilding…
                 </>
               ) : (
                 "Confirm"

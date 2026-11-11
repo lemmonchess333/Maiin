@@ -1,6 +1,7 @@
 import { useHiddenActivities } from "@/hooks/useHiddenActivities";
 import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useUid } from "@/lib/auth";
@@ -217,6 +218,8 @@ export default function Social() {
 
   const {
     isRefreshing: pullRefreshing,
+    pull,
+    readyAt: pullReadyAt,
     triggerRefresh,
     bindProps: pullBindProps,
   } = usePullToRefresh({ onRefresh: performRefresh });
@@ -238,6 +241,28 @@ export default function Social() {
     <PageShell
       {...pullBindProps}
       title="Social"
+      /* Together's hero (the person's race, or the weekly challenge) names
+         the screen, so no large title sits above it (DS4, Soc16): the
+         title is for screen readers, and the Together/Feed switch takes
+         its place beside search and notifications, one row of chrome. It
+         is hidden while FeedView's full board overlays the page. */
+      titleHidden
+      lead={
+        chromeHidden ? undefined : (
+          <SegmentedControl
+            ariaLabel="Social section"
+            size="sm"
+            value={tab}
+            onChange={setTab}
+            options={[
+              /* Together leads (SOCIAL-HOME-01). Legacy ?tab=crews still
+                 resolves to Together; ?tab=find opens the People overlay. */
+              { value: "together", label: "Together" },
+              { value: "feed", label: "Feed" },
+            ]}
+          />
+        )
+      }
       /* The canonical --page-bottom-pad token (tab-bar height + the home
          indicator's inset + 1rem), as Food pins it, so the last card on
          Together or the Feed scrolls clear of the floating tab bar. */
@@ -275,6 +300,12 @@ export default function Social() {
         </>
       }
     >
+      <PullToRefreshIndicator
+        pull={pull}
+        readyAt={pullReadyAt}
+        refreshing={pullRefreshing}
+        label="Refreshing feed"
+      />
       {/* A new medal's reveal (Soc15), once per medal and tier, on the
           next visit to Social and never over Home. A blocking surface in
           the coordinator, so it never opens over another sheet; it waits
@@ -307,28 +338,6 @@ export default function Social() {
         onRetry={notifications.retry}
       />
 
-      {/* Tab bar — primary navigation on the canonical iOS "track"
-          SegmentedControl (44pt floor + full radiogroup a11y handled by
-          the primitive). Was a hand-rolled button row; migrated in the
-          Social-uniformity pass so every switcher across the app shares
-          one control. Hidden while the FullLeaderboard overlay shows
-          (chromeHidden mirrors FeedView's overlay state). */}
-      {!chromeHidden && (
-        <SegmentedControl
-          ariaLabel="Social section"
-          value={tab}
-          onChange={setTab}
-          options={[
-            /* Together leads (SOCIAL-HOME-01): the user's active
-               Circle + shared-goal surfaces. Feed is the second
-               track. Legacy ?tab=crews still resolves to Together;
-               ?tab=find opens the People overlay. */
-            { value: "together", label: "Together" },
-            { value: "feed", label: "Feed" },
-          ]}
-        />
-      )}
-
       {/* ========== FEED TAB ========== */}
       <FeedView
         active={tab === "feed"}
@@ -343,7 +352,6 @@ export default function Social() {
         blockedUsers={blockedUsers}
         blockedReady={blockedReady}
         hiddenActivityIds={hiddenActivityIds}
-        pullRefreshing={pullRefreshing}
         refreshRef={feedRefreshRef}
         onOverlayChange={setChromeHidden}
       />

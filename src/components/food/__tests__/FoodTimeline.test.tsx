@@ -67,8 +67,11 @@ describe("FoodTimeline — an empty day", () => {
     /* The composer sits directly above this card, so "Log a meal above"
        pointed at something already in view. */
     render(diary([]));
-    expect(screen.getByText("Nothing logged yet")).toBeInTheDocument();
-    expect(screen.getByText("Meals you log show here.")).toBeInTheDocument();
+    // DS4: a row with the plate, not the hexagon "nothing yet" block.
+    expect(screen.queryByText("Nothing logged yet")).toBeNull();
+    expect(
+      screen.getByText("Meals you log today show here.")
+    ).toBeInTheDocument();
     expect(screen.queryByText(/above/)).toBeNull();
   });
 });
@@ -114,15 +117,15 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
           meal("other", "Oats", { meal: "breakfast" }),
         ])
       );
-      expect(container.querySelectorAll("img")).toHaveLength(1);
-      expect(container.querySelector("img")).toHaveAttribute(
+      expect(container.querySelectorAll("img[data-food-photo]")).toHaveLength(
+        1
+      );
+      expect(container.querySelector("img[data-food-photo]")).toHaveAttribute(
         "src",
         photos.urls.scanned
       );
       expect(rowFor("Soup")).not.toBeNull();
-      expect(
-        container.querySelector('[data-slot-tile="breakfast"]')
-      ).not.toBeNull();
+      expect(container.querySelector('[data-food-art="bowl"]')).not.toBeNull();
     }
   );
 
@@ -138,14 +141,14 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
         meal("later", "Soup"),
       ])
     );
-    expect(container.querySelectorAll("img")).toHaveLength(1);
-    expect(container.querySelector("img")).toHaveAttribute(
+    expect(container.querySelectorAll("img[data-food-photo]")).toHaveLength(1);
+    expect(container.querySelector("img[data-food-photo]")).toHaveAttribute(
       "src",
       photos.urls.scanned
     );
   });
 
-  it("lines every name up on a day with a photo", () => {
+  it("gives every row a picture, its photo or our drawing", () => {
     const { container } = render(
       diary([
         meal("m1", "Salmon", {
@@ -159,18 +162,16 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
         }),
       ])
     );
-    expect(container.querySelectorAll("img")).toHaveLength(1);
-    expect(
-      container.querySelector('[data-slot-tile="breakfast"]')
-    ).not.toBeNull();
+    expect(container.querySelectorAll("img[data-food-photo]")).toHaveLength(1);
+    expect(container.querySelector('[data-food-art="bowl"]')).not.toBeNull();
   });
 
-  it("keeps the compact rows on a day without photos", () => {
+  it("draws a day without photos too", () => {
     const { container } = render(
       diary([meal("m1", "Oats", { meal: "breakfast" })])
     );
     expect(rowFor("Oats")).not.toBeNull();
-    expect(container.querySelector("[data-slot-tile]")).toBeNull();
+    expect(container.querySelector('[data-food-art="bowl"]')).not.toBeNull();
   });
 });
 

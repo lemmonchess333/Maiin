@@ -36,7 +36,7 @@ export const SETUP = {
   raceDate: "Race target date",
   /** Run9: asked of every distance goal, nothing chosen. */
   raceEntry: "Race or on your own",
-  raceEntered: "A race I've entered",
+  raceEntered: "A race I’ve entered",
   /** The running a race plan starts from (R5), asked of someone who runs
    *  already. */
   weekMinutes: "Minutes a week",
@@ -48,7 +48,7 @@ export const SETUP = {
   sex: "Sex for calorie calculation",
   age: "Age range",
   name: "Your public display name",
-  start: "Go to Today",
+  start: "Start my plan",
 } as const;
 
 /** The answers on setup's screens that the journeys give, by question.
@@ -122,7 +122,7 @@ export const RUN = {
   distance: "Distance from treadmill",
   saveTreadmill: "Save treadmill run",
   /** The summary's heading, by the planned session's name ("Easy 30"). */
-  summary: (sessionName: string) => `${sessionName} complete ✓`,
+  summary: (sessionName: string) => `${sessionName} done`,
   save: "Save run",
   markPlannedDone: "Mark scheduled run complete",
   done: "Done",
@@ -149,7 +149,8 @@ export const STRIP = {
   runDone: "completed run",
 } as const;
 
-/** Home, where a saved version 2 plan lands (`Home`'s page title). */
+/** Home, where a saved version 2 plan lands (`Home`'s page h1: for screen
+ *  readers only since DS4, where the hero names the screen). */
 export const HOME = {
   heading: "Today",
 } as const;
@@ -201,7 +202,7 @@ export const RUN_ABOUT = {
   open: "Why this run",
   what: "What it is",
   feel: "How it should feel",
-  why: "Why it's in your week",
+  why: "Why it’s in your week",
   ifWrong: "If it feels wrong",
   alsoCalled: "Coaches also call this",
 } as const;

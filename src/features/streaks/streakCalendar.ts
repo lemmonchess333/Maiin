@@ -19,7 +19,13 @@ import { formatMonth, formatWeekdayDayMonth } from "@/utils/formatters";
  * and today before anything is logged, carry no mark: the sheet never
  * says a streak is at risk.
  */
-export type StreakDayState = "logged" | "covered" | "none" | "ahead";
+export type StreakDayState =
+  | "logged"
+  | "covered"
+  | "none"
+  | "ahead"
+  /** Before the first day the streak reads: nothing is known of it. */
+  | "unread";
 
 export interface StreakCalendarDay {
   key: string;
@@ -44,6 +50,7 @@ const STATE_WORDS: Record<StreakDayState, string> = {
   covered: "covered",
   none: "nothing logged",
   ahead: "",
+  unread: "",
 };
 
 /** The first of the month holding `dayKey`. */
@@ -58,16 +65,26 @@ export function earliestStreakMonth(
   todayKey: string,
   windowDays: number
 ): Date {
-  return monthOf(
-    localDateString(addLocalDays(parseLocalDate(todayKey), -windowDays))
-  );
+  return monthOf(streakReadFrom(todayKey, windowDays));
 }
 
+/** The first day the streak's reads reach (`streakWindowStart`). */
+export function streakReadFrom(todayKey: string, windowDays: number): string {
+  return localDateString(addLocalDays(parseLocalDate(todayKey), -windowDays));
+}
+
+/**
+ * A month of the streak. `readFrom` is the first day the streak's reads
+ * cover (`streakWindowStart`): the earliest month it can show starts
+ * before it, and a day before it says nothing, logged or not, rather than
+ * "nothing logged" over days that may have been.
+ */
 export function streakMonth(
   month: Date,
   logged: ReadonlySet<string>,
   covered: readonly string[],
-  todayKey: string
+  todayKey: string,
+  readFrom?: string
 ): StreakMonth {
   const first = new Date(month.getFullYear(), month.getMonth(), 1);
   const length = new Date(
@@ -87,7 +104,9 @@ export function streakMonth(
         ? "covered"
         : key >= todayKey
           ? "ahead"
-          : "none";
+          : readFrom && key < readFrom
+            ? "unread"
+            : "none";
     const name = `${formatWeekdayDayMonth(d)}${isToday ? ", today" : ""}`;
     days.push({
       key,
@@ -119,6 +138,6 @@ export function coveredDayLine(
   const latest = [...covered].sort().at(-1)!;
   const yesterday = localDateString(addLocalDays(parseLocalDate(todayKey), -1));
   if (latest === yesterday)
-    return `Yesterday's rest day is covered. Still on a ${streak}-day streak.`;
-  return `${formatWeekdayDayMonth(parseLocalDate(latest))} was a rest day, and it's covered.`;
+    return `Yesterday’s rest day is covered. Still on a ${streak}-day streak.`;
+  return `${formatWeekdayDayMonth(parseLocalDate(latest))} was a rest day, and it’s covered.`;
 }

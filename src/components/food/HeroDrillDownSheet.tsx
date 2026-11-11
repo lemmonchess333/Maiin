@@ -315,7 +315,7 @@ export default function HeroDrillDownSheet({
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-foreground">
-                  Fuel for today's training
+                  Fuel for today’s training
                 </p>
                 {!isPro && (
                   <span className="inline-flex items-center gap-1 text-caption font-semibold text-lifting-strong">
@@ -365,11 +365,11 @@ export default function HeroDrillDownSheet({
                     <span className="font-mono tabular-nums">
                       +{fuel.proteinDeltaG}g protein
                     </span>
-                    ; there isn't room for extra carbs.
+                    ; there isn’t room for extra carbs.
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Protein and essential fat are already protected, so today's
+                    Protein and essential fat are already protected, so today’s
                     split stays steady.
                   </p>
                 )

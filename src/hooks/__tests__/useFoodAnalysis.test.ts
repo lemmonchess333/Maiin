@@ -32,6 +32,7 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 import { useFoodAnalysis } from "../useFoodAnalysis";
+import { bootSteps } from "@/lib/bootTrace";
 
 const GOOD = {
   foodName: "Chicken and rice",
@@ -51,6 +52,14 @@ const GOOD = {
   totalFat: 5,
   confidence: "high",
 };
+
+/** The steps written since `before` was taken, by identity: the list is
+ *  one buffer for the process, capped at forty, so a length is no mark. */
+function stepsSince(before: Set<unknown>) {
+  return bootSteps()
+    .filter((entry) => !before.has(entry))
+    .map((entry) => entry.step);
+}
 
 function stubFetch(impl: () => Promise<unknown>) {
   vi.stubGlobal("fetch", vi.fn(impl));
@@ -206,12 +215,95 @@ describe("useFoodAnalysis — the outcome contract", () => {
       throw new TypeError("Failed to fetch");
     });
     const { result } = renderHook(() => useFoodAnalysis());
+    const before = new Set(bootSteps());
     let outcome!: Awaited<ReturnType<typeof result.current.analyzeFood>>;
     await act(async () => {
       outcome = await result.current.analyzeFood("QUJD");
     });
-    expect(outcome.errorMessage).toMatch(/couldn't reach the server/i);
+    expect(outcome.errorMessage).toMatch(/couldn’t reach the server/i);
     expect(outcome.errorMessage).not.toMatch(/failed to fetch/i);
+    // The browser's own words do reach the step list, which only the
+    // iPhone's Details shows: they are what a screenshot needs. Only this
+    // call's steps: the list is one buffer for the whole process.
+    const steps = stepsSince(before);
+    expect(steps).toEqual([
+      expect.stringMatching(/^Scan: sending a \d+ KB photo$/),
+      expect.stringMatching(/^Scan: signed the request in \d+ ms$/),
+      expect.stringMatching(
+        /^Scan: failed after \d+ ms \(TypeError: Failed to fetch\)$/
+      ),
+    ]);
+  });
+
+  it("a typed meal's request is traced under its own name, apart from a photo's", async () => {
+    stubFetch(async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    const { result } = renderHook(() => useFoodAnalysis());
+    const before = new Set(bootSteps());
+    let parsed: Awaited<ReturnType<typeof result.current.analyzeFoodText>> =
+      GOOD;
+    await act(async () => {
+      parsed = await result.current.analyzeFoodText("2 eggs");
+    });
+    expect(parsed).toBeNull();
+    expect(stepsSince(before)).toEqual([
+      "Typed meal: sending",
+      expect.stringMatching(/^Typed meal: signed the request in \d+ ms$/),
+      expect.stringMatching(
+        /^Typed meal: failed after \d+ ms \(TypeError: Failed to fetch\)$/
+      ),
+    ]);
+  });
+
+  it("a refused scan names the AI model's own answer in the step list", async () => {
+    // The first TestFlight scans: the model, asked for in a region that
+    // does not serve it, answered 404, and the list said only "server
+    // answered 500".
+    stubFetch(async () =>
+      reply(500, {
+        error: "ai-failed",
+        message:
+          "Couldn't analyse this. Try again. This one didn't use a scan.",
+        modelStatus: 404,
+      })
+    );
+    const { result } = renderHook(() => useFoodAnalysis());
+    const before = new Set(bootSteps());
+    let outcome!: Awaited<ReturnType<typeof result.current.analyzeFood>>;
+    await act(async () => {
+      outcome = await result.current.analyzeFood("QUJD");
+    });
+    expect(outcome.errorMessage).toMatch(/didn't use a scan/);
+    expect(stepsSince(before)).toEqual([
+      expect.stringMatching(/^Scan: sending a \d+ KB photo$/),
+      expect.stringMatching(/^Scan: signed the request in \d+ ms$/),
+      expect.stringMatching(/^Scan: server answered 500 in \d+ ms$/),
+      "Scan: the AI model answered 404",
+    ]);
+  });
+
+  it("a typed meal names the model's answer too, and a failure without one adds nothing", async () => {
+    stubFetch(async () => reply(500, { error: "ai-failed", modelStatus: 403 }));
+    const { result } = renderHook(() => useFoodAnalysis());
+    let before = new Set(bootSteps());
+    await act(async () => {
+      await result.current.analyzeFoodText("2 eggs");
+    });
+    expect(stepsSince(before)).toContain(
+      "Typed meal: the AI model answered 403"
+    );
+
+    stubFetch(async () =>
+      reply(500, { error: "Failed to analyze food image" })
+    );
+    before = new Set(bootSteps());
+    await act(async () => {
+      await result.current.analyzeFood("QUJD");
+    });
+    expect(
+      stepsSince(before).some((step) => step.includes("AI model answered"))
+    ).toBe(false);
   });
 
   it("a stalled request times out instead of hanging forever", async () => {

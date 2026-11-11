@@ -12,8 +12,10 @@
  * a screen-reader activation opens the existing Stop confirm dialog instead
  * (via onRequestConfirm) — so hold users get the fast path and everyone else
  * (and every stray brush) gets the safe path. A completed hold ends the run
- * directly and swallows its trailing click. See spec `spec-run-fast-launch.md`
- * §12.
+ * directly and swallows its trailing click. A hold let go early only resets
+ * the ring and swallows its click too: the runner changed their mind, and a
+ * dialog mid-run would interrupt them (DESIGN_GUIDE §14h). See spec
+ * `spec-run-fast-launch.md` §12.
  *
  * The paused screen's Stop is the same control at the large size, with its
  * own label and glyph: a hold there ends the run too, and a tap still opens
@@ -35,6 +37,12 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 
 const HOLD_MS = 1500;
+/** A press longer than this was a hold, not a tap. */
+const TAP_MAX_MS = 300;
+/** How long after a hold is let go its click is taken as that release's
+ *  own; a click later than this is a separate activation (Enter, a
+ *  VoiceOver double-tap) and opens the dialog. */
+const RELEASE_CLICK_MS = 400;
 /* The ring sits 4px inside the button's edge, at either size. */
 const BUTTON_PX: Record<RunControlSize, number> = { sm: 56, lg: 76 };
 const RING_INSET = 4;
@@ -72,6 +80,9 @@ export default function HoldToFinishButton({
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number | null>(null);
   const completedRef = useRef(false);
+  /** When the last press, a hold, was let go early: the click that
+   *  follows that release is swallowed. */
+  const abandonedAtRef = useRef<number | null>(null);
   const tickRef = useRef(0);
   const loopRef = useRef<(() => void) | null>(null);
   const [progress, setProgress] = useState(0);
@@ -113,6 +124,7 @@ export default function HoldToFinishButton({
 
   const begin = useCallback(() => {
     completedRef.current = false;
+    abandonedAtRef.current = null;
     tickRef.current = 0;
     startRef.current = performance.now();
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
@@ -123,6 +135,13 @@ export default function HoldToFinishButton({
   // trailing click (from a tap) is handled by handleClick below.
   const cancel = useCallback(() => {
     if (completedRef.current) return;
+    const started = startRef.current;
+    // No press in progress: an echo of one already ended. On touch the
+    // browser fires pointerleave after pointerup, and that second call
+    // must not wipe what the first one recorded.
+    if (started == null) return;
+    const now = performance.now();
+    abandonedAtRef.current = now - started > TAP_MAX_MS ? now : null;
     stop();
   }, [stop]);
 
@@ -131,6 +150,16 @@ export default function HoldToFinishButton({
     // the trailing click so it doesn't also open the confirm dialog.
     if (completedRef.current) {
       completedRef.current = false;
+      return;
+    }
+    // A hold let go early: the ring has reset, and that is all. Only the
+    // click that comes with that release; a later one is its own press.
+    const abandonedAt = abandonedAtRef.current;
+    abandonedAtRef.current = null;
+    if (
+      abandonedAt != null &&
+      performance.now() - abandonedAt < RELEASE_CLICK_MS
+    ) {
       return;
     }
     onRequestConfirm();

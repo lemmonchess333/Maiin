@@ -11,7 +11,7 @@ import {
 } from "@/lib/restTimerNotification";
 import { formatClock } from "@/utils/formatters";
 import { showRestOutside } from "@/lib/restOutside";
-import CompactRestTimer from "./CompactRestTimer";
+import CompactRestTimer, { type RestNextSet } from "./CompactRestTimer";
 
 function playChime() {
   try {
@@ -51,12 +51,15 @@ export default function WorkoutRestTimer({
   startedAt,
   initialTarget,
   exerciseName,
+  next,
   onStop,
   onAnnounce,
 }: {
   startedAt: number;
   initialTarget: number;
   exerciseName?: string;
+  /** The set the rest leads to, named under the countdown. */
+  next?: RestNextSet;
   onStop: () => void;
   onAnnounce?: (words: string) => void;
 }) {
@@ -120,6 +123,7 @@ export default function WorkoutRestTimer({
     <CompactRestTimer
       seconds={seconds}
       target={target}
+      next={next}
       onStop={onStop}
       onExtend={(extra) => {
         // Re-arm an expired rest, without carrying its extension to the next.

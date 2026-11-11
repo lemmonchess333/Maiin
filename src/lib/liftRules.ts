@@ -144,9 +144,9 @@ export function liftRules(ctx: LiftRulesContext): LiftRule[] {
         !scheduled
           ? ctx.experience === "intermediate" || ctx.experience === "advanced"
             ? `Your plan schedules none on ${word(ctx.liftDays)} lift ${ctx.liftDays === 1 ? "day" : "days"} a week.`
-            : "Your plan schedules none while you're new to lifting."
+            : "Your plan schedules none while you’re new to lifting."
           : ctx.racing
-            ? "Your lighter weeks fall on your run plan's easier weeks, with half the sets at the same weights."
+            ? "Your lighter weeks fall on your run plan’s easier weeks, with half the sets at the same weights."
             : `Every ${ordinal(LIGHTER_WEEK_EVERY)} week you train is lighter, with half the sets at the same weights.`
       } ${takeOne}`,
     },

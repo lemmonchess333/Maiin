@@ -74,10 +74,16 @@ export default function GuidedRunOverlay({
       }}
     >
       {/* Overall progress bar */}
-      <div className="h-1 bg-white/5">
+      <div className="h-1 bg-white/5 overflow-hidden">
+        {/* The fill stays full width and slides: a width change, retargeted
+           every second for the whole run, laid the screen out and painted
+           every frame; a transform runs on the GPU (DESIGN_GUIDE §14h). */}
         <div
-          className="h-full transition-all duration-1000"
-          style={{ width: `${totalProgress * 100}%`, background: segColor }}
+          className="h-full w-full transition-transform duration-1000"
+          style={{
+            transform: `translateX(${(totalProgress - 1) * 100}%)`,
+            background: segColor,
+          }}
         />
       </div>
 
@@ -104,8 +110,11 @@ export default function GuidedRunOverlay({
         {/* Segment progress bar */}
         <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
           <div
-            className="h-full rounded-full transition-all duration-1000"
-            style={{ width: `${segmentProgress * 100}%`, background: segColor }}
+            className="h-full w-full rounded-full transition-transform duration-1000"
+            style={{
+              transform: `translateX(${(segmentProgress - 1) * 100}%)`,
+              background: segColor,
+            }}
           />
         </div>
 

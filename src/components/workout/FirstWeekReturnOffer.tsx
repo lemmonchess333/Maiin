@@ -41,6 +41,10 @@ export default function FirstWeekReturnOffer({
   const choice = useFirstSessionReturnChoice();
   const [busy, setBusy] = useState(false);
   const [refusedUid, setRefusedUid] = useState<string | null>(null);
+  // Answered on this screen: the card goes at once, and a second tap
+  // while the answer saves sends nothing again.
+  const [answeredUid, setAnsweredUid] = useState<string | null>(null);
+  const answering = useRef<string | null>(null);
   const viewed = useRef<string | null>(null);
   // Setup's time: the person has not chosen one, and Settings changes it.
   const time = SETUP_REMINDER_TIME;
@@ -48,7 +52,9 @@ export default function FirstWeekReturnOffer({
   const preview = reminderPreview(
     time,
     profile?.weekSchedule,
-    reminders.liftName
+    reminders.liftName,
+    new Date(),
+    reminders.doneDay
   );
   const ready =
     !!uid &&
@@ -64,6 +70,7 @@ export default function FirstWeekReturnOffer({
     !choice.failed &&
     !choice.response;
   const refused = !!uid && refusedUid === uid;
+  const answered = !!uid && answeredUid === uid;
 
   useEffect(() => {
     if (!ready || day === null) return;
@@ -78,6 +85,9 @@ export default function FirstWeekReturnOffer({
   }, [ready, uid, kind, todayKey, day]);
 
   const answer = async (outcome: "enabled" | "later" | "denied") => {
+    if (!uid || answering.current === uid) return;
+    answering.current = uid;
+    setAnsweredUid(uid);
     if (day !== null)
       trackLifecycle("first_week_reminder_choice", {
         kind,
@@ -103,7 +113,7 @@ export default function FirstWeekReturnOffer({
       await answer("enabled");
       toast.success("Training-day reminders are on");
     } catch {
-      toast.error("Couldn't turn on reminders. Try again.");
+      toast.error("Couldn’t turn on reminders. Try again.");
     } finally {
       setBusy(false);
     }
@@ -113,12 +123,12 @@ export default function FirstWeekReturnOffer({
     return (
       <Card size="compact" as="section" aria-label="Reminder permission">
         <p role="status" className="text-sm text-muted-foreground">
-          Notifications are off for Tropos. Allow them in your phone&apos;s
-          Settings, then turn reminders on in Settings → Notifications.
+          Notifications are off for Tropos. Allow them in your phone’s Settings,
+          then turn reminders on in Settings → Notifications.
         </p>
       </Card>
     );
-  if (!ready) return null;
+  if (!ready || answered) return null;
   const next = reminders.liftName ?? "your next session";
   return (
     <Card size="compact" as="section" aria-label="Training-day reminder">

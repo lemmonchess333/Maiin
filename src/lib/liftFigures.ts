@@ -64,6 +64,33 @@ export function workFigure(
     : { to: reps, format: groupedFigure, unit: reps === 1 ? "rep" : "reps" };
 }
 
+/** What a session's done sets add up to, kg moved and reps, for
+ *  `workFigure`. Warm-ups are not the session's work, and a hold's `reps`
+ *  are seconds, so neither counts. The live workout's header and the
+ *  finish screen both read it, so the figure that grows set by set is the
+ *  one the finish shows. `setLogs` is indexed as `exercises` is. */
+export function sessionWork(
+  setLogs: readonly (readonly {
+    completed: boolean;
+    type?: string;
+    weight: number;
+    reps: number;
+  }[])[],
+  exercises: readonly ({ repUnit?: string } | undefined)[]
+): { volumeKg: number; reps: number } {
+  let volumeKg = 0;
+  let reps = 0;
+  setLogs.forEach((logs, exIdx) => {
+    if (exercises[exIdx]?.repUnit === "seconds") return;
+    for (const set of logs) {
+      if (!set.completed || set.type === "warmup") continue;
+      volumeKg += set.weight * set.reps;
+      reps += set.reps;
+    }
+  });
+  return { volumeKg, reps };
+}
+
 /** The sets that count. Warm-ups are not the session's work, and are
  *  left out by the caller. */
 export function setsFigure(sets: number): LiftFigure {

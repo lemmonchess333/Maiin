@@ -300,9 +300,9 @@ export function verdictFor(args: {
   if (loadBand === "high") {
     return "A strong week, with training load running high.";
   }
-  if (delta !== null && delta >= 5) return "Momentum's building.";
+  if (delta !== null && delta >= 5) return "Momentum’s building.";
   if (delta !== null && delta <= -5) {
-    return "A softer week — this week's plan resets the rhythm.";
+    return "A softer week — this week’s plan resets the rhythm.";
   }
   return "Steady week.";
 }

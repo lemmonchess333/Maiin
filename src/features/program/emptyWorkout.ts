@@ -1,4 +1,5 @@
 import type { WorkoutDay } from "./programTypes";
+import { keepTitleWhole } from "@/lib/workoutLabels";
 import {
   computeDraftIdentity,
   draftIdentityScope,
@@ -48,13 +49,12 @@ export const EMPTY_WORKOUT_NAME_MAX = 60;
  * trimmed, its spaces single, and no longer than the longest name. The
  * saved workout's title is its notes line up to the first " — ", the
  * separator a programme's notes put after the day's name, so a dash
- * typed that way is kept as an en dash, which no reader splits at.
+ * typed that way is kept as an en dash, which no reader splits at
+ * (`keepTitleWhole`).
  * Nothing typed is "Workout".
  */
 export function emptyWorkoutName(typed: string | null | undefined): string {
-  const name = (typed ?? "")
-    .replace(/\s+/g, " ")
-    .replace(/ — /g, " – ")
+  const name = keepTitleWhole((typed ?? "").replace(/\s+/g, " "))
     .trim()
     .slice(0, EMPTY_WORKOUT_NAME_MAX)
     .trim();

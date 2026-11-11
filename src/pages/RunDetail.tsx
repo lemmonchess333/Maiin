@@ -218,7 +218,7 @@ export default function RunDetail() {
         loadingLabel="Loading run"
         missingHeadline="Run not found"
         missingSub="It may have been deleted, or the link belongs to another account."
-        failedHeadline="Couldn't load this run"
+        failedHeadline="Couldn’t load this run"
         failedSub="Check your connection and try again. Nothing has been changed."
         onRetry={retryRun}
         backHref={historyReturnTo ?? "/history"}
@@ -327,7 +327,7 @@ export default function RunDetail() {
       source: "run",
     });
     toast[ok ? "success" : "error"](
-      ok ? "Route saved — find it in run setup" : "Couldn't save route"
+      ok ? "Route saved — find it in run setup" : "Couldn’t save route"
     );
   };
 

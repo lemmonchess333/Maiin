@@ -8,11 +8,10 @@
  *   repaint pulse does not (`useElapsedSeconds`), and it reads the time
  *   left from the rest's start each tick, so a throttled timer is late,
  *   never wrong. The title goes back as the rest ends.
- * - On the phone, the lock screen's Live Activity (`restLiveActivity.ts`).
- *   NATIVE HALF DEFERRED: until its widget extension is built in Xcode
- *   it shows nothing. Loaded only on a phone, so the web never fetches
- *   it. The rest-end notification (`restTimerNotification.ts`) is
- *   separate and already works there.
+ * - On the phone, the lock screen's Live Activity (`restLiveActivity.ts`),
+ *   drawn by the `LiveActivitiesExtension` widget (iOS 16.2 or later).
+ *   Loaded only on a phone, so the web never fetches it. The rest-end
+ *   notification (`restTimerNotification.ts`) is separate.
  */
 import { isNativePlatform } from "@/lib/platform";
 import { elapsedSecondsSince } from "@/hooks/useElapsedSeconds";

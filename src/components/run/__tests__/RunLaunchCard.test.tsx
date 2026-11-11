@@ -72,7 +72,7 @@ describe("RunLaunchCard", () => {
       /What it is.*Relaxed running at a chatty pace/
     );
     expect(why).toHaveTextContent(
-      /Why it's in your week.*it makes the hard days work/
+      /Why it’s in your week.*it makes the hard days work/
     );
     expect(why).toHaveTextContent(/If it feels wrong.*Slow down/);
   });

@@ -619,6 +619,61 @@ describe("claimWindowStart", () => {
     });
     expect(result.current.runs.map((r) => r.id)).toEqual(["this-plan"]);
   });
+
+  // A starter stage is weighed by run days since it began, up to two weeks
+  // back: Home read only this week and missed a goal reached over two.
+  it("reads a starter stage's runs from its first week", async () => {
+    expect(
+      claimWindowStart("2026-10-21", [], {
+        mode: "starter",
+        stageWeekKey: "2026-10-19",
+        stageStartedWeek: "2026-10-12",
+      })
+    ).toBe("2026-10-11");
+    // At most two weeks back, however long the stage has run.
+    expect(
+      claimWindowStart("2026-10-21", [], {
+        mode: "starter",
+        stageWeekKey: "2026-10-19",
+        stageStartedWeek: "2026-09-07",
+      })
+    ).toBe("2026-10-04");
+    // Another plan reads this week, as before.
+    expect(
+      claimWindowStart("2026-10-21", [], {
+        mode: "race_prep",
+        stageWeekKey: "2026-10-19",
+        stageStartedWeek: "2026-10-12",
+      })
+    ).toBe("2026-10-18");
+
+    resetFirestore();
+    currentUser = mockUser;
+    mockProgramState = {
+      runDays: [],
+      manualCompletions: {},
+      runPlan: {
+        mode: "starter",
+        stageWeekKey: "2026-05-25",
+        stageStartedWeek: "2026-05-18",
+      },
+    } as unknown as typeof mockProgramState;
+    seedRuns([
+      {
+        id: "last-week",
+        data: {
+          date: "2026-05-20",
+          distance: 3000,
+          completedAt: Timestamp.fromMillis(1779270000_000),
+        },
+      },
+    ]);
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    await act(async () => {
+      await flushSnapshots();
+    });
+    expect(result.current.runs.map((r) => r.id)).toEqual(["last-week"]);
+  });
 });
 
 describe("useClaimMap - distance threshold", () => {

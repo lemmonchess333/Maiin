@@ -177,7 +177,7 @@ export async function uploadProfilePhoto(
  */
 export async function removeProfilePhoto(uid: string): Promise<void> {
   if (!auth.currentUser || auth.currentUser.uid !== uid) {
-    throw new Error("Cannot remove another user's profile photo.");
+    throw new Error("Cannot remove another user’s profile photo.");
   }
 
   const profileRef = doc(db, "users", uid, "public", "profile");

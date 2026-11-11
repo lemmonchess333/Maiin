@@ -297,7 +297,7 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
           meals: prev?.scope === scope ? prev.meals : [],
           lastDoc: null,
           hasMore: false,
-          error: "Couldn't load your food diary.",
+          error: "Couldn’t load your food diary.",
           serverConfirmed: false,
         }));
         finish();

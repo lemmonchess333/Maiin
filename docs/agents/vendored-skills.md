@@ -4,8 +4,8 @@ Most skills in `.claude/skills/` are copied from other repositories. This
 records where each came from, which version is here, and what this repo
 changed in it. With that, an update check is one `diff -r` against upstream,
 and the local changes are carried into the next copy instead of being lost.
-`lock-decision` and `verifier-tropos-web` are this repo's own and are not
-listed.
+`lock-decision`, `screen-critique` and `verifier-tropos-web` are this repo's
+own and are not listed.
 
 ## mattpocock/skills
 
@@ -20,7 +20,8 @@ listed.
   Matt's TypeScript courses, and the `in-progress` bucket.
 - **Source:** [mattpocock/skills](https://github.com/mattpocock/skills),
   `skills/<bucket>/<name>/`
-- **Version here:** v1.3.1, commit `24fe0ef` (2026-10-04)
+- **Version here:** main at commit `4ae2317` (2026-10-31), after v1.3.2.
+  Updated 2026-11-09 from v1.3.1 (`24fe0ef`).
 - **Local changes:**
   - `prototype` asks before creating its throwaway branch where the session
     is limited to a designated branch (`d11a8b7c`).
@@ -29,7 +30,8 @@ listed.
     jobs: the built-in hunts correctness bugs, Matt's checks the diff
     against the repo's written standards and against the spec or ticket it
     came from. The references in `ask-matt`, `implement`, `implement-spec`
-    and `tdd` say `code-review-matt` to match.
+    and `tdd` say `code-review-matt` to match, `implement`'s Skill call
+    included.
   - `pr` opens with one line saying `.github/PULL_REQUEST_TEMPLATE.md` keeps
     its sections, with the skill's template filling its Summary and Test
     plan.
@@ -39,11 +41,14 @@ listed.
 
 ## emilkowalski/skills
 
-- **Skills:** animate, animate-expo, animation-vocabulary, apple-design,
-  ask-sonner, break-ui, emil-design-eng, find-animation-opportunities,
+- **Skills:** animate, animate-expo, animation-performance,
+  animation-vocabulary, apple-design, ask-sonner, break-ui, choreograph,
+  emil-design-eng, find-animation-opportunities, gestures,
   improve-animations, mobile-native, pick-ui-library, prototype (here
-  `prototype-emil`), review-animations, write-swift
+  `prototype-emil`), remove-animations, review-animations, write-swift
 - **Source:** [emilkowalski/skills](https://github.com/emilkowalski/skills),
+  updated 2026-11-09 to commit `715c180` (four new skills:
+  animation-performance, choreograph, gestures, remove-animations); first
   installed 2026-10-05 with `npx skills@latest add emilkowalski/skills
 --agent claude-code --copy`. `skills-lock.json` records each skill's
   source and hash.

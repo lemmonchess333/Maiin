@@ -189,7 +189,7 @@ it("says so when the invite link can't be copied", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Share invite link" }));
   await waitFor(() =>
     expect(toasts.error).toHaveBeenCalledWith(
-      "Couldn't copy the invite link. Try again."
+      "Couldn’t copy the invite link. Try again."
     )
   );
   expect(toasts.success).not.toHaveBeenCalled();
@@ -237,11 +237,22 @@ it("shows the person's code to read out, made once when People opens", async () 
   expect(A.fetchCode).toHaveBeenCalledTimes(1);
 });
 
-it("reads a code the account already has without asking for one", () => {
+it("shows the account's code at once, and the server's in its place", async () => {
+  // The profile is read at sign-in, and a block may have renewed the code
+  // since, so People asks for the code that works now.
   A.profile = { uid: "me", inviteCode: "A2B3C4D5" };
   renderPeople(true);
   expect(screen.getByText("A2B3-C4D5")).toBeInTheDocument();
-  expect(A.fetchCode).not.toHaveBeenCalled();
+  expect(await screen.findByText("K7P4-9M2H")).toBeInTheDocument();
+  expect(A.fetchCode).toHaveBeenCalledTimes(1);
+});
+
+it("keeps the account's code when the server can't be asked", async () => {
+  A.profile = { uid: "me", inviteCode: "A2B3C4D5" };
+  A.fetchCode.mockRejectedValue(new Error("offline"));
+  renderPeople(true);
+  await vi.waitFor(() => expect(A.fetchCode).toHaveBeenCalledTimes(1));
+  expect(screen.getByText("A2B3-C4D5")).toBeInTheDocument();
 });
 
 it("says what an invite makes, by whether the person approves followers", () => {
@@ -252,7 +263,7 @@ it("says what an invite makes, by whether the person approves followers", () => 
   const { unmount } = renderPeople(true);
   expect(
     screen.getByText(
-      "When they join with your link or code, you'll follow them and they'll ask to follow you."
+      "When they join with your link or code, you’ll follow them and they’ll ask to follow you."
     )
   ).toBeInTheDocument();
   unmount();
@@ -278,7 +289,7 @@ it("says so when the code can't be had, and shares nothing", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Share invite link" }));
   await waitFor(() =>
     expect(toasts.error).toHaveBeenCalledWith(
-      "Couldn't get your invite code. Check your connection and try again."
+      "Couldn’t get your invite code. Check your connection and try again."
     )
   );
   expect(share).not.toHaveBeenCalled();

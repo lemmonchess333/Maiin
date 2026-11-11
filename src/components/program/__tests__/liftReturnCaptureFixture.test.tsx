@@ -45,7 +45,7 @@ function seededDaysAway(): number {
 /** The line the capture spec blocks on before it shoots. */
 function specGapLine(): string {
   const src = read("e2e/screenshots/lift-return.screens.capture.spec.ts");
-  const match = /getByText\(\/(It's been about \d+ weeks)\/i\)/.exec(src);
+  const match = /getByText\(\/(It’s been about \d+ weeks)\/i\)/.exec(src);
   if (!match) {
     throw new Error(
       "lift-return.screens.capture.spec.ts: gap-line locator not found"
@@ -75,7 +75,7 @@ describe("lift-return capture fixture", () => {
   // only drift possible is the capture measuring one day MORE than was
   // staged. Asserting the staged day alone is what passed on 2026-09-13.
   for (const daysAway of [staged, staged + 1]) {
-    it(`renders the spec's line at ${daysAway} days away`, () => {
+    it(`renders the spec’s line at ${daysAway} days away`, () => {
       renderGap(daysAway);
       expect(screen.getByText(line)).toBeInTheDocument();
       cleanup();

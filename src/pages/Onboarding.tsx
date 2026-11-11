@@ -223,7 +223,7 @@ export default function Onboarding() {
   const [nameTyped, setNameTyped] = useState(
     chosenDraftName(draft?.displayName, user?.email) !== undefined
   );
-  /* Go to Today was pressed without a name it can publish: the field says
+  /* Start my plan was pressed without a name it can publish: the field says
      why from then on, rather than greeting an empty box with an error. */
   const [nameAsked, setNameAsked] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -1028,7 +1028,7 @@ export default function Onboarding() {
           "Onboarding: local profile update failed; reloading to pick up server state",
           localUpdateErr
         );
-        toast.success("Setting up your program…");
+        toast.success("Setting up your programme…");
         // Brief delay so the toast renders before the reload swallows it.
         await new Promise((r) => setTimeout(r, 600));
         // Re-read the completed profile on Home. The server-stamped journey
@@ -1085,7 +1085,7 @@ export default function Onboarding() {
         clearPendingInvite(pendingInviteAtFinish);
         if (inviteCode.trim()) {
           toast.error(
-            `That invite code didn't look right. ${ENTER_CODE_LATER}`
+            `That invite code didn’t look right. ${ENTER_CODE_LATER}`
           );
         }
       }
@@ -1136,8 +1136,8 @@ export default function Onboarding() {
               : code === "invalid-argument"
                 ? // The server refused an answer, so a retry on a better
                   // connection would fail the same way.
-                  "We couldn’t save your plan: one of your answers wasn’t accepted. Check your answers and try again."
-                : "We couldn’t save your plan. Check your connection and try again. Your answers are saved."
+                  "Couldn’t save your plan: one of your answers wasn’t accepted. Check your answers and try again."
+                : "Couldn’t save your plan. Check your connection and try again. Your answers are saved."
       );
     } finally {
       pending.current = false;
@@ -1440,7 +1440,7 @@ export default function Onboarding() {
                       <p className="text-sm">
                         Run {STARTER_GOAL_NAME} in about nine weeks. It starts
                         with short runs and walks between them, and a week
-                        repeats until you've done it.
+                        repeats until you’ve done it.
                       </p>
                       <div className="space-y-2">
                         <p className="text-sm">Runs per week</p>
@@ -1570,7 +1570,7 @@ export default function Onboarding() {
                             {runningWeekMinutes !== "" &&
                             runningLongestMinutes !== "" &&
                             !runningStartValid
-                              ? "The longest run is part of the week, so it can't be more, and each is at least 10 min."
+                              ? "The longest run is part of the week, so it can’t be more, and each is at least 10 min."
                               : "The plan starts from here and builds a step a week towards the race."}
                           </p>
                         </div>
@@ -1620,7 +1620,7 @@ export default function Onboarding() {
                             </p>
                             <p className="text-xs text-muted-foreground">
                               A third fewer sets on leg lifts, at the same
-                              weights, from your plan's build weeks until the
+                              weights, from your plan’s build weeks until the
                               two lighter weeks before your race.
                             </p>
                           </div>
@@ -1717,7 +1717,7 @@ export default function Onboarding() {
                         >
                           {Number(recentRaceSeconds) > 59
                             ? "Seconds go up to 59."
-                            : "That time doesn't look right. Check it and try again."}
+                            : "That time doesn’t look right. Check it and try again."}
                         </p>
                       )}
                     </section>
@@ -2358,9 +2358,10 @@ export default function Onboarding() {
               : step === 7
                 ? saveError
                   ? "Try again"
-                  : ACTIVATION_JOURNEY_V2_ENABLED
-                    ? "Go to Today"
-                    : "Start my plan"
+                  : // One label for both journeys: where it goes is the
+                    // server's answer (the comparison group and a switched-off
+                    // v2 go to the Pro offer), which no label can know first.
+                    "Start my plan"
                 : returnToReview
                   ? "Back to review"
                   : "Continue"}

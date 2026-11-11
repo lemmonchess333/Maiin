@@ -79,7 +79,7 @@ const LOAD_TEMPLATES: Record<ScoreBand, PerformanceInsight[]> = {
     {
       source: "load",
       headline: "Load is light",
-      body: "You logged fewer sessions than your usual week. Add one easy session if you're feeling fresh.",
+      body: "You logged fewer sessions than your usual week. Add one easy session if you’re feeling fresh.",
     },
     {
       source: "load",
@@ -89,7 +89,7 @@ const LOAD_TEMPLATES: Record<ScoreBand, PerformanceInsight[]> = {
     {
       source: "load",
       headline: "Quiet week",
-      body: "Volume came in low. If you're easing in, ramp gently.",
+      body: "Volume came in low. If you’re easing in, ramp gently.",
     },
   ],
   medium: [
@@ -143,7 +143,7 @@ const RECOVERY_TEMPLATES: Record<ScoreBand, PerformanceInsight[]> = {
     {
       source: "recovery",
       headline: "Recovery dipped",
-      body: "You're recovering less than your training load asks for. Pull one session if it persists.",
+      body: "You’re recovering less than your training load asks for. Pull one session if it persists.",
     },
   ],
   medium: [
@@ -172,7 +172,7 @@ const RECOVERY_TEMPLATES: Record<ScoreBand, PerformanceInsight[]> = {
     {
       source: "recovery",
       headline: "Recovery is high",
-      body: "You're absorbing the load well. Keep building gradually.",
+      body: "You’re absorbing the load well. Keep building gradually.",
     },
     {
       source: "recovery",

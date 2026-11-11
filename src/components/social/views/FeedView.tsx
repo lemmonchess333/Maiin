@@ -87,7 +87,6 @@ export interface FeedViewProps {
   openPeople: () => void;
   /** Jump to the Together tab. */
   openTogether: () => void;
-  pullRefreshing: boolean;
   /** The shell's pull-to-refresh needs the ACTIVE feed's refresh; the
    *  view publishes it into this ref so refresh keeps working without
    *  lifting the feed hooks out of the view. */
@@ -113,7 +112,6 @@ export default function FeedView({
   hiddenActivityIds,
   openPeople,
   openTogether,
-  pullRefreshing,
   refreshRef,
   onOverlayChange,
 }: FeedViewProps) {
@@ -543,17 +541,11 @@ export default function FeedView({
             {feedSubTab === "following" && followingCount === 0 && (
               <HexEmptyState
                 icon={Users}
-                headline="You don't follow anyone yet"
+                headline="You don’t follow anyone yet"
                 sub="Follow people to see their sessions here."
                 accent={THEME.brand}
                 action={{ label: "Find people", onClick: openPeople }}
               />
-            )}
-
-            {pullRefreshing && (
-              <div className="flex items-center justify-center py-2">
-                <Spinner size="sm" variant="primary" label="Refreshing feed" />
-              </div>
             )}
 
             {/* The full-width refresh button that used to live here was
@@ -568,7 +560,7 @@ export default function FeedView({
                 sentence for the person. */}
             {feedSubTab === "following" && followingFeed.error && (
               <ErrorState
-                title="Couldn't load your feed"
+                title="Couldn’t load your feed"
                 description="Check your connection and try again."
                 retry={{ label: "Retry", onClick: followingFeed.refresh }}
               />
@@ -587,7 +579,7 @@ export default function FeedView({
               exploreFeed.items.length === 0 &&
               !exploreFeed.loading && (
                 <ErrorState
-                  title="Couldn't load the community feed"
+                  title="Couldn’t load the community feed"
                   description="Check your connection and try again."
                   retry={{ label: "Retry", onClick: exploreFeed.refresh }}
                 />
@@ -766,7 +758,7 @@ export default function FeedView({
                     <HexEmptyState
                       icon={Globe}
                       headline="Tropos is quiet right now"
-                      sub="Your circles don't need a crowd"
+                      sub="Your circles don’t need a crowd"
                       accent={THEME.brand}
                       action={{
                         label: "Open Together",

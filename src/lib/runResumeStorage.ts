@@ -499,7 +499,35 @@ export function clearStoredRun(uid: string): void {
     if (readString(key) === null && i >= known) break;
     remove(key);
   }
+  if (meta) announceClear();
 }
+
+/* A stored run going away is announced: saved, discarded or expired. The
+   week rollover waits on a run from last week still on this phone
+   (`useProgram`), and once it goes it reads the recent runs again, so a
+   run saved just after midnight counts for the week it was started in.
+   Announced after the call, never inside it: a read that discards an
+   expired run can run while a page renders, and a listener that set state
+   there would update another component mid-render. */
+const clearListeners = new Set<() => void>();
+let clears = 0;
+
+function announceClear(): void {
+  clears++;
+  queueMicrotask(() => clearListeners.forEach((listener) => listener()));
+}
+
+/** For `useSyncExternalStore`, with `storedRunClears`. */
+export function subscribeStoredRunClears(listener: () => void): () => void {
+  clearListeners.add(listener);
+  return () => {
+    clearListeners.delete(listener);
+  };
+}
+
+/** How many stored runs have gone on this device, for
+ *  `useSyncExternalStore`. */
+export const storedRunClears = () => clears;
 
 // ─── Internal validation ────────────────────────────────────────────
 

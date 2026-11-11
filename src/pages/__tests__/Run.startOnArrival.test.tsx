@@ -296,7 +296,7 @@ describe("a run started from Home", () => {
   it("starts the planned run as the page opens, with no second Start", async () => {
     planTodaysEasyRun();
     await open(HOME_START);
-    expect(screen.getByText("Acquiring GPS...")).toBeInTheDocument();
+    expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
     expect(h.gpsCalls).toContain("start");
     expect(h.launchCardRenders).toBe(0);
     // Off the address, so going Back here from the summary, or a reload,
@@ -309,7 +309,7 @@ describe("a run started from Home", () => {
   it("starts a free run for a free runner, not the picker", async () => {
     h.runMode = "freeform";
     await open("/run?start=1");
-    expect(screen.getByText("Acquiring GPS...")).toBeInTheDocument();
+    expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
     expect(h.pickerRenders).toBe(0);
     fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
     await saveOnTheTreadmill("5");
@@ -364,7 +364,7 @@ describe("a run started from Home", () => {
     planTodaysEasyRun();
     h.hint = { owed: true, loading: false, runCount: 4 };
     await open(HOME_START);
-    expect(screen.getByText("Acquiring GPS...")).toBeInTheDocument();
+    expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
   });
 
   it("waits for a slow read of the runs only so long", async () => {
@@ -375,7 +375,7 @@ describe("a run started from Home", () => {
     expect(h.gpsCalls).not.toContain("start");
     expect(h.launchCardRenders).toBe(0);
     expect(
-      await screen.findByText("Acquiring GPS...", undefined, {
+      await screen.findByText("Acquiring GPS…", undefined, {
         timeout: FIRST_RUN_CHECK_MS + 2000,
       })
     ).toBeInTheDocument();
@@ -393,7 +393,7 @@ describe("a run whose location is refused", () => {
     refuse();
     await open("/run?start=1");
     expect(screen.getByText("Location is off for Tropos")).toBeInTheDocument();
-    expect(screen.queryByText("Acquiring GPS...")).toBeNull();
+    expect(screen.queryByText("Acquiring GPS…")).toBeNull();
     expect(
       screen.queryByText("Move to an open area away from buildings")
     ).toBeNull();
@@ -414,7 +414,7 @@ describe("a run whose location is refused", () => {
     refuse();
     await open("/run?start=1");
     expect(screen.queryByRole("button", { name: "Open settings" })).toBeNull();
-    expect(screen.getByText(/browser's settings/)).toBeInTheDocument();
+    expect(screen.getByText(/browser’s settings/)).toBeInTheDocument();
   });
 });
 
@@ -423,22 +423,23 @@ describe("the note about time in the background", () => {
     const pending = new Set<unknown>();
     const realSet = globalThis.setTimeout;
     const realClear = globalThis.clearTimeout;
-    const setSpy = vi
-      .spyOn(globalThis, "setTimeout")
-      .mockImplementation(((fn: () => void, ms?: number) => {
-        const id = realSet(() => {
-          pending.delete(id);
-          fn();
-        }, ms);
-        if (ms === 6000) pending.add(id);
-        return id;
-      }) as typeof setTimeout);
-    const clearSpy = vi
-      .spyOn(globalThis, "clearTimeout")
-      .mockImplementation(((id: unknown) => {
+    const setSpy = vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+      fn: () => void,
+      ms?: number
+    ) => {
+      const id = realSet(() => {
         pending.delete(id);
-        realClear(id as ReturnType<typeof setTimeout>);
-      }) as typeof clearTimeout);
+        fn();
+      }, ms);
+      if (ms === 6000) pending.add(id);
+      return id;
+    }) as typeof setTimeout);
+    const clearSpy = vi.spyOn(globalThis, "clearTimeout").mockImplementation(((
+      id: unknown
+    ) => {
+      pending.delete(id);
+      realClear(id as ReturnType<typeof setTimeout>);
+    }) as typeof clearTimeout);
     try {
       await open("/run?start=1");
       act(() => visibility.onVisible?.({ hiddenDuration: 30 }));
@@ -460,6 +461,6 @@ describe("a run opened from Train", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "The run's card" }));
     });
-    expect(screen.getByText("Acquiring GPS...")).toBeInTheDocument();
+    expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
   });
 });

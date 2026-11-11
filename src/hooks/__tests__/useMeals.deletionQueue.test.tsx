@@ -242,7 +242,7 @@ describe("queued diary deletion and restoration", () => {
       throw new DOMException("quota", "QuotaExceededError");
     });
     await expect(result.current.deleteMeal("new-meal")).rejects.toThrow(
-      "Couldn't save on this phone"
+      "Couldn’t save on this phone"
     );
     expect(pendingDocumentWrites(uid, path)).toHaveLength(1);
     expect(readDoc(`${path}/new-meal`)).toBeUndefined();

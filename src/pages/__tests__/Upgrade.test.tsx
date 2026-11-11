@@ -219,18 +219,20 @@ describe("Upgrade — plan radiogroup (free user)", () => {
   });
 });
 
-describe("Upgrade — the buttons are the app's primary button", () => {
-  it("Continue and checkout carry no gradient", () => {
+describe("Upgrade — the buttons are the app's neutral filled button", () => {
+  it("Continue and checkout carry no gradient, and no purple", () => {
     renderPage();
     const next = screen.getByRole("button", { name: "Continue" });
-    // Both were purple-to-teal gradients (2026-09-29).
-    expect(next.className).toContain("bg-primary-strong");
+    // Both were purple-to-teal gradients (2026-09-29), then purple: a
+    // screen's one full-width filled button is neutral (DS4 call 1a).
+    expect(next.className).toMatch(/(^|\s)bg-foreground(\s|$)/);
+    expect(next.className).not.toContain("bg-primary-strong");
     expect(next.getAttribute("style") ?? "").not.toMatch(/gradient/);
     fireEvent.click(next);
     const checkout = screen.getByRole("button", {
       name: "Start Pro — £34.99/yr",
     });
-    expect(checkout.className).toContain("bg-primary-strong");
+    expect(checkout.className).toMatch(/(^|\s)bg-foreground(\s|$)/);
     expect(checkout.getAttribute("style") ?? "").not.toMatch(/gradient/);
   });
 });
@@ -307,6 +309,20 @@ describe("Upgrade — checkout uses selected plan (the original bug)", () => {
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Card declined.");
+  });
+
+  it("a purchase the store took shows a note, not an error", async () => {
+    purchaseMock.mockResolvedValueOnce({
+      success: false,
+      pending: "approval",
+    });
+    renderPlans();
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    const note = await screen.findByText(
+      /Your purchase is waiting for approval\./
+    );
+    expect(note.getAttribute("role")).toBe("status");
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("checkout passes entryPoint = upgrade", async () => {
@@ -596,8 +612,8 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument();
   });
 
-  /* An iPhone build without the store (deploy-ios.yml leaves RevenueCat's
-     key out until its activation order is done) can only refuse a
+  /* An iPhone build without the store (one made without RevenueCat's
+     VITE_REVENUECAT_IOS_KEY secret) can only refuse a
      purchase. Showing prices and a button there is a Guideline 2.1
      rejection, so the page shows neither, and no Restore. */
   it("in a build that cannot sell, shows no price, checkout or Restore", () => {
@@ -605,7 +621,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     canSellMock.mockReturnValue(false);
     renderPage();
     expect(screen.getByRole("note")).toHaveTextContent(
-      "Pro isn't on sale in this version of the app yet."
+      "Pro isn’t on sale in this version of the app yet."
     );
     expect(screen.queryByText(/£/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();

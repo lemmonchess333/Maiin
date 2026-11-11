@@ -20,8 +20,7 @@ vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "viewer" }));
 vi.mock("@/lib/socialApi", () => ({
-  getFollowerCount: async () => 0,
-  getFollowingCount: async () => 0,
+  getFollowCounts: async () => ({ followers: 0, following: 0 }),
   batchGetKudos: async () => ({}),
   blockUser: vi.fn(),
   unblockUser: vi.fn(async () => {}),

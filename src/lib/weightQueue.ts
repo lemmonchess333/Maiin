@@ -23,7 +23,7 @@ const running = new Map<string, Promise<void>>();
 function persist(uid: string, actions: WeightAction[]) {
   if (!writeJson(key(uid), actions))
     throw new Error(
-      "Couldn't save on this phone. Free device storage and retry."
+      "Couldn’t save on this phone. Free device storage and retry."
     );
 }
 function append(uid: string, action: WeightAction) {

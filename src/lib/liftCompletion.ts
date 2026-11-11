@@ -33,7 +33,11 @@ import { estimateLiftBurn } from "@/lib/workoutBurn";
 import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
 import { liftPost, liftPostPreview, type LiftForPost } from "@/lib/liftPost";
 import type { LiftUnit } from "@/lib/liftLoad";
-import type { LiftMomentFacts } from "@/lib/postMoments";
+import {
+  liftPostMoments,
+  type LiftMomentFacts,
+  type PostMoment,
+} from "@/lib/postMoments";
 import { logger } from "@/lib/logger";
 import type {
   ProgramExercise,
@@ -59,6 +63,9 @@ export interface LiftCompletionReceipt {
   syncStatus: "synced" | "queued";
   /** Settles once the workout is saved, or cannot be. */
   sync: Promise<"synced" | "failed">;
+  /** What the post says happened (`liftPostMoments`), most significant
+   *  first: the finish screen picks its register from them (DS4 call 3). */
+  moments?: PostMoment[];
 }
 
 /** A finished lift's workout id. Deterministic, so a retried Finish
@@ -316,6 +323,7 @@ export async function completeLift(
   return {
     workoutId,
     share,
+    moments: liftPostMoments(finished.moments),
     syncStatus: queued ? "queued" : "synced",
     sync,
     ...(queued ? {} : { committed }),

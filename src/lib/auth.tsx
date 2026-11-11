@@ -67,6 +67,7 @@ import type { ShareType } from "@/lib/shareComposer";
 import type { NotificationPreferences } from "@/lib/notificationPreferences";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
+import { traceBoot } from "@/lib/bootTrace";
 import { rememberSignInMethod, signInMethodOf } from "./signInMethod";
 import type { Goal } from "./types";
 import type { PreferredSplit } from "@/features/program/programTypes";
@@ -446,6 +447,10 @@ export interface UserProfileSocial {
    *  timestamp): absent until it does, and then People stops offering a
    *  code field. Server-written by redeemInvite, never by the client. */
   invitedAt?: unknown;
+  /** Whose invite this account joined from (their uid), stamped with
+   *  `invitedAt`: a block of this account by that person renews their code
+   *  (Soc15). Server-written by redeemInvite. */
+  invitedBy?: string;
   /** LEGACY (share composer superseded these, #1416): the saved share
    *  default decides auto-posting now — `shareDefaults` above. Nothing has
    *  READ these three since; the Settings switches that wrote
@@ -934,7 +939,19 @@ interface AuthContextType {
    * loading screen until `retry` succeeds, and says why.
    */
   watchAccountCleanup: { retry: () => void } | null;
+  /** Whether this account's profile is here, absent or could not be read.
+   *  Route on this, not on `profile === null`, which is true of both. */
+  profileLoad: ProfileLoad;
 }
+
+/**
+ * Where the signed-in account's own profile stands. `missing` and `failed`
+ * are different answers: a new account has no profile yet and goes to setup,
+ * while a profile that could not be read belongs to someone who may have
+ * weeks of training, and setup would replace their programme. Only `failed`
+ * offers a retry. Signed out, it reads `missing`; nothing asks then.
+ */
+export type ProfileLoad = "loading" | "ready" | "missing" | "failed";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -1069,6 +1086,26 @@ const WATCH_CLEANUP_RETRY_MS = 400;
  * the caller holds the account back. Stops retrying once the account
  * changes again, so a stale attempt can never bind the wrong account.
  */
+/** Firebase's half of a native sign-in, timed for the step list a failed
+ *  sign-in can show (bootTrace.ts). */
+async function traceSignIn<T>(work: Promise<T>): Promise<T> {
+  const started = Date.now();
+  traceBoot("Firebase: signing in");
+  try {
+    const result = await work;
+    traceBoot(`Firebase: signed in after ${Date.now() - started} ms`);
+    return result;
+  } catch (error) {
+    const code =
+      (error as { code?: unknown })?.code ??
+      (error instanceof Error ? error.message : String(error));
+    traceBoot(
+      `Firebase: failed after ${Date.now() - started} ms (${String(code)})`
+    );
+    throw error;
+  }
+}
+
 async function clearOutgoingWatchAccount(
   uid: string | null,
   previousUid: string | null,
@@ -1113,6 +1150,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  /* The last read of this account's profile failed. It matters only while
+     no profile is held: with one, the app carries on with it. */
+  const [profileReadFailed, setProfileReadFailed] = useState(false);
   /* A sign-out that clears the device's Firestore copy ends in a reload
      (firestoreCacheClear.ts). Until it does, the app stays on its loading
      screen: Login drawn on the page being left would take input the
@@ -1191,13 +1231,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let stopHealthExportReconciler = () => {};
     let stopWatchRunSyncReconciler = () => {};
 
+    traceBoot("Waiting for sign-in to answer");
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!isMounted) return;
       const uid = firebaseUser?.uid ?? null;
+      traceBoot(`Sign-in answered: ${uid ? "signed in" : "signed out"}`);
 
       // A queued stale callback must not invalidate the current callback's
       // generation. Reject it before incrementing the epoch.
-      if ((auth.currentUser?.uid ?? null) !== uid) return;
+      if ((auth.currentUser?.uid ?? null) !== uid) {
+        traceBoot("Sign-in answer was out of date");
+        return;
+      }
 
       stopSubscriptionUpdates();
       stopSubscriptionUpdates = () => {};
@@ -1225,6 +1270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         invalidatePushTokenLifecycle();
         setUser(null);
         setProfile(null);
+        setProfileReadFailed(false);
         setLoading(true);
       }
       // The Watch bridge can retain an active run, pending controls and raw
@@ -1235,6 +1281,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setWatchAccountCleanup(null);
       const watchOwner = watchAccountRef.current;
       if (watchOwner !== uid && isNativePlatform()) {
+        traceBoot("Clearing the last account’s Watch run");
         for (;;) {
           try {
             await clearOutgoingWatchAccount(uid, watchOwner, isCurrent);
@@ -1256,6 +1303,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         if (!isCurrent()) return;
         watchAccountRef.current = uid;
+        traceBoot("Watch run cleared");
       }
       setUser(firebaseUser);
       // This device has had an account: the signed-out screen greets the
@@ -1301,6 +1349,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // hydrateProfile does no writes, and the timezone-capture write stays
         // on the server branch only so it isn't double-fired.
         /* Inside `if (firebaseUser)`, so a profile exists to read. */
+        traceBoot("Loading Firestore");
         const {
           doc,
           getDoc,
@@ -1331,8 +1380,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         try {
+          traceBoot("Reading the profile");
           const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          traceBoot("Profile read");
           if (!isCurrent()) return;
+          setProfileReadFailed(false);
 
           if (profileDoc.exists()) {
             const data = profileDoc.data();
@@ -1391,7 +1443,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (err) {
           if (!isCurrent()) return;
           logger.error("[AuthProvider] Failed to load profile", err);
-          setProfile(null);
+          /* A read that failed is not a profile that is missing. Clearing
+             the profile here would send a signed-in account to setup: on a
+             first read with no connection, and also mid-session, since
+             every token refresh comes back through here. Finishing setup
+             replaces the programme (completeOnboarding). Keep the copy this
+             account already shows, from the device's cache or an earlier
+             read; with none, `profileLoad` says "failed" and the app offers
+             a retry. */
+          setProfileReadFailed(true);
+          setProfile((previous) => (previous?.uid === uid ? previous : null));
         }
 
         if (!isCurrent()) return;
@@ -1425,10 +1486,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         // No signed-in user (Login screen) — apply the dark default.
         setProfile(null);
+        setProfileReadFailed(false);
         syncDarkMode(true);
       }
 
-      if (isCurrent()) setLoading(false);
+      if (isCurrent()) {
+        traceBoot("Ready");
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -1588,9 +1653,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
        capacitor://localhost, not a Firebase authorized domain — so it drives
        the native Google sheet and completes with the returned credential. */
     if (isNativePlatform()) {
+      traceBoot("Google: opening the account picker");
       const credential = await getGoogleCredentialNative();
+      traceBoot("Google: account chosen");
       await revokeOutgoingAccountDeviceState();
-      const cred = await signInWithCredential(auth, credential);
+      const cred = await traceSignIn(signInWithCredential(auth, credential));
       await finishOAuthSignIn(cred, "google");
       return;
     }
@@ -1622,9 +1689,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithApple = useCallback(async () => {
     if (isNativePlatform()) {
+      traceBoot("Apple: opening the sign-in sheet");
       const { credential, displayName } = await getAppleSignInNative();
+      traceBoot("Apple: account chosen");
       await revokeOutgoingAccountDeviceState();
-      const cred = await signInWithCredential(auth, credential);
+      const cred = await traceSignIn(signInWithCredential(auth, credential));
       // The name Apple shares on the first sign-in, kept before the new
       // profile is made from the account. Never over a name it has.
       if (displayName && !cred.user.displayName) {
@@ -1663,8 +1732,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      users get their profile doc created via finishOAuthSignIn exactly like
      the popup path (onAuthStateChanged only READS a profile — it would set
      null for a brand-new OAuth user whose doc doesn't exist yet). Runs once
-     on mount; a null result means there was no pending redirect. */
+     on mount; a null result means there was no pending redirect.
+
+     Not inside the iPhone app: it signs in natively (nativeAuth.ts) and
+     never redirects, and its Auth has no popup/redirect resolver
+     (firebaseApp.ts), so asking throws auth/argument-error on every
+     launch, which errorReporting then files as a real error. */
   useEffect(() => {
+    if (isNativePlatform()) return;
     let cancelled = false;
     getRedirectResult(auth)
       .then((result) => {
@@ -1676,6 +1751,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return finishOAuthSignIn(result, method);
       })
       .catch((err) => {
+        traceBoot(
+          `Redirect result: ${err instanceof Error ? err.message : String(err)}`
+        );
         logger.error("[AuthProvider] OAuth redirect sign-in failed", err);
       });
     return () => {
@@ -1826,7 +1904,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           onLateFailure: () => {
             if (auth.currentUser?.uid !== writeUid) return;
             toast.error(
-              "A change you made offline couldn't be saved. Check your settings.",
+              "A change you made offline couldn’t be saved. Check your settings.",
               { id: "update-profile-error" }
             );
           },
@@ -1861,7 +1939,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logger.error("[auth] updateProfile failed", err);
         // Stable toast ID collapses bursts (e.g. rapid Settings toggles) into
         // a single visible message.
-        toast.error("Couldn't save your settings. Try again.", {
+        toast.error("Couldn’t save your settings. Try again.", {
           id: "update-profile-error",
         });
         return { ok: false, error: err };
@@ -1930,7 +2008,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return reverted ? { ...prev, shareDefaults: next } : prev;
         });
         logger.error("[auth] updateShareDefaults failed", err);
-        toast.error("Couldn't save your settings. Try again.", {
+        toast.error("Couldn’t save your settings. Try again.", {
           id: "update-profile-error",
         });
         return { ok: false, error: err };
@@ -1969,6 +2047,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         snap = await getDoc(ref);
       }
       if (auth.currentUser?.uid !== uid) return;
+      // The read answered, with a profile or without one: the retry screen's
+      // "Try again" lands here, and a new account then goes on to setup.
+      setProfileReadFailed(false);
       if (snap.exists()) {
         setProfile(
           hydrateProfile(
@@ -2004,10 +2085,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [signIn, signUp, signInWithGoogle, signInWithApple, signOutUser]
   );
 
+  const profileLoad: ProfileLoad =
+    loading || leavingForReload
+      ? "loading"
+      : profile
+        ? "ready"
+        : user && profileReadFailed
+          ? "failed"
+          : "missing";
+
   const value = useMemo(
     () => ({
       user,
       profile,
+      profileLoad,
       loading: loading || leavingForReload,
       ...credentialActions,
       resetPassword,
@@ -2020,6 +2111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [
       user,
       profile,
+      profileLoad,
       loading,
       leavingForReload,
       credentialActions,

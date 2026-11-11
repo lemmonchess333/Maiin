@@ -72,6 +72,8 @@ const DEVICE_SCOPED: Record<string, string> = {
   "tropos.program.commandOutbox": "same uid-tagged-entries shape",
   "tropos-guide-under-automation":
     "a capture spec's switch that turns the first-visit guide on in an automated browser, planted before the account it films exists; the app only reads it",
+  "tropos-step-details":
+    "a developer's switch that shows the iPhone-only step list (StepDetails) on the web preview too; a device's setting for the preview loop, about no account, and the app only reads it",
   "tropos.pendingInvite":
     "an invite link's code, kept from the signed-out welcome screen through sign-up and setup, before there is an account to scope it to; it expires after the 14 days an account may use one and is cleared once used or refused",
 };

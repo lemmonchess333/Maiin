@@ -1,12 +1,19 @@
 /**
- * Cut out the run cards' runner: the two released poses in
- * docs/exercise-art/run-poses, keyed out of their black backdrop by the same
- * keying as the exercise cut-outs (keying.ts), so Home's run card and its
- * lift card draw alike. RUN_CARD_RUNNER_BRIEF.md says what each pose is for.
+ * Cut out the run cards' runner and the rest day's walker: the released
+ * poses in docs/exercise-art/run-poses, keyed out of their black backdrop by
+ * the same keying as the exercise cut-outs (keying.ts), so Home's run, lift
+ * and rest heroes draw alike. RUN_CARD_RUNNER_BRIEF.md says what each pose
+ * is for.
+ *
+ * The runner's lit muscles were drawn in the lifting purple; running is
+ * coral everywhere in the app, so the two run poses' highlight is moved to
+ * running's coral as they are cut (recolour.ts). The rest day's walker
+ * keeps its purple: a rest day belongs to the plan, not to a run.
  *
  * Writes public/form-art/<pose>.webp and src/lib/runPoses.data.ts, which
- * records each source's and output's hash; runPoses.test.ts fails when a
- * source changes and its cut-out was not regenerated.
+ * records each source's and output's hash and the highlight's colour;
+ * runPoses.test.ts fails when a source changes and its cut-out was not
+ * regenerated, and measures each cut-out's highlight.
  *
  *   npm run art:run-poses
  */
@@ -15,10 +22,17 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { formatGenerated } from "./format-generated";
 import { cutoutWebp } from "./keying";
+import { RUNNING_CORAL, recolourHighlight } from "./recolour";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const MANIFEST = resolve(ROOT, "src/lib/runPoses.data.ts");
-const POSES = ["run-easy", "run-fast"] as const;
+const POSES = ["run-easy", "run-fast", "rest-walk"] as const;
+/** The colour each pose's lit muscles are drawn in. */
+const HIGHLIGHT: Record<(typeof POSES)[number], "running" | "lifting"> = {
+  "run-easy": "running",
+  "run-fast": "running",
+  "rest-walk": "lifting",
+};
 
 const sha256 = (bytes: Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
@@ -28,13 +42,19 @@ async function main() {
   for (const pose of POSES) {
     const source = `docs/exercise-art/run-poses/${pose}.jpg`;
     const sourceBytes = readFileSync(resolve(ROOT, source));
-    const { webp, width, height } = await cutoutWebp(resolve(ROOT, source));
+    const highlight = HIGHLIGHT[pose];
+    const { webp, width, height } = await cutoutWebp(
+      resolve(ROOT, source),
+      highlight === "running"
+        ? (rgba) => void recolourHighlight(rgba, RUNNING_CORAL)
+        : undefined
+    );
     const src = `form-art/${pose}.webp`;
     writeFileSync(resolve(ROOT, "public", src), webp);
     rows.push(
       `  "${pose}": { src: "${src}", width: ${width}, height: ${height}, ` +
         `source: "${source}", sourceSha256: "${sha256(sourceBytes)}", ` +
-        `sha256: "${sha256(webp)}" },`
+        `highlight: "${highlight}", sha256: "${sha256(webp)}" },`
     );
     console.log(
       `${pose.padEnd(10)} ${width}x${height}  ${(webp.length / 1024).toFixed(0)} KB`
@@ -54,6 +74,9 @@ export interface RunPoseCutout {
   /** The released pose it was cut from. */
   source: string;
   sourceSha256: string;
+  /** The meaning colour its lit muscles are drawn in: running's coral for
+   *  a run, the plan's purple for the rest day's walk. */
+  highlight: "running" | "lifting";
   sha256: string;
 }
 

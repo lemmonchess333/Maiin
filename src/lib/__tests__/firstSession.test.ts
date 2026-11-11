@@ -19,7 +19,20 @@ vi.mock("@/lib/firebase", () => ({
   auth: { currentUser: { uid: "u1" } },
 }));
 
-import { hasEarlierSession } from "../firstSession";
+import {
+  earlierSessions,
+  isFirstOfSport,
+  isFirstSession,
+} from "../firstSession";
+
+/** Whether the account has any earlier session: the post's first session
+ *  is a known false. Null when it can't be known. */
+const hasEarlierSession = async (
+  ...args: Parameters<typeof earlierSessions>
+) => {
+  const earlier = await earlierSessions(...args);
+  return earlier === null ? null : !isFirstSession(earlier);
+};
 import { localDateString } from "../dateHelpers";
 
 const today = localDateString(new Date());
@@ -34,7 +47,7 @@ beforeEach(() => {
 });
 afterEach(() => online.mockRestore());
 
-describe("hasEarlierSession", () => {
+describe("earlierSessions: the account's first session", () => {
   it("is false for an account with no saved session: its first", async () => {
     expect(await hasEarlierSession("u1")).toBe(false);
   });
@@ -69,5 +82,42 @@ describe("hasEarlierSession", () => {
     failNextFirestore("getDocs");
     expect(await hasEarlierSession("u1")).toBeNull();
     expect(unfiredFailures()).toEqual([]);
+  });
+});
+
+/* DS4 call 3 (owner, 7 November 2026): a lifter's first run, or a runner's
+   first lift, is a first on the finish screen. The post keeps the
+   account's first. */
+describe("the first of a sport", () => {
+  it("counts a lifter's first run as a first run, not a first session", async () => {
+    seedFirestore({
+      "users/u1/workouts/old": { ...workout, date: "2024-01-03" },
+      "users/u1/runs/run-1": savedRun,
+    });
+    const earlier = await earlierSessions("u1", { runId: "run-1" });
+    expect(earlier).toEqual({ workouts: true, runs: false });
+    expect(isFirstOfSport(earlier, "run")).toBe(true);
+    expect(isFirstOfSport(earlier, "lift")).toBe(false);
+    expect(isFirstSession(earlier)).toBe(false);
+  });
+
+  it("counts a runner's first lift as a first workout", async () => {
+    seedFirestore({ "users/u1/runs/old": savedRun });
+    const earlier = await earlierSessions("u1", {
+      workoutId: "programme-new",
+    });
+    expect(isFirstOfSport(earlier, "lift")).toBe(true);
+    expect(isFirstSession(earlier)).toBe(false);
+  });
+
+  it("is the account's first, and its sport's, with nothing earlier", async () => {
+    const earlier = await earlierSessions("u1");
+    expect(isFirstSession(earlier)).toBe(true);
+    expect(isFirstOfSport(earlier, "lift")).toBe(true);
+  });
+
+  it("claims no first it can't know", () => {
+    expect(isFirstSession(null)).toBe(false);
+    expect(isFirstOfSport(null, "run")).toBe(false);
   });
 });

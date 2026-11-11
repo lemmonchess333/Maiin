@@ -6,7 +6,9 @@
  *
  * Gold is a new best and nothing else (DESIGN_GUIDE §14b), so the bests
  * (a PR, the longest run, a first distance, a fastest effort) take it; the
- * streak keeps its flame's brand purple, as do the plan and a first session.
+ * streak keeps its flame's brand purple, as does the plan. A first session
+ * takes its sport's colour, as the finish screen draws it: running's coral
+ * on a run, the lifting purple on a lift (DS4, owner 7 November 2026).
  */
 import type { PostMoment } from "@/lib/postMoments";
 import type { DistanceUnit } from "@/lib/distanceUnits";
@@ -19,8 +21,9 @@ export interface PostMomentLines {
   headline: string;
   /** The quieter second line: a name as written, then the figures. */
   detail?: { text?: string; figure?: string };
-  /** "best" draws in gold; "milestone" in the brand purple. */
-  tone: "best" | "milestone";
+  /** "best" draws in gold; "milestone" in the brand purple; "sport" in
+   *  the post's sport's colour. */
+  tone: "best" | "milestone" | "sport";
   icon: "trophy" | "medal" | "flame" | "flag";
 }
 
@@ -45,7 +48,7 @@ export function postMomentLines(
   switch (moment.kind) {
     case "pr":
       return {
-        headline: "New PR",
+        headline: "New best",
         detail: {
           text: moment.exercise,
           figure: keepTogether(
@@ -104,7 +107,7 @@ export function postMomentLines(
     case "firstSession":
       return {
         headline: "First session on Tropos",
-        tone: "milestone",
+        tone: "sport",
         icon: "flag",
       };
   }

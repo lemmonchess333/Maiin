@@ -56,7 +56,7 @@ export default function StartTimeSheet({
   const problem = startProblem(at, bounds);
   const message =
     problem === "later-than-now"
-      ? "That's later than now."
+      ? "That’s later than now."
       : problem === "before-the-floor"
         ? `The earliest that day is ${formatTimeOfDay(new Date(bounds.earliest))}.`
         : null;
@@ -134,7 +134,12 @@ export default function StartTimeSheet({
             {message}
           </p>
         )}
-        <Button type="submit" fullWidth disabled={problem !== null}>
+        <Button
+          variant="neutral"
+          type="submit"
+          fullWidth
+          disabled={problem !== null}
+        >
           Save start time
         </Button>
         <Button variant="ghost" fullWidth onClick={onClose}>

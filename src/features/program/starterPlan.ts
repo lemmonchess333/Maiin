@@ -73,14 +73,6 @@ export function runsInWeek(
   return new Set(runDays.filter((day) => day >= weekKey && day < end)).size;
 }
 
-/** Whether the week starting `weekKey` was done (`STARTER_RUNS_FOR_A_DONE_WEEK`). */
-export function starterWeekDone(
-  runDays: readonly string[],
-  weekKey: string
-): boolean {
-  return runsInWeek(runDays, weekKey) >= STARTER_RUNS_FOR_A_DONE_WEEK;
-}
-
 /**
  * The weeks in a row with no run, ending with the week starting `weekKey`:
  * 0 when that week has one. Counted no further than one past the step-back
@@ -100,6 +92,17 @@ export function emptyWeeksEndingWith(
   return empty;
 }
 
+/** The first day a run counts towards the stage of the week starting
+ *  `weekKey`: the stage's first week, at most two weeks back. A reader of
+ *  the runs a stage is weighed by reads from here. */
+export function starterCreditStart(
+  weekKey: string,
+  stageStartedWeek = weekKey
+): string {
+  const recentStart = weekKeyAfter(weekKey, -2);
+  return stageStartedWeek > recentStart ? stageStartedWeek : recentStart;
+}
+
 /** Distinct recent running days at this stage. A long absence must not
  * reuse old credits; the three-week window matches the existing step-back
  * policy, not a claim about a medically safe recovery interval. */
@@ -109,9 +112,7 @@ export function starterStageRunDays(
   stageStartedWeek = weekKey
 ): string[] {
   const end = weekKeyAfter(weekKey, 1);
-  const recentStart = weekKeyAfter(weekKey, -2);
-  const creditStart =
-    stageStartedWeek > recentStart ? stageStartedWeek : recentStart;
+  const creditStart = starterCreditStart(weekKey, stageStartedWeek);
   return [
     ...new Set(runDays.filter((day) => day >= creditStart && day < end)),
   ].sort();

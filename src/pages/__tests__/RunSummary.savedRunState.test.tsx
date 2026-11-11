@@ -47,6 +47,14 @@ const h = vi.hoisted(() => ({
   skipRunDay: vi.fn(),
   track: vi.fn(),
   mapProps: [] as Record<string, unknown>[],
+  runDays: undefined as
+    | undefined
+    | {
+        id: string;
+        date: string;
+        templateId: string;
+        status: string;
+      }[],
   runPlan: undefined as
     | {
         currentWeek: number;
@@ -58,6 +66,10 @@ const h = vi.hoisted(() => ({
     | undefined,
   failedOptional: null as "kudos" | "week" | null,
   optionalAttempts: [] as string[],
+  /** What the share sheet was last given: the card's data and its extra
+   *  actions (Export GPX among them). */
+  shareSheet: null as null | { data: { date?: string }; extras?: unknown },
+  gpx: [] as string[],
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => h.auth,
@@ -71,7 +83,7 @@ vi.mock("@/features/program/useProgram", () => ({
       markManualComplete: h.markManualComplete,
       skipRunDay: h.skipRunDay,
       programState: {
-        runDays: [{ id: "rd-1", status: "planned" }],
+        runDays: h.runDays ?? [{ id: "rd-1", status: "planned" }],
         runPlan: h.runPlan,
       },
     };
@@ -123,8 +135,18 @@ vi.mock("@/components/analytics/ElevationProfile", () => ({
   default: () => null,
 }));
 vi.mock("@/components/share/ShareCardSheet", () => ({
-  default: () => null,
+  default: (props: { data: { date?: string }; extras?: unknown }) => {
+    h.shareSheet = props;
+    return null;
+  },
   ShareCardSheet: () => null,
+}));
+vi.mock("@/lib/shareRoute", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/shareRoute")>()),
+  shareGpx: async (gpx: string) => {
+    h.gpx.push(gpx);
+    return "shared" as const;
+  },
 }));
 vi.mock("@/components/social/CircleShareSheet", () => ({
   default: () => null,
@@ -207,10 +229,12 @@ function savedRun(notes = "") {
   };
 }
 
-function renderSummary() {
+function renderSummary(extra: Record<string, unknown> = {}) {
   return render(
     <MemoryRouter
-      initialEntries={[{ pathname: "/run-summary", state: savedRun() }]}
+      initialEntries={[
+        { pathname: "/run-summary", state: { ...savedRun(), ...extra } },
+      ]}
     >
       <Routes>
         <Route path="/run-summary" element={<RunSummary />} />
@@ -236,6 +260,8 @@ beforeEach(() => {
   h.skipRunDay.mockResolvedValue({ status: "applied" });
   h.failedOptional = null;
   h.optionalAttempts.length = 0;
+  h.shareSheet = null;
+  h.gpx.length = 0;
 });
 afterEach(() => {
   resumeReads();
@@ -382,6 +408,7 @@ describe("RunSummary — past runs are read once", () => {
 describe("RunSummary — the week's runs are counted once", () => {
   afterEach(() => {
     h.runPlan = undefined;
+    h.runDays = undefined;
     delete (h.auth.profile as Record<string, unknown>).runMode;
   });
 
@@ -422,6 +449,94 @@ describe("RunSummary — the week's runs are counted once", () => {
     d.setDate(d.getDate() + days);
     return localDateString(d);
   };
+
+  it("names race week for a race run begun on race day and reviewed after midnight", async () => {
+    // The run is dated by its start; read on today, the day after the
+    // race, the kicker named no week under the race itself.
+    (h.auth.profile as Record<string, unknown>).runMode = "race_prep";
+    const raceDay = daysFromToday(-1);
+    h.runPlan = {
+      currentWeek: 11,
+      totalWeeks: 12,
+      raceGoal: { distance: "10k", targetDate: raceDay },
+    };
+    const startedAt = new Date(`${raceDay}T22:30:00`).getTime();
+    renderSummary({
+      identity: {
+        uid: "runner",
+        sessionId: "race-run",
+        runId: "race-run",
+        scheduledRunId: null,
+        startedAt,
+        startLocalDate: raceDay,
+        originTimeZone: "UTC",
+      },
+    });
+    expect(await screen.findByText("Week 12 of 12")).toBeInTheDocument();
+  });
+
+  it("names the run after the run's own day as next, for a run saved after midnight", async () => {
+    // Read from today, a Sunday-night run saved after midnight skipped
+    // Monday's run and named Tuesday's.
+    const yesterday = daysFromToday(-1);
+    const today = daysFromToday(0);
+    h.runDays = [
+      { id: "today", date: today, templateId: "easy_30", status: "planned" },
+      {
+        id: "tomorrow",
+        date: daysFromToday(1),
+        templateId: "tempo_run",
+        status: "planned",
+      },
+    ];
+    renderSummary({
+      identity: {
+        uid: "runner",
+        sessionId: "late-run",
+        runId: "late-run",
+        scheduledRunId: null,
+        startedAt: new Date(`${yesterday}T23:30:00`).getTime(),
+        startLocalDate: yesterday,
+        originTimeZone: "UTC",
+      },
+    });
+    const weekday = new Date(`${today}T12:00:00`).toLocaleDateString("en-GB", {
+      weekday: "long",
+    });
+    expect(
+      await screen.findByText(new RegExp(`^Next run: .* — ${weekday}$`))
+    ).toBeInTheDocument();
+  });
+
+  it("shares and exports a run under its own day, for a run shared after midnight", async () => {
+    // Dated by the moment of sharing, a Sunday-night run shared after
+    // midnight went out as Monday's: the saved run's page says Sunday.
+    const yesterday = daysFromToday(-1);
+    const startedAt = new Date(`${yesterday}T23:30:00`).getTime();
+    renderSummary({
+      identity: {
+        uid: "runner",
+        sessionId: "late-run",
+        runId: "late-run",
+        scheduledRunId: null,
+        startedAt,
+        startLocalDate: yesterday,
+        originTimeZone: "UTC",
+      },
+    });
+    const runDay = new Date(startedAt).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+    await waitFor(() => expect(h.shareSheet?.data.date).toBe(runDay));
+    // The sheet's Export GPX names the track by the same day.
+    cleanup();
+    render(<>{h.shareSheet?.extras as React.ReactNode}</>);
+    fireEvent.click(screen.getByRole("button", { name: "Export GPX" }));
+    await waitFor(() => expect(h.gpx).toHaveLength(1));
+    expect(h.gpx[0]).toContain(`Tropos Run ${runDay}`);
+  });
 
   it("counts no plan week once race day has passed", async () => {
     (h.auth.profile as Record<string, unknown>).runMode = "race_prep";
@@ -500,7 +615,7 @@ describe("RunSummary — Save", () => {
   it("queues the run, then shows it saved", async () => {
     renderUnsaved();
     expect(
-      await screen.findByRole("heading", { name: "Nice run", level: 1 })
+      await screen.findByRole("heading", { name: "Run done", level: 1 })
     ).toBeInTheDocument();
     // The E2E journeys save and leave by these (src/test/journeyScreens.ts).
     fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
@@ -590,9 +705,12 @@ describe("RunSummary — Save", () => {
     const done = await screen.findByRole("button", { name: RUN.done });
     const pinned = done.closest("[data-testid='summary-footer']");
     expect(pinned).not.toBeNull();
+    // Share beside Done, its outline; Done the one filled button (DS4).
     expect(within(pinned as HTMLElement).getAllByRole("button")).toEqual([
+      screen.getByRole("button", { name: "Share" }),
       done,
     ]);
+    expect(screen.getAllByRole("button", { name: "Share" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: RUN.save })).toBeNull();
   });
 
@@ -816,7 +934,9 @@ describe("RunSummary — splits, best efforts and the route key", () => {
       splits: [lap(1, 372), lap(2, 364), lap(3, 352)],
     });
     // Every figure it shows from the first paint, however fast the machine.
-    const figure = document.querySelector(".text-display") as HTMLElement;
+    const figure = document.querySelector(
+      "[data-finish-figure]"
+    ) as HTMLElement;
     expect(figure).not.toBeNull();
     const shown = [figure.textContent ?? ""];
     const observer = new MutationObserver(() =>
@@ -827,13 +947,16 @@ describe("RunSummary — splits, best efforts and the route key", () => {
       childList: true,
       subtree: true,
     });
-    await waitFor(() => expect(figure.textContent).toMatch(/^3\.20\s*km$/));
+    await waitFor(() => expect(figure.textContent).toBe("3.20"));
+    expect(document.querySelector("[data-finish-caption]")).toHaveTextContent(
+      "km in 19:10"
+    );
     observer.disconnect();
     const values = shown.map((text) => Number.parseFloat(text));
     expect(Math.min(...values)).toBeLessThan(3.2);
   });
 
-  it("lists best efforts from the track and keys the pace-coloured route", async () => {
+  it("lists best efforts from the track, and opens on the route in the run's coral", async () => {
     const points = track(13, 30);
     renderFinished({
       points,
@@ -845,8 +968,12 @@ describe("RunSummary — splits, best efforts and the route key", () => {
     expect(
       within(efforts).getByText("1K").nextElementSibling?.textContent
     ).toBe("4:30");
-    expect(screen.getByRole("img", { name: /^Route pace/ })).toBeVisible();
-    expect(h.mapProps.at(-1)?.paceColored).toBe(true);
+    /* DS4 (§14m rules 11 and 23): the finish opens on the map as a
+       full-bleed band, its route the run's one colour. The pace-coloured
+       route and its key are the saved run's page's (RunDetail). */
+    expect(h.mapProps.at(-1)?.paceColored).toBeFalsy();
+    expect(screen.queryByRole("img", { name: /^Route pace/ })).toBeNull();
+    expect(document.querySelector("[data-finish-band]")).not.toBeNull();
   });
 });
 
@@ -924,7 +1051,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
 
     renderPlanned("run_walk_1");
     expect(
-      await screen.findByText("Run-walk 1 complete ✓")
+      await screen.findByRole("heading", { name: "Run-walk 1 done" })
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/on target|Faster than|Slower than|Quicker than/)
@@ -937,7 +1064,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
   it("hands Pace Insight a run-walk as the easy run it is, so it sets no benchmark", async () => {
     renderPlanned("run_walk_1");
     expect(
-      await screen.findByText("Run-walk 1 complete ✓")
+      await screen.findByRole("heading", { name: "Run-walk 1 done" })
     ).toBeInTheDocument();
     const handed = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
     expect(handed).toMatchObject({ activityType: "easy" });
@@ -953,7 +1080,9 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       },
     };
     renderPlanned("easy_30", { activityType: "manual" });
-    expect(await screen.findByText("Easy 30 complete ✓")).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Easy 30 done" })
+    ).toBeVisible();
     expect(
       screen.queryByText(/on target|Faster than|Slower than|Quicker than/)
     ).toBeNull();
@@ -978,7 +1107,9 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       segments: block(false),
       workPortion,
     });
-    expect(await screen.findByText("20 Min Tempo complete ✓")).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "20 Min Tempo done" })
+    ).toBeVisible();
     const handed = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
     expect(handed).toMatchObject({ workPortion, workPacePinned: false });
     expect(benchmarkEffortOf(handed)).toMatchObject({
@@ -995,7 +1126,9 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       segments: block(true),
       workPortion,
     });
-    expect(await screen.findByText("20 Min Tempo complete ✓")).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "20 Min Tempo done" })
+    ).toBeVisible();
     const pinned = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
     expect(pinned.workPacePinned).toBe(true);
     expect(benchmarkEffortOf(pinned)).toBeNull();
@@ -1021,16 +1154,16 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       )
     );
     const easy = renderPlanned("easy_30");
-    expect(await screen.findByText("PR!")).toBeInTheDocument();
+    expect(await screen.findByText("New best")).toBeInTheDocument();
     easy.unmount();
 
     renderPlanned("run_walk_1");
     expect(
-      await screen.findByText("Run-walk 1 complete ✓")
+      await screen.findByRole("heading", { name: "Run-walk 1 done" })
     ).toBeInTheDocument();
     // The history has been read and judged by the time the insight settles.
     await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
-    expect(screen.queryByText("PR!")).toBeNull();
+    expect(screen.queryByText("New best")).toBeNull();
   });
 });
 
@@ -1085,13 +1218,17 @@ describe("RunSummary — the pace line speaks only when the run didn't match", (
     };
     // 5 km in 32 minutes: 6:24 /km, inside the window.
     const easy = renderPlannedEasy(32 * 60);
-    expect(await screen.findByText("Easy 30 complete ✓")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Easy 30 done" })
+    ).toBeInTheDocument();
     expect(screen.queryByText(/on target|Faster than easy/)).toBeNull();
     easy.unmount();
 
     // 5 km in 25 minutes: 5:00 /km, an easy run run hard.
     renderPlannedEasy(25 * 60);
-    expect(await screen.findByText("Easy 30 complete ✓")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Easy 30 done" })
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/^Faster than easy today: 5:00 \/km/)
     ).toBeInTheDocument();
@@ -1223,7 +1360,7 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
       )
     );
     const outdoors = renderTreadmillRun(true);
-    expect(await screen.findByText("PR!")).toBeInTheDocument();
+    expect(await screen.findByText("New best")).toBeInTheDocument();
     outdoors.unmount();
 
     renderTreadmillRun();
@@ -1235,7 +1372,7 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
     ).toBeInTheDocument();
     // The history has been read and judged by the time the insight settles.
     await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
-    expect(screen.queryByText("PR!")).toBeNull();
+    expect(screen.queryByText("New best")).toBeNull();
   });
 
   it("suggests no new benchmark from a typed pace, as an outdoor run's can", async () => {

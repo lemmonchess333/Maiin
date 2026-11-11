@@ -345,6 +345,13 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          # RevenueCat's public iOS key (`appl_…`). Wired once the activation
+          # order in docs/iap/revenuecat-setup.md was done (2026-11-07): the
+          # App Store app with its In-App Purchase key, the `pro` entitlement,
+          # the `default` offering, the transfer behaviour, the webhook and
+          # Apple's notifications. A build made without the secret cannot
+          # sell, and its paywalls show no price (canSellInThisBuild).
+          VITE_REVENUECAT_IOS_KEY: ${{ secrets.VITE_REVENUECAT_IOS_KEY }}
           #
           # Absent on purpose, so nobody has to re-derive why:
           #
@@ -355,12 +362,6 @@ jobs:
           #     appCheck.ts takes its isNativePlatform() branch before it ever
           #     reads the key, so passing it here would do nothing and imply
           #     native attestation is configured when it is not.
-          #   VITE_REVENUECAT_IOS_KEY — NOT wired, deliberately. Adding the
-          #     line arms RevenueCat the instant the GitHub secret exists, and
-          #     purchaseProvider routes iOS through it with no further gate.
-          #     Add it only after the activation order in
-          #     docs/iap/revenuecat-setup.md is complete, or a purchase is
-          #     taken by Apple and no entitlement is written.
 
       # Both failures above are invisible in a green build: the bundle
       # compiles either way and only misbehaves on a device, by which point
@@ -508,6 +509,11 @@ jobs:
                   problems.append(f"{bundle}: profile expired on {profile['ExpirationDate']:%Y-%m-%d}")
               mismatched = mismatched_entitlements(wanted, have)
               if mismatched:
+                  # Name what the profile holds for each, so a format Apple
+                  # writes differently from the app's file is told apart from
+                  # a capability that is really off.
+                  for key in mismatched:
+                      print(f"{bundle}: app asks {key} = {wanted.get(key)!r}; profile has {have.get(key)!r}")
                   problems.append(
                       f"{bundle}: profile lacks matching " + ", ".join(mismatched)
                       + ". Turn on those App ID capabilities in Apple Developer → Identifiers and regenerate the profile"
@@ -746,7 +752,10 @@ jobs:
       # is built on a runner, so they go up here, from the archive just sent
       # to TestFlight. After that upload, so a failure here turns the run red
       # without keeping the build from testers, and whatever the step before
-      # did, so a slow App Store Connect does not cost the symbols.
+      # did, so a slow App Store Connect does not cost the symbols. The tool
+      # itself has crashed once (a segmentation fault, build 12) with the
+      # build already in TestFlight, so a failed upload is tried once more
+      # before the run goes red.
       - name: Upload Crashlytics symbol files
         if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
         run: |
@@ -759,7 +768,12 @@ jobs:
             exit 1
           fi
           "$UPLOAD" -gsp ios/App/App/GoogleService-Info.plist -p ios \
-            "$RUNNER_TEMP/App.xcarchive/dSYMs"
+            "$RUNNER_TEMP/App.xcarchive/dSYMs" || {
+            echo "::warning::upload-symbols failed once; trying again in 15 s"
+            sleep 15
+            "$UPLOAD" -gsp ios/App/App/GoogleService-Info.plist -p ios \
+              "$RUNNER_TEMP/App.xcarchive/dSYMs"
+          }
 
       # The runner is thrown away after the job, but the signing key should
       # not outlive the steps that needed it.

@@ -52,8 +52,17 @@ type RootProps = Omit<
 export interface PageShellProps extends RootProps {
   /** The page name. */
   title: ReactNode;
+  /** The page name for screen readers only: a screen whose hero names it
+   *  draws no large title above the hero (DS4, DESIGN_GUIDE §14m) and
+   *  keeps its h1 for a reader landing on the page. Home's. */
+  titleHidden?: boolean;
   /** A short line above the title — Home's date. */
   eyebrow?: ReactNode;
+  /** A control in the title's place, beside the actions, for a screen
+   *  whose title is hidden: Social's Together/Feed switch. The header is
+   *  then one row, the control and the actions (DS4, DESIGN_GUIDE §14m:
+   *  no large title above a hero, one control row of 32-40pt). */
+  lead?: ReactNode;
   /** A line beneath the title. It wraps rather than truncating. */
   subtitle?: ReactNode;
   /** The other lines a switching subtitle can show (Train's is
@@ -61,6 +70,10 @@ export interface PageShellProps extends RootProps {
    *  unread, so the header is as tall as the tallest of them at any
    *  width and text size, and switching moves nothing below it. */
   subtitleAlternates?: ReactNode[];
+  /** Lays the subtitle under the title and the actions, the header's full
+   *  width, rather than in the title's column beside the actions. Train's:
+   *  in the column its line ran to two at 393pt and three at 320. */
+  subtitleBelow?: boolean;
   /** The right-hand action cluster: icon buttons, pills, a settings link. */
   actions?: ReactNode;
   /** A controls row inside the header zone, beneath the title —
@@ -76,9 +89,12 @@ export interface PageShellProps extends RootProps {
 
 export default function PageShell({
   title,
+  titleHidden = false,
   eyebrow,
+  lead,
   subtitle,
   subtitleAlternates,
+  subtitleBelow = false,
   actions,
   controls,
   banner,
@@ -88,6 +104,31 @@ export default function PageShell({
 }: PageShellProps) {
   const titleClass =
     "text-h1 leading-tight tracking-tight font-extrabold text-foreground";
+
+  /* Under the title row, which is the actions' 44pt and so already
+     leaves room below the title's 39, the line needs no gap of its own. */
+  const subtitleGap = subtitleBelow ? "mt-0" : "mt-1";
+  const subtitleLine =
+    subtitle === undefined ? null : subtitleAlternates?.length ? (
+      /* One grid cell holds every line: the shown one, and the others
+         invisible beneath it, so the cell is the height of the tallest. */
+      <p className={cn("grid text-sm text-muted-foreground", subtitleGap)}>
+        <span className="col-start-1 row-start-1">{subtitle}</span>
+        {subtitleAlternates.map((line, i) => (
+          <span
+            key={i}
+            aria-hidden="true"
+            className="invisible col-start-1 row-start-1"
+          >
+            {line}
+          </span>
+        ))}
+      </p>
+    ) : (
+      <p className={cn("text-sm text-muted-foreground", subtitleGap)}>
+        {subtitle}
+      </p>
+    );
 
   return (
     <motion.div
@@ -103,34 +144,23 @@ export default function PageShell({
             and the row wraps: at large text, actions that no longer fit
             beside the title (Food's date switcher) move under it rather
             than being drawn over it. */}
-        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 pt-1 pb-1">
+        <div
+          className={cn(
+            "flex flex-wrap justify-between gap-x-3 gap-y-2 pt-1 pb-1",
+            /* With no title the row is the eyebrow or the lead control
+               beside the actions, so the two share a centre line. */
+            titleHidden ? "items-center" : "items-start"
+          )}
+        >
           <div className="min-w-min flex-1">
             {eyebrow !== undefined && (
               <p className="text-sm font-semibold text-muted-foreground">
                 {eyebrow}
               </p>
             )}
-            <h1 className={titleClass}>{title}</h1>
-            {subtitle !== undefined &&
-              (subtitleAlternates?.length ? (
-                /* One grid cell holds every line: the shown one, and the
-                   others invisible beneath it, so the cell is the height of
-                   the tallest. */
-                <p className="grid text-sm text-muted-foreground mt-1">
-                  <span className="col-start-1 row-start-1">{subtitle}</span>
-                  {subtitleAlternates.map((line, i) => (
-                    <span
-                      key={i}
-                      aria-hidden="true"
-                      className="invisible col-start-1 row-start-1"
-                    >
-                      {line}
-                    </span>
-                  ))}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
-              ))}
+            {lead !== undefined && <div>{lead}</div>}
+            <h1 className={titleHidden ? "sr-only" : titleClass}>{title}</h1>
+            {!subtitleBelow && subtitleLine}
           </div>
           {actions && (
             <div className="ml-auto flex items-center gap-1 flex-shrink-0">
@@ -138,6 +168,7 @@ export default function PageShell({
             </div>
           )}
         </div>
+        {subtitleBelow && subtitleLine}
         {controls && <div className="pt-2">{controls}</div>}
       </motion.header>
       {children}

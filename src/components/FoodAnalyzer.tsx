@@ -152,7 +152,7 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
      Either way the database has no such product, which is not a failure
      to reach it. */
   if (res.status === 404) throw new BarcodeNotFoundError(BARCODE_NOT_FOUND);
-  if (!res.ok) throw new Error("Couldn't look up barcode. Try again.");
+  if (!res.ok) throw new Error("Couldn’t look up barcode. Try again.");
   const data = await res.json();
 
   if (!data || data.status !== 1 || !data.product) {
@@ -740,7 +740,7 @@ export default function FoodAnalyzer({
       // retry.
       setSaving(false);
       logger.error("[FoodAnalyzer] save failed", err);
-      toast.error(appErrorMessage(err, "Couldn't save. Try again."));
+      toast.error(appErrorMessage(err, "Couldn’t save. Try again."));
     }
   };
 
@@ -937,7 +937,7 @@ export default function FoodAnalyzer({
        browser-internal string "Failed to fetch", the dishonest cousin
        of the modal's "You're offline" one tab over. */
     if (!navigator.onLine) {
-      const msg = "You're offline — barcode lookup needs a connection.";
+      const msg = "You’re offline — barcode lookup needs a connection.";
       setBarcodeError(msg);
       toast.error(msg, { id: "barcode-offline" });
       return "unreachable";
@@ -972,10 +972,10 @@ export default function FoodAnalyzer({
          mid-lookup) — its message is browser-internal, never copy. */
       const msg =
         e instanceof TypeError
-          ? "Couldn't reach the barcode database. Check your connection."
+          ? "Couldn’t reach the barcode database. Check your connection."
           : e instanceof Error
             ? e.message
-            : "Barcode lookup failed.";
+            : "Couldn’t look up that barcode.";
       setBarcodeError(msg);
       /* One id, because the scanner tries an unreachable code again while
          it stays in view, and each try would otherwise add a toast. */
@@ -1058,16 +1058,16 @@ export default function FoodAnalyzer({
           <Spinner
             size="sm"
             variant="muted"
-            label={barcodeLoading ? "Fetching nutrition" : "Analyzing food"}
+            label={barcodeLoading ? "Fetching nutrition" : "Analysing food"}
           />
-          {barcodeLoading ? "Fetching nutrition..." : "Analyzing..."}
+          {barcodeLoading ? "Fetching nutrition…" : "Analysing…"}
         </div>
       )}
 
       {showError && !activeResult && (
         <div className="bg-destructive/10 rounded-xl p-4 space-y-2">
           <p className="text-sm text-destructive-strong">
-            Couldn't identify food.
+            Couldn’t identify food.
           </p>
           <div className="grid grid-cols-2 gap-2">
             <Button
@@ -1106,7 +1106,7 @@ export default function FoodAnalyzer({
         <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
           <div className="space-y-1">
             <p className="text-base font-semibold text-foreground">
-              Couldn't identify food
+              Couldn’t identify food
             </p>
             <p className="text-sm text-muted-foreground">
               Try another photo, or log it manually.

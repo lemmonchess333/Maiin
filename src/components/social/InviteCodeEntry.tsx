@@ -123,7 +123,7 @@ export default function InviteCodeEntry({ disabled }: { disabled: boolean }) {
           htmlFor={inputId}
           className="block text-sm text-muted-foreground"
         >
-          Enter their invite code and they'll follow you.
+          Enter their invite code and they’ll follow you.
         </label>
         {/* The button drops under the field when the two no longer fit
             (larger text), rather than squeezing the code. Wide-first. */}

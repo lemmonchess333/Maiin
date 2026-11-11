@@ -43,8 +43,8 @@ export default function SkipConfirmSheet({
             Skip {sessionName}?
           </p>
           <p className="text-sm text-muted-foreground">
-            It won&apos;t count toward this week. The session resets next week —
-            past weeks stay viewable from the week navigator.
+            It won’t count toward this week. The session resets next week — past
+            weeks stay viewable from the week navigator.
           </p>
         </div>
 

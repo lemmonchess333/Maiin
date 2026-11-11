@@ -564,7 +564,7 @@ export function useChallenges() {
       } catch (error) {
         if (!session.active || sessionRef.current !== session) return false;
         logger.error("[Challenges] Join failed:", error);
-        toast.error("Couldn't join the challenge. Try again.");
+        toast.error("Couldn’t join the challenge. Try again.");
         return false;
       }
     },
@@ -590,7 +590,7 @@ export function useChallenges() {
       } catch (error) {
         if (!session.active || sessionRef.current !== session) return;
         logger.error("[Challenges] Leave failed:", error);
-        toast.error("Couldn't leave the challenge. Try again.");
+        toast.error("Couldn’t leave the challenge. Try again.");
       }
     },
     [uid, setMyProgress]

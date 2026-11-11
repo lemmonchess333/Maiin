@@ -276,7 +276,7 @@ describe("useSpaceMembership — joining", () => {
     expect(readDoc(MINE)).toBeUndefined();
     expect(H.haptic).toHaveBeenLastCalledWith("error");
     expect(H.toastError).toHaveBeenCalledWith(
-      "Couldn't join the space. Try again."
+      "Couldn’t join the space. Try again."
     );
   });
 
@@ -356,7 +356,7 @@ describe("useSpaceMembership — a tap that settles after the page moves on", ()
     expect(result.current.memberCount).toBe(3);
     // The tap still says it failed: it did.
     expect(H.toastError).toHaveBeenCalledWith(
-      "Couldn't join the space. Try again."
+      "Couldn’t join the space. Try again."
     );
   });
 });
@@ -401,7 +401,7 @@ describe("useSpaceMembership — leaving", () => {
     expect(readDoc(MINE)).toMatchObject({ uid: "me" });
     expect(H.haptic).toHaveBeenLastCalledWith("error");
     expect(H.toastError).toHaveBeenCalledWith(
-      "Couldn't leave the space. Try again."
+      "Couldn’t leave the space. Try again."
     );
   });
 

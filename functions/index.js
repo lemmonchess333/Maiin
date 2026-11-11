@@ -69,6 +69,7 @@ const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const blockGuard = require("./lib/blockGuard");
 const blockMirror = require("./lib/blockMirror");
+const followCounts = require("./lib/followCounts");
 const identityResync = require("./lib/identityResync");
 // S4e: a restricted account is refused anything that reaches another person.
 const restriction = require("./lib/restriction");
@@ -1403,10 +1404,14 @@ exports.applyProgramCommand = functions
     // A callable obtains its token asynchronously on the client. A queued
     // command must never execute under an account switched in during that
     // await. Older clients have no expectedUid and keep their bare payload.
-    if (data && Object.prototype.hasOwnProperty.call(data, "expectedUid") &&
-        data.expectedUid !== uid) {
+    if (
+      data &&
+      Object.prototype.hasOwnProperty.call(data, "expectedUid") &&
+      data.expectedUid !== uid
+    ) {
       throw new functions.https.HttpsError(
-        "cancelled", "Programme command belongs to another account."
+        "cancelled",
+        "Programme command belongs to another account."
       );
     }
     const firestore = admin.firestore();
@@ -1704,7 +1709,11 @@ exports.analyzeFood = functions
           ),
         });
 
-        const data = await response.json();
+        // A refusal can come back as a page rather than JSON (a wrong host
+        // answers with Google's HTML 404), so the body is read leniently:
+        // the status is what says who refused, and it must survive a body
+        // that is not JSON. A 200 that is not JSON fails as unreadable.
+        const data = await response.json().catch(() => null);
         // 2026-05-26 audit PR 4 (finding #10) — success-path full-body
         // log dropped; structural-metadata log on the error path only.
         if (!response.ok) {
@@ -1911,7 +1920,9 @@ exports.analyzeFoodText = functions
           body: JSON.stringify(buildFoodTextRequest(text)),
         });
 
-        const data = await response.json();
+        // Read leniently, as in analyzeFood: a refusal's status must
+        // survive a body that is not JSON.
+        const data = await response.json().catch(() => null);
 
         if (!response.ok) {
           console.error(
@@ -8973,6 +8984,11 @@ exports.onFollowRequestCreated = functions
  * On every write, and each delivery sets the row to what the block is now,
  * read in the transaction that writes it, so a retry or a delivery out of
  * order changes nothing that is already right.
+ *
+ * A block of someone who joined from the blocker's invite also renews the
+ * blocker's code (lib/inviteCodes.js renewInviteCodeAfterBlock), so the
+ * person blocked cannot make a new account and join from it again. Read
+ * against the block and the code's age, so a retry renews nothing twice.
  */
 exports.onBlockWritten = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -8986,6 +9002,48 @@ exports.onBlockWritten = functions
       blockedUid,
     });
     functions.logger.info("onBlockWritten.reconciled", { result });
+    const invite = await inviteCodes.renewInviteCodeAfterBlock({
+      firestore: admin.firestore(),
+      blockerUid,
+      blockedUid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    if (invite.renewed)
+      functions.logger.info("onBlockWritten.inviteCodeRenewed", {
+        blockerUid,
+      });
+    return null;
+  });
+
+/**
+ * onFollowerEdgeWritten and onFollowingEdgeWritten keep
+ * `followCounts/{uid}` (lib/followCounts.js): how many people follow an
+ * account and how many it follows, so a profile reads two numbers and
+ * nobody's lists.
+ *
+ * Each recounts one list for the account that owns it, and only when an
+ * edge was made or removed. A retry counts the same edges and stores the
+ * same number, and an account being deleted is left alone.
+ */
+exports.onFollowerEdgeWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("followers/{uid}/users/{followerUid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (!followCounts.edgeMovesCount(change.before.exists, change.after.exists))
+      return null;
+    await followCounts.recountFollowSide(db, context.params.uid, "followers");
+    return null;
+  });
+
+exports.onFollowingEdgeWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("following/{uid}/users/{targetUid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (!followCounts.edgeMovesCount(change.before.exists, change.after.exists))
+      return null;
+    await followCounts.recountFollowSide(db, context.params.uid, "following");
     return null;
   });
 
@@ -9077,11 +9135,15 @@ exports.setLeagueSharing = functions
  * one notification), forms this week's from the people who opted in and
  * trained in the last 14 days, and writes the figure the locked card reads.
  * Keyed by this week's Monday in leagueWeeks/{weekKey}, so a second run
- * does nothing twice (lib/leagues.js runLeagueTurn).
+ * does nothing twice (lib/leagues.js runLeagueTurn). It runs again at
+ * quarter past each hour until the end of Monday UTC: a scheduled function
+ * is not retried, and a run cut off part way (a timeout, one failed write)
+ * would otherwise leave the week with no groups. Once the week is finished
+ * a run reads its marker and stops.
  */
 exports.weeklyLeagueTurn = functions
   .runWith(SCHEDULED_CAP)
-  .pubsub.schedule("15 12 * * 1")
+  .pubsub.schedule("15 12-23 * * 1")
   .timeZone("Etc/UTC")
   .onRun(() =>
     jobRuns.recordJobRun(db, "weeklyLeagueTurn", async () => {
@@ -9195,6 +9257,43 @@ exports.getInviteCode = functions
     }
     try {
       const { code } = await inviteCodes.getOrCreateInviteCode({
+        firestore: admin.firestore(),
+        uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { code };
+    } catch (err) {
+      throw mapInviteError(err);
+    }
+  });
+
+/**
+ * renewInviteCode — the caller's new invite code (Soc15):
+ * the old one stops working at once, as a Circle owner's New code does. A
+ * restricted account gets none, as with getInviteCode: a code reaches the
+ * people who use it. Five a day: a code is renewed when it went somewhere
+ * it should not have, not to reset its daily cap.
+ */
+exports.renewInviteCode = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
+    if (await isRateLimited(uid, "inviteCodeRenew", 5, 86_400_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "You've made a few new codes today. Try again tomorrow."
+      );
+    }
+    try {
+      const { code } = await inviteCodes.renewInviteCode({
         firestore: admin.firestore(),
         uid,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),

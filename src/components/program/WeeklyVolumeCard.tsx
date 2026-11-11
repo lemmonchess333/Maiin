@@ -163,7 +163,7 @@ export default function WeeklyVolumeCard({
                 <span className="text-sm text-foreground w-24 shrink-0">
                   {JUDGEMENT_MUSCLE_LABEL[muscle]}
                 </span>
-                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div className="flex-1 h-1.5 rounded-full track-cut overflow-hidden">
                   <div
                     className="h-full rounded-full"
                     style={{

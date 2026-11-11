@@ -52,7 +52,7 @@ export default function PaceInsightCard({
       toast.success("Training paces updated");
       setAccepted(true);
     } else {
-      toast.error("Couldn't update your paces. Try again.");
+      toast.error("Couldn’t update your paces. Try again.");
     }
   }
 

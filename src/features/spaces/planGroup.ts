@@ -17,9 +17,9 @@ import { spaceDef, type SpaceDef, type SpaceEventInfo } from "./spaceDefs";
  * (functions/lib/raceCohorts.js).
  *
  * Only someone whose own goal is bound to a race sees anything, and only
- * while their race is ahead: Social's card in Together's This week, and a
- * line in the race space's hero. With fewer than two others in the group
- * the card says only "You're training for …" and the hero says nothing.
+ * while their race is ahead: Together's race hero, and a line in the race
+ * space's hero. With fewer than two others in the group neither shows a
+ * number.
  */
 
 /** The smallest group, the viewer included, whose size is shown. */
@@ -87,18 +87,12 @@ export function weeksToGoLine(weeksToGo: number): string {
   return weeksToGo === 1 ? "1 week to go" : `${weeksToGo} weeks to go`;
 }
 
-/**
- * The Social card's sentence. `count` is the group's size with the viewer
- * in it; under PLAN_GROUP_MIN_COUNT, or unknown, the card speaks of the
- * viewer alone.
- */
-export function planGroupCardLine(
-  count: number | null,
-  raceName: string
-): string {
-  if (count === null || count < PLAN_GROUP_MIN_COUNT)
-    return `You're training for ${raceName}`;
-  return `You and ${(count - 1).toLocaleString()} others are training for ${raceName}`;
+/** Together's race hero's line, under the race's name: "You and 11 others
+ *  on Tropos are training for it", or null when the group is too small to
+ *  show. */
+export function planGroupHeroCardLine(count: number | null): string | null {
+  if (count === null || count < PLAN_GROUP_MIN_COUNT) return null;
+  return `You and ${(count - 1).toLocaleString()} others on Tropos are training for it`;
 }
 
 /** The race space hero's line, or null when the group is too small to show. */

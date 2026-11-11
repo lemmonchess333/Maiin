@@ -47,14 +47,14 @@ describe("WeekResetCard", () => {
   it("a bit much: a shorter lift or a lighter run plan, then a run move, before the layout", () => {
     const props = card();
     expect(names()).toEqual([
-      "Use this week's Express session",
+      "Use this week’s Express session",
       "Make the run plan lighter",
       "Move a run this week",
       "Change usual weekly layout",
       "Keep this week",
     ]);
     fireEvent.click(
-      screen.getByRole("button", { name: "Use this week's Express session" })
+      screen.getByRole("button", { name: "Use this week’s Express session" })
     );
     expect(props.onOpen).toHaveBeenCalledWith("/program?day=1&express=1");
     fireEvent.click(
@@ -75,7 +75,7 @@ describe("WeekResetCard", () => {
   it("offers no run actions to someone with no run plan", () => {
     card({ runPlan: "none", plannedRuns: 0 });
     expect(names()).toEqual([
-      "Use this week's Express session",
+      "Use this week’s Express session",
       "Change usual weekly layout",
       "Keep this week",
     ]);

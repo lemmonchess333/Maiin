@@ -126,7 +126,7 @@ export default function SpaceCommentSheet({
       toast.error(
         filter
           ? OBJECTIONABLE_COMMENT_MESSAGE
-          : "Couldn't post the comment. Try again."
+          : "Couldn’t post the comment. Try again."
       );
       haptic("error");
       return;
@@ -161,8 +161,8 @@ export default function SpaceCommentSheet({
         const reason = describeRejection(err);
         toast.error(
           reason
-            ? `Couldn't post the comment. ${reason}`
-            : "Couldn't post the comment. Try again."
+            ? `Couldn’t post the comment. ${reason}`
+            : "Couldn’t post the comment. Try again."
         );
       }
     } finally {
@@ -181,8 +181,8 @@ export default function SpaceCommentSheet({
       const reason = describeRejection(err);
       toast.error(
         reason
-          ? `Couldn't delete the comment. ${reason}`
-          : "Couldn't delete the comment. Try again."
+          ? `Couldn’t delete the comment. ${reason}`
+          : "Couldn’t delete the comment. Try again."
       );
     }
   };
@@ -271,7 +271,7 @@ export default function SpaceCommentSheet({
               <IconButton
                 aria-label={
                   c.authorName
-                    ? `More options for ${c.authorName}'s comment`
+                    ? `More options for ${c.authorName}’s comment`
                     : "More options for this comment"
                 }
                 onClick={() => setPanel({ kind: "options", comment: c })}

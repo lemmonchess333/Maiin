@@ -160,13 +160,13 @@ export function runSessionAbout(
     const swapBack =
       template.id === RUN_WALK_TEMPLATE_IDS[0]
         ? ""
-        : " Too much this week? You can swap in last week's session for this day.";
+        : " Too much this week? You can swap in last week’s session for this day.";
     // The last is one run, between the two walks (Run20 (5)).
     if (config.runWalk?.runSecs.length === 1) {
       return {
         what: runWalkShape(config.runWalk),
         feel: "Easy on the run: you can talk in full sentences. Brisk on the walks.",
-        ifWrong: `Can't talk? Slow down, or walk for a minute, then run again.${swapBack}`,
+        ifWrong: `Can’t talk? Slow down, or walk for a minute, then run again.${swapBack}`,
       };
     }
     return {
@@ -174,7 +174,7 @@ export function runSessionAbout(
         ? runWalkShape(config.runWalk)
         : "Easy runs with walks between them, after a walk to warm up.",
       feel: "Easy on the runs: you can talk in full sentences. Brisk on the walks.",
-      ifWrong: `Can't talk on a run? Slow down, or start the walk early.${swapBack}`,
+      ifWrong: `Can’t talk on a run? Slow down, or start the walk early.${swapBack}`,
     };
   }
   if (template.type === "intervals") {
@@ -194,7 +194,7 @@ export function runSessionAbout(
             : "Hard repeats, with an easy jog or walk between each.",
           feel: "Hard, and even: the last rep as quick as the first. No chatting.",
           ifWrong:
-            "Can't match your first rep? Take a longer rest, or stop a rep early. One fewer rep is still the session.",
+            "Can’t match your first rep? Take a longer rest, or stop a rep early. One fewer rep is still the session.",
           alsoCalled: "VO2 max intervals.",
         };
   }
@@ -207,9 +207,9 @@ export function runSessionAbout(
         : blocks > 1
           ? "A warm-up, then your goal race pace in two blocks with easy running between, then a cool-down."
           : "A warm-up, then a block at your goal race pace, then a cool-down.",
-      feel: "Race pace: even and controlled, the rhythm you'll hold on race day.",
+      feel: "Race pace: even and controlled, the rhythm you’ll hold on race day.",
       ifWrong:
-        "Race pace won't come today? Ease off to a pace you can hold and finish the time. If it keeps feeling out of reach, you can change your goal time in your run plan.",
+        "Race pace won’t come today? Ease off to a pace you can hold and finish the time. If it keeps feeling out of reach, you can change your goal time in your run plan.",
     };
   }
   if (template.type === "tempo") {
@@ -231,7 +231,7 @@ export function runSessionAbout(
       what: "Your longest run of the week, finishing at your goal race pace.",
       feel: "Easy until the final stretch, then strong and even at race pace.",
       ifWrong:
-        "Race pace won't come today? Run the rest easy. Finishing the distance matters more than the pace.",
+        "Race pace won’t come today? Run the rest easy. Finishing the distance matters more than the pace.",
     };
   }
   if (template.type === "long") {
@@ -257,7 +257,7 @@ export function runSessionAbout(
       what: "A longer-than-usual easy run.",
       feel: "Easy: you can talk in full sentences, just for longer than usual.",
       ifWrong:
-        "Legs heavy before the end? Cut it short. The week's long run matters more.",
+        "Legs heavy before the end? Cut it short. The week’s long run matters more.",
       alsoCalled: ZONE_2,
     };
   }
@@ -265,7 +265,7 @@ export function runSessionAbout(
     what: "Relaxed running at a chatty pace.",
     feel: "Easy: you can talk in full sentences. Slower is fine.",
     ifWrong:
-      "Can't talk? Slow down, or walk for a minute. That's still the run.",
+      "Can’t talk? Slow down, or walk for a minute. That’s still the run.",
     alsoCalled: ZONE_2,
   };
 }

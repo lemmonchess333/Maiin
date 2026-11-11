@@ -1,5 +1,4 @@
 import type { ReminderActivity } from "./useReminderActivity";
-import { localDateString } from "@/lib/dateHelpers";
 import { useEffect, useRef } from "react";
 import { useReminderPreferences } from "./useReminderPreferences";
 import { useAuth } from "@/lib/auth";
@@ -11,7 +10,7 @@ import {
 import { isReminderLocallyOff } from "@/lib/localReminderChoice";
 import {
   isReminderDay,
-  nextWeekdayOccurrence,
+  reminderAtOn,
   WORKOUT_REMINDER_IDS,
   workoutReminderCopy,
 } from "@/lib/workoutReminderCopy";
@@ -120,11 +119,13 @@ export function useWorkoutRemindersInternal(
         // that one, which is exactly why the chain has to exist.
         if (cancelled) return;
         if (!isReminderDay(day, schedule)) continue;
-        const at = nextWeekdayOccurrence(reminders.time, day);
+        // The completed day no longer needs a reminder: the next week's.
+        const at = reminderAtOn(
+          reminders.time,
+          day,
+          activity?.workout ? activity.dateKey : null
+        );
         if (!at) continue;
-        // The completed day no longer needs a reminder. Preserve the next week's slot.
-        if (activity?.workout && localDateString(at) === activity.dateKey)
-          at.setDate(at.getDate() + 7);
         await scheduleNotification({
           id: WORKOUT_NOTIFICATION_IDS[day],
           ...workoutReminderCopy(day, schedule, liftName),
@@ -160,5 +161,8 @@ export function useWorkoutRemindersInternal(
     requestPermission: requestNotificationPermission,
     /** The programme's next workout, as the reminders name it. */
     liftName: liftName ?? null,
+    /** The day a session was saved, today's or null: its reminder is not
+     *  sent, so a preview must not name it (`reminderAtOn`). */
+    doneDay: activity?.workout ? activity.dateKey : null,
   };
 }

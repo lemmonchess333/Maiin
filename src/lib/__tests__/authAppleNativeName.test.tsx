@@ -106,6 +106,7 @@ vi.mock("@/lib/captureTimezone", () => ({
   shouldUpdateTimezone: () => false,
 }));
 
+import { getRedirectResult } from "firebase/auth";
 import { AuthProvider, useAuth } from "../auth";
 import {
   readDoc,
@@ -140,6 +141,12 @@ afterEach(() => {
 });
 
 describe("native Apple sign-in", () => {
+  it("never asks for a web redirect result", () => {
+    // The app's Auth has no redirect resolver, so asking throws
+    // auth/argument-error on every launch, which was filed as an error.
+    expect(getRedirectResult).not.toHaveBeenCalled();
+  });
+
   it("names the new account with the name Apple shared", async () => {
     await act(async () => {
       await H.signInWithApple!();

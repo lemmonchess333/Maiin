@@ -91,6 +91,38 @@ describe("CompactRestTimer", () => {
     );
   });
 
+  it("draws the time left in the display register, the live screen's one (DS4)", () => {
+    row(6, 90);
+    const time = screen.getByText("1:24");
+    expect(time).toHaveClass("ds-display-figure", "ds-display-rest");
+    // In the text colour while it runs and once it is over: green at this
+    // size would be the largest colour on the screen.
+    expect(time).toHaveClass("text-foreground");
+  });
+
+  it("names the set that comes next beside its exercise's drawing", () => {
+    render(
+      <CompactRestTimer
+        seconds={10}
+        target={90}
+        next={{ exerciseId: "bench-press", name: "Set 2", load: "15 kg × 10" }}
+        onExtend={() => {}}
+        onStop={() => {}}
+      />
+    );
+    const group = screen.getByRole("group", { name: "Rest timer" });
+    expect(group).toHaveTextContent("Next · Set 2");
+    expect(group).toHaveTextContent("15 kg × 10");
+    expect(group.querySelector("[data-thumb]")).not.toBeNull();
+  });
+
+  it("says nothing of a next set when none is left", () => {
+    row(10, 90);
+    expect(
+      screen.getByRole("group", { name: "Rest timer" })
+    ).not.toHaveTextContent("Next");
+  });
+
   it("adds fifteen seconds and ends the rest", () => {
     const { onExtend, onStop } = row(10, 90);
     fireEvent.click(

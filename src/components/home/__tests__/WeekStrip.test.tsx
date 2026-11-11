@@ -700,11 +700,13 @@ describe("WeekStrip — the week you are in, not the week ahead", () => {
   });
 });
 
-describe("WeekStrip — today is a ring, selection a second ring outside it", () => {
-  // DS3: today is the purple ring on whichever state the day is in, so a
-  // finished today still reads as today. Selection is a ring OUTSIDE the
-  // circle, so the two compose instead of one masking the other.
-  it("marks today with the purple ring and nothing else", () => {
+describe("WeekStrip — today is an outline, selection a ring outside it", () => {
+  // DS4: today is outlined in the foreground on whichever state the day is
+  // in, so a finished today still reads as today (a planned day is
+  // outlined in its sport colour, so a purple ring would read as a planned
+  // lift). Selection is a ring OUTSIDE the segment, so the two compose
+  // instead of one masking the other.
+  it("marks today with the foreground outline and nothing else", () => {
     const { container } = render(
       <WeekStrip
         todayKey={localDateString()}
@@ -719,7 +721,7 @@ describe("WeekStrip — today is a ring, selection a second ring outside it", ()
     const todayButton = container.querySelector('button[aria-current="date"]');
     expect(todayButton).not.toBeNull();
     const cls = todayCircle(container).className;
-    expect(cls).toContain("border-primary");
+    expect(cls).toContain("border-foreground");
     expect(cls).not.toContain("ring-foreground");
   });
 
@@ -737,7 +739,7 @@ describe("WeekStrip — today is a ring, selection a second ring outside it", ()
       />
     );
     const cls = todayCircle(container).className;
-    expect(cls).toContain("border-primary");
+    expect(cls).toContain("border-foreground");
     expect(cls).toContain("ring-foreground");
   });
 });

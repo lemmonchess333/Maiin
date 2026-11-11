@@ -1090,7 +1090,7 @@ export function simulateLiftSeason(
             fail(
               "run-day-card",
               date,
-              `${hidden.userOverride || hidden.templateId} is planned today, and Home's card is a ${card.type} day's`
+              `${hidden.userOverride || hidden.templateId} is planned today, and Home's card is a ${card.type} day’s`
             );
           const fromTrain =
             hidden && !offeredRun && persona.actions?.longRunOn !== undefined

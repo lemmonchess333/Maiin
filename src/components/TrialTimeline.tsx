@@ -41,7 +41,7 @@ export default function TrialTimeline({ plan }: Props) {
     {
       icon: Crown,
       when: `Day ${TRIAL_DAYS}`,
-      what: `Your subscription starts at ${plan.price} ${plan.periodPhrase} unless you've cancelled.`,
+      what: `Your subscription starts at ${plan.price} ${plan.periodPhrase} unless you’ve cancelled.`,
     },
   ];
 

@@ -81,6 +81,7 @@ import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
+import StepDetails from "@/components/StepDetails";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 import PlanPicker from "@/components/paywall/PlanPicker";
 import RenewalDisclosure from "@/components/paywall/RenewalDisclosure";
@@ -187,7 +188,7 @@ export default function Upgrade() {
     selectedPlan
   );
 
-  const { loading, error, startCheckout } = useProCheckout();
+  const { loading, error, notice, startCheckout } = useProCheckout();
 
   const platform: "web" | "ios" = isNativeIOS() ? "ios" : "web";
 
@@ -403,12 +404,12 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re a Pro member via the App Store
+              You’re a Pro member via the App Store
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription in your Apple Account. Apple doesn&apos;t
-            let us cancel or refund App Store subscriptions on your behalf.
+            Manage your subscription in your Apple Account. Apple doesn’t let us
+            cancel or refund App Store subscriptions on your behalf.
           </p>
           {storeTrial && <TrialDetails trial={storeTrial} />}
           <a
@@ -435,12 +436,12 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re a Pro member on the web
+              You’re a Pro member on the web
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription at troposfit.com — Apple&apos;s App Store
-            isn&apos;t the billing platform for this account.
+            Manage your subscription at troposfit.com — Apple’s App Store isn’t
+            the billing platform for this account.
           </p>
         </div>
       )}
@@ -451,7 +452,7 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re on Pro
+              You’re on Pro
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -583,7 +584,12 @@ export default function Upgrade() {
             {/* The app's primary button: it was a purple-to-teal gradient,
                 the one decorative gradient left on a button. */}
             {onSale && (
-              <Button size="lg" fullWidth onClick={handleContinue}>
+              <Button
+                variant="neutral"
+                size="lg"
+                fullWidth
+                onClick={handleContinue}
+              >
                 Continue
               </Button>
             )}
@@ -643,12 +649,22 @@ export default function Upgrade() {
               {error}
             </p>
           ) : null}
+          {notice ? (
+            <p
+              role="status"
+              className="text-xs text-foreground bg-muted rounded-lg px-3 py-2"
+            >
+              {notice}
+            </p>
+          ) : null}
 
           {/* Sub1a trial transparency — what actually happens, before the ask. */}
           {withTrial ? <TrialTimeline plan={selected} /> : null}
 
-          {/* Direct purchase CTA — never opens another modal. */}
+          {/* Direct purchase CTA — never opens another modal. The screen's
+              one full-width filled button, so neutral (DS4 call 1a). */}
           <Button
+            variant="neutral"
             size="lg"
             fullWidth
             onClick={handleCheckout}
@@ -658,7 +674,7 @@ export default function Upgrade() {
               <>
                 <Spinner
                   size="sm"
-                  variant="inverse"
+                  variant="current"
                   label="Starting checkout"
                 />
                 <span>Starting checkout…</span>
@@ -675,6 +691,7 @@ export default function Upgrade() {
             platform={platform}
             withTrial={withTrial}
           />
+          <StepDetails failed={!!error} waiting={loading} />
 
           {footer}
 

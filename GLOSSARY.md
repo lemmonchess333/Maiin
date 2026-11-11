@@ -257,6 +257,8 @@ Audited May 2026. Re-verify when products change. Each subsection lists what the
 
 STATUS 2026-11-05 (Soc15 call 2): the feed's user imagery now includes the person's own photos. A **post photo** is one of the one to four photos the author adds to a shared session after it is posted (`photos: [{ id, url, w, h }]` on `activities/{id}`, files at `post-photos/{uid}/{activityId}/{photoId}.jpg`, screened before the post names them, deleted with the post). Not a **meal photo**, which stays on the device (Food9), nor a progress photo, which only its owner reads; neither ever reaches social. Strava, Hevy and Nike Run Club all let a post carry its author's photos.
 
+STATUS 2026-11-10 (Soc16, owner: "Yes agree", after the reference apps were checked again on Mobbin): **challenges leave photography; races and Spaces keep it.** On the challenge surfaces themselves the dominant apps draw their own art, not photographs: every Strava challenge is a badge with its number in it (photos only on sponsored partner banners), Nike Run Club's list and challenge page are the medal on a block of colour, and Garmin draws even its real-place Expeditions (Everest, the Camino) as badges. Races are the opposite: Runna puts the real race location behind a race's plan. So a challenge's picture is now its own medal (`MedalArt`, at poster size in `ChallengeMedalBand`, on every row through `rowMedal.ts`), the twelve `challenge-*` covers are retired, and photography stays for places and communities: a race's real place, a Space's cover, Together's race hero. DESIGN_GUIDE §14m rule 26 says the same. The 2026-07-11 position above stands for races, Spaces and the feed.
+
 ### Follow approval (Polish2, 2026-10-20)
 
 **Reference apps** (checked against their own pages, 2026-10-20):

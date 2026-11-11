@@ -82,7 +82,7 @@ function ProfileUnavailable({ back }: { back: ReactNode }) {
       {back}
       <EmptyState
         icon={UserX}
-        headline="This profile isn't available"
+        headline="This profile isn’t available"
         sub="The account may have been deleted, or the link is out of date."
         action={{
           label: "Go back",
@@ -202,7 +202,7 @@ function ProfileContent({
         {back}
         <EmptyState
           icon={WifiOff}
-          headline="Couldn't load this profile"
+          headline="Couldn’t load this profile"
           sub="Check your connection and try again."
           action={{ label: "Try again", onClick: retry }}
         />
@@ -223,7 +223,7 @@ function ProfileContent({
       toast.success(`Blocked ${name}`);
       navigate(-1);
     } catch {
-      toast.error("Couldn't block user. Try again.");
+      toast.error("Couldn’t block user. Try again.");
     }
   };
 
@@ -236,7 +236,7 @@ function ProfileContent({
       removeBlocked(uid);
       toast.success(`Unblocked ${name}`);
     } catch {
-      toast.error("Couldn't unblock. Try again.");
+      toast.error("Couldn’t unblock. Try again.");
     }
   };
 
@@ -265,7 +265,7 @@ function ProfileContent({
           </h1>
           {countsFailed ? (
             <p className="mt-1 text-small text-muted-foreground">
-              Couldn't load follower counts.
+              Couldn’t load follower counts.
             </p>
           ) : followers === null || followingCount === null ? (
             <Skeleton className="mt-1.5 h-4 w-36 rounded" />
@@ -452,7 +452,7 @@ function ProfileContent({
               <Skeleton className="mt-3 h-12 w-full rounded-lg" />
             ) : postsFailed ? (
               <p className="mt-2 text-small text-muted-foreground">
-                Couldn't load this week's sessions.
+                Couldn’t load this week’s sessions.
               </p>
             ) : week.sessions > 0 ? (
               <div className="mt-3 grid grid-cols-3 divide-x divide-border">
@@ -480,7 +480,7 @@ function ProfileContent({
 
           {badgesFailed && (
             <p className="text-small text-muted-foreground">
-              Couldn't load badges.
+              Couldn’t load badges.
             </p>
           )}
           {badges.length > 0 && (
@@ -518,7 +518,7 @@ function ProfileContent({
               </>
             ) : postsFailed ? (
               <ErrorState
-                title="Couldn't load sessions"
+                title="Couldn’t load sessions"
                 description="Check your connection and try again."
                 retry={{ onClick: retry }}
               />
@@ -530,7 +530,7 @@ function ProfileContent({
               <EmptyState
                 icon={Users}
                 headline="Nothing shared yet"
-                sub="Sessions you share show here and in your followers' feeds."
+                sub="Sessions you share show here and in your followers’ feeds."
                 action={{ label: "Start a workout", href: "/program" }}
               />
             ) : (

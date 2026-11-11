@@ -137,7 +137,7 @@ export default function ReportForm({
       toast.success(parts.length > 0 ? parts.join(" · ") + "." : "Done.");
       onClose();
     } catch {
-      toast.error("Couldn't complete that. Try again.");
+      toast.error("Couldn’t complete that. Try again.");
     } finally {
       setSending(false);
     }
@@ -265,7 +265,7 @@ export default function ReportForm({
           {targetType === "activity" ? (
             <ActionCheckbox
               label="Hide from my feed"
-              description="You won't see this activity again."
+              description="You won’t see this activity again."
               checked={doHide}
               onChange={setDoHide}
             />

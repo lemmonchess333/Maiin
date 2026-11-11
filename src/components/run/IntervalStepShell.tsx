@@ -160,16 +160,17 @@ export default function IntervalStepShell({
           >
             <div
               className={
-                reduce ? "h-full" : "h-full transition-all duration-1000"
+                reduce
+                  ? "h-full w-full"
+                  : "h-full w-full transition-transform duration-1000"
               }
               style={{
                 background: TYPE_COLOR[s.type],
-                width:
-                  i < idx
-                    ? "100%"
-                    : i === idx
-                      ? `${liveProgress * 100}%`
-                      : "0%",
+                /* Full width, slid into place: a width retargeted every
+                   second laid out and painted every frame of the run. */
+                transform: `translateX(${
+                  (i < idx ? 0 : i === idx ? liveProgress - 1 : -1) * 100
+                }%)`,
               }}
             />
           </div>
@@ -220,7 +221,7 @@ export default function IntervalStepShell({
         {manualDistance && isDistanceBased && (
           <div className="space-y-3 pt-2">
             <p className="text-xs text-white/70">
-              Distance isn't tracked live. Mark this step complete when you've
+              Distance isn’t tracked live. Mark this step complete when you’ve
               covered its target; enter the full run distance below when
               finished.
             </p>

@@ -14,19 +14,21 @@ import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonthLong, formatWeekdayDayMonth } from "@/utils/formatters";
 
 /**
- * What one day of the strip shows (DS3). The circle carries the day's
- * state on its own; there is no dot row beneath it and no legend to learn.
+ * What one day of the strip shows (DS4: seven segments under Home's hero,
+ * where DS3 drew seven circles). The segment carries the day's state on
+ * its own; there is no dot row beneath it and no legend to learn. Its
+ * colour is the person's training, the largest colour on Home (§14m).
  *
  *   lift-done / run-done  filled with the sport's colour
  *   both-done             split between the two
- *   planned               an outlined circle: something is still to do
+ *   planned               outlined in its sport's colour: still to do
  *   missed                a dashed outline: a planned day that has passed
- *   rest                  the bare date
- *   before                the bare date, for a day before the account
+ *   rest                  the bare track
+ *   before                the bare track, for a day before the account
  *                         began: a plan made on Friday did not miss Monday
  *
- * Today adds the purple ring on top of whichever state it is in, so a
- * finished today still reads as today.
+ * Today is outlined in the foreground on top of whichever state it is in,
+ * so a finished today still reads as today.
  */
 export type WeekDayState =
   | "lift-done"
@@ -123,14 +125,27 @@ function trainingLabel(
   return run;
 }
 
+/* A segment that holds nothing yet is a track (DESIGN_GUIDE §14o): in the
+ * dark theme it is cut into the week card, so a done day's colour sits in
+ * something. `track-cut` equals `bg-muted` in the light theme, so only
+ * the states with no fill there name the theme. */
 const STATE_CLASSES: Record<WeekDayState, string> = {
-  "lift-done": "bg-lifting/30 text-foreground",
-  "run-done": "bg-running/30 text-foreground",
-  "both-done": "text-foreground",
-  planned: "border-2 border-foreground/20 text-foreground",
-  missed: "border-2 border-dashed border-foreground/25 text-muted-foreground",
-  rest: "text-muted-foreground",
-  before: "text-muted-foreground",
+  "lift-done": "bg-lifting",
+  "run-done": "bg-running",
+  "both-done": "",
+  planned: "border-2 dark:track-cut",
+  missed: "border-2 border-dashed border-foreground/30 dark:track-cut",
+  rest: "track-cut",
+  before: "bg-muted/50 dark:bg-track/60 dark:shadow-[var(--ds-shadow-track)]",
+};
+
+/** A planned day's outline, in the colour of what it plans. A day with
+ *  both takes the lift's: the outline says "still to do", and the label
+ *  names both sessions. */
+const PLANNED_EDGE: Record<string, string> = {
+  lift: "border-lifting/70",
+  run: "border-running/70",
+  both: "border-lifting/70",
 };
 
 export default function WeekStrip({
@@ -246,34 +261,33 @@ export default function WeekStrip({
     startKey,
   ]);
   return (
-    /* Seven equal columns, each circle as wide as its column allows up
-       to 2.5rem. Fixed 44px buttons and rem-sized circles needed more
-       than a 320px phone has once the text is larger, and pushed
-       Sunday off the screen. The 44px height stays the tap target.
-       Named as Food's strip is, so a screen reader hears seven days as
-       one week rather than seven loose buttons. */
+    /* Seven equal columns, each segment its column's width less the gap.
+       The gap is px, so it does not grow with the text and squeeze "W"
+       past its column at double size on a 320px phone. Fixed 44px buttons
+       needed more than a 320px phone has once the text is larger, and
+       pushed Sunday off the screen. The 44px height stays
+       the tap target. Named as Food's strip is, so a screen reader hears
+       seven days as one week rather than seven loose buttons. */
     <div
       role="group"
       aria-label={
         days[0] ? `Week of ${formatDayMonthLong(days[0].date)}` : undefined
       }
-      className="grid grid-cols-7 items-center justify-items-center"
+      className="grid grid-cols-7 items-center gap-x-[6px]"
     >
       {days.map(function (day) {
-        /* Every circle is the same size, deliberately: a larger today
-           breaks the row's baselines on the one day a user looks at
-           most. Today is a ring, selection a second ring outside it, and
-           the two compose.
-
-           Day numbers are numbers inside the strip → font-mono (the text face) +
-           tabular-nums per the design-system invariant. */
+        /* Every segment is the same size, deliberately: a larger today
+           breaks the row on the one day a user looks at most. Today is an
+           outline, selection a ring outside it, and the two compose. */
         const style =
           day.state === "both-done"
             ? {
                 background:
-                  "linear-gradient(135deg, hsl(var(--lifting) / 0.3) 50%, hsl(var(--running) / 0.3) 50%)",
+                  "linear-gradient(90deg, hsl(var(--lifting)) 50%, hsl(var(--running)) 50%)",
               }
             : undefined;
+        const sport =
+          day.sType === "both" ? "both" : day.sType === "run" ? "run" : "lift";
         return (
           <button
             type="button"
@@ -299,14 +313,28 @@ export default function WeekStrip({
               (day.hasActivity ? " (food logged)" : "") +
               (day.isToday ? " (today)" : "")
             }
-            className="flex flex-col items-center gap-1.5 active:scale-[0.95] transition-transform w-full min-w-0 min-h-[44px] justify-center"
+            className="flex flex-col items-stretch gap-1.5 active:scale-[0.95] transition-transform w-full min-w-0 min-h-[44px] justify-center"
           >
+            <div
+              data-state={day.state}
+              data-sport={day.state === "planned" ? sport : undefined}
+              data-today={day.isToday || undefined}
+              className={cn(
+                "h-2.5 w-full rounded-full transition-colors",
+                STATE_CLASSES[day.state],
+                day.state === "planned" && PLANNED_EDGE[sport],
+                day.isToday && "border-2 border-foreground border-solid",
+                day.isSelected &&
+                  "ring-2 ring-foreground ring-offset-2 ring-offset-card"
+              )}
+              style={style}
+            />
             {/* One letter, not two. The row is a fixed frame — the strip
                 is always the calendar week — so position disambiguates the
                 two S's and the two T's, as on the iOS week row. */}
             <span
               className={cn(
-                "text-xs",
+                "text-center text-xs",
                 day.isToday
                   ? "font-bold text-foreground"
                   : "font-medium text-muted-foreground"
@@ -314,20 +342,6 @@ export default function WeekStrip({
             >
               {format(day.date, "EEEEE")}
             </span>
-            <div
-              data-state={day.state}
-              data-today={day.isToday || undefined}
-              className={cn(
-                "w-full max-w-10 aspect-square rounded-full flex items-center justify-center text-sm font-semibold font-mono tabular-nums transition-colors",
-                STATE_CLASSES[day.state],
-                day.isToday && "border-2 border-primary border-solid",
-                day.isSelected &&
-                  "ring-2 ring-foreground ring-offset-2 ring-offset-background"
-              )}
-              style={style}
-            >
-              {day.date.getDate()}
-            </div>
           </button>
         );
       })}

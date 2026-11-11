@@ -317,7 +317,7 @@ describe("Why this run", () => {
     expect(about.alsoCalled, "a name coaches use for a long run").toBeTruthy();
     render(
       <RunPurpose>
-        <RunAbout about={about} why="The week's anchor run." />
+        <RunAbout about={about} why="The week’s anchor run." />
       </RunPurpose>
     );
     expect(screen.getByText(RUN_ABOUT.open, { exact: true }).tagName).toBe(

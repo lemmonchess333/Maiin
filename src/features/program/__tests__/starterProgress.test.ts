@@ -26,7 +26,9 @@ describe("starterProgress", () => {
     expect(starterProgress(plan(8), goal, [])!.toGoLabel).toBe(
       "2 stages to go"
     );
-    expect(starterProgress(plan(9), goal, [])!.toGoLabel).toBe("the last stage");
+    expect(starterProgress(plan(9), goal, [])!.toGoLabel).toBe(
+      "the last stage"
+    );
   });
 
   it("counts this week's saved runs against the two that make it done", () => {
@@ -35,14 +37,24 @@ describe("starterProgress", () => {
     expect(view.runsForTheWeek).toBe(2);
   });
 
-  it("repeats when last week, inside the goal, was not done", () => {
-    expect(starterProgress(plan(3), goal, ["2026-10-14"])!.repeated).toBe(true);
-    expect(
-      starterProgress(plan(3), goal, ["2026-10-13", "2026-10-15"])!.repeated
-    ).toBe(false);
+  it("repeats when the rollover kept the stage, inside the goal", () => {
+    // The stage began last week and is this week's again.
+    const kept = {
+      runPlan: starterRunPlan(3, THIS_WEEK, LAST_WEEK),
+    } as Pick<ProgramState, "runPlan">;
+    expect(starterProgress(kept, goal, ["2026-10-14"])!.repeated).toBe(true);
     // A goal begun this week has no week before it to repeat.
     expect(
       starterProgress(plan(1), { startedOn: "2026-10-20" }, [])!.repeated
+    ).toBe(false);
+  });
+
+  it("does not repeat a stage that moved on from runs on two weeks' days", () => {
+    // One run last week and one the week before moved stage 3 on to 4
+    // (nextStarterStage adds distinct days across weeks); last week alone
+    // was short of two, but stage 4 is new this week.
+    expect(
+      starterProgress(plan(4), goal, ["2026-10-08", "2026-10-14"])!.repeated
     ).toBe(false);
   });
 

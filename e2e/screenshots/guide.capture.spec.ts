@@ -14,7 +14,7 @@ import { GUIDE_UNDER_AUTOMATION_KEY } from "../../src/lib/firstGuide";
  *
  * The guide never shows under automation, so no other spec meets it; this
  * one turns it on with its localStorage switch before the app loads. The
- * capture rig has no Functions emulator, so "Go to Today" is routed into
+ * capture rig has no Functions emulator, so "Start my plan" is routed into
  * the real `completeOnboarding` handler with a verified emulator token,
  * as run-coaching.capture.spec.ts does for its callable: the account and
  * its plan are written by the code that writes them in production.
@@ -142,7 +142,9 @@ test("a new account can start training before replaying the guide", async ({
   await page
     .getByRole("textbox", { name: "Your public display name" })
     .fill("Guide tester");
-  await page.getByRole("button", { name: "Go to Today", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Start my plan", exact: true })
+    .click();
 
   // The saved plan opens Today with the training task ready and no tour or
   // offer in the way. Food remains available in the tab bar.
@@ -244,7 +246,7 @@ test("a new account can start training before replaying the guide", async ({
   const isButton = await startsRun.evaluate((el) => el.tagName === "BUTTON");
   await (isButton ? startsRun : startsRun.getByRole("button").first()).click();
   await expect(firstRun).toHaveCount(0);
-  await expect(page.getByText("Acquiring GPS...")).toBeVisible({
+  await expect(page.getByText("Acquiring GPS…")).toBeVisible({
     timeout: 10_000,
   });
   await expect(startsRun).toHaveCount(0);

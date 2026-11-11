@@ -37,7 +37,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type SpinnerSize = "xs" | "sm" | "md" | "lg";
-export type SpinnerVariant = "primary" | "inverse" | "muted";
+export type SpinnerVariant = "primary" | "inverse" | "muted" | "current";
 
 interface SpinnerProps extends Omit<
   HTMLAttributes<HTMLSpanElement>,
@@ -60,6 +60,9 @@ const SIZE_CLASSES: Record<SpinnerSize, string> = {
 const VARIANT_CLASSES: Record<SpinnerVariant, string> = {
   primary: "text-primary",
   inverse: "text-white",
+  // The colour of the text around it: a spinner inside a filled button
+  // whose label is the page's own ink (the neutral fill).
+  current: "text-current",
   muted: "text-muted-foreground",
 };
 

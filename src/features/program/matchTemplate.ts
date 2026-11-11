@@ -463,7 +463,7 @@ export function applyEquipmentFilterToWorkouts(
     return {
       ...ex,
       notes:
-        `${ex.name} needs equipment you don't have — replace it manually ` +
+        `${ex.name} needs equipment you don’t have — replace it manually ` +
         `or use a bodyweight variation.`,
     };
   };

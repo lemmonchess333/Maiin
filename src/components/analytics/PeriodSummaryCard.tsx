@@ -20,6 +20,9 @@ import { abbreviateK } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { binAxis } from "@/components/analytics/binAxis";
 import { buttonClasses } from "@/components/ui/buttonClasses";
+import ChartReading, {
+  type ChartReadingLine,
+} from "@/components/analytics/ChartReading";
 
 /** What the bars can show: the three figures above them. */
 export type SummaryMetric = "sessions" | "volume" | "distance";
@@ -31,6 +34,9 @@ export interface SummaryFigure {
   /** The words under the number: "sessions", "kg lifted", "km run". */
   unit: string;
   change: SummaryChange | null;
+  /** The figure against the range before, in a sentence
+   *  (`rangeChangeReading`), shown while it is the chart's figure. */
+  reading?: ChartReadingLine | null;
 }
 
 /** Drawing units; the SVG scales to the card's width. */
@@ -159,6 +165,7 @@ export default function PeriodSummaryCard({
     0,
     figures.findIndex((f) => f.metric === metric)
   );
+  const reading = figures[selectedIndex]?.reading ?? null;
 
   function choose(index: number) {
     const figure = figures[index];
@@ -194,9 +201,23 @@ export default function PeriodSummaryCard({
     <Card as="section" aria-label={title} className="space-y-4">
       <div>
         <h2 className="text-base font-bold text-foreground">{title}</h2>
-        <p className="text-sm text-muted-foreground">
-          {comparedWith ? `Compared with ${comparedWith}` : sinceLabel}
-        </p>
+        {/* The chart's figure against the range before, in a sentence,
+            where "Compared with the 30 days before" stood: the sentence
+            names the same range, with the number and which way it moved,
+            and the other figures' arrows read by it. Until the range
+            before is known, or for an account younger than the range, the
+            line it replaced stays, and the next one says when it
+            compares. */}
+        {comparedWith && reading && !reading.waiting ? (
+          <ChartReading line={reading} />
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              {comparedWith ? `Compared with ${comparedWith}` : sinceLabel}
+            </p>
+            {reading?.waiting && <ChartReading line={reading} />}
+          </>
+        )}
       </div>
 
       {/* The figures are the chart's switch. Their backgrounds reach into
@@ -226,7 +247,7 @@ export default function PeriodSummaryCard({
                 onClick={() => choose(i)}
                 onKeyDown={(event) => onKeyDown(event, i)}
                 className={cn(
-                  "min-w-0 rounded-xl px-2 py-2 text-left",
+                  "min-w-0 rounded-lg px-2 py-2 text-left",
                   "active:scale-[0.97] motion-safe:transition-[background-color,scale]",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                   selected && "bg-muted"

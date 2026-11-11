@@ -718,7 +718,7 @@ test.describe("App Store screenshots", () => {
     await expect(
       page.getByRole("button", { name: "Start workout", exact: true })
     ).toBeVisible({ timeout: 20_000 });
-    const food = page.getByRole("region", { name: "Today's food" });
+    const food = page.getByRole("region", { name: "Today’s food" });
     await expect(food).toContainText(/kcal (left|over)/, { timeout: 20_000 });
     await expect(food.getByText("Protein")).toBeVisible();
 
@@ -813,7 +813,8 @@ test.describe("App Store screenshots", () => {
       timeout: 15_000,
     });
     await page.clock.setFixedTime(startedAt + (14 * 60 + 20) * 1000);
-    await expect(page.getByText(/ · 14:2\d$/)).toBeVisible();
+    // The header's time figure.
+    await expect(page.getByText(/^14:2\d$/)).toBeVisible();
     await shoot(page, "03-workout");
   });
 
@@ -826,7 +827,7 @@ test.describe("App Store screenshots", () => {
     await expect(
       page
         .getByText(/^Food log\s+·\s+\d+ items?$/)
-        .or(page.getByText("Nothing logged yet"))
+        .or(page.getByText("Meals you log today show here."))
     ).toBeVisible({ timeout: 20_000 });
     await expect(
       page.getByRole("button", { name: /calories logged/ }).first()

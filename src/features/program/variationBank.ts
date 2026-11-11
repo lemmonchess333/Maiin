@@ -598,6 +598,34 @@ export const PINNED_EQUIPMENT_FALLBACK: Readonly<Record<string, string>> = {
   "seated-calf-raise": "single-leg-calf-raise",
 };
 
+/** The categories whose primary is a whole-body compound: the squat, the
+ *  bench, the press, the row, the pull-up, the deadlift. The arm and core
+ *  primaries are not, and never stand for a session. */
+const COMPOUND_CATEGORIES: readonly MovementCategory[] = [
+  "horizontal_push",
+  "vertical_push",
+  "horizontal_pull",
+  "vertical_pull",
+  "knee_dominant",
+  "hip_dominant",
+];
+
+/**
+ * True when the exercise is a compound category's primary, the lift that
+ * category is built around. A session's picture is its first such lift
+ * (`sessionLeadArt`): a beginner's pull day opens with the straight-arm
+ * pulldown the floor gate put in the pull-up's place, and the row behind
+ * it is the day's main lift.
+ */
+export function isCompoundPrimary(exerciseId: string | undefined): boolean {
+  if (!exerciseId) return false;
+  return COMPOUND_CATEGORIES.some((category) =>
+    exerciseBank[category].some(
+      (option) => option.id === exerciseId && option.primary
+    )
+  );
+}
+
 /** The bank category that owns an exercise id, if it is a bank movement. */
 export function movementCategoryForExerciseId(
   exerciseId: string | undefined

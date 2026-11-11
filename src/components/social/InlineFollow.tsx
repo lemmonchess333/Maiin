@@ -66,7 +66,7 @@ export default function InlineFollow({
         } else {
           setFollowedHere(false);
           haptic("error");
-          toast.error("Couldn't follow. Try again.");
+          toast.error("Couldn’t follow. Try again.");
         }
       }}
       className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-2 text-sm font-semibold text-lifting-strong hover:text-lifting-strong/80 active:scale-[0.97] transition-[color,scale] disabled:opacity-50"

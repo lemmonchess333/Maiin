@@ -76,7 +76,7 @@ e2e/                    # Playwright specs; screenshot capture specs in e2e/scre
 - **Offline support:** `src/lib/offlineQueue.ts` queues writes when offline
 - **Error boundaries:** `RouteErrorBoundary` (page-level) and `SectionErrorBoundary` (card-level)
 - **Tab preloading:** `BottomNavigation` calls `preloadTab()` (`src/lib/preloadTab.ts`) to load a tab's page as the person reaches for it
-- **Auth routing:** Three route sets — unauthenticated (Login), onboarding incomplete (Onboarding), authenticated (full app)
+- **Auth routing:** Three route sets — unauthenticated (Login), onboarding incomplete (Onboarding), authenticated (full app). Route on `profileLoad` (`auth.tsx`), not on `profile === null`: an account with no profile yet is `missing` and goes to Onboarding, while one whose profile could not be read is `failed` and gets `ProfileUnavailable` (Try again, Sign out), because finishing setup replaces the programme
 - **App version:** Defined via `__APP_VERSION__`, read from `package.json` at build time
 
 ## Pages (src/pages/)
@@ -116,8 +116,8 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Dedicated lift-plan editor                                                      |
 | `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)           |
 | `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                             |
-| `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into My pantry              |
-| `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | My pantry — edit or remove the saved foods Quick add offers (F2d)               |
+| `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into Your pantry            |
+| `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | Your pantry — edit or remove the saved foods Quick add offers (F2d)             |
 | `settings/SettingsData.tsx`            | `/settings/data`                   | Your data — exports, and the way into recently deleted meals                    |
 | `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                   |
 | `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                         |
@@ -291,14 +291,15 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **The community goal counts everyone** (Soc14). A `group-goal-*` challenge carries server-written `collectiveMeters` (whole metres) and `collectiveRunners`: every eligible run saved in its month adds to them, joined or not, and deleting the run takes exactly its credit back off (`functions/lib/communityGoal.js`; the per-run credits live in `users/{uid}/communityGoal`, server-only, swept with the account). The app reads that total, never a sum of the loaded board.
 - **A medal is kept per challenge edition** (Soc15). `users/{uid}/medals/{challengeId}` (owner-read) and the public profile's `medalSummary` (the trophy case, newest 40) are written ONLY by `onChallengeParticipantWritten` (`functions/lib/medals.js`), derived from the participant document, never by the several writers of `tierAchieved`; the rules refuse a client write of either. A medal follows the participant until 48 hours after the challenge ends, then is frozen. A community goal awards none. Reveals are on Social only, once per medal and tier per device.
 - **A league is opt-in and scored against your own plan** (Soc15 call 3). `users/{uid}.leagueOptIn` is set only by the `setLeagueSharing` callable, which a restricted account cannot use to join; leaving deletes the person's standing at once. `leagueMembers`, `leagueGroups` (+ `standings`), `users/{uid}/leagueResults`, `leagueWeeks` and `leagueStatus` are SERVER-written only: `weeklyLeagueTurn` (Monday 12:15 UTC) settles, forms groups of about 20 and writes the open/locked figure, and the session triggers recompute a standing from the sessions. Points are `round(100 × min(done, planned) / planned)`; the planned count is `functions/lib/leaguePlanned.js`, a server copy of `trainingWeek.ts` pinned by `leaguePlanned.cross.test.ts`, and the rules are `functions/lib/leagueRules.js`.
-- **A plan group is a count, recounted** (Soc15). `raceCohorts/{spaceId}` = `{ count, updatedAt }`: how many race goals (`users/{uid}.raceGoal.eventSpaceId`) are bound to that race with their race day still ahead. SERVER-written only, from a count aggregation and never an increment (`functions/lib/raceCohorts.js`), by `onRaceGoalWritten` (any write to `users/{uid}` that sets, moves or clears a bound goal recounts the old race and the new one; it is a trigger because the goal has many writers, account deletion among them) and `dailyRaceCohortRecount` (04:30 UTC, every race ahead); any signed-in person reads it. It names no one, so it leaves no one out. Only someone whose own goal is bound to a race ahead sees it (`PlanGroupCard` in Together's This week, a line in the race space's hero), and under 3 neither shows a number.
+- **A plan group is a count, recounted** (Soc15). `raceCohorts/{spaceId}` = `{ count, updatedAt }`: how many race goals (`users/{uid}.raceGoal.eventSpaceId`) are bound to that race with their race day still ahead. SERVER-written only, from a count aggregation and never an increment (`functions/lib/raceCohorts.js`), by `onRaceGoalWritten` (any write to `users/{uid}` that sets, moves or clears a bound goal recounts the old race and the new one; it is a trigger because the goal has many writers, account deletion among them) and `dailyRaceCohortRecount` (04:30 UTC, every race ahead); any signed-in person reads it. It names no one, so it leaves no one out. Only someone whose own goal is bound to a race ahead sees it (`RaceHero`, Together's hero, and a line in the race space's hero), and under 3 neither shows a number.
 - **Social's live pulse counts everyone's sessions** (Soc15). `pulse/{YYYY-MM-DD}` = `{ sessions, updatedAt, expiresAt }`, read by anyone signed in and written only by the session create and delete triggers (`functions/lib/pulse.js`), each session once through `users/{uid}/pulseCredits` (server-only, swept with the account); both expire by TTL eight days after the day starts. The Feed reads the viewer's local today and draws nothing below 10.
 - **A block hides each person from the other** (S4, Polish3 call 1). `blocks/{blocker}/users/{blocked}` is the blocker's own list; `blockedBy/{blocked}/users/{blocker}` is its copy for the person blocked, SERVER-written by `onBlockWritten` (`functions/lib/blockMirror.js`) and read only by them. `useBlockedUsers().blocked` merges the two, and every social surface filters on it; `youBlocked` and `blockedYou` are for the profile's Unblock and its not-available state alone (`blockedBothWays.test.tsx`). The rules refuse a single read of a blocker's public profile, and of a post across a block either way; queries (Explore, search, a profile's posts) are filtered in the app.
 - **Auth:** Firebase Auth (Email, Google, Apple Sign-In)
 - **Email sign-ups verify after the plan, not before it** (owner, 2026-10-01, reversing the 2026-09-15 wall). Sign-up sends the link (`signUp` in `auth.tsx`) and goes straight to onboarding, and `completeOnboarding` no longer asks for the claim. Home asks (`VerifyEmailBanner`, with Resend and a way to change a wrong address) until the app sees the address verified. The App-level gate rechecks on every return to the app, reloading Auth and refreshing the token, so tapping the link in Mail is enough. The social gate below is unchanged.
 - **Public writes need a verified email.** The `email_verified` token claim gates `activities` and `spaces/{id}/posts` creates in `firestore.rules` (`isEmailVerified()`) and comments in the two comment callables (`assertCallerEmailVerified`). Private logging under `users/{uid}/*` and every non-content interaction stay open to unverified accounts; OAuth accounts carry the claim already. The e2e rig marks its signup-form accounts verified through the Auth emulator REST API (seed scripts create users verified).
 - **A restricted account reaches no one** (S4e, 2026-10-06). `globalRestrictedUids/{uid}`, written by the moderation page's Restrict user (`resolveReport`) and removed by its Lift (`liftRestriction`), makes `isRestricted()` in `firestore.rules` refuse posts (a private one excepted), follows, Space and challenge joins, Circle events and partner bonds, and `functions/lib/restriction.js` refuse props, comments, likes, reactions and the Circle callables; the toggles refuse only adding. Logging, the person's own profile, blocking, reporting, unfollowing, leaving and deleting their own things stay open. The app says so before the server refuses: `RestrictedNotice` where an action would be, `showRestrictedToast()` for a refused tap (`src/lib/accountRestriction.ts`). Deleting a restricted account keeps a keyed hash of its email (only once verified, so a borrowed address restricts no one) and its Google and Apple sign-in ids in `restrictedIdentities/{hash}` for 13 months (`functions/lib/restrictedIdentities.js`, STATUS 2026-10-20): `onAuthUserCreated` restricts a new account carrying one, and `liftRestriction` forgets them.
-- **A follower is someone you accepted** (Polish2, 2026-10-20). `users/{uid}.approveFollowers` (Settings → Social & privacy; absent means on) makes `firestore.rules` refuse a direct follow, and the app writes `followRequests/{target}/users/{asker}` instead, seen only by the two. Only the person asked writes the two follow edges, on accepting (`acceptFollowRequest`). Requests have their own collection so every reader of `followers/`/`following/` still sees only accepted follows. One exception (Soc15 call 4, 2026-11-04; narrowed by its STATUS of 2026-11-05): a new account that joins from someone's invite link or code is followed by them at once, written only by the `redeemInvite` callable (`functions/lib/inviteCodes.js`; edges carry `fromInvite`), since using their link counts as the new person accepting them. The new person follows the inviter at once only when the inviter has Approve followers off; otherwise `redeemInvite` writes their follow request, marked `fromInvite`, which the inviter accepts in one tap, so a code posted publicly reaches no followers-only post.
+- **A follower is someone you accepted** (Polish2, 2026-10-20). `users/{uid}.approveFollowers` (Settings → Social & privacy; absent means on) makes `firestore.rules` refuse a direct follow, and the app writes `followRequests/{target}/users/{asker}` instead, seen only by the two. Only the person asked writes the two follow edges, on accepting (`acceptFollowRequest`). Requests have their own collection so every reader of `followers/`/`following/` still sees only accepted follows. One exception (Soc15 call 4, 2026-11-04; narrowed by its STATUS of 2026-11-05): a new account that joins from someone's invite link or code is followed by them at once, written only by the `redeemInvite` callable (`functions/lib/inviteCodes.js`; edges carry `fromInvite`), since using their link counts as the new person accepting them. The new person follows the inviter at once only when the inviter has Approve followers off; otherwise `redeemInvite` writes their follow request, marked `fromInvite`, which the inviter accepts in one tap, so a code posted publicly reaches no followers-only post. A code is renewed (Soc15 STATUS 2026-11-10) by its owner at any time (`renewInviteCode`, People's New code) and by a block of someone who joined from it (`onBlockWritten` reads the `invitedBy` that `redeemInvite` stamps), and the old code stops working at once, so a person blocked cannot make a new account and join from it again.
+- **A follow count is the server's, recounted.** `followCounts/{uid}` = `{ followers, followersAt, following, followingAt }`: how many accounts follow one and how many it follows. SERVER-written only, by `onFollowerEdgeWritten` and `onFollowingEdgeWritten` (`functions/lib/followCounts.js`), each from a count aggregation over the list whose edge was made or removed and never an increment, and never for an account being deleted. A profile reads someone else's numbers from it (`getFollowCounts` in `socialApi.ts`), so no screen reads another person's lists; your own profile counts your own lists, which are right the moment you follow someone. Anyone signed in reads one, except someone its owner blocked, and nobody lists them. A side the server has not counted is absent: the app counts the list for it while the rules allow that, and reads it as 0 once they keep a list to its owner (Polish4 call 1; `functions/scripts/backfill-follow-counts.js` counts every account first, and stays as the repair).
 - **Activity notifications follow the recipient's switches.** `notificationPreferences` on `users/{uid}` (S3: props, comments, circles and spaces on; new followers off; Polish2: follow requests on) is read by `createNotification`, the one writer of `notifications/{uid}/items`, which writes nothing for a kind that is off. The client's copy (`src/lib/notificationPreferences.ts`) and the rules' value gate are pinned to the server's (`functions/lib/notificationPreferences.js`) by `notificationPreferences.cross.test.ts`. A new notification type has to be given a switch, or none on purpose, in that file.
 - **A copied name and photo follow the profile.** Posts, comments, Space and Circle memberships and challenge places copy the author's name and photo when written, and a notification its sender's name (`fromName`, and the sentence that starts with it); `onPublicProfileIdentityChanged` carries a new public name or photo to the last 90 days of them (`functions/lib/identityResync.js` has the bounds), never a name the word filter refuses, a restricted account's new name or photo, or into an account being deleted. A new copy of a name goes on its list.
 - **User profile:** Defined in `src/lib/auth.tsx` as `UserProfile` interface
@@ -331,7 +332,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
   option) and AM/PM in copy are banned by
   `src/utils/__tests__/timeTreatment.test.ts`. Durations and paces ("23:41",
   "5:18 /km") are not times of day.
-- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 cal", and a pace "5:34 /km"
+- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 kcal", and a pace "5:34 /km"
   (`src/utils/__tests__/unitTreatment.test.ts` bans unspaced kg/km and a pace glued to its unit, including
   the `${x}kg` template form). Two named exceptions: grams on the food
   surface stay unspaced ("128g" — MacroColumn's documented house style), and
@@ -528,6 +529,10 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
   branch whose lint had just been "checked". Same shape as the `tsc -p`
   row above and as `echo $?` after a pipe: a number that looks like the
   answer to the question you asked.
+- **Gate a push on the checks in the same command with `&&`, never `;`.**
+  `vitest … | grep …; git push` pushes whatever the tests said: a pipe's
+  status is its last stage's, and `;` ignores it anyway. It pushed 28
+  failing Home tests on 2026-11-09.
 - **Adding an import to a component breaks any suite that mocks that module
   wholesale.** `vi.mock("@/lib/auth", () => ({ useAuth: … }))` makes every
   OTHER export `undefined`, and the failure surfaces at the call site
@@ -538,6 +543,17 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
   turns those assertions into claims about the stub. Run the FULL unit suite
   before pushing a change that adds a cross-module import — the touched
   subset will not show it.
+- **Never resolve a promise with a Capacitor plugin.** A plugin is a Proxy
+  that answers EVERY property with a native call, `then` included, so
+  `return mod.Purchases` from an async function, or
+  `.then((m) => m.Health)`, asks it for `then`, calls a native method that
+  does not exist (`"Purchases.then()" is not implemented on ios`) and never
+  settles. The first TestFlight builds hung on exactly this: RevenueCat was
+  never set up, App Check never answered, and checkout sat on "Starting
+  checkout…". Hand back a holder (`{ plugin }`) as `haptic.ts`,
+  `systemChrome.ts` and `revenuecat.ts` do, and mock the plugin in tests
+  with `src/test/capacitorPlugin.ts`, which answers `then` as the bridge
+  does, so the old shape hangs the test instead of passing.
 - `react-body-highlighter` exports `Muscle` type — cast `mapMuscles()` return to `Muscle[]`
 - Recharts v3 Tooltip props: let TypeScript infer `labelFormatter`/`formatter` parameter types
 - `useRef` in strict mode requires an explicit initial value argument
@@ -545,7 +561,7 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
 - Firestore `d.data()` returns `DocumentData` — always assert types at boundaries
 - Run tracking pages (`/run`, `/run-summary`) render full-screen without the Layout nav wrapper
 - Which card Home's session stack shows, and what it says, is decided in `src/lib/todaySession.ts` from one day key; `StackedCTACards.tsx` only draws the answer, so change the rules there and test them without rendering Home
-- `WaterWave.tsx` + `WaterBubbles.tsx` have complex SVG animations — treat carefully when modifying
+- `WaterWave.tsx` + `WaterBubbles.tsx` move on the compositor: each wave is drawn once, two tiles wide, and slid by `Element.animate`, and each bubble is an `Element.animate` of transform and opacity. Do not put back an animation-frame loop, a rewrite of a path's `d`, or a framer `y`: the old loop cost about a fifth of the main thread on an idle Home. The tests stub `Element.animate` (jsdom has none)
 
 ## gstack
 
@@ -553,13 +569,20 @@ gstack (`.claude/skills/gstack`, a git submodule) is checked out only in local s
 
 ## Tropos Design System
 
-Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the accessibility floors, and §14 the owner's dated design decisions, the training-plan primitives and the button-variant mapping. Screenshot capture and the emulator rig are in `docs/agents/capture-rig.md`.
+Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the accessibility floors, and §14 the owner's dated design decisions, the training-plan primitives and the button-variant mapping. Since DS4 (2026-11-07) its rules are measured from the apps people come back to (§14m, evidence in `docs/design-rules-2026-11/`): one hero per screen holding its largest text, colour on the person's data within a budget, our own art as the pictures, full-screen rewards for firsts, bests, streaks and finished plans, and a full day 1. CODING_STANDARDS' house voice carries the measured words rules. §14n (DS5, 2026-11-10) adds eleven rules for what a flow does, counted from 168 screens of 51 apps (`rules-engagement.md`): the streak's page, missed days, asking for notifications, setup, logging, the week and the paywall; Tropos met nine of them already, so most are floors not to go below. §14o (DS6, 2026-11-10) is where a surface's definition comes from: dark cards, tiles, chips and pills take a lit edge through the shadow tokens, glass is allowed on what floats over scrolling content (tab bar, sheets, toasts, the workout's docked cards) and never on a card of the person's data, a hero may stand in one soft light of its session's colour, and neon stays out. A visual change starts as a mockup with before-and-after captures; a pass that only removes things has not done the job. Screenshot capture and the emulator rig are in `docs/agents/capture-rig.md`.
 
 ### Component Architecture
 
 - **Pages:** src/pages/ — route-level, lazy-loaded
-- **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards
-  (LiftCTACard / RunCTACard / RestDayCard — Start on the card, no pills) →
+- **Home screen built from:** the header (the date as a kicker, with the
+  plan's position or a first session beside it, then the streak chip and
+  the avatar; "Today" is the h1 for screen readers only, DS4) →
+  StackedCTACards, the hero (LiftCTACard / RunCTACard / RestDayCard drawn
+  by SessionHero: the session's name, its focus and minutes, its picture,
+  one line against last time, one neutral Start; a day's second session
+  is a compact card under it; the words are `homeHero.ts`'s) → the week
+  card: WeekSessions over WeekStrip's seven segments → DayPeekCard (the
+  tapped day) →
   StarterDoneCard (the starter goal reached: Done, and a 5K offered once) →
   FirstWeekCard (a new account's first seven days; for a v2 account one
   or two rows, the first workout and the first run) → NewBadgeRow (a
@@ -653,6 +676,11 @@ from, its version and the local changes to carry into the next update are in
 
 ### Reusable prompts
 
+When the owner says a screen feels off, use the `screen-critique` skill: it
+scores the screen against §14m (`npm run score:screens` on the emulator
+rig), sets it beside the reference apps, finds the cause in the code and
+ends in fixes for the owner to call. Together's Soc16 critique is its model.
+
 Three paste-ready session prompts live in `docs/agents/`, each carrying its
 measured baseline: `visual-pass-prompt.md` for the pixels-only visual pass,
 `app-improvement-prompt.md` for the whole-app pass (security, guards,
@@ -665,6 +693,9 @@ before acting; the citations are starting points, not a to-do list.
 `app-improvement-pass-2026-09-05.md` is that prompt's first run: what
 shipped, what was declined and why, the operator checklist, the open owner
 calls with both options measured, and the ratchet baselines it left.
+`whole-app-pass-2026-11-10.md` is a narrower pass by one session: what it
+fixed, the open follow-list finding and its four-step plan, seven
+architecture candidates and five owner calls.
 
 ### Domain docs
 
@@ -673,6 +704,12 @@ Single-context. `GLOSSARY.md` at repo root holds the domain terms (its
 `docs/adr/`. See `docs/agents/domain.md`. It was `CONTEXT.md` until
 2026-10-04, and plan-file rows and ADRs from before then still call it that.
 Don't create a `GLOSSARY-MAP.md`: this repo has one context.
+
+`docs/state-machines.md` lists every flow with more than two states: which
+have them written down as a type or a graph, and which are flags and refs,
+with a combination each can hold that it should not. Read it before changing
+one of those flows, and add a row with a new one;
+`stateMachinesDoc.test.ts` keeps its file and type names true.
 
 Training-programming evidence handoffs (integrated 2026-08-09): start at
 `docs/training-programming-claude-handoff.md`, which indexes the lifting

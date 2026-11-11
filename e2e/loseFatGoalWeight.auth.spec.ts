@@ -12,7 +12,7 @@ import { verifySignupEmail } from "./helpers/verifySignupEmail";
  * negative weekly rate, the goal-weight plan applies the deficit, the
  * profile sanitizer keeps both fields, and the Nutrition section shows a
  * pace and a goal. Nothing followed one account through all of them. Here
- * "Go to Today" runs the real `completeOnboarding` handler, as the
+ * "Start my plan" runs the real `completeOnboarding` handler, as the
  * journeys do, so what Settings reads is what production writes.
  */
 
@@ -95,7 +95,7 @@ test.describe("lose fat with a goal weight", () => {
         .getByRole("textbox", { name: "Your public display name" })
         .fill("Goal weight tester");
       await page
-        .getByRole("button", { name: "Go to Today", exact: true })
+        .getByRole("button", { name: "Start my plan", exact: true })
         .click();
       await expect(
         page.getByRole("heading", { name: "Today", level: 1 })

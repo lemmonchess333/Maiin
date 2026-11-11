@@ -497,6 +497,29 @@ describe("the climb from what was done, at the runner's own pace", () => {
     expect(third.some((run) => run.type === "long")).toBe(false);
   });
 
+  // A plan on one run day a week (kept from before two were the least) is
+  // done with its one run. Held to two, it stayed on its first rung.
+  it("climbs a one-run-day plan from its one run a week, run as given", () => {
+    const oneDay = (runs: (typeof afternoon)[], currentDate: string) =>
+      generateRacePlanV2({
+        weekSchedule: planWeekSchedule(3, 1, undefined),
+        raceGoal: { distance: "half", targetDate: RACE },
+        weeklyRunDays: 1,
+        currentDate,
+        weekStart: localWeekKey(parseLocalDate(currentDate)),
+        recentLayoff: "none",
+        runningBaseline: OWNER,
+        recentRuns: runs,
+        planTotalWeeks: 25,
+      }).weeks[0];
+    expect(longest(oneDay([afternoon], MONDAY))).toBe(20);
+    // The week's one run, its 20 minutes as given.
+    const given = { date: "2026-11-07", distance: 2400, duration: 1200 };
+    expect(isWeekDone([given], MONDAY, 1)).toBe(true);
+    expect(isWeekDone([given], MONDAY)).toBe(false);
+    expect(longest(oneDay([afternoon, given], "2026-11-09"))).toBe(30);
+  });
+
   it("holds the rollover's week when the week before was missed", () => {
     const made = buildPlan({ ...setupInput, recentRuns: [afternoon] });
     const profile = {

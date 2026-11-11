@@ -276,7 +276,7 @@ function ScoreBar({
           {Math.round(value)}
         </p>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden bg-muted">
+      <div className="h-1.5 rounded-full overflow-hidden track-cut">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${Math.min(value, 100)}%`, background: color }}
@@ -351,8 +351,7 @@ export default function PerformanceTab({
       <div className="p-4 rounded-2xl bg-card">
         <h3 className="text-base font-bold text-foreground">Performance</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          No performance weeks yet. Log workouts/runs and your weekly index will
-          appear here.
+          Log a workout or a run and your first weekly score appears here.
         </p>
       </div>
     );

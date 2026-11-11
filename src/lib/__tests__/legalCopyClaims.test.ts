@@ -217,12 +217,12 @@ describe("the AI question and the policy say the same things", () => {
   const SHEET = AI_CONSENT_COPY.body;
 
   it("both name Google's Gemini as where the food goes", () => {
-    expect(SHEET).toMatch(/Google's Gemini/);
-    expect(PRIVACY_PROSE).toMatch(/Google&apos;s Gemini on Vertex AI/);
+    expect(SHEET).toMatch(/Google’s Gemini/);
+    expect(PRIVACY_PROSE).toMatch(/Google’s Gemini on Vertex AI/);
   });
 
   it("both say Google does not train on it", () => {
-    expect(SHEET).toMatch(/Google doesn't use it to train its models/);
+    expect(SHEET).toMatch(/Google doesn’t use it to train its models/);
     expect(PRIVACY_PROSE).toMatch(/Google does not use it to train its models/);
   });
 

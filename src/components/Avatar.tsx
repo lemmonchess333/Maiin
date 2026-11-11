@@ -113,7 +113,7 @@ export default function Avatar({
       {showImage ? (
         <img
           src={photoURL}
-          alt={displayName ? `${displayName}'s avatar` : "Avatar"}
+          alt={displayName ? `${displayName}’s avatar` : "Avatar"}
           className="size-full object-cover"
           onError={() => setImageFailed(true)}
           loading="lazy"

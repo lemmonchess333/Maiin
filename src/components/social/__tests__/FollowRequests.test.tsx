@@ -107,7 +107,7 @@ describe("FollowRequestsSection", () => {
     });
     expect(screen.getByText("Maya")).toBeInTheDocument();
     expect(H.toastError).toHaveBeenCalledWith(
-      "Couldn't accept the request. Try again."
+      "Couldn’t accept the request. Try again."
     );
   });
 

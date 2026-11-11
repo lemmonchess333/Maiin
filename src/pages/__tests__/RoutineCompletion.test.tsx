@@ -20,6 +20,7 @@ const h = vi.hoisted(() => ({
       }>),
   user: { uid: "routine-user", emailVerified: true },
   compose: vi.fn(),
+  routineName: "Bench day",
 }));
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({
@@ -36,7 +37,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/savedRoutines", () => ({
   getSavedRoutine: async () => ({
     id: "r1",
-    name: "Bench day",
+    name: h.routineName,
     sourceAuthorName: "Athlete",
     exercises: [
       {
@@ -68,6 +69,7 @@ vi.mock("@/lib/shareComposer", () => ({
   showQueuedToast: vi.fn(),
 }));
 import Routine from "../Routine";
+import { workoutTitle } from "@/lib/workoutLabels";
 
 const session = {
   completionId: "stable-routine",
@@ -92,9 +94,26 @@ beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   h.complete = undefined;
+  h.routineName = "Bench day";
 });
 
 describe("routine completion receipt", () => {
+  it("titles the saved workout with the routine's whole name, a dash in it too", async () => {
+    // History titles a workout up to the first " — " of its notes, and a
+    // phone's keyboard makes a typed "--" one.
+    h.routineName = "Push — heavy";
+    await openRoutine();
+    await act(async () => {
+      await h.complete!(-1, session);
+    });
+    const saved = readDoc(
+      "users/routine-user/workouts/routine-stable-routine"
+    ) as { notes: string };
+    expect(workoutTitle(saved)).toBe(
+      "Routine: Push – heavy (saved from Athlete)"
+    );
+  });
+
   it("preserves the note and offers sharing only when requested after saving", async () => {
     await openRoutine();
     await act(async () => {

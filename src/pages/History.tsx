@@ -8,6 +8,7 @@ import { useMeals } from "@/hooks/useMeals";
 import { useMealsInRange } from "@/hooks/useMealsInRange";
 import { useLifetimeMealStats } from "@/hooks/useLifetimeMealStats";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 import { useStallWatch } from "@/hooks/useStallWatch";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
@@ -25,6 +26,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
+import { ONE_CARD_RADIUS } from "@/components/ui/cardClasses";
 import EmptyState from "@/components/ui/EmptyState";
 import PeriodSummaryCard, {
   type SummaryFigure,
@@ -120,7 +122,19 @@ import {
   runRecordRows,
 } from "@/lib/historyFigures";
 import { trainingHistorySearch } from "@/lib/trainingHistory";
-import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  comparisonStartKey,
+  rangeChangeReading,
+  type RangeReadingKind,
+} from "@/lib/historyReadings";
+import type { ChartReadingLine } from "@/components/analytics/ChartReading";
+import type { SummaryChange } from "@/lib/periodSummary";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import { useDayMoment } from "@/hooks/useDayMoment";
 import {
   computeMuscleRecovery,
   hitsFromWorkoutDocs,
@@ -271,9 +285,13 @@ function FilterPills({
       ariaLabel="History view"
       value={filter}
       onChange={setFilter}
+      /* A 36pt track with 44pt options, as Train's Lift/Run switch
+         (§14m rule 18): the row was 52pt. */
+      size="sm"
       options={VALID_TABS.map((f) => ({
         value: f,
-        label: f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : "Badges",
+        label:
+          f === "analytics" ? "Analytics" : f === "prs" ? "Bests" : "Badges",
       }))}
     />
   );
@@ -561,7 +579,13 @@ export default function History() {
     enabled: filter === "analytics" && view === "performance",
   });
   const uid = useUid();
-  const { meals, loading: mealsLoading } = useMeals();
+  const {
+    meals,
+    deletedMeals,
+    hasMore: mealsPastWindow,
+    loading: mealsLoading,
+    error: mealsError,
+  } = useMeals();
   /* The nutrition section reads its OWN range-scoped query rather than
      slicing the 400-doc `useMeals` window, which silently truncated 3M / 6M
      / 1Y for anyone logging more than a couple of meals a day. `* 2` because
@@ -572,15 +596,26 @@ export default function History() {
     rangeDays * 2
   );
   const lifetimeRuns = useLifetimeRunStats();
-  const lifetimeMeals = useLifetimeMealStats();
+  // The window above is every meal for an account that fits in it, so the
+  // lifetime figures read nothing more; past it, one read a session.
+  const lifetimeMeals = useLifetimeMealStats({
+    meals,
+    deletedMeals,
+    hasMore: mealsPastWindow,
+    loading: mealsLoading,
+    error: mealsError,
+  });
   const { profile } = useAuth();
   /* The range the pill names, read once for every figure below: its
      window, the range before it, and the days an account younger than
      the range has had (`historyFigures`). Such an account has nothing in
      the range before it to compare with. */
+  /* Read at the day's moment, so a History left open overnight, or brought
+     back the next morning, covers the new day's window (useDayMoment). */
+  const now = useDayMoment();
   const range = useMemo(
-    () => historyRange(rangeDays, { createdAt: profile?.createdAt }),
-    [rangeDays, profile?.createdAt]
+    () => historyRange(rangeDays, { createdAt: profile?.createdAt, now }),
+    [rangeDays, profile?.createdAt, now]
   );
   const { startKey, joinedInRange } = range;
   const historyReturnTo = `/history${searchParams.size ? `?${searchParams}` : ""}`;
@@ -663,13 +698,17 @@ export default function History() {
   // stuck. The more precise alternative would be to watch
   // runsLoading directly, but that introduces a render dependency
   // loop here.
-  const { isRefreshing: pullRefreshing, bindProps: pullBindProps } =
-    usePullToRefresh({
-      onRefresh: () => {
-        refreshRuns();
-      },
-      minDisplayMs: 600,
-    });
+  const {
+    isRefreshing: pullRefreshing,
+    pull,
+    readyAt: pullReadyAt,
+    bindProps: pullBindProps,
+  } = usePullToRefresh({
+    onRefresh: () => {
+      refreshRuns();
+    },
+    minDisplayMs: 600,
+  });
 
   /* The nutrition StatCards' "target N" reference line.
    *
@@ -694,11 +733,12 @@ export default function History() {
 
   // Lifetime totals — all-time aggregates shown only on the "All" tab,
   // pinned at the very bottom as a quiet "you've come this far" footer.
-  /* Runs and meals each come from a one-shot whole-collection read, so
-     records older than any window still count toward a total that claims to
-     be lifetime. `useMeals` cannot serve this: it subscribes to the newest
-     400 meal docs, so both meal figures would saturate there — silently,
-     since a capped count looks exactly like a real one.
+  /* Runs come from a one-shot whole-collection read, so records older than
+     any window still count toward a total that claims to be lifetime. Meals
+     do too once they outgrow the `useMeals` window, which stops at the
+     newest 400: counted from the window alone, both meal figures would
+     saturate there, silently, since a capped count looks exactly like a
+     real one. `useLifetimeMealStats` knows when the window is everything.
 
      Workouts still read `useWorkouts`. Whether that hook is bounded the
      same way is a separate question on a separate surface — not assumed
@@ -745,15 +785,15 @@ export default function History() {
   // half). NOW-state — always computed over the last RECOVERY_LOOKBACK_DAYS
   // regardless of the page's TimeRange (the card labels the carve-out).
   const muscleRecovery = useMemo(() => {
-    const lookbackStart = new Date();
-    lookbackStart.setDate(lookbackStart.getDate() - RECOVERY_LOOKBACK_DAYS);
-    const lookbackKey = localDateString(lookbackStart);
+    const lookbackKey = localDateString(
+      addLocalDays(parseLocalDate(range.todayKey), -RECOVERY_LOOKBACK_DAYS)
+    );
     const recent = workouts.filter((w) => w.date >= lookbackKey);
     const hits = hitsFromWorkoutDocs(recent);
     return recoveryForHeatMapGroups(
-      computeMuscleRecovery(hits, localDateString())
+      computeMuscleRecovery(hits, range.todayKey)
     );
-  }, [workouts]);
+  }, [workouts, range.todayKey]);
 
   /* The range's sessions, kilograms and sets per muscle, the range
      before for the changes, and the PRs tab's lift records. */
@@ -830,17 +870,70 @@ export default function History() {
     [runs, lifetimeRuns.runs, allRunsKnown, range, periodSummary.bins]
   );
 
+  /* Each chart's figure against the range before, in a sentence
+     (`historyReadings`): the overview's chosen figure, and the Lifting and
+     Running pages' bars. An account younger than the range is told the
+     day it starts comparing. */
+  const comparesFromKey = comparisonStartKey(range);
+  const rangeReading = (
+    kind: RangeReadingKind,
+    change: SummaryChange | null,
+    previousKnown: boolean,
+    noneInEither: boolean
+  ): ChartReadingLine | null => {
+    const text = rangeChangeReading({
+      kind,
+      change,
+      previousKnown,
+      previousLabel: previousRangeLabel(timeRange),
+      comparesFromKey,
+      noneInEither,
+      today: range.now,
+    });
+    return text ? { text, waiting: comparesFromKey !== null } : null;
+  };
+
   const summarySessions = liftingData.liftCount + runningTotals.runCount;
+  const sessionsChange = countChange(
+    summarySessions,
+    periodSummary.prevRunCount === null
+      ? null
+      : liftingData.prevLiftCount + periodSummary.prevRunCount
+  );
+  const volumeRangeChange = volumeChange(
+    liftingData.liftVolume,
+    liftingData.prevLiftVolume,
+    liftUnit
+  );
+  const distanceRangeChange = distanceChange(
+    runningTotals.runDistance * 1000,
+    periodSummary.prevRunM,
+    unit
+  );
+  const liftedReading = rangeReading(
+    "lifted",
+    volumeRangeChange,
+    true,
+    liftingData.liftVolume === 0 && liftingData.prevLiftVolume === 0
+  );
+  const ranReading = rangeReading(
+    "ran",
+    distanceRangeChange,
+    periodSummary.prevRunM !== null,
+    runningTotals.runDistance === 0 && periodSummary.prevRunM === 0
+  );
   const summaryFigures: SummaryFigure[] = [
     {
       metric: "sessions",
       value: String(summarySessions),
       unit: summarySessions === 1 ? "session" : "sessions",
-      change: countChange(
-        summarySessions,
-        periodSummary.prevRunCount === null
-          ? null
-          : liftingData.prevLiftCount + periodSummary.prevRunCount
+      change: sessionsChange,
+      reading: rangeReading(
+        "sessions",
+        sessionsChange,
+        periodSummary.prevRunCount !== null,
+        summarySessions === 0 &&
+          liftingData.prevLiftCount + (periodSummary.prevRunCount ?? 0) === 0
       ),
     },
     {
@@ -850,11 +943,8 @@ export default function History() {
           ? formatVolume(liftingData.liftVolume, liftUnit).value
           : "0",
       unit: `${liftUnitLabel(liftUnit)} lifted`,
-      change: volumeChange(
-        liftingData.liftVolume,
-        liftingData.prevLiftVolume,
-        liftUnit
-      ),
+      change: volumeRangeChange,
+      reading: liftedReading,
     },
     {
       metric: "distance",
@@ -863,11 +953,8 @@ export default function History() {
           ? formatDistance(distanceIn(runningTotals.runDistance * 1000, unit))
           : "0",
       unit: `${distanceUnitLabel(unit)} run`,
-      change: distanceChange(
-        runningTotals.runDistance * 1000,
-        periodSummary.prevRunM,
-        unit
-      ),
+      change: distanceRangeChange,
+      reading: ranReading,
     },
   ];
 
@@ -1039,6 +1126,7 @@ export default function History() {
   return (
     <PageShell
       {...pullBindProps}
+      className={ONE_CARD_RADIUS}
       title="Analytics"
       actions={
         <Link
@@ -1056,34 +1144,35 @@ export default function History() {
          title, where Food and Train keep theirs. */
       banner={<HistoryOfflineBanner />}
     >
-      {/* Hist4: small refresh indicator while the pull-to-refresh
-          gesture is in flight. aria-live polite so screen readers
-          announce the transient state without interrupting. */}
-      {pullRefreshing && (
-        <div
-          className="flex justify-center py-1 text-xs text-muted-foreground"
-          aria-live="polite"
-        >
-          Refreshing…
-        </div>
-      )}
+      <PullToRefreshIndicator
+        pull={pull}
+        readyAt={pullReadyAt}
+        refreshing={pullRefreshing}
+      />
 
-      <motion.div variants={pageItemVariant}>
-        <FilterPills
-          filter={filter}
-          setFilter={(next) => {
-            setFilter(next);
-            trackHistoryEvent("history_tab_selected", {
-              tab: next as HistoryTab,
-            });
-          }}
-        />
-      </motion.div>
+      {/* The tab-level switch belongs to the overview and the PRs and
+          Badges tabs. A page is a screen pushed from the overview, and its
+          way back is the Overview row: with the switch over it too, a page
+          stacked three control rows under the title (52 + 44 + 52 pt,
+          40% of the first screen with the tab bar; §14m rules 17-18). */}
+      {(filter !== "analytics" || view === "overview") && (
+        <motion.div variants={pageItemVariant}>
+          <FilterPills
+            filter={filter}
+            setFilter={(next) => {
+              setFilter(next);
+              trackHistoryEvent("history_tab_selected", {
+                tab: next as HistoryTab,
+              });
+            }}
+          />
+        </motion.div>
+      )}
 
       <Suspense
         fallback={
           <div className="py-8 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
-            Loading analytics...
+            Loading analytics…
           </div>
         }
       >
@@ -1114,12 +1203,27 @@ export default function History() {
               history under it, so changing the range never moves the
               index — the two mental models (current form vs adjustable
               history) are separated spatially. Suppressed in cold-start:
-              the "No analytics yet" card below stands in until the first
+              the "Your first week starts here" card below stands in until the first
               session is logged. `/history#performance` opens the
               Performance page. */}
-            {/* A deeper page's way back to the overview. */}
+            {/* A deeper page's one control row: the way back to the
+                overview, and beside it the range that scopes the page.
+                The range keeps 15em; where the row cannot give it that
+                (a 320pt phone, larger text) it wraps under the way back. */}
             {filter === "analytics" && view !== "overview" && (
-              <AnalyticsBackRow onBack={() => setView("overview")} />
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <AnalyticsBackRow onBack={() => setView("overview")} />
+                {/* The Body page's weight chart keeps its own range, and
+                    the Performance page's sits in its training load card. */}
+                {view !== "body" && view !== "performance" && (
+                  <div className="min-w-[min(100%,15em)] flex-1">
+                    <TimeRangePills
+                      selected={timeRange}
+                      onChange={setTimeRange}
+                    />
+                  </div>
+                )}
+              </div>
             )}
 
             {/* The week's index, range-independent, above the range
@@ -1152,11 +1256,9 @@ export default function History() {
               </SectionErrorBoundary>
             )}
 
-            {/* The range scopes the history below it. The Body page's
-                weight chart keeps its own, so it gets none here, and on
-                the Performance page it scopes only the training load, so
-                it sits in that card. */}
-            {view !== "body" && view !== "performance" && (
+            {/* The range scopes the history below it. On a page it shares
+                the way back's row, above. */}
+            {view === "overview" && (
               <TimeRangePills selected={timeRange} onChange={setTimeRange} />
             )}
 
@@ -1254,9 +1356,18 @@ export default function History() {
                   <EmptyState
                     icon={LineChart}
                     accent={THEME.brand}
-                    headline="No analytics yet"
-                    sub="Log a workout, run or meal and your trends will show up here."
-                    action={{ label: "Start a workout", href: "/program" }}
+                    /* Day one is a starting line (DS4 words rules): the
+                       first step, and what fills. The rules' rewrite of
+                       "No analytics yet". */
+                    headline="Your first week starts here"
+                    sub="Finish your first workout and this page draws your sessions, kg lifted and km run."
+                    /* The screen's one filled button is neutral, as Home's
+                       and Train's Start are (§14m rule 12). */
+                    action={{
+                      label: "Start a workout",
+                      href: "/program",
+                      variant: "neutral",
+                    }}
                   />
                 </ArrivalFade>
               )}
@@ -1343,7 +1454,7 @@ export default function History() {
                      network or a wedged stream) clears on a second go. */
                   <div className="p-4 rounded-2xl bg-card space-y-2 card-shadow">
                     <p className="text-sm font-semibold text-foreground">
-                      Couldn&apos;t load your runs
+                      Couldn’t load your runs
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Your runs are safe — this was a problem reading them, not
@@ -1367,6 +1478,9 @@ export default function History() {
                     <RacePredictionsCard />
                   </>
                 ) : runs.length === 0 ? (
+                  /* The page's empty start keeps its domain's colour in the
+                     tinted form (§14i), as Train's Realign does: History
+                     draws no coloured filled button (§14m rules 10, 12). */
                   <SectionEmptyCTA
                     icon={
                       <Footprints className="size-5 shrink-0 text-running" />
@@ -1374,7 +1488,7 @@ export default function History() {
                     text="Complete your first run to see running analytics here"
                     to="/run"
                     ctaLabel="Start run"
-                    variant="sport"
+                    variant="sport-tinted"
                   />
                 ) : (
                   <>
@@ -1391,6 +1505,7 @@ export default function History() {
                         bins={periodSummary.bins}
                         granularity={periodSummary.granularity}
                         sport="running"
+                        verdict={ranReading}
                         reading={runningBins(unit)}
                         onPick={(b) =>
                           trackHistoryEvent("history_chart_tap_attempted", {
@@ -1479,7 +1594,7 @@ export default function History() {
                     text="Log a workout to see your lifting analytics here"
                     to="/program"
                     ctaLabel="Start lift"
-                    variant="primary"
+                    variant="lifting-tinted"
                   />
                 ) : (
                   <>
@@ -1503,6 +1618,7 @@ export default function History() {
                         bins={periodSummary.bins}
                         granularity={periodSummary.granularity}
                         sport="lifting"
+                        verdict={liftedReading}
                         reading={liftingBins(liftUnit)}
                         onPick={(b) =>
                           trackHistoryEvent("history_chart_tap_attempted", {
@@ -1624,7 +1740,7 @@ export default function History() {
                       text="Log meals to see your nutrition trends here"
                       to="/food"
                       ctaLabel="Log meal"
-                      variant="nutrition"
+                      variant="nutrition-tinted"
                     />
                   </>
                 ) : (

@@ -9,6 +9,7 @@ import {
   earliestStreakMonth,
   monthOf,
   streakMonth,
+  streakReadFrom,
 } from "../streakCalendar";
 
 const TODAY = "2026-10-27"; // a Tuesday
@@ -74,18 +75,38 @@ describe("earliestStreakMonth", () => {
       earliest.getDate(),
     ]).toEqual([2026, 6, 1]);
   });
+
+  // The reads begin on 29 July; that month's earlier days were never
+  // read, so they say nothing rather than "nothing logged".
+  it("says nothing of the days before the reads begin", () => {
+    const readFrom = streakReadFrom(TODAY, 90);
+    expect(readFrom).toBe("2026-07-29");
+    const july = streakMonth(
+      earliestStreakMonth(TODAY, 90),
+      new Set(["2026-07-30"]),
+      [],
+      TODAY,
+      readFrom
+    );
+    const day = (date: number) => july.days[date - 1];
+    expect(day(28).state).toBe("unread");
+    expect(day(28).label).toBe("Tuesday 28 July");
+    expect(day(29).state).toBe("none");
+    expect(day(29).label).toBe("Wednesday 29 July, nothing logged");
+    expect(day(30).state).toBe("logged");
+  });
 });
 
 describe("coveredDayLine", () => {
   it("says yesterday's rest day is covered, in Streak1's words", () => {
     expect(coveredDayLine(["2026-10-26"], 12, TODAY)).toBe(
-      "Yesterday's rest day is covered. Still on a 12-day streak."
+      "Yesterday’s rest day is covered. Still on a 12-day streak."
     );
   });
 
   it("names an older covered day by its date", () => {
     expect(coveredDayLine(["2026-10-20", "2026-10-13"], 15, TODAY)).toBe(
-      "Tuesday 20 October was a rest day, and it's covered."
+      "Tuesday 20 October was a rest day, and it’s covered."
     );
   });
 

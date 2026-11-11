@@ -299,8 +299,10 @@ const BUTTON_VARIANTS = [
   "outline",
   "sport",
   "sport-tinted",
+  "lifting-tinted",
   "nutrition",
   "nutrition-tinted",
+  "neutral",
 ] as const;
 
 /**
@@ -522,7 +524,7 @@ describe("the range track's fill/groove edge — WCAG 1.4.11", () => {
  *
  * One misattribution stays pinned: 7.26:1 was once published as the base's
  * ratio (calling it AAA). That figure belongs to `Run.tsx:142`'s
- * "Acquiring GPS..." label — `text-warning-strong/90` on the DARK page.
+ * "Acquiring GPS…" label — `text-warning-strong/90` on the DARK page.
  * The assertion computing it keeps either number from being quoted for the
  * other again.
  */
@@ -879,5 +881,65 @@ describe("photo captions — the scrim holds through the words", () => {
     // White over a 0.55 black scrim over a white photo, the worst ground.
     const ground = over([0, 0, 0], [1, 1, 1], 0.55);
     expect(contrast([1, 1, 1], ground)).toBeGreaterThanOrEqual(AA_NORMAL);
+  });
+});
+
+describe("a chip's edge and a track cut into its card (DESIGN_GUIDE §14o)", () => {
+  const TOKENS = readFile("src/styles/tokens.css");
+
+  it("the track is darker than the dark card, and the raised tile in light", () => {
+    const dark = darkBlock();
+    const track = luminance(hslToRgb(...readHsl(dark, "track")));
+    const card = luminance(hslToRgb(...readHsl(dark, "card")));
+    // Cut in means darker than the surface. `--muted` is lighter than
+    // the card, so it cannot be the cut.
+    expect(track).toBeLessThan(card);
+    // Light draws no cut: `track-cut` there is `bg-muted` exactly.
+    expect(lightBlock()).toMatch(/--track:\s*var\(--muted\);/);
+  });
+
+  it.each([
+    "lifting",
+    "running",
+    "nutrition",
+    "primary",
+    "success",
+    "warning",
+    "destructive",
+  ])("a %s fill is at least 3:1 against the dark track", (fill) => {
+    // The edge between the filled part and the rest is the only thing
+    // that says how far a bar has got (WCAG 1.4.11).
+    const dark = darkBlock();
+    const ratio = contrast(
+      hslToRgb(...readHsl(dark, fill)),
+      hslToRgb(...readHsl(dark, "track"))
+    );
+    expect(ratio, `--${fill} on --track`).toBeGreaterThanOrEqual(AA_LARGE);
+  });
+
+  it("neither shadow is ever `none`", () => {
+    // `chip-edge` and `track-cut` put the token in one box-shadow list
+    // with Tailwind's ring shadows. `none` inside a list makes the whole
+    // declaration invalid, and the focus ring goes with it.
+    for (const name of ["--ds-shadow-chip", "--ds-shadow-track"]) {
+      const values = [
+        ...TOKENS.matchAll(new RegExp(`${name}:\\s*([^;]+);`, "g")),
+      ].map((m) => m[1].trim());
+      // Once for each theme.
+      expect(values, name).toHaveLength(2);
+      for (const value of values) expect(value, name).not.toMatch(/\bnone\b/);
+    }
+  });
+
+  it("both utilities draw through Tailwind's shadow variable", () => {
+    // A bare `box-shadow` here would replace a selection ring or a focus
+    // ring on the same element (the week strip's selected day has one)
+    // instead of being drawn with it.
+    for (const name of ["chip-edge", "track-cut"]) {
+      const block = CSS.match(new RegExp(`@utility ${name} \\{([^}]*)\\}`));
+      expect(block, name).not.toBeNull();
+      expect(block![1], name).toMatch(/@apply [^;]*shadow-\[var\(--ds-shadow-/);
+      expect(block![1], name).not.toMatch(/box-shadow\s*:/);
+    }
   });
 });

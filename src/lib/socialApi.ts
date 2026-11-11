@@ -217,20 +217,77 @@ export async function isFollowing(
   return snap.exists();
 }
 
-/* Counted on the server: a profile with 1,284 followers is one
-   aggregation read, not 1,284 documents downloaded to show a number. */
-export async function getFollowerCount(uid: string): Promise<number> {
-  const snap = await getCountFromServer(
-    collection(db, "followers", uid, "users")
-  );
+export interface FollowCounts {
+  followers: number;
+  following: number;
+}
+
+/* Counted on the server: a list of 1,284 followers is one aggregation
+   read, not 1,284 documents downloaded to show a number. */
+async function countFollowList(
+  kind: "followers" | "following",
+  uid: string
+): Promise<number> {
+  const snap = await getCountFromServer(collection(db, kind, uid, "users"));
   return snap.data().count;
 }
 
-export async function getFollowingCount(uid: string): Promise<number> {
-  const snap = await getCountFromServer(
-    collection(db, "following", uid, "users")
-  );
-  return snap.data().count;
+/**
+ * Someone else's list, counted for a side the server has no number for.
+ * While the rules let any account count a list, this is that side's real
+ * size for an account the backfill has not reached. Once the rules keep a
+ * list to its owner the count is refused, and by then every account has
+ * been counted, so no stored number means nobody.
+ */
+async function countOrNobody(
+  kind: "followers" | "following",
+  uid: string
+): Promise<number> {
+  try {
+    return await countFollowList(kind, uid);
+  } catch (err) {
+    if ((err as { code?: string } | undefined)?.code === "permission-denied") {
+      return 0;
+    }
+    throw err;
+  }
+}
+
+/** A stored count, or null for a side the server has not counted. */
+function storedCount(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : null;
+}
+
+/**
+ * How many people follow `uid` and how many `uid` follows.
+ *
+ * Someone else's come from `followCounts/{uid}`, which the server keeps
+ * (functions/lib/followCounts.js): one document, and nobody's lists. A
+ * side it has not counted is read from the list while the rules allow
+ * that, and is 0 once they do not (`countOrNobody`). Your own come from
+ * your own lists, which are right the moment you follow someone or accept
+ * a request; the server's copy trails that by a second or two.
+ */
+export async function getFollowCounts(
+  uid: string,
+  own: boolean
+): Promise<FollowCounts> {
+  if (own) {
+    const [followers, following] = await Promise.all([
+      countFollowList("followers", uid),
+      countFollowList("following", uid),
+    ]);
+    return { followers, following };
+  }
+  const snap = await getDoc(doc(db, "followCounts", uid));
+  const stored = snap.exists() ? snap.data() : {};
+  const [followers, following] = await Promise.all([
+    storedCount(stored.followers) ?? countOrNobody("followers", uid),
+    storedCount(stored.following) ?? countOrNobody("following", uid),
+  ]);
+  return { followers, following };
 }
 
 /**

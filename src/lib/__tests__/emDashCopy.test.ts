@@ -60,9 +60,10 @@ import { globSync } from "tinyglobby";
  * plan page's helpers each took one short line, and 119 once the race
  * card's Phase tile, with its "—" for no phase, went. 114 once the
  * Circles section's invite, its goal chooser and its sheet's empty line
- * each took a full stop.
+ * each took a full stop. 113 once the training-load card's first-use line
+ * became two sentences.
  */
-const EM_DASH_COPY_BASELINE = 114;
+const EM_DASH_COPY_BASELINE = 113;
 /** ExerciseHistory, 8, and every one of them the bare "—" placeholder
  *  rather than the construction. Lower this only against real copy. */
 const WORST_FILE_BASELINE = 8;

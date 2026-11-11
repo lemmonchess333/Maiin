@@ -1,7 +1,7 @@
 /**
  * nativeLocationSource's watchers, with the background-geolocation plugin
  * faked. The plugin ships no JavaScript, so on the web and in the unit
- * suite every call stops at `loadPlugin()`; these give it a plugin and pin
+ * suite every call stops at `nativePlugin()`; these give it a plugin and pin
  * what the iOS app relies on: the options that keep a run recording with
  * the screen locked, fixes and errors mapped onto the Web shapes, and a
  * stop that lands before the native watcher's id has come back.
@@ -28,7 +28,11 @@ const fake = vi.hoisted(() => {
 });
 const native = vi.hoisted(() => ({ value: true }));
 
-vi.mock("@capacitor/core", () => {
+vi.mock("@capacitor/core", async () => {
+  // The bridge's own shape: a Proxy that answers `then` too. A plain object
+  // has none, so a loader that resolved a promise with the plugin passed
+  // here and hung on the phone (a run sat on "Finding GPS").
+  const { capacitorPlugin } = await import("@/test/capacitorPlugin");
   fake.addWatcher = vi.fn(
     (_options: unknown, callback: Callback) =>
       new Promise<string>((resolve) => {
@@ -38,11 +42,12 @@ vi.mock("@capacitor/core", () => {
   );
   fake.removeWatcher = vi.fn((_arg: { id: string }) => Promise.resolve());
   return {
-    registerPlugin: () => ({
-      addWatcher: (options: unknown, callback: Callback) =>
-        fake.addWatcher(options, callback),
-      removeWatcher: (arg: { id: string }) => fake.removeWatcher(arg),
-    }),
+    registerPlugin: () =>
+      capacitorPlugin({
+        addWatcher: (options: unknown, callback: Callback) =>
+          fake.addWatcher(options, callback),
+        removeWatcher: (arg: { id: string }) => fake.removeWatcher(arg),
+      }),
     Capacitor: { isNativePlatform: () => native.value },
   };
 });
@@ -62,7 +67,7 @@ const FIX = {
   time: 1_700_000_000_000,
 };
 
-/** Let loadPlugin's promise and the addWatcher call run. */
+/** Let the addWatcher call and its id run. */
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
 beforeEach(() => {
@@ -157,6 +162,54 @@ describe("getCurrent — the pre-warm", () => {
     fake.resolveId[0]("p-2");
     await settle();
     expect(fake.removeWatcher).toHaveBeenCalledWith({ id: "p-2" });
+  });
+});
+
+describe("getCurrent — its timeout", () => {
+  /* The run screen polls a one-off fix every 3 s while the watch is still
+     acquiring, with a 10 s timeout, as the Web's getCurrentPosition takes
+     it. A native one-off that ignored it lived until a fix came: indoors,
+     or on a phone with no cached location, one more watcher every poll,
+     and still there, location on, after the run screen had gone. */
+  const after = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  it("gives up at its timeout, as the Web's does, and removes its watcher", async () => {
+    const onFix = vi.fn();
+    const onError = vi.fn();
+    nativeLocationSource.getCurrent({ timeout: 20 }, onFix, onError);
+    await settle();
+    fake.resolveId[0]("p-3");
+    await after(40);
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0][0].code).toBe(3); // TIMEOUT
+    expect(fake.removeWatcher).toHaveBeenCalledWith({ id: "p-3" });
+    // A fix after it gave up changes nothing.
+    fake.callbacks[0](FIX);
+    expect(onFix).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
+  it("removes a watcher whose id comes back after the timeout", async () => {
+    nativeLocationSource.getCurrent({ timeout: 10 }, vi.fn(), vi.fn());
+    await after(30);
+    expect(fake.removeWatcher).not.toHaveBeenCalled();
+    fake.resolveId[0]("p-4");
+    await settle();
+    expect(fake.removeWatcher).toHaveBeenCalledWith({ id: "p-4" });
+  });
+
+  it("does not time out a fix that came in time", async () => {
+    const onFix = vi.fn();
+    const onError = vi.fn();
+    nativeLocationSource.getCurrent({ timeout: 20 }, onFix, onError);
+    await settle();
+    fake.resolveId[0]("p-5");
+    await settle();
+    fake.callbacks[0](FIX);
+    await after(40);
+    expect(onFix).toHaveBeenCalledTimes(1);
+    expect(onError).not.toHaveBeenCalled();
+    expect(fake.removeWatcher).toHaveBeenCalledTimes(1);
   });
 });
 

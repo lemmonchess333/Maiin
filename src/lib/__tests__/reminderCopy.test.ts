@@ -12,7 +12,7 @@ it.each([
     .replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, "")
     .replace(/&apos;|&#39;/g, "'");
   expect(source).not.toMatch(
-    /\blose\b|at risk|don't break|keep your streak alive/i
+    /\blose\b|at risk|don['’]t break|keep your streak alive/i
   );
 });
 
@@ -98,7 +98,7 @@ describe("reminder and push copy keeps the house voice", () => {
       "Yesterday was a good start 💪",
       "Nice work!",
       "Let's realign this week",
-      "Last week didn't go to plan — tap to adjust your runs.",
+      "Last week didn’t go to plan — tap to adjust your runs.",
       "Please open Tropos",
       "You missed two runs",
     ];

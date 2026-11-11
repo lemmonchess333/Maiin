@@ -130,11 +130,11 @@ describe("Training history", () => {
     await waitFor(() => expect(sessionLinks()).toHaveLength(4));
     await waitFor(() =>
       expect(
-        sessionLinks().filter((link) => link.textContent?.includes("PR"))
+        sessionLinks().filter((link) => link.textContent?.includes("Best"))
       ).toHaveLength(1)
     );
     expect(
-      sessionLinks().find((link) => link.textContent?.includes("PR"))
+      sessionLinks().find((link) => link.textContent?.includes("Best"))
     ).toHaveAttribute("href", expect.stringContaining("heavier"));
   });
 
@@ -170,6 +170,64 @@ describe("Training history", () => {
     expect(
       screen.queryByRole("button", { name: "Show more sessions" })
     ).toBeNull();
+  });
+
+  it("finds a search's match older than the first thirty sessions", async () => {
+    seedFirestore({
+      ...Object.fromEntries(
+        Array.from({ length: 35 }, (_, i) => [
+          `users/history-owner/workouts/upper-${i}`,
+          savedWorkoutDoc("2026-10-20", { notes: "Upper A" }),
+        ])
+      ),
+      "users/history-owner/workouts/deadlift": savedWorkoutDoc("2026-10-02", {
+        notes: "Deadlift day",
+      }),
+    });
+    open("?sport=lifts&q=deadlift");
+    await waitFor(() => expect(sessionLinks()).toHaveLength(1));
+    expect(sessionLinks()[0]).toHaveAttribute(
+      "href",
+      expect.stringContaining("/workout/deadlift")
+    );
+    expect(screen.queryByText("No matching sessions")).toBeNull();
+  });
+
+  it("counts the sessions on screen, not every one read", async () => {
+    seedFirestore({
+      ...Object.fromEntries(
+        Array.from({ length: 35 }, (_, i) => [
+          `users/history-owner/workouts/many-${i}`,
+          savedWorkoutDoc("2026-10-20"),
+        ])
+      ),
+      ...Object.fromEntries(
+        Array.from({ length: 35 }, (_, i) => [
+          `users/history-owner/runs/many-${i}`,
+          savedRunDoc("2026-10-21"),
+        ])
+      ),
+    });
+    open();
+    await waitFor(() => expect(sessionLinks()).toHaveLength(30));
+    expect(screen.getByText("30 sessions shown")).toBeInTheDocument();
+  });
+
+  it("jumps a Runs view to the last run, not to a later lift", async () => {
+    resetFirestore();
+    seedFirestore({
+      "users/history-owner/runs/older": savedRunDoc("2026-08-01"),
+      "users/history-owner/workouts/later": savedWorkoutDoc("2026-09-15"),
+    });
+    open("?sport=runs");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Jump to your last session" })
+    );
+    await waitFor(() => expect(sessionLinks()).toHaveLength(1));
+    expect(sessionLinks()[0]).toHaveAttribute(
+      "href",
+      expect.stringContaining("/run/older")
+    );
   });
 
   it("returns to the plan with the review it came from, not a fresh plan", async () => {
@@ -213,7 +271,7 @@ describe("Training history", () => {
     open();
     expect(screen.getByText("Loading sessions…")).toBeInTheDocument();
     expect(
-      screen.queryByText("This period isn't fully loaded")
+      screen.queryByText("This period isn’t fully loaded")
     ).not.toBeInTheDocument();
     expect(screen.queryByText("0 sessions shown")).not.toBeInTheDocument();
   });
@@ -228,7 +286,7 @@ describe("Training history", () => {
       refresh: vi.fn(),
     });
     open("?q=tempo");
-    await screen.findByText("This period isn't fully loaded");
+    await screen.findByText("This period isn’t fully loaded");
     expect(screen.queryByText("No matching sessions")).not.toBeInTheDocument();
     expect(
       screen.queryByText("No saved sessions in this period")
@@ -300,7 +358,7 @@ describe("Training history", () => {
   it("retains available lifts when runs fail and retries the missing source", async () => {
     failNextFirestore("onSnapshot", { path: "users/history-owner/runs" });
     open();
-    await screen.findByText("Run history couldn't load");
+    await screen.findByText("Run history couldn’t load");
     expect(unfiredFailures()).toEqual([]);
     expect(screen.getByText("Full body B")).toBeInTheDocument();
     expect(screen.getByText("1 session shown")).toBeInTheDocument();
@@ -308,14 +366,14 @@ describe("Training history", () => {
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await screen.findByText("2 sessions");
     expect(
-      screen.queryByText("Run history couldn't load")
+      screen.queryByText("Run history couldn’t load")
     ).not.toBeInTheDocument();
   });
 
   it("never calls a failed run history an empty search result", async () => {
     failNextFirestore("onSnapshot", { path: "users/history-owner/runs" });
     open("?sport=runs&q=tempo");
-    await screen.findByText("Run history couldn't load");
+    await screen.findByText("Run history couldn’t load");
     expect(unfiredFailures()).toEqual([]);
     expect(screen.getByText("History unavailable")).toBeInTheDocument();
     expect(screen.queryByText("No matching sessions")).not.toBeInTheDocument();

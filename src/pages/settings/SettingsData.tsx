@@ -16,7 +16,7 @@ export default function SettingsData() {
   return (
     <SettingsSection
       title="Your data"
-      subtitle="Export what you've logged, restore deleted meals"
+      subtitle="Export what you’ve logged, restore deleted meals"
       section="data_storage"
     >
       <DataExportSection user={user} />

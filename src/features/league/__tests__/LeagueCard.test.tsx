@@ -1,7 +1,7 @@
 /**
  * The weekly league's card on Social (Soc15 call 3), in each of its four
  * states, from what the server wrote: not joined (what joining shows and
- * to whom, and Join), locked ("3 so far"), waiting for Monday, and in a
+ * to whom, and Join), locked ("3 so far", and no count under three), waiting for Monday, and in a
  * group (tier, place, points, sessions against the plan, "Ends Sunday").
  * Joining goes through the callable; a restricted account is told why it
  * cannot. Firestore runs on the one fake (ADR-0009); dates come from the
@@ -140,6 +140,26 @@ describe("joined", () => {
     expect(
       screen.queryByRole("button", { name: "Join the league" })
     ).toBeNull();
+    // A league that has not opened is the Weekly league, not one they are in.
+    expect(
+      screen.getByRole("heading", { name: "Weekly league" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/You.re in the league/)).toBeNull();
+  });
+
+  it("locked: names no count and draws no bar under three", async () => {
+    seedFirestore({
+      "leagueStatus/current": { joined: 1, needed: 10, open: false },
+      "leagueMembers/me": { tier: "bronze", groupId: null, weekKey: null },
+    });
+    renderCard();
+    expect(
+      await screen.findByText("Leagues open when 10 people have joined.")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("progressbar", { name: "People who have joined" })
+    ).toBeNull();
+    expect(screen.queryByText(/so far/)).toBeNull();
   });
 
   it("waiting: the league is open and their group starts on Monday", async () => {

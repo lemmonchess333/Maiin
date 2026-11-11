@@ -415,7 +415,7 @@ function WeekAhead({
         className="mt-6"
       />
       <div className="mt-auto pt-8">
-        <Button fullWidth onClick={onDone}>
+        <Button variant="neutral" fullWidth onClick={onDone}>
           Done
         </Button>
       </div>
@@ -551,7 +551,7 @@ export default function WeeklyReview() {
     slides = [
       {
         key: "failed",
-        label: "Couldn't load",
+        label: "Couldn’t load",
         render: () => (
           <div className="flex flex-1 flex-col" role="alert">
             <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
@@ -561,7 +561,7 @@ export default function WeeklyReview() {
               Check your connection and try again.
             </p>
             <div className="mt-auto space-y-2 pt-8">
-              <Button fullWidth onClick={retry}>
+              <Button variant="neutral" fullWidth onClick={retry}>
                 Try again
               </Button>
               <Button fullWidth variant="ghost" onClick={close}>
@@ -600,7 +600,7 @@ export default function WeeklyReview() {
               </div>
             )}
             <div className="mt-auto pt-8">
-              <Button fullWidth onClick={close}>
+              <Button variant="neutral" fullWidth onClick={close}>
                 Done
               </Button>
             </div>

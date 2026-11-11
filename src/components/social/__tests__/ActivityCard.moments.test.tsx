@@ -102,11 +102,30 @@ describe("moments on the feed card", () => {
       })
     );
     expect(text).toContain("30-day streak");
-    expect(text).toContain("New PR");
+    expect(text).toContain("New best");
     expect(text).toContain("Bench Press 90 kg × 5");
     expect(text).toContain("Week 4 of 12 done");
-    expect(text).toContain("2 PRs");
+    expect(text).toContain("2 bests");
     expect(tiles).toEqual(["milestone", "best", "milestone"]);
+  });
+
+  it("draws a first session in its sport's colour: coral on a run", () => {
+    const tile = (type: "run" | "workout") => {
+      const { container, unmount } = render(
+        <MemoryRouter>
+          <ActivityCard
+            feedItem={post(type, { moments: [{ kind: "firstSession" }] })}
+          />
+        </MemoryRouter>
+      );
+      const cls =
+        container.querySelector("[data-moment-tone]")?.className ?? "";
+      unmount();
+      return cls;
+    };
+    expect(tile("run")).toContain("text-running-strong");
+    expect(tile("run")).not.toContain("text-primary");
+    expect(tile("workout")).toContain("text-primary");
   });
 
   it("reads a lift's PR in the reader's load unit", () => {
@@ -159,7 +178,7 @@ describe("moments on the feed card", () => {
         { prHit: true, prExercise: "Bench Press", prWeight: 100 }
       )
     );
-    expect(text).toContain("New PR: Bench Press 100 kg");
+    expect(text).toContain("New best: Bench Press 100 kg");
     expect(text).toContain("Week 3 complete");
     expect(tiles).toEqual([]);
   });
@@ -170,7 +189,7 @@ describe("moments on the feed card", () => {
         post("workout", { exercises: [BENCH_ROW], moments })
       );
       expect(tiles).toEqual([]);
-      expect(text).not.toContain("New PR");
+      expect(text).not.toContain("New best");
       expect(text).not.toContain("streak");
     }
   });
