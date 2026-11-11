@@ -30,7 +30,7 @@ function renderRing({
   target = 2000,
   mode = "left" as CalorieRingMode,
   drawIn = true,
-  size = undefined as "hero" | "card" | "compact" | undefined,
+  size = undefined as "hero" | "compact" | undefined,
 } = {}) {
   return render(
     <CalorieRing
@@ -124,7 +124,9 @@ describe("CalorieRing — the label is plain text", () => {
 
   it("reads 'kcal over 2,000' past the target", () => {
     renderRing({ consumed: 2300 });
-    expect(screen.getByText(`kcal over ${groupText(2000)}`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`kcal over ${groupText(2000)}`)
+    ).toBeInTheDocument();
   });
 
   it("says 'logged' to a screen reader too", () => {
@@ -178,16 +180,13 @@ describe("CalorieRing — Food's wheel carries its target and a tap mark", () =>
     );
   });
 
-  it.each(["card", "compact"] as const)(
-    "the %s wheel keeps the short label and has no mark",
-    (size) => {
-      // Home's wheel is 104px: the target does not fit inside it.
-      const { container } = renderRing({ size });
-      expect(screen.getByText("kcal left")).toBeInTheDocument();
-      expect(container.querySelector("[data-tap-mark]")).toBeNull();
-      expect(container.querySelector("p svg")).toBeNull();
-    }
-  );
+  it("the compact wheel keeps the short label and has no mark", () => {
+    // Home's wheel is 104px: the target does not fit inside it.
+    const { container } = renderRing({ size: "compact" });
+    expect(screen.getByText("kcal left")).toBeInTheDocument();
+    expect(container.querySelector("[data-tap-mark]")).toBeNull();
+    expect(container.querySelector("p svg")).toBeNull();
+  });
 });
 
 /**
@@ -236,10 +235,10 @@ describe("CalorieRing — the second lap's head stands clear of the first lap", 
   it("is the colour of what the wheel stands on", () => {
     const page = gap(renderRing({ consumed: 2600 }).container)!;
     expect(page.style.stroke).toBe("hsl(var(--background))");
-    for (const size of ["card", "compact"] as const) {
-      const onCard = gap(renderRing({ consumed: 2600, size }).container)!;
-      expect(onCard.style.stroke).toBe("hsl(var(--card))");
-    }
+    const onCard = gap(
+      renderRing({ consumed: 2600, size: "compact" }).container
+    )!;
+    expect(onCard.style.stroke).toBe("hsl(var(--card))");
   });
 });
 
