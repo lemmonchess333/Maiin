@@ -1,17 +1,21 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import CalorieRing from "../CalorieRing";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 /**
- * The compact ring is Home's: the Food page's ring at a smaller size, so
+ * The compact ring is Home's: the Food page's wheel at a smaller size, so
  * the two screens draw the same object. The box and the number step
  * down; the label keeps its 12px text, which is the floor.
+ *
+ * Food's own is 264px on the page since Food11 call 2. The 176px ring it
+ * drew in its card until then is `size="card"`, which the paywall's scan
+ * demo still draws.
  */
-describe("CalorieRing — compact size", () => {
-  function draw(size?: "hero" | "compact") {
+describe("CalorieRing — the three sizes", () => {
+  function draw(size?: "hero" | "card" | "compact") {
     render(
       <CalorieRing
         consumed={1285}
@@ -23,22 +27,31 @@ describe("CalorieRing — compact size", () => {
       />
     );
     const ring = screen.getByRole("button");
-    const number = ring.querySelector("p")!;
-    const label = screen.getByText("kcal left");
-    return {
+    const [number, label] = Array.from(ring.querySelectorAll("p"));
+    const out = {
       ring: ring.className,
       number: number.className,
       label: label.className,
     };
+    cleanup();
+    return out;
   }
 
-  it("keeps the Food page's ring as the default, its figure the largest text", () => {
-    // 176 pt, the figure sized from the ring up to the display size
-    // (owner, 7 November 2026: at least 1.2x the "Food" title).
+  it("keeps the Food page's wheel as the default, its figure the largest text", () => {
+    // 264px, the figure sized from the ring up to the display size.
     const hero = draw();
-    expect(hero.ring).toContain("w-44");
+    expect(hero.ring).toContain("w-[264px]");
+    expect(hero.ring).toContain("max-w-full");
     expect(hero.number).toContain("var(--text-display)");
-    expect(hero.label).toContain("text-xs");
+    expect(hero.label).toContain("text-sm");
+  });
+
+  it("keeps the 176px ring for a card, with the 12px label", () => {
+    const card = draw("card");
+    expect(card.ring).toContain("w-44");
+    expect(card.ring).not.toContain("w-[264px]");
+    expect(card.number).toContain("var(--text-display)");
+    expect(card.label).toContain("text-xs");
   });
 
   it("draws Home's ring smaller, with the label still at 12px", () => {

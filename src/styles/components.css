@@ -654,24 +654,29 @@ html.guiding [data-brand-mark] {
   --glow-c: 0.045;
 }
 
-/* Food's calorie card (owner, 7 November 2026): a faint glow of the food
-   orange behind the ring, fading into the card (DS4, §14m rule 13). It
-   replaced a wash from orange into the brand purple, the only two-hue
-   gradient on an everyday screen in 178 measured, which made dark 2.5x
-   louder than light. Weak enough to count as colour in neither theme. */
+/* Food's calorie wheel: a faint light of the food orange behind it, one
+   hue fading into the page (DS4, §14m rule 13; §14o's one soft light for
+   a hero). The owner's call of 7 November 2026 put it behind the ring in
+   its card, in place of a wash from orange into the brand purple, the
+   only two-hue gradient on an everyday screen in 178 measured, which made
+   dark 2.5x louder than light. Since Food11 the wheel is on the page and
+   the light is a circle 340px across round it, at the strengths the
+   picked board was measured with: a fixed size, drawn at the centre of a
+   box as wide as the screen, so nothing is laid out past a narrow one.
+   Weak enough to count as colour in neither theme. */
 .food-hero-glow {
   background: radial-gradient(
-    closest-side,
-    hsl(var(--nutrition) / 0.2),
-    hsl(var(--nutrition) / 0.09) 50%,
+    circle 170px at center,
+    hsl(var(--nutrition) / 0.14),
+    hsl(var(--nutrition) / 0.05) 58%,
     transparent
   );
 }
 .dark .food-hero-glow {
   background: radial-gradient(
-    closest-side,
-    hsl(var(--nutrition) / 0.13),
-    hsl(var(--nutrition) / 0.05) 50%,
+    circle 170px at center,
+    hsl(var(--nutrition) / 0.12),
+    hsl(var(--nutrition) / 0.04) 58%,
     transparent
   );
 }

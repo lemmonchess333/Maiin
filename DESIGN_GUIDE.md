@@ -497,7 +497,11 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   (`loggedFill`), so a day with nothing logged is a grey track; and the
   week as seven short bars under the wheel, edge to edge, in the deeper
   orange in light, where it was seven rings with the date above the
-  calorie card. Read Food11 before changing
+  calorie card; and the wheel itself on the page, 264 pt and in no card,
+  with Details under it, the target in its label ("kcal left of 2,200"),
+  a small mark after the label that says it can be tapped (DS3's quiet
+  ring had no mark; Home's still has none) and a sliver of the page's
+  colour ahead of the second lap's head. Read Food11 before changing
   any of it. What follows is the screen as it stood before, and stays
   true of the parts not yet rebuilt. The owner kept the original screen
   (title, week strip, macro cards with their icons and colours, draining
