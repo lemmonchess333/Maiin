@@ -657,55 +657,30 @@ function startingVariation(
 }
 
 /**
- * The order each generated day gives its lifts up when it is sized to its
- * time (Lift21): one rank per authored slot, in the day's own order, and
- * the lower the rank the longer the lift is kept. The order is what a day
- * of its kind must hold first: a push day its two presses, then side delts
- * and triceps; a pull day a pull and a row, then a curl and rear delts; a
- * leg day a squat pattern and a hinge, then one more leg lift and calves.
- * A second lift for a muscle the day already trains goes before any of
- * those. A full-body day keeps a leg lift, a press and a pull; the third
- * day's squat pattern outranks both, since the week's other two days lead
- * with a squat and a deadlift and three-lift days would otherwise train the
- * quads once a week.
+ * A builder's slot with its place in the order its day gives lifts up when
+ * it is sized to its time (Lift21): the lower the rank, the longer the lift
+ * is kept, and rank 1 is the day's main lift. Each day's ranks follow what
+ * a day of its kind must hold first: a push day its two presses, then side
+ * delts and triceps; a pull day a pull and a row, then a curl and rear
+ * delts; a leg day a squat pattern and a hinge, then one more leg lift and
+ * calves. A second lift for a muscle the day already trains goes before
+ * any of those. A full-body day keeps a leg lift, a press and a pull; the
+ * third day's squat pattern outranks both, since the week's other two days
+ * lead with a squat and a deadlift and three-lift days would otherwise
+ * train the quads once a week.
  *
- * No pass adds pulling sets to a built week any more, so the order also
- * keeps a short week pulling about as much as it presses (D-LIFT-3): where
- * one day's press outranks its pull, the next day's pull outranks its
- * press (the two upper days; the squat and deadlift full-body days), and
- * the third full-body day keeps its pull before its press.
- * `liftDayLabel.test.ts` covers the same day names, and
- * `sessionSizing.test.ts` holds the rows and the balance.
+ * No pass adds pulling sets to a built week, so the ranks also keep a short
+ * week pulling about as much as it presses (D-LIFT-3): where one day's
+ * press outranks its pull, the next day's pull outranks its press (the two
+ * upper days; the squat and deadlift full-body days), and the third
+ * full-body day keeps its pull before its press. `sessionSizing.test.ts`
+ * holds the balance and the sizes over every setup.
+ *
+ * The rank is build-time only: `generateProgram` takes it off before a plan
+ * leaves the builder.
  */
-export const KEEP_RANKS: Readonly<Record<string, readonly number[]>> = {
-  "Full Body — Squat Focus": [1, 2, 3, 4, 5, 6],
-  "Full Body — Deadlift Focus": [1, 3, 2, 4, 5, 6],
-  "Full Body — Posterior Focus": [1, 4, 3, 2, 6, 5],
-  "Upper — Chest & Back": [1, 2, 4, 3, 5, 6],
-  "Lower — Squat Focus": [1, 2, 3, 6, 4, 5],
-  "Upper — Shoulders & Arms": [1, 2, 3, 4, 6, 7, 5],
-  "Lower — Deadlift Focus": [1, 2, 3, 4, 5, 6],
-  "Push — Chest Focus": [1, 2, 5, 4, 6, 3],
-  "Pull — Lat Focus": [1, 2, 5, 3, 6, 4],
-  "Legs — Squat Focus": [1, 2, 3, 6, 4, 5],
-  "Push — Shoulder Focus": [1, 2, 5, 4, 3, 6],
-  "Pull — Row Focus": [1, 2, 5, 3, 4, 6],
-  "Legs — Deadlift Focus": [1, 2, 3, 5, 4, 6],
-};
-
-/** Give each authored slot its day's rank (`KEEP_RANKS`). Run on the
- *  builders' own output, before any pass moves a slot. */
-function withKeepRanks(workouts: WorkoutDay[]): WorkoutDay[] {
-  return workouts.map((day) => {
-    const ranks = KEEP_RANKS[day.dayName];
-    if (!ranks) return day;
-    return {
-      ...day,
-      exercises: day.exercises.map((ex, i) =>
-        ranks[i] === undefined ? ex : { ...ex, keepRank: ranks[i] }
-      ),
-    };
-  });
+function rank(keepRank: number, exercise: ProgramExercise): ProgramExercise {
+  return { ...exercise, keepRank };
 }
 
 /** The movement patterns of the lower body; every other pattern is the
@@ -802,55 +777,70 @@ function buildFullBody(
     dayType: "full_body",
     completed: false,
     exercises: [
-      makeExercise(
-        "knee_dominant",
-        round(3 * vm),
-        main,
-        80,
-        profile.mainProgression,
-        findExisting(0, 0)
+      rank(
+        1,
+        makeExercise(
+          "knee_dominant",
+          round(3 * vm),
+          main,
+          80,
+          profile.mainProgression,
+          findExisting(0, 0)
+        )
       ),
-      makeExercise(
-        "horizontal_push",
-        round(3 * vm),
-        main,
-        60,
-        profile.mainProgression,
-        findExisting(0, 1)
+      rank(
+        2,
+        makeExercise(
+          "horizontal_push",
+          round(3 * vm),
+          main,
+          60,
+          profile.mainProgression,
+          findExisting(0, 1)
+        )
       ),
-      makeExercise(
-        "vertical_pull",
-        round(3 * vm),
-        acc,
-        0,
-        profile.mainProgression,
-        findExisting(0, 2),
-        true
+      rank(
+        3,
+        makeExercise(
+          "vertical_pull",
+          round(3 * vm),
+          acc,
+          0,
+          profile.mainProgression,
+          findExisting(0, 2),
+          true
+        )
       ),
       // A new slot starts on the Romanian deadlift where the level takes
       // it (Lift21): the deadlift is day B's main lift, once a week.
-      makeExercise(
-        "hip_dominant",
-        round(3 * vm),
-        acc,
-        60,
-        "linear",
-        findExisting(0, 3),
-        true,
-        startsOnIfOfferable("hip_dominant", "romanian-deadlift")
+      rank(
+        4,
+        makeExercise(
+          "hip_dominant",
+          round(3 * vm),
+          acc,
+          60,
+          "linear",
+          findExisting(0, 3),
+          true,
+          startsOnIfOfferable("hip_dominant", "romanian-deadlift")
+        )
       ),
-      makeExercise(
-        "core",
-        round(2 * vm),
-        12,
-        15,
-        "linear",
-        findExisting(0, 4),
-        true
+      rank(
+        5,
+        makeExercise(
+          "core",
+          round(2 * vm),
+          12,
+          15,
+          "linear",
+          findExisting(0, 4),
+          true
+        )
       ),
       // Direct calf work — the bank has no calves category, so this is a
       // named slot (see makeNamedAccessory).
-      makeNamedAccessory("standing-calf-raise", round(2 * vm), 12, 40),
+      rank(6, makeNamedAccessory("standing-calf-raise", round(2 * vm), 12, 40)),
     ],
   };
 
@@ -861,48 +851,63 @@ function buildFullBody(
     dayType: "full_body",
     completed: false,
     exercises: [
-      makeExercise(
-        "hip_dominant",
-        round(3 * vm),
-        main,
-        80,
-        profile.mainProgression,
-        findExisting(1, 0)
+      rank(
+        1,
+        makeExercise(
+          "hip_dominant",
+          round(3 * vm),
+          main,
+          80,
+          profile.mainProgression,
+          findExisting(1, 0)
+        )
       ),
-      makeExercise(
-        "vertical_push",
-        round(3 * vm),
-        main,
-        40,
-        profile.mainProgression,
-        findExisting(1, 1)
+      rank(
+        3,
+        makeExercise(
+          "vertical_push",
+          round(3 * vm),
+          main,
+          40,
+          profile.mainProgression,
+          findExisting(1, 1)
+        )
       ),
-      makeExercise(
-        "horizontal_pull",
-        round(3 * vm),
-        acc,
-        50,
-        profile.mainProgression,
-        findExisting(1, 2),
-        true
+      rank(
+        2,
+        makeExercise(
+          "horizontal_pull",
+          round(3 * vm),
+          acc,
+          50,
+          profile.mainProgression,
+          findExisting(1, 2),
+          true
+        )
       ),
-      makeExercise(
-        "knee_dominant",
-        round(3 * vm),
-        acc,
-        60,
-        "linear",
-        findExisting(1, 3),
-        true
+      rank(
+        4,
+        makeExercise(
+          "knee_dominant",
+          round(3 * vm),
+          acc,
+          60,
+          "linear",
+          findExisting(1, 3),
+          true
+        )
       ),
-      makeExercise(
-        "arms_biceps",
-        round(2 * vm),
-        12,
-        10,
-        "linear",
-        findExisting(1, 4),
-        true
+      rank(
+        5,
+        makeExercise(
+          "arms_biceps",
+          round(2 * vm),
+          12,
+          10,
+          "linear",
+          findExisting(1, 4),
+          true
+        )
       ),
     ],
   };
@@ -920,7 +925,10 @@ function buildFullBody(
         ...dayB,
         exercises: [
           ...dayB.exercises,
-          makeNamedAccessory("seated-calf-raise", round(3 * vm), 15, 30),
+          rank(
+            6,
+            makeNamedAccessory("seated-calf-raise", round(3 * vm), 15, 30)
+          ),
         ],
       },
     ];
@@ -936,55 +944,70 @@ function buildFullBody(
     dayType: "full_body",
     completed: false,
     exercises: [
-      makeExercise(
-        "hip_dominant",
-        round(3 * vm),
-        main,
-        80,
-        profile.mainProgression,
-        findExisting(2, 0),
-        false,
-        startsOnIfOfferable("hip_dominant", "romanian-deadlift")
+      rank(
+        1,
+        makeExercise(
+          "hip_dominant",
+          round(3 * vm),
+          main,
+          80,
+          profile.mainProgression,
+          findExisting(2, 0),
+          false,
+          startsOnIfOfferable("hip_dominant", "romanian-deadlift")
+        )
       ),
-      makeExercise(
-        "horizontal_push",
-        round(3 * vm),
-        acc,
-        60,
-        profile.mainProgression,
-        findExisting(2, 1),
-        true
+      rank(
+        4,
+        makeExercise(
+          "horizontal_push",
+          round(3 * vm),
+          acc,
+          60,
+          profile.mainProgression,
+          findExisting(2, 1),
+          true
+        )
       ),
-      makeExercise(
-        "vertical_pull",
-        round(3 * vm),
-        acc,
-        0,
-        profile.mainProgression,
-        findExisting(2, 2),
-        true
+      rank(
+        3,
+        makeExercise(
+          "vertical_pull",
+          round(3 * vm),
+          acc,
+          0,
+          profile.mainProgression,
+          findExisting(2, 2),
+          true
+        )
       ),
-      makeExercise(
-        "knee_dominant",
-        round(3 * vm),
-        acc,
-        60,
-        "linear",
-        findExisting(2, 3),
-        true
+      rank(
+        2,
+        makeExercise(
+          "knee_dominant",
+          round(3 * vm),
+          acc,
+          60,
+          "linear",
+          findExisting(2, 3),
+          true
+        )
       ),
-      makeExercise(
-        "core",
-        round(2 * vm),
-        12,
-        15,
-        "linear",
-        findExisting(2, 4),
-        true
+      rank(
+        6,
+        makeExercise(
+          "core",
+          round(2 * vm),
+          12,
+          15,
+          "linear",
+          findExisting(2, 4),
+          true
+        )
       ),
       // Soleus-biased partner to day A's standing raise (bent knee shifts
       // the load — same split the hand-authored templates use).
-      makeNamedAccessory("seated-calf-raise", round(2 * vm), 15, 30),
+      rank(5, makeNamedAccessory("seated-calf-raise", round(2 * vm), 15, 30)),
     ],
   };
 
@@ -1009,51 +1032,69 @@ function buildUpperLower(
       dayType: "upper",
       completed: false,
       exercises: [
-        makeExercise(
-          "horizontal_push",
-          round(4 * vm),
-          main,
-          60,
-          profile.mainProgression,
-          findExisting(0, 0)
+        rank(
+          1,
+          makeExercise(
+            "horizontal_push",
+            round(4 * vm),
+            main,
+            60,
+            profile.mainProgression,
+            findExisting(0, 0)
+          )
         ),
-        makeExercise(
-          "horizontal_pull",
-          round(4 * vm),
-          main,
-          60,
-          profile.mainProgression,
-          findExisting(0, 1)
+        rank(
+          2,
+          makeExercise(
+            "horizontal_pull",
+            round(4 * vm),
+            main,
+            60,
+            profile.mainProgression,
+            findExisting(0, 1)
+          )
         ),
-        makeExercise(
-          "vertical_push",
-          round(3 * vm),
-          acc,
-          30,
-          "linear",
-          findExisting(0, 2)
+        rank(
+          4,
+          makeExercise(
+            "vertical_push",
+            round(3 * vm),
+            acc,
+            30,
+            "linear",
+            findExisting(0, 2)
+          )
         ),
         // The day's second pull (Lift21): two presses and one row left an
         // upper/lower week with about twice the pressing sets of its
         // pulling ones, and nothing adds sets to a built week any more.
-        makeAccessory("vertical_pull", round(3 * vm), acc, 40, "pull-ups"),
-        makeExercise(
-          "arms_biceps",
-          round(3 * vm),
-          12,
-          12,
-          "double",
-          findExisting(0, 4),
-          true
+        rank(
+          3,
+          makeAccessory("vertical_pull", round(3 * vm), acc, 40, "pull-ups")
         ),
-        makeExercise(
-          "arms_triceps",
-          round(3 * vm),
-          12,
-          15,
-          "double",
-          findExisting(0, 5),
-          true
+        rank(
+          5,
+          makeExercise(
+            "arms_biceps",
+            round(3 * vm),
+            12,
+            12,
+            "double",
+            findExisting(0, 4),
+            true
+          )
+        ),
+        rank(
+          6,
+          makeExercise(
+            "arms_triceps",
+            round(3 * vm),
+            12,
+            15,
+            "double",
+            findExisting(0, 5),
+            true
+          )
         ),
       ],
     },
@@ -1062,31 +1103,48 @@ function buildUpperLower(
       dayType: "lower",
       completed: false,
       exercises: [
-        makeExercise(
-          "knee_dominant",
-          round(4 * vm),
-          main,
-          80,
-          profile.mainProgression,
-          findExisting(1, 0)
+        rank(
+          1,
+          makeExercise(
+            "knee_dominant",
+            round(4 * vm),
+            main,
+            80,
+            profile.mainProgression,
+            findExisting(1, 0)
+          )
         ),
-        hingeAfterSquat(profile, round(4 * vm), findExisting(1, 1), experience),
-        makeAccessory("knee_dominant", round(3 * vm), 12, 40, "squat"),
-        makeExercise(
-          "core",
-          round(3 * vm),
-          12,
-          15,
-          "double",
-          findExisting(1, 3),
-          true
+        rank(
+          2,
+          hingeAfterSquat(
+            profile,
+            round(4 * vm),
+            findExisting(1, 1),
+            experience
+          )
+        ),
+        rank(3, makeAccessory("knee_dominant", round(3 * vm), 12, 40, "squat")),
+        rank(
+          6,
+          makeExercise(
+            "core",
+            round(3 * vm),
+            12,
+            15,
+            "double",
+            findExisting(1, 3),
+            true
+          )
         ),
         // Direct calf work (named slot — see makeNamedAccessory). Appended
         // last so the findExisting positions above stay valid.
-        makeNamedAccessory("standing-calf-raise", round(3 * vm), 12, 40),
+        rank(
+          4,
+          makeNamedAccessory("standing-calf-raise", round(3 * vm), 12, 40)
+        ),
         // Knee flexion (Lift21): the hinge above trains the hamstrings at
         // the hip only.
-        makeNamedAccessory("seated-leg-curl", round(3 * vm), 12, 30),
+        rank(5, makeNamedAccessory("seated-leg-curl", round(3 * vm), 12, 30)),
       ],
     },
     {
@@ -1094,42 +1152,74 @@ function buildUpperLower(
       dayType: "upper",
       completed: false,
       exercises: [
-        makeExercise(
-          "vertical_push",
-          round(4 * vm),
-          main,
-          40,
-          profile.mainProgression,
-          findExisting(2, 0)
+        rank(
+          1,
+          makeExercise(
+            "vertical_push",
+            round(4 * vm),
+            main,
+            40,
+            profile.mainProgression,
+            findExisting(2, 0)
+          )
         ),
-        makeExercise(
-          "vertical_pull",
-          round(4 * vm),
-          main,
-          0,
-          profile.mainProgression,
-          findExisting(2, 1)
+        rank(
+          2,
+          makeExercise(
+            "vertical_pull",
+            round(4 * vm),
+            main,
+            0,
+            profile.mainProgression,
+            findExisting(2, 1)
+          )
         ),
-        makeAccessory("horizontal_push", round(3 * vm), acc, 30, "bench-press"),
-        // The day's second pull (see the Upper — Chest & Back note).
-        makeAccessory("horizontal_pull", round(3 * vm), acc, 30, "barbell-row"),
-        makeExercise(
-          "arms_biceps",
-          round(2 * vm),
-          12,
-          10,
-          "double",
-          findExisting(2, 4),
-          true
+        rank(
+          3,
+          makeAccessory(
+            "horizontal_push",
+            round(3 * vm),
+            acc,
+            30,
+            "bench-press"
+          )
         ),
-        makeExercise(
-          "arms_triceps",
-          round(2 * vm),
-          12,
-          12,
-          "double",
-          findExisting(2, 5),
-          true
+        // The day's second pull (see the Upper — Chest & Back note). It
+        // gives way before the curl: the week's other upper day holds two
+        // pulls already, and this is the day named for arms.
+        rank(
+          6,
+          makeAccessory(
+            "horizontal_pull",
+            round(3 * vm),
+            acc,
+            30,
+            "barbell-row"
+          )
+        ),
+        rank(
+          4,
+          makeExercise(
+            "arms_biceps",
+            round(2 * vm),
+            12,
+            10,
+            "double",
+            findExisting(2, 4),
+            true
+          )
+        ),
+        rank(
+          7,
+          makeExercise(
+            "arms_triceps",
+            round(2 * vm),
+            12,
+            12,
+            "double",
+            findExisting(2, 5),
+            true
+          )
         ),
         // Direct side-delt work (named slot — see makeNamedAccessory). The
         // 2026-08-03 coach-read audit measured 0 side-delt sets across every
@@ -1138,7 +1228,7 @@ function buildUpperLower(
         // no-slot-to-grow failure the calf slots fixed. The hand-authored
         // templates already prescribe this on every shoulder day. Appended
         // last so the findExisting positions above stay valid.
-        makeNamedAccessory("lateral-raise", round(3 * vm), 12, 8),
+        rank(5, makeNamedAccessory("lateral-raise", round(3 * vm), 12, 8)),
       ],
     },
     {
@@ -1146,30 +1236,42 @@ function buildUpperLower(
       dayType: "lower",
       completed: false,
       exercises: [
-        makeExercise(
-          "hip_dominant",
-          round(4 * vm),
-          main,
-          80,
-          profile.mainProgression,
-          findExisting(3, 0)
+        rank(
+          1,
+          makeExercise(
+            "hip_dominant",
+            round(4 * vm),
+            main,
+            80,
+            profile.mainProgression,
+            findExisting(3, 0)
+          )
         ),
-        makeAccessory("knee_dominant", round(3 * vm), acc, 50, "squat"),
-        makeAccessory("hip_dominant", round(3 * vm), 12, 40, "deadlift"),
-        makeExercise(
-          "core",
-          round(3 * vm),
-          12,
-          15,
-          "double",
-          findExisting(3, 3),
-          true
+        rank(
+          2,
+          makeAccessory("knee_dominant", round(3 * vm), acc, 50, "squat")
+        ),
+        rank(
+          3,
+          makeAccessory("hip_dominant", round(3 * vm), 12, 40, "deadlift")
+        ),
+        rank(
+          4,
+          makeExercise(
+            "core",
+            round(3 * vm),
+            12,
+            15,
+            "double",
+            findExisting(3, 3),
+            true
+          )
         ),
         // Seated (soleus-biased) on the deadlift day, standing on the squat
         // day — the same standing/seated split the templates author.
-        makeNamedAccessory("seated-calf-raise", round(3 * vm), 15, 30),
+        rank(5, makeNamedAccessory("seated-calf-raise", round(3 * vm), 15, 30)),
         // The day's sixth lift (Lift21), which only a long session reaches.
-        makeNamedAccessory("leg-extension", round(3 * vm), 15, 30),
+        rank(6, makeNamedAccessory("leg-extension", round(3 * vm), 15, 30)),
       ],
     },
   ];
@@ -1193,43 +1295,58 @@ function buildPPL(
       dayType: "push",
       completed: false,
       exercises: [
-        makeExercise(
-          "horizontal_push",
-          round(4 * vm),
-          main,
-          60,
-          profile.mainProgression,
-          findExisting(0, 0)
+        rank(
+          1,
+          makeExercise(
+            "horizontal_push",
+            round(4 * vm),
+            main,
+            60,
+            profile.mainProgression,
+            findExisting(0, 0)
+          )
         ),
-        makeExercise(
-          "vertical_push",
-          round(3 * vm),
-          acc,
-          30,
-          "linear",
-          findExisting(0, 1)
+        rank(
+          2,
+          makeExercise(
+            "vertical_push",
+            round(3 * vm),
+            acc,
+            30,
+            "linear",
+            findExisting(0, 1)
+          )
         ),
-        makeAccessory("horizontal_push", round(3 * vm), 12, 30, "bench-press"),
-        makeExercise(
-          "arms_triceps",
-          round(3 * vm),
-          12,
-          15,
-          "double",
-          findExisting(0, 3),
-          true
+        rank(
+          5,
+          makeAccessory("horizontal_push", round(3 * vm), 12, 30, "bench-press")
         ),
-        makeAccessory(
-          "arms_triceps",
-          round(3 * vm),
-          15,
-          10,
-          "rope-tricep-pushdown"
+        rank(
+          4,
+          makeExercise(
+            "arms_triceps",
+            round(3 * vm),
+            12,
+            15,
+            "double",
+            findExisting(0, 3),
+            true
+          )
+        ),
+        rank(
+          6,
+          makeAccessory(
+            "arms_triceps",
+            round(3 * vm),
+            15,
+            10,
+            "rope-tricep-pushdown"
+          )
         ),
         // Direct side-delt slot (see the Upper — Shoulders & Arms note):
         // 2 base sets here, 3 on the shoulder-focus push day; a 5-day week
         // (which slices PPL to this one push day) still gets direct work.
-        makeNamedAccessory("lateral-raise", round(2 * vm), 12, 8),
+        rank(3, makeNamedAccessory("lateral-raise", round(2 * vm), 12, 8)),
       ],
     },
     {
@@ -1237,37 +1354,52 @@ function buildPPL(
       dayType: "pull",
       completed: false,
       exercises: [
-        makeExercise(
-          "vertical_pull",
-          round(4 * vm),
-          main,
-          0,
-          profile.mainProgression,
-          findExisting(1, 0)
+        rank(
+          1,
+          makeExercise(
+            "vertical_pull",
+            round(4 * vm),
+            main,
+            0,
+            profile.mainProgression,
+            findExisting(1, 0)
+          )
         ),
-        makeExercise(
-          "horizontal_pull",
-          round(3 * vm),
-          acc,
-          50,
-          "linear",
-          findExisting(1, 1)
+        rank(
+          2,
+          makeExercise(
+            "horizontal_pull",
+            round(3 * vm),
+            acc,
+            50,
+            "linear",
+            findExisting(1, 1)
+          )
         ),
-        makeAccessory("vertical_pull", round(3 * vm), 12, 40, "pull-ups"),
-        makeExercise(
-          "arms_biceps",
-          round(3 * vm),
-          12,
-          12,
-          "double",
-          findExisting(1, 3),
-          true
+        rank(
+          5,
+          makeAccessory("vertical_pull", round(3 * vm), 12, 40, "pull-ups")
         ),
-        makeAccessory("arms_biceps", round(3 * vm), 15, 8, "barbell-curl"),
+        rank(
+          3,
+          makeExercise(
+            "arms_biceps",
+            round(3 * vm),
+            12,
+            12,
+            "double",
+            findExisting(1, 3),
+            true
+          )
+        ),
+        rank(
+          6,
+          makeAccessory("arms_biceps", round(3 * vm), 15, 8, "barbell-curl")
+        ),
         // Direct rear-delt work (Lift21): a pull day's rows credit the rear
         // delts and nothing trained them on their own. A named slot at the
         // end, like the side-delt one, so the positions above stay valid.
-        makeNamedAccessory("face-pulls", round(3 * vm), 15, 15),
+        rank(4, makeNamedAccessory("face-pulls", round(3 * vm), 15, 15)),
       ],
     },
     {
@@ -1275,36 +1407,53 @@ function buildPPL(
       dayType: "legs",
       completed: false,
       exercises: [
-        makeExercise(
-          "knee_dominant",
-          round(4 * vm),
-          main,
-          80,
-          profile.mainProgression,
-          findExisting(2, 0)
+        rank(
+          1,
+          makeExercise(
+            "knee_dominant",
+            round(4 * vm),
+            main,
+            80,
+            profile.mainProgression,
+            findExisting(2, 0)
+          )
         ),
-        hingeAfterSquat(profile, round(4 * vm), findExisting(2, 1), experience),
-        makeAccessory("knee_dominant", round(3 * vm), 12, 40, "squat"),
-        makeExercise(
-          "core",
-          round(3 * vm),
-          15,
-          15,
-          "double",
-          // Was findExisting(2, 4) — an off-by-one. This day has four slots
-          // (0-3), so index 4 never resolved and the core lift was rebuilt
-          // from defaults on EVERY regenerate, silently dropping the user's
-          // logged weight and history. Same family as #17; found by the
-          // regenerate-preserves-load test rather than by reading indices.
-          findExisting(2, 3),
-          true
+        rank(
+          2,
+          hingeAfterSquat(
+            profile,
+            round(4 * vm),
+            findExisting(2, 1),
+            experience
+          )
+        ),
+        rank(3, makeAccessory("knee_dominant", round(3 * vm), 12, 40, "squat")),
+        rank(
+          6,
+          makeExercise(
+            "core",
+            round(3 * vm),
+            15,
+            15,
+            "double",
+            // Was findExisting(2, 4) — an off-by-one. This day has four slots
+            // (0-3), so index 4 never resolved and the core lift was rebuilt
+            // from defaults on EVERY regenerate, silently dropping the user's
+            // logged weight and history. Same family as #17; found by the
+            // regenerate-preserves-load test rather than by reading indices.
+            findExisting(2, 3),
+            true
+          )
         ),
         // Direct calf work (named slot — see makeNamedAccessory). Appended
         // last so the findExisting positions above stay valid.
-        makeNamedAccessory("standing-calf-raise", round(3 * vm), 12, 40),
+        rank(
+          4,
+          makeNamedAccessory("standing-calf-raise", round(3 * vm), 12, 40)
+        ),
         // Knee flexion (Lift21): the hinge above trains the hamstrings at
         // the hip only.
-        makeNamedAccessory("seated-leg-curl", round(3 * vm), 12, 30),
+        rank(5, makeNamedAccessory("seated-leg-curl", round(3 * vm), 12, 30)),
       ],
     },
     {
@@ -1312,34 +1461,61 @@ function buildPPL(
       dayType: "push",
       completed: false,
       exercises: [
-        makeExercise(
-          "vertical_push",
-          round(4 * vm),
-          main,
-          40,
-          profile.mainProgression,
-          findExisting(3, 0)
+        rank(
+          1,
+          makeExercise(
+            "vertical_push",
+            round(4 * vm),
+            main,
+            40,
+            profile.mainProgression,
+            findExisting(3, 0)
+          )
         ),
-        makeAccessory("horizontal_push", round(3 * vm), acc, 40, "bench-press"),
-        makeAccessory("vertical_push", round(3 * vm), 12, 20, "overhead-press"),
-        makeExercise(
-          "arms_triceps",
-          round(3 * vm),
-          12,
-          15,
-          "double",
-          findExisting(3, 3),
-          true
+        rank(
+          2,
+          makeAccessory(
+            "horizontal_push",
+            round(3 * vm),
+            acc,
+            40,
+            "bench-press"
+          )
+        ),
+        rank(
+          5,
+          makeAccessory(
+            "vertical_push",
+            round(3 * vm),
+            12,
+            20,
+            "overhead-press"
+          )
+        ),
+        rank(
+          4,
+          makeExercise(
+            "arms_triceps",
+            round(3 * vm),
+            12,
+            15,
+            "double",
+            findExisting(3, 3),
+            true
+          )
         ),
         // Direct side-delt slot (see the Upper — Shoulders & Arms note).
-        makeNamedAccessory("lateral-raise", round(3 * vm), 12, 8),
+        rank(3, makeNamedAccessory("lateral-raise", round(3 * vm), 12, 8)),
         // The day's sixth lift (Lift21), which only a long session reaches.
-        makeAccessory(
-          "arms_triceps",
-          round(3 * vm),
-          15,
-          10,
-          "rope-tricep-pushdown"
+        rank(
+          6,
+          makeAccessory(
+            "arms_triceps",
+            round(3 * vm),
+            15,
+            10,
+            "rope-tricep-pushdown"
+          )
         ),
       ],
     },
@@ -1348,29 +1524,44 @@ function buildPPL(
       dayType: "pull",
       completed: false,
       exercises: [
-        makeExercise(
-          "horizontal_pull",
-          round(4 * vm),
-          main,
-          60,
-          profile.mainProgression,
-          findExisting(4, 0)
+        rank(
+          1,
+          makeExercise(
+            "horizontal_pull",
+            round(4 * vm),
+            main,
+            60,
+            profile.mainProgression,
+            findExisting(4, 0)
+          )
         ),
-        makeAccessory("vertical_pull", round(3 * vm), acc, 40, "pull-ups"),
-        makeAccessory("horizontal_pull", round(3 * vm), 12, 30, "barbell-row"),
-        makeExercise(
-          "arms_biceps",
-          round(3 * vm),
-          12,
-          10,
-          "double",
-          findExisting(4, 3),
-          true
+        rank(
+          2,
+          makeAccessory("vertical_pull", round(3 * vm), acc, 40, "pull-ups")
+        ),
+        rank(
+          5,
+          makeAccessory("horizontal_pull", round(3 * vm), 12, 30, "barbell-row")
+        ),
+        rank(
+          3,
+          makeExercise(
+            "arms_biceps",
+            round(3 * vm),
+            12,
+            10,
+            "double",
+            findExisting(4, 3),
+            true
+          )
         ),
         // Direct rear-delt slot (see the Pull — Lat Focus note).
-        makeNamedAccessory("reverse-flyes", round(3 * vm), 15, 5),
+        rank(4, makeNamedAccessory("reverse-flyes", round(3 * vm), 15, 5)),
         // The day's sixth lift (Lift21), which only a long session reaches.
-        makeAccessory("arms_biceps", round(3 * vm), 15, 8, "barbell-curl"),
+        rank(
+          6,
+          makeAccessory("arms_biceps", round(3 * vm), 15, 8, "barbell-curl")
+        ),
       ],
     },
   ];
@@ -1393,41 +1584,50 @@ function buildLegsB(profile: GoalProfile, existing?: WorkoutDay[]): WorkoutDay {
     completed: false,
     exercises: [
       // Flipped: hip-dominant leads
-      makeExercise(
-        "hip_dominant",
-        round(4 * vm),
-        main,
-        80,
-        profile.mainProgression,
-        findExisting(0)
+      rank(
+        1,
+        makeExercise(
+          "hip_dominant",
+          round(4 * vm),
+          main,
+          80,
+          profile.mainProgression,
+          findExisting(0)
+        )
       ),
-      makeExercise(
-        "knee_dominant",
-        round(4 * vm),
-        acc,
-        60,
-        profile.mainProgression,
-        findExisting(1)
+      rank(
+        2,
+        makeExercise(
+          "knee_dominant",
+          round(4 * vm),
+          acc,
+          60,
+          profile.mainProgression,
+          findExisting(1)
+        )
       ),
       // Accessories in reversed order with different rep ranges
-      makeAccessory("hip_dominant", round(3 * vm), 10, 40, "deadlift"),
+      rank(3, makeAccessory("hip_dominant", round(3 * vm), 10, 40, "deadlift")),
       // One set traded to the calf slot below: at 6d the audit measured
       // quads OVER the volume ceiling and calves below maintenance, and
       // this day was already at the 18-set session budget — the swap moves
       // a set from the surplus muscle to the deficient one instead of
       // growing the session.
-      makeAccessory("knee_dominant", round(2 * vm), 10, 40, "squat"),
-      makeExercise(
-        "core",
-        round(3 * vm),
-        12,
-        15,
-        "double",
-        findExisting(4),
-        true
+      rank(5, makeAccessory("knee_dominant", round(2 * vm), 10, 40, "squat")),
+      rank(
+        4,
+        makeExercise(
+          "core",
+          round(3 * vm),
+          12,
+          15,
+          "double",
+          findExisting(4),
+          true
+        )
       ),
       // Seated pairs with Legs A's standing raise (see makeNamedAccessory).
-      makeNamedAccessory("seated-calf-raise", round(2 * vm), 15, 30),
+      rank(6, makeNamedAccessory("seated-calf-raise", round(2 * vm), 15, 30)),
     ],
   };
 }
@@ -1801,8 +2001,8 @@ export function generateProgram(
   experience?: Experience,
   /**
    * The session length the plan is built for (Lift4 (5), `sessionFit.ts`):
-   * each session is cut to fit it. Every plan build passes one
-   * (`sessionMinutesFor`); absent, only the 18-set ceiling applies.
+   * each session is sized to it. Every plan build passes one
+   * (`sessionMinutesFor`); absent, no lift is taken from a day.
    */
   sessionMinutes?: number,
   /**
@@ -2006,7 +2206,7 @@ export function generateProgram(
     existingWorkouts,
     buildSplit(undefined)
   );
-  let workouts = withKeepRanks(buildSplit(existingForBuild));
+  let workouts = buildSplit(existingForBuild);
 
   // D-LIFT-12: ensure no day picks the same exercise twice (e.g. a main
   // carried on a variation an accessory then matched). Re-picks the duplicate
@@ -2114,7 +2314,7 @@ export function generateProgram(
   // Lift21: time sets how many lifts a day has, not how many sets each
   // gets. Each day is sized to the minutes the person has
   // (`sizeSessionsToTime`): every lift at its place's sets, lifts off the
-  // end of the day's order (`KEEP_RANKS`) while it runs over, and sets back
+  // end of the day's order (each slot's `rank`) while it runs over, and sets back
   // on the lifts it keeps while there is time left. No weekly ceiling takes
   // a set or a lift from a built plan; the Weekly volume card reports them.
   workouts = sizeSessionsToTime(

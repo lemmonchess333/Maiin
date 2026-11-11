@@ -129,8 +129,9 @@ describe("weekly set volume over six mesocycles", () => {
     const cycle = (start: number) =>
       [0, 1, 2, 3].map((i) => at(start + i).total);
     // Four days with no length to fit: each day's whole list, at four sets
-    // on its main lift (the deadlift's three) and three on every other.
-    expect(cycle(5)).toEqual([81, 81, 81, 52]);
+    // on its main lift (the deadlift's three) and on an upper day's first
+    // pull, and three on every other.
+    expect(cycle(5)).toEqual([83, 83, 83, 52]);
     for (const start of [9, 13, 17, 21]) {
       expect(cycle(start), `mesocycle starting at week ${start}`).toEqual(
         cycle(5)

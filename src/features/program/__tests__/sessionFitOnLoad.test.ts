@@ -43,11 +43,12 @@ const load = (state: ProgramState) =>
 describe("a plan fitted to its time, through the loader", () => {
   it("keeps a new 30-minute plan's two-set lifts", () => {
     const plan = buildOnboardingPlan(
-      answers({ sessionMinutes: 30 }),
+      answers({ sessionMinutes: 30, daysPerWeek: 3 }),
       "cut",
       "2026-03-09"
     ).programState;
-    // A half-hour day's supporting lifts take two sets (Lift21).
+    // A half-hour day's supporting lifts take two sets where a third does
+    // not fit (Lift21).
     expect(
       plan.workouts.flatMap((d) => d.exercises).filter((e) => e.sets === 2)
         .length

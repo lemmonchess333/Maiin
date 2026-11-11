@@ -97,9 +97,9 @@ describe("sizeSessionsToTime — a new plan, sized to its time (Lift21)", () => 
   const total = (day: WorkoutDay) =>
     day.exercises.reduce((n, e) => n + e.sets, 0);
 
-  it("with no length to fit, gives the main lift four sets and every other lift three", () => {
+  it("with no length to fit, gives the main lift four sets, its first pull as many, and every other lift three", () => {
     expect(shape(sized(ranked(), Number.POSITIVE_INFINITY))).toBe(
-      "bench-press 4, squat 3, lat-pulldown 3, romanian-deadlift 3, cable-crunch 3, standing-calf-raise 3"
+      "bench-press 4, squat 3, lat-pulldown 4, romanian-deadlift 3, cable-crunch 3, standing-calf-raise 3"
     );
   });
 
@@ -171,7 +171,7 @@ describe("sizeSessionsToTime — a new plan, sized to its time (Lift21)", () => 
   });
 
   it("brings back one of the day's first four when it fits once a dearer lift has gone", () => {
-    // The squat is dear and the curl after it cheap. In 25 minutes the
+    // The squat is dear and the curl after it cheap. In 28 minutes the
     // curl goes, then the squat, and the curl, the day's fourth piece, fits
     // again; the pushdown, its fifth, stays out.
     const day: WorkoutDay = {
@@ -203,7 +203,7 @@ describe("sizeSessionsToTime — a new plan, sized to its time (Lift21)", () => 
         }),
       ],
     };
-    expect(sized(day, 25).exercises.map((e) => e.exerciseId)).toEqual([
+    expect(sized(day, 28).exercises.map((e) => e.exerciseId)).toEqual([
       "bench-press",
       "lat-pulldown",
       "db-curl",
@@ -216,10 +216,10 @@ describe("sizeSessionsToTime — a new plan, sized to its time (Lift21)", () => 
     expect(sized(ranked(), 5).exercises).toHaveLength(2);
   });
 
-  it("gives a beginner three sets on the main lift and two elsewhere, and three at most", () => {
+  it("gives a beginner three sets on the main lift and its first pull, two elsewhere, and three at most", () => {
     const day = sized(ranked(), Number.POSITIVE_INFINITY, "beginner");
     expect(shape(day)).toBe(
-      "bench-press 3, squat 2, lat-pulldown 2, romanian-deadlift 2, cable-crunch 2, standing-calf-raise 2"
+      "bench-press 3, squat 2, lat-pulldown 3, romanian-deadlift 2, cable-crunch 2, standing-calf-raise 2"
     );
     for (const e of sized(ranked(), 600, "beginner").exercises)
       expect(e.sets).toBe(3);
@@ -300,11 +300,11 @@ describe("refitSessionsToTime — a plan the person has", () => {
       expect(e.baseSets).toBe(e.sets);
     });
     const long = refitSessionsToTime(short, "intermediate", 75);
-    // Its place's sets: four on the day's first main lift from an hour,
-    // three on every other lift. The six fill the 75 minutes, so none goes
-    // deeper.
+    // Its place's sets: four on the day's first main lift from an hour and
+    // on its first pull, three on every other lift. The six fill the 75
+    // minutes, so none goes deeper.
     expect(shape(long[0])).toBe(
-      "bench-press 4, squat 3, lat-pulldown 3, romanian-deadlift 3, cable-crunch 3, standing-calf-raise 3"
+      "bench-press 4, squat 3, lat-pulldown 4, romanian-deadlift 3, cable-crunch 3, standing-calf-raise 3"
     );
   });
 

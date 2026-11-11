@@ -14,7 +14,6 @@ import { describe, expect, it } from "vitest";
 import { exerciseRole } from "../exerciseRole";
 import { estimateSessionSeconds } from "../expressSession";
 import { buildPlan, type PlanBuilderInput } from "../planBuilder";
-import { generateProgram, KEEP_RANKS } from "../programEngine";
 import type { PrimaryGoal, WorkoutDay } from "../programTypes";
 import { FLOOR_DEADLIFT_IDS } from "../roleTable";
 import { FIT_TOLERANCE, sessionFits } from "../sessionFit";
@@ -263,42 +262,38 @@ describe("a new plan's week, for every setup of the panel (Lift21)", () => {
   });
 });
 
-describe("the order a day gives its lifts up in (KEEP_RANKS)", () => {
-  it("ranks every day the generator names, each rank once", () => {
-    const named = new Set(
-      [1, 2, 3, 4, 5, 6].flatMap((days) =>
-        generateProgram(days).workouts.map((d) => d.dayName)
-      )
+describe("the order a day gives its lifts up in", () => {
+  const shape = (week: WorkoutDay[]) =>
+    week.map(
+      (d) =>
+        `${d.dayName}: ${d.exercises.map((e) => `${e.exerciseId} ${String(e.sets)}`).join(", ")}`
     );
-    expect([...named].filter((name) => !KEEP_RANKS[name])).toEqual([]);
-    for (const [name, ranks] of Object.entries(KEEP_RANKS)) {
-      expect(ranks[0], name).toBe(1);
-      expect(
-        [...ranks].sort((a, b) => a - b),
-        name
-      ).toEqual(ranks.map((_, i) => i + 1));
-    }
+  const sixDays = (minutes: number) =>
+    shape(weekOf({ days: 6, minutes, level: "intermediate", goal: "general" }));
+
+  // Lift21's first reference: six days of General fitness, the week the
+  // decision was taken on. Written out so a change to a rank or to the
+  // sizing shows as a changed week, not only as a count.
+  it("keeps each day's first pieces at 45 minutes", () => {
+    expect(sixDays(45)).toEqual([
+      "Pull — Lat Focus: pull-ups 3, barbell-row 3, db-curl 3, face-pulls 3",
+      "Push — Chest Focus: bench-press 3, overhead-press 3, rope-tricep-pushdown 3, lateral-raise 3",
+      "Legs — Squat Focus: squat 3, romanian-deadlift 3, hack-squat 3, standing-calf-raise 3",
+      "Pull — Row Focus: barbell-row 3, lat-pulldown 3, db-curl 3, reverse-flyes 3",
+      "Push — Shoulder Focus: overhead-press 4, db-bench 3, rope-tricep-pushdown 3, lateral-raise 3",
+      "Legs — Deadlift Focus: deadlift 3, squat 4, seated-leg-curl 4",
+    ]);
   });
 
-  it("has a rank for every slot the builders author", () => {
-    // With no length to fit a day keeps its whole list: the builders' own
-    // slots, then any lift added for a muscle's two days.
-    for (const days of [2, 3, 4, 5, 6]) {
-      for (const day of generateProgram(
-        days,
-        undefined,
-        "hypertrophy",
-        undefined,
-        undefined,
-        "advanced"
-      ).workouts) {
-        const ranks = KEEP_RANKS[day.dayName];
-        expect(
-          day.exercises.length,
-          `${String(days)}d ${day.dayName}`
-        ).toBeGreaterThanOrEqual(ranks.length);
-      }
-    }
+  it("adds a fifth lift and the main lift's fourth set at an hour", () => {
+    expect(sixDays(60)).toEqual([
+      "Pull — Lat Focus: pull-ups 4, barbell-row 4, lat-pulldown 3, db-curl 4, face-pulls 3",
+      "Push — Chest Focus: bench-press 4, overhead-press 4, db-bench 3, rope-tricep-pushdown 4, lateral-raise 3",
+      "Legs — Squat Focus: squat 4, romanian-deadlift 4, hack-squat 3, standing-calf-raise 3, seated-leg-curl 3",
+      "Pull — Row Focus: barbell-row 4, lat-pulldown 4, seated-row 3, db-curl 4, reverse-flyes 3",
+      "Push — Shoulder Focus: overhead-press 4, db-bench 4, db-shoulder-press 4, rope-tricep-pushdown 3, lateral-raise 3",
+      "Legs — Deadlift Focus: deadlift 3, squat 3, seated-leg-curl 3, hack-squat 3, cable-crunch 3",
+    ]);
   });
 
   it("leaves no rank on a built plan", () => {

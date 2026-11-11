@@ -58,17 +58,15 @@ function onDay<T>(day: string, run: () => T): T {
   }
 }
 
-/** The length the lifter's plan is fitted to. */
-const MINUTES = 45;
+/** The session lengths setup offers, the commonest first. */
+const LENGTHS = [45, 60, 75, 30] as const;
 
-/** Four upper and lower days of 45 minutes, for an intermediate. A day is
- *  sized to its length with a twentieth to spare (`FIT_TOLERANCE`), and
- *  this is the week where one heavier press takes a day past that. */
+/** Four upper and lower days, for an intermediate. */
 const lifter: OnboardingDraft = {
   step: 7,
   primaryGoal: "general",
   daysPerWeek: 4,
-  sessionMinutes: MINUTES,
+  sessionMinutes: LENGTHS[0],
   equipment: "full_gym",
   runFrequency: "none",
   runMode: "freeform",
@@ -88,7 +86,7 @@ const lifter: OnboardingDraft = {
 
 /** The plan setup builds on START, as the loader reads it back, and the
  *  profile setup writes with it. */
-function build(answers: Partial<OnboardingDraft> = {}) {
+function buildAt(answers: Partial<OnboardingDraft>) {
   return onDay(START, () => {
     const plan = buildOnboardingPlan(
       { ...lifter, ...answers },
@@ -119,12 +117,11 @@ const PRESS_AND_CURL: Record<string, number> = {
   "barbell-curl": 30,
 };
 
-/** Four days to get stronger, an hour each, and a stronger lifter's loads
- *  on the upper days' lifts. */
+/** Four days to get stronger, and a stronger lifter's loads on the upper
+ *  days' lifts. */
 const STRENGTH: Partial<OnboardingDraft> = {
   primaryGoal: "strength",
   daysPerWeek: 4,
-  sessionMinutes: 60,
   weightKg: 85,
 };
 const STRONGER: Record<string, number> = {
@@ -162,6 +159,28 @@ const over = (s: ProgramState): string[] =>
   s.workouts
     .filter((d) => !sessionFits(d.exercises, s.sessionMinutes ?? 60))
     .map((d) => d.dayName);
+
+/**
+ * The lifter's plan at the first session length where `loads` take one of
+ * its days past the fit. A day is sized to its length with a twentieth to
+ * spare (`FIT_TOLERANCE`), so only a day within a warm-up set or two of
+ * that runs over when its lifts get heavier, and which length holds such a
+ * day moves with the builders' sizing. The tests need one that does.
+ */
+function build(
+  answers: Partial<OnboardingDraft> = {},
+  loads: Record<string, number> = PRESS_AND_CURL
+) {
+  for (const sessionMinutes of LENGTHS) {
+    const built = buildAt({ ...answers, sessionMinutes });
+    if (
+      over(built.state).length === 0 &&
+      over(heavier(built.state, loads)).length > 0
+    )
+      return built;
+  }
+  throw new Error("no session length where the heavier loads outgrow a day");
+}
 
 /** Each day's lifts as `id sets/baseSets`, by day name. */
 const setsOf = (s: ProgramState): Record<string, string[]> =>
@@ -235,7 +254,7 @@ describe("a day its warm-ups outgrew, as the week moves on (Lift7)", () => {
   it("is re-fitted at the Monday rollover, by sets alone", () => {
     const { state, profile } = build();
     // Every day fits its length as the plan is built…
-    expect(state.sessionMinutes).toBe(MINUTES);
+    expect(LENGTHS).toContain(state.sessionMinutes);
     expect(over(state)).toEqual([]);
     // …and one runs over it once the press and the curl are heavier.
     const before = trainedHeavier(state);
@@ -416,7 +435,7 @@ describe("a week that isn't an ordinary one (Lift7)", () => {
     // The trim's sets are the week's, not the plan's: a re-fit from them
     // would keep the legs trimmed after the race. The upper days, which the
     // trim leaves as they are, wait for an ordinary week too.
-    const { state, profile } = build(STRENGTH);
+    const { state, profile } = build(STRENGTH, STRONGER);
     const before = trainedHeavier(state, STRONGER);
     const build8 = advanceWeek(
       before,
@@ -498,9 +517,9 @@ describe("refitOutgrownSessions", () => {
 
   it("returns a week with no day outgrown as it was", () => {
     const { state } = build();
-    expect(refitOutgrownSessions(state.workouts, experience, MINUTES)).toBe(
-      state.workouts
-    );
+    expect(
+      refitOutgrownSessions(state.workouts, experience, state.sessionMinutes!)
+    ).toBe(state.workouts);
   });
 
   /** A lift's sets set by hand, the next weeks' with them. */
@@ -526,7 +545,7 @@ describe("refitOutgrownSessions", () => {
   it("returns each day it doesn't re-fit as it was", () => {
     // A day that fits keeps a set fewer on its first lift, set by hand,
     // though the re-fit would start it from its place's sets.
-    const grown = trainedHeavier(build(STRENGTH).state, STRONGER);
+    const grown = trainedHeavier(build(STRENGTH, STRONGER).state, STRONGER);
     const fitting = grown.workouts.find(
       (d) => !over(grown).includes(d.dayName)
     )!;
@@ -535,7 +554,11 @@ describe("refitOutgrownSessions", () => {
     expect(over(before)).not.toContain(fitting.dayName);
     const outgrown = over(before);
     expect(outgrown.length).toBeGreaterThan(0);
-    const refitted = refitOutgrownSessions(before.workouts, experience, 60);
+    const refitted = refitOutgrownSessions(
+      before.workouts,
+      experience,
+      before.sessionMinutes!
+    );
     before.workouts.forEach((day, i) => {
       if (outgrown.includes(day.dayName)) expect(refitted[i]).not.toBe(day);
       else expect(refitted[i]).toBe(day);
@@ -543,35 +566,43 @@ describe("refitOutgrownSessions", () => {
   });
 
   it("gives no lift a set, where the re-fit would", () => {
-    // The outgrown day's last lift taken down to one set by hand, and its
-    // sets given to the lift before it, so the day still runs over and only
-    // for its warm-ups: the re-fit starts the last lift from its place's
-    // sets and gives it more than one.
+    // One lift of the outgrown day taken down to one set by hand, and its
+    // sets given to another, so the day still runs over and only for its
+    // warm-ups. Which two lifts do that depends on what each costs, so the
+    // first pair that does is the one used. The re-fit starts the lift from
+    // its place's sets and gives it more than one.
     const grown = trainedHeavier(build().state);
+    const minutes = grown.sessionMinutes!;
     const [name] = over(grown);
-    const last = dayNamed(grown, name).exercises.length - 1;
-    const before = withSets(
-      withSets(grown, name, last, 1),
-      name,
-      last - 1,
-      dayNamed(grown, name).exercises[last - 1].sets +
-        dayNamed(grown, name).exercises[last].sets -
-        1
-    );
+    const lifts = dayNamed(grown, name).exercises;
+    const moved = lifts
+      .flatMap((_, from) => lifts.map((_, to) => ({ from, to })))
+      .filter(({ from, to }) => from !== to && lifts[from].sets > 1)
+      .map(({ from, to }) => ({
+        from,
+        state: withSets(
+          withSets(grown, name, from, 1),
+          name,
+          to,
+          lifts[to].sets + lifts[from].sets - 1
+        ),
+      }))
+      .find(({ state }) =>
+        warmupsOutgrewFit(dayNamed(state, name).exercises, minutes)
+      );
+    expect(moved).toBeDefined();
+    const { from, state: before } = moved!;
     expect(over(before)).toContain(name);
-    expect(warmupsOutgrewFit(dayNamed(before, name).exercises, MINUTES)).toBe(
-      true
-    );
     const d = before.workouts.findIndex((day) => day.dayName === name);
-    const reFit = refitSessionsToTime(before.workouts, experience, MINUTES);
-    expect(reFit[d].exercises[last].sets).toBeGreaterThan(1);
+    const reFit = refitSessionsToTime(before.workouts, experience, minutes);
+    expect(reFit[d].exercises[from].sets).toBeGreaterThan(1);
     const refitted = refitOutgrownSessions(
       before.workouts,
       experience,
-      MINUTES
+      minutes
     );
-    expect(refitted[d].exercises[last].sets).toBe(1);
+    expect(refitted[d].exercises[from].sets).toBe(1);
     expectOnlySetsCut(before.workouts[d], refitted[d]);
-    expect(sessionFits(refitted[d].exercises, MINUTES)).toBe(true);
+    expect(sessionFits(refitted[d].exercises, minutes)).toBe(true);
   });
 });

@@ -235,8 +235,8 @@ const MIN_SHORT_LIFTS = 2;
  *  lifts. */
 const SHORT_SESSION_MINUTES = 30;
 
-/** The ranks of the pieces a day must hold (`KEEP_RANKS`): its main lift
- *  and the three after it. */
+/** The ranks of the pieces a day must hold (a builder slot's `rank`): its
+ *  main lift and the three after it. */
 const MUST_HOLD_RANKS = 4;
 
 /** The share of its length under which a day counts as short, and takes

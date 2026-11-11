@@ -69,6 +69,11 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *
  * - `misses:bench-press` after misses: four sets of five across on the
  *   bench, all built now, and the fourth is the set that goes (F4).
+ * - `stall:barbell-row` after misses: the day's first pull takes its
+ *   press's four sets, the person loads it past the plan's weight, and the
+ *   fourth set is the one that falls a rep short. With a lighter week after
+ *   every third miss, every other session of it is an easy one, and the
+ *   plan waits at 67.5 kg for 6 from March to May (F4, F9).
  * - the half marathoner's `lift:stall` on the squat, the deadlift and the
  *   Romanian deadlift: a race build holds its leg lifts' numbers, and the
  *   deadlift's own range (5 to 8) reaches its top sooner than 8 to 12 did,
@@ -85,7 +90,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "swaps-bench-keeps": ["acsm-heavy:bench-press"],
   "swaps-squat-today": ["stall:leg-press"],
   "replaces-row": ["acsm-heavy:seated-row", "stall:db-curl"],
-  "lighter-after-misses": ["misses:bench-press"],
+  "lighter-after-misses": ["misses:bench-press", "stall:barbell-row"],
   "hybrid-lighter-week": [
     "lift:stall:deadlift",
     "lift:stall:romanian-deadlift",
