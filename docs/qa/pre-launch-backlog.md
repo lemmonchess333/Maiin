@@ -4386,3 +4386,35 @@ the handover.
       the overlay fades.
 - [ ] **A share card.** Share a run and a medal. Passing: the small mark
       in the card's corner is the T, in the card's colour.
+
+## The welcome shows your week, and sign-in a lifter who faces you (DS8, 2026-11-11)
+
+Affects: `Login.tsx` (the welcome, sign-in and sign-up), `WelcomePreview`,
+`SignInFigure`, `AuthLockup` and the `.ds-auth-*`, `.welcome-*` and
+`.signin-*` styles. Captured in Chromium at 393 and 320 px and measured for
+overflow at 100%, 135% and 200% text; WebKit on a phone has not drawn them.
+
+- [ ] **The welcome on a phone.** Delete the app, install a build made
+      after the merge and open it. Passing: the lockup is clear of the
+      status bar; the week card, today's card and the target card are all
+      whole above "Get started"; the three cards rise in once and the ring
+      draws; nothing reaches past either edge of the screen.
+- [ ] **Sign-in on a phone.** Tap "I have an account". Passing: the lifter
+      appears at once (the drawing is in the app, not fetched), presses the
+      bar twice and rests with it overhead; "Welcome back" is on one line
+      beside it; the screen fits from the lockup to "Sign up" without
+      scrolling on a 6.1 inch phone.
+- [ ] **Across the forms.** Tap "Sign up", then "Sign In". Passing: the
+      heading changes and the lifter does not start its rep again.
+- [ ] **The keyboard.** Tap Email. Passing: the field is above the
+      keyboard, and the page scrolls so "Sign In" can be reached.
+- [ ] **Reduce Motion.** With Reduce Motion on, open the welcome and
+      sign-in. Passing: the cards are in place with no rise, and the lifter
+      stands still.
+- [ ] **Larger Text.** Set Larger Text to its largest standard size and
+      open both. Passing: the words grow and wrap, the picture keeps its
+      size, and nothing is cut off or leaves the screen.
+- [ ] **iOS 15.** On a phone or simulator on iOS 15.4 to 15.8, open both.
+      Passing: the picture's cards are sized and placed as on a current
+      phone (they are measured from the screen, since iOS 15 has no
+      container query units).

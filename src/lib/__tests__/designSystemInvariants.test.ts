@@ -602,12 +602,12 @@ describe("DS ratchets — surface-level drift", () => {
     expectRatchet("shadow-card trap", total, SHADOW_TRAP_BASELINE, byFile);
   });
 
-  /* Capitals with letter-spacing are one register with two places, both
-     named in DESIGN_GUIDE §4: a table's column headers (the workout's set
-     table, "SET  PREVIOUS  KG  REPS", as Hevy and Strong set theirs) and
-     the brand name set as a wordmark beside the mark on the welcome and
-     sign-in screens. Every other label, caption, eyebrow, pill and control
-     caption is written in sentence case, the run screen's included.
+  /* Capitals with letter-spacing are one register with one place, named
+     in DESIGN_GUIDE §4: a table's column headers (the workout's set
+     table, "SET  PREVIOUS  KG  REPS", as Hevy and Strong set theirs). The
+     brand name is not one: it is title case beside the mark (DS8). Every
+     other label, caption, eyebrow, pill and control caption is written
+     in sentence case, the run screen's included.
      An exact list, not a ratchet: a new site is a design decision, and it
      goes into the guide and this list together. Counted: any string
      literal carrying `uppercase` and a wide `tracking-*` utility (so a
@@ -617,10 +617,9 @@ describe("DS ratchets — surface-level drift", () => {
   const LABEL_PRIMITIVE = "src/components/ui/SectionLabel.tsx";
   const CAPS_REGISTER: Record<string, number> = {
     "src/components/WorkoutSession.tsx": 1,
-    "src/pages/Login.tsx": 2,
   };
   const CAPS_EXEMPT = new Set(["src/components/share/ShareCardRenderer.tsx"]);
-  it("capitals with letter-spacing appear only in the two documented places", () => {
+  it("capitals with letter-spacing appear only in the one documented place", () => {
     const caps = (lit: string) =>
       /\buppercase\b/.test(lit) &&
       /\btracking-(?:wide|wider|widest|\[[^\]]+\])/.test(lit);

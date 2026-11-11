@@ -113,8 +113,9 @@ If you only remember thirteen things:
   These two colours recur in calendar dots, section headings, icon tints, and
   contextual cards.
 - **Logo:** A white T on the purple gradient field, its stem rising into
-  its bar with a chevron-shaped gap between them (DS7) — the app icon and
-  the sign-in screens. Home carries no wordmark since DS3, and no
+  its bar with a chevron-shaped gap between them (DS7): the app icon. The
+  welcome and sign-in screens carry the lockup, the mark in brand purple
+  beside the name (DS8, §14p). Home carries no wordmark since DS3, and no
   large title since DS4: its hero names it, with the date as the kicker
   and the mark beside it; "Today" stays its h1 for screen readers.
 
@@ -409,19 +410,21 @@ has one treatment across the app, so a screen reads as one system:
 
 **Capitals.** Text is written in sentence case, units in their symbols'
 own case ("km", "kcal", never "KM"). Spaced capitals (`uppercase` with a
-wide `tracking-*`) appear in two places, and nowhere else:
+wide `tracking-*`) appear in one place, and nowhere else: **table column
+headers**, the workout's set table, "SET · PREVIOUS · KG · REPS". A column
+header labels a column of numbers rather than reading as a sentence, and
+the lifting apps the set table follows (Hevy, Strong) set theirs the same
+way.
 
-1. **Table column headers** — the workout's set table, "SET · PREVIOUS ·
-   KG · REPS". A column header labels a column of numbers rather than
-   reading as a sentence, and the lifting apps the set table follows
-   (Hevy, Strong) set theirs the same way.
-2. **The brand wordmark** — "TROPOS" beside the mark on the welcome and
-   sign-in screens. It is the name set as a logo, not a label.
+The brand name is not a second place. Beside the mark on the welcome and
+sign-in screens it is "Tropos" in title case, set as a logo in Archivo at
+weight 800 (`.ds-wordmark`; DS8, §14p), and it is written nowhere else at
+that size.
 
 The run screen is not an exception: its captions, its controls' captions
 ("Lock", "Pause", "Finish") and its splits are sentence case like the rest
-of the app. `designSystemInvariants.test.ts` holds the two places as an
-exact list; a third is a decision for this section first.
+of the app. `designSystemInvariants.test.ts` holds the one place as an
+exact list; a second is a decision for this section first.
 
 **Line breaks.** Headings balance their lines and running text avoids a
 lone last word: one base rule in `index.css` (`text-wrap: balance` on
@@ -871,11 +874,11 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
 
 - **Aesthetic:** Dark is the DEFAULT theme — a deep, cool neutral: page #0E0E11, cards #17171B, raised #212127, text #F4F4F6 (DS3, 2026-09-27; it was #121214 / #1A1A1F under DS2). It is what new users and the signed-out/Login state see. There is no ambient glow: DS3 retired the brand-purple wash that sat at the top of every signed-in page (`AmbientGlow`), so colour belongs to content.
 - **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page had its own pass. The owner kept Food's layout and its one timeline (Food8) on 2026-09-28, and chose two changes from the mockups: a week strip above the calorie card (`FoodWeekStrip`, Home's strip with each day a ring of calories eaten against that day's target), and the calorie ring in the food orange instead of purple. On 2026-09-29 Home's food card took the Food page's own ring and macro tiles, smaller and side by side (`size="compact"` on `CalorieRing` and `MacroColumn`), with the one left/logged switch shared: the two screens draw the same object, so change it in one place. The same day the ring went quiet: its number is the text colour, "kcal left" / "kcal logged" is plain grey text under it (no tag, no swap arrow), and the arc is one solid orange on a grey groove with no gradient, track shadow or pulsing glow; Home's macros sit on the card with no box of their own. The second view says "logged", not "eaten": the number counts what is in the diary, not what the person ate. The stored mode key is still `"eaten"`. Read the DS3 row before re-deciding any of it.
-- **The Food hero keeps its wash and three macro cards (owner, 1 November 2026).** A 31 October pass put the ring and the macros on one plain card to calm the page; the owner compared the two on a phone and kept the earlier look, which was restored. Don't flatten the Food hero again without asking. The same day the welcome screen got back its three rows (Lifting, Running, Food, each with its drawing) in place of the pass's single photo.
+- **The Food hero keeps its wash and three macro cards (owner, 1 November 2026).** A 31 October pass put the ring and the macros on one plain card to calm the page; the owner compared the two on a phone and kept the earlier look, which was restored. Don't flatten the Food hero again without asking. The same day the welcome screen got back its three rows (Lifting, Running, Food, each with its drawing) in place of the pass's single photo. On 11 November 2026 the owner chose the welcome's picture over those rows (DS8, §14p).
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
-- **Brand colour:** Purple #7B72E9 — lifting and the brand (DS4 call 1): lifting actions and data, active tab indicators, progress on a lifting goal. Generic actions are neutral. Never as a full background: its only fills are the primary button on a lifting or brand action, the auth logo and, as `--lifting-fill` under a white label, the selected segment of a lifting `SegmentedControl` (§7), and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
+- **Brand colour:** Purple #7B72E9 — lifting and the brand (DS4 call 1): lifting actions and data, active tab indicators, progress on a lifting goal. Generic actions are neutral. Never as a full background: its only fills are the primary button on a lifting or brand action and, as `--lifting-fill` under a white label, the selected segment of a lifting `SegmentedControl` (§7), and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
-- **Logo:** a T whose stem rises into its bar: a bar notched under its middle and a stem pointed to fit, with an upward chevron as the gap between them. White on a purple field that lightens toward the top on the app icon, and brand purple in the app. The owner chose it on 2026-11-11 (DS7; `docs/visual-audit/bakeoff/DECISION.md`, decision 5) over the hexagon of decision 4, from the top apps' marks: a letter of the name, one shape straight on the field. It is the app icon (with dark and tinted versions for iOS's home-screen modes), the sign-in screen's logo (the icon itself), the mark on share cards, and the launch image (the bar alone). The hexagon is no longer the logo; it stays the shape of badges and empty states (§7). Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`), so "Today" keeps the left edge the cards below it start on. The geometry lives in `src/lib/brandMark.ts` and `src/assets/brand/app-icon.svg`, held together by `BrandMark.test.tsx`; after changing it, run `node scripts/art/gen-app-icon.mjs` (every app and web icon) and `node scripts/art/gen-splash.mjs` (the launch image).
+- **Logo:** a T whose stem rises into its bar: a bar notched under its middle and a stem pointed to fit, with an upward chevron as the gap between them. White on a purple field that lightens toward the top on the app icon, and brand purple in the app. The owner chose it on 2026-11-11 (DS7; `docs/visual-audit/bakeoff/DECISION.md`, decision 5) over the hexagon of decision 4, from the top apps' marks: a letter of the name, one shape straight on the field. It is the app icon (with dark and tinted versions for iOS's home-screen modes), the mark in the welcome and sign-in screens' lockup (DS8, §14p), the mark on share cards, and the launch image (the bar alone). The hexagon is no longer the logo; it stays the shape of badges and empty states (§7). Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`), so "Today" keeps the left edge the cards below it start on. The geometry lives in `src/lib/brandMark.ts` and `src/assets/brand/app-icon.svg`, held together by `BrandMark.test.tsx`; after changing it, run `node scripts/art/gen-app-icon.mjs` (every app and web icon) and `node scripts/art/gen-splash.mjs` (the launch image).
 - **Launch animation:** `LaunchSplash` takes over from the launch image (index.html paints the same bar, `#boot-splash`, until the bundle runs). Once its first frame is up it takes the native launch image down (`nativeLaunchImage.ts`; the two frames are the same), so the rise is seen and not played underneath it. The stem rises into the bar; if the app is still loading a beat later, the mark breathes until it leaves. Once the app is ready (on Home, once Home's header mark holds still and Home has drawn today's session and food, `data-page-ready`, waited for at most a second) the mark flies into Home's header mark on a soft arc that leaves upward, on a spring with no bounce, as the page shows; anywhere but Home it lifts a little as the overlay fades. Every movement is a transform or an opacity, played by the Web Animations API on a layer of its own, so it keeps its frames while the app starts underneath. Reduce Motion: the stem fades in where it stays, nothing breathes, and the overlay fades. Its ground is the launch colour in both themes (`--launch`, the dark page), as the launch image is, so a light-mode user's page turns light only as it is revealed, never under the logo. It never shows under automation (`navigator.webdriver`), so specs and captures see the app as before. The four copies of the first frame (launch PNG, index.html, the overlay's CSS size, `brandMark.ts`) are pinned together by `launchSplash.test.ts`.
 
 ### 14b. Colour System (src/styles/tokens.css + src/lib/theme.ts)
@@ -942,8 +945,8 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
   2. Same role, same weight: the session card's dose is 500 on Home and
      Train alike, a day's number in a strip of days is 600 on Home, Food
      and Train.
-  3. Capitals in two places only, table column headers and the brand
-     wordmark (§4 Capitals); the run screen is sentence case, and the
+  3. Capitals in one place only, table column headers (§4 Capitals);
+     the brand name is title case, the run screen is sentence case, and the
      hold-to-finish control reads "Finish" with the accessible name "Hold
      to finish run".
   4. A unit inside a figure is the text face (`font-sans`, 14px medium),
@@ -1417,3 +1420,16 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **Still out.** Neon (a saturated outline or glow on chrome, text or buttons), a "nice blue", a two-hue or rainbow gradient, a coloured wash over a whole page, and glass on data.
 - **Check on a phone.** Backdrop blur costs paint in a web view. Each frosted surface is checked on a phone while content scrolls behind it, and one that drops frames goes back to solid with its rim.
 - **Order of work.** The card and tile tokens; chips, pills and tracks; the tab bar's rim and a fade under it; sheets and toasts; the workout's docked cards; the hero light on Home and Train. One PR each, with before and after captures (§0 rule 13). The captures are in `docs/visual-audit/ds6-2026-11-10/`; from the second step they are the real components, built with the app's stylesheet into a harness page, since the emulator rig cannot run where they were made.
+
+### 14p. The signed-out screens (DS8, 11 November 2026)
+
+- **Why.** The owner said the welcome and sign-in screens could be better and that the top apps' "got a lot of personality". Both were a centred frosted card: the app icon in a tile, the name in spaced capitals, a centred heading and, on the welcome, three grey rows. He was shown three welcome directions and a sign-in screen on a canvas and chose the third welcome and the sign-in, with a different drawing: "the deadlift looks weird showing just the back" (lock row DS8 in the plan file).
+- **The welcome's picture is the product.** `WelcomePreview` draws what the first questions lead to: an example week of lift and run days, today's session with its drawing, and a daily calorie target. It is one image to a screen reader, named as an example, and never the visitor's own numbers. It is sized from the column's width and not the text size, as a picture is, and on a short screen it gives up its lower edge before "Get started" leaves the first screen.
+- **The forms open on a lifter who faces you.** `SignInFigure` stands to the right of the heading on sign-in and sign-up: front on, never from behind. It is the overhead press, playing its rep through the hero's flipbook (`HeroMotion`) when the screen opens and then resting, and still under Reduce Motion. The heading runs under the bar and stops short of the body. Under 14rem of column the lifter gives way to the words. A different drawing is one constant in `authArt.ts`; it needs a flipbook.
+- **The lockup.** `AuthLockup`: the mark at 26 px in brand purple beside "Tropos" in Archivo 800 at 23 px, title case, top left on all three screens. A logo, so a fixed size.
+- **On the page, in one light.** No card and no glass (§14o): the content sits on the plain page, left-aligned, in a column a phone wide. The one light on each screen is behind its picture. The buttons are as they were: "Get started", "Create account" and "Sign In" are the brand's filled purple, as setup's Continue is, so the way in is one colour from the welcome to the plan. DS4's neutral main button (§14i) has not been taken to the signed-out and setup flow; that is one owner call for the whole flow, not a button at a time.
+- **Signed out is dark.** `public/init.js` and sign-out both put a signed-out app in the dark theme, so these screens are reviewed in dark. They hold in light, with the hero's own light, should that change.
+- **Measured from the screen, not a container.** The picture's unit and the lifter's giving way read `--auth-column` (the screen less the page's margins, up to the column's limit). Container query units arrived in iOS 16 and the app runs on 15.4.
+- **Light to load.** The drawings are named by path (`authArt.ts`, held to the released cut-outs by `authArt.test.ts`), and `eagerGraph.test.ts` keeps Login from importing the exercise database or framer: these screens are fetched before anyone has signed in.
+- **Not decided.** The launch's ground. The owner was shown the launch opening on the icon's purple beside today's black and has not called it; it stays black, and purple there needs "never a full-page background" (§1) opened for that one screen.
+- **Captures.** `docs/visual-audit/welcome-2026-11-11/`: before and after at 393 and 320 px, and at 1.35x and 2x text.

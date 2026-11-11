@@ -6,9 +6,10 @@
      .ds-input             Every form field: typed inputs, textareas,
                            and the Select primitive's select.
      .ds-status-banner     Global online/offline + app-state banners.
-     .ds-auth-shell        Full-page login/signup shell only.
-     .ds-auth-card         Login/signup elevated card surface only.
-     .ds-auth-logo         Auth-only brand mark container.
+     .ds-auth-shell        The signed-out screens' page (welcome,
+                           sign-in, sign-up) only.
+     .ds-auth-page         Their one phone-wide column.
+     .ds-wordmark          The name beside the mark on those screens.
      .launch-splash        The launch overlay (index.html's #boot-splash
                            and LaunchSplash): the iOS launch image's
                            bar, at its size and place.
@@ -319,88 +320,280 @@ select.ds-input:focus {
   border-bottom: 1px solid hsl(var(--success) / 0.14);
 }
 
-/* `min-height` is layered for mobile Safari:
-     - 100vh   fallback for older browsers
-     - 100svh  small viewport (URL bar visible) — never overshoots
-     - 100dvh  dynamic viewport — follows the URL bar's collapsing
-   `overflow-y: auto` so when the on-screen keyboard opens and
-   compresses the viewport, the legal-links row at the bottom stays
-   reachable rather than getting clipped.
-   Padding uses `calc(safe-area + 1rem)` instead of
-   `max(1rem, safe-area)` so devices with a notch get extra
-   breathing room above the card, not just the bare safe-area inset.
+/* The signed-out screens (DS8): the welcome, sign-in and sign-up sit on
+   the page itself, left-aligned, in one column a phone wide. No card:
+   frosted glass is for what floats (§14o), and the page is plain, so the
+   one light on it is the one behind the screen's picture.
 
-   Ambient gradient is intentionally local to the auth shell only —
-   the global body canvas is plain (see comment above body{} in
-   index.css). Opacities are deliberately small
-   (0.045 / 0.025 light; 0.10 / 0.055 dark) so the gradient adds a
-   hint of warmth around the auth card without staining the
-   page. If this still reads muddy in practice, drop the gradient
-   layers entirely and fall back to plain hsl(var(--background)). */
+   `min-height` is layered for mobile Safari:
+     - 100vh   fallback for older browsers
+     - 100svh  small viewport (URL bar visible), which never overshoots
+     - 100dvh  dynamic viewport, which follows the URL bar's collapsing
+   It is a minimum and not a height, so a screen taller than the phone
+   (the form with the keyboard up, double text) scrolls the page and its
+   last row stays reachable.
+   Padding is the safe area plus 16px, so a notch gets room above the
+   lockup and not the bare inset. Side margins are px, as iOS keeps its
+   layout margins at every text size: in rem, double text spent 64px of a
+   320pt screen on them. */
 .ds-auth-shell {
   min-height: 100vh;
   min-height: 100svh;
   min-height: 100dvh;
-  overflow-y: auto;
-  background:
-    radial-gradient(
-      circle at 18% 0%,
-      rgba(123, 114, 233, 0.045),
-      transparent 36%
-    ),
-    radial-gradient(
-      circle at 92% 8%,
-      rgba(217, 136, 78, 0.025),
-      transparent 32%
-    ),
-    hsl(var(--background));
+  background: hsl(var(--background));
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* Side margins in px, as iOS keeps its layout margins at every text
-     size: in rem, double text spent 64px of a 320pt screen on them. */
-  padding: calc(var(--safe-top) + 1rem) 16px calc(var(--safe-bottom) + 1rem);
+  padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);
 }
 
-.dark .ds-auth-shell {
-  background:
-    radial-gradient(
-      circle at 18% 0%,
-      rgba(123, 114, 233, 0.1),
-      transparent 38%
-    ),
-    radial-gradient(
-      circle at 92% 8%,
-      rgba(212, 99, 122, 0.055),
-      transparent 34%
-    ),
-    hsl(var(--background));
+/* The column fills a phone from the lockup to the last row, which is
+   what lets the welcome's picture take the height left over. On a
+   window taller than a phone it stops at 50rem and the shell centres
+   it. `--auth-column` is the column's own width, for the picture and
+   the lifter to measure themselves by: the shell's two 16px margins off
+   the screen, up to the column's limit. It is written from the screen
+   and not asked of a container, because container units arrived in iOS
+   16 and the app runs on 15.4. */
+.ds-auth-page {
+  --auth-column: min(100vw - 32px, 24rem);
+  --auth-fill: calc(100vh - var(--safe-top) - var(--safe-bottom) - 32px);
+  width: 100%;
+  max-width: 24rem;
+  min-height: min(var(--auth-fill), 50rem);
+  display: flex;
+  flex-direction: column;
 }
-
-/* On short viewports (keyboard open on iPhone SE, landscape, etc.)
-   anchor the card to the top so its top edge stays visible — pure
-   `align-items: center` clips the top off when content is taller
-   than the viewport. */
-@media (max-height: 680px) {
-  .ds-auth-shell {
-    align-items: flex-start;
+@supports (height: 100dvh) {
+  .ds-auth-page {
+    --auth-fill: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 32px);
   }
 }
 
-.ds-auth-card {
-  width: 100%;
-  max-width: 24rem;
-  /* px for the same reason as the shell's margins: the designed 20–28px
-     at every text size. */
-  padding: clamp(20px, 5vw, 28px);
-  border-radius: 1.75rem;
-  background: hsl(var(--card) / 0.92);
-  border: 1px solid hsl(var(--border) / 0.72);
-  box-shadow: var(--ds-shadow-elevated);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+/* The name beside the mark (DS8 call 3): a logo, so it is the figure
+   face at its heaviest and a fixed size, like the mark it sits by. */
+.ds-wordmark {
+  font-family: var(--font-figure);
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
 }
 
+/* ─── THE WELCOME'S PICTURE (WelcomePreview, DS8 call 1) ──────
+   An example week, today's session and a daily target, drawn as one
+   picture. Every length inside it is a share of the column's width
+   (`--u` is one design pixel of a 361px column), so it keeps its
+   proportions on a 320pt phone and does not grow with the text size, as
+   a picture does not.
+
+   The box takes the height the screen has left (`flex: 1`), never under
+   the week card's, and fades out its lower edge, so on a short phone
+   the two tilted cards are cut before the buttons leave the screen. Its
+   side padding is room for the cards' shadows, taken back as margin. */
+.welcome-preview {
+  flex: 1 1 0;
+  min-height: 188px;
+  margin: 0 -12px;
+  padding: 0 12px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 calc(100% - 24px),
+    transparent
+  );
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+}
+.welcome-art {
+  --u: calc(var(--auth-column) / 361);
+  position: relative;
+  height: calc(362 * var(--u));
+}
+.welcome-light {
+  position: absolute;
+  left: 50%;
+  top: 64%;
+  width: calc(332 * var(--u));
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+}
+.welcome-week {
+  position: relative;
+  border-radius: calc(20 * var(--u));
+  padding: calc(14 * var(--u)) calc(14 * var(--u)) calc(16 * var(--u));
+}
+.welcome-title,
+.welcome-caption,
+.welcome-meta,
+.welcome-note {
+  font-size: calc(12 * var(--u));
+  line-height: 1.25;
+  color: hsl(var(--muted-foreground));
+}
+.welcome-title {
+  margin-bottom: calc(10 * var(--u));
+  font-weight: 700;
+  color: hsl(var(--foreground));
+}
+.welcome-caption {
+  font-weight: 600;
+}
+.welcome-meta {
+  margin-top: calc(2 * var(--u));
+  white-space: nowrap;
+}
+.welcome-days {
+  display: flex;
+  gap: calc(6 * var(--u));
+}
+.welcome-day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(6 * var(--u));
+}
+.welcome-cell {
+  width: 100%;
+  height: calc(44 * var(--u));
+  border-radius: calc(10 * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.welcome-dot {
+  width: calc(10 * var(--u));
+  height: calc(10 * var(--u));
+  border-radius: 9999px;
+}
+.welcome-key {
+  display: flex;
+  gap: calc(14 * var(--u));
+  margin-top: calc(12 * var(--u));
+}
+.welcome-key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(6 * var(--u));
+}
+.welcome-key-dot {
+  width: calc(8 * var(--u));
+  height: calc(8 * var(--u));
+  border-radius: 9999px;
+}
+/* The two cards under the week lie at a slight tilt, one over the
+   other, each lifted a step higher than a card in a list. */
+.welcome-today,
+.welcome-target {
+  position: absolute;
+  border-radius: calc(20 * var(--u));
+  box-shadow: var(--ds-shadow-card-hover);
+}
+.welcome-today {
+  left: calc(-6 * var(--u));
+  top: calc(164 * var(--u));
+  padding: calc(12 * var(--u));
+  /* The target card lies over this much of its right edge. */
+  padding-right: calc(30 * var(--u));
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--u));
+  rotate: -3deg;
+}
+.welcome-today-art {
+  height: calc(84 * var(--u));
+  width: auto;
+}
+.welcome-session {
+  margin-top: calc(2 * var(--u));
+  font-size: calc(16 * var(--u));
+  font-weight: 700;
+  line-height: 1.2;
+  color: hsl(var(--foreground));
+}
+.welcome-target {
+  right: calc(-4 * var(--u));
+  top: calc(192 * var(--u));
+  width: calc(164 * var(--u));
+  padding: calc(12 * var(--u)) calc(10 * var(--u));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(7 * var(--u));
+  text-align: center;
+  rotate: 3deg;
+}
+.welcome-ring {
+  display: block;
+  width: calc(70 * var(--u));
+  height: calc(70 * var(--u));
+}
+.welcome-figure {
+  font-size: calc(18 * var(--u));
+  font-weight: 700;
+  line-height: 1.1;
+  color: hsl(var(--foreground));
+}
+.welcome-unit {
+  font-size: calc(12 * var(--u));
+  font-weight: 500;
+}
+.welcome-note {
+  margin-top: calc(-3 * var(--u));
+}
+
+/* ─── THE LIFTER ON SIGN-IN (SignInFigure, DS8 call 2) ────────
+   The head of the form: the lockup, then the heading at the foot of a
+   drawn lifter who stands to its right in the screen's one light. The
+   heading runs under the bar and stops short of the body
+   (`--signin-clear`), so "Welcome back" keeps one line on a 375pt
+   phone. Under 14rem of column (double text, or 1.35x on a 320pt phone)
+   the lifter gives way and the words take the row: beside it "Welcome"
+   no longer fits on a line. `--signin-room` is that switch without a
+   container query (iOS 15.4): nothing under 14rem, and more than any
+   length here above it, so `min()` with it keeps a length or drops it
+   to nothing. */
+.signin-head {
+  /* The lifter's box is 121px wide and its body the middle 55px: half
+     the box, half the body and a gap. */
+  --signin-clear: 100px;
+  --signin-room: max(0px, calc((var(--auth-column) - 14rem) * 9999));
+}
+.signin-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+}
+.signin-row > .signin-figure {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.signin-row > .signin-heading {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  align-self: end;
+  padding-right: min(var(--signin-clear), var(--signin-room));
+}
+.signin-figure {
+  position: relative;
+  height: min(176px, var(--signin-room));
+  display: flex;
+  justify-content: center;
+}
+/* The light is as wide as the lifter plus the page's margin each side,
+   so it ends at the screen's edge and nothing reaches past it, and half
+   as tall again as the lifter: a tall oval, as the figure is tall. */
+.signin-light {
+  position: absolute;
+  left: -16px;
+  right: -16px;
+  top: -18%;
+  bottom: -18%;
+  border-radius: 50%;
+}
 /* Fixed iOS safe-area cover. Sits behind the iOS status bar /
    Dynamic Island and hides scrolling content from showing behind the
    clock. Implemented as a soft gradient scrim (see below) so it never
@@ -441,21 +634,6 @@ select.ds-input:focus {
      contrast). translateZ(0) pins the layer so the bg + blur survive
      scrolling on every page. */
   transform: translateZ(0);
-}
-
-.ds-auth-logo {
-  width: 4.25rem;
-  height: 4.25rem;
-  border-radius: 1.35rem;
-  display: grid;
-  place-items: center;
-  color: hsl(var(--primary-foreground));
-  background: linear-gradient(
-    135deg,
-    hsl(var(--primary)) 0%,
-    hsl(var(--primary-strong)) 100%
-  );
-  box-shadow: var(--ds-shadow-purple-glow);
 }
 
 /* The launch overlay. index.html paints #boot-splash with these classes
