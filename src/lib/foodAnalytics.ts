@@ -42,16 +42,11 @@ export type FoodEvent =
  * and omitting it would silently misattribute those saves to `manual`.
  */
 export type FoodLogPath =
-  | "usual"
-  | "typeahead"
-  | "copy"
-  | "nl"
-  | "manual"
-  | "barcode"
-  | "photo";
+  "usual" | "typeahead" | "copy" | "nl" | "manual" | "barcode" | "photo";
 
 export interface FoodEventMetadata {
-  /** food_meal_slot_tapped + food_meal_slot_perf: which slot
+  /** food_meal_slot_tapped (retired with the composer's meal chip) +
+   *  food_meal_slot_perf: which slot
    *  ("breakfast" | "lunch" | "snacks" | "dinner"). */
   slot?: MealKey;
   /** food_date_navigated: direction of navigation. */

@@ -81,13 +81,12 @@ describe("Food page order", () => {
     expect(food).not.toContain("FoodProStrip");
   });
 
-  it("the meal chip comes before the text in the field, and nothing says Adding to", () => {
-    // Food11 call 3: one chip in the field, where a row of four meals
-    // headed it.
-    const chip = composer.indexOf("<FoodMealChip");
-    const field = composer.indexOf("<textarea");
-    expect(chip).toBeGreaterThan(-1);
-    expect(chip).toBeLessThan(field);
+  it("the field asks for no meal, and nothing says Adding to", () => {
+    // The owner, 11 November 2026: the clock files a log under a meal
+    // and the edit sheet moves it. A row of four meals headed the field
+    // until Food11, and one chip stood in it for a day after.
+    expect(composer).toContain("<textarea");
+    expect(composer).not.toContain("FoodMealChip");
     expect(composer).not.toContain("<SegmentedControl");
     expect(composer).not.toContain("Adding to ${");
     expect(composer).not.toContain("Cancel adding to");

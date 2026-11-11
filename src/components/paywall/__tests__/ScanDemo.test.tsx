@@ -242,12 +242,13 @@ describe("ScanDemo's Food page", () => {
     }
   });
 
-  it("names the meal once, on a chip in the field, with the camera inside it", () => {
+  it("draws a field that asks for no meal, with the camera inside it", () => {
     const page = foodPage();
     const box = page.querySelector(".ds-input-box");
     const field = box?.parentElement;
     if (!field) throw new Error("the demo's Food page has no field");
-    expect(field).toHaveTextContent("Dinner");
+    // The page's field holds no meal control (11 November 2026).
+    expect(field).not.toHaveTextContent(/Breakfast|Lunch|Snacks|Dinner/);
     expect(field).toHaveTextContent("Describe a meal");
     const camera = field.querySelector(".lucide-camera");
     expect(camera).not.toBeNull();

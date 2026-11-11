@@ -4289,7 +4289,7 @@ are checked on the first TestFlight build that carries it.
 ## Food leads with the calorie wheel (Food11, 2026-11-11)
 
 Affects: the Food page (`Food.tsx`, `FoodHeroCard`, `CalorieRing`,
-`FoodWeekStrip`, `FoodMacroRow`, `FoodComposerCard`, `FoodMealChip`,
+`FoodWeekStrip`, `FoodMacroRow`, `FoodComposerCard`,
 `FoodLogFlight`) and Home's food card, which draws the same wheel. The
 captures in `docs/visual-audit/food-2026-11-11/` are the real components
 in a desktop Chrome on the emulator. A phone decides the rest: the
@@ -4319,14 +4319,13 @@ WKWebView.
 - [ ] **Reduce Motion.** With Settings → Accessibility → Motion → Reduce
       Motion on, log a food. Passing: nothing flies, and the wheel and
       the macros are at their new figures at once.
-- [ ] **The meal chip.** Tap the chip in the field. Passing: the four
-      meals open under it, the chosen one marked; a tap on another closes
-      the menu, changes the chip and puts the cursor in the field with
-      the keyboard up; a tap outside closes it and changes nothing. With
-      VoiceOver the chip reads "Add to Lunch. Change meal" and the menu's
-      rows read as checked or not. On an SE in Display Zoom, where the
-      menu opens over the text's row, each of the four meals can be
-      picked.
+- [ ] **The meal comes from the clock.** The field has no meal control
+      (11 November 2026). Log a food before 10:00, another after 15:00
+      and a third after 17:00. Passing: the rows read Breakfast, Snacks
+      and Dinner. Leave Food open across 10:00 or 15:00, come back to
+      the app and log: the row reads the meal for the time it is now,
+      not the time Food was opened. Tap a row and move it to another
+      meal: the row's caption follows, and nothing else changes.
 - [ ] **The camera in the field.** Tap the camera at the end of the
       field. Passing: the scanner opens, growing out of the camera; a
       thumb finds it without looking (its tap area is 48 pt); the orange
@@ -4337,23 +4336,24 @@ WKWebView.
       rice with a side salad"). Passing: the pencil has gone, the text
       wraps inside the field, the field grows with it, and the send arrow
       and the camera stay level with the field's middle. On an SE in
-      Display Zoom the pencil and the text are the row under the chip,
-      and the field does not change height when it is tapped.
+      Display Zoom the field is still one row, and it does not change
+      height when it is tapped.
 - [ ] **Larger text.** At the largest standard text size and at the
       largest accessibility size, open Food. Passing: the header row, the
       wheel's label (it may wrap inside the ring), the week, the macros
-      (they stack) and the composer (the text drops under the chip) all
-      fit the screen, with nothing cut off and no sideways scroll.
+      (they stack) and the composer (one row: the pencil, the text and
+      the camera) all fit the screen, with nothing cut off and no
+      sideways scroll.
 - [ ] **The usual foods follow the meal.** With a history of breakfast
-      and lunch foods, focus the field with the chip on Breakfast, then
-      on Lunch. Passing: each list leads with that meal's foods, and
-      logging one does not reshuffle the list on screen.
+      and lunch foods, focus the field before 10:00, then again between
+      10:00 and 15:00. Passing: each list leads with that meal's foods,
+      and logging one does not reshuffle the list on screen.
 - [ ] **The Pro scan demo shows this page.** On a free account tap the
       camera in Food's field and watch the demo in the Pro offer through
       twice, then open Upgrade and watch it there. Passing: the Food
       page in the drawn phone has no title, the wheel on the page with
-      its target in the label, the week as bars, and one field with
-      Dinner on a chip and the camera inside it. After Log, the food's
+      its target in the label, the week as bars, and one field with the
+      camera inside it and no meal control. After Log, the food's
       picture rises from the field to the wheel, the wheel, the week and
       the macros take the meal, the earlier diary rows move down for the
       new one, and nothing stutters. With Reduce Motion on it is the

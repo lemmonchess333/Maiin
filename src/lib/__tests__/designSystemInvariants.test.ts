@@ -400,10 +400,9 @@ describe("DS ratchets — surface-level drift", () => {
   // 291 → 292: the "Ended circles" fold under the Circles list (Soc16), a
   // full-width row that opens the list's ended rows.
   // 292 → 294: Food's meal chip and the rows of its menu (Food11 call 3).
-  // A chip in the field and four menu rows, neither of which is a CTA:
-  // the chip is 44px tall and as wide as its meal's name, the rows are
-  // full-width `menuitemradio`s.
-  const RAW_BUTTON_BASELINE = 294;
+  // 294 → 292: the chip and its menu went again (11 November 2026): the
+  // field asks for no meal.
+  const RAW_BUTTON_BASELINE = 292;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
@@ -969,7 +968,7 @@ describe("form controls share the field primitive", () => {
   > = {
     "src/components/food/FoodComposerCard.tsx": {
       count: 1,
-      why: "Food's composer: one field holding the meal chip, the pencil, the text and the camera (Food11 call 3)",
+      why: "Food's composer: one field holding the pencil, the text and the camera (Food11 call 3)",
     },
   };
 

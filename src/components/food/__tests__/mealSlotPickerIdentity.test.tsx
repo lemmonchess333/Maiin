@@ -6,14 +6,15 @@
  * pass once moved both to the neutral track and the owner asked for the
  * orange back, because it left Food the only domain with no colour of
  * its own. Food11 answers that another way: the colour is on the person's
- * data (the wheel, the week and macro bars) and on the meal chip's dot,
- * and no control that chooses a meal is filled. 60% of the first
- * screen's colour was two filled buttons; Together and Home had none.
+ * data (the wheel, the week and macro bars), and no control that chooses
+ * a meal is filled. 60% of the first screen's colour was two filled
+ * buttons; Together and Home had none.
  *
- * These pin that: the composer's meal is a chip with a menu, the edit
- * sheet's four meals are on the neutral track, and the filled-pill look
- * is gone from the segmented control, so a sweep cannot bring it back at
- * one call site.
+ * The composer asks for no meal at all since 11 November 2026: the
+ * clock files a log, and the edit sheet moves it. These pin that the
+ * field holds no meal control, that the edit sheet's four meals are on
+ * the neutral track, and that the filled-pill look is gone from the
+ * segmented control, so a sweep cannot bring it back at one call site.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -24,18 +25,14 @@ const SRC = join(process.cwd(), "src");
 const read = (file: string) => readFileSync(join(SRC, file), "utf8");
 
 describe("the meal is chosen in neutral controls", () => {
-  it("the composer's meal is the chip, not a row of segments", () => {
+  it("the composer's field holds no meal control: no chip, no segments, no menu", () => {
     const composer = read("components/food/FoodComposerCard.tsx");
-    expect(composer).toContain("<FoodMealChip");
+    expect(composer).not.toContain("FoodMealChip");
     expect(composer).not.toContain("<SegmentedControl");
-  });
-
-  it("the chip is a neutral control with the food orange as a dot", () => {
-    const chip = read("components/food/FoodMealChip.tsx");
-    expect(chip).toContain("bg-foreground/[0.07]");
-    expect(chip).toContain("bg-nutrition-strong");
-    // No filled orange behind the meal's name.
-    expect(chip).not.toMatch(/bg-nutrition-fill|bg-nutrition(?!-strong)/);
+    expect(composer).not.toMatch(/MEAL_LABELS|MEAL_ORDER|menuitemradio/);
+    expect(globSync("components/food/FoodMealChip.tsx", { cwd: SRC })).toEqual(
+      []
+    );
   });
 
   it("the edit sheet's four meals are on the neutral track, on the shared grid", () => {
