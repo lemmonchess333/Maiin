@@ -254,7 +254,7 @@ export default function SettingsPantry() {
     setHidden((prev) => new Set(prev).add(food.id));
     if (!(await removeFavourite(food.id))) {
       showAgain(food.id);
-      toast.error("Couldn't remove. Try again.", { id: "pantry-remove-error" });
+      toast.error("Couldn’t remove. Try again.", { id: "pantry-remove-error" });
       return;
     }
     toast(`Removed ${food.name}`, {
@@ -265,7 +265,7 @@ export default function SettingsPantry() {
         onClick: async () => {
           if (await restoreFavourite(food)) showAgain(food.id);
           else
-            toast.error("Couldn't undo. The food stays removed.", {
+            toast.error("Couldn’t undo. The food stays removed.", {
               id: "pantry-undo-error",
             });
         },
@@ -285,7 +285,7 @@ export default function SettingsPantry() {
       return false;
     }
     if (result === "failed") {
-      toast.error("Couldn't save. Try again.", { id: "pantry-save-error" });
+      toast.error("Couldn’t save. Try again.", { id: "pantry-save-error" });
       return false;
     }
     toast.success(`Saved ${changes.name}`, { id: `pantry-saved-${food.id}` });
@@ -295,7 +295,7 @@ export default function SettingsPantry() {
   return (
     <SettingsSection
       title="Your pantry"
-      subtitle="Foods you've logged, which Quick add offers"
+      subtitle="Foods you’ve logged, which Quick add offers"
       backTo="/settings/nutrition"
       backLabel="Nutrition"
     >

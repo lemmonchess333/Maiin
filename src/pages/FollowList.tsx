@@ -30,7 +30,7 @@ const EMPTY: Record<FollowListKind, { headline: string; sub: string }> = {
     sub: "People who follow you show here.",
   },
   following: {
-    headline: "You don't follow anyone yet",
+    headline: "You don’t follow anyone yet",
     sub: "People you follow show here, and their sessions in your feed.",
   },
 };
@@ -87,7 +87,7 @@ export default function FollowList({ kind }: { kind: FollowListKind }) {
       setNext(page.next);
     } catch (err) {
       logger.error("[followList] next page failed", err);
-      toast.error("Couldn't load more. Try again.");
+      toast.error("Couldn’t load more. Try again.");
     } finally {
       setMore(false);
     }
@@ -106,7 +106,7 @@ export default function FollowList({ kind }: { kind: FollowListKind }) {
     } catch (err) {
       logger.error("[followList] remove failed", err);
       setPeople(before);
-      toast.error("Couldn't remove the follower. Try again.");
+      toast.error("Couldn’t remove the follower. Try again.");
     }
   };
 
@@ -139,7 +139,7 @@ export default function FollowList({ kind }: { kind: FollowListKind }) {
 
       {status === "failed" ? (
         <ErrorState
-          title={`Couldn't load your ${kind === "followers" ? "followers" : "following list"}`}
+          title={`Couldn’t load your ${kind === "followers" ? "followers" : "following list"}`}
           description="Check your connection and try again."
           retry={{
             onClick: () => {
@@ -224,7 +224,7 @@ export default function FollowList({ kind }: { kind: FollowListKind }) {
         title={
           removing ? `Remove ${removing.displayName}?` : "Remove follower?"
         }
-        description="They won't be told. They stop seeing the sessions you share with followers."
+        description="They won’t be told. They stop seeing the sessions you share with followers."
         confirmLabel="Remove"
         destructive
         onConfirm={() => void confirmRemove()}

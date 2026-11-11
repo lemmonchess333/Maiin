@@ -463,7 +463,7 @@ export default function AdminModeration() {
                       onClick={() =>
                         void resolveReport(report.reportId, false, true)
                       }
-                      aria-label="Restrict user — they can't post, comment or follow anyone until the restriction is lifted."
+                      aria-label="Restrict user — they can’t post, comment or follow anyone until the restriction is lifted."
                       className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive/80 text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                     >
                       <UserX className="size-3.5" aria-hidden="true" />

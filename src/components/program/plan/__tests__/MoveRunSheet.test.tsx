@@ -93,7 +93,7 @@ describe("run move review", () => {
     } as ScheduledRunDay;
     const { unmount } = setup({ allRuns: [run, race] });
     expect(screen.getByText("Race day stays on its date")).toBeInTheDocument();
-    expect(screen.getByText("After this week's race")).toBeInTheDocument();
+    expect(screen.getByText("After this week’s race")).toBeInTheDocument();
     unmount();
     setup({ allRuns: [run, race], goalDay: "Your 5K" });
     expect(screen.getByText("Your 5K stays on its date")).toBeInTheDocument();

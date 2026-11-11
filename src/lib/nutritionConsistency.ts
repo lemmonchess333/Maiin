@@ -68,9 +68,9 @@ export function deriveProgress(
   const done = new Set(mealDates.filter((d) => inWeek(d, weekKey))).size;
   const met = done >= target;
   const line = met
-    ? "Commitment met — that's the habit working."
+    ? "Commitment met — that’s the habit working."
     : done === 0
-      ? "The week's open — one logged meal starts it."
+      ? "The week’s open — one logged meal starts it."
       : `${target - done} more ${target - done === 1 ? "day" : "days"} to go. No rush.`;
   return { target, done: Math.min(done, target), met, line };
 }

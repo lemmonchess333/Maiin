@@ -718,7 +718,7 @@ test.describe("App Store screenshots", () => {
     await expect(
       page.getByRole("button", { name: "Start workout", exact: true })
     ).toBeVisible({ timeout: 20_000 });
-    const food = page.getByRole("region", { name: "Today's food" });
+    const food = page.getByRole("region", { name: "Today’s food" });
     await expect(food).toContainText(/kcal (left|over)/, { timeout: 20_000 });
     await expect(food.getByText("Protein")).toBeVisible();
 

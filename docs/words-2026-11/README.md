@@ -72,7 +72,7 @@ The aim is the reference median rounded up; the ceiling is the largest everyday 
 | words joined by a slash | "and"                                            | "workouts/runs", "fitness/fatigue", "start/end"    | fixed                             |
 | "e.g."                  | "e.g. Home"                                      | "e.g., Nike" 2                                     | fixed                             |
 | system words            | plain                                            | "Invalid email or password", "currently scheduled" | fixed                             |
-| apostrophe              | straight 441                                     | curly 24                                           | owner call 1                      |
+| apostrophe              | straight 441                                     | curly 24                                           | owner call 1: ’, held at zero     |
 | em dash                 | none wanted                                      | 163 lines in 84 files                              | 1 removed, 162 left; owner call 2 |
 | "tap" in an instruction | a verb alone                                     | 33                                                 | listed, not changed               |
 | "No … yet" as a heading | DS4 rule 8 forbids it                            | 18                                                 | listed, not changed               |
@@ -105,7 +105,7 @@ The aim is the reference median rounded up; the ceiling is the largest everyday 
 
 ## Owner calls
 
-1. **Apostrophes: curly everywhere.** 441 strings use a straight ' and 24 a curly ’. iOS's own apps set the curly one, and at hero sizes the straight one shows. It is a mechanical change to about 440 strings and the tests that quote them, so it wants its own PR. Recommended: yes.
+1. **Apostrophes: curly everywhere.** 441 strings use a straight ' and 24 a curly ’. iOS's own apps set the curly one, and at hero sizes the straight one shows. It is a mechanical change to about 440 strings and the tests that quote them, so it wants its own PR. Recommended: yes. **Done:** 682 strings in 225 files now write ’, with the 180 test files and specs that quote them, and `copyMechanics.test.ts` holds a straight one at zero. The first measure, 441, came from a narrower scan that left out thrown messages, which people also see, and most of the legal pages. Left straight: 95 strings in eight content libraries (51 in the exercise library, 15 spoken run cues, 11 in the Space definitions), where a name such as "Farmer's Carry" is saved in people's history under that spelling, and the server's own text.
 2. **Em dashes: take the rest out.** 162 lines in 84 files still carry one; the ratchet (`emDashCopy.test.ts`) only stops the count growing. The densest are `liftDayLabel.ts` (13), `runSessionExplainer.ts` (11), the weather tips (6) and the day and week sheets on Train (10). Each becomes a full stop, a colon or a middot. Recommended: yes, in three PRs by area.
 3. **One name for a record.** "New best" on the finish screen and Home, "PR" on Analytics ("Running PRs", "First PR"), "Personal bests by reps" on an exercise. Recommended: "best" everywhere ("New best", "Running bests", "Bests by reps"), since the rest of the app is British and says so in words rather than initials.
 4. **kcal or cal.** Food and the run screen say "kcal"; the units rule in `CLAUDE.md` gives "2,633 cal". Recommended: kcal, the unit on a British food label, and correct the rule.

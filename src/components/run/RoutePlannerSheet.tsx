@@ -197,7 +197,7 @@ export default function RoutePlannerSheet({
           zoom: 15,
           duration: 600,
         }),
-      () => toast.error("Couldn't get your location")
+      () => toast.error("Couldn’t get your location")
     );
   };
 
@@ -211,7 +211,7 @@ export default function RoutePlannerSheet({
     const ok = await onSave(name.trim() || "Planned route", points);
     setSaving(false);
     if (!ok) {
-      toast.error("Couldn't save route");
+      toast.error("Couldn’t save route");
       return;
     }
     setSaveOpen(false);
@@ -272,7 +272,7 @@ export default function RoutePlannerSheet({
 
         <div className="space-y-2 p-4">
           <p className="text-xs text-muted-foreground">
-            Point-to-point distance — segments don&apos;t follow roads.
+            Point-to-point distance — segments don’t follow roads.
           </p>
           <div className="flex items-center gap-2">
             {/* Undo/clear act on dropped points, so they only appear once

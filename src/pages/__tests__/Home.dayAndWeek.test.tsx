@@ -570,7 +570,7 @@ describe("Home — the week's food days are days with a meal", () => {
       [monday(), { workouts: 0, meals: 2, caloriesHit: false }],
     ]);
     h.meals = [];
-    h.mealsError = "Couldn't load your food diary.";
+    h.mealsError = "Couldn’t load your food diary.";
     renderHome();
     expect(column("Food logged")).toBe("Food logged: 1 of 7 days");
   });

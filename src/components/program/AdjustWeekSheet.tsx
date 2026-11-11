@@ -123,14 +123,14 @@ interface AdjustWeekSheetProps {
 const INTENTS: Array<{ id: Intent; label: string; hint: string }> = [
   {
     id: "not_100",
-    label: "I'm not feeling 100%",
-    hint: "Ease this week's runs",
+    label: "I’m not feeling 100%",
+    hint: "Ease this week’s runs",
   },
   { id: "crowded", label: "My week is crowded", hint: "Re-plan from today" },
   {
     id: "easier",
     label: "I need easier running",
-    hint: "Ease this week's runs",
+    hint: "Ease this week’s runs",
   },
   // No "keep the plan as is" chip — it was a pure no-op (it just dismissed the
   // sheet). Swiping the sheet down / tapping outside already means "no change",
@@ -273,7 +273,7 @@ export default function AdjustWeekSheet({
     try {
       const { ok, message } = await revertEaseWeek();
       if (!ok) {
-        toast.error(message || "Couldn't undo the easier week.");
+        toast.error(message || "Couldn’t undo the easier week.");
         return;
       }
       track("adjust_week_applied", {
@@ -285,7 +285,7 @@ export default function AdjustWeekSheet({
       close(false);
     } catch (err) {
       logger.error("[adjustWeek] easier-week undo failed", err);
-      toast.error("Couldn't undo the easier week. Try again.");
+      toast.error("Couldn’t undo the easier week. Try again.");
     } finally {
       pendingRef.current = false;
       setUndoing(false);
@@ -314,14 +314,14 @@ export default function AdjustWeekSheet({
       // A plan refresh must not silently add runs the athlete never previewed.
       const landed = await applyEaseWeek(previewSwaps);
       if (landed === null) {
-        toast.error("Couldn't adjust the week. Try again.");
+        toast.error("Couldn’t adjust the week. Try again.");
         return;
       }
       if (landed === 0) {
         // The server refuses an ease that would change nothing, so this is
         // the belt to that braces — say something rather than close on a
         // silent no-op.
-        toast.error("None of this week's runs can be changed now.");
+        toast.error("None of this week’s runs can be changed now.");
         return;
       }
       // A6: record the week so next week's bounce check can read this
@@ -350,7 +350,7 @@ export default function AdjustWeekSheet({
       close(false);
     } catch (err) {
       logger.error("[adjustWeek] easier-week apply failed", err);
-      toast.error("Couldn't adjust the week. Try again.");
+      toast.error("Couldn’t adjust the week. Try again.");
     } finally {
       pendingRef.current = false;
       setApplying(false);
@@ -377,7 +377,7 @@ export default function AdjustWeekSheet({
       close(false);
     } catch (err) {
       logger.error("[adjustWeek] realign apply failed", err);
-      toast.error("Couldn't re-plan. Try again.");
+      toast.error("Couldn’t re-plan. Try again.");
     } finally {
       pendingRef.current = false;
       setApplying(false);
@@ -426,7 +426,7 @@ export default function AdjustWeekSheet({
                   </span>
                 </div>
                 <p className="text-micro text-muted-foreground">
-                  Feeling better? Put this week's runs back the way they were.
+                  Feeling better? Put this week’s runs back the way they were.
                 </p>
                 <Button
                   variant="sport-tinted"
@@ -542,7 +542,7 @@ export default function AdjustWeekSheet({
               {step.timing === "compressible" &&
                 "The remaining time is tight, so the re-planned block will be compressed toward your race date."}
               {step.timing === "below-floor" &&
-                "There isn't enough time left for a full build, so the plan will switch to a mostly-easy shape (all easy running, no big jumps)."}
+                "There isn’t enough time left for a full build, so the plan will switch to a mostly-easy shape (all easy running, no big jumps)."}
             </p>
             <div className="flex gap-2 pt-1">
               <Button

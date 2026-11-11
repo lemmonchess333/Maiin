@@ -143,7 +143,7 @@ export function useWaterLog(date?: string) {
       };
       if (!queueWater(uid, action)) {
         toast.error(
-          "Couldn't keep this water entry. Free some storage and try again."
+          "Couldn’t keep this water entry. Free some storage and try again."
         );
         return false;
       }
@@ -227,9 +227,9 @@ export function useWaterLog(date?: string) {
        queue indefinitely and silently. */
     syncStatus:
       readError || (uid && waterSyncError(uid))
-        ? "Couldn't sync water. Your pending entries are kept."
+        ? "Couldn’t sync water. Your pending entries are kept."
         : pending.length && !navigator.onLine
-          ? "Saved on this device. It'll sync when you're back online."
+          ? "Saved on this device. It’ll sync when you’re back online."
           : "",
     retry: () => {
       setReadVersion((v) => v + 1);

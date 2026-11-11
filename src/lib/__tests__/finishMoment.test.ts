@@ -199,10 +199,10 @@ describe("rewardLine: you, what you did, the number and its comparison (house vo
 
   it("gives a streak its next milestone", () => {
     expect(text(rewardLine({ kind: "streak", days: 7 }, kg))).toBe(
-      "You've trained 7 days in a row. 14 is next."
+      "You’ve trained 7 days in a row. 14 is next."
     );
     expect(text(rewardLine({ kind: "streak", days: 365 }, kg))).toBe(
-      "You've trained 365 days in a row."
+      "You’ve trained 365 days in a row."
     );
   });
 

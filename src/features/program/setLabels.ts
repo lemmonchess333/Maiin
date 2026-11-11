@@ -39,7 +39,7 @@ export const SET_TYPE_COPY: Record<
   warmup: {
     name: "Warm-up",
     letter: "W",
-    detail: "Lighter and optional. It's not saved.",
+    detail: "Lighter and optional. It’s not saved.",
   },
   dropset: {
     name: "Drop set",

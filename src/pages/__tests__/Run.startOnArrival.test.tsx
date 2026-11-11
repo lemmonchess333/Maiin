@@ -414,7 +414,7 @@ describe("a run whose location is refused", () => {
     refuse();
     await open("/run?start=1");
     expect(screen.queryByRole("button", { name: "Open settings" })).toBeNull();
-    expect(screen.getByText(/browser's settings/)).toBeInTheDocument();
+    expect(screen.getByText(/browser’s settings/)).toBeInTheDocument();
   });
 });
 

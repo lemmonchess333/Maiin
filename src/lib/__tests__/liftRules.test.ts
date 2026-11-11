@@ -124,7 +124,7 @@ describe("liftRules", () => {
         }),
         "lighter"
       )
-    ).toContain("schedules none while you're new to lifting");
+    ).toContain("schedules none while you’re new to lifting");
     expect(
       rule(
         liftRules({
@@ -149,7 +149,7 @@ describe("liftRules", () => {
       smallPlates: false,
       racing: true,
     });
-    expect(rule(racing, "lighter")).toContain("your run plan's easier weeks");
+    expect(rule(racing, "lighter")).toContain("your run plan’s easier weeks");
     expect(rule(racing, "race")).toContain(
       "The last two weeks before your race are lighter"
     );

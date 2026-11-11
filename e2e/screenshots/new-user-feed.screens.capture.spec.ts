@@ -190,7 +190,7 @@ test.describe("new person's feed screenshots", () => {
       .getByRole("radiogroup", { name: "Feed source" })
       .getByRole("radio", { name: /^Following/ })
       .click({ timeout: 10_000 });
-    await expect(page.getByText("You don't follow anyone yet")).toBeVisible({
+    await expect(page.getByText("You don’t follow anyone yet")).toBeVisible({
       timeout: 15_000,
     });
     await page.waitForTimeout(500);

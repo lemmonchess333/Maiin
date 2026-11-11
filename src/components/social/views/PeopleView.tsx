@@ -156,7 +156,7 @@ export default function PeopleView({
       } catch {
         if (seq !== searchSeqRef.current) return;
         setSearchResults([]);
-        setSearchError("Couldn't search right now");
+        setSearchError("Couldn’t search right now");
       }
       if (seq === searchSeqRef.current) setSearching(false);
     },

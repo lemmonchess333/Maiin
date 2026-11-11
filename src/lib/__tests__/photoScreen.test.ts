@@ -37,7 +37,7 @@ describe("screenUploadedPhoto", () => {
   });
 
   it("passes on a photo it could not check as a failure, not a refusal", async () => {
-    const unavailable = Object.assign(new Error("Couldn't check"), {
+    const unavailable = Object.assign(new Error("Couldn’t check"), {
       code: "functions/unavailable",
     });
     call.mockRejectedValueOnce(unavailable);

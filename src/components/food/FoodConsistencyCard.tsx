@@ -150,7 +150,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
     setSaving(false);
     setPicking(false);
     if (ok) toast.success("Focus set for this week.");
-    else toast.error("Couldn't save. Try again.");
+    else toast.error("Couldn’t save. Try again.");
   };
 
   const shareMet = async () => {
@@ -166,7 +166,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
       await save({ ...commitment, sharedMet: true });
       toast.success("Shared with your circle.");
     } else {
-      toast.error("Couldn't share. Try again.");
+      toast.error("Couldn’t share. Try again.");
     }
   };
 

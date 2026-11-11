@@ -26,7 +26,7 @@ export function useLeagueJoin(onChanged: () => void) {
         await setLeagueSharing(join);
         await refreshProfile();
         onChanged();
-        toast.success(join ? "You're in the league" : "You've left the league");
+        toast.success(join ? "You’re in the league" : "You’ve left the league");
         return true;
       } catch (err) {
         if (isRestrictedRefusal(err)) {
@@ -35,8 +35,8 @@ export function useLeagueJoin(onChanged: () => void) {
           logger.error("[league] join or leave failed", err);
           toast.error(
             join
-              ? "Couldn't join the league. Try again."
-              : "Couldn't leave the league. Try again."
+              ? "Couldn’t join the league. Try again."
+              : "Couldn’t leave the league. Try again."
           );
         }
         return false;

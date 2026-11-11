@@ -139,7 +139,7 @@ export default function SpacePostComposer({
     if (offline && photoFile) {
       haptic("error");
       toast.error(
-        "Photos need a connection. Remove the photo to post now, or try again when you're back online."
+        "Photos need a connection. Remove the photo to post now, or try again when you’re back online."
       );
       return;
     }
@@ -156,7 +156,7 @@ export default function SpacePostComposer({
         toast.error(
           error instanceof PhotoRefusedError
             ? error.message
-            : "Couldn't upload the photo. Try again, or remove it to post without it."
+            : "Couldn’t upload the photo. Try again, or remove it to post without it."
         );
         setBusy(false);
         return;
@@ -208,7 +208,7 @@ export default function SpacePostComposer({
       finish("Posted");
     } catch {
       haptic("error");
-      toast.error("Couldn't post. Check you've joined the space.");
+      toast.error("Couldn’t post. Check you’ve joined the space.");
     } finally {
       setBusy(false);
     }

@@ -61,7 +61,7 @@ export function getWeeklyAccountability(input: {
   // State C — goal met: say so, and point at progress, not "do more".
   if (myWeeklyCount >= target) {
     return {
-      title: `You've hit your ${target}-session week`,
+      title: `You’ve hit your ${target}-session week`,
       sub: `${myWeeklyCount} ${myWeeklyCount === 1 ? "session" : "sessions"} this week.`,
       ctaLabel: "View progress",
       ctaTo: "/history",
@@ -73,9 +73,9 @@ export function getWeeklyAccountability(input: {
   // session that moves it.
   if (myWeeklyCount > 0) {
     return {
-      title: "You're on the board",
+      title: "You’re on the board",
       sub: `${myWeeklyCount} of ${target} sessions this week.`,
-      ctaLabel: "Do today's session",
+      ctaLabel: "Do today’s session",
       ctaTo: "/program",
       goalMet: false,
     };
@@ -88,7 +88,7 @@ export function getWeeklyAccountability(input: {
         othersTrained === 1 ? "person" : "people"
       } you follow trained this week`,
       sub: "Join them — one planned session today.",
-      ctaLabel: "Do today's session",
+      ctaLabel: "Do today’s session",
       ctaTo: "/program",
       goalMet: false,
     };
@@ -99,7 +99,7 @@ export function getWeeklyAccountability(input: {
   return {
     title: `Train ${targetWord} this week`,
     sub: "No sessions yet this week.",
-    ctaLabel: "Start today's session",
+    ctaLabel: "Start today’s session",
     ctaTo: "/program",
     goalMet: false,
   };

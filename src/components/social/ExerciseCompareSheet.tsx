@@ -114,7 +114,7 @@ export default function ExerciseCompareSheet({
         {!loading && error && (
           <div className="rounded-xl bg-muted/50 px-3.5 py-3">
             <p className="text-xs text-muted-foreground">
-              Couldn&apos;t load your history. Try again later.
+              Couldn’t load your history. Try again later.
             </p>
           </div>
         )}

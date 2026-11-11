@@ -404,12 +404,12 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re a Pro member via the App Store
+              You’re a Pro member via the App Store
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription in your Apple Account. Apple doesn&apos;t
-            let us cancel or refund App Store subscriptions on your behalf.
+            Manage your subscription in your Apple Account. Apple doesn’t let us
+            cancel or refund App Store subscriptions on your behalf.
           </p>
           {storeTrial && <TrialDetails trial={storeTrial} />}
           <a
@@ -436,12 +436,12 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re a Pro member on the web
+              You’re a Pro member on the web
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription at troposfit.com — Apple&apos;s App Store
-            isn&apos;t the billing platform for this account.
+            Manage your subscription at troposfit.com — Apple’s App Store isn’t
+            the billing platform for this account.
           </p>
         </div>
       )}
@@ -452,7 +452,7 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re on Pro
+              You’re on Pro
             </p>
           </div>
           <p className="text-sm text-muted-foreground">

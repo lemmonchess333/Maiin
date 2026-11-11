@@ -71,7 +71,7 @@ export function adaptiveCalorieStatusLabel(
         s.retunedDaysAgo === 0 ? "today" : `${s.retunedDaysAgo}d ago`;
       const base = `Adapting — retuned ${when} from your real intake + weight.`;
       return typeof appliedTarget === "number" && Number.isFinite(appliedTarget)
-        ? `${base} This is your baseline; today's target is ${Math.round(
+        ? `${base} This is your baseline; today’s target is ${Math.round(
             appliedTarget
           ).toLocaleString()} ${CALORIE_UNIT}.`
         : base;

@@ -87,7 +87,7 @@ export default function InviteFriendCard({
   const share = async () => {
     const mine = await ensureCode();
     if (!mine) return;
-    const text = `I'm tracking my lifts and runs on Tropos. Join me with my invite code ${formatInviteCode(mine)}.`;
+    const text = `I’m tracking my lifts and runs on Tropos. Join me with my invite code ${formatInviteCode(mine)}.`;
     const url = appInviteUrl(mine);
     if (navigator.share) {
       try {
@@ -103,7 +103,7 @@ export default function InviteFriendCard({
       await navigator.clipboard.writeText(`${text} ${url}`);
       toast.success("Invite link copied");
     } catch {
-      toast.error("Couldn't copy the invite link. Try again.");
+      toast.error("Couldn’t copy the invite link. Try again.");
     }
   };
 
@@ -113,7 +113,7 @@ export default function InviteFriendCard({
       setCode(await renewMyInviteCode());
       toast.success("New invite code. The old one no longer works.");
     } catch {
-      toast.error("Couldn't make a new code. Try again.");
+      toast.error("Couldn’t make a new code. Try again.");
     } finally {
       setRenewing(false);
     }
@@ -125,7 +125,7 @@ export default function InviteFriendCard({
       await navigator.clipboard.writeText(formatInviteCode(code));
       toast.success("Code copied");
     } catch {
-      toast.error("Couldn't copy. Long-press the code to select it.");
+      toast.error("Couldn’t copy. Long-press the code to select it.");
     }
   };
 
@@ -155,7 +155,7 @@ export default function InviteFriendCard({
           <p className="text-small text-muted-foreground leading-relaxed mt-0.5">
             {profile?.approveFollowers === false
               ? "When they join with your link or code, you follow each other."
-              : "When they join with your link or code, you'll follow them and they'll ask to follow you."}
+              : "When they join with your link or code, you’ll follow them and they’ll ask to follow you."}
           </p>
         </div>
       </div>

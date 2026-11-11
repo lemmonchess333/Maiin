@@ -109,10 +109,10 @@ describe("Layout pending changes", () => {
     state.queue["account-a"] = 2;
     render(<App />);
     expect(banner()).toHaveTextContent(
-      "You're offline · 2 changes saved on this phone"
+      "You’re offline · 2 changes saved on this phone"
     );
     setNetwork(true);
-    expect(banner()).not.toHaveTextContent("You're offline");
+    expect(banner()).not.toHaveTextContent("You’re offline");
     expect(banner()).toHaveTextContent(
       "2 changes saved on this phone · waiting to sync"
     );
@@ -230,7 +230,7 @@ describe("Layout pending changes", () => {
   it("reports connectivity alone when no local changes are known", () => {
     setNetwork(false);
     render(<App />);
-    expect(banner()).toHaveTextContent("You're offline");
+    expect(banner()).toHaveTextContent("You’re offline");
     expect(banner()).not.toHaveTextContent("saved");
     setNetwork(true);
     expect(banner()).toHaveTextContent("Back online");

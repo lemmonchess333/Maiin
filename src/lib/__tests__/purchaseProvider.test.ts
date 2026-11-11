@@ -272,7 +272,7 @@ describe("in mobile Safari on an iPhone (the web build)", () => {
 
     expect(result).toEqual({
       success: false,
-      error: "Couldn't start checkout. Try again.",
+      error: "Couldn’t start checkout. Try again.",
       detail: "Failed to fetch",
     });
   });
@@ -284,7 +284,7 @@ describe("in mobile Safari on an iPhone (the web build)", () => {
 
     const result = await manageSubscription("uid-1");
 
-    expect(result.error).toBe("Couldn't open billing portal. Try again.");
+    expect(result.error).toBe("Couldn’t open billing portal. Try again.");
     expect(result.detail).toBe("internal");
   });
 

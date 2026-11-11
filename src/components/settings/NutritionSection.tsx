@@ -565,8 +565,8 @@ export default function NutritionSection({
               choice rather than a shortfall. Say it, at the point the pace is
               chosen. */}
           <p className="text-micro text-muted-foreground leading-snug pt-2">
-            Protein follows your training block. Carbs and fat are a rest
-            day&apos;s; training days move some fat to carbs.
+            Protein follows your training block. Carbs and fat are a rest day’s;
+            training days move some fat to carbs.
           </p>
 
           {split.aggressive && !split.infeasible && (
@@ -652,7 +652,7 @@ export default function NutritionSection({
             </p>
             <p className="text-xs text-muted-foreground">
               Your daily calorie target already accounts for your training, so
-              there's no need to eat back exercise calories. Big training days
+              there’s no need to eat back exercise calories. Big training days
               shift more carbs for fuel.
             </p>
           </div>

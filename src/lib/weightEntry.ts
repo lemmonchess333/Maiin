@@ -49,7 +49,7 @@ export async function saveWeightEntry(
   const editId = queuedId ?? readString(key) ?? crypto.randomUUID();
   if (!writeString(key, editId))
     throw new Error(
-      "Couldn't keep this entry for retry. Check device storage."
+      "Couldn’t keep this entry for retry. Check device storage."
     );
   const ref = doc(db, "users", uid, "bodyweightLogs", date);
   const profileRef = doc(db, "users", uid);

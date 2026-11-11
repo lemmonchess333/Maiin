@@ -164,15 +164,15 @@ function SpacePostPage({
       {unavailable ? (
         <EmptyState
           icon={MessageCircleOff}
-          headline="This post isn't available"
-          sub="It may have been deleted, or it's no longer shared with you."
+          headline="This post isn’t available"
+          sub="It may have been deleted, or it’s no longer shared with you."
           action={
             def ? { label: `Open ${def.name}`, href: spacePath } : undefined
           }
         />
       ) : read.status === "error" ? (
         <ErrorState
-          title="Couldn't load this post"
+          title="Couldn’t load this post"
           description="Check your connection and try again."
           retry={{
             onClick: () => {

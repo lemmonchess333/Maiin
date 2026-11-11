@@ -176,7 +176,7 @@ describe("RunSummary — Export GPX", () => {
     renderSummary();
     await exportGpx();
     await waitFor(() =>
-      expect(h.toast.error).toHaveBeenCalledWith("Couldn't share route")
+      expect(h.toast.error).toHaveBeenCalledWith("Couldn’t share route")
     );
     expect(h.toast.success).not.toHaveBeenCalled();
   });

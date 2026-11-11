@@ -134,7 +134,7 @@ describe("answerShareQuestion — the one question, asked once", function () {
     ).toEqual({ run: "public" });
   });
 
-  it("'Don't share' saves never, so the question is not asked again", function () {
+  it("'Don’t share' saves never, so the question is not asked again", function () {
     const answers = answerShareQuestion(undefined, "run", "never");
     expect(finishShareStart(savedShareDefault(answers, "run"), false)).toEqual({
       kind: "hold",

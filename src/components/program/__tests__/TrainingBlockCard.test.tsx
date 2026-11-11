@@ -316,7 +316,7 @@ describe("TrainingBlockCard (Blk2) — the active block", () => {
     );
     await waitFor(() =>
       expect(error.mock.calls.map(([text]) => text)).toContain(
-        "Couldn't close the block. Try again."
+        "Couldn’t close the block. Try again."
       )
     );
     expect(archiveBlockMock).toHaveBeenCalledTimes(1);

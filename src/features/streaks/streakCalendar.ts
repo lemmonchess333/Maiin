@@ -138,6 +138,6 @@ export function coveredDayLine(
   const latest = [...covered].sort().at(-1)!;
   const yesterday = localDateString(addLocalDays(parseLocalDate(todayKey), -1));
   if (latest === yesterday)
-    return `Yesterday's rest day is covered. Still on a ${streak}-day streak.`;
-  return `${formatWeekdayDayMonth(parseLocalDate(latest))} was a rest day, and it's covered.`;
+    return `Yesterday’s rest day is covered. Still on a ${streak}-day streak.`;
+  return `${formatWeekdayDayMonth(parseLocalDate(latest))} was a rest day, and it’s covered.`;
 }

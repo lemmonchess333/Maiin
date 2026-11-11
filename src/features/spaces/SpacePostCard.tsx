@@ -101,7 +101,7 @@ export default function SpacePostCard({
       haptic("light");
       onRemoved(postId);
     } catch {
-      toast.error("Couldn't delete the post. Try again.");
+      toast.error("Couldn’t delete the post. Try again.");
     }
   };
 
@@ -413,7 +413,7 @@ export default function SpacePostCard({
       <ConfirmDialog
         open={showDeleteConfirm}
         title="Delete this post?"
-        description="This can't be undone."
+        description="This can’t be undone."
         confirmLabel="Delete"
         destructive
         onConfirm={async () => {
@@ -438,7 +438,7 @@ export default function SpacePostCard({
             addBlocked(post.authorId);
             toast.success(`Blocked ${post.authorName}`);
           } catch {
-            toast.error(`Couldn't block ${post.authorName}. Try again.`);
+            toast.error(`Couldn’t block ${post.authorName}. Try again.`);
           }
         }}
         onCancel={() => setShowBlockConfirm(false)}

@@ -176,7 +176,7 @@ describe("announceRouteShare", () => {
     announceRouteShare("downloaded");
     expect(toasts.success).toHaveBeenCalledWith("Route downloaded");
     announceRouteShare("failed");
-    expect(toasts.error).toHaveBeenCalledWith("Couldn't share route");
+    expect(toasts.error).toHaveBeenCalledWith("Couldn’t share route");
   });
 
   it("says nothing after a share or a dismissed sheet", () => {

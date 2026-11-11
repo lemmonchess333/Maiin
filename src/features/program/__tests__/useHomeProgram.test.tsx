@@ -347,7 +347,7 @@ describe("Home acts on the server's copy of the plan", () => {
     await waitFor(() => expect(h.controllerMounts).toBe(1));
     act(() => h.publish!(published("failed")));
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Couldn't load your programme. Try again."
+      "Couldn’t load your programme. Try again."
     );
     expect(h.skip).not.toHaveBeenCalled();
   });

@@ -148,8 +148,8 @@ describe("friendlyAuthError — fallthrough behaviour", () => {
       AUTH_ERROR_FALLBACK
     );
     expect(
-      friendlyAuthError(wrap("some-new-code"), "Couldn't sign in. Try again.")
-    ).toBe("Couldn't sign in. Try again.");
+      friendlyAuthError(wrap("some-new-code"), "Couldn’t sign in. Try again.")
+    ).toBe("Couldn’t sign in. Try again.");
     expect(__getRecentErrors().at(-1)?.message).toBe(wrap("some-new-code"));
   });
 

@@ -11,4 +11,4 @@
  * in the words it uses for a deleted account, and nothing sends them a
  * notice, so they are not told. */
 export const BLOCK_DIALOG_DESCRIPTION =
-  "They won't see your posts or profile, and you won't see theirs. They won't be told.";
+  "They won’t see your posts or profile, and you won’t see theirs. They won’t be told.";

@@ -773,7 +773,7 @@ export default function RunPlanSettings({
               "Your programme changed. Reopen settings to review the latest plan before saving.")
           : isRateLimitedRejection(e)
             ? PLAN_SAVES_TOO_OFTEN
-            : "Couldn't save your run plan. Try again.",
+            : "Couldn’t save your run plan. Try again.",
         {
           id: "run-plan",
         }
@@ -878,7 +878,7 @@ export default function RunPlanSettings({
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             Run {STARTER_GOAL_NAME} in about nine weeks. It starts with short
-            runs and walks between them, and a week repeats until you've done
+            runs and walks between them, and a week repeats until you’ve done
             it.
           </p>
           <div className="space-y-2">
@@ -1168,7 +1168,7 @@ export default function RunPlanSettings({
               id="run-plan-load-failed"
               className="mb-2 text-center text-xs text-muted-foreground"
             >
-              Couldn't load your programme. Reopen this page to try again.
+              Couldn’t load your programme. Reopen this page to try again.
             </p>
           )}
           <Button

@@ -230,9 +230,9 @@ export default function RaceCockpitCard({
           transient message and the persistent one agree. */}
       {belowFloor ? (
         <p className="text-xs text-muted-foreground">
-          Mostly-easy plan — there aren&apos;t enough weeks for a full build at
-          this distance, so every session is easy running, with no quality
-          sessions. Aim to finish strong, not to PR.
+          Mostly-easy plan — there aren’t enough weeks for a full build at this
+          distance, so every session is easy running, with no quality sessions.
+          Aim to finish strong, not to PR.
         </p>
       ) : (
         compressed && (

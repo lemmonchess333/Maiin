@@ -185,7 +185,7 @@ export default function Routine() {
     return (
       <div className="p-6 space-y-3 text-center">
         <ErrorState
-          title="Couldn't load this routine"
+          title="Couldn’t load this routine"
           description="Check your connection and try again."
           retry={{
             onClick: () => {

@@ -66,7 +66,7 @@ export default function VerifyEmailBanner() {
     } catch (err) {
       logger.error("[VerifyEmailBanner] verification check failed", err);
       toast.error(
-        "Couldn't check verification. Check your connection and try again."
+        "Couldn’t check verification. Check your connection and try again."
       );
     } finally {
       setChecking(false);
@@ -80,7 +80,7 @@ export default function VerifyEmailBanner() {
       title="Verify your email to post and comment"
       description={
         <>
-          {unsent ? "Couldn't send the link to " : "We sent a link to "}
+          {unsent ? "Couldn’t send the link to " : "We sent a link to "}
           <strong className="font-medium text-foreground break-all">
             {user.email}
           </strong>
@@ -111,7 +111,7 @@ export default function VerifyEmailBanner() {
             loading={checking}
             onClick={confirm}
           >
-            I've verified
+            I’ve verified
           </Button>
         </div>
       }

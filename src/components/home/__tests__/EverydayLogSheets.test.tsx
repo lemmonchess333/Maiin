@@ -244,7 +244,7 @@ describe("everyday entry sheets", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
     expect(log).toHaveBeenCalledWith(400);
     expect(screen.getByRole("spinbutton")).toHaveValue(400);
-    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't save");
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn’t save");
     expect(close).not.toHaveBeenCalled();
     log.mockReturnValue(true);
     fireEvent.click(screen.getByRole("button", { name: "Add" }));

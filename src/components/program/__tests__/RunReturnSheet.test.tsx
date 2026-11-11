@@ -95,14 +95,14 @@ describe("RunReturnSheet — what it says", () => {
   it("states the gap as a time, not a count", () => {
     setup(24);
     expect(
-      paragraph("It's been about 3 weeks since your last run")
+      paragraph("It’s been about 3 weeks since your last run")
     ).toBeInTheDocument();
   });
 
   it("says months after a long break", () => {
     setup(130);
     expect(
-      paragraph("It's been about 4 months since your last run")
+      paragraph("It’s been about 4 months since your last run")
     ).toBeInTheDocument();
   });
 

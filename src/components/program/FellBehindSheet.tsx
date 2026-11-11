@@ -170,7 +170,7 @@ export default function FellBehindSheet({
         reportChoice("dismissed");
         onClose();
       }}
-      title={detrained ? "Welcome back" : "Last week didn't go to plan"}
+      title={detrained ? "Welcome back" : "Last week didn’t go to plan"}
       description="Pick how you want to adjust"
       hideHeader
       choices={choices}
@@ -187,7 +187,7 @@ export default function FellBehindSheet({
           <p className="text-base font-semibold text-foreground mt-0.5">
             {ledger
               ? `${ledger.realRunCount} of ${ledger.weeklyTarget} runs (${Math.round(ledger.completedRatio * 100)}%)`
-              : "It's been a while between runs"}
+              : "It’s been a while between runs"}
           </p>
         </div>
       </div>

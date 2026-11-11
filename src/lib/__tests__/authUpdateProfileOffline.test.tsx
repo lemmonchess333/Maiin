@@ -166,7 +166,7 @@ describe("updateProfile offline", () => {
     });
     await waitFor(() =>
       expect(H.toastError).toHaveBeenCalledWith(
-        "A change you made offline couldn't be saved. Check your settings.",
+        "A change you made offline couldn’t be saved. Check your settings.",
         { id: "update-profile-error" }
       )
     );

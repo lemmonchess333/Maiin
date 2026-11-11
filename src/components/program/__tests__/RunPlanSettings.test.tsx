@@ -126,7 +126,7 @@ type Programme = {
 /** Race prep as a person picks it now: the mode, then whether it is a
  *  race they have entered, which the plan asks before it saves (Run9
  *  STATUS 2026-11-01). */
-function pickRacePrep(entry: string = "A race I've entered") {
+function pickRacePrep(entry: string = "A race I’ve entered") {
   fireEvent.click(screen.getByRole("radio", { name: /Training for a race/i }));
   fireEvent.click(screen.getByRole("radio", { name: entry }));
 }
@@ -390,7 +390,7 @@ describe("RunPlanSettings", () => {
         target: { value: RACE_TARGET_DATE },
       });
       fireEvent.click(
-        screen.getByRole("radio", { name: "A race I've entered" })
+        screen.getByRole("radio", { name: "A race I’ve entered" })
       );
     };
 
@@ -1067,7 +1067,7 @@ describe("RunPlanSettings", () => {
       setWeeklyGoal();
 
       const line = screen.getByText(
-        "Couldn't load your programme. Reopen this page to try again."
+        "Couldn’t load your programme. Reopen this page to try again."
       );
       const save = screen.getByRole("button", { name: "Save run plan" });
       expect(save).toHaveAccessibleDescription(line.textContent ?? "");
@@ -1234,7 +1234,7 @@ describe("RunPlanSettings", () => {
       fireEvent.click(
         screen.getByRole("radio", { name: /Training for a race/i })
       );
-      for (const name of ["A race I've entered", "On my own"])
+      for (const name of ["A race I’ve entered", "On my own"])
         expect(screen.getByRole("radio", { name })).toHaveAttribute(
           "aria-checked",
           "false"
@@ -1274,7 +1274,7 @@ describe("RunPlanSettings", () => {
         raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
       });
       expect(
-        screen.getByRole("radio", { name: "A race I've entered" })
+        screen.getByRole("radio", { name: "A race I’ve entered" })
       ).toHaveAttribute("aria-checked", "true");
     });
   });

@@ -225,7 +225,7 @@ describe("set completion through row controls", () => {
     fireEvent.click(
       screen.getAllByRole("button", { name: "Mark set complete" })[1]
     );
-    expect(h.error).toHaveBeenCalledWith("Reps can't be negative.");
+    expect(h.error).toHaveBeenCalledWith("Reps can’t be negative.");
     expect(
       screen.getByRole("spinbutton", { name: "Set 2 reps" })
     ).toBeEnabled();
@@ -354,7 +354,7 @@ describe("set completion through row controls", () => {
       screen.getByRole("heading", { name: "Review workout" })
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/sets? you haven't ticked won't be saved\./)
+      screen.getByText(/sets? you haven’t ticked won’t be saved\./)
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Edit workout" }));
     expect(finish()).toBeVisible();
@@ -1236,7 +1236,7 @@ describe("completed-set corrections", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     await vi.waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "Reps can't be negative."
+        "Reps can’t be negative."
       )
     );
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));

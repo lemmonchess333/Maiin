@@ -129,7 +129,7 @@ describe("WorkoutDetail", () => {
      since stale data reads as data rather than as an error. */
   it.each([
     ["missing", "Workout not found"],
-    ["failed", "Couldn't load this workout"],
+    ["failed", "Couldn’t load this workout"],
   ])(
     "clears the previous workout when the next record is %s",
     async (state, headline) => {

@@ -64,7 +64,7 @@ describe("describeStartRejection", () => {
       refusal("permission-denied", "blocked-pair"),
       "Maya"
     );
-    expect(copy).toBe("You can't start a streak with this person.");
+    expect(copy).toBe("You can’t start a streak with this person.");
     expect(copy).not.toMatch(/block/i);
   });
 
@@ -107,7 +107,7 @@ describe("describeStartRejection", () => {
         },
         "Maya"
       )
-    ).toBe("Your account is restricted, so you can't do this for now.");
+    ).toBe("Your account is restricted, so you can’t do this for now.");
   });
 });
 

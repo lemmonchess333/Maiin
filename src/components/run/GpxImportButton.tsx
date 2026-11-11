@@ -31,12 +31,12 @@ export default function GpxImportButton({
       const text = await file.text();
       const points = parseGpx(text);
       if (points.length < 2) {
-        toast.error("Couldn't read a route from that file");
+        toast.error("Couldn’t read a route from that file");
         return;
       }
       onRoute(points, parseGpxName(text));
     } catch {
-      toast.error("Couldn't read that file");
+      toast.error("Couldn’t read that file");
     }
   };
 

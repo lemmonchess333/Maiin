@@ -22,7 +22,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/lib/accountSecurity", () => ({
   sendVerificationEmail: h.sendVerificationEmail,
-  resendVerificationErrorMessage: () => "Couldn't send the email. Try again.",
+  resendVerificationErrorMessage: () => "Couldn’t send the email. Try again.",
   verificationSendFailed: () => h.unsent,
 }));
 vi.mock("@/lib/toast", () => ({
@@ -71,7 +71,7 @@ describe("VerifyEmailBanner", () => {
       screen.getByRole("link", { name: "Change your email" })
     ).toHaveAttribute("href", "/settings/account");
     expect(screen.getByRole("button", { name: "Resend link" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "I've verified" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "I’ve verified" })).toBeVisible();
   });
 
   // The two absences below are anchored on the same render showing the
@@ -118,7 +118,7 @@ describe("VerifyEmailBanner", () => {
     const user = emailUser();
     h.user = user;
     show();
-    fireEvent.click(screen.getByRole("button", { name: "I've verified" }));
+    fireEvent.click(screen.getByRole("button", { name: "I’ve verified" }));
     await waitFor(() =>
       expect(h.toastSuccess).toHaveBeenCalledWith("Email verified")
     );
@@ -142,7 +142,7 @@ describe("VerifyEmailBanner", () => {
     h.user = emailUser();
     h.unsent = true;
     show();
-    expect(screen.getByText(/Couldn't send the link to/)).toBeInTheDocument();
+    expect(screen.getByText(/Couldn’t send the link to/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Send link" }));
     await waitFor(() =>
       expect(screen.getByText(/We sent a link to/)).toBeInTheDocument()

@@ -260,7 +260,7 @@ function ActivityCard({
       if (isRestrictedRefusal(err)) showRestrictedToast();
       // The haptic alone says nothing on the web, where the count just
       // drops back.
-      else toast.error("Couldn't give props. Try again.");
+      else toast.error("Couldn’t give props. Try again.");
     }
   };
 
@@ -1199,7 +1199,7 @@ function ActivityCard({
               </div>
             ) : kudosUsers.length === 0 ? (
               <p className="text-xs text-muted-foreground py-1">
-                Couldn&apos;t load props right now. Try again.
+                Couldn’t load props right now. Try again.
               </p>
             ) : (
               /* Nobody either side of a block with you, as in the
@@ -1310,7 +1310,7 @@ function ActivityCard({
             addBlocked(activity.authorId as string);
             toast.success(`Blocked ${feedItem.authorName}`);
           } catch {
-            toast.error(`Couldn't block ${feedItem.authorName}. Try again.`);
+            toast.error(`Couldn’t block ${feedItem.authorName}. Try again.`);
           }
         }}
         onCancel={() => setShowBlockConfirm(false)}

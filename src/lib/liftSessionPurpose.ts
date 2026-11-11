@@ -91,7 +91,7 @@ export const FOCUS_PURPOSE: Record<PrimaryGoal, string> = {
   general:
     "This session is built for general fitness: a balanced mix of reps and sets.",
   running:
-    "This session is built to support your running: heavy main lifts and fewer sets, so the lifting doesn't compete with your runs.",
+    "This session is built to support your running: heavy main lifts and fewer sets, so the lifting doesn’t compete with your runs.",
 };
 
 const NUMBER_WORDS = ["no", "one", "two", "three", "four"];
@@ -181,7 +181,7 @@ export const LAST_FULL_WEEK =
 export const CYCLE = `Your plan builds for ${count(buildWeeks())} weeks, then a lighter week follows.`;
 
 export const RACE_CYCLE =
-  "Your lighter weeks fall on your run plan's easier weeks.";
+  "Your lighter weeks fall on your run plan’s easier weeks.";
 
 /** Whether a later week of the race block is one of the run plan's
  *  step-back weeks. */

@@ -156,7 +156,7 @@ export function useActivityComments({
       toast.error(
         filter
           ? OBJECTIONABLE_COMMENT_MESSAGE
-          : "Couldn't post comment. Try again."
+          : "Couldn’t post comment. Try again."
       );
       haptic("error");
       return;
@@ -185,8 +185,8 @@ export function useActivityComments({
         const reason = describeRejection(err);
         toast.error(
           reason
-            ? `Couldn't post comment. ${reason}`
-            : "Couldn't post comment. Try again."
+            ? `Couldn’t post comment. ${reason}`
+            : "Couldn’t post comment. Try again."
         );
       }
       haptic("error");
@@ -209,8 +209,8 @@ export function useActivityComments({
       const reason = describeRejection(err);
       toast.error(
         reason
-          ? `Couldn't delete comment. ${reason}`
-          : "Couldn't delete comment. Try again."
+          ? `Couldn’t delete comment. ${reason}`
+          : "Couldn’t delete comment. Try again."
       );
       haptic("error");
     }
@@ -255,7 +255,7 @@ export function useActivityComments({
       haptic("error");
       if (isRestrictedRefusal(err)) showRestrictedToast();
       // The haptic alone says nothing on the web.
-      else toast.error("Couldn't update your reaction. Try again.");
+      else toast.error("Couldn’t update your reaction. Try again.");
     }
   };
 

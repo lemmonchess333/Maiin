@@ -91,10 +91,10 @@ export default function FollowButton({
       haptic("error");
       toast.error(
         before === "following"
-          ? "Couldn't unfollow. Try again."
+          ? "Couldn’t unfollow. Try again."
           : before === "requested"
-            ? "Couldn't cancel the request. Try again."
-            : "Couldn't follow. Try again."
+            ? "Couldn’t cancel the request. Try again."
+            : "Couldn’t follow. Try again."
       );
     }
   };

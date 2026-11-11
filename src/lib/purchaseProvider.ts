@@ -181,7 +181,7 @@ async function purchaseWithStripe(
     logger.error("[purchase] Stripe checkout failed", err);
     return {
       success: false,
-      error: "Couldn't start checkout. Try again.",
+      error: "Couldn’t start checkout. Try again.",
       detail: err instanceof Error ? err.message : String(err),
     };
   }
@@ -216,7 +216,7 @@ async function purchaseWithRevenueCat(plan: PlanId): Promise<PurchaseResult> {
   if (!outcome.success) {
     return {
       success: false,
-      error: outcome.error ?? "Couldn't complete the purchase. Try again.",
+      error: outcome.error ?? "Couldn’t complete the purchase. Try again.",
       detail: outcome.detail,
     };
   }
@@ -308,7 +308,7 @@ export async function purchase(
     // failing somewhere further in.
     return {
       success: false,
-      error: "Purchases aren't available in this build.",
+      error: "Purchases aren’t available in this build.",
     };
   }
   return purchaseWithStripe(plan, uid, email, options);
@@ -348,7 +348,7 @@ export async function manageSubscription(uid: string): Promise<PurchaseResult> {
     if (!url) {
       return {
         success: false,
-        error: "Couldn't open billing portal. Try again.",
+        error: "Couldn’t open billing portal. Try again.",
       };
     }
     window.location.href = url;
@@ -360,7 +360,7 @@ export async function manageSubscription(uid: string): Promise<PurchaseResult> {
       // A failed-precondition carries a sentence the server wrote for the
       // person; any other code's message is the server's own.
       error:
-        describeRejection(err) ?? "Couldn't open billing portal. Try again.",
+        describeRejection(err) ?? "Couldn’t open billing portal. Try again.",
       detail: err instanceof Error ? err.message : String(err),
     };
   }
@@ -375,14 +375,14 @@ export async function restorePurchases(): Promise<PurchaseResult> {
   }
 
   if (!isRevenueCatEnabled()) {
-    return { success: false, error: "Restore isn't available in this build." };
+    return { success: false, error: "Restore isn’t available in this build." };
   }
 
   const outcome = await rcRestore();
   if (!outcome.success) {
     return {
       success: false,
-      error: outcome.error ?? "Couldn't restore your purchases.",
+      error: outcome.error ?? "Couldn’t restore your purchases.",
       detail: outcome.detail,
     };
   }

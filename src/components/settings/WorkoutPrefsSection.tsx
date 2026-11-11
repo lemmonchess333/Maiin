@@ -88,7 +88,7 @@ export default function WorkoutPrefsSection({
             }}
             className="ml-auto w-auto min-w-0 max-w-full"
           >
-            <option value={0}>Plan's suggestion</option>
+            <option value={0}>Plan’s suggestion</option>
             <option value={60}>1:00</option>
             <option value={90}>1:30</option>
             <option value={120}>2:00</option>

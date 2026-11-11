@@ -197,7 +197,7 @@ export default function ExercisePicker({
       setDetail(null);
       onClose();
     } catch {
-      toast.error("Couldn't change the exercise. Try again.");
+      toast.error("Couldn’t change the exercise. Try again.");
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -210,7 +210,7 @@ export default function ExercisePicker({
     try {
       await onRemoveExercise(id);
     } catch {
-      toast.error("Couldn't remove the exercise. Try again.");
+      toast.error("Couldn’t remove the exercise. Try again.");
     } finally {
       setRemovingIds((previous) => {
         const next = new Set(previous);
@@ -267,7 +267,7 @@ export default function ExercisePicker({
       setDetail(null);
       onClose();
     } catch {
-      toast.error("Couldn't add the exercises. Try again.");
+      toast.error("Couldn’t add the exercises. Try again.");
     } finally {
       savingRef.current = false;
       setSaving(false);

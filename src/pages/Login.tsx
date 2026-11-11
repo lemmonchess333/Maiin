@@ -177,7 +177,7 @@ export default function Login() {
         setError(
           message.startsWith("Too many")
             ? message
-            : friendlyAuthError(message, "Couldn't send the link. Try again.")
+            : friendlyAuthError(message, "Couldn’t send the link. Try again.")
         );
         setLoadingAction(null);
         return;
@@ -219,8 +219,8 @@ export default function Login() {
         friendlyAuthError(
           message,
           isSignUp
-            ? "Couldn't create your account. Try again."
-            : "Couldn't sign in. Try again."
+            ? "Couldn’t create your account. Try again."
+            : "Couldn’t sign in. Try again."
         )
       );
     } finally {
@@ -250,7 +250,7 @@ export default function Login() {
         }
       }
     }
-    setError(friendlyAuthError(message, "Couldn't sign in. Try again."));
+    setError(friendlyAuthError(message, "Couldn’t sign in. Try again."));
   };
 
   const handleGoogle = async () => {
@@ -615,7 +615,7 @@ export default function Login() {
 
         {/* Toggle */}
         <p className="text-center text-sm text-muted-foreground">
-          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+          {isSignUp ? "Already have an account?" : "Don’t have an account?"}{" "}
           <button
             type="button"
             onClick={() => {

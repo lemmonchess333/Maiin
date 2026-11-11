@@ -119,7 +119,7 @@ describe("ShareComposerSheet", () => {
     render(<ShareComposerSheet />);
     const first = openSheet();
     fireEvent.click(
-      screen.getByRole("button", { name: /don't share this one/i })
+      screen.getByRole("button", { name: /don’t share this one/i })
     );
     await expect(first).resolves.toBeNull();
     expect(saved()).toEqual([]);
@@ -151,7 +151,7 @@ describe("ShareComposerSheet", () => {
     const first = openSheet();
     fireEvent.click(rememberBox());
     fireEvent.click(
-      screen.getByRole("button", { name: /don't share future workouts/i })
+      screen.getByRole("button", { name: /don’t share future workouts/i })
     );
     await expect(first).resolves.toBeNull();
     expect(saved()).toEqual([{ workout: "never" }]);
@@ -182,7 +182,7 @@ describe("ShareComposerSheet", () => {
     fireEvent.click(rememberBox());
     expect(screen.getByText(/apply automatically to future runs/)).toBeTruthy();
     fireEvent.click(
-      screen.getByRole("button", { name: /don't share future runs/i })
+      screen.getByRole("button", { name: /don’t share future runs/i })
     );
     await expect(first).resolves.toBeNull();
     expect(saved()).toEqual([{ run: "never" }]);
@@ -302,7 +302,7 @@ describe("ShareComposerSheet — a restricted account (S4e)", () => {
     ).toBeDisabled();
     expect(screen.getByRole("button", { name: /make public/i })).toBeDisabled();
     expect(
-      screen.getByRole("button", { name: /don't share this one/i })
+      screen.getByRole("button", { name: /don’t share this one/i })
     ).not.toBeDisabled();
   });
 });

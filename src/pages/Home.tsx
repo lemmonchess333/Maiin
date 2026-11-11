@@ -1322,8 +1322,8 @@ export default function Home() {
         ) : v2TrainingUnavailable ? (
           <Banner
             variant="neutral"
-            title="Training isn't ready"
-            description="Couldn't load today's training. Open your plan to try again."
+            title="Training isn’t ready"
+            description="Couldn’t load today’s training. Open your plan to try again."
             action={
               <Button variant="secondary" onClick={() => navigate("/program")}>
                 Open training plan
@@ -1711,7 +1711,7 @@ export default function Home() {
             }}
             onEaseBack={async () => {
               if (!(await easeBackIn(liftReturn.easeBackShare))) {
-                throw new Error("The plan wasn't eased back");
+                throw new Error("The plan wasn’t eased back");
               }
             }}
             daysAway={liftReturn.daysAway}
@@ -1783,7 +1783,7 @@ export default function Home() {
               // A rebuild that didn't land keeps the sheet open to try
               // again, as the weekly prompt's flag would stay set.
               if (!(await realignAndSay()))
-                throw new Error("The plan wasn't rebuilt");
+                throw new Error("The plan wasn’t rebuilt");
             }}
             onRaceMoved={() => {
               closeRunReturn();

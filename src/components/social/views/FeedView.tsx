@@ -541,7 +541,7 @@ export default function FeedView({
             {feedSubTab === "following" && followingCount === 0 && (
               <HexEmptyState
                 icon={Users}
-                headline="You don't follow anyone yet"
+                headline="You don’t follow anyone yet"
                 sub="Follow people to see their sessions here."
                 accent={THEME.brand}
                 action={{ label: "Find people", onClick: openPeople }}
@@ -560,7 +560,7 @@ export default function FeedView({
                 sentence for the person. */}
             {feedSubTab === "following" && followingFeed.error && (
               <ErrorState
-                title="Couldn't load your feed"
+                title="Couldn’t load your feed"
                 description="Check your connection and try again."
                 retry={{ label: "Retry", onClick: followingFeed.refresh }}
               />
@@ -579,7 +579,7 @@ export default function FeedView({
               exploreFeed.items.length === 0 &&
               !exploreFeed.loading && (
                 <ErrorState
-                  title="Couldn't load the community feed"
+                  title="Couldn’t load the community feed"
                   description="Check your connection and try again."
                   retry={{ label: "Retry", onClick: exploreFeed.refresh }}
                 />
@@ -758,7 +758,7 @@ export default function FeedView({
                     <HexEmptyState
                       icon={Globe}
                       headline="Tropos is quiet right now"
-                      sub="Your circles don't need a crowd"
+                      sub="Your circles don’t need a crowd"
                       accent={THEME.brand}
                       action={{
                         label: "Open Together",

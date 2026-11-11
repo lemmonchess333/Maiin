@@ -80,7 +80,7 @@ export default function RouteSetupSection({
     });
     setSaving(false);
     setSaveOpen(false);
-    toast[ok ? "success" : "error"](ok ? "Route saved" : "Couldn't save route");
+    toast[ok ? "success" : "error"](ok ? "Route saved" : "Couldn’t save route");
   };
 
   if (targetRoute) {

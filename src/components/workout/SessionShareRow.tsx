@@ -83,9 +83,9 @@ const AUDIENCE: Record<ShareVisibility, string> = {
 
 const NOTE: Record<Note, string> = {
   verify: "Verify your email to share sessions.",
-  failed: "Couldn't share this session.",
+  failed: "Couldn’t share this session.",
   removed: "Removed from the feed.",
-  cancelled: "It won't be shared.",
+  cancelled: "It won’t be shared.",
 };
 
 /* Loaded the first time a person opens it: most finish screens never do. */
@@ -125,7 +125,7 @@ function statusText(state: RowState): string {
     case "live":
       return state.outcome.status === "posted"
         ? `Shared ${AUDIENCE[state.outcome.visibility]}`
-        : `Will share ${AUDIENCE[state.outcome.visibility]} when you're back online`;
+        : `Will share ${AUDIENCE[state.outcome.visibility]} when you’re back online`;
     case "held":
       return state.note ? NOTE[state.note] : "";
     default:
@@ -250,7 +250,7 @@ function ShareRow({
       setState({ kind: "held", note });
     } catch (err) {
       logger.warn("[SessionShareRow] undo failed:", err);
-      toast.error("Couldn't remove the post. Try again.");
+      toast.error("Couldn’t remove the post. Try again.");
       setState({ kind: "live", outcome });
     }
   };
@@ -381,7 +381,7 @@ function ShareRow({
               onClick={() => answer("never")}
               leftIcon={<EyeOff className="size-4 shrink-0" aria-hidden />}
             >
-              Don&apos;t share
+              Don’t share
             </Button>
           </div>
         </Card>

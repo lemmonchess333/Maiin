@@ -451,7 +451,7 @@ export default function Space() {
       setHasMore(snap.docs.length >= POSTS_PAGE_SIZE);
     } catch {
       // The posts already shown stay, and the button stays to try again.
-      toast.error("Couldn't load more posts. Try again.");
+      toast.error("Couldn’t load more posts. Try again.");
     } finally {
       setLoadingMore(false);
     }
@@ -673,7 +673,7 @@ export default function Space() {
           </div>
           {posts === null && postsFailed ? (
             <ErrorState
-              title="Couldn't load posts"
+              title="Couldn’t load posts"
               description="Check your connection and try again."
               retry={{
                 onClick: () => {
@@ -693,7 +693,7 @@ export default function Space() {
               headline="No posts from members yet"
               sub={
                 joined === true
-                  ? "Share a session, ask a question, or say what you're training for."
+                  ? "Share a session, ask a question, or say what you’re training for."
                   : joined === false
                     ? "Join to post here."
                     : undefined

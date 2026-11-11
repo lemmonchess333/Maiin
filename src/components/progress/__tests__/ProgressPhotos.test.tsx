@@ -254,7 +254,7 @@ describe("adding photos", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Add photos" }));
     pickFile(await screen.findByRole("dialog"), "Add front photo");
     expect(
-      await screen.findByText(/Couldn't encrypt the photo/)
+      await screen.findByText(/Couldn’t encrypt the photo/)
     ).toBeInTheDocument();
     expect(uploadBytesResumable).not.toHaveBeenCalled();
   });
@@ -323,7 +323,7 @@ describe("deleting, replacing and moving", () => {
       within(dialog).getByRole("button", { name: "Delete front photo" })
     );
     fireEvent.click(within(dialog).getByRole("button", { name: "Keep" }));
-    expect(within(dialog).queryByText(/can't be recovered/)).toBeNull();
+    expect(within(dialog).queryByText(/can’t be recovered/)).toBeNull();
     expect(deleteObject).not.toHaveBeenCalled();
     expect(readDoc(`${PHOTOS}/front`)).toBeDefined();
   });

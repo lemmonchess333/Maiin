@@ -37,7 +37,7 @@ describe("deletion completion and identity", () => {
   it("cannot turn an unexpected callable response into successful deletion", async () => {
     h.request.mockResolvedValue({ data: { ok: false } });
     await expect(deleteAccount("u1")).rejects.toThrow(
-      "Deletion wasn't confirmed"
+      "Deletion wasn’t confirmed"
     );
   });
   it("uses the authenticated callable and allows time for larger accounts", async () => {

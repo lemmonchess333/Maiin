@@ -46,7 +46,7 @@ export default function HeartRateZonesSection({
       setEditing(false);
       setValue("");
     } catch {
-      setError("Couldn't save — check your connection and try again.");
+      setError("Couldn’t save — check your connection and try again.");
     } finally {
       setSaving(false);
     }

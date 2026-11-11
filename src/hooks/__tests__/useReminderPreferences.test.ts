@@ -69,7 +69,7 @@ describe("useReminderPreferences", () => {
     expect(result.current.loading).toBe(false);
     await expect(
       result.current.updateReminders({ enabled: true })
-    ).rejects.toThrow("Reminder settings aren't ready");
+    ).rejects.toThrow("Reminder settings aren’t ready");
     act(() => result.current.retry());
     await waitFor(() => expect(result.current.reminders.time).toBe("08:15"));
     expect(result.current.failed).toBe(false);

@@ -97,7 +97,7 @@ export function CommentListStatus({
     return (
       <div className="text-center py-8 space-y-2" role="alert">
         <p className="text-sm font-medium text-foreground">
-          Couldn't load comments
+          Couldn’t load comments
         </p>
         <p className="text-xs text-muted-foreground">
           Check your connection and try again.

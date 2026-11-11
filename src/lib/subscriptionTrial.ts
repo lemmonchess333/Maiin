@@ -91,12 +91,12 @@ export function trialPhoneReminder(
     return null;
   const price = trialPriceText(trial);
   const choice = price
-    ? `if you don't want to pay ${price}`
-    : "if you don't want your subscription to start";
+    ? `if you don’t want to pay ${price}`
+    : "if you don’t want your subscription to start";
   return {
     fireAt,
     title: `Your free trial ends on ${endDay}`,
-    body: `Cancel by ${deadline} ${choice}. Already cancelled? There's nothing to do.`,
+    body: `Cancel by ${deadline} ${choice}. Already cancelled? There’s nothing to do.`,
   };
 }
 

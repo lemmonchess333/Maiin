@@ -143,7 +143,7 @@ describe("joining with a code", () => {
     await submitCode("K7P4-9M2H");
 
     await waitFor(() =>
-      expect(toastMock.success).toHaveBeenCalledWith("You're in.")
+      expect(toastMock.success).toHaveBeenCalledWith("You’re in.")
     );
     expect(joinCircle).toHaveBeenCalledWith("K7P4-9M2H");
     expect(toastMock.error).not.toHaveBeenCalled();
@@ -189,7 +189,7 @@ describe("a restricted account (S4e)", () => {
     fireEvent.click(screen.getByRole("button", { name: /start a circle/i }));
     expect(toastMock.error).toHaveBeenCalledTimes(2);
     expect(toastMock.error).toHaveBeenCalledWith(
-      "Your account is restricted, so you can't do this for now.",
+      "Your account is restricted, so you can’t do this for now.",
       expect.anything()
     );
     expect(hook.joinCircle).not.toHaveBeenCalled();

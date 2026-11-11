@@ -105,7 +105,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
     }
     if (outcome === "saved") toast.success("Image saved");
     if (outcome === "failed")
-      toast.error("Couldn't share the image. Try again.");
+      toast.error("Couldn’t share the image. Try again.");
   };
 
   const sharePhoto = async (photo: ProgressPhoto) => {
@@ -117,7 +117,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
       );
     } catch (err) {
       logger.error("[ProgressPhotos] photo share failed:", err);
-      toast.error("Couldn't make the image. Try again.");
+      toast.error("Couldn’t make the image. Try again.");
     }
   };
 
@@ -140,7 +140,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
       );
     } catch (err) {
       logger.error("[ProgressPhotos] comparison share failed:", err);
-      toast.error("Couldn't make the image. Try again.");
+      toast.error("Couldn’t make the image. Try again.");
     }
   };
 
@@ -186,7 +186,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
         ) : days.length === 0 ? (
           loadFailed ? (
             <p className="text-sm text-muted-foreground" role="alert">
-              Couldn't load your photos. Check your connection and reopen this
+              Couldn’t load your photos. Check your connection and reopen this
               page.
             </p>
           ) : (

@@ -1085,7 +1085,7 @@ export default function Onboarding() {
         clearPendingInvite(pendingInviteAtFinish);
         if (inviteCode.trim()) {
           toast.error(
-            `That invite code didn't look right. ${ENTER_CODE_LATER}`
+            `That invite code didn’t look right. ${ENTER_CODE_LATER}`
           );
         }
       }
@@ -1440,7 +1440,7 @@ export default function Onboarding() {
                       <p className="text-sm">
                         Run {STARTER_GOAL_NAME} in about nine weeks. It starts
                         with short runs and walks between them, and a week
-                        repeats until you've done it.
+                        repeats until you’ve done it.
                       </p>
                       <div className="space-y-2">
                         <p className="text-sm">Runs per week</p>
@@ -1570,7 +1570,7 @@ export default function Onboarding() {
                             {runningWeekMinutes !== "" &&
                             runningLongestMinutes !== "" &&
                             !runningStartValid
-                              ? "The longest run is part of the week, so it can't be more, and each is at least 10 min."
+                              ? "The longest run is part of the week, so it can’t be more, and each is at least 10 min."
                               : "The plan starts from here and builds a step a week towards the race."}
                           </p>
                         </div>
@@ -1620,7 +1620,7 @@ export default function Onboarding() {
                             </p>
                             <p className="text-xs text-muted-foreground">
                               A third fewer sets on leg lifts, at the same
-                              weights, from your plan's build weeks until the
+                              weights, from your plan’s build weeks until the
                               two lighter weeks before your race.
                             </p>
                           </div>
@@ -1717,7 +1717,7 @@ export default function Onboarding() {
                         >
                           {Number(recentRaceSeconds) > 59
                             ? "Seconds go up to 59."
-                            : "That time doesn't look right. Check it and try again."}
+                            : "That time doesn’t look right. Check it and try again."}
                         </p>
                       )}
                     </section>

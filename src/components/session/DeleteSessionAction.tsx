@@ -71,11 +71,11 @@ export default function DeleteSessionAction({
         open={confirming}
         title={`Delete this ${noun}?`}
         description={[
-          `This can't be undone. Your challenge progress and lifetime totals will drop by what this ${noun} contributed, so your standing in a live challenge can go down.`,
-          "Streaks and badges you've already earned stay.",
+          `This can’t be undone. Your challenge progress and lifetime totals will drop by what this ${noun} contributed, so your standing in a live challenge can go down.`,
+          "Streaks and badges you’ve already earned stay.",
           sharedActivityId
             ? "Its post is removed from your feed too."
-            : `Any post you've already shared about this ${noun} stays on your feed.`,
+            : `Any post you’ve already shared about this ${noun} stays on your feed.`,
         ].join(" ")}
         confirmLabel="Delete"
         destructive
@@ -97,7 +97,7 @@ export default function DeleteSessionAction({
             else navigate(historyReturnTo ?? "/history", { replace: true });
           } catch {
             setBusy(false);
-            toast.error(`Couldn't delete this ${noun}. Try again.`);
+            toast.error(`Couldn’t delete this ${noun}. Try again.`);
           }
         }}
       />

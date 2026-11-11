@@ -2105,7 +2105,7 @@ export default function WorkoutSession({
       logger.error("[WorkoutSession] finish failed:", error);
       setSaveStatus("needs-attention");
       toast.error(
-        "Couldn't save your workout. Your completed session is still here, so try again."
+        "Couldn’t save your workout. Your completed session is still here, so try again."
       );
     } finally {
       finishPending.current = false;
@@ -3385,8 +3385,8 @@ export default function WorkoutSession({
         title={`Remove ${removing?.name ?? ""}?`}
         description={
           removing?.sets === 1
-            ? "The set you've done on it won't be saved."
-            : `The ${removing?.sets ?? 0} sets you've done on it won't be saved.`
+            ? "The set you’ve done on it won’t be saved."
+            : `The ${removing?.sets ?? 0} sets you’ve done on it won’t be saved.`
         }
         confirmLabel="Remove"
         cancelLabel="Keep it"

@@ -138,7 +138,7 @@ export default function SaveRoutineSheet({
       }, 650);
     } catch (err) {
       logger.error("saveRoutine failed:", err);
-      toast.error("Couldn't save. Try again.");
+      toast.error("Couldn’t save. Try again.");
       setSaving(false);
     }
   };
@@ -159,7 +159,7 @@ export default function SaveRoutineSheet({
       title="Save as routine"
       description={
         external
-          ? `Snapshot of ${sourceAuthorName}'s workout. You can run it later from the Train tab.`
+          ? `Snapshot of ${sourceAuthorName}’s workout. You can run it later from the Train tab.`
           : "A copy of this workout. You can run it again from the Train tab."
       }
     >

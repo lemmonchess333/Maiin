@@ -97,7 +97,7 @@ export function BadgeGrid() {
   if (loadFailed) {
     return (
       <ErrorState
-        title="Couldn't load your badges"
+        title="Couldn’t load your badges"
         description="Check your connection and try again."
         retry={{ onClick: retryLoad }}
       />

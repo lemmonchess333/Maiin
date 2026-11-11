@@ -100,13 +100,13 @@ describe("earliestStreakMonth", () => {
 describe("coveredDayLine", () => {
   it("says yesterday's rest day is covered, in Streak1's words", () => {
     expect(coveredDayLine(["2026-10-26"], 12, TODAY)).toBe(
-      "Yesterday's rest day is covered. Still on a 12-day streak."
+      "Yesterday’s rest day is covered. Still on a 12-day streak."
     );
   });
 
   it("names an older covered day by its date", () => {
     expect(coveredDayLine(["2026-10-20", "2026-10-13"], 15, TODAY)).toBe(
-      "Tuesday 20 October was a rest day, and it's covered."
+      "Tuesday 20 October was a rest day, and it’s covered."
     );
   });
 

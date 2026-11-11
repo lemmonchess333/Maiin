@@ -81,7 +81,7 @@ describe("describeJoinRejection", () => {
       rejection("permission-denied", "bad invite")
     );
     expect(closed).toBe("That circle has been closed.");
-    expect(typo).toBe("That invite code isn't right. Check it and try again.");
+    expect(typo).toBe("That invite code isn’t right. Check it and try again.");
     expect(closed).not.toBe(typo);
   });
 
@@ -116,7 +116,7 @@ describe("describeJoinRejection", () => {
     const copy = describeJoinRejection(
       rejection("permission-denied", "blocked-pair: cannot share a Circle")
     );
-    expect(copy).toBe("You can't join this circle.");
+    expect(copy).toBe("You can’t join this circle.");
     expect(copy).not.toMatch(/block/i);
   });
 
@@ -198,6 +198,6 @@ describe("describeJoinRejection — a restricted account (S4e)", () => {
         message: "Your account is restricted",
         details: { reason: "account-restricted" },
       })
-    ).toBe("Your account is restricted, so you can't do this for now.");
+    ).toBe("Your account is restricted, so you can’t do this for now.");
   });
 });

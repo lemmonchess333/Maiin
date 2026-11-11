@@ -335,7 +335,7 @@ export function programmePreservationNote(args: {
       ? `Week ${args.weekNumber}`
       : "Your current week";
   if (args.liftDaysChanged) {
-    return `Changing your lift days rebuilds your weekly structure. Any exercises you've added, removed, or reordered will be reset to the new plan. ${week}, your history, and logged sessions are kept.`;
+    return `Changing your lift days rebuilds your weekly structure. Any exercises you’ve added, removed, or reordered will be reset to the new plan. ${week}, your history, and logged sessions are kept.`;
   }
   const refit =
     args.sessionMinutesTo === undefined
@@ -348,5 +348,5 @@ export function programmePreservationNote(args: {
   const level = args.levelChanged
     ? " Your main lifts take the targets for your new level."
     : "";
-  return `We'll update your plan with these settings and keep your current workouts — including any exercises you've customised.${refit}${level} ${week}, your history, and logged sessions stay.`;
+  return `We’ll update your plan with these settings and keep your current workouts — including any exercises you’ve customised.${refit}${level} ${week}, your history, and logged sessions stay.`;
 }

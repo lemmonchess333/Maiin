@@ -60,11 +60,11 @@ export default function ProfileUnavailable({
       }}
     >
       <div role="alert" className="max-w-sm space-y-3 text-center">
-        <p className="text-sm font-semibold">Couldn&apos;t load your account</p>
+        <p className="text-sm font-semibold">Couldn’t load your account</p>
         <p className="text-xs text-muted-foreground">
           {triedAgain
-            ? "Still no answer. Your account hasn't changed. Check your connection, then try again."
-            : "Your account hasn't changed. Check your connection, then try again."}
+            ? "Still no answer. Your account hasn’t changed. Check your connection, then try again."
+            : "Your account hasn’t changed. Check your connection, then try again."}
         </p>
         <div className="flex flex-col items-center gap-2">
           <Button variant="secondary" loading={trying} onClick={retry}>

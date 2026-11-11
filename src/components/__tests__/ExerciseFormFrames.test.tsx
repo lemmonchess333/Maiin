@@ -105,13 +105,13 @@ describe("six-frame form guide", () => {
     const first = view.container.querySelectorAll("img");
     fireEvent.load(first[0]);
     fireEvent.error(first[1]);
-    expect(screen.getByText("Couldn't load this frame.")).toBeInTheDocument();
+    expect(screen.getByText("Couldn’t load this frame.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry images" }));
     const retried = view.container.querySelectorAll("img");
     expect(retried[0]).not.toBe(first[0]);
     retried.forEach((image) => fireEvent.load(image));
     expect(
-      screen.queryByText("Couldn't load this frame.")
+      screen.queryByText("Couldn’t load this frame.")
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Loading frame…")).not.toBeInTheDocument();
   });
@@ -246,7 +246,7 @@ describe("six-frame form guide", () => {
   });
   it("refuses partial sequences instead of presenting misleading form", () => {
     render(<ExerciseFormFrames name="Squat" beats={beats.slice(0, 4)} />);
-    expect(screen.getByRole("status")).toHaveTextContent("isn't ready");
+    expect(screen.getByRole("status")).toHaveTextContent("isn’t ready");
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 });

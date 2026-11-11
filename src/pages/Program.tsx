@@ -273,7 +273,7 @@ function ProgramInner() {
     const ok = await applyDeloadWeek();
     if (!ok) {
       toast.error(
-        "Couldn't take a lighter week. Check your connection and try again."
+        "Couldn’t take a lighter week. Check your connection and try again."
       );
       return false;
     }
@@ -289,7 +289,7 @@ function ProgramInner() {
               });
               toast.success("Back to the full plan this week");
             } else {
-              toast.error("Couldn't undo the lighter week.");
+              toast.error("Couldn’t undo the lighter week.");
             }
           });
         },
@@ -845,7 +845,7 @@ function ProgramInner() {
   if (!programState || !prescription) {
     return (
       <ErrorState
-        title="Couldn't load your programme"
+        title="Couldn’t load your programme"
         description="Something went wrong fetching your training plan. Check your connection and try again."
         retry={{ label: "Retry", onClick: () => window.location.reload() }}
       />
@@ -2491,7 +2491,7 @@ function ProgramInner() {
                           Reorder exercises
                         </span>
                         <span className="block text-xs text-muted-foreground">
-                          Drag to change today&apos;s order
+                          Drag to change today’s order
                         </span>
                       </span>
                     </button>

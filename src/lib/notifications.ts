@@ -435,7 +435,7 @@ const TEST_NOTIFICATION_COPY: Record<
   },
   review: {
     title: "Your week, reviewed",
-    body: "This is what Monday's review notification looks like. Tap it to open the review.",
+    body: "This is what Monday’s review notification looks like. Tap it to open the review.",
   },
 };
 

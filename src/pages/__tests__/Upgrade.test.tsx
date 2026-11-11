@@ -621,7 +621,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     canSellMock.mockReturnValue(false);
     renderPage();
     expect(screen.getByRole("note")).toHaveTextContent(
-      "Pro isn't on sale in this version of the app yet."
+      "Pro isn’t on sale in this version of the app yet."
     );
     expect(screen.queryByText(/£/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();

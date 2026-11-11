@@ -60,7 +60,7 @@ function blockReason(field: keyof FoodValuesToValidate, val: number): string {
   if (Number.isNaN(val) || !Number.isFinite(val)) {
     return `${FIELD_LABELS[field]} must be a valid number.`;
   }
-  return `Macros can't be negative.`;
+  return `Macros can’t be negative.`;
 }
 
 export function validateFoodEntry(
@@ -175,6 +175,6 @@ export function checkAggregateAgainstTarget(
 
   return {
     title: "This meal looks unusually high",
-    description: `This scan totals about ${Math.round(totalCalories)} ${CALORIE_UNIT}, which is over a full day's target. Check the items before saving.`,
+    description: `This scan totals about ${Math.round(totalCalories)} ${CALORIE_UNIT}, which is over a full day’s target. Check the items before saving.`,
   };
 }

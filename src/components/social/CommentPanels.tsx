@@ -85,7 +85,7 @@ export default function CommentPanels({
       toast.success(`Blocked ${name}`);
       onChange(null);
     } catch {
-      toast.error(`Couldn't block ${name}. Try again.`);
+      toast.error(`Couldn’t block ${name}. Try again.`);
     } finally {
       setBlocking(false);
     }
@@ -178,7 +178,7 @@ export default function CommentPanels({
               Delete comment?
             </h3>
             <p className="text-sm text-muted-foreground">
-              This can&apos;t be undone.
+              This can’t be undone.
             </p>
           </div>
           <ConfirmDialogActions

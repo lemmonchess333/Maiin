@@ -377,7 +377,7 @@ export default function Run() {
       {snapshotWriteFailed && (
         <Banner
           variant="neutral"
-          description="Latest progress couldn't be saved for recovery. Recording continues; keep this run open."
+          description="Latest progress couldn’t be saved for recovery. Recording continues; keep this run open."
           className="w-full bg-stage-raised border-stage-muted/20 [&_.text-muted-foreground]:text-stage-muted"
         />
       )}
@@ -1735,7 +1735,7 @@ export default function Run() {
       points.length < 2
     ) {
       toast(
-        "GPS never locked on — your time is saved, but there's no route or distance for this one."
+        "GPS never locked on — your time is saved, but there’s no route or distance for this one."
       );
     }
     if (watchEligible && identityRef.current && user?.uid)
@@ -2320,7 +2320,7 @@ export default function Run() {
                 {locationDenied
                   ? isNativePlatform()
                     ? "Turn it on in Settings to track this run with GPS, or track it without GPS."
-                    : "Allow location for this site in your browser's settings to track this run with GPS, or track it without GPS."
+                    : "Allow location for this site in your browser’s settings to track this run with GPS, or track it without GPS."
                   : quality === "weak" || quality === "searching"
                     ? "Move to an open area away from buildings"
                     : "Getting an accurate signal…"}
@@ -2340,7 +2340,7 @@ export default function Run() {
                 )
               ) : gps.error ? (
                 <p className="text-xs text-destructive-strong mt-2 text-center max-w-[280px]">
-                  Can't get a GPS signal right now. Move outside, or track
+                  Can’t get a GPS signal right now. Move outside, or track
                   without GPS below.
                 </p>
               ) : null}
@@ -2716,7 +2716,7 @@ export default function Run() {
           onResume={handleResumeFromPrompt}
           recoveryNote={
             resumeCoaching?.fallback
-              ? "Your recorded progress is kept. Session guidance couldn't be restored. Continue without coaching."
+              ? "Your recorded progress is kept. Session guidance couldn’t be restored. Continue without coaching."
               : undefined
           }
           resumeLabel={
@@ -2731,7 +2731,7 @@ export default function Run() {
       <ConfirmDialog
         open={showDiscardConfirm}
         title="Discard this run?"
-        description="This can't be undone."
+        description="This can’t be undone."
         confirmLabel="Discard"
         destructive
         onConfirm={() => {

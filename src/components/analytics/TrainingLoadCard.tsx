@@ -116,7 +116,7 @@ export default function TrainingLoadCard({
         </h3>
         {rangeRow}
         <ErrorState
-          title="Couldn't load your training history"
+          title="Couldn’t load your training history"
           description="Your training load is unavailable until your sessions can be read."
           retry={onRetry ? { onClick: onRetry } : undefined}
         />

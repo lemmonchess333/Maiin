@@ -182,7 +182,7 @@ describe("Apple account-deletion revocation", () => {
       text: () => "sensitive upstream diagnostic",
     });
     await expect(reauthWithApple(user, { forDeletion: true })).rejects.toThrow(
-      "Couldn't disconnect Sign in with Apple"
+      "Couldn’t disconnect Sign in with Apple"
     );
   });
 });

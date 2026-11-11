@@ -245,11 +245,11 @@ describe("FeedView — a failed Following feed", () => {
     followingError = null;
   });
 
-  it("says the feed couldn't load, not the SDK's error text", () => {
+  it("says the feed couldn’t load, not the SDK’s error text", () => {
     followingError = "Missing or insufficient permissions.";
     setup({ feedSubTab: "following" });
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't load your feed"
+      "Couldn’t load your feed"
     );
     expect(screen.queryByText(/insufficient permissions/)).toBeNull();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
@@ -360,7 +360,7 @@ describe("FeedView — who you follow could not be read", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Couldn’t load who you follow."
     );
-    expect(screen.queryByText("You don't follow anyone yet")).toBeNull();
+    expect(screen.queryByText("You don’t follow anyone yet")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(retryFollowingCount).toHaveBeenCalledTimes(1);
   });
@@ -524,7 +524,7 @@ describe("FeedView — following nobody (the retired solo-first stack)", () => {
       followingFeedUnlocked: false,
       openPeople,
     });
-    expect(screen.getByText("You don't follow anyone yet")).toBeInTheDocument();
+    expect(screen.getByText("You don’t follow anyone yet")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Find people" }));
     expect(openPeople).toHaveBeenCalled();
   });
