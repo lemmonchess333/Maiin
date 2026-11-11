@@ -18,7 +18,7 @@ import {
 import { useState } from "react";
 import HeroDrillDownSheet from "../HeroDrillDownSheet";
 import { setCalorieRingMode } from "@/hooks/useCalorieRingMode";
-import { groupRe } from "@/test/localeGrouping";
+import { groupRe, groupTextRe } from "@/test/localeGrouping";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import type { TrainingFuelAdjustment } from "@/hooks/useEffectiveTargets";
 
@@ -304,7 +304,7 @@ describe("HeroDrillDownSheet — bars are what is logged, in both modes", () => 
     expect(pct).toBeLessThan(100);
     expect(section).toHaveTextContent(`${pct}%`);
     expect(section).toHaveTextContent(
-      new RegExp(`${groupRe(1000)} kcal logged`)
+      new RegExp(`${groupTextRe(1000)} kcal logged`)
     );
   });
 });
