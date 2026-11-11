@@ -120,6 +120,32 @@ describe("Login — who sees which screen", () => {
   });
 });
 
+/* DS8: the welcome's picture is the product, and the forms open on a
+   lifter who faces you. Both carry the lockup and sit on the page. */
+describe("Login — what the signed-out screens show (DS8)", () => {
+  it("the welcome carries the lockup and its picture", () => {
+    show();
+    expect(screen.getByText("Tropos")).toHaveClass("ds-wordmark");
+    expect(
+      screen.getByRole("img", { name: /^An example plan:/ })
+    ).toBeInTheDocument();
+  });
+
+  it("sign-in and sign-up share one lifter, which is not drawn again on the way across", () => {
+    h.signedInBefore = true;
+    const { container } = show();
+    expect(screen.getByText("Tropos")).toHaveClass("ds-wordmark");
+    const lifter = container.querySelector(".signin-figure");
+    expect(lifter).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
+    expect(
+      screen.getByRole("heading", { name: "Create your account" })
+    ).toBeInTheDocument();
+    // The same node: a new one would play its rep from the start.
+    expect(container.querySelector(".signin-figure")).toBe(lifter);
+  });
+});
+
 /* App Review 1.2: whoever creates an account agrees to the Terms. Every
    button on the two forms can create one (the email form on Sign up;
    Apple and Google on either screen, the first time they are used). */
