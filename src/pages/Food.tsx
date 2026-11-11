@@ -106,6 +106,7 @@ import { foodWeek, foodWeekStart } from "@/lib/foodWeek";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import { useLocalHour } from "@/hooks/useLocalHour";
 import { keepFoodDraft, keptFoodDraft } from "@/lib/foodDraft";
 import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
@@ -165,9 +166,8 @@ const DEFAULT_QUICK_MEALS = [
 // explicit; subsequent rotations show real strings the parser
 // handles, which serve as both decoration and a working tutorial.
 // The first two name the two modes between them. Each must fit the
-// composer's field on one line at 375px beside the widest meal chip
-// ("Breakfast"), the pencil and the camera, which leave the text
-// 123px (Food11 call 3; it had about 180px before the chip).
+// composer's field on one line beside the pencil and the camera, which
+// leave the text 196px on a 320px phone.
 const NL_EXAMPLE_PROMPTS = [
   "Search a food",
   "Describe a meal",
@@ -290,12 +290,17 @@ export default function Food() {
   // kind of string the NL parser understands without needing a help doc.
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [inputFocused, setInputFocused] = useState(false);
-  // Default the logging destination to the meal a user is most likely
-  // trying to log right now, so the common case does not require a
-  // breakfast/lunch/snacks/dinner decision before every save. The
-  // composer's meal chip changes it.
-  const [targetMeal, setTargetMeal] = useState<MealKey | null>(() =>
-    inferMostLikelyMealSlot(new Date().getHours())
+  /* The meal a log goes to is the one the clock says, while the diary
+     is on today: nothing on the page asks for it (the owner, 11 November
+     2026), and the sheet a diary row opens moves a food to another
+     meal. On another day there is none, as there was none when the
+     meal chip stood in the field and a change of day cleared it; that
+     log's meal is read from when it was written (`mealSlotFor`). */
+  const clockHour = useLocalHour();
+  const targetMeal = useMemo<MealKey | null>(
+    () =>
+      selectedDate === todayStr ? inferMostLikelyMealSlot(clockHour) : null,
+    [selectedDate, todayStr, clockHour]
   );
   // Food6 a2: tap-on-hero opens a detailed nutrition-breakdown sheet
   // (calories + macros + activity-burn adjustment). Read-only — the
@@ -330,8 +335,7 @@ export default function Food() {
 
   // Cycle the placeholder every 2.8s when the input is idle (empty +
   // unfocused). Stops the moment the user engages so the placeholder
-  // doesn't shift mid-typing. A targeted meal no longer pauses it: the
-  // meal chip in the field says where a log goes, so the field is free
+  // doesn't shift mid-typing. The field names no meal, so it is free
   // to show what a log can look like.
   useEffect(() => {
     if (nlInput.trim() || inputFocused) return;
@@ -598,7 +602,6 @@ export default function Food() {
   if (prevDate !== selectedDate) {
     setPrevDate(selectedDate);
     if (heroDrawIn) setHeroDrawIn(false);
-    if (targetMeal) setTargetMeal(null);
     // Clear any in-flight typed text on date change. Without this,
     // typing "2 eggs" for today, then tapping yesterday on the date
     // bar, would silently submit "2 eggs" against yesterday — a
@@ -1588,24 +1591,6 @@ export default function Food() {
     });
   };
 
-  /* From the composer's meal chip, which hands over a meal other than
-     the one chosen. Nothing un-chooses a meal by hand; a change of day
-     does (above). */
-  const handleTargetMeal = (mealKey: MealKey) => {
-    haptic();
-    setTargetMeal(mealKey);
-    trackFoodEvent("food_meal_slot_tapped", { slot: mealKey });
-    // Scroll input into view then focus
-    setTimeout(() => {
-      /* No `behavior` — the default follows the computed
-         `scroll-behavior`, which is smooth normally and `auto` under
-         Reduce Motion. Naming "smooth" here overrides that by spec and
-         animates for a reader who asked it not to. */
-      inputRef.current?.scrollIntoView({ block: "center" });
-      setTimeout(() => inputRef.current?.focus(), 300);
-    }, 50);
-  };
-
   // Merged Quick Add source, for the meal being added to (Food11 call 7).
   //
   // Three layers, in priority order:
@@ -1924,8 +1909,7 @@ export default function Food() {
     });
   };
 
-  const usualSlot =
-    targetMeal ?? inferMostLikelyMealSlot(new Date().getHours());
+  const usualSlot = targetMeal ?? inferMostLikelyMealSlot(clockHour);
   const usual = useMemo(
     () => usualMeal(meals, usualSlot, selectedDate),
     [meals, usualSlot, selectedDate]
@@ -1958,7 +1942,6 @@ export default function Food() {
       // (composition preserved); plain chips keep the single synthetic
       // item. Pure helper so the 1/2/3+-item shapes are unit-tested.
       const undo = await saveQuickMeal(uid, meal, selectedDate, slot);
-      if (slot) setTargetMeal(slot);
       let undoing = false;
       toast.success(
         navigator.onLine
@@ -2357,8 +2340,6 @@ export default function Food() {
           }
           onParse={handleNLParse}
           inputRef={inputRef}
-          targetMeal={targetMeal}
-          onTargetMeal={handleTargetMeal}
           showSuggestions={showSuggestions || showQuickAdd}
           suggestions={suggestions}
           offResults={offResults}

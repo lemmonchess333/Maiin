@@ -68,68 +68,45 @@ test.describe("food delight", () => {
         path: `screenshots/food-delight-${theme}.png`,
       });
 
-      // The composer's meal is one chip in the field (Food11 call 3);
-      // its menu holds the four meals, each a full 44px row on screen.
-      const chip = page.getByRole("button", { name: /change meal$/i });
-      await chip.evaluate((element) =>
+      // The composer's field asks for no meal (11 November 2026): the
+      // pencil, the text and the camera, on one row at 393 and at 320px.
+      // It held a meal chip with a menu until then, and broke into two
+      // rows on a 320px phone to fit it.
+      const field = page.getByRole("textbox", { name: "What did you eat" });
+      await field.evaluate((element) =>
         element.scrollIntoView({ block: "center" })
       );
-      const chipBox = (await chip.boundingBox())!;
-      expect(chipBox.height).toBeGreaterThanOrEqual(44);
-      await chip.click();
-      const choices = page
-        .getByRole("menu", { name: "Add to meal" })
-        .getByRole("menuitemradio");
-      await expect(choices).toHaveCount(4);
-      const bounds = await choices.evaluateAll((elements) =>
-        elements.map((element) => {
-          const { x, y, width, height } = element.getBoundingClientRect();
-          return { x, y, width, height };
-        })
-      );
-      for (const box of bounds) {
-        expect(box.width).toBeGreaterThanOrEqual(44);
-        expect(box.height).toBeGreaterThanOrEqual(44);
-        expect(box.x).toBeGreaterThanOrEqual(0);
-        expect(box.x + box.width).toBeLessThanOrEqual(393);
-      }
-      await page.screenshot({
-        animations: "disabled",
-        path: `screenshots/food-composer-menu-${theme}.png`,
-      });
-      await page.keyboard.press("Escape");
+      await expect(
+        page.getByRole("button", { name: /change meal$/i })
+      ).toHaveCount(0);
       await expect(page.getByRole("menu")).toHaveCount(0);
+      const oneRow = async (width: number) => {
+        const text = (await field.boundingBox())!;
+        const pencil = (await page
+          .getByRole("button", { name: "Enter manually" })
+          .boundingBox())!;
+        const camera = (await page
+          .getByRole("button", { name: "Scan a meal" })
+          .boundingBox())!;
+        for (const box of [pencil, camera]) {
+          expect(box.y).toBeGreaterThanOrEqual(text.y - 1);
+          expect(box.y + box.height).toBeLessThanOrEqual(
+            text.y + text.height + 1
+          );
+        }
+        expect(pencil.x + pencil.width).toBeLessThanOrEqual(text.x + 1);
+        expect(camera.x).toBeGreaterThanOrEqual(text.x + text.width - 1);
+        expect(camera.x + camera.width).toBeLessThanOrEqual(width);
+        // Room to read an example in: 196px at 320.
+        expect(text.width).toBeGreaterThanOrEqual(150);
+      };
+      await oneRow(393);
       await page.screenshot({
         animations: "disabled",
         path: `screenshots/food-composer-${theme}.png`,
       });
-
-      // On a 320px phone the text is the row under the chip, and the
-      // menu opens over it. Every meal is still a full row on screen,
-      // and a tap lands on it: the text box lay over the menu there and
-      // took the taps meant for the first meals. A trial click checks
-      // where the tap would land and leaves the meal as it was.
       await page.setViewportSize({ width: 320, height: 852 });
-      await chip.click();
-      await expect(choices).toHaveCount(4);
-      const narrow = await choices.evaluateAll((elements) =>
-        elements.map((element) => {
-          const { x, width, height } = element.getBoundingClientRect();
-          return { x, width, height };
-        })
-      );
-      for (const box of narrow) {
-        expect(box.height).toBeGreaterThanOrEqual(44);
-        expect(box.x).toBeGreaterThanOrEqual(0);
-        expect(box.x + box.width).toBeLessThanOrEqual(320);
-      }
-      for (const meal of ["Breakfast", "Lunch", "Snacks", "Dinner"]) {
-        await page
-          .getByRole("menuitemradio", { name: meal })
-          .click({ trial: true });
-      }
-      await page.keyboard.press("Escape");
-      await expect(page.getByRole("menu")).toHaveCount(0);
+      await oneRow(320);
       await page.setViewportSize({ width: 393, height: 852 });
 
       await page.getByRole("button", { name: "Enter manually" }).click();

@@ -15,9 +15,7 @@ import FoodSuggestionsDropdown, {
   type PantrySuggestion,
   type QuickAddSection,
 } from "./FoodSuggestionsDropdown";
-import FoodMealChip from "./FoodMealChip";
 import ScanQuotaIndicator from "./ScanQuotaIndicator";
-import type { MealKey } from "./mealConstants";
 
 /* Scan button override shape — matches the existing
    useScanButtonOverrides hook return surface in
@@ -54,19 +52,10 @@ interface FoodComposerCardProps {
   setSuggestionsActive: (v: boolean) => void;
   /** Placeholder string when the input is empty. The parent rotates
    *  through example strings; this component just renders whichever
-   *  one it's handed. The meal chip in the field says where a log
-   *  goes, so the placeholder does not repeat it ("Adding to
-   *  Snacks…") — it shows what a log can look like instead. */
+   *  one it's handed: what a log can look like. */
   placeholderPrompt: string;
   onParse: () => void;
   inputRef: RefObject<HTMLTextAreaElement | null>;
-  // ── Target meal ────────────────────────────────────────────────
-  /** The meal a log goes to; null when none is chosen (the page clears
-   *  it on a change of day). */
-  targetMeal: MealKey | null;
-  /** Another meal was picked from the chip's menu. The chip never
-   *  hands back the meal already chosen. */
-  onTargetMeal: (m: MealKey) => void;
   // ── Suggestions dropdown ──────────────────────────────────────
   showSuggestions: boolean;
   suggestions: FoodSuggestion[];
@@ -97,18 +86,18 @@ interface FoodComposerCardProps {
 }
 
 /**
- * The Food page's input surface, in the order a person acts: one field
- * holding the meal chip (which meal), the manual-entry pencil, the NL
- * textarea (what) with the send button trailing it, and the camera at
- * its end; then the suggestions dropdown and the conditional quota
- * caption / Pro hint.
+ * The Food page's input surface: one field holding the manual-entry
+ * pencil, the NL textarea (what was eaten) with the send button trailing
+ * it, and the camera at its end; then the suggestions dropdown and the
+ * conditional quota caption / Pro hint.
  *
- * The meal sat in three places — "Adding to Snacks…" in the field, the
- * meal 50px below under an ADD TO caption, and an "Enter manually" ghost
- * button alone beneath that. Owner call from the Food options page (5a):
- * pills head the field, the pencil is the manual-entry button, and the
- * caption, the X and the lone button go. The pills keep their solid
- * nutrition emphasis — the food surface's one colour, a recorded keep.
+ * The field asks for no meal (the owner, 11 November 2026). The page
+ * files a log under the meal the clock says, and the sheet a diary row
+ * opens moves it to another. A row of four meal pills headed the field
+ * until Food11, and one meal chip with a menu stood in it for a day
+ * after: of ten food apps' logging flows, none has a row of meals, and
+ * the four whose diary is a time-ordered log, as this one is, ask for no
+ * meal at all.
  *
  * The pencil alone turned out to be too quiet a way in: in the renders it
  * read as decoration. Mob2 (call 4) names it again, as a "Quick add" row
@@ -140,8 +129,6 @@ function FoodComposerCard({
   placeholderPrompt,
   onParse,
   inputRef,
-  targetMeal,
-  onTargetMeal,
   showSuggestions,
   suggestions,
   offResults,
@@ -193,16 +180,15 @@ function FoodComposerCard({
       <div className="relative">
         {/* The field is the whole row; the dropdown sits below it at
             the row's full width, outside the field so it can never
-            stretch a control in it. The row is the container the
-            field's narrow layout is measured on, since a container
-            cannot style itself. */}
-        <div className="@container" data-guide-anchor="food-composer">
-          {/* One field holding the meal, the pencil, the text and the
-              camera (Food11 call 3). Its box (the field primitive's
-              edge, fill and radius) is drawn by a layer under the four,
-              so each of them, the text box included, is the full height
-              of the row. */}
-          <div className="relative flex min-w-0 flex-wrap items-stretch">
+            stretch a control in it. */}
+        <div data-guide-anchor="food-composer">
+          {/* One field holding the pencil, the text and the camera. Its
+              box (the field primitive's edge, fill and radius) is drawn
+              by a layer under the three, so each of them, the text box
+              included, is the full height of the row. It is one row at
+              every width: the pencil and the camera are 92px between
+              them, which leaves the text 196px on a 320px phone. */}
+          <div className="relative flex min-w-0 items-stretch">
             <div
               aria-hidden="true"
               data-field-box=""
@@ -216,26 +202,13 @@ function FoodComposerCard({
                   : undefined,
               }}
             />
-            {/* Where the log goes. It leads the field: pick the meal,
-                then say what. */}
-            <FoodMealChip
-              meal={targetMeal}
-              onChange={onTargetMeal}
-              onOpen={() => setSuggestionsActive(false)}
-            />
             {/* The pencil is a manual-entry shortcut — a 44px button
-                between the meal and the text. The named way to the same
-                form is the Quick add row in the focused box's list
-                (Mob2, call 4); the dropdown's no-results row offers it
-                as Log manually. It is there while the field is at rest
-                and gives its 44px to the text once the person is typing:
-                beside the Breakfast chip on a 375px phone the text has
-                123px with it and 159px without. In the narrow layout it
-                leads the text's row, under the chip: on the chip's row
-                the chip, the pencil and the camera did not fit a 320px
-                phone at twice the text size, and the camera took a row
-                of its own until the field was tapped, 44px of page that
-                came and went. */}
+                that leads the field. The named way to the same form is
+                the Quick add row in the focused box's list (Mob2, call
+                4); the dropdown's no-results row offers it as Log
+                manually. It is there while the field is at rest and
+                goes once the person is typing, when the text starts at
+                the field's own 12px inset as in any text box. */}
             {!typing && (
               <button
                 type="button"
@@ -245,18 +218,11 @@ function FoodComposerCard({
                   onManualOpen();
                 }}
                 aria-label="Enter manually"
-                className="relative z-[1] size-[44px] shrink-0 self-center inline-flex items-center justify-center rounded-lg text-muted-foreground active:scale-90 transition-all @max-[19.5em]:order-3"
+                className="relative z-[1] size-[44px] shrink-0 self-center inline-flex items-center justify-center rounded-lg text-muted-foreground active:scale-90 transition-all"
               >
                 <PenLine className="size-4" />
               </button>
             )}
-            {/* The narrow layout's line break: the chip and the camera
-                above it, the pencil and the text below. */}
-            <span
-              aria-hidden="true"
-              data-row-break=""
-              className="hidden h-0 basis-full @max-[19.5em]:order-2 @max-[19.5em]:block"
-            />
             <textarea
               ref={inputRef}
               value={nlInput}
@@ -288,51 +254,39 @@ function FoodComposerCard({
               maxLength={500}
               /* min-h-[48px]: the row's height, the camera's at its
                  end. A floor, not a height, so a line of larger text on
-                 the phone still fits; the chip, the pencil and the
-                 camera stay in px, as iOS keeps a control's size when
-                 the text grows. `field-sizing-content` grows the field a
-                 line when what is typed wraps, up to max-h-40; where it
-                 is unsupported the field stays one line. py-[14px]
-                 centres one 20px line in the 48px row. `block`, because
-                 an inline textarea sits on a text baseline and leaves a
-                 gap under it.
+                 the phone still fits; the pencil and the camera stay in
+                 px, as iOS keeps a control's size when the text grows.
+                 `field-sizing-content` grows the field a line when what
+                 is typed wraps, up to max-h-40; where it is unsupported
+                 the field stays one line. py-[14px] centres one 20px
+                 line in the 48px row. `block`, because an inline
+                 textarea sits on a text baseline and leaves a gap under
+                 it.
 
                  The text box draws no box of its own: the layer under
-                 it does, so the box takes in the meal chip, the pencil
-                 and the camera too. The right edge clears the send
-                 button only while there is text for it to send.
-
-                 It shares the row with the chip, the pencil and the
-                 camera while the composer's row is 19.5em wide (a 375px
-                 phone at the designed text size is 21em, a 320px one
-                 18em), and takes the row under the chip below that: on
-                 a 320px phone, and at larger text. There it comes last,
-                 after the camera, the break and the pencil, and has the
-                 field's own 12px inset once the pencil has gone. The
-                 placeholder is one line and ends in "…"
-                 if it does not fit: it changes every few seconds, and a
-                 longer example that wrapped would move the page each
-                 time. */
+                 it does, so the box takes in the pencil and the camera
+                 too. The right edge clears the send button only while
+                 there is text for it to send. The placeholder is one
+                 line and ends in "…" if it does not fit: it changes
+                 every few seconds, and a longer example that wrapped
+                 would move the page each time. */
               className={cn(
-                "relative z-[1] block min-h-[48px] max-h-40 min-w-0 flex-1 basis-[7em] field-sizing-content resize-none border-0 bg-transparent py-[14px] text-sm text-foreground placeholder:overflow-hidden placeholder:text-ellipsis placeholder:whitespace-nowrap @max-[19.5em]:order-4",
-                typing ? "pl-2.5 @max-[19.5em]:pl-3" : "pl-0.5",
-                nlInput.trim() ? "pr-11" : "pr-1 @max-[19.5em]:pr-3"
+                "relative z-[1] block min-h-[48px] max-h-40 min-w-0 flex-1 field-sizing-content resize-none border-0 bg-transparent py-[14px] text-sm text-foreground placeholder:overflow-hidden placeholder:text-ellipsis placeholder:whitespace-nowrap",
+                typing ? "pl-3" : "pl-0.5",
+                nlInput.trim() ? "pr-11" : "pr-1"
               )}
               /* The global rule for a plain text box draws a focus ring
                  on it; this one's is the layer's. */
               style={{ outline: "none", boxShadow: "none" }}
             />
             {/* Send is there only while there is text to send. It sits
-                at the end of the text: before the camera on one row, so
-                the camera never moves under a thumb, and at the end of
-                the text's own row in the narrow layout, level with its
-                last line (the row is one 1.25rem line and 28px of
-                padding, and send is 32px). It is sized in px like the
+                at the end of the text, before the camera, so the camera
+                never moves under a thumb. It is sized in px like the
                 field's other controls: in rem it was 64px at twice the
-                text size and reached up into the camera's row. Its 44px
-                tap area stops where the camera's begins. */}
+                text size. Its 44px tap area stops where the camera's
+                begins. */}
             {nlInput.trim() && (
-              <div className="absolute right-[54px] top-1/2 z-[2] flex -translate-y-1/2 items-center @max-[19.5em]:top-auto @max-[19.5em]:right-[6px] @max-[19.5em]:bottom-[calc(0.625rem-2px)] @max-[19.5em]:translate-y-0">
+              <div className="absolute right-[54px] top-1/2 z-[2] flex -translate-y-1/2 items-center">
                 <button
                   type="button"
                   onClick={() => {
@@ -362,8 +316,7 @@ function FoodComposerCard({
                 meal". It is the only camera on the page.
 
                 It stays put while there is text: the send button comes
-                in before it. In the narrow layout it ends the chip's
-                row.
+                in before it.
 
                 Every account gets the same control. A locked account
                 (no photo scans on its tier) opens the scanner on
@@ -380,7 +333,7 @@ function FoodComposerCard({
                 haptic();
                 scanOverrides.onClick(e.currentTarget.getBoundingClientRect());
               }}
-              className="relative z-[1] size-[48px] self-center text-nutrition-strong hover:bg-transparent @max-[19.5em]:order-1 @max-[19.5em]:ml-auto"
+              className="relative z-[1] size-[48px] shrink-0 self-center text-nutrition-strong hover:bg-transparent"
             />
           </div>
         </div>

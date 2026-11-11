@@ -155,11 +155,9 @@ describe("Food — the usual row", () => {
         <Food />
       </MemoryRouter>
     );
-    // Back-filling yesterday: changing day clears the chosen meal.
+    // Back-filling yesterday: on another day no meal is set for a log,
+    // so the row's own slot is the one it has to carry.
     fireEvent.click(screen.getByRole("button", { name: "Previous day" }));
-    expect(
-      screen.getByRole("button", { name: "Choose a meal" })
-    ).toHaveTextContent(/^Meal$/);
 
     const row = screen.getByRole("group", {
       name: "Your usual at snack time",

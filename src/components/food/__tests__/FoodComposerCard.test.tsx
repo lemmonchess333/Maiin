@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from "vitest";
-import { act, render, screen, within, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
 import { createRef } from "react";
 
 vi.mock("framer-motion", () => ({
@@ -38,9 +38,6 @@ function renderComposer(over: Record<string, any> = {}) {
     placeholderPrompt: "Search food or describe a meal",
     onParse: vi.fn(),
     inputRef: createRef<HTMLTextAreaElement>(),
-    targetMeal: null,
-    setTargetMeal: vi.fn(),
-    onTargetMeal: vi.fn(),
     showSuggestions: false,
     suggestions: [],
     offResults: [],
@@ -163,29 +160,24 @@ describe("FoodComposerCard — the camera at the end of the field", () => {
     expect(field.parentElement!.contains(send)).toBe(true);
     expect(lastControl()).toHaveAccessibleName("Scan a meal");
     expect(send).toHaveClass("text-nutrition-strong");
-    // Before the camera on one row; at the end of the text's own row in
-    // the narrow layout.
-    expect(send.parentElement).toHaveClass(
-      "right-[54px]",
-      "@max-[19.5em]:right-[6px]",
-      "@max-[19.5em]:bottom-[calc(0.625rem-2px)]"
-    );
+    // Before the camera, on the one row.
+    expect(send.parentElement).toHaveClass("right-[54px]");
     // In px, like the field's other controls: in rem it was 64px at
-    // twice the text size and reached into the camera's row.
+    // twice the text size.
     expect(send).toHaveClass("p-[6px]", "before:-inset-[6px]");
     expect(send.querySelector("svg")).toHaveClass("size-[20px]");
     // The text clears send only while send is there.
     expect(field).toHaveClass("pr-11");
   });
 
-  it('no cancel control: the chip owns the meal, and the field never says "Adding to"', () => {
+  it('no cancel control, and the field never says "Adding to"', () => {
     /* The field used to carry an X ("Cancel adding to Dinner") beside
        the camera whenever a meal was targeted and the input empty. An X
        in an empty field reads as "clear", and clearing nothing did
-       nothing visible. The meal chip says where a log goes, so the X and
-       the "Adding to…" placeholder that went with it are gone: the chip
-       says where, the placeholder shows what. */
-    renderComposer({ targetMeal: "dinner", nlInput: "" });
+       nothing visible. The field names no meal now, so the X and the
+       "Adding to…" placeholder that went with it are gone: the
+       placeholder shows what a log can look like. */
+    renderComposer({ nlInput: "" });
     expect(screen.queryByRole("button", { name: /cancel adding/i })).toBeNull();
     const field = screen.getByRole("textbox", { name: "What did you eat" });
     expect(field).toHaveAttribute(
@@ -195,95 +187,47 @@ describe("FoodComposerCard — the camera at the end of the field", () => {
     expect(screen.getByRole("button", { name: "Scan a meal" })).toBeTruthy();
   });
 
-  it("the meal chip leads the field, inside its box, with no row of meals above", () => {
-    /* Food11 call 3: pick the meal, then say what, in one field. The
-       chip precedes the text box in document order and shares its box;
-       the row of four meals that headed the field is gone. */
-    const { container } = renderComposer({ targetMeal: "lunch" });
-    const chip = screen.getByRole("button", {
-      name: "Add to Lunch. Change meal",
-    });
-    const field = screen.getByRole("textbox", { name: "What did you eat" });
+  it("asks for no meal: no chip, no menu and no row of meals", () => {
+    /* The owner, 11 November 2026. The clock files a log under a meal
+       and the sheet a diary row opens moves it. A row of four meals
+       headed the field until Food11; one chip with a menu stood in it
+       for a day after. */
+    const { container } = renderComposer();
     expect(
-      chip.compareDocumentPosition(field) & Node.DOCUMENT_POSITION_FOLLOWING,
-      "the chip must come before the field"
-    ).toBeTruthy();
-    const box = container.querySelector("[data-field-box]")!;
-    expect(box.parentElement!.contains(chip)).toBe(true);
-    expect(box.parentElement!.contains(field)).toBe(true);
+      screen.queryByRole("button", { name: /change meal|choose a meal/i })
+    ).toBeNull();
+    expect(screen.queryByRole("menu")).toBeNull();
     expect(screen.queryByRole("radiogroup")).toBeNull();
     expect(screen.queryByText(/^add to$/i)).toBeNull();
+    expect(container).not.toHaveTextContent(/Breakfast|Lunch|Snacks|Dinner/);
   });
 
-  it("the pencil and the text take the row under the chip on a narrow phone and at larger text", () => {
-    // 19.5em of composer row: a 375px phone at the designed text size
-    // is 21em, a 320px one 18em. Measured on the row, since a container
-    // cannot style itself. Below it a break splits the field in two:
-    // the chip and the camera above, the pencil and the text below.
-    const { container } = renderComposer();
+  it("is one row at every width: nothing wraps and nothing is reordered", () => {
+    /* The chip, the pencil and the camera did not fit a 320px phone
+       beside the text, so the field broke into two rows below 19.5em of
+       width, with its own order, a break element and a second place for
+       send. Without the chip the pencil and the camera are 92px between
+       them and the text has 196px at 320. */
+    const { container, rerender, props } = renderComposer();
+    const row = container.querySelector('[data-guide-anchor="food-composer"]')!;
     const field = screen.getByRole("textbox", { name: "What did you eat" });
-    expect(field.parentElement).toHaveClass("flex-wrap");
-    expect(
-      container.querySelector('[data-guide-anchor="food-composer"]')
-    ).toHaveClass("@container");
-    const rowBreak = container.querySelector("[data-row-break]")!;
-    expect(rowBreak).toHaveClass(
-      "hidden",
-      "h-0",
-      "basis-full",
-      "@max-[19.5em]:block",
-      "@max-[19.5em]:order-2"
-    );
-    expect(rowBreak.parentElement).toBe(field.parentElement);
-    // The narrow order: the chip, the camera at the row's end, the
-    // break, the pencil, the text.
-    expect(screen.getByRole("button", { name: "Scan a meal" })).toHaveClass(
-      "@max-[19.5em]:order-1",
-      "@max-[19.5em]:ml-auto"
-    );
-    expect(screen.getByRole("button", { name: "Enter manually" })).toHaveClass(
-      "@max-[19.5em]:order-3"
-    );
-    expect(field).toHaveClass("flex-1", "basis-[7em]", "@max-[19.5em]:order-4");
+    expect(row).not.toHaveClass("@container");
+    expect(field.parentElement).not.toHaveClass("flex-wrap");
+    expect(container.querySelector("[data-row-break]")).toBeNull();
+    rerender(<FoodComposerCard {...(props as any)} nlInput="2 eggs" />);
+    for (const el of [row, ...row.querySelectorAll("*")]) {
+      expect(el.getAttribute("class") ?? "").not.toMatch(/@max-\[|\border-\d/);
+    }
   });
 
-  it("keeps the field one height when it is tapped, in the narrow layout too", () => {
-    /* The pencil goes while the person types. On the chip's row that
-       let the camera drop back beside the chip on a 320px phone at
-       twice the text size, and the field lost a row as it was tapped.
-       On the text's row its going only widens the text, which takes the
-       field's own inset in its place. */
+  it("the text takes the field's own inset once the pencil has gone", () => {
     const { rerender, props } = renderComposer();
     const field = () =>
       screen.getByRole("textbox", { name: "What did you eat" });
     expect(field()).toHaveClass("pl-0.5");
-    expect(field()).not.toHaveClass("@max-[19.5em]:pl-3");
     rerender(<FoodComposerCard {...(props as any)} inputFocused />);
     expect(screen.queryByRole("button", { name: "Enter manually" })).toBeNull();
-    expect(field()).toHaveClass("pl-2.5", "@max-[19.5em]:pl-3");
-  });
-
-  it("draws the meal chip's layer above the text box and send, so the open menu takes its own taps", () => {
-    /* The menu and the layer that catches a tap outside it are drawn in
-       the chip's box. At the text box's level the text box, which comes
-       later, lay over the open menu in the narrow layout (the text is
-       the row under the chip) and took the taps meant for the first
-       meals. jsdom has no layout: this pins the levels, and the
-       large-text capture spec picks a meal from the menu at 320px. */
-    renderComposer({ targetMeal: "lunch", nlInput: "2 eggs" });
-    expect(
-      screen.getByRole("button", { name: "Add to Lunch. Change meal" })
-        .parentElement
-    ).toHaveClass("z-[3]");
-    expect(
-      screen.getByRole("textbox", { name: "What did you eat" })
-    ).toHaveClass("z-[1]");
-    expect(
-      screen.getByRole("button", { name: "Log meal" }).parentElement
-    ).toHaveClass("z-[2]");
-    expect(screen.getByRole("button", { name: "Scan a meal" })).toHaveClass(
-      "z-[1]"
-    );
+    expect(field()).toHaveClass("pl-3");
   });
 
   it("keeps the example to one line, so a longer one cannot move the page", () => {
@@ -300,8 +244,8 @@ describe("FoodComposerCard — the camera at the end of the field", () => {
   });
 
   it("the text box is the row's 48px and draws no box of its own", () => {
-    /* The field's box is a layer under the chip, the pencil, the text
-       and the camera, so the text box is the full height of the row and
+    /* The field's box is a layer under the pencil, the text and the
+       camera, so the text box is the full height of the row and
        level with the camera (companion-food.capture.spec.ts measures
        the two against each other). */
     const { container } = renderComposer();
@@ -332,14 +276,13 @@ describe("FoodComposerCard — visible manual entry", () => {
   it("opens manual entry from the pencil in the field — one 44px control, no separate button", () => {
     /* "Enter manually" was a ghost button orphaned two rows below the
        field while a decorative pencil sat in it. The pencil is the
-       button now, between the meal chip and the text; the capture spec
-       that clicks by name still finds it. */
+       button now, leading the field; the capture spec that clicks by
+       name still finds it. */
     renderComposer();
     const pencil = screen.getByRole("button", { name: "Enter manually" });
     expect(pencil).toHaveClass("size-[44px]", "shrink-0");
-    // On the text's row in the narrow layout, never left out: the
-    // large-text capture spec opens manual entry by it at every size.
-    expect(pencil).toHaveClass("@max-[19.5em]:order-3");
+    // Never left out at a width: the large-text capture spec opens
+    // manual entry by it at every size.
     expect(pencil.className).not.toMatch(/:hidden/);
     const field = screen.getByRole("textbox", { name: "What did you eat" });
     expect(
@@ -354,14 +297,14 @@ describe("FoodComposerCard — visible manual entry", () => {
     ["in the field", { inputFocused: true }],
     ["with something written", { nlInput: "2 eggs" }],
   ])("gives the pencil's 44px to the text while typing (%s)", (_, over) => {
-    // Beside the Breakfast chip on a 375px phone the text has 123px with
-    // the pencil and 159px without. Manual entry stays in the focused
-    // box's list (Quick add) and its no-results row.
+    // The text then starts at the field's edge, as in any text box.
+    // Manual entry stays in the focused box's list (Quick add) and its
+    // no-results row.
     renderComposer(over);
     expect(screen.queryByRole("button", { name: "Enter manually" })).toBeNull();
     expect(
       screen.getByRole("textbox", { name: "What did you eat" })
-    ).toHaveClass("pl-2.5");
+    ).toHaveClass("pl-3");
   });
 
   it("opens manual entry without a search or a scan", () => {
@@ -382,27 +325,11 @@ describe("FoodComposerCard — visible manual entry", () => {
     expect(onManualOpen).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps meal selection separate from scan and manual entry", () => {
-    renderComposer({ targetMeal: "dinner" });
-    // Three controls and a text box: the meal chip, the manual entry
-    // pencil and the camera. No button is a bare meal name until
-    // the chip's menu is open.
-    expect(
-      screen.queryByRole("button", {
-        name: /^(Breakfast|Lunch|Snacks|Dinner)$/,
-      })
-    ).toBeNull();
+  it("holds two controls and a text box at rest: the pencil and the camera", () => {
+    renderComposer();
     expect(
       screen.getAllByRole("button").map((b) => b.getAttribute("aria-label"))
-    ).toEqual(["Add to Dinner. Change meal", "Enter manually", "Scan a meal"]);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add to Dinner. Change meal" })
-    );
-    const meals = screen.getByRole("menu", { name: "Add to meal" });
-    expect(within(meals).getAllByRole("menuitemradio")).toHaveLength(4);
-    expect(
-      within(meals).getByRole("menuitemradio", { name: "Dinner" })
-    ).toHaveAttribute("aria-checked", "true");
+    ).toEqual(["Enter manually", "Scan a meal"]);
   });
 });
 

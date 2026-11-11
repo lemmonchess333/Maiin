@@ -3,6 +3,7 @@
  * on the page, rather than in its component alone.
  */
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -16,8 +17,11 @@ import type { Meal } from "@/hooks/useMeals";
 
 const api = vi.hoisted(() => ({
   meals: [] as Meal[],
-  /** The meal the page opens on. Null leaves it to the clock. */
+  /** The meal the clock says. Null leaves it to the real rule. */
   openingMeal: null as "breakfast" | "lunch" | "snacks" | "dinner" | null,
+  /** The hour the page's clock reads, and who is listening for it. */
+  hour: 12,
+  hourListeners: new Set<() => void>(),
   /** The hours the pantry was asked for, in order. */
   pantryHours: [] as number[],
   favourites: [] as Array<Record<string, unknown>>,
@@ -63,9 +67,23 @@ vi.mock("@/hooks/useMeals", () => ({
     editMeal: api.editMeal,
   }),
 }));
-/* The meal the page opens on is the clock's guess. A test of what
+/* The meal a log goes to is the one the clock says. A test of what
    follows from the meal sets it, so it does not depend on the hour the
-   suite runs at, or on how the composer lets the meal be changed. */
+   suite runs at; `clockMovesTo` then moves the page's clock, which is
+   the only thing that changes the meal. */
+vi.mock("@/hooks/useLocalHour", async () => {
+  const { useSyncExternalStore } = await import("react");
+  return {
+    useLocalHour: () =>
+      useSyncExternalStore(
+        (listener) => {
+          api.hourListeners.add(listener);
+          return () => api.hourListeners.delete(listener);
+        },
+        () => api.hour
+      ),
+  };
+});
 vi.mock("@/components/food/mealConstants", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/components/food/mealConstants")>();
@@ -187,6 +205,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   api.meals = [];
   api.openingMeal = null;
+  api.hour = 12;
   api.pantryHours = [];
   api.favourites = [];
   api.createMealEntry.mockResolvedValue({ id: "added" });
@@ -224,10 +243,13 @@ function eightRecentFoods(): Meal[] {
   return out;
 }
 
-/** Pick a meal from the composer's chip and its menu. */
-function chooseMeal(name: string) {
-  fireEvent.click(screen.getByRole("button", { name: /change meal$/i }));
-  fireEvent.click(screen.getByRole("menuitemradio", { name }));
+/** The clock comes round to another meal while the page is open. */
+function clockMovesTo(meal: "breakfast" | "lunch" | "dinner") {
+  api.openingMeal = meal;
+  act(() => {
+    api.hour = { breakfast: 8, lunch: 13, dinner: 19 }[meal];
+    api.hourListeners.forEach((notify) => notify());
+  });
 }
 
 function quickAddNames(): string[] {
@@ -299,7 +321,7 @@ describe("Food — the Quick add list's More row", () => {
  * to. Food 1 is the most logged food, always at lunch; Food 2 is logged
  * a third as often, always at breakfast.
  */
-describe("Food — the Quick add list follows the chosen meal", () => {
+describe("Food — the Quick add list follows the meal the clock says", () => {
   function lunchAndBreakfastFoods(): Meal[] {
     const out: Meal[] = [];
     for (let n = 1; n <= 9; n++) {
@@ -336,18 +358,37 @@ describe("Food — the Quick add list follows the chosen meal", () => {
     expect(quickAddNames()).toEqual(["Food 1", "Food 2"]);
   });
 
-  it("ranks afresh when the meal is changed, and back again", () => {
+  it("ranks afresh when the clock moves to another meal, and back again", () => {
     api.meals = lunchAndBreakfastFoods();
     api.openingMeal = "breakfast";
     renderFood();
     fireEvent.focus(screen.getByLabelText("What did you eat"));
     expect(quickAddNames()).toEqual(["Food 2", "Food 1"]);
-    chooseMeal("Lunch");
+    clockMovesTo("lunch");
     fireEvent.focus(screen.getByLabelText("What did you eat"));
     expect(quickAddNames()).toEqual(["Food 1", "Food 2"]);
-    chooseMeal("Breakfast");
+    clockMovesTo("breakfast");
     fireEvent.focus(screen.getByLabelText("What did you eat"));
     expect(quickAddNames()).toEqual(["Food 2", "Food 1"]);
+  });
+
+  it("files a log under the meal the clock says, and under the next meal once the clock has moved", async () => {
+    api.meals = lunchAndBreakfastFoods();
+    api.openingMeal = "breakfast";
+    renderFood();
+    fireEvent.focus(screen.getByLabelText("What did you eat"));
+    fireEvent.click(screen.getAllByRole("button", { name: /^Food \d/ })[0]);
+    await waitFor(() => expect(api.createMealEntry).toHaveBeenCalledTimes(1));
+    expect(api.createMealEntry.mock.calls[0][1]).toMatchObject({
+      meal: "breakfast",
+    });
+    clockMovesTo("dinner");
+    fireEvent.focus(screen.getByLabelText("What did you eat"));
+    fireEvent.click(screen.getAllByRole("button", { name: /^Food \d/ })[0]);
+    await waitFor(() => expect(api.createMealEntry).toHaveBeenCalledTimes(2));
+    expect(api.createMealEntry.mock.calls[1][1]).toMatchObject({
+      meal: "dinner",
+    });
   });
 
   it("asks the pantry for the meal's time of day, not the clock's", () => {
@@ -355,7 +396,7 @@ describe("Food — the Quick add list follows the chosen meal", () => {
     renderFood();
     expect(new Set(api.pantryHours)).toEqual(new Set([8]));
     api.pantryHours = [];
-    chooseMeal("Dinner");
+    clockMovesTo("dinner");
     expect(api.pantryHours.at(-1)).toBe(19);
   });
 });
