@@ -96,9 +96,31 @@ What that shows:
 
 1. **Pull A is 24 sets across 12 lifts and the app prices it at 93 to 99
    minutes** (`evidence/owner-pull-a.txt`). The builder's own Pull A for six
-   days is 3 lifts. The other nine were added, by you or by an earlier build,
-   and the re-fit then cut all twelve to 2 sets
+   days is 3 lifts. The re-fit cut all twelve to 2 sets
    (`sessionFit.ts:396-422`: "nothing is dropped").
+
+   STATUS 2026-11-11: the owner says he did not add the other lifts. No path
+   read in this pass grows a day by seven lifts on its own: the twice-a-week
+   additions add small direct lifts only (`weeklyFrequency.ts`), the retired
+   top-up added sets, the migrations add a calf raise and a lateral raise, a
+   rebuild returns template-sized days, a lift added in a session never
+   reaches the plan (`sessionAdd.ts`), and finishing a session maps over the
+   stored lifts (`sessionCompletion.ts:217-227`). The seven lifts after Preacher
+   Curl (Deadlift, Tricep Dips, Barbell Squat, Front Squat, Romanian Deadlift,
+   Seated Calf Raise, Cable Crunch) all read a flat 10 reps (the dips 9, one
+   step on), where the day's first five read 12, 12, 12, 8-10 and 15. A flat 10
+   is what the Add command has given every lift since at least September
+   (`useProgram.ts`, `addExercises`: `sets: 3, reps: 10`); the generator's
+   lifts take ranges or 12s and 15s. So the evidence points at one batch Add at
+   some time, by a tap or by a fault that fired the command. It is not proved.
+   The stored plan would settle it (an added lift's `instanceId` is
+   `cmd-<commandId>-<n>`, and the server keeps a dated receipt per command at
+   `users/{uid}/programState/current/commandReceipts`), and so would the
+   workouts export, which dates the first session that held them. Whatever
+   the cause, the plan kept them because a plan is preserved whenever the day
+   count is unchanged (`planBuilder.ts:402-412`), and nothing since has told
+   him the day runs to twice its length.
+
 2. **Legs A is the 45-minute plan.** Ten sets priced at 44 minutes is 4.4
    minutes a set. At 45 minutes the builder gives every lift 2 sets, in every
    plan it makes (`lifting-session-shape.md`).
