@@ -15,14 +15,14 @@ import {
   isSignInCancelled,
 } from "@/lib/authErrors";
 import { AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import appIconUrl from "@/assets/brand/app-icon.svg";
 import { Button } from "@/components/ui/Button";
 import BootSteps from "@/components/BootSteps";
 import { isNativePlatform } from "@/lib/platform";
 import { IconButton } from "@/components/ui/IconButton";
-import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import InviteNote from "@/components/onboarding/InviteNote";
-import { FoodTabIcon } from "@/components/icons/TabIcons";
+import AuthLockup from "@/components/auth/AuthLockup";
+import WelcomePreview from "@/components/auth/WelcomePreview";
+import SignInFigure from "@/components/auth/SignInFigure";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { readLastSignInMethod, type SignInMethod } from "@/lib/signInMethod";
 
@@ -282,70 +282,24 @@ export default function Login() {
   if (view === "welcome") {
     return (
       <div className="ds-auth-shell">
-        <div className="ds-auth-card ds-page-stack">
-          <div className="text-center space-y-3">
-            <img
-              src={appIconUrl}
-              alt=""
-              className="ds-auth-logo mx-auto overflow-hidden"
-            />
-            <div>
-              {/* The name as a wordmark beside the mark, one of the two
-                  places DESIGN_GUIDE §4 sets text in capitals. */}
-              <p className="text-xs font-bold uppercase tracking-[0.28em] text-lifting-strong">
-                Tropos
-              </p>
-              <h1 className="text-h2 font-extrabold text-foreground mt-1 text-balance">
-                Your training and food, planned together
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Answer a few questions and get a week of training and a daily
-                calorie target that fit you.
-              </p>
-            </div>
+        <div className="ds-auth-page gap-4">
+          <AuthLockup />
+          <div>
+            <h1 className="text-h1 font-extrabold leading-[1.1] tracking-tight text-foreground text-balance">
+              Your training and food, planned together
+            </h1>
+            <p className="mt-2.5 text-sm text-muted-foreground">
+              Answer a few questions and get a week of training and a daily
+              calorie target that fit you.
+            </p>
           </div>
           {/* Soc15: arrived from a friend's invite link. */}
           <InviteNote />
-          {/* Each row's picture gives way under 9em (double text on a
-              narrow phone), leaving the words the row. Wide-first. */}
-          <ul className="@container space-y-2" aria-label="What Tropos plans">
-            <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
-              <span className="shrink-0 @max-[9em]:hidden">
-                <ChoiceArt art={{ kind: "exercise", id: "db-curl" }} />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">Lifting</p>
-                <p className="text-xs text-muted-foreground">
-                  Sessions for your days, gym and experience
-                </p>
-              </div>
-            </li>
-            <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
-              <span className="shrink-0 text-running-strong @max-[9em]:hidden">
-                <ChoiceArt art={{ kind: "route", distance: 3 }} />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">Running</p>
-                <p className="text-xs text-muted-foreground">
-                  Run when you like, or train for a race
-                </p>
-              </div>
-            </li>
-            <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
-              <span
-                aria-hidden="true"
-                className="size-12 shrink-0 rounded-xl bg-muted flex items-center justify-center text-nutrition-strong @max-[9em]:hidden"
-              >
-                <FoodTabIcon active={false} className="size-7" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">Food</p>
-                <p className="text-xs text-muted-foreground">
-                  A calorie target worked out from your numbers
-                </p>
-              </div>
-            </li>
-          </ul>
+          {/* The screen's picture. It takes the height left over. */}
+          <WelcomePreview />
+          {/* The brand's filled button, as Create account, Sign In and
+              setup's Continue are: one colour for the way in, from here
+              to the plan. */}
           <div className="space-y-2">
             <Button fullWidth size="md" onClick={() => setView("signUp")}>
               Get started
@@ -383,25 +337,21 @@ export default function Login() {
 
   return (
     <div className="ds-auth-shell">
-      <div className="ds-auth-card ds-page-stack">
-        {/* Logo: the app icon itself, as on the home screen. */}
-        <div className="text-center space-y-3">
-          <img
-            src={appIconUrl}
-            alt=""
-            className="ds-auth-logo mx-auto overflow-hidden"
-          />
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-lifting-strong">
-              Tropos
-            </p>
-            <h1 className="text-h2 font-extrabold text-foreground mt-1">
+      <div className="ds-auth-page ds-page-stack">
+        {/* The lockup, then the heading at the foot of the lifter. The
+            lifter stays mounted between Sign in and Sign up, so it does
+            not play its rep again on the way across. */}
+        <div className="signin-head">
+          <div className="signin-row">
+            <AuthLockup />
+            <SignInFigure />
+            <h1 className="signin-heading text-h1 font-extrabold leading-[1.1] tracking-tight text-foreground text-balance">
               {isSignUp ? "Create your account" : "Welcome back"}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Track food, lifting, running, and progress in one place.
-            </p>
           </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Track food, lifting, running, and progress in one place.
+          </p>
         </div>
 
         {/* Soc15: arrived from a friend's invite link; signing up keeps
