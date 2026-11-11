@@ -62,12 +62,15 @@ export function useFoodPhotoUrls(
   mealIds: readonly string[]
 ): Record<string, string> {
   const uid = useUid();
-  const [urls, setUrls] = useState<Record<string, string>>({});
+  const [snapshot, setSnapshot] = useState<{
+    uid: string;
+    urls: Record<string, string>;
+  } | null>(null);
   const mountedRef = useRef(true);
 
   // Stable dependency: the hook is called with a fresh array every
   // render, so depending on the array identity would loop forever.
-  const key = useMemo(() => [...mealIds].sort().join(","), [mealIds]);
+  const key = useMemo(() => JSON.stringify([...mealIds].sort()), [mealIds]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -77,9 +80,10 @@ export function useFoodPhotoUrls(
   }, []);
 
   useEffect(() => {
-    if (!uid || !key) return;
+    if (!uid) return;
     let cancelled = false;
-    const ids = key.split(",").filter(Boolean);
+    const ids: string[] = JSON.parse(key);
+    if (!ids.length) return;
 
     void (async () => {
       const seeded: Record<string, string> = {};
@@ -90,7 +94,10 @@ export function useFoodPhotoUrls(
         else misses.push(id);
       }
       if (Object.keys(seeded).length && !cancelled) {
-        setUrls((prev) => ({ ...prev, ...seeded }));
+        setSnapshot((prev) => ({
+          uid,
+          urls: { ...(prev?.uid === uid ? prev.urls : {}), ...seeded },
+        }));
       }
       if (!misses.length) return;
 
@@ -103,7 +110,10 @@ export function useFoodPhotoUrls(
         if (cancelled || !mountedRef.current) return;
         if (!src) continue;
         srcCache.set(`${uid}:${id}`, src);
-        setUrls((prev) => ({ ...prev, [id]: src }));
+        setSnapshot((prev) => ({
+          uid,
+          urls: { ...(prev?.uid === uid ? prev.urls : {}), [id]: src },
+        }));
       }
     })();
 
@@ -112,5 +122,13 @@ export function useFoodPhotoUrls(
     };
   }, [uid, key]);
 
-  return urls;
+  // Filter during render, not in an effect: another account or diary day
+  // must never get even one render of the previous scope's thumbnails.
+  return useMemo(() => {
+    if (!uid || snapshot?.uid !== uid) return {};
+    const ids: string[] = JSON.parse(key);
+    return Object.fromEntries(
+      ids.filter((id) => snapshot.urls[id]).map((id) => [id, snapshot.urls[id]])
+    );
+  }, [uid, key, snapshot]);
 }
