@@ -6,7 +6,8 @@ that it may be the orange, the sizing or the plainness. This is the critique
 (the `screen-critique` skill), the evidence, and three prototypes to pick from.
 
 **Picked (owner, 11 November 2026):** A's page, with the calorie wheel as it
-is today. Section 10 has it.
+is today. Section 10 has it. Section 11 has the research that followed, and the
+seven changes the owner then took.
 
 **Nothing in production changed.** This folder holds words, captures and the
 prototype's source.
@@ -525,8 +526,10 @@ name.
 
 ### Seven changes it supports
 
-All seven are on the canvas as its third row. Three have a switch on the
-first board of that row (goal, meal, pace).
+**Adopted.** On these seven the owner said: "Yes fold all seven in". They are in
+the Food11 lock, and the pick's boards on the canvas (its second row) now show
+them. Three have a switch on the first of those boards (goal, meal, pace) that
+shows the pick as it was before.
 
 1. **The target stays on the wheel: "kcal left of 2,200".** 5 of the 6 food
    apps with a ring or arc print the goal beside the number
@@ -552,14 +555,14 @@ first board of that row (goal, meal, pace).
    and [BitePal's meal chip](https://mobbin.com/screens/b4972476-48ad-491e-b136-83bd6eeb57b7). It
    frees 62 px for the diary and removes the control the owner first
    complained about. The cost: changing the meal takes two taps where it
-   took one. **This changes call 3 of Food11.**
+   took one. **This changed call 3 of Food11.**
 4. **A quicker log: about 0.6 s, not 0.9 s.** The flight in 400 ms, then the
    arc and the count in 350 ms starting at 250 ms. Nielsen Norman Group:
    "the duration of most animations should be in the range of 100–500 ms",
    with 400 ms "a very slow animation, to be used only for big movements
    across large screens", and "the more frequent the animation, the more
    subtle and shorter". Apple gives no number: brief, and never make people
-   wait. **This changes the times in call 6.**
+   wait. **This changed the times in call 6.**
 5. **The lap past the target gets an outlined head**, so it reads against
    the first lap. The only second lap in the same hue found is
    [Google Health's](https://mobbin.com/screens/59bc2882-bb6b-4964-aaa7-00defb0b42a4), and it
@@ -625,6 +628,29 @@ the camera and a short placeholder; the app's own placeholder is a short
 example such as "Eggs".
 
 Captures: `e-improved-*`.
+
+### The build plan, final
+
+One pull request each, with before and after captures and the
+`npm run score:screens` table. Nothing is built yet.
+
+1. **Header.** No title; the date bar is the header row and carries the
+   targets gear.
+2. **Composer.** The 48 px field with the meal chip, the text, the pencil and
+   the scan button; the chip's menu of four meals. `EditServingsSheet`'s
+   picker takes the neutral treatment.
+3. **Macros.** One row with no boxes.
+4. **Week strip.** Seven bars, edge to edge; the deeper orange in light.
+5. **Fill direction.** The wheel, the macro bars, the Details sheet and Home's
+   wheel fill with what is logged. Nothing logged is grey.
+6. **The wheel on the page.** Out of its card at 264 px, the label with the
+   target and the tap mark, the outlined head on the lap past the target,
+   Details under it.
+7. **Usual foods by meal.** Ranked for the chosen meal.
+8. **The flight, last.** 400 ms, then the arc and the count in 350 ms from
+   250 ms; its limits; nothing under reduced motion.
+9. **Checks.** The large-text spec for Food at 393 and 320 px, and a row in
+   `docs/qa/pre-launch-backlog.md` for what only a phone shows.
 
 ## The prototype's source
 

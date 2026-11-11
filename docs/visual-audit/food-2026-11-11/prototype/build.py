@@ -303,7 +303,7 @@ dot: meal === id ? "block" : "none",
 vis: meal === id ? "visible" : "hidden",
 pick: () => this.setState({ meal: id, mealOpen: false }),
 }));
-const FAST = (this.props.pace ?? "0.9 s") === "0.6 s";
+const FAST = (this.props.pace ?? "0.6 s") === "0.6 s";
 const add = (i) => () => {
 if (n !== i || heavy) return;
 this.setState({ n: i + 1, prev: i, k: reduced ? null : 0, open: false, where: where.slice(0, i).concat([meal]) });
@@ -756,9 +756,10 @@ out.ringOn = fillAt(n) > 0 ? 1 : 0;
 out.lapOff = (C * (1 - Math.max(0, Math.min(1, (logged - TARGET) / TARGET)))).toFixed(1);
 out.lapOn = over ? 1 : 0;
 out.flyCls = (this.props.flight ?? true) ? "" : "noflight";
-// After the research: the target stays on the wheel, one meal chip, a quicker log.
-const goalOn = (this.props.goal ?? "off") === "on";
-const chip = (this.props.meal ?? "track") === "chip";
+// From the research, adopted 11 November: the target stays on the wheel, one meal chip, a quicker log.
+// The three switches show the pick as it was before.
+const goalOn = (this.props.goal ?? "on") === "on";
+const chip = (this.props.meal ?? "chip") === "chip";
 out.wheelLabel = goalOn ? (over && mode === "left" ? "kcal over " : out.figureLabel + " of ") + fmt(TARGET) : out.figureLabel;
 // The app's own placeholder is a short rotating example ("Eggs"); with the chip in a 320 px field only that fits on one line.
 if (chip && w < 360) out.placeholder = "Eggs";
@@ -782,7 +783,7 @@ out["f" + (i + 1)] = { x: X.toFixed(0) + "px", y: Y.toFixed(0) + "px", fx: (fiel
 }
 """
 
-D_PROPS = '"goal":{"editor":"enum","options":["off","on"],"default":"off","section":"After the research"},"meal":{"editor":"enum","options":["track","chip"],"default":"track","section":"After the research"},"pace":{"editor":"enum","options":["0.9 s","0.6 s"],"default":"0.9 s","section":"After the research"},"ring":{"editor":"enum","options":["fills","as now"],"default":"fills","section":"The wheel"},"flight":{"editor":"boolean","default":true,"section":"The wheel"},'
+D_PROPS = '"goal":{"editor":"enum","options":["on","off"],"default":"on","section":"From the research"},"meal":{"editor":"enum","options":["chip","track"],"default":"chip","section":"From the research"},"pace":{"editor":"enum","options":["0.6 s","0.9 s"],"default":"0.6 s","section":"From the research"},"ring":{"editor":"enum","options":["fills","as now"],"default":"fills","section":"The wheel"},"flight":{"editor":"boolean","default":true,"section":"The wheel"},'
 
 D_BODY = part(HEADER) + part(D_HERO) + part(WEEK, 6) + part(MACROS, 8) + part(TRACK, 14) + part(FIELD, 8) + part(LOG, 14)
 
