@@ -468,6 +468,30 @@ select.ds-input:focus {
   height: calc(10 * var(--u));
   border-radius: 9999px;
 }
+/* A day's colour is its sport's, as a wash with a dot of the full
+   colour; a rest day is the neutral tile. The washes are set here and
+   not as `bg-lifting/20`: no words sit on them, and a tint written as a
+   class is read as one a label may sit on (tokenContrast.test.ts). */
+[data-day="lift"] > .welcome-cell {
+  background: hsl(var(--lifting) / 0.2);
+}
+[data-day="run"] > .welcome-cell {
+  background: hsl(var(--running) / 0.2);
+}
+[data-day="rest"] > .welcome-cell {
+  background: hsl(var(--muted));
+}
+[data-day="lift"] .welcome-dot,
+[data-key="lift"] > .welcome-key-dot {
+  background: hsl(var(--lifting));
+}
+[data-day="run"] .welcome-dot,
+[data-key="run"] > .welcome-key-dot {
+  background: hsl(var(--running));
+}
+[data-day="rest"] .welcome-dot {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
 .welcome-key {
   display: flex;
   gap: calc(14 * var(--u));

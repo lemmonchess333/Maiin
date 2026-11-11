@@ -19,12 +19,6 @@ const WEEK: readonly { day: string; kind: DayKind }[] = [
   { day: "S", kind: "rest" },
 ];
 
-const CELL: Record<DayKind, { cell: string; dot: string }> = {
-  lift: { cell: "bg-lifting/20", dot: "bg-lifting" },
-  run: { cell: "bg-running/20", dot: "bg-running" },
-  rest: { cell: "bg-muted", dot: "bg-muted-foreground/40" },
-};
-
 /** The example day and target. A 45-minute day holds four lifts (Lift21). */
 const EXAMPLE = { session: "Legs", minutes: 45, lifts: 4, calories: 2450 };
 
@@ -60,19 +54,19 @@ export default function WelcomePreview({ className }: { className?: string }) {
             {WEEK.map(({ day, kind }, i) => (
               <div key={i} className="welcome-day" data-day={kind}>
                 <span className="welcome-caption">{day}</span>
-                <span className={cn("welcome-cell", CELL[kind].cell)}>
-                  <span className={cn("welcome-dot", CELL[kind].dot)} />
+                <span className="welcome-cell">
+                  <span className="welcome-dot" />
                 </span>
               </div>
             ))}
           </div>
           <div className="welcome-key welcome-caption">
-            <span className="welcome-key-item">
-              <span className="welcome-key-dot bg-lifting" />
+            <span className="welcome-key-item" data-key="lift">
+              <span className="welcome-key-dot" />
               Lift
             </span>
-            <span className="welcome-key-item">
-              <span className="welcome-key-dot bg-running" />
+            <span className="welcome-key-item" data-key="run">
+              <span className="welcome-key-dot" />
               Run
             </span>
           </div>
