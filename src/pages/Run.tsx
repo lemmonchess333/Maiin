@@ -100,7 +100,6 @@ import { useGpsWarmup } from "@/hooks/useGpsWarmup";
 import GhostDeltaChip from "../components/run/GhostDeltaChip";
 import RouteSetupSection from "../components/run/RouteSetupSection";
 import type { SavedRouteSource } from "../lib/savedRoutes";
-import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useHeartRate } from "../hooks/useHeartRate";
 import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
 import { useWatchRunSwitch } from "@/hooks/useWatchRunSwitch";
@@ -191,6 +190,9 @@ function sessionSegmentsFor(
   seed: number
 ) {
   if (!config) return null;
+  /* A run begun from one of the three fixed guided workouts, before
+     Trim1 call 8 took them out of the setup. It carries its own steps, so
+     one still in flight when the app updates is finished as it began. */
   if (config.activityType === "guided") {
     return config.guidedWorkout
       ? segmentsFromGuided(config.guidedWorkout)
@@ -577,8 +579,8 @@ export default function Run() {
   );
   // STRUCT-SESS-02: ONE structure source for the in-run player — the
   // canonical segments from the plan prefill, or derived on the spot for a
-  // hand-built interval session. Guided runs keep their own player (and
-  // overlay) this slice.
+  // hand-built interval session. A stored guided run's own steps come
+  // through here too, and are drawn by the same step shell.
   const sessionSegments = useMemo(
     () => sessionSegmentsFor(runConfig, unit, cueSeed),
     [runConfig, unit, cueSeed]
@@ -2195,7 +2197,7 @@ export default function Run() {
             </div>
           ) : (
             // Freeform / rest / completed / ad-hoc → one-tap tile picker.
-            // Structured sessions (intervals/guided/race/route) and any run
+            // Structured sessions (intervals/race/route) and any run
             // on the treadmill live behind "More options" → the full modal.
             <RunTilePicker
               paceTable={paceTable}
@@ -2643,10 +2645,6 @@ export default function Run() {
               })()}
             </div>
 
-            {runConfig?.activityType === "guided" && sessionSegments && (
-              <GuidedRunOverlay player={player} />
-            )}
-
             <RunBottomSheet
               expandRequest={panelExpandRequest}
               elapsed={timer.elapsed}
@@ -2683,7 +2681,7 @@ export default function Run() {
               }}
               isInvalid={isInvalid}
               intervalDisplay={
-                sessionSegments && runConfig?.activityType !== "guided" ? (
+                sessionSegments ? (
                   <IntervalStepShell
                     player={player}
                     band={intervalBand}

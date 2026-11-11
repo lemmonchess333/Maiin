@@ -147,7 +147,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `savedWorkouts.ts`      | The one saved-workout reader: query, parse, day, queued ones   |
 | `gps.ts`                | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
 | `paceTrends.ts`         | Running pace trend detection (PR/improving/consistent)         |
-| `guidedRun.ts`          | Guided run logic & coaching                                    |
+| `guidedRun.ts`          | A run step's kinds and colours, and a stored guided workout    |
 | `weather.ts`            | Weather API integration for runs                               |
 | `privacyZones.ts`       | GPS privacy zone detection for runs                            |
 | `prTracking.ts`         | Personal record tracking system                                |
