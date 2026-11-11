@@ -88,8 +88,7 @@ interface ConfigSummary {
   /** `exerciseId × sets × reps @ weight`, per day. The prescription itself. */
   prescription: string[];
   /** Weekly sets per JUDGEMENT group, each read against its own per-group
-   *  goal band (taxonomy split). This is the tally the balancers and the
-   *  reconciler act on. */
+   *  goal band (taxonomy split). */
   volume: Record<string, string>;
 }
 
@@ -99,9 +98,8 @@ function summarise(
   goal: PrimaryGoal
 ): ConfigSummary {
   const { programState } = buildPlan(input(liftDays, equipment, goal));
-  // Judgement groups with per-group bands (taxonomy split) — the same
-  // classification the balancers and reconciler act on, so the ratchet
-  // below counts the violations the engine can actually see.
+  // Judgement groups with per-group bands (taxonomy split), the same
+  // classification the Weekly volume card reads.
   const tally = weeklyVolumeByJudgementMuscle(programState.workouts);
 
   const volume: Record<string, string> = {};
@@ -264,6 +262,27 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
                                                Focus of one row; the six
                                                configs it costs are six-day
                                                plans a few sets over.
+       (judged, 1:1)     52 over / —         — Lift21, loosened on purpose:
+                                               time sizes a built day and
+                                               nothing trims a week to the
+                                               bands (ADR-0013). The hour
+                                               the sweep builds now holds
+                                               15 to 18 sets where it held
+                                               11 to 17, and the readings
+                                               over are fed by indirect
+                                               sets: triceps from presses,
+                                               biceps, lats and rear delts
+                                               from rows, hamstrings from
+                                               squats. Lift21 counts those
+                                               at half; this unit counts
+                                               them whole until the bands
+                                               are re-read for the half
+                                               count, when this bound comes
+                                               down with them. Until then
+                                               it measures the gap between
+                                               the bands and the week; it
+                                               is not a list to shrink by
+                                               cutting sets.
      Tighten whenever it improves; the test fails the moment a change makes
      it worse in the CURRENT unit. */
   it("D-VOL: ceiling violations are ratcheted and must only shrink", () => {
@@ -272,7 +291,7 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
     ).length;
 
     expect(high, `${high} configs over a landmark ceiling`).toBeLessThanOrEqual(
-      26
+      52
     );
 
     // …and it is genuinely not solved, so the ratchet is never read as a pass.
@@ -314,7 +333,7 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
     // First-match-wins keyword matching over the display name. "fly"/"flye"
     // sit under horizontal_push, so `Reverse Flyes` and `Rear Delt Machine
     // Fly` — both PULL movements — classify as PUSH, corrupting the exact
-    // `balancePushPull` rail that exists to keep pull ≥ push for the shoulder.
+    // pull-to-push count that exists to keep pull ≥ push for the shoulder.
     // Asserted against the inference directly since the generator does not
     // surface the category in the prescription string.
     expect(inferMovementCategory("Reverse Flyes")).toBe("horizontal_push");

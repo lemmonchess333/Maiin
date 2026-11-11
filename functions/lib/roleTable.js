@@ -194,17 +194,31 @@ function roleReps(goal, role, experience, highRepIsolation) {
   return { sets, ...reps };
 }
 
+/** Mirror of roleTable.ts FLOOR_DEADLIFT_IDS. */
+const FLOOR_DEADLIFT_IDS = ["deadlift", "sumo-deadlift", "trap-bar-deadlift"];
+
+/** Mirror of roleTable.ts isFloorDeadlift. */
+function isFloorDeadlift(exerciseId) {
+  return FLOOR_DEADLIFT_IDS.includes(exerciseId);
+}
+
 /** Mirror of roleTable.ts roleRepsFor. */
 function roleRepsFor(goal, exercise, experience) {
-  return roleReps(
+  const floor = isFloorDeadlift(exercise && exercise.exerciseId);
+  const row = roleReps(
     goal,
-    exerciseRole(exercise),
+    floor ? "main" : exerciseRole(exercise),
     experience,
     HIGH_REP_SET.has(exercise && exercise.exerciseId)
   );
+  if (!floor || toExperience(experience) === "beginner") return row;
+  return row.top === undefined
+    ? { ...row, sets: Math.min(row.sets, 3) }
+    : { sets: Math.min(row.sets, 3), bottom: 5, top: 8 };
 }
 
 module.exports = {
+  FLOOR_DEADLIFT_IDS,
   HIGH_REP_EXERCISE_IDS,
   ISOLATION_EXERCISE_IDS,
   exerciseRole,

@@ -3,7 +3,6 @@ import {
   applyProgression,
   applyDeload,
   advanceWeek,
-  assignDayRoles,
   generateProgram,
   expectedDayCount,
   goalProfileFor,
@@ -19,6 +18,7 @@ import { exerciseBank } from "../variationBank";
 import { roleRepsFor } from "../roleTable";
 import { EXERCISES, isBodyweightExerciseId } from "@/lib/exercises";
 import type {
+  PrimaryGoal,
   ProgramExercise,
   ProgramState,
   WorkoutDay,
@@ -882,154 +882,78 @@ describe("splitRationale", () => {
   });
 });
 
-// Backlog #3 — day roles (N9 daily undulation). Compare same-structure days
-// across weekly targets: 1-day week is all-moderate, 3-day week is
-// [heavy, moderate, pump], so day A (heavy in the 3-day week) should sit 2
-// reps under its 1-day (moderate) twin, and day C mirrors +2 vs moderate.
-// The moderate day is the role table's (Lift4 (5)): an intermediate's Build
-// muscle main lifts start at 6. A beginner's sessions don't undulate, so
-// these plans are built for an intermediate.
-describe("day roles (backlog #3)", () => {
-  const mainRepsOf = (w: {
-    exercises: { isAccessory?: boolean; reps: number }[];
-  }) => w.exercises.filter((e) => e.isAccessory !== true).map((e) => e.reps);
+// Lift21: a day's role shifts the reps of a lift held as the main lift on
+// two days of the week, and the builders give each day a main lift of its
+// own. So a built week's reps are the role table's on every day. The shift
+// itself (heavy −2, pump +2, the hinge main exempt) is `represcribe.ts`'s,
+// for a plan that keeps day roles, and `represcribe.test.ts` pins it.
+describe("day roles on a built week (Lift21)", () => {
+  const built = (
+    days: number,
+    goal: PrimaryGoal,
+    experience: "beginner" | "intermediate" | "advanced"
+  ) =>
+    generateProgram(days, undefined, goal, undefined, undefined, experience)
+      .workouts;
 
-  it("keeps each session's role on the day, at every level", () => {
-    // A beginner's reps don't shift by role, but a level change can bring
-    // the shifts in, on the sessions the plan was built with.
+  it("makes every session moderate, at every level", () => {
     for (const experience of ["beginner", "intermediate"] as const) {
       for (const days of [1, 2, 3, 4, 5, 6]) {
-        const { workouts } = generateProgram(
-          days,
-          undefined,
-          "hypertrophy",
-          undefined,
-          undefined,
-          experience
-        );
         expect(
-          workouts.map((d) => d.dayRole),
+          built(days, "hypertrophy", experience).map((d) => d.dayRole),
           `${experience}, ${String(days)} days`
-        ).toEqual(assignDayRoles(workouts.length));
+        ).toEqual(Array.from({ length: days }, () => "moderate"));
       }
     }
   });
 
-  it("single-day weeks stay at the table's numbers", () => {
-    const one = generateProgram(
-      1,
-      undefined,
-      "hypertrophy",
-      undefined,
-      undefined,
-      "intermediate"
-    );
-    expect(mainRepsOf(one.workouts[0])).toContain(6);
+  it("gives every lift its role's reps, the same on every day", () => {
+    for (const goal of ["hypertrophy", "strength", "general"] as const) {
+      for (const experience of ["intermediate", "advanced"] as const) {
+        for (const days of [2, 3, 4, 5, 6]) {
+          for (const day of built(days, goal, experience)) {
+            for (const ex of day.exercises) {
+              if (ex.repUnit === "seconds") continue;
+              const label = `${goal} ${experience} ${String(days)}d ${day.dayName}: ${ex.exerciseId}`;
+              const bottom = roleRepsFor(goal, ex, experience).bottom;
+              // A bodyweight lift's target stops at its own ceiling.
+              expect(ex.reps, label).toBeLessThanOrEqual(bottom);
+              if (!isBodyweightExerciseId(ex.exerciseId))
+                expect(ex.reps, label).toBe(bottom);
+              expect(ex.baseReps, label).toBe(ex.reps);
+            }
+          }
+        }
+      }
+    }
   });
 
-  it("3-day full-body week undulates: day A heavy (-2) vs its moderate twin", () => {
-    const one = generateProgram(
-      1,
-      undefined,
-      "hypertrophy",
-      undefined,
-      undefined,
-      "intermediate"
-    );
-    const three = generateProgram(
-      3,
-      undefined,
-      "hypertrophy",
-      undefined,
-      undefined,
-      "intermediate"
-    );
-    const moderateA = one.workouts[0];
-    const heavyA = three.workouts[0];
-    expect(heavyA.dayName).toBe(moderateA.dayName);
-    heavyA.exercises.forEach((ex) => {
-      // Each lift sits 2 under its role's moderate number (`roleTable.ts`);
-      // the slots can hold different lifts in the two weeks, since the
-      // overlap cap re-points the 3-day week's hinge.
-      const moderate = roleRepsFor("hypertrophy", ex, "intermediate").bottom;
-      const floor = ex.isAccessory === true ? 6 : 3;
-      expect(ex.reps).toBe(Math.max(floor, moderate - 2));
-      expect(ex.baseReps).toBe(ex.reps);
-      const twin = moderateA.exercises.find(
-        (t) => t.exerciseId === ex.exerciseId
-      );
-      if (twin) expect(ex.reps).toBe(Math.max(floor, twin.reps - 2));
-    });
-    // middle day is moderate: the mains start at the table's bottom
-    expect(mainRepsOf(three.workouts[1])).toContain(6);
+  it("leads no two days of a week with the same lift, but the bench at five days", () => {
+    // Push, Pull, Legs, Upper, Lower: the push day and the upper day both
+    // lead with the bench press, at the same reps.
+    for (const experience of ["intermediate", "advanced"] as const) {
+      for (const days of [2, 3, 4, 5, 6]) {
+        const leads = built(days, "hypertrophy", experience).map(
+          (d) => d.exercises.find((e) => e.isAccessory !== true)?.exerciseId
+        );
+        const twice = leads.filter((id, i) => leads.indexOf(id) !== i);
+        expect(
+          twice,
+          `${experience} ${String(days)}d: ${leads.join(", ")}`
+        ).toEqual(days === 5 ? ["bench-press"] : []);
+      }
+    }
   });
 
-  it("strength mains floor at 3 on heavy days", () => {
-    const two = generateProgram(
-      2,
-      undefined,
-      "strength",
-      undefined,
-      undefined,
-      "intermediate"
-    );
-    const heavyMains = mainRepsOf(two.workouts[0]);
-    // strength base 5 → heavy day 3; nothing below the floor
-    expect(Math.min(...heavyMains)).toBeGreaterThanOrEqual(3);
-    expect(heavyMains).toContain(3);
-  });
-
-  it("pump day sits +2 over the base — except the hinge main", () => {
-    // 6-day week: days 3-5 carry the pump role. Day 3 (Pull — Row Focus)
-    // has a non-hinge main, which takes the +2.
-    const six = generateProgram(
-      6,
-      undefined,
-      "hypertrophy",
-      undefined,
-      undefined,
-      "intermediate"
-    );
-    expect(mainRepsOf(six.workouts[3])).toContain(8);
-  });
-
-  it("pump +2 never reaches a hip-dominant main (no high-rep heavy hinge)", () => {
-    // Day C of the 3-day week (Posterior Focus) is the pump day and its only
-    // main is the deadlift. Pre-exemption it was prescribed at base+2 — the
-    // 4×10 heavy hinge the corpus warns against. It must open at base.
-    const three = generateProgram(
-      3,
-      undefined,
-      "hypertrophy",
-      undefined,
-      undefined,
-      "intermediate"
-    );
-    const dayC = three.workouts[2];
-    const hinges = dayC.exercises.filter(
-      (e) => e.movementCategory === "hip_dominant" && e.isAccessory !== true
-    );
-    expect(hinges.length).toBeGreaterThanOrEqual(1);
-    hinges.forEach((e) => expect(e.reps).toBe(6)); // the table's 6, not 8
-    // …while the rest of the day still undulates (+2 with the accessory
-    // floor), so the exemption is surgical, not a dead pump day. The 6-day
-    // week's Legs — Deadlift day pins the same pair in one session.
-    const legsB = generateProgram(
-      6,
-      undefined,
-      "hypertrophy",
-      undefined,
-      undefined,
-      "intermediate"
-    ).workouts[5];
-    const hingeMain = legsB.exercises.find(
-      (e) => e.movementCategory === "hip_dominant" && e.isAccessory !== true
-    );
-    const kneeMain = legsB.exercises.find(
-      (e) => e.movementCategory === "knee_dominant" && e.isAccessory !== true
-    );
-    expect(hingeMain?.reps).toBe(6); // exempt — no +2
-    expect(kneeMain?.reps).toBe(8); // the table's 6, +2 on the pump day
+  it("gives a deadlift from the floor three sets of 5 to 8, never 8 to 12", () => {
+    for (const goal of ["hypertrophy", "general"] as const) {
+      const deadlifts = built(6, goal, "intermediate")
+        .flatMap((d) => d.exercises)
+        .filter((e) => e.exerciseId === "deadlift");
+      expect(
+        deadlifts.map((e) => `${e.sets} × ${e.reps}-${e.repRangeMax}`)
+      ).toEqual(["3 × 5-8"]);
+    }
   });
 });
 
@@ -1169,10 +1093,7 @@ describe("progression scheme per exercise type (backlog #7)", () => {
     }
   });
 
-  it("keeps the range WIDTH constant across day roles", () => {
-    // The ceiling is derived after applyDayRoles has shifted reps, so a
-    // heavy day gets a shifted ceiling too. A fixed ceiling would have
-    // turned a 6-10 main into 4-10 on heavy days — a 6-rep climb.
+  it("gives every range its role's width", () => {
     const { workouts } = generateProgram(
       3,
       undefined,
@@ -1184,7 +1105,8 @@ describe("progression scheme per exercise type (backlog #7)", () => {
     for (const ex of allEx(workouts)) {
       if (ex.repUnit === "seconds") continue;
       // The width is the role's (`roleTable.ts`): 4 for a main or another
-      // compound, 5 for an isolation, 8 for a calf, side-delt or ab one.
+      // compound, 5 for an isolation, 8 for a calf, side-delt or ab one,
+      // 3 for a deadlift from the floor.
       const row = roleRepsFor("hypertrophy", ex, "intermediate");
       const span = row.top! - row.bottom;
       // …unless the prescription ceiling bit first (2026-07-28 audit): a
@@ -1193,10 +1115,6 @@ describe("progression scheme per exercise type (backlog #7)", () => {
       const ceiling = isBodyweightExerciseId(ex.exerciseId) ? 15 : 20;
       expect(ex.repRangeMax! - ex.reps).toBe(Math.min(span, ceiling - ex.reps));
     }
-    // and the roles really did move: heavy day A mains sit under pump day C
-    const mainReps = (i: number) =>
-      workouts[i].exercises.filter((e) => e.isAccessory !== true)[0].reps;
-    expect(mainReps(0)).toBeLessThan(mainReps(2));
   });
 
   it("puts isolations on double progression and mains on the goal's scheme", () => {
@@ -1774,12 +1692,13 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
       )
         .workouts.flatMap((d) => d.exercises)
         .reduce((s, e) => s + e.sets, 0);
-    // 54 working sets for the 3-day recomp hypertrophy build (the role
-    // table's three a lift, the lateral raises that work the side delts on
-    // two days, then the 18-set session ceiling) — a stored literal, so a
-    // cap that started adding or dropping sets moves this number.
-    // (Comparing the call to itself pinned nothing.)
-    expect(totalSets(3)).toBe(54);
+    // 59 working sets for the 3-day hypertrophy build with no length to
+    // fit (four on each day's first main lift but the deadlift's three,
+    // three on every other lift, the lateral raises that work the side
+    // delts on two days) — a stored literal, so a cap that started adding
+    // or dropping sets moves this number. (Comparing the call to itself
+    // pinned nothing.)
+    expect(totalSets(3)).toBe(59);
     const { workouts } = generateProgram(
       3,
       undefined,
@@ -1793,10 +1712,9 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
     expect(workouts.map((d) => d.exercises.length)).toEqual([7, 6, 6]);
   });
 
-  it("the replacement obeys its day role (it used to escape it)", () => {
-    // applyOverlapCaps runs BEFORE applyDayRoles precisely so a re-pointed
-    // slot is shifted like an originally-built one. Running it after left
-    // day A's replacement at the unshifted goal base.
+  it("the replacement takes its own role's reps", () => {
+    // applyOverlapCaps runs BEFORE the role table precisely so a re-pointed
+    // slot gets the numbers of the lift it now holds.
     const three = generateProgram(
       3,
       undefined,
@@ -1806,18 +1724,14 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
       "intermediate"
     );
     const dayA = three.workouts[0];
-    const accessoryReps = dayA.exercises
-      .filter((e) => e.isAccessory === true)
-      .map((e) => e.reps);
-    // day A is the heavy day: every accessory sits 2 under its role's
-    // bottom (`roleTable.ts`), floored at 6
-    dayA.exercises
-      .filter((e) => e.isAccessory === true)
-      .forEach((e, i) =>
-        expect(accessoryReps[i]).toBe(
-          Math.max(6, roleRepsFor("hypertrophy", e, "intermediate").bottom - 2)
-        )
+    const accessories = dayA.exercises.filter((e) => e.isAccessory === true);
+    expect(accessories.length).toBeGreaterThan(0);
+    for (const e of accessories) {
+      if (isBodyweightExerciseId(e.exerciseId)) continue;
+      expect(e.reps, e.exerciseId).toBe(
+        roleRepsFor("hypertrophy", e, "intermediate").bottom
       );
+    }
     dayA.exercises.forEach((e) => expect(e.baseReps).toBe(e.reps));
   });
 
@@ -2423,7 +2337,11 @@ describe("coach-read audit pins (2026-08-03)", () => {
 });
 
 // Lift4 (5): every muscle at least twice a week on two or more days, as far
-// as the time and the ceilings allow (`weeklyFrequency.ts`).
+// as the time allows (`weeklyFrequency.ts`). Since Lift21 time takes lifts
+// off the end of a day, and the lifts added for the two days go first: the
+// big muscles keep their two days from 45 minutes, and the three small
+// ones nothing else reaches (side delts, calves, abs) get theirs at 75 on
+// six days.
 describe("every muscle on two days a week (Lift4 (5))", () => {
   const plan = (
     days: number,
@@ -2441,27 +2359,39 @@ describe("every muscle on two days a week (Lift4 (5))", () => {
       minutes
     ).workouts;
 
-  it("works every muscle twice in a Build muscle week with the time for it", async () => {
+  it("works every muscle twice in a six-day week at 75 minutes", async () => {
+    // Four and five days leave the side delts their one raise: the first
+    // upper day's six lifts are two presses, two pulls and the arms.
     const { daysPerMuscle } = await import("../weeklyFrequency");
     const { JUDGEMENT_MUSCLE_ORDER } = await import("../volumeModel");
-    const cases: Array<[number, number]> = [
-      [2, 75],
-      [3, 75],
-      [4, 75],
-      [5, 75],
-      [6, 75],
-      [4, 60],
-      [5, 60],
-      [6, 60],
-    ];
     for (const experience of ["intermediate", "advanced"] as const) {
-      for (const [days, minutes] of cases) {
-        const counts = daysPerMuscle(plan(days, minutes, experience));
+      for (const days of [6]) {
+        const counts = daysPerMuscle(plan(days, 75, experience));
         for (const muscle of JUDGEMENT_MUSCLE_ORDER) {
           expect(
             counts.get(muscle) ?? 0,
-            `${experience} ${days}d/${minutes}m: ${muscle}`
+            `${experience} ${days}d/75m: ${muscle}`
           ).toBeGreaterThanOrEqual(2);
+        }
+      }
+    }
+  });
+
+  it("works every big muscle twice from three days at 45 minutes", async () => {
+    const { daysPerMuscle } = await import("../weeklyFrequency");
+    const { JUDGEMENT_MUSCLE_ORDER } = await import("../volumeModel");
+    const small = new Set(["SideDelts", "Calves", "Abs"]);
+    for (const experience of ["intermediate", "advanced"] as const) {
+      for (const days of [3, 4, 5, 6]) {
+        for (const minutes of [45, 60, 75]) {
+          const counts = daysPerMuscle(plan(days, minutes, experience));
+          for (const muscle of JUDGEMENT_MUSCLE_ORDER) {
+            if (small.has(muscle)) continue;
+            expect(
+              counts.get(muscle) ?? 0,
+              `${experience} ${days}d/${minutes}m: ${muscle}`
+            ).toBeGreaterThanOrEqual(2);
+          }
         }
       }
     }
@@ -2472,7 +2402,9 @@ describe("every muscle on two days a week (Lift4 (5))", () => {
     const raises = first
       .flatMap((d) => d.exercises)
       .filter((e) => e.exerciseId === "lateral-raise");
-    expect(raises.length).toBeGreaterThanOrEqual(2);
+    // The deadlift day's raise: its list is one short of the others', so
+    // the lift added for the side delts fits.
+    expect(raises.length).toBeGreaterThanOrEqual(1);
     const trained = first.map((d) => ({
       ...d,
       exercises: d.exercises.map((e) =>

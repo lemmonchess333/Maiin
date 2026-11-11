@@ -740,6 +740,7 @@ lands in the same place (the plan-file lock rule, applied to ADRs):
 | 0010 | Volume currency — 1:1 is correct; the flip waits on landmark-aware builders        |
 | 0011 | Programme command boundary stops at the week engine — 8 sites stay document writes |
 | 0012 | Deleting a logged session reverses accumulators, not history                       |
+| 0013 | Weekly bands judge a plan and do not shape it; time sizes a day (Lift21)           |
 
 ## Dynamic workflows & `ultracode` (when to escalate)
 

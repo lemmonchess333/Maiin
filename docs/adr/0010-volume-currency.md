@@ -238,3 +238,15 @@ direct lift (a beginner's six days keep no curl or pushdown, their arms
 reading 11 sets at 1:1 from the presses and rows). The floor is kept at the
 plan's 1:1 count; at Pelland's fractional count, which the simulator's
 lifter uses, those groups are the ones that addendum asks it to watch.
+
+## Status addendum — 2026-11-11: the bands stop shaping the plan (ADR-0013)
+
+The staged condition this ADR set (the reconciler) and what the addendum of
+2026-10-13 put past its floors (Lift12's drops, Lift17's three-lift floor)
+are retired by ADR-0013, with Lift21: time sizes a day and no ceiling trims
+it. The count is unchanged, one for one, and the bands are unchanged. What
+changes is what they do: they judge a week on the Weekly volume card and no
+longer take sets or lifts out of one. The plan sweep's configurations over a
+ceiling go 26 → 52 in this unit, on purpose; ADR-0013 has the measurement
+and what stays open (the count an indirect set takes, which Lift21 asks to
+be half).

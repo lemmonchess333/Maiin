@@ -68,7 +68,6 @@ import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { firstFullWeekKey } from "./runPlanTiming";
 import {
   applyDeload,
-  balanceWeekVolume,
   generateProgram,
   expectedDayCount,
   refitSessionsASaveOverran,
@@ -520,9 +519,8 @@ function buildLiftProgram(input: LiftProgramInput): {
     input.previousSessionMinutes !== undefined &&
     input.sessionMinutes !== input.previousSessionMinutes;
   const fitted = refit
-    ? refitWeek(
+    ? refitSessionsToTime(
         equipmentSafe,
-        input.primaryGoal,
         toExperience(input.experience),
         sessionMinutesFor(input.sessionMinutes)
       )
@@ -605,7 +603,6 @@ function buildLiftProgram(input: LiftProgramInput): {
       ? refitSessionsASaveOverran(
           existing,
           workouts,
-          input.primaryGoal,
           toExperience(input.experience),
           sessionMinutesFor(sessionMinutes)
         )
@@ -674,25 +671,6 @@ function keepWeekLighter(
       : lighter;
   }
   return firstWeekBack(kept) ? oneSetFewer(workouts) : workouts;
-}
-
-/** A re-fitted week, balanced as a new plan's is, with its volume anchor
- *  (`baseSets`) moved to the sets it now has. */
-function refitWeek(
-  workouts: WorkoutDay[],
-  goal: PrimaryGoal,
-  experience: ReturnType<typeof toExperience>,
-  minutes: number
-): WorkoutDay[] {
-  return balanceWeekVolume(
-    refitSessionsToTime(workouts, goal, experience, minutes),
-    goal,
-    experience,
-    minutes
-  ).map((day) => ({
-    ...day,
-    exercises: day.exercises.map((ex) => ({ ...ex, baseSets: ex.sets })),
-  }));
 }
 
 /**

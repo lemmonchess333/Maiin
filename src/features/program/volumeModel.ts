@@ -19,13 +19,13 @@
  * Three layers since the taxonomy split:
  *   - FINE (muscleTaxonomy.ts, 27 members) — attribution substrate;
  *   - CANONICAL ten — the DISPLAY roll-up the app has always published;
- *   - JUDGEMENT (14 groups) — what classification, the balancers and the
- *     reconciler run on, with per-group bands (`judgementLandmark`). The
- *     canonical Shoulders/Back/Core buckets are judged on their parts.
+ *   - JUDGEMENT (14 groups) — what classification runs on, with per-group
+ *     bands (`judgementLandmark`). The canonical Shoulders/Back/Core buckets
+ *     are judged on their parts.
  *
- * It both SURFACES the tally (WeeklyVolumeCard) and DRIVES selection:
- * `balanceWeeklyVolume` nudges under-dosed muscles toward the landmark low by
- * growing their accessories (add-only, mains untouched).
+ * It SURFACES the tally (WeeklyVolumeCard) and decides which muscles a week
+ * works (`weeklyFrequency.ts`). It does not shape a plan's sets (Lift21,
+ * ADR-0013): time sizes a day, and the bands judge what it holds.
  */
 import { getExerciseById, type Exercise } from "@/lib/exercises";
 import {
@@ -130,12 +130,10 @@ export interface FineMuscleVolume {
  * a secondary rather than the target.
  *
  * 1.0 — the literature's convention, landed with the judgement layer as
- * ADR-0010's second status addendum records. The reconciler alone was
- * measured insufficient (the canonical Shoulders/Core buckets mispriced 1:1
- * cross-exercise credit at 292/750 readings over-ceiling); judging volume
- * per head with per-group bands closed exactly that, and the flip landed in
- * the same change. The D-VOL ratchet is denominated in this judged 1:1
- * unit.
+ * ADR-0010's second status addendum records: the canonical Shoulders/Core
+ * buckets mispriced 1:1 cross-exercise credit at 292/750 readings
+ * over-ceiling, and judging volume per head with per-group bands closed
+ * exactly that. The D-VOL ratchet is denominated in this judged 1:1 unit.
  *
  * The primary is always 1.0; there is no constant for it because a convention
  * in which the target muscle earns anything else does not exist.
@@ -289,8 +287,8 @@ export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
 ================================ */
 
 /**
- * The groups weekly volume is JUDGED on — landmark classification, balancer
- * targets and reconciler ceilings. The canonical ten stay the DISPLAY layer.
+ * The groups weekly volume is JUDGED on, by landmark classification. The
+ * canonical ten stay the DISPLAY layer.
  *
  * Why a third layer (ADR-0010 status addendum): the canonical Shoulders
  * bucket averages a lateral raise and a rear-delt flye into one number the
@@ -621,8 +619,8 @@ function judgementCreditsFor(
   return credits;
 }
 
-/** The judgement group an exercise's sets count 1.0 toward (balancer and
- *  reconciler targeting), or null when unattributable (cardio/whole-body). */
+/** The judgement group an exercise's sets count 1.0 toward, or null when
+ *  unattributable (cardio/whole-body). */
 export function primaryJudgementForExercise(
   ex: Pick<ProgramExercise, "exerciseId" | "movementCategory">
 ): JudgementMuscle | null {
@@ -755,399 +753,13 @@ export function judgementLandmark(
  */
 const BEGINNER_TIER = { num: 2, den: 3 };
 
-/** Don't push any single accessory beyond this many sets. */
-const ACCESSORY_SET_CAP = 5;
-
 /**
- * Floors the landmark reconciler may cut a slot down to. Accessories share
- * the balancers' 2-set floor; a MAIN keeps at least 3 working sets — the
- * progression anchor still needs enough exposures to progress on, and 3 is
- * the lowest main-set prescription anywhere in the corpus's worked examples.
- */
-const RECONCILE_ACCESSORY_FLOOR = 2;
-const RECONCILE_MAIN_FLOOR = 3;
-
-/**
- * Resolve the per-group landmark from either call shape: a single band
- * applied to every group (the pre-judgement signature, kept so tests and
- * any external caller with one band keep working), or a per-group resolver
- * (what `generateProgram` passes — `judgementLandmark(goal, m)`).
- */
-type LandmarkFor =
-  | VolumeLandmark
-  | ((muscle: JudgementMuscle) => VolumeLandmark);
-function resolveLandmark(
-  landmarkFor: LandmarkFor,
-  muscle: JudgementMuscle
-): VolumeLandmark {
-  return typeof landmarkFor === "function" ? landmarkFor(muscle) : landmarkFor;
-}
-
-/**
- * The hinge accessory work: a supporting lift of the hip-dominant movement
- * (`hip_dominant`) — an RDL, a leg curl, a hip thrust or glute bridge, or a
- * deadlift in a supporting slot. Every lift the bank holds for it loads the
- * hamstrings. L7 (decisions.md, the beginner's deadlift): when the
- * hamstrings sit over their ceiling, this is the work that gives way, never
- * the deadlift off a day.
- */
-export function isHingeAccessory(
-  ex: Pick<ProgramExercise, "isAccessory" | "movementCategory">
-): boolean {
-  return ex.isAccessory === true && ex.movementCategory === "hip_dominant";
-}
-
-/** Whether the reconciler may take a set off this slot for this muscle: a
- *  slot that trains it as its primary, or, for the hamstrings, the hinge
- *  accessory work (L7). */
-function cutsFor(ex: ProgramExercise, muscle: JudgementMuscle): boolean {
-  return (
-    primaryJudgementForExercise(ex) === muscle ||
-    (muscle === "Hamstrings" && isHingeAccessory(ex))
-  );
-}
-
-/**
- * Landmark reconciliation (ADR-0010's staged condition): shrink the authored
- * week until no muscle the builders can reach sits above its volume ceiling.
- *
- * Why this exists: the day builders hard-code slot counts, the balancers are
- * ADD-only, and at the literature's 1:1 counting the authored weeks run to
- * 230% of a ceiling (measured: Back 46 vs 20 at 6d hypertrophy). Over-MRV
- * volume is the unrecoverable failure — RP Ch3: above MRV the added work
- * costs recovery and returns nothing — so the generator must not author it.
- *
- * Contract, chosen for the smallest defensible blast radius:
- *   - SHRINK-ONLY, sets only. Never deletes a slot, never reorders, never
- *     touches identity — positional accessory carry and findExisting stay
- *     valid, and no user-visible exercise disappears.
- *   - Only slots whose PRIMARY muscle is over the ceiling are cut. A slot is
- *     never punished for its secondary credit (cutting bench because
- *     Shoulders read high would starve Chest); secondaries drain anyway as
- *     their over-authored primaries shrink, which at 1:1 is exactly the
- *     cascade that does most of the work. One exception, by decision (L7):
- *     the hamstrings take sets off the hinge accessory work too, whatever
- *     its primary, so a hip thrust gives a set before anything comes out
- *     (`hingeAccessoryPastCeiling`). The hinge is the hamstrings' own
- *     movement; a squat or leg press, which credits them as well, is not
- *     cut for them.
- *   - Accessories cut before mains (floor 2 before a main drops below its
- *     authored count; mains floor 3), largest slot first, then day/slot
- *     order — fully deterministic, one set per step, tally recomputed every
- *     step so cross-muscle cascades are always current.
- *   - Muscles whose overage the builders cannot reach (all primary slots at
- *     floor) are left over the ceiling and REPORTED by the D-VOL ratchet —
- *     an honest residual, not a silent one. Session budget only ever frees
- *     up, and the add-only balancer runs after this pass, so under-floor
- *     muscles are topped back up from the freed budget within the ceilings.
- */
-export function reconcileToLandmarks(
-  workouts: WorkoutDay[],
-  landmarkFor: LandmarkFor
-): WorkoutDay[] {
-  const days = workouts.map((d) => ({
-    ...d,
-    exercises: d.exercises.map((e) => ({ ...e })),
-  }));
-  const floorFor = (ex: ProgramExercise) =>
-    ex.isAccessory === true ? RECONCILE_ACCESSORY_FLOOR : RECONCILE_MAIN_FLOOR;
-
-  // One set moves per iteration; the bound is generous (a week tops out
-  // around 120 authored sets) and exists so a logic bug can't spin forever.
-  for (let guard = 0; guard < 500; guard += 1) {
-    const over = weeklyVolumeByJudgementMuscle(days)
-      .map((v) => ({
-        muscle: v.muscle,
-        overshoot: v.sets - resolveLandmark(landmarkFor, v.muscle).high,
-      }))
-      .filter((v) => v.overshoot > 0)
-      .sort(
-        (a, b) => b.overshoot - a.overshoot || a.muscle.localeCompare(b.muscle)
-      );
-
-    let cutMade = false;
-    for (const { muscle } of over) {
-      const candidates: Array<{ di: number; ei: number; ex: ProgramExercise }> =
-        [];
-      days.forEach((d, di) => {
-        if (d.skipped) return; // the tally skips these — stay consistent
-        d.exercises.forEach((ex, ei) => {
-          if ((ex.sets ?? 0) <= floorFor(ex)) return;
-          if (!cutsFor(ex, muscle)) return;
-          candidates.push({ di, ei, ex });
-        });
-      });
-      if (candidates.length === 0) continue; // unreachable overage — next muscle
-      candidates.sort(
-        (a, b) =>
-          Number(b.ex.isAccessory === true) -
-            Number(a.ex.isAccessory === true) ||
-          (b.ex.sets ?? 0) - (a.ex.sets ?? 0) ||
-          a.di - b.di ||
-          a.ei - b.ei
-      );
-      const target = candidates[0];
-      days[target.di].exercises[target.ei].sets = (target.ex.sets ?? 0) - 1;
-      cutMade = true;
-      break; // recompute the tally before choosing the next cut
-    }
-    if (!cutMade) break; // in-band, or every remaining overage is floor-bound
-  }
-  return days;
-}
-
-/**
- * The table is a ceiling (Lift4 (5)), and the hamstrings' is kept by the
- * hinge work (L7): in a balanced week whose hamstrings sit over their
- * ceiling, the hinge accessory that comes out of the week, if any (its
- * `instanceId`). The reconciler has taken it to its floor already, so what
- * is left to give is the lift.
- *
- * A beginner's supporting lifts start at two sets, the reconciler's floor,
- * so for a beginner this is the only way the hamstrings' ceiling is kept:
- * the audit's beginner full body read 15 against 13 with the seated leg
- * curl at its floor.
- *
- * Never a lift the week also has as a main lift: a deadlift in a supporting
- * slot is the deadlift on one of its days, and it keeps them. Of the rest,
- * the biggest goes first, then the earliest in the week. The generator
- * takes it out only when the week, fitted and balanced again without it,
- * is the better one (`generateProgram`): the hamstrings come down, no
- * muscle ends further over its ceiling, and every muscle keeps its two days
- * a week.
- */
-export function hingeAccessoryPastCeiling(
-  workouts: readonly WorkoutDay[],
-  ceiling: (muscle: JudgementMuscle) => number
-): string | undefined {
-  const hamstrings =
-    weeklyVolumeByJudgementMuscle(workouts).find(
-      (v) => v.muscle === "Hamstrings"
-    )?.sets ?? 0;
-  if (hamstrings <= ceiling("Hamstrings")) return undefined;
-  const lifts = workouts.filter((d) => !d.skipped).flatMap((d) => d.exercises);
-  const mains = new Set(
-    lifts.filter((ex) => ex.isAccessory !== true).map((ex) => ex.exerciseId)
-  );
-  return lifts
-    .map((ex, i) => ({ ex, i }))
-    .filter(
-      ({ ex }) =>
-        isHingeAccessory(ex) &&
-        ex.instanceId !== undefined &&
-        (ex.sets ?? 0) > 0 &&
-        !mains.has(ex.exerciseId)
-    )
-    .sort((a, b) => (b.ex.sets ?? 0) - (a.ex.sets ?? 0) || a.i - b.i)[0]?.ex
-    .instanceId;
-}
-
-/**
- * The table is a ceiling for every muscle (Lift12): in a balanced week, the
- * supporting lifts that could come out for the muscles over their ceilings,
- * each with the muscle it would come out for. A lift's own muscle is its
- * primary; the most-over muscle comes first, and of its lifts the biggest,
- * then the latest in the week, so the week's first sessions keep theirs.
- * Never a lift the week also has as a main lift.
- *
- * The reconciler cuts sets down to its floors and never takes a lift out;
- * past those floors a muscle fed by the lifts that credit it as well (the
- * triceps by every press, the biceps by every row) stays over, at up to two
- * and a half times its ceiling in a beginner's six days. The generator
- * takes one of these out only when the week, fitted and balanced again
- * without it, is the better one (`generateProgram`).
- */
-export function accessoriesPastCeiling(
-  workouts: readonly WorkoutDay[],
-  ceiling: (muscle: JudgementMuscle) => number
-): Array<{ instanceId: string; muscle: JudgementMuscle }> {
-  const over = weeklyVolumeByJudgementMuscle(workouts)
-    .map((v) => ({ muscle: v.muscle, by: v.sets - ceiling(v.muscle) }))
-    .filter((v) => v.by > 0)
-    .sort((a, b) => b.by - a.by || a.muscle.localeCompare(b.muscle));
-  if (over.length === 0) return [];
-  const lifts = workouts.filter((d) => !d.skipped).flatMap((d) => d.exercises);
-  const mains = new Set(
-    lifts.filter((ex) => ex.isAccessory !== true).map((ex) => ex.exerciseId)
-  );
-  return over.flatMap(({ muscle }) =>
-    lifts
-      .map((ex, i) => ({ ex, i }))
-      .filter(
-        ({ ex }) =>
-          ex.isAccessory === true &&
-          ex.instanceId !== undefined &&
-          (ex.sets ?? 0) > 0 &&
-          !mains.has(ex.exerciseId) &&
-          primaryJudgementForExercise(ex) === muscle
-      )
-      .sort((a, b) => (b.ex.sets ?? 0) - (a.ex.sets ?? 0) || b.i - a.i)
-      .map(({ ex }) => ({ instanceId: ex.instanceId!, muscle }))
-  );
-}
-
-/**
- * Working sets one session may hold. The time fit (`sessionFit.ts`) cuts to
- * it as well as to the session's minutes, and the push/pull balancer adds
- * nothing past it.
+ * Working sets one session may hold; a long one a few more (`sessionFit.ts`,
+ * which sizes a day to it as well as to its minutes).
  *
  * At roughly 2.5–3 minutes per working set including rest, 18 sets is an hour
  * of work plus warm-up — the session length both Helms and Meadows treat as
  * the practical ceiling, and past which the last exercises are performed
  * tired rather than well.
- *
- * This is the budget backlog #15 was originally DEFERRED on ("needs a
- * volume-budget decision first — a full-body day is already long"). Its STATUS
- * later dismissed that worry as unfounded, and a 2026-07-28 audit measured the
- * dismissal to be wrong in exactly the way the deferral predicted: marking the
- * full-body builder's slots as accessories made them growable for the first
- * time, and a 3-day full-body week went 42 → 54 weekly sets, 14 → 20 in a
- * single session. The volume balancing is CORRECT — it had simply never run
- * for full-body users before — but it needs the bound it was always missing.
  */
 export const MAX_SETS_PER_SESSION = 18;
-
-function sessionSets(day: WorkoutDay): number {
-  return day.exercises.reduce((n, e) => n + (e.sets ?? 0), 0);
-}
-
-/** The day this exercise sits in, or null if it isn't in the week. */
-function dayOf(
-  days: WorkoutDay[],
-  exercise: ProgramExercise
-): WorkoutDay | null {
-  return days.find((d) => d.exercises.includes(exercise)) ?? null;
-}
-
-/** Whether a session fits: its time and the set ceiling (`sessionFits` in
- *  `sessionFit.ts`), or the set ceiling alone for a caller with no time. */
-type SessionFits = (exercises: ProgramExercise[]) => boolean;
-const withinSetCeiling: SessionFits = (exercises) =>
-  sessionSets({ exercises } as WorkoutDay) <= MAX_SETS_PER_SESSION;
-
-/** Would growing this exercise take its session past what fits? */
-function overshootsSession(
-  days: WorkoutDay[],
-  exercise: ProgramExercise,
-  fits: SessionFits
-): boolean {
-  const day = dayOf(days, exercise);
-  if (!day) return false;
-  exercise.sets += 1;
-  const over = !fits(day.exercises);
-  exercise.sets -= 1;
-  return over;
-}
-
-/**
- * Would growing this exercise by a set take a muscle that is currently AT OR
- * BELOW its landmark high above it?
- *
- * The balancers are add-only, which was reasoned about as the safe direction
- * ("trimming wanted work is the riskier direction") but had no ceiling at all
- * — so chasing one under-dosed muscle up to MEV freely pushed the muscles that
- * SHARE the exercise past MRV. A 2026-07-28 audit measured generated weeks
- * violating the app's own landmarks in both directions at once: hypertrophy
- * 6-day came out Back=39 / Shoulders=29 against a high of 20, while
- * hamstrings sat at 11 against a low of 12.
- *
- * This does not trim anything — the add-only stance is unchanged. It only
- * declines an ADD whose cost lands on a muscle that is at or over its
- * ceiling. Adds elsewhere are unaffected, so this is a targeted veto rather
- * than a freeze: in a week where the back is over MRV, hamstring and quad
- * top-ups still happen; only the pull accessories stop growing.
- */
-function overshootsCeiling(
-  days: WorkoutDay[],
-  exercise: ProgramExercise,
-  landmarkFor: LandmarkFor
-): boolean {
-  const before = new Map(
-    weeklyVolumeByJudgementMuscle(days).map((v) => [v.muscle, v.sets])
-  );
-  exercise.sets += 1;
-  const after = weeklyVolumeByJudgementMuscle(days);
-  exercise.sets -= 1;
-  return after.some(
-    (v) =>
-      v.sets > resolveLandmark(landmarkFor, v.muscle).high &&
-      v.sets > (before.get(v.muscle) ?? 0)
-  );
-}
-
-// Movement categories grouped by push vs pull (knee/hip/core are neither).
-// Push:pull balance is computed at the MOVEMENT level (robust + unambiguous)
-// rather than the muscle level — the canonical "Shoulders" group lumps the
-// push-y front delt with the pull-y rear delt, so a muscle-level ratio would
-// be misleading. Lift6: pressing against rows and pull-downs, the movements
-// the shoulder balance is about. Arm work counts on neither side, so the
-// pull grown is never a curl, and triceps sets don't add push to match.
-const PUSH_CATEGORIES = new Set(["horizontal_push", "vertical_push"]);
-const PULL_CATEGORIES = new Set(["horizontal_pull", "vertical_pull"]);
-
-/** Safety bound on auto-added pull sets per week. */
-const MAX_ADDED_PULL_SETS = 8;
-
-function categorySetTotals(workouts: WorkoutDay[]): {
-  push: number;
-  pull: number;
-} {
-  let push = 0;
-  let pull = 0;
-  for (const day of workouts) {
-    if (day.skipped) continue;
-    for (const ex of day.exercises) {
-      const sets = ex.sets ?? 0;
-      if (sets <= 0) continue;
-      if (PUSH_CATEGORIES.has(ex.movementCategory)) push += sets;
-      else if (PULL_CATEGORIES.has(ex.movementCategory)) pull += sets;
-    }
-  }
-  return { push, pull };
-}
-
-/**
- * Push/pull balance (D-LIFT-3) — keep weekly PULL volume at least equal to PUSH.
- * Pull-dominant programming protects the shoulders (the most-cited balance
- * principle) and the procedural builders skew slightly push-heavy. When push >
- * pull, grow PULL accessories until pull ≥ push. Pure; conservative + add-only
- * (accessories only, mains untouched, each capped, total bounded), and only
- * inside what a session fits (`fits`: its time and the set ceiling, Lift4
- * (5)). Uses movement category (not muscle) so it's immune to the
- * front/rear-delt lumping. Add-only — never trims push.
- */
-export function balancePushPull(
-  workouts: WorkoutDay[],
-  landmark?: LandmarkFor,
-  fits: SessionFits = withinSetCeiling
-): WorkoutDay[] {
-  const days = workouts.map((d) => ({
-    ...d,
-    exercises: d.exercises.map((e) => ({ ...e })),
-  }));
-
-  const pullAccessories = days
-    .filter((d) => !d.skipped)
-    .flatMap((d) => d.exercises)
-    .filter((e) => e.isAccessory && PULL_CATEGORIES.has(e.movementCategory));
-  if (pullAccessories.length === 0) return days; // nothing to grow
-
-  let added = 0;
-  while (added < MAX_ADDED_PULL_SETS) {
-    const { push, pull } = categorySetTotals(days);
-    if (pull >= push) break;
-    const target = pullAccessories
-      .filter((e) => e.sets < ACCESSORY_SET_CAP)
-      .sort((a, b) => a.sets - b.sets)
-      .find(
-        (e) =>
-          (!landmark || !overshootsCeiling(days, e, landmark)) &&
-          !overshootsSession(days, e, fits)
-      );
-    if (!target) break; // all capped, or every add overshoots a ceiling
-    target.sets += 1;
-    added += 1;
-  }
-
-  return days;
-}

@@ -13,8 +13,7 @@
  * - (c) `refitWhenRampsGrow`: at the first rollover of a week, any day the
  *   app's own check says no longer fits its length (`sessionFits`: with
  *   the sets unchanged, a ramp that grew) is re-fitted as the app re-fits
- *   a plan to a new length (`refitSessionsToTime`, then
- *   `balanceWeekVolume`, as planBuilder's `refitWeek`). Only the re-fit's
+ *   a plan to a new length (`refitSessionsToTime`). Only the re-fit's
  *   cuts on that day are kept: the re-fit path gives a few slots a set
  *   the generator's fit doesn't, with nothing grown, and that isn't (c).
  *   A lighter week, or the first week back, waits for the next ordinary
@@ -24,7 +23,6 @@ import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { getExerciseById } from "@/lib/exercises";
 import {
   applyProgression,
-  balanceWeekVolume,
   repRangeMaxFor,
 } from "@/features/program/programEngine";
 import type {
@@ -101,10 +99,7 @@ export interface RefitVariant extends PlanVariant {
   refits: number[];
 }
 
-export function refitWhenRampsGrow(
-  goal: PrimaryGoal | undefined,
-  experience: Experience
-): RefitVariant {
+export function refitWhenRampsGrow(experience: Experience): RefitVariant {
   const refits: number[] = [];
   return {
     name: "(c) re-fit at the rollover",
@@ -126,9 +121,8 @@ export function refitWhenRampsGrow(
           (d) => !sessionFits(d.exercises, minutes)
         );
         if (!over.includes(true)) return state;
-        const refitted = balanceWeekVolume(
-          refitSessionsToTime(state.workouts, goal, experience, minutes),
-          goal,
+        const refitted = refitSessionsToTime(
+          state.workouts,
           experience,
           minutes
         );

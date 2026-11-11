@@ -479,15 +479,14 @@ export function seedStartingLoads(
             // One anchor for the whole PROGRAMME — not `ex.reps`, and not a
             // per-slot main/accessory split.
             //
-            // Two things force this. Seeding runs after `applyDayRoles`, so
-            // `ex.reps` is the undulated per-DAY target (heavy -2, pump +2) with
-            // `baseReps` overwritten to match; and some builders prescribe
-            // accessory reps on slots they do not flag `isAccessory`, so
-            // `bench-press` is a main on one hypertrophy/3d day and an accessory
-            // on another. Either input gives the same lift two different loads in
-            // one week, which `generatorAudit`'s "prescribes ONE load per lift
-            // across the week" catches — rightly, since a lifter has one working
-            // weight per lift and the rep target is what makes a day hard or easy.
+            // Two things force this. A plan that keeps day roles holds
+            // `ex.reps` as a per-DAY target (heavy -2, pump +2) with `baseReps`
+            // to match; and one lift can be the main lift on one day and a
+            // supporting one on another, in different rep bands. Either input
+            // gives the same lift two different loads in one week, which
+            // `generatorAudit`'s "prescribes ONE load per lift across the week"
+            // catches — rightly, since a lifter has one working weight per lift
+            // and the rep target is what makes a day hard or easy.
             //
             // The mains carry the goal's intensity claim (and are what the
             // running-economy evidence is about), so they set the anchor and
