@@ -17,7 +17,7 @@ import {
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { buildGlanceLine } from "@/lib/foodDailySummary";
 import CalorieRing from "./CalorieRing";
-import { LOG_MOMENT_MS } from "./logMoment";
+import { LOG_MOMENT_MS, WHEEL_GROW_MS } from "./logMoment";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
 import { beforeStart, startDayKey } from "@/lib/startDay";
@@ -44,6 +44,11 @@ interface FoodHeroCardProps {
    *  Food passes false once the person has switched day: the card is
    *  remounted per day, and a remount is a browse, not a log. */
   drawIn?: boolean;
+  /** A logged food is on its way to the wheel (Food11 call 6): the wheel
+   *  keeps the calories it had until this is false again, then grows.
+   *  The haptic and the goal-hit moment still time themselves from the
+   *  log, not from the wheel. */
+  holdWheel?: boolean;
   /** Task-first Food entry: full nutrition stays one tap away in Details. */
 }
 
@@ -61,6 +66,7 @@ export default function FoodHeroCard({
   dailyTotals,
   onTapDrillDown,
   drawIn = true,
+  holdWheel = false,
 }: FoodHeroCardProps) {
   /* Targets-set detection. When a user hasn't customised
      `profile.targetCalories`, useDailyTargets falls back to a
@@ -95,6 +101,15 @@ export default function FoodHeroCard({
   // macro flips all four at once.
   const mode = useCalorieRingMode();
 
+  /* The calories the wheel draws: the day's, except while a logged food
+     is in the air, when it stays where it was so the arc grows as the
+     food arrives and not before. Set during render, so the release
+     reaches the wheel in the same commit as the flag. */
+  const [wheelCalories, setWheelCalories] = useState(dailyTotals.calories);
+  if (!holdWheel && wheelCalories !== dailyTotals.calories) {
+    setWheelCalories(dailyTotals.calories);
+  }
+
   // Celebration state — driven by a log that completes all three macros today
   const [celebrating, setCelebrating] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -124,9 +139,9 @@ export default function FoodHeroCard({
     setCalorieRingMode(mode === "left" ? "eaten" : "left");
   };
 
-  // Log-moment haptic fires on completion of the main ring animation.
-  // We fire it via a setTimeout aligned with LOG_MOMENT_MS because the ring
-  // animation is driven by Framer Motion inside the child component.
+  // Log-moment haptic fires as the wheel and the macros finish, at
+  // LOG_MOMENT_MS from the log. A setTimeout, because the animations are
+  // driven by Framer Motion inside the child components.
   useEffect(() => {
     if (firstMountRef.current) {
       // Skip haptic on first mount / day switch
@@ -307,13 +322,17 @@ export default function FoodHeroCard({
           </div>
         ) : (
           <CalorieRing
-            consumed={dailyTotals.calories}
+            consumed={holdWheel ? wheelCalories : dailyTotals.calories}
             target={dailyTargets.finalTarget}
             mode={mode}
             onToggleMode={toggleMode}
             trajectoryLabel={trajectoryLabel}
             glowing={celebrating}
-            ringDurationMs={LOG_MOMENT_MS}
+            /* 350 ms and no wait of its own: on a log the page holds the
+               wheel for the flight's 250 ms first, so the wheel and the
+               macros (600 ms from the log) finish together. */
+            ringDurationMs={WHEEL_GROW_MS}
+            ringDelayMs={0}
             drawIn={drawIn}
           />
         )}

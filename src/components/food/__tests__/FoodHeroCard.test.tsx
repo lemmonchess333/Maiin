@@ -22,6 +22,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import FoodHeroCard from "../FoodHeroCard";
 import FoodMacroRow from "../FoodMacroRow";
@@ -234,6 +236,54 @@ describe("FoodHeroCard — the wheel is on the page", () => {
       ringButton().compareDocumentPosition(details) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+  });
+});
+
+/**
+ * Food11 call 6: while a logged food is on its way to the wheel, the
+ * wheel keeps the calories it had, so the arc grows as the food arrives
+ * and not before it has left the field.
+ */
+describe("FoodHeroCard — the wheel waits for a logged food's flight", () => {
+  function hero(calories: number, holdWheel: boolean) {
+    return (
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday
+          dailyTargets={dailyTargets}
+          dailyTotals={{ ...dailyTotals, calories }}
+          drawIn={false}
+          holdWheel={holdWheel}
+        />
+      </MemoryRouter>
+    );
+  }
+
+  it("keeps the old calories while held, then takes the new ones", () => {
+    const { rerender } = render(hero(900, false));
+    expect(ringButton()).toHaveAccessibleName(/^900 of 2000 calories logged/);
+    // The log and the hold arrive in one commit.
+    rerender(hero(1440, true));
+    expect(ringButton()).toHaveAccessibleName(/^900 of 2000 calories logged/);
+    rerender(hero(1440, false));
+    expect(ringButton()).toHaveAccessibleName(/^1440 of 2000 calories logged/);
+  });
+
+  it("follows the day's calories at once when nothing is in the air", () => {
+    const { rerender } = render(hero(900, false));
+    rerender(hero(700, false));
+    expect(ringButton()).toHaveAccessibleName(/^700 of 2000 calories logged/);
+  });
+
+  it("grows in 350 ms with no wait of its own", () => {
+    // The page's 250 ms hold and this make the 600 ms the macros take.
+    const source = readFileSync(
+      join(process.cwd(), "src/components/food/FoodHeroCard.tsx"),
+      "utf8"
+    );
+    expect(source).toContain("ringDurationMs={WHEEL_GROW_MS}");
+    expect(source).toContain("ringDelayMs={0}");
   });
 });
 

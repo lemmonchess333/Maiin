@@ -1,3 +1,11 @@
+/* The wheel's drawing, in the units of its own box: `CalorieRing` draws
+   from these, and the flight of a logged food lands on the arc they
+   place (`foodFlight.ts`). */
+/** The side of the wheel's box. */
+export const WHEEL_SIZE = 160;
+/** The width of its arc. */
+export const WHEEL_STROKE = 12;
+
 /**
  * How full the calorie wheel and the bars beside it are drawn.
  *

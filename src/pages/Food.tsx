@@ -94,6 +94,9 @@ import AiConsentSheet from "@/components/food/AiConsentSheet";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
 import FoodMacroRow from "@/components/food/FoodMacroRow";
+import FoodLogFlight from "@/components/food/FoodLogFlight";
+import { useFoodLogFlight } from "@/hooks/useFoodLogFlight";
+import { foodArtKindFor, foodArtUrl } from "@/lib/foodArt";
 import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
 import FoodTargetsLink from "@/components/food/FoodTargetsLink";
@@ -808,6 +811,40 @@ export default function Food() {
   };
 
   const isToday = selectedDate === todayStr;
+
+  /* A food logged today flies to the calorie wheel (Food11 call 6):
+     `nextFlight` has when, `FoodLogFlight` draws it, and the hero holds
+     the wheel's old calories until it lands. The picture is our drawing
+     of the food, as its diary row has until a photo of its own has been
+     read from the device. */
+  const visibleMealIds = useMemo(
+    () => visibleTodaysMeals.map((meal) => meal.id),
+    [visibleTodaysMeals]
+  );
+  const logFlight = useFoodLogFlight({
+    day: selectedDate,
+    isToday,
+    ready: !mealsLoading,
+    ids: visibleMealIds,
+    calories: dailyTotals.calories,
+    reducedMotion,
+  });
+  const flyingMeal = logFlight.flight
+    ? visibleTodaysMeals.find((meal) => meal.id === logFlight.flight?.mealId)
+    : undefined;
+  const foodFlight = logFlight.flight
+    ? {
+        key: logFlight.flight.mealId,
+        src: foodArtUrl(
+          foodArtKindFor([
+            flyingMeal?.foodName ?? "",
+            ...(flyingMeal?.items ?? []).map((item) => item.name ?? ""),
+          ])
+        ),
+        fromCalories: logFlight.flight.fromCalories,
+        target: dailyTargets.finalTarget,
+      }
+    : null;
   const canGoBack = selectedDate > minDateStr;
   const canGoForward = selectedDate < todayStr;
 
@@ -2138,6 +2175,7 @@ export default function Food() {
         <FoodHeroCard
           key={selectedDate}
           drawIn={heroDrawIn}
+          holdWheel={logFlight.holdWheel}
           selectedDate={selectedDate}
           isToday={isToday}
           dailyTargets={dailyTargets}
@@ -2177,6 +2215,11 @@ export default function Food() {
           />
         )}
       </motion.div>
+      <FoodLogFlight
+        flight={foodFlight}
+        onArrive={logFlight.arrive}
+        onDone={logFlight.finish}
+      />
       {/* Mounted from the first open on, so it closes with its animation
           and its queued Pro sheet opens after it has gone. */}
       {heroSheetUsed && (

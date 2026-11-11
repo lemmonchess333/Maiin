@@ -510,7 +510,11 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   field, in the food orange, 24 pt in a 48 pt tap area, with no fill
   (the owner, 11 Nov 2026: as the food apps do it; it replaces the
   filled square beside the field of 23 Sep 2026, and §14 has the
-  count). Read Food11 before changing
+  count). A food logged today flies to the wheel: its drawing rises
+  from the field to the end of the arc in 400 ms and the arc grows from
+  250 ms, 600 ms in all (`FoodLogFlight`, `nextFlight`); never on an
+  edit, a delete, another day or under Reduce Motion. Read Food11 before
+  changing
   any of it. What follows is the screen as it stood before, and stays
   true of the parts not yet rebuilt. The owner kept the original screen
   (title, week strip, macro cards with their icons and colours, draining

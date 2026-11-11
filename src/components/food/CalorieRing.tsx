@@ -5,7 +5,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
-import { loggedFill } from "@/lib/calorieRingFill";
+import { loggedFill, WHEEL_SIZE, WHEEL_STROKE } from "@/lib/calorieRingFill";
 import { THEME } from "@/lib/theme";
 
 export type CalorieRingMode = "left" | "eaten";
@@ -19,8 +19,11 @@ interface CalorieRingProps {
   trajectoryLabel: string | null;
   /** Drives celebration drop-shadow. Parent owns the timing. */
   glowing?: boolean;
-  /** Main ring redraw duration in seconds. Default 1.5. */
+  /** How long the arc takes to redraw and the number to count, in ms.
+   *  Default 1500. */
   ringDurationMs?: number;
+  /** How long the arc waits before it redraws, in ms. Default 100. */
+  ringDelayMs?: number;
   /** Draw the ring and count the number up from zero when it mounts
    *  (the default). False mounts it already drawn, at its figures —
    *  Food's hero after a day switch, which is a browse, not a log. */
@@ -44,8 +47,8 @@ interface CalorieRingProps {
 
 /* Drawn on a 160 box. Nothing may paint past r + stroke / 2 = SIZE / 2:
    the box clips it flat on all four sides (regression-pinned). */
-const SIZE = 160;
-const STROKE = 12;
+const SIZE = WHEEL_SIZE;
+const STROKE = WHEEL_STROKE;
 const RADIUS = SIZE / 2 - STROKE / 2;
 const CENTER = SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -89,6 +92,7 @@ export default function CalorieRing({
   trajectoryLabel,
   glowing = false,
   ringDurationMs = 1500,
+  ringDelayMs = 100,
   drawIn = true,
   size = "hero",
 }: CalorieRingProps) {
@@ -133,6 +137,16 @@ export default function CalorieRing({
   const lapGapOffset = -(CIRCUMFERENCE * overshootRatio + LAP_GAP);
 
   const ringDurationSec = ringDurationMs / 1000;
+  const ringDelaySec = ringDelayMs / 1000;
+  /* The second lap takes as long as the first and starts a moment after
+     it, so going over reads as filled, then past, inside the same log
+     moment. It ran 1.5 s from 0.6 s whatever the first lap took, so a
+     log over the target was shown 2.1 s after it was made. */
+  const lapTransition = {
+    duration: reduce ? 0 : ringDurationSec,
+    ease: RING_EASE,
+    delay: reduce ? 0 : ringDelaySec + 0.15,
+  };
 
   const ariaLabel = hasTarget
     ? isOver
@@ -145,6 +159,8 @@ export default function CalorieRing({
   return (
     <button
       type="button"
+      /* The food's flight finds the wheel by this (`FoodLogFlight`). */
+      data-calorie-wheel=""
       onClick={onToggleMode}
       aria-label={
         ariaLabel + ". Tap to toggle between calories left and calories logged."
@@ -198,15 +214,16 @@ export default function CalorieRing({
               transition={{
                 duration: reduce ? 0 : ringDurationSec,
                 ease: RING_EASE,
-                delay: reduce ? 0 : 0.1,
+                delay: reduce ? 0 : ringDelaySec,
               }}
             />
           )}
           {/* Overshoot lap — in BOTH modes when over target, so the
               logged view does not sit at 100% indistinguishable from
-              "hit the target exactly". Runs after the main ring's draw. */}
+              "hit the target exactly". It starts a moment after the
+              main ring (`lapTransition`). */}
           {/* The sliver ahead of the second lap's head (LAP_GAP). It
-              travels with the head: the same curve, time and delay. */}
+              travels with the head: the same transition. */}
           {isOver && (
             <motion.circle
               data-lap-gap=""
@@ -222,11 +239,7 @@ export default function CalorieRing({
                 strokeDashoffset: settled ? lapGapOffset : -LAP_GAP,
               }}
               animate={{ strokeDashoffset: lapGapOffset }}
-              transition={{
-                duration: reduce ? 0 : 1.5,
-                ease: RING_EASE,
-                delay: reduce ? 0 : 0.6,
-              }}
+              transition={lapTransition}
             />
           )}
           {isOver && (
@@ -243,11 +256,7 @@ export default function CalorieRing({
                 strokeDashoffset: settled ? overlapOffset : CIRCUMFERENCE,
               }}
               animate={{ strokeDashoffset: overlapOffset }}
-              transition={{
-                duration: reduce ? 0 : 1.5,
-                ease: RING_EASE,
-                delay: reduce ? 0 : 0.6,
-              }}
+              transition={lapTransition}
             />
           )}
         </g>
