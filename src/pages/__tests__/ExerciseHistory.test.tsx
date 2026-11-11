@@ -284,8 +284,8 @@ describe("ExerciseHistory — comparisons belong to the session", () => {
     expect(row("evening")).toHaveTextContent("Last: 62.5 kg × 8");
     expect(row("morning")).toHaveTextContent("Last: 60 kg × 8");
     expect(row("first")).not.toHaveTextContent("Last:");
-    expect(within(row("evening")).queryByText("PR")).toBeNull();
-    expect(within(row("morning")).getByText("PR")).toBeVisible();
+    expect(within(row("evening")).queryByText("Best")).toBeNull();
+    expect(within(row("morning")).getByText("Best")).toBeVisible();
   });
 
   it("leaves warm-ups out of top sets, volume, set counts and comparison history", () => {

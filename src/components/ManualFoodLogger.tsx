@@ -265,7 +265,7 @@ export function ManualFoodLogger({
           {barcode && (
             <div className="mt-4 flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm text-foreground">Add to my pantry</p>
+                <p className="text-sm text-foreground">Add to your pantry</p>
                 <p className="text-xs text-muted-foreground">
                   The next scan of this barcode finds it.
                 </p>
@@ -273,7 +273,7 @@ export function ManualFoodLogger({
               <Toggle
                 checked={addToPantry}
                 onChange={() => setAddToPantry((on) => !on)}
-                label="Add to my pantry"
+                label="Add to your pantry"
               />
             </div>
           )}

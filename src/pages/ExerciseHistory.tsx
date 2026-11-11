@@ -194,7 +194,7 @@ export default function ExerciseHistory() {
     return out;
   }, [workouts, decodedName, isTimed]);
 
-  // Personal bests by reps — heaviest weight ever lifted at exactly that rep
+  // Bests by reps — heaviest weight ever lifted at exactly that rep
   // count. For bodyweight exercises this is the heaviest ADDED weight
   // (e.g. weighted pull-ups stored as `weightKg = 10` for +10 kg);
   // pure BW sessions store `weightKg = 0` and just show "BW" with the
@@ -515,7 +515,7 @@ export default function ExerciseHistory() {
         />
       ) : (
         <>
-          {/* ── Personal bests by reps ───────────────────────────────── */}
+          {/* ── Bests by reps ───────────────────────────────── */}
           {!isTimed && (
             <div className="@container rounded-2xl bg-card p-4 space-y-3 card-shadow">
               <div className="flex items-center gap-2">
@@ -527,7 +527,7 @@ export default function ExerciseHistory() {
                     wording already existed three characters away, on the
                     bodyweight side of this same ternary. */}
                 <h3 className="text-base font-bold text-foreground">
-                  Personal bests by reps
+                  Bests by reps
                 </h3>
               </div>
               {/* The columns are the rep counts THIS lifter trains, so
@@ -661,7 +661,7 @@ export default function ExerciseHistory() {
                               the food orange measured 2.76:1. */}
                           {isPR && (
                             <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
-                              PR
+                              Best
                             </span>
                           )}
                         </div>

@@ -72,7 +72,9 @@ describe("a lift post's hero", () => {
       ])
     );
     const drawing = card.querySelector("img[data-lead-drawing]");
-    expect(drawing?.getAttribute("src")).toMatch(/form-art\/bench-press\.webp$/);
+    expect(drawing?.getAttribute("src")).toMatch(
+      /form-art\/bench-press\.webp$/
+    );
     // In place of the muscle figure, not beside it.
     expect(
       screen.queryByRole("img", { name: "Muscles trained this session" })
@@ -112,7 +114,7 @@ describe("a lift post's hero", () => {
       )
     );
     expect(card.querySelector("img[data-lead-drawing]")).not.toBeNull();
-    expect(screen.getAllByText("2 PRs")).toHaveLength(1);
+    expect(screen.getAllByText("2 bests")).toHaveLength(1);
     expect(screen.getAllByText(/kg volume/)).toHaveLength(1);
   });
 });

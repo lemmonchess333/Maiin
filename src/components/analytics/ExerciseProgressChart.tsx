@@ -104,7 +104,7 @@ export default function ExerciseProgressChart({
     new Date(data[data.length - 1].date + "T12:00:00")
   );
   const latestValue = formatValue(data[data.length - 1].value, unit, true);
-  const ariaLabel = `Progression chart, ${metricLabel}. ${data.length} session${data.length === 1 ? "" : "s"} from ${firstDate} to ${lastDate}. Latest value: ${latestValue}. ${prCount} personal record${prCount === 1 ? "" : "s"}.`;
+  const ariaLabel = `Progression chart, ${metricLabel}. ${data.length} session${data.length === 1 ? "" : "s"} from ${firstDate} to ${lastDate}. Latest value: ${latestValue}. ${prCount} new best${prCount === 1 ? "" : "s"}.`;
 
   return (
     <div className="h-44" role="img" aria-label={ariaLabel}>
@@ -172,7 +172,7 @@ export default function ExerciseProgressChart({
                           fontWeight: 700,
                         }}
                       >
-                        PR
+                        Best
                       </span>
                     )}
                   </div>

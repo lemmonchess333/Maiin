@@ -833,7 +833,7 @@ function LiftTemplate({
               fontSize: 32 * scale,
             }}
           >
-            {data.prCount} PR{(data.prCount ?? 0) > 1 ? "s" : ""}
+            {data.prCount} {(data.prCount ?? 0) > 1 ? "bests" : "best"}
             {data.prExercise ? ` · ${data.prExercise}` : ""}
           </div>
         )

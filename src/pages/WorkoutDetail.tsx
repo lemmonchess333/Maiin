@@ -196,7 +196,7 @@ function ExerciseRecord({
                     aria-hidden="true"
                     className="ml-auto text-caption font-semibold text-achievement-strong"
                   >
-                    PR
+                    Best
                   </span>
                 )}
               </li>

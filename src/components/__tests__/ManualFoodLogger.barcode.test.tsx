@@ -3,7 +3,7 @@
  *
  * A barcode the food database did not have used to end in a toast. Type
  * details opens this form for the product: the meal keeps the code, and
- * "Add to my pantry", on by default, files the product under it so the
+ * "Add to your pantry", on by default, files the product under it so the
  * next scan of the same pack finds it.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -58,7 +58,7 @@ describe("ManualFoodLogger — a product the scan did not find", () => {
       />
     );
     expect(
-      screen.getByRole("switch", { name: "Add to my pantry" })
+      screen.getByRole("switch", { name: "Add to your pantry" })
     ).toHaveAttribute("aria-checked", "true");
     fillProduct();
     fireEvent.click(screen.getByRole("button", { name: /log meal/i }));
@@ -89,7 +89,7 @@ describe("ManualFoodLogger — a product the scan did not find", () => {
       />
     );
     fillProduct();
-    fireEvent.click(screen.getByRole("switch", { name: "Add to my pantry" }));
+    fireEvent.click(screen.getByRole("switch", { name: "Add to your pantry" }));
     fireEvent.click(screen.getByRole("button", { name: /log meal/i }));
     await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
     expect(createMealEntry).toHaveBeenCalledTimes(1);

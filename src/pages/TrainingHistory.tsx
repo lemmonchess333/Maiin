@@ -455,7 +455,7 @@ export default function TrainingHistory() {
                                   bests.ids.has(session.id) &&
                                   session.kind === "lift" && (
                                     <span className="ml-2 text-micro font-semibold text-achievement-strong">
-                                      PR
+                                      Best
                                     </span>
                                   )}
                               </span>

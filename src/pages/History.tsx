@@ -290,7 +290,8 @@ function FilterPills({
       size="sm"
       options={VALID_TABS.map((f) => ({
         value: f,
-        label: f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : "Badges",
+        label:
+          f === "analytics" ? "Analytics" : f === "prs" ? "Bests" : "Badges",
       }))}
     />
   );

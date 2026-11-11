@@ -130,11 +130,11 @@ describe("Training history", () => {
     await waitFor(() => expect(sessionLinks()).toHaveLength(4));
     await waitFor(() =>
       expect(
-        sessionLinks().filter((link) => link.textContent?.includes("PR"))
+        sessionLinks().filter((link) => link.textContent?.includes("Best"))
       ).toHaveLength(1)
     );
     expect(
-      sessionLinks().find((link) => link.textContent?.includes("PR"))
+      sessionLinks().find((link) => link.textContent?.includes("Best"))
     ).toHaveAttribute("href", expect.stringContaining("heavier"));
   });
 

@@ -142,7 +142,9 @@ test.describe("analytics — a season of training", () => {
        scoped pool left as "--" for anything older than the range. The
        race is weeks old, so its row only fills from the lifetime read. */
     await page.goto("/Maiin/history?tab=prs");
-    await expect(page.getByText("Lift PRs")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Lifting bests")).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(page.getByText("Longest run").first()).toBeVisible();
     await settleImages(page);
     await settleFullPageHeight(page);
