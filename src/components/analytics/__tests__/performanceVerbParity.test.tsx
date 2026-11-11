@@ -1,18 +1,23 @@
 /**
- * Home and Analytics name the same week the same way.
+ * The overview's card and the Performance page name the same week the
+ * same way.
  *
- * The gauge on Analytics derived its own band from the SCORE alone —
- * Peak ≥80 / Building ≥60 / Moderate ≥40 / Recovery — while Home renders
- * the taxonomy PI1 locks, derived from (loadBand, deloadRecommended).
- * Two different mappings from two different inputs, so the same week had
- * two names: a low-band 30 read "Building" on Home and "Recovery" here,
- * and a moderate 65 read "Steady" there and "Building" here, where
- * "Building" also meant something else again.
+ * The gauge on the page derived its own band from the SCORE alone —
+ * Peak ≥80 / Building ≥60 / Moderate ≥40 / Recovery — while the row Home
+ * then had rendered the taxonomy PI1 locks, derived from (loadBand,
+ * deloadRecommended). Two different mappings from two different inputs,
+ * so the same week had two names: a low-band 30 read "Building" on Home
+ * and "Recovery" here, and a moderate 65 read "Steady" there and
+ * "Building" here, where "Building" also meant something else again.
  *
  * Neither label alone is the invariant — AGREEMENT is. So this renders
  * both real surfaces from one fixture and compares them, rather than
  * asserting a string that a future rename would have to touch in two
  * places to keep honest.
+ *
+ * Home's row left with Trim1 call 1 (11 November 2026), so the pair is
+ * now the two that remain: the overview's card, which reads the words
+ * the row did, and the page.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, within } from "@testing-library/react";
@@ -41,7 +46,7 @@ vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 import PerformanceTab from "../PerformanceTab";
-import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
+import PerformanceOverviewCard from "../PerformanceOverviewCard";
 import { VERB_LABEL } from "@/lib/performanceLine";
 
 function week(weekKey: string, pi: number, loadBand: string, deload = false) {
@@ -115,26 +120,24 @@ describe("the two performance surfaces agree on the verb", () => {
     const analyticsVerbs = verbOnScreen(analytics.container);
     cleanup();
 
-    const home = render(
+    const overview = render(
       <MemoryRouter>
-        <PerformanceHeroCard
-          currentWeek={weeks[weeks.length - 1] as never}
-          previousWeek={weeks[weeks.length - 2] as never}
-          weeksAvailable={weeks.length}
-          loading={false}
-        />
+        <PerformanceOverviewCard hasLoggedSession onOpenDetails={() => {}} />
       </MemoryRouter>
     );
-    const homeVerbs = verbOnScreen(home.container);
+    const overviewVerbs = verbOnScreen(overview.container);
 
     // Anchored on a positive: each surface must actually be SHOWING a
     // verb. Two surfaces rendering nothing would "agree" vacuously.
-    expect(homeVerbs.length, "Home rendered no locked verb").toBeGreaterThan(0);
+    expect(
+      overviewVerbs.length,
+      "the overview's card rendered no locked verb"
+    ).toBeGreaterThan(0);
     expect(
       analyticsVerbs.length,
-      "Analytics rendered no locked verb"
+      "the Performance page rendered no locked verb"
     ).toBeGreaterThan(0);
-    expect(analyticsVerbs).toEqual(homeVerbs);
+    expect(analyticsVerbs).toEqual(overviewVerbs);
   });
 
   it("Analytics no longer invents score-derived bands", () => {

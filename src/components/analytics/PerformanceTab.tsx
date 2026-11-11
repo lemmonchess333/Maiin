@@ -54,7 +54,8 @@ const PI_EXPLAINER =
  * AA step for SMALL text in the same hue: every one of the five identities
  * fails 4.5:1 on the light card (best case brand at 3.87), so the 12px
  * band label and the 16px verdict headline must not take the identity.
- * The same fix as PerformanceHeroCard's textHue, applied to this tab's
+ * The same fix Home's performance row had (the row left Home in Trim1
+ * call 1), applied to this tab's
  * own five-way scale — the two ternaries this replaces had already
  * drifted into gauge and summary as separate copies. */
 function bandPalette(
@@ -445,7 +446,7 @@ export default function PerformanceTab({
                 positively; the headline already carries the verdict. */}
             {delta !== null && delta !== 0 && !establishing && (
               // Text on the -strong steps, tint from the identity — the
-              // same pair PerformanceHeroCard's delta chip uses (DS2).
+              // same pair the delta chip on Home's performance row used (DS2).
               // Supersedes the DS1b "stays inline" note: the concern was a
               // CLASS swap shifting the hue; the -strong VAR steps keep the
               // hue and add the AA lightness the identities lack at 12px

@@ -258,7 +258,7 @@ and consistency must yield to them:
 | Element              | Keeps                                                                  |
 | -------------------- | ---------------------------------------------------------------------- |
 | Food hero            | Calorie ring, one orange arc on a grey groove, and three macro cards   |
-| Home performance row | The ring in the band's colour with the score in it, the verb, the chip |
+| Performance verdict  | The ring in the band's colour with the score in it, the verb, the chip |
 | Meal slot picker     | Filled orange pills (`SegmentedControl` `emphasis="solid"`)            |
 | Sport coding         | Purple lifting / coral running, everywhere they appear                 |
 
@@ -268,7 +268,9 @@ prop. Between them the food surface lost the only colour it owned and the
 weekly verdict became a row of digits. (DS3 made the performance card the
 closing row of Home's "This week" card and dropped its gradient halo with
 the app's other glows. What it kept is the list above: the verdict is
-still a coloured ring, a verb and a chip, not digits.) Both were consistency applied past
+still a coloured ring, a verb and a chip, not digits. Trim1 call 1, 11
+November 2026, took that row off Home so the score is shown in one
+place; the verdict keeps the same three things on Analytics.) Both were consistency applied past
 the point where it helps. Before you unify something, ask whether the thing
 you are unifying IS the identity of its surface; if it is, unify the
 behaviour (roles, keyboard, target size) and leave the treatment alone.
@@ -580,7 +582,7 @@ behaviour.
   (`--muted-foreground / 0.22`), never a tint of the ring's own hue. The SVG
   is decorative: the figure beside or inside it carries the meaning, so say
   it in text or an `aria-label` on the surrounding control. Home's calorie
-  ring and its Performance row use it. One ring per card; several quantities
+  ring uses it. One ring per card; several quantities
   side by side are bars (DS3's macros), not a row of rings.
 - **`EmptyState`** (`src/components/ui/EmptyState.tsx`): the canonical
   designed empty-state — a stroke-vector **brand hexagon** + one-line
@@ -990,6 +992,7 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
 - **Hero card (Health Score, Water):** `Card` (hero), larger icon (48px container), icon in purple-tinted bg square
 - **Compact tile (Weight, Steps):** the compact pairing on the card surface (`bg-card card-shadow`), 2-col grid. It sat one step darker than the page (`tone="muted"`) until DS3 deepened the dark surfaces, where a muted tile read as a hole beside the cards around it.
 - **Home hero (`LiftCTACard` / `RunCTACard` / `RestDayCard`, drawn by `SessionHero`; DS4, the Today card of DS3):** open on the page rather than in a card, over a soft glow of the sport's colour: the session as a 36px title (`text-hero`), its focus and minutes ("Back and biceps · about 26 min", "5 km · about 30 min"), its picture (the lead lift's drawing, a runner for a run), one line with a number and its comparison (`homeHero.ts`: "Barbell row 35 kg × 8", "2.5 kg more than last time"; a lift with no last time, the day's size and "Pick a weight you could lift 3 more times than the reps ask."), and a full-width `neutral` Start. The kicker beside the date gives the plan's position ("Week 9 of 12") or a first session ("Your first workout"). A rest day's hero is "Rest day" and the next session, with no Start. A day with two sessions draws the second as a compact card under the hero, its Start in its sport's colour. The week sits in the card under it: the sessions done of the plan's, the next session, and seven segments (done lifts purple, done runs coral, planned outlined in their sport's colour, today outlined in the foreground), each opening its day's peek. Start begins the session (`/program?day=N&start=1`, `/run?template=…`); the rest of the card is a sibling button that opens the day in Train to look it over, because a button cannot sit inside a button. A lift shows the cut-out drawing of its first exercise that has one (`formArtCutouts`). A finished or skipped day shows its status instead of Start. A session under way on the phone (a workout closed with its sets kept, a run left before it was saved) shows the In progress strip in Start's place, "In progress · 5 sets · 18:40" and Resume (`InProgressStrip`, Hevy and Strong's pattern); a session under way that is not the card's leads the stack on a strip of its own, and Train's day card draws the same primitive. Which card it goes on is `todaySession.ts`'s rule, and only a session Resume will actually open is offered (`sessionsInFlight.ts`). No rationale and no plan position ("Base · week 3 of 16") on Home: owner direction 2026-09-09, pinned in `SessionPurpose.test.tsx`. DS4 call 5 (2026-11-07) lets Home's hero show the plan position and today's main lift against last time ("Week 9 of 12"; "35 kg × 8 · last time 32.5 kg"); reasons stay behind "Why this session". It landed with the Home hero, and `SessionPurpose.test.tsx` now pins the position on the kicker and the reasons off the hero.
+- **Home's week card (Trim1 call 1, 11 November 2026):** one card under the hero says the week once. The week's sessions as a figure with its caption and the next session ("3 of 5 sessions this week", "Long run tomorrow"), the seven segments, then one muted line of what the count is made of: "Lifts 2 of 3", "Runs 1 of 2", "Food logged 4 of 7 days", with the Weekly review link beside it while a review waits. Lifts and runs are listed only when the week holds both; with one of them the figure above is already its count. No bars: the segments are the card's picture. It replaces the "This week" card that closed Home (DS3), three columns with bars over the Performance row, which read the same counts a second time. The owner: "streamline all". Home's always-on blocks went from seven to five.
 - **Quick actions:** there is no pill row. Today's actions are the Start
   buttons on the Today cards, and food logging is the "Log food" button in
   `TodayEnergy`'s header.

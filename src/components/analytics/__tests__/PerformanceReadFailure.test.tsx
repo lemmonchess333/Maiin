@@ -4,7 +4,6 @@ import { MemoryRouter } from "react-router-dom";
 import PerformanceOverviewCard from "../PerformanceOverviewCard";
 import PerformanceSection from "../PerformanceSection";
 import PerformanceTab from "../PerformanceTab";
-import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
 
 const mock = vi.hoisted(() => ({
   refresh: vi.fn(),
@@ -33,20 +32,6 @@ const surfaces = [
   ],
   ["section", () => <PerformanceSection hasLoggedSession />],
   ["tab", () => <PerformanceTab />],
-  [
-    "home",
-    () => (
-      <PerformanceHeroCard
-        currentWeek={null}
-        previousWeek={null}
-        weeksAvailable={0}
-        loading={mock.loading}
-        failed={mock.failed}
-        onRetry={mock.refresh}
-        hasLoggedSession
-      />
-    ),
-  ],
 ] as const;
 
 beforeEach(() => {
