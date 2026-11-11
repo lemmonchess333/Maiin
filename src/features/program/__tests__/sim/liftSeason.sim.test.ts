@@ -73,6 +73,11 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   Lift21: its four sets of five are all built now, where the time fit
  *   left three, and the fourth is the set that goes. Their 26-week 1RMs
  *   are the same to the half kilo either way.
+ * - the six-day lifter's `stall:overhead-press`: his shoulder day's press
+ *   is the one lift of his week at four sets, 8 to 12 at 45 kg. A climb
+ *   needs all four at the target and the fourth falls two short, so the
+ *   plan waits at 45 kg for 11 from June to August. His press 1RM rises
+ *   8.8% over the 26 weeks, as the four-day lifters' do.
  *
  * F12 `acsm-size:quads` went with Lift21: a size plan's quads get ten sets
  * a week or more, where the fitted week gave nine.
@@ -108,6 +113,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "stall:seated-leg-curl",
     "stall:standing-calf-raise",
   ],
+  "six-days-general": ["stall:overhead-press"],
 };
 
 const seasons = new Map<string, Season>();

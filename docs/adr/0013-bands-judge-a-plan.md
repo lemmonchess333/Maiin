@@ -48,8 +48,8 @@ length.
 
 2. **What the balancer protected is authored instead.** Pulling keeps up
    with pressing (D-LIFT-3) through the builders' lists and the order each
-   day gives lifts up in (`KEEP_RANKS`), and through one placement rule: a
-   day's first pull takes its first press's sets. `sessionSizing.test.ts`
+   day gives lifts up in (the `rank` on each builder slot), and through one
+   placement rule: a day's first pull takes its first press's sets. `sessionSizing.test.ts`
    holds it over the panel: no week without a pull, and compound pulling at
    0.7 of compound pressing or more from 45 minutes.
 
@@ -94,11 +94,13 @@ past beginner under three sets outside a half-hour day.
   re-read for another count, never by cutting sets.
 - **The small muscles lose direct work in short plans.** Time takes lifts
   from the end of a day's order, where the calf raise, the ab lift and the
-  lateral raise sit. From the panel, an intermediate's direct slots a week:
-  at 45 minutes no plan holds an ab lift and most hold no calf raise; a
-  two- or three-day week holds none of the three under 75 minutes. Lift22
-  (pairing a short day's last lifts as supersets) is the decision that
-  brings them back.
+  lateral raise sit, and the triceps lift on a day that presses twice. From
+  the panel, an intermediate's direct lifts a week: at 45 minutes no plan
+  holds an ab lift, and only a General fitness plan of three days or more
+  holds a calf raise; a two- or three-day week holds no lateral raise under
+  75 minutes and no triceps lift at any length; a four-day week holds no
+  triceps lift under 75 minutes. Lift22 (pairing a short day's last lifts
+  as supersets) is the decision that brings them back.
 - **A re-fit and a new plan come out alike again**, by one rule. A session
   length changed and changed back returns the sets it started with.
 - **Day roles stop shifting reps in a built plan.** A role shifted a whole
