@@ -1,0 +1,36 @@
+// Scratch: what a re-fit does to a plan the person already has.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { refitSessionsToTime, sessionFits } from "../sessionFit";
+import { balanceWeekVolume } from "../programEngine";
+import { estimateSessionMinutes } from "../expressSession";
+
+type Ex = { name: string; sets: number; reps: number; isAccessory?: boolean; weight: number; instanceId?: string; exerciseId: string };
+type Day = { dayName: string; exercises: Ex[] };
+const show = (days: Day[], m: number) => days.map((d) => ({ name: d.dayName, n: d.exercises.length, sets: d.exercises.reduce((t, e) => t + e.sets, 0), est: estimateSessionMinutes(d.exercises as never, { sessionMinutes: m }), fits: sessionFits(d.exercises as never, m), ex: d.exercises.map((e) => `${e.name} ${e.sets}x${e.reps}@${e.weight}`) }));
+
+it("kept", () => {
+  const out: Record<string, unknown> = {};
+  const m = 60;
+  const plan = buildPlan({ primaryGoal: "hypertrophy", nutritionPhase: "recomp", experience: "intermediate", sessionMinutes: m, bodyweightKg: 80, sex: "male", liftDays: 6, preferredSplit: "auto", runMode: "freeform", weeklyRunDays: 0, equipment: "full_gym", injuries: [], currentDate: "2026-11-09" } as unknown as PlanBuilderInput) as unknown as { programState: { workouts: Day[] } };
+  const w = plan.programState.workouts;
+  out["new plan"] = show(w, m);
+
+  // 1. The same plan once the lifter is strong: every weight doubled.
+  const strong = w.map((d) => ({ ...d, exercises: d.exercises.map((e) => ({ ...e, weight: Math.round(e.weight * 2) })) }));
+  out["strong lifter, before any re-fit"] = show(strong, m);
+  out["strong lifter, re-fitted as a week's turn does"] = show(balanceWeekVolume(refitSessionsToTime(strong as never, "hypertrophy", "intermediate", m), "hypertrophy", "intermediate", m) as unknown as Day[], m);
+
+  // 2. A day the person has added lifts to (or one kept from an older, longer plan): Pull A plus the other pull day's lifts and four more.
+  const pullA = w.find((d) => d.dayName.startsWith("Pull — Lat"))!;
+  const extras = w.filter((d) => d !== pullA).flatMap((d) => d.exercises).filter((e) => /Row|Pulldown|Curl|Raise|Crunch|Calf|Cable|Extension|Pushdown/.test(e.name));
+  const seen = new Set(pullA.exercises.map((e) => e.name));
+  const added: Ex[] = [];
+  for (const e of extras) { if (!seen.has(e.name)) { seen.add(e.name); added.push({ ...e, instanceId: `added-${added.length}`, isAccessory: true }); } }
+  for (const size of [8, 10, 12]) {
+    const long = [{ ...pullA, exercises: [...pullA.exercises, ...added].slice(0, size) }];
+    out[`a ${size}-lift day, re-fitted to ${m} minutes`] = show(refitSessionsToTime(long as never, "hypertrophy", "intermediate", m) as unknown as Day[], m);
+  }
+  writeFileSync("/tmp/work/train/kept.json", JSON.stringify(out, null, 1));
+});

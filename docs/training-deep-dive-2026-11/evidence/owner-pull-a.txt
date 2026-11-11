@@ -1,0 +1,5 @@
+Pull A, 12 lifts x 2 sets, session 45: 99 min with no lift flagged as supporting work, 93 min with all but the first two flagged
+Legs A, 5 lifts x 2 sets, session 45: 43 min (first two as main lifts)
+Pull A, 12 lifts x 2 sets, session 60: 99 min with no lift flagged as supporting work, 93 min with all but the first two flagged
+Legs A, 5 lifts x 2 sets, session 60: 43 min (first two as main lifts)
+mechanic: Barbell Row=undefined, Single-Arm Lat Pulldown=undefined, Barbell Curl=isolation, Pull-Ups=undefined, Preacher Curl=isolation, Deadlift=undefined, Tricep Dips=undefined, Barbell Squat=undefined, Front Squat=undefined, Romanian Deadlift=undefined, Seated Calf Raise=isolation, Cable Crunch=isolation

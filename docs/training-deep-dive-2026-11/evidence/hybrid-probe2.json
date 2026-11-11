@@ -1,0 +1,15 @@
+{
+ "theirs": "Mon:lift Tue:run Wed:lift Thu:run Fri:lift Sat:rest Sun:run",
+ "keptAtFirstBuild": "Mon:lift Tue:run Wed:lift Thu:run Fri:lift Sat:rest Sun:run",
+ "runsFirst": [
+  "Tue easy_30",
+  "Thu easy_30_strides",
+  "Sun long_10k"
+ ],
+ "afterAddingALiftDay": "Mon:lift Tue:run Wed:run Thu:lift Fri:lift Sat:run Sun:lift",
+ "runsAfter": [
+  "Tue easy_30",
+  "Wed easy_30_strides",
+  "Sat long_10k"
+ ]
+}

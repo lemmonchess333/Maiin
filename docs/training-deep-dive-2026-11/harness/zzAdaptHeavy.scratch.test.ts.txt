@@ -1,0 +1,19 @@
+// Scratch, not committed: first weights for heavy beginners.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { freshLiftWeek, type FreshLiftAnswers } from "../planBuilder";
+
+it("heavy beginners", () => {
+  const out: string[] = [];
+  for (const [sex, bw, level] of [
+    ["male", 130, "beginner"], ["male", 150, "beginner"], ["female", 100, "beginner"], ["female", 120, "beginner"],
+    ["male", 60, "beginner"], ["female", 55, "beginner"], ["male", 130, "intermediate"],
+  ] as const) {
+    const days = freshLiftWeek({
+      primaryGoal: "hypertrophy", experience: level, sessionMinutes: 60, bodyweightKg: bw, sex,
+      liftDays: 3, equipment: "full_gym", injuries: [],
+    } as unknown as FreshLiftAnswers);
+    out.push(`${sex} ${bw} kg ${level}: ` + days.map((d) => d.exercises.map((e) => `${e.name} ${e.sets}x${e.reps}${e.repRangeMax ? "-" + e.repRangeMax : ""} @${e.weight}`).join("; ")).join(" || "));
+  }
+  writeFileSync("/tmp/work/train/adapt-heavy.txt", out.join("\n"));
+});

@@ -1,0 +1,101 @@
+{
+ "eve": {
+  "schedule": [
+   "Sun:rest",
+   "Mon:lift",
+   "Tue:run",
+   "Wed:run",
+   "Thu:lift",
+   "Fri:lift",
+   "Sat:run"
+  ],
+  "eveIndex": 2,
+  "backToBack": [
+   false,
+   true
+  ],
+  "days": [
+   {
+    "name": "Full Body — Squat Focus",
+    "fractionalLegSets": 11,
+    "rawLegLiftSets": 5,
+    "legLifts": [
+     "Barbell Squat 3x6*",
+     "Seated Leg Curl 2x8"
+    ]
+   },
+   {
+    "name": "Full Body — Deadlift Focus",
+    "fractionalLegSets": 12,
+    "rawLegLiftSets": 5,
+    "legLifts": [
+     "Deadlift 3x8*",
+     "Barbell Squat 2x8"
+    ]
+   },
+   {
+    "name": "Full Body — Posterior Focus",
+    "fractionalLegSets": 10,
+    "rawLegLiftSets": 7,
+    "legLifts": [
+     "Romanian Deadlift 3x8*",
+     "Front Squat 2x10",
+     "Seated Calf Raise 2x12"
+    ]
+   }
+  ],
+  "overlap01": 12,
+  "overlap12": 13,
+  "overlap02": 10
+ },
+ "freeRunnerOwnDays": {
+  "theirs": "Mon:lift Tue:run Wed:lift Thu:run Fri:lift Sat:lift Sun:run",
+  "afterAnEquipmentSave": "Mon:lift Tue:lift Wed:lift Thu:rest Fri:lift Sat:rest Sun:rest",
+  "weeklyRunDaysTarget": 0
+ },
+ "raceAdded_20daysOut": {
+  "runPlan": {
+   "currentWeek": 0,
+   "totalWeeks": 3
+  },
+  "whatTheRolloverWouldCallThisWeek": "taper",
+  "liftPhase": "progression",
+  "raceWeek": null,
+  "sets": [
+   "Upper — Chest & Back: 11 sets",
+   "Lower — Squat Focus: 13 sets",
+   "Upper — Shoulders & Arms: 17 sets",
+   "Lower — Deadlift Focus: 15 sets"
+  ]
+ },
+ "raceAdded_13daysOut": {
+  "runPlan": {
+   "currentWeek": 0,
+   "totalWeeks": 2
+  },
+  "whatTheRolloverWouldCallThisWeek": "taper",
+  "liftPhase": "progression",
+  "raceWeek": null,
+  "sets": [
+   "Upper — Chest & Back: 11 sets",
+   "Lower — Squat Focus: 13 sets",
+   "Upper — Shoulders & Arms: 17 sets",
+   "Lower — Deadlift Focus: 15 sets"
+  ]
+ },
+ "raceAdded_6daysOut": {
+  "runPlan": {
+   "currentWeek": 0,
+   "totalWeeks": 1
+  },
+  "whatTheRolloverWouldCallThisWeek": "race",
+  "liftPhase": "progression",
+  "raceWeek": null,
+  "sets": [
+   "Upper — Chest & Back: 11 sets",
+   "Lower — Squat Focus: 13 sets",
+   "Upper — Shoulders & Arms: 17 sets",
+   "Lower — Deadlift Focus: 15 sets"
+  ]
+ }
+}

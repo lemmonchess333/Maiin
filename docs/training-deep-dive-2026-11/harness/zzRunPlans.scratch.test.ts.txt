@@ -1,0 +1,506 @@
+/**
+ * SCRATCH (git-ignored, read-only investigation): the running engine's
+ * output for the deep dive's personas, through the simulator's season.
+ * Writes JSON + traces to /tmp/work/train/run/.
+ */
+import { mkdirSync, writeFileSync } from "node:fs";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("firebase/firestore");
+vi.mock("@/lib/firebase", () => ({ db: {}, auth: { currentUser: null } }));
+
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import {
+  DEFAULT_START,
+  simulateLiftSeason,
+  type LiftPersona,
+} from "@/test/sim/liftSeason";
+import type { LifterSetup } from "@/test/sim/lifter";
+import { runCoachingFindings } from "@/test/sim/runCoaching";
+import { BASE_RUNNER } from "@/test/sim/runner";
+import { runTrace } from "@/test/sim/runTrace";
+import { runnerStartingPoint } from "@/test/sim/runSeason";
+import { paceTableFromFitness, vdotFromRace } from "@/lib/runPaces";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+
+const OUT = "/tmp/work/train/run";
+mkdirSync(OUT, { recursive: true });
+
+const fromStart = (weeks: number, days = 0) =>
+  localDateString(
+    addLocalDays(parseLocalDate(DEFAULT_START), weeks * 7 + days)
+  );
+
+const NO_LIFTING = {
+  lifter: { trainingAge: "novice", start1RM: {}, seedRir: 3 } as LifterSetup,
+  sessionShare: 0,
+  calibrates: false,
+  tracked: [] as string[],
+};
+const RUNNING_ONLY = {
+  trainingActivity: "running",
+  primaryGoal: "running",
+  daysPerWeek: 0,
+} as const;
+
+const NO_INJURY = { ...BASE_RUNNER, name: "no-injury", injuryScale: 0 };
+
+const bench = (distanceM: number, timeS: number) => ({
+  benchmark: { distanceM, timeS },
+  vdot: Math.round(vdotFromRace(distanceM, timeS) * 10) / 10,
+});
+
+interface Case {
+  persona: LiftPersona;
+  weeks: number;
+  /** perfect: injuryScale 0. */
+  perfect?: boolean;
+  seed?: number;
+}
+
+const B5K_2730 = bench(5000, 27 * 60 + 30);
+const B10K_54 = bench(10000, 54 * 60);
+const B5K_25 = bench(5000, 25 * 60);
+const B10K_55 = bench(10000, 55 * 60);
+const B10K_42 = bench(10000, 42 * 60);
+
+const starter: LiftPersona = {
+  name: "p01-starter-new-runner",
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "new",
+    runMode: "starter",
+    weeklyRunDays: 3,
+    experience: "beginner",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: { vdot: 24, weeklyMinutes: 20, runningWeeks: 0 },
+    runShare: 1,
+  },
+};
+
+const new5k: LiftPersona = {
+  name: "p01b-new-runner-5k-race-11w",
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "new",
+    runMode: "race_prep",
+    weeklyRunDays: 3,
+    raceDistance: "5k",
+    raceTargetDate: fromStart(10, 6),
+    experience: "beginner",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: { vdot: 24, weeklyMinutes: 20, runningWeeks: 0 },
+    runShare: 1,
+  },
+};
+
+const fiveK: LiftPersona = {
+  name: "p02-5k-improver-3runs-10w",
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "regular",
+    runMode: "race_prep",
+    weeklyRunDays: 3,
+    raceDistance: "5k",
+    raceTargetDate: fromStart(9, 6),
+    experience: "intermediate",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: {
+      vdot: B5K_2730.vdot,
+      weeklyMinutes: 100,
+      runningWeeks: 60,
+      longestRunKm: 6,
+    },
+    runShare: 1,
+    benchmark: B5K_2730.benchmark,
+  },
+};
+
+const tenK = (days: number): LiftPersona => ({
+  name: `p03-10k-${String(days)}runs-12w`,
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "regular",
+    runMode: "race_prep",
+    weeklyRunDays: days,
+    raceDistance: "10k",
+    raceTargetDate: fromStart(11, 6),
+    experience: "intermediate",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: {
+      vdot: B10K_54.vdot,
+      weeklyMinutes: 150,
+      runningWeeks: 80,
+      longestRunKm: 8,
+    },
+    runShare: 1,
+    benchmark: B10K_54.benchmark,
+  },
+});
+
+const half = (weeksOut: number, extra: Partial<LiftPersona> = {}): LiftPersona => ({
+  name: `p04-half-4runs-${String(weeksOut)}w`,
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "regular",
+    runMode: "race_prep",
+    weeklyRunDays: 4,
+    raceDistance: "half",
+    raceTargetDate: fromStart(weeksOut - 1, 6),
+    experience: "intermediate",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: {
+      vdot: B5K_25.vdot,
+      weeklyMinutes: 160,
+      runningWeeks: 100,
+      longestRunKm: 10,
+    },
+    runShare: 1,
+    benchmark: B5K_25.benchmark,
+  },
+  ...extra,
+});
+
+const firstMarathon = (
+  weeksOut: number,
+  extra: Partial<LiftPersona> = {},
+  name?: string
+): LiftPersona => ({
+  name: name ?? `p05-first-marathon-4runs-${String(weeksOut)}w`,
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "regular",
+    runMode: "race_prep",
+    weeklyRunDays: 4,
+    raceDistance: "marathon",
+    raceTargetDate: fromStart(weeksOut - 1, 6),
+    experience: "intermediate",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: {
+      vdot: B10K_55.vdot,
+      weeklyMinutes: 170,
+      runningWeeks: 100,
+      longestRunKm: 12,
+    },
+    runShare: 1,
+    benchmark: B10K_55.benchmark,
+  },
+  ...extra,
+});
+
+const expMarathon = (days: number): LiftPersona => ({
+  name: `p06-exp-marathon-${String(days)}runs-16w-goal-3h15`,
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "regular",
+    runMode: "race_prep",
+    weeklyRunDays: days,
+    raceDistance: "marathon",
+    raceTargetDate: fromStart(15, 6),
+    experience: "advanced",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: {
+      vdot: B10K_42.vdot,
+      weeklyMinutes: 330,
+      runningWeeks: 300,
+      longestRunKm: 24,
+    },
+    runShare: 1,
+    benchmark: B10K_42.benchmark,
+    goalTimeS: 3 * 3600 + 15 * 60,
+  },
+});
+
+const freeform: LiftPersona = {
+  name: "p07-freeform-no-race",
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "regular",
+    runMode: "freeform",
+    weeklyRunDays: 0,
+    experience: "intermediate",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: { vdot: 38, weeklyMinutes: 150, runningWeeks: 80 },
+    runShare: 1,
+    freeRuns: [
+      { day: 2, minutes: 40 },
+      { day: 4, minutes: 40 },
+      { day: 0, minutes: 70 },
+    ],
+  },
+};
+
+const structured: LiftPersona = {
+  name: "p07b-structured-no-race",
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "regular",
+    runMode: "structured",
+    weeklyRunDays: 4,
+    experience: "intermediate",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: { vdot: 38, weeklyMinutes: 150, runningWeeks: 80 },
+    runShare: 1,
+  },
+};
+
+const noBench: LiftPersona = {
+  name: "p08-no-benchmark-10k-3runs-12w",
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "occasional",
+    runMode: "race_prep",
+    weeklyRunDays: 3,
+    raceDistance: "10k",
+    raceTargetDate: fromStart(11, 6),
+    experience: "beginner",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: {
+      vdot: 33,
+      weeklyMinutes: 80,
+      runningWeeks: 30,
+      longestRunKm: 5,
+    },
+    runShare: 1,
+  },
+};
+
+const noBenchHalf: LiftPersona = {
+  name: "p08b-no-benchmark-half-3runs-14w",
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "regular",
+    runMode: "race_prep",
+    weeklyRunDays: 3,
+    raceDistance: "half",
+    raceTargetDate: fromStart(13, 6),
+    experience: "intermediate",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: {
+      vdot: 36,
+      weeklyMinutes: 130,
+      runningWeeks: 60,
+      longestRunKm: 9,
+    },
+    runShare: 1,
+  },
+};
+
+const B10K_63 = bench(10000, 63 * 60 + 30);
+const slowMarathon = (withBench: boolean): LiftPersona => ({
+  name: withBench ? "p11a-slow-marathon-benchmarked-18w" : "p11b-slow-marathon-no-benchmark-18w",
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "regular",
+    runMode: "race_prep",
+    weeklyRunDays: 4,
+    raceDistance: "marathon",
+    raceTargetDate: fromStart(17, 6),
+    experience: "intermediate",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: {
+      vdot: B10K_63.vdot,
+      weeklyMinutes: 180,
+      runningWeeks: 100,
+      longestRunKm: 12,
+    },
+    runShare: 1,
+    ...(withBench ? { benchmark: B10K_63.benchmark } : {}),
+  },
+});
+const CASES: Case[] = [
+  { persona: slowMarathon(true), weeks: 19, perfect: true },
+  { persona: slowMarathon(false), weeks: 19, perfect: true },
+  {
+    persona: { ...slowMarathon(false), name: "p11c-slow-marathon-accepts-derived-18w", running: { ...slowMarathon(false).running!, acceptsDerived: true } },
+    weeks: 19,
+    perfect: true,
+  },
+  { persona: starter, weeks: 14, perfect: true },
+  { persona: new5k, weeks: 13, perfect: true },
+  { persona: fiveK, weeks: 12, perfect: true },
+  { persona: tenK(3), weeks: 15, perfect: true },
+  { persona: tenK(4), weeks: 15, perfect: true },
+  { persona: half(14), weeks: 18, perfect: true },
+  { persona: half(12), weeks: 16, perfect: true },
+  { persona: firstMarathon(18), weeks: 23, perfect: true },
+  { persona: firstMarathon(20), weeks: 25, perfect: true },
+  { persona: expMarathon(5), weeks: 21, perfect: true },
+  { persona: expMarathon(6), weeks: 21, perfect: true },
+  { persona: freeform, weeks: 8, perfect: true },
+  { persona: structured, weeks: 4, perfect: true },
+  { persona: noBench, weeks: 14, perfect: true },
+  { persona: noBenchHalf, weeks: 16, perfect: true },
+  // Adaptivity
+  {
+    persona: half(14, {
+      name: "p09a-half-off-weeks-6to9-away",
+      breaks: [6, 7, 8, 9],
+      awayFromApp: true,
+    }),
+    weeks: 18,
+    perfect: true,
+  },
+  {
+    persona: half(14, {
+      name: "p09b-half-off-weeks-6to8-opens-app",
+      breaks: [6, 7, 8],
+      awayFromApp: false,
+    }),
+    weeks: 18,
+    perfect: true,
+  },
+  {
+    persona: half(14, {
+      name: "p09c-half-misses-week-7",
+      breaks: [7],
+      awayFromApp: false,
+    }),
+    weeks: 18,
+    perfect: true,
+  },
+  {
+    persona: firstMarathon(
+      18,
+      { breaks: [10] },
+      "p09d-first-marathon-misses-week-10"
+    ),
+    weeks: 23,
+    perfect: true,
+  },
+  // 75% adherence, injuries on, three seeds
+  ...[1, 2, 3].map((seed) => ({
+    persona: {
+      ...firstMarathon(18, {}, `p09e-first-marathon-75pct-seed${String(seed)}`),
+      running: {
+        ...firstMarathon(18).running!,
+        runShare: 0.75,
+      },
+    },
+    weeks: 23,
+    seed,
+  })),
+  // Race too close / too far
+  {
+    persona: firstMarathon(4, {}, "p10a-marathon-in-4-weeks"),
+    weeks: 9,
+    perfect: true,
+  },
+  {
+    persona: firstMarathon(6, {}, "p10a2-marathon-in-6-weeks"),
+    weeks: 11,
+    perfect: true,
+  },
+  {
+    persona: firstMarathon(40, {}, "p10b-marathon-in-40-weeks"),
+    weeks: 45,
+    perfect: true,
+  },
+];
+
+describe("zz run plans (scratch)", () => {
+  it("writes the template catalogue", () => {
+    writeFileSync(
+      `${OUT}/_templates.json`,
+      JSON.stringify(
+        RUN_TEMPLATES.map((t) => ({
+          id: t.id,
+          name: t.name,
+          type: t.type,
+          minutes: t.estimatedDuration,
+          config: t.config,
+          description: t.description,
+        })),
+        null,
+        1
+      )
+    );
+    expect(true).toBe(true);
+  });
+
+  it.each(CASES.map((c) => [c.persona.name, c] as const))(
+    "%s",
+    (name, c) => {
+      const season = simulateLiftSeason(c.persona, {
+        weeks: c.weeks,
+        seed: c.seed ?? 1,
+        ...(c.perfect ? { runnerVariant: NO_INJURY } : {}),
+      });
+      const habits = c.persona.running!;
+      const fitness = habits.benchmark
+        ? {
+            benchmark: habits.benchmark,
+            vdot:
+              Math.round(
+                vdotFromRace(
+                  habits.benchmark.distanceM,
+                  habits.benchmark.timeS
+                ) * 10
+              ) / 10,
+          }
+        : null;
+      const start = c.persona.start ?? DEFAULT_START;
+      const out = {
+        name,
+        answers: c.persona.answers,
+        runner: habits.runner,
+        runShare: habits.runShare,
+        benchmark: habits.benchmark ?? null,
+        goalTimeS: habits.goalTimeS ?? null,
+        paceTable: paceTableFromFitness(fitness),
+        baseline: runnerStartingPoint(c.persona, start),
+        breaks: c.persona.breaks ?? [],
+        awayFromApp: c.persona.awayFromApp ?? false,
+        runWeeks: season.runWeeks,
+        runs: season.runs,
+        events: season.events,
+        failures: season.failures,
+        coaching: runCoachingFindings(season, c.persona),
+      };
+      writeFileSync(`${OUT}/${name}.json`, JSON.stringify(out, null, 1));
+      writeFileSync(`${OUT}/${name}.txt`, runTrace(season, c.persona));
+      expect(season.runWeeks.length).toBeGreaterThan(0);
+    },
+    120_000
+  );
+});

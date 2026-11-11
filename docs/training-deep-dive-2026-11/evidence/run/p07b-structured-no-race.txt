@@ -1,0 +1,21 @@
+p07b-structured-no-race · seed 1 · base model · 4 weeks from 2026-03-09 · no race
+runner: VDOT 38.0 · 150 min a week · 80 weeks running · no benchmark
+
+w1 2026-03-09  no plan  counted 4/4  plan 161 min, long 10.0 km, quality 1
+  planned Mon:5x1k · Wed:easy_30 · Fri:easy_30 · Sun:long_10k
+  ran     Mon 5x1k 7.4 km/41 min 5:29 · Wed easy_30 4.6 km/30 min 6:28 · Fri easy_30 4.5 km/30 min 6:36 · Sun long_10k 10.0 km/66 min 6:35
+  week    166 min · 26.6 km · easy 85% · longest ×1.32 the month's
+  runner  VDOT 38.12 · fitness 154 min · easy own 6:14–7:01, prescribed none
+w2 2026-03-16  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 37.35 · fitness 130 min
+w3 2026-03-23  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 36.63 · fitness 110 min
+  · 2026-03-23: server flagged the week of 2026-03-16 as fallen behind
+w4 2026-03-30  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 35.98 · fitness 93 min
+  · 2026-03-30: server flagged the week of 2026-03-23 as fallen behind
+
+runs 4 · counted 4 of the 4 planned · injuries 0 · VDOT 38.0 → 35.98

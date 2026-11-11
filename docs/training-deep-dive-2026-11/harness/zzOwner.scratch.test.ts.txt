@@ -1,0 +1,30 @@
+// Scratch: the owner's own lifting week as the repo records his setup
+// (six lift days, General fitness, intermediate), at each session length.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { estimateSessionMinutes } from "../expressSession";
+
+it("owner", () => {
+  const out: string[] = [];
+  for (const sessionMinutes of [45, 60, 75]) {
+    for (const weeklyRunDays of [0, 6]) {
+      const input = {
+        primaryGoal: "general", nutritionPhase: "recomp", experience: "intermediate", sessionMinutes, bodyweightKg: 80, sex: "male",
+        liftDays: 6, preferredSplit: "auto", runMode: weeklyRunDays ? "race_prep" : "freeform", weeklyRunDays, ...(weeklyRunDays ? { raceGoal: { distance: "marathon", targetDate: "2027-04-24" }, runFrequency: "occasional" } : {}), equipment: "full_gym", injuries: [],
+        currentDate: "2026-11-09",
+      } as unknown as PlanBuilderInput;
+      const plan = buildPlan(input) as unknown as { programState: { splitType: string; workouts: Array<{ dayName: string; exercises: Array<{ name: string; sets: number; reps: number; repRangeMax?: number; isAccessory?: boolean }> }> } };
+      let total = 0;
+      out.push(`\n== General, intermediate, 6 days, ${sessionMinutes} min, run days ${weeklyRunDays} (${plan.programState.splitType})`);
+      for (const d of plan.programState.workouts) {
+        const sets = d.exercises.reduce((t, e) => t + e.sets, 0);
+        total += sets;
+        out.push(`${d.dayName} | ${d.exercises.length} lifts | ${sets} sets | ${estimateSessionMinutes(d.exercises as never, { sessionMinutes })} min | ` +
+          d.exercises.map((e) => `${e.name} ${e.sets}x${e.reps}${e.repRangeMax ? "-" + e.repRangeMax : ""}${e.isAccessory ? "" : "*"}`).join(", "));
+      }
+      out.push(`week: ${total} sets`);
+    }
+  }
+  writeFileSync("/tmp/work/train/owner-lift.txt", out.join("\n"));
+});

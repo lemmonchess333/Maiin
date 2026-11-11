@@ -1,0 +1,35 @@
+// Scratch: the same week uncut, cut for a new plan, and re-fitted as a kept plan is.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { freshLiftWeek, type FreshLiftAnswers } from "../planBuilder";
+import { refitSessionsToTime } from "../sessionFit";
+import { estimateSessionMinutes } from "../expressSession";
+import { balanceWeekVolume } from "../programEngine";
+
+type Day = { dayName: string; exercises: Array<{ name: string; sets: number; reps: number; isAccessory?: boolean; exerciseId: string; weight: number }> };
+const show = (days: Day[], minutes?: number) =>
+  days.map((d) => ({
+    name: d.dayName,
+    n: d.exercises.length,
+    sets: d.exercises.reduce((t, e) => t + e.sets, 0),
+    est: estimateSessionMinutes(d.exercises as never, minutes ? { sessionMinutes: minutes } : {}),
+    ex: d.exercises.map((e) => `${e.name} ${e.sets}x${e.reps}${e.isAccessory ? "" : "*"}`),
+  }));
+
+it("stages", () => {
+  const out: Record<string, unknown> = {};
+  for (const liftDays of [3, 4, 5, 6]) {
+    const base = { primaryGoal: "hypertrophy", experience: "intermediate", bodyweightKg: 80, sex: "male", liftDays, equipment: "full_gym", injuries: [] };
+    const uncut = freshLiftWeek(base as unknown as FreshLiftAnswers) as unknown as Day[];
+    out[`${liftDays}d uncut (no session length)`] = show(uncut);
+    for (const m of [45, 60, 75]) {
+      const fresh = freshLiftWeek({ ...base, sessionMinutes: m } as unknown as FreshLiftAnswers) as unknown as Day[];
+      out[`${liftDays}d new plan at ${m}`] = show(fresh, m);
+      const refit = refitSessionsToTime(uncut as never, "hypertrophy", "intermediate", m) as unknown as Day[];
+      out[`${liftDays}d kept plan re-fitted to ${m} (refit only)`] = show(refit, m);
+      const bal = balanceWeekVolume(refit as never, "hypertrophy", "intermediate", m) as unknown as Day[];
+      out[`${liftDays}d kept plan re-fitted to ${m} then balanced`] = show(bal, m);
+    }
+  }
+  writeFileSync("/tmp/work/train/stages.json", JSON.stringify(out, null, 1));
+});

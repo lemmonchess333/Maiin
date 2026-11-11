@@ -1,0 +1,1567 @@
+{
+ "first": [
+  {
+   "name": "Upper — Chest & Back",
+   "seconds": 3225,
+   "outgrew": false,
+   "warmups": [
+    4,
+    4,
+    2,
+    0
+   ],
+   "ex": [
+    "Bench Press 3x4-8 @57.5",
+    "Barbell Row 3x4-8 @55",
+    "Overhead Press 3x4-8 @37.5",
+    "Lateral Raise 2x10-18 @10"
+   ]
+  },
+  {
+   "name": "Lower — Squat Focus",
+   "seconds": 3495,
+   "outgrew": false,
+   "warmups": [
+    4,
+    4,
+    0,
+    2,
+    2
+   ],
+   "ex": [
+    "Barbell Squat 3x4-8 @90",
+    "Deadlift 3x4-8 @105",
+    "Hack Squat 3x6-10 @80",
+    "Cable Crunch 2x10-18 @37.5",
+    "Standing Calf Raise 2x10-18 @27.5"
+   ]
+  },
+  {
+   "name": "Upper — Shoulders & Arms",
+   "seconds": 3585,
+   "outgrew": false,
+   "warmups": [
+    1,
+    0,
+    2,
+    2,
+    2,
+    0
+   ],
+   "ex": [
+    "Overhead Press 3x8-12 @37.5",
+    "Pull-Ups 3x8-12 @0",
+    "Dumbbell Bench Press 3x10-14 @20",
+    "Dumbbell Curl 3x12-17 @6",
+    "Rope Tricep Pushdown 3x12-17 @15",
+    "Lateral Raise 2x14-20 @10"
+   ]
+  },
+  {
+   "name": "Lower — Deadlift Focus",
+   "seconds": 3420,
+   "outgrew": false,
+   "warmups": [
+    4,
+    2,
+    2,
+    2,
+    2
+   ],
+   "ex": [
+    "Deadlift 3x6-10 @105",
+    "Hack Squat 3x10-14 @80",
+    "Seated Leg Curl 3x12-17 @27.5",
+    "Cable Crunch 3x14-20 @37.5",
+    "Seated Calf Raise 3x14-20 @27.5"
+   ]
+  }
+ ],
+ "rolledUntouched": [
+  {
+   "name": "Upper — Chest & Back",
+   "seconds": 3225,
+   "outgrew": false,
+   "warmups": [
+    4,
+    4,
+    2,
+    0
+   ],
+   "ex": [
+    "Bench Press 3x4-8 @57.5",
+    "Barbell Row 3x4-8 @55",
+    "Overhead Press 3x4-8 @37.5",
+    "Lateral Raise 2x10-18 @10"
+   ]
+  },
+  {
+   "name": "Lower — Squat Focus",
+   "seconds": 3495,
+   "outgrew": false,
+   "warmups": [
+    4,
+    4,
+    0,
+    2,
+    2
+   ],
+   "ex": [
+    "Barbell Squat 3x4-8 @90",
+    "Deadlift 3x4-8 @105",
+    "Hack Squat 3x6-10 @80",
+    "Cable Crunch 2x10-18 @37.5",
+    "Standing Calf Raise 2x10-18 @27.5"
+   ]
+  },
+  {
+   "name": "Upper — Shoulders & Arms",
+   "seconds": 3585,
+   "outgrew": false,
+   "warmups": [
+    1,
+    0,
+    2,
+    2,
+    2,
+    0
+   ],
+   "ex": [
+    "Overhead Press 3x8-12 @37.5",
+    "Pull-Ups 3x8-12 @0",
+    "Dumbbell Bench Press 3x10-14 @20",
+    "Dumbbell Curl 3x12-17 @6",
+    "Rope Tricep Pushdown 3x12-17 @15",
+    "Lateral Raise 2x14-20 @10"
+   ]
+  },
+  {
+   "name": "Lower — Deadlift Focus",
+   "seconds": 3420,
+   "outgrew": false,
+   "warmups": [
+    4,
+    2,
+    2,
+    2,
+    2
+   ],
+   "ex": [
+    "Deadlift 3x6-10 @105",
+    "Hack Squat 3x10-14 @80",
+    "Seated Leg Curl 3x12-17 @27.5",
+    "Cable Crunch 3x14-20 @37.5",
+    "Seated Calf Raise 3x14-20 @27.5"
+   ]
+  }
+ ],
+ "reorders": [
+  {
+   "day": "Upper — Chest & Back",
+   "movedFirst": "Barbell Row",
+   "secondsBefore": 3225,
+   "outgrew": false,
+   "warmups": [
+    4,
+    4,
+    2,
+    0
+   ],
+   "setsBefore": 11,
+   "setsAfter": 11,
+   "cut": [],
+   "afterSeconds": 3225
+  },
+  {
+   "day": "Upper — Chest & Back",
+   "movedFirst": "Overhead Press",
+   "secondsBefore": 3225,
+   "outgrew": false,
+   "warmups": [
+    2,
+    4,
+    4,
+    0
+   ],
+   "setsBefore": 11,
+   "setsAfter": 11,
+   "cut": [],
+   "afterSeconds": 3225
+  },
+  {
+   "day": "Upper — Chest & Back",
+   "movedFirst": "Lateral Raise",
+   "secondsBefore": 3225,
+   "outgrew": false,
+   "warmups": [
+    2,
+    4,
+    4,
+    0
+   ],
+   "setsBefore": 11,
+   "setsAfter": 11,
+   "cut": [],
+   "afterSeconds": 3225
+  },
+  {
+   "day": "Lower — Squat Focus",
+   "movedFirst": "Deadlift",
+   "secondsBefore": 3495,
+   "outgrew": false,
+   "warmups": [
+    4,
+    4,
+    0,
+    2,
+    2
+   ],
+   "setsBefore": 13,
+   "setsAfter": 13,
+   "cut": [],
+   "afterSeconds": 3495
+  },
+  {
+   "day": "Lower — Squat Focus",
+   "movedFirst": "Hack Squat",
+   "secondsBefore": 3435,
+   "outgrew": false,
+   "warmups": [
+    3,
+    0,
+    4,
+    2,
+    2
+   ],
+   "setsBefore": 13,
+   "setsAfter": 13,
+   "cut": [],
+   "afterSeconds": 3435
+  },
+  {
+   "day": "Lower — Squat Focus",
+   "movedFirst": "Cable Crunch",
+   "secondsBefore": 3495,
+   "outgrew": false,
+   "warmups": [
+    2,
+    4,
+    4,
+    0,
+    2
+   ],
+   "setsBefore": 13,
+   "setsAfter": 13,
+   "cut": [],
+   "afterSeconds": 3495
+  },
+  {
+   "day": "Lower — Squat Focus",
+   "movedFirst": "Standing Calf Raise",
+   "secondsBefore": 3495,
+   "outgrew": false,
+   "warmups": [
+    2,
+    4,
+    4,
+    0,
+    2
+   ],
+   "setsBefore": 13,
+   "setsAfter": 13,
+   "cut": [],
+   "afterSeconds": 3495
+  },
+  {
+   "day": "Upper — Shoulders & Arms",
+   "movedFirst": "Pull-Ups",
+   "secondsBefore": 3585,
+   "outgrew": false,
+   "warmups": [
+    0,
+    1,
+    2,
+    2,
+    2,
+    0
+   ],
+   "setsBefore": 17,
+   "setsAfter": 17,
+   "cut": [],
+   "afterSeconds": 3585
+  },
+  {
+   "day": "Upper — Shoulders & Arms",
+   "movedFirst": "Dumbbell Bench Press",
+   "secondsBefore": 3585,
+   "outgrew": false,
+   "warmups": [
+    2,
+    1,
+    0,
+    2,
+    2,
+    0
+   ],
+   "setsBefore": 17,
+   "setsAfter": 17,
+   "cut": [],
+   "afterSeconds": 3585
+  },
+  {
+   "day": "Upper — Shoulders & Arms",
+   "movedFirst": "Dumbbell Curl",
+   "secondsBefore": 3585,
+   "outgrew": false,
+   "warmups": [
+    2,
+    1,
+    0,
+    2,
+    2,
+    0
+   ],
+   "setsBefore": 17,
+   "setsAfter": 17,
+   "cut": [],
+   "afterSeconds": 3585
+  },
+  {
+   "day": "Upper — Shoulders & Arms",
+   "movedFirst": "Rope Tricep Pushdown",
+   "secondsBefore": 3585,
+   "outgrew": false,
+   "warmups": [
+    2,
+    1,
+    0,
+    2,
+    2,
+    0
+   ],
+   "setsBefore": 17,
+   "setsAfter": 17,
+   "cut": [],
+   "afterSeconds": 3585
+  },
+  {
+   "day": "Upper — Shoulders & Arms",
+   "movedFirst": "Lateral Raise",
+   "secondsBefore": 3645,
+   "outgrew": true,
+   "warmups": [
+    2,
+    0,
+    0,
+    2,
+    2,
+    2
+   ],
+   "setsBefore": 17,
+   "setsAfter": 15,
+   "cut": [
+    "Dumbbell Curl 3->2",
+    "Rope Tricep Pushdown 3->2"
+   ],
+   "afterSeconds": 3405
+  },
+  {
+   "day": "Lower — Deadlift Focus",
+   "movedFirst": "Hack Squat",
+   "secondsBefore": 3420,
+   "outgrew": false,
+   "warmups": [
+    2,
+    4,
+    2,
+    2,
+    2
+   ],
+   "setsBefore": 15,
+   "setsAfter": 15,
+   "cut": [],
+   "afterSeconds": 3420
+  },
+  {
+   "day": "Lower — Deadlift Focus",
+   "movedFirst": "Seated Leg Curl",
+   "secondsBefore": 3420,
+   "outgrew": false,
+   "warmups": [
+    2,
+    4,
+    2,
+    2,
+    2
+   ],
+   "setsBefore": 15,
+   "setsAfter": 15,
+   "cut": [],
+   "afterSeconds": 3420
+  },
+  {
+   "day": "Lower — Deadlift Focus",
+   "movedFirst": "Cable Crunch",
+   "secondsBefore": 3420,
+   "outgrew": false,
+   "warmups": [
+    2,
+    4,
+    2,
+    2,
+    2
+   ],
+   "setsBefore": 15,
+   "setsAfter": 15,
+   "cut": [],
+   "afterSeconds": 3420
+  },
+  {
+   "day": "Lower — Deadlift Focus",
+   "movedFirst": "Seated Calf Raise",
+   "secondsBefore": 3420,
+   "outgrew": false,
+   "warmups": [
+    2,
+    4,
+    2,
+    2,
+    2
+   ],
+   "setsBefore": 15,
+   "setsAfter": 15,
+   "cut": [],
+   "afterSeconds": 3420
+  }
+ ],
+ "addedWeights": [
+  {
+   "id": "bench-press",
+   "name": "Bench Press",
+   "equipment": "Barbell",
+   "muscle": "Pectorals",
+   "role": "main",
+   "weight": 55
+  },
+  {
+   "id": "incline-bench",
+   "name": "Incline Bench Press",
+   "equipment": "Barbell",
+   "muscle": "Upper Chest",
+   "role": "main",
+   "weight": 45
+  },
+  {
+   "id": "decline-bench",
+   "name": "Decline Bench Press",
+   "equipment": "Barbell",
+   "muscle": "Lower Chest",
+   "role": "main",
+   "weight": 55
+  },
+  {
+   "id": "db-bench",
+   "name": "Dumbbell Bench Press",
+   "equipment": "Dumbbells",
+   "muscle": "Pectorals",
+   "role": "main",
+   "weight": 20
+  },
+  {
+   "id": "incline-db-press",
+   "name": "Incline Dumbbell Press",
+   "equipment": "Dumbbells",
+   "muscle": "Upper Chest",
+   "role": "main",
+   "weight": 17.5
+  },
+  {
+   "id": "decline-db-press",
+   "name": "Decline Dumbbell Press",
+   "equipment": "Dumbbells",
+   "muscle": "Lower Chest",
+   "role": "main",
+   "weight": 55
+  },
+  {
+   "id": "db-flyes",
+   "name": "Dumbbell Flyes",
+   "equipment": "Dumbbells",
+   "muscle": "Pectorals",
+   "role": "isolation",
+   "weight": 55
+  },
+  {
+   "id": "cable-crossover",
+   "name": "Cable Crossover",
+   "equipment": "Cable Machine",
+   "muscle": "Pectorals",
+   "role": "isolation",
+   "weight": 55
+  },
+  {
+   "id": "chest-press-machine",
+   "name": "Chest Press Machine",
+   "equipment": "Machine",
+   "muscle": "Pectorals",
+   "role": "main",
+   "weight": 55
+  },
+  {
+   "id": "pec-deck",
+   "name": "Pec Deck",
+   "equipment": "Machine",
+   "muscle": "Pectorals",
+   "role": "isolation",
+   "weight": 55
+  },
+  {
+   "id": "machine-chest-fly",
+   "name": "Machine Chest Fly",
+   "equipment": "Machine",
+   "muscle": "Chest",
+   "role": "isolation",
+   "weight": 55
+  },
+  {
+   "id": "smith-bench-press",
+   "name": "Smith Machine Bench Press",
+   "equipment": "Machine",
+   "muscle": "Chest",
+   "role": "main",
+   "weight": 55
+  },
+  {
+   "id": "push-ups",
+   "name": "Push-Ups",
+   "equipment": "Bodyweight",
+   "muscle": "Pectorals",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "pike-push-up",
+   "name": "Pike Push-Up",
+   "equipment": "Bodyweight",
+   "muscle": "Deltoids",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "weighted-push-ups",
+   "name": "Weighted Push-Ups",
+   "equipment": "Bodyweight",
+   "muscle": "Chest",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "barbell-floor-press",
+   "name": "Barbell Floor Press",
+   "equipment": "Barbell",
+   "muscle": "Chest",
+   "role": "main",
+   "weight": 47.5
+  },
+  {
+   "id": "weighted-chest-dip",
+   "name": "Weighted Chest Dip",
+   "equipment": "Bodyweight",
+   "muscle": "Lower Chest",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "deadlift",
+   "name": "Deadlift",
+   "equipment": "Barbell",
+   "muscle": "Full Back",
+   "role": "main",
+   "weight": 100
+  },
+  {
+   "id": "barbell-row",
+   "name": "Barbell Row",
+   "equipment": "Barbell",
+   "muscle": "Lats",
+   "role": "main",
+   "weight": 52.5
+  },
+  {
+   "id": "pendlay-row",
+   "name": "Pendlay Row",
+   "equipment": "Barbell",
+   "muscle": "Lats",
+   "role": "main",
+   "weight": 45
+  },
+  {
+   "id": "db-row",
+   "name": "Dumbbell Row",
+   "equipment": "Dumbbells",
+   "muscle": "Lats",
+   "role": "main",
+   "weight": 20
+  },
+  {
+   "id": "chest-supported-db-row",
+   "name": "Chest-Supported Dumbbell Row",
+   "equipment": "Dumbbells",
+   "muscle": "Mid Back",
+   "role": "main",
+   "weight": 17.5
+  },
+  {
+   "id": "meadows-row",
+   "name": "Meadows Row",
+   "equipment": "Barbell",
+   "muscle": "Lats",
+   "role": "main",
+   "weight": 52.5
+  },
+  {
+   "id": "pull-ups",
+   "name": "Pull-Ups",
+   "equipment": "Bodyweight",
+   "muscle": "Lats",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "chin-ups",
+   "name": "Chin-Ups",
+   "equipment": "Bodyweight",
+   "muscle": "Lats",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "lat-pulldown",
+   "name": "Lat Pulldown",
+   "equipment": "Cable Machine",
+   "muscle": "Lats",
+   "role": "main",
+   "weight": 45
+  },
+  {
+   "id": "single-arm-lat-pulldown",
+   "name": "Single-Arm Lat Pulldown",
+   "equipment": "Cable Machine",
+   "muscle": "Lats",
+   "role": "main",
+   "weight": 20
+  },
+  {
+   "id": "seated-row",
+   "name": "Seated Cable Row",
+   "equipment": "Cable Machine",
+   "muscle": "Mid Back",
+   "role": "main",
+   "weight": 47.5
+  },
+  {
+   "id": "t-bar-row",
+   "name": "T-Bar Row",
+   "equipment": "Barbell",
+   "muscle": "Mid Back",
+   "role": "main",
+   "weight": 42.5
+  },
+  {
+   "id": "face-pulls",
+   "name": "Face Pulls",
+   "equipment": "Cable Machine",
+   "muscle": "Rear Delts",
+   "role": "isolation",
+   "weight": 52.5
+  },
+  {
+   "id": "rack-pull",
+   "name": "Rack Pull",
+   "equipment": "Barbell",
+   "muscle": "Posterior Chain",
+   "role": "main",
+   "weight": 115
+  },
+  {
+   "id": "straight-arm-pulldown",
+   "name": "Straight-Arm Pulldown",
+   "equipment": "Cable Machine",
+   "muscle": "Lats",
+   "role": "isolation",
+   "weight": 22.5
+  },
+  {
+   "id": "inverted-row",
+   "name": "Inverted Row",
+   "equipment": "Bodyweight",
+   "muscle": "Mid Back",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "overhead-press",
+   "name": "Overhead Press",
+   "equipment": "Barbell",
+   "muscle": "Deltoids",
+   "role": "main",
+   "weight": 35
+  },
+  {
+   "id": "db-shoulder-press",
+   "name": "Dumbbell Shoulder Press",
+   "equipment": "Dumbbells",
+   "muscle": "Deltoids",
+   "role": "main",
+   "weight": 12.5
+  },
+  {
+   "id": "lateral-raise",
+   "name": "Lateral Raise",
+   "equipment": "Dumbbells",
+   "muscle": "Side Delts",
+   "role": "isolation",
+   "weight": 35
+  },
+  {
+   "id": "reverse-pec-deck",
+   "name": "Reverse Pec Deck",
+   "equipment": "Machine",
+   "muscle": "Rear Delts",
+   "role": "isolation",
+   "weight": 52.5
+  },
+  {
+   "id": "cable-lateral-raise",
+   "name": "Cable Lateral Raise",
+   "equipment": "Cable Machine",
+   "muscle": "Side Delts",
+   "role": "isolation",
+   "weight": 35
+  },
+  {
+   "id": "front-raise",
+   "name": "Front Raise",
+   "equipment": "Dumbbells",
+   "muscle": "Front Delts",
+   "role": "isolation",
+   "weight": 35
+  },
+  {
+   "id": "reverse-flyes",
+   "name": "Reverse Flyes",
+   "equipment": "Dumbbells",
+   "muscle": "Rear Delts",
+   "role": "isolation",
+   "weight": 52.5
+  },
+  {
+   "id": "rear-delt-machine-fly",
+   "name": "Rear Delt Machine Fly",
+   "equipment": "Machine",
+   "muscle": "Rear Delts",
+   "role": "isolation",
+   "weight": 52.5
+  },
+  {
+   "id": "arnold-press",
+   "name": "Arnold Press",
+   "equipment": "Dumbbells",
+   "muscle": "Deltoids",
+   "role": "main",
+   "weight": 10
+  },
+  {
+   "id": "shoulder-press-machine",
+   "name": "Shoulder Press Machine",
+   "equipment": "Machine",
+   "muscle": "Deltoids",
+   "role": "main",
+   "weight": 35
+  },
+  {
+   "id": "smith-shoulder-press",
+   "name": "Smith Machine Shoulder Press",
+   "equipment": "Machine",
+   "muscle": "Deltoids",
+   "role": "main",
+   "weight": 35
+  },
+  {
+   "id": "barbell-upright-row",
+   "name": "Barbell Upright Row",
+   "equipment": "Barbell",
+   "muscle": "Traps",
+   "role": "main",
+   "weight": 35
+  },
+  {
+   "id": "shrugs",
+   "name": "Shrugs",
+   "equipment": "Dumbbells",
+   "muscle": "Traps",
+   "role": "isolation",
+   "weight": 52.5
+  },
+  {
+   "id": "barbell-shrug",
+   "name": "Barbell Shrug",
+   "equipment": "Barbell",
+   "muscle": "Traps",
+   "role": "isolation",
+   "weight": 52.5
+  },
+  {
+   "id": "cuban-press",
+   "name": "Cuban Press",
+   "equipment": "Dumbbells",
+   "muscle": "Shoulders",
+   "role": "isolation",
+   "weight": 35
+  },
+  {
+   "id": "lu-raise",
+   "name": "Lu Raise",
+   "equipment": "Dumbbells",
+   "muscle": "Deltoids",
+   "role": "isolation",
+   "weight": 35
+  },
+  {
+   "id": "landmine-press",
+   "name": "Landmine Press",
+   "equipment": "Barbell",
+   "muscle": "Deltoids",
+   "role": "main",
+   "weight": 20
+  },
+  {
+   "id": "barbell-curl",
+   "name": "Barbell Curl",
+   "equipment": "Barbell",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 20
+  },
+  {
+   "id": "ez-bar-curl",
+   "name": "EZ Bar Curl",
+   "equipment": "Barbell",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 20
+  },
+  {
+   "id": "db-curl",
+   "name": "Dumbbell Curl",
+   "equipment": "Dumbbells",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 5
+  },
+  {
+   "id": "incline-db-curl",
+   "name": "Incline Dumbbell Curl",
+   "equipment": "Dumbbells",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 15
+  },
+  {
+   "id": "hammer-curl",
+   "name": "Hammer Curl",
+   "equipment": "Dumbbells",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 5
+  },
+  {
+   "id": "cross-body-hammer-curl",
+   "name": "Cross-Body Hammer Curl",
+   "equipment": "Dumbbells",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 5
+  },
+  {
+   "id": "zottman-curl",
+   "name": "Zottman Curl",
+   "equipment": "Dumbbells",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 15
+  },
+  {
+   "id": "preacher-curl",
+   "name": "Preacher Curl",
+   "equipment": "Barbell",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 20
+  },
+  {
+   "id": "cable-curl",
+   "name": "Cable Curl",
+   "equipment": "Cable Machine",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 12.5
+  },
+  {
+   "id": "bayesian-cable-curl",
+   "name": "Bayesian Cable Curl",
+   "equipment": "Cable Machine",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 15
+  },
+  {
+   "id": "concentration-curl",
+   "name": "Concentration Curl",
+   "equipment": "Dumbbells",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 15
+  },
+  {
+   "id": "spider-db-curl",
+   "name": "Spider Dumbbell Curl",
+   "equipment": "Dumbbells",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 15
+  },
+  {
+   "id": "reverse-barbell-curl",
+   "name": "Reverse Barbell Curl",
+   "equipment": "Barbell",
+   "muscle": "Biceps",
+   "role": "isolation",
+   "weight": 20
+  },
+  {
+   "id": "rope-tricep-pushdown",
+   "name": "Rope Tricep Pushdown",
+   "equipment": "Cable Machine",
+   "muscle": "Triceps",
+   "role": "isolation",
+   "weight": 15
+  },
+  {
+   "id": "skull-crushers",
+   "name": "Skull Crushers",
+   "equipment": "Barbell",
+   "muscle": "Triceps",
+   "role": "isolation",
+   "weight": 20
+  },
+  {
+   "id": "overhead-extension",
+   "name": "Overhead Tricep Extension",
+   "equipment": "Dumbbells",
+   "muscle": "Triceps",
+   "role": "isolation",
+   "weight": 10
+  },
+  {
+   "id": "overhead-cable-tricep-extension",
+   "name": "Overhead Cable Tricep Extension",
+   "equipment": "Cable Machine",
+   "muscle": "Triceps",
+   "role": "isolation",
+   "weight": 15
+  },
+  {
+   "id": "tricep-dips",
+   "name": "Tricep Dips",
+   "equipment": "Bodyweight",
+   "muscle": "Triceps",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "bench-dips",
+   "name": "Bench Dips",
+   "equipment": "Bodyweight",
+   "muscle": "Triceps",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "close-grip-bench",
+   "name": "Close Grip Bench Press",
+   "equipment": "Barbell",
+   "muscle": "Triceps",
+   "role": "main",
+   "weight": 45
+  },
+  {
+   "id": "tricep-kickback",
+   "name": "Tricep Kickback",
+   "equipment": "Dumbbells",
+   "muscle": "Triceps",
+   "role": "isolation",
+   "weight": 5
+  },
+  {
+   "id": "single-arm-cable-pushdown",
+   "name": "Single-Arm Cable Pushdown",
+   "equipment": "Cable Machine",
+   "muscle": "Triceps",
+   "role": "isolation",
+   "weight": 15
+  },
+  {
+   "id": "reverse-grip-cable-pushdown",
+   "name": "Reverse Grip Cable Pushdown",
+   "equipment": "Cable Machine",
+   "muscle": "Triceps",
+   "role": "isolation",
+   "weight": 15
+  },
+  {
+   "id": "jm-press",
+   "name": "JM Press",
+   "equipment": "Barbell",
+   "muscle": "Triceps",
+   "role": "main",
+   "weight": 20
+  },
+  {
+   "id": "diamond-push-ups",
+   "name": "Diamond Push-Ups",
+   "equipment": "Bodyweight",
+   "muscle": "Triceps",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "squat",
+   "name": "Barbell Squat",
+   "equipment": "Barbell",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 85
+  },
+  {
+   "id": "front-squat",
+   "name": "Front Squat",
+   "equipment": "Barbell",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 65
+  },
+  {
+   "id": "goblet-squat",
+   "name": "Goblet Squat",
+   "equipment": "Dumbbells",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 25
+  },
+  {
+   "id": "sissy-squat",
+   "name": "Sissy Squat",
+   "equipment": "Bodyweight",
+   "muscle": "Quads",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "smith-machine-squat",
+   "name": "Smith Machine Squat",
+   "equipment": "Machine",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 85
+  },
+  {
+   "id": "hack-squat",
+   "name": "Hack Squat",
+   "equipment": "Machine",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 77.5
+  },
+  {
+   "id": "leg-press",
+   "name": "Leg Press",
+   "equipment": "Machine",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 135
+  },
+  {
+   "id": "leg-extension",
+   "name": "Leg Extension",
+   "equipment": "Machine",
+   "muscle": "Quads",
+   "role": "isolation",
+   "weight": 85
+  },
+  {
+   "id": "seated-leg-curl",
+   "name": "Seated Leg Curl",
+   "equipment": "Machine",
+   "muscle": "Hamstrings",
+   "role": "isolation",
+   "weight": 25
+  },
+  {
+   "id": "romanian-deadlift",
+   "name": "Romanian Deadlift",
+   "equipment": "Barbell",
+   "muscle": "Hamstrings",
+   "role": "main",
+   "weight": 65
+  },
+  {
+   "id": "db-rdl",
+   "name": "Dumbbell Romanian Deadlift",
+   "equipment": "Dumbbells",
+   "muscle": "Hamstrings",
+   "role": "main",
+   "weight": 25
+  },
+  {
+   "id": "nordic-hamstring-curl",
+   "name": "Nordic Hamstring Curl",
+   "equipment": "Bodyweight",
+   "muscle": "Hamstrings",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "glute-ham-raise",
+   "name": "Glute-Ham Raise",
+   "equipment": "Machine",
+   "muscle": "Hamstrings",
+   "role": "isolation",
+   "weight": 100
+  },
+  {
+   "id": "sumo-deadlift",
+   "name": "Sumo Deadlift",
+   "equipment": "Barbell",
+   "muscle": "Glutes",
+   "role": "main",
+   "weight": 95
+  },
+  {
+   "id": "trap-bar-deadlift",
+   "name": "Trap Bar Deadlift",
+   "equipment": "Barbell",
+   "muscle": "Glutes",
+   "role": "main",
+   "weight": 100
+  },
+  {
+   "id": "lunges",
+   "name": "Lunges",
+   "equipment": "Dumbbells",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 85
+  },
+  {
+   "id": "bodyweight-lunge",
+   "name": "Bodyweight Lunge",
+   "equipment": "Bodyweight",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "bodyweight-squat",
+   "name": "Bodyweight Squat",
+   "equipment": "Bodyweight",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "walking-dumbbell-lunges",
+   "name": "Walking Dumbbell Lunges",
+   "equipment": "Dumbbells",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 85
+  },
+  {
+   "id": "bulgarian-split",
+   "name": "Bulgarian Split Squat",
+   "equipment": "Dumbbells",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 22.5
+  },
+  {
+   "id": "barbell-step-ups",
+   "name": "Barbell Step-Ups",
+   "equipment": "Barbell",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 85
+  },
+  {
+   "id": "calf-raise",
+   "name": "Calf Raise",
+   "equipment": "Machine",
+   "muscle": "Calves",
+   "role": "isolation",
+   "weight": 85
+  },
+  {
+   "id": "standing-calf-raise",
+   "name": "Standing Calf Raise",
+   "equipment": "Machine",
+   "muscle": "Calves",
+   "role": "isolation",
+   "weight": 85
+  },
+  {
+   "id": "seated-calf-raise",
+   "name": "Seated Calf Raise",
+   "equipment": "Machine",
+   "muscle": "Calves",
+   "role": "isolation",
+   "weight": 85
+  },
+  {
+   "id": "donkey-calf-raise",
+   "name": "Donkey Calf Raise",
+   "equipment": "Machine",
+   "muscle": "Calves",
+   "role": "isolation",
+   "weight": 85
+  },
+  {
+   "id": "single-leg-calf-raise",
+   "name": "Single-Leg Calf Raise",
+   "equipment": "Bodyweight",
+   "muscle": "Calves",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "hip-thrust",
+   "name": "Hip Thrust",
+   "equipment": "Barbell",
+   "muscle": "Glutes",
+   "role": "main",
+   "weight": 90
+  },
+  {
+   "id": "glute-bridge",
+   "name": "Glute Bridge",
+   "equipment": "Bodyweight",
+   "muscle": "Glutes",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "hip-abduction-machine",
+   "name": "Hip Abduction Machine",
+   "equipment": "Machine",
+   "muscle": "Glutes",
+   "role": "isolation",
+   "weight": 100
+  },
+  {
+   "id": "hip-adduction-machine",
+   "name": "Hip Adduction Machine",
+   "equipment": "Machine",
+   "muscle": "Adductors",
+   "role": "isolation",
+   "weight": 100
+  },
+  {
+   "id": "cable-glute-kickback",
+   "name": "Cable Glute Kickback",
+   "equipment": "Cable Machine",
+   "muscle": "Glutes",
+   "role": "isolation",
+   "weight": 100
+  },
+  {
+   "id": "pistol-squat",
+   "name": "Pistol Squats",
+   "equipment": "Bodyweight",
+   "muscle": "Quads",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "plank",
+   "name": "Plank",
+   "equipment": "Bodyweight",
+   "muscle": "Core",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "superman-hold",
+   "name": "Superman Hold",
+   "equipment": "Bodyweight",
+   "muscle": "Lower Back",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "side-plank",
+   "name": "Side Plank",
+   "equipment": "Bodyweight",
+   "muscle": "Obliques",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "weighted-plank",
+   "name": "Weighted Plank",
+   "equipment": "Bodyweight",
+   "muscle": "Core",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "crunches",
+   "name": "Crunches",
+   "equipment": "Bodyweight",
+   "muscle": "Abs",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "bicycle-crunch",
+   "name": "Bicycle Crunch",
+   "equipment": "Bodyweight",
+   "muscle": "Obliques",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "decline-sit-up",
+   "name": "Decline Sit-Up",
+   "equipment": "Bodyweight",
+   "muscle": "Abs",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "leg-raise",
+   "name": "Hanging Leg Raise",
+   "equipment": "Bodyweight",
+   "muscle": "Lower Abs",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "toe-touches",
+   "name": "Toe Touches",
+   "equipment": "Bodyweight",
+   "muscle": "Abs",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "russian-twist",
+   "name": "Russian Twist",
+   "equipment": "Bodyweight",
+   "muscle": "Obliques",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "mountain-climbers",
+   "name": "Mountain Climbers",
+   "equipment": "Bodyweight",
+   "muscle": "Core",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "cable-crunch",
+   "name": "Cable Crunch",
+   "equipment": "Cable Machine",
+   "muscle": "Abs",
+   "role": "isolation",
+   "weight": 35
+  },
+  {
+   "id": "cable-woodchopper",
+   "name": "Cable Woodchopper",
+   "equipment": "Cable Machine",
+   "muscle": "Obliques",
+   "role": "isolation",
+   "weight": 35
+  },
+  {
+   "id": "pallof-press",
+   "name": "Pallof Press",
+   "equipment": "Cable Machine",
+   "muscle": "Core",
+   "role": "isolation",
+   "weight": 17.5
+  },
+  {
+   "id": "dead-bug",
+   "name": "Dead Bug",
+   "equipment": "Bodyweight",
+   "muscle": "Core",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "dragon-flag",
+   "name": "Dragon Flag",
+   "equipment": "Bodyweight",
+   "muscle": "Core",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "ab-wheel",
+   "name": "Ab Wheel Rollout",
+   "equipment": "Ab Wheel",
+   "muscle": "Core",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "l-sit",
+   "name": "L-Sit",
+   "equipment": "Bodyweight",
+   "muscle": "Core",
+   "role": "isolation",
+   "weight": 0
+  },
+  {
+   "id": "clean-and-press",
+   "name": "Clean and Press",
+   "equipment": "Barbell",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 35
+  },
+  {
+   "id": "kettlebell-swing",
+   "name": "Kettlebell Swing",
+   "equipment": "Kettlebell",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 100
+  },
+  {
+   "id": "burpees",
+   "name": "Burpees",
+   "equipment": "Bodyweight",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "thrusters",
+   "name": "Thrusters",
+   "equipment": "Barbell",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 35
+  },
+  {
+   "id": "farmers-carry",
+   "name": "Farmer's Carry",
+   "equipment": "Dumbbells",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 35
+  },
+  {
+   "id": "sled-push-pull",
+   "name": "Sled Push/Pull",
+   "equipment": "Machine",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 35
+  },
+  {
+   "id": "landmine-squat",
+   "name": "Landmine Squat",
+   "equipment": "Barbell",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 85
+  },
+  {
+   "id": "zercher-squat",
+   "name": "Zercher Squat",
+   "equipment": "Barbell",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 85
+  },
+  {
+   "id": "turkish-get-up",
+   "name": "Turkish Get-Up",
+   "equipment": "Kettlebell",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 36
+  },
+  {
+   "id": "man-maker",
+   "name": "Man Maker",
+   "equipment": "Dumbbells",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 35
+  },
+  {
+   "id": "battle-ropes",
+   "name": "Battle Ropes",
+   "equipment": "Battle Ropes",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 35
+  },
+  {
+   "id": "box-jumps",
+   "name": "Box Jumps",
+   "equipment": "Box",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 35
+  },
+  {
+   "id": "dips",
+   "name": "Dips",
+   "equipment": "Bodyweight",
+   "muscle": "Pectorals",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "muscle-ups",
+   "name": "Muscle-Ups",
+   "equipment": "Bodyweight",
+   "muscle": "Full Body",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "handstand-push-ups",
+   "name": "Handstand Push-Ups",
+   "equipment": "Bodyweight",
+   "muscle": "Deltoids",
+   "role": "main",
+   "weight": 0
+  },
+  {
+   "id": "cable-fly",
+   "name": "Cable Fly",
+   "equipment": "Cable Machine",
+   "muscle": "Pectorals",
+   "role": "isolation",
+   "weight": 55
+  }
+ ]
+}

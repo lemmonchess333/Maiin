@@ -1,0 +1,4 @@
+from VDOT 24 (easy 563 s/km, equivalent marathon 5:44): max long 15 km = 141 min
+from VDOT 32.3 (easy 450 s/km, equivalent marathon 4:33): max long 20 km = 150 min
+from VDOT 43 (easy 360 s/km, equivalent marathon 3:36): max long 25 km = 150 min
+from VDOT 54 (easy 300 s/km, equivalent marathon 2:58): max long 30 km = 150 min

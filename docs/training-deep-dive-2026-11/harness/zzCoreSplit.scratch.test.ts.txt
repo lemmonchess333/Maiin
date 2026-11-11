@@ -1,0 +1,34 @@
+// Scratch: the full builder, with the split chosen.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { estimateSessionMinutes } from "../expressSession";
+
+it("splits", () => {
+  const rows: unknown[] = [];
+  for (const preferredSplit of ["auto", "ppl", "upper_lower", "full_body", "bro_split"])
+    for (const primaryGoal of ["hypertrophy", "strength", "general"])
+      for (const experience of ["beginner", "intermediate", "advanced"])
+        for (const sessionMinutes of [45, 60, 75])
+          for (const liftDays of [3, 4, 5, 6]) {
+            const input = {
+              primaryGoal, nutritionPhase: "recomp", experience, sessionMinutes, bodyweightKg: 80, sex: "male",
+              liftDays, preferredSplit, runMode: "freeform", weeklyRunDays: 0, equipment: "full_gym", injuries: [],
+              currentDate: "2026-11-09",
+            } as unknown as PlanBuilderInput;
+            try {
+              const out = buildPlan(input) as unknown as { programState: { splitType: string; workouts: Array<{ dayName: string; exercises: Array<{ name: string; sets: number; reps: number; isAccessory?: boolean }> }> } };
+              rows.push({
+                preferredSplit, primaryGoal, experience, sessionMinutes, liftDays, split: out.programState.splitType,
+                days: out.programState.workouts.map((d) => ({
+                  name: d.dayName, n: d.exercises.length, sets: d.exercises.reduce((t, e) => t + e.sets, 0),
+                  est: estimateSessionMinutes(d.exercises as never, { sessionMinutes }),
+                  ex: d.exercises.map((e) => `${e.name} ${e.sets}x${e.reps}${e.isAccessory ? "" : "*"}`),
+                })),
+              });
+            } catch (err) {
+              rows.push({ preferredSplit, primaryGoal, experience, sessionMinutes, liftDays, error: String(err).slice(0, 160) });
+            }
+          }
+  writeFileSync("/tmp/work/train/splits.json", JSON.stringify(rows));
+});

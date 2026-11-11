@@ -1,0 +1,154 @@
+// Scratch, not committed: single probes behind the hybrid findings.
+import { it, vi } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import {
+  backToBackPairs,
+  posteriorChainOverlap,
+  sessionBeforeLongRun,
+} from "../overlapModel";
+import { weeklyVolumeByMuscle } from "../volumeModel";
+import { loadsTheLegs } from "../easierToday";
+import type { ScheduleDay } from "@/lib/scheduleUtils";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import { raceBlockWeek, raceLiftWeek } from "../weekPrescription";
+
+const START = "2026-11-09";
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const plusDays = (date: string, n: number) =>
+  localDateString(addLocalDays(parseLocalDate(date), n));
+
+const base: PlanBuilderInput = {
+  primaryGoal: "general",
+  nutritionPhase: "recomp" as never,
+  experience: "intermediate",
+  sessionMinutes: 60,
+  bodyweightKg: 80,
+  sex: "male",
+  liftDays: 3,
+  preferredSplit: "auto",
+  runMode: "race_prep",
+  weeklyRunDays: 3,
+  raceGoal: { distance: "half", targetDate: plusDays(START, 7 * 11 + 6) },
+  equipment: "full_gym",
+  injuries: [],
+  currentDate: START,
+  preserveHistory: false,
+};
+
+const mk = (types: string[]): ScheduleDay[] =>
+  Array.from({ length: 7 }, (_, day) => ({
+    day,
+    type: types[(day + 6) % 7] as ScheduleDay["type"],
+  }));
+
+it("probes", () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(`${START}T12:00:00`));
+  const out: Record<string, unknown> = {};
+
+  // 1. What the eve-of-long-run pick weighs on a three-day full-body week.
+  {
+    const plan = buildPlan(base);
+    const ws = plan.programState.workouts;
+    const LEGS = new Set(["Quads", "Hamstrings", "Glutes"]);
+    out.eve = {
+      schedule: plan.weekSchedule.map((d) => `${DOW[d.day]}:${d.type}`),
+      eveIndex: sessionBeforeLongRun(plan.weekSchedule, ws.length),
+      backToBack: backToBackPairs(plan.weekSchedule, ws.length),
+      days: ws.map((d) => ({
+        name: d.dayName,
+        fractionalLegSets: weeklyVolumeByMuscle([d])
+          .filter((v) => LEGS.has(v.muscle))
+          .reduce((t, v) => t + v.sets, 0),
+        rawLegLiftSets: d.exercises
+          .filter(loadsTheLegs)
+          .reduce((t, e) => t + e.sets, 0),
+        legLifts: d.exercises
+          .filter(loadsTheLegs)
+          .map((e) => `${e.name} ${e.sets}x${e.reps}${e.isAccessory ? "" : "*"}`),
+      })),
+      overlap01: posteriorChainOverlap(ws[0], ws[1]),
+      overlap12: posteriorChainOverlap(ws[1], ws[2]),
+      overlap02: posteriorChainOverlap(ws[0], ws[2]),
+    };
+  }
+
+  // 2. A free runner who marked their own run days: a settings save.
+  {
+    const own = mk(["lift", "run", "lift", "run", "lift", "lift", "run"]);
+    const first = buildPlan({
+      ...base,
+      liftDays: 4,
+      runMode: "freeform",
+      weeklyRunDays: 0,
+      raceGoal: undefined,
+    });
+    const saved = buildPlan({
+      ...base,
+      liftDays: 4,
+      runMode: "freeform",
+      weeklyRunDays: 0,
+      raceGoal: undefined,
+      weekSchedule: own,
+      existingState: first.programState,
+      preserveHistory: true,
+      previousExperience: "intermediate",
+      equipment: "home_gym",
+    });
+    const fmt = (s: ScheduleDay[]) =>
+      [...s]
+        .sort((a, b) => ((a.day + 6) % 7) - ((b.day + 6) % 7))
+        .map((d) => `${DOW[d.day]}:${d.type}`)
+        .join(" ");
+    out.freeRunnerOwnDays = {
+      theirs: fmt(own),
+      afterAnEquipmentSave: fmt(saved.weekSchedule),
+      weeklyRunDaysTarget: saved.profileUpdates.weeklyRunDaysTarget,
+    };
+  }
+
+  // 3. A race added to a plan the person has, inside the last two weeks.
+  {
+    const first = buildPlan({
+      ...base,
+      liftDays: 4,
+      runMode: "freeform",
+      weeklyRunDays: 0,
+      raceGoal: undefined,
+    });
+    for (const daysOut of [20, 13, 6]) {
+      const withRace = buildPlan({
+        ...base,
+        liftDays: 4,
+        weeklyRunDays: 3,
+        raceGoal: { distance: "10k", targetDate: plusDays(START, daysOut) },
+        raceLegTrim: true,
+        existingState: first.programState,
+        preserveHistory: true,
+        previousExperience: "intermediate",
+      });
+      const block = raceBlockWeek(withRace.programState.runPlan);
+      (out as Record<string, unknown>)[`raceAdded_${String(daysOut)}daysOut`] =
+        {
+          runPlan: {
+            currentWeek: withRace.programState.runPlan?.currentWeek,
+            totalWeeks: withRace.programState.runPlan?.totalWeeks,
+          },
+          whatTheRolloverWouldCallThisWeek: raceLiftWeek(block, undefined),
+          liftPhase: withRace.programState.currentPhase,
+          raceWeek: withRace.programState.raceWeek ?? null,
+          sets: withRace.programState.workouts.map(
+            (d) =>
+              `${d.dayName}: ${String(d.exercises.reduce((t, e) => t + e.sets, 0))} sets${d.skipped ? " (skipped)" : ""}`
+          ),
+        };
+    }
+  }
+  vi.useRealTimers();
+  writeFileSync("/tmp/work/train/hybrid-probe.json", JSON.stringify(out, null, 1));
+});

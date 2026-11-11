@@ -1,0 +1,73 @@
+// Scratch, not committed: the full grid of setup answers, one compact row per plan, for python to count.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { freshLiftWeek, type FreshLiftAnswers } from "../planBuilder";
+import { estimateSessionSeconds } from "../expressSession";
+import { weeklyVolumeByJudgementMuscle } from "../volumeModel";
+import { exerciseRole } from "../exerciseRole";
+import { exerciseBank } from "../variationBank";
+import { EXERCISES } from "@/lib/exercises";
+
+const GOALS = ["hypertrophy", "strength", "general", "fat_loss", "running"];
+const LEVELS = ["beginner", "intermediate", "advanced"];
+const MINUTES = [30, 45, 60, 75];
+const DAYS = [1, 2, 3, 4, 5, 6];
+const KITS: Array<[string, boolean]> = [
+  ["full_gym", false],
+  ["home_gym", false],
+  ["home_gym", true],
+  ["minimal", false],
+];
+const INJ = [[], ["lower_back"], ["shoulder"], ["knee"], ["elbow"], ["wrist"], ["knee", "lower_back"]];
+
+it("sweeps", () => {
+  const lines: string[] = [];
+  for (const g of GOALS)
+    for (const l of LEVELS)
+      for (const m of MINUTES)
+        for (const d of DAYS)
+          for (const [k, b] of KITS)
+            for (const inj of INJ) {
+              const input = {
+                primaryGoal: g, experience: l, sessionMinutes: m, bodyweightKg: 80, sex: "male",
+                liftDays: d, equipment: k, barbellAtHome: b, injuries: inj,
+              } as unknown as FreshLiftAnswers;
+              try {
+                const days = freshLiftWeek(input);
+                lines.push(
+                  JSON.stringify({
+                    g, l, m, d, k, b, inj: inj.join("+"),
+                    vol: Object.fromEntries(
+                      weeklyVolumeByJudgementMuscle(days as never).map((v) => [v.muscle, v.sets])
+                    ),
+                    days: days.map((day) => ({
+                      n: day.dayName,
+                      r: (day as { dayRole?: string }).dayRole,
+                      s: Math.round(estimateSessionSeconds(day.exercises as never)),
+                      x: day.exercises.map((e) => [
+                        e.exerciseId, e.sets, e.reps, e.repRangeMax ?? 0, e.weight,
+                        e.isAccessory ? 1 : 0, exerciseRole(e), e.swappedFrom?.exerciseId ?? "",
+                        e.notes?.startsWith("No safe") ? "NOSAFE" : e.notes?.includes("needs equipment") ? "NOKIT" : "",
+                      ]),
+                    })),
+                  })
+                );
+              } catch (err) {
+                lines.push(JSON.stringify({ g, l, m, d, k, b, inj: inj.join("+"), error: String(err).slice(0, 200) }));
+              }
+            }
+  writeFileSync("/tmp/work/train/adapt-sweep.jsonl", lines.join("\n"));
+  // The catalogue against the bank: loaded lifts with no load metadata.
+  const bankIds = new Set(Object.values(exerciseBank).flatMap((opts) => opts.map((o) => o.id)));
+  writeFileSync(
+    "/tmp/work/train/adapt-bank.json",
+    JSON.stringify({
+      catalogue: EXERCISES.filter((e) => e.category !== "Cardio").map((e) => ({
+        id: e.id, name: e.name, equipment: e.equipment, inBank: bankIds.has(e.id),
+      })),
+      bank: Object.fromEntries(
+        Object.entries(exerciseBank).map(([cat, opts]) => [cat, opts.map((o) => ({ ...o }))])
+      ),
+    })
+  );
+});
