@@ -47,9 +47,8 @@ interface MacroColumnProps {
    * figure with its word beside it, then a thin bar. Three of them make
    * one row under the calorie wheel.
    *
-   * "tile" is the centred form on a card, which the paywall's demo of a
-   * scan still draws. "compact" is that tile at the size Home's food
-   * card draws it, on a tinted tile beside the calorie ring: a smaller
+   * "tile" is the centred form on a card. "compact" is that tile at
+   * the size Home's food card draws it, on a tinted tile beside the calorie ring: a smaller
    * icon and number, the 12px labels unchanged, and a bar track that
    * shows on the tint.
    */
